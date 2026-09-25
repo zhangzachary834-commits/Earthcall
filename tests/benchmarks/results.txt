@@ -1,35 +1,43 @@
 ======================================================
 REPRODUCIBLE BENCHMARK: AlphaNode Lookup Strategies
-Environment: Linux x86_64, GCC 13.3.0 (-O3)
+Environment: ChatGPT repair runner, Linux x86_64, GCC 14.2.0 (-O3)
 ======================================================
 
 ======================================================
 NETWORK SIZE: 5 AlphaNodes | Rounds: 50 x 100000 ops
 ======================================================
-[Hit Beginning] Linear: 1.85ns (p95: 2.54) | Map: 13.69ns (p95: 14.30) | DirectVec: 1.86ns (p95: 2.30)
-[Hit End]       Linear: 3.54ns (p95: 4.12) | Map: 13.56ns (p95: 14.23) | DirectVec: 1.86ns (p95: 2.16)
-[Misses]        Linear: 4.97ns (p95: 5.98) | Map: 23.16ns (p95: 23.99) | DirectVec: 1.12ns (p95: 1.61)
+[Hit Beginning] Linear: 0.81ns (p95: 0.97) | Map: 2.10ns (p95: 2.29) | DirectVec: 0.81ns (p95: 0.96)
+[Hit End]       Linear: 1.90ns (p95: 2.73) | Map: 2.11ns (p95: 2.30) | DirectVec: 0.81ns (p95: 0.84)
+[Misses]        Linear: 2.44ns (p95: 3.40) | Map: 7.04ns (p95: 8.88) | DirectVec: 0.54ns (p95: 0.56)
+[In-range holes] Linear: 2.45ns (p95: 3.25) | Map: 1.90ns (p95: 2.19) | DirectVec: 0.54ns (p95: 0.72)
+[Mixed random]   Linear: 3.85ns (p95: 4.43) | Map: 3.56ns (p95: 4.49) | DirectVec: 0.72ns (p95: 1.02)
 
 ======================================================
 NETWORK SIZE: 20 AlphaNodes | Rounds: 50 x 100000 ops
 ======================================================
-[Hit Beginning] Linear: 1.85ns (p95: 2.25) | Map: 24.30ns (p95: 25.33) | DirectVec: 1.86ns (p95: 2.53)
-[Hit End]       Linear: 10.94ns (p95: 11.94) | Map: 13.52ns (p95: 14.09) | DirectVec: 1.87ns (p95: 2.12)
-[Misses]        Linear: 10.08ns (p95: 10.72) | Map: 27.33ns (p95: 28.71) | DirectVec: 1.12ns (p95: 1.40)
+[Hit Beginning] Linear: 0.81ns (p95: 0.94) | Map: 3.83ns (p95: 4.15) | DirectVec: 0.82ns (p95: 1.11)
+[Hit End]       Linear: 7.48ns (p95: 8.41) | Map: 2.10ns (p95: 2.34) | DirectVec: 0.81ns (p95: 0.98)
+[Misses]        Linear: 7.18ns (p95: 9.89) | Map: 6.60ns (p95: 6.86) | DirectVec: 0.54ns (p95: 0.69)
+[In-range holes] Linear: 7.20ns (p95: 16.27) | Map: 2.72ns (p95: 6.24) | DirectVec: 0.54ns (p95: 1.00)
+[Mixed random]   Linear: 8.81ns (p95: 15.71) | Map: 4.37ns (p95: 6.90) | DirectVec: 0.66ns (p95: 1.02)
 
 ======================================================
 NETWORK SIZE: 100 AlphaNodes | Rounds: 50 x 100000 ops
 ======================================================
-[Hit Beginning] Linear: 1.86ns (p95: 2.51) | Map: 24.33ns (p95: 24.90) | DirectVec: 1.87ns (p95: 2.53)
-[Hit End]       Linear: 53.81ns (p95: 56.91) | Map: 13.52ns (p95: 14.82) | DirectVec: 1.86ns (p95: 2.76)
-[Misses]        Linear: 60.04ns (p95: 62.54) | Map: 30.60ns (p95: 31.93) | DirectVec: 1.13ns (p95: 1.44)
+[Hit Beginning] Linear: 0.81ns (p95: 0.98) | Map: 3.92ns (p95: 4.26) | DirectVec: 0.82ns (p95: 0.96)
+[Hit End]       Linear: 29.66ns (p95: 62.52) | Map: 2.11ns (p95: 3.81) | DirectVec: 0.82ns (p95: 1.00)
+[Misses]        Linear: 30.05ns (p95: 43.24) | Map: 8.34ns (p95: 9.91) | DirectVec: 0.54ns (p95: 0.70)
+[In-range holes] Linear: 32.09ns (p95: 38.11) | Map: 2.56ns (p95: 3.10) | DirectVec: 0.54ns (p95: 0.86)
+[Mixed random]   Linear: 30.32ns (p95: 38.53) | Map: 6.31ns (p95: 8.16) | DirectVec: 0.63ns (p95: 1.32)
 
 ======================================================
 NETWORK SIZE: 500 AlphaNodes | Rounds: 50 x 100000 ops
 ======================================================
-[Hit Beginning] Linear: 1.86ns (p95: 2.52) | Map: 13.67ns (p95: 14.45) | DirectVec: 1.86ns (p95: 2.50)
-[Hit End]       Linear: 222.26ns (p95: 225.64) | Map: 13.92ns (p95: 14.53) | DirectVec: 1.89ns (p95: 2.42)
-[Misses]        Linear: 218.01ns (p95: 222.67) | Map: 33.40ns (p95: 35.13) | DirectVec: 1.17ns (p95: 1.42)
+[Hit Beginning] Linear: 0.81ns (p95: 1.09) | Map: 2.11ns (p95: 2.61) | DirectVec: 0.82ns (p95: 1.20)
+[Hit End]       Linear: 162.42ns (p95: 194.41) | Map: 2.12ns (p95: 3.50) | DirectVec: 0.82ns (p95: 1.04)
+[Misses]        Linear: 158.86ns (p95: 185.30) | Map: 9.87ns (p95: 12.17) | DirectVec: 0.55ns (p95: 0.74)
+[In-range holes] Linear: 159.19ns (p95: 184.69) | Map: 2.95ns (p95: 5.28) | DirectVec: 0.55ns (p95: 1.51)
+[Mixed random]   Linear: 133.37ns (p95: 150.03) | Map: 7.61ns (p95: 9.29) | DirectVec: 0.57ns (p95: 0.81)
 
 ======================================================
 LIFECYCLE & MEMORY CHURN BENCHMARK (10,000 MONOTONIC NODES)
@@ -41,6 +49,9 @@ Index memory accounting for 100 active nodes with max ID 10,000:
 ======================================================
 PRUNE INDEX REBUILD BENCHMARK (dropUnboundAlphaNodes)
 ======================================================
-Max ID:    1000 | Live Alphas:  50 -> 0.077 us/prune
-Max ID:   10000 | Live Alphas:  50 -> 3.173 us/prune
-Max ID:  100000 | Live Alphas:  50 -> 32.306 us/prune
+Max ID:    1000 | Live Alphas:  50 -> 0.113 us/prune
+Max ID:   10000 | Live Alphas:  50 -> 0.725 us/prune
+Max ID:  100000 | Live Alphas:  50 -> 8.621 us/prune
+
+NOTE: These are isolated representation microbenchmarks on the named environment.
+They do not by themselves establish an Earthcall-wide end-to-end speedup.
