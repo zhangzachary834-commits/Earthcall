@@ -2160,6 +2160,38 @@ int main() {
         assert(responseFirstStats.sdfProgramCompiles == 1 &&
                "first authored receiver-response draw must compile its structure once");
 
+        // TWO RECEIVERS, ONE WORLD: keep source, visibility, geometry, albedo,
+        // camera and legacy compatibility coefficients identical. A distinct
+        // Material-owned response expression alone must produce a distinct pixel.
+        auto blueSurfaceMat = materials.create("webgpu_rung9_response_blue_surface");
+        blueSurfaceMat->baseColor = responseMat->baseColor;
+        blueSurfaceMat->ambient = responseMat->ambient;
+        blueSurfaceMat->diffuse = responseMat->diffuse;
+        blueSurfaceMat->specular = responseMat->specular;
+        blueSurfaceMat->shininess = responseMat->shininess;
+        blueSurfaceMat->responseExpr = std::make_shared<OntoMath::Piecewise>(
+            OntoMath::Piecewise::continuous(vectorNode(0.03, 0.03, 1.0)));
+        blueSurfaceMat->bumpResponseRevision();
+
+        Object blueSurfaceReceiver;
+        blueSurfaceReceiver.setFieldShape(
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.55f)),
+            glm::vec3(1.0f));
+        blueSurfaceReceiver.setMaterialId("material.webgpu_rung9_response_blue_surface");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        blueSurfaceReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char responseOtherSurfaceBlue[4];
+        readCentre(responseOtherSurfaceBlue);
+        assert(responseOtherSurfaceBlue[2] > responseOtherSurfaceBlue[0] + 70 &&
+               responseOtherSurfaceBlue[2] > responseOtherSurfaceBlue[1] + 70 &&
+               "second receiver's authored blue response did not control its pixel");
+        assert(responseRed[0] > responseOtherSurfaceBlue[0] + 70 &&
+               responseOtherSurfaceBlue[2] > responseRed[2] + 70 &&
+               "two otherwise-identical receivers differing only in authored response "
+               "did not yield different native pixels");
+
         // NUMERIC RESPONSE EDIT ONLY: identical VectorConstruct/ScalarLeaf
         // topology, same source and visibility, but response changes red -> blue.
         responseRoot->children[0]->scalarForm.terms[0].coefficient = 0.03;
