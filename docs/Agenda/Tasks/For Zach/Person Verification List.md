@@ -26,6 +26,8 @@
 
 *Status 2026-09-24: Zach committed this (*`1d84821f`*) as "the sparkly guy with anti-gravity powers made anti-gravity light and idk what this is" — so it has been seen, but not yet understood or judged. The checks below stay open; the "what am I looking at" answer is the viewpoint and beam description below.*
 
+*Status 2026-09-25, Zach: Sanctuary of Sunlit Mist was already extremely laggy before Codex's resident-parameter work and seemed basically unresponsive afterward; the separate Sanctuary of Beginnings still runs around 60 FPS. [Codex's direct candidate-parent A/B](../../../audits/rendering_optimization/2026-09-25_sunlit_mist_saved_scene_ab.md) found identical image hashes and no repeatable candidate-specific frame-time result, so this remains an open causal report. The candidate is withheld; agents owe a whole-app, long-duration witness before asking Zach to retry.*
+
 - [ ] Build & launch WebGPU app: `./scripts/build.sh webgpu run` (or `./build/earthcall_webgpu`).
 - [ ] In the World Load console / Creator Console, load the world: `sanctuary_of_sunlit_mist` (or switch to Zone `"Sanctuary of Sunlit Mist"`).
 - [ ] Observe the visual phenomenon from the default viewpoint `[0.0, 2.2, 8.0]` looking into `-Z` toward the altar:
@@ -833,6 +835,8 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 ## Northern Veil after V5 medium-set composition (added 2026-09-24)
 
 *Codex / GPT-6 · session* `01a0cfbf-c751-7af0-b160-df07da055bc0` *· 2026-09-24 00:18 PDT. Zach has already seen Rungs 3–8 and V0; this asks only for the new four-curtain V5 experience after #343 lands. [Audit](../../../audits/2026-09-24_sol_visual_radiance_rungs3-8_volumetric_v1-5_audit.md).*
+
+*Status 2026-09-25, Zach: Northern Veil still looked just as laggy. The resident-volume-parameter experiment has no witnessed responsiveness win; agents owe a preserved-save performance A/B before requesting another visual check. The visual hierarchy question remains open.*
 
 - [ ] In **Northern Veil**, look where the emerald, cyan, violet, and crimson curtains overlap after V5. Say whether their hierarchy stays legible, the overlap looks coherent as the camera moves, and the Zone remains responsive. A before/after capture and timing should come from the agent's preserved-save witness; no need to recheck the old Rung 3–8/V0 list.
 
