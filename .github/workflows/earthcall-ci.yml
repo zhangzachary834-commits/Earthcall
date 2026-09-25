@@ -103,7 +103,8 @@ jobs:
             jit_llvm_test \
             advanced_face_paint_test \
             action_model_test \
-            async_state_logger_test
+            async_state_logger_test \
+            save_system_error_test
 
       - name: Run Terminal exact-reference smoke
         shell: bash
@@ -123,7 +124,289 @@ jobs:
         run: |
           set -euxo pipefail
           ctest --test-dir build --output-on-failure \
-            -R '^(language_identity_reference_test|creation_tools_test|interaction_channel_test|creator_console_fixture_law_test|keyboard_shell_shortcuts_test|no_black_box_test|channel_paths_test|dynamic_property_reachability_test|relation_retry_lexeme_test|logos_modality_test|person_not_object_test|zone_native_save_isolation_test|zone_spatial_field_roundtrip_test|perlin_zone_field_restore_test|object_roundtrip_test|object_serialization_test|matter_semantic_precedence_test|shape_hydration_integrity_test|synthesis_studio_zone_closure_test|synthesis_studio_living_test|chess_zone_native_boot_test|synthesis_studio_full_store_boot_test|second_nature_law_authoring_test|second_nature_law_forge_zone_test|prophetic_rete_test|home_identity_continuity_test|person_migration_test|person_home_migration_boot_test|body_part_test|person_database_test|person_serialization_test|person_display_name_identity_test|authorable_light_contract_test|timeline_test|law_file_tree_fossil_test|rete_state_ptr_index_test|relation_type_lexeme_lifetime_test|jit_llvm_test|advanced_face_paint_test|action_model_test|async_state_logger_test)$'
+            -R '^(language_identity_reference_test|creation_tools_test|interaction_channel_test|creator_console_fixture_law_test|keyboard_shell_shortcuts_test|no_black_box_test|channel_paths_test|dynamic_property_reachability_test|relation_retry_lexeme_test|logos_modality_test|person_not_object_test|zone_native_save_isolation_test|zone_spatial_field_roundtrip_test|perlin_zone_field_restore_test|object_roundtrip_test|object_serialization_test|matter_semantic_precedence_test|shape_hydration_integrity_test|synthesis_studio_zone_closure_test|synthesis_studio_living_test|chess_zone_native_boot_test|synthesis_studio_full_store_boot_test|second_nature_law_authoring_test|second_nature_law_forge_zone_test|prophetic_rete_test|home_identity_continuity_test|person_migration_test|person_home_migration_boot_test|body_part_test|person_database_test|person_serialization_test|person_display_name_identity_test|authorable_light_contract_test|timeline_test|law_file_tree_fossil_test|rete_state_ptr_index_test|relation_type_lexeme_lifetime_test|jit_llvm_test|advanced_face_paint_test|action_model_test|async_state_logger_test|save_system_error_test)
+
+  sdf-range-proxy-verification:
+    name: SDF range-proxy verification (macOS)
+    runs-on: macos-14
+    timeout-minutes: 35
+
+    steps:
+      - name: Check out tested commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Configure Earthcall
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+
+      - name: Build SDF proof and GPU parity witnesses
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake --build build --parallel 4 --target \
+            sdf_revision_split_test \
+            sdf_wgsl_parameter_refresh_test \
+            sdf_range_soundness_test \
+            sdf_range_hierarchy_test \
+            heightfield_predicate_test \
+            scene_spatial_synthesis_dag_test \
+            scene_spatial_ontomath_synthesis_test \
+            rendered_field_piecewise_synthesis_test \
+            channel_paths_test \
+            webgpu_sdf_parity_test \
+            webgpu_sdf_distance_test \
+            webgpu_sdf_color_expr_test \
+            webgpu_perlin_exact_gradient_test \
+            webgpu_object_test \
+            webgpu_v5_overlap_physics_test \
+            webgpu_volumetric_mist_test \
+            sanctuary_of_sunlit_mist_test
+
+      - name: Run CPU SDF proof witnesses
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ./build/sdf_revision_split_test
+          ./build/sdf_wgsl_parameter_refresh_test
+          ./build/sdf_range_soundness_test
+          ./build/sdf_range_hierarchy_test
+          ./build/heightfield_predicate_test
+          ./build/scene_spatial_synthesis_dag_test
+          ./build/scene_spatial_ontomath_synthesis_test
+          ./build/rendered_field_piecewise_synthesis_test
+          ./build/channel_paths_test
+          ./build/sanctuary_of_sunlit_mist_test
+
+      - name: Verify generic WebGPU SDF parity
+        shell: bash
+        run: ./build/webgpu_sdf_parity_test
+
+      - name: Verify WebGPU SDF distance parity
+        shell: bash
+        run: ./build/webgpu_sdf_distance_test
+
+      - name: Verify WebGPU authored-color parity
+        shell: bash
+        run: ./build/webgpu_sdf_color_expr_test
+
+      - name: Verify WebGPU object/radiance parity
+        shell: bash
+        run: |
+          set -o pipefail
+          ./build/webgpu_object_test 2>&1 | tee webgpu-object-parity.log
+
+      - name: Verify V5 fused overlap physics
+        shell: bash
+        run: |
+          set -o pipefail
+          ./build/webgpu_v5_overlap_physics_test 2>&1 | tee webgpu-v5-overlap-physics.log
+
+      - name: Verify volumetric mist/source/occluder transport
+        shell: bash
+        run: |
+          set -o pipefail
+          ./build/webgpu_volumetric_mist_test 2>&1 | tee webgpu-volumetric-mist.log
+
+      - name: Upload WebGPU object/radiance diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webgpu-object-parity-log
+          path: |
+            webgpu-object-parity.log
+            webgpu-v5-overlap-physics.log
+            webgpu-volumetric-mist.log
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Verify authored-Perlin core gradient/compiler gates
+        shell: bash
+        env:
+          EARTHCALL_PERLIN_TEST_MODE: ABC
+        run: ./build/webgpu_perlin_exact_gradient_test
+
+      - name: Verify authored-Perlin range-traversal camera gate
+        shell: bash
+        env:
+          EARTHCALL_PERLIN_TEST_MODE: D
+        run: ./build/webgpu_perlin_exact_gradient_test
+
+  sdf-range-perf:
+    name: SDF authored-Perlin A/B (macOS Release)
+    runs-on: macos-14
+    timeout-minutes: 25
+    needs: sdf-range-proxy-verification
+
+    steps:
+      - name: Check out tested commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Configure Release benchmark
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! cmake -S . -B build-perf -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a" \
+            >/tmp/sdf-range-perf-configure.log 2>&1; then
+            tail -80 /tmp/sdf-range-perf-configure.log
+            exit 1
+          fi
+
+      - name: Build Release authored-Perlin A/B
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! cmake --build build-perf --parallel 4 --target webgpu_sdf_range_perf_test \
+            >/tmp/sdf-range-perf-build.log 2>&1; then
+            tail -120 /tmp/sdf-range-perf-build.log
+            exit 1
+          fi
+
+      - name: Measure 2880x1800 authored-Perlin OFF vs ON
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./build-perf/webgpu_sdf_range_perf_test | tee sdf-range-perf.txt
+
+      - name: Publish authored-Perlin A/B result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdf-range-perf
+          path: sdf-range-perf.txt
+          if-no-files-found: error
+          retention-days: 7
+
+  slow-adapter-independent-clock:
+    name: Slow Adapter independent clock (macOS)
+    runs-on: macos-14
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out tested commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Configure Earthcall
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+
+      - name: Build Slow Adapter witnesses
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake --build build --parallel 4 --target \
+            slow_adapter_test \
+            slow_adapter_parity_test \
+            slow_adapter_clock_test \
+            slow_adapter_zone_perf_test \
+            law_direct_stress_test
+
+      - name: Verify Slow Adapter soundness and independent cadence
+        shell: bash
+        run: |
+          set -euo pipefail
+          ctest --test-dir build --output-on-failure \
+            -R '^(slow_adapter_test|slow_adapter_parity_test|slow_adapter_clock_test)$'
+
+      - name: Measure dramatic Law-Direct A/B
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./build/law_direct_stress_test
+
+      - name: Measure adapter impact across authored worlds
+        shell: bash
+        run: |
+          set -euo pipefail
+          worlds=(
+            saves/worlds/chess_app.json
+            saves/worlds/basic_pixel_changer.json
+            saves/worlds/noise_floor.json
+          )
+          for world in "${worlds[@]}"; do
+            echo "PERF_BEGIN world=$world"
+            python3 - "$world" <<'PY'
+          import subprocess
+          import sys
+
+          world = sys.argv[1]
+
+          def run_mode(adapter, direct):
+              cmd = ["./build/slow_adapter_zone_perf_test", world,
+                     f"--adapter={adapter}", f"--direct={direct}", "--frames=60"]
+              try:
+                  result = subprocess.run(cmd, text=True, capture_output=True, timeout=120)
+              except subprocess.TimeoutExpired:
+                  print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={adapter} direct={direct} timeout_s=120")
+                  raise SystemExit(1)
+
+              lines = [line for line in result.stdout.splitlines()
+                       if line.startswith("ADAPTER_PERF ")]
+              for line in lines:
+                  print(line)
+              if result.returncode != 0 or not lines:
+                  tail = (result.stdout + "\n" + result.stderr).splitlines()[-20:]
+                  print("\n".join(tail), file=sys.stderr)
+                  raise SystemExit(result.returncode or 1)
+
+              for token in lines[-1].split():
+                  if token.startswith("frame_median_ms="):
+                      return float(token.split("=")[1])
+              return 0.0
+
+          # Three arms, same commit/runner:
+          #   floor      = no adapter, no Direct
+          #   pre-direct = adapter ON, Direct OFF (the old terminal state)
+          #   direct     = adapter ON, Direct ON
+          off_ms = run_mode("off", "off")
+          pre_direct_ms = run_mode("on", "off")
+          direct_ms = run_mode("on", "on")
+
+          if off_ms > 0:
+              ratio = direct_ms / off_ms
+              diff = direct_ms - off_ms
+              if ratio > 1.20 and diff > 1.0:
+                  direct_ms_retry = run_mode("on", "on")
+                  if direct_ms_retry < direct_ms:
+                      direct_ms = direct_ms_retry
+                      ratio = direct_ms / off_ms
+                      diff = direct_ms - off_ms
+              print(f"PERF_COMPARE world={world} off_ms={off_ms:.6f} on_ms={direct_ms:.6f} ratio={ratio:.2f} diff={diff:.6f}")
+              if ratio > 1.20 and diff > 1.0:
+                  print(f"ERROR: Slow Adapter + Direct regression too high! Allowed ratio <= 1.20 or diff <= 1.0ms")
+                  raise SystemExit(2)
+
+          if pre_direct_ms > 0:
+              direct_ratio = direct_ms / pre_direct_ms
+              direct_diff = direct_ms - pre_direct_ms
+              print(f"LAW_DIRECT_WORLD_COMPARE world={world} pre_direct_ms={pre_direct_ms:.6f} direct_ms={direct_ms:.6f} ratio={direct_ratio:.2f} diff={direct_diff:.6f}")
+          PY
+          done
+
 
   sdf-range-proxy-verification:
     name: SDF range-proxy verification (macOS)
