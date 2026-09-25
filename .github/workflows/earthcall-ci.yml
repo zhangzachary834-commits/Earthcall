@@ -2,7 +2,7 @@ name: Earthcall focused CI
 
 # CI is intentionally read-only. It builds and runs tests; it does not deploy,
 # publish, merge, delete, upload releases, or write back to the repository.
-on:
+'on':
   push:
   pull_request:
   workflow_dispatch:
