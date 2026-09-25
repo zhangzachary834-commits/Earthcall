@@ -741,6 +741,7 @@ int main() {
     Rendering::RenderedFieldSemanticObserver observer;
     auto productionZeroRho = Piecewise::continuous(scalarS(0.0));
     auto productionZeroDensity = Piecewise::continuous(scalarS(0.0));
+    auto productionEmission = Piecewise::continuous(scalarS(7.0));
 
     Rendering::RadianceSourceBinding observedSource;
     observedSource.producerId = "observer/source-A";
@@ -751,6 +752,8 @@ int main() {
     observedMedium.producerId = "observer/medium-A";
     observedMedium.densityExpr = &productionZeroDensity;
     observedMedium.densityRevision = 9101;
+    observedMedium.emissionExpr = &productionEmission;
+    observedMedium.emissionRevision = 9102;
 
     // Disabled means completely inert even when production admission calls it.
     observer.observeRadianceSources({observedSource}, 10001);
@@ -807,6 +810,9 @@ int main() {
     assert(freshDensityProof.has_value());
     assert(*freshDensityProof ==
            Rendering::RenderedFieldSemanticObserver::ProofKind::DensityZeroSupport);
+    assert(observedMedium.emissionExpr == &productionEmission);
+    assert(observedMedium.emissionRevision == 9102);
+    assert(observer.stats().authorityBypassesApplied == 0);
 
     // Channel sovereignty is part of the handle itself. A forged channel on an
     // otherwise fresh source handle fails open rather than borrowing density authority.
@@ -907,9 +913,11 @@ int main() {
     assert(observer.validateRadianceHandle(
         *readdedRadianceHandle, observedSource));
     assert(observer.stats().alignedHandlePublications == 5);
-    assert(observer.stats().alignedHandleValidations == 10);
-    assert(observer.stats().alignedHandleMetadataTests == 36);
-    assert(observer.stats().alignedHandleFallbacks == 3);
+    assert(observer.stats().alignedHandleValidations == 15);
+    assert(observer.stats().alignedHandleMetadataTests == 56);
+    assert(observer.stats().alignedHandleFallbacks == 5);
+    assert(observer.stats().alignedProofReads == 5);
+    assert(observer.stats().alignedProofReadFallbacks == 2);
     assert(observer.stats().authorityBypassesApplied == 0);
 
     // Production aligned-slot incrementality witness: when one member of an
@@ -1038,24 +1046,6 @@ int main() {
     assert(rendererBoundary.volumeDensitySources()[0].producerId == mediumProducerBefore);
     assert(rendererBoundary.radianceSourcesRevision() == 14001);
     assert(rendererBoundary.volumeDensitySourcesRevision() == 15001);
-
-    // Density proof inspection is density-only even while the admitted medium
-    // independently carries V4 self-emission. Reading the proof cannot mutate
-    // or erase the emission lane, and it still grants zero rendering authority.
-    auto boundaryDensityHandle =
-        rendererBoundary.renderedFieldSemanticObserver().publishDensityHandle(0);
-    assert(boundaryDensityHandle.has_value());
-    const auto boundaryDensityProof =
-        rendererBoundary.renderedFieldSemanticObserver().inspectDensityProof(
-            *boundaryDensityHandle, rendererBoundary.volumeDensitySources()[0]);
-    assert(boundaryDensityProof.has_value());
-    assert(*boundaryDensityProof ==
-           Rendering::RenderedFieldSemanticObserver::ProofKind::DensityZeroSupport);
-    assert(rendererBoundary.volumeDensitySources()[0].emissionExpr == emissionExprBefore);
-    assert(rendererBoundary.volumeDensitySources()[0].emissionRevision ==
-           emissionRevisionBefore);
-    assert(rendererBoundary.renderedFieldSemanticObservationStats()
-               .authorityBypassesApplied == 0);
 
     // ON->ON is exactly idempotent.
     rendererBoundary.setRenderedFieldSemanticObservationEnabled(true);
