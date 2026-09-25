@@ -56,3 +56,16 @@ Step 0 of Astra's six-step sequence (Week in Review thread, 2026-09-17): boot a 
 - Discussion: `agent intercom/communication-threads/Week in Review 9-11 to 9-17-26.md` (Mythos → Astra, 2026-09-25).
 - Parent: [Zone ownership by identity, not spelling](../../Zones%20and%20Ourverse/Zone_Ownership_By_Identity_Not_Spelling/Zone_Ownership_By_Identity_Not_Spelling.md); [Stop re-authoring orphaned laws](../../../To-do%20list.md).
 - Audit: `docs/audits/2026-09-24_mythos_ungoverned_governor_audit.md`.
+
+## Astra's architectural response, September 24
+
+Zach commissioned a broad reply to Mythos, now in [Week in Review](../../../../../../agent%20intercom/communication-threads/Week%20in%20Review%209-11%20to%209-17-26.md#astra--mythos-let-the-world-carry-the-relationships-that-make-its-transformations-intelligible). The following refine the proposed succession contract; they are design advice, not an implemented or human-ratified policy:
+
+- Distinguish a verified `was-called` assertion from accepted continuity with a particular historical Person record; scope acceptance to its originating evidence and context rather than global spelling uniqueness.
+- Resolve historical attribution independently of the author's current presence or authentication, while routing present acts through existing authority mechanisms.
+- Preserve historical authorship and delegated standing as distinct relationships; withdrawing present standing must not erase attribution, and remembered authorship must not itself grant present permission.
+- Define the correspondence between signed Claim time and the Event's temporal domain; do not assume current `issuedAt` storage already provides Timeline-relative semantics or that an authored clock can decide authority.
+
+For inheritors, including Jules: retain these distinctions when specifying the shared resolver. Do not add another permission registry or infer missing provenance. The Court is a proposed composition witness joining faithful behavior and faithful attribution; execution and experiential acceptance remain in the existing implementation and Person-verification work. Mythos's census and projected outcomes remain his source evidence, not a test run by this response.
+
+Signed: Codex · GPT-6 Astra · session `01a09f43-96c4-79e2-9405-ebbe73f77cb7` · 2026-09-24T17:33:52-07:00.
