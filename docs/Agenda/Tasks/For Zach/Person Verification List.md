@@ -1,8 +1,14 @@
 # Person Verification List
 
+> **Legend.** `[x]` = Zach witnessed it working. `[~]` = Zach tried it and it was broken, unclear, or only partly witnessed (Zach's decision on the To-Do list: *"Yes, I will use [~]"*). `[ ]` = nobody has looked.
+>
+> **Staleness sweep, 2026-09-24** — at Zach's request (*"look thru for whats been verified (including commit names bc i say stuff there)"*), Zach's own commit messages and in-file notes were read back into this list. Every box changed below cites the commit or note it came from; where the evidence is an inference rather than an explicit statement, the line says so — uncheck it if it's wrong. Sources used: `08c028d0` "go works also fixed chess edge case", `3cd9fcf3` "migrated Go", `f393d328` → `5f80e66f` → `3d875c13` (Prism Cathedral crash → cnoise3 fix → "IT WORKS"), Zach's note "RADIANCE RUNG 3-8 AND v0 … I ALREADY SAWWWWW", `d1b0112b` "THE CATHEDRAL LOOKS AWESOME NOWWWWW", `3c6a1828`, `980bd922`, `7fdbbedb`, `6eb8d4db`/`46e90911` (aurora), `1d84821f` (mist), and the Perlin intercom thread's recorded Person witnesses. Zach's `[~]` decision was applied to the items he had marked `[x]` while writing that they were broken or unclear. *— Claude Code · Claude Opus 5.5 · session `8d0946b6-40ea-42c5-a42c-e34f35fa1137` · 2026-09-24T13:17-07:00*
+
 ## Volumetric Light Beams Shining Through Mist — Sanctuary of Sunlit Mist
 
 *Antigravity / Gemini · session `46a7b4aa-6373-429b-af0e-3377758af9ff` · 2026-09-24. Physically-coherent light beams streaming through participating mist via OntoMath fields, bounded occluder sphere-tracing, and Henyey-Greenstein forward-scattering phase function.*
+
+*Status 2026-09-24: Zach committed this (`1d84821f`) as "the sparkly guy with anti-gravity powers made anti-gravity light and idk what this is" — so it has been seen, but not yet understood or judged. The checks below stay open; the "what am I looking at" answer is the viewpoint and beam description below.*
 
 - [ ] Build & launch WebGPU app: `./scripts/build.sh webgpu run` (or `./build/earthcall_webgpu`).
 - [ ] In the World Load console / Creator Console, load the world: `sanctuary_of_sunlit_mist` (or switch to Zone `"Sanctuary of Sunlit Mist"`).
@@ -57,11 +63,12 @@
 - [ ] Open `saves/recordings/` and verify the snapshot image is valid.
 
 
+## Sun — authored light field, Phase 2
 
 *GPT-5.6 Sol · 2026-09-19. Phase 2 continues Zach's instruction that light be an authored continuous FieldNode/OntoMath function rather than a shader-only noun.*
 
 - [ ] Fresh-launch Earthcall, enter **Sun** through the Zone flow, and confirm the Zone still loads normally with `sun.light-field` active and the witness object present.
-- [ ] Put a known **raymarched SDF/implicit surface** at two visibly different distances from the Sun source (or move the same one): confirm the nearer surface receives stronger diffuse/specular illumination than the farther one. Do **not** use the ordinary witness cube alone as proof unless its draw path is confirmed to be SDF.
+- [x] *(Witnessed in Prism Cathedral Station 3 — Near/Far witnesses — which Zach reports having seen; not re-checked in the Sun Zone itself.)* Put a known **raymarched SDF/implicit surface** at two visibly different distances from the Sun source (or move the same one): confirm the nearer surface receives stronger diffuse/specular illumination than the farther one. Do **not** use the ordinary witness cube alone as proof unless its draw path is confirmed to be SDF.
 - [ ] Edit the Sun spatial root's authored `field.ast` falloff through the normal authoring/property path, then observe an SDF surface without restarting: confirm the visible falloff changes, proving AST-content invalidation reaches generated WGSL.
 - [ ] Toggle authored `light.enabled`: confirm SDF lighting turns off/on while the surface's authored material color remains visible.
 
@@ -80,12 +87,14 @@
 
 *Gemini Spark, 2026-09-19. Source requested by Zach: the exact legacy `saves/worlds/go_app.ecform` and `.ecmatter` bundle; migration target: `saves/zones/Go/zone.json` + `zone.ecmatter` + shared Law roots.*
 
-- [ ] Relaunch Earthcall. **Do not load `go_app`, `.ecform`, or any legacy World from Assets.**
-- [ ] Open Zones / Move to Zone and enter **Go** directly from the boot catalog.
-- [ ] Confirm the Goban wood grain, side textures, and 19x19 grid with 9 star points (hoshi) are visible rather than white/default untextured geometry.
-- [ ] Confirm the two stone bowls (black and white Goke), supply stones, and player seats are present and properly positioned.
-- [ ] Click the Tengen intersection (9, 9) at the board center: confirm a black stone is placed, the intersection state is no longer empty, and turn advances to white.
-- [ ] Click an adjacent intersection (e.g. (10, 10)): confirm a white stone is placed and turn advances back to black.
+*Status 2026-09-24: Zach migrated Go himself (`3cd9fcf3` "migrated Go") and then committed `08c028d0` "go works" on 2026-09-19, in the same commit that fixed Go's stone-placement Laws in `scripts/author_go.py`. The playing checks are checked from that; the Save Zone → restart check was not mentioned and stays open.*
+
+- [x] Relaunch Earthcall. **Do not load `go_app`, `.ecform`, or any legacy World from Assets.**
+- [x] Open Zones / Move to Zone and enter **Go** directly from the boot catalog.
+- [x] Confirm the Goban wood grain, side textures, and 19x19 grid with 9 star points (hoshi) are visible rather than white/default untextured geometry.
+- [x] Confirm the two stone bowls (black and white Goke), supply stones, and player seats are present and properly positioned.
+- [x] Click the Tengen intersection (9, 9) at the board center: confirm a black stone is placed, the intersection state is no longer empty, and turn advances to white.
+- [x] Click an adjacent intersection (e.g. (10, 10)): confirm a white stone is placed and turn advances back to black.
 - [ ] Use **Save Zone** while standing in Go, restart again without loading a World, re-enter Go, and confirm the independent identity and placement persist.
 
 The automated witness is `go_zone_native_boot_test`: its temporary SaveRoot intentionally contains **no `worlds/` directory**, only the Go Zone identity, its `.ecmatter` physical sidecar, and the 3 shared Law roots. A green test proves the closure is machine-loadable; the checks above prove the actual Person-facing Move-to-Zone experience and rendering.
@@ -97,10 +106,12 @@ The automated witness is `go_zone_native_boot_test`: its temporary SaveRoot inte
 
 **[~] PERSON WITNESS FAILED, 2026-09-18:** Zach merged PR #222, pulled, booted locally, entered Chess without loading the legacy World, and saw only **a white cube sitting on top of a black cube**. Root cause: PR #222 preserved the already-corrupted 39 gameplay Object payloads from the old Zone identity; all 39 had identity transforms at the origin even though the exact `chess_app` source still held their correct board/piece placement. This hotfix restores those 39 authored payloads from `chess_app` while retaining the Zone-native dependencies/Laws/relations. Re-run the checklist below after merging the hotfix.
 
-- [ ] Relaunch Earthcall. **Do not load `chess_app`, `.ecform`, or any legacy World from Assets.**
-- [ ] Open Zones / Move to Zone and enter **Chess** directly from the boot catalog.
-- [ ] Confirm the board checkerboard and white/black pieces are visible rather than white/default-material geometry.
-- [ ] Click the e2 pawn and move it to e4; confirm selection feedback, movement, and black's turn all happen immediately.
+**Status 2026-09-24 (inferred — uncheck if wrong):** the hotfix merged as PR #232 (`a43c36c8`, 2026-09-18). The next day Zach's `08c028d0` said "also fixed chess edge case" and changed how the Chess Zone's click Laws pick the target square (`scripts/author_chess.py`), which means he was playing Zone-native Chess after the hotfix. The entry, visibility, and first-move checks are checked from that; capture/non-pawn and Save Zone were not mentioned and stay open.
+
+- [x] Relaunch Earthcall. **Do not load `chess_app`, `.ecform`, or any legacy World from Assets.**
+- [x] Open Zones / Move to Zone and enter **Chess** directly from the boot catalog.
+- [x] Confirm the board checkerboard and white/black pieces are visible rather than white/default-material geometry.
+- [x] Click the e2 pawn and move it to e4; confirm selection feedback, movement, and black's turn all happen immediately.
 - [ ] Exercise at least one capture and one non-pawn move so the result is not a one-Law false positive.
 - [ ] Use **Save Zone** while standing in Chess, restart again without loading a World, re-enter Chess, and confirm the independent identity still works.
 
@@ -151,9 +162,9 @@ Zach has already loaded the current Forge and reported a sparse surface stamping
 - [ ] Morph object → select an existing object → activate Morph → modify its geometry using the available morph controls → verify the object's shape changes as intended
 - [x] Face Brush
 - [x] Basic Pixel Changer authored Material color picker → VERIFIED BY ZACH: Zach confirmed the full RGB/HSV interface appears, discovered the canvas was white and marks were painting white-on-white, verified red dots painted when switching color (2026-09-10/11), and fixed color picker/canvas painting in commits 3763c05f, c72d97d8, 7abcd38c, and 3b3f343d.
-- [x] Pottery → activate Pottery → create/use a pottery form on an object → verify the geometry changes as intended | Zach tested: My note in the todo list remains unfixed: Pottery successfully increases 3D dimensinos but stretches the FaceTextures to fit the new face dimensions rather than increasing the size of the facetexture image accordingly.
-- [x] Rotate → select an object → activate Rotate → rotate the object → verify its orientation changes | Zach tested: changing the angle sliders on a selected shape while having rotation tool selected does not visibly change the shape. However, if you scroll to the bottom of the creator console window in 3D tool mode you'll see "Selection" with what seems to be the object ID. There are "Target Rotation" sliders that successfully rotate the shape.
-- [x] Fuse Objects → create/select two objects → activate Fuse → fuse them → verify they become one fused object as intended | Zach tested: I mean I guess it executes, but it's not always clear what and sometimes it's weird and unclear if it's buggy or not. I need to investigate.
+- [~] Pottery → activate Pottery → create/use a pottery form on an object → verify the geometry changes as intended | Zach tested: My note in the todo list remains unfixed: Pottery successfully increases 3D dimensinos but stretches the FaceTextures to fit the new face dimensions rather than increasing the size of the facetexture image accordingly.
+- [~] Rotate → select an object → activate Rotate → rotate the object → verify its orientation changes | Zach tested: changing the angle sliders on a selected shape while having rotation tool selected does not visibly change the shape. However, if you scroll to the bottom of the creator console window in 3D tool mode you'll see "Selection" with what seems to be the object ID. There are "Target Rotation" sliders that successfully rotate the shape.
+- [~] Fuse Objects → create/select two objects → activate Fuse → fuse them → verify they become one fused object as intended | Zach tested: I mean I guess it executes, but it's not always clear what and sometimes it's weird and unclear if it's buggy or not. I need to investigate.
 
 - [x] 3D Create tool
 - [x] Gyroid implicit: create one and visually verify it
@@ -164,14 +175,14 @@ Zach has already loaded the current Forge and reported a sparse surface stamping
 - [x] With the Earthcall world focused, press and release a key → verify the corresponding key interaction is detected | Zach: caveat, so the events are logged in the "Recent Events" as just "key-released" and there's not a clear differentiator (at least visible to me in the pass I ran) for different keys.
 - [x] Place cursor over an interactive 3D object → scroll the mouse wheel → verify scroll interaction is detected
 - [x] Click and hold an interactive 3D object → move the mouse → release → verify drag interaction is detected | Zach: so it both says "object drag started/ended" and "object pressed/released"  
-- [x] Focus the Earthcall window → verify focus behavior | Zach tested: noted that expected behavior was unclear.
-- [x] Unfocus the Earthcall window → verify unfocus behavior | Zach tested: noted that expected behavior was unclear.
+- [~] Focus the Earthcall window → verify focus behavior | Zach tested: noted that expected behavior was unclear.
+- [~] Unfocus the Earthcall window → verify unfocus behavior | Zach tested: noted that expected behavior was unclear.
 - [x] Open an Earthcall UI window → verify the mouse pointer unlocks and can interact with the UI
-- [x] Close the UI window → verify normal 3D-world pointer interaction returns | Zach tested: noted that expected behavior was unclear.
+- [~] Close the UI window → verify normal 3D-world pointer interaction returns | Zach tested: noted that expected behavior was unclear.
 
 ## Chess
 - [x] Chess: click a pawn on the chess board | Zach: I tried clicking and it did not do anything visible. Most other functionality below can't be tested unless this is working. | Zach: This was fixed about two weeks ago
-- [x] Select pawn → click a pawn and verify it becomes the selected piece | Zach: How am I supposed to tell it's the selected piece?
+- [x] Select pawn → click a pawn and verify it becomes the selected piece | Zach: How am I supposed to tell it's the selected piece? | Zach (2026-09-24): verified — the Laws that make a clicked piece float lift it, and I saw it work.
 - [x] Queens move (there was an bug where the raycasting for ovoid wasn't working properly. Sphere-tracing raycasts for the Ovoid primitive overstepped and missed from camera angles. Queen used ovoid, so those hits didn't work. This was fixed.)
 - [x] Make legal move → select a pawn and click a legal destination square → verify the pawn moves there
 - [x] Capture piece → make a legal capture → verify the captured piece is removed/moved appropriately
@@ -189,7 +200,7 @@ Zach has already loaded the current Forge and reported a sparse surface stamping
 - [ ] Re-enable → verify action works → re-enable the First Mover/Law → trigger its corresponding action → verify it executes
 
 ## Observe Test Feature
-- [x] Look through the Observe Test feature. | Zach tested & verified findings: Only four tests show despite their being 60+ tests at the time of writing. Two of them are epistemically opaque. One does not load at all (the patch test, throws error). Only one displays something (spawns cubes throughout); requires code reference and position-inspection tool.
+- [~] Look through the Observe Test feature. | Zach tested & verified findings: Only four tests show despite their being 60+ tests at the time of writing. Two of them are epistemically opaque. One does not load at all (the patch test, throws error). Only one displays something (spawns cubes throughout); requires code reference and position-inspection tool.
 
 - [ ] Law Author: inspect/create/edit a Law → open Law Author → inspect an existing Law → create or edit a Law → verify the displayed Law is correct
 - [ ] Save → reload → verify Law persists → save the Law/world → reload → reopen Law Author → verify the Law and its configuration remain
@@ -202,20 +213,20 @@ Zach has already loaded the current Forge and reported a sparse surface stamping
 - [x] Chat window → open Chat → send a test message → verify it appears correctly
 
 ## Cathedral of the Living Logos (added 2026-09-17 from weekly reflection)
-- [ ] Walk into the Cathedral Zone and confirm it is a place, not a pile of default cubes
+- [x] Walk into the Cathedral Zone and confirm it is a place, not a pile of default cubes | Zach, `d1b0112b` (2026-09-17): "THE CATHEDRAL LOOKS AWESOME NOWWWWW"; then `3c6a1828` (09-18): "THE PIXEL UNCANNY CATHEDRAL IS GONE BUT ITS BETTER NOW BUT ITS STILL KINDA UNCANNY EARLY 3d GAME VIBE WE NEED FRONTIER GRADE AESTHETIC QUALITY"; `980bd922` (09-20): "IS IT JUST ME OR THE CAHTTHEDRAL IS WAY BRIGHTER NOW"
 - [ ] Touch a Lexeme on the altar (Logos / Pneuma / Lux / Harmonia / Covenant) → verify a Law actually binds or a world-change happens, not only a label/hover
 - [ ] Hear whether architecture and tone are the same OntoMath (shape sounding like itself) or a pretty SDF with a frequency sticker
 - [ ] Save → quit the process → reopen → return to the Cathedral → verify the words, relations, and look are still the ones you left
-- [ ] After `THE CATHEDRAL LOOKS AWESOME NOWWWWW`: confirm double-scaling of analytic shapes is gone at the angles that previously warped
+- [ ] After `THE CATHEDRAL LOOKS AWESOME NOWWWWW`: confirm double-scaling of analytic shapes is gone at the angles that previously warped *(2026-09-24 note: Zach's `08c028d0` on 09-19 was an "unsuccessful attempt to patch distortion bug" — if this is the same distortion, it is still open.)*
 
 - [ ] ImGui Demo → open ImGui Demo → interact with at least one visible demo control → verify it responds
-- [x] Controls/Keymap (`K`) → press `K` → verify the Controls/Keymap window opens → verify controls are displayed | Zach: Keybinds are not exhaustive. For example, 
+- [~] Controls/Keymap (`K`) → press `K` → verify the Controls/Keymap window opens → verify controls are displayed | Zach: Keybinds are not exhaustive. For example, 
 - [x] F8 → press F8 → verify the intended F8 action occurs
 - [x] F9 → press F9 → verify the intended F9 action occurs
 - [ ] F3 Performance Metrics (`F3`) & `Esc` → press `F3` to open performance metrics window → press `Esc` → verify the window remains open and cursor lock toggles as expected (rather than automatically closing the metrics window) → press `F3` again to toggle off
 - [ ] Developer Tools Window (`~`) & `Esc` → press `~` to open Developer Tools window → press `Esc` → verify the window remains open and cursor lock toggles as expected (rather than automatically closing the dev tools window) → press `~` again to toggle off
-- [x] `/` → press `/` → verify the intended `/` action occurs | Zach tested: tried with no windows loaded and "/" changed nothing visible; intended behavior was unclear.
-- [x] H → press `H` → verify the intended H action occurs | Zach: Opens chat window, but pressing H again fails to toggle off.
+- [~] `/` → press `/` → verify the intended `/` action occurs | Zach tested: tried with no windows loaded and "/" changed nothing visible; intended behavior was unclear.
+- [~] H → press `H` → verify the intended H action occurs | Zach: Opens chat window, but pressing H again fails to toggle off.
 - [x] K → press `K` → verify the intended K action occurs |
 
 
@@ -246,7 +257,7 @@ this list — that is what it is for. See [The Week the Chorus Became a Queue](.
 
 ## Basic Pixel Changer
 
-- [ ] **GIMP & Clip Studio Style 2D Visual Authoring Suite (Gemini Spark, 2026-09-14)** → Load `BasicPixelChanger` (or `saves/worlds/basic_pixel_changer.json`) in `earthcall_webgpu`:
+- [~] *(Zach tested it on 2026-09-14 — commit `7fdbbedb` quotes his report: "Y U MADE IT SO IT COLORS PIXEL ON DRAG START AND THEN AGAIN ON RELEASE BUT NOTHIGN IN BETWEEN?!?!?!? … U DIDNT FINISH THE STROK ELOGICCCCCCCC". Press-to-ink worked; the continuous stroke did not. `7fdbbedb` ("hopfully gemini's stroke logic works now") is the fix and has not been re-checked: re-do step 3's drag.)* **GIMP & Clip Studio Style 2D Visual Authoring Suite (Gemini Spark, 2026-09-14)** → Load `BasicPixelChanger` (or `saves/worlds/basic_pixel_changer.json`) in `earthcall_webgpu`:
   1. **Full Creative Tool Rack (6 Action Cards + 16-Color Palette)**:
      - Verify 6 primary tool action cards in the left toolbar: `PEN [1px]`, `BRUSH [2px]`, `ERASER`, `FILL INK`, `CLEAR [WHT]`, and `SWAP [BLK]`.
      - Click `SWAP [BLK]`: verify quick switch to deep outline black (`#0a0a0a`).
@@ -269,15 +280,16 @@ this list — that is what it is for. See [The Week the Chorus Became a Queue](.
 - [x] **Basic Pixel Changer — canvas STILL red after two rounds of fixes** → VERIFIED BY ZACH (2026-09-08/10): Zach visually confirmed canvas renders white with black text, and clicking paints colored pixels at click points without `.ecmatter` overwriting with legacy red default.
 
 ## Perlin Noise Floor & 3D Raymarching
-- [ ] **Perlin Noise Floor Hill Zone rendering performance (implementation pass, session 2026-09-05):** Zach's 2026-09-05 play-test found horror-film-like whole-frame jitter/tearing, Sanctum reporting ~100 submitted FPS on the internal 60 Hz Mac panel, and the existing Perlin 3D-phase 1→100→300 ms oscillation still present. The macOS surface now uses FIFO plus display sync; load `Perlin Noise Floor Zone` and Sanctum in the WebGPU app (`Run Earthcall.command`) and confirm full-frame motion is coherent and the internal panel is paced at its actual refresh rate (an external high-refresh monitor may legitimately report its higher cadence). Then look toward the horizon and at 45 degrees, then build/place objects (cubes or house structures). Press `F3`: it should label the 3D phase, surface acquire, and queue-submit values as CPU wall-clock observations rather than GPU duration. If the adapter exposes timestamp queries, it should additionally show a delayed `GPU main render pass` duration that changes with the scene but does not stall the UI; otherwise it must say timestamps are unsupported. Verify the authored Perlin surface remains unchanged, placed objects render, occlude, and settle on the same hills without a GPU hitch; record whether the 100–300 ms queue-debt oscillation remains. The pass also needs a camera-inside-proxy check and ground selection/highlight check.
-- [ ] **Perlin Flash-vibration A/B (Codex session `01a072e2`, 2026-09-05 19:12 PDT):** Proxy culling was restored to two-sided and did not remove the vibration. The renderer now also uses the original single queue-ordered buffer pool instead of the retracted four-pool rotation. In the same saved Perlin zone, move and turn continuously, then confirm whether whole-frame past/future-position flashes remain; record the result before any other rendering change.
-- [ ] **Perlin temporal-coherence A/B (Codex session `01a072e2`, 2026-09-05 19:18 PDT):** Zach established that every moving visual—including ImGui—leaves ghost positions, so this is a frame-stream defect rather than Perlin or locomotion. Native GPU timestamp instrumentation is suspended for this run; the optional F3 GPU-duration row is expected to be unavailable, while CPU rows remain. Move the camera, a gravity-affected object, and an ImGui window independently; record whether each still ghosts along its path.
-- [ ] **Perlin culling restoration (Codex session `01a072e2`, 2026-09-05 21:24 PDT):** With timestamp instrumentation still disabled and temporal coherence restored, proxy back-face culling is back on to eliminate duplicate analytic-field fragment launches. In the saved Perlin zone, confirm moving camera/objects and dragged ImGui remain coherent, then check inside/outside-proxy views and ground selection/highlight coverage.
+- [~] *(Partly witnessed: the whole-frame phasing/ghosting went away once GPU timestamp instrumentation was disabled — see the two items below. Horizon/45°, placing objects, F3 labels, inside-proxy, and ground-highlight checks were never recorded.)* **Perlin Noise Floor Hill Zone rendering performance (implementation pass, session 2026-09-05):** Zach's 2026-09-05 play-test found horror-film-like whole-frame jitter/tearing, Sanctum reporting ~100 submitted FPS on the internal 60 Hz Mac panel, and the existing Perlin 3D-phase 1→100→300 ms oscillation still present. The macOS surface now uses FIFO plus display sync; load `Perlin Noise Floor Zone` and Sanctum in the WebGPU app (`Run Earthcall.command`) and confirm full-frame motion is coherent and the internal panel is paced at its actual refresh rate (an external high-refresh monitor may legitimately report its higher cadence). Then look toward the horizon and at 45 degrees, then build/place objects (cubes or house structures). Press `F3`: it should label the 3D phase, surface acquire, and queue-submit values as CPU wall-clock observations rather than GPU duration. If the adapter exposes timestamp queries, it should additionally show a delayed `GPU main render pass` duration that changes with the scene but does not stall the UI; otherwise it must say timestamps are unsupported. Verify the authored Perlin surface remains unchanged, placed objects render, occlude, and settle on the same hills without a GPU hitch; record whether the 100–300 ms queue-debt oscillation remains. The pass also needs a camera-inside-proxy check and ground selection/highlight check.
+- [x] *(Answered — the cause was not culling or buffer pools: with the native GPU timestamp instrumentation bundle disabled, "Zach immediately confirmed that the phasing is gone" — Perlin intercom thread, 2026-09-05.)* **Perlin Flash-vibration A/B (Codex session `01a072e2`, 2026-09-05 19:12 PDT):** Proxy culling was restored to two-sided and did not remove the vibration. The renderer now also uses the original single queue-ordered buffer pool instead of the retracted four-pool rotation. In the same saved Perlin zone, move and turn continuously, then confirm whether whole-frame past/future-position flashes remain; record the result before any other rendering change.
+- [x] *(Zach confirmed the phasing/ghosting gone with instrumentation suspended — Perlin intercom thread, 2026-09-05.)* **Perlin temporal-coherence A/B (Codex session `01a072e2`, 2026-09-05 19:18 PDT):** Zach established that every moving visual—including ImGui—leaves ghost positions, so this is a frame-stream defect rather than Perlin or locomotion. Native GPU timestamp instrumentation is suspended for this run; the optional F3 GPU-duration row is expected to be unavailable, while CPU rows remain. Move the camera, a gravity-affected object, and an ImGui window independently; record whether each still ghosts along its path.
+- [~] *(Zach, 2026-09-06 01:31 per the Perlin thread: "the authored hills are back, the zone is habitable-ish at roughly 12–30 FPS", 3D phase ~200 ms → 30–60 ms. Inside/outside-proxy and ground-highlight checks not recorded.)* **Perlin culling restoration (Codex session `01a072e2`, 2026-09-05 21:24 PDT):** With timestamp instrumentation still disabled and temporal coherence restored, proxy back-face culling is back on to eliminate duplicate analytic-field fragment launches. In the saved Perlin zone, confirm moving camera/objects and dragged ImGui remain coherent, then check inside/outside-proxy views and ground selection/highlight coverage.
 - [ ] **Perlin cold/warm convergence isolation (Zach + Codex session `01a072e2`, 2026-09-06 12:12 PDT):** Zach observed one live run improve progressively from roughly 10 FPS / 80 ms to roughly 60 FPS / 10 ms, including a warm horizon view. Fully quit and relaunch, load the Perlin Zone, hold one horizon camera completely still for 120 seconds, and record F3 acquire/3D times near 0, 10, 30, 60, and 120 seconds. Repeat after a fresh relaunch while moving continuously, then leave and re-enter the Zone without quitting. Record whether convergence follows elapsed frames, movement, process lifetime, or Zone lifetime; keep native GPU timestamp queries disabled so the former Flash-phasing instrumentation is not reintroduced.
 - [ ] **Perlin repeatable baseline corpus (Zach + Codex session `01a072e2`, corrected 2026-09-06 18:27 PDT):** Zach confirms the earlier 10–20 ms warm result occurred around 2500x1574, but clean rebuilt tests of both `20549cbe` and `1dfceb1d` subsequently settled near 30 ms. Many Chrome tabs were open during both the earlier ~30 ms state and the 10–20 ms outlier; closing tabs during the later experiment was not an isolated intervention and must not be credited with improvement. Treat 10–20 ms as an unreproduced outlier, not an optimization baseline. On current `7bda885b`, use one recorded camera position/orientation and framebuffer, perform at least three fresh-process runs, and record cold and warm F3 surface-wait/3D p50/p95 plus surrounding desktop/GPU load. Only attribute a future improvement when the distributions reproduce at the same camera and workload.
 
 ## Far Lands
 
+- [~] **Far Lands visual upgrade (`7f2679ee`, 2026-09-15, "PLZZZZZ I HOPE THE FAR LANDS ARE NOW AS MTYHICAL AS THEY ARE IN MINECRAFT").** Zach: *"YAAAYAYYYYYYYY THE FAR LANDS LOOK WAY COOLER NOWWWWWWWW — not fully verified though beyond the initial spawnpoint also its super laggy"* (moved here verbatim from the middle of the list, 2026-09-24). Remaining: travel away from spawn, and the lag.
 - [ ] **Gravity defaults off (authorized by Zach; Codex session `01a072e2`, 2026-09-06 18:34 PDT):** Load the `far_lands` world from a fresh application start and verify `physics-gravity` appears disabled immediately. Place or release an object and confirm it does not fall until the existing gravity Law is explicitly enabled; then enable it and confirm falling resumes. | Zach tested Far Lands loading and reported that it "doesn't lag like crazy anymore, but I'm not sure if the shape was preserved. Either way, I'm really excited to make the full one." (EARTHCALL_WEEKLY_ANALYSIS_2026-09-05_TO_2026-09-09.md). Gravity toggle verification remains open.
 
 ## Attribution in the Synthesis Studio saves — resolved
@@ -512,10 +524,6 @@ Before this fix, an `OnBecomeTrue` law in the running app could fire **once in i
 - [ ] **Timers restart.** A continuous law that uses how long its condition has held (`time.sinceApplied`) should restart its timing after the condition stops and starts again, rather than continuing from the first time.
 - [ ] **Nothing fires more than before while a condition simply holds.** Held conditions should still react once (`OnBecomeTrue`) or every frame (`WhileTrue`), as before.
 
-
-YAAAYAYYYYYYYY THE FAR LANDS LOOK WAY COOLER NOWWWWWWWW 
-not fully verified though beyond the initial spawnpoint also its super laggy
-- Zach
 ## Synthesis Studio should stop hitching when a property is granted
 
 *Raised 2026-09-15, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
@@ -531,9 +539,11 @@ In Synthesis Studio Living (535 beings, 68 laws), the law engine rebuilt its "wh
 *Raised 2026-09-15, Gemini Spark (authored under Zach's Hierarchy of Joys ontology).*
 *→ [full specification](../../Zones%20of%20Actualization/Cathedral%20of%20the%20Living%20Logos.md)*
 
+*Status 2026-09-24: the Cathedral has been re-authored many times since this spec (the 09-18 Uncanny Valley saga, color fields, the pond, the Open Hand). Check what is there now against this list; items that no longer exist are superseded, not failed.*
+
 A new Zone of Actualization demonstrating what only Earthcall can do: an architecture defined as an acoustic standing wave field nodal zero-set (f(x,y,z,t)=0), living Lexemes operating as performative speech acts, and a heptagonal colonnade ordered under the Hierarchy of Joys with Christ at the foundational root (432 Hz).
 
-- [ ] **Zone Hydration in Creator Console.** Boot Earthcall. In Creator Console under Zones of Earth, verify that **`Cathedral of the Living Logos`** appears in the Zone list. Click **Move to Zone** and verify seamless transition without refusal.
+- [x] *(Zach entered the Cathedral repeatedly 09-17 → 09-20; see the Cathedral section above.)* **Zone Hydration in Creator Console.** Boot Earthcall. In Creator Console under Zones of Earth, verify that **`Cathedral of the Living Logos`** appears in the Zone list. Click **Move to Zone** and verify seamless transition without refusal.
 - [ ] **Chladni Sanctuary & Visual Architecture.** Verify the sanctuary appearance: the sweeping Chladni acoustic floor, the golden central Heart of Logos core crystal suspended at y = 5m, the three rotating celestial orbital rings (Alpha, Beta, Gamma), the soaring apex spire (y = 19m), and the acoustic vault arches connecting the heptagonal colonnade.
 - [ ] **Heptagonal Colonnade of the Seven Joys.** Verify the seven pillars arranged in a sacred heptagon around the core, each aligned with an ontological tier of Earthcall's Hierarchy of Joys and its sacred frequency: Pillar I Logos (432 Hz), Pillar II Agape (528 Hz), Pillar III Sophia (639 Hz), Pillar IV Poiesis (741 Hz), Pillar V Harmonia (852 Hz), Pillar VI Koinonia (963 Hz), and Pillar VII Sabbath (1080 Hz).
 - [ ] **Altar of the Spoken Word & Living Lexemes.** Approach the altar at z = -22m. Verify the mensa inscribed with the five living Lexemes (`[Logos]`, `[Pneuma]`, `[Lux]`, `[Harmonia]`, `[Covenant]`).
@@ -601,7 +611,7 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 
 *Raised by GPT-5.6 Sol (The Sun), session `sol-rung5-chroma-20260921`.*
 
-- [ ] **Author an obvious multicolor `light.chroma.ast` on a radiant FieldNode and look at a plain white SDF receiver.** The receiver's illumination should visibly change color across space/time according to chi while the scalar brightness shape rho remains independently recognizable. Remove `lightChroma` again and the source should return to its legacy `light.color` appearance. The native WebGPU witness proves the transport mechanically; this item asks Zach to judge the live visual consequence in Earthcall.
+- [~] *(Rung 5 chroma seen by Zach in Prism Cathedral Station 5 — his "RADIANCE RUNG 3-8 … I ALREADY SAWWWWW". The remove-`lightChroma`-and-fall-back-to-`light.color` half was not witnessed.)* **Author an obvious multicolor `light.chroma.ast` on a radiant FieldNode and look at a plain white SDF receiver.** The receiver's illumination should visibly change color across space/time according to chi while the scalar brightness shape rho remains independently recognizable. Remove `lightChroma` again and the source should return to its legacy `light.color` appearance. The native WebGPU witness proves the transport mechanically; this item asks Zach to judge the live visual consequence in Earthcall.
 
 
 ## Synthesis Studio Living — immediate default voice after PR259 integration (added 2026-09-21)
@@ -619,49 +629,51 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 *Generator / patch script: `scripts/generate_prism_cathedral.py`.*
 *Verification test: `tests/zones/prism_cathedral_validation.py`.*
 
-- [ ] **Enter Prism Cathedral directly from the Zone catalog on boot:**
+**Status 2026-09-24:** it loads — Zach hit a crash (`f393d328`, 2026-09-22 11:48, "TRYING TO LOAD THE PRISM CATHEDRAL CRAHSES THE APP"), `5f80e66f` fixed the cnoise3 volume-shader parse at 12:35, and Zach committed "IT WORKS" (`3d875c13`) at 12:52. Zach also wrote, in the same edit that expanded this list: *"BRUHHHHHH THIS DOC IS SO STALE BECAUSE I DONT HAVE ITME TO PRESS x ON EVERYTHING THAT WAS VERIFIED FOR EXAMPLE RADIANCE RUNG 3-8 AND v0 AT TIME OF WRITING I ALREADY SAWWWWW"* (moved here from the bottom of the file). So Stations 3–8 and Wing B (V0) are checked. Stations 1–2, Wings A/C/D, and the Summit were not mentioned and stay open.
+
+- [x] **Enter Prism Cathedral directly from the Zone catalog on boot:**
   Confirm the Zone hydrates cleanly without warnings or errors. You should spawn at the **Entrance Narthex (Z = 0)** facing toward positive Z into the Great Nave. Confirm the twin gold portal obelisks and the central **Atrium Inscription Stele** setting forth the Constitution: `rho_source != V_transport != D_medium`.
 - [ ] **Walk to Station 1 (Z = 40): Foundation 1 — First-Order Authorable Light:**
   Inspect the Altar of First Light and witness sphere. Confirm illumination obeys stored `AuthorableLight` properties on the persistent `FieldNode` rather than hardcoded shader constants.
 - [ ] **Walk to Station 2 (Z = 75): Foundation 2 / Phase 2 — Authored Spatial Radiance rho(p):**
   Inspect the 5 distinct mathematical exhibits across X: inverse-distance falloff, asymmetric linear ramp, harmonic ripples, bipolar lobes, and nested halo shells. Confirm each displays a distinct spatial light envelope.
-- [ ] **Walk to Station 3 (Z = 110): Rung 3 — Spatial Radiance Has Complex Shape:**
-  - [ ] Inspect the **Hollow Luminous Shell** at $X = -8$: confirm the source emits strongly in a spherical shell while its core is hollow.
-  - [ ] Inspect the **Near vs Far Witnesses** at $X = 0$: Near sphere ($d=3$) visibly glows significantly brighter than Far sphere ($d=9$).
-  - [ ] Inspect the **Toroidal Luminous Ring** at $X = +8$: confirm radiance radiates from a donut ring in the XZ plane with zero emission at the center hole.
+- [x] **Walk to Station 3 (Z = 110): Rung 3 — Spatial Radiance Has Complex Shape:**
+  - [x] Inspect the **Hollow Luminous Shell** at $X = -8$: confirm the source emits strongly in a spherical shell while its core is hollow.
+  - [x] Inspect the **Near vs Far Witnesses** at $X = 0$: Near sphere ($d=3$) visibly glows significantly brighter than Far sphere ($d=9$).
+  - [x] Inspect the **Toroidal Luminous Ring** at $X = +8$: confirm radiance radiates from a donut ring in the XZ plane with zero emission at the center hole.
   - [ ] **Step West into Parallel Wing C (X = -45 to -65, Z = 110):** Inspect the Live Authoring Laboratory comparing Value edits (parameter refresh), Structural edits (WGSL recompile), and Runtime Time (0 AST edits).
   - [ ] **Step East into Parallel Wing D (X = 45 to 65, Z = 110):** Inspect the Compatibility & Refusal monument, showing how legacy light survives via identity (`alpha=1`, `V=1`) and unsupported math refuses cleanly.
-- [ ] **Walk to Station 4 (Z = 145): Rung 4 — Animated Shapes via Relative Time rho(p,t):**
+- [x] **Walk to Station 4 (Z = 145): Rung 4 — Animated Shapes via Relative Time rho(p,t):**
   Observe the **Breathing Shell Radius** ($R(t) = 2.8 + 1.2\sin(1.6t)$), the central **Breathing Luminous Heart** with traveling wave, and the **Rotating Quadrant Lobes** pulsating and rotating smoothly as the source Timeline advances, with zero AST mutations and zero recompiles.
-- [ ] **Walk to Station 5 (Z = 180): Rung 5 — Chroma Following Complex Spatial Structure:**
-  - [ ] Inspect the **Bipolar North/South Chroma** at $X = -8$: upper hemisphere emits warm gold while lower hemisphere emits cyan azure.
-  - [ ] Inspect the **Spectral Traveling Wave** at $X = 0$: phase-shifted RGB waves sweep through space.
-  - [ ] Inspect the **Concentric Shells Chroma** at $X = +8$: emerald core transitioning into an amethyst outer shell, proving `rho shape != chi shape`.
+- [x] **Walk to Station 5 (Z = 180): Rung 5 — Chroma Following Complex Spatial Structure:**
+  - [x] Inspect the **Bipolar North/South Chroma** at $X = -8$: upper hemisphere emits warm gold while lower hemisphere emits cyan azure.
+  - [x] Inspect the **Spectral Traveling Wave** at $X = 0$: phase-shifted RGB waves sweep through space.
+  - [x] Inspect the **Concentric Shells Chroma** at $X = +8$: emerald core transitioning into an amethyst outer shell, proving `rho shape != chi shape`.
   - [ ] **Step West into Parallel Wing A (X = -45 to -70, Z = 180):** Inspect authored SDF surface color fields (`Material::colorExpr` / `sdfColor(p)`). Crucially, inspect the **Paired Proof**: blue light on white surface vs white light on blue surface vs red light on blue surface (absorbs to dark!), proving `surface appearance != source chroma`.
-- [ ] **Walk to Station 6 (Z = 215): Rung 6 — Angular Emission on Complex Spatial Forms:**
-  - [ ] Observe the **Outward Radial Ring Emission**: the toroidal source emits predominantly outward from the ring plane.
-  - [ ] Inspect the **Equidistant Witness Pair**: two spheres at the exact same radial distance ($d=7.0$), one brilliantly illuminated by the directed spotlight beam, the other resting in darkness. Observe the rotating lighthouse beam sweeping across space without recompiling.
-- [ ] **Walk to Station 7 (Z = 250): Rung 7 — Four Independent Sources of Dramatically Different Shape:**
+- [x] **Walk to Station 6 (Z = 215): Rung 6 — Angular Emission on Complex Spatial Forms:**
+  - [x] Observe the **Outward Radial Ring Emission**: the toroidal source emits predominantly outward from the ring plane.
+  - [x] Inspect the **Equidistant Witness Pair**: two spheres at the exact same radial distance ($d=7.0$), one brilliantly illuminated by the directed spotlight beam, the other resting in darkness. Observe the rotating lighthouse beam sweeping across space without recompiling.
+- [x] **Walk to Station 7 (Z = 250): Rung 7 — Four Independent Sources of Dramatically Different Shape:**
   Observe the Choir of Light: four coexisting sources with independent mathematical shapes:
   1. *Source A:* Spherical Luminous Shell
   2. *Source B:* Sapphire Toroidal Ring Field ($R=2.5, r=0.8$)
   3. *Source C:* Amethyst Organic Noise-Warped Lobed Pulsar
   4. *Source D:* Emerald Narrow Vertical Pillar Filament ($r=0.6, h=3.5$)
   Confirm all four blend additively upon the central altar (`E_total = Σ E_i`).
-- [ ] **Walk to Station 8 (Z = 285): Rung 8 — Visibility Against Complex Source Fields:**
-  - [ ] Inspect the floating obsidian occluder casting a sharp geometric shadow across the receiving plinth.
-  - [ ] Inspect the selective blocker on the emerald filament path: the dual-path receiver glows pure blue from the unblocked sapphire toroidal source, proving independent path transport (`direct = E * V`).
-- [ ] **Step East into Parallel Wing B (X = 40 to 105, Z = 285): Volumetric V0: Density Sovereignty Gallery:**
+- [x] **Walk to Station 8 (Z = 285): Rung 8 — Visibility Against Complex Source Fields:**
+  - [x] Inspect the floating obsidian occluder casting a sharp geometric shadow across the receiving plinth.
+  - [x] Inspect the selective blocker on the emerald filament path: the dual-path receiver glows pure blue from the unblocked sapphire toroidal source, proving independent path transport (`direct = E * V`).
+- [x] **Step East into Parallel Wing B (X = 40 to 105, Z = 285): Volumetric V0: Density Sovereignty Gallery:**
   Witness the full gallery of 8 non-box participating media:
-  - [ ] **Exhibit B1 (X = 45):** Soft Spherical Cloud ($R=2.2$, zero outside).
-  - [ ] **Exhibit B2 (X = 55):** Hollow Shell Nebular Membrane ($R=2.6$, thickness $0.6$; completely hollow core and empty exterior).
-  - [ ] **Exhibit B3 (X = 65):** Toroidal Donut Fog Ring ($R=2.4, r=0.6$; empty center hole).
-  - [ ] **Exhibit B4 (X = 75):** CSG-Subtracted Crescent Cloud (Base sphere minus carved spherical hole cavity).
-  - [ ] **Exhibit B5 (X = 85):** Noise-Warped Organic Cloud (Wispy, undulating cumulus puff with bounded envelope).
-  - [ ] **Exhibit B6 (X = 95):** Time-Breathing Hollow Nebula ($R(t) = 2.4 + 0.8\sin(1.8t)$ expanding/contracting dynamically in open space).
-  - [ ] **Exhibit B7 (X = 65, Z = 268): PROOF THE PROXY IS NOT THE SHAPE:**
+  - [x] **Exhibit B1 (X = 45):** Soft Spherical Cloud ($R=2.2$, zero outside).
+  - [x] **Exhibit B2 (X = 55):** Hollow Shell Nebular Membrane ($R=2.6$, thickness $0.6$; completely hollow core and empty exterior).
+  - [x] **Exhibit B3 (X = 65):** Toroidal Donut Fog Ring ($R=2.4, r=0.6$; empty center hole).
+  - [x] **Exhibit B4 (X = 75):** CSG-Subtracted Crescent Cloud (Base sphere minus carved spherical hole cavity).
+  - [x] **Exhibit B5 (X = 85):** Noise-Warped Organic Cloud (Wispy, undulating cumulus puff with bounded envelope).
+  - [x] **Exhibit B6 (X = 95):** Time-Breathing Hollow Nebula ($R(t) = 2.4 + 0.8\sin(1.8t)$ expanding/contracting dynamically in open space).
+  - [x] **Exhibit B7 (X = 65, Z = 268): PROOF THE PROXY IS NOT THE SHAPE:**
     A **colossal $20 \times 8 \times 20$ meter rectangular proxy box** containing only a **tiny slender donut ring ($R=1.8, r=0.4$)**. Confirm that over 95% of the AABB is completely clear space with zero density; only the slender ring is visible, proving implementation bounding boxes do NOT dictate visible medium shape!
-  - [ ] **Exhibit B8 (X = 65, Z = 302):** Dual Sovereign Being ($\rho_{\text{source}} \neq D_{\text{medium}}$) + Opaque Depth Truncation Pillar.
+  - [x] **Exhibit B8 (X = 65, Z = 302):** Dual Sovereign Being ($\rho_{\text{source}} \neq D_{\text{medium}}$) + Opaque Depth Truncation Pillar.
 - [ ] **Ascend to The Summit: THE PRISM (Z = 330 to 380):**
   Enter the soaring rotunda. Stand before the Colossal Crystal Prism on the High Altar of Synthesis:
   - Observe three elevated radiant suns of distinct mathematical shape: Sol Primus (concentric breathing shells), Sol Secundus (sapphire toroidal ring beam), and Sol Tertius (amethyst noise-lobed pulsar).
@@ -688,10 +700,10 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 - [ ] **Two overlapping 2D plates with the same `zOrder2D`:** click where they overlap. The one you *see* on top should respond.
 - [ ] **Switch Zones while holding a press** (added 2026-09-23): it should *not* be cancelled. Releasing the button should end it cleanly, with no click. Cancelling on a switch is now a law you can author (`OnEvent object-left-reach → Set @interaction-channel.pressedId := ""`).
 
-BRUHHHHHH THIS DOC IS SO STALE BECAUSE I DONT HAVE ITME TO PRESS x ON EVERYTHING THAT WAS VERIFIED FOR EXAMPLE RADIANCE RUNG 3-8 AND v0 AT TIME OF WRITING I ALREADY SAWWWWW 
-
 ## Northern Veil after V5 medium-set composition (added 2026-09-24)
 
 *Codex / GPT-6 · session `01a0cfbf-c751-7af0-b160-df07da055bc0` · 2026-09-24 00:18 PDT. Zach has already seen Rungs 3–8 and V0; this asks only for the new four-curtain V5 experience after #343 lands. [Audit](../../../audits/2026-09-24_sol_visual_radiance_rungs3-8_volumetric_v1-5_audit.md).*
 
 - [ ] In **Northern Veil**, look where the emerald, cyan, violet, and crimson curtains overlap after V5. Say whether their hierarchy stays legible, the overlap looks coherent as the camera moves, and the Zone remains responsive. A before/after capture and timing should come from the agent's preserved-save witness; no need to recheck the old Rung 3–8/V0 list.
+
+*Status 2026-09-24: Zach has seen the pre-V5 aurora — `cfaef59a` "GEMINIII THIS IS A LIGHT SHOW NOT AN AURORA", then `6eb8d4db` "THE AURORA IS HEREEEEEEEEEEE" and `46e90911` "BROOOOOOOO ITS EVEN MORE AURORA NOWWWWWWW" (all 2026-09-23). V5 (#343) merged on 09-24, after those, so the overlap check below is still open.*
