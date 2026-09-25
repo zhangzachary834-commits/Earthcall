@@ -373,16 +373,44 @@ bool RelationManager::removeInvolving(const Singular* being) {
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const Singular& being) const {
     std::vector<std::shared_ptr<Relation>> result;
+    std::vector<Relation*> candidates;
+    // O(degree) candidate lookup via endpoint index
+    relationsInvolving(being, candidates);
+    if (candidates.empty()) return result;
+
+    result.reserve(candidates.size());
+    std::unordered_set<Relation*> candSet(candidates.begin(), candidates.end());
+
+    // Single pass over relations with early break once all K candidates are matched
     for (const auto& r : relations) {
-        if (r && r->involves(being)) result.push_back(r);
+        if (!r) continue;
+        if (candSet.count(r.get())) {
+            result.push_back(r);
+            if (result.size() == candSet.size()) break;
+        }
     }
     return result;
 }
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const std::string& identifier) const {
     std::vector<std::shared_ptr<Relation>> result;
+    if (identifier.empty()) return result;
+    if (_indexedGeneration != _generation) rebuildEndpointIndex();
+
+    auto it = _byIdentifier.find(identifier);
+    if (it == _byIdentifier.end() || it->second.empty()) return result;
+
+    const auto& candidates = it->second;
+    result.reserve(candidates.size());
+    std::unordered_set<Relation*> candSet(candidates.begin(), candidates.end());
+
+    // Single pass over relations with early break once all K candidates are matched
     for (const auto& r : relations) {
-        if (r && r->involves(identifier)) result.push_back(r);
+        if (!r) continue;
+        if (candSet.count(r.get())) {
+            result.push_back(r);
+            if (result.size() == candSet.size()) break;
+        }
     }
     return result;
 }
