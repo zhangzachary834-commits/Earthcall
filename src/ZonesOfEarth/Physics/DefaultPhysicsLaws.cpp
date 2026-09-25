@@ -219,9 +219,8 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     // climbed ~366 Hz per frame without bound.
     //
     // `c` is a WORLD READING, registered by the Audio channel (see
-    // MathBinding.hpp and AudioSystem::setupAudioEventListeners). The law
-    // substrate does not know what occlusion is; it knows only that some
-    // channel answers this name.
+    // MathBinding.hpp). The law substrate does not know what occlusion is;
+    // it knows only that some channel answers this name.
     // -----------------------------------------------------------------------
     auto occlusion = std::make_shared<FirstMoverLaw>("physics: acoustics occlusion");
     occlusion->setLawIdentifier("physics-acoustics-occlusion");
