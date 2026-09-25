@@ -93,3 +93,24 @@ The production boundary remains unchanged. `authorityBypassesApplied == 0`; exac
 ### Canonical drift and exact next continuation point
 
 Do not close or promote from this pre-reconciliation measurement alone. Current canonical has advanced beyond the successor ancestry and includes an independent workflow edit. Re-read current `sync-from-earthcall-main`, reconcile ancestry without snapshot overwrite, preserve both workflow intents, then run exact-head CI again on the reconciled successor head. Only after that green reconciled run may the bounded successor receive its final measured authority verdict and final `docs/analysis` / Agent Intercom closure.
+
+
+## 2026-09-25 continuation — canonical ancestry reconciled
+
+The successor branch has now been ancestry-reconciled with live canonical `32c8b396275b64354c910bd8666a4800cdb75eec` by merge commit `0142b56a12ea8ca269c9c751d39d281db173cdbb`.
+
+This was not a snapshot overwrite. The merge commit has the prior successor head `8c87fd96ddc57eb05668fded0cfe8424cb1a15c5` as first parent and canonical `32c8b396275b64354c910bd8666a4800cdb75eec` as second parent. A merge-base check after the write resolves to that canonical SHA, establishing that the captured canonical head is now true branch ancestry.
+
+Targeted three-way audit found exactly one path changed by both sides since their previous merge base: `.github/workflows/earthcall-ci.yml`. The reconciliation preserved both intents:
+
+- canonical's `save_system_error_test` focused-CI coverage;
+- successor's `rendered_field_direct_dispatch_test` coverage;
+- successor's retained `aligned-authority-ab` result artifact and pipefail-safe capture.
+
+All other successor-owned files were overlaid unchanged onto the canonical tree because the targeted changed-path intersection showed no other two-sided path overlap. Canonical-only files therefore remain canonical-owned in the merged tree.
+
+Production authority remains zero. This reconciliation changes ancestry and CI composition only; it does not promote the benchmark authority path into rendering.
+
+### Exact next continuation point
+
+Run/read exact-head CI on the reconciled successor head (including this documentation continuation). If canonical advances again before closure, re-read and reconcile only the new delta. If reconciled exact-head CI is green and the retained A/B remains valid, write the bounded final `docs/analysis` verdict and final Agent Intercom verdict; do not invent a new rung.
