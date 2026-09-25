@@ -66,6 +66,25 @@ protected:
     }
 };
 
+class RegisteredOverlapRoot : public Singular {
+public:
+    int shapeValue = 111;
+    int shapeRValue = 222;
+
+    std::string getIdentifier() const override { return "reg-overlap-root"; }
+
+protected:
+    void buildProperties() override {
+        _propertyNames.push_back(StringInterner::intern("shape"));
+        _propertyRegistry.push_back(std::make_unique<PropertyRef<RegisteredOverlapRoot, int>>(
+            "shape", this, &RegisteredOverlapRoot::shapeValue, this));
+
+        _propertyNames.push_back(StringInterner::intern("shape.r"));
+        _propertyRegistry.push_back(std::make_unique<PropertyRef<RegisteredOverlapRoot, int>>(
+            "shape.r", this, &RegisteredOverlapRoot::shapeRValue, this));
+    }
+};
+
 void testParseInternsCombinations() {
     StringInterner::clear();
 
@@ -255,6 +274,66 @@ void testDynamicPropertyPath() {
     std::cout << "  ✓ Dynamic properties work via PropertyPath\n";
 }
 
+void testLongestPrefixSelection() {
+    StringInterner::clear();
+
+    std::cout << "[Test 9] Longest-prefix selection regression witness\n";
+
+    TestRoot obj;
+    // Set both a short prefix and a longer joined dynamic property
+    obj.setDynamicProperty("shape", PropertyValue(10));
+    obj.setDynamicProperty("shape.color", PropertyValue(std::string("red")));
+
+    PropertyPath pathShapeColor = PropertyPath::parse("shape.color");
+
+    // 1. Resolve "shape.color": MUST select the longer key "shape.color" over "shape"
+    auto slot1 = pathShapeColor.resolve(obj);
+    assert(slot1.dynamicSlot != nullptr);
+    assert(slot1.dynamicKey == "shape.color");
+    PropertyValue val1;
+    assert(pathShapeColor.getValue(obj, val1) == PropertyPath::PathResult::Ok);
+    assert(std::get<std::string>(val1) == "red");
+
+    // 2. Fallback case: remove the longer joined key "shape.color"
+    obj.removeDynamicProperty("shape.color");
+    // Resolving "shape.color" now consumes "shape" (short prefix), but fails to find
+    // "color" component on integer value 10 -> returns NoSuchProperty.
+    PropertyValue val2;
+    assert(pathShapeColor.getValue(obj, val2) == PropertyPath::PathResult::NoSuchProperty);
+
+    // 3. Fallback traversal case with PropertyDict under "shape"
+    auto dict = std::make_shared<PropertyDict>();
+    dict->elements["color"] = PropertyValue(std::string("blue"));
+    obj.setDynamicProperty("shape", PropertyValue(dict));
+
+    // Resolving "shape.color" now consumes "shape" (dict) and traverses "color"
+    PropertyValue val3;
+    assert(pathShapeColor.getValue(obj, val3) == PropertyPath::PathResult::Ok);
+    assert(std::get<std::string>(val3) == "blue");
+
+    // 4. Overlapping with registered property: "position" (vec3) vs dynamic "position.x.custom"
+    obj.setDynamicProperty("position.x.custom", PropertyValue(999));
+    PropertyPath pathPosCustom = PropertyPath::parse("position.x.custom");
+    auto slot2 = pathPosCustom.resolve(obj);
+    assert(slot2.dynamicSlot != nullptr);
+    assert(slot2.dynamicKey == "position.x.custom");
+    PropertyValue val4;
+    assert(pathPosCustom.getValue(obj, val4) == PropertyPath::PathResult::Ok);
+    assert(std::get<int>(val4) == 999);
+
+    // 5. Overlapping registered properties: "shape" (111) vs "shape.r" (222)
+    RegisteredOverlapRoot regObj;
+    PropertyPath pathShapeR = PropertyPath::parse("shape.r");
+    auto slot3 = pathShapeR.resolve(regObj);
+    assert(slot3.prop != nullptr);
+    assert(slot3.prop->name() == "shape.r");
+    PropertyValue val5;
+    assert(pathShapeR.getValue(regObj, val5) == PropertyPath::PathResult::Ok);
+    assert(std::get<int>(val5) == 222);
+
+    std::cout << "  ✓ Longest-prefix matching and fallback traversal verified\n";
+}
+
 int main() {
     std::cout << "\n=== PropertyPath Pre-Calculation Test ===\n\n";
 
@@ -266,6 +345,7 @@ int main() {
     testVec3ComponentSetValue();
     testEmptyPath();
     testDynamicPropertyPath();
+    testLongestPrefixSelection();
 
     std::cout << "\n✓ All tests passed!\n\n";
     std::cout << "PropertyPath now performs ZERO allocations during resolve()!\n";

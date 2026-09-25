@@ -126,20 +126,22 @@ PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t sta
             const auto& idsFromHere = _joinedIds[i];
             
             PropertyValue* foundDyn = nullptr;
-            for (std::size_t runLength = 1; runLength <= idsFromHere.size(); ++runLength) {
+            for (std::size_t runLength = idsFromHere.size(); runLength > 0; --runLength) {
                 Earthcall::StringId id = idsFromHere[runLength - 1];
                 if (PropertyValue* candidate = currentOwner->getDynamicPropertyPtr(id)) {
                     foundDyn = candidate;
                     consumed = runLength;
+                    break;
                 }
             }
 
             if (!foundDyn) {
-                for (std::size_t runLength = 1; runLength <= idsFromHere.size(); ++runLength) {
+                for (std::size_t runLength = idsFromHere.size(); runLength > 0; --runLength) {
                     Earthcall::StringId id = idsFromHere[runLength - 1];
                     if (Property* candidate = currentOwner->findProperty(id)) {
                         foundReg = candidate;
                         consumed = runLength;
+                        break;
                     }
                 }
             }
