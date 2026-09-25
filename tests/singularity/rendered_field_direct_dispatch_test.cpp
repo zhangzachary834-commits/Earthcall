@@ -210,6 +210,16 @@ Admission admitted(std::string producerId, Channel channel, uint64_t revision,
     return a;
 }
 
+Admission admitted(const Rendering::RadianceSourceBinding& source) {
+    return admitted(source.producerId, Channel::SourceRho,
+                    source.radianceRevision, source.radianceExpr);
+}
+
+Admission admitted(const Rendering::VolumeDensityBinding& medium) {
+    return admitted(medium.producerId, Channel::MediumDensity,
+                    medium.densityRevision, medium.densityExpr);
+}
+
 } // namespace
 
 int main() {
@@ -221,12 +231,29 @@ int main() {
     Accounting accounting;
     DirectDispatchTable table(accounting);
 
-    Admission source =
-        admitted("field/source-A", Channel::SourceRho, 101, &zeroA);
-    Admission medium =
-        admitted("field/medium-A", Channel::MediumDensity, 202, &zeroB);
-    Admission neighbor =
-        admitted("field/source-neighbor", Channel::SourceRho, 303, &nonZero);
+    Rendering::RadianceSourceBinding sourceBinding;
+    sourceBinding.producerId = "field/source-A";
+    sourceBinding.radianceExpr = &zeroA;
+    sourceBinding.radianceRevision = 101;
+
+    Rendering::VolumeDensityBinding mediumBinding;
+    mediumBinding.producerId = "field/medium-A";
+    mediumBinding.densityExpr = &zeroB;
+    mediumBinding.densityRevision = 202;
+    mediumBinding.emissionExpr = &emission;
+    mediumBinding.emissionRevision = 404;
+    geom::SdfNode occluder;
+    mediumBinding.occluderSdf = &occluder;
+    mediumBinding.occluderRevision = 505;
+
+    Rendering::RadianceSourceBinding neighborBinding;
+    neighborBinding.producerId = "field/source-neighbor";
+    neighborBinding.radianceExpr = &nonZero;
+    neighborBinding.radianceRevision = 303;
+
+    Admission source = admitted(sourceBinding);
+    Admission medium = admitted(mediumBinding);
+    Admission neighbor = admitted(neighborBinding);
 
     auto generations = table.build({source, medium, neighbor});
     source.expectedArtifactGeneration = generations[0];
@@ -280,15 +307,6 @@ int main() {
     // independent participating-medium occluder lane remain present and
     // untouched even when the density action says exact density evaluation can
     // be skipped.
-    Rendering::VolumeDensityBinding mediumBinding;
-    mediumBinding.densityExpr = &zeroB;
-    mediumBinding.densityRevision = medium.authoredRevision;
-    mediumBinding.emissionExpr = &emission;
-    mediumBinding.emissionRevision = 404;
-    geom::SdfNode occluder;
-    mediumBinding.occluderSdf = &occluder;
-    mediumBinding.occluderRevision = 505;
-
     const auto* emissionBefore = mediumBinding.emissionExpr;
     const uint64_t emissionRevisionBefore = mediumBinding.emissionRevision;
     const auto* occluderBefore = mediumBinding.occluderSdf;
