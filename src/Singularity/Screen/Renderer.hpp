@@ -71,6 +71,9 @@ public:
         uint32_t volumeProgramRefusals = 0;
         std::string volumeLastProgramRefusal;
         size_t volumeWgslBytesGenerated = 0;
+        // Actual volume parameter transfer, independent of per-frame instance
+        // and time uniforms. Stable authored values should reach zero after warmup.
+        size_t volumeParameterBytesUploaded = 0;
         // Conservative SDF range-proxy observability. A build is revision-bound;
         // an applied draw used a strictly smaller proved-may-contain-zero proxy;
         // a culled draw was proved to contain no zero set at all.

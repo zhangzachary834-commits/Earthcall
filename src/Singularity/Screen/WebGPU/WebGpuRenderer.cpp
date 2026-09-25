@@ -522,6 +522,14 @@ void WebGpuRenderer::releasePersistentSdfRangeNodes() {
     _persistentSdfRangeNodeVramBytes = 0;
 }
 
+void WebGpuRenderer::releasePersistentVolumeParams() {
+    for (auto& kv : _persistentVolumeParams) {
+        if (kv.second.buffer) wgpuBufferRelease(kv.second.buffer);
+    }
+    _persistentVolumeParams.clear();
+    _persistentVolumeParamVramBytes = 0;
+}
+
 void WebGpuRenderer::releasePersistentRadianceSources() {
     if (_persistentRadianceSources.buffer) {
         wgpuBufferRelease(_persistentRadianceSources.buffer);
@@ -533,10 +541,11 @@ void WebGpuRenderer::releasePersistentRadianceSources() {
 }
 
 void WebGpuRenderer::reloadShaders() {
-    // Keys are SdfPipeline addresses, so release these before destroying the
-    // pipeline map whose node addresses identify the caches.
+    // Resident parameter keys are pipeline addresses; release both SDF and
+    // volume buffers before destroying the maps that own those addresses.
     releasePersistentSdfParams();
     releasePersistentSdfRangeNodes();
+    releasePersistentVolumeParams();
     releasePersistentRadianceSources();
     for (auto& kv : _sdfPipes) {
         if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
@@ -589,6 +598,7 @@ void WebGpuRenderer::shutdown() {
     releaseGpuTimestampQueries();
     releasePersistentSdfParams();
     releasePersistentSdfRangeNodes();
+    releasePersistentVolumeParams();
     releasePersistentRadianceSources();
     _meshCache.shutdown();
     _bufferPool.shutdown();
@@ -2065,13 +2075,15 @@ void WebGpuRenderer::flushSdfDraws() {
 
         const auto* raw =
             reinterpret_cast<const unsigned char*>(gpuSources.data());
-        const std::vector<unsigned char> bytesNow(raw, raw + bytes);
         if (_persistentRadianceSources.buffer &&
             _persistentRadianceSources.capacityBytes >= bytes) {
-            if (_persistentRadianceSources.mirror != bytesNow) {
+            const bool changed =
+                _persistentRadianceSources.mirror.size() != bytes ||
+                std::memcmp(_persistentRadianceSources.mirror.data(), raw, bytes) != 0;
+            if (changed) {
                 wgpuQueueWriteBuffer(_queue, _persistentRadianceSources.buffer, 0,
                                      gpuSources.data(), bytes);
-                _persistentRadianceSources.mirror = bytesNow;
+                _persistentRadianceSources.mirror.assign(raw, raw + bytes);
             }
             sourceBuffer = _persistentRadianceSources.buffer;
             sourceBindingSize = bytes;
@@ -2818,8 +2830,50 @@ void WebGpuRenderer::flushVolumeComposite() {
         const auto& params = _volumeParamBatches[pipeline];
         if (!pipeline || !pipeline->pipe || instances.empty() || params.empty()) continue;
 
-        auto paramAlloc =
-            bufferPool().suballocateStorage(params.data(), params.size() * sizeof(float));
+        const size_t paramBytes = params.size() * sizeof(float);
+        auto& persistent = _persistentVolumeParams[pipeline];
+        if (!persistent.buffer || persistent.capacityBytes < paramBytes) {
+            uint64_t capacity = 256;
+            while (capacity < paramBytes) capacity *= 2;
+            WGPUBufferDescriptor bd = {};
+            bd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
+            bd.size = capacity;
+            WGPUBuffer grown = wgpuDeviceCreateBuffer(_device, &bd);
+            if (grown) {
+                if (persistent.buffer) {
+                    _persistentVolumeParamVramBytes -=
+                        static_cast<size_t>(persistent.capacityBytes);
+                    wgpuBufferRelease(persistent.buffer);
+                }
+                persistent.buffer = grown;
+                persistent.capacityBytes = capacity;
+                persistent.mirror.clear();
+                _persistentVolumeParamVramBytes += static_cast<size_t>(capacity);
+            }
+        }
+
+        const bool persistentUsable =
+            persistent.buffer && persistent.capacityBytes >= paramBytes;
+        WGPUBuffer paramBuffer = persistentUsable ? persistent.buffer : nullptr;
+        uint64_t paramOffset = 0;
+        uint64_t paramBindingSize = static_cast<uint64_t>(paramBytes);
+        if (persistentUsable) {
+            const bool changed = persistent.mirror.size() != params.size() ||
+                std::memcmp(persistent.mirror.data(), params.data(), paramBytes) != 0;
+            if (changed) {
+                wgpuQueueWriteBuffer(_queue, paramBuffer, 0, params.data(), paramBytes);
+                persistent.mirror = params;
+                mutableFrameStats().volumeParameterBytesUploaded += paramBytes;
+            }
+        } else {
+            // A failed grow cannot bind the old, undersized buffer. The frame
+            // ring remains the complete fallback, as on the SDF path.
+            auto fallback = bufferPool().suballocateStorage(params.data(), paramBytes);
+            paramBuffer = fallback.buffer;
+            paramOffset = fallback.offset;
+            paramBindingSize = fallback.size;
+            mutableFrameStats().volumeParameterBytesUploaded += paramBytes;
+        }
         auto instanceAlloc =
             bufferPool().suballocateStorage(instances.data(),
                                             instances.size() * sizeof(VolumeInstanceData));
@@ -2830,9 +2884,9 @@ void WebGpuRenderer::flushVolumeComposite() {
         globalEntries[0].offset = globalAlloc.offset;
         globalEntries[0].size = globalAlloc.size;
         globalEntries[1].binding = 1;
-        globalEntries[1].buffer = paramAlloc.buffer;
-        globalEntries[1].offset = paramAlloc.offset;
-        globalEntries[1].size = paramAlloc.size;
+        globalEntries[1].buffer = paramBuffer;
+        globalEntries[1].offset = paramOffset;
+        globalEntries[1].size = paramBindingSize;
         globalEntries[2].binding = 2;
         globalEntries[2].textureView = _depthView;
 
@@ -2947,7 +3001,8 @@ void WebGpuRenderer::endFrame() {
     auto& fs = mutableFrameStats();
     fs.vramAllocatedBytes = bufferPool().totalVramBytes() + _meshCache.totalCachedBytes() +
                             _persistentSdfParamVramBytes + _persistentSdfRangeNodeVramBytes +
-                            _persistentRadianceSourceVramBytes;
+                            _persistentRadianceSourceVramBytes +
+                            _persistentVolumeParamVramBytes;
     fs.uniformBytesWritten = bufferPool().bytesWrittenThisFrame();
     fs.bufferSuballocations = bufferPool().suballocationsThisFrame();
     fs.cachedMeshesCount = static_cast<uint32_t>(_meshCache.cachedMeshCount());
@@ -3257,4 +3312,3 @@ bool WebGpuRenderer::readPixels(uint8_t* outRgba, uint32_t width, uint32_t heigh
     wgpuBufferUnmap(_readbackBuffer);
     return true;
 }
-

@@ -18,3 +18,11 @@
 **Next-agent direction:** First close the V5 null-overlap and backend-refusal tests on PR #343. Treat Northern Veil capture and scaling as the merge/after-merge evidence decision based on measured results. Keep #315's proof acceleration separate from the still absent scene-wide visibility authority. Update the PR descriptions as code and CI advance; do not reopen solved two-medium order dependence.
 
 **Signed:** Codex / GPT-6 · session `01a0cfbf-c751-7af0-b160-df07da055bc0` · 2026-09-24 00:18 PDT
+
+## 2026-09-25 progress note
+
+The historical handoff above described PR #343 as a draft and listed the null-participant test as open. [V5 #343](https://github.com/zhangzachary834-commits/Earthcall/pull/343) and the [null-overlap follow-up #361](https://github.com/zhangzachary834-commits/Earthcall/pull/361) have since merged. The remaining visual and scale checks remain in the To-do index and Person Verification List.
+
+Zach's separate request for a small Screen-channel performance improvement produced [the resident volume-parameter audit](../../../../../audits/rendering_optimization/2026-09-25_non_prophetic_renderer_fruit.md). The isolated native V5 test now records 20 B on the first authored-value upload and 0 B on a repeated unchanged draw, while retaining pixel identity and the existing Timeline/value-edit behavior. That witness measures transfer, not a Northern Veil FPS change. Next profile the saved four-medium scene's CPU gathering, 24 Piecewise serializations, bind-group construction, pipeline compilation, and GPU pass independently before taking another optimization rung. Keep revision-led discovery conditional on a complete mutation/invalidation contract.
+
+**Signed:** Codex / GPT-6 · session `01a0cfbf-c751-7af0-b160-df07da055bc0` · 2026-09-25 11:50 PDT

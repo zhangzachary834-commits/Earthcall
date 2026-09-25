@@ -407,6 +407,17 @@ private:
     };
     std::map<const VolumePipeline*, std::vector<VolumeInstanceData>> _volumeBatches;
     std::map<const VolumePipeline*, std::vector<float>> _volumeParamBatches;
+    // Stable authored medium values live across frames. Instance/time values
+    // remain in the frame ring; only this parameter storage is revision-neutral
+    // enough to keep resident and compare byte-for-byte.
+    struct PersistentVolumeParams {
+        WGPUBuffer buffer = nullptr;
+        uint64_t capacityBytes = 0;
+        std::vector<float> mirror;
+    };
+    std::unordered_map<const VolumePipeline*, PersistentVolumeParams> _persistentVolumeParams;
+    size_t _persistentVolumeParamVramBytes = 0;
+    void releasePersistentVolumeParams();
     // Ordinary V0-V4 pipelines draw one proxy instance per medium. A V5 fused
     // set stores one union-bounds header plus N medium records but draws only
     // the header proxy once; this map records that explicit draw count.

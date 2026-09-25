@@ -454,9 +454,13 @@ int main() {
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         renderer.composeVolumes();
         renderer.endFrame();
+        unsigned char sharedOrderFirst[4];
+        readCentre(sharedOrderFirst);
         const Renderer::FrameStats sharedDensityFirstStats = renderer.frameStats();
         assert(sharedDensityFirstStats.volumeProgramCompiles >= 1 &&
                "shared-D extinction variants did not establish their program structures");
+        assert(sharedDensityFirstStats.volumeParameterBytesUploaded > 0 &&
+               "first fused medium draw did not upload authored values");
 
         renderer.setModel(glm::mat4(1.0f));
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
@@ -465,9 +469,20 @@ int main() {
         unsigned char sharedOrderAB[4];
         readCentre(sharedOrderAB);
         const Renderer::FrameStats sharedDensitySecondStats = renderer.frameStats();
+        std::printf(
+            "V5 resident parameters first=%zu B stable=%zu B, "
+            "ring suballocations first=%u stable=%u\n",
+            sharedDensityFirstStats.volumeParameterBytesUploaded,
+            sharedDensitySecondStats.volumeParameterBytesUploaded,
+            sharedDensityFirstStats.bufferSuballocations,
+            sharedDensitySecondStats.bufferSuballocations);
         assert(sharedDensitySecondStats.volumeProgramCompiles == 0 &&
                sharedDensitySecondStats.volumeProgramCacheHits >= 2 &&
                "media sharing D but differing in sigma_t thrashed the volume program cache");
+        assert(sharedDensitySecondStats.volumeParameterBytesUploaded == 0 &&
+               "unchanged fused media uploaded authored values again");
+        assert(std::memcmp(sharedOrderFirst, sharedOrderAB, sizeof(sharedOrderAB)) == 0 &&
+               "stable fused medium pixels changed after a resident-parameter cache hit");
 
         // V5 NATIVE PERMUTATION WITNESS: these two bounded media overlap the
         // centre ray. Reversing the projected world-set order must not change
@@ -667,6 +682,8 @@ int main() {
                "advancing one fused member Timeline regenerated set WGSL");
         assert(fusedTimeAdvanceStats.volumeProgramCacheHits >= 2 &&
                "advancing fused member time failed to reuse the admitted set program");
+        assert(fusedTimeAdvanceStats.volumeParameterBytesUploaded == 0 &&
+               "Timeline-only movement uploaded unchanged authored medium parameters");
 
         // V5 MEMBERSHIP INVALIDATION: the already-memoized {A,B} set above
         // is the baseline. Add a third admitted medium C with independent
@@ -1309,6 +1326,8 @@ int main() {
         // and WGSL were reused.
         assert(v4DimmedStats.volumeProgramCompiles == 0 &&
                "numeric E_v edit regenerated WGSL instead of refreshing parameters");
+        assert(v4DimmedStats.volumeParameterBytesUploaded > 0 &&
+               "numeric E_v edit did not upload refreshed authored values");
 
         // REFUSAL: an unsupported E_v must suppress the medium contribution and
         // may not replay the previously valid emissive program.

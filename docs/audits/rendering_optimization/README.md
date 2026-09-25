@@ -17,6 +17,7 @@ measurements, reviews, and conclusions.
 - [`2026-09-18_sdf_calculation_and_rendering_pipeline_inefficiency_audit.md`](2026-09-18_sdf_calculation_and_rendering_pipeline_inefficiency_audit.md) — GPT-5.6 Sol's field-evaluation density diagnosis and SDF pipeline audit at its September 18 base.
 - [`2026-09-18_sdf_pipeline_mathematical_complexity_companion.md`](2026-09-18_sdf_pipeline_mathematical_complexity_companion.md) — the Sol audit's complexity model and spatial-Prophetic proposal.
 - [`2026-09-23_sol_sdf_performance_followup_audit.md`](2026-09-23_sol_sdf_performance_followup_audit.md) — current-source and live-PR review of the Sol lineage through draft #329, with native profitability evidence and independent next experiments.
+- [`2026-09-25_non_prophetic_renderer_fruit.md`](2026-09-25_non_prophetic_renderer_fruit.md) — resident volume-parameter transfer and plural-radiance allocation improvement, native correctness witnesses, and ranked remaining Screen costs.
 
 ## Scope boundary
 
