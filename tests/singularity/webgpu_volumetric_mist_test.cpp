@@ -142,6 +142,13 @@ int main() {
     sunSource.specularRadiance = lightSpecular;
     sunSource.coefficients = glm::vec4(1.0f);
     sunSource.enabled = true;
+
+    // Cross-rung authority witness: volumetric transport consumes source rho,
+    // but source value/structure revisions remain source-owned.
+    auto sourceRhoNode = scalarNode(1.0);
+    OntoMath::Piecewise sourceRho = OntoMath::Piecewise::continuous(sourceRhoNode);
+    sunSource.radianceExpr = &sourceRho;
+    sunSource.radianceRevision = 9000;
     renderer.setRadianceSources({sunSource}, 9001);
 
     // Physical mist parameters
@@ -188,6 +195,30 @@ int main() {
                 unoccludedPx[rightIdx], unoccludedPx[rightIdx+1], unoccludedPx[rightIdx+2], unoccRightLum);
     assert(unoccLeftLum > 30 && unoccRightLum > 30 &&
            "Unoccluded mist must be visibly illuminated across both sides");
+
+    // Source numeric refresh must reach the already-compiled volume transport.
+    // Keep the outer source-set revision deliberately unchanged; the projected
+    // source channel's own revision is the authority under test.
+    sourceRhoNode->scalarForm.terms[0].coefficient = 0.1;
+    sunSource.radianceRevision = 9002;
+    renderer.setRadianceSources({sunSource}, 9001);
+    renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+    renderer.composeVolumes();
+    renderer.endFrame();
+    std::vector<unsigned char> dimmedPx;
+    readImage(gpu, target, readback, dimmedPx);
+    const int dimmedLeftLum =
+        dimmedPx[leftIdx] + dimmedPx[leftIdx+1] + dimmedPx[leftIdx+2];
+    const Renderer::FrameStats sourceRefreshStats = renderer.frameStats();
+    assert(dimmedLeftLum < unoccLeftLum / 2 &&
+           "numeric source rho edit did not refresh volumetric incident transport");
+    assert(sourceRefreshStats.volumeProgramCompiles == 0 &&
+           "numeric source rho edit regenerated volume WGSL instead of refreshing params");
+
+    // Restore full source strength for the visibility tribunal.
+    sourceRhoNode->scalarForm.terms[0].coefficient = 1.0;
+    sunSource.radianceRevision = 9003;
+    renderer.setRadianceSources({sunSource}, 9001);
 
     // Phase 2: Authored occluder geometry (a solid blocker covering the left half x < 0).
     // The blocker sits between the medium center and the light at z = -1.5, spanning x in [-2.0, -0.05].

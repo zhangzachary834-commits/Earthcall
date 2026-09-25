@@ -166,7 +166,9 @@ jobs:
             webgpu_sdf_color_expr_test \
             webgpu_perlin_exact_gradient_test \
             webgpu_object_test \
-            webgpu_v5_overlap_physics_test
+            webgpu_v5_overlap_physics_test \
+            webgpu_volumetric_mist_test \
+            sanctuary_of_sunlit_mist_test
 
       - name: Run CPU SDF proof witnesses
         shell: bash
@@ -181,6 +183,7 @@ jobs:
           ./build/scene_spatial_ontomath_synthesis_test
           ./build/rendered_field_piecewise_synthesis_test
           ./build/channel_paths_test
+          ./build/sanctuary_of_sunlit_mist_test
 
       - name: Verify generic WebGPU SDF parity
         shell: bash
@@ -206,6 +209,12 @@ jobs:
           set -o pipefail
           ./build/webgpu_v5_overlap_physics_test 2>&1 | tee webgpu-v5-overlap-physics.log
 
+      - name: Verify volumetric mist/source/occluder transport
+        shell: bash
+        run: |
+          set -o pipefail
+          ./build/webgpu_volumetric_mist_test 2>&1 | tee webgpu-volumetric-mist.log
+
       - name: Upload WebGPU object/radiance diagnostic
         if: always()
         uses: actions/upload-artifact@v4
@@ -214,6 +223,7 @@ jobs:
           path: |
             webgpu-object-parity.log
             webgpu-v5-overlap-physics.log
+            webgpu-volumetric-mist.log
           if-no-files-found: error
           retention-days: 7
 
