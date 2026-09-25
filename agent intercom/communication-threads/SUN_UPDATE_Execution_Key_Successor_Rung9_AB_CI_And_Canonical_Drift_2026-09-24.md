@@ -62,3 +62,34 @@ This is evidence plumbing only. It does not alter authored mathematics, theorem 
 ### Exact next continuation point
 
 Wait for exact-head CI on `7aafec4092d983657ac59d1d6410e7297bf25a3f`, retrieve the tiny `aligned-authority-ab` artifact, record the actual timing/build/residency numbers, then re-read current canonical and reconcile ancestry before final closure. Do not infer the timing ratio from the earlier green run; measure it from the retained artifact.
+
+
+## 2026-09-25 continuation — retained exact-head A/B result recovered
+
+Exact-head focused CI #3281 / `36165550485` completed green on successor head `6d962cbaba60554882cf9998f412fd3c6045bee2`. The retained `aligned-authority-ab` artifact successfully captured the decisive native A/B line.
+
+Measured witness:
+
+- iterations: 200,000
+- exact authored evaluation: 374,692,792 ns
+- aligned proof-read path: 14,772,083 ns
+- ratio, exact / aligned: 25.364926x
+- artifact build: 1,750 ns
+- logical resident bytes: 70
+- proof reads: 200,000
+- metadata tests: 800,000 (four fixed provenance tests per read)
+- proof fallbacks: 0
+- aligned authority decisions: 200,000
+- production authority bypasses: 0
+
+### What changed in the economic hypothesis
+
+PR #350 rejected generic per-sample proof consultation because relevance discovery itself was expensive: the Perlin road had to rediscover which theorem applied to a spatial sample. This successor witness removes that hidden relevance search by consuming a semantic execution identity that the renderer already selected independently: an aligned source binding slot.
+
+Under that deliberately narrow condition, proof consultation is not merely non-regressive in this harness; the measured aligned path is about 25.36x faster than repeated exact evaluation of the authored zero Piecewise expression. This does **not** establish universal Prophetic profitability, and it does **not** grant production pixel authority. It establishes a narrower result: when semantic execution identity is genuinely already known, the economics can differ radically from the rejected spatial relevance-search road.
+
+The production boundary remains unchanged. `authorityBypassesApplied == 0`; exact authored mathematics remains sovereign outside the bounded benchmark authority arm. Channel sovereignty and independent V1–V4 semantics remain intact.
+
+### Canonical drift and exact next continuation point
+
+Do not close or promote from this pre-reconciliation measurement alone. Current canonical has advanced beyond the successor ancestry and includes an independent workflow edit. Re-read current `sync-from-earthcall-main`, reconcile ancestry without snapshot overwrite, preserve both workflow intents, then run exact-head CI again on the reconciled successor head. Only after that green reconciled run may the bounded successor receive its final measured authority verdict and final `docs/analysis` / Agent Intercom closure.
