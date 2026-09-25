@@ -1516,6 +1516,83 @@ int main() {
               "Rung-8 V does not reinterpret participating-medium D as opaque geometry");
     }
 
+    // ---------------------------------------------------------------------
+    // 10. Rendering relevance economics: the benchmark-only NO-PROOF topology
+    //     must be a structural subtraction, never a semantic rewrite.
+    //
+    //     This CPU witness runs before the expensive native performance job:
+    //     - default compile() must remain exactly proof-capable;
+    //     - NO-PROOF must preserve the authored parameter block and storage ABI;
+    //     - executable rangeCandidate/traversal code must actually be absent;
+    //     - the same subtraction must hold in the multi-source marcher branch.
+    // ---------------------------------------------------------------------
+    {
+        geom::SdfNode terrain = geom::makeImplicit(terrainMath(40.0));
+
+        const auto production = sdfwgsl::compile(terrain);
+        sdfwgsl::CompileOptions explicitDefaultOptions;
+        explicitDefaultOptions.emitRangeTraversal = true;
+        const auto explicitDefault =
+            sdfwgsl::compileWithOptions(terrain, explicitDefaultOptions);
+
+        sdfwgsl::CompileOptions noProofOptions;
+        noProofOptions.emitRangeTraversal = false;
+        const auto noProof =
+            sdfwgsl::compileWithOptions(terrain, noProofOptions);
+
+        check(production.ok && explicitDefault.ok && noProof.ok,
+              "proof-capable and NO-PROOF compiler topologies both compile");
+        check(production.wgsl == explicitDefault.wgsl &&
+                  sameFloats(production.params, explicitDefault.params),
+              "default compile() remains byte-identical to explicit proof-capable topology");
+        check(sameFloats(production.params, noProof.params),
+              "NO-PROOF preserves the exact authored parameter block");
+        check(noProof.wgsl.find("reserved0: u32") != std::string::npos &&
+                  noProof.wgsl.find("reserved3: u32") != std::string::npos,
+              "NO-PROOF preserves SdfInstanceData byte stride with neutral reserved slots");
+        check(production.wgsl.find("fn rangeCandidate(") != std::string::npos &&
+                  production.wgsl.find("inst.rangeTraversalEnabled != 0u") != std::string::npos &&
+                  production.wgsl.find("rangeProofWords") != std::string::npos,
+              "proof-capable topology contains executable proof state and storage");
+        check(noProof.wgsl.find("fn rangeCandidate(") == std::string::npos &&
+                  noProof.wgsl.find("rangeProof") == std::string::npos &&
+                  noProof.wgsl.find("rangeTraversal") == std::string::npos &&
+                  noProof.wgsl.find("@group(1) @binding(2)") == std::string::npos,
+              "NO-PROOF structurally removes proof functions, fields, branch, and storage binding");
+
+        auto rho0Node =
+            std::shared_ptr<OntoMath::MathNode>(number(1.0).release());
+        auto rho1Node =
+            std::shared_ptr<OntoMath::MathNode>(number(0.8).release());
+        OntoMath::Piecewise rho0 =
+            OntoMath::Piecewise::continuous(rho0Node);
+        OntoMath::Piecewise rho1 =
+            OntoMath::Piecewise::continuous(rho1Node);
+        Rendering::RadianceSourceBinding source0;
+        source0.radianceExpr = &rho0;
+        Rendering::RadianceSourceBinding source1;
+        source1.radianceExpr = &rho1;
+        std::vector<Rendering::RadianceSourceBinding> sources{
+            source0, source1};
+
+        const auto multiProof = sdfwgsl::compile(
+            terrain, nullptr, nullptr, nullptr, nullptr, nullptr, &sources);
+        const auto multiNoProof = sdfwgsl::compileWithOptions(
+            terrain, noProofOptions, nullptr, nullptr, nullptr, nullptr,
+            nullptr, &sources);
+
+        check(multiProof.ok && multiNoProof.ok,
+              "multi-source proof-capable and NO-PROOF topologies both compile");
+        check(sameFloats(multiProof.params, multiNoProof.params),
+              "multi-source NO-PROOF preserves the exact parameter block");
+        check(multiProof.wgsl.find("fn rangeCandidate(") != std::string::npos &&
+                  multiNoProof.wgsl.find("fn rangeCandidate(") == std::string::npos &&
+                  multiNoProof.wgsl.find("rangeProof") == std::string::npos &&
+                  multiNoProof.wgsl.find("rangeTraversal") == std::string::npos &&
+                  multiNoProof.wgsl.find("@group(1) @binding(2)") == std::string::npos,
+              "multi-source NO-PROOF removes the same proof WGSL surface");
+    }
+
     if (failures) {
         std::printf("sdf_wgsl_parameter_refresh_test: %d failure(s)\n", failures);
         return 1;

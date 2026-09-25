@@ -2367,7 +2367,113 @@ ParameterBlock collectParams(const geom::SdfNode& root,
     return block;
 }
 
-Program compile(const geom::SdfNode& root,
+bool eraseWgslSpan(std::string& source,
+                   const std::string& beginMarker,
+                   const std::string& endMarker) {
+    const std::size_t begin = source.find(beginMarker);
+    if (begin == std::string::npos) return false;
+    const std::size_t end = source.find(endMarker, begin + beginMarker.size());
+    if (end == std::string::npos) return false;
+    source.erase(begin, end - begin);
+    return true;
+}
+
+bool buildPrimitiveSource(const CompileOptions& options,
+                          std::string& primitives,
+                          std::string& error) {
+    primitives = kPrimitives;
+    if (options.emitRangeTraversal) {
+        error.clear();
+        return true;
+    }
+
+    // NO-PROOF-SHADER keeps the exact instance byte stride but removes proof
+    // semantics from WGSL. Four reserved u32 slots occupy the same trailing
+    // layout as the production proof fields, so CPU submission remains an
+    // apples-to-apples comparator while the shader no longer declares proof
+    // state or the range-proof storage binding.
+    const std::string proofFields =
+        "    // Fixed-depth conservative positive-proof bit grid. A zero bit means\n"
+        "    // \"no GPU skip proof; exact authored marching owns this cell.\"\n"
+        "    rangeProofWordOffset: u32,\n"
+        "    rangeProofWordCount: u32,\n"
+        "    rangeTraversalEnabled: u32,\n"
+        "    rangeProofDepth: u32,\n";
+    const std::string reservedFields =
+        "    // Reserved benchmark slots: preserve SdfInstanceData byte stride\n"
+        "    // without exposing dormant proof semantics to the shader.\n"
+        "    reserved0: u32,\n"
+        "    reserved1: u32,\n"
+        "    reserved2: u32,\n"
+        "    reserved3: u32,\n";
+    const std::size_t fieldsAt = primitives.find(proofFields);
+    if (fieldsAt == std::string::npos) {
+        error = "range-proof primitive-layout seam no longer matches kPrimitives";
+        return false;
+    }
+    primitives.replace(fieldsAt, proofFields.size(), reservedFields);
+
+    const std::string proofBinding =
+        "// Positive-outside proof bitmap, packed 32 regular depth-N cells per u32.\n"
+        "@group(1) @binding(2) var<storage, read> rangeProofWords: array<u32>;\n";
+    const std::size_t bindingAt = primitives.find(proofBinding);
+    if (bindingAt == std::string::npos) {
+        error = "range-proof storage-binding seam no longer matches kPrimitives";
+        return false;
+    }
+    primitives.erase(bindingAt, proofBinding.size());
+
+    if (primitives.find("rangeProof") != std::string::npos ||
+        primitives.find("rangeTraversal") != std::string::npos) {
+        error = "NO-PROOF primitive source still exposes proof symbols";
+        return false;
+    }
+
+    error.clear();
+    return true;
+}
+
+bool buildMarcherSource(const CompileOptions& options,
+                        std::string& marcher,
+                        std::string& error) {
+    marcher = kMarcher;
+    if (options.emitRangeTraversal) {
+        error.clear();
+        return true;
+    }
+
+    // Keep the SdfInstanceData/storage ABI identical across benchmark arms and
+    // remove only the executable proof path. That isolates dormant shader cost
+    // from CPU submission, buffer-layout, or bind-group differences.
+    const bool removedFunctions = eraseWgslSpan(
+        marcher,
+        "// Generic spatial-Prophetic traversal over a fixed-depth proof bitmap.\n",
+        "// Rung 8 exact baseline for the geometry this shader actually owns.\n");
+    const bool removedState = eraseWgslSpan(
+        marcher,
+        "    // When range traversal is active, exact marching owns only the current\n",
+        "    for (var i = 0; i < 192; i = i + 1) {\n");
+    const bool removedBranch = eraseWgslSpan(
+        marcher,
+        "        if (inst.rangeTraversalEnabled != 0u &&\n",
+        "        // Keep the coordinate at which this iteration's medium sample is\n");
+
+    if (!removedFunctions || !removedState || !removedBranch) {
+        error = "range-traversal benchmark seam no longer matches kMarcher";
+        return false;
+    }
+    if (marcher.find("fn rangeCandidate(") != std::string::npos ||
+        marcher.find("inst.rangeTraversalEnabled != 0u") != std::string::npos) {
+        error = "range-traversal benchmark seam left executable proof code behind";
+        return false;
+    }
+
+    error.clear();
+    return true;
+}
+
+Program compileWithOptions(const geom::SdfNode& root,
+                const CompileOptions& options,
                 const geom::FieldNode* fieldNode,
                 const OntoMath::Piecewise* colorExpr,
                 const OntoMath::Piecewise* radianceExpr,
@@ -2401,8 +2507,14 @@ Program compile(const geom::SdfNode& root,
                        "    return PerlinJet(" + je.value + ", " + je.grad + ");\n}\n";
     }
 
+    std::string primitiveSource;
+    std::string primitiveError;
+    if (!buildPrimitiveSource(options, primitiveSource, primitiveError)) {
+        e.refuse(primitiveError);
+    }
+
     Program prog;
-    prog.wgsl = kPrimitives;
+    prog.wgsl = primitiveSource;
 
     if (hasAnalyticGrad) {
         prog.wgsl += evalGradFunc;
@@ -2614,6 +2726,12 @@ Program compile(const geom::SdfNode& root,
     }
     prog.wgsl += "\nfn sdfColor(p: vec3<f32>) -> vec3<f32> {\n" + colorBody + "}\n";
 
+    std::string selectedMarcher;
+    std::string marcherError;
+    if (!buildMarcherSource(options, selectedMarcher, marcherError)) {
+        e.refuse(marcherError);
+    }
+
     const bool multiSource = radianceSources && radianceSources->size() > 1;
     if (!multiSource) {
         std::string radianceBody;
@@ -2675,7 +2793,7 @@ Program compile(const geom::SdfNode& root,
         // Deliberately retain the historical marcher source verbatim in the
         // zero/one-source case. Rung 7 is additive composition, not a rewrite
         // of the already-proven Rungs 3-6 path.
-        prog.wgsl += kMarcher;
+        prog.wgsl += selectedMarcher;
     } else {
         prog.wgsl +=
             "\nstruct RadianceSourceData {\n"
@@ -2751,7 +2869,7 @@ Program compile(const geom::SdfNode& root,
         prog.wgsl += "const SOURCE_DIRECTION_EPS: f32 = " +
                      wgslLiteral(OntoMath::kDirectionEpsilon) + ";\n";
 
-        std::string marcher = kMarcher;
+        std::string marcher = selectedMarcher;
         const std::string lightingBegin =
             "    let L = normalize(u.lightPos.xyz - pw);\n";
         const std::string lightingEnd =
@@ -2851,6 +2969,26 @@ Program compile(const geom::SdfNode& root,
     // legal without the shader having to know.
     if (prog.params.empty()) prog.params.push_back(0.0f);
     return prog;
+}
+
+Program compile(const geom::SdfNode& root,
+                const geom::FieldNode* fieldNode,
+                const OntoMath::Piecewise* colorExpr,
+                const OntoMath::Piecewise* radianceExpr,
+                const OntoMath::Piecewise* chromaExpr,
+                const OntoMath::Piecewise* angularExpr,
+                const std::vector<Rendering::RadianceSourceBinding>* radianceSources,
+                const OntoMath::Piecewise* densityExpr,
+                DensityInputKind densityKind,
+                const OntoMath::Piecewise* extinctionExpr,
+                const OntoMath::Piecewise* scatteringExpr,
+                const OntoMath::Piecewise* volumeChromaExpr,
+                const OntoMath::Piecewise* phaseExpr,
+                const OntoMath::Piecewise* emissionExpr) {
+    return compileWithOptions(
+        root, CompileOptions{}, fieldNode, colorExpr, radianceExpr, chromaExpr,
+        angularExpr, radianceSources, densityExpr, densityKind, extinctionExpr,
+        scatteringExpr, volumeChromaExpr, phaseExpr, emissionExpr);
 }
 
 ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,

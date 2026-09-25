@@ -98,6 +98,15 @@ struct EmissionExpressionLayout {
     std::string error;
 };
 
+// Compiler topology control for bounded renderer-economics experiments.
+// The default preserves today's production shader exactly. Disabling range
+// traversal removes only the spatial-proof WGSL function/state/branch while
+// leaving authored field mathematics and the renderer ABI unchanged, so a
+// benchmark can price the dormant shader structure without changing semantics.
+struct CompileOptions {
+    bool emitRangeTraversal = true;
+};
+
 struct Program {
     std::string        wgsl;    // full shader source; identical for same-shaped trees
     std::vector<float> params;  // the numbers this instance needs, in emitted order
@@ -146,6 +155,26 @@ struct Program {
 // the old generic FieldNode fallback, None means no participating medium, and
 // Authored makes densityExpr the sole V0 D(p,t) authority.
 Program compile(const geom::SdfNode& root,
+                const geom::FieldNode* fieldNode = nullptr,
+                const OntoMath::Piecewise* colorExpr = nullptr,
+                const OntoMath::Piecewise* radianceExpr = nullptr,
+                const OntoMath::Piecewise* chromaExpr = nullptr,
+                const OntoMath::Piecewise* angularExpr = nullptr,
+                const std::vector<Rendering::RadianceSourceBinding>* radianceSources = nullptr,
+                const OntoMath::Piecewise* densityExpr = nullptr,
+                DensityInputKind densityKind = DensityInputKind::LegacyField,
+                const OntoMath::Piecewise* extinctionExpr = nullptr,
+                const OntoMath::Piecewise* scatteringExpr = nullptr,
+                const OntoMath::Piecewise* volumeChromaExpr = nullptr,
+                const OntoMath::Piecewise* phaseExpr = nullptr,
+                const OntoMath::Piecewise* emissionExpr = nullptr);
+
+// Same compiler, with an explicit generated-shader topology option. This is
+// intentionally separate from compile() so every existing production call keeps
+// the default proof-capable shader unless a bounded test opts into another shape.
+Program compileWithOptions(
+                const geom::SdfNode& root,
+                const CompileOptions& options,
                 const geom::FieldNode* fieldNode = nullptr,
                 const OntoMath::Piecewise* colorExpr = nullptr,
                 const OntoMath::Piecewise* radianceExpr = nullptr,
