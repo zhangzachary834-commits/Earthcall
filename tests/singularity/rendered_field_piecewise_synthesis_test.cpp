@@ -876,8 +876,8 @@ int main() {
     assert(observer.validateRadianceHandle(
         *readdedRadianceHandle, observedSource));
     assert(observer.stats().alignedHandlePublications == 5);
-    assert(observer.stats().alignedHandleValidations == 9);
-    assert(observer.stats().alignedHandleMetadataTests == 32);
+    assert(observer.stats().alignedHandleValidations == 10);
+    assert(observer.stats().alignedHandleMetadataTests == 36);
     assert(observer.stats().alignedHandleFallbacks == 3);
     assert(observer.stats().authorityBypassesApplied == 0);
 
