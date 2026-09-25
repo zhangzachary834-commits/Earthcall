@@ -2067,6 +2067,43 @@ int main() {
         renderer.setRadianceSources({}, 0);
     }
 
+    // --- RUNG 9 MATERIAL COPY-ON-WRITE CONTINUITY ---------------------------
+    // Painting an Object creates its private Material. That operation may change
+    // paint ownership; it must neither erase nor alias receiver-response truth.
+    {
+        auto sharedResponseMat = materials.create("webgpu_rung9_cow_shared");
+        auto sharedResponseRoot = vectorNode(0.8, 0.2, 0.1);
+        sharedResponseMat->responseExpr = std::make_shared<OntoMath::Piecewise>(
+            OntoMath::Piecewise::continuous(sharedResponseRoot));
+        sharedResponseMat->bumpResponseRevision();
+        const std::string sharedResponseBefore =
+            sharedResponseMat->responseExpr->toJson().dump();
+
+        Object paintedReceiver;
+        paintedReceiver.setShapeKind(Object::ShapeKind::Cube);
+        paintedReceiver.setMaterialId("material.webgpu_rung9_cow_shared");
+        paintedReceiver.setFaceColor(0, 0.4f, 0.5f, 0.6f);
+
+        auto privateResponseMat = materials.get(paintedReceiver.materialId());
+        assert(privateResponseMat &&
+               privateResponseMat.get() != sharedResponseMat.get() &&
+               "painting did not create the Object's private Material");
+        assert(privateResponseMat->responseExpr &&
+               privateResponseMat->responseExpr->toJson().dump() ==
+                   sharedResponseBefore &&
+               "Material copy-on-write erased or changed authored receiver response");
+        assert(privateResponseMat->responseExpr.get() !=
+                   sharedResponseMat->responseExpr.get() &&
+               "Material copy-on-write aliased the response Piecewise object");
+
+        privateResponseMat->responseExpr->pieces[0].mathNode =
+            vectorNode(0.1, 0.2, 0.9);
+        privateResponseMat->bumpResponseRevision();
+        assert(sharedResponseMat->responseExpr->toJson().dump() ==
+                   sharedResponseBefore &&
+               "editing private painted Material mutated the shared response AST");
+    }
+
     // --- RUNG 9 AUTHORED RECEIVER RESPONSE ---------------------------------
     // Same receiver geometry, source, visibility state and white albedo. Only the
     // Material-owned response expression changes. This is the native witness that
