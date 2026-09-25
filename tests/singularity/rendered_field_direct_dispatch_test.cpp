@@ -333,11 +333,22 @@ int main() {
     assert(accounting.exactFallbacks == 7);
     assert(accounting.artifactBytes > 0);
 
+    const size_t bindingObjectBytes =
+        sizeof(sourceBinding) + sizeof(mediumBinding) + sizeof(neighborBinding);
+    const size_t producerIdChars =
+        sourceBinding.producerId.size() +
+        mediumBinding.producerId.size() +
+        neighborBinding.producerId.size();
+    assert(bindingObjectBytes > 0);
+    assert(producerIdChars > 0);
+
     std::printf(
         "DIRECT_DISPATCH PASS lookups=%llu metadata_tests=%llu "
         "exact_avoided=%llu fallbacks=%llu record_scans=%llu "
         "hierarchy_walks=%llu hash_probes=%llu spatial_searches=%llu "
-        "build_ns=%llu repair_ns=%llu artifact_bytes=%zu\n",
+        "build_ns=%llu repair_ns=%llu artifact_bytes=%zu "
+        "binding_object_bytes=%zu producer_id_chars=%zu "
+        "radiance_binding_size=%zu medium_binding_size=%zu\n",
         static_cast<unsigned long long>(accounting.dispatchLookups),
         static_cast<unsigned long long>(accounting.metadataTests),
         static_cast<unsigned long long>(accounting.exactEvaluationsAvoided),
@@ -348,7 +359,11 @@ int main() {
         static_cast<unsigned long long>(accounting.spatialSearches),
         static_cast<unsigned long long>(accounting.buildNanoseconds),
         static_cast<unsigned long long>(accounting.repairNanoseconds),
-        accounting.artifactBytes);
+        accounting.artifactBytes,
+        bindingObjectBytes,
+        producerIdChars,
+        sizeof(Rendering::RadianceSourceBinding),
+        sizeof(Rendering::VolumeDensityBinding));
 
     return 0;
 }
