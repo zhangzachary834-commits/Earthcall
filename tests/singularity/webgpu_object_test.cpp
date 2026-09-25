@@ -2220,9 +2220,9 @@ int main() {
         unsigned char responseVisibilityOn[4];
         readCentre(responseVisibilityOn);
         const Renderer::FrameStats responseVisibilityStats = renderer.frameStats();
-        assert(abs(int(responseVisibilityOn[0]) - int(responseBlue[0])) <= 2 &&
-               abs(int(responseVisibilityOn[1]) - int(responseBlue[1])) <= 2 &&
-               abs(int(responseVisibilityOn[2]) - int(responseBlue[2])) <= 2 &&
+        assert(abs(int(responseVisibilityOn[0]) - int(responseDimmedBySource[0])) <= 2 &&
+               abs(int(responseVisibilityOn[1]) - int(responseDimmedBySource[1])) <= 2 &&
+               abs(int(responseVisibilityOn[2]) - int(responseDimmedBySource[2])) <= 2 &&
                "blocker-free visibility changed authored receiver response output");
         assert(responseVisibilityStats.sdfProgramCompiles == 0 &&
                responseVisibilityStats.sdfProgramCacheHits >= 1 &&
