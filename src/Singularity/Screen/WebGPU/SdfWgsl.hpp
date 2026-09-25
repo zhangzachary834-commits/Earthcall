@@ -171,7 +171,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* scatteringExpr = nullptr,
                 const OntoMath::Piecewise* volumeChromaExpr = nullptr,
                 const OntoMath::Piecewise* phaseExpr = nullptr,
-                const OntoMath::Piecewise* emissionExpr = nullptr);
+                const OntoMath::Piecewise* emissionExpr = nullptr,
+                const OntoMath::Piecewise* responseExpr = nullptr);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
@@ -189,7 +190,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* scatteringExpr = nullptr,
                              const OntoMath::Piecewise* volumeChromaExpr = nullptr,
                              const OntoMath::Piecewise* phaseExpr = nullptr,
-                             const OntoMath::Piecewise* emissionExpr = nullptr);
+                             const OntoMath::Piecewise* emissionExpr = nullptr,
+                             const OntoMath::Piecewise* responseExpr = nullptr);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
 // uses, but with its parameter numbering starting at zero. Equal structure means
