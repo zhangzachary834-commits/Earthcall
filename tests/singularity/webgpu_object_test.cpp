@@ -2160,6 +2160,31 @@ int main() {
         assert(responseFirstStats.sdfProgramCompiles == 1 &&
                "first authored receiver-response draw must compile its structure once");
 
+        // NUMERIC RESPONSE EDIT ONLY: identical VectorConstruct/ScalarLeaf
+        // topology, same source and visibility, but response changes red -> blue.
+        responseRoot->children[0]->scalarForm.terms[0].coefficient = 0.03;
+        responseRoot->children[2]->scalarForm.terms[0].coefficient = 1.0;
+        responseMat->bumpResponseRevision();
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        receiver.drawObject();
+        renderer.endFrame();
+        unsigned char responseBlue[4];
+        readCentre(responseBlue);
+        const Renderer::FrameStats responseValueStats = renderer.frameStats();
+        std::printf("Rung-9 response blue=(%d,%d,%d) compiles=%u cacheHits=%u paramBytes=%zu\n",
+                    responseBlue[0], responseBlue[1], responseBlue[2],
+                    responseValueStats.sdfProgramCompiles,
+                    responseValueStats.sdfProgramCacheHits,
+                    responseValueStats.sdfParameterBytesUploaded);
+        assert(responseBlue[2] > responseBlue[0] + 70 &&
+               responseBlue[2] > responseBlue[1] + 70 &&
+               "numeric receiver-response edit did not visibly change the receiver");
+        assert(responseValueStats.sdfProgramCompiles == 0 &&
+               responseValueStats.sdfProgramCacheHits >= 1 &&
+               responseValueStats.sdfParameterBytesUploaded > 0 &&
+               "numeric response edit regenerated WGSL or reused stale parameters");
+
         // TWO RECEIVERS, ONE WORLD: keep source, visibility, geometry, albedo,
         // camera and legacy compatibility coefficients identical. A distinct
         // Material-owned response expression alone must produce a distinct pixel.
@@ -2191,31 +2216,6 @@ int main() {
                responseOtherSurfaceBlue[2] > responseRed[2] + 70 &&
                "two otherwise-identical receivers differing only in authored response "
                "did not yield different native pixels");
-
-        // NUMERIC RESPONSE EDIT ONLY: identical VectorConstruct/ScalarLeaf
-        // topology, same source and visibility, but response changes red -> blue.
-        responseRoot->children[0]->scalarForm.terms[0].coefficient = 0.03;
-        responseRoot->children[2]->scalarForm.terms[0].coefficient = 1.0;
-        responseMat->bumpResponseRevision();
-
-        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
-        receiver.drawObject();
-        renderer.endFrame();
-        unsigned char responseBlue[4];
-        readCentre(responseBlue);
-        const Renderer::FrameStats responseValueStats = renderer.frameStats();
-        std::printf("Rung-9 response blue=(%d,%d,%d) compiles=%u cacheHits=%u paramBytes=%zu\n",
-                    responseBlue[0], responseBlue[1], responseBlue[2],
-                    responseValueStats.sdfProgramCompiles,
-                    responseValueStats.sdfProgramCacheHits,
-                    responseValueStats.sdfParameterBytesUploaded);
-        assert(responseBlue[2] > responseBlue[0] + 70 &&
-               responseBlue[2] > responseBlue[1] + 70 &&
-               "numeric receiver-response edit did not visibly change the receiver");
-        assert(responseValueStats.sdfProgramCompiles == 0 &&
-               responseValueStats.sdfProgramCacheHits >= 1 &&
-               responseValueStats.sdfParameterBytesUploaded > 0 &&
-               "numeric response edit regenerated WGSL or reused stale parameters");
 
         // SOURCE VALUE EDIT ONLY: dim rho while preserving the response AST
         // byte-for-byte. Incident light may change the answer; it may not rewrite
