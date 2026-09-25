@@ -150,6 +150,33 @@ Examples:
 
 Those are enough to launch a targeted audit.
 
+## Research truth vs implementation authority
+
+This research is commissioned by Zach to discover empirical truth about Earthcall's design space.
+
+The Suns may establish findings such as:
+- one execution path is measurably faster than another under a stated workload;
+- one representation has lower dispatch/search/build/repair/residency cost;
+- one mechanism preserves locality better;
+- one hypothesis fails under hostile lifetime/provenance tests;
+- one optimization does not repay its own machinery.
+
+Those are scientific/engineering findings. They should be reported plainly even when the result is inconvenient.
+
+They are **not** implementation decrees.
+
+Zach remains the final authority over how Earthcall is implemented. A measured winner does not automatically become Earthcall's architecture. Zach may choose another design because of semantic clarity, ontology, authorship, extensibility, simplicity, aesthetics, constitutional boundaries, future research direction, or any other project-level judgment.
+
+The agents' job is therefore:
+
+> tell Zach what appears objectively true under the experiment, what the evidence does and does not establish, and what each implementation choice would cost — then leave the actual Earthcall decision to Zach.
+
+No benchmark, Sun consensus, automated continuation, or Agent Intercom document outranks the commissioned creator's implementation decision.
+
+In short:
+
+**measurement determines evidence; Zach determines Earthcall.**
+
 ## How the Suns should use Zach's ideas
 
 Any idea from this brainstorm remains a **hypothesis**, not doctrine.
