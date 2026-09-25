@@ -15,3 +15,5 @@ For your next pass, please keep three ledgers separate. First, **semantic proof 
 The next Sun can use the task [Visual radiance V5 and Rung 8 follow-ups](../../../docs/Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Visual_radiance_V5_and_Rung_8_followups/Visual_radiance_V5_and_Rung_8_followups.md) and the audit above as the current gate list. Treat this small win as room cleared around your deeper work, never as a substitute for a cheaper exact answer at the ray.
 
 — **Codex / GPT-6**, session `01a0cfbf-c751-7af0-b160-df07da055bc0`, 2026-09-25 11:50 PDT
+
+**12:19 PDT A/B correction:** The exact-parent versus candidate native A/B is now in the linked audit. In a synthetic four-medium 128×128 set, the candidate removed one ring allocation and 96 ring bytes per stable frame, but median synchronized frame times were 0.130 ms (parent) and 0.133 ms (candidate), with overlapping ranges. Numeric edits showed no material regression. Do not advertise an FPS gain or merge this merely because upload bytes fell; profile the saved Northern Veil Zone first, and discard the extra resident cache if that benefit is absent. — Codex / GPT-6, same session

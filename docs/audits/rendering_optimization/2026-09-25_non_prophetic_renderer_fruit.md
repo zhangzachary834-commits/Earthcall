@@ -42,3 +42,23 @@ Some attractive sounding “standard” work is already done: meshes use a persi
 **Next-agent direction:** Keep the resident buffer's reload/shutdown/VRAM accounting together if editing pipeline lifetime. Use the existing native object and V5 tests as gates. Profile Northern Veil's CPU medium discovery and compile/main-pass cost separately before optimizing anything else in that path. Leave Prophetic proof authority and SDF sampling with their active Suns.
 
 **Signed:** Codex / GPT-6 · session `01a0cfbf-c751-7af0-b160-df07da055bc0` · 2026-09-25 11:48 PDT
+
+## 2026-09-25 A/B measurement, 12:19 PDT
+
+Zach asked for the actual A/B after the first correctness witness. I built the exact parent `c645315d` and candidate `4874573c` as separate Debug worktrees, using the same CMake/OpenSSL settings and byte-identical [native probe](../../../scratch/webgpu_volume_param_ab_test.cpp) (SHA-256 `93851d8cb42649384f48e7fade64bec2ceab156ed71f9a800a8d1658c86a7c09`). The probe is a **synthetic constant-coefficient four-medium V5 set**, not the Northern Veil save. It warmed 30 frames, then ran five blocks of 300 frames per process at 128×128. Runs were serial in A–B–B–A order for each mode; the first block of each process was excluded from timing summaries because startup/load transients were large. Each reported median below covers the remaining eight 300-frame blocks per variant. `process CPU` is process-wide CPU time for the render loop; `wall + sync` includes one pixel readback/synchronization per block. No other test was intentionally run concurrently.
+
+| Four-media 128×128 arm | Parent A | Candidate B | Interpretation |
+|---|---:|---:|---|
+| Stable values: ring suballocations/frame | 3 | 2 | Exact one-allocation reduction |
+| Stable values: ring bytes written/frame | 640 B | 544 B | Exact 96 B reduction; candidate retains a 256 B parameter buffer for this pipeline |
+| Stable values: median process CPU/frame | 0.149 ms | 0.141 ms | Ranges overlap: A 0.137–0.197, B 0.103–0.179 ms |
+| Stable values: median wall + sync/frame | 0.130 ms | 0.133 ms | No wall-time improvement shown; ranges overlap |
+| Edited value every frame: median process CPU/frame | 0.211 ms | 0.207 ms | Ranges overlap: A 0.199–0.257, B 0.200–0.228 ms |
+| Edited value every frame: median wall + sync/frame | 0.139 ms | 0.135 ms | Ranges overlap; no material regression established |
+| Center RGB after each block | `1f0529` | `1f0529` | Same final center pixel in all runs |
+
+The two-medium 64×64 probe also consistently removed one ring allocation and 48 ring bytes per frame with the same center pixel `250038`, but its timings moved in opposite directions between A/B pairs. A four-medium 256×256 exploratory pair contained a late 11 ms/frame baseline block and was not used for a speed claim. Thus the **transfer/allocation win is proved; an FPS win is not**. This small resident cache carries lifetime and memory complexity despite the absent frame-time signal. Treat it as a candidate for a saved-Zone profile, not a performance victory to merge on timing grounds alone. If Northern Veil likewise shows no measurable benefit, removing the cache is the cleaner minimum-maximum decision.
+
+To reproduce, copy the linked scratch probe into `tests/singularity/webgpu_volume_param_ab_test.cpp` in both checkouts, configure both builds after the new source appears (CMake globs tests), build that target, and run `webgpu_volume_param_ab_test 128 300 5 stable 4` and `webgpu_volume_param_ab_test 128 300 5 edit 4` serially. The scratch probe is deliberately outside ordinary `ctest`: a timing-only, load-sensitive benchmark should not silently become a suite gate.
+
+**Signed:** Codex / GPT-6 · session `01a0cfbf-c751-7af0-b160-df07da055bc0` · 2026-09-25 12:19 PDT
