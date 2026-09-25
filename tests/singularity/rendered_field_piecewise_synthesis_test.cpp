@@ -743,10 +743,12 @@ int main() {
     auto productionZeroDensity = Piecewise::continuous(scalarS(0.0));
 
     Rendering::RadianceSourceBinding observedSource;
+    observedSource.producerId = "observer/source-A";
     observedSource.radianceExpr = &productionZeroRho;
     observedSource.radianceRevision = 9001;
 
     Rendering::VolumeDensityBinding observedMedium;
+    observedMedium.producerId = "observer/medium-A";
     observedMedium.densityExpr = &productionZeroDensity;
     observedMedium.densityRevision = 9101;
 
@@ -770,6 +772,19 @@ int main() {
     assert(firstObserverStats.hypotheticalRadianceBypasses == 1);
     assert(firstObserverStats.hypotheticalDensityBypasses == 1);
     assert(firstObserverStats.authorityBypassesApplied == 0);
+    assert(firstObserverStats.alignedSlotBuilds == 2);
+    assert(firstObserverStats.alignedSlotRepairs == 0);
+    assert(firstObserverStats.alignedSlotReuses == 0);
+    assert(firstObserverStats.alignedSlotDrops == 0);
+    assert(firstObserverStats.alignedSlotLogicalBytes > 0);
+    assert(observer.alignedRadianceSlotCount() == 1);
+    assert(observer.alignedDensitySlotCount() == 1);
+    const uint64_t firstRadianceSlotGeneration =
+        observer.alignedRadianceSlotGeneration(0);
+    const uint64_t firstDensitySlotGeneration =
+        observer.alignedDensitySlotGeneration(0);
+    assert(firstRadianceSlotGeneration != 0);
+    assert(firstDensitySlotGeneration != 0);
 
     // Stable set revisions are O(1) observer hits: runtime/frame movement does
     // not walk the vessels or rebuild the theorem artifacts.
@@ -792,6 +807,40 @@ int main() {
     assert(observer.stats().hypotheticalRadianceBypasses == 0);
     assert(observer.stats().hypotheticalDensityBypasses == 1);
     assert(observer.stats().authorityBypassesApplied == 0);
+    assert(observer.stats().alignedSlotRepairs ==
+           firstObserverStats.alignedSlotRepairs + 1);
+    assert(observer.alignedRadianceSlotGeneration(0) !=
+           firstRadianceSlotGeneration);
+    assert(observer.alignedDensitySlotGeneration(0) ==
+           firstDensitySlotGeneration);
+
+    // Producer replacement in the same numeric slot is a provenance repair,
+    // not a reuse. The unrelated medium slot keeps its generation.
+    const uint64_t radianceGenerationAfterRevision =
+        observer.alignedRadianceSlotGeneration(0);
+    observedSource.producerId = "observer/source-B";
+    observer.observeRadianceSources({observedSource}, 10003);
+    assert(observer.stats().alignedSlotRepairs ==
+           firstObserverStats.alignedSlotRepairs + 2);
+    assert(observer.alignedRadianceSlotGeneration(0) !=
+           radianceGenerationAfterRevision);
+    assert(observer.alignedDensitySlotGeneration(0) ==
+           firstDensitySlotGeneration);
+
+    // Removal drops the aligned artifact. Re-addition builds a fresh slot with
+    // a fresh generation even if the binding's authored revision is unchanged.
+    const uint64_t generationBeforeRemoval =
+        observer.alignedRadianceSlotGeneration(0);
+    observer.observeRadianceSources({}, 10004);
+    assert(observer.alignedRadianceSlotCount() == 0);
+    assert(observer.stats().alignedSlotDrops == 1);
+    observer.observeRadianceSources({observedSource}, 10005);
+    assert(observer.alignedRadianceSlotCount() == 1);
+    assert(observer.alignedRadianceSlotGeneration(0) !=
+           generationBeforeRemoval);
+    assert(observer.stats().alignedSlotBuilds ==
+           firstObserverStats.alignedSlotBuilds + 1);
+    assert(observer.stats().authorityBypassesApplied == 0);
 
     // Phase B renderer lifecycle: admit authoritative world truth while
     // observation is OFF, then enable diagnostics without waiting for another
@@ -803,10 +852,12 @@ int main() {
     auto boundaryEmission = Piecewise::continuous(scalarS(7.0));
 
     Rendering::RadianceSourceBinding boundarySource;
+    boundarySource.producerId = "boundary/source-A";
     boundarySource.radianceExpr = &boundaryZeroRho;
     boundarySource.radianceRevision = 12001;
 
     Rendering::VolumeDensityBinding boundaryMedium;
+    boundaryMedium.producerId = "boundary/medium-A";
     boundaryMedium.densityExpr = &boundaryZeroDensity;
     boundaryMedium.densityRevision = 13001;
     boundaryMedium.emissionExpr = &boundaryEmission;
@@ -825,6 +876,10 @@ int main() {
     const uint64_t rhoRevisionBefore = rendererBoundary.radianceSources()[0].radianceRevision;
     const uint64_t densityRevisionBefore = rendererBoundary.volumeDensitySources()[0].densityRevision;
     const uint64_t emissionRevisionBefore = rendererBoundary.volumeDensitySources()[0].emissionRevision;
+    const std::string sourceProducerBefore =
+        rendererBoundary.radianceSources()[0].producerId;
+    const std::string mediumProducerBefore =
+        rendererBoundary.volumeDensitySources()[0].producerId;
 
     rendererBoundary.setRenderedFieldSemanticObservationEnabled(true);
     const auto firstBoundary = rendererBoundary.renderedFieldSemanticObservationStats();
@@ -834,6 +889,9 @@ int main() {
     assert(firstBoundary.hypotheticalRadianceBypasses == 1);
     assert(firstBoundary.hypotheticalDensityBypasses == 1);
     assert(firstBoundary.authorityBypassesApplied == 0);
+    assert(firstBoundary.alignedSlotBuilds == 2);
+    assert(firstBoundary.alignedSlotRepairs == 0);
+    assert(firstBoundary.alignedSlotLogicalBytes > 0);
 
     // Replay borrows existing renderer state. It may not move or rewrite the
     // admitted collections, their authored AST pointers, or any V4 field.
@@ -845,6 +903,8 @@ int main() {
     assert(rendererBoundary.radianceSources()[0].radianceRevision == rhoRevisionBefore);
     assert(rendererBoundary.volumeDensitySources()[0].densityRevision == densityRevisionBefore);
     assert(rendererBoundary.volumeDensitySources()[0].emissionRevision == emissionRevisionBefore);
+    assert(rendererBoundary.radianceSources()[0].producerId == sourceProducerBefore);
+    assert(rendererBoundary.volumeDensitySources()[0].producerId == mediumProducerBefore);
     assert(rendererBoundary.radianceSourcesRevision() == 14001);
     assert(rendererBoundary.volumeDensitySourcesRevision() == 15001);
 
@@ -897,6 +957,10 @@ int main() {
                 "phase_b_observer=1 renderer_enable_replays_current_scene=1 "
                 "renderer_enable_idempotent=1 v4_emission_observer_inert=1 "
                 "observer_authority_bypasses=0 "
+                "aligned_slot_artifacts=1 aligned_slot_searches=0 "
+                "aligned_slot_builds=%llu aligned_slot_repairs=%llu "
+                "aligned_slot_reuses=%llu aligned_slot_drops=%llu "
+                "aligned_slot_logical_bytes=%zu "
                 "observer_radiance_zero=%llu observer_density_zero=%llu "
                 "pretty_print_identity=0 full_scene_serialization_identity=0\n",
                 static_cast<unsigned long long>(adapter.proofBuilds),
@@ -907,6 +971,15 @@ int main() {
                 static_cast<unsigned long long>(adapter.proofRefusals),
                 static_cast<unsigned long long>(adapter.proofPremiseInspections),
                 static_cast<unsigned long long>(adapter.exactEvaluationsAvoided),
+                static_cast<unsigned long long>(
+                    observer.stats().alignedSlotBuilds),
+                static_cast<unsigned long long>(
+                    observer.stats().alignedSlotRepairs),
+                static_cast<unsigned long long>(
+                    observer.stats().alignedSlotReuses),
+                static_cast<unsigned long long>(
+                    observer.stats().alignedSlotDrops),
+                observer.stats().alignedSlotLogicalBytes,
                 static_cast<unsigned long long>(
                     observer.stats().hypotheticalRadianceBypasses),
                 static_cast<unsigned long long>(
