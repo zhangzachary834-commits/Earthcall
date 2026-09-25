@@ -795,6 +795,27 @@ int main() {
     assert(observer.validateRadianceHandle(*firstRadianceHandle, observedSource));
     assert(observer.validateDensityHandle(*firstDensityHandle, observedMedium));
 
+    // Rung 8: a fresh generation-bound handle may inspect only the proof already
+    // resident in its aligned artifact. No theorem lookup/search happens here.
+    const auto freshRadianceProof =
+        observer.inspectRadianceProof(*firstRadianceHandle, observedSource);
+    const auto freshDensityProof =
+        observer.inspectDensityProof(*firstDensityHandle, observedMedium);
+    assert(freshRadianceProof.has_value());
+    assert(*freshRadianceProof ==
+           Rendering::RenderedFieldSemanticObserver::ProofKind::RadianceZeroContribution);
+    assert(freshDensityProof.has_value());
+    assert(*freshDensityProof ==
+           Rendering::RenderedFieldSemanticObserver::ProofKind::DensityZeroSupport);
+
+    // Channel sovereignty is part of the handle itself. A forged channel on an
+    // otherwise fresh source handle fails open rather than borrowing density authority.
+    auto wrongChannelRadianceHandle = *firstRadianceHandle;
+    wrongChannelRadianceHandle.channel =
+        Rendering::RenderedFieldSemanticObserver::Channel::MediumDensity;
+    assert(!observer.inspectRadianceProof(
+        wrongChannelRadianceHandle, observedSource).has_value());
+
     // Stable set revisions are O(1) observer hits: runtime/frame movement does
     // not walk the vessels or rebuild the theorem artifacts.
     observer.observeRadianceSources({observedSource}, 10001);
@@ -826,6 +847,16 @@ int main() {
         *firstRadianceHandle, observedSource));
     assert(observer.validateDensityHandle(
         *firstDensityHandle, observedMedium));
+
+    // The old generation must not expose a proof after local repair. The
+    // unaffected density neighbor keeps both generation validity and proof.
+    assert(!observer.inspectRadianceProof(
+        *firstRadianceHandle, observedSource).has_value());
+    const auto densityProofAfterRadianceRepair =
+        observer.inspectDensityProof(*firstDensityHandle, observedMedium);
+    assert(densityProofAfterRadianceRepair.has_value());
+    assert(*densityProofAfterRadianceRepair ==
+           Rendering::RenderedFieldSemanticObserver::ProofKind::DensityZeroSupport);
 
     const auto revisedRadianceHandle = observer.publishRadianceHandle(0);
     assert(revisedRadianceHandle.has_value());
@@ -911,6 +942,8 @@ int main() {
     assert(alignedBHandle.has_value());
     assert(alignedObserver.validateRadianceHandle(*alignedAHandle, alignedA));
     assert(alignedObserver.validateRadianceHandle(*alignedBHandle, alignedB));
+    assert(alignedObserver.inspectRadianceProof(*alignedAHandle, alignedA).has_value());
+    assert(alignedObserver.inspectRadianceProof(*alignedBHandle, alignedB).has_value());
 
     alignedA.radianceRevision = 20002;
     alignedObserver.observeRadianceSources({alignedA, alignedB}, 22002);
@@ -922,6 +955,10 @@ int main() {
            alignedBGeneration);
     assert(!alignedObserver.validateRadianceHandle(*alignedAHandle, alignedA));
     assert(alignedObserver.validateRadianceHandle(*alignedBHandle, alignedB));
+    assert(!alignedObserver.inspectRadianceProof(
+        *alignedAHandle, alignedA).has_value());
+    assert(alignedObserver.inspectRadianceProof(
+        *alignedBHandle, alignedB).has_value());
 
     // Ordered slot is an execution address, never lifetime identity. Reordering
     // the two admitted producers repairs both slots; neither old handle can
@@ -930,6 +967,10 @@ int main() {
     assert(alignedObserver.stats().alignedSlotRepairs == 3);
     assert(!alignedObserver.validateRadianceHandle(*alignedAHandle, alignedA));
     assert(!alignedObserver.validateRadianceHandle(*alignedBHandle, alignedB));
+    assert(!alignedObserver.inspectRadianceProof(
+        *alignedAHandle, alignedA).has_value());
+    assert(!alignedObserver.inspectRadianceProof(
+        *alignedBHandle, alignedB).has_value());
     assert(alignedObserver.stats().authorityBypassesApplied == 0);
 
     // Phase B renderer lifecycle: admit authoritative world truth while
@@ -997,6 +1038,24 @@ int main() {
     assert(rendererBoundary.volumeDensitySources()[0].producerId == mediumProducerBefore);
     assert(rendererBoundary.radianceSourcesRevision() == 14001);
     assert(rendererBoundary.volumeDensitySourcesRevision() == 15001);
+
+    // Density proof inspection is density-only even while the admitted medium
+    // independently carries V4 self-emission. Reading the proof cannot mutate
+    // or erase the emission lane, and it still grants zero rendering authority.
+    auto boundaryDensityHandle =
+        rendererBoundary.renderedFieldSemanticObserver().publishDensityHandle(0);
+    assert(boundaryDensityHandle.has_value());
+    const auto boundaryDensityProof =
+        rendererBoundary.renderedFieldSemanticObserver().inspectDensityProof(
+            *boundaryDensityHandle, rendererBoundary.volumeDensitySources()[0]);
+    assert(boundaryDensityProof.has_value());
+    assert(*boundaryDensityProof ==
+           Rendering::RenderedFieldSemanticObserver::ProofKind::DensityZeroSupport);
+    assert(rendererBoundary.volumeDensitySources()[0].emissionExpr == emissionExprBefore);
+    assert(rendererBoundary.volumeDensitySources()[0].emissionRevision ==
+           emissionRevisionBefore);
+    assert(rendererBoundary.renderedFieldSemanticObservationStats()
+               .authorityBypassesApplied == 0);
 
     // ON->ON is exactly idempotent.
     rendererBoundary.setRenderedFieldSemanticObservationEnabled(true);
