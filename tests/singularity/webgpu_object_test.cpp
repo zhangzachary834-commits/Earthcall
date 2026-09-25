@@ -2067,6 +2067,156 @@ int main() {
         renderer.setRadianceSources({}, 0);
     }
 
+    // --- RUNG 9 AUTHORED RECEIVER RESPONSE ---------------------------------
+    // Same receiver geometry, source, visibility state and white albedo. Only the
+    // Material-owned response expression changes. This is the native witness that
+    // f_r is receiver truth rather than another source/visibility coefficient.
+    {
+        auto responseMat = materials.create("webgpu_rung9_response_witness");
+        responseMat->baseColor = glm::vec3(1.0f);
+        // Deliberately hostile compatibility values: an authored response must
+        // not secretly inherit these legacy Blinn-Phong knobs.
+        responseMat->ambient = 0.73f;
+        responseMat->diffuse = 0.11f;
+        responseMat->specular = 0.91f;
+        responseMat->shininess = 3.0f;
+
+        auto responseRoot = vectorNode(1.0, 0.03, 0.03);
+        responseMat->responseExpr = std::make_shared<OntoMath::Piecewise>(
+            OntoMath::Piecewise::continuous(responseRoot));
+        responseMat->bumpResponseRevision();
+
+        Object receiver;
+        receiver.setFieldShape(
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.55f)),
+            glm::vec3(1.0f));
+        receiver.setMaterialId("material.webgpu_rung9_response_witness");
+
+        auto responseRhoNode = scalarNode(1.0);
+        OntoMath::Piecewise responseRho =
+            OntoMath::Piecewise::continuous(responseRhoNode);
+
+        renderer.setRadianceSources({}, 0);
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.setRadianceAngular(nullptr, 0);
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setRadianceField(&responseRho, 5001);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.0f),
+                          glm::vec3(0.8f),
+                          glm::vec3(0.0f));
+        renderer.setLightingEnabled(true);
+        renderer.setModel(glm::mat4(1.0f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        receiver.drawObject();
+        renderer.endFrame();
+        unsigned char responseRed[4];
+        readCentre(responseRed);
+        const Renderer::FrameStats responseFirstStats = renderer.frameStats();
+        std::printf("Rung-9 response red=(%d,%d,%d) compiles=%u\n",
+                    responseRed[0], responseRed[1], responseRed[2],
+                    responseFirstStats.sdfProgramCompiles);
+        assert(responseRed[0] > responseRed[1] + 70 &&
+               responseRed[0] > responseRed[2] + 70 &&
+               "authored red receiver response did not control the native surface pixel");
+        assert(responseFirstStats.sdfProgramCompiles == 1 &&
+               "first authored receiver-response draw must compile its structure once");
+
+        // NUMERIC RESPONSE EDIT ONLY: identical VectorConstruct/ScalarLeaf
+        // topology, same source and visibility, but response changes red -> blue.
+        responseRoot->children[0]->scalarForm.terms[0].coefficient = 0.03;
+        responseRoot->children[2]->scalarForm.terms[0].coefficient = 1.0;
+        responseMat->bumpResponseRevision();
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        receiver.drawObject();
+        renderer.endFrame();
+        unsigned char responseBlue[4];
+        readCentre(responseBlue);
+        const Renderer::FrameStats responseValueStats = renderer.frameStats();
+        std::printf("Rung-9 response blue=(%d,%d,%d) compiles=%u cacheHits=%u paramBytes=%zu\n",
+                    responseBlue[0], responseBlue[1], responseBlue[2],
+                    responseValueStats.sdfProgramCompiles,
+                    responseValueStats.sdfProgramCacheHits,
+                    responseValueStats.sdfParameterBytesUploaded);
+        assert(responseBlue[2] > responseBlue[0] + 70 &&
+               responseBlue[2] > responseBlue[1] + 70 &&
+               "numeric receiver-response edit did not visibly change the receiver");
+        assert(responseValueStats.sdfProgramCompiles == 0 &&
+               responseValueStats.sdfProgramCacheHits >= 1 &&
+               responseValueStats.sdfParameterBytesUploaded > 0 &&
+               "numeric response edit regenerated WGSL or reused stale parameters");
+
+        // SOURCE VALUE EDIT ONLY: dim rho while preserving the response AST
+        // byte-for-byte. Incident light may change the answer; it may not rewrite
+        // the receiver's mathematics or force a response structural compile.
+        const std::string responseBeforeSourceEdit =
+            responseMat->responseExpr->toJson().dump();
+        responseRhoNode->scalarForm.terms[0].coefficient = 0.25;
+        renderer.setRadianceField(&responseRho, 5002);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        receiver.drawObject();
+        renderer.endFrame();
+        unsigned char responseDimmedBySource[4];
+        readCentre(responseDimmedBySource);
+        const Renderer::FrameStats sourceEditStats = renderer.frameStats();
+        assert(responseBlue[2] > responseDimmedBySource[2] + 70 &&
+               "source rho edit did not change incident illumination on authored response");
+        assert(sourceEditStats.sdfProgramCompiles == 0 &&
+               sourceEditStats.sdfProgramCacheHits >= 1 &&
+               "numeric source edit recompiled receiver-response structure");
+        assert(responseMat->responseExpr->toJson().dump() == responseBeforeSourceEdit &&
+               "source edit mutated receiver-owned response mathematics");
+
+        // Restore source value, then alter response TOPOLOGY while retaining its
+        // broad blue answer. Structure must recompile exactly because f_r changed.
+        responseRhoNode->scalarForm.terms[0].coefficient = 1.0;
+        renderer.setRadianceField(&responseRho, 5003);
+        auto responseAdd = std::make_unique<OntoMath::MathNode>();
+        responseAdd->op = OntoMath::MathNode::Op::Add;
+        responseAdd->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.01)));
+        responseAdd->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.02)));
+        responseRoot->children[0] = std::move(responseAdd);
+        responseMat->bumpResponseRevision();
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        receiver.drawObject();
+        renderer.endFrame();
+        const Renderer::FrameStats responseStructureStats = renderer.frameStats();
+        assert(responseStructureStats.sdfProgramCompiles == 1 &&
+               "response topology edit did not invalidate the relevant SDF program");
+
+        // REFUSAL: unsupported receiver math must clear to the offscreen
+        // background, not reuse the previously compiled blue response.
+        auto badResponse = std::make_unique<OntoMath::MathNode>();
+        badResponse->op = OntoMath::MathNode::Op::Raycast;
+        responseRoot->children[0] = std::move(badResponse);
+        responseMat->bumpResponseRevision();
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        receiver.drawObject();
+        renderer.endFrame();
+        unsigned char responseRefused[4];
+        readCentre(responseRefused);
+        const Renderer::FrameStats responseRefusalStats = renderer.frameStats();
+        assert(responseRefusalStats.sdfProgramRefusals >= 1 &&
+               responseRefusalStats.sdfLastProgramRefusal.find("material response") !=
+                   std::string::npos &&
+               responseRefusalStats.sdfLastProgramRefusal.find("Raycast") !=
+                   std::string::npos &&
+               "unsupported receiver response did not surface a named refusal");
+        assert(responseRefused[0] < 12 && responseRefused[1] < 12 &&
+               responseRefused[2] < 12 &&
+               "refused receiver response left stale authored output on screen");
+
+        renderer.setRadianceField(nullptr, 0);
+        renderer.setRadianceVisibilityEnabled(false);
+    }
+
     // --- An unpainted cube draws as ONE merged mesh; painting a single face
     // must drop it straight back to the six-face path (remediation plan Phase
     // 4.2). This is the guard the plan calls for: the merge decision reads the
