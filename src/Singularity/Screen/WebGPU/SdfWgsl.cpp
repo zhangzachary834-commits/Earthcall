@@ -319,6 +319,8 @@ struct Emit {
     bool               bindEmissionOmega = false; // V4 E_v owns a distinct omega context
     bool               readEmissionOmega = false;
     bool               bindPhaseDirections = false; // V3 Phi admits wi/wo, never source omega
+    bool               bindMaterialResponse = false; // Rung 9 receiver context admits n + wi/wo
+    bool               readSurfaceNormal = false;
     bool               readWi = false;
     bool               readWo = false;
     // Ambient temporal coordinate for the expression currently being emitted.
@@ -399,6 +401,13 @@ std::string pointComponent(const std::string& var, Emit& e, const std::string& p
                  "expression context does not bind the temporal coordinate");
         return "0.0";
     }
+    if (var == OntoMath::kSurfaceNormalVar) {
+        e.readSurfaceNormal = true;
+        if (e.bindMaterialResponse) return "n";
+        e.refuse("an expression names receiver normal 'n', but this shader "
+                 "expression context is not material response");
+        return "vec3<f32>(0.0)";
+    }
     if (var == OntoMath::kOmegaXVar ||
         var == OntoMath::kOmegaYVar ||
         var == OntoMath::kOmegaZVar) {
@@ -422,12 +431,12 @@ std::string pointComponent(const std::string& var, Emit& e, const std::string& p
         var == OntoMath::kWiYVar ||
         var == OntoMath::kWiZVar) {
         e.readWi = true;
-        if (e.bindPhaseDirections) {
+        if (e.bindPhaseDirections || e.bindMaterialResponse) {
             if (var == OntoMath::kWiXVar) return "wi.x";
             if (var == OntoMath::kWiYVar) return "wi.y";
             return "wi.z";
         }
-        e.refuse("a field expression names phase incoming direction '" + var +
+        e.refuse("an expression names incoming direction '" + var +
                  "', but this shader expression context does not bind wi");
         return "0.0";
     }
@@ -435,12 +444,12 @@ std::string pointComponent(const std::string& var, Emit& e, const std::string& p
         var == OntoMath::kWoYVar ||
         var == OntoMath::kWoZVar) {
         e.readWo = true;
-        if (e.bindPhaseDirections) {
+        if (e.bindPhaseDirections || e.bindMaterialResponse) {
             if (var == OntoMath::kWoXVar) return "wo.x";
             if (var == OntoMath::kWoYVar) return "wo.y";
             return "wo.z";
         }
-        e.refuse("a field expression names phase outgoing direction '" + var +
+        e.refuse("an expression names outgoing direction '" + var +
                  "', but this shader expression context does not bind wo");
         return "0.0";
     }
@@ -1137,6 +1146,57 @@ bool validatePhasePiecewise(const OntoMath::Piecewise& pw, std::string& error) {
         }
         if (kind != OntoMath::ValueKind::Scalar) {
             error = "piece " + std::to_string(i) + " must evaluate to Scalar, got " +
+                    std::string(OntoMath::valueKindName(kind));
+            return false;
+        }
+    }
+    error.clear();
+    return true;
+}
+
+// Rung 9 material response is vector-valued receiver truth. It reuses the
+// generic directional names wi/wo but owns a separate admission environment
+// from volume phase. No t appears here: this bounded rung has not established
+// an honest Material-owned Timeline.
+bool validateResponsePiecewise(const OntoMath::Piecewise& pw, std::string& error) {
+    OntoMath::TypeEnv env{
+        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
+        {"x", OntoMath::ValueKind::Scalar},
+        {"y", OntoMath::ValueKind::Scalar},
+        {"z", OntoMath::ValueKind::Scalar},
+        {OntoMath::kSurfaceNormalVar, OntoMath::ValueKind::Vector},
+        {OntoMath::kWiXVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWiYVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWiZVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWoXVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWoYVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWoZVar, OntoMath::ValueKind::Scalar}
+    };
+
+    if (pw.pieces.empty()) {
+        error = "authored material response expression has no pieces";
+        return false;
+    }
+    for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
+        const auto& piece = pw.pieces[i];
+        if (piece.guard || piece.whereLEZero || piece.call || piece.fold) {
+            error = "piece " + std::to_string(i) +
+                    " uses Piecewise semantics the WGSL response channel does not implement";
+            return false;
+        }
+        if (!piece.mathNode) {
+            error = "piece " + std::to_string(i) + " has no authored response value";
+            return false;
+        }
+        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
+        std::string typeError;
+        if (!piece.mathNode->checkTypes(env, typeError, &kind, false)) {
+            error = typeError;
+            return false;
+        }
+        if (kind != OntoMath::ValueKind::Vector) {
+            error = "piece " + std::to_string(i) +
+                    " material response must evaluate to Vector, got " +
                     std::string(OntoMath::valueKindName(kind));
             return false;
         }
@@ -2093,6 +2153,48 @@ AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr
 // Minimum–maximum principle: keep one expressive directional language while
 // preserving distinct irreducible predicates for source emission, medium
 // scattering, and receiving-surface response.
+ResponseExpressionLayout inspectResponseExpression(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) {
+        return ResponseExpressionLayout{
+            "<material-response:legacy-blinn-phong>", 0, false, false, false, true, ""};
+    }
+
+    std::string validationError;
+    if (!validateResponsePiecewise(*expr, validationError)) {
+        return ResponseExpressionLayout{"", 0, false, false, false, false, validationError};
+    }
+
+    Emit e;
+    e.bindMaterialResponse = true;
+    std::string body;
+    emitPiecewise(*expr, e, "p", "vec3<f32>", body);
+
+    ResponseExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.readsNormal = e.readSurfaceNormal;
+    layout.readsWi = e.readWi;
+    layout.readsWo = e.readWo;
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
+ParameterBlock collectResponseParams(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) return ParameterBlock{};
+
+    std::string validationError;
+    if (!validateResponsePiecewise(*expr, validationError)) {
+        return ParameterBlock{{}, false, validationError};
+    }
+
+    Emit e;
+    e.bindMaterialResponse = true;
+    std::string throwaway;
+    emitPiecewise(*expr, e, "p", "vec3<f32>", throwaway);
+    return ParameterBlock{std::move(e.params), !e.refused, e.refusal};
+}
+
 PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr) {
     if (!expr || expr->pieces.empty()) {
         return PhaseExpressionLayout{"<volume-phase:1.0>", 0, false, false, true, ""};
