@@ -41,6 +41,15 @@ public:
         uint64_t hypotheticalRadianceBypasses = 0;
         uint64_t hypotheticalDensityBypasses = 0;
         uint64_t authorityBypassesApplied = 0;
+
+        // Rung 7 successor: diagnostic artifacts aligned 1:1 with the already-
+        // admitted renderer binding slots. Build/repair happens only at source-
+        // set admission; no pixel path consumes these artifacts.
+        uint64_t alignedSlotBuilds = 0;
+        uint64_t alignedSlotRepairs = 0;
+        uint64_t alignedSlotReuses = 0;
+        uint64_t alignedSlotDrops = 0;
+        size_t alignedSlotLogicalBytes = 0;
     };
 
     void setEnabled(bool enabled) { _enabled = enabled; }
@@ -48,10 +57,24 @@ public:
 
     const Stats& stats() const { return _stats; }
 
+    // Generation-only diagnostics let tests prove local slot repair without
+    // exposing a theorem-consumption API to renderer control flow.
+    size_t alignedRadianceSlotCount() const { return _radianceSlots.size(); }
+    size_t alignedDensitySlotCount() const { return _densitySlots.size(); }
+    uint64_t alignedRadianceSlotGeneration(size_t slot) const {
+        return slot < _radianceSlots.size() ? _radianceSlots[slot].generation : 0;
+    }
+    uint64_t alignedDensitySlotGeneration(size_t slot) const {
+        return slot < _densitySlots.size() ? _densitySlots[slot].generation : 0;
+    }
+
     void reset() {
         _stats = {};
         _vessels.clear();
         _canonicalLiteralMath.clear();
+        _radianceSlots.clear();
+        _densitySlots.clear();
+        _nextAlignedGeneration = 0;
         _haveRadianceSetRevision = false;
         _haveDensitySetRevision = false;
         _lastRadianceSetRevision = 0;
@@ -76,13 +99,21 @@ public:
         _lastRadianceSetSize = sources.size();
         _stats.hypotheticalRadianceBypasses = 0;
 
-        for (const auto& source : sources) {
-            if (!source.radianceExpr) continue;
-            const ProofKind proof = observeVessel(
-                Channel::SourceRho, source.radianceExpr, source.radianceRevision);
-            if (proof == ProofKind::RadianceZeroContribution)
-                ++_stats.hypotheticalRadianceBypasses;
+        for (size_t slot = 0; slot < sources.size(); ++slot) {
+            const auto& source = sources[slot];
+            ProofKind proof = ProofKind::None;
+            if (source.radianceExpr) {
+                proof = observeVessel(
+                    Channel::SourceRho, source.radianceExpr, source.radianceRevision);
+                if (proof == ProofKind::RadianceZeroContribution)
+                    ++_stats.hypotheticalRadianceBypasses;
+            }
+            updateAlignedSlot(
+                _radianceSlots, slot, source.producerId, Channel::SourceRho,
+                source.radianceRevision, proof);
         }
+        shrinkAlignedSlots(_radianceSlots, sources.size());
+        refreshAlignedSlotLogicalBytes();
     }
 
     void observeVolumeDensitySources(
@@ -101,16 +132,79 @@ public:
         _lastDensitySetSize = sources.size();
         _stats.hypotheticalDensityBypasses = 0;
 
-        for (const auto& medium : sources) {
-            if (!medium.densityExpr) continue;
-            const ProofKind proof = observeVessel(
-                Channel::MediumDensity, medium.densityExpr, medium.densityRevision);
-            if (proof == ProofKind::DensityZeroSupport)
-                ++_stats.hypotheticalDensityBypasses;
+        for (size_t slot = 0; slot < sources.size(); ++slot) {
+            const auto& medium = sources[slot];
+            ProofKind proof = ProofKind::None;
+            if (medium.densityExpr) {
+                proof = observeVessel(
+                    Channel::MediumDensity, medium.densityExpr, medium.densityRevision);
+                if (proof == ProofKind::DensityZeroSupport)
+                    ++_stats.hypotheticalDensityBypasses;
+            }
+            updateAlignedSlot(
+                _densitySlots, slot, medium.producerId, Channel::MediumDensity,
+                medium.densityRevision, proof);
         }
+        shrinkAlignedSlots(_densitySlots, sources.size());
+        refreshAlignedSlotLogicalBytes();
     }
 
 private:
+    struct AlignedSlotArtifact {
+        std::string producerId;
+        Channel channel = Channel::SourceRho;
+        uint64_t authoredRevision = 0;
+        uint64_t generation = 0;
+        ProofKind proof = ProofKind::None;
+    };
+
+    void updateAlignedSlot(
+        std::vector<AlignedSlotArtifact>& slots,
+        size_t slot,
+        const std::string& producerId,
+        Channel channel,
+        uint64_t authoredRevision,
+        ProofKind proof) {
+        if (slot < slots.size()) {
+            auto& existing = slots[slot];
+            if (existing.producerId == producerId &&
+                existing.channel == channel &&
+                existing.authoredRevision == authoredRevision) {
+                ++_stats.alignedSlotReuses;
+                return;
+            }
+
+            existing = AlignedSlotArtifact{
+                producerId, channel, authoredRevision,
+                ++_nextAlignedGeneration, proof};
+            ++_stats.alignedSlotRepairs;
+            return;
+        }
+
+        // The artifact vector is always grown in the same order as the admitted
+        // binding vector. There is no identity lookup or theorem search here.
+        slots.push_back(AlignedSlotArtifact{
+            producerId, channel, authoredRevision,
+            ++_nextAlignedGeneration, proof});
+        ++_stats.alignedSlotBuilds;
+    }
+
+    void shrinkAlignedSlots(
+        std::vector<AlignedSlotArtifact>& slots,
+        size_t admittedSize) {
+        if (slots.size() <= admittedSize) return;
+        _stats.alignedSlotDrops += slots.size() - admittedSize;
+        slots.resize(admittedSize);
+    }
+
+    void refreshAlignedSlotLogicalBytes() {
+        size_t bytes =
+            sizeof(AlignedSlotArtifact) *
+            (_radianceSlots.size() + _densitySlots.size());
+        for (const auto& slot : _radianceSlots) bytes += slot.producerId.size();
+        for (const auto& slot : _densitySlots) bytes += slot.producerId.size();
+        _stats.alignedSlotLogicalBytes = bytes;
+    }
     struct VesselKey {
         Channel channel = Channel::SourceRho;
         const OntoMath::Piecewise* expr = nullptr;
@@ -211,6 +305,9 @@ private:
     Stats _stats;
     std::unordered_map<VesselKey, ProofKind, VesselKeyHash> _vessels;
     std::unordered_set<uint64_t> _canonicalLiteralMath;
+    std::vector<AlignedSlotArtifact> _radianceSlots;
+    std::vector<AlignedSlotArtifact> _densitySlots;
+    uint64_t _nextAlignedGeneration = 0;
 };
 
 } // namespace Rendering
