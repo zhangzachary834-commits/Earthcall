@@ -50,6 +50,16 @@ public:
         uint64_t alignedSlotReuses = 0;
         uint64_t alignedSlotDrops = 0;
         size_t alignedSlotLogicalBytes = 0;
+        uint64_t alignedHandlePublications = 0;
+        uint64_t alignedHandleValidations = 0;
+        uint64_t alignedHandleMetadataTests = 0;
+        uint64_t alignedHandleFallbacks = 0;
+    };
+
+    struct AlignedSlotHandle {
+        Channel channel = Channel::SourceRho;
+        size_t slot = 0;
+        uint64_t generation = 0;
     };
 
     void setEnabled(bool enabled) { _enabled = enabled; }
@@ -66,6 +76,29 @@ public:
     }
     uint64_t alignedDensitySlotGeneration(size_t slot) const {
         return slot < _densitySlots.size() ? _densitySlots[slot].generation : 0;
+    }
+
+    std::optional<AlignedSlotHandle> publishRadianceHandle(size_t slot) {
+        return publishAlignedHandle(_radianceSlots, slot, Channel::SourceRho);
+    }
+    std::optional<AlignedSlotHandle> publishDensityHandle(size_t slot) {
+        return publishAlignedHandle(_densitySlots, slot, Channel::MediumDensity);
+    }
+
+    bool validateRadianceHandle(
+        const AlignedSlotHandle& handle,
+        const RadianceSourceBinding& binding) {
+        return validateAlignedHandle(
+            _radianceSlots, handle, Channel::SourceRho,
+            binding.producerId, binding.radianceRevision);
+    }
+
+    bool validateDensityHandle(
+        const AlignedSlotHandle& handle,
+        const VolumeDensityBinding& binding) {
+        return validateAlignedHandle(
+            _densitySlots, handle, Channel::MediumDensity,
+            binding.producerId, binding.densityRevision);
     }
 
     void reset() {
