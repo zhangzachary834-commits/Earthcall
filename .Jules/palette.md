@@ -5,3 +5,7 @@
 ## 2026-09-24 - Add clear button to utterance input
 **Learning:** In flex layouts with dynamic inputs, toggling element visibility using `display: none` / `block` can cause visually jarring layout shifts (e.g., adjacent buttons jump sideways).
 **Action:** Use `visibility: hidden` and `visibility: visible` to toggle elements inside flex layouts when you want to reserve their space, preventing sibling elements from shifting when the element appears or disappears.
+
+## 2025-02-18 - Throttling aria-live status loop
+**Learning:** `aria-live` elements combined with an auto-reconnect retry loop in JS can spam screen readers continuously with "Connecting... Disconnected..." announcements on interval.
+**Action:** Move continuous string status updates out of `aria-live` containers and instead inject specific logical state changes into a controlled `#sr-announcer` hidden div when the binary state (connected/disconnected) explicitly flips.

@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let ws = null;
     let clientId = "client_" + Math.random().toString(36).substr(2, 9);
+    let lastAnnouncedState = null;
     
     // Check if we are running under Emscripten (WASM Mode)
     const isWasmMode = typeof Module !== 'undefined' && Module.Earthcall_EmitUtterance;
@@ -22,12 +23,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         statusContainer.classList.remove('connected', 'disconnected', 'connecting');
 
+        let currentState = 'disconnected';
+
         if (isConnected) {
             statusContainer.classList.add('connected');
+            currentState = 'connected';
         } else if (isConnecting) {
             statusContainer.classList.add('connecting');
         } else {
             statusContainer.classList.add('disconnected');
+        }
+
+        // Only announce state changes to prevent screen reader spam during retries
+        if (lastAnnouncedState !== currentState) {
+            const announcer = document.getElementById('sr-announcer');
+            if (announcer) {
+                announcer.textContent = isConnected ? "Engine connected" : "Engine disconnected";
+            }
+            lastAnnouncedState = currentState;
         }
 
         inputField.disabled = !isConnected;

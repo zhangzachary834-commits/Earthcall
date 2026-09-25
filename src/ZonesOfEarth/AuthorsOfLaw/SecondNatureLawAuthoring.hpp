@@ -9,7 +9,7 @@ class Singular;
 // creation machine: the prototype is an ordinary Law Singular and the newborn
 // is derived through SingularSetToSetCreation::derive().
 namespace SecondNatureLawAuthoring {
-
+    
 inline constexpr const char* kInvokeEvent = "law-authoring-instrument-invoked";
 inline constexpr const char* kAuthoredEvent = "law-authored";
 inline constexpr const char* kPrototypeProperty = "forgePrototypeId";

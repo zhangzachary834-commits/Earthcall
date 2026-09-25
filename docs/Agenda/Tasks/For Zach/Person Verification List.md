@@ -6,6 +6,20 @@
 
 
 
+## The Law Line — speak a Law in the Mac Terminal
+
+*Claude Code · Claude Opus 5.5 · session* `01WXmPy9U71FLqizbRYzMToZ` *· 2026-09-25. Your "Natural Language Law Authoring" note, built terminal-first. Tests pass; nobody has typed into it with the app running yet. How it works and what it deliberately doesn't do yet:* `docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Law_Line/Law_Line.md`*.*
+
+- [ ] Double-click `Run Earthcall.command`. When the app is up, its Terminal window prints *"The Law Line is listening…"* and an `earthcall>` prompt.
+- [ ] In the app, switch to the Zone **Law Line**. You should see one pale cube, the "Law Line Cube".
+- [ ] In the Terminal, type `my ev` and press Tab: it becomes `my event-triggered law`. Keep going with Tab: `called Red fires on obj⇥` (→ `object-clicked`) `if hp is greater than 2 then set col⇥` (→ `color`) `1 0 0`.
+- [ ] Double-Tab after `then ` lists the actions; `?? color` searches the vocabulary; the same sentence ending in `?` prints a preview and authors nothing.
+- [ ] Press Enter: the Terminal prints `authored law_… (written by …)` and the Law read back as a sentence. The prompt comes back intact.
+- [ ] Click the cube in the app: it turns red. The Law also appears in the Law Graph / Law Library, where you can edit it.
+- [ ] Switch to another Zone and type any line: the Terminal says no Law in this Zone hears it (the hearing Laws live in Law Line for now).
+- [ ] Quit the app normally: the Terminal types and echoes normally again. (If the app ever crashes and leaves the Terminal odd, typing `reset` and Enter restores it.)
+- [ ] The legacy `Run Earthcall Terminal.command` still behaves exactly as before.
+
 ## Volumetric Light Beams Shining Through Mist — Sanctuary of Sunlit Mist
 
 *Antigravity / Gemini · session* `46a7b4aa-6373-429b-af0e-3377758af9ff` *· 2026-09-24. Volumetric light beams through participating mist via authored fields and bounded local occluder sphere-tracing. Current Sanctuary phase is the V3 isotropic compatibility identity unless* `volumePhase` *is explicitly authored.*
