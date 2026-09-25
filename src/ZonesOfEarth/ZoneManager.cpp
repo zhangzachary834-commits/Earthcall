@@ -244,7 +244,12 @@ bool ZoneManager::switchTo(size_t index)
                     }
                     triggers.push_back(trigger.get<std::string>());
                 }
-                if (law->activation() == Law::Activation::OnEvent && triggers.empty()) {
+                // A DISABLED Law is a source, not an actor: nothing wakes it, so
+                // lacking a trigger is not a defect. The Law Line's preset
+                // "my event-triggered law" is exactly such a Law — OnEvent, no
+                // trigger, the event left open for the sentence to name.
+                if (law->activation() == Law::Activation::OnEvent && triggers.empty() &&
+                    law->isEnabled()) {
                     throw std::runtime_error("OnEvent Law '" + ref + "' names no trigger");
                 }
 

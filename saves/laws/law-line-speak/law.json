@@ -1,0 +1,45 @@
+{
+ "authors": [
+  "Zach"
+ ],
+ "identifier": "law-line-speak",
+ "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
+ "law": {
+  "activation": 0,
+  "applicationLog": [],
+  "authors": [
+   "Zach"
+  ],
+  "authority": 0,
+  "conditionMode": "all",
+  "conditionSubjects": [],
+  "drives": false,
+  "enabled": true,
+  "id": "law-line-speak",
+  "name": "Law Line · a spoken law sentence asks the Terminal to author it",
+  "provenance": [
+   {
+    "directed": true,
+    "entityA": "law-line-speak",
+    "entityB": "Zach",
+    "events": [],
+    "type": "authored-by",
+    "weight": 1.0
+   }
+  ],
+  "retrigger": 0,
+  "scope": 0,
+  "targets": [],
+  "actionModel": {
+   "kind": 1,
+   "path": "@terminal-channel.speakRequests",
+   "operand": {
+    "t": "double",
+    "v": 1.0
+   }
+  }
+ },
+ "triggers": [
+  "law-sentence-spoken"
+ ]
+}
