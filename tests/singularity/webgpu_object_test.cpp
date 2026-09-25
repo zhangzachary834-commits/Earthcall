@@ -2207,6 +2207,31 @@ int main() {
         assert(responseMat->responseExpr->toJson().dump() == responseBeforeSourceEdit &&
                "source edit mutated receiver-owned response mathematics");
 
+        // VISIBILITY STATE EDIT ONLY: with no blocker, toggling derived
+        // visibility changes V from implicit 1 to computed 1. It must not rewrite
+        // receiver-owned response mathematics or regenerate its structure.
+        const std::string responseBeforeVisibilityEdit =
+            responseMat->responseExpr->toJson().dump();
+        renderer.setRadianceVisibilityEnabled(true);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        receiver.drawObject();
+        renderer.endFrame();
+        unsigned char responseVisibilityOn[4];
+        readCentre(responseVisibilityOn);
+        const Renderer::FrameStats responseVisibilityStats = renderer.frameStats();
+        assert(abs(int(responseVisibilityOn[0]) - int(responseBlue[0])) <= 2 &&
+               abs(int(responseVisibilityOn[1]) - int(responseBlue[1])) <= 2 &&
+               abs(int(responseVisibilityOn[2]) - int(responseBlue[2])) <= 2 &&
+               "blocker-free visibility changed authored receiver response output");
+        assert(responseVisibilityStats.sdfProgramCompiles == 0 &&
+               responseVisibilityStats.sdfProgramCacheHits >= 1 &&
+               "visibility-state edit recompiled receiver-response structure");
+        assert(responseMat->responseExpr->toJson().dump() ==
+                   responseBeforeVisibilityEdit &&
+               "visibility-state edit mutated receiver-owned response mathematics");
+        renderer.setRadianceVisibilityEnabled(false);
+
         // Restore source value, then alter response TOPOLOGY while retaining its
         // broad blue answer. Structure must recompile exactly because f_r changed.
         responseRhoNode->scalarForm.terms[0].coefficient = 1.0;
