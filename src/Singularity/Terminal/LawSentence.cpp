@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
+#include <map>
 #include <set>
 
 namespace Singularity {
@@ -148,6 +149,12 @@ bool admits(const Admit& admit, const std::string& opcode) {
 const Admit kClauseStart{"clause.", "activation.", "scope.", "action.", "preset"};
 const Admit kConditionStart{"condition."};
 
+std::string roleOf(const std::string& opcode) {
+    if (startsWith(opcode, "op.")) return "operator";
+    const std::size_t dot = opcode.find('.');
+    return dot == std::string::npos ? opcode : opcode.substr(0, dot);
+}
+
 struct Refusal {
     std::string message;
     std::size_t offset = 0;
@@ -183,6 +190,7 @@ public:
     }
 
     Parse& result() { return _out; }
+    const std::vector<Span>& spans() const { return _spans; }
     const Expectation& expectation() const { return _expect; }
 
     void run() {
@@ -264,8 +272,9 @@ private:
         }
         const std::string written = _text.substr(bestAt, bestLen);
         _pos = bestAt + bestLen;
-        if (distinct.size() == 1) return distinct.front();
-        return resolve(written, slot, distinct, bestAt);
+        Word chosen = distinct.size() == 1 ? distinct.front() : resolve(written, slot, distinct, bestAt);
+        mark(bestAt, bestAt + bestLen, roleOf(chosen.opcode));
+        return chosen;
     }
 
     Word resolve(const std::string& written, const std::string& slot,
@@ -294,6 +303,7 @@ private:
 
     bool peekClauseWord() {
         const std::size_t saved = _pos;
+        const std::size_t savedSpans = _spans.size();
         const bool savedCompleting = _completing;
         _completing = false;
         bool hit = false;
@@ -304,6 +314,7 @@ private:
             hit = true;   // an ambiguous clause word is still a clause word
         }
         _pos = saved;
+        _spans.resize(savedSpans);
         _completing = savedCompleting;
         return hit;
     }
@@ -367,12 +378,14 @@ private:
 
     std::string requirePath() {
         const Atom a = requireAtom("a property path", &Expectation::path);
+        mark(a.offset, _pos, "path");
         if (a.quoted || !looksLikePath(a.text)) refuse("'" + a.text + "' is not a property path", a.offset);
         return a.text;
     }
 
     std::string requireBeing(const std::string& what) {
         const Atom a = requireAtom(what, &Expectation::being);
+        mark(a.offset, _pos, "being");
         if (a.quoted || !looksLikePath(a.text)) refuse("'" + a.text + "' does not name a being", a.offset);
         if (startsWith(a.text, "@event.")) return a.text;
         return a.text[0] == '@' ? a.text.substr(1) : a.text;
@@ -380,6 +393,7 @@ private:
 
     std::string requireEvent(const std::string& what) {
         const Atom a = requireAtom(what, &Expectation::event);
+        mark(a.offset, _pos, "event");
         if (a.quoted || !looksLikePath(a.text)) refuse("'" + a.text + "' does not name an event", a.offset);
         return a.text;
     }
@@ -388,15 +402,24 @@ private:
         if (atEnd()) {
             if (_completing) {
                 _expect.value = true;
-                expect({"value."});
+                expect({"value"});
                 throw Stop{};
             }
             refuse("the sentence ends where a value was expected", _pos);
         }
-        if (auto w = tryMatch({"value."}, "value")) return PropertyValue(w->opcode == "value.true");
+        if (auto w = tryMatch({"value"}, "value")) {
+            if (w->opcode == "value.true" || w->opcode == "value.false") {
+                return PropertyValue(w->opcode == "value.true");
+            }
+            for (const auto& p : _vocab.presets) {
+                if (p.lawId == w->lawId && p.value) return *p.value;
+            }
+            refuse("'" + w->symbol + "' denotes Law " + w->lawId + ", which holds no value", _pos);
+        }
         const std::size_t start = _pos;
         if (peekClauseWord()) refuse("'" + peekAtomText() + "' is a clause word, not a value", start);
         Atom first = readAtomRaw();
+        mark(first.offset, _pos, "value");
         if (first.quoted) return PropertyValue(first.text);
         double numbers[3];
         if (parseNumber(first.text, numbers[0])) {
@@ -409,6 +432,7 @@ private:
                     _pos = saved;
                     break;
                 }
+                mark(next.offset, _pos, "value");
                 ++count;
             }
             if (count == 1) return PropertyValue(numbers[0]);
@@ -453,7 +477,9 @@ private:
 
     void nameClause() {
         if (!atEnd() && _text[_pos] == '"') {
+            const std::size_t at = _pos;
             _out.name = readAtomRaw().text;
+            mark(at, _pos, "name");
             return;
         }
         const std::size_t start = _pos;
@@ -463,6 +489,7 @@ private:
             end = _pos;
         }
         const std::string name = trim(_text.substr(start, end - start));
+        mark(start, end, "name");
         if (name.empty()) {
             if (atEnd() && _completing) throw Stop{};
             refuse("a name was expected after 'called'", _pos);
@@ -541,6 +568,7 @@ private:
                 std::string type;
                 if (!tryMatch({"filler.to"}, "filler")) {
                     type = requireAtom("a relation type", &Expectation::value).text;
+                    mark(_pos - type.size(), _pos, "value");
                     if (!tryMatch({"filler.to"}, "filler")) return ConditionNode::related(type, "");
                 }
                 return ConditionNode::related(type, requireBeing("a being"));
@@ -591,7 +619,10 @@ private:
         if (!atEnd() && _text[_pos] == '@') {
             const std::size_t saved = _pos;
             const Atom a = readAtomRaw();
-            if (looksLikePath(a.text)) return ConditionNode::comparePaths(path, cmp, a.text);
+            if (looksLikePath(a.text)) {
+                mark(a.offset, _pos, "path");
+                return ConditionNode::comparePaths(path, cmp, a.text);
+            }
             _pos = saved;
         }
         return ConditionNode::compare(path, cmp, parseValue());
@@ -669,7 +700,11 @@ private:
         if (kind == "Destroy") {
             return ActionNode::destroy(valueFollows() ? requireBeing("a being") : std::string{});
         }
-        if (kind == "Spawn") return ActionNode::spawn(requireAtom("a concept", &Expectation::being).text);
+        if (kind == "Spawn") {
+            const Atom a = requireAtom("a concept", &Expectation::being);
+            mark(a.offset, _pos, "being");
+            return ActionNode::spawn(a.text);
+        }
         if (kind == "AddProperty" || kind == "RemoveProperty") {
             const auto [owner, name] = ownerAndName(requirePath());
             if (kind == "RemoveProperty") return ActionNode::removeProperty(owner, name);
@@ -683,6 +718,7 @@ private:
         if (kind == "AddRelation") {
             const std::string a = requireBeing("the relation's source");
             const std::string type = requireAtom("a relation type", &Expectation::value).text;
+                    mark(_pos - type.size(), _pos, "value");
             const std::string b = requireBeing("the relation's target");
             return ActionNode::addRelation(a, b, type);
         }
@@ -695,6 +731,11 @@ private:
     std::size_t _pos = 0;
     std::vector<Spelling> _spellings;
     std::vector<std::string> _suffixes;
+    std::vector<Span> _spans;
+
+    void mark(std::size_t start, std::size_t end, const std::string& role) {
+        if (end > start) _spans.push_back({start, end, role});
+    }
 
     Parse _out;
     Expectation _expect;
@@ -851,6 +892,59 @@ void offerPaths(std::set<std::string>& out, const Vocabulary& vocab, const std::
 // ---------------------------------------------------------------------------
 // The structural words and the engine's own opcode spellings.
 // ---------------------------------------------------------------------------
+// What the menu says beside a structural word or an engine opcode spelling.
+static std::string canonicalDescription(const std::string& op) {
+    static const std::pair<const char*, const char*> kTable[] = {
+        {"clause.name", "names the Law"},
+        {"clause.trigger", "fires on an event"},
+        {"clause.condition", "the condition follows"},
+        {"clause.action", "the action follows"},
+        {"clause.timeline", "Timeline clause (not yet)"},
+        {"logic.And", "both must hold"},
+        {"logic.Or", "either may hold"},
+        {"filler.to", ""},
+        {"filler.by", ""},
+        {"filler.about", "whom the event is about"},
+        {"filler.within", "the tolerance of near"},
+        {"activation.OnEvent", "fires when its event happens"},
+        {"activation.WhileTrue", "applies every moment it holds"},
+        {"activation.OnBecomeTrue", "fires the moment it starts holding"},
+        {"scope.Subject", "acts on the event's subject"},
+        {"scope.Everyone", "acts on every being satisfying the IF"},
+        {"value.true", "true"},
+        {"value.false", "false"},
+        {"op.Eq", "equals"},
+        {"op.Ne", "differs from"},
+        {"op.Lt", "less than"},
+        {"op.Le", "at most"},
+        {"op.Gt", "greater than"},
+        {"op.Ge", "at least"},
+        {"op.Near", "near … within <tolerance>"},
+        {"op.InRange", "between <low> and <high>"},
+        {"condition.Not", "negates the next condition"},
+        {"condition.Related", "related [type] [to @being]"},
+        {"condition.IsKind", "is a kind of being"},
+        {"condition.Identity", "is exactly @being"},
+        {"condition.Overlaps", "touching @being"},
+        {"action.Set", "set <path> to <value>"},
+        {"action.Add", "add <number> to <path>"},
+        {"action.Scale", "multiply <path> by <number>"},
+        {"action.Publish", "publish an event"},
+        {"action.Destroy", "remove a being"},
+        {"action.Spawn", "spawn a concept"},
+        {"action.AddProperty", "grant a property"},
+        {"action.RemoveProperty", "revoke a property"},
+        {"action.AddRelation", "relate <a> <type> <b>"},
+    };
+    for (const auto& [code, text] : kTable) {
+        if (op == code) return text;
+    }
+    if (startsWith(op, "condition.")) return "condition (Law Graph only for now)";
+    if (startsWith(op, "action.")) return "action (Law Graph only for now)";
+    if (startsWith(op, "kind.")) return "a kind of being";
+    return "";
+}
+
 std::vector<Word> canonicalWords() {
     std::vector<Word> w{
         {"called", "clause.name", "", ""},
@@ -904,6 +998,7 @@ std::vector<Word> canonicalWords() {
                              "Zone", "Lexeme"}) {
         w.push_back({kind, std::string("kind.") + kind, "", ""});
     }
+    for (auto& word : w) word.description = canonicalDescription(word.opcode);
     return w;
 }
 
@@ -917,6 +1012,14 @@ std::string classify(const Law& law, const std::vector<std::string>& triggers, P
     if (hasAction && !hasCondition) {
         const ActionNode& a = *law.actionModel();
         using K = ActionNode::Kind;
+        // "red": a Set with no path but a value. The Law holds what the word
+        // stands for; the sentence decides where it goes.
+        if (a.kind == K::Set && a.path.empty() && !std::holds_alternative<std::monostate>(a.operand)) {
+            preset = Preset{};
+            preset.lawId = law.getIdentifier();
+            preset.value = a.operand;
+            return "value";
+        }
         bool open = false;
         switch (a.kind) {
             case K::Set: case K::Add: case K::Scale: open = a.path.empty(); break;
@@ -1008,11 +1111,14 @@ std::string Parse::preview() const {
 }
 
 Parse parse(const std::string& raw, const Vocabulary& vocab) {
+    std::size_t lead = 0;
+    while (lead < raw.size() && isSpace(raw[lead])) ++lead;
     std::string text = trim(raw);
     if (startsWith(text, "??")) {
         Parse p;
         p.search = true;
         p.candidates = search(text.substr(2), vocab);
+        p.spans.push_back({lead, lead + 2, "clause"});
         p.ok = true;
         return p;
     }
@@ -1035,6 +1141,12 @@ Parse parse(const std::string& raw, const Vocabulary& vocab) {
         out.candidates = r.candidates;
     }
     out.previewOnly = previewOnly;
+    for (const auto& span : parser.spans()) out.spans.push_back({span.start + lead, span.end + lead, span.role});
+    if (!out.error.empty() && out.errorOffset < text.size()) {
+        std::size_t end = out.errorOffset;
+        while (end < text.size() && !isSpace(text[end])) ++end;
+        out.spans.push_back({out.errorOffset + lead, end + lead, "error"});
+    }
     if (out.error.empty() && !previewOnly && requiredOpen(out.openClauses)) {
         out.error = "still open:";
         for (const auto& c : out.openClauses) out.error += " " + c + ";";
@@ -1064,6 +1176,9 @@ std::vector<std::string> complete(const std::string& beforeCursor, const Vocabul
 
     std::set<std::string> out;
     for (std::size_t split : splits) {
+        // An empty tail means "what comes next" — only after a space. Right
+        // after a word, what comes next would be glued onto it ("cofalse").
+        if (split == n && n > 0 && !isSpace(beforeCursor[n - 1])) continue;
         const std::string head = beforeCursor.substr(0, split);
         const std::string tail = beforeCursor.substr(split);
         Parser parser(head, vocab, true);
@@ -1090,14 +1205,155 @@ std::vector<std::string> complete(const std::string& beforeCursor, const Vocabul
     return {out.begin(), out.end()};
 }
 
+namespace {
+
+// How well `typed` (what was typed of the thing, possibly several words)
+// matches `candidate`: 0 = not at all. Prefix beats word-start beats
+// subsequence; shorter candidates win ties, so the likeliest word comes first.
+int fuzzyScore(const std::string& typed, const std::string& candidate) {
+    const std::string t = squash(typed);
+    const std::string c = squash(candidate);
+    if (t.empty()) return 1;
+    const int shortness = std::max(0, 200 - static_cast<int>(c.size()));
+    if (startsWith(c, t)) return 3000 + shortness;
+    if (t.find(' ') != std::string::npos) return 0;   // phrases match by prefix only
+    for (std::size_t i = 1; i < c.size(); ++i) {
+        const bool wordStart = !std::isalnum(static_cast<unsigned char>(c[i - 1])) &&
+                               std::isalnum(static_cast<unsigned char>(c[i]));
+        if (wordStart && c.compare(i, t.size(), t) == 0) return 2000 + shortness;
+    }
+    if (c.find(t) != std::string::npos) return 1500 + shortness;
+    // Subsequence ("gtt" -> "greater than"), rewarding runs.
+    std::size_t j = 0;
+    int run = 0, bonus = 0;
+    for (char ch : c) {
+        if (j < t.size() && ch == t[j]) {
+            ++j;
+            bonus += ++run;
+        } else {
+            run = 0;
+        }
+    }
+    return j == t.size() ? 500 + bonus * 10 + shortness / 4 : 0;
+}
+
+} // namespace
+
+std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabulary& vocab) {
+    const std::size_t n = beforeCursor.size();
+    std::set<std::size_t> splits{n};
+    const std::size_t floor = n > 48 ? n - 48 : 0;
+    for (std::size_t p = floor; p < n; ++p) {
+        if (isSpace(beforeCursor[p])) continue;
+        if (p == 0 || isSpace(beforeCursor[p - 1]) ||
+            isAtomChar(beforeCursor[p - 1]) != isAtomChar(beforeCursor[p])) {
+            splits.insert(p);
+        }
+    }
+
+    std::map<std::string, Suggestion> best;   // by text: keep the best reading of it
+    const auto offer = [&](std::size_t from, const std::string& tail, const std::string& text,
+                           const std::string& description, const std::string& role) {
+        int score = fuzzyScore(tail, text);
+        if (score == 0) return;
+        // Words that would only be refused ("author it in the Law Graph") are
+        // still findable, but never crowd out words that work.
+        if (description.find("Law Graph only") != std::string::npos) score -= 2500;
+        if (score <= 0) score = 1;
+        const std::string key = lower(text);
+        auto it = best.find(key);
+        if (it == best.end() || it->second.score < score) {
+            best[key] = Suggestion{from, text, description, role, score};
+        }
+    };
+
+    for (std::size_t split : splits) {
+        // An empty tail means "what comes next" — only after a space. Right
+        // after a word, what comes next would be glued onto it ("cofalse").
+        if (split == n && n > 0 && !isSpace(beforeCursor[n - 1])) continue;
+        const std::string head = beforeCursor.substr(0, split);
+        const std::string tail = beforeCursor.substr(split);
+        Parser parser(head, vocab, true);
+        try {
+            parser.run();
+            continue;
+        } catch (const Stop&) {
+        } catch (const Refusal&) {
+            continue;
+        }
+        const Expectation& e = parser.expectation();
+        for (const auto& w : vocab.words) {
+            if (admits(e.admit, w.opcode)) offer(split, tail, w.symbol, w.description, roleOf(w.opcode));
+        }
+        if (tail.find_first_of(" \t") != std::string::npos) continue;   // atoms are single words
+        if (e.event) {
+            for (const auto& ev : vocab.events) {
+                offer(split, tail, ev, vocab.describeEvent ? vocab.describeEvent(ev) : "event", "event");
+            }
+        }
+        if (e.being) {
+            for (const auto& b : vocab.beings) {
+                offer(split, tail, "@" + b, vocab.describeBeing ? vocab.describeBeing(b) : "", "being");
+            }
+        }
+        if (e.path) {
+            const auto prop = [&](const std::string& being, const std::string& name) {
+                return vocab.describeProperty ? vocab.describeProperty(being, name) : std::string{};
+            };
+            if (!tail.empty() && tail[0] == '@') {
+                bool inside = false;
+                for (const auto& b : vocab.beings) {
+                    const std::string root = "@" + b + ".";
+                    if (startsWith(tail, root) && vocab.propertiesOf) {
+                        inside = true;
+                        const std::string rest = tail.substr(root.size());
+                        for (const auto& p : vocab.propertiesOf(b)) {
+                            const int score = fuzzyScore(rest, p);
+                            if (score == 0) continue;
+                            const std::string text = root + p;
+                            auto it = best.find(lower(text));
+                            if (it == best.end() || it->second.score < score) {
+                                best[lower(text)] = Suggestion{split, text, prop(b, p), "path", score};
+                            }
+                        }
+                    }
+                }
+                if (!inside) {
+                    for (const char* root : {"@event.subject.", "@event.object.", "@world."}) {
+                        offer(split, tail, root, "whoever the event is about", "path");
+                    }
+                    for (const auto& b : vocab.beings) {
+                        offer(split, tail, "@" + b + ".",
+                              vocab.describeBeing ? vocab.describeBeing(b) : "", "being");
+                    }
+                }
+            } else if (vocab.propertiesOf && !vocab.scopeBeing.empty()) {
+                for (const auto& p : vocab.propertiesOf(vocab.scopeBeing)) {
+                    offer(split, tail, p, prop(vocab.scopeBeing, p), "path");
+                }
+            }
+        }
+    }
+
+    std::vector<Suggestion> out;
+    for (auto& [text, s] : best) out.push_back(std::move(s));
+    std::sort(out.begin(), out.end(), [](const Suggestion& a, const Suggestion& b) {
+        if (a.score != b.score) return a.score > b.score;
+        return lower(a.text) < lower(b.text);
+    });
+    if (out.size() > 200) out.resize(200);
+    return out;
+}
+
 std::vector<std::string> search(const std::string& rawQuery, const Vocabulary& vocab) {
     const std::string q = lower(trim(rawQuery));
     const auto hit = [&](const std::string& s) { return lower(s).find(q) != std::string::npos; };
 
     std::vector<std::string> out;
     for (const auto& w : vocab.words) {
-        if (hit(w.symbol) || hit(w.opcode)) {
-            out.push_back("word     " + w.symbol + "  ->  " + w.opcode + "  (" + w.individual() + ")");
+        if (hit(w.symbol) || hit(w.opcode) || (!w.description.empty() && hit(w.description))) {
+            out.push_back("word     " + w.symbol + "  ->  " + w.opcode +
+                          (w.description.empty() ? "" : "  · " + w.description) + "  (" + w.individual() + ")");
         }
     }
     for (const auto& e : vocab.events) {

@@ -8,16 +8,29 @@
 
 ## The Law Line — speak a Law in the Mac Terminal
 
-*Claude Code · Claude Opus 5.5 · session* `01WXmPy9U71FLqizbRYzMToZ` *· 2026-09-25. Your "Natural Language Law Authoring" note, built terminal-first. Tests pass; nobody has typed into it with the app running yet. How it works and what it deliberately doesn't do yet:* `docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Law_Line/Law_Line.md`*.*
+*Claude Code · Claude Opus 5.5 · session* `01WXmPy9U71FLqizbRYzMToZ` *· 2026-09-25. Your "Natural Language Law Authoring" note, built terminal-first. How it works and what it doesn't do yet:* `docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Law_Line/Law_Line.md`*.*
 
-- [ ] Double-click `Run Earthcall.command`. When the app is up, its Terminal window prints *"The Law Line is listening…"* and an `earthcall>` prompt.
-- [ ] In the app, switch to the Zone **Law Line**. You should see one pale cube, the "Law Line Cube".
-- [ ] In the Terminal, type `my ev` and press Tab: it becomes `my event-triggered law`. Keep going with Tab: `called Red fires on obj⇥` (→ `object-clicked`) `if hp is greater than 2 then set col⇥` (→ `color`) `1 0 0`.
-- [ ] Double-Tab after `then ` lists the actions; `?? color` searches the vocabulary; the same sentence ending in `?` prints a preview and authors nothing.
-- [ ] Press Enter: the Terminal prints `authored law_… (written by …)` and the Law read back as a sentence. The prompt comes back intact.
-- [ ] Click the cube in the app: it turns red. The Law also appears in the Law Graph / Law Library, where you can edit it.
-- [ ] Switch to another Zone and type any line: the Terminal says no Law in this Zone hears it (the hearing Laws live in Law Line for now).
-- [ ] Quit the app normally: the Terminal types and echoes normally again. (If the app ever crashes and leaves the Terminal odd, typing `reset` and Enter restores it.)
+**Rung 1 — you witnessed it** (Zach, 2026-09-25: *"i tried the sentence you said and it works. I saw the law Red in world and the graph showed me on-clicked trigger, hp > 2 as condition, and set color 1 0 0 as action"*):
+
+- [x] `Run Earthcall.command` → the Terminal shows the Law Line prompt.
+- [x] In the Law Line Zone, `my event-triggered law called Red fires on object-clicked if hp is greater than 2 then set color 1 0 0` authors a Law.
+- [x] The Law appears in the world and the Law Graph with the object-clicked trigger, `hp > 2`, and `set color 1 0 0`.
+
+**Rung 2 — the ergonomic line and the new words** (your request: Tab selects, arrows move, temporary display like Claude Code). Driven in a real terminal emulator by me, but not yet by you:
+
+- [ ] While you type, a menu opens under the line on its own, with what each word means beside it. **↓/↑ move the `▸`**, **Tab** takes it, **Esc** closes it. Nothing is printed as a message while you type.
+- [ ] On an empty word (after `then `), **Tab** opens the menu of everything that may come next.
+- [ ] The dim **ghost text** after the cursor is the rest of the chosen word, or of a line you typed before. **→** takes it.
+- [ ] The line is **coloured by how it's read**: presets, actions, operators, events, and values each in their own colour.
+- [ ] Under the line, the **live preview** (`↳ WHEN … -> IF … -> THEN …`) changes as you type. An unfinished sentence says `next: …`. A mistake shows `✗` with a `^` under it only once you've moved past the word.
+- [ ] **Enter** leaves exactly one line in the scrollback plus `✓ authored …` (green) or `✗ refused …` (red).
+- [ ] In the Law Line Zone, `when hovered then set color gold` turns the cube gold when you point at it; `when clicked then set color cyan` works too.
+- [ ] `?? color` shows matches **live** under the line, before you press Enter.
+- [ ] **↑** recalls earlier sentences (also after restarting the app); **Ctrl-R** searches them.
+- [ ] The app's log lines appear **above** the prompt, dimmed, and never scramble what you're typing.
+- [ ] **Ctrl-C** clears the line; on an empty line it warns once, then a second Ctrl-C quits. Afterwards the Terminal types and echoes normally.
+- [ ] Outside the Law Line Zone, click a cube in the world, then type `on tick then set ` and press Tab: that cube's properties are offered, with their live values.
+- [ ] Does it *feel* right? Menu height (`@terminal-channel.menuRows`, default 8), whether it opens on its own (`autoMenu`), the colours, and the hint footer (`hints`) are all registered properties if you want them different.
 - [ ] The legacy `Run Earthcall Terminal.command` still behaves exactly as before.
 
 ## Volumetric Light Beams Shining Through Mist — Sanctuary of Sunlit Mist

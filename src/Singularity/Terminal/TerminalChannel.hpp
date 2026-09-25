@@ -1,9 +1,12 @@
 #pragma once
 
 #include "Singularity/Terminal/LawSentence.hpp"
+#include "Singularity/Terminal/LineEditor.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 
+#include <cstdint>
 #include <deque>
+#include <optional>
 #include <functional>
 #include <string>
 #include <vector>
@@ -41,6 +44,15 @@ namespace Terminal {
 // applies every Law that targets it (its Metalaws), and takes whichever
 // candidate they wrote to `ambiguity.resolved`. None did -> refused.
 //
+// THE LINE ITSELF (2026-09-25, Zach: "tab should … actually select one and
+// arrow keys should … move between them … show me stuff temporarily"): the
+// channel owns a LineEditor region under the prompt — a live menu, ghost
+// text, the sentence coloured by how it is read, a transient preview/error
+// panel, history — redrawn in place. The app's own stdout/stderr are relayed
+// above that region (dimmed, and kept in saves/logs/earthcall-terminal.log)
+// so they never tear the line being typed. Settings a Person may change are
+// registered: menuRows, autoMenu, color, hints, relayLogs, prompt.
+//
 // This is not a network channel: its author is the Person at the keyboard,
 // so ForeignActuationGuard (for foreign movers) does not apply.
 class TerminalChannel : public Law {
@@ -75,6 +87,16 @@ private:
     void buildProperties() override;
     void speak(LawManager& laws, const std::string& text);
     void say(const std::string& text);
+    const LawSentence::Vocabulary& liveVocabulary();
+    const LawSentence::Parse& liveParse(const std::string& text);
+    std::vector<LineEditor::Status> statusOf(const std::string& text);
+    void handleKeys(const std::vector<Key>& keys, double now);
+    void draw();
+    void printAbove(const std::string& text);
+    std::string erase() const;
+    int width() const;
+    std::string describeProperty(const std::string& beingId, const std::string& property) const;
+    std::string describeBeing(const std::string& beingId) const;
     LawSentence::Resolution resolveByMetalaw(LawManager& laws, const LawSentence::Ambiguity& a);
     void attach(LawManager& laws);
     void detach();
@@ -103,6 +125,12 @@ private:
     std::string _ambiguityCandidates;
     std::string _ambiguityResolved;
     bool _attached = false;
+    // Settings of the line (registered).
+    int _menuRows = 8;
+    bool _autoMenu = true;
+    bool _color = true;
+    bool _hints = true;
+    bool _relayLogs = true;
 
     // Below the Kernel — machine mechanism, not world state (named per
     // NO_BLACK_BOX §5): the queue between libedit's callback and the frame,
@@ -112,6 +140,20 @@ private:
     bool _attachTried = false;
     Sink _sink;
     LawManager* _laws = nullptr;
+    // The drawn region: the editor's state, the key decoder, where the cursor
+    // sits inside the region, and per-frame caches of the vocabulary and the
+    // live parse (rebuilt every frame, so they never outlive a world change).
+    LineEditor _editor;
+    KeyDecoder _decoder;
+    bool _drawn = false;
+    int _cursorRow = 0;
+    int _lastWidth = 0;
+    double _lastInterrupt = -10.0;
+    std::uint64_t _frame = 0;
+    std::uint64_t _vocabFrame = 0;
+    std::optional<LawSentence::Vocabulary> _vocab;
+    std::string _parseText;
+    std::optional<LawSentence::Parse> _parse;
 };
 
 } // namespace Terminal

@@ -66,6 +66,7 @@ struct Word {
     std::string opcode;    // "op.Gt", "clause.trigger", "action.Set", "preset", ...
     std::string lexemeId;  // the authored Lexeme; "" for a structural / canonical spelling
     std::string lawId;     // the Law this Lexeme denotes; "" for a canonical spelling
+    std::string description;   // what the menu says it means (a denoted Law's name)
 
     // How an ambiguity names this candidate. A Lexeme that denotes several
     // Laws is several candidates, so the denoted Law is part of the name.
@@ -83,11 +84,14 @@ struct Preset {
     std::vector<std::string> triggers;
     std::optional<ConditionNode> condition;   // empty All() = fixes "no condition"
     std::optional<ActionNode> action;
+    // A VALUE word ("red"): a Set with no path but a value — the Law holds the
+    // value the word stands for.
+    std::optional<PropertyValue> value;
 };
 
 // Read a denoted Law's models: which opcode is it? Returns "" when the Law
 // carries nothing a sentence can use (e.g. an open slot in a kind that has no
-// sentence form). `preset` is filled when the answer is "preset".
+// sentence form). `preset` is filled when the answer is "preset" or "value".
 std::string classify(const Law& law, const std::vector<std::string>& triggers, Preset& preset);
 
 // Two or more admissible meanings for the same spelling at the same place.
@@ -110,6 +114,20 @@ struct Vocabulary {
     std::string scopeBeing;                  // bare paths complete against this being
     std::function<std::vector<std::string>(const std::string& beingId)> propertiesOf;
     std::function<Resolution(const Ambiguity&)> resolve;   // the Metalaw seam
+
+    // What the menu says beside a candidate. All optional; absent = blank.
+    std::function<std::string(const std::string& beingId, const std::string& property)> describeProperty;
+    std::function<std::string(const std::string& beingId)> describeBeing;
+    std::function<std::string(const std::string& eventType)> describeEvent;
+};
+
+// A stretch of the sentence and what it was read as — for colouring the line
+// as it is typed. Roles: clause, logic, filler, activation, scope, preset,
+// action, operator, condition, kind, value, path, being, event, name, error.
+struct Span {
+    std::size_t start = 0;
+    std::size_t end = 0;
+    std::string role;
 };
 
 // The structural words and the engine's own opcode spellings.
@@ -133,6 +151,7 @@ struct Parse {
     std::string error;                        // "" when ok
     std::size_t errorOffset = 0;              // byte offset into the sentence
     std::vector<std::string> candidates;      // ambiguity candidates / search hits
+    std::vector<Span> spans;                  // offsets into the raw text given to parse()
 
     std::string preview() const;              // WHEN … -> IF … -> THEN …
 };
@@ -142,6 +161,18 @@ Parse parse(const std::string& text, const Vocabulary& vocab);
 // Tab. `beforeCursor` is the whole line up to the cursor; each result is the
 // full replacement for the word being typed (readline's contract).
 std::vector<std::string> complete(const std::string& beforeCursor, const Vocabulary& vocab);
+
+// The live menu. Each suggestion REPLACES beforeCursor[from, end) with
+// `text`; matching is fuzzy (prefix, then word-start, then subsequence), best
+// first. `description` says what the candidate means; `role` colours it.
+struct Suggestion {
+    std::size_t from = 0;
+    std::string text;
+    std::string description;
+    std::string role;
+    int score = 0;
+};
+std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabulary& vocab);
 
 // "?? color" — every spelling, event, being, and scoped property whose text
 // contains the query, each labelled with what it is.

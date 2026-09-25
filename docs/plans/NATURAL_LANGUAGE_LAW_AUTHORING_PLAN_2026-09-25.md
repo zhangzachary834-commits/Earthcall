@@ -86,6 +86,37 @@ These are listed in the task doc:
   - `law_line_zone_test` passes 19/19, including that Save Zone keeps every seeded Lexeme and `denotes` Relation.
   - The full suite and its pre-existing failures are recorded in the task doc.
 
+## 6. Rung 2 — the ergonomic line (same day)
+
+Zach, after witnessing rung 1: *"tab shouldn't just display a list of all possibilities above me as a message. Tab should be able to actually select one and arrow keys should be able to move between them … like claude code cli … it can show me stuff temporarily without sending as a full message … think about other design and ergonomics"*, and *"make it more intuitive to use with more laws and singulars"*.
+
+- **libedit was replaced**, because it has no selectable menu and its Tab prints into the scrollback. In its place is `Singularity/Terminal/LineEditor`: pure state plus a rendered frame, redrawn in place under the prompt, the way Claude Code/Ink, fish, and zsh menu-select work. `TerminalChannel` holds the terminal in raw mode, decodes keys (`KeyDecoder`), and draws frames in one synchronized write. It also relays the app's stdout/stderr above the region, through a read-only reader thread that also writes the session log.
+- **Ergonomics (Claude's design, from Zach's request):**
+  - a live fuzzy menu with meanings, where Tab/↑↓/Enter/Esc select;
+  - ghost text from the selection or from history, with → to take it;
+  - the line coloured by how it is read;
+  - a transient panel: preview, `next: …`, an error with a caret only once a word is finished, live `??` search, and a key-hint footer;
+  - persistent history and Ctrl-R;
+  - bracketed paste;
+  - Ctrl-C clears, then quits on a double press;
+  - property rows show live values;
+  - bare paths complete against the authored scope, or whatever was last clicked.
+
+  The line's settings are registered properties.
+- **More authored words** (data only, patched into the LawLine Zone):
+  - value words: a Lexeme denoting a Set Law with no path but a value — 13 colours, plus on/yes/off/no;
+  - trigger presets: when clicked, on hover, when the pointer leaves, when touched, when I land, when I jump, when the zone opens.
+
+  `classify()` learned "value". `seed_law_line.py` became a patcher: it creates only missing files, only adds to the Zone, verifies the original is intact, backs it up, and replaces atomically.
+- **Found by driving the real app in an emulated terminal** (`pyte`) and fixed:
+  - next-word suggestions glued onto a finished word (`set co⇥` → `cofalse`);
+  - red errors appeared on the word still being typed;
+  - Law-Graph-only opcodes crowded the menu;
+  - accepting `se` produced the engine's `Set` instead of the Person's `set`;
+  - a recalled history line opened a menu that hijacked ↓.
+
+  Each is now held by `line_editor_test`.
+
 ---
 
 *Claude Code · Claude Opus 5.5 · session `01WXmPy9U71FLqizbRYzMToZ` · 2026-09-25T02:25-07:00. Zach originated the Law Line, its grammar, presets, Tab, the terminal-first order, the TerminalChannel, the legacy split, and corrections 1–7 above. Claude originated: the libedit callback-interface pump, reading a denoted Law's shape as its opcode (open slot vs preset), composable presets, the request-counter invocation, Metalaw application by `targets`, character-level spelling forms, and the disabled-Law loader refinement.*

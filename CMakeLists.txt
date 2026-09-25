@@ -223,13 +223,6 @@ if (NOT EMSCRIPTEN)
     endif()
 endif()
 if(APPLE AND NOT EMSCRIPTEN)
-    # libedit (system, readline API): the TerminalChannel's line editor and
-    # Tab completion. macOS ships it in the SDK; no vendored dependency.
-    find_library(EDIT_LIB edit)
-    if (EDIT_LIB)
-        target_link_libraries(earthcall_core PUBLIC ${EDIT_LIB})
-        target_compile_definitions(earthcall_core PUBLIC EARTHCALL_HAS_LIBEDIT)
-    endif()
     target_link_libraries(earthcall_core PUBLIC 
         ${GLFW_LIB}
         ${COCOA_FW}
@@ -284,12 +277,6 @@ if(NOT EMSCRIPTEN)
     add_executable(earthcall_webgpu src/entry.cpp ${WEBGPU_APP_SOURCES} ${IMGUI_WEBGPU_SOURCES})
     target_include_directories(earthcall_webgpu PRIVATE ${WGPU_NATIVE_DIR}/include)
     target_compile_definitions(earthcall_webgpu PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU GLFW_INCLUDE_NONE)
-    # The app compiles its own sources rather than linking earthcall_core, so
-    # the TerminalChannel's line editor must be granted here too.
-    if (APPLE AND EDIT_LIB)
-        target_link_libraries(earthcall_webgpu PRIVATE ${EDIT_LIB})
-        target_compile_definitions(earthcall_webgpu PRIVATE EARTHCALL_HAS_LIBEDIT)
-    endif()
 
     if(APPLE)
         target_link_libraries(earthcall_webgpu PRIVATE

@@ -138,9 +138,28 @@ int main() {
     harness.lawManager.tick();
     PropertyValue color;
     lawGetValue(*cube, PropertyPath::parse("color"), color);
-    const auto* c = std::get_if<glm::vec3>(&color);
+    const glm::vec3* c = std::get_if<glm::vec3>(&color);
     check(c && std::fabs(c->x - 1.0f) < 0.03f && c->y < 0.03f && c->z < 0.03f,
           "clicking the cube turns it red under the spoken Law");
+
+    // The second seed pass: value words and trigger presets, all authored.
+    const auto words = terminal->vocabulary(harness.lawManager);
+    const auto hasWord = [&](const std::string& symbol, const std::string& opcode) {
+        return std::any_of(words.words.begin(), words.words.end(), [&](const auto& w) {
+            return w.symbol == symbol && w.opcode == opcode;
+        });
+    };
+    check(hasWord("gold", "value") && hasWord("on", "value") && hasWord("on", "clause.trigger"),
+          "'gold' and 'on' are value words, and 'on' is still the trigger word where a clause begins");
+    check(hasWord("when hovered", "preset"), "'when hovered' denotes a trigger preset");
+    terminal->inject("when hovered then set color gold");
+    frame();
+    Core::EventBus::instance().publish(ECA::Event{"object-hover-entered", cube, nullptr, std::time(nullptr)});
+    harness.lawManager.tick();
+    lawGetValue(*cube, PropertyPath::parse("color"), color);
+    c = std::get_if<glm::vec3>(&color);
+    check(c && std::fabs(c->x - 1.0f) < 0.03f && std::fabs(c->y - 0.84f) < 0.03f && c->z < 0.03f,
+          "'when hovered then set color gold' paints the cube gold on hover");
 
     check(harness.zones.persistActiveZone(), "Save Zone keeps the spoken Law");
     const auto persisted = SaveSystem::readZoneIdentity("LawLine");
