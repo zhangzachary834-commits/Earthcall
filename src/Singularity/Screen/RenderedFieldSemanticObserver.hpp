@@ -8,6 +8,7 @@
 #include <cstring>
 #include <limits>
 #include <optional>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -238,6 +239,49 @@ private:
         for (const auto& slot : _densitySlots) bytes += slot.producerId.size();
         _stats.alignedSlotLogicalBytes = bytes;
     }
+
+    std::optional<AlignedSlotHandle> publishAlignedHandle(
+        const std::vector<AlignedSlotArtifact>& slots,
+        size_t slot,
+        Channel channel) {
+        if (slot >= slots.size()) return std::nullopt;
+        const auto& artifact = slots[slot];
+        if (artifact.channel != channel) return std::nullopt;
+        ++_stats.alignedHandlePublications;
+        return AlignedSlotHandle{channel, slot, artifact.generation};
+    }
+
+    bool validateAlignedHandle(
+        const std::vector<AlignedSlotArtifact>& slots,
+        const AlignedSlotHandle& handle,
+        Channel expectedChannel,
+        const std::string& producerId,
+        uint64_t authoredRevision) {
+        ++_stats.alignedHandleValidations;
+        if (handle.slot >= slots.size()) {
+            ++_stats.alignedHandleFallbacks;
+            return false;
+        }
+
+        const auto& artifact = slots[handle.slot];
+        const bool channelMatches =
+            handle.channel == expectedChannel &&
+            artifact.channel == expectedChannel;
+        const bool generationMatches =
+            artifact.generation == handle.generation;
+        const bool producerMatches = artifact.producerId == producerId;
+        const bool revisionMatches =
+            artifact.authoredRevision == authoredRevision;
+        _stats.alignedHandleMetadataTests += 4;
+
+        if (!channelMatches || !generationMatches ||
+            !producerMatches || !revisionMatches) {
+            ++_stats.alignedHandleFallbacks;
+            return false;
+        }
+        return true;
+    }
+
     struct VesselKey {
         Channel channel = Channel::SourceRho;
         const OntoMath::Piecewise* expr = nullptr;
