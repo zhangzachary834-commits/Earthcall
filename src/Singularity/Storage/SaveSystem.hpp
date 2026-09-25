@@ -79,7 +79,7 @@ nlohmann::json readSaveData(const std::string& filepath);
 std::string getSaveTypeFolderName(SaveType type);
 
 // Unpack a monolithic JSON save into individual files in a directory
-void unpackSaveToDirectory(const nlohmann::json& j, const std::string& directoryPath);
+bool unpackSaveToDirectory(const nlohmann::json& j, const std::string& directoryPath);
 
 // Compile an unpacked directory back into a monolithic JSON save
 nlohmann::json compileSaveFromDirectory(const std::string& directoryPath);
