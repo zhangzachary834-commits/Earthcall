@@ -182,10 +182,21 @@ jobs:
           ./build/heightfield_predicate_test
           ./build/scene_spatial_synthesis_dag_test
           ./build/scene_spatial_ontomath_synthesis_test
-          ./build/rendered_field_piecewise_synthesis_test
+          set -o pipefail
+          ./build/rendered_field_piecewise_synthesis_test 2>&1 | tee aligned-authority-ab.log
+          grep -F 'ALIGNED_AUTHORITY_AB ' aligned-authority-ab.log > aligned-authority-ab-result.txt
           ./build/rendered_field_direct_dispatch_test
           ./build/channel_paths_test
           ./build/sanctuary_of_sunlit_mist_test
+
+      - name: Upload aligned execution-key authority A/B
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aligned-authority-ab
+          path: aligned-authority-ab-result.txt
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Verify generic WebGPU SDF parity
         shell: bash
