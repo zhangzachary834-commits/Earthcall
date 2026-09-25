@@ -122,6 +122,38 @@ void faceTexturesFromJson(Material& m, const json& arr) {
         m.faceTextures.push_back(std::move(ft));
     }
 }
+class ResponseExprBridge : public Property {
+public:
+    explicit ResponseExprBridge(std::string name, Material* mat)
+        : _name(std::move(name)), _nameId(Earthcall::StringInterner::intern(_name)), _mat(mat) {}
+
+    std::string name() const override { return _name; }
+    Earthcall::StringId nameId() const override { return _nameId; }
+    std::string typeName() const override { return "string"; }
+
+    PropertyValue value() const override {
+        if (!_mat || !_mat->responseExpr) return PropertyValue(std::string("{}"));
+        return PropertyValue(_mat->responseExpr->toJson().dump());
+    }
+    bool setValue(const PropertyValue& v) override {
+        if (!_mat) return false;
+        const std::string* src = std::get_if<std::string>(&v);
+        if (!src) return false;
+        nlohmann::json parsed = nlohmann::json::parse(*src, nullptr, false);
+        if (parsed.is_discarded()) return false;
+
+        _mat->responseExpr =
+            std::make_shared<OntoMath::Piecewise>(OntoMath::Piecewise::fromJson(parsed));
+        _mat->bumpResponseRevision();
+        return true;
+    }
+
+private:
+    std::string _name;
+    Earthcall::StringId _nameId;
+    Material* _mat;
+};
+
 class ColorExprBridge : public Property {
 public:
     explicit ColorExprBridge(std::string name, Material* mat)
@@ -170,6 +202,8 @@ void Material::buildProperties() {
         "diffuse", this, &Material::diffuse));
     registerProperty(std::make_unique<ColorExprBridge>(
         "colorExpr", this));
+    registerProperty(std::make_unique<ResponseExprBridge>(
+        "responseExpr", this));
     registerProperty(std::make_unique<ComputedProperty<Material, int>>(
         "textureResolution", this, &Material::getTextureResolution, &Material::setTextureResolution));
     registerProperty(std::make_unique<ComputedProperty<Material, int>>(
@@ -232,6 +266,9 @@ json Material::toJson() const {
     if (colorExpr) {
         j["colorExpr"] = colorExpr->toJson();
     }
+    if (responseExpr) {
+        j["responseExpr"] = responseExpr->toJson();
+    }
     if (textureResolution != 64) {
         j["textureResolution"] = textureResolution;
     }
@@ -255,6 +292,10 @@ Material Material::fromJson(const json& j) {
     m.diffuse   = j.value("diffuse", 0.8f);
     if (j.contains("colorExpr")) {
         m.colorExpr = std::make_shared<OntoMath::Piecewise>(OntoMath::Piecewise::fromJson(j["colorExpr"]));
+    }
+    if (j.contains("responseExpr")) {
+        m.responseExpr =
+            std::make_shared<OntoMath::Piecewise>(OntoMath::Piecewise::fromJson(j["responseExpr"]));
     }
     if (j.contains("textureResolution") && j["textureResolution"].is_number_integer()) {
         m.textureResolution = j["textureResolution"].get<int>();
