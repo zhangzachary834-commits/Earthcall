@@ -302,7 +302,7 @@ void benchmarkPruneRebuild() {
 int main() {
     std::cout << "======================================================\n";
     std::cout << "REPRODUCIBLE BENCHMARK: AlphaNode Lookup Strategies\n";
-    std::cout << "Environment: Linux x86_64, GCC 13.3.0 (-O3)\n";
+    std::cout << "Compiler: GCC " << __VERSION__ << " | build: -O3\n";
     std::cout << "======================================================\n";
 
     benchmarkPatterns(5);
