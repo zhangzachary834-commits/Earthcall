@@ -139,7 +139,7 @@ int main() {
     // its semantic JSON is identical to the incoming canonical Zone.
     std::filesystem::remove(unpackedDir / ".unpack_manifest.json");
     std::filesystem::path safeAlias =
-        unpackedDir / "zones" / "zone_Display_Name_Zone_1.json";
+        unpackedDir / "zones" / "zone_Display Name Zone 1.json";
     {
         std::ofstream out(safeAlias);
         out << std::setw(2) << fullSave["zones"][0] << std::endl;
@@ -160,7 +160,7 @@ int main() {
           "Fixture unpack for ambiguous alias succeeds");
     std::filesystem::remove(ambiguousDir / ".unpack_manifest.json");
     std::filesystem::path ambiguousAlias =
-        ambiguousDir / "zones" / "zone_Display_Name_Zone_1.json";
+        ambiguousDir / "zones" / "zone_Display Name Zone 1.json";
     nlohmann::json personAlias = fullSave["zones"][0];
     personAlias["person_note"] = "keep this authored difference";
     {
