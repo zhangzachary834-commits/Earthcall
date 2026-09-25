@@ -271,6 +271,22 @@ std::shared_ptr<Material> Object::ownMaterial() {
         mine->specular     = shared->specular;
         mine->ambient      = shared->ambient;
         mine->diffuse      = shared->diffuse;
+
+        // Authored appearance mathematics is Material truth too. Copy-on-write
+        // must preserve it when paint causes an Object to diverge from a shared
+        // Material, but the new Material must own an independent AST so future
+        // Law/property edits cannot mutate the shared being through pointer aliasing.
+        if (shared->colorExpr) {
+            mine->colorExpr = std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::fromJson(shared->colorExpr->toJson()));
+            mine->bumpRevision();
+        }
+        if (shared->responseExpr) {
+            mine->responseExpr = std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::fromJson(shared->responseExpr->toJson()));
+            mine->bumpResponseRevision();
+        }
+
         mine->faceTextures = shared->faceTextures;
         // The copies are this material's own paint now; a texture handle
         // belongs to the buffer the backend uploaded, so let each re-upload

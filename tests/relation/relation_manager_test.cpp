@@ -2,6 +2,7 @@
 #include "Relation/Relation.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "json.hpp"
+#include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 
 #include <iostream>
 #include <string>
@@ -115,6 +116,52 @@ void test_cycle_detection() {
     check(!noCycle, "Adding A -> C should not form a cycle");
 }
 
+void test_forget_type_lexeme() {
+    std::cout << "--- test_forget_type_lexeme ---\n";
+    RelationManager rm;
+    DummySingular a("nodeA");
+    DummySingular b("nodeB");
+
+    Singularity::Language::Lexeme lexeme("custom_relation_type");
+    auto r = std::make_shared<Relation>(lexeme, a, b, false);
+    rm.add(r);
+
+    check(r->getTypeLexeme() == &lexeme, "Relation should have the lexeme initially");
+
+    std::string expectedId = lexeme.getIdentifier();
+    check(r->type == expectedId, "Relation type string should match lexeme ID");
+
+    RelationManager::forgetTypeLexemeEverywhere(&lexeme);
+
+    check(r->getTypeLexeme() == nullptr, "Relation should forget the lexeme");
+    check(r->type == expectedId, "Relation type string should be preserved");
+}
+
+void test_would_form_cycle_string_overload() {
+    std::cout << "--- test_would_form_cycle_string_overload ---\n";
+    RelationManager rm;
+    DummySingular a("nodeA");
+    DummySingular b("nodeB");
+    DummySingular c("nodeC");
+    DummySingular d("nodeD");
+
+    // A -> B
+    rm.add(std::make_shared<Relation>("hierarchy", a, b, true));
+    // B -> C
+    rm.add(std::make_shared<Relation>("hierarchy", b, c, true));
+    // C -> D
+    rm.add(std::make_shared<Relation>("hierarchy", c, d, true));
+
+    bool cycles = rm.wouldFormCycle("nodeD", "nodeA", "hierarchy");
+    check(cycles, "Adding D -> A should form a cycle for 'hierarchy' (string overload)");
+
+    bool noCycle = rm.wouldFormCycle("nodeA", "nodeD", "hierarchy");
+    check(!noCycle, "Adding A -> D should not form a cycle (string overload)");
+
+    bool cyclesSelf = rm.wouldFormCycle("nodeB", "nodeB", "hierarchy");
+    check(cyclesSelf, "Self-loop should be detected as a cycle (string overload)");
+}
+
 void test_forget_being() {
     std::cout << "--- test_forget_being ---\n";
     // Using a separate scope for the manager to ensure liveManagers behavior
@@ -223,6 +270,8 @@ int main() {
     test_find_adjacent_entities();
     test_json_serialization();
     test_relations_involving();
+    test_forget_type_lexeme();
+    test_would_form_cycle_string_overload();
 
     std::cout << "============================================================\n";
     std::cout << "RelationManager test summary: "

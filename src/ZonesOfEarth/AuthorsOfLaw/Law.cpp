@@ -1436,8 +1436,13 @@ std::size_t ReteNetwork::addAlphaNode(const std::string& description, AlphaPredi
     node.description = description;
     node.predicate = std::move(predicate);
     node.source = source;
+    const std::size_t id = node.id;
     _alphaNodes.push_back(std::move(node));
-    return _alphaNodes.back().id;
+    if (id >= _alphaIndexById.size()) {
+        _alphaIndexById.resize(id + 1, static_cast<std::size_t>(-1));
+    }
+    _alphaIndexById[id] = _alphaNodes.size() - 1;
+    return id;
 }
 
 std::size_t ReteNetwork::addBetaNode(const std::string& description,
@@ -1657,6 +1662,15 @@ void ReteNetwork::dropUnboundAlphaNodes() {
                                   doomed.end();
                        }),
         _alphaNodes.end());
+
+    // Alpha ids are stable but vector indices are not: erase compacts survivors.
+    // Rebuild the direct-address table after pruning so every surviving id
+    // resolves to its new vector position and removed ids resolve to invalid.
+    std::fill(_alphaIndexById.begin(), _alphaIndexById.end(),
+              static_cast<std::size_t>(-1));
+    for (std::size_t i = 0; i < _alphaNodes.size(); ++i) {
+        _alphaIndexById[_alphaNodes[i].id] = i;
+    }
 }
 
 std::vector<ReteActivation> ReteNetwork::drainAgenda() {
@@ -1719,17 +1733,21 @@ nlohmann::json ReteNetwork::toJson() const {
 }
 
 const ReteNetwork::AlphaNode* ReteNetwork::findAlpha(std::size_t id) const {
-    for (const auto& alpha : _alphaNodes) {
-        if (alpha.id == id) return &alpha;
+    if (id >= _alphaIndexById.size()) return nullptr;
+    const std::size_t index = _alphaIndexById[id];
+    if (index == static_cast<std::size_t>(-1) || index >= _alphaNodes.size()) {
+        return nullptr;
     }
-    return nullptr;
+    return &_alphaNodes[index];
 }
 
 ReteNetwork::AlphaNode* ReteNetwork::findAlpha(std::size_t id) {
-    for (auto& alpha : _alphaNodes) {
-        if (alpha.id == id) return &alpha;
+    if (id >= _alphaIndexById.size()) return nullptr;
+    const std::size_t index = _alphaIndexById[id];
+    if (index == static_cast<std::size_t>(-1) || index >= _alphaNodes.size()) {
+        return nullptr;
     }
-    return nullptr;
+    return &_alphaNodes[index];
 }
 
 std::vector<Singular*> ReteNetwork::collectTerminalSubjects(

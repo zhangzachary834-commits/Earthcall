@@ -24,7 +24,13 @@ $$\text{LIGHT} + \text{MEDIUM} + \text{SPACE} + \text{VIEW} \longrightarrow \tex
 3. **Refusal #7 (No hardcoded variable behavior)**: The shapes of the beams, the falloff, the aperture cutouts, and the scattering properties are authored in data, not hardcoded into engine methods.
 4. **Bounded Sphere-Tracing for Visibility**: Rather than an expensive nested raymarch ($O(N^2)$), the visibility function $V(p)$ employs bounded sphere-tracing over the authored occluder SDF ($O(1)$ empty-space leaps, max 24 steps) with soft penumbra estimation:
    $$V(p) = \min\left(1.0, \frac{k_{\text{penumbra}} \cdot d(t)}{t}\right)$$
-   This maintains interactive 60+ FPS frame rates while producing smooth penumbra transitions at the beam boundaries.
+   This produced smooth penumbra transitions in the focused image witness. The original 60+ FPS assertion has no saved-scene frame-time witness; see the dated correction below.
+
+## Performance correction — 2026-09-25
+
+Zach reported that Sanctuary of Sunlit Mist becomes unresponsive sooner during use. Codex / GPT-6 measured the unchanged authored mist in a native, volume-only saved-scene probe: current 1280×720 synchronized wall time was approximately 85–87 ms/frame in one run, with substantial run-to-run load variation. The original `1d84821f` implementation was also costly. A no-occluder diagnostic was far faster but changed the image and is not an acceptable replacement. The initial 60+ FPS statement above is withdrawn as a performance claim; the focused 32×16 contrast test verifies appearance, not interactive frame rate. The saved-scene A/B, caveats, and next gate are in [the audit](../../../../../audits/rendering_optimization/2026-09-25_sunlit_mist_saved_scene_ab.md).
+
+**Correction signed:** Codex / GPT-6 · session `01a0cfbf-c751-7af0-b160-df07da055bc0` · 2026-09-25 12:56 PDT. Antigravity's original authorship and its correctness witness remain attributed above.
 
 ## Constitutional correction after cross-rung review
 

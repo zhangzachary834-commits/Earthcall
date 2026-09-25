@@ -1,0 +1,35 @@
+{
+ "authors": [
+  "Zach"
+ ],
+ "identifier": "law-line-preset-becomes",
+ "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
+ "law": {
+  "activation": 2,
+  "applicationLog": [],
+  "authors": [
+   "Zach"
+  ],
+  "authority": 0,
+  "conditionMode": "all",
+  "conditionSubjects": [],
+  "drives": false,
+  "enabled": false,
+  "id": "law-line-preset-becomes",
+  "name": "my law that fires when it becomes true",
+  "provenance": [
+   {
+    "directed": true,
+    "entityA": "law-line-preset-becomes",
+    "entityB": "Zach",
+    "events": [],
+    "type": "authored-by",
+    "weight": 1.0
+   }
+  ],
+  "retrigger": 0,
+  "scope": 1,
+  "targets": []
+ },
+ "triggers": []
+}

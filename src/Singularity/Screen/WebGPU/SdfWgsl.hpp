@@ -90,6 +90,19 @@ struct PhaseExpressionLayout {
     std::string error;
 };
 
+// Rung 9 receiving-surface response. It intentionally resembles the phase
+// layout only at the generic mathematical level: n/wi/wo are admitted under a
+// distinct receiver-owned context, and no Material Timeline is invented here.
+struct ResponseExpressionLayout {
+    std::string structure;
+    std::size_t parameterCount = 0;
+    bool readsNormal = false;
+    bool readsWi = false;
+    bool readsWo = false;
+    bool ok = true;
+    std::string error;
+};
+
 struct EmissionExpressionLayout {
     std::string structure;
     std::size_t parameterCount = 0;
@@ -158,7 +171,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* scatteringExpr = nullptr,
                 const OntoMath::Piecewise* volumeChromaExpr = nullptr,
                 const OntoMath::Piecewise* phaseExpr = nullptr,
-                const OntoMath::Piecewise* emissionExpr = nullptr);
+                const OntoMath::Piecewise* emissionExpr = nullptr,
+                const OntoMath::Piecewise* responseExpr = nullptr);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
@@ -176,7 +190,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* scatteringExpr = nullptr,
                              const OntoMath::Piecewise* volumeChromaExpr = nullptr,
                              const OntoMath::Piecewise* phaseExpr = nullptr,
-                             const OntoMath::Piecewise* emissionExpr = nullptr);
+                             const OntoMath::Piecewise* emissionExpr = nullptr,
+                             const OntoMath::Piecewise* responseExpr = nullptr);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
 // uses, but with its parameter numbering starting at zero. Equal structure means
@@ -218,6 +233,15 @@ AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr
 // V3 medium phase Phi(p,wi,wo,t)->scalar. Absence is exact identity Phi=1.
 // wi/wo are transport bindings, never aliases of source alpha's omega.
 PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr);
+
+// Rung 9 receiver-owned f_r-like channel. Authored responses are vec3-valued,
+// may read n and existing wi/wo directional coordinates, and deliberately do
+// not admit t until an honest Material-owned Timeline exists.
+ResponseExpressionLayout inspectResponseExpression(const OntoMath::Piecewise* expr);
+
+// Re-collect only response numeric parameters using the same admission/lowering
+// path as inspectResponseExpression. This is the future value-only cache path.
+ParameterBlock collectResponseParams(const OntoMath::Piecewise* expr);
 
 // V4 medium self-emission E_v(p,omega,t)->vec3. Absence is no self-emitted
 // radiance. omega is world-space sample -> eye in an emission-owned context.

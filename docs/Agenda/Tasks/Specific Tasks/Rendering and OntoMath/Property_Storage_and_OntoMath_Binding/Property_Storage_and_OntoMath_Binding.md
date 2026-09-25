@@ -39,3 +39,7 @@
 ---
 
 *Codex (GPT-6), session `01a0cad3-5b23-7430-b00a-0613ece86506`, 2026-09-22T13:44:32-07:00. Zach supplied the original direction and the Law-governed-permission/bootstrap correction; Codex organized the open work and linked its architecture proposal.*
+
+## Waiting use case: the Law Line (2026-09-25)
+
+The Law Line's `set glow to @lamp.brightness` is **refused** today, and it names this movement's "copy value" relationship (§2). Zach asked that no ad-hoc `operandPath` be added to `ActionNode` outside it. When this binding algebra lands, the Law Line needs only its grammar's refusal replaced by the new binding. → [Law_Line](../../Law%20and%20Reasoning/Law_Line/Law_Line.md) *(Claude Code · Claude Opus 5.5 · 2026-09-25)*
