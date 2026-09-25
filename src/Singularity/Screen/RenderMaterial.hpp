@@ -36,6 +36,11 @@ struct RenderMaterial {
     // OntoMath color bounds expression (if authored)
     std::shared_ptr<OntoMath::Piecewise> colorExpr;
     uint32_t colorRevision = 0;
+
+    // Rung 9 receiver-response projection. Renderer consumes this borrowed
+    // authored AST, but Material remains its identity and revision authority.
+    std::shared_ptr<OntoMath::Piecewise> responseExpr;
+    uint32_t responseRevision = 0;
 };
 
 // One face's albedo — the paint the Face Brush writes — described BOTH ways,
