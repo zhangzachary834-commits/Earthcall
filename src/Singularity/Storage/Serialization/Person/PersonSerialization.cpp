@@ -64,13 +64,29 @@ void updatePriorPersonSerializations(const Person& person, const std::string& ol
         std::string personFolder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
         if (!personFolder.empty()) {
             std::error_code ec;
-            std::string oldPath = personFolder + "/" + SaveSystem::sanitizeLabel(oldName) + ".json";
-            if (std::filesystem::exists(oldPath, ec)) {
-                std::filesystem::remove(oldPath, ec);
+            std::string canonicalStem = SaveSystem::sanitizeLabel(person.getIdentifier());
+            std::string canonicalEcformPath = personFolder + "/" + canonicalStem + ".ecform";
+
+            std::string oldStem = SaveSystem::sanitizeLabel(oldName);
+            if (!oldStem.empty()) {
+                std::string oldEcformPath = personFolder + "/" + oldStem + ".ecform";
+                if (oldEcformPath != canonicalEcformPath && std::filesystem::exists(oldEcformPath, ec)) {
+                    std::filesystem::remove(oldEcformPath, ec);
+                }
+                std::string oldJsonPath = personFolder + "/" + oldStem + ".json";
+                if (oldJsonPath != canonicalEcformPath && std::filesystem::exists(oldJsonPath, ec)) {
+                    std::filesystem::remove(oldJsonPath, ec);
+                }
             }
             if (oldName == "Player" || oldName == "player") {
-                std::string playerPath = personFolder + "/Player.json";
-                if (std::filesystem::exists(playerPath, ec)) std::filesystem::remove(playerPath, ec);
+                std::string playerEcformPath = personFolder + "/Player.ecform";
+                if (playerEcformPath != canonicalEcformPath && std::filesystem::exists(playerEcformPath, ec)) {
+                    std::filesystem::remove(playerEcformPath, ec);
+                }
+                std::string playerJsonPath = personFolder + "/Player.json";
+                if (playerJsonPath != canonicalEcformPath && std::filesystem::exists(playerJsonPath, ec)) {
+                    std::filesystem::remove(playerJsonPath, ec);
+                }
             }
         }
     }
@@ -100,7 +116,8 @@ void updatePriorPersonSerializations(const Person& person, const std::string& ol
             if (ext != ".json" && ext != ".ecform") continue;
 
             std::string stem = entry.path().stem().string();
-            if (entry.path().parent_path().filename() == "persons" && stem == SaveSystem::sanitizeLabel(newName)) {
+            std::string canonicalStem = SaveSystem::sanitizeLabel(person.getIdentifier());
+            if (entry.path().parent_path().filename() == "persons" && stem == canonicalStem) {
                 continue;
             }
 
