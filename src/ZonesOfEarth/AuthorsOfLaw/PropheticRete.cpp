@@ -980,15 +980,17 @@ std::vector<std::string> normalizedPaths(const std::string& dotted) {
     return out;
 }
 
-bool pathsMayAlias(const std::string& a, const std::string& b) {
-    const auto aa = normalizedPaths(a);
-    const auto bb = normalizedPaths(b);
+bool pathsMayAlias(const std::vector<std::string>& aa, const std::vector<std::string>& bb) {
     for (const auto& left : aa) {
         for (const auto& right : bb) {
             if (left == right) return true;
         }
     }
     return false;
+}
+
+bool pathsMayAlias(const std::string& a, const std::string& b) {
+    return pathsMayAlias(normalizedPaths(a), normalizedPaths(b));
 }
 
 bool namesWorldReading(const std::string& dotted) {
@@ -1094,13 +1096,36 @@ void Index::rebuild(const std::vector<std::shared_ptr<Law>>& laws) {
     // and "there may also be other edges we cannot enumerate" can both be true.
     // Runtime consumers still must fall back unless the graph is complete.
     _relevanceComplete = _complete && !anyOpaqueWrite;
+
+    // Bolt Optimization: Pre-compute normalized paths for writes and branchReads
+    // to eliminate string parsing and allocations inside the inner relevance loop.
+    std::vector<std::vector<std::vector<std::string>>> writeNorms(_facts.size());
+    std::vector<std::vector<std::vector<std::string>>> readNorms(_facts.size());
+
+    for (std::size_t j = 0; j < _facts.size(); ++j) {
+        writeNorms[j].reserve(_facts[j].writes.size());
+        for (const auto& w : _facts[j].writes) {
+            writeNorms[j].push_back(normalizedPaths(w.path));
+        }
+
+        readNorms[j].reserve(_facts[j].branchReads.size());
+        for (const auto& r : _facts[j].branchReads) {
+            readNorms[j].push_back(normalizedPaths(r.path));
+        }
+    }
+
     std::set<std::tuple<std::string, std::string, std::string, std::string,
                         std::string, bool>> seen;
-    for (const auto& writerFacts : _facts) {
-        for (const auto& write : writerFacts.writes) {
-            for (const auto& readerFacts : _facts) {
-                for (const auto& read : readerFacts.branchReads) {
-                    if (!pathsMayAlias(write.path, read.path)) continue;
+
+    for (std::size_t i = 0; i < _facts.size(); ++i) {
+        const auto& writerFacts = _facts[i];
+        for (std::size_t w = 0; w < writerFacts.writes.size(); ++w) {
+            const auto& write = writerFacts.writes[w];
+            for (std::size_t j = 0; j < _facts.size(); ++j) {
+                const auto& readerFacts = _facts[j];
+                for (std::size_t r = 0; r < readerFacts.branchReads.size(); ++r) {
+                    const auto& read = readerFacts.branchReads[r];
+                    if (!pathsMayAlias(writeNorms[i][w], readNorms[j][r])) continue;
                     if (!write.range.mayIntersect(read.satisfying)) continue;
                     const auto key = std::make_tuple(
                         write.lawId, write.branchId, read.lawId, read.branchId,

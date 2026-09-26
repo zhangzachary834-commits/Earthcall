@@ -36,15 +36,10 @@ struct Key {
     enum class Kind {
         Text, Enter, Tab, BackTab, Backspace, Delete, Left, Right, Up, Down, Home, End,
         WordLeft, WordRight, Escape, Interrupt, EndOfInput, KillToStart, KillToEnd, KillWord,
-        Redraw, HistorySearch, PasteBegin, PasteEnd,
-        // Rung 3: the mouse (only reported while a menu or help is open),
-        // paging, help, and the terminal's answer to "where is the cursor?".
-        WheelUp, WheelDown, Click, PageUp, PageDown, Help, CursorReport
+        Redraw, HistorySearch, PasteBegin, PasteEnd
     };
     Kind kind = Kind::Text;
     std::string text;   // Kind::Text: one UTF-8 character
-    int x = 0;          // Click / CursorReport: column (Click: region-relative once mapped)
-    int y = 0;          // Click / CursorReport: row
 };
 
 // Bytes from a terminal in character mode -> keys. A lone ESC is ambiguous
@@ -55,12 +50,8 @@ public:
     std::vector<Key> feed(const std::string& bytes, double now);
     std::vector<Key> flush(double now);
     double escapeDelay = 0.03;
-    // A cursor-position report looks like a key (`ESC[r;cR`); it is only
-    // read as one when the channel has just asked for it.
-    void expectCursorReport() { ++_expectReports; }
 
 private:
-    int _expectReports = 0;
     std::vector<Key> drain(bool final);
     std::string _pending;
     double _pendingSince = 0.0;
@@ -78,25 +69,12 @@ public:
     using HighlightFn = std::function<std::vector<LawSentence::Span>(const std::string& text)>;
     using StatusFn = std::function<std::vector<Status>(const std::string& text)>;
 
-    enum class Outcome { None, Submitted, Interrupt, EndOfInput, Redraw, Help };
+    enum class Outcome { None, Submitted, Interrupt, EndOfInput, Redraw };
 
     void setProviders(SuggestFn suggest, HighlightFn highlight, StatusFn status);
-    // Asked before Enter submits: "" lets the line go; anything else keeps it
-    // in place and shows the answer (what is still missing, with an example).
-    std::function<std::string(const std::string& text)> submitGate;
     Outcome press(const Key& key);
     std::string takeSubmitted();
     void setNotice(const std::string& notice) { _notice = notice; }
-
-    // A transient, scrollable overlay in the panel (help). Lines arrive
-    // already styled and fitted to the width; wheel/↑↓/PgUp/PgDn scroll,
-    // Esc or typing closes it. It never enters the scrollback.
-    void showOverlay(std::vector<std::string> lines) { _overlay = std::move(lines); _overlayScroll = 0; }
-    void closeOverlay() { _overlay.clear(); }
-    bool overlayVisible() const { return !_overlay.empty(); }
-    int overlayScroll() const { return _overlayScroll; }
-    // Mouse reporting is wanted only while there is something to point at.
-    bool wantsMouse() const { return menuVisible() || overlayVisible(); }
     void refresh() { edited(false); }   // the world changed: recompute menu and status
 
     void setHistory(std::vector<std::string> history) { _history = std::move(history); }
@@ -108,11 +86,6 @@ public:
     bool autoMenu = true;
     bool color = true;
     bool hints = true;
-    int overlayRows = 18;
-    // The status footer (plain text; the editor styles it) and the colour of
-    // its leading mark — green when this Zone hears the line, yellow if not.
-    std::string footer;
-    std::string footerMark = "32";
 
     // One drawable region: the input (which the terminal wraps) and the panel.
     struct Frame {
@@ -134,8 +107,6 @@ public:
     const std::vector<LawSentence::Suggestion>& suggestions() const { return _suggestions; }
     std::string ghost() const;
     bool searching() const { return _searching; }
-    bool onPlaceholder() const;
-    bool hasPlaceholders() const;
 
 private:
     void edited(bool textChanged);
@@ -146,11 +117,7 @@ private:
     std::string currentWord() const;
     void historyStep(int direction);
     std::string historyMatch() const;
-    std::string styled(const std::string& text, bool markCursor = false) const;
-    std::size_t placeholderEnd(std::size_t at) const;
-    void jumpToPlaceholder();
-    void eraseSelectedPlaceholder();
-    void clickAt(int row, int col);
+    std::string styled(const std::string& text) const;
     std::string sgr(const std::string& code, const std::string& text) const;
 
     std::string _buffer;
@@ -173,14 +140,6 @@ private:
     bool _searching = false;
     std::string _query;
     int _searchSkip = 0;
-
-    std::vector<std::string> _overlay;
-    int _overlayScroll = 0;
-    // What the last frame put on each region row (a menu item's index, or -1)
-    // — how a click becomes a choice.
-    mutable std::vector<int> _rowItems;
-    mutable int _inputRows = 1;
-    mutable int _width = 80;
 
     SuggestFn _suggest;
     HighlightFn _highlight;

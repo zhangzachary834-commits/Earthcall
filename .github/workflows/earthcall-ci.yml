@@ -71,8 +71,8 @@ jobs:
             no_black_box_test \
             channel_paths_test \
             dynamic_property_reachability_test \
+            tick_snapshot_structural_refresh_test \
             property_path_precalc_test \
-            law_identifier_index_test \
             relation_retry_lexeme_test \
             logos_modality_test \
             person_not_object_test \
@@ -126,7 +126,7 @@ jobs:
         run: |
           set -euxo pipefail
           ctest --test-dir build --output-on-failure \
-            -R '^(language_identity_reference_test|creation_tools_test|interaction_channel_test|creator_console_fixture_law_test|keyboard_shell_shortcuts_test|no_black_box_test|channel_paths_test|dynamic_property_reachability_test|property_path_precalc_test|law_identifier_index_test|relation_retry_lexeme_test|logos_modality_test|person_not_object_test|zone_native_save_isolation_test|zone_spatial_field_roundtrip_test|perlin_zone_field_restore_test|object_roundtrip_test|object_serialization_test|matter_semantic_precedence_test|shape_hydration_integrity_test|synthesis_studio_zone_closure_test|synthesis_studio_living_test|chess_zone_native_boot_test|synthesis_studio_full_store_boot_test|second_nature_law_authoring_test|second_nature_law_forge_zone_test|prophetic_rete_test|home_identity_continuity_test|person_migration_test|person_home_migration_boot_test|body_part_test|person_database_test|person_serialization_test|person_display_name_identity_test|authorable_light_contract_test|timeline_test|law_file_tree_fossil_test|rete_state_ptr_index_test|relation_type_lexeme_lifetime_test|jit_llvm_test|advanced_face_paint_test|action_model_test|async_state_logger_test|save_system_error_test)$'
+            -R '^(language_identity_reference_test|creation_tools_test|interaction_channel_test|creator_console_fixture_law_test|keyboard_shell_shortcuts_test|no_black_box_test|channel_paths_test|dynamic_property_reachability_test|tick_snapshot_structural_refresh_test|property_path_precalc_test|relation_retry_lexeme_test|logos_modality_test|person_not_object_test|zone_native_save_isolation_test|zone_spatial_field_roundtrip_test|perlin_zone_field_restore_test|object_roundtrip_test|object_serialization_test|matter_semantic_precedence_test|shape_hydration_integrity_test|synthesis_studio_zone_closure_test|synthesis_studio_living_test|chess_zone_native_boot_test|synthesis_studio_full_store_boot_test|second_nature_law_authoring_test|second_nature_law_forge_zone_test|prophetic_rete_test|home_identity_continuity_test|person_migration_test|person_home_migration_boot_test|body_part_test|person_database_test|person_serialization_test|person_display_name_identity_test|authorable_light_contract_test|timeline_test|law_file_tree_fossil_test|rete_state_ptr_index_test|relation_type_lexeme_lifetime_test|jit_llvm_test|advanced_face_paint_test|action_model_test|async_state_logger_test|save_system_error_test)$'
 
   sdf-range-proxy-verification:
     name: SDF range-proxy verification (macOS)

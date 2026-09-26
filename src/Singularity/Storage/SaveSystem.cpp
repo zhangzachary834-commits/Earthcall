@@ -14,7 +14,7 @@
 #include "Singularity/Storage/CloudStorage.hpp"
 #include "Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.hpp"
 #include "Identity/FirstMoverRegister.hpp"
-#include "Singularity/Storage/MigrationFramework.hpp"
+
 #include <zlib.h>
 #include <thread>
 #include <atomic>
@@ -419,7 +419,7 @@ std::string writeSaveData(const nlohmann::json& j, const std::string& customLabe
     if (filename.empty()) return "";
 
     bool success = atomicWriteFile(filename, [&](std::ostream& out) {
-        out << j.dump(-1);
+        out << j.dump(2);
         return static_cast<bool>(out);
     });
 
@@ -609,14 +609,31 @@ nlohmann::json readSaveData(const std::string& filepath) {
     }
     
     // Check magic bytes or extension to determine if it's msgpack
-    if (actualPath.length() > 7 && actualPath.substr(actualPath.length() - 7) == ".ecsave") {
+    bool isMsgpack = false;
+    if (actualPath.length() >= 7 && actualPath.substr(actualPath.length() - 7) == ".ecsave") {
+        isMsgpack = true;
+    } else if (actualPath.length() >= 7 && actualPath.substr(actualPath.length() - 7) == ".ecform") {
+        char firstChar = 0;
+        in.get(firstChar);
+        in.clear();
+        in.seekg(0, std::ios::beg);
+        if (firstChar != '{' && firstChar != '[' && firstChar != ' ' && firstChar != '\n' && firstChar != '\r' && firstChar != '\t') {
+            isMsgpack = true;
+        }
+    }
+
+    if (isMsgpack) {
         std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
         std::vector<uint8_t> decompressed = decompressData(bytes);
         try {
             return nlohmann::json::from_msgpack(decompressed);
         } catch (...) {
-            std::cerr << "[SaveSystem] Malformed msgpack in: " << filepath << "\n";
-            return nlohmann::json();
+            try {
+                return nlohmann::json::parse(decompressed.begin(), decompressed.end());
+            } catch (...) {
+                std::cerr << "[SaveSystem] Malformed msgpack in: " << filepath << "\n";
+                return nlohmann::json();
+            }
         }
     } else {
         // Fallback to plain JSON
@@ -628,10 +645,7 @@ nlohmann::json readSaveData(const std::string& filepath) {
                       << ": " << e.what() << "\n";
             return nlohmann::json();
         }
-        
-        // Pass through the migration framework to ensure forward-compatibility
-        // and translation to Graph-based unified structure.
-        return Earthcall::Storage::MigrationFramework::migrateLegacySave(j);
+        return j;
     }
 }
 
@@ -1333,7 +1347,7 @@ bool writeZoneIdentity(const std::string& identifier, const nlohmann::json& j) {
     const std::string path = zoneIdentityPath(identifier);
     if (path.empty()) return false;
     return atomicWriteFile(path, [&](std::ostream& out) {
-        out << j.dump(-1);
+        out << j.dump(2);
         return static_cast<bool>(out);
     });
 }
@@ -1414,7 +1428,7 @@ bool writeLawIdentity(const std::string& identifier, const nlohmann::json& j) {
     const std::string path = lawIdentityPath(identifier);
     if (path.empty()) return false;
     return atomicWriteFile(path, [&](std::ostream& out) {
-        out << j.dump(-1);
+        out << j.dump(2);
         return static_cast<bool>(out);
     });
 }
@@ -1484,7 +1498,7 @@ bool writeHomeIdentity(const std::string& identifier, const nlohmann::json& j) {
     const std::string path = homeIdentityPath(identifier);
     if (path.empty()) return false;
     return atomicWriteFile(path, [&](std::ostream& out) {
-        out << j.dump(-1);
+        out << j.dump(2);
         return static_cast<bool>(out);
     });
 }

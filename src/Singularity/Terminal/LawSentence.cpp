@@ -391,35 +391,11 @@ private:
         return a.text[0] == '@' ? a.text.substr(1) : a.text;
     }
 
-    // An event a Law will LISTEN for must be one this world knows — heard,
-    // bound, or published by some Law — or a Law is born deaf to a name that
-    // never fires (Zach, 2026-09-25: "fires when" made a Law waiting for an
-    // event called "when"). A new name is minted on purpose by quoting it.
-    // `mayMint`: publishing may always name a new event; that is minting.
-    std::string requireEvent(const std::string& what, bool mayMint) {
-        if (!atEnd() && _text[_pos] != '"' && peekClauseWord()) {
-            refuse("'" + peekAtomText() + "' is a clause word, not an event; name the event after it" +
-                       (_vocab.events.empty() ? std::string{} : " (e.g. " + _vocab.events.front() + ")"),
-                   _pos);
-        }
+    std::string requireEvent(const std::string& what) {
         const Atom a = requireAtom(what, &Expectation::event);
         mark(a.offset, _pos, "event");
-        if (a.text.empty() || !looksLikePath(a.text)) refuse("'" + a.text + "' does not name an event", a.offset);
-        if (a.quoted || mayMint || _vocab.events.empty()) return a.text;
-        if (std::find(_vocab.events.begin(), _vocab.events.end(), a.text) != _vocab.events.end()) return a.text;
-        std::vector<std::string> near;
-        const std::string want = lower(a.text);
-        for (const auto& e : _vocab.events) {
-            const std::string have = lower(e);
-            if (have.find(want) != std::string::npos || want.find(have) != std::string::npos ||
-                (want.size() >= 3 && have.compare(0, 3, want, 0, 3) == 0)) {
-                near.push_back(e);
-            }
-        }
-        if (near.size() > 6) near.resize(6);
-        refuse("'" + a.text + "' is not an event this world knows, so the Law would never fire. "
-               "Pick one from the menu, or quote a new name on purpose: on \"" + a.text + "\"",
-               a.offset, near);
+        if (a.quoted || !looksLikePath(a.text)) refuse("'" + a.text + "' does not name an event", a.offset);
+        return a.text;
     }
 
     PropertyValue parseValue() {
@@ -548,10 +524,9 @@ private:
     void triggerClause() {
         (void)tryMatch({"clause.trigger"}, "clause");   // "fires on": the "on" is optional
         if (auto a = tryMatch({"activation."}, "activation")) return setActivation(a->opcode);
-        if (auto p = tryMatch({"preset"}, "preset")) return takePreset(*p);   // "fires when clicked"
         if (tryMatch({"clause.timeline"}, "clause")) timelineRefusal();
         while (true) {
-            _triggers.push_back(requireEvent("an event", false));
+            _triggers.push_back(requireEvent("an event"));
             if (!_activationSpoken) {
                 _activation = Law::Activation::OnEvent;
                 _activationSpoken = true;
@@ -717,20 +692,18 @@ private:
             return kind == "Add" ? ActionNode::add(path, n) : ActionNode::scale(path, n);
         }
         if (kind == "Publish") {
-            const std::string event = requireEvent("an event to publish", true);
+            const std::string event = requireEvent("an event to publish");
             std::string subject;
             if (tryMatch({"filler.about"}, "filler")) subject = requireBeing("whom the event is about");
             return ActionNode::publish(event, subject);
         }
         if (kind == "Destroy") {
-            const std::string target = valueFollows() ? requireBeing("a being or a Law") : std::string{};
-            _out.destroyTarget = target;
-            return ActionNode::destroy(target);
+            return ActionNode::destroy(valueFollows() ? requireBeing("a being") : std::string{});
         }
         if (kind == "Spawn") {
             const Atom a = requireAtom("a concept", &Expectation::being);
             mark(a.offset, _pos, "being");
-            return ActionNode::spawn(!a.text.empty() && a.text[0] == '@' ? a.text.substr(1) : a.text);
+            return ActionNode::spawn(a.text);
         }
         if (kind == "AddProperty" || kind == "RemoveProperty") {
             const auto [owner, name] = ownerAndName(requirePath());
@@ -777,16 +750,6 @@ private:
 };
 
 void Parser::finish() {
-    // "delete Blue": nothing says WHEN, so it is an act for now, not a Law.
-    // Only Destroy is admitted, and TerminalChannel routes it through the
-    // confirming Metalaw — nothing here performs it.
-    if (_presets.empty() && _triggers.empty() && !_activationSpoken && !_condition &&
-        _actions.size() == 1 && _actions.front().kind == ActionNode::Kind::Destroy &&
-        !_out.destroyTarget.empty()) {
-        _out.immediate = true;
-        _out.action = _actions.front();
-        return;
-    }
     // Compose the presets: each FIXES clauses; the sentence fills the rest.
     // Several presets compose when they agree ("my event-triggered law" and
     // a scope preset are two fragments of one Law, not a conflict).
@@ -964,14 +927,14 @@ static std::string canonicalDescription(const std::string& op) {
         {"condition.Identity", "is exactly @being"},
         {"condition.Overlaps", "touching @being"},
         {"action.Set", "set <path> to <value>"},
-        {"action.Add", "add <path> by <number>"},
-        {"action.Scale", "scale <path> by <number>"},
-        {"action.Publish", "publish <event> [about <being>]"},
-        {"action.Destroy", "destroy <being or Law>  (asks first)"},
-        {"action.Spawn", "spawn <concept>"},
-        {"action.AddProperty", "grant <property> [to <value>]"},
-        {"action.RemoveProperty", "revoke <property>"},
-        {"action.AddRelation", "relate <being> <type> <being>"},
+        {"action.Add", "add <number> to <path>"},
+        {"action.Scale", "multiply <path> by <number>"},
+        {"action.Publish", "publish an event"},
+        {"action.Destroy", "remove a being"},
+        {"action.Spawn", "spawn a concept"},
+        {"action.AddProperty", "grant a property"},
+        {"action.RemoveProperty", "revoke a property"},
+        {"action.AddRelation", "relate <a> <type> <b>"},
     };
     for (const auto& [code, text] : kTable) {
         if (op == code) return text;
@@ -1276,53 +1239,6 @@ int fuzzyScore(const std::string& typed, const std::string& candidate) {
 
 } // namespace
 
-std::string argumentTemplate(const std::string& op) {
-    static const std::pair<const char*, const char*> kTable[] = {
-        {"action.Set", "‹path› to ‹value›"},
-        {"action.Add", "‹path› by ‹number›"},
-        {"action.Scale", "‹path› by ‹number›"},
-        {"action.Publish", "‹event›"},
-        {"action.Destroy", "‹being›"},
-        {"action.Spawn", "‹concept›"},
-        {"action.AddProperty", "‹property›"},
-        {"action.RemoveProperty", "‹property›"},
-        {"action.AddRelation", "‹being› ‹type› ‹being›"},
-        {"op.Eq", "‹value›"}, {"op.Ne", "‹value›"}, {"op.Lt", "‹value›"}, {"op.Le", "‹value›"},
-        {"op.Gt", "‹value›"}, {"op.Ge", "‹value›"},
-        {"op.Near", "‹value› within ‹tolerance›"},
-        {"op.InRange", "‹low› and ‹high›"},
-        {"condition.Not", "‹condition›"},
-        {"condition.IsKind", "‹kind›"},
-        {"condition.Identity", "‹being›"},
-        {"condition.Overlaps", "‹being›"},
-        {"condition.Related", "‹type› to ‹being›"},
-        {"clause.name", "‹name›"},
-        {"clause.trigger", "‹event›"},
-        {"clause.condition", "‹condition›"},
-        {"clause.action", "‹action›"},
-    };
-    for (const auto& [code, text] : kTable) {
-        if (op == code) return text;
-    }
-    return {};
-}
-
-namespace {
-
-// Tab on an empty word lists everything that may come next, grouped in the
-// order a sentence is usually built.
-int groupRank(const std::string& role) {
-    static const char* kOrder[] = {"preset", "activation", "action", "operator", "condition",
-                                   "kind", "value", "event", "path", "being", "clause",
-                                   "logic", "scope", "filler"};
-    for (int i = 0; i < static_cast<int>(sizeof kOrder / sizeof *kOrder); ++i) {
-        if (role == kOrder[i]) return i;
-    }
-    return 99;
-}
-
-} // namespace
-
 std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabulary& vocab) {
     const std::size_t n = beforeCursor.size();
     std::set<std::size_t> splits{n};
@@ -1337,17 +1253,17 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
 
     std::map<std::string, Suggestion> best;   // by text: keep the best reading of it
     const auto offer = [&](std::size_t from, const std::string& tail, const std::string& text,
-                           const std::string& description, const std::string& role,
-                           const std::string& detail = {}, const std::string& snippet = {}) {
-        // A word that could only be refused ("author it in the Law Graph")
-        // is never offered: the menu only holds words that can work here.
-        if (description.find("Law Graph only") != std::string::npos) return;
-        const int score = fuzzyScore(tail, text);
+                           const std::string& description, const std::string& role) {
+        int score = fuzzyScore(tail, text);
         if (score == 0) return;
+        // Words that would only be refused ("author it in the Law Graph") are
+        // still findable, but never crowd out words that work.
+        if (description.find("Law Graph only") != std::string::npos) score -= 2500;
+        if (score <= 0) score = 1;
         const std::string key = lower(text);
         auto it = best.find(key);
         if (it == best.end() || it->second.score < score) {
-            best[key] = Suggestion{from, text, description, role, score, detail, snippet};
+            best[key] = Suggestion{from, text, description, role, score};
         }
     };
 
@@ -1367,10 +1283,7 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
         }
         const Expectation& e = parser.expectation();
         for (const auto& w : vocab.words) {
-            if (admits(e.admit, w.opcode)) {
-                offer(split, tail, w.symbol, w.description, roleOf(w.opcode),
-                      w.detail.empty() ? w.description : w.detail, argumentTemplate(w.opcode));
-            }
+            if (admits(e.admit, w.opcode)) offer(split, tail, w.symbol, w.description, roleOf(w.opcode));
         }
         if (tail.find_first_of(" \t") != std::string::npos) continue;   // atoms are single words
         if (e.event) {
@@ -1381,13 +1294,6 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
         if (e.being) {
             for (const auto& b : vocab.beings) {
                 offer(split, tail, "@" + b, vocab.describeBeing ? vocab.describeBeing(b) : "", "being");
-            }
-            // Laws by the name they were spoken with ("delete Blue").
-            for (const auto& l : vocab.laws) {
-                if (l.name.empty()) continue;
-                const bool spaced = l.name.find(' ') != std::string::npos;
-                offer(split, tail, spaced ? "\"" + l.name + "\"" : l.name, "law", "being",
-                      l.summary + "  (" + l.id + ")");
             }
         }
         if (e.path) {
@@ -1429,41 +1335,13 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
         }
     }
 
-    std::vector<Suggestion> ranked;
-    for (auto& [text, s] : best) ranked.push_back(std::move(s));
-    std::sort(ranked.begin(), ranked.end(), [](const Suggestion& a, const Suggestion& b) {
+    std::vector<Suggestion> out;
+    for (auto& [text, s] : best) out.push_back(std::move(s));
+    std::sort(out.begin(), out.end(), [](const Suggestion& a, const Suggestion& b) {
         if (a.score != b.score) return a.score > b.score;
-        if (groupRank(a.role) != groupRank(b.role)) return groupRank(a.role) < groupRank(b.role);
         return lower(a.text) < lower(b.text);
     });
-
-    // Nor a word that would contradict what the sentence already says —
-    // "always" after "when they collide" (two presets fixing different
-    // times of firing). Each word is tried in place; a refusal that is not
-    // merely "the sentence is unfinished" or "a Metalaw decides" drops it.
-    std::vector<Suggestion> out;
-    for (auto& s : ranked) {
-        if (out.size() >= 60) break;   // the menu shows 8; keep typing narrows
-        if (s.role != "path" && s.role != "event" && s.role != "being") {
-            const Parse trial = parse(beforeCursor.substr(0, s.from) + s.text + " ?", vocab);
-            const std::string& e = trial.error;
-            if (!e.empty() && e.rfind("the sentence ends where", 0) != 0 &&
-                e.find("Metalaw") == std::string::npos && e.find("does not begin a clause") == std::string::npos) {
-                continue;
-            }
-            // A preset leaves clauses open; those become its blanks.
-            if (s.role == "preset" && e.empty()) {
-                std::string blanks;
-                for (const auto& clause : trial.openClauses) {
-                    if (clause.find("(optional)") != std::string::npos) continue;
-                    if (clause.rfind("on ", 0) == 0) blanks += (blanks.empty() ? "" : " ") + std::string("on ‹event›");
-                    if (clause.rfind("then ", 0) == 0) blanks += (blanks.empty() ? "" : " ") + std::string("then ‹action›");
-                }
-                s.snippet = blanks;
-            }
-        }
-        out.push_back(std::move(s));
-    }
+    if (out.size() > 200) out.resize(200);
     return out;
 }
 

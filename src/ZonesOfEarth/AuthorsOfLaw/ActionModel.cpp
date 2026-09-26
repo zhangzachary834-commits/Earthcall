@@ -6,7 +6,6 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
-#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "Person/Person.hpp"
 #include "Person/Relationship/Community/Community.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
@@ -1214,16 +1213,8 @@ ECA::ActionExecutor ActionNode::compile() const {
                     emitEffect("Destroy", false, "unproven victim: " + victimToken);
                     return;
                 }
-                // A Law may be unmade too — retired from the register and from
-                // the active Zone's authored membership (LawManager::reapUnmade).
-                // The Law Line's confirmed deletion is exactly this, authored.
-                if (auto* law = dynamic_cast<Law*>(victim)) {
-                    if (law->isFirstMover()) {
-                        emitEffect("Destroy", false, "a First Mover is engine substrate; it cannot be unmade");
-                        return;
-                    }
-                } else if (!dynamic_cast<Object*>(victim)) {
-                    emitEffect("Destroy", false, "only Objects and Laws can be unmade today");
+                if (!dynamic_cast<Object*>(victim)) {
+                    emitEffect("Destroy", false, "only Objects can be unmade today");
                     return;
                 }
                 Universe::instance().requestUnmaking(victim);

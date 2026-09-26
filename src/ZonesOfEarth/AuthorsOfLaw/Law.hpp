@@ -828,9 +828,7 @@ class LawManager {
 public:
     std::shared_ptr<Law> createLaw(const std::string& name,
                                    const std::vector<Singular*>& authors = {});
-    std::shared_ptr<Law> createLaw(const std::string& name,
-                                   const std::string& identifier,
-                                   const std::vector<Singular*>& authors = {});
+
     void add(const std::shared_ptr<Law>& law);
     bool remove(const std::string& lawId);
 

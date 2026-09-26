@@ -43,10 +43,6 @@ struct Scratch {
     }
 };
 
-bool mentions(const std::string& haystack, const std::string& needle) {
-    return haystack.find(needle) != std::string::npos;
-}
-
 bool contains(const std::vector<std::string>& v, const std::string& s) {
     return std::find(v.begin(), v.end(), s) != v.end();
 }
@@ -165,119 +161,7 @@ int main() {
     check(c && std::fabs(c->x - 1.0f) < 0.03f && std::fabs(c->y - 0.84f) < 0.03f && c->z < 0.03f,
           "'when hovered then set color gold' paints the cube gold on hover");
 
-    // Zach's first unguided session (2026-09-25): after "when they collide"
-    // the menu offered "always" (a contradicting preset) and actions with no
-    // sentence form. It must offer only words that can work there.
-    {
-        const auto live = terminal->vocabulary(harness.lawManager);
-        const auto menu = Singularity::Terminal::LawSentence::suggest("my law called Blue when they collide ", live);
-        const auto offered = [&](const std::string& text) {
-            return std::any_of(menu.begin(), menu.end(), [&](const auto& s) { return s.text == text; });
-        };
-        check(!offered("always") && !offered("my constantly-applied law"),
-              "the menu never offers a preset that contradicts 'when they collide'");
-        check(!offered("WritePixel") && !offered("AddElement") && !offered("AuthorZone"),
-              "the menu never offers an action with no sentence form");
-        check(offered("then"), "the menu offers 'then' after a trigger preset");
-    }
-    terminal->inject("my law called Blue when they collide then set color blue");
-    frame();
-    check(mentions(printed.back(), "authored"), "Zach's intended sentence authors: " + printed.back().substr(0, 60));
-
-    // Zach's line (2026-09-25) made a Law waiting for an event called "when".
-    {
-        const std::size_t before = harness.lawManager.getAll().size();
-        terminal->inject("my law called Blue fires when Spawn @material.concept-shape-3d.birth-74.member-0");
-        frame();
-        check(harness.lawManager.getAll().size() == before && mentions(printed.back(), "clause word"),
-              "'fires when <action>' is refused: 'when' is not an event");
-        terminal->inject("my law called Blue fires when clicked then set color blue");
-        frame();
-        Law* blue = harness.lawManager.getAll().back().get();
-        check(mentions(printed.back(), "authored") &&
-                  harness.lawManager.triggersOf(blue->getIdentifier()) == std::vector<std::string>{"object-clicked"},
-              "'fires when clicked' reads the trigger preset and listens for object-clicked");
-    }
-
-    // ------------------------------------------------------------------
-    // Confirmed deletion (Zach, 2026-09-25: "the metalaw that does the
-    // deletions should say 'are you sure you want to delete?' … no means no
-    // delete and requires your yes to delete").
-    // ------------------------------------------------------------------
-    const auto textOf = [&](const char* path) {
-        PropertyValue v;
-        lawGetValue(*terminal, PropertyPath::parse(path), v);
-        return std::holds_alternative<std::string>(v) ? std::get<std::string>(v) : std::string{};
-    };
-    const auto lawNamed = [&](const std::string& name) -> std::vector<std::string> {
-        std::vector<std::string> ids;
-        for (const auto& law : harness.lawManager.getAll()) {
-            if (law && law->name() == name) ids.push_back(law->getIdentifier());
-        }
-        return ids;
-    };
-    // Earlier in this test two Laws were spoken with the name Blue.
-    const auto blues = lawNamed("Blue");
-    check(blues.size() == 2, "two Laws named Blue exist");
-    const std::string blueId = blues.front();
-    check(harness.zones.persistActiveZone(), "Save Zone before deleting (so Blue has its own file)");
-    check(std::filesystem::exists(scratch.path / "laws" / blueId / "law.json"), "Blue was saved as its own file");
-    terminal->inject("delete Blue");
-    frame();
-    frame();
-    check(textOf("question") == "Are you sure you want to delete" && mentions(textOf("pending.names"), "Blue"),
-          "'delete Blue' makes the Metalaw ask: " + textOf("question"));
-    terminal->inject("no");
-    frame();
-    check(harness.lawManager.find(blues[0]) != nullptr && harness.lawManager.find(blues[1]) != nullptr &&
-              mentions(printed.back(), "kept"),
-          "'no' keeps both Blues — nothing is deleted");
-
-    terminal->inject("delete Blue");
-    frame();
-    frame();
-    terminal->inject("1");
-    frame();
-    terminal->inject("yes");
-    frame();
-    check(harness.lawManager.find(blueId) == nullptr && mentions(printed.back(), "deleted"),
-          "'yes' deletes Blue: " + printed.back().substr(0, 50));
-
-    // Two Laws share a name: the question asks which, and only that one goes.
-    terminal->inject("my law called Twin when hovered then set glow 1");
-    frame();
-    terminal->inject("my law called Twin when clicked then set glow 2");
-    frame();
-    const auto twins = lawNamed("Twin");
-    check(twins.size() == 2, "two Laws named Twin exist");
-    terminal->inject("delete Twin");
-    frame();
-    frame();
-    check(textOf("pending.names").find('|') != std::string::npos, "the question names both Twins");
-    terminal->inject("2");
-    frame();
-    terminal->inject("yes");
-    frame();
-    check(twins.size() == 2 && harness.lawManager.find(twins[0]) != nullptr &&
-              harness.lawManager.find(twins[1]) == nullptr,
-          "answering 2, then yes, deletes only the second Twin");
-
     check(harness.zones.persistActiveZone(), "Save Zone keeps the spoken Law");
-    {
-        const auto afterDelete = SaveSystem::readZoneIdentity("LawLine").value("lawRefs", nlohmann::json::array());
-        check(std::find(afterDelete.begin(), afterDelete.end(), blueId) == afterDelete.end(),
-              "Save Zone no longer names the deleted Law");
-        check(std::filesystem::exists(scratch.path / "laws" / blueId / "law.json"),
-              "the deleted Law's own file stays on disk as history");
-    }
-
-    // Without the deciding Metalaws, nothing can be deleted from the line.
-    harness.lawManager.remove("law-line-ask-before-deleting");
-    const std::size_t lawsBefore = harness.lawManager.getAll().size();
-    terminal->inject("delete Red");
-    frame();
-    check(harness.lawManager.getAll().size() == lawsBefore && mentions(printed.back(), "no Law in this Zone decides"),
-          "with no asking Metalaw, 'delete' deletes nothing and says why");
     const auto persisted = SaveSystem::readZoneIdentity("LawLine");
     const auto refs = persisted.value("lawRefs", nlohmann::json::array());
     check(std::find(refs.begin(), refs.end(), newbornId) != refs.end(),

@@ -7,7 +7,7 @@ Branch: `sol/volumetric-v5-medium-set-composition-current-20260923`
 ## Read first
 
 Prior landed handoff:
-`agent intercom/communication-threads/ontomath-light-and-image/SUN_HANDOFF_V3_V4_LANDED_VOLUMETRIC_ARCHITECTURE_2026-09-23.md`
+`agent intercom/communication-threads/SUN_HANDOFF_V3_V4_LANDED_VOLUMETRIC_ARCHITECTURE_2026-09-23.md`
 
 V3/V4 are landed. Do not restart them.
 

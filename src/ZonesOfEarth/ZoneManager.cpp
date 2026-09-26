@@ -174,8 +174,6 @@ bool ZoneManager::switchTo(size_t index)
             for (const auto& refJson : lawRefs) {
                 if (!refJson.is_string()) throw std::runtime_error("lawRef is not a string");
                 const std::string ref = refJson.get<std::string>();
-                // Retired by an authored act this session, not yet saved away.
-                if (isLawRetiredFrom(targetZone->getIdentifier(), ref)) continue;
                 if (ref.empty() || !requestedLawIds.insert(ref).second) {
                     throw std::runtime_error("empty or duplicate lawRef '" + ref + "'");
                 }
@@ -1589,7 +1587,7 @@ void ZoneManager::saveState(const std::string& filename, SaveContext& ctx) {
         }
     }
 
-    if (!atomicWriteFile(p, j.dump(-1))) {
+    if (!atomicWriteFile(p, j.dump(2))) {
         std::cerr << "[ZoneManager] saveState: failed to commit " << p << "\n";
         return;
     }
@@ -2288,27 +2286,19 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                 // reached 1,441 entities: a World naming one Zone, migrated
                 // while dozens of unrelated Zones were also live.
                 std::unordered_set<std::string> scopeIds;
-                
-                auto extractZones = [&](const nlohmann::json& source) {
-                    if (source.contains("zones") && source["zones"].is_array()) {
-                        for (const auto& zj : source["zones"]) {
-                            const std::string zid = zoneIdFromJson(zj);
-                            if (!zid.empty()) scopeIds.insert(zid);
-                        }
+                if (j.contains("zones") && j["zones"].is_array()) {
+                    for (const auto& zj : j["zones"]) {
+                        const std::string zid = zoneIdFromJson(zj);
+                        if (!zid.empty()) scopeIds.insert(zid);
                     }
-                    if (source.contains("zoneRefs") && source["zoneRefs"].is_array()) {
-                        for (const auto& ref : source["zoneRefs"]) {
-                            std::string zid;
-                            if (ref.is_string()) zid = ref.get<std::string>();
-                            else if (ref.is_object()) zid = ref.value("identifier", std::string{});
-                            if (!zid.empty()) scopeIds.insert(zid);
-                        }
+                }
+                if (j.contains("zoneRefs") && j["zoneRefs"].is_array()) {
+                    for (const auto& ref : j["zoneRefs"]) {
+                        std::string zid;
+                        if (ref.is_string()) zid = ref.get<std::string>();
+                        else if (ref.is_object()) zid = ref.value("identifier", std::string{});
+                        if (!zid.empty()) scopeIds.insert(zid);
                     }
-                };
-
-                extractZones(j);
-                if (j.contains(kSemanticRootsKey)) {
-                    extractZones(j[kSemanticRootsKey]);
                 }
                 // An empty scope means this legacy file named no Zone at
                 // all — degenerate, not "fall back to everything": that
@@ -2326,7 +2316,7 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                                     filename + "  ";
                         std::cerr << "[ZoneManager] Legacy migration matter write FAILED for "
                                   << filename << "\n";
-                    } else if (atomicWriteFile(formPath, j.dump(-1))) {
+                    } else if (atomicWriteFile(formPath, j.dump(2))) {
                         cleanupPredecessorMatter(oldMatterPath);
                         logIo("Migrated legacy save '" + filename +
                               "' to split substrate (.ecform + generation-coupled .ecmatter).");
