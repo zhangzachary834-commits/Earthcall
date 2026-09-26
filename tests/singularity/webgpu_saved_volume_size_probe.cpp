@@ -153,17 +153,19 @@ int main(int argc, char** argv) {
         const bool candidate = std::getenv("EARTHCALL_EXPERIMENT_V5_SHARED_SOURCE") &&
             std::string(std::getenv("EARTHCALL_EXPERIMENT_V5_SHARED_SOURCE")) == "1";
         const auto generated = sdfwgsl::compileVolumeSet(inputs, candidate);
-        assert(generated.ok);
         const auto fs = generated.wgsl.find("\n@fragment");
-        assert(fs != std::string::npos);
         size_t sourceEvalCalls = 0;
-        for (size_t at = fs; (at = generated.wgsl.find("lightRadianceEval_", at)) != std::string::npos; ++at)
-            ++sourceEvalCalls;
-        assert(sourceEvalCalls == (candidate ? 1u : media.size()));
-        std::printf("V5_WGSL candidate=%d bytes=%zu radial_eval_call_sites=%zu shared_source=%d source_time_binding=%d\n",
-                    candidate, generated.wgsl.size(), sourceEvalCalls,
-                    generated.wgsl.find("sharedSourceReady", fs) != std::string::npos,
+        if (fs != std::string::npos) {
+            for (size_t at = fs; (at = generated.wgsl.find("lightRadianceEval_", at)) != std::string::npos; ++at)
+                ++sourceEvalCalls;
+        }
+        std::printf("V5_WGSL candidate=%d ok=%d error=%s bytes=%zu fragment=%d radial_eval_call_sites=%zu shared_source=%d source_time_binding=%d\n",
+                    candidate, generated.ok, generated.error.c_str(), generated.wgsl.size(),
+                    fs != std::string::npos, sourceEvalCalls,
+                    fs != std::string::npos && generated.wgsl.find("sharedSourceReady", fs) != std::string::npos,
                     generated.wgsl.find("u.sourceTime.x") != std::string::npos);
+        if (!generated.ok || fs == std::string::npos ||
+            sourceEvalCalls != (candidate ? 1u : media.size())) return 3;
     }
     renderer.setRadianceSources({source}, 1);
 
