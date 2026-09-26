@@ -47,7 +47,7 @@ nlohmann::json readJson(const char* path) {
 int main(int argc, char** argv) {
     std::setvbuf(stdout, nullptr, _IONBF, 0);
     if (argc < 3) {
-        std::fprintf(stderr, "usage: probe <zone.json> <authored> [width] [height] [frames] [blocks] [eyeX] [eyeY] [eyeZ] [lookX] [lookY] [lookZ] [motion:0|1]\n");
+        std::fprintf(stderr, "usage: probe <zone.json> <authored> [width] [height] [frames] [blocks] [eyeX] [eyeY] [eyeZ] [lookX] [lookY] [lookZ] [motion:0|1] [sourceTime] [editedSourceRho:0|1]\n");
         return 2;
     }
     if (std::string(argv[2]) != "authored") return 2;
@@ -63,17 +63,26 @@ int main(int argc, char** argv) {
                          argc > 11 ? std::atof(argv[11]) : (northern ? 64.0f : 2.25f),
                          argc > 12 ? std::atof(argv[12]) : (northern ? 80.0f : -12.0f));
     const bool motion = argc > 13 && std::atoi(argv[13]) != 0;
+    const double sourceTime = argc > 14 ? std::atof(argv[14]) : 0.0;
+    const bool editSourceRho = argc > 15 && std::atoi(argv[15]) != 0;
     assert(width >= 16 && height >= 16 && frames > 0 && blocks > 0);
 
-    const auto saved = readJson(argv[1]);
+    auto saved = readJson(argv[1]);
     assert(saved.at("identifier") == (northern ? "Northern Veil" : "Sanctuary of Sunlit Mist"));
+    if (editSourceRho) {
+        assert(northern);
+        // In-memory parameter edit only. The saved AST and source file remain
+        // untouched; its structure and shader should stay resident.
+        saved["spatialRoot"]["field"]["ast"]["pieces"][0]["mathNode"]
+             ["scalarForm"]["terms"][0]["c"] = 0.2;
+    }
     auto sun = geom::FieldNode::fromJson(saved.at("spatialRoot"));
     std::vector<std::shared_ptr<geom::FieldNode>> fields;
     std::vector<Rendering::VolumeDensityBinding> media;
     for (const auto& json : saved.at("spatialFields")) {
         fields.push_back(geom::FieldNode::fromJson(json));
         Rendering::VolumeDensityBinding medium;
-        assert(fields.back() && Rendering::readVolumeDensity(*fields.back(), 0, 0, medium));
+        assert(fields.back() && Rendering::readVolumeDensity(*fields.back(), sourceTime, 0, medium));
         media.push_back(medium);
     }
     assert(sun && media.size() == (northern ? 4u : 1u));
@@ -114,7 +123,23 @@ int main(int argc, char** argv) {
     source.specularRadiance = Rendering::lightSpecularRadiance(light);
     source.coefficients = glm::vec4(light.intensity, light.ambient,
                                      light.diffuse, light.specular);
+    source.temporalCoordinate = sourceTime;
     source.enabled = light.enabled;
+    if (sun->field &&
+        sun->field->mode == OntoMath::ScalarField::EvaluationMode::AST &&
+        !sun->field->astDefinition.pieces.empty()) {
+        source.radianceExpr = &sun->field->astDefinition;
+        source.radianceRevision =
+            std::hash<std::string>{}(sun->field->astDefinition.toJson().dump());
+    }
+    if (sun->lightChroma && !sun->lightChroma->pieces.empty()) {
+        source.chromaExpr = sun->lightChroma.get();
+        source.chromaRevision = std::hash<std::string>{}(sun->lightChroma->toJson().dump());
+    }
+    if (sun->lightAngular && !sun->lightAngular->pieces.empty()) {
+        source.angularExpr = sun->lightAngular.get();
+        source.angularRevision = std::hash<std::string>{}(sun->lightAngular->toJson().dump());
+    }
     renderer.setRadianceSources({source}, 1);
 
     const glm::mat4 view3d = glm::lookAt(eye, look, glm::vec3(0,1,0));
@@ -198,7 +223,7 @@ int main(int argc, char** argv) {
         }
         std::string setIdentity;
         for (size_t i=0; i<fields.size(); ++i) {
-            assert(Rendering::readVolumeDensity(*fields[i], 0, 0, media[i]));
+            assert(Rendering::readVolumeDensity(*fields[i], sourceTime, 0, media[i]));
             Rendering::appendVolumeSetIdentity(setIdentity, fields[i]->getIdentifier(), media[i]);
         }
         renderer.setVolumeDensitySources(media, std::hash<std::string>{}(setIdentity));
@@ -213,9 +238,9 @@ int main(int argc, char** argv) {
     };
     for (int i=0;i<12;++i) { double p=0,s=0;frame(p,s); }
     syncImage();
-    std::printf("SCENE=%s media=%zu size=%ux%u eye=(%.2f,%.2f,%.2f) look=(%.2f,%.2f,%.2f) frames=%d blocks=%d motion=%d volume-only\n",
+    std::printf("SCENE=%s media=%zu size=%ux%u eye=(%.2f,%.2f,%.2f) look=(%.2f,%.2f,%.2f) frames=%d blocks=%d motion=%d sourceTime=%.3f editedSourceRho=%d volume-only\n",
                 saved.at("identifier").get<std::string>().c_str(), media.size(),
-                width,height,eye.x,eye.y,eye.z,look.x,look.y,look.z,frames,blocks,motion);
+                width,height,eye.x,eye.y,eye.z,look.x,look.y,look.z,frames,blocks,motion,sourceTime,editSourceRho);
     for (int block=0;block<blocks;++block) {
         double projectionMs=0,submitMs=0;
         const auto wallStart=Clock::now();
