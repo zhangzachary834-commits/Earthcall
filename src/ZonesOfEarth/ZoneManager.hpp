@@ -39,6 +39,8 @@ class ZoneManager {
     // remain visible in zone.json; this set only tells switchTo which runtime
     // registrations it must release on departure.
     std::unordered_set<std::string> _activeZoneLawIds;
+    // Laws retired from a Zone by an authored act, by Zone identifier.
+    std::unordered_map<std::string, std::unordered_set<std::string>> _retiredLawIdsByZone;
     // Residence index for locate(): being -> the Zone whose store holds it.
     // Derived state (DERIVED_STATE_LEDGER): rebuilt when the Universe clock
     // has advanced since the last build, and on any miss. Stale for at most
@@ -92,6 +94,15 @@ public:
     // `lawRefs`, so leaving the Zone releases it and Save Zone can persist it.
     // This is authored membership, not inference from the global LawManager.
     bool adoptLawIntoActiveZone(const std::string& lawId);
+
+    // The inverse, and equally an authored act (a confirmed deletion, via a
+    // Destroy whose victim is a Law): the Law leaves the active Zone's
+    // closure. Save Zone otherwise only APPENDS to `lawRefs`, so the
+    // retirement is remembered per Zone and dropped from `lawRefs` on save —
+    // and honoured if the Zone is re-entered before a save. The Law's own
+    // file under saves/laws/ stays on disk as history.
+    bool retireLawFromActiveZone(const std::string& lawId);
+    bool isLawRetiredFrom(const std::string& zoneId, const std::string& lawId) const;
 
     // ------------------------------------------------------------------
     // Zones as mathematical bounds — the kernel locator

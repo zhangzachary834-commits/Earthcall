@@ -1,1800 +1,6852 @@
 {
- "deletable": {
-  "Zach": true
- },
- "formationRelations": [
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.equals.op-eq",
-   "entityB": "law-line-op-eq",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
+  "deletable": {
+    "Zach": true
+  },
+  "formationRelations": [
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.equals.op-eq",
+      "entityB": "law-line-op-eq",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.is.op-eq",
+      "entityB": "law-line-op-eq",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.is-equal-to.op-eq",
+      "entityB": "law-line-op-eq",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.is-not.op-ne",
+      "entityB": "law-line-op-ne",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.isn-t.op-ne",
+      "entityB": "law-line-op-ne",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.does-not-equal.op-ne",
+      "entityB": "law-line-op-ne",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.less-than.op-lt",
+      "entityB": "law-line-op-lt",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.is-less-than.op-lt",
+      "entityB": "law-line-op-lt",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.below.op-lt",
+      "entityB": "law-line-op-lt",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.is-below.op-lt",
+      "entityB": "law-line-op-lt",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.fewer-than.op-lt",
+      "entityB": "law-line-op-lt",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.at-most.op-le",
+      "entityB": "law-line-op-le",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.is-at-most.op-le",
+      "entityB": "law-line-op-le",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.greater-than.op-gt",
+      "entityB": "law-line-op-gt",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.is-greater-than.op-gt",
+      "entityB": "law-line-op-gt",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.above.op-gt",
+      "entityB": "law-line-op-gt",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.is-above.op-gt",
+      "entityB": "law-line-op-gt",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.more-than.op-gt",
+      "entityB": "law-line-op-gt",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.at-least.op-ge",
+      "entityB": "law-line-op-ge",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.is-at-least.op-ge",
+      "entityB": "law-line-op-ge",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.is-a.cond-iskind",
+      "entityB": "law-line-cond-iskind",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.is-an.cond-iskind",
+      "entityB": "law-line-cond-iskind",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.related.cond-related",
+      "entityB": "law-line-cond-related",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.is-related.cond-related",
+      "entityB": "law-line-cond-related",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.touching.cond-overlaps",
+      "entityB": "law-line-cond-overlaps",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.touches.cond-overlaps",
+      "entityB": "law-line-cond-overlaps",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.set.act-set",
+      "entityB": "law-line-act-set",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.make.act-set",
+      "entityB": "law-line-act-set",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.change.act-set",
+      "entityB": "law-line-act-set",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.add.act-add",
+      "entityB": "law-line-act-add",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.increase.act-add",
+      "entityB": "law-line-act-add",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.raise.act-add",
+      "entityB": "law-line-act-add",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.scale.act-scale",
+      "entityB": "law-line-act-scale",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.multiply.act-scale",
+      "entityB": "law-line-act-scale",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.publish.act-publish",
+      "entityB": "law-line-act-publish",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.announce.act-publish",
+      "entityB": "law-line-act-publish",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.destroy.act-destroy",
+      "entityB": "law-line-act-destroy",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.delete.act-destroy",
+      "entityB": "law-line-act-destroy",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.grant.act-grant",
+      "entityB": "law-line-act-grant",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.give.act-grant",
+      "entityB": "law-line-act-grant",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.revoke.act-revoke",
+      "entityB": "law-line-act-revoke",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.relate.act-relate",
+      "entityB": "law-line-act-relate",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.my-event-triggered-law.preset-event",
+      "entityB": "law-line-preset-event",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.my-event-triggered.preset-event",
+      "entityB": "law-line-preset-event",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.my-constantly-applied-law.preset-constant",
+      "entityB": "law-line-preset-constant",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.always.preset-constant",
+      "entityB": "law-line-preset-constant",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.constantly.preset-constant",
+      "entityB": "law-line-preset-constant",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.every-moment.preset-constant",
+      "entityB": "law-line-preset-constant",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.my-law-that-fires-when-it-becomes-true.preset-becomes",
+      "entityB": "law-line-preset-becomes",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.whenever-it-becomes-true.preset-becomes",
+      "entityB": "law-line-preset-becomes",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.becomes-true.preset-becomes",
+      "entityB": "law-line-preset-becomes",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.my-law-with-no-condition.preset-unconditioned",
+      "entityB": "law-line-preset-unconditioned",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.unconditionally.preset-unconditioned",
+      "entityB": "law-line-preset-unconditioned",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.red.value-red",
+      "entityB": "law-line-value-red",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.green.value-green",
+      "entityB": "law-line-value-green",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.blue.value-blue",
+      "entityB": "law-line-value-blue",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.white.value-white",
+      "entityB": "law-line-value-white",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.black.value-black",
+      "entityB": "law-line-value-black",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.yellow.value-yellow",
+      "entityB": "law-line-value-yellow",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.orange.value-orange",
+      "entityB": "law-line-value-orange",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.purple.value-purple",
+      "entityB": "law-line-value-purple",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.violet.value-purple",
+      "entityB": "law-line-value-purple",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.pink.value-pink",
+      "entityB": "law-line-value-pink",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.cyan.value-cyan",
+      "entityB": "law-line-value-cyan",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.magenta.value-magenta",
+      "entityB": "law-line-value-magenta",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.gold.value-gold",
+      "entityB": "law-line-value-gold",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.gray.value-gray",
+      "entityB": "law-line-value-gray",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.grey.value-gray",
+      "entityB": "law-line-value-gray",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.on.value-true",
+      "entityB": "law-line-value-true",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.yes.value-true",
+      "entityB": "law-line-value-true",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.off.value-false",
+      "entityB": "law-line-value-false",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.no.value-false",
+      "entityB": "law-line-value-false",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.when-clicked.preset-clicked",
+      "entityB": "law-line-preset-clicked",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.on-click.preset-clicked",
+      "entityB": "law-line-preset-clicked",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.when-it-is-clicked.preset-clicked",
+      "entityB": "law-line-preset-clicked",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.when-hovered.preset-hovered",
+      "entityB": "law-line-preset-hovered",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.on-hover.preset-hovered",
+      "entityB": "law-line-preset-hovered",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.when-the-pointer-enters.preset-hovered",
+      "entityB": "law-line-preset-hovered",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.when-the-pointer-leaves.preset-unhovered",
+      "entityB": "law-line-preset-unhovered",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.on-unhover.preset-unhovered",
+      "entityB": "law-line-preset-unhovered",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.when-touched.preset-touched",
+      "entityB": "law-line-preset-touched",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.on-contact.preset-touched",
+      "entityB": "law-line-preset-touched",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.when-they-collide.preset-touched",
+      "entityB": "law-line-preset-touched",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.when-i-land.preset-landed",
+      "entityB": "law-line-preset-landed",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.on-landing.preset-landed",
+      "entityB": "law-line-preset-landed",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.when-i-jump.preset-jumped",
+      "entityB": "law-line-preset-jumped",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.on-jump.preset-jumped",
+      "entityB": "law-line-preset-jumped",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.when-the-zone-opens.preset-zone-entered",
+      "entityB": "law-line-preset-zone-entered",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.remove.act-destroy",
+      "entityB": "law-line-act-destroy",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.y.value-true",
+      "entityB": "law-line-value-true",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "lexeme.law-line.n.value-false",
+      "entityB": "law-line-value-false",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790380800
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386363
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "denotes",
+          "timestamp": 1790386742
+        }
+      ],
+      "type": "denotes",
+      "weight": 1.0
     }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.is.op-eq",
-   "entityB": "law-line-op-eq",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.is-equal-to.op-eq",
-   "entityB": "law-line-op-eq",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.is-not.op-ne",
-   "entityB": "law-line-op-ne",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.isn-t.op-ne",
-   "entityB": "law-line-op-ne",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.does-not-equal.op-ne",
-   "entityB": "law-line-op-ne",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.less-than.op-lt",
-   "entityB": "law-line-op-lt",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.is-less-than.op-lt",
-   "entityB": "law-line-op-lt",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.below.op-lt",
-   "entityB": "law-line-op-lt",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.is-below.op-lt",
-   "entityB": "law-line-op-lt",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.fewer-than.op-lt",
-   "entityB": "law-line-op-lt",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.at-most.op-le",
-   "entityB": "law-line-op-le",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.is-at-most.op-le",
-   "entityB": "law-line-op-le",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.greater-than.op-gt",
-   "entityB": "law-line-op-gt",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.is-greater-than.op-gt",
-   "entityB": "law-line-op-gt",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.above.op-gt",
-   "entityB": "law-line-op-gt",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.is-above.op-gt",
-   "entityB": "law-line-op-gt",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.more-than.op-gt",
-   "entityB": "law-line-op-gt",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.at-least.op-ge",
-   "entityB": "law-line-op-ge",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.is-at-least.op-ge",
-   "entityB": "law-line-op-ge",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.is-a.cond-iskind",
-   "entityB": "law-line-cond-iskind",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.is-an.cond-iskind",
-   "entityB": "law-line-cond-iskind",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.related.cond-related",
-   "entityB": "law-line-cond-related",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.is-related.cond-related",
-   "entityB": "law-line-cond-related",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.touching.cond-overlaps",
-   "entityB": "law-line-cond-overlaps",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.touches.cond-overlaps",
-   "entityB": "law-line-cond-overlaps",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.set.act-set",
-   "entityB": "law-line-act-set",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.make.act-set",
-   "entityB": "law-line-act-set",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.change.act-set",
-   "entityB": "law-line-act-set",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.add.act-add",
-   "entityB": "law-line-act-add",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.increase.act-add",
-   "entityB": "law-line-act-add",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.raise.act-add",
-   "entityB": "law-line-act-add",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.scale.act-scale",
-   "entityB": "law-line-act-scale",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.multiply.act-scale",
-   "entityB": "law-line-act-scale",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.publish.act-publish",
-   "entityB": "law-line-act-publish",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.announce.act-publish",
-   "entityB": "law-line-act-publish",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.destroy.act-destroy",
-   "entityB": "law-line-act-destroy",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.delete.act-destroy",
-   "entityB": "law-line-act-destroy",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.grant.act-grant",
-   "entityB": "law-line-act-grant",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.give.act-grant",
-   "entityB": "law-line-act-grant",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.revoke.act-revoke",
-   "entityB": "law-line-act-revoke",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.relate.act-relate",
-   "entityB": "law-line-act-relate",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.my-event-triggered-law.preset-event",
-   "entityB": "law-line-preset-event",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.my-event-triggered.preset-event",
-   "entityB": "law-line-preset-event",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.my-constantly-applied-law.preset-constant",
-   "entityB": "law-line-preset-constant",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.always.preset-constant",
-   "entityB": "law-line-preset-constant",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.constantly.preset-constant",
-   "entityB": "law-line-preset-constant",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.every-moment.preset-constant",
-   "entityB": "law-line-preset-constant",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.my-law-that-fires-when-it-becomes-true.preset-becomes",
-   "entityB": "law-line-preset-becomes",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.whenever-it-becomes-true.preset-becomes",
-   "entityB": "law-line-preset-becomes",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.becomes-true.preset-becomes",
-   "entityB": "law-line-preset-becomes",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.my-law-with-no-condition.preset-unconditioned",
-   "entityB": "law-line-preset-unconditioned",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.unconditionally.preset-unconditioned",
-   "entityB": "law-line-preset-unconditioned",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.red.value-red",
-   "entityB": "law-line-value-red",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.green.value-green",
-   "entityB": "law-line-value-green",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.blue.value-blue",
-   "entityB": "law-line-value-blue",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.white.value-white",
-   "entityB": "law-line-value-white",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.black.value-black",
-   "entityB": "law-line-value-black",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.yellow.value-yellow",
-   "entityB": "law-line-value-yellow",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.orange.value-orange",
-   "entityB": "law-line-value-orange",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.purple.value-purple",
-   "entityB": "law-line-value-purple",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.violet.value-purple",
-   "entityB": "law-line-value-purple",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.pink.value-pink",
-   "entityB": "law-line-value-pink",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.cyan.value-cyan",
-   "entityB": "law-line-value-cyan",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.magenta.value-magenta",
-   "entityB": "law-line-value-magenta",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.gold.value-gold",
-   "entityB": "law-line-value-gold",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.gray.value-gray",
-   "entityB": "law-line-value-gray",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.grey.value-gray",
-   "entityB": "law-line-value-gray",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.on.value-true",
-   "entityB": "law-line-value-true",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.yes.value-true",
-   "entityB": "law-line-value-true",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.off.value-false",
-   "entityB": "law-line-value-false",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.no.value-false",
-   "entityB": "law-line-value-false",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.when-clicked.preset-clicked",
-   "entityB": "law-line-preset-clicked",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.on-click.preset-clicked",
-   "entityB": "law-line-preset-clicked",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.when-it-is-clicked.preset-clicked",
-   "entityB": "law-line-preset-clicked",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.when-hovered.preset-hovered",
-   "entityB": "law-line-preset-hovered",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.on-hover.preset-hovered",
-   "entityB": "law-line-preset-hovered",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.when-the-pointer-enters.preset-hovered",
-   "entityB": "law-line-preset-hovered",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.when-the-pointer-leaves.preset-unhovered",
-   "entityB": "law-line-preset-unhovered",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.on-unhover.preset-unhovered",
-   "entityB": "law-line-preset-unhovered",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.when-touched.preset-touched",
-   "entityB": "law-line-preset-touched",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.on-contact.preset-touched",
-   "entityB": "law-line-preset-touched",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.when-they-collide.preset-touched",
-   "entityB": "law-line-preset-touched",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.when-i-land.preset-landed",
-   "entityB": "law-line-preset-landed",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.on-landing.preset-landed",
-   "entityB": "law-line-preset-landed",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.when-i-jump.preset-jumped",
-   "entityB": "law-line-preset-jumped",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.on-jump.preset-jumped",
-   "entityB": "law-line-preset-jumped",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  },
-  {
-   "type": "denotes",
-   "entityA": "lexeme.law-line.when-the-zone-opens.preset-zone-entered",
-   "entityB": "law-line-preset-zone-entered",
-   "directed": true,
-   "weight": 1.0,
-   "events": [
-    {
-     "description": "denotes",
-     "deltaWeight": 1.0,
-     "timestamp": 1790380800
-    }
-   ]
-  }
- ],
- "identifier": "LawLine",
- "lawRefs": [
-  "law-line-op-eq",
-  "law-line-op-ne",
-  "law-line-op-lt",
-  "law-line-op-le",
-  "law-line-op-gt",
-  "law-line-op-ge",
-  "law-line-cond-iskind",
-  "law-line-cond-related",
-  "law-line-cond-overlaps",
-  "law-line-act-set",
-  "law-line-act-add",
-  "law-line-act-scale",
-  "law-line-act-publish",
-  "law-line-act-destroy",
-  "law-line-act-grant",
-  "law-line-act-revoke",
-  "law-line-act-relate",
-  "law-line-preset-event",
-  "law-line-preset-constant",
-  "law-line-preset-becomes",
-  "law-line-preset-unconditioned",
-  "law-line-hear",
-  "law-line-speak",
-  "law-line-scope",
-  "law-line-value-red",
-  "law-line-value-green",
-  "law-line-value-blue",
-  "law-line-value-white",
-  "law-line-value-black",
-  "law-line-value-yellow",
-  "law-line-value-orange",
-  "law-line-value-purple",
-  "law-line-value-pink",
-  "law-line-value-cyan",
-  "law-line-value-magenta",
-  "law-line-value-gold",
-  "law-line-value-gray",
-  "law-line-value-true",
-  "law-line-value-false",
-  "law-line-preset-clicked",
-  "law-line-preset-hovered",
-  "law-line-preset-unhovered",
-  "law-line-preset-touched",
-  "law-line-preset-landed",
-  "law-line-preset-jumped",
-  "law-line-preset-zone-entered"
- ],
- "lexemes": [
-  {
-   "id": "lexeme.law-line.equals.op-eq",
-   "symbol": "equals"
-  },
-  {
-   "id": "lexeme.law-line.is.op-eq",
-   "symbol": "is"
-  },
-  {
-   "id": "lexeme.law-line.is-equal-to.op-eq",
-   "symbol": "is equal to"
-  },
-  {
-   "id": "lexeme.law-line.is-not.op-ne",
-   "symbol": "is not"
-  },
-  {
-   "id": "lexeme.law-line.isn-t.op-ne",
-   "symbol": "isn't"
-  },
-  {
-   "id": "lexeme.law-line.does-not-equal.op-ne",
-   "symbol": "does not equal"
-  },
-  {
-   "id": "lexeme.law-line.less-than.op-lt",
-   "symbol": "less than"
-  },
-  {
-   "id": "lexeme.law-line.is-less-than.op-lt",
-   "symbol": "is less than"
-  },
-  {
-   "id": "lexeme.law-line.below.op-lt",
-   "symbol": "below"
-  },
-  {
-   "id": "lexeme.law-line.is-below.op-lt",
-   "symbol": "is below"
-  },
-  {
-   "id": "lexeme.law-line.fewer-than.op-lt",
-   "symbol": "fewer than"
-  },
-  {
-   "id": "lexeme.law-line.at-most.op-le",
-   "symbol": "at most"
-  },
-  {
-   "id": "lexeme.law-line.is-at-most.op-le",
-   "symbol": "is at most"
-  },
-  {
-   "id": "lexeme.law-line.greater-than.op-gt",
-   "symbol": "greater than"
-  },
-  {
-   "id": "lexeme.law-line.is-greater-than.op-gt",
-   "symbol": "is greater than"
-  },
-  {
-   "id": "lexeme.law-line.above.op-gt",
-   "symbol": "above"
-  },
-  {
-   "id": "lexeme.law-line.is-above.op-gt",
-   "symbol": "is above"
-  },
-  {
-   "id": "lexeme.law-line.more-than.op-gt",
-   "symbol": "more than"
-  },
-  {
-   "id": "lexeme.law-line.at-least.op-ge",
-   "symbol": "at least"
-  },
-  {
-   "id": "lexeme.law-line.is-at-least.op-ge",
-   "symbol": "is at least"
-  },
-  {
-   "id": "lexeme.law-line.is-a.cond-iskind",
-   "symbol": "is a"
-  },
-  {
-   "id": "lexeme.law-line.is-an.cond-iskind",
-   "symbol": "is an"
-  },
-  {
-   "id": "lexeme.law-line.related.cond-related",
-   "symbol": "related"
-  },
-  {
-   "id": "lexeme.law-line.is-related.cond-related",
-   "symbol": "is related"
-  },
-  {
-   "id": "lexeme.law-line.touching.cond-overlaps",
-   "symbol": "touching"
-  },
-  {
-   "id": "lexeme.law-line.touches.cond-overlaps",
-   "symbol": "touches"
-  },
-  {
-   "id": "lexeme.law-line.set.act-set",
-   "symbol": "set"
-  },
-  {
-   "id": "lexeme.law-line.make.act-set",
-   "symbol": "make"
-  },
-  {
-   "id": "lexeme.law-line.change.act-set",
-   "symbol": "change"
-  },
-  {
-   "id": "lexeme.law-line.add.act-add",
-   "symbol": "add"
-  },
-  {
-   "id": "lexeme.law-line.increase.act-add",
-   "symbol": "increase"
-  },
-  {
-   "id": "lexeme.law-line.raise.act-add",
-   "symbol": "raise"
-  },
-  {
-   "id": "lexeme.law-line.scale.act-scale",
-   "symbol": "scale"
-  },
-  {
-   "id": "lexeme.law-line.multiply.act-scale",
-   "symbol": "multiply"
-  },
-  {
-   "id": "lexeme.law-line.publish.act-publish",
-   "symbol": "publish"
-  },
-  {
-   "id": "lexeme.law-line.announce.act-publish",
-   "symbol": "announce"
-  },
-  {
-   "id": "lexeme.law-line.destroy.act-destroy",
-   "symbol": "destroy"
-  },
-  {
-   "id": "lexeme.law-line.delete.act-destroy",
-   "symbol": "delete"
-  },
-  {
-   "id": "lexeme.law-line.grant.act-grant",
-   "symbol": "grant"
-  },
-  {
-   "id": "lexeme.law-line.give.act-grant",
-   "symbol": "give"
-  },
-  {
-   "id": "lexeme.law-line.revoke.act-revoke",
-   "symbol": "revoke"
-  },
-  {
-   "id": "lexeme.law-line.relate.act-relate",
-   "symbol": "relate"
-  },
-  {
-   "id": "lexeme.law-line.my-event-triggered-law.preset-event",
-   "symbol": "my event-triggered law"
-  },
-  {
-   "id": "lexeme.law-line.my-event-triggered.preset-event",
-   "symbol": "my event-triggered"
-  },
-  {
-   "id": "lexeme.law-line.my-constantly-applied-law.preset-constant",
-   "symbol": "my constantly-applied law"
-  },
-  {
-   "id": "lexeme.law-line.always.preset-constant",
-   "symbol": "always"
-  },
-  {
-   "id": "lexeme.law-line.constantly.preset-constant",
-   "symbol": "constantly"
-  },
-  {
-   "id": "lexeme.law-line.every-moment.preset-constant",
-   "symbol": "every moment"
-  },
-  {
-   "id": "lexeme.law-line.my-law-that-fires-when-it-becomes-true.preset-becomes",
-   "symbol": "my law that fires when it becomes true"
-  },
-  {
-   "id": "lexeme.law-line.whenever-it-becomes-true.preset-becomes",
-   "symbol": "whenever it becomes true"
-  },
-  {
-   "id": "lexeme.law-line.becomes-true.preset-becomes",
-   "symbol": "becomes true"
-  },
-  {
-   "id": "lexeme.law-line.my-law-with-no-condition.preset-unconditioned",
-   "symbol": "my law with no condition"
-  },
-  {
-   "id": "lexeme.law-line.unconditionally.preset-unconditioned",
-   "symbol": "unconditionally"
-  },
-  {
-   "id": "lexeme.law-line.red.value-red",
-   "symbol": "red"
-  },
-  {
-   "id": "lexeme.law-line.green.value-green",
-   "symbol": "green"
-  },
-  {
-   "id": "lexeme.law-line.blue.value-blue",
-   "symbol": "blue"
-  },
-  {
-   "id": "lexeme.law-line.white.value-white",
-   "symbol": "white"
-  },
-  {
-   "id": "lexeme.law-line.black.value-black",
-   "symbol": "black"
-  },
-  {
-   "id": "lexeme.law-line.yellow.value-yellow",
-   "symbol": "yellow"
-  },
-  {
-   "id": "lexeme.law-line.orange.value-orange",
-   "symbol": "orange"
-  },
-  {
-   "id": "lexeme.law-line.purple.value-purple",
-   "symbol": "purple"
-  },
-  {
-   "id": "lexeme.law-line.violet.value-purple",
-   "symbol": "violet"
-  },
-  {
-   "id": "lexeme.law-line.pink.value-pink",
-   "symbol": "pink"
-  },
-  {
-   "id": "lexeme.law-line.cyan.value-cyan",
-   "symbol": "cyan"
-  },
-  {
-   "id": "lexeme.law-line.magenta.value-magenta",
-   "symbol": "magenta"
-  },
-  {
-   "id": "lexeme.law-line.gold.value-gold",
-   "symbol": "gold"
-  },
-  {
-   "id": "lexeme.law-line.gray.value-gray",
-   "symbol": "gray"
-  },
-  {
-   "id": "lexeme.law-line.grey.value-gray",
-   "symbol": "grey"
-  },
-  {
-   "id": "lexeme.law-line.on.value-true",
-   "symbol": "on"
-  },
-  {
-   "id": "lexeme.law-line.yes.value-true",
-   "symbol": "yes"
-  },
-  {
-   "id": "lexeme.law-line.off.value-false",
-   "symbol": "off"
-  },
-  {
-   "id": "lexeme.law-line.no.value-false",
-   "symbol": "no"
-  },
-  {
-   "id": "lexeme.law-line.when-clicked.preset-clicked",
-   "symbol": "when clicked"
-  },
-  {
-   "id": "lexeme.law-line.on-click.preset-clicked",
-   "symbol": "on click"
-  },
-  {
-   "id": "lexeme.law-line.when-it-is-clicked.preset-clicked",
-   "symbol": "when it is clicked"
-  },
-  {
-   "id": "lexeme.law-line.when-hovered.preset-hovered",
-   "symbol": "when hovered"
-  },
-  {
-   "id": "lexeme.law-line.on-hover.preset-hovered",
-   "symbol": "on hover"
-  },
-  {
-   "id": "lexeme.law-line.when-the-pointer-enters.preset-hovered",
-   "symbol": "when the pointer enters"
-  },
-  {
-   "id": "lexeme.law-line.when-the-pointer-leaves.preset-unhovered",
-   "symbol": "when the pointer leaves"
-  },
-  {
-   "id": "lexeme.law-line.on-unhover.preset-unhovered",
-   "symbol": "on unhover"
-  },
-  {
-   "id": "lexeme.law-line.when-touched.preset-touched",
-   "symbol": "when touched"
-  },
-  {
-   "id": "lexeme.law-line.on-contact.preset-touched",
-   "symbol": "on contact"
-  },
-  {
-   "id": "lexeme.law-line.when-they-collide.preset-touched",
-   "symbol": "when they collide"
-  },
-  {
-   "id": "lexeme.law-line.when-i-land.preset-landed",
-   "symbol": "when i land"
-  },
-  {
-   "id": "lexeme.law-line.on-landing.preset-landed",
-   "symbol": "on landing"
-  },
-  {
-   "id": "lexeme.law-line.when-i-jump.preset-jumped",
-   "symbol": "when i jump"
-  },
-  {
-   "id": "lexeme.law-line.on-jump.preset-jumped",
-   "symbol": "on jump"
-  },
-  {
-   "id": "lexeme.law-line.when-the-zone-opens.preset-zone-entered",
-   "symbol": "when the zone opens"
-  }
- ],
- "materials": [
-  {
-   "ambient": 0.2,
-   "baseColor": [
-    1,
-    1,
-    1
-   ],
-   "diffuse": 0.8,
-   "name": "default",
-   "opacity": 1.0,
-   "shininess": 32.0,
-   "specular": 1.0
-  }
- ],
- "name": "Law Line",
- "owner": "Zach",
- "parentZone": "",
- "qualities": {
-  "ownerKind": "person",
-  "purpose": "law-line-terminal-authoring",
-  "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25"
- },
- "scope": "Local",
- "spatialRoot": {
-  "field": {
-   "amplitude": 1.0,
-   "baseDensity": 1.0,
-   "frequency": 1.0,
-   "mode": "Procedural"
-  },
-  "id": "LawLine_spatialRoot",
-  "origin": [
-   0.0,
-   0.0,
-   0.0
   ],
-  "scale": [
-   1.0,
-   1.0,
-   1.0
+  "identifier": "LawLine",
+  "lawRefs": [
+    "law-line-op-eq",
+    "law-line-op-ne",
+    "law-line-op-lt",
+    "law-line-op-le",
+    "law-line-op-gt",
+    "law-line-op-ge",
+    "law-line-cond-iskind",
+    "law-line-cond-related",
+    "law-line-cond-overlaps",
+    "law-line-act-set",
+    "law-line-act-add",
+    "law-line-act-scale",
+    "law-line-act-publish",
+    "law-line-act-destroy",
+    "law-line-act-grant",
+    "law-line-act-revoke",
+    "law-line-act-relate",
+    "law-line-preset-event",
+    "law-line-preset-constant",
+    "law-line-preset-becomes",
+    "law-line-preset-unconditioned",
+    "law-line-hear",
+    "law-line-speak",
+    "law-line-scope",
+    "law-line-value-red",
+    "law-line-value-green",
+    "law-line-value-blue",
+    "law-line-value-white",
+    "law-line-value-black",
+    "law-line-value-yellow",
+    "law-line-value-orange",
+    "law-line-value-purple",
+    "law-line-value-pink",
+    "law-line-value-cyan",
+    "law-line-value-magenta",
+    "law-line-value-gold",
+    "law-line-value-gray",
+    "law-line-value-true",
+    "law-line-value-false",
+    "law-line-preset-clicked",
+    "law-line-preset-hovered",
+    "law-line-preset-unhovered",
+    "law-line-preset-touched",
+    "law-line-preset-landed",
+    "law-line-preset-jumped",
+    "law-line-preset-zone-entered",
+    "law-line-ask-before-deleting",
+    "law-line-delete-when-confirmed",
+    "law_595f4e7e-255b-4232-9c06-4b888ca838f6",
+    "law_208c85cd-08a3-4a51-bdfd-8aa604188baf"
   ],
-  "vectorField": {
-   "amplitude": 1.0,
-   "baseFlowX": 0.0,
-   "baseFlowY": 0.0,
-   "baseFlowZ": 0.0,
-   "frequency": 1.0,
-   "mode": "Procedural"
-  }
- },
- "world": {
-  "objects": [
-   {
-    "authoritativeAxis": [
-     0.0,
-     1.0,
-     0.0
-    ],
-    "center": [
-     0.0,
-     0.0,
-     0.0
-    ],
-    "faceColors": [
-     [
-      0.85,
-      0.85,
-      0.82
-     ],
-     [
-      0.85,
-      0.85,
-      0.82
-     ],
-     [
-      0.85,
-      0.85,
-      0.82
-     ],
-     [
-      0.85,
-      0.85,
-      0.82
-     ],
-     [
-      0.85,
-      0.85,
-      0.82
-     ],
-     [
-      0.85,
-      0.85,
-      0.82
-     ]
-    ],
-    "geometryType": 0,
-    "materialId": "material.default",
-    "objectID": "law-line-cube",
-    "renderMode": 0,
-    "rotationResponsiveness": 10.0,
-    "shapeKind": 0,
-    "shapeParams": [
-     0.5,
-     0.32,
-     0.5,
-     0.5,
-     0.35,
-     0.15,
-     2.0,
-     0.25,
-     0.12,
-     100.0,
-     100.0
-    ],
-    "targetRotation": [
-     0.0,
-     0.0,
-     0.0
-    ],
-    "transform": [
-     1.0,
-     0.0,
-     0.0,
-     0.0,
-     0.0,
-     1.0,
-     0.0,
-     0.0,
-     0.0,
-     0.0,
-     1.0,
-     0.0,
-     0.0,
-     0.5,
-     -3.0,
-     1.0
-    ],
-    "x2D": 100.0,
-    "y2D": 100.0,
-    "zOrder2D": 0,
-    "authoredProperties": {
-     "displayName": {
-      "t": "string",
-      "v": "Law Line Cube"
-     },
-     "hp": {
-      "t": "double",
-      "v": 3.0
-     },
-     "glow": {
-      "t": "double",
-      "v": 0.0
-     }
+  "lexemes": [
+    {
+      "id": "lexeme.christ",
+      "symbol": "Christ"
+    },
+    {
+      "id": "lexeme_49C91DEB-29CB-4CA4-8F65-45CC6E3C22F3",
+      "symbol": "Person"
+    },
+    {
+      "id": "lexeme_52214A2D-5858-44FB-8BA6-22F83DCF27E7",
+      "symbol": "Zach"
+    },
+    {
+      "id": "lexeme.logos",
+      "symbol": "Logos"
+    },
+    {
+      "id": "lexeme.pneuma",
+      "symbol": "Pneuma"
+    },
+    {
+      "id": "lexeme.lux",
+      "symbol": "Lux"
+    },
+    {
+      "id": "lexeme.harmonia",
+      "symbol": "Harmonia"
+    },
+    {
+      "id": "lexeme.covenant",
+      "symbol": "Covenant"
+    },
+    {
+      "id": "lexeme.agape",
+      "symbol": "Agape"
+    },
+    {
+      "id": "lexeme.sophia",
+      "symbol": "Sophia"
+    },
+    {
+      "id": "lexeme.poiesis",
+      "symbol": "Poiesis"
+    },
+    {
+      "id": "lexeme.koinonia",
+      "symbol": "Koinonia"
+    },
+    {
+      "id": "lexeme.sabbath",
+      "symbol": "Sabbath"
+    },
+    {
+      "id": "lexeme.astra.openhand.commission",
+      "symbol": "Zach commissioned Astra to make a separate Court of the Open Hand in the Cathedral, 2026-09-19."
+    },
+    {
+      "id": "lexeme_AE87B46C-C105-4225-A073-1BF347784B0A",
+      "symbol": "Person"
+    },
+    {
+      "id": "lexeme_17BDF5B3-40F3-4578-91FC-739FF0394C91",
+      "symbol": "Zach"
+    },
+    {
+      "id": "lexeme.law-line.equals.op-eq",
+      "symbol": "equals"
+    },
+    {
+      "id": "lexeme.law-line.is.op-eq",
+      "symbol": "is"
+    },
+    {
+      "id": "lexeme.law-line.is-equal-to.op-eq",
+      "symbol": "is equal to"
+    },
+    {
+      "id": "lexeme.law-line.is-not.op-ne",
+      "symbol": "is not"
+    },
+    {
+      "id": "lexeme.law-line.isn-t.op-ne",
+      "symbol": "isn't"
+    },
+    {
+      "id": "lexeme.law-line.does-not-equal.op-ne",
+      "symbol": "does not equal"
+    },
+    {
+      "id": "lexeme.law-line.less-than.op-lt",
+      "symbol": "less than"
+    },
+    {
+      "id": "lexeme.law-line.is-less-than.op-lt",
+      "symbol": "is less than"
+    },
+    {
+      "id": "lexeme.law-line.below.op-lt",
+      "symbol": "below"
+    },
+    {
+      "id": "lexeme.law-line.is-below.op-lt",
+      "symbol": "is below"
+    },
+    {
+      "id": "lexeme.law-line.fewer-than.op-lt",
+      "symbol": "fewer than"
+    },
+    {
+      "id": "lexeme.law-line.at-most.op-le",
+      "symbol": "at most"
+    },
+    {
+      "id": "lexeme.law-line.is-at-most.op-le",
+      "symbol": "is at most"
+    },
+    {
+      "id": "lexeme.law-line.greater-than.op-gt",
+      "symbol": "greater than"
+    },
+    {
+      "id": "lexeme.law-line.is-greater-than.op-gt",
+      "symbol": "is greater than"
+    },
+    {
+      "id": "lexeme.law-line.above.op-gt",
+      "symbol": "above"
+    },
+    {
+      "id": "lexeme.law-line.is-above.op-gt",
+      "symbol": "is above"
+    },
+    {
+      "id": "lexeme.law-line.more-than.op-gt",
+      "symbol": "more than"
+    },
+    {
+      "id": "lexeme.law-line.at-least.op-ge",
+      "symbol": "at least"
+    },
+    {
+      "id": "lexeme.law-line.is-at-least.op-ge",
+      "symbol": "is at least"
+    },
+    {
+      "id": "lexeme.law-line.is-a.cond-iskind",
+      "symbol": "is a"
+    },
+    {
+      "id": "lexeme.law-line.is-an.cond-iskind",
+      "symbol": "is an"
+    },
+    {
+      "id": "lexeme.law-line.related.cond-related",
+      "symbol": "related"
+    },
+    {
+      "id": "lexeme.law-line.is-related.cond-related",
+      "symbol": "is related"
+    },
+    {
+      "id": "lexeme.law-line.touching.cond-overlaps",
+      "symbol": "touching"
+    },
+    {
+      "id": "lexeme.law-line.touches.cond-overlaps",
+      "symbol": "touches"
+    },
+    {
+      "id": "lexeme.law-line.set.act-set",
+      "symbol": "set"
+    },
+    {
+      "id": "lexeme.law-line.make.act-set",
+      "symbol": "make"
+    },
+    {
+      "id": "lexeme.law-line.change.act-set",
+      "symbol": "change"
+    },
+    {
+      "id": "lexeme.law-line.add.act-add",
+      "symbol": "add"
+    },
+    {
+      "id": "lexeme.law-line.increase.act-add",
+      "symbol": "increase"
+    },
+    {
+      "id": "lexeme.law-line.raise.act-add",
+      "symbol": "raise"
+    },
+    {
+      "id": "lexeme.law-line.scale.act-scale",
+      "symbol": "scale"
+    },
+    {
+      "id": "lexeme.law-line.multiply.act-scale",
+      "symbol": "multiply"
+    },
+    {
+      "id": "lexeme.law-line.publish.act-publish",
+      "symbol": "publish"
+    },
+    {
+      "id": "lexeme.law-line.announce.act-publish",
+      "symbol": "announce"
+    },
+    {
+      "id": "lexeme.law-line.destroy.act-destroy",
+      "symbol": "destroy"
+    },
+    {
+      "id": "lexeme.law-line.delete.act-destroy",
+      "symbol": "delete"
+    },
+    {
+      "id": "lexeme.law-line.grant.act-grant",
+      "symbol": "grant"
+    },
+    {
+      "id": "lexeme.law-line.give.act-grant",
+      "symbol": "give"
+    },
+    {
+      "id": "lexeme.law-line.revoke.act-revoke",
+      "symbol": "revoke"
+    },
+    {
+      "id": "lexeme.law-line.relate.act-relate",
+      "symbol": "relate"
+    },
+    {
+      "id": "lexeme.law-line.my-event-triggered-law.preset-event",
+      "symbol": "my event-triggered law"
+    },
+    {
+      "id": "lexeme.law-line.my-event-triggered.preset-event",
+      "symbol": "my event-triggered"
+    },
+    {
+      "id": "lexeme.law-line.my-constantly-applied-law.preset-constant",
+      "symbol": "my constantly-applied law"
+    },
+    {
+      "id": "lexeme.law-line.always.preset-constant",
+      "symbol": "always"
+    },
+    {
+      "id": "lexeme.law-line.constantly.preset-constant",
+      "symbol": "constantly"
+    },
+    {
+      "id": "lexeme.law-line.every-moment.preset-constant",
+      "symbol": "every moment"
+    },
+    {
+      "id": "lexeme.law-line.my-law-that-fires-when-it-becomes-true.preset-becomes",
+      "symbol": "my law that fires when it becomes true"
+    },
+    {
+      "id": "lexeme.law-line.whenever-it-becomes-true.preset-becomes",
+      "symbol": "whenever it becomes true"
+    },
+    {
+      "id": "lexeme.law-line.becomes-true.preset-becomes",
+      "symbol": "becomes true"
+    },
+    {
+      "id": "lexeme.law-line.my-law-with-no-condition.preset-unconditioned",
+      "symbol": "my law with no condition"
+    },
+    {
+      "id": "lexeme.law-line.unconditionally.preset-unconditioned",
+      "symbol": "unconditionally"
+    },
+    {
+      "id": "lexeme.law-line.red.value-red",
+      "symbol": "red"
+    },
+    {
+      "id": "lexeme.law-line.green.value-green",
+      "symbol": "green"
+    },
+    {
+      "id": "lexeme.law-line.blue.value-blue",
+      "symbol": "blue"
+    },
+    {
+      "id": "lexeme.law-line.white.value-white",
+      "symbol": "white"
+    },
+    {
+      "id": "lexeme.law-line.black.value-black",
+      "symbol": "black"
+    },
+    {
+      "id": "lexeme.law-line.yellow.value-yellow",
+      "symbol": "yellow"
+    },
+    {
+      "id": "lexeme.law-line.orange.value-orange",
+      "symbol": "orange"
+    },
+    {
+      "id": "lexeme.law-line.purple.value-purple",
+      "symbol": "purple"
+    },
+    {
+      "id": "lexeme.law-line.violet.value-purple",
+      "symbol": "violet"
+    },
+    {
+      "id": "lexeme.law-line.pink.value-pink",
+      "symbol": "pink"
+    },
+    {
+      "id": "lexeme.law-line.cyan.value-cyan",
+      "symbol": "cyan"
+    },
+    {
+      "id": "lexeme.law-line.magenta.value-magenta",
+      "symbol": "magenta"
+    },
+    {
+      "id": "lexeme.law-line.gold.value-gold",
+      "symbol": "gold"
+    },
+    {
+      "id": "lexeme.law-line.gray.value-gray",
+      "symbol": "gray"
+    },
+    {
+      "id": "lexeme.law-line.grey.value-gray",
+      "symbol": "grey"
+    },
+    {
+      "id": "lexeme.law-line.on.value-true",
+      "symbol": "on"
+    },
+    {
+      "id": "lexeme.law-line.yes.value-true",
+      "symbol": "yes"
+    },
+    {
+      "id": "lexeme.law-line.off.value-false",
+      "symbol": "off"
+    },
+    {
+      "id": "lexeme.law-line.no.value-false",
+      "symbol": "no"
+    },
+    {
+      "id": "lexeme.law-line.when-clicked.preset-clicked",
+      "symbol": "when clicked"
+    },
+    {
+      "id": "lexeme.law-line.on-click.preset-clicked",
+      "symbol": "on click"
+    },
+    {
+      "id": "lexeme.law-line.when-it-is-clicked.preset-clicked",
+      "symbol": "when it is clicked"
+    },
+    {
+      "id": "lexeme.law-line.when-hovered.preset-hovered",
+      "symbol": "when hovered"
+    },
+    {
+      "id": "lexeme.law-line.on-hover.preset-hovered",
+      "symbol": "on hover"
+    },
+    {
+      "id": "lexeme.law-line.when-the-pointer-enters.preset-hovered",
+      "symbol": "when the pointer enters"
+    },
+    {
+      "id": "lexeme.law-line.when-the-pointer-leaves.preset-unhovered",
+      "symbol": "when the pointer leaves"
+    },
+    {
+      "id": "lexeme.law-line.on-unhover.preset-unhovered",
+      "symbol": "on unhover"
+    },
+    {
+      "id": "lexeme.law-line.when-touched.preset-touched",
+      "symbol": "when touched"
+    },
+    {
+      "id": "lexeme.law-line.on-contact.preset-touched",
+      "symbol": "on contact"
+    },
+    {
+      "id": "lexeme.law-line.when-they-collide.preset-touched",
+      "symbol": "when they collide"
+    },
+    {
+      "id": "lexeme.law-line.when-i-land.preset-landed",
+      "symbol": "when i land"
+    },
+    {
+      "id": "lexeme.law-line.on-landing.preset-landed",
+      "symbol": "on landing"
+    },
+    {
+      "id": "lexeme.law-line.when-i-jump.preset-jumped",
+      "symbol": "when i jump"
+    },
+    {
+      "id": "lexeme.law-line.on-jump.preset-jumped",
+      "symbol": "on jump"
+    },
+    {
+      "id": "lexeme.law-line.when-the-zone-opens.preset-zone-entered",
+      "symbol": "when the zone opens"
+    },
+    {
+      "id": "lexeme.law-line.remove.act-destroy",
+      "symbol": "remove"
+    },
+    {
+      "id": "lexeme.law-line.y.value-true",
+      "symbol": "y"
+    },
+    {
+      "id": "lexeme.law-line.n.value-false",
+      "symbol": "n"
     }
-   }
-  ]
- }
+  ],
+  "materials": [
+    {
+      "ambient": 0.20000000298023224,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.800000011920929,
+      "name": "default",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0
+    }
+  ],
+  "name": "Law Line",
+  "owner": "Zach",
+  "parentZone": "",
+  "qualities": {
+    "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
+    "ownerKind": "person",
+    "purpose": "law-line-terminal-authoring"
+  },
+  "scope": "Local",
+  "spatialRoot": {
+    "field": {
+      "amplitude": 1.0,
+      "baseDensity": 1.0,
+      "frequency": 1.0,
+      "mode": "Procedural"
+    },
+    "id": "LawLine_spatialRoot",
+    "origin": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "vectorField": {
+      "amplitude": 1.0,
+      "baseFlowX": 0.0,
+      "baseFlowY": 0.0,
+      "baseFlowZ": 0.0,
+      "frequency": 1.0,
+      "mode": "Procedural"
+    }
+  },
+  "world": {
+    "objects": [
+      {
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Law Line Cube"
+          },
+          "glow": {
+            "t": "double",
+            "v": 0.0
+          },
+          "hp": {
+            "t": "double",
+            "v": 3.0
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.8500000238418579,
+            0.8500000238418579,
+            0.8199999928474426
+          ],
+          [
+            0.8500000238418579,
+            0.8500000238418579,
+            0.8199999928474426
+          ],
+          [
+            0.8500000238418579,
+            0.8500000238418579,
+            0.8199999928474426
+          ],
+          [
+            0.8500000238418579,
+            0.8500000238418579,
+            0.8199999928474426
+          ],
+          [
+            0.8500000238418579,
+            0.8500000238418579,
+            0.8199999928474426
+          ],
+          [
+            0.8500000238418579,
+            0.8500000238418579,
+            0.8199999928474426
+          ]
+        ],
+        "geometryType": 0,
+        "materialId": "material.default",
+        "objectID": "law-line-cube",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shape": {
+          "kind": 0,
+          "params": {
+            "fillet": 0.11999999731779099,
+            "halfH": 0.5,
+            "height2D": 100.0,
+            "majorR": 0.3499999940395355,
+            "minorR": 0.15000000596046448,
+            "ovoidAsym": 0.25,
+            "paraboloidA": 2.0,
+            "r": 0.5,
+            "ry": 0.3199999928474426,
+            "rz": 0.5,
+            "width2D": 100.0
+          }
+        },
+        "shapeKind": 0,
+        "shapeParams": [
+          0.5,
+          0.3199999928474426,
+          0.5,
+          0.5,
+          0.3499999940395355,
+          0.15000000596046448,
+          2.0,
+          0.25,
+          0.11999999731779099,
+          100.0,
+          100.0
+        ],
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          -3.0,
+          1.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      }
+    ]
+  }
 }
