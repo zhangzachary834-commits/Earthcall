@@ -2133,18 +2133,22 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     }
     auto T1 = glfwGetTime();
 
+    // Query beings once per tick to avoid repeated allocations and provider
+    // calls during continuous law sweeps and candidate route evaluations.
+    const std::vector<Singular*> allBeings = Universe::instance().beings();
+
     // Introduce any being the network has not met. Only while connected: the
     // property-change callback installed by connectToEventBus() is what keeps
     // a seeded fact current, and a snapshot nothing refreshes is worse than no
     // snapshot — the reactive path would answer confidently from stale values.
     // Disconnected, the sweep below reads the beings themselves and is right.
     if (_connected) {
-        for (Singular* being : Universe::instance().beings()) {
+        for (Singular* being : allBeings) {
             seedStateFacts(being);
         }
     }
 
-    refreshVocabularyIndex();
+    refreshVocabularyIndex(allBeings);
     revalidateRelationStateFacts();
 
     auto T2 = glfwGetTime();
@@ -2173,7 +2177,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             Universe::EventScope eventScope(subject, eventObject);
 
             if (law->scope() == Law::Scope::Everyone) {
-                std::vector<Singular*> subjects = sweepSubjects(*law);
+                std::vector<Singular*> subjects = sweepSubjects(*law, allBeings);
                 for (Singular* being : subjects) {
                     if (!being || Universe::instance().isUnmade(being)) continue;
                     bool usedDirect = false;
@@ -2343,7 +2347,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         }
 
         // OnBecomeTrue and laws without Rete terminals: full sweep path.
-        std::vector<Singular*> subjects = sweepSubjects(*law);
+        std::vector<Singular*> subjects = sweepSubjects(*law, allBeings);
 
         for (Singular* subject : subjects) {
             if (!subject || Universe::instance().isUnmade(subject)) continue;
@@ -2373,7 +2377,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         }
     }
     auto T3 = glfwGetTime();
-    runDriveSessions(records);
+    runDriveSessions(records, allBeings);
     auto T4 = glfwGetTime();
     reapUnmade();
     auto T5 = glfwGetTime();
@@ -2451,7 +2455,7 @@ bool LawManager::gatesHold(const Law& law) const {
 // as a structural change does. Missing a name would omit candidates, and an
 // omitted candidate is a law gone deaf (PROPHETIC_RETE.md §2) — so the check is
 // conservative in the safe direction and rebuilds when unsure.
-void LawManager::refreshVocabularyIndex() const {
+void LawManager::refreshVocabularyIndex(const std::vector<Singular*>& allBeings) const {
     const uint64_t revision = Universe::instance().structuralRevision();
     const uint64_t textRevision = Law::textRevision();
     // Nothing has moved: not the shape of the world, not a word of law text.
@@ -2506,7 +2510,7 @@ void LawManager::refreshVocabularyIndex() const {
     // deaf law). Guarded by tests/law/vocabulary_index_test.cpp §H, which asks
     // both invariants of every being: nothing reached that couldApplyTo
     // rejects, and nothing whose condition holds left unreached.
-    for (Singular* being : Universe::instance().beings()) {
+    for (Singular* being : allBeings) {
         if (!being) continue;
         // Asked the other way round: what does THIS being carry that some law
         // names? Looking each indexed name up on the being instead costs a
@@ -2560,7 +2564,8 @@ void LawManager::refreshVocabularyIndex() const {
 // its law condition revision matches, it is current, and it is STRICTLY
 // narrower than the lower vocabulary/sweep candidate set. Equal-width higher
 // tiers are refused: a higher label that buys no narrowing is pure overhead.
-void LawManager::refreshCandidateRoute(const Law& law) const {
+void LawManager::refreshCandidateRoute(
+    const Law& law, const std::vector<Singular*>& allBeings) const {
     const std::string lawId = law.getIdentifier();
     const std::uint64_t textRevision = Law::textRevision();
     const std::uint64_t structural = Universe::instance().structuralRevision();
@@ -2593,13 +2598,13 @@ void LawManager::refreshCandidateRoute(const Law& law) const {
 
     // Tier 0 floor: whole eligible world. We need only its CARDINALITY here,
     // not the vector itself, to decide whether a higher tier is narrower.
-    std::size_t lowerCount = Universe::instance().beings().size();
+    std::size_t lowerCount = allBeings.size();
 
     // Tier 2 vocabulary route. Its "route" is simply the rarest required name.
     // Pick it when the index is refreshed, not once per use of sweepSubjects.
     const auto& required = law.requiredProperties();
     if (!required.empty()) {
-        refreshVocabularyIndex();
+        refreshVocabularyIndex(allBeings);
         chosen.tier = CandidateTier::Vocabulary;
         const std::vector<Singular*>* seed = nullptr;
         for (const std::string& name : required) {
@@ -2674,7 +2679,7 @@ void LawManager::refreshCandidateRoute(const Law& law) const {
 }
 
 std::string LawManager::candidateTierFor(const Law& law) const {
-    refreshCandidateRoute(law);
+    refreshCandidateRoute(law, Universe::instance().beings());
     auto it = _candidateRoutes.find(law.getIdentifier());
     if (it == _candidateRoutes.end()) return "sweep";
     switch (it->second.tier) {
@@ -2688,7 +2693,8 @@ std::string LawManager::candidateTierFor(const Law& law) const {
 
 // Who a law sweeps when it has no targets Formation: consume one cached,
 // current route and let couldApplyTo / the condition remain the truth.
-std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
+std::vector<Singular*> LawManager::sweepSubjects(
+    const Law& law, const std::vector<Singular*>& allBeings) const {
     const auto& targets = law.targets().getMembers();
     if (!targets.empty()) {
         // An explicit targets Formation is the author's own answer to "whom".
@@ -2700,12 +2706,17 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
         return chosen;
     }
 
-    refreshCandidateRoute(law);
+    refreshCandidateRoute(law, allBeings);
     auto routeIt = _candidateRoutes.find(law.getIdentifier());
     if (routeIt == _candidateRoutes.end()) {
         // Defensive widening. A missing cache entry may cost a sweep; it must
         // never cost a Law its subjects.
-        return Universe::instance().beings();
+        std::vector<Singular*> chosen;
+        chosen.reserve(allBeings.size());
+        for (Singular* being : allBeings) {
+            if (being && !Universe::instance().isUnmade(being)) chosen.push_back(being);
+        }
+        return chosen;
     }
 
     const CandidateRoute& route = routeIt->second;
@@ -2736,14 +2747,21 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
         // The road went stale between selection and consumption. Refuse it,
         // invalidate the decision and immediately descend one rung.
         invalidateCandidateRoute(law.getIdentifier());
-        refreshCandidateRoute(law);
+        refreshCandidateRoute(law, allBeings);
         routeIt = _candidateRoutes.find(law.getIdentifier());
-        if (routeIt == _candidateRoutes.end()) return Universe::instance().beings();
+        if (routeIt == _candidateRoutes.end()) {
+            std::vector<Singular*> chosen;
+            chosen.reserve(allBeings.size());
+            for (Singular* being : allBeings) {
+                if (being && !Universe::instance().isUnmade(being)) chosen.push_back(being);
+            }
+            return chosen;
+        }
     }
 
     const CandidateRoute& fallback = routeIt->second;
     if (fallback.tier == CandidateTier::Vocabulary) {
-        refreshVocabularyIndex();
+        refreshVocabularyIndex(allBeings);
         auto seedIt = _vocabularyIndex.find(fallback.vocabularySeed);
         if (seedIt == _vocabularyIndex.end()) return {};
 
@@ -2757,7 +2775,12 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
     }
 
     // Tier 0: complete over-approximating floor.
-    return Universe::instance().beings();
+    std::vector<Singular*> chosen;
+    chosen.reserve(allBeings.size());
+    for (Singular* being : allBeings) {
+        if (being && !Universe::instance().isUnmade(being)) chosen.push_back(being);
+    }
+    return chosen;
 }
 
 bool LawManager::candidateConditionsSatisfied(
@@ -2950,7 +2973,8 @@ void LawManager::maybeStartDriveSession(Law& law, Singular& subject) {
     _driveSessions.push_back(std::move(session));
 }
 
-void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) {
+void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records,
+                                  const std::vector<Singular*>& allBeings) {
     if (_driveSessions.empty() || !Universe::instance().hasClock()) return;
     const double now = Universe::instance().now();
 
@@ -2958,7 +2982,7 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
     // from the provider on every call — every object, law, relation, and zone
     // in the world — and this used to happen three times per session per tick
     // (subject, event subject, event object).
-    const std::vector<Singular*> beings = Universe::instance().beings();
+    const std::vector<Singular*>& beings = allBeings;
 
     for (auto it = _driveSessions.begin(); it != _driveSessions.end();) {
         Law* law = find(it->lawId);
