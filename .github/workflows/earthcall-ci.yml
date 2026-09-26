@@ -257,7 +257,7 @@ jobs:
           done
           # Source Timeline and in-memory numeric source edit exercise the
           # first member's parameter offset rather than merely equal pointers.
-          for scenario in '1.25 0' '1.25 1'; do
+          for scenario in '1.25 0' '0 1'; do
             read -r time edited <<< "$scenario"
             for mode in exact shared; do
               if [[ "$mode" == shared ]]; then
