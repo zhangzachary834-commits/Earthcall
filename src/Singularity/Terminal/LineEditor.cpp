@@ -444,13 +444,6 @@ LineEditor::Outcome LineEditor::press(const Key& key) {
                 return Outcome::None;
             }
             if (_buffer.find_first_not_of(' ') == std::string::npos) return Outcome::None;
-            if (submitGate) {
-                const std::string why = submitGate(_buffer);
-                if (!why.empty()) {
-                    _notice = why;   // the line stays; nothing lands in the scrollback
-                    return Outcome::None;
-                }
-            }
             _submitted = _buffer;
             if (_history.empty() || _history.back() != _buffer) _history.push_back(_buffer);
             _buffer.clear();

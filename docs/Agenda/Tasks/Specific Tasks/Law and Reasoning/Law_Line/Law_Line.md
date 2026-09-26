@@ -44,17 +44,6 @@
 6. `?` at the end previews without authoring. `?? word` searches the vocabulary, live in the panel: spellings, meanings, events, beings, properties.
 7. The app's own log output appears **above** the prompt, dimmed. It is also saved to `saves/logs/earthcall-terminal.log`. It never breaks the line you're typing.
 
-### Stuck? The line tells you
-
-(Added after Zach's first unguided session, 2026-09-25: *"HALP IDK HOW TO USE THIS"*. He had picked WritePixel, AddElement, AuthorZone and "always" from the menu, and every Enter was refused.)
-
-- An **empty line** shows a `try:` sentence built from this world's own words, plus the sentence's shape: `[preset] [called <name>] [on <event> | when …] [if <condition>] then <action>`.
-- While you type, the panel says **`next: …  e.g. …`** with a real example.
-- **Enter on an unfinished sentence authors nothing.** The line stays and the panel says what to add (`not yet — add then <action>, e.g. then set color red`).
-- **The menu only offers words that can work where you are.** Actions with no sentence form (WritePixel, AddElement, AuthorZone, …) are never offered. Neither is a word that would contradict your sentence ("always" after "when they collide").
-
-- **A Law only listens for events this world knows** (after Zach's `fires when Spawn …` made a Law waiting for an event called "when"). Known means heard this session, bound by a Law (the trigger presets bind the common ones), or published by a Law. An unknown name is refused, with the closest known events offered. A structural word (`when`, `then`, …) is never an event name. To mint a new event on purpose, quote it: `on "door-opened"`. `publish` may always name a new event. `fires when clicked` reads the trigger preset.
-
 ### Try these in the Law Line Zone
 
 - `when clicked then set color gold`
@@ -104,7 +93,6 @@
 - **Live reading must never act.** The per-frame vocabulary replaces the Metalaw resolver with "first meaning, decided when spoken". Metalaws are applied only by `speak()`.
 - **A suggestion must never glue onto a finished word.** An empty tail offers "what comes next" only after a space. The running app showed `set co⇥` becoming `set cofalse` before this rule existed; `line_editor_test` holds it.
 - **`earthcall_webgpu` compiles its own sources.** A link or define added only to `earthcall_core` does not reach the app.
-- **Never touch the Person's history when probing.** Set `EARTHCALL_TERMINAL_HISTORY` to a scratch file for any automated run. An agent's probe clean-up once deleted Zach's `saves/logs/terminal-history.txt` along with its own lines.
 - **One channel attaches, and only to a TTY.** Under ctest nothing attaches, which is why the tests use `inject()`, `setSink()`, and the pure `LineEditor`.
 
 ## Evidence

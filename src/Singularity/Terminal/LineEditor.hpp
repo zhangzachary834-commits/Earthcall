@@ -72,9 +72,6 @@ public:
     enum class Outcome { None, Submitted, Interrupt, EndOfInput, Redraw };
 
     void setProviders(SuggestFn suggest, HighlightFn highlight, StatusFn status);
-    // Asked before Enter submits: "" lets the line go; anything else keeps it
-    // in place and shows the answer (what is still missing, with an example).
-    std::function<std::string(const std::string& text)> submitGate;
     Outcome press(const Key& key);
     std::string takeSubmitted();
     void setNotice(const std::string& notice) { _notice = notice; }

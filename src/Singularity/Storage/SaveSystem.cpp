@@ -609,14 +609,31 @@ nlohmann::json readSaveData(const std::string& filepath) {
     }
     
     // Check magic bytes or extension to determine if it's msgpack
-    if (actualPath.length() > 7 && actualPath.substr(actualPath.length() - 7) == ".ecsave") {
+    bool isMsgpack = false;
+    if (actualPath.length() >= 7 && actualPath.substr(actualPath.length() - 7) == ".ecsave") {
+        isMsgpack = true;
+    } else if (actualPath.length() >= 7 && actualPath.substr(actualPath.length() - 7) == ".ecform") {
+        char firstChar = 0;
+        in.get(firstChar);
+        in.clear();
+        in.seekg(0, std::ios::beg);
+        if (firstChar != '{' && firstChar != '[' && firstChar != ' ' && firstChar != '\n' && firstChar != '\r' && firstChar != '\t') {
+            isMsgpack = true;
+        }
+    }
+
+    if (isMsgpack) {
         std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
         std::vector<uint8_t> decompressed = decompressData(bytes);
         try {
             return nlohmann::json::from_msgpack(decompressed);
         } catch (...) {
-            std::cerr << "[SaveSystem] Malformed msgpack in: " << filepath << "\n";
-            return nlohmann::json();
+            try {
+                return nlohmann::json::parse(decompressed.begin(), decompressed.end());
+            } catch (...) {
+                std::cerr << "[SaveSystem] Malformed msgpack in: " << filepath << "\n";
+                return nlohmann::json();
+            }
         }
     } else {
         // Fallback to plain JSON
