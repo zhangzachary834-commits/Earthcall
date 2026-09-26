@@ -1,0 +1,53 @@
+name: PR386 temporary Prophetic benchmark
+
+on:
+  push:
+    branches:
+      - sun/pr386-current-canonical-baseline-20260926
+      - jules-17023102035958893417-7958bb15
+
+permissions:
+  contents: read
+
+jobs:
+  prophetic-rebuild-linux:
+    name: Prophetic rebuild A/B witness (Ubuntu Release)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out exact tested commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install native build prerequisites
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build \
+            libssl-dev zlib1g-dev uuid-dev \
+            libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+
+      - name: Configure Release benchmark
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake -S . -B build-pr386 -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+
+      - name: Build benchmark
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake --build build-pr386 --parallel 4 --target bench_prophetic_rebuild
+
+      - name: Run exact production benchmark
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ./build-pr386/bench_prophetic_rebuild | tee pr386-benchmark.log
+          grep '^PRODUCTION_REBUILD ' pr386-benchmark.log
+          grep '^PAIRWISE_PHASE_SPEEDUP ' pr386-benchmark.log
