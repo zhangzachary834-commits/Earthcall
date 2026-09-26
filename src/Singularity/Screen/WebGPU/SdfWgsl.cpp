@@ -3725,8 +3725,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
 }
 
 
-Program compileVolumeSet(const std::vector<VolumeProgramInput>& media,
-                         bool shareSourceFactors) {
+Program compileVolumeSet(const std::vector<VolumeProgramInput>& media) {
     Program out;
     if (media.empty()) {
         out.ok = false;
@@ -3740,22 +3739,6 @@ Program compileVolumeSet(const std::vector<VolumeProgramInput>& media,
                              m.volumeChromaExpr, m.phaseExpr, m.emissionExpr,
                              m.occluderSdf, m.lightRadianceExpr, m.lightChromaExpr,
                              m.lightAngularExpr);
-    }
-
-    // The renderer supplies one admitted source to every medium, but the
-    // compiler API also accepts independent callers. Pointer identity proves
-    // the authored source expressions and collected parameter values agree;
-    // otherwise retain each member's established evaluator and parameter slot.
-    if (shareSourceFactors) {
-        const auto& first = media.front();
-        for (const auto& m : media) {
-            if (m.lightRadianceExpr != first.lightRadianceExpr ||
-                m.lightChromaExpr != first.lightChromaExpr ||
-                m.lightAngularExpr != first.lightAngularExpr) {
-                shareSourceFactors = false;
-                break;
-            }
-        }
     }
 
     auto replaceAll = [](std::string& text,
@@ -3985,15 +3968,6 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             var totalSource = vec3<f32>(0.0);
 )WGSL";
 
-    if (shareSourceFactors) {
-        out.wgsl += R"WGSL(
-            var sharedSourceReady = false;
-            var sharedRadial = 1.0;
-            var sharedChroma = vec3<f32>(1.0);
-            var sharedAngular = 1.0;
-)WGSL";
-    }
-
     for (std::size_t i = 0; i < media.size(); ++i) {
         const std::string n = std::to_string(i);
         const std::string inst = std::to_string(i + 1) + "u";
@@ -4021,24 +3995,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             "                    let mediumChroma" + n + " = volumeChromaEval_" + n +
                 "(p" + n + ");\n"
             "                    var incidentLi" + n + " = vec3<f32>(1.0);\n"
-            "                    if (u.incidentSource.w > 0.5) {\n";
-        if (shareSourceFactors) {
-            out.wgsl +=
-                "                        if (!sharedSourceReady) {\n"
-                "                            g_instIdx = 1u;\n"
-                "                            let sourceDelta = worldP - u.incidentSource.xyz;\n"
-                "                            let sourceDist = length(sourceDelta);\n"
-                "                            let lightDir = select(vec3<f32>(0.0, 1.0, 0.0), -sourceDelta / max(sourceDist, 1e-8), sourceDist > 1e-8);\n"
-                "                            if (HAS_AUTHORED_LIGHT_RADIANCE_0) { sharedRadial = max(lightRadianceEval_0(sourceDelta), 0.0); }\n"
-                "                            if (HAS_AUTHORED_LIGHT_CHROMA_0) { sharedChroma = max(lightChromaEval_0(sourceDelta), vec3<f32>(0.0)); }\n"
-                "                            if (HAS_AUTHORED_LIGHT_ANGULAR_0) { sharedAngular = max(lightAngularEval_0(sourceDelta, lightDir), 0.0); }\n"
-                "                            sharedSourceReady = true;\n"
-                "                        }\n"
-                "                        g_instIdx = " + inst + ";\n"
-                "                        let vis = volumeSourceVisibility_" + n + "(worldP, u.incidentSource.xyz);\n"
-                "                        incidentLi" + n + " = sharedChroma * (sharedRadial * sharedAngular * vis);\n";
-        } else {
-            out.wgsl +=
+            "                    if (u.incidentSource.w > 0.5) {\n"
             "                        let sourceDelta = worldP - u.incidentSource.xyz;\n"
             "                        let sourceDist = length(sourceDelta);\n"
             "                        let lightDir = select(vec3<f32>(0.0, 1.0, 0.0), -sourceDelta / max(sourceDist, 1e-8), sourceDist > 1e-8);\n"
@@ -4055,9 +4012,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             "                            angular = max(lightAngularEval_" + n + "(sourceDelta, lightDir), 0.0);\n"
             "                        }\n"
             "                        let vis = volumeSourceVisibility_" + n + "(worldP, u.incidentSource.xyz);\n"
-            "                        incidentLi" + n + " = chroma * (radialRad * angular * vis);\n";
-        }
-        out.wgsl +=
+            "                        incidentLi" + n + " = chroma * (radialRad * angular * vis);\n"
             "                    }\n"
             "                    var phase" + n + " = 1.0;\n"
             "                    if (HAS_AUTHORED_VOLUME_PHASE_" + n + ") {\n"
