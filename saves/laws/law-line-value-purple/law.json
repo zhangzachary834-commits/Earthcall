@@ -1,0 +1,45 @@
+{
+ "authors": [
+  "Zach"
+ ],
+ "identifier": "law-line-value-purple",
+ "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
+ "law": {
+  "activation": 0,
+  "applicationLog": [],
+  "authors": [
+   "Zach"
+  ],
+  "authority": 0,
+  "conditionMode": "all",
+  "conditionSubjects": [],
+  "drives": false,
+  "enabled": false,
+  "id": "law-line-value-purple",
+  "name": "means: purple (0.5, 0, 1)",
+  "provenance": [
+   {
+    "directed": true,
+    "entityA": "law-line-value-purple",
+    "entityB": "Zach",
+    "events": [],
+    "type": "authored-by",
+    "weight": 1.0
+   }
+  ],
+  "retrigger": 0,
+  "scope": 0,
+  "targets": [],
+  "actionModel": {
+   "kind": 0,
+   "path": "",
+   "operand": {
+    "t": "vec3",
+    "x": 0.5,
+    "y": 0.0,
+    "z": 1.0
+   }
+  }
+ },
+ "triggers": []
+}

@@ -172,8 +172,6 @@ int main() {
         Rendering::VolumeDensityBinding projected;
         check(Rendering::readVolumeDensity(fogOnly, 3.25, 0.125, projected),
               "density-only FieldNode projects as participating medium without light.source");
-        check(projected.producerId == fogOnly.getIdentifier(),
-              "volume projection preserves the already-known FieldNode producer identity");
         check(projected.densityExpr == fogOnly.volumeDensity.get(),
               "volume projection borrows the authored D AST rather than copying or aliasing rho");
         check(projected.extinctionExpr == fogOnly.volumeExtinction.get() &&
@@ -212,10 +210,9 @@ int main() {
         std::string preEmissionSetIdentity;
         std::string postEmissionSetIdentity;
         Rendering::appendVolumeSetIdentity(
-            preEmissionSetIdentity, projected.producerId, projected);
+            preEmissionSetIdentity, fogOnly.getIdentifier(), projected);
         Rendering::appendVolumeSetIdentity(
-            postEmissionSetIdentity, emissionIdentityProbe.producerId,
-            emissionIdentityProbe);
+            postEmissionSetIdentity, fogOnly.getIdentifier(), emissionIdentityProbe);
         check(preEmissionSetIdentity != postEmissionSetIdentity,
               "V5 world medium-set identity changes when only E_v changes");
         PropertyValue lightSource;

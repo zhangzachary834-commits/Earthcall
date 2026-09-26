@@ -209,6 +209,21 @@ void grammar() {
         assert(!open.ok && mentions(open.error, "on <event>"));
     }
 
+    // --- a Law never listens for an event nobody publishes (Zach, 2026-09-25:
+    //     "fires when" made a Law waiting for an event called "when")
+    {
+        const auto clause = LS::parse("my law called Blue fires when then set glow 1", v);
+        assert(!clause.ok && mentions(clause.error, "clause word"));
+        const auto unknown = LS::parse("on door-opened then set glow 1", v);
+        assert(!unknown.ok && mentions(unknown.error, "not an event this world knows"));
+        const auto near = LS::parse("on object then set glow 1", v);
+        assert(!near.ok && contains(near.candidates, "object-clicked"));
+        const auto minted = LS::parse("on \"door-opened\" then set glow 1", v);
+        assert(minted.ok && minted.triggers == std::vector<std::string>{"door-opened"});
+        const auto publish = LS::parse("on tick then publish door-opened", v);
+        assert(publish.ok);   // publishing may always name a new event
+    }
+
     // --- Tab
     {
         const auto c = LS::complete("on object-clicked then se", v);
@@ -300,6 +315,11 @@ void channel() {
     laws.bindTrigger("law-line-speak", "law-sentence-spoken");
 
     PropertyPath::parse("authorPath").setValue(*terminal, PropertyValue(std::string("@zach.who")));
+
+    // The world has heard these before anyone speaks of them.
+    Core::EventBus::instance().publish(ECA::Event{"object-clicked", &cube, nullptr, std::time(nullptr), ""});
+    Core::EventBus::instance().publish(ECA::Event{"tick", &cube, nullptr, std::time(nullptr), ""});
+    laws.tick();
 
     const auto frame = [&] {
         terminal->sense(laws);

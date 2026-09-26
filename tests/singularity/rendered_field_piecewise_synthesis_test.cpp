@@ -3,7 +3,6 @@
 #include "Singularity/Screen/Renderer.hpp"
 
 #include <cassert>
-#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -742,19 +741,14 @@ int main() {
     Rendering::RenderedFieldSemanticObserver observer;
     auto productionZeroRho = Piecewise::continuous(scalarS(0.0));
     auto productionZeroDensity = Piecewise::continuous(scalarS(0.0));
-    auto productionEmission = Piecewise::continuous(scalarS(7.0));
 
     Rendering::RadianceSourceBinding observedSource;
-    observedSource.producerId = "observer/source-A";
     observedSource.radianceExpr = &productionZeroRho;
     observedSource.radianceRevision = 9001;
 
     Rendering::VolumeDensityBinding observedMedium;
-    observedMedium.producerId = "observer/medium-A";
     observedMedium.densityExpr = &productionZeroDensity;
     observedMedium.densityRevision = 9101;
-    observedMedium.emissionExpr = &productionEmission;
-    observedMedium.emissionRevision = 9102;
 
     // Disabled means completely inert even when production admission calls it.
     observer.observeRadianceSources({observedSource}, 10001);
@@ -776,52 +770,6 @@ int main() {
     assert(firstObserverStats.hypotheticalRadianceBypasses == 1);
     assert(firstObserverStats.hypotheticalDensityBypasses == 1);
     assert(firstObserverStats.authorityBypassesApplied == 0);
-    assert(firstObserverStats.alignedSlotBuilds == 2);
-    assert(firstObserverStats.alignedSlotRepairs == 0);
-    assert(firstObserverStats.alignedSlotReuses == 0);
-    assert(firstObserverStats.alignedSlotDrops == 0);
-    assert(firstObserverStats.alignedSlotLogicalBytes > 0);
-    assert(observer.alignedRadianceSlotCount() == 1);
-    assert(observer.alignedDensitySlotCount() == 1);
-    const uint64_t firstRadianceSlotGeneration =
-        observer.alignedRadianceSlotGeneration(0);
-    const uint64_t firstDensitySlotGeneration =
-        observer.alignedDensitySlotGeneration(0);
-    assert(firstRadianceSlotGeneration != 0);
-    assert(firstDensitySlotGeneration != 0);
-
-    const auto firstRadianceHandle = observer.publishRadianceHandle(0);
-    const auto firstDensityHandle = observer.publishDensityHandle(0);
-    assert(firstRadianceHandle.has_value());
-    assert(firstDensityHandle.has_value());
-    assert(firstRadianceHandle->generation == firstRadianceSlotGeneration);
-    assert(firstDensityHandle->generation == firstDensitySlotGeneration);
-    assert(observer.validateRadianceHandle(*firstRadianceHandle, observedSource));
-    assert(observer.validateDensityHandle(*firstDensityHandle, observedMedium));
-
-    // Rung 8: a fresh generation-bound handle may inspect only the proof already
-    // resident in its aligned artifact. No theorem lookup/search happens here.
-    const auto freshRadianceProof =
-        observer.inspectRadianceProof(*firstRadianceHandle, observedSource);
-    const auto freshDensityProof =
-        observer.inspectDensityProof(*firstDensityHandle, observedMedium);
-    assert(freshRadianceProof.has_value());
-    assert(*freshRadianceProof ==
-           Rendering::RenderedFieldSemanticObserver::ProofKind::RadianceZeroContribution);
-    assert(freshDensityProof.has_value());
-    assert(*freshDensityProof ==
-           Rendering::RenderedFieldSemanticObserver::ProofKind::DensityZeroSupport);
-    assert(observedMedium.emissionExpr == &productionEmission);
-    assert(observedMedium.emissionRevision == 9102);
-    assert(observer.stats().authorityBypassesApplied == 0);
-
-    // Channel sovereignty is part of the handle itself. A forged channel on an
-    // otherwise fresh source handle fails open rather than borrowing density authority.
-    auto wrongChannelRadianceHandle = *firstRadianceHandle;
-    wrongChannelRadianceHandle.channel =
-        Rendering::RenderedFieldSemanticObserver::Channel::MediumDensity;
-    assert(!observer.inspectRadianceProof(
-        wrongChannelRadianceHandle, observedSource).has_value());
 
     // Stable set revisions are O(1) observer hits: runtime/frame movement does
     // not walk the vessels or rebuild the theorem artifacts.
@@ -844,143 +792,6 @@ int main() {
     assert(observer.stats().hypotheticalRadianceBypasses == 0);
     assert(observer.stats().hypotheticalDensityBypasses == 1);
     assert(observer.stats().authorityBypassesApplied == 0);
-    assert(observer.stats().alignedSlotRepairs ==
-           firstObserverStats.alignedSlotRepairs + 1);
-    assert(observer.alignedRadianceSlotGeneration(0) !=
-           firstRadianceSlotGeneration);
-    assert(observer.alignedDensitySlotGeneration(0) ==
-           firstDensitySlotGeneration);
-    assert(!observer.validateRadianceHandle(
-        *firstRadianceHandle, observedSource));
-    assert(observer.validateDensityHandle(
-        *firstDensityHandle, observedMedium));
-
-    // The old generation must not expose a proof after local repair. The
-    // unaffected density neighbor keeps both generation validity and proof.
-    assert(!observer.inspectRadianceProof(
-        *firstRadianceHandle, observedSource).has_value());
-    const auto densityProofAfterRadianceRepair =
-        observer.inspectDensityProof(*firstDensityHandle, observedMedium);
-    assert(densityProofAfterRadianceRepair.has_value());
-    assert(*densityProofAfterRadianceRepair ==
-           Rendering::RenderedFieldSemanticObserver::ProofKind::DensityZeroSupport);
-
-    const auto revisedRadianceHandle = observer.publishRadianceHandle(0);
-    assert(revisedRadianceHandle.has_value());
-    assert(observer.validateRadianceHandle(
-        *revisedRadianceHandle, observedSource));
-
-    // Producer replacement in the same numeric slot is a provenance repair,
-    // not a reuse. The unrelated medium slot keeps its generation.
-    const uint64_t radianceGenerationAfterRevision =
-        observer.alignedRadianceSlotGeneration(0);
-    observedSource.producerId = "observer/source-B";
-    observer.observeRadianceSources({observedSource}, 10003);
-    assert(observer.stats().alignedSlotRepairs ==
-           firstObserverStats.alignedSlotRepairs + 2);
-    assert(observer.alignedRadianceSlotGeneration(0) !=
-           radianceGenerationAfterRevision);
-    assert(observer.alignedDensitySlotGeneration(0) ==
-           firstDensitySlotGeneration);
-    assert(!observer.validateRadianceHandle(
-        *revisedRadianceHandle, observedSource));
-    assert(observer.validateDensityHandle(
-        *firstDensityHandle, observedMedium));
-
-    const auto replacedRadianceHandle = observer.publishRadianceHandle(0);
-    assert(replacedRadianceHandle.has_value());
-    assert(observer.validateRadianceHandle(
-        *replacedRadianceHandle, observedSource));
-
-    // Removal drops the aligned artifact. Re-addition builds a fresh slot with
-    // a fresh generation even if the binding's authored revision is unchanged.
-    const uint64_t generationBeforeRemoval =
-        observer.alignedRadianceSlotGeneration(0);
-    observer.observeRadianceSources({}, 10004);
-    assert(observer.alignedRadianceSlotCount() == 0);
-    assert(observer.stats().alignedSlotDrops == 1);
-    assert(!observer.validateRadianceHandle(
-        *replacedRadianceHandle, observedSource));
-    observer.observeRadianceSources({observedSource}, 10005);
-    assert(observer.alignedRadianceSlotCount() == 1);
-    assert(observer.alignedRadianceSlotGeneration(0) !=
-           generationBeforeRemoval);
-    assert(observer.stats().alignedSlotBuilds ==
-           firstObserverStats.alignedSlotBuilds + 1);
-    const auto readdedRadianceHandle = observer.publishRadianceHandle(0);
-    assert(readdedRadianceHandle.has_value());
-    assert(readdedRadianceHandle->generation !=
-           replacedRadianceHandle->generation);
-    assert(observer.validateRadianceHandle(
-        *readdedRadianceHandle, observedSource));
-    assert(observer.stats().alignedHandlePublications == 5);
-    assert(observer.stats().alignedHandleValidations == 15);
-    assert(observer.stats().alignedHandleMetadataTests == 56);
-    assert(observer.stats().alignedHandleFallbacks == 5);
-    assert(observer.stats().alignedProofReads == 5);
-    assert(observer.stats().alignedProofReadFallbacks == 2);
-    assert(observer.stats().authorityBypassesApplied == 0);
-
-    // Production aligned-slot incrementality witness: when one member of an
-    // already-admitted ordered source set changes, only that slot repairs.
-    // The neighboring slot keeps both generation and handle validity.
-    Rendering::RenderedFieldSemanticObserver alignedObserver;
-    alignedObserver.setEnabled(true);
-    auto alignedZeroA = Piecewise::continuous(scalarS(0.0));
-    auto alignedZeroB = Piecewise::continuous(scalarS(0.0));
-
-    Rendering::RadianceSourceBinding alignedA;
-    alignedA.producerId = "aligned/source-A";
-    alignedA.radianceExpr = &alignedZeroA;
-    alignedA.radianceRevision = 20001;
-
-    Rendering::RadianceSourceBinding alignedB;
-    alignedB.producerId = "aligned/source-B";
-    alignedB.radianceExpr = &alignedZeroB;
-    alignedB.radianceRevision = 21001;
-
-    alignedObserver.observeRadianceSources({alignedA, alignedB}, 22001);
-    assert(alignedObserver.alignedRadianceSlotCount() == 2);
-    const uint64_t alignedAGeneration =
-        alignedObserver.alignedRadianceSlotGeneration(0);
-    const uint64_t alignedBGeneration =
-        alignedObserver.alignedRadianceSlotGeneration(1);
-    const auto alignedAHandle = alignedObserver.publishRadianceHandle(0);
-    const auto alignedBHandle = alignedObserver.publishRadianceHandle(1);
-    assert(alignedAHandle.has_value());
-    assert(alignedBHandle.has_value());
-    assert(alignedObserver.validateRadianceHandle(*alignedAHandle, alignedA));
-    assert(alignedObserver.validateRadianceHandle(*alignedBHandle, alignedB));
-    assert(alignedObserver.inspectRadianceProof(*alignedAHandle, alignedA).has_value());
-    assert(alignedObserver.inspectRadianceProof(*alignedBHandle, alignedB).has_value());
-
-    alignedA.radianceRevision = 20002;
-    alignedObserver.observeRadianceSources({alignedA, alignedB}, 22002);
-    assert(alignedObserver.stats().alignedSlotRepairs == 1);
-    assert(alignedObserver.stats().alignedSlotReuses == 1);
-    assert(alignedObserver.alignedRadianceSlotGeneration(0) !=
-           alignedAGeneration);
-    assert(alignedObserver.alignedRadianceSlotGeneration(1) ==
-           alignedBGeneration);
-    assert(!alignedObserver.validateRadianceHandle(*alignedAHandle, alignedA));
-    assert(alignedObserver.validateRadianceHandle(*alignedBHandle, alignedB));
-    assert(!alignedObserver.inspectRadianceProof(
-        *alignedAHandle, alignedA).has_value());
-    assert(alignedObserver.inspectRadianceProof(
-        *alignedBHandle, alignedB).has_value());
-
-    // Ordered slot is an execution address, never lifetime identity. Reordering
-    // the two admitted producers repairs both slots; neither old handle can
-    // authorize the producer that moved into its numeric position.
-    alignedObserver.observeRadianceSources({alignedB, alignedA}, 22003);
-    assert(alignedObserver.stats().alignedSlotRepairs == 3);
-    assert(!alignedObserver.validateRadianceHandle(*alignedAHandle, alignedA));
-    assert(!alignedObserver.validateRadianceHandle(*alignedBHandle, alignedB));
-    assert(!alignedObserver.inspectRadianceProof(
-        *alignedAHandle, alignedA).has_value());
-    assert(!alignedObserver.inspectRadianceProof(
-        *alignedBHandle, alignedB).has_value());
-    assert(alignedObserver.stats().authorityBypassesApplied == 0);
 
     // Phase B renderer lifecycle: admit authoritative world truth while
     // observation is OFF, then enable diagnostics without waiting for another
@@ -992,12 +803,10 @@ int main() {
     auto boundaryEmission = Piecewise::continuous(scalarS(7.0));
 
     Rendering::RadianceSourceBinding boundarySource;
-    boundarySource.producerId = "boundary/source-A";
     boundarySource.radianceExpr = &boundaryZeroRho;
     boundarySource.radianceRevision = 12001;
 
     Rendering::VolumeDensityBinding boundaryMedium;
-    boundaryMedium.producerId = "boundary/medium-A";
     boundaryMedium.densityExpr = &boundaryZeroDensity;
     boundaryMedium.densityRevision = 13001;
     boundaryMedium.emissionExpr = &boundaryEmission;
@@ -1016,10 +825,6 @@ int main() {
     const uint64_t rhoRevisionBefore = rendererBoundary.radianceSources()[0].radianceRevision;
     const uint64_t densityRevisionBefore = rendererBoundary.volumeDensitySources()[0].densityRevision;
     const uint64_t emissionRevisionBefore = rendererBoundary.volumeDensitySources()[0].emissionRevision;
-    const std::string sourceProducerBefore =
-        rendererBoundary.radianceSources()[0].producerId;
-    const std::string mediumProducerBefore =
-        rendererBoundary.volumeDensitySources()[0].producerId;
 
     rendererBoundary.setRenderedFieldSemanticObservationEnabled(true);
     const auto firstBoundary = rendererBoundary.renderedFieldSemanticObservationStats();
@@ -1029,9 +834,6 @@ int main() {
     assert(firstBoundary.hypotheticalRadianceBypasses == 1);
     assert(firstBoundary.hypotheticalDensityBypasses == 1);
     assert(firstBoundary.authorityBypassesApplied == 0);
-    assert(firstBoundary.alignedSlotBuilds == 2);
-    assert(firstBoundary.alignedSlotRepairs == 0);
-    assert(firstBoundary.alignedSlotLogicalBytes > 0);
 
     // Replay borrows existing renderer state. It may not move or rewrite the
     // admitted collections, their authored AST pointers, or any V4 field.
@@ -1043,8 +845,6 @@ int main() {
     assert(rendererBoundary.radianceSources()[0].radianceRevision == rhoRevisionBefore);
     assert(rendererBoundary.volumeDensitySources()[0].densityRevision == densityRevisionBefore);
     assert(rendererBoundary.volumeDensitySources()[0].emissionRevision == emissionRevisionBefore);
-    assert(rendererBoundary.radianceSources()[0].producerId == sourceProducerBefore);
-    assert(rendererBoundary.volumeDensitySources()[0].producerId == mediumProducerBefore);
     assert(rendererBoundary.radianceSourcesRevision() == 14001);
     assert(rendererBoundary.volumeDensitySourcesRevision() == 15001);
 
@@ -1074,102 +874,6 @@ int main() {
     assert(reenabledBoundary.theoremBuilds == disabledBoundary.theoremBuilds);
     assert(reenabledBoundary.authorityBypassesApplied == 0);
 
-    // Successor native A/B: same already-known SourceRho execution identity,
-    // same authored literal-zero vessel, two execution modes in one native
-    // process. The aligned arm treats the generation-gated resident theorem as
-    // authoritative ONLY inside this benchmark harness; production Renderer
-    // control flow remains unchanged and authorityBypassesApplied stays zero.
-    Rendering::RenderedFieldSemanticObserver abObserver;
-    abObserver.setEnabled(true);
-    auto abZeroRho = Piecewise::continuous(scalarS(0.0));
-
-    Rendering::RadianceSourceBinding abSource;
-    abSource.producerId = "ab/source-zero";
-    abSource.radianceExpr = &abZeroRho;
-    abSource.radianceRevision = 31001;
-
-    const auto abBuildStart = std::chrono::steady_clock::now();
-    abObserver.observeRadianceSources({abSource}, 32001);
-    const auto abBuildEnd = std::chrono::steady_clock::now();
-    const auto abHandle = abObserver.publishRadianceHandle(0);
-    assert(abHandle.has_value());
-    assert(abObserver.validateRadianceHandle(*abHandle, abSource));
-
-    constexpr uint64_t kAbIterations = 200000;
-    volatile double abSink = 0.0;
-
-    const auto exactStart = std::chrono::steady_clock::now();
-    for (uint64_t i = 0; i < kAbIterations; ++i) {
-        const auto exact = abZeroRho.evaluate({{"x", 0.0}, {"t", 0.0}});
-        assert(exact.has_value());
-        const auto* scalar = std::get_if<double>(&*exact);
-        assert(scalar);
-        abSink = abSink + *scalar;
-    }
-    const auto exactEnd = std::chrono::steady_clock::now();
-
-    const auto proofReadsBeforeAb = abObserver.stats().alignedProofReads;
-    const auto metadataTestsBeforeAb = abObserver.stats().alignedHandleMetadataTests;
-    const auto fallbacksBeforeAb = abObserver.stats().alignedProofReadFallbacks;
-
-    uint64_t alignedAuthorityDecisions = 0;
-    const auto alignedStart = std::chrono::steady_clock::now();
-    for (uint64_t i = 0; i < kAbIterations; ++i) {
-        const auto proof = abObserver.inspectRadianceProof(*abHandle, abSource);
-        double value = 0.0;
-        if (proof.has_value() &&
-            *proof == Rendering::RenderedFieldSemanticObserver::ProofKind::
-                          RadianceZeroContribution) {
-            ++alignedAuthorityDecisions;
-            value = 0.0;
-        } else {
-            const auto exact = abZeroRho.evaluate({{"x", 0.0}, {"t", 0.0}});
-            assert(exact.has_value());
-            const auto* scalar = std::get_if<double>(&*exact);
-            assert(scalar);
-            value = *scalar;
-        }
-        abSink = abSink + value;
-    }
-    const auto alignedEnd = std::chrono::steady_clock::now();
-
-    const uint64_t exactNs = static_cast<uint64_t>(
-        std::chrono::duration_cast<std::chrono::nanoseconds>(
-            exactEnd - exactStart).count());
-    const uint64_t alignedNs = static_cast<uint64_t>(
-        std::chrono::duration_cast<std::chrono::nanoseconds>(
-            alignedEnd - alignedStart).count());
-    const uint64_t buildNs = static_cast<uint64_t>(
-        std::chrono::duration_cast<std::chrono::nanoseconds>(
-            abBuildEnd - abBuildStart).count());
-
-    assert(alignedAuthorityDecisions == kAbIterations);
-    assert(abObserver.stats().alignedProofReads - proofReadsBeforeAb ==
-           kAbIterations);
-    assert(abObserver.stats().alignedHandleMetadataTests -
-               metadataTestsBeforeAb == 4 * kAbIterations);
-    assert(abObserver.stats().alignedProofReadFallbacks - fallbacksBeforeAb == 0);
-    assert(abObserver.stats().authorityBypassesApplied == 0);
-    assert(abObserver.stats().alignedSlotLogicalBytes > 0);
-    (void)abSink;
-
-    std::printf(
-        "ALIGNED_AUTHORITY_AB iterations=%llu exact_ns=%llu aligned_ns=%llu "
-        "ratio_exact_over_aligned=%.6f build_ns=%llu resident_bytes=%zu "
-        "proof_reads=%llu metadata_tests=%llu proof_fallbacks=0 "
-        "authority_decisions=%llu production_authority_bypasses=0\n",
-        static_cast<unsigned long long>(kAbIterations),
-        static_cast<unsigned long long>(exactNs),
-        static_cast<unsigned long long>(alignedNs),
-        alignedNs ? static_cast<double>(exactNs) /
-                        static_cast<double>(alignedNs)
-                  : 0.0,
-        static_cast<unsigned long long>(buildNs),
-        abObserver.stats().alignedSlotLogicalBytes,
-        static_cast<unsigned long long>(kAbIterations),
-        static_cast<unsigned long long>(4 * kAbIterations),
-        static_cast<unsigned long long>(alignedAuthorityDecisions));
-
     std::printf("RENDERED_FIELD_PIECEWISE_SYNTHESIS parity=1 channels=5 "
                 "piecewise_topology_identity=1 child_math_shared=1 "
                 "runtime_rebuilds=0 density_value_edit_local=1 "
@@ -1193,15 +897,6 @@ int main() {
                 "phase_b_observer=1 renderer_enable_replays_current_scene=1 "
                 "renderer_enable_idempotent=1 v4_emission_observer_inert=1 "
                 "observer_authority_bypasses=0 "
-                "aligned_slot_artifacts=1 aligned_slot_searches=0 "
-                "aligned_slot_local_repair=1 aligned_slot_reorder_refused=1 "
-                "aligned_slot_builds=%llu aligned_slot_repairs=%llu "
-                "aligned_slot_reuses=%llu aligned_slot_drops=%llu "
-                "aligned_slot_logical_bytes=%zu "
-                "aligned_handle_publications=%llu "
-                "aligned_handle_validations=%llu "
-                "aligned_handle_metadata_tests=%llu "
-                "aligned_handle_fallbacks=%llu "
                 "observer_radiance_zero=%llu observer_density_zero=%llu "
                 "pretty_print_identity=0 full_scene_serialization_identity=0\n",
                 static_cast<unsigned long long>(adapter.proofBuilds),
@@ -1212,23 +907,6 @@ int main() {
                 static_cast<unsigned long long>(adapter.proofRefusals),
                 static_cast<unsigned long long>(adapter.proofPremiseInspections),
                 static_cast<unsigned long long>(adapter.exactEvaluationsAvoided),
-                static_cast<unsigned long long>(
-                    observer.stats().alignedSlotBuilds),
-                static_cast<unsigned long long>(
-                    observer.stats().alignedSlotRepairs),
-                static_cast<unsigned long long>(
-                    observer.stats().alignedSlotReuses),
-                static_cast<unsigned long long>(
-                    observer.stats().alignedSlotDrops),
-                observer.stats().alignedSlotLogicalBytes,
-                static_cast<unsigned long long>(
-                    observer.stats().alignedHandlePublications),
-                static_cast<unsigned long long>(
-                    observer.stats().alignedHandleValidations),
-                static_cast<unsigned long long>(
-                    observer.stats().alignedHandleMetadataTests),
-                static_cast<unsigned long long>(
-                    observer.stats().alignedHandleFallbacks),
                 static_cast<unsigned long long>(
                     observer.stats().hypotheticalRadianceBypasses),
                 static_cast<unsigned long long>(

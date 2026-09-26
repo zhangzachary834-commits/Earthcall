@@ -43,6 +43,10 @@ struct Scratch {
     }
 };
 
+bool mentions(const std::string& haystack, const std::string& needle) {
+    return haystack.find(needle) != std::string::npos;
+}
+
 bool contains(const std::vector<std::string>& v, const std::string& s) {
     return std::find(v.begin(), v.end(), s) != v.end();
 }
@@ -138,9 +142,62 @@ int main() {
     harness.lawManager.tick();
     PropertyValue color;
     lawGetValue(*cube, PropertyPath::parse("color"), color);
-    const auto* c = std::get_if<glm::vec3>(&color);
+    const glm::vec3* c = std::get_if<glm::vec3>(&color);
     check(c && std::fabs(c->x - 1.0f) < 0.03f && c->y < 0.03f && c->z < 0.03f,
           "clicking the cube turns it red under the spoken Law");
+
+    // The second seed pass: value words and trigger presets, all authored.
+    const auto words = terminal->vocabulary(harness.lawManager);
+    const auto hasWord = [&](const std::string& symbol, const std::string& opcode) {
+        return std::any_of(words.words.begin(), words.words.end(), [&](const auto& w) {
+            return w.symbol == symbol && w.opcode == opcode;
+        });
+    };
+    check(hasWord("gold", "value") && hasWord("on", "value") && hasWord("on", "clause.trigger"),
+          "'gold' and 'on' are value words, and 'on' is still the trigger word where a clause begins");
+    check(hasWord("when hovered", "preset"), "'when hovered' denotes a trigger preset");
+    terminal->inject("when hovered then set color gold");
+    frame();
+    Core::EventBus::instance().publish(ECA::Event{"object-hover-entered", cube, nullptr, std::time(nullptr)});
+    harness.lawManager.tick();
+    lawGetValue(*cube, PropertyPath::parse("color"), color);
+    c = std::get_if<glm::vec3>(&color);
+    check(c && std::fabs(c->x - 1.0f) < 0.03f && std::fabs(c->y - 0.84f) < 0.03f && c->z < 0.03f,
+          "'when hovered then set color gold' paints the cube gold on hover");
+
+    // Zach's first unguided session (2026-09-25): after "when they collide"
+    // the menu offered "always" (a contradicting preset) and actions with no
+    // sentence form. It must offer only words that can work there.
+    {
+        const auto live = terminal->vocabulary(harness.lawManager);
+        const auto menu = Singularity::Terminal::LawSentence::suggest("my law called Blue when they collide ", live);
+        const auto offered = [&](const std::string& text) {
+            return std::any_of(menu.begin(), menu.end(), [&](const auto& s) { return s.text == text; });
+        };
+        check(!offered("always") && !offered("my constantly-applied law"),
+              "the menu never offers a preset that contradicts 'when they collide'");
+        check(!offered("WritePixel") && !offered("AddElement") && !offered("AuthorZone"),
+              "the menu never offers an action with no sentence form");
+        check(offered("then"), "the menu offers 'then' after a trigger preset");
+    }
+    terminal->inject("my law called Blue when they collide then set color blue");
+    frame();
+    check(mentions(printed.back(), "authored"), "Zach's intended sentence authors: " + printed.back().substr(0, 60));
+
+    // Zach's line (2026-09-25) made a Law waiting for an event called "when".
+    {
+        const std::size_t before = harness.lawManager.getAll().size();
+        terminal->inject("my law called Blue fires when Spawn @material.concept-shape-3d.birth-74.member-0");
+        frame();
+        check(harness.lawManager.getAll().size() == before && mentions(printed.back(), "clause word"),
+              "'fires when <action>' is refused: 'when' is not an event");
+        terminal->inject("my law called Blue fires when clicked then set color blue");
+        frame();
+        Law* blue = harness.lawManager.getAll().back().get();
+        check(mentions(printed.back(), "authored") &&
+                  harness.lawManager.triggersOf(blue->getIdentifier()) == std::vector<std::string>{"object-clicked"},
+              "'fires when clicked' reads the trigger preset and listens for object-clicked");
+    }
 
     check(harness.zones.persistActiveZone(), "Save Zone keeps the spoken Law");
     const auto persisted = SaveSystem::readZoneIdentity("LawLine");

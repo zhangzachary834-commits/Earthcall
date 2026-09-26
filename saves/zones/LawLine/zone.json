@@ -744,6 +744,496 @@
      "timestamp": 1790380800
     }
    ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.red.value-red",
+   "entityB": "law-line-value-red",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.green.value-green",
+   "entityB": "law-line-value-green",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.blue.value-blue",
+   "entityB": "law-line-value-blue",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.white.value-white",
+   "entityB": "law-line-value-white",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.black.value-black",
+   "entityB": "law-line-value-black",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.yellow.value-yellow",
+   "entityB": "law-line-value-yellow",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.orange.value-orange",
+   "entityB": "law-line-value-orange",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.purple.value-purple",
+   "entityB": "law-line-value-purple",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.violet.value-purple",
+   "entityB": "law-line-value-purple",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.pink.value-pink",
+   "entityB": "law-line-value-pink",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.cyan.value-cyan",
+   "entityB": "law-line-value-cyan",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.magenta.value-magenta",
+   "entityB": "law-line-value-magenta",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.gold.value-gold",
+   "entityB": "law-line-value-gold",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.gray.value-gray",
+   "entityB": "law-line-value-gray",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.grey.value-gray",
+   "entityB": "law-line-value-gray",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.on.value-true",
+   "entityB": "law-line-value-true",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.yes.value-true",
+   "entityB": "law-line-value-true",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.off.value-false",
+   "entityB": "law-line-value-false",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.no.value-false",
+   "entityB": "law-line-value-false",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.when-clicked.preset-clicked",
+   "entityB": "law-line-preset-clicked",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.on-click.preset-clicked",
+   "entityB": "law-line-preset-clicked",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.when-it-is-clicked.preset-clicked",
+   "entityB": "law-line-preset-clicked",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.when-hovered.preset-hovered",
+   "entityB": "law-line-preset-hovered",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.on-hover.preset-hovered",
+   "entityB": "law-line-preset-hovered",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.when-the-pointer-enters.preset-hovered",
+   "entityB": "law-line-preset-hovered",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.when-the-pointer-leaves.preset-unhovered",
+   "entityB": "law-line-preset-unhovered",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.on-unhover.preset-unhovered",
+   "entityB": "law-line-preset-unhovered",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.when-touched.preset-touched",
+   "entityB": "law-line-preset-touched",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.on-contact.preset-touched",
+   "entityB": "law-line-preset-touched",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.when-they-collide.preset-touched",
+   "entityB": "law-line-preset-touched",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.when-i-land.preset-landed",
+   "entityB": "law-line-preset-landed",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.on-landing.preset-landed",
+   "entityB": "law-line-preset-landed",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.when-i-jump.preset-jumped",
+   "entityB": "law-line-preset-jumped",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.on-jump.preset-jumped",
+   "entityB": "law-line-preset-jumped",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.when-the-zone-opens.preset-zone-entered",
+   "entityB": "law-line-preset-zone-entered",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
   }
  ],
  "identifier": "LawLine",
@@ -771,7 +1261,29 @@
   "law-line-preset-unconditioned",
   "law-line-hear",
   "law-line-speak",
-  "law-line-scope"
+  "law-line-scope",
+  "law-line-value-red",
+  "law-line-value-green",
+  "law-line-value-blue",
+  "law-line-value-white",
+  "law-line-value-black",
+  "law-line-value-yellow",
+  "law-line-value-orange",
+  "law-line-value-purple",
+  "law-line-value-pink",
+  "law-line-value-cyan",
+  "law-line-value-magenta",
+  "law-line-value-gold",
+  "law-line-value-gray",
+  "law-line-value-true",
+  "law-line-value-false",
+  "law-line-preset-clicked",
+  "law-line-preset-hovered",
+  "law-line-preset-unhovered",
+  "law-line-preset-touched",
+  "law-line-preset-landed",
+  "law-line-preset-jumped",
+  "law-line-preset-zone-entered"
  ],
  "lexemes": [
   {
@@ -985,6 +1497,146 @@
   {
    "id": "lexeme.law-line.unconditionally.preset-unconditioned",
    "symbol": "unconditionally"
+  },
+  {
+   "id": "lexeme.law-line.red.value-red",
+   "symbol": "red"
+  },
+  {
+   "id": "lexeme.law-line.green.value-green",
+   "symbol": "green"
+  },
+  {
+   "id": "lexeme.law-line.blue.value-blue",
+   "symbol": "blue"
+  },
+  {
+   "id": "lexeme.law-line.white.value-white",
+   "symbol": "white"
+  },
+  {
+   "id": "lexeme.law-line.black.value-black",
+   "symbol": "black"
+  },
+  {
+   "id": "lexeme.law-line.yellow.value-yellow",
+   "symbol": "yellow"
+  },
+  {
+   "id": "lexeme.law-line.orange.value-orange",
+   "symbol": "orange"
+  },
+  {
+   "id": "lexeme.law-line.purple.value-purple",
+   "symbol": "purple"
+  },
+  {
+   "id": "lexeme.law-line.violet.value-purple",
+   "symbol": "violet"
+  },
+  {
+   "id": "lexeme.law-line.pink.value-pink",
+   "symbol": "pink"
+  },
+  {
+   "id": "lexeme.law-line.cyan.value-cyan",
+   "symbol": "cyan"
+  },
+  {
+   "id": "lexeme.law-line.magenta.value-magenta",
+   "symbol": "magenta"
+  },
+  {
+   "id": "lexeme.law-line.gold.value-gold",
+   "symbol": "gold"
+  },
+  {
+   "id": "lexeme.law-line.gray.value-gray",
+   "symbol": "gray"
+  },
+  {
+   "id": "lexeme.law-line.grey.value-gray",
+   "symbol": "grey"
+  },
+  {
+   "id": "lexeme.law-line.on.value-true",
+   "symbol": "on"
+  },
+  {
+   "id": "lexeme.law-line.yes.value-true",
+   "symbol": "yes"
+  },
+  {
+   "id": "lexeme.law-line.off.value-false",
+   "symbol": "off"
+  },
+  {
+   "id": "lexeme.law-line.no.value-false",
+   "symbol": "no"
+  },
+  {
+   "id": "lexeme.law-line.when-clicked.preset-clicked",
+   "symbol": "when clicked"
+  },
+  {
+   "id": "lexeme.law-line.on-click.preset-clicked",
+   "symbol": "on click"
+  },
+  {
+   "id": "lexeme.law-line.when-it-is-clicked.preset-clicked",
+   "symbol": "when it is clicked"
+  },
+  {
+   "id": "lexeme.law-line.when-hovered.preset-hovered",
+   "symbol": "when hovered"
+  },
+  {
+   "id": "lexeme.law-line.on-hover.preset-hovered",
+   "symbol": "on hover"
+  },
+  {
+   "id": "lexeme.law-line.when-the-pointer-enters.preset-hovered",
+   "symbol": "when the pointer enters"
+  },
+  {
+   "id": "lexeme.law-line.when-the-pointer-leaves.preset-unhovered",
+   "symbol": "when the pointer leaves"
+  },
+  {
+   "id": "lexeme.law-line.on-unhover.preset-unhovered",
+   "symbol": "on unhover"
+  },
+  {
+   "id": "lexeme.law-line.when-touched.preset-touched",
+   "symbol": "when touched"
+  },
+  {
+   "id": "lexeme.law-line.on-contact.preset-touched",
+   "symbol": "on contact"
+  },
+  {
+   "id": "lexeme.law-line.when-they-collide.preset-touched",
+   "symbol": "when they collide"
+  },
+  {
+   "id": "lexeme.law-line.when-i-land.preset-landed",
+   "symbol": "when i land"
+  },
+  {
+   "id": "lexeme.law-line.on-landing.preset-landed",
+   "symbol": "on landing"
+  },
+  {
+   "id": "lexeme.law-line.when-i-jump.preset-jumped",
+   "symbol": "when i jump"
+  },
+  {
+   "id": "lexeme.law-line.on-jump.preset-jumped",
+   "symbol": "on jump"
+  },
+  {
+   "id": "lexeme.law-line.when-the-zone-opens.preset-zone-entered",
+   "symbol": "when the zone opens"
   }
  ],
  "materials": [
