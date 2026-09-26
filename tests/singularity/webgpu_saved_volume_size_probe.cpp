@@ -48,7 +48,7 @@ nlohmann::json readJson(const char* path) {
 int main(int argc, char** argv) {
     std::setvbuf(stdout, nullptr, _IONBF, 0);
     if (argc < 3) {
-        std::fprintf(stderr, "usage: probe <zone.json> <authored> [width] [height] [frames] [blocks] [eyeX] [eyeY] [eyeZ] [lookX] [lookY] [lookZ] [motion:0|1] [sourceTime] [editedSourceRho:0|1]\n");
+        std::fprintf(stderr, "usage: probe <zone.json> <authored> [width] [height] [frames] [blocks] [eyeX] [eyeY] [eyeZ] [lookX] [lookY] [lookZ] [motion:0|1] [sourceTime]\n");
         return 2;
     }
     if (std::string(argv[2]) != "authored") return 2;
@@ -65,18 +65,10 @@ int main(int argc, char** argv) {
                          argc > 12 ? std::atof(argv[12]) : (northern ? 80.0f : -12.0f));
     const bool motion = argc > 13 && std::atoi(argv[13]) != 0;
     const double sourceTime = argc > 14 ? std::atof(argv[14]) : 0.0;
-    const bool editSourceRho = argc > 15 && std::atoi(argv[15]) != 0;
     assert(width >= 16 && height >= 16 && frames > 0 && blocks > 0);
 
     auto saved = readJson(argv[1]);
     assert(saved.at("identifier") == (northern ? "Northern Veil" : "Sanctuary of Sunlit Mist"));
-    if (editSourceRho) {
-        assert(northern);
-        // In-memory parameter edit only. The saved AST and source file remain
-        // untouched; its structure and shader should stay resident.
-        saved["spatialRoot"]["field"]["ast"]["pieces"][0]["mathNode"]
-             ["scalarForm"]["terms"][0]["c"] = 0.2;
-    }
     auto sun = geom::FieldNode::fromJson(saved.at("spatialRoot"));
     if (northern && sourceTime != 0.0) {
         // Exercise the admitted source Timeline itself; the saved root's rho
@@ -158,9 +150,7 @@ int main(int argc, char** argv) {
                               medium.occluderSdf, source.radianceExpr,
                               source.chromaExpr, source.angularExpr});
         }
-        const bool candidate = std::getenv("EARTHCALL_EXPERIMENT_V5_SHARED_SOURCE") &&
-            std::string(std::getenv("EARTHCALL_EXPERIMENT_V5_SHARED_SOURCE")) == "1";
-        const auto generated = sdfwgsl::compileVolumeSet(inputs, candidate);
+        const auto generated = sdfwgsl::compileVolumeSet(inputs);
         const auto fs = generated.wgsl.find("\n@fragment");
         size_t sourceEvalCalls = 0;
         size_t otherMemberCalls = 0;
@@ -171,14 +161,13 @@ int main(int argc, char** argv) {
                 if (generated.wgsl.find("lightRadianceEval_" + std::to_string(i) + "(", fs) != std::string::npos)
                     ++otherMemberCalls;
         }
-        std::printf("V5_WGSL candidate=%d ok=%d error=%s bytes=%zu fragment=%d radial_eval_call_sites=%zu other_member_calls=%zu shared_source=%d source_time_binding=%d\n",
-                    candidate, generated.ok, generated.error.c_str(), generated.wgsl.size(),
+        std::printf("V5_WGSL ok=%d error=%s bytes=%zu fragment=%d radial_eval_call_sites=%zu other_member_calls=%zu source_time_binding=%d\n",
+                    generated.ok, generated.error.c_str(), generated.wgsl.size(),
                     fs != std::string::npos, sourceEvalCalls, otherMemberCalls,
-                    fs != std::string::npos && generated.wgsl.find("sharedSourceReady", fs) != std::string::npos,
                     generated.wgsl.find("u.sourceTime.x") != std::string::npos);
         if (!generated.ok || fs == std::string::npos ||
             sourceEvalCalls != media.size() ||
-            otherMemberCalls != (candidate ? 0u : media.size()-1u) ||
+            otherMemberCalls != media.size()-1u ||
             (sourceTime != 0.0 && generated.wgsl.find("u.sourceTime.x") == std::string::npos)) return 3;
     }
     renderer.setRadianceSources({source}, 1);
@@ -279,9 +268,9 @@ int main(int argc, char** argv) {
     };
     for (int i=0;i<12;++i) { double p=0,s=0;frame(p,s); }
     syncImage();
-    std::printf("SCENE=%s media=%zu size=%ux%u eye=(%.2f,%.2f,%.2f) look=(%.2f,%.2f,%.2f) frames=%d blocks=%d motion=%d sourceTime=%.3f editedSourceRho=%d volume-only\n",
+    std::printf("SCENE=%s media=%zu size=%ux%u eye=(%.2f,%.2f,%.2f) look=(%.2f,%.2f,%.2f) frames=%d blocks=%d motion=%d sourceTime=%.3f volume-only\n",
                 saved.at("identifier").get<std::string>().c_str(), media.size(),
-                width,height,eye.x,eye.y,eye.z,look.x,look.y,look.z,frames,blocks,motion,sourceTime,editSourceRho);
+                width,height,eye.x,eye.y,eye.z,look.x,look.y,look.z,frames,blocks,motion,sourceTime);
     for (int block=0;block<blocks;++block) {
         double projectionMs=0,submitMs=0;
         const auto wallStart=Clock::now();
