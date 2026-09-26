@@ -40,8 +40,10 @@ int main() {
 
     std::vector<Singular*> population{&author, &seed};
     bool registered = false;
+    std::size_t providerCalls = 0;
 
     Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+        ++providerCalls;
         out.insert(out.end(), population.begin(), population.end());
     });
 
@@ -79,6 +81,7 @@ int main() {
         observer->setActionModel(ActionNode::add("position.z", 1.0));
 
         const auto beforeRevision = Universe::instance().structuralRevision();
+        providerCalls = 0;
         manager.tick();
 
         assert(registered && "first Law did not register the newcomer");
@@ -86,6 +89,19 @@ int main() {
                "structural addition did not move the Universe generation");
         assert(near(newcomer.getPosition().z, 1.0) &&
                "later Law did not see a being registered earlier in the same tick");
+        assert(providerCalls == 2 &&
+               "structural-change tick should query once initially and once after revision");
+
+        // With no structural change, every later consumer must reuse the same
+        // population snapshot. This is the deterministic performance oracle:
+        // no wall-clock threshold, no machine dependence, just one provider
+        // construction for the whole tick.
+        providerCalls = 0;
+        manager.tick();
+        assert(providerCalls == 1 &&
+               "quiescent tick rebuilt Universe::beings more than once");
+        assert(near(newcomer.getPosition().z, 2.0) &&
+               "quiescent snapshot reuse changed lawful application semantics");
     }
 
     Universe::instance().setProvider(nullptr);
