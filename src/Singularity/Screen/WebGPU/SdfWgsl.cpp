@@ -4082,6 +4082,36 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
 }
 
 
+bool reuseVolumeSourceGeometry(Program& program, std::string& error) {
+    if (!program.ok) { error = program.error; return false; }
+    auto& code = program.wgsl;
+    if (code.find("const HAS_OCCLUDER_SDF: bool = false;") != std::string::npos)
+        return true; // Nothing to reuse; retain the exact no-occluder shader.
+    auto replaceOnce = [&](const std::string& before, const std::string& after) {
+        const auto at = code.find(before);
+        if (at == std::string::npos || code.find(before, at + before.size()) != std::string::npos)
+            return false;
+        code.replace(at, before.size(), after);
+        return true;
+    };
+    if (!replaceOnce(
+            "fn volumeSourceVisibility(worldP: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {",
+            "fn volumeSourceVisibility(worldP: vec3<f32>, sourceWorld: vec3<f32>, distToLight: f32, lightDir: vec3<f32>) -> f32 {") ||
+        !replaceOnce(
+            "    let toLight = sourceWorld - worldP;\n"
+            "    let distToLight = length(toLight);\n"
+            "    if (distToLight <= 1e-4) { return 1.0; }\n"
+            "    let lightDir = toLight / distToLight;\n",
+            "    if (distToLight <= 1e-4) { return 1.0; }\n") ||
+        !replaceOnce(
+            "let vis = volumeSourceVisibility(worldP, u.incidentSource.xyz);",
+            "let vis = volumeSourceVisibility(worldP, u.incidentSource.xyz, sourceDist, lightDir);")) {
+        error = "single-medium source-geometry reuse: unexpected shader structure";
+        return false;
+    }
+    return true;
+}
+
 bool instrumentVolumeWork(Program& program, bool mediumSet, std::string& error) {
     if (!program.ok) { error = program.error; return false; }
     auto& code = program.wgsl;
