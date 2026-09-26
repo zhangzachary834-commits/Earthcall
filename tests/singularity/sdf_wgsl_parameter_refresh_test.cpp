@@ -1454,6 +1454,18 @@ int main() {
         check(oneSource.wgsl.find(
                   "let directRadiance = shapedRadiance * pathVisibility") != std::string::npos,
               "one-source direct transport multiplies visibility after authored emission");
+        check(oneSource.wgsl.find(
+                  "(inst.rangeTraversalEnabled & 1u) != 0u") != std::string::npos,
+              "primary proof traversal owns an independent admission bit");
+        check(oneSource.wgsl.find(
+                  "(inst.rangeTraversalEnabled & 2u) != 0u") != std::string::npos &&
+                  oneSource.wgsl.find(
+                      "rangeCandidate(inst, origin, shadowDir, tShadow, maxShadow)") !=
+                      std::string::npos,
+              "visibility transport owns an independent positive-proof traversal bit");
+        check(oneSource.wgsl.find(
+                  "sourceTransportSignedStep(pShadow, damping)") != std::string::npos,
+              "unknown visibility proof cells preserve exact signed marching authority");
 
         Rendering::RadianceSourceBinding s0;
         s0.radianceExpr = &rho0;

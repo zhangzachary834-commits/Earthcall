@@ -40,6 +40,8 @@ struct SdfInstanceData {
     heightGridDimZ: u32,
     // Fixed-depth conservative positive-proof bit grid. A zero bit means
     // "no GPU skip proof; exact authored marching owns this cell."
+    // rangeTraversalEnabled is an admission mask: bit 0 = primary ray,
+    // bit 1 = Rung-8 source visibility. The consumers are verified separately.
     rangeProofWordOffset: u32,
     rangeProofWordCount: u32,
     rangeTraversalEnabled: u32,
@@ -1578,9 +1580,32 @@ fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWor
     let maxShadow = min(bounds.y, rayLength - bias);
     if (maxShadow <= tShadow) { return 1.0; }
 
-    // Match the primary renderer's finite exact-march budget. This baseline uses
-    // no proof-grid skip, no penumbra estimate, and no percentage heuristic.
+    // Visibility owns its own proof-consumption latch (bit 1). The proof bitmap
+    // is never shadow truth: it can only fast-forward cells the CPU theorem
+    // proved strictly positive/zero-free. Clear/unknown cells immediately hand
+    // authority back to the exact signed marcher below.
+    var visibilityCellExit = tShadow;
+    var visibilityCandidateActive = false;
+
+    // Match the primary renderer's finite exact-march budget. Proof traversal
+    // spends no authored SDF evaluations; ambiguous cells still use exactly the
+    // same blocker test and signed-step policy as the baseline.
     for (var shadowStep = 0; shadowStep < 192; shadowStep = shadowStep + 1) {
+        if ((inst.rangeTraversalEnabled & 2u) != 0u &&
+            (!visibilityCandidateActive || tShadow >= visibilityCellExit)) {
+            let candidate =
+                rangeCandidate(inst, origin, shadowDir, tShadow, maxShadow);
+            if (candidate.z < 0.5) {
+                // Every remaining regular cell on this segment was proved
+                // positive. The theorem permits a clear-path answer without
+                // evaluating the authored field in those cells.
+                return 1.0;
+            }
+            tShadow = candidate.x;
+            visibilityCellExit = candidate.y;
+            visibilityCandidateActive = true;
+        }
+
         if (tShadow >= maxShadow) { return 1.0; }
 
         let pShadow = origin + shadowDir * tShadow;
@@ -1709,7 +1734,7 @@ fn fs(in: VSOut) -> FSOut {
     for (var i = 0; i < 192; i = i + 1) {
         if (t > maxDist) { break; }
 
-        if (inst.rangeTraversalEnabled != 0u &&
+        if ((inst.rangeTraversalEnabled & 1u) != 0u &&
             (!rangeCandidateActive || t >= rangeCellExit)) {
             let candidate = rangeCandidate(inst, ro, rd, t, maxDist);
             if (candidate.z < 0.5) {
