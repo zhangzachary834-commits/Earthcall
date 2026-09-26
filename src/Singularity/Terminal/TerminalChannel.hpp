@@ -97,6 +97,15 @@ private:
     int width() const;
     std::string describeProperty(const std::string& beingId, const std::string& property) const;
     std::string describeBeing(const std::string& beingId) const;
+    // Rung 3 (Zach, 2026-09-25): the footer, help, confirmed deletion, dry run.
+    std::string footerText(bool& hears);
+    void showHelp();
+    void requestDeletion(LawManager& laws, const std::string& target);
+    void answer(LawManager& laws, const std::string& line);
+    void cancelDeletion(const std::string& why);
+    bool awaitingAnswer() const { return !_pendingTargets.empty() && !_question.empty(); }
+    std::string dryRun(const LawSentence::Parse& p);
+    std::string lawSummary(const Law& law, LawManager& laws) const;
     LawSentence::Resolution resolveByMetalaw(LawManager& laws, const LawSentence::Ambiguity& a);
     void attach(LawManager& laws);
     void detach();
@@ -125,6 +134,11 @@ private:
     std::string _ambiguityCandidates;
     std::string _ambiguityResolved;
     bool _attached = false;
+    // Confirmed deletion (registered): the question a Metalaw asks, and what
+    // is waiting for the Person's answer.
+    std::string _question;
+    std::string _pendingTargetsText;
+    std::string _pendingNames;
     // Settings of the line (registered).
     int _menuRows = 8;
     bool _autoMenu = true;
@@ -154,6 +168,16 @@ private:
     std::optional<LawSentence::Vocabulary> _vocab;
     std::string _parseText;
     std::optional<LawSentence::Parse> _parse;
+    // Mouse reporting is on only while a menu or help is open; a cursor
+    // report after each draw says which screen row the region starts on.
+    bool _mouseOn = false;
+    bool _wasAwaiting = false;
+    int _reportScreenRow = -1;
+    int _reportRegionRow = 0;
+    // The Law(s) a deletion request names, and the one being deleted now.
+    std::vector<std::string> _pendingTargets;
+    std::string _deletingId;
+    std::string _deletingName;
 };
 
 } // namespace Terminal

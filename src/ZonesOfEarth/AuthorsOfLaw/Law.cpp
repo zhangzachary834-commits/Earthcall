@@ -1,3 +1,4 @@
+#include "ZonesOfEarth/ZoneManager.hpp"
 #include "Law.hpp"
 #include "Identity/FirstMoverRegister.hpp"
 #include <string_view>
@@ -2786,6 +2787,15 @@ void LawManager::reapUnmade() {
     // still exists — it is what catches beings the delete tool unmakes — but
     // a LawManager's own bookkeeping must not depend on having been connected
     // to a global bus that cannot be unsubscribed from.
+    // Laws among the victims are retired by THIS manager: they are ours to
+    // free, not a Zone's objects. Collected before anything is released.
+    std::vector<std::string> retiredLaws;
+    for (Singular* victim : victims) {
+        auto* law = dynamic_cast<Law*>(victim);
+        if (law && !law->isFirstMover() && find(law->getIdentifier()) == law) {
+            retiredLaws.push_back(law->getIdentifier());
+        }
+    }
     for (Singular* victim : victims) {
         releaseFromLaws(victim);
     }
@@ -2796,6 +2806,13 @@ void LawManager::reapUnmade() {
     // the being still exists — it must not be handed the corpse next tick.
     for (Singular* victim : victims) {
         _rete.retractFactsAbout(victim);
+    }
+    // Only now, with no fact or Law still pointing at them, free the Laws —
+    // and take them out of the active Zone's authored closure so Save Zone
+    // stops naming them.
+    for (const auto& id : retiredLaws) {
+        remove(id);
+        if (ZoneManager* zones = ZoneManager::live()) zones->retireLawFromActiveZone(id);
     }
 }
 

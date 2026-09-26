@@ -35,6 +35,16 @@
 - [ ] `my law called Blue when they collide then set color blue` authors (your sentence, one step from done).
 - [ ] The legacy `Run Earthcall Terminal.command` still behaves exactly as before.
 
+**Rung 3 — what you asked for after that** (mouse, blanks, help, footer, dry run, deletion):
+
+- [ ] **Scroll the menu with the mouse wheel**, and **click** a row to take it. When the menu closes, the Terminal scrolls its history and selects text normally again.
+- [ ] Take `set`: the line becomes `set ‹path› to ‹value›`. Type to fill the blank; picking from the menu fills it and jumps to the next; Tab jumps; Enter waits until no blanks are left.
+- [ ] Tab after `then ` shows the menu **in sections**, your typed letters are **bold**, and a `⤷` line explains the selected entry.
+- [ ] Type `help` (or F1): a **boxed page** opens under the line and scrolls with the wheel; Esc closes it. **Is it beautiful?** That's your call.
+- [ ] The **footer** (◆) always says the Zone, whether it hears the line, the scope, you, and how many live Laws there are.
+- [ ] End a sentence with `?`: the panel also says who the IF holds for right now.
+- [ ] In the Law Line Zone, speak a Law called `Test`, then `delete Test`. The prompt asks *"Are you sure you want to delete “Test”? (yes / no)"*. `no` keeps it. Ask again and `yes` deletes it. After Save Zone and a restart, it stays gone.
+
 ## Volumetric Light Beams Shining Through Mist — Sanctuary of Sunlit Mist
 
 *Antigravity / Gemini · session* `46a7b4aa-6373-429b-af0e-3377758af9ff` *· 2026-09-24. Volumetric light beams through participating mist via authored fields and bounded local occluder sphere-tracing. Current Sanctuary phase is the V3 isotropic compatibility identity unless* `volumePhase` *is explicitly authored.*

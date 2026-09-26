@@ -20,7 +20,7 @@ LS::Vocabulary vocabulary() {
     LS::Vocabulary v;
     v.words = LS::canonicalWords();
     v.words.push_back({"greater than", "op.Gt", "lex_gt", "law_gt", "means: greater than"});
-    v.words.push_back({"red", "value", "lex_red", "law_red", "means: red"});
+    v.words.push_back({"red", "value", "lex_red", "law_red", "means: red", "(1, 0, 0) · a Lexeme denoting law_red"});
     v.words.push_back({"my event-triggered law", "preset", "lex_evt", "law_evt", "my event-triggered law"});
     LS::Preset red;
     red.lawId = "law_red";
@@ -103,35 +103,42 @@ void menu() {
     assert(e.suggestions().front().text == "set" || e.suggestions().front().text == "Set");
     assert(!e.ghost().empty());   // "t" shown dim after the cursor
 
-    // Tab takes the selection, and a space so the sentence flows on.
+    // Tab takes the selection and lays out the word's own blanks, with the
+    // first one selected (Zach: "only shows the remaining args").
     press(e, Key::Kind::Tab);
-    assert(e.buffer() == "on object-clicked then Set " || e.buffer() == "on object-clicked then set ");
+    assert(e.buffer() == "on object-clicked then set \u2039path\u203A to \u2039value\u203A");
+    assert(e.onPlaceholder() && e.menuVisible());   // the menu offers what fills ‹path›
+    assert(e.press(Key{Key::Kind::Enter, {}}) == LineEditor::Outcome::None);   // blanks remain
 
-    // Tab on an empty word opens the menu of what may come next; arrows move.
-    type(e, "l");   // fuzzy: both "color" and "glow" contain it
-    assert(e.menuVisible() && e.suggestions().size() >= 2);
+    // Arrows move through what may fill the blank; Enter takes the choice.
     const std::string first = e.suggestions()[e.selected()].text;
+    assert(e.suggestions().size() >= 2);
     press(e, Key::Kind::Down);
     assert(e.selected() == 1);
     press(e, Key::Kind::Up);
     press(e, Key::Kind::Up);   // wraps
     assert(e.selected() == static_cast<int>(e.suggestions().size()) - 1);
     press(e, Key::Kind::Down);
-    assert(e.suggestions()[e.selected()].text == first);
-    press(e, Key::Kind::Enter);   // after navigating, Enter takes the choice, not the line
-    assert(e.buffer().find(first + " ") != std::string::npos);
+    press(e, Key::Kind::Enter);
+    assert(e.buffer() == "on object-clicked then set " + first + " to \u2039value\u203A");
+    assert(e.onPlaceholder());   // filling one blank selected the next
 
-    // Value words: "red" is a Lexeme denoting a value.
+    // Typing replaces the selected blank; value words complete.
     type(e, "re");
+    assert(e.buffer() == "on object-clicked then set " + first + " to re");
     assert(e.menuVisible());
     press(e, Key::Kind::Tab);
-    assert(e.buffer().substr(e.buffer().size() - 4) == "red ");
+    assert(e.buffer() == "on object-clicked then set " + first + " to red ");
+    assert(!e.hasPlaceholders());
 
-    // Enter authors (submits) when the menu was not navigated.
+    // Enter authors (submits) now that nothing is blank.
     assert(e.press(Key{Key::Kind::Enter, {}}) == LineEditor::Outcome::Submitted);
-    assert(e.takeSubmitted().find("then Set color red") != std::string::npos ||
-           !e.history().empty());
+    assert(e.takeSubmitted() == "on object-clicked then set " + first + " to red ");
     assert(e.buffer().empty());
+
+    // Tab jumps between blanks when the menu is closed; typing fills.
+    type(e, "on tick then set ");
+    press(e, Key::Kind::KillToStart);
 
     // Fuzzy: a subsequence still finds the phrase.
     type(e, "on tick if hp gth");
@@ -234,7 +241,7 @@ void rendering() {
     const auto f = e.render(80);
     assert(f.text.rfind("earthcall> on object-clicked then se", 0) == 0);
     assert(f.text.find("▸") != std::string::npos);          // the selected row
-    assert(f.text.find("tab accept") != std::string::npos);  // the footer tells you how
+    assert(f.text.find("tab take") != std::string::npos);    // the footer tells you how
     assert(f.cursorRow == 0 && f.cursorCol == static_cast<int>(std::string("earthcall> on object-clicked then se").size()));
     assert(f.rows >= 3);
 
@@ -256,12 +263,96 @@ void rendering() {
 
 } // namespace
 
+void rungThree() {
+    using K = Key::Kind;
+    // The mouse: SGR reports; wheel 64/65; a left press is a click; a cursor
+    // report is only read as one when the channel asked for it.
+    KeyDecoder d;
+    auto keys = d.feed("\x1b[<64;10;5M\x1b[<65;10;5M\x1b[<0;12;7M\x1b[<0;12;7m\x1b[5~\x1b[6~\x1bOP", 0.0);
+    assert(keys.size() == 6);
+    assert(keys[0].kind == K::WheelUp && keys[1].kind == K::WheelDown);
+    assert(keys[2].kind == K::Click && keys[2].x == 12 && keys[2].y == 7);
+    assert(keys[3].kind == K::PageUp && keys[4].kind == K::PageDown && keys[5].kind == K::Help);
+    assert(d.feed("\x1b[12;3R", 0.0).empty());   // not asked for: not a report
+    d.expectCursorReport();
+    keys = d.feed("\x1b[12;3R", 0.0);
+    assert(keys.size() == 1 && keys[0].kind == K::CursorReport && keys[0].y == 12 && keys[0].x == 3);
+
+    const auto v = vocabulary();
+    LineEditor e = editor(v);
+    e.color = false;
+    type(e, "on tick then ");
+    assert(!e.wantsMouse());
+    press(e, K::Tab);   // everything that may come next, in sections
+    assert(e.menuVisible() && e.wantsMouse());
+    auto f = e.render(100);
+    assert(f.text.find("Actions") != std::string::npos);
+
+    // Wheel moves the selection; PgDn moves by a page.
+    press(e, K::WheelDown);
+    assert(e.selected() == 1);
+    press(e, K::PageDown);
+    assert(e.selected() > 1);
+    press(e, K::PageUp);
+    press(e, K::PageUp);
+    assert(e.selected() == 0);
+
+    // A click on a menu row takes that row: find the row "Add" is drawn on.
+    f = e.render(100);
+    int row = 0, addRow = -1;
+    for (std::size_t at = 0, next; at <= f.text.size(); at = next + 2, ++row) {
+        next = f.text.find("\r\n", at);
+        const std::string r = f.text.substr(at, next == std::string::npos ? std::string::npos : next - at);
+        if (r.find(" Add ") != std::string::npos) addRow = row;
+        if (next == std::string::npos) break;
+    }
+    assert(addRow > 0);
+    e.press(Key{K::Click, {}, 6, addRow});
+    assert(e.buffer().rfind("on tick then Add \u2039path\u203A by \u2039number\u203A", 0) == 0);
+
+    // A click on the line moves the cursor there.
+    press(e, K::KillToStart);
+    type(e, "on tick then set glow 1");
+    e.press(Key{K::Click, {}, static_cast<int>(std::string("earthcall> on ").size()), 0});
+    assert(e.cursor() == std::string("on ").size());
+
+    // Matched letters are bold; the selected entry is explained.
+    LineEditor colored = editor(v);
+    type(colored, "on tick then se");
+    const auto g = colored.render(100);
+    assert(g.text.find("\x1b[7;1m") != std::string::npos);    // selected row, matched letters bold
+    LineEditor explained = editor(v);
+    type(explained, "on tick then set glow re");
+    const auto h = explained.render(100);
+    assert(h.text.find("\u2937") != std::string::npos && h.text.find("(1, 0, 0)") != std::string::npos);
+
+    // The footer says where you are.
+    e.footer = "Law Line · hears ✓ · scope @cube";
+    assert(e.render(100).text.find("◆ Law Line · hears ✓") != std::string::npos);
+
+    // Help: an overlay that scrolls and closes, never submitted.
+    std::vector<std::string> lines;
+    for (int i = 0; i < 40; ++i) lines.push_back("line " + std::to_string(i) + "|");
+    e.showOverlay(lines);
+    assert(e.overlayVisible() && e.wantsMouse());
+    press(e, K::WheelDown);
+    assert(e.overlayScroll() == 3);
+    press(e, K::PageDown);
+    assert(e.overlayScroll() == 3 + e.overlayRows);
+    assert(e.render(100).text.find("line 3|") == std::string::npos);
+    assert(e.render(100).text.find("line 21|") != std::string::npos);
+    press(e, K::Escape);
+    assert(!e.overlayVisible());
+    assert(e.press(Key{K::Help, {}}) == LineEditor::Outcome::Help);
+}
+
 int main() {
     decoding();
     menu();
     noGluing();
     editing();
     rendering();
+    rungThree();
     std::cout << "line_editor_test: OK\n";
     return 0;
 }

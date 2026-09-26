@@ -1,0 +1,45 @@
+{
+ "authors": [
+  "Zach"
+ ],
+ "identifier": "law-line-ask-before-deleting",
+ "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
+ "law": {
+  "activation": 0,
+  "applicationLog": [],
+  "authors": [
+   "Zach"
+  ],
+  "authority": 0,
+  "conditionMode": "all",
+  "conditionSubjects": [],
+  "drives": false,
+  "enabled": true,
+  "id": "law-line-ask-before-deleting",
+  "name": "Law Line · ask before deleting",
+  "provenance": [
+   {
+    "directed": true,
+    "entityA": "law-line-ask-before-deleting",
+    "entityB": "Zach",
+    "events": [],
+    "type": "authored-by",
+    "weight": 1.0
+   }
+  ],
+  "retrigger": 0,
+  "scope": 0,
+  "targets": [],
+  "actionModel": {
+   "kind": 0,
+   "path": "@terminal-channel.question",
+   "operand": {
+    "t": "string",
+    "v": "Are you sure you want to delete"
+   }
+  }
+ },
+ "triggers": [
+  "terminal-deletion-requested"
+ ]
+}

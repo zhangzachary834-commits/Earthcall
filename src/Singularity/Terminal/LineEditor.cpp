@@ -122,7 +122,20 @@ std::vector<Key> KeyDecoder::flush(double now) {
 std::vector<Key> KeyDecoder::drain(bool final) {
     using K = Key::Kind;
     std::vector<Key> keys;
-    const auto push = [&](K kind, std::string text = {}) { keys.push_back(Key{kind, std::move(text)}); };
+    const auto push = [&](K kind, std::string text = {}) { keys.push_back(Key{kind, std::move(text), 0, 0}); };
+    const auto pushAt = [&](K kind, int x, int y) { keys.push_back(Key{kind, {}, x, y}); };
+    // "b;x;y" or "r;c" -> numbers.
+    const auto numbers = [](const std::string& text) {
+        std::vector<int> out;
+        int value = 0;
+        bool any = false;
+        for (char c : text) {
+            if (c >= '0' && c <= '9') { value = value * 10 + (c - '0'); any = true; }
+            else if (c == ';') { out.push_back(any ? value : 0); value = 0; any = false; }
+        }
+        out.push_back(any ? value : 0);
+        return out;
+    };
     std::size_t i = 0;
     const std::string& p = _pending;
     while (i < p.size()) {
@@ -165,6 +178,26 @@ std::vector<Key> KeyDecoder::drain(bool final) {
                 }
                 const std::string params = p.substr(i + 2, j - i - 2);
                 const char fin = p[j];
+                // SGR mouse: ESC[<b;x;yM (press) / m (release). Only presses
+                // matter: the wheel (64 up, 65 down) and the left button.
+                if (!params.empty() && params[0] == '<' && (fin == 'M' || fin == 'm')) {
+                    const auto n = numbers(params.substr(1));
+                    if (fin == 'M' && n.size() >= 3) {
+                        const int b = n[0];
+                        if (b & 64) pushAt((b & 1) ? K::WheelDown : K::WheelUp, n[1], n[2]);
+                        else if ((b & 3) == 0 && !(b & 32)) pushAt(K::Click, n[1], n[2]);
+                    }
+                    i = j + 1;
+                    continue;
+                }
+                // The terminal's answer to "where is the cursor?" (ESC[6n).
+                if (fin == 'R' && _expectReports > 0) {
+                    --_expectReports;
+                    const auto n = numbers(params);
+                    if (n.size() >= 2) pushAt(K::CursorReport, n[1], n[0]);
+                    i = j + 1;
+                    continue;
+                }
                 const bool word = params.find(";5") != std::string::npos || params.find(";3") != std::string::npos;
                 switch (fin) {
                     case 'A': push(K::Up); break;
@@ -180,6 +213,12 @@ std::vector<Key> KeyDecoder::drain(bool final) {
                             push(K::PasteBegin);
                         } else if (params == "3") {
                             push(K::Delete);
+                        } else if (params == "5") {
+                            push(K::PageUp);
+                        } else if (params == "6") {
+                            push(K::PageDown);
+                        } else if (params == "11") {
+                            push(K::Help);
                         } else if (params == "1" || params == "7") {
                             push(K::Home);
                         } else if (params == "4" || params == "8") {
@@ -205,6 +244,7 @@ std::vector<Key> KeyDecoder::drain(bool final) {
                     case 'D': push(K::Left); break;
                     case 'H': push(K::Home); break;
                     case 'F': push(K::End); break;
+                    case 'P': push(K::Help); break;   // F1
                     default: break;
                 }
                 i += 3;
@@ -308,7 +348,45 @@ void LineEditor::insert(const std::string& text) {
     _cursor += text.size();
 }
 
+// ---------------------------------------------------------------------------
+// Blanks. A blank is simply "‹…›" in the text — found by scanning, never
+// tracked, so no edit can leave bookkeeping behind. The blank the cursor sits
+// on is "selected": typing replaces it, and the menu offers what may fill it.
+// ---------------------------------------------------------------------------
+namespace {
+const std::string kOpen = "\u2039";    // ‹
+const std::string kClose = "\u203A";   // ›
+}
+
+std::size_t LineEditor::placeholderEnd(std::size_t at) const {
+    if (_buffer.compare(at, kOpen.size(), kOpen) != 0) return std::string::npos;
+    const std::size_t close = _buffer.find(kClose, at + kOpen.size());
+    return close == std::string::npos ? std::string::npos : close + kClose.size();
+}
+
+bool LineEditor::onPlaceholder() const { return placeholderEnd(_cursor) != std::string::npos; }
+
+bool LineEditor::hasPlaceholders() const { return _buffer.find(kOpen) != std::string::npos; }
+
+void LineEditor::eraseSelectedPlaceholder() {
+    const std::size_t end = placeholderEnd(_cursor);
+    if (end != std::string::npos) _buffer.erase(_cursor, end - _cursor);
+}
+
+void LineEditor::jumpToPlaceholder() {
+    std::size_t from = _cursor;
+    if (onPlaceholder()) from = placeholderEnd(_cursor);
+    std::size_t at = _buffer.find(kOpen, from);
+    if (at == std::string::npos) at = _buffer.find(kOpen);
+    if (at == std::string::npos) return;
+    _cursor = at;
+    edited(false);
+    _menuForced = !_suggestions.empty();   // show what may fill this blank
+}
+
 void LineEditor::accept(const LawSentence::Suggestion& s) {
+    const bool fillingBlank = onPlaceholder();
+    eraseSelectedPlaceholder();   // a chosen word fills the selected blank
     const std::size_t from = std::min(s.from, _cursor);
     // Keep the casing the Person typed ("se" + Set -> "set"); only the
     // untyped remainder comes from the candidate.
@@ -316,6 +394,23 @@ void LineEditor::accept(const LawSentence::Suggestion& s) {
     const std::string text = startsWithCi(s.text, typed) ? typed + s.text.substr(typed.size()) : s.text;
     _buffer.replace(from, _cursor - from, text);
     _cursor = from + text.size();
+    // The word's own blanks follow it ("set" -> "set ‹path› to ‹value›"),
+    // and the first one is selected — unless blanks already follow.
+    if (!s.snippet.empty()) {
+        const std::string rest = _buffer.substr(_cursor);
+        const std::size_t lead = rest.find_first_not_of(' ');
+        if (lead == std::string::npos || rest.compare(lead, kOpen.size(), kOpen) != 0) {
+            _buffer.insert(_cursor, " " + s.snippet);
+        }
+        const std::size_t first = _buffer.find(kOpen, _cursor);
+        if (first != std::string::npos) {
+            _cursor = first;
+            _menuForced = false;
+            edited(true);
+            _menuForced = !_suggestions.empty();
+            return;
+        }
+    }
     const bool continues = !text.empty() && text.back() != '.';
     if (continues && (_cursor >= _buffer.size() || _buffer[_cursor] != ' ')) {
         _buffer.insert(_cursor, " ");
@@ -323,6 +418,30 @@ void LineEditor::accept(const LawSentence::Suggestion& s) {
     }
     _menuForced = false;
     edited(true);
+    // Filling one blank moves on to the next, as snippets do in an IDE.
+    if (fillingBlank && _buffer.find(kOpen, _cursor) != std::string::npos) jumpToPlaceholder();
+}
+
+void LineEditor::clickAt(int row, int col) {
+    if (row >= 0 && row < static_cast<int>(_rowItems.size()) && _rowItems[row] >= 0 &&
+        _rowItems[row] < static_cast<int>(_suggestions.size())) {
+        _selected = _rowItems[row];
+        accept(_suggestions[_selected]);
+        return;
+    }
+    if (row < 0 || row >= _inputRows || _searching) return;
+    // A click on the line itself moves the cursor there.
+    const int cell = row * _width + col - static_cast<int>(visibleWidth(prompt));
+    if (cell < 0) return;
+    std::size_t at = 0;
+    int seen = 0;
+    while (at < _buffer.size() && seen < cell) {
+        at = nextBoundary(_buffer, at);
+        ++seen;
+    }
+    _cursor = at;
+    _menuForced = false;
+    edited(false);
 }
 
 std::string LineEditor::historyMatch() const {
@@ -394,6 +513,31 @@ LineEditor::Outcome LineEditor::press(const Key& key) {
     using K = Key::Kind;
     _notice.clear();
 
+    if (overlayVisible()) {
+        const int last = std::max(0, static_cast<int>(_overlay.size()) - overlayRows);
+        const auto scrollBy = [&](int d) { _overlayScroll = std::clamp(_overlayScroll + d, 0, last); };
+        switch (key.kind) {
+            case K::Up: scrollBy(-1); return Outcome::None;
+            case K::Down: scrollBy(+1); return Outcome::None;
+            case K::WheelUp: scrollBy(-3); return Outcome::None;
+            case K::WheelDown: scrollBy(+3); return Outcome::None;
+            case K::PageUp: scrollBy(-overlayRows); return Outcome::None;
+            case K::PageDown: scrollBy(+overlayRows); return Outcome::None;
+            case K::Escape: case K::Enter: case K::Help: case K::Click: case K::Interrupt:
+                closeOverlay();
+                return Outcome::None;
+            default:
+                closeOverlay();   // typing goes on where it left off
+                break;
+        }
+    }
+    if (key.kind == K::CursorReport) return Outcome::None;
+    if (key.kind == K::Help) return Outcome::Help;
+    if (key.kind == K::Click) {
+        clickAt(key.y, key.x);
+        return Outcome::None;
+    }
+
     if (_searching) {
         const auto match = [&]() -> std::string {
             int skip = _searchSkip;
@@ -433,8 +577,24 @@ LineEditor::Outcome LineEditor::press(const Key& key) {
 
     switch (key.kind) {
         case K::Text:
+            eraseSelectedPlaceholder();
             insert(key.text);
             if (!_pasting) edited(true);
+            return Outcome::None;
+        case K::WheelUp:
+            if (menuVisible()) select(-1);
+            return Outcome::None;
+        case K::WheelDown:
+            if (menuVisible()) select(+1);
+            return Outcome::None;
+        case K::PageUp:
+        case K::PageDown:
+            if (menuVisible()) {
+                const int n = static_cast<int>(_suggestions.size());
+                const int step = std::max(1, menuRows);
+                _selected = std::clamp(_selected + (key.kind == K::PageUp ? -step : step), 0, n - 1);
+                _navigated = true;
+            }
             return Outcome::None;
         case K::PasteBegin: _pasting = true; return Outcome::None;
         case K::PasteEnd: _pasting = false; edited(true); return Outcome::None;
@@ -444,6 +604,10 @@ LineEditor::Outcome LineEditor::press(const Key& key) {
                 return Outcome::None;
             }
             if (_buffer.find_first_not_of(' ') == std::string::npos) return Outcome::None;
+            if (hasPlaceholders()) {
+                _notice = "fill the ‹blanks› first — tab jumps between them";
+                return Outcome::None;
+            }
             if (submitGate) {
                 const std::string why = submitGate(_buffer);
                 if (!why.empty()) {
@@ -461,6 +625,10 @@ LineEditor::Outcome LineEditor::press(const Key& key) {
         case K::Tab: {
             if (menuVisible()) {
                 accept(_suggestions[_selected]);
+                return Outcome::None;
+            }
+            if (hasPlaceholders()) {   // the menu is closed: go to the next blank
+                jumpToPlaceholder();
                 return Outcome::None;
             }
             if (_suggestions.empty()) {
@@ -536,6 +704,11 @@ LineEditor::Outcome LineEditor::press(const Key& key) {
             edited(false);
             return Outcome::None;
         case K::Backspace: {
+            if (onPlaceholder()) {
+                eraseSelectedPlaceholder();
+                edited(true);
+                return Outcome::None;
+            }
             if (_cursor == 0) return Outcome::None;
             const std::size_t from = prevBoundary(_buffer, _cursor);
             _buffer.erase(from, _cursor - from);
@@ -544,7 +717,10 @@ LineEditor::Outcome LineEditor::press(const Key& key) {
             return Outcome::None;
         }
         case K::Delete:
-            if (_cursor < _buffer.size()) {
+            if (onPlaceholder()) {
+                eraseSelectedPlaceholder();
+                edited(true);
+            } else if (_cursor < _buffer.size()) {
                 _buffer.erase(_cursor, nextBoundary(_buffer, _cursor) - _cursor);
                 edited(true);
             }
@@ -593,6 +769,7 @@ LineEditor::Outcome LineEditor::press(const Key& key) {
             }
             return Outcome::None;
         case K::Redraw: return Outcome::Redraw;
+        case K::Click: case K::Help: case K::CursorReport: return Outcome::None;   // handled above
         case K::HistorySearch:
             _searching = true;
             _query.clear();
@@ -607,17 +784,34 @@ std::string LineEditor::sgr(const std::string& code, const std::string& text) co
     return "\x1b[" + code + "m" + text + "\x1b[0m";
 }
 
-std::string LineEditor::styled(const std::string& text) const {
-    if (!color || !_highlight) return text;
-    const auto spans = _highlight(text);
+std::string LineEditor::styled(const std::string& text, bool markCursor) const {
+    // Blanks read as blanks: dim italic, and the selected one inverted.
+    std::vector<std::pair<std::size_t, std::size_t>> blanks;
+    for (std::size_t at = text.find(kOpen); at != std::string::npos; at = text.find(kOpen, at + 1)) {
+        const std::size_t close = text.find(kClose, at);
+        if (close == std::string::npos) break;
+        blanks.emplace_back(at, close + kClose.size());
+    }
+    if (!color) return text;
+    const auto spans = _highlight ? _highlight(text) : std::vector<LawSentence::Span>{};
     std::string out;
     std::string current;
     for (std::size_t i = 0; i < text.size();) {
-        std::string role;
-        for (const auto& s : spans) {
-            if (i >= s.start && i < s.end) role = s.role;   // later spans (errors) win
+        std::string code;
+        bool inBlank = false;
+        for (const auto& [a, b] : blanks) {
+            if (i >= a && i < b) {
+                inBlank = true;
+                code = (markCursor && a == _cursor) ? "7" : "3;38;5;245";
+            }
         }
-        const std::string code = roleColor(role);
+        if (!inBlank) {
+            std::string role;
+            for (const auto& s : spans) {
+                if (i >= s.start && i < s.end) role = s.role;   // later spans (errors) win
+            }
+            code = roleColor(role);
+        }
         if (code != current) {
             out += "\x1b[0m";
             if (!code.empty()) out += "\x1b[" + code + "m";
@@ -635,9 +829,46 @@ std::string LineEditor::echo(const std::string& line) const {
     return sgr("2", prompt) + styled(line);
 }
 
+namespace {
+
+// The menu's section names when Tab lists everything that may come next.
+const char* groupLabel(const std::string& role) {
+    if (role == "preset" || role == "activation") return "Presets";
+    if (role == "action") return "Actions";
+    if (role == "operator") return "Comparisons";
+    if (role == "condition" || role == "kind") return "Conditions";
+    if (role == "value") return "Values";
+    if (role == "event") return "Events";
+    if (role == "path") return "Properties";
+    if (role == "being") return "Beings & Laws";
+    return "Clause words";
+}
+
+// Which letters of `candidate` the typed text matched: prefix, then a
+// substring, then letters in order — the same order the menu ranks by.
+std::vector<bool> matchedLetters(const std::string& candidate, const std::string& typed) {
+    std::vector<bool> hit(candidate.size(), false);
+    if (typed.empty() || typed.find(' ') != std::string::npos) return hit;
+    const std::string c = lower(candidate), t = lower(typed);
+    std::size_t at = c.find(t);
+    if (at != std::string::npos) {
+        for (std::size_t k = 0; k < t.size(); ++k) hit[at + k] = true;
+        return hit;
+    }
+    std::size_t j = 0;
+    for (std::size_t i = 0; i < c.size() && j < t.size(); ++i) {
+        if (c[i] == t[j]) { hit[i] = true; ++j; }
+    }
+    if (j < t.size()) std::fill(hit.begin(), hit.end(), false);
+    return hit;
+}
+
+} // namespace
+
 LineEditor::Frame LineEditor::render(int width) const {
     const std::size_t w = static_cast<std::size_t>(std::max(width, 20));
     const std::size_t max = w - 1;
+    _width = static_cast<int>(w);
     Frame frame;
 
     std::string input;
@@ -656,101 +887,188 @@ LineEditor::Frame LineEditor::render(int width) const {
         total = visibleWidth(input);
     } else {
         const std::string g = ghost();
-        input = sgr("1;38;5;141", prompt) + styled(_buffer) + sgr("2", g);
+        input = sgr("1;38;5;141", prompt) + styled(_buffer, true) + sgr("2", g);
         before = visibleWidth(prompt) + visibleWidth(_buffer.substr(0, _cursor));
         total = visibleWidth(prompt) + visibleWidth(_buffer) + visibleWidth(g);
     }
     const int inputRows = total == 0 ? 1 : static_cast<int>((total + w - 1) / w);
+    _inputRows = inputRows;
     frame.cursorRow = static_cast<int>(before / w);
     frame.cursorCol = static_cast<int>(before % w);
 
     std::vector<std::string> panel;
+    std::vector<int> items;   // parallel to panel: the menu item on that row, or -1
     const auto line = [&]() { return PanelLine{max, color, {}, 0}; };
+    const auto push = [&](const std::string& text, int item = -1) {
+        panel.push_back(text);
+        items.push_back(item);
+    };
 
-    // A caret under the character the sentence stumbled on.
-    if (!_searching && inputRows == 1) {
-        for (const auto& s : _status) {
-            if (s.role != "error" || s.errorOffset == std::string::npos) continue;
-            const std::size_t col =
-                visibleWidth(prompt) + visibleWidth(_buffer.substr(0, std::min(s.errorOffset, _buffer.size())));
-            if (col < max) {
+    if (overlayVisible()) {
+        // Help: a window onto its lines, and how to move it.
+        const int n = static_cast<int>(_overlay.size());
+        const int rows = std::min(overlayRows, n);
+        for (int i = _overlayScroll; i < _overlayScroll + rows && i < n; ++i) push(_overlay[i]);
+        if (n > rows) {
+            PanelLine l = line();
+            l.add("  ↑↓ wheel · PgUp PgDn scroll · esc closes    " + std::to_string(_overlayScroll + 1) + "–" +
+                      std::to_string(std::min(n, _overlayScroll + rows)) + " of " + std::to_string(n),
+                  "2");
+            push(l.out);
+        }
+    } else {
+        // A caret under the character the sentence stumbled on.
+        if (!_searching && inputRows == 1) {
+            for (const auto& s : _status) {
+                if (s.role != "error" || s.errorOffset == std::string::npos) continue;
+                const std::size_t col =
+                    visibleWidth(prompt) + visibleWidth(_buffer.substr(0, std::min(s.errorOffset, _buffer.size())));
+                if (col < max) {
+                    PanelLine l = line();
+                    l.add(std::string(col, ' '));
+                    l.add("^", "1;31");
+                    push(l.out);
+                }
+                break;
+            }
+        }
+
+        const bool menu = menuVisible();
+        if (menu) {
+            const int n = static_cast<int>(_suggestions.size());
+            // Tab on an empty word lists everything next: show it in sections.
+            const bool grouped = typedTail(_suggestions.front()).empty();
+            struct Row { bool header; int item; std::string label; };
+            std::vector<Row> rows;
+            std::string lastGroup;
+            for (int i = 0; i < n; ++i) {
+                const std::string g = groupLabel(_suggestions[i].role);
+                if (grouped && g != lastGroup) {
+                    rows.push_back({true, -1, g});
+                    lastGroup = g;
+                }
+                rows.push_back({false, i, {}});
+            }
+            int selectedRow = 0;
+            for (int r = 0; r < static_cast<int>(rows.size()); ++r) {
+                if (!rows[r].header && rows[r].item == _selected) selectedRow = r;
+            }
+            const int total = static_cast<int>(rows.size());
+            const int shown = std::min(std::max(menuRows, 1) + (grouped ? 2 : 0), total);
+            int start = std::clamp(selectedRow - shown / 2, 0, total - shown);
+            if (start > 0 && !rows[start].header && grouped) {
+                // Keep a section's header visible above its first shown item.
+                for (int r = start; r >= 0; --r) {
+                    if (rows[r].header) { if (selectedRow - r < shown) start = r; break; }
+                }
+            }
+            std::size_t textCol = 0;
+            for (int r = start; r < start + shown; ++r) {
+                if (!rows[r].header) textCol = std::max(textCol, visibleWidth(_suggestions[rows[r].item].text));
+            }
+            textCol = std::min<std::size_t>(textCol, 30);
+            for (int r = start; r < start + shown; ++r) {
                 PanelLine l = line();
-                l.add(std::string(col, ' '));
-                l.add("^", "1;31");
-                panel.push_back(l.out);
+                if (rows[r].header) {
+                    l.add("   " + rows[r].label, "1;38;5;244");
+                    push(l.out);
+                    continue;
+                }
+                const int i = rows[r].item;
+                const auto& s = _suggestions[i];
+                const bool chosen = i == _selected;
+                l.add(chosen ? "  ▸ " : "    ", chosen ? "1;36" : "");
+                const auto hit = matchedLetters(s.text, typedTail(s));
+                const std::string base = chosen ? "7" : roleColor(s.role);
+                for (std::size_t k = 0; k < s.text.size();) {
+                    const std::size_t len = std::min(utf8Length(static_cast<unsigned char>(s.text[k])), s.text.size() - k);
+                    const std::string code = hit[k] ? (base.empty() ? "1" : base + ";1") : base;
+                    l.add(s.text.substr(k, len), code);
+                    k += len;
+                }
+                const std::size_t shownWidth = visibleWidth(s.text);
+                if (shownWidth < textCol) l.add(std::string(textCol - shownWidth, ' '), chosen ? "7" : "");
+                if (!s.description.empty()) {
+                    l.add("  ");
+                    l.add(s.description, "2");
+                }
+                push(l.out, i);
             }
-            break;
-        }
-    }
-
-    const bool menu = menuVisible();
-    if (menu) {
-        const int n = static_cast<int>(_suggestions.size());
-        const int shown = std::min(std::max(menuRows, 1), n);
-        const int start = std::clamp(_selected - shown / 2, 0, n - shown);
-        std::size_t textCol = 0;
-        for (int i = start; i < start + shown; ++i) {
-            textCol = std::max(textCol, visibleWidth(_suggestions[i].text));
-        }
-        textCol = std::min<std::size_t>(textCol, 30);
-        for (int i = start; i < start + shown; ++i) {
-            const auto& s = _suggestions[i];
-            const bool chosen = i == _selected;
-            std::string text = s.text;
-            if (visibleWidth(text) < textCol) text += std::string(textCol - visibleWidth(text), ' ');
-            PanelLine l = line();
-            l.add(chosen ? "  ▸ " : "    ", chosen ? "1;36" : "");
-            l.add(text, chosen ? "7" : roleColor(s.role));
-            if (!s.description.empty()) {
-                l.add("  ");
-                l.add(s.description, "2");
+            const int moreItems = n - [&] {
+                int c = 0;
+                for (int r = start; r < start + shown; ++r) if (!rows[r].header) ++c;
+                return c;
+            }();
+            if (moreItems > 0) {
+                PanelLine l = line();
+                l.add("    " + std::to_string(moreItems) + " more · wheel, ↑↓ or PgUp PgDn · keep typing to narrow", "2");
+                push(l.out);
             }
-            panel.push_back(l.out);
+            // The selected entry, explained.
+            const auto& sel = _suggestions[std::clamp(_selected, 0, n - 1)];
+            const std::string detail = sel.detail.empty() ? std::string{} : sel.detail;
+            if (!detail.empty() && detail != sel.description) {
+                PanelLine l = line();
+                l.add("    ⤷ ", "38;5;141");
+                l.add(detail, "3");
+                push(l.out);
+            }
         }
-        if (n > shown) {
+
+        for (const auto& s : _status) {
             PanelLine l = line();
-            l.add("    " + std::to_string(n - shown) + " more · keep typing to narrow", "2");
-            panel.push_back(l.out);
+            if (s.role == "error") {
+                l.add("  ✗ ", "31");
+                l.add(s.text, "31");
+            } else if (s.role == "preview") {
+                l.add("  ↳ ", "2");
+                l.add(s.text, "2");
+            } else if (s.role == "question") {
+                l.add("  ? ", "1;33");
+                l.add(s.text, "1;33");
+            } else if (s.role == "note") {
+                l.add("    " + s.text, "2");
+            } else {
+                l.add("  " + s.text);
+            }
+            push(l.out);
+        }
+
+        if (!_notice.empty()) {
+            PanelLine l = line();
+            l.add("  " + _notice, "33");
+            push(l.out);
         }
     }
 
-    for (const auto& s : _status) {
-        PanelLine l = line();
-        if (s.role == "error") {
-            l.add("  ✗ ", "31");
-            l.add(s.text, "31");
-        } else if (s.role == "preview") {
-            l.add("  ↳ ", "2");
-            l.add(s.text, "2");
-        } else if (s.role == "note") {
-            l.add("    " + s.text, "2");
-        } else {
-            l.add("  " + s.text);
-        }
-        panel.push_back(l.out);
-    }
-
-    if (!_notice.empty()) {
-        PanelLine l = line();
-        l.add("  " + _notice, "33");
-        panel.push_back(l.out);
-    }
-
-    if (hints) {
+    if (hints || !footer.empty()) {
         std::string h;
-        if (_searching) {
+        if (overlayVisible()) {
+            h = "esc closes help";
+        } else if (_searching) {
             h = "type to search history · ctrl-r older · enter take · esc cancel";
-        } else if (menu) {
-            h = "tab accept · ↑↓ choose · enter take · esc close";
+        } else if (menuVisible()) {
+            h = "tab take · ↑↓ wheel choose · click picks · esc close";
+        } else if (hasPlaceholders()) {
+            h = "type to fill the blank · tab next blank · enter when all are filled";
         } else if (_buffer.empty()) {
-            h = "type a law sentence · tab shows words · ?? searches · ↑ history · ctrl-r search history";
+            h = "type a law sentence · tab shows words · help · ↑ history";
         } else {
-            h = "tab complete · → take ghost · enter author · end with ? to preview · ctrl-c clear";
+            h = "tab complete · → take ghost · enter author · end with ? to preview";
         }
         PanelLine l = line();
-        l.add("  " + h, "2");
-        panel.push_back(l.out);
+        if (!footer.empty()) {
+            l.add("  ◆ ", footerMark);
+            l.add(footer, "2");
+            if (hints) l.add("  │  " + h, "2");
+        } else {
+            l.add("  " + h, "2");
+        }
+        push(l.out);
     }
+
+    _rowItems.assign(static_cast<std::size_t>(inputRows), -1);
+    for (int item : items) _rowItems.push_back(item);
 
     frame.text = input;
     for (const auto& p : panel) frame.text += "\r\n" + p;

@@ -174,6 +174,8 @@ bool ZoneManager::switchTo(size_t index)
             for (const auto& refJson : lawRefs) {
                 if (!refJson.is_string()) throw std::runtime_error("lawRef is not a string");
                 const std::string ref = refJson.get<std::string>();
+                // Retired by an authored act this session, not yet saved away.
+                if (isLawRetiredFrom(targetZone->getIdentifier(), ref)) continue;
                 if (ref.empty() || !requestedLawIds.insert(ref).second) {
                     throw std::runtime_error("empty or duplicate lawRef '" + ref + "'");
                 }

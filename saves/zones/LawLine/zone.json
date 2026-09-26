@@ -1234,6 +1234,48 @@
      "timestamp": 1790380800
     }
    ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.remove.act-destroy",
+   "entityB": "law-line-act-destroy",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.y.value-true",
+   "entityB": "law-line-value-true",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
+  },
+  {
+   "type": "denotes",
+   "entityA": "lexeme.law-line.n.value-false",
+   "entityB": "law-line-value-false",
+   "directed": true,
+   "weight": 1.0,
+   "events": [
+    {
+     "description": "denotes",
+     "deltaWeight": 1.0,
+     "timestamp": 1790380800
+    }
+   ]
   }
  ],
  "identifier": "LawLine",
@@ -1283,7 +1325,9 @@
   "law-line-preset-touched",
   "law-line-preset-landed",
   "law-line-preset-jumped",
-  "law-line-preset-zone-entered"
+  "law-line-preset-zone-entered",
+  "law-line-ask-before-deleting",
+  "law-line-delete-when-confirmed"
  ],
  "lexemes": [
   {
@@ -1637,6 +1681,18 @@
   {
    "id": "lexeme.law-line.when-the-zone-opens.preset-zone-entered",
    "symbol": "when the zone opens"
+  },
+  {
+   "id": "lexeme.law-line.remove.act-destroy",
+   "symbol": "remove"
+  },
+  {
+   "id": "lexeme.law-line.y.value-true",
+   "symbol": "y"
+  },
+  {
+   "id": "lexeme.law-line.n.value-false",
+   "symbol": "n"
   }
  ],
  "materials": [

@@ -44,6 +44,32 @@
 6. `?` at the end previews without authoring. `?? word` searches the vocabulary, live in the panel: spellings, meanings, events, beings, properties.
 7. The app's own log output appears **above** the prompt, dimmed. It is also saved to `saves/logs/earthcall-terminal.log`. It never breaks the line you're typing.
 
+### Rung 3 (2026-09-25): mouse, blanks, help, footer, dry run, deletion
+
+Zach chose these from a proposal; he deferred typo-fixing and usage ranking ("needs more robust Lexeme Formations first").
+
+- **Mouse:** the **wheel** scrolls the menu (and help); **clicking** a row takes it; clicking in the line moves the cursor. Mouse reporting is on *only while a menu or help is open*, so the rest of the time the Terminal scrolls and selects text as usual.
+- **Blanks:** taking a word lays out its own arguments as `‹blanks›`, and the first is selected. `set` gives `set ‹path› to ‹value›`; `when clicked` gives `when clicked then ‹action›`.
+  - Typing replaces the selected blank, and the menu shows what fits it.
+  - Choosing from the menu fills it and moves to the next blank.
+  - Tab jumps between blanks.
+  - Enter waits until none are left.
+- **The menu explains itself:**
+  - Tab on an empty word lists everything next, **in sections** (Presets, Actions, Comparisons, Conditions, Values, Events, Properties, Beings & Laws, Clause words);
+  - the letters you typed are **bold**;
+  - a `⤷` line explains the selected entry: what a preset fixes, a value word's value, a property's live value;
+  - **PgUp/PgDn** page through it.
+- **Footer:** the last line always says the Zone, whether it hears the line (◆ green / yellow), the scope, who you're writing as, and how many live Laws there are.
+- **Help:** `help`, `?` on an empty line, or **F1** opens a page in the panel. It contains the sentence shape, three examples from this world's words, what words exist, the keys, and where you are. It scrolls, and Esc closes it. It is a reading of the terminal, not a Law.
+- **Dry run:** ending with `?` also says who the IF holds for right now ("right now the IF holds for 1 being: Law Line Cube"). This is read-only.
+- **Deleting a Law** (Zach: *"the metalaw that does the deletions should say 'are you sure you want to delete?' … no means no delete and requires your yes"*):
+  - `delete Blue` (also `remove`, `destroy`, `@law_…`) asks a question: `Are you sure you want to delete “Blue”? (yes / no) ›`.
+  - **Only a yes deletes.** `no`, Esc and Ctrl-C keep it.
+  - When several Laws share the name, it lists them and asks for a number first.
+  - The question's words live in the seeded Metalaw `law-line-ask-before-deleting`, so you can rewrite them. The deletion itself is done by `law-line-delete-when-confirmed` (`Destroy @event.object`).
+  - The terminal only senses the request and the answer, and publishes `terminal-deletion-requested` / `terminal-deletion-confirmed`.
+  - A deleted Law leaves the Zone's `lawRefs` on save. Its own file stays in `saves/laws/` as history.
+
 ### Stuck? The line tells you
 
 (Added after Zach's first unguided session, 2026-09-25: *"HALP IDK HOW TO USE THIS"*. He had picked WritePixel, AddElement, AuthorZone and "always" from the menu, and every Enter was refused.)
@@ -104,6 +130,10 @@
 - **Live reading must never act.** The per-frame vocabulary replaces the Metalaw resolver with "first meaning, decided when spoken". Metalaws are applied only by `speak()`.
 - **A suggestion must never glue onto a finished word.** An empty tail offers "what comes next" only after a space. The running app showed `set co⇥` becoming `set cofalse` before this rule existed; `line_editor_test` holds it.
 - **`earthcall_webgpu` compiles its own sources.** A link or define added only to `earthcall_core` does not reach the app.
+- **Destroy may now unmake a Law** (never a First Mover). `LawManager::reapUnmade` retires it *after* retracting its facts. `ZoneManager::retireLawFromActiveZone` records the retirement per Zone, because Save Zone otherwise only ever *appends* to `lawRefs`. Held by `destroy_law_test` and `law_line_zone_test`.
+- **The deletion Metalaws carry no `targets`.** Laws targeting `terminal-channel` are applied by the ambiguity resolver, and a deleting Law must never run there.
+- **Mouse reporting and cursor reports:** a click needs the terminal's answer to `ESC[6n` to know the region's screen row. Real terminals answer it; a test emulator must be told to (see the rung-3 probe). Reporting must be switched off on every exit path, including the signal handler.
+- **Pad by visible width, never bytes.** `·`, `‹` and `›` are several bytes (the help page's key rows broke once).
 - **Never touch the Person's history when probing.** Set `EARTHCALL_TERMINAL_HISTORY` to a scratch file for any automated run. An agent's probe clean-up once deleted Zach's `saves/logs/terminal-history.txt` along with its own lines.
 - **One channel attaches, and only to a TTY.** Under ctest nothing attaches, which is why the tests use `inject()`, `setSink()`, and the pure `LineEditor`.
 
