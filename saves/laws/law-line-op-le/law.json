@@ -1,43 +1,92 @@
 {
- "authors": [
-  "Zach"
- ],
- "identifier": "law-line-op-le",
- "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
- "law": {
-  "activation": 0,
-  "applicationLog": [],
   "authors": [
-   "Zach"
+    "Zach"
   ],
-  "authority": 0,
-  "conditionMode": "all",
-  "conditionSubjects": [],
-  "drives": false,
-  "enabled": false,
-  "id": "law-line-op-le",
-  "name": "means: at most",
-  "provenance": [
-   {
-    "directed": true,
-    "entityA": "law-line-op-le",
-    "entityB": "Zach",
-    "events": [],
-    "type": "authored-by",
-    "weight": 1.0
-   }
-  ],
-  "retrigger": 0,
-  "scope": 0,
-  "targets": [],
-  "conditionModel": {
-   "kind": 0,
-   "path": "",
-   "op": 3,
-   "operand": {
-    "t": "none"
-   }
-  }
- },
- "triggers": []
+  "identifier": "law-line-op-le",
+  "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
+  "law": {
+    "actionDescriptions": [],
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "Zach"
+    ],
+    "conditionDescriptions": [
+      " <= value"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 0,
+      "op": 3,
+      "operand": {
+        "t": "none"
+      },
+      "path": ""
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": false,
+    "id": "law-line-op-le",
+    "name": "means: at most",
+    "provenance": [
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "directed": true,
+        "entityA": "law-line-op-le",
+        "entityB": "Zach",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1790386363
+          },
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1790386742
+          }
+        ],
+        "type": "authored-by",
+        "weight": 3.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": []
 }
