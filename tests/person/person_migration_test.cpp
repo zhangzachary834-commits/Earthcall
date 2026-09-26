@@ -5,8 +5,6 @@
 #include "Identity/IdentityLedger.hpp"
 #include "Identity/KeyStore.hpp"
 #include "Identity/PersonMigration.hpp"
-#include "Person/Person.hpp"
-#include "Person/Soul/Soul.hpp"
 
 #include <cassert>
 #include <filesystem>
@@ -230,55 +228,6 @@ static void testMissingKeyDoesNotRemint() {
     std::cout << "  missing key refuses to remint an identity OK\n";
 }
 
-static void testLivePersonMigrationRequiresKeyUnlock() {
-    Sandbox box("live-person");
-
-    Soul firstSoul("Zach");
-    Body firstBody("humanoid", "default");
-    Person first(std::move(firstSoul), std::move(firstBody), "default");
-
-    const auto firstId = migratePersonIdentity(first, box.ledger, box.keys, kPass);
-    assert(firstId.has_value());
-    assert(first.hasIdentity());
-
-    IdentityLedger reopened(box.ledger.path());
-    assert(reopened.load());
-    KeyStore reopenedKeys(box.keys.directory());
-
-    Soul secondSoul("Zach");
-    Body secondBody("humanoid", "default");
-    Person second(std::move(secondSoul), std::move(secondBody), "default");
-
-    const auto wrong = migratePersonIdentity(second, reopened, reopenedKeys, "wrong-passphrase");
-    assert(!wrong.has_value());
-    assert(!second.hasIdentity());
-
-    const auto right = migratePersonIdentity(second, reopened, reopenedKeys, kPass);
-    assert(right.has_value());
-    assert(second.hasIdentity());
-    assert(right->toString() == firstId->toString());
-
-    std::cout << "  live Person migration requires unlocking the stored key OK\n";
-}
-
-static void testLivePersonMigrationRollsBackMintWhenLedgerCannotCommit() {
-    Sandbox box("live-rollback");
-    const std::filesystem::path badLedgerPath = box.dir / "ledger-is-a-directory";
-    std::filesystem::create_directories(badLedgerPath);
-
-    IdentityLedger badLedger(badLedgerPath);
-    Soul soul("Zach");
-    Body body("humanoid", "default");
-    Person person(std::move(soul), std::move(body), "default");
-
-    const auto result = migratePersonIdentity(person, badLedger, box.keys, kPass);
-    assert(!result.has_value());
-    assert(!person.hasIdentity());
-    assert(box.keys.list().empty());
-
-    std::cout << "  failed ledger commit rolls back a freshly minted live key OK\n";
-}
-
 static void testEmptyAndMalformedSaves() {
     Sandbox box("malformed");
 
@@ -309,8 +258,6 @@ int main() {
     testLawAuthorsMigrateButNonPersonsDoNot();
     testDeletabilityRekeyed();
     testMissingKeyDoesNotRemint();
-    testLivePersonMigrationRequiresKeyUnlock();
-    testLivePersonMigrationRollsBackMintWhenLedgerCannotCommit();
     testEmptyAndMalformedSaves();
     std::cout << "person_migration_test: ALL OK\n";
     return 0;

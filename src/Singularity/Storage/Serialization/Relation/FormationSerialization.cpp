@@ -31,11 +31,6 @@ void internZoneLexemes(Zone& zone, const nlohmann::json& zj) {
 
 Singular* resolveZoneEndpoint(Zone& zone, const std::string& id) {
     if (id.empty()) return nullptr;
-    // A Zone is itself a legitimate Relation endpoint. During first hydration
-    // makeZoneFromJson has not admitted it to ZoneManager yet, so Universe
-    // cannot find it. Resolve self directly or persisted Zone→Person relations
-    // such as owned-by remain pending until a second pass that may never come.
-    if (zone.getIdentifier() == id) return &zone;
     if (Singular* member = zone.formation().findMemberByIdentifier(id)) return member;
     for (const auto& obj : zone.getOwnedObjects()) {
         if (obj && obj->getIdentifier() == id) return obj.get();
