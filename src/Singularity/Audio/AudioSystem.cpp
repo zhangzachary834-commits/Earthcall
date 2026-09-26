@@ -152,13 +152,6 @@ void AudioSystem::playSound(const std::string& filepath) {
     ma_engine_play_sound(&_state->engine, filepath.c_str(), NULL);
 }
 
-void AudioSystem::setupAudioEventListeners() {
-    // Compatibility no-op. The checked PlayAudio sink is now owned by
-    // Singularity::Audio::AudioChannel, matching ScreenChannel and
-    // InteractionChannel: the modality Law is the world/machine boundary,
-    // while AudioSystem remains the hardware/DSP substrate below it.
-}
-
 void AudioSystem::tick() {
     if (!_initialized || !_state) return;
 

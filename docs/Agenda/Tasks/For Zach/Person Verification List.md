@@ -15,6 +15,7 @@
 - [x] `Run Earthcall.command` → the Terminal shows the Law Line prompt.
 - [x] In the Law Line Zone, `my event-triggered law called Red fires on object-clicked if hp is greater than 2 then set color 1 0 0` authors a Law.
 - [x] The Law appears in the world and the Law Graph with the object-clicked trigger, `hp > 2`, and `set color 1 0 0`.
+- [x] Spoken Laws persist: after Save Zone and a restart, they are still there (Zach, 2026-09-25: *"i just verified in world the new laws persist after i save them they appear when i boot it up again"*).
 
 **Rung 2 — the ergonomic line and the new words** (your request: Tab selects, arrows move, temporary display like Claude Code). Driven in a real terminal emulator by me, but not yet by you:
 
@@ -31,7 +32,19 @@
 - [ ] **Ctrl-C** clears the line; on an empty line it warns once, then a second Ctrl-C quits. Afterwards the Terminal types and echoes normally.
 - [ ] Outside the Law Line Zone, click a cube in the world, then type `on tick then set ` and press Tab: that cube's properties are offered, with their live values.
 - [ ] Does it *feel* right? Menu height (`@terminal-channel.menuRows`, default 8), whether it opens on its own (`autoMenu`), the colours, and the hint footer (`hints`) are all registered properties if you want them different.
+- [ ] **Guidance** (after your "HALP IDK HOW TO USE THIS"): the empty line shows a `try:` example; while typing, `next: … e.g. …` says what comes next; Enter on an unfinished sentence keeps it and says what to add, rather than refusing; the menu never offers WritePixel/AddElement/AuthorZone, or "always" after "when they collide".
+- [ ] `my law called Blue when they collide then set color blue` authors (your sentence, one step from done).
 - [ ] The legacy `Run Earthcall Terminal.command` still behaves exactly as before.
+
+**Rung 3 — what you asked for after that** (mouse, blanks, help, footer, dry run, deletion):
+
+- [ ] **Scroll the menu with the mouse wheel**, and **click** a row to take it. When the menu closes, the Terminal scrolls its history and selects text normally again.
+- [ ] Take `set`: the line becomes `set ‹path› to ‹value›`. Type to fill the blank; picking from the menu fills it and jumps to the next; Tab jumps; Enter waits until no blanks are left.
+- [ ] Tab after `then ` shows the menu **in sections**, your typed letters are **bold**, and a `⤷` line explains the selected entry.
+- [ ] Type `help` (or F1): a **boxed page** opens under the line and scrolls with the wheel; Esc closes it. **Is it beautiful?** That's your call.
+- [ ] The **footer** (◆) always says the Zone, whether it hears the line, the scope, you, and how many live Laws there are.
+- [ ] End a sentence with `?`: the panel also says who the IF holds for right now.
+- [ ] In the Law Line Zone, speak a Law called `Test`, then `delete Test`. The prompt asks *"Are you sure you want to delete “Test”? (yes / no)"*. `no` keeps it. Ask again and `yes` deletes it. After Save Zone and a restart, it stays gone.
 
 ## Volumetric Light Beams Shining Through Mist — Sanctuary of Sunlit Mist
 
@@ -863,3 +876,8 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 
 - [ ] Load `saves/worlds/test the hills.json` and read the load report (the line ending "law(s) added"). It should carry the clause **"(1 re-authored onto this Person so they can fire)"**. Then open the Law Author window: the law whose file says `"authors": ["Zach"]` should now list *you* (your key or display name) as author, with no trace that it was re-authored. Say whether that is what you want a load to do silently.
 - [ ] If you have a keyed identity: load any world whose laws are authored `"Zach"` by display name and count how many the report re-authors. Each one is a law that detached from you and was handed back to you under a different name.
+
+- **2026-09-25: Serialization Format Triage & Migration Framework (Gemini Spark)**
+  - Please load an existing bloated JSON save file (e.g., `clawd-monastery-save` or `synthesis_studio`), make a minor change, and save it.
+  - Verify that the resulting `.ecform` file on disk has shrunk drastically (typically dropping from 200MB down to single digit MBs or less) due to the removal of `semanticRoots["zones"]` duplication, capping `stakeholders` history to 20, and disabling `j.dump(2)` whitespace bloating.
+  - Verify that the world loads seamlessly despite these changes (backward compatibility is handled transparently via `materializeSemanticRoots` and the new `MigrationFramework`).
