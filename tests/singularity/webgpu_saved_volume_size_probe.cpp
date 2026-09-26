@@ -78,6 +78,14 @@ int main(int argc, char** argv) {
              ["scalarForm"]["terms"][0]["c"] = 0.2;
     }
     auto sun = geom::FieldNode::fromJson(saved.at("spatialRoot"));
+    if (northern && sourceTime != 0.0) {
+        // Exercise the admitted source Timeline itself; the saved root's rho
+        // happens to be a constant, which cannot witness a temporal binding.
+        auto timeLeaf = std::make_shared<OntoMath::MathNode>();
+        timeLeaf->op = OntoMath::MathNode::Op::ValueLeaf;
+        timeLeaf->variableName = "t";
+        sun->field->astDefinition.pieces[0].mathNode = timeLeaf;
+    }
     std::vector<std::shared_ptr<geom::FieldNode>> fields;
     std::vector<Rendering::VolumeDensityBinding> media;
     for (const auto& json : saved.at("spatialFields")) {
@@ -155,17 +163,23 @@ int main(int argc, char** argv) {
         const auto generated = sdfwgsl::compileVolumeSet(inputs, candidate);
         const auto fs = generated.wgsl.find("\n@fragment");
         size_t sourceEvalCalls = 0;
+        size_t otherMemberCalls = 0;
         if (fs != std::string::npos) {
             for (size_t at = fs; (at = generated.wgsl.find("lightRadianceEval_", at)) != std::string::npos; ++at)
                 ++sourceEvalCalls;
+            for (size_t i=1; i<media.size(); ++i)
+                if (generated.wgsl.find("lightRadianceEval_" + std::to_string(i) + "(", fs) != std::string::npos)
+                    ++otherMemberCalls;
         }
-        std::printf("V5_WGSL candidate=%d ok=%d error=%s bytes=%zu fragment=%d radial_eval_call_sites=%zu shared_source=%d source_time_binding=%d\n",
+        std::printf("V5_WGSL candidate=%d ok=%d error=%s bytes=%zu fragment=%d radial_eval_call_sites=%zu other_member_calls=%zu shared_source=%d source_time_binding=%d\n",
                     candidate, generated.ok, generated.error.c_str(), generated.wgsl.size(),
-                    fs != std::string::npos, sourceEvalCalls,
+                    fs != std::string::npos, sourceEvalCalls, otherMemberCalls,
                     fs != std::string::npos && generated.wgsl.find("sharedSourceReady", fs) != std::string::npos,
                     generated.wgsl.find("u.sourceTime.x") != std::string::npos);
         if (!generated.ok || fs == std::string::npos ||
-            sourceEvalCalls != (candidate ? 1u : media.size())) return 3;
+            sourceEvalCalls != media.size() ||
+            otherMemberCalls != (candidate ? 0u : media.size()-1u) ||
+            (sourceTime != 0.0 && generated.wgsl.find("u.sourceTime.x") == std::string::npos)) return 3;
     }
     renderer.setRadianceSources({source}, 1);
 
