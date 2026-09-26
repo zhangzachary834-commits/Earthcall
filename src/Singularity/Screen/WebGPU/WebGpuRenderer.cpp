@@ -2716,7 +2716,7 @@ void WebGpuRenderer::flushVolumeComposite() {
             }
 
             const std::string structure =
-                (diagnosticWork ? "diagnostic-work:1\n" : "diagnostic-work:0\n") +
+                std::string(diagnosticWork ? "diagnostic-work:1\n" : "diagnostic-work:0\n") +
                 (reuseSourceGeometry ? "reuse-source-geometry:1\n" : "reuse-source-geometry:0\n") +
                 "density:\n" + densityLayout.structure +
                 "\nextinction:\n" + extinctionLayout.structure +
