@@ -53,8 +53,14 @@ namespace Terminal {
 // so they never tear the line being typed. Settings a Person may change are
 // registered: menuRows, autoMenu, color, hints, relayLogs, prompt.
 //
-// This is not a network channel: its author is the Person at the keyboard,
-// so ForeignActuationGuard (for foreign movers) does not apply.
+// AUTHORSHIP — AN OPEN GAP, NOT A GUARANTEE. Every spoken Law is recorded as
+// written by whoever `authorPath` names (the Person present). But this channel
+// cannot tell a Person typing from any process writing to its stdin — a test
+// harness, a script, an agent. Astra's warning ("a string saying Terminal
+// supplies transport context, not proof that Zach authored an utterance") holds
+// here: a non-Person writer should arrive as a registered First Mover under a
+// Person's grant, as MCP does via ForeignActuationGuard. Not built yet; see
+// Law_Line.md, "The line trusts its stdin, and stdin can lie".
 class TerminalChannel : public Law {
 public:
     using Sink = std::function<void(const std::string&)>;

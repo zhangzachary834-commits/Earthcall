@@ -121,10 +121,12 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - FOR ZACH ONLY: Revise manifesto so the Object taxonomy says "Visual/extra-visual Objects." Also, the old ObjectConcept idea was already entailed by non-visual or extra-visual Objects.
 - Singular set to set creation must be able to create every kind of Singular, so we stop having to invent new ActionKinds or op codes for every individual Singular. Creating a new Law via Laws should use ActionNode create Singular (and then select Singular kind based on all the classes that inherit Singular), or use the set to set Creation node, which must be designed to ask the same thing.
 - **Continuum as Singular: Discrete Definition of Continua and Dynamic Internal Calculations** — Realize the ontology where continua (fluids, atmospheres, fields) are defined as individual Singulars with discrete forms and boundary properties governed by Laws, while internal fluid motion resolves via dynamic continuum calculations on the hardware substrate rather than discrete particle beings. → [full task](Specific%20Tasks/Architecture%20and%20Ontology/Continuum_As_Singular_Discrete_Definition/Continuum_As_Singular_Discrete_Definition.md)
+- remove old Relation fossils
 
 ## Property · PropertyPath 
 
 - Caching Property lookup via string interning uses string paths, but Singulars are individuated via SingularId. There seems to be a tension here, and resolving property paths at their Singular roots may run into the same is-versus-called problems we have from before.
+- Retire my earlier note that "All data structures should be hardcoded properties of Singulars for expressability." My new Propertypath-metal union framework I wrote this week supersedes that. Data structures in the cpp-metal sense should be properties, not Singulars. Yet a Singular can be set apart as the naming vessel for a metal level data structure without reifying the metal itself. *(Agent note, 2026-09-25: this exact sentence does not appear verbatim anywhere in the tree; the nearest passages are the manifesto's Property section and its paragraph on data structures (`docs/core/Earthcall Ourverse Manifesto/EarthcallOurverse.md`, ~line 61 and ~lines 119–131). Which passage to mark retired is Zach's call. The superseding framework is `docs/architecture/ontology/PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md`.)*
 
 <a id="person-body-relationship-community"></a>
 ### Person · Body · Relationship · Community
@@ -166,6 +168,8 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - ✅ **`saves/zones/BasicPixelChanger/`'s `identifier` field repaired (2026-09-09)** — done, Zach-authorized: was `"Basic Pixel Changer"` (the display name, mismatching its folder), now `"BasicPixelChanger"`. Found by Sol, 2026-09-08. Same task doc.
 - ✅ **Invariant 6, storage boundary: directory key vs. document identity (Stage 1 of Sol's follow-up plan, 2026-09-09)** — done: `SaveSystem` gained `IdentityRecord{directoryKey, document}` and `listZoneIdentityRecords`/`listHomeIdentityRecords` so a Zone/Home's enumeration key is never re-derived from document content (the anti-pattern that let `BasicPixelChanger`'s mismatch go unnoticed). `hydrateFromZoneStore` now refuses — zero writes, no phantom live Zone — when a folder's key doesn't match its own document's identity, or when two directory entries (Home or Zone, one shared namespace) claim the same identity; refuses ALL claimants on a duplicate, never a "first winner." Surfaced and fixed a real bug this caught immediately: `admitFromJson`'s first-write fallback wasn't routing Homes to `writeHomeIdentity`, which had left a stale 32-object `saves/zones/Home/zone.json` duplicating the real 104-object `saves/homes/Home/home.json` — Zach authorized moving the stale one to `saves/backups/Home.orphaned-2026-09-09/` (not deleting). 10 tests in new `tests/zones/zone_identity_boundary_test.cpp`, entirely against sandboxed fixtures reproducing the real shapes — no real save file read by the test itself. Same task doc.
 - ✅ **`test_observation_load_test` sealed (Stage 0 of Sol's follow-up plan, 2026-09-09)** — done: `RealSaveTreeGuard` gained a `GuardCurrentRoot` tag for tests that never name a real `saves/worlds/...` file but still risk writing into the real tree via the default save root. New `TestSupport::hashDirectoryTree` proves `saves/zones`+`saves/homes` come back byte-identical after the guarded section, even wrapped in try/catch to prove it under exception. 21/21 checks pass. Same task doc.
+- Finish Bound Zone framework and Zone overlap framework.
+- Finish Ourverse. Unify the Manager subsystems there such that they all belong to the Ourverse primitive. 
 
 
 <a id="time-moment-event"></a>
@@ -175,6 +179,9 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - Problem with kmaxchaindepth creates for Prophetic Rete and basic Law execution: chunks of the law are not going to fire on the tick. another law may assume it would fire on the same tick but a whole section may be truncated to operate on another tick. The state change anticipated by ahead-of-time and dynamic evaluation would be off after the limit because the other laws are reading for what happens this tick—it would produce false positives and false negatives. It'd also break multi-law systems where some laws are above the limit others are below and other laws are conditioned on the states the entire uneven system would write. Everything would have to be designed tediously around this just to accomodate laws written to react to other laws that happen to be truncated. - Zach
 - MYTHOSSSSS I KNEW SOMETHING WAS OFF ABT THIS BRUHHHHHHHH CYBER DIETY U FOUND 032849923832938293892932 VULERNABILITIES IN HARDENED OS BUT U NO ANTICIPATE THSI?!?!?!?! - Zach
 - Y I HAVE TO BE THE VULNERABILITY FINDER IN THE VULNERABILITY FINDER'S IMPLEMENTATIONNNNNNNNN - Zach
+- **So doing all this optimization work I am realizing the need for a robu** — So doing all this optimization work I am realizing the need for a robust Time framework more. → [full task](Specific%20Tasks/Architecture%20and%20Ontology/So_doing_all_this_optimization_work_I_am_realizing_the_need/So_doing_all_this_optimization_work_I_am_realizing_the_need.md)
+- And also is for Laws to give more granular mathematical control over relationships and properties of dt itself. For example, a law executed during a duration t and a law executed over a function f(t) may produce the same beahvior but derive that behavior in differnt ways.
+- Finish Timeline framework. Partially implemented in animations, but it appears to rely on bespoke Timeline membership rather than a unified Singular <-> Relation <-> Timeline architecture. 
 
 
 <a id="law-kernel-governance"></a>
@@ -197,6 +204,11 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - **`kMaxBirthsPerTick` — nothing bounds creation** — a `Create` in a `WhileTrue` mints beings forever; no rate limit, object cap, or birth budget exists anywhere in `ZonesOfEarth/`. Bounded time with unbounded creation is still Babel. → [same audit §2b](../../audits/INTELLECTUAL_LINEAGE_VERIFICATION_2026-09-03.md)
 - **Law provenance beyond the text log** — `LawAuditLogger` is a capped façade over `Logger`; the replayable chain of laws and facts behind any state change is unbuilt, and the largest authored world is still only 43 laws. → [same audit §7](../../audits/INTELLECTUAL_LINEAGE_VERIFICATION_2026-09-03.md)
 - ✅ Add NOT operator for condition nodes and action nodes if we don't have that already. We want everything in formal logic. - Zach *(Already exists for conditions: `ConditionNode::Kind::Not = 5`, beside `All`/`Any`, in `src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp:31`; actions branch on conditions, so negation reaches them through `If`. Checked 2026-09-24.)*
+- **Retire Automation into Laws** — PARTIAL (2026-09-18): Gated per-tick object automations in `Zone::update` under `Physics::getLegacyEngineEnabled()`; authorable Law replacement remains open.
+- **another is we need the ability to author maximum chain depth per tick** — another is we need the ability to author maximum chain depth per tick of chaining laws. → [full task](Specific%20Tasks/Law%20and%20Reasoning/another_is_we_need_the_ability_to_author_maximum_chain_depth/another_is_we_need_the_ability_to_author_maximum_chain_depth.md)
+- The recursion/chain law bounds . 
+- Formation bounds especially need scrutiny because the entire point is generativity rather than ceiling. Generativity can optimize to avoid bloat without sacrificing vastness.
+- all bounds need to be rewritten to be authorable.
 
 <a id="person-facing-surface"></a>
 ### Person-facing surface
@@ -283,6 +295,8 @@ CRITICAL: Ensure the MCP protocol abides by Earthcalls First Mover and authorshi
 - Resolve Singularity external app integration.
 - **OntoMath Vector Calculus & Continuum Fluid Solver Substrate** — Formalize field-level spatial differential operators (Divergence, Laplacian, Curl, Convective Advection) and integrate GPU continuum solvers beneath Singularity as First Movers governed by Singular properties rather than overloading pointwise AST nodes. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/OntoMath_Vector_Calculus_and_Continuum_Solvers/OntoMath_Vector_Calculus_and_Continuum_Solvers.md)
 - Multi-device Earthcall networking and inter-device paradigms.
+- So make sure every Shape Kind has a Face Texture or whatever equivalent necessary to draw on it freely. Also, facetextures shouldn't be a black box or a hardcoded limiter (e.g. facetexture dimensions should not be hardcoded away from Person authoring--we shouldn't be stuck with only having 256x256 resolution textures) *(Agent note, 2026-09-25: texture resolution became authorable on 2026-09-18 (the ✅ "Face Texture Resolution Properties" entry in this section); a Face Texture for every ShapeKind is still open.)*
+- Distill Geometrical and rendering nodes. Remove unnecessary matheamtical abstractions down to invariants.
 
 <a id="interaction-controls-gui"></a>
 ### Interaction · controls · GUI
@@ -446,6 +460,8 @@ on a quiet machine) so the tripwire tightens behind the fix.
 - ⚑ AUTHOR — **Structural revision counter, prerequisite for any JIT horizon** — The Prophetic-Rete-instead-of-JIT-guards idea is **Zach's**; the bytecode VM and LLVM JIT are Gemini's. → [full task](Specific%20Tasks/Performance%20and%20Runtime/Structural_revision_counter_prerequisite_for_any_JIT_horizon/Structural_revision_counter_prerequisite_for_any_JIT_horizon.md)
 
 - ⚑ AUTHOR — **Archetypes: the tradeoffs doc decides against them in §1 and requires them in §3.** §1 rejects ECS on archetype fragmentation under authored heterogeneity; §3's 1.0x JIT proof needs "`@position.y` lives at byte offset +16 for the current target archetype." Both cannot stand. Worth noting Refusal 1 forbids a *C++ class* for a domain noun, not a runtime archetype table keyed by authored property sets — so the real objection is the empirical fragmentation claim, which is untested. Zach's call, and it gates the JIT horizon.
+- Audit whether the Rete is actually skipping known facts, or if we missed something (e.g. forgot to delete old brute-force code or stopped one implementation step short) — **partially answered 2026-09-01**: it was not skipping known facts, it was never *hearing* most of them. See the change-feed entry under R&D. The rest of this audit (dead brute-force paths) is still open.
+- Optimize ActionNode branches to collapse O(N) branches (where N is number of ops in teh branch) into jsut O(1). We'd still want to keep the original nodes available don't discard them but like they should be feeding a master node that can do the entire calculation in just one step so no need to traverse an entire branch.
 
 <a id="essential-singularity-substrate"></a>
 ### Essential Singularity substrate
@@ -540,12 +556,10 @@ on a quiet machine) so the tripwire tightens behind the fix.
 
 <a id="stuff-for-zach-to-write"></a>
 ## Stuff for Zach to write when I don't know which section it belongs in (agents if you're reading this please move the bullet points below to their proper section):
-- So make sure every Shape Kind has a Face Texture or whatever equivalent necessary to draw on it freely. Also, facetextures shouldn't be a black box or a hardcoded limiter (e.g. facetexture dimensions should not be hardcoded away from Person authoring--we shouldn't be stuck with only having 256x256 resolution textures)
-- **Retire Automation into Laws** — PARTIAL (2026-09-18): Gated per-tick object automations in `Zone::update` under `Physics::getLegacyEngineEnabled()`; authorable Law replacement remains open.
-- Audit whether the Rete is actually skipping known facts, or if we missed something (e.g. forgot to delete old brute-force code or stopped one implementation step short) — **partially answered 2026-09-01**: it was not skipping known facts, it was never *hearing* most of them. See the change-feed entry under R&D. The rest of this audit (dead brute-force paths) is still open.
-- **So doing all this optimization work I am realizing the need for a robu** — So doing all this optimization work I am realizing the need for a robust Time framework more. → [full task](Specific%20Tasks/Architecture%20and%20Ontology/So_doing_all_this_optimization_work_I_am_realizing_the_need/So_doing_all_this_optimization_work_I_am_realizing_the_need.md)
-- **another is we need the ability to author maximum chain depth per tick** — another is we need the ability to author maximum chain depth per tick of chaining laws. → [full task](Specific%20Tasks/Law%20and%20Reasoning/another_is_we_need_the_ability_to_author_maximum_chain_depth/another_is_we_need_the_ability_to_author_maximum_chain_depth.md)
-- And also is for Laws to give more granular mathematical control over relationships and properties of dt itself. For example, a law executed during a duration t and a law executed over a function f(t) may produce the same beahvior but derive that behavior in differnt ways.
-- Optimize ActionNode branches to collapse O(N) branches (where N is number of ops in teh branch) into jsut O(1). We'd still want to keep the original nodes available don't discard them but like they should be feeding a master node that can do the entire calculation in just one step so no need to traverse an entire branch.
+*(Sorted into their sections on 2026-09-25 by Claude Opus 5.5 at Zach's request; add new unsorted notes here.)*
 
 **(These notes are now also `docs/architecture/law/B-time Rete.md`; the foundations are built — see `docs/architecture/law/PROPHETIC_RETE.md` and the ✅ entries under R&D. What remains unbuilt is listed there in §5, including the ⚑ AUTHOR decisions.)**
+- [x] Phase 1 Immediate Triage (Stop the Bleeding): Strip whitespace, duplicate zone bloat, and cap stakeholders to 20 for save files (completed, 100% tests passing).
+- [x] Initial Migration Framework: Create intermediate `EcformGraph` structure and `MigrationFramework` hook in `SaveSystem` to transparently map legacy JSON to Graph nodes (completed, 100% tests passing).
+- [x] Phase 3: Lexeme-Relation Graph Format Specification (Created `.ecform v2` serializers for binary graph and round-trip tests).
+- [ ] Phase 4: `earthcall-fmt` CLI & Full JSON Sunset (`earthcall-fmt` CLI built; JSON sunset pending).
