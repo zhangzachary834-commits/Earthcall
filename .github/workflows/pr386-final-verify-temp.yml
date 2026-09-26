@@ -1,0 +1,60 @@
+name: PR386 final source verification
+
+on:
+  push:
+    branches:
+      - sun/pr386-final-verify-20260926
+
+permissions:
+  contents: read
+
+jobs:
+  final-source:
+    name: Final Prophetic source verification (Ubuntu Release)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out exact final source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install native build prerequisites
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build \
+            libssl-dev zlib1g-dev uuid-dev \
+            libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+
+      - name: Configure Release verification
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake -S . -B build-pr386-final -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+
+      - name: Build semantic regression and benchmark
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake --build build-pr386-final --parallel 4 --target \
+            prophetic_rete_test \
+            bench_prophetic_rebuild
+
+      - name: Run production semantic regression
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ./build-pr386-final/prophetic_rete_test
+
+      - name: Run optimized benchmark witness
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ./build-pr386-final/bench_prophetic_rebuild | tee pr386-final-benchmark.log
+          grep '^PRODUCTION_REBUILD ' pr386-final-benchmark.log
+          grep '^PAIRWISE_PHASE_SPEEDUP ' pr386-final-benchmark.log
