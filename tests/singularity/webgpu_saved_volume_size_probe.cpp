@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <fstream>
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <string>
@@ -121,6 +122,7 @@ int main(int argc, char** argv) {
         glm::radians(45.0f), float(width) / height, 0.1f, 100.0f);
     renderer.setCamera(view3d, proj, eye);
 
+    int captureIndex = 0;
     auto syncImage = [&] {
         WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
         WGPUTexelCopyTextureInfo src = {};
@@ -158,6 +160,27 @@ int main(int argc, char** argv) {
                     hash *= 1099511628211ull;
                 }
             }
+        }
+        // Paired raw captures retain the exact medium radiance and opacity
+        // independently. They are diagnostic pixels over transparent black,
+        // not a saved scene composite or a final quality acceptance image.
+        if (const char* dir = std::getenv("EARTHCALL_VOLUME_CAPTURE_DIR")) {
+            std::filesystem::create_directories(dir);
+            const std::string stem = std::string(dir) + "/" +
+                (northern ? "veil" : "mist") + "-" + std::to_string(width) + "x" +
+                std::to_string(height) + (motion ? "-moving-" : "-fixed-") +
+                std::to_string(static_cast<int>(eye.x)) + "-" +
+                std::to_string(captureIndex++);
+            std::ofstream rgb(stem + ".ppm", std::ios::binary);
+            std::ofstream alpha(stem + "-alpha.pgm", std::ios::binary);
+            rgb << "P6\n" << width << " " << height << "\n255\n";
+            alpha << "P5\n" << width << " " << height << "\n255\n";
+            for (uint32_t y=0; y<height; ++y) for (uint32_t x=0; x<width; ++x) {
+                const char* pixel = reinterpret_cast<const char*>(pixels + size_t(y)*stride + x*4);
+                rgb.write(pixel, 3);
+                alpha.write(pixel+3, 1);
+            }
+            assert(rgb.good() && alpha.good());
         }
         wgpuBufferUnmap(readback);
         return std::array<uint64_t,3>{lum,alphaSum,hash};
