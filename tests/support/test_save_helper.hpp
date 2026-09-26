@@ -13,6 +13,7 @@
 #include <string>
 #include <filesystem>
 #include <iostream>
+#include <functional>
 
 
 struct TempSaveRoot {
@@ -32,7 +33,8 @@ struct TempSaveRoot {
 };
 
 inline void dump_test_save(const std::string& test_name, Zone& testWorld, LawManager& testLawManager, Person& testPlayer,
-                           const std::string& filepathOverride = "") {
+                           const std::string& filepathOverride = "",
+                           const std::function<void()>& afterSaveRootSetForTest = {}) {
     std::cout << "[TestSaveHelper] Generating test save: " << test_name << "...\n";
 
     ZoneManager mgr;
@@ -93,16 +95,46 @@ inline void dump_test_save(const std::string& test_name, Zone& testWorld, LawMan
     ctx.worldTime = &worldTime;
     ctx.unpackForAuthoring = false;
 
+    const std::string originalSaveRoot = SaveSystem::saveRoot();
+    bool isDefaultRoot = originalSaveRoot.empty();
+    if (!isDefaultRoot) {
+        // Compare lexical absolute paths. This does not require either path to
+        // exist, but correctly distinguishes the authored ./saves root from
+        // lookalikes such as "saves/.." (the working directory).
+        const auto normalizedAbsolute = [](const std::filesystem::path& p) {
+            return std::filesystem::absolute(p).lexically_normal();
+        };
+        isDefaultRoot =
+            normalizedAbsolute(std::filesystem::path(originalSaveRoot)) ==
+            normalizedAbsolute(std::filesystem::path("saves"));
+    }
+
+    std::filesystem::path root;
+    struct SaveRootRestorer {
+        std::string original;
+        ~SaveRootRestorer() {
+            SaveSystem::setSaveRoot(original);
+        }
+    } restorer{originalSaveRoot};
+
+    if (!isDefaultRoot) {
+        root = std::filesystem::path(originalSaveRoot);
+    } else {
+        root = std::filesystem::temp_directory_path() / "earthcall_test_dumps";
+    }
+
     std::string filepath = filepathOverride;
     if (filepath.empty()) {
-        std::filesystem::path root = SaveSystem::saveRoot().empty()
-            ? (std::filesystem::temp_directory_path() / "earthcall_test_dumps")
-            : std::filesystem::path(SaveSystem::saveRoot());
         std::filesystem::path testsFolder = root / "tests";
         std::filesystem::create_directories(testsFolder);
         filepath = (testsFolder / (test_name + ".json")).string();
     } else {
         std::filesystem::create_directories(std::filesystem::path(filepath).parent_path());
+    }
+
+    SaveSystem::setSaveRoot(root.string());
+    if (afterSaveRootSetForTest) {
+        afterSaveRootSetForTest();
     }
     mgr.saveState(filepath, ctx);
     
