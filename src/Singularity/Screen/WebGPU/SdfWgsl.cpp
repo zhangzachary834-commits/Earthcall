@@ -4084,7 +4084,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
 
 bool reuseVolumeSourceGeometry(Program& program, std::string& error) {
     if (!program.ok) { error = program.error; return false; }
-    auto& code = program.wgsl;
+    std::string code = program.wgsl;
     if (code.find("const HAS_OCCLUDER_SDF: bool = false;") != std::string::npos)
         return true; // Nothing to reuse; retain the exact no-occluder shader.
     auto replaceOnce = [&](const std::string& before, const std::string& after) {
@@ -4109,6 +4109,7 @@ bool reuseVolumeSourceGeometry(Program& program, std::string& error) {
         error = "single-medium source-geometry reuse: unexpected shader structure";
         return false;
     }
+    program.wgsl = std::move(code);
     return true;
 }
 
