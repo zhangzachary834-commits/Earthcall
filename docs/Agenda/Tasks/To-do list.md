@@ -572,6 +572,7 @@ on a quiet machine) so the tripwire tightens behind the fix.
 - Even incredibly complex intricate shapes can be reduced to something very simple if the direction is static and they are not rotating. 
 - What if the shapes themselves are changing in form or rotating, moving or both? Not as hard as you think when you realize Prophetic Rete means the very laws governing their rotation and movement. Thus you can compile AST Law syntehsis-style into one clear execution of rotation and movement + shape change -> one master equation purely dedicated to calculating the positional variables for those.
 - Ok I have more to say but I dont have time ot write all here rn
+- Need to integrate Singularity.cpp/hpp and Being::Kind  
 
 **(These notes are now also `docs/architecture/law/B-time Rete.md`; the foundations are built — see `docs/architecture/law/PROPHETIC_RETE.md` and the ✅ entries under R&D. What remains unbuilt is listed there in §5, including the ⚑ AUTHOR decisions.)**
 - [x] Phase 1 Immediate Triage (Stop the Bleeding): Strip whitespace, duplicate zone bloat, and cap stakeholders to 20 for save files (completed, 100% tests passing).
