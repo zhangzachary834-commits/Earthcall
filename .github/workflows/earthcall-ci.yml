@@ -254,6 +254,44 @@ jobs:
           test "$(grep -c 'work_view_sum=[1-9]' saved-volume-work.log)" -eq 2
           test "$(grep -c 'work_step_sum=[1-9]' saved-volume-work.log)" -eq 2
 
+      - name: Compare single-medium source-geometry reuse at native resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          probe=./build/webgpu_saved_volume_size_probe
+          mist='saves/zones/Sanctuary of Sunlit Mist/zone.json'
+          for label in A1 B1 B2 A2; do
+            if [[ "$label" == B* ]]; then
+              export EARTHCALL_EXPERIMENT_VOLUME_REUSE_SOURCE_GEOMETRY=1
+            else
+              unset EARTHCALL_EXPERIMENT_VOLUME_REUSE_SOURCE_GEOMETRY
+            fi
+            export EARTHCALL_VOLUME_CAPTURE_DIR="$PWD/saved-volume-captures/reuse-$label"
+            "$probe" "$mist" authored 1280 720 8 2 0 2.2 8 0 2.25 -12 \
+              | tee "source-geometry-$label.log"
+          done
+          for label in B1 B2 A2; do
+            diff -u <(sed -n 's/.*rgba_hash=//p' source-geometry-A1.log | cut -d' ' -f1) \
+                    <(sed -n 's/.*rgba_hash=//p' "source-geometry-$label.log" | cut -d' ' -f1)
+            for file in saved-volume-captures/reuse-A1/*; do
+              cmp "$file" "${file/reuse-A1/reuse-$label}"
+            done
+          done
+          for mode in exact reuse; do
+            if [[ "$mode" == reuse ]]; then
+              export EARTHCALL_EXPERIMENT_VOLUME_REUSE_SOURCE_GEOMETRY=1
+            else
+              unset EARTHCALL_EXPERIMENT_VOLUME_REUSE_SOURCE_GEOMETRY
+            fi
+            export EARTHCALL_VOLUME_CAPTURE_DIR="$PWD/saved-volume-captures/moving-$mode"
+            "$probe" "$mist" authored 1280 720 16 1 0 2.2 8 0 2.25 -12 1 \
+              | tee "source-geometry-moving-$mode.log"
+          done
+          cmp saved-volume-captures/moving-exact/mist-1280x720-moving-0-1.ppm \
+              saved-volume-captures/moving-reuse/mist-1280x720-moving-0-1.ppm
+          cmp saved-volume-captures/moving-exact/mist-1280x720-moving-0-1-alpha.pgm \
+              saved-volume-captures/moving-reuse/mist-1280x720-moving-0-1-alpha.pgm
+
       - name: Upload WebGPU object/radiance diagnostic
         if: always()
         uses: actions/upload-artifact@v4
@@ -265,6 +303,7 @@ jobs:
             webgpu-volumetric-mist.log
             saved-volume-size.log
             saved-volume-work.log
+            source-geometry-*.log
             saved-volume-hashes.log
             saved-volume-captures/
           if-no-files-found: error
