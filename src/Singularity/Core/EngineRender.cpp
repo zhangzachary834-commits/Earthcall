@@ -140,7 +140,7 @@ namespace Core {
                 // discovery cannot silently lag a newly-authored channel. In
                 // particular, V4 E_v must participate in world-set revision.
                 Rendering::appendVolumeSetIdentity(
-                    volumeSetIdentity, field->getIdentifier(), medium);
+                    volumeSetIdentity, medium.producerId, medium);
                 volumeDensities.push_back(medium);
             }
 
@@ -148,6 +148,7 @@ namespace Core {
             if (!Rendering::readAuthorableLight(*field, light)) continue;
 
             Rendering::RadianceSourceBinding source;
+            source.producerId = field->getIdentifier();
             source.position = light.position;
             source.ambientRadiance = Rendering::lightAmbientRadiance(light);
             source.diffuseRadiance = Rendering::lightDiffuseRadiance(light);
@@ -185,7 +186,7 @@ namespace Core {
             // enablement and temporal coordinates live in the persistent source
             // storage buffer and must NOT serialize an entire FieldNode merely
             // to move/recolor/enable a source.
-            sourceSetIdentity += field->getIdentifier();
+            sourceSetIdentity += source.producerId;
             sourceSetIdentity += ":";
             sourceSetIdentity += std::to_string(source.radianceRevision);
             sourceSetIdentity += ":";
