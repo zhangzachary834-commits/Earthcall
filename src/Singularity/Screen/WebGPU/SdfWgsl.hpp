@@ -285,10 +285,7 @@ struct VolumeProgramInput {
 // semantics, then composes those evaluators into one shared ray integral. The
 // caller supplies one VolumeInstanceData record per medium after a union-bounds
 // header record; each medium's paramOffset points at its own parameter segment.
-// Diagnostic candidate: share identical source evaluators per occupied sample.
-// Default remains the established exact V5 path until native parity/perf gates.
-Program compileVolumeSet(const std::vector<VolumeProgramInput>& media,
-                         bool shareSourceFactors = false);
+Program compileVolumeSet(const std::vector<VolumeProgramInput>& media);
 
 // Value-only companion to compileVolume(). Recollects numeric parameter slots
 // without regenerating shader source when structure is unchanged.
