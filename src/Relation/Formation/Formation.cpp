@@ -228,7 +228,7 @@ bool Formation::reachesDirected(const std::string& from, const std::string& to,
     if (from.empty() || to.empty()) return false;
     if (from == to) return true;
 
-    std::map<std::string, std::vector<std::string>> out;
+    std::unordered_map<std::string, std::vector<std::string>> out;
     for (const auto& rel : relationMgr.getAll()) {
         if (!rel || !rel->directed) continue;
         if (rel->type != type) continue;
