@@ -9,7 +9,6 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <cmath>
-#include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <limits>
@@ -2403,14 +2402,6 @@ void WebGpuRenderer::flushVolumeComposite() {
     }
 
     if (activeMedia.size() > 1) {
-        // Diagnostic-only opt-in. The production shader remains unchanged;
-        // compare separate processes at the same saved camera/time and size.
-        // The value is fixed for the process lifetime so the memo's structure
-        // and pipeline cannot silently switch beneath a cache entry.
-        static const bool shareSourceFactors = [] {
-            const char* value = std::getenv("EARTHCALL_EXPERIMENT_V5_SHARED_SOURCE");
-            return value && std::strcmp(value, "1") == 0;
-        }();
         VolumeSetProgramKey setKey;
         setKey.reserve(activeMedia.size());
         std::vector<sdfwgsl::VolumeProgramInput> compilerInputs;
@@ -2445,7 +2436,6 @@ void WebGpuRenderer::flushVolumeComposite() {
             std::string layoutError = incidentSourceLayoutError;
             std::string structure =
                 "medium-count:" + std::to_string(activeMedia.size()) + "\n" +
-                (shareSourceFactors ? "shared-source:1\n" : "shared-source:0\n") +
                 incidentSourceStructure + "\n";
 
             for (std::size_t i = 0; layoutsOk && i < activeMedia.size(); ++i) {
@@ -2514,8 +2504,7 @@ void WebGpuRenderer::flushVolumeComposite() {
                     !setMemo.ok || setMemo.structure != structure ||
                     !setMemo.pipeline;
                 if (needsCompile) {
-                    setMemo.prog = sdfwgsl::compileVolumeSet(
-                        compilerInputs, shareSourceFactors);
+                    setMemo.prog = sdfwgsl::compileVolumeSet(compilerInputs);
                     ++mutableFrameStats().volumeProgramCompiles;
                     mutableFrameStats().volumeWgslBytesGenerated +=
                         setMemo.prog.wgsl.size();
@@ -3292,3 +3281,4 @@ bool WebGpuRenderer::readPixels(uint8_t* outRgba, uint32_t width, uint32_t heigh
     wgpuBufferUnmap(_readbackBuffer);
     return true;
 }
+
