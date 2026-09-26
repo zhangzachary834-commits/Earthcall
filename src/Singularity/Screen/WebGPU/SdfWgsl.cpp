@@ -4161,14 +4161,18 @@ bool instrumentVolumeWork(Program& program, bool mediumSet, std::string& error) 
         error = "volume work probe: missing transport return";
         return false;
     }
+    // Both compiler paths end with this fragment return. Replace the normal
+    // color tail so the diagnostic shader has no unreachable WGSL statements.
+    code.erase(at);
     // Three 8-bit channels pack two 12-bit counters. Alpha=1 bypasses the
     // normal premultiplied blend over the transparent diagnostic target.
-    code.insert(at, R"WGSL(
+    code += R"WGSL(
     let viewCount = min(g_workView, 4095u);
     let stepCount = min(g_workSteps, 4095u);
     return vec4<f32>(f32(viewCount & 255u),
                      f32(((viewCount >> 8u) & 15u) | ((stepCount & 15u) << 4u)),
                      f32((stepCount >> 4u) & 255u), 255.0) / 255.0;
+}
 )WGSL");
     return true;
 }
