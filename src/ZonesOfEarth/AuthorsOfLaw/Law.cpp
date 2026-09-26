@@ -1844,6 +1844,16 @@ void LawManager::add(const std::shared_ptr<Law>& law) {
 static LawManager* s_singularHookOwner = nullptr;
 
 LawManager::~LawManager() {
+    if (_ecaEventSubscription != 0) {
+        Core::EventBus::instance().unsubscribe<ECA::Event>(_ecaEventSubscription);
+        _ecaEventSubscription = 0;
+    }
+    if (_customEventSubscription != 0) {
+        Core::EventBus::instance().unsubscribe<Core::Event::Custom>(_customEventSubscription);
+        _customEventSubscription = 0;
+    }
+    _connected = false;
+
     if (s_singularHookOwner == this) {
         Singular::setPropertyChangeCallback(nullptr);
         Singular::setBeingReleasedCallback(nullptr);
@@ -1954,7 +1964,7 @@ void LawManager::connectToEventBus() {
         _dirty = true;
     });
 
-    Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
+    _ecaEventSubscription = Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
         std::string subjectId = e.subject ? e.subject->getIdentifier() : "null";
         std::string objectId = e.object ? e.object->getIdentifier() : "null";
 
@@ -2023,7 +2033,7 @@ void LawManager::connectToEventBus() {
         }
     });
 
-    Core::EventBus::instance().subscribe<Core::Event::Custom>([this](const Core::Event::Custom& e) {
+    _customEventSubscription = Core::EventBus::instance().subscribe<Core::Event::Custom>([this](const Core::Event::Custom& e) {
         if (!e.relation) return;
         
         std::string evType = e.relation->type;
