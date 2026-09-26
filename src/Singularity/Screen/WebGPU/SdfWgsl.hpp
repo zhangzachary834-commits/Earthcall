@@ -293,6 +293,11 @@ Program compileVolumeSet(const std::vector<VolumeProgramInput>& media);
 // authored frame; the ordinary compiler output remains unchanged.
 bool instrumentVolumeWork(Program& program, bool mediumSet, std::string& error);
 
+// Default-off single-medium A/B experiment: pass already computed source
+// distance/direction into the visibility marcher. Caller retains the ordinary
+// shader as fallback; this changes no authored expression or saved value.
+bool reuseVolumeSourceGeometry(Program& program, std::string& error);
+
 // Value-only companion to compileVolume(). Recollects numeric parameter slots
 // without regenerating shader source when structure is unchanged.
 ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
