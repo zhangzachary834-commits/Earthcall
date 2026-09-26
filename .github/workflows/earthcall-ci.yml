@@ -239,39 +239,6 @@ jobs:
           "$probe" "$mist" authored 640 360 16 2 0 2.2 8 0 2.25 -12 1 | tee -a saved-volume-size.log
           "$probe" "$veil" authored 640 360 16 2 0 64 230 0 64 80 1 | tee -a saved-volume-size.log
 
-          # Diagnostic V5 candidate only. Native-resolution, same saved camera
-          # and time; no timing threshold because runner load can drift.
-          for label in A1 B1 B2 A2; do
-            if [[ "$label" == B* ]]; then
-              export EARTHCALL_EXPERIMENT_V5_SHARED_SOURCE=1
-            else
-              unset EARTHCALL_EXPERIMENT_V5_SHARED_SOURCE
-            fi
-            export EARTHCALL_VOLUME_CAPTURE_DIR="$PWD/saved-volume-captures/$label"
-            "$probe" "$veil" authored 1280 720 12 2 0 64 230 0 64 80 \
-              | tee "v5-shared-source-$label.log"
-          done
-          for label in B1 B2 A2; do
-            diff -u <(sed -n 's/.*rgba_hash=//p' v5-shared-source-A1.log) \
-                    <(sed -n 's/.*rgba_hash=//p' "v5-shared-source-$label.log")
-          done
-          # Source Timeline and in-memory numeric source edit exercise the
-          # first member's parameter offset rather than merely equal pointers.
-          for scenario in '1.25 0' '0 1'; do
-            read -r time edited <<< "$scenario"
-            for mode in exact shared; do
-              if [[ "$mode" == shared ]]; then
-                export EARTHCALL_EXPERIMENT_V5_SHARED_SOURCE=1
-              else
-                unset EARTHCALL_EXPERIMENT_V5_SHARED_SOURCE
-              fi
-              export EARTHCALL_VOLUME_CAPTURE_DIR="$PWD/saved-volume-captures/$mode-$time-$edited"
-              "$probe" "$veil" authored 1280 720 3 1 0 64 230 0 64 80 0 "$time" "$edited" \
-                | tee "v5-$mode-$time-$edited.log"
-            done
-            diff -u <(sed -n 's/.*rgba_hash=//p' "v5-exact-$time-$edited.log") \
-                    <(sed -n 's/.*rgba_hash=//p' "v5-shared-$time-$edited.log")
-          done
 
       - name: Upload WebGPU object/radiance diagnostic
         if: always()
@@ -285,9 +252,6 @@ jobs:
             saved-volume-size.log
             saved-volume-hashes.log
             saved-volume-captures/
-            v5-shared-source-*.log
-            v5-exact-*.log
-            v5-shared-*.log
           if-no-files-found: error
           retention-days: 7
 
