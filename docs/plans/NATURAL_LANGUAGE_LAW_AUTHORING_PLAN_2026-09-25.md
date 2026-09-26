@@ -117,33 +117,6 @@ Zach, after witnessing rung 1: *"tab shouldn't just display a list of all possib
 
   Each is now held by `line_editor_test`.
 
-## 7. Rung 3: mouse, blanks, help, footer, dry run, confirmed deletion
-
-**Zach's choices (2026-09-25):**
-- mouse scrolling of the Tab lists;
-- "the rest are great and we should do them now";
-- typo-fixing and usage ranking deferred ("we need more robust Lexeme Formations first");
-- "add a help command and make it aesthetic/beautiful";
-- deletion: *"the metalaw that does the deletions should say 'are you sure you want to delete?' and then either yes or no saying no means no delete and requires your yes to delete."*
-
-**What was built:**
-- **Deletion** runs through two seeded Metalaws (`law-line-ask-before-deleting`, `law-line-delete-when-confirmed`) over existing opcodes. There is no new ActionNode kind:
-  - Destroy now accepts a Law victim;
-  - `LawManager::reapUnmade` retires it;
-  - `ZoneManager::retireLawFromActiveZone` makes Save Zone drop it from `lawRefs`.
-- **The editor gained:**
-  - SGR mouse reporting (on only while a menu or help is open) with cursor-report row mapping;
-  - PgUp/PgDn and F1;
-  - `‹blank›` placeholders derived from each opcode's own argument signature (`argumentTemplate`), plus a preset's still-open clauses;
-  - grouped menus, bold matched letters, and a `⤷` detail line;
-  - a status footer;
-  - a scrollable overlay for `help`.
-- **The dry run** evaluates the compiled condition read-only.
-
-**Verified:**
-- `line_editor_test`, `law_line_test`, `law_line_zone_test` (40 checks), and `destroy_law_test`;
-- the real app, driven in an emulated terminal: the help box and its wheel scrolling, mouse off after close, the grouped menu, a wheel-moved selection, a click that took `Add` with its blanks, and the blanks filled by typing and Tab.
-
 ---
 
 *Claude Code · Claude Opus 5.5 · session `01WXmPy9U71FLqizbRYzMToZ` · 2026-09-25T02:25-07:00. Zach originated the Law Line, its grammar, presets, Tab, the terminal-first order, the TerminalChannel, the legacy split, and corrections 1–7 above. Claude originated: the libedit callback-interface pump, reading a denoted Law's shape as its opcode (open slot vs preset), composable presets, the request-counter invocation, Metalaw application by `targets`, character-level spelling forms, and the disabled-Law loader refinement.*

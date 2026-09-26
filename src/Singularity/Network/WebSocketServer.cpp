@@ -475,9 +475,7 @@ struct WebSocketServer::Impl {
                     if (target == "@player" || normTarget == "player" || normTarget == "Player") {
                         targetBeing = ::Core::Engine::instance().getPerson();
                     } else if (target == "@active_zone" || normTarget == "active_zone" || normTarget == "zone") {
-                        if (!mgr.zones().empty() && mgr.currentIndex() < mgr.zones().size() && mgr.zones()[mgr.currentIndex()]) {
-                            targetBeing = &mgr.active();
-                        }
+                        targetBeing = &mgr.active();
                     } else {
                         // 1. Search in Universe beings
                         for (auto* being : Universe::instance().beings()) {
@@ -495,7 +493,7 @@ struct WebSocketServer::Impl {
                             }
                         }
                         // 2. Search in active zone objects
-                        if (!targetBeing && !mgr.zones().empty() && mgr.currentIndex() < mgr.zones().size() && mgr.zones()[mgr.currentIndex()]) {
+                        if (!targetBeing) {
                             for (const auto& obj : mgr.active().getOwnedObjects()) {
                                 if (!obj) continue;
                                 if (obj->getObjectID() == target || obj->getObjectID() == normTarget ||
@@ -737,12 +735,10 @@ struct WebSocketServer::Impl {
                 std::string id = j.value("id", j.value("target", ""));
                 if (!id.empty()) {
                     Object* targetObj = nullptr;
-                    if (!mgr.zones().empty() && mgr.currentIndex() < mgr.zones().size() && mgr.zones()[mgr.currentIndex()]) {
-                        for (auto& o : mgr.active().objects()) {
-                            if (o && (o->getObjectID() == id || o->getIdentifier() == id)) {
-                                targetObj = o.get();
-                                break;
-                            }
+                    for (auto& o : mgr.active().objects()) {
+                        if (o && (o->getObjectID() == id || o->getIdentifier() == id)) {
+                            targetObj = o.get();
+                            break;
                         }
                     }
 
@@ -809,16 +805,24 @@ struct WebSocketServer::Impl {
                 bool enabled = j.value("enabled", true);
                 LawManager* lm = ::Core::Engine::instance().getLawManager();
                 if (lm && !identifier.empty()) {
-                    Law* law = lm->find(identifier);
-                    std::string lawId = law ? law->getIdentifier() : identifier;
+                    std::string lawId = identifier;
+                    for (auto& law : lm->getAll()) {
+                        if (law && (law->getIdentifier() == identifier || law->name() == identifier)) {
+                            lawId = law->getIdentifier();
+                            break;
+                        }
+                    }
                     auto mover = admit(hdl, clientId, "toggle_law_ack", SaveSystem::resolveLawIdentityPath(lawId),
                                        "enabled", "", {{"identifier", identifier}});
                     if (!mover) return;
                     Identity::FirstMoverSession moverSession(Identity::FirstMoverRegister::instance(), *mover);
                     bool found = false;
-                    if (law) {
-                        law->setEnabled(enabled);
-                        found = true;
+                    for (auto& law : lm->getAll()) {
+                        if (law && (law->getIdentifier() == identifier || law->name() == identifier)) {
+                            law->setEnabled(enabled);
+                            found = true;
+                            break;
+                        }
                     }
 
                     nlohmann::json reply;
@@ -841,19 +845,31 @@ struct WebSocketServer::Impl {
                 LawManager* lm = ::Core::Engine::instance().getLawManager();
 
                 if (lm && !identifier.empty()) {
-                    Law* law = lm->find(identifier);
-                    std::string touchedId = law ? law->getIdentifier() : identifier;
+                    std::string touchedId = identifier;   // see create_law: name matches too
+                    for (auto& l : lm->getAll()) {
+                        if (l && (l->getIdentifier() == identifier || l->name() == identifier)) {
+                            touchedId = l->getIdentifier();
+                            break;
+                        }
+                    }
                     auto mover = admit(hdl, clientId, "update_law_ack", SaveSystem::resolveLawIdentityPath(touchedId),
                                        j.contains("enabled") ? "enabled" : "", "", {{"identifier", identifier}});
                     if (!mover) return;
                     Identity::FirstMoverSession moverSession(Identity::FirstMoverRegister::instance(), *mover);
+                    Law* law = nullptr;
+                    for (auto& l : lm->getAll()) {
+                        if (l && (l->getIdentifier() == identifier || l->name() == identifier)) {
+                            law = l.get();
+                            break;
+                        }
+                    }
 
                     if (!law) {
                         // Create if not found. The author is the mover who wrote
                         // it -- never the Person merely present at the screen.
                         auto newLaw = lm->createLaw(j.value("name", "Authored Law"),
-                                                    identifier,
                                                     Foreign::foreignLawAuthors(Identity::FirstMoverRegister::instance(), *mover));
+                        newLaw->setLawIdentifier(identifier);
                         law = newLaw.get();
                     }
 
@@ -974,10 +990,20 @@ struct WebSocketServer::Impl {
 
                 // Re-authoring an existing Law re-enables it; that is a write
                 // of `enabled`, which TransferPolicy gates like any other.
-                // Authorize against the Law that will ACTUALLY be touched by identifier.
-                Law* existing = lm ? lm->find(identifier) : nullptr;
-                bool reenables = existing != nullptr;
-                std::string touchedId = existing ? existing->getIdentifier() : identifier;
+                // Authorize against the Law that will ACTUALLY be touched: the
+                // lookup below matches by name too, and a name must never
+                // carry a mover's scope onto someone else's Law.
+                bool reenables = false;
+                std::string touchedId = identifier;
+                if (lm) {
+                    for (auto& l : lm->getAll()) {
+                        if (l && (l->getIdentifier() == identifier || l->name() == name)) {
+                            reenables = true;
+                            touchedId = l->getIdentifier();
+                            break;
+                        }
+                    }
+                }
                 auto mover = admit(hdl, clientId, "create_law_ack", SaveSystem::resolveLawIdentityPath(touchedId),
                                    reenables ? "enabled" : "", "", {{"identifier", identifier}});
                 if (!mover) return;
@@ -994,6 +1020,14 @@ struct WebSocketServer::Impl {
                 Identity::FirstMoverSession moverSession(Identity::FirstMoverRegister::instance(), *mover);
 
                 if (lm) {
+                    Law* existing = nullptr;
+                    for (auto& l : lm->getAll()) {
+                        if (l && (l->getIdentifier() == identifier || l->name() == name)) {
+                            existing = l.get();
+                            break;
+                        }
+                    }
+
                     std::shared_ptr<Law> law;
                     if (existing) {
                         existing->setEnabled(true);
@@ -1007,7 +1041,10 @@ struct WebSocketServer::Impl {
                         // Truthful authorship (plan section 13.1): the mover
                         // wrote this Law. Before 2026-09-24 this line recorded
                         // the present Person as author of text a model emitted.
-                        law = lm->createLaw(name, identifier, Foreign::foreignLawAuthors(Identity::FirstMoverRegister::instance(), *mover));
+                        law = lm->createLaw(name, Foreign::foreignLawAuthors(Identity::FirstMoverRegister::instance(), *mover));
+                        if (!identifier.empty()) {
+                            law->setLawIdentifier(identifier);
+                        }
                     }
 
                     if (law) {

@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
     assert(active);
 
     Object* board = findObj(*active, "object.chess.board");
-    Object* state = findObj(*active, "state.chess");
+    Object* state = findCat("state.chess");
     Object* whiteKing = findObj(*active, "piece-white-king-4-0");
     Object* whiteRookH1 = findObj(*active, "piece-white-rook-7-0");
     Object* whiteRookA1 = findObj(*active, "piece-white-rook-0-0");

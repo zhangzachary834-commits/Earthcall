@@ -2338,8 +2338,6 @@ std::unique_ptr<MathNode> MathNode::fromJson(const nlohmann::json& j) {
     }
     if (j.contains("arg")) {
         node->stringArg = j["arg"].get<std::string>();
-    } else if (j.contains("stringArg")) {
-        node->stringArg = j["stringArg"].get<std::string>();
     }
     if (j.contains("children")) {
         for (const auto& c : j["children"]) {
