@@ -59,16 +59,20 @@ int main() {
     assert(SaveSystem::saveRoot() == customRoot.string());
     std::filesystem::remove_all(customRoot);
 
-    // "saves/.." is the working directory, not the authored saves root. It
-    // must not be misclassified as the default just because it normalizes to ".".
-    auto cwdRoot = std::filesystem::temp_directory_path() / "earthcall_cwd_like_root";
-    std::filesystem::remove_all(cwdRoot);
-    SaveSystem::setSaveRoot(cwdRoot.string());
+    // A custom path that lexically collapses through ".." must remain custom;
+    // only the actual authored saves path is the default. Keep this entirely in
+    // the OS temp tree so the witness cannot create repo-relative artifacts.
+    auto cwdLikeBase = std::filesystem::temp_directory_path() / "earthcall_cwd_like_root";
+    auto cwdLikeChild = cwdLikeBase / "child";
+    std::filesystem::remove_all(cwdLikeBase);
+    std::filesystem::create_directories(cwdLikeChild);
+    const std::string cwdLikeSpelling = (cwdLikeChild / "..").string();
+    SaveSystem::setSaveRoot(cwdLikeSpelling);
     dump_test_save("test_dump_cwd_like", testWorld, testLawManager, testPlayer);
-    assert(std::filesystem::exists(cwdRoot / "tests" / "test_dump_cwd_like.json") ||
-           std::filesystem::exists(cwdRoot / "tests" / "test_dump_cwd_like.ecform"));
-    assert(SaveSystem::saveRoot() == cwdRoot.string());
-    std::filesystem::remove_all(cwdRoot);
+    assert(std::filesystem::exists(cwdLikeBase / "tests" / "test_dump_cwd_like.json") ||
+           std::filesystem::exists(cwdLikeBase / "tests" / "test_dump_cwd_like.ecform"));
+    assert(SaveSystem::saveRoot() == cwdLikeSpelling);
+    std::filesystem::remove_all(cwdLikeBase);
 
     // 3. Test explicit filepathOverride is honored using temp root and causes no repo pollution
     SaveSystem::setSaveRoot(customRoot.string());
