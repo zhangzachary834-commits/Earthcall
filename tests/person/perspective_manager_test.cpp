@@ -21,6 +21,7 @@ void test_add_perspective() {
     assert(manager.count() == 1);
     assert(manager.currentIndex() == 0);
     assert(manager.current() != nullptr);
+    assert(manager.current()->getIdentifier() == "P1");
     assert(manager.current()->getName() == "P1");
 
     // Add another perspective
@@ -33,6 +34,32 @@ void test_add_perspective() {
     // Test adding duplicate name
     manager.addPerspective(std::make_unique<PersonPerspective>("P1", PersonPerspective::PerspectiveType::FreeCamera));
     assert(manager.count() == 2); // Should not add duplicate
+}
+
+class CustomPerspective : public PersonPerspective {
+public:
+    CustomPerspective(const std::string& name, const std::string& id)
+        : PersonPerspective(name), _customId(id) {}
+    std::string getIdentifier() const override { return _customId; }
+private:
+    std::string _customId;
+};
+
+void test_identity_lookup_regression() {
+    PerspectiveManager manager;
+    // Two perspectives that share display name "Overview" but have distinct Singular identifiers
+    manager.addPerspective(std::make_unique<CustomPerspective>("Overview", "perspective.overview.primary"));
+    manager.addPerspective(std::make_unique<CustomPerspective>("Overview", "perspective.overview.secondary"));
+
+    assert(manager.count() == 2);
+    assert(manager.hasPerspective("perspective.overview.primary"));
+    assert(manager.hasPerspective("perspective.overview.secondary"));
+    assert(!manager.hasPerspective("Overview"));
+
+    manager.switchTo("perspective.overview.secondary");
+    assert(manager.currentIndex() == 1);
+    assert(manager.current()->getIdentifier() == "perspective.overview.secondary");
+    assert(manager.current()->getName() == "Overview");
 }
 
 void test_switch_perspective() {
@@ -140,6 +167,7 @@ int main() {
     test_remove_perspective();
     test_state_management();
     test_clear();
+    test_identity_lookup_regression();
 
     std::puts("perspective_manager_test: ALL OK");
     return 0;
