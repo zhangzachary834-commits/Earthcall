@@ -4174,7 +4174,7 @@ bool instrumentVolumeWork(Program& program, bool mediumSet, std::string& error) 
                      f32(((viewCount >> 8u) & 15u) | ((stepCount & 15u) << 4u)),
                      f32((stepCount >> 4u) & 255u), 255.0) / 255.0;
 }
-)WGSL");
+)WGSL";
     return true;
 }
 
