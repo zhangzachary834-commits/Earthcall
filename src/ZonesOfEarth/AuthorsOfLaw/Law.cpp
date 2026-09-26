@@ -1,4 +1,3 @@
-
 #include "Law.hpp"
 #include "Identity/FirstMoverRegister.hpp"
 #include <string_view>
@@ -1794,7 +1793,6 @@ std::shared_ptr<Law> LawManager::createLaw(const std::string& name,
     return law;
 }
 
-
 void LawManager::add(const std::shared_ptr<Law>& law) {
     if (!law) return;
     const std::string id = law->getIdentifier();
@@ -2828,9 +2826,7 @@ void LawManager::reapUnmade() {
     // still exists — it is what catches beings the delete tool unmakes — but
     // a LawManager's own bookkeeping must not depend on having been connected
     // to a global bus that cannot be unsubscribed from.
-
     for (Singular* victim : victims) {
-
         releaseFromLaws(victim);
     }
     reapUnmadeBeings();
@@ -2841,7 +2837,6 @@ void LawManager::reapUnmade() {
     for (Singular* victim : victims) {
         _rete.retractFactsAbout(victim);
     }
-
 }
 
 // The freeing itself, callable without a LawManager: a compiled Destroy node
