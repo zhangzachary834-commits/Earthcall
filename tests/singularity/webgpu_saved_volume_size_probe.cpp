@@ -6,6 +6,7 @@
 #include "Singularity/Screen/VolumeDensity.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
+#include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 
 #include <webgpu/wgpu.h>
 #include <glm/glm.hpp>
@@ -140,6 +141,30 @@ int main(int argc, char** argv) {
         source.angularExpr = sun->lightAngular.get();
         source.angularRevision = std::hash<std::string>{}(sun->lightAngular->toJson().dump());
     }
+    if (northern) {
+        std::vector<sdfwgsl::VolumeProgramInput> inputs;
+        for (const auto& medium : media) {
+            inputs.push_back({medium.densityExpr, medium.extinctionExpr,
+                              medium.scatteringExpr, medium.volumeChromaExpr,
+                              medium.phaseExpr, medium.emissionExpr,
+                              medium.occluderSdf, source.radianceExpr,
+                              source.chromaExpr, source.angularExpr});
+        }
+        const bool candidate = std::getenv("EARTHCALL_EXPERIMENT_V5_SHARED_SOURCE") &&
+            std::string(std::getenv("EARTHCALL_EXPERIMENT_V5_SHARED_SOURCE")) == "1";
+        const auto generated = sdfwgsl::compileVolumeSet(inputs, candidate);
+        assert(generated.ok);
+        const auto fs = generated.wgsl.find("\n@fragment");
+        assert(fs != std::string::npos);
+        size_t sourceEvalCalls = 0;
+        for (size_t at = fs; (at = generated.wgsl.find("lightRadianceEval_", at)) != std::string::npos; ++at)
+            ++sourceEvalCalls;
+        assert(sourceEvalCalls == (candidate ? 1u : media.size()));
+        std::printf("V5_WGSL candidate=%d bytes=%zu radial_eval_call_sites=%zu shared_source=%d source_time_binding=%d\n",
+                    candidate, generated.wgsl.size(), sourceEvalCalls,
+                    generated.wgsl.find("sharedSourceReady", fs) != std::string::npos,
+                    generated.wgsl.find("u.sourceTime.x") != std::string::npos);
+    }
     renderer.setRadianceSources({source}, 1);
 
     const glm::mat4 view3d = glm::lookAt(eye, look, glm::vec3(0,1,0));
@@ -251,13 +276,17 @@ int main(int argc, char** argv) {
         const auto wallEnd=Clock::now();
         std::printf("BLOCK %d projection_ms=%.4f submit_ms=%.4f process_cpu_ms=%.4f "
                     "wall_sync_ms=%.4f ring_allocs=%u ring_bytes=%zu "
-                    "wgsl_compiles=%u lum_sum=%llu alpha_sum=%llu rgba_hash=%016llx\n",
+                    "wgsl_compiles=%u gpu_timestamp_supported=%d gpu_timestamp_valid=%d gpu_main_ms=%.4f "
+                    "lum_sum=%llu alpha_sum=%llu rgba_hash=%016llx\n",
                     block,projectionMs/frames,submitMs/frames,
                     1000.0*double(cpuEnd-cpuStart)/CLOCKS_PER_SEC/frames,
                     elapsedMs(wallStart,wallEnd)/frames,
                     renderer.frameStats().bufferSuballocations,
                     renderer.frameStats().uniformBytesWritten,
                     renderer.frameStats().volumeProgramCompiles,
+                    renderer.frameStats().gpuMainPassTimingSupported,
+                    renderer.frameStats().gpuMainPassTimingValid,
+                    renderer.frameStats().gpuMainPassMs,
                     static_cast<unsigned long long>(lum),
                     static_cast<unsigned long long>(alpha),
                     static_cast<unsigned long long>(hash));
