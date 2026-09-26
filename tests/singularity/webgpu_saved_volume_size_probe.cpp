@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
     const auto saved = readJson(argv[1]);
     assert(saved.at("identifier") == (northern ? "Northern Veil" : "Sanctuary of Sunlit Mist"));
     auto sun = geom::FieldNode::fromJson(saved.at("spatialRoot"));
-    std::vector<std::unique_ptr<geom::FieldNode>> fields;
+    std::vector<std::shared_ptr<geom::FieldNode>> fields;
     std::vector<Rendering::VolumeDensityBinding> media;
     for (const auto& json : saved.at("spatialFields")) {
         fields.push_back(geom::FieldNode::fromJson(json));
