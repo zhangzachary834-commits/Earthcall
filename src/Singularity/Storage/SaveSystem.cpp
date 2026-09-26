@@ -551,9 +551,11 @@ nlohmann::json readSaveData(const std::string& filepath) {
         return nlohmann::json();
     }
     
+    std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    if (bytes.empty()) return nlohmann::json();
+
     // Check magic bytes or extension to determine if it's msgpack
     if (actualPath.length() > 7 && actualPath.substr(actualPath.length() - 7) == ".ecsave") {
-        std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
         std::vector<uint8_t> decompressed = decompressData(bytes);
         try {
             return nlohmann::json::from_msgpack(decompressed);
@@ -562,16 +564,28 @@ nlohmann::json readSaveData(const std::string& filepath) {
             return nlohmann::json();
         }
     } else {
-        // Fallback to plain JSON
-        nlohmann::json j;
+        // Fallback to plain JSON, then compressed / msgpack fallback
         try {
-            in >> j;
+            return nlohmann::json::parse(bytes.begin(), bytes.end());
         } catch (const std::exception& e) {
+            try {
+                std::vector<uint8_t> decompressed = decompressData(bytes);
+                if (!decompressed.empty() && decompressed != bytes) {
+                    try {
+                        return nlohmann::json::parse(decompressed.begin(), decompressed.end());
+                    } catch (...) {
+                        return nlohmann::json::from_msgpack(decompressed);
+                    }
+                } else {
+                    try {
+                        return nlohmann::json::from_msgpack(bytes);
+                    } catch (...) {}
+                }
+            } catch (...) {}
             std::cerr << "[SaveSystem] Failed to parse JSON " << filepath
                       << ": " << e.what() << "\n";
             return nlohmann::json();
         }
-        return j;
     }
 }
 
