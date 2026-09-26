@@ -4082,4 +4082,65 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
 }
 
 
+bool instrumentVolumeWork(Program& program, bool mediumSet, std::string& error) {
+    if (!program.ok) { error = program.error; return false; }
+    auto& code = program.wgsl;
+    const std::string instance = "var<private> g_instIdx: u32;";
+    const auto instanceAt = code.find(instance);
+    const auto fragmentAt = code.find("\n@fragment", instanceAt);
+    if (instanceAt == std::string::npos || fragmentAt == std::string::npos) {
+        error = "volume work probe: missing instance or fragment boundary";
+        return false;
+    }
+    code.insert(instanceAt + instance.size(),
+                "\nvar<private> g_workView: u32;\nvar<private> g_workSteps: u32;");
+    const std::string sample = mediumSet
+        ? "let sampleT = segmentStart +" : "let sampleT = t0 +";
+    auto at = code.find(sample, code.find("\n@fragment"));
+    if (at == std::string::npos) {
+        error = "volume work probe: missing view-sample loop";
+        return false;
+    }
+    code.insert(at, "g_workView = g_workView + 1u;\n            ");
+
+    if (mediumSet) {
+        // Count an occupied member's actual density evaluation, not the
+        // union proxy's conservative overlap checks.
+        const auto fs = code.find("\n@fragment");
+        std::size_t search = fs;
+        std::size_t count = 0;
+        const std::string increment = "g_workSteps = g_workSteps + 1u;\n                ";
+        while ((search = code.find("let density", search)) != std::string::npos) {
+            code.insert(search, increment);
+            search += increment.size() + sizeof("let density") - 1;
+            ++count;
+        }
+        if (count < 2) {
+            error = "volume work probe: missing V5 density evaluations";
+            return false;
+        }
+    } else {
+        const std::string sdf = "let d = volumeSdfEval(curLocal);";
+        at = code.find(sdf);
+        if (at != std::string::npos)
+            code.insert(at, "g_workSteps = g_workSteps + 1u;\n        ");
+    }
+
+    at = code.find("    let alpha = 1.0 - transmittance;", code.find("\n@fragment"));
+    if (at == std::string::npos) {
+        error = "volume work probe: missing transport return";
+        return false;
+    }
+    // Three 8-bit channels pack two 12-bit counters. Alpha=1 bypasses the
+    // normal premultiplied blend over the transparent diagnostic target.
+    code.insert(at, R"WGSL(
+    let viewCount = min(g_workView, 4095u);
+    let stepCount = min(g_workSteps, 4095u);
+    return vec4<f32>(f32(viewCount & 255u),
+                     f32(((viewCount >> 8u) & 15u) | ((stepCount & 15u) << 4u)),
+                     f32((stepCount >> 4u) & 255u), 255.0) / 255.0;
+)WGSL");
+    return true;
+}
+
 } // namespace sdfwgsl
