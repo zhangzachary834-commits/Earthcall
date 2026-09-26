@@ -53,22 +53,5 @@ Max ID:    1000 | Live Alphas:  50 -> 0.113 us/prune
 Max ID:   10000 | Live Alphas:  50 -> 0.725 us/prune
 Max ID:  100000 | Live Alphas:  50 -> 8.621 us/prune
 
-======================================================
-REPRODUCIBLE BENCHMARK: Prophetic Index Rebuild Path Pre-normalization
-Environment: Linux x86_64, GCC 13.3.0 (-O3)
-======================================================
-SCALE: 5 Laws (5 Fact sets, 4 Relevance Edges) | 50 Rounds
-  Correctness Witness: PASS (4 edges identical)
-  Baseline Median: 69.00 us | Optimized Median: 16.00 us | Speedup: 4.31x
-
-SCALE: 20 Laws (20 Fact sets, 25 Relevance Edges) | 50 Rounds
-  Correctness Witness: PASS (25 edges identical)
-  Baseline Median: 1093.00 us | Optimized Median: 96.00 us | Speedup: 11.39x
-
-SCALE: 100 Laws (100 Fact sets, 650 Relevance Edges) | 50 Rounds
-  Correctness Witness: PASS (650 edges identical)
-  Baseline Median: 27398.00 us | Optimized Median: 1407.00 us | Speedup: 19.47x
-
-SCALE: 250 Laws (250 Fact sets, 3948 Relevance Edges) | 50 Rounds
-  Correctness Witness: PASS (3948 edges identical)
-  Baseline Median: 172559.00 us | Optimized Median: 9436.00 us | Speedup: 18.29x
+NOTE: These are isolated representation microbenchmarks on the named environment.
+They do not by themselves establish an Earthcall-wide end-to-end speedup.

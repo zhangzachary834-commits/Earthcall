@@ -1,3 +1,4 @@
+#include "ZonesOfEarth/ZoneManager.hpp"
 #include "Law.hpp"
 #include "Identity/FirstMoverRegister.hpp"
 #include <string_view>
@@ -1793,6 +1794,24 @@ std::shared_ptr<Law> LawManager::createLaw(const std::string& name,
     return law;
 }
 
+std::shared_ptr<Law> LawManager::createLaw(const std::string& name,
+                                           const std::string& identifier,
+                                           const std::vector<Singular*>& authors) {
+    // An explicit identity is a creation key, not a display-name alias.
+    // Refuse duplicates here so callers never receive a fresh Law that add()
+    // silently declined to register because the identifier already exists.
+    if (!identifier.empty() && find(identifier)) {
+        return nullptr;
+    }
+
+    auto law = std::make_shared<Law>(name, authors);
+    if (!identifier.empty()) {
+        law->setLawIdentifier(identifier);
+    }
+    add(law);
+    return law;
+}
+
 void LawManager::add(const std::shared_ptr<Law>& law) {
     if (!law) return;
     const std::string id = law->getIdentifier();
@@ -2114,20 +2133,9 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     }
     auto T1 = glfwGetTime();
 
-    // Reuse one beings snapshot while the world's structural generation is
-    // unchanged. A Law can synchronously Create/Spawn/register a being during
-    // this tick, and the pre-optimization code asked Universe::beings() again
-    // at each later sweep. Preserve that same-tick visibility without paying
-    // to rebuild the provider vector for every Law when nothing structural
-    // changed.
-    std::vector<Singular*> allBeings = Universe::instance().beings();
-    std::uint64_t allBeingsRevision = Universe::instance().structuralRevision();
-    const auto refreshBeingsIfStructureChanged = [&]() {
-        const std::uint64_t revision = Universe::instance().structuralRevision();
-        if (revision == allBeingsRevision) return;
-        allBeings = Universe::instance().beings();
-        allBeingsRevision = Universe::instance().structuralRevision();
-    };
+    // Query beings once per tick to avoid repeated allocations and provider
+    // calls during continuous law sweeps and candidate route evaluations.
+    const std::vector<Singular*> allBeings = Universe::instance().beings();
 
     // Introduce any being the network has not met. Only while connected: the
     // property-change callback installed by connectToEventBus() is what keeps
@@ -2169,7 +2177,6 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             Universe::EventScope eventScope(subject, eventObject);
 
             if (law->scope() == Law::Scope::Everyone) {
-                refreshBeingsIfStructureChanged();
                 std::vector<Singular*> subjects = sweepSubjects(*law, allBeings);
                 for (Singular* being : subjects) {
                     if (!being || Universe::instance().isUnmade(being)) continue;
@@ -2340,8 +2347,6 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         }
 
         // OnBecomeTrue and laws without Rete terminals: full sweep path.
-        // A previous Law in this same tick may have changed who exists.
-        refreshBeingsIfStructureChanged();
         std::vector<Singular*> subjects = sweepSubjects(*law, allBeings);
 
         for (Singular* subject : subjects) {
@@ -2372,9 +2377,6 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         }
     }
     auto T3 = glfwGetTime();
-    // Drive sessions historically took a fresh Universe snapshot at this
-    // point, after continuous Laws had run. Keep that observable boundary.
-    refreshBeingsIfStructureChanged();
     runDriveSessions(records, allBeings);
     auto T4 = glfwGetTime();
     reapUnmade();
@@ -2826,6 +2828,15 @@ void LawManager::reapUnmade() {
     // still exists — it is what catches beings the delete tool unmakes — but
     // a LawManager's own bookkeeping must not depend on having been connected
     // to a global bus that cannot be unsubscribed from.
+    // Laws among the victims are retired by THIS manager: they are ours to
+    // free, not a Zone's objects. Collected before anything is released.
+    std::vector<std::string> retiredLaws;
+    for (Singular* victim : victims) {
+        auto* law = dynamic_cast<Law*>(victim);
+        if (law && !law->isFirstMover() && find(law->getIdentifier()) == law) {
+            retiredLaws.push_back(law->getIdentifier());
+        }
+    }
     for (Singular* victim : victims) {
         releaseFromLaws(victim);
     }
@@ -2836,6 +2847,13 @@ void LawManager::reapUnmade() {
     // the being still exists — it must not be handed the corpse next tick.
     for (Singular* victim : victims) {
         _rete.retractFactsAbout(victim);
+    }
+    // Only now, with no fact or Law still pointing at them, free the Laws —
+    // and take them out of the active Zone's authored closure so Save Zone
+    // stops naming them.
+    for (const auto& id : retiredLaws) {
+        remove(id);
+        if (ZoneManager* zones = ZoneManager::live()) zones->retireLawFromActiveZone(id);
     }
 }
 
