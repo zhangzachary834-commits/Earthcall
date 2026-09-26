@@ -141,6 +141,8 @@ int main(int argc, char** argv) {
         source.angularExpr = sun->lightAngular.get();
         source.angularRevision = std::hash<std::string>{}(sun->lightAngular->toJson().dump());
     }
+    const bool reuseSourceGeometry = std::getenv("EARTHCALL_EXPERIMENT_VOLUME_REUSE_SOURCE_GEOMETRY") &&
+        std::string(std::getenv("EARTHCALL_EXPERIMENT_VOLUME_REUSE_SOURCE_GEOMETRY")) == "1";
     if (northern) {
         std::vector<sdfwgsl::VolumeProgramInput> inputs;
         for (const auto& medium : media) {
@@ -169,6 +171,20 @@ int main(int argc, char** argv) {
             sourceEvalCalls != media.size() ||
             otherMemberCalls != media.size()-1u ||
             (sourceTime != 0.0 && generated.wgsl.find("u.sourceTime.x") == std::string::npos)) return 3;
+    } else if (reuseSourceGeometry) {
+        const auto& m = media.front();
+        auto generated = sdfwgsl::compileVolume(
+            m.densityExpr, m.extinctionExpr, m.scatteringExpr,
+            m.volumeChromaExpr, m.phaseExpr, m.emissionExpr, m.occluderSdf,
+            source.radianceExpr, source.chromaExpr, source.angularExpr);
+        const auto original = generated.wgsl;
+        std::string error;
+        const bool applied = sdfwgsl::reuseVolumeSourceGeometry(generated, error);
+        std::printf("SOURCE_GEOMETRY_REUSE applied=%d changed=%d error=%s\n",
+                    applied, original != generated.wgsl, error.c_str());
+        if (!applied || original == generated.wgsl ||
+            generated.wgsl.find("sourceDist, lightDir);") == std::string::npos)
+            return 3;
     }
     renderer.setRadianceSources({source}, 1);
 
