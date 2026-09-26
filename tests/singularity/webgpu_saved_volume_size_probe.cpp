@@ -177,6 +177,8 @@ int main(int argc, char** argv) {
         glm::radians(45.0f), float(width) / height, 0.1f, 100.0f);
     renderer.setCamera(view3d, proj, eye);
 
+    const bool diagnosticWork = std::getenv("EARTHCALL_DIAGNOSTIC_VOLUME_WORK") &&
+        std::string(std::getenv("EARTHCALL_DIAGNOSTIC_VOLUME_WORK")) == "1";
     int captureIndex = 0;
     auto syncImage = [&] {
         WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
@@ -203,13 +205,20 @@ int main(int argc, char** argv) {
         assert(result.ok);
         const auto* pixels = static_cast<const unsigned char*>(
             wgpuBufferGetConstMappedRange(readback, 0, bd.size));
-        uint64_t lum = 0, alphaSum = 0;
+        uint64_t lum = 0, alphaSum = 0, viewSum = 0, stepSum = 0, saturated = 0;
         uint64_t hash = 1469598103934665603ull;
         for (uint32_t y=0; y<height; ++y) {
             for (uint32_t x=0; x<width; ++x) {
                 const size_t at = static_cast<size_t>(y)*stride + x*4;
                 lum += pixels[at] + pixels[at+1] + pixels[at+2];
                 alphaSum += pixels[at+3];
+                if (diagnosticWork && pixels[at+3] == 255) {
+                    const unsigned view = pixels[at] | ((pixels[at+1] & 15u) << 8u);
+                    const unsigned step = (pixels[at+1] >> 4u) | (pixels[at+2] << 4u);
+                    viewSum += view;
+                    stepSum += step;
+                    saturated += (view == 4095 || step == 4095);
+                }
                 for (int c=0;c<4;++c) {
                     hash ^= pixels[at+c];
                     hash *= 1099511628211ull;
@@ -238,7 +247,7 @@ int main(int argc, char** argv) {
             assert(rgb.good() && alpha.good());
         }
         wgpuBufferUnmap(readback);
-        return std::array<uint64_t,3>{lum,alphaSum,hash};
+        return std::array<uint64_t,6>{lum,alphaSum,hash,viewSum,stepSum,saturated};
     };
 
     int frameIndex = 0;
@@ -277,12 +286,13 @@ int main(int argc, char** argv) {
         const auto cpuStart=std::clock();
         for(int i=0;i<frames;++i) frame(projectionMs,submitMs);
         const auto cpuEnd=std::clock();
-        const auto [lum,alpha,hash]=syncImage();
+        const auto [lum,alpha,hash,viewSum,stepSum,saturated]=syncImage();
         const auto wallEnd=Clock::now();
         std::printf("BLOCK %d projection_ms=%.4f submit_ms=%.4f process_cpu_ms=%.4f "
                     "wall_sync_ms=%.4f ring_allocs=%u ring_bytes=%zu "
                     "wgsl_compiles=%u gpu_timestamp_supported=%d gpu_timestamp_valid=%d gpu_main_ms=%.4f "
-                    "lum_sum=%llu alpha_sum=%llu rgba_hash=%016llx\n",
+                    "lum_sum=%llu alpha_sum=%llu rgba_hash=%016llx "
+                    "work_view_sum=%llu work_step_sum=%llu work_saturated_pixels=%llu\n",
                     block,projectionMs/frames,submitMs/frames,
                     1000.0*double(cpuEnd-cpuStart)/CLOCKS_PER_SEC/frames,
                     elapsedMs(wallStart,wallEnd)/frames,
@@ -294,7 +304,11 @@ int main(int argc, char** argv) {
                     renderer.frameStats().gpuMainPassMs,
                     static_cast<unsigned long long>(lum),
                     static_cast<unsigned long long>(alpha),
-                    static_cast<unsigned long long>(hash));
+                    static_cast<unsigned long long>(hash),
+                    static_cast<unsigned long long>(viewSum),
+                    static_cast<unsigned long long>(stepSum),
+                    static_cast<unsigned long long>(saturated));
+        if (diagnosticWork && (viewSum == 0 || saturated != 0)) return 4;
     }
     wgpuBufferRelease(readback);
     wgpuTextureViewRelease(view);
