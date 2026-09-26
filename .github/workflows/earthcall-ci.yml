@@ -240,6 +240,20 @@ jobs:
           "$probe" "$veil" authored 640 360 16 2 0 64 230 0 64 80 1 | tee -a saved-volume-size.log
 
 
+      - name: Count authored volume shader work (diagnostic color only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          export EARTHCALL_DIAGNOSTIC_VOLUME_WORK=1
+          ./build/webgpu_saved_volume_size_probe \
+            'saves/zones/Sanctuary of Sunlit Mist/zone.json' authored \
+            640 360 2 1 0 2.2 8 0 2.25 -12 | tee saved-volume-work.log
+          ./build/webgpu_saved_volume_size_probe \
+            'saves/zones/Northern Veil/zone.json' authored \
+            640 360 2 1 0 64 230 0 64 80 | tee -a saved-volume-work.log
+          test "$(grep -c 'work_view_sum=[1-9]' saved-volume-work.log)" -eq 2
+          test "$(grep -c 'work_step_sum=[1-9]' saved-volume-work.log)" -eq 2
+
       - name: Upload WebGPU object/radiance diagnostic
         if: always()
         uses: actions/upload-artifact@v4
@@ -250,6 +264,7 @@ jobs:
             webgpu-v5-overlap-physics.log
             webgpu-volumetric-mist.log
             saved-volume-size.log
+            saved-volume-work.log
             saved-volume-hashes.log
             saved-volume-captures/
           if-no-files-found: error
