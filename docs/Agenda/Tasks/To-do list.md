@@ -557,6 +557,21 @@ on a quiet machine) so the tripwire tightens behind the fix.
 <a id="stuff-for-zach-to-write"></a>
 ## Stuff for Zach to write when I don't know which section it belongs in (agents if you're reading this please move the bullet points below to their proper section):
 *(Sorted into their sections on 2026-09-25 by Claude Opus 5.5 at Zach's request; add new unsorted notes here.)*
+- Alright I got more unsorted notes now
+- Retire Law Drive, onEvent/whiletrue/onbecometrue into a rich OntoMath bounds framework over Moments in Timelines instead of bespoke temproal kinds
+- WHY DID WE MAKE AUTHORITY INTO A NUMBER LINE?!?!?!? Retire numerical law authority ranking for a hierarchical, category-relation based "authority-over" relations Directed Acyclic Graph, descending from fixed root nodes and never being higher except first movers being able to be higher than that.
+- Give room for horizontal mutually modifying laws.
+
+- I am already thinking of how to write the algorithm laws for the new broad vs narrow phase. There are probably frontier things I could look at but I wanna try coming up with things myself first because it's more fun that way.
+- SCREW HARDCODD COLLISION. SCRW HARDCODED NARROWPHASE AND BROADPHASE. O(BRUHHHHHH^2)
+- Author well designed laws handling collision detection differently for different combinatorics of shapekinds. Two shapes -> magical set constraints
+- Accessible properties. ahead-of-time-interpreted the known categories of the shape and connecting htem to the Prophetic Rete's category system and variables such as number of convex holes, degree of its.
+- So yeah here I'm gonna be thinking about how this applies even the hardest SDFs. Not the tiny little polyhedrons we're all familiar with. Cause no need to calculate the entire BIG CHUNGUS every single frame when u can just calculate only the relevant, preinterprted regions once, then do incrementally only if there's change. 
+- so then the basic idea is very simple. Prophetic rete is all about knowing properties so therefore you know both what changed everywhere and also you can interpret ahead of time which laws would even cause a change that'd be relevant as a condition in another law. 
+- So consider this. you know the direction theyre moving in. u know their convexity and where the caves and curves are, and since you know how each shape is rotated, so you know entire regions that are mathematically impossible to reach the other unless rotation. U can calculate ahead of time given the velocity differentials and direction location which points wuold actually collide first, while flattening complex round shapes into purely the relevant high-portruding points that with angular rotation + xyz whole-shape movement would actually hit. You don't have to do some incredibly complex fine grained linear approximation on smaller regiosn thing bruh just only focus on the relevant portrusion-points along the dimensions of actual movement and the angles of actual rotation. 
+- Even incredibly complex intricate shapes can be reduced to something very simple if the direction is static and they are not rotating. 
+- What if the shapes themselves are changing in form or rotating, moving or both? Not as hard as you think when you realize Prophetic Rete means the very laws governing their rotation and movement. Thus you can compile AST Law syntehsis-style into one clear execution of rotation and movement + shape change -> one master equation purely dedicated to calculating the positional variables for those.
+- Ok I have more to say but I dont have time ot write all here rn
 
 **(These notes are now also `docs/architecture/law/B-time Rete.md`; the foundations are built — see `docs/architecture/law/PROPHETIC_RETE.md` and the ✅ entries under R&D. What remains unbuilt is listed there in §5, including the ⚑ AUTHOR decisions.)**
 - [x] Phase 1 Immediate Triage (Stop the Bleeding): Strip whitespace, duplicate zone bloat, and cap stakeholders to 20 for save files (completed, 100% tests passing).

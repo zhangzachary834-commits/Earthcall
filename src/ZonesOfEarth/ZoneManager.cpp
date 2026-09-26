@@ -1589,7 +1589,16 @@ void ZoneManager::saveState(const std::string& filename, SaveContext& ctx) {
         }
     }
 
-    if (!atomicWriteFile(p, j.dump(-1))) {
+    std::vector<uint8_t> outBytes;
+    if (p.extension() == ".ecform") {
+        nlohmann::json wrapper = nlohmann::json::object();
+        wrapper["MigrationRoot"] = j.dump(-1);
+        outBytes = nlohmann::json::to_msgpack(wrapper);
+    } else {
+        std::string txt = j.dump(-1);
+        outBytes.assign(txt.begin(), txt.end());
+    }
+    if (!atomicWriteFile(p, outBytes)) {
         std::cerr << "[ZoneManager] saveState: failed to commit " << p << "\n";
         return;
     }
@@ -2326,15 +2335,20 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                                     filename + "  ";
                         std::cerr << "[ZoneManager] Legacy migration matter write FAILED for "
                                   << filename << "\n";
-                    } else if (atomicWriteFile(formPath, j.dump(-1))) {
-                        cleanupPredecessorMatter(oldMatterPath);
-                        logIo("Migrated legacy save '" + filename +
-                              "' to split substrate (.ecform + generation-coupled .ecmatter).");
                     } else {
+                        nlohmann::json wrapper = nlohmann::json::object();
+                        wrapper["MigrationRoot"] = j.dump(-1);
+                        std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
+                        if (atomicWriteFile(formPath, outBytes)) {
+                            cleanupPredecessorMatter(oldMatterPath);
+                            logIo("Migrated legacy save '" + filename +
+                                  "' to split substrate (.ecform + generation-coupled .ecmatter).");
+                        } else {
                         failures += "legacy-migration-write: semantic root failed for " +
                                     filename + "  ";
                         std::cerr << "[ZoneManager] Legacy migration root write FAILED for "
                                   << filename << "\n";
+                        }
                     }
                 }
             }
