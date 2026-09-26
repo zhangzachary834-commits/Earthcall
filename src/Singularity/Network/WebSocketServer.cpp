@@ -475,7 +475,9 @@ struct WebSocketServer::Impl {
                     if (target == "@player" || normTarget == "player" || normTarget == "Player") {
                         targetBeing = ::Core::Engine::instance().getPerson();
                     } else if (target == "@active_zone" || normTarget == "active_zone" || normTarget == "zone") {
-                        targetBeing = &mgr.active();
+                        if (!mgr.zones().empty() && mgr.currentIndex() < mgr.zones().size() && mgr.zones()[mgr.currentIndex()]) {
+                            targetBeing = &mgr.active();
+                        }
                     } else {
                         // 1. Search in Universe beings
                         for (auto* being : Universe::instance().beings()) {
@@ -493,7 +495,7 @@ struct WebSocketServer::Impl {
                             }
                         }
                         // 2. Search in active zone objects
-                        if (!targetBeing) {
+                        if (!targetBeing && !mgr.zones().empty() && mgr.currentIndex() < mgr.zones().size() && mgr.zones()[mgr.currentIndex()]) {
                             for (const auto& obj : mgr.active().getOwnedObjects()) {
                                 if (!obj) continue;
                                 if (obj->getObjectID() == target || obj->getObjectID() == normTarget ||
@@ -735,10 +737,12 @@ struct WebSocketServer::Impl {
                 std::string id = j.value("id", j.value("target", ""));
                 if (!id.empty()) {
                     Object* targetObj = nullptr;
-                    for (auto& o : mgr.active().objects()) {
-                        if (o && (o->getObjectID() == id || o->getIdentifier() == id)) {
-                            targetObj = o.get();
-                            break;
+                    if (!mgr.zones().empty() && mgr.currentIndex() < mgr.zones().size() && mgr.zones()[mgr.currentIndex()]) {
+                        for (auto& o : mgr.active().objects()) {
+                            if (o && (o->getObjectID() == id || o->getIdentifier() == id)) {
+                                targetObj = o.get();
+                                break;
+                            }
                         }
                     }
 
