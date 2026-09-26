@@ -1,0 +1,33 @@
+# Sunlit Mist Screen pass: half-resolution hypothesis and witness gate
+
+**Codex / GPT-6 · session `81a146575a35` · 2026-09-26 04:45 UTC**
+
+Zach reports that Sanctuary of Sunlit Mist was extremely laggy before the resident-parameter candidate and nearly unresponsive afterward; Northern Veil remains laggy. Sanctuary of Beginnings is a different saved world. The direct saved-volume parent/candidate A–B–B–A in [the September 25 audit](2026-09-25_sunlit_mist_saved_scene_ab.md) showed identical images and no repeatable candidate-specific speed change. The candidate remains withheld. This pass uses a separate cloud checkout at `8fbc201a`; it did not touch the shared local checkout or any save.
+
+## New observations supplied by Zach
+
+* A test-only 12-step visibility cap changed the 640×360 luminance sum from 3,861,510 to 4,085,512 (224,002, or 5.80% of the original) and did not reliably improve timing. It was restored. It is not a viable optimization.
+* The saved default-camera, volume-only probe cost about 24 ms/frame at 640×360 and 79 ms/frame at 1280×720 on the same Apple M5. Pixel count grows 4× and observed cost about 3.29×. Simple bilinear enlargement of the smaller black-composited RGB differed by at most one 8-bit channel level from direct larger RGB. This says nothing conclusive about opacity, scene depth, twelve objects, edges, camera motion, or final composite quality.
+
+## Source inspection at `8fbc201a`
+
+`WebGpuRenderer::flushVolumeComposite` flushes opaque mesh and SDF draws, ends their pass, and opens a volume pass loading the existing full-resolution color. The volume pipeline reads the finished depth texture; it has no depth attachment. Its shader reconstructs a ray from `in.position.xy / u.viewport`, loads `sceneDepthTex` at the corresponding integer pixel, and clips the medium's integration to that surface. It emits premultiplied `C_medium` and opacity `alpha=1-T`; fixed-function blending computes `C_medium + T*C_scene`. It then reopens a pass loading color and depth for world overlays. The volume pipeline cache is keyed by full WGSL text.
+
+The nested visibility loop evaluates the authored occluder SDF up to 24 times within each of 96 volume steps. At most 2,304 visibility SDF evaluations per covered pixel follow, before density and other authored expressions. At 1280×720 that ceiling is roughly 2.12 billion evaluations per full-screen medium, although early termination, coverage, and depth reduce actual work. This is an upper bound, not a measured invocation count.
+
+**A half-size RGB render over black is not a compositing test.** At a foreground edge, low-resolution rays can integrate through a distant scene depth while a neighboring full-resolution pixel terminates at a nearby pillar. Bilinear interpolation mixes these distinct depth layers. An RGB-only image also loses the transmittance needed to combine the medium with arbitrary authored scene color. Multiple overlapping media must retain their current ordered premultiplied composition.
+
+## Minimum Screen-channel experiment
+
+1. Keep all source, medium, occluder, temporal, and saved-world data intact. Add a Screen renderer diagnostic mode, default **off**, selectable only in a test harness initially. Render the existing authored volume WGSL at half dimensions to an RGBA target with transparent clear. Supply the *full-resolution opaque depth* and distinguish low-resolution fragment coordinates from depth-texel coordinates in the shader. A direct low-resolution depth lookup via the current `u.viewport` is incorrect.
+2. Preserve premultiplied radiance and transmittance. Composite the low-resolution result into the full-resolution loaded scene color with the existing `ONE / ONE_MINUS_SRC_ALPHA` equation. Sample a neighborhood with depth-aware weights; compare the full-resolution opaque depth at the destination to the depth represented by each low-resolution ray. Near silhouettes, fall back to a full-resolution ray rather than blend across a discontinuity. The fallback can be a second mask/scissored pass only if its discovery and execution cost are measured. A cheap conservative edge mask may overselect but must never miss an edge that changes ray integration. If that proof is unavailable, leave the experimental mode off.
+3. Do not compile a new WGSL permutation on each camera or numeric property change. Cache by shader structure and target format; recreate render targets on resize only. Explicitly release them on device loss and renderer destruction. Report shader compiles, target allocations, memory lifetime, and surface-acquire latency alongside GPU timestamps.
+4. Compare default and moving cameras on the untouched Sanctuary save, including the twelve objects, translucent surfaces, architecture edges, nearby geometry, and at least one second medium if the pass is intended for Northern Veil. Compare full-resolution RGBA after composition, not black RGB alone: max and percentile absolute channel error, structural edge crops, and temporal error/popping. Preserve an exact native-resolution mode and automatically use it when a depth-aware reconstruction cannot meet the visual gate.
+
+This policy lives in `Singularity/Screen`: it changes how the machine spends pixels, never what a Person authored as light, medium, occluder, or Zone. A fixed 12-step cap would alter authored shadow meaning. Half resolution is an approximation and needs Zach's visual judgment after the quantitative gate, especially around shafts and penumbrae.
+
+## Required experiment before a reviewable PR
+
+Run paired A–B–B–A native app captures at the actual drawable resolution on the same quiet GPU, with exact save hash and build SHAs. Capture cold load, first shader compile, warmed fixed-camera frames, moving-camera frames, and a sustained run through the reported near-unresponsive period. Record GPU completion, CPU projection/submission, surface acquire/present, frame latency, shader/cache counts, target allocations, memory, and image error. Repeat for Northern Veil and use Sanctuary of Beginnings as a separate control. A synthetic offscreen volume-only speedup is insufficient. Reject an approximation that visibly erases beams, halos architecture, pops under motion, or fails to restore whole-app responsiveness.
+
+**Current execution limit:** this cloud Linux VM has no `/dev/dri` GPU device and no `cmake` command. No native rendering, app-frame measurement, shader compilation, or visual acceptance was performed in this pass. This is a source-backed experiment design, not an implemented speedup or passing witness. The Person verification item remains open. Do not open a performance PR or merge based on this document.
