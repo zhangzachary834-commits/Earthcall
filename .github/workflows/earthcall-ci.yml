@@ -224,6 +224,7 @@ jobs:
         run: |
           set -euo pipefail
           probe=./build/webgpu_saved_volume_size_probe
+          export EARTHCALL_VOLUME_CAPTURE_DIR="$PWD/saved-volume-captures"
           mist='saves/zones/Sanctuary of Sunlit Mist/zone.json'
           veil='saves/zones/Northern Veil/zone.json'
           shasum -a 256 "$mist" "$veil" | tee saved-volume-hashes.log
@@ -249,6 +250,7 @@ jobs:
             webgpu-volumetric-mist.log
             saved-volume-size.log
             saved-volume-hashes.log
+            saved-volume-captures/
           if-no-files-found: error
           retention-days: 7
 
