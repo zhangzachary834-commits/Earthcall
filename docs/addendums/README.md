@@ -9,3 +9,4 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating ImGui First Mover and Performance as Rightly Ordered Truth](imgui_first_mover_and_performance_as_truth_addendum.md)
 *   [Integrating Atomic Save Swaps and Macro Moments](atomic_save_swaps_as_macro_moments_addendum.md)
 *   [Integrating Continuous Drives and Path Resolution Optimizations](continuous_drives_and_path_resolution_addendum.md)
+*   [Integrating Physical Modalities, Collision Events, and the New Kind Framework](physics_and_new_kind_ontology_addendum.md)
