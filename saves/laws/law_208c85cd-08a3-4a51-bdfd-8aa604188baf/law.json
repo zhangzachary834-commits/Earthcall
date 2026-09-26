@@ -1,0 +1,138 @@
+{
+  "authors": [
+    "Zach"
+  ],
+  "identifier": "law_208c85cd-08a3-4a51-bdfd-8aa604188baf",
+  "law": {
+    "actionDescriptions": [
+      "set color"
+    ],
+    "actionModel": {
+      "kind": 0,
+      "operand": {
+        "t": "vec3",
+        "x": 0.23000000417232513,
+        "y": 3.0,
+        "z": 3.0
+      },
+      "path": "color"
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "Zach"
+    ],
+    "conditionDescriptions": [],
+    "conditionMode": "all",
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law_208c85cd-08a3-4a51-bdfd-8aa604188baf",
+    "name": "when clicked then set color 0.23 3 3",
+    "provenance": [
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "directed": true,
+        "entityA": "law_208c85cd-08a3-4a51-bdfd-8aa604188baf",
+        "entityB": "Zach",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1790386875
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "directed": true,
+        "entityA": "law_208c85cd-08a3-4a51-bdfd-8aa604188baf",
+        "entityB": "law-line-preset-clicked",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1790386875
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}

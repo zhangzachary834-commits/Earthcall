@@ -151,8 +151,8 @@ int main() {
         check(j.contains("objects") && j["objects"].is_array() && j["objects"].size() == 3,
               "top-level objects array keeps all three spawns (not skip-2)");
         std::size_t zoneObjs = 0;
-        if (j.contains("zones") && j["zones"].is_array() && !j["zones"].empty()) {
-            const auto& w = j["zones"][0]["world"];
+        if (j.contains(kSemanticRootsKey) && j[kSemanticRootsKey].contains("zones") && j[kSemanticRootsKey]["zones"].is_array() && !j[kSemanticRootsKey]["zones"].empty()) {
+            const auto& w = j[kSemanticRootsKey]["zones"][0]["world"];
             if (w.contains("objects") && w["objects"].is_array())
                 zoneObjs = w["objects"].size();
         }

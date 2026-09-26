@@ -209,6 +209,40 @@ void grammar() {
         assert(!open.ok && mentions(open.error, "on <event>"));
     }
 
+    // --- a Law never listens for an event nobody publishes (Zach, 2026-09-25:
+    //     "fires when" made a Law waiting for an event called "when")
+    {
+        const auto clause = LS::parse("my law called Blue fires when then set glow 1", v);
+        assert(!clause.ok && mentions(clause.error, "clause word"));
+        const auto unknown = LS::parse("on door-opened then set glow 1", v);
+        assert(!unknown.ok && mentions(unknown.error, "not an event this world knows"));
+        const auto near = LS::parse("on object then set glow 1", v);
+        assert(!near.ok && contains(near.candidates, "object-clicked"));
+        const auto minted = LS::parse("on \"door-opened\" then set glow 1", v);
+        assert(minted.ok && minted.triggers == std::vector<std::string>{"door-opened"});
+        const auto publish = LS::parse("on tick then publish door-opened", v);
+        assert(publish.ok);   // publishing may always name a new event
+    }
+
+    // --- rung 3: "delete Blue" is an act for now (confirmed by a Metalaw in
+    //     TerminalChannel), and each opcode's own blanks
+    {
+        const auto del = LS::parse("delete Blue", v);   // canonical "Destroy" is spelled case-insensitively
+        const auto destroy = LS::parse("Destroy Blue", v);
+        assert(destroy.ok && destroy.immediate && destroy.destroyTarget == "Blue");
+        (void)del;
+        const auto notNow = LS::parse("on tick then Destroy Blue", v);
+        assert(notNow.ok && !notNow.immediate);   // with a WHEN it is an ordinary Law
+        assert(LS::argumentTemplate("action.Set") == "\u2039path\u203A to \u2039value\u203A");
+        assert(LS::argumentTemplate("op.InRange") == "\u2039low\u203A and \u2039high\u203A");
+        assert(LS::argumentTemplate("clause.trigger") == "\u2039event\u203A");
+        bool snippet = false;
+        for (const auto& sug : LS::suggest("on tick then se", v)) {
+            if (sug.text == "Set") snippet = sug.snippet == LS::argumentTemplate("action.Set");
+        }
+        assert(snippet);
+    }
+
     // --- Tab
     {
         const auto c = LS::complete("on object-clicked then se", v);
@@ -301,6 +335,11 @@ void channel() {
 
     PropertyPath::parse("authorPath").setValue(*terminal, PropertyValue(std::string("@zach.who")));
 
+    // The world has heard these before anyone speaks of them.
+    Core::EventBus::instance().publish(ECA::Event{"object-clicked", &cube, nullptr, std::time(nullptr), ""});
+    Core::EventBus::instance().publish(ECA::Event{"tick", &cube, nullptr, std::time(nullptr), ""});
+    laws.tick();
+
     const auto frame = [&] {
         terminal->sense(laws);
         for (int i = 0; i < 3; ++i) laws.tick();
@@ -352,6 +391,11 @@ void channel() {
     Law* resolved = laws.getAll().back().get();
     assert(resolved->hasConditionModel() && resolved->conditionModel()->op == ConditionNode::Op::Eq);
     assert(mentions(printed.back(), "law-line-metalaw-is"));
+
+    // "…?" also says who the IF holds for right now (read-only).
+    terminal->inject("on tick if hp > 2 then set glow 1 ?");
+    frame();
+    assert(mentions(printed.back(), "right now the IF holds for 1 being"));
 
     // 4. Nothing enters the world without an author.
     PropertyPath::parse("authorPath").setValue(*terminal, PropertyValue(std::string("@nobody.who")));

@@ -97,7 +97,7 @@ OPCODES = [
     ("law-line-act-add", "means: add", None, {"kind": 1, "path": "", "operand": none()}, ["add", "increase", "raise"]),
     ("law-line-act-scale", "means: scale", None, {"kind": 2, "path": "", "operand": none()}, ["scale", "multiply"]),
     ("law-line-act-publish", "means: publish", None, {"kind": 10, "eventType": "", "publishSubject": "", "publishObject": ""}, ["publish", "announce"]),
-    ("law-line-act-destroy", "means: destroy", None, {"kind": 16, "elementToken": ""}, ["destroy", "delete"]),
+    ("law-line-act-destroy", "means: destroy", None, {"kind": 16, "elementToken": ""}, ["destroy", "delete", "remove"]),
     ("law-line-act-grant", "means: grant a property", None, {"kind": 12, "path": "", "propertyName": "", "operand": none()}, ["grant", "give"]),
     ("law-line-act-revoke", "means: revoke a property", None, {"kind": 14, "path": "", "propertyName": ""}, ["revoke"]),
     ("law-line-act-relate", "means: relate", None, {"kind": 20}, ["relate"]),
@@ -137,8 +137,8 @@ VALUES = [
     ("law-line-value-gray", "means: gray (0.5, 0.5, 0.5)", vec3(0.5, 0.5, 0.5), ["gray", "grey"]),
     # "on" is also the structural trigger word; grammar position tells them
     # apart (a value slot admits only values), so the shared spelling is legal.
-    ("law-line-value-true", "means: true", {"t": "bool", "v": True}, ["on", "yes"]),
-    ("law-line-value-false", "means: false", {"t": "bool", "v": False}, ["off", "no"]),
+    ("law-line-value-true", "means: true", {"t": "bool", "v": True}, ["on", "yes", "y"]),
+    ("law-line-value-false", "means: false", {"t": "bool", "v": False}, ["off", "no", "n"]),
 ]
 
 # Presets that fix the trigger: the most common things a Law waits for.
@@ -167,6 +167,18 @@ WIRING = [
     law("law-line-speak", "Law Line · a spoken law sentence asks the Terminal to author it", enabled=True,
         action={"kind": 1, "path": "@terminal-channel.speakRequests", "operand": {"t": "double", "v": 1.0}},
         triggers=["law-sentence-spoken"]),
+    # Confirmed deletion (Zach, 2026-09-25: "the metalaw that does the
+    # deletions should say 'are you sure you want to delete?' and then either
+    # yes or no … no means no delete and requires your yes to delete").
+    # The Terminal only senses the request and the answer; these two Laws ask
+    # and act. The question's words are here, in Law text, to be rewritten.
+    law("law-line-ask-before-deleting", "Law Line · ask before deleting", enabled=True,
+        action={"kind": 0, "path": "@terminal-channel.question",
+                "operand": {"t": "string", "v": "Are you sure you want to delete"}},
+        triggers=["terminal-deletion-requested"]),
+    law("law-line-delete-when-confirmed", "Law Line · delete only on a yes", enabled=True,
+        action={"kind": 16, "elementToken": "@event.object"},
+        triggers=["terminal-deletion-confirmed"]),
     law("law-line-scope", "Law Line · bare paths complete against the Law Line cube", enabled=True,
         action={"kind": 0, "path": "@terminal-channel.scopeBeing", "operand": {"t": "string", "v": "law-line-cube"}},
         triggers=["zone-entered"]),
