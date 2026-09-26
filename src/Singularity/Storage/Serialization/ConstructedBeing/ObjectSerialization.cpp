@@ -269,11 +269,7 @@ void to_json(nlohmann::json& j, const Object& obj){
 
     if (!obj.stakeholders().empty()) {
         nlohmann::json shJson = nlohmann::json::array();
-        const auto& shs = obj.stakeholders();
-        // Cap to the last 20 events to avoid monolithic JSON bloat
-        size_t startIdx = (shs.size() > 20) ? (shs.size() - 20) : 0;
-        for (size_t i = startIdx; i < shs.size(); ++i) {
-            const auto& sh = shs[i];
+        for (const auto& sh : obj.stakeholders()) {
             shJson.push_back({
                 {"propertyPath", sh.propertyPath},
                 {"authorId", sh.authorId},

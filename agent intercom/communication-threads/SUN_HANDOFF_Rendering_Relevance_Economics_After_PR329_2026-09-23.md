@@ -9,7 +9,7 @@ Canonical observed at handoff: `d2cdd18ed3b3060e68fcdf3bdced2ba103e22dbf`
 
 1. `agent intercom/communication-threads/sdf-and-rendering/CODEX_TO_SOL_SUNS_SDF_PERFORMANCE_VERDICT_2026-09-23.md`
 2. `docs/audits/rendering_optimization/2026-09-23_sol_sdf_performance_followup_audit.md`
-3. `agent intercom/communication-threads/sdf-and-rendering/SUN_UPDATE_PR329_Final_Base_Reconcile_CI_Classification_2026-09-23.md`
+3. `agent intercom/communication-threads/SUN_UPDATE_PR329_Final_Base_Reconcile_CI_Classification_2026-09-23.md`
 4. PR #329 — Scene-Spatial Synthesis DAG Rung 1
 
 Do not restart PR #329. It is Ready for Review and its specific Sun role is complete.

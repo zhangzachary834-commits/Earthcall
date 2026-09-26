@@ -67,7 +67,6 @@ struct Word {
     std::string lexemeId;  // the authored Lexeme; "" for a structural / canonical spelling
     std::string lawId;     // the Law this Lexeme denotes; "" for a canonical spelling
     std::string description;   // what the menu says it means (a denoted Law's name)
-    std::string detail;        // the longer line under the menu when this word is selected
 
     // How an ambiguity names this candidate. A Lexeme that denotes several
     // Laws is several candidates, so the denoted Law is part of the name.
@@ -120,15 +119,6 @@ struct Vocabulary {
     std::function<std::string(const std::string& beingId, const std::string& property)> describeProperty;
     std::function<std::string(const std::string& beingId)> describeBeing;
     std::function<std::string(const std::string& eventType)> describeEvent;
-
-    // The Laws present, by display name — for naming a Law in a sentence
-    // ("delete Blue"). Display names may be shared; the id individuates.
-    struct LawRef {
-        std::string id;
-        std::string name;
-        std::string summary;   // the Law read back as a sentence
-    };
-    std::vector<LawRef> laws;
 };
 
 // A stretch of the sentence and what it was read as — for colouring the line
@@ -162,11 +152,6 @@ struct Parse {
     std::size_t errorOffset = 0;              // byte offset into the sentence
     std::vector<std::string> candidates;      // ambiguity candidates / search hits
     std::vector<Span> spans;                  // offsets into the raw text given to parse()
-    // "delete Blue": an action with nothing that says WHEN is an act for now,
-    // not a Law — only Destroy is admitted, and only through a confirming
-    // Metalaw (TerminalChannel). `destroyTarget` is the named thing.
-    bool immediate = false;
-    std::string destroyTarget;
 
     std::string preview() const;              // WHEN … -> IF … -> THEN …
 };
@@ -186,15 +171,8 @@ struct Suggestion {
     std::string description;
     std::string role;
     int score = 0;
-    std::string detail;    // the line under the menu while this one is selected
-    std::string snippet;   // blanks to follow it, e.g. "‹path› to ‹value›" (may be empty)
 };
 std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabulary& vocab);
-
-// The blanks an opcode's own argument signature leaves, in the grammar's own
-// order: Set -> "‹path› to ‹value›", Gt -> "‹value›", clause.trigger ->
-// "‹event›". Empty when the word takes nothing after it.
-std::string argumentTemplate(const std::string& opcode);
 
 // "?? color" — every spelling, event, being, and scoped property whose text
 // contains the query, each labelled with what it is.

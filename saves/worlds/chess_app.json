@@ -718,6 +718,240 @@
       }
     },
     {
+      "objectID": "state.chess",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        80.0,
+        80.0,
+        80.0,
+        1.0
+      ],
+      "center": [
+        80.0,
+        80.0,
+        80.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "turn": {
+          "t": "int",
+          "v": 0
+        },
+        "selectedX": {
+          "t": "int",
+          "v": -1
+        },
+        "selectedY": {
+          "t": "int",
+          "v": -1
+        },
+        "targetX": {
+          "t": "int",
+          "v": -1
+        },
+        "targetY": {
+          "t": "int",
+          "v": -1
+        },
+        "selectionActive": {
+          "t": "bool",
+          "v": false
+        },
+        "dx": {
+          "t": "int",
+          "v": 0
+        },
+        "dy": {
+          "t": "int",
+          "v": 0
+        },
+        "castleMove": {
+          "t": "int",
+          "v": 0
+        },
+        "enPassantFile": {
+          "t": "int",
+          "v": -1
+        },
+        "enPassantTargetY": {
+          "t": "int",
+          "v": -1
+        },
+        "enPassantVictimY": {
+          "t": "int",
+          "v": -1
+        },
+        "nextEnPassantFile": {
+          "t": "int",
+          "v": -1
+        },
+        "nextEnPassantTargetY": {
+          "t": "int",
+          "v": -1
+        },
+        "nextEnPassantVictimY": {
+          "t": "int",
+          "v": -1
+        },
+        "repCount": {
+          "t": "int",
+          "v": 0
+        },
+        "isDraw": {
+          "t": "bool",
+          "v": false
+        },
+        "drawReason": {
+          "t": "string",
+          "v": ""
+        },
+        "prevX": {
+          "t": "int",
+          "v": -1
+        },
+        "prevY": {
+          "t": "int",
+          "v": -1
+        },
+        "prevHasMoved": {
+          "t": "bool",
+          "v": false
+        },
+        "inCheck": {
+          "t": "bool",
+          "v": false
+        },
+        "checkers": {
+          "t": "int",
+          "v": 0
+        },
+        "gameOver": {
+          "t": "bool",
+          "v": false
+        },
+        "result": {
+          "t": "int",
+          "v": 0
+        },
+        "nextCapturedSlot": {
+          "t": "int",
+          "v": 0
+        },
+        "whiteKingX": {
+          "t": "int",
+          "v": 4
+        },
+        "whiteKingY": {
+          "t": "int",
+          "v": 0
+        },
+        "blackKingX": {
+          "t": "int",
+          "v": 4
+        },
+        "blackKingY": {
+          "t": "int",
+          "v": 7
+        },
+        "midY": {
+          "t": "int",
+          "v": 2
+        },
+        "midYBlack": {
+          "t": "int",
+          "v": 5
+        },
+        "sliderRankActive": {
+          "t": "bool",
+          "v": false
+        },
+        "sliderFileActive": {
+          "t": "bool",
+          "v": false
+        },
+        "sliderDiagActive": {
+          "t": "bool",
+          "v": false
+        },
+        "sliderRankX": {
+          "t": "int",
+          "v": -1
+        },
+        "sliderRankY": {
+          "t": "int",
+          "v": -1
+        },
+        "sliderFileX": {
+          "t": "int",
+          "v": -1
+        },
+        "sliderFileY": {
+          "t": "int",
+          "v": -1
+        },
+        "sliderDiagX": {
+          "t": "int",
+          "v": -1
+        },
+        "sliderDiagY": {
+          "t": "int",
+          "v": -1
+        },
+        "kingX": {
+          "t": "int",
+          "v": 4
+        },
+        "kingY": {
+          "t": "int",
+          "v": 0
+        },
+        "kingXp1": {
+          "t": "int",
+          "v": 5
+        },
+        "kingXm1": {
+          "t": "int",
+          "v": 3
+        },
+        "kingYp1": {
+          "t": "int",
+          "v": 1
+        },
+        "kingYm1": {
+          "t": "int",
+          "v": -1
+        },
+        "displayName": {
+          "t": "string",
+          "v": "Chess state"
+        }
+      }
+    },
+    {
       "objectID": "object.chess.status",
       "shapeKind": 12,
       "geometryType": 12,

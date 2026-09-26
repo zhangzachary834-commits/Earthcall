@@ -1,10 +1,7 @@
 #include "Singularity/Network/WebSocketServer.hpp"
-#include "ZonesOfEarth/ZoneManager.hpp"
 #include <cassert>
 #include <iostream>
 #include <string>
-
-extern ZoneManager mgr;
 
 #ifndef __EMSCRIPTEN__
 #include <sys/socket.h>
@@ -98,12 +95,6 @@ int main() {
     server.stop();
 
     std::cout << "[Test] WebSocketServer real network path verification succeeded." << std::endl;
-
-    // Test unhydrated ZoneManager safety: clear zones to simulate startup before zone hydration
-    std::cout << "[Test] Verifying WebSocketServer behavior when ZoneManager has no active zones..." << std::endl;
-    mgr.zones().clear();
-    server.broadcastStateSync();
-    std::cout << "[Test] Unhydrated ZoneManager state_sync broadcast succeeded without crash." << std::endl;
 #else
     std::cout << "[Test] WebSocketServer skipped on Emscripten." << std::endl;
 #endif

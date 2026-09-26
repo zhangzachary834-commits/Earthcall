@@ -1,108 +1,43 @@
 {
+ "authors": [
+  "Zach"
+ ],
+ "identifier": "law-line-hear",
+ "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
+ "law": {
+  "activation": 0,
+  "applicationLog": [],
   "authors": [
-    "Zach"
+   "Zach"
   ],
-  "identifier": "law-line-hear",
-  "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
-  "law": {
-    "actionDescriptions": [
-      "publish 'law-sentence-spoken'"
-    ],
-    "actionModel": {
-      "eventType": "law-sentence-spoken",
-      "kind": 10
-    },
-    "activation": 0,
-    "applicationLog": [
-      {
-        "actions": [
-          "publish 'law-sentence-spoken'"
-        ],
-        "changed": true,
-        "conditions": [],
-        "lawId": "law-line-hear",
-        "nodes": [
-          {
-            "action": "Publish",
-            "wrote": true
-          }
-        ],
-        "result": "applied",
-        "targetId": "terminal-channel",
-        "timestamp": 1790386875
-      }
-    ],
-    "authority": 0,
-    "authors": [
-      "Zach"
-    ],
-    "conditionDescriptions": [],
-    "conditionMode": "all",
-    "conditionSubjects": [],
-    "drives": false,
-    "enabled": true,
-    "id": "law-line-hear",
-    "name": "Law Line · a terminal line is a spoken law sentence",
-    "provenance": [
-      {
-        "attachment": {
-          "childAnchor": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "enabled": false,
-          "inheritRotation": true,
-          "inheritScale": true,
-          "inheritTranslation": true,
-          "localOffset": [
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0
-          ],
-          "parentAnchor": [
-            0.0,
-            0.0,
-            0.0
-          ]
-        },
-        "directed": true,
-        "entityA": "law-line-hear",
-        "entityB": "Zach",
-        "events": [
-          {
-            "deltaWeight": 1.0,
-            "description": "authored-by",
-            "timestamp": 1790386363
-          },
-          {
-            "deltaWeight": 1.0,
-            "description": "authored-by",
-            "timestamp": 1790386742
-          }
-        ],
-        "type": "authored-by",
-        "weight": 3.0
-      }
-    ],
-    "retrigger": 0,
-    "scope": 0,
-    "targets": []
-  },
-  "triggers": [
-    "terminal-line-entered"
-  ]
+  "authority": 0,
+  "conditionMode": "all",
+  "conditionSubjects": [],
+  "drives": false,
+  "enabled": true,
+  "id": "law-line-hear",
+  "name": "Law Line · a terminal line is a spoken law sentence",
+  "provenance": [
+   {
+    "directed": true,
+    "entityA": "law-line-hear",
+    "entityB": "Zach",
+    "events": [],
+    "type": "authored-by",
+    "weight": 1.0
+   }
+  ],
+  "retrigger": 0,
+  "scope": 0,
+  "targets": [],
+  "actionModel": {
+   "kind": 10,
+   "eventType": "law-sentence-spoken",
+   "publishSubject": "",
+   "publishObject": ""
+  }
+ },
+ "triggers": [
+  "terminal-line-entered"
+ ]
 }

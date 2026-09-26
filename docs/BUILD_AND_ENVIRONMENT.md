@@ -65,7 +65,7 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 247 registered (2026-09-25); WebGPU/GL tests require a desktop GPU/display session; frame_lag_test is machine-load-sensitive
+ctest --test-dir build --output-on-failure -j4        # 246 registered (2026-09-25); WebGPU/GL tests require a desktop GPU/display session; frame_lag_test is machine-load-sensitive
 cmake --build build --target lag                       # just the frame-cost probe, with its report
 ```
 

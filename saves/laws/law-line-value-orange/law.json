@@ -1,94 +1,45 @@
 {
+ "authors": [
+  "Zach"
+ ],
+ "identifier": "law-line-value-orange",
+ "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
+ "law": {
+  "activation": 0,
+  "applicationLog": [],
   "authors": [
-    "Zach"
+   "Zach"
   ],
-  "identifier": "law-line-value-orange",
-  "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
-  "law": {
-    "actionDescriptions": [
-      "set "
-    ],
-    "actionModel": {
-      "kind": 0,
-      "operand": {
-        "t": "vec3",
-        "x": 1.0,
-        "y": 0.5,
-        "z": 0.0
-      },
-      "path": ""
-    },
-    "activation": 0,
-    "applicationLog": [],
-    "authority": 0,
-    "authors": [
-      "Zach"
-    ],
-    "conditionDescriptions": [],
-    "conditionMode": "all",
-    "conditionSubjects": [],
-    "drives": false,
-    "enabled": false,
-    "id": "law-line-value-orange",
-    "name": "means: orange (1, 0.5, 0)",
-    "provenance": [
-      {
-        "attachment": {
-          "childAnchor": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "enabled": false,
-          "inheritRotation": true,
-          "inheritScale": true,
-          "inheritTranslation": true,
-          "localOffset": [
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0
-          ],
-          "parentAnchor": [
-            0.0,
-            0.0,
-            0.0
-          ]
-        },
-        "directed": true,
-        "entityA": "law-line-value-orange",
-        "entityB": "Zach",
-        "events": [
-          {
-            "deltaWeight": 1.0,
-            "description": "authored-by",
-            "timestamp": 1790386363
-          },
-          {
-            "deltaWeight": 1.0,
-            "description": "authored-by",
-            "timestamp": 1790386742
-          }
-        ],
-        "type": "authored-by",
-        "weight": 3.0
-      }
-    ],
-    "retrigger": 0,
-    "scope": 0,
-    "targets": []
-  },
-  "triggers": []
+  "authority": 0,
+  "conditionMode": "all",
+  "conditionSubjects": [],
+  "drives": false,
+  "enabled": false,
+  "id": "law-line-value-orange",
+  "name": "means: orange (1, 0.5, 0)",
+  "provenance": [
+   {
+    "directed": true,
+    "entityA": "law-line-value-orange",
+    "entityB": "Zach",
+    "events": [],
+    "type": "authored-by",
+    "weight": 1.0
+   }
+  ],
+  "retrigger": 0,
+  "scope": 0,
+  "targets": [],
+  "actionModel": {
+   "kind": 0,
+   "path": "",
+   "operand": {
+    "t": "vec3",
+    "x": 1.0,
+    "y": 0.5,
+    "z": 0.0
+   }
+  }
+ },
+ "triggers": []
 }

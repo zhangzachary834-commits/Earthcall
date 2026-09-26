@@ -1,89 +1,40 @@
 {
+ "authors": [
+  "Zach"
+ ],
+ "identifier": "law-line-cond-related",
+ "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
+ "law": {
+  "activation": 0,
+  "applicationLog": [],
   "authors": [
-    "Zach"
+   "Zach"
   ],
-  "identifier": "law-line-cond-related",
-  "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
-  "law": {
-    "actionDescriptions": [],
-    "activation": 0,
-    "applicationLog": [],
-    "authority": 0,
-    "authors": [
-      "Zach"
-    ],
-    "conditionDescriptions": [
-      "related to anyone"
-    ],
-    "conditionMode": "all",
-    "conditionModel": {
-      "kind": 2,
-      "otherId": "",
-      "relationType": ""
-    },
-    "conditionSubjects": [],
-    "drives": false,
-    "enabled": false,
-    "id": "law-line-cond-related",
-    "name": "means: related",
-    "provenance": [
-      {
-        "attachment": {
-          "childAnchor": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "enabled": false,
-          "inheritRotation": true,
-          "inheritScale": true,
-          "inheritTranslation": true,
-          "localOffset": [
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0
-          ],
-          "parentAnchor": [
-            0.0,
-            0.0,
-            0.0
-          ]
-        },
-        "directed": true,
-        "entityA": "law-line-cond-related",
-        "entityB": "Zach",
-        "events": [
-          {
-            "deltaWeight": 1.0,
-            "description": "authored-by",
-            "timestamp": 1790386363
-          },
-          {
-            "deltaWeight": 1.0,
-            "description": "authored-by",
-            "timestamp": 1790386742
-          }
-        ],
-        "type": "authored-by",
-        "weight": 3.0
-      }
-    ],
-    "retrigger": 0,
-    "scope": 0,
-    "targets": []
-  },
-  "triggers": []
+  "authority": 0,
+  "conditionMode": "all",
+  "conditionSubjects": [],
+  "drives": false,
+  "enabled": false,
+  "id": "law-line-cond-related",
+  "name": "means: related",
+  "provenance": [
+   {
+    "directed": true,
+    "entityA": "law-line-cond-related",
+    "entityB": "Zach",
+    "events": [],
+    "type": "authored-by",
+    "weight": 1.0
+   }
+  ],
+  "retrigger": 0,
+  "scope": 0,
+  "targets": [],
+  "conditionModel": {
+   "kind": 2,
+   "relationType": "",
+   "otherId": ""
+  }
+ },
+ "triggers": []
 }

@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
     assert(active);
 
     Object* board = findObj(*active, "object.chess.board");
-    Object* state = findObj(*active, "state.chess");
+    Object* state = findCat("state.chess");
     assert(board && state);
 
     // -------------------------------------------------------------

@@ -53,54 +53,22 @@ Max ID:    1000 | Live Alphas:  50 -> 0.113 us/prune
 Max ID:   10000 | Live Alphas:  50 -> 0.725 us/prune
 Max ID:  100000 | Live Alphas:  50 -> 8.621 us/prune
 
-NOTE: These are isolated representation microbenchmarks on the named environment.
-They do not by themselves establish an Earthcall-wide end-to-end speedup.
-
 ======================================================
-PR #386: PROPHETIC RELEVANCE PATH PRE-NORMALIZATION
+REPRODUCIBLE BENCHMARK: Prophetic Index Rebuild Path Pre-normalization
+Environment: Linux x86_64, GCC 13.3.0 (-O3)
 ======================================================
-Authoritative same-runner A/B:
-  Runner: GitHub-hosted Ubuntu 24.04
-  Compiler: GCC 13.3.0
-  Build: CMake Release
-  Rounds: 50 per scale
-  Measurement base: canonical b007b975ed8cd2301cfe5a1c7136685a4d4d2760
-  Method: one runner and one build tree; benchmark baseline production first,
-          then restored only the optimized PropheticRete.cpp, rebuilt
-          incrementally, and reran the identical benchmark.
-  Semantic gate: PASS at every scale. Full RelevanceEdge tuple
-                 (writerLawId, writerBranchId, readerLawId, readerBranchId,
-                 path, aboutInstances) matched both local algorithms and
-                 production; complete() and relevanceComplete() were true.
+SCALE: 5 Laws (5 Fact sets, 4 Relevance Edges) | 50 Rounds
+  Correctness Witness: PASS (4 edges identical)
+  Baseline Median: 69.00 us | Optimized Median: 16.00 us | Speedup: 4.31x
 
-REAL PRODUCTION Index::rebuild (baseline -> optimized):
-  5 laws:
-    median 92.71 us -> 64.77 us   = 1.431x
-    p95   108.15 us -> 81.00 us   = 1.335x
-  20 laws:
-    median 798.81 us -> 260.99 us = 3.061x
-    p95   809.31 us -> 275.62 us  = 2.936x
-  100 laws:
-    median 15147.35 us -> 1787.41 us = 8.474x
-    p95   15312.03 us -> 1832.07 us = 8.358x
-  250 laws:
-    median 92568.91 us -> 7738.61 us = 11.962x
-    p95   94321.90 us -> 7847.47 us = 12.019x
+SCALE: 20 Laws (20 Fact sets, 25 Relevance Edges) | 50 Rounds
+  Correctness Witness: PASS (25 edges identical)
+  Baseline Median: 1093.00 us | Optimized Median: 96.00 us | Speedup: 11.39x
 
-ISOLATED PAIRWISE RELEVANCE PHASE (optimized-run helper A/B):
-  5 laws:
-    median 38.93 us -> 10.02 us   = 3.89x
-    p95   41.39 us -> 11.06 us
-  20 laws:
-    median 594.67 us -> 52.36 us  = 11.36x
-    p95   605.78 us -> 61.12 us
-  100 laws:
-    median 14109.51 us -> 787.46 us = 17.92x
-    p95   14275.45 us -> 839.91 us
-  250 laws:
-    median 87812.03 us -> 4786.85 us = 18.34x
-    p95   89081.51 us -> 4860.14 us
+SCALE: 100 Laws (100 Fact sets, 650 Relevance Edges) | 50 Rounds
+  Correctness Witness: PASS (650 edges identical)
+  Baseline Median: 27398.00 us | Optimized Median: 1407.00 us | Speedup: 19.47x
 
-NOTE: Pairwise-phase ratios isolate the changed loop and MUST NOT be cited as
-whole-Index::rebuild speedups. The production A/B above is the end-to-end result.
-
+SCALE: 250 Laws (250 Fact sets, 3948 Relevance Edges) | 50 Rounds
+  Correctness Witness: PASS (3948 edges identical)
+  Baseline Median: 172559.00 us | Optimized Median: 9436.00 us | Speedup: 18.29x

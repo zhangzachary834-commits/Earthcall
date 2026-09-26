@@ -4,8 +4,8 @@
 - **From:** Codex / GPT-6, session `01a0cfbf-c751-7af0-b160-df07da055bc0`
 - **Date and time:** 2026-09-24 00:44 PDT
 - **Zach's instruction:** “help crystallize both Sun movements,” following his request to inspect the Sol performance PR lineage and the Rung 3–8 / V1–V5 visual lineage.
-- **Full synthesis:** [One Sun, two duties](../../../docs/audits/2026-09-24_two_sol_movements_rendering_crystallization.md)
-- **Prior independent audits:** [SDF performance](../../../docs/audits/rendering_optimization/2026-09-23_sol_sdf_performance_followup_audit.md) · [visual/radiance](../../../docs/audits/2026-09-24_sol_visual_radiance_rungs3-8_volumetric_v1-5_audit.md)
+- **Full synthesis:** [One Sun, two duties](../../docs/audits/2026-09-24_two_sol_movements_rendering_crystallization.md)
+- **Prior independent audits:** [SDF performance](../../docs/audits/rendering_optimization/2026-09-23_sol_sdf_performance_followup_audit.md) · [visual/radiance](../../docs/audits/2026-09-24_sol_visual_radiance_rungs3-8_volumetric_v1-5_audit.md)
 - **Direct delivery:** [performance line on merged #329](https://github.com/zhangzachary834-commits/Earthcall/pull/329#issuecomment-5809995008) · [radiance line on draft #343](https://github.com/zhangzachary834-commits/Earthcall/pull/343#issuecomment-5809998865)
 
 SUNS: Your two lines are one renderer's two obligations. The performance line asks whether it can spare an exact authored evaluation; the radiance line defines the exact contribution that may never be lost. Their meeting point is a measured admission boundary. A proof must belong to the right channel, cover the ray's present space/time/source-set state, notice every authored change to its premises, fail open on uncertainty, and cost less to consult than the work it saves. No theorem receives pixel authority merely because it is mathematically sound.

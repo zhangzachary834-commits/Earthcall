@@ -980,8 +980,7 @@ std::vector<std::string> normalizedPaths(const std::string& dotted) {
     return out;
 }
 
-bool pathsMayAlias(const std::vector<std::string>& aa,
-                   const std::vector<std::string>& bb) {
+bool pathsMayAlias(const std::vector<std::string>& aa, const std::vector<std::string>& bb) {
     for (const auto& left : aa) {
         for (const auto& right : bb) {
             if (left == right) return true;
@@ -1098,27 +1097,26 @@ void Index::rebuild(const std::vector<std::shared_ptr<Law>>& laws) {
     // Runtime consumers still must fall back unless the graph is complete.
     _relevanceComplete = _complete && !anyOpaqueWrite;
 
-    // Normalize every authored effect path once per rebuild. The relevance
-    // graph is pairwise in writes x branchReads; reparsing the same path in
-    // that inner product multiplies PropertyPath parsing and tail-string work
-    // by the candidate-pair count without changing the proof.
+    // Bolt Optimization: Pre-compute normalized paths for writes and branchReads
+    // to eliminate string parsing and allocations inside the inner relevance loop.
     std::vector<std::vector<std::vector<std::string>>> writeNorms(_facts.size());
     std::vector<std::vector<std::vector<std::string>>> readNorms(_facts.size());
 
-    for (std::size_t i = 0; i < _facts.size(); ++i) {
-        writeNorms[i].reserve(_facts[i].writes.size());
-        for (const auto& write : _facts[i].writes) {
-            writeNorms[i].push_back(normalizedPaths(write.path));
+    for (std::size_t j = 0; j < _facts.size(); ++j) {
+        writeNorms[j].reserve(_facts[j].writes.size());
+        for (const auto& w : _facts[j].writes) {
+            writeNorms[j].push_back(normalizedPaths(w.path));
         }
 
-        readNorms[i].reserve(_facts[i].branchReads.size());
-        for (const auto& read : _facts[i].branchReads) {
-            readNorms[i].push_back(normalizedPaths(read.path));
+        readNorms[j].reserve(_facts[j].branchReads.size());
+        for (const auto& r : _facts[j].branchReads) {
+            readNorms[j].push_back(normalizedPaths(r.path));
         }
     }
 
     std::set<std::tuple<std::string, std::string, std::string, std::string,
                         std::string, bool>> seen;
+
     for (std::size_t i = 0; i < _facts.size(); ++i) {
         const auto& writerFacts = _facts[i];
         for (std::size_t w = 0; w < writerFacts.writes.size(); ++w) {
