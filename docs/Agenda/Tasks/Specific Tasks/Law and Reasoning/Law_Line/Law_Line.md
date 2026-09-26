@@ -103,6 +103,7 @@ Zach chose these from a proposal; he deferred typo-fixing and usage ranking ("ne
 ## Next rungs
 
 - [ ] **The Law Line in every Zone.** Laws are per-Zone membership (`lawRefs`), so the hearing Laws live in `LawLine`. Carrying them everywhere needs a Home/Ourverse carrier. ⚑ Zach's call.
+- [ ] **A spoken Law must survive its author getting a key** (Mythos, Interaction as Law thread, 2026-09-25). Spoken Laws record the author by the identifier `@interaction-channel.personId` resolves to *now*. That is spelling-resolved causation, and it unbinds when Zach takes a key. Untested. The fix is the `was-called` Claim Mythos proposed in `Succession_Is_Not_In_The_World`.
 - [ ] `set x to @other.path`: waits for the PropertyPath binding algebra ("copy value", [Property_Storage_and_OntoMath_Binding](../../Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)). The refusal already points there.
 - [ ] OntoMath expression text, so Map/Flow/Drive/Zone conditions have a sentence form.
 - [ ] Timeline clauses (after the Law/Timeline ontology; TIME_AND_MOMENT.md).

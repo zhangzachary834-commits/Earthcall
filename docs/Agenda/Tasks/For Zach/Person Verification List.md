@@ -15,6 +15,7 @@
 - [x] `Run Earthcall.command` → the Terminal shows the Law Line prompt.
 - [x] In the Law Line Zone, `my event-triggered law called Red fires on object-clicked if hp is greater than 2 then set color 1 0 0` authors a Law.
 - [x] The Law appears in the world and the Law Graph with the object-clicked trigger, `hp > 2`, and `set color 1 0 0`.
+- [x] Spoken Laws persist: after Save Zone and a restart, they are still there (Zach, 2026-09-25: *"i just verified in world the new laws persist after i save them they appear when i boot it up again"*).
 
 **Rung 2 — the ergonomic line and the new words** (your request: Tab selects, arrows move, temporary display like Claude Code). Driven in a real terminal emulator by me, but not yet by you:
 

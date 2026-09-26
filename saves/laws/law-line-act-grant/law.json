@@ -1,43 +1,91 @@
 {
- "authors": [
-  "Zach"
- ],
- "identifier": "law-line-act-grant",
- "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
- "law": {
-  "activation": 0,
-  "applicationLog": [],
   "authors": [
-   "Zach"
+    "Zach"
   ],
-  "authority": 0,
-  "conditionMode": "all",
-  "conditionSubjects": [],
-  "drives": false,
-  "enabled": false,
-  "id": "law-line-act-grant",
-  "name": "means: grant a property",
-  "provenance": [
-   {
-    "directed": true,
-    "entityA": "law-line-act-grant",
-    "entityB": "Zach",
-    "events": [],
-    "type": "authored-by",
-    "weight": 1.0
-   }
-  ],
-  "retrigger": 0,
-  "scope": 0,
-  "targets": [],
-  "actionModel": {
-   "kind": 12,
-   "path": "",
-   "propertyName": "",
-   "operand": {
-    "t": "none"
-   }
-  }
- },
- "triggers": []
+  "identifier": "law-line-act-grant",
+  "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
+  "law": {
+    "actionDescriptions": [
+      "grant property ''"
+    ],
+    "actionModel": {
+      "kind": 12,
+      "operand": {
+        "t": "none"
+      },
+      "propertyName": ""
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "Zach"
+    ],
+    "conditionDescriptions": [],
+    "conditionMode": "all",
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": false,
+    "id": "law-line-act-grant",
+    "name": "means: grant a property",
+    "provenance": [
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "directed": true,
+        "entityA": "law-line-act-grant",
+        "entityB": "Zach",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1790386363
+          },
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1790386742
+          }
+        ],
+        "type": "authored-by",
+        "weight": 3.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": []
 }
