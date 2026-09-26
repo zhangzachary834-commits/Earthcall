@@ -9,6 +9,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <cmath>
+#include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <limits>
@@ -2330,6 +2331,16 @@ void WebGpuRenderer::flushSdfDraws() {
 }
 
 void WebGpuRenderer::flushVolumeComposite() {
+    // Process-fixed, test-only shader output. The ordinary frame never takes
+    // this path; a diagnostic process encodes work counts in place of color.
+    static const bool diagnosticWork = [] {
+        const char* value = std::getenv("EARTHCALL_DIAGNOSTIC_VOLUME_WORK");
+        return value && std::strcmp(value, "1") == 0;
+    }();
+    static const bool reuseSourceGeometry = [] {
+        const char* value = std::getenv("EARTHCALL_EXPERIMENT_VOLUME_REUSE_SOURCE_GEOMETRY");
+        return value && std::strcmp(value, "1") == 0;
+    }();
     if (!_encoder || !_frameColorView || !_depthView) return;
 
     // V3 does not invent incident direction. A wi-reading Phi can consume one
@@ -2436,6 +2447,7 @@ void WebGpuRenderer::flushVolumeComposite() {
             std::string layoutError = incidentSourceLayoutError;
             std::string structure =
                 "medium-count:" + std::to_string(activeMedia.size()) + "\n" +
+                (diagnosticWork ? "diagnostic-work:1\n" : "diagnostic-work:0\n") +
                 incidentSourceStructure + "\n";
 
             for (std::size_t i = 0; layoutsOk && i < activeMedia.size(); ++i) {
@@ -2505,6 +2517,12 @@ void WebGpuRenderer::flushVolumeComposite() {
                     !setMemo.pipeline;
                 if (needsCompile) {
                     setMemo.prog = sdfwgsl::compileVolumeSet(compilerInputs);
+                    std::string diagnosticError;
+                    if (diagnosticWork && setMemo.prog.ok &&
+                        !sdfwgsl::instrumentVolumeWork(setMemo.prog, true, diagnosticError)) {
+                        setMemo.prog.ok = false;
+                        setMemo.prog.error = diagnosticError;
+                    }
                     ++mutableFrameStats().volumeProgramCompiles;
                     mutableFrameStats().volumeWgslBytesGenerated +=
                         setMemo.prog.wgsl.size();
@@ -2698,6 +2716,8 @@ void WebGpuRenderer::flushVolumeComposite() {
             }
 
             const std::string structure =
+                std::string(diagnosticWork ? "diagnostic-work:1\n" : "diagnostic-work:0\n") +
+                (reuseSourceGeometry ? "reuse-source-geometry:1\n" : "reuse-source-geometry:0\n") +
                 "density:\n" + densityLayout.structure +
                 "\nextinction:\n" + extinctionLayout.structure +
                 "\nscattering:\n" + scatteringLayout.structure +
@@ -2719,6 +2739,19 @@ void WebGpuRenderer::flushVolumeComposite() {
                         incidentSource ? incidentSource->radianceExpr : nullptr,
                         incidentSource ? incidentSource->chromaExpr : nullptr,
                         incidentSource ? incidentSource->angularExpr : nullptr);
+                std::string diagnosticError;
+                if (reuseSourceGeometry && memo.prog.ok &&
+                    !sdfwgsl::reuseVolumeSourceGeometry(memo.prog, diagnosticError)) {
+                    // The experiment may see a future shader shape. Keep its
+                    // original exact program rather than losing this medium.
+                    std::fprintf(stderr, "[WebGpuRenderer] %s; using exact volume shader\n",
+                                 diagnosticError.c_str());
+                }
+                if (diagnosticWork && memo.prog.ok &&
+                    !sdfwgsl::instrumentVolumeWork(memo.prog, false, diagnosticError)) {
+                    memo.prog.ok = false;
+                    memo.prog.error = diagnosticError;
+                }
                 ++mutableFrameStats().volumeProgramCompiles;
                 mutableFrameStats().volumeWgslBytesGenerated += memo.prog.wgsl.size();
                 memo.structure = structure;
@@ -3281,4 +3314,3 @@ bool WebGpuRenderer::readPixels(uint8_t* outRgba, uint32_t width, uint32_t heigh
     wgpuBufferUnmap(_readbackBuffer);
     return true;
 }
-

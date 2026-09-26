@@ -4082,4 +4082,100 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
 }
 
 
+bool reuseVolumeSourceGeometry(Program& program, std::string& error) {
+    if (!program.ok) { error = program.error; return false; }
+    std::string code = program.wgsl;
+    if (code.find("const HAS_OCCLUDER_SDF: bool = false;") != std::string::npos)
+        return true; // Nothing to reuse; retain the exact no-occluder shader.
+    auto replaceOnce = [&](const std::string& before, const std::string& after) {
+        const auto at = code.find(before);
+        if (at == std::string::npos || code.find(before, at + before.size()) != std::string::npos)
+            return false;
+        code.replace(at, before.size(), after);
+        return true;
+    };
+    if (!replaceOnce(
+            "fn volumeSourceVisibility(worldP: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {",
+            "fn volumeSourceVisibility(worldP: vec3<f32>, sourceWorld: vec3<f32>, distToLight: f32, lightDir: vec3<f32>) -> f32 {") ||
+        !replaceOnce(
+            "    let toLight = sourceWorld - worldP;\n"
+            "    let distToLight = length(toLight);\n"
+            "    if (distToLight <= 1e-4) { return 1.0; }\n"
+            "    let lightDir = toLight / distToLight;\n",
+            "    if (distToLight <= 1e-4) { return 1.0; }\n") ||
+        !replaceOnce(
+            "let vis = volumeSourceVisibility(worldP, u.incidentSource.xyz);",
+            "let vis = volumeSourceVisibility(worldP, u.incidentSource.xyz, sourceDist, lightDir);")) {
+        error = "single-medium source-geometry reuse: unexpected shader structure";
+        return false;
+    }
+    program.wgsl = std::move(code);
+    return true;
+}
+
+bool instrumentVolumeWork(Program& program, bool mediumSet, std::string& error) {
+    if (!program.ok) { error = program.error; return false; }
+    auto& code = program.wgsl;
+    const std::string instance = "var<private> g_instIdx: u32;";
+    const auto instanceAt = code.find(instance);
+    const auto fragmentAt = code.find("\n@fragment", instanceAt);
+    if (instanceAt == std::string::npos || fragmentAt == std::string::npos) {
+        error = "volume work probe: missing instance or fragment boundary";
+        return false;
+    }
+    code.insert(instanceAt + instance.size(),
+                "\nvar<private> g_workView: u32;\nvar<private> g_workSteps: u32;");
+    const std::string sample = mediumSet
+        ? "let sampleT = segmentStart +" : "let sampleT = t0 +";
+    auto at = code.find(sample, code.find("\n@fragment"));
+    if (at == std::string::npos) {
+        error = "volume work probe: missing view-sample loop";
+        return false;
+    }
+    code.insert(at, "g_workView = g_workView + 1u;\n            ");
+
+    if (mediumSet) {
+        // Count an occupied member's actual density evaluation, not the
+        // union proxy's conservative overlap checks.
+        const auto fs = code.find("\n@fragment");
+        std::size_t search = fs;
+        std::size_t count = 0;
+        const std::string increment = "g_workSteps = g_workSteps + 1u;\n                ";
+        while ((search = code.find("let density", search)) != std::string::npos) {
+            code.insert(search, increment);
+            search += increment.size() + sizeof("let density") - 1;
+            ++count;
+        }
+        if (count < 2) {
+            error = "volume work probe: missing V5 density evaluations";
+            return false;
+        }
+    } else {
+        const std::string sdf = "let d = volumeSdfEval(curLocal);";
+        at = code.find(sdf);
+        if (at != std::string::npos)
+            code.insert(at, "g_workSteps = g_workSteps + 1u;\n        ");
+    }
+
+    at = code.find("    let alpha = 1.0 - transmittance;", code.find("\n@fragment"));
+    if (at == std::string::npos) {
+        error = "volume work probe: missing transport return";
+        return false;
+    }
+    // Both compiler paths end with this fragment return. Replace the normal
+    // color tail so the diagnostic shader has no unreachable WGSL statements.
+    code.erase(at);
+    // Three 8-bit channels pack two 12-bit counters. Alpha=1 bypasses the
+    // normal premultiplied blend over the transparent diagnostic target.
+    code += R"WGSL(
+    let viewCount = min(g_workView, 4095u);
+    let stepCount = min(g_workSteps, 4095u);
+    return vec4<f32>(f32(viewCount & 255u),
+                     f32(((viewCount >> 8u) & 15u) | ((stepCount & 15u) << 4u)),
+                     f32((stepCount >> 4u) & 255u), 255.0) / 255.0;
+}
+)WGSL";
+    return true;
+}
+
 } // namespace sdfwgsl

@@ -171,6 +171,7 @@ jobs:
             webgpu_object_test \
             webgpu_v5_overlap_physics_test \
             webgpu_volumetric_mist_test \
+            webgpu_saved_volume_size_probe \
             sanctuary_of_sunlit_mist_test
 
       - name: Run CPU SDF proof witnesses
@@ -218,6 +219,79 @@ jobs:
           set -o pipefail
           ./build/webgpu_volumetric_mist_test 2>&1 | tee webgpu-volumetric-mist.log
 
+      - name: Measure authored saved volumes across drawable sizes
+        shell: bash
+        run: |
+          set -euo pipefail
+          probe=./build/webgpu_saved_volume_size_probe
+          export EARTHCALL_VOLUME_CAPTURE_DIR="$PWD/saved-volume-captures"
+          mist='saves/zones/Sanctuary of Sunlit Mist/zone.json'
+          veil='saves/zones/Northern Veil/zone.json'
+          shasum -a 256 "$mist" "$veil" | tee saved-volume-hashes.log
+          for size in '320 180' '640 360' '1280 720'; do
+            read -r width height <<< "$size"
+            "$probe" "$mist" authored "$width" "$height" 8 2 0 2.2 8 0 2.25 -12 | tee -a saved-volume-size.log
+            "$probe" "$veil" authored "$width" "$height" 8 2 0 64 230 0 64 80 | tee -a saved-volume-size.log
+          done
+          # A second fixed pose samples camera dependence without changing time.
+          "$probe" "$mist" authored 640 360 8 2 2 2.2 7 0 2.25 -12 | tee -a saved-volume-size.log
+          "$probe" "$veil" authored 640 360 8 2 12 68 205 0 64 80 | tee -a saved-volume-size.log
+          "$probe" "$mist" authored 640 360 16 2 0 2.2 8 0 2.25 -12 1 | tee -a saved-volume-size.log
+          "$probe" "$veil" authored 640 360 16 2 0 64 230 0 64 80 1 | tee -a saved-volume-size.log
+
+
+      - name: Count authored volume shader work (diagnostic color only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          export EARTHCALL_DIAGNOSTIC_VOLUME_WORK=1
+          ./build/webgpu_saved_volume_size_probe \
+            'saves/zones/Sanctuary of Sunlit Mist/zone.json' authored \
+            640 360 2 1 0 2.2 8 0 2.25 -12 | tee saved-volume-work.log
+          ./build/webgpu_saved_volume_size_probe \
+            'saves/zones/Northern Veil/zone.json' authored \
+            640 360 2 1 0 64 230 0 64 80 | tee -a saved-volume-work.log
+          test "$(grep -c 'work_view_sum=[1-9]' saved-volume-work.log)" -eq 2
+          test "$(grep -c 'work_step_sum=[1-9]' saved-volume-work.log)" -eq 2
+
+      - name: Compare single-medium source-geometry reuse at native resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          probe=./build/webgpu_saved_volume_size_probe
+          mist='saves/zones/Sanctuary of Sunlit Mist/zone.json'
+          for label in A1 B1 B2 A2; do
+            if [[ "$label" == B* ]]; then
+              export EARTHCALL_EXPERIMENT_VOLUME_REUSE_SOURCE_GEOMETRY=1
+            else
+              unset EARTHCALL_EXPERIMENT_VOLUME_REUSE_SOURCE_GEOMETRY
+            fi
+            export EARTHCALL_VOLUME_CAPTURE_DIR="$PWD/saved-volume-captures/reuse-$label"
+            "$probe" "$mist" authored 1280 720 8 2 0 2.2 8 0 2.25 -12 \
+              | tee "source-geometry-$label.log"
+          done
+          for label in B1 B2 A2; do
+            diff -u <(sed -n 's/.*rgba_hash=//p' source-geometry-A1.log | cut -d' ' -f1) \
+                    <(sed -n 's/.*rgba_hash=//p' "source-geometry-$label.log" | cut -d' ' -f1)
+            for file in saved-volume-captures/reuse-A1/*; do
+              cmp "$file" "${file/reuse-A1/reuse-$label}"
+            done
+          done
+          for mode in exact reuse; do
+            if [[ "$mode" == reuse ]]; then
+              export EARTHCALL_EXPERIMENT_VOLUME_REUSE_SOURCE_GEOMETRY=1
+            else
+              unset EARTHCALL_EXPERIMENT_VOLUME_REUSE_SOURCE_GEOMETRY
+            fi
+            export EARTHCALL_VOLUME_CAPTURE_DIR="$PWD/saved-volume-captures/moving-$mode"
+            "$probe" "$mist" authored 1280 720 16 1 0 2.2 8 0 2.25 -12 1 \
+              | tee "source-geometry-moving-$mode.log"
+          done
+          cmp saved-volume-captures/moving-exact/mist-1280x720-moving-0-1.ppm \
+              saved-volume-captures/moving-reuse/mist-1280x720-moving-0-1.ppm
+          cmp saved-volume-captures/moving-exact/mist-1280x720-moving-0-1-alpha.pgm \
+              saved-volume-captures/moving-reuse/mist-1280x720-moving-0-1-alpha.pgm
+
       - name: Upload WebGPU object/radiance diagnostic
         if: always()
         uses: actions/upload-artifact@v4
@@ -227,6 +301,11 @@ jobs:
             webgpu-object-parity.log
             webgpu-v5-overlap-physics.log
             webgpu-volumetric-mist.log
+            saved-volume-size.log
+            saved-volume-work.log
+            source-geometry-*.log
+            saved-volume-hashes.log
+            saved-volume-captures/
           if-no-files-found: error
           retention-days: 7
 

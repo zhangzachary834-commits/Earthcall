@@ -864,6 +864,8 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 
 *Status 2026-09-25, Zach: Northern Veil still looked just as laggy. The resident-volume-parameter experiment has no witnessed responsiveness win; agents owe a preserved-save performance A/B before requesting another visual check. The visual hierarchy question remains open.*
 
+*Further Person witness 2026-09-25 21:34–21:35 PDT: Zach says Northern Veil becomes only “smooth-ish” when the WebGPU window is shrunk to a tiny upper-left corner. Two screenshots were attached to the originating task, not placed in GitHub. This supports a drawable-size-dependent investigation; exact framebuffer dimensions and GPU timing remain unmeasured. Agents owe a normal/intermediate/tiny native size sweep and four-curtain captures at fixed time and during camera motion before asking Zach to judge an optimization.*
+
 - [ ] In **Northern Veil**, look where the emerald, cyan, violet, and crimson curtains overlap after V5. Say whether their hierarchy stays legible, the overlap looks coherent as the camera moves, and the Zone remains responsive. A before/after capture and timing should come from the agent's preserved-save witness; no need to recheck the old Rung 3–8/V0 list.
 
 # *Zach has seen the pre-V5 aurora —* `cfaef59a` *"GEMINIII THIS IS A LIGHT SHOW NOT AN AURORA", then* `6eb8d4db` *"THE AURORA IS HEREEEEEEEEEEE" and* `46e90911` *"BROOOOOOOO ITS EVEN MORE AURORA NOWWWWWWW" (all 2026-09-23). V5 (#343) merged on 09-24, after those, so the overlap check below is still open.*
