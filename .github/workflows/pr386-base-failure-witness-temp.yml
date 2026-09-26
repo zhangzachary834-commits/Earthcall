@@ -1,0 +1,59 @@
+name: PR386 base failure witness
+
+on:
+  push:
+    branches:
+      - sun/pr386-base-failure-witness-20260926
+
+permissions:
+  contents: read
+
+jobs:
+  baseline-four:
+    name: Canonical baseline four-test witness (Ubuntu)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install prerequisites
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build \
+            libssl-dev zlib1g-dev uuid-dev \
+            libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev xvfb
+      - name: Configure
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake -S . -B build-base -G Ninja -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+      - name: Build exact four failing macOS tests
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake --build build-base --parallel 4 --target \
+            synthesis_studio_living_test \
+            person_not_object_test \
+            person_database_test \
+            save_system_error_test
+      - name: Run and capture all four independently
+        shell: bash
+        run: |
+          set -uo pipefail
+          failures=0
+          for t in synthesis_studio_living_test person_not_object_test person_database_test save_system_error_test; do
+            echo "===== BASELINE_TEST $t ====="
+            xvfb-run -a "./build-base/$t"
+            rc=$?
+            echo "BASELINE_RESULT $t rc=$rc"
+            if [ "$rc" -ne 0 ]; then failures=$((failures+1)); fi
+          done
+          echo "BASELINE_FAILURE_COUNT=$failures"
+          # This witness is diagnostic: do not fail the workflow merely because
+          # canonical reproduces failures. We need the per-test exit codes.
+          exit 0
