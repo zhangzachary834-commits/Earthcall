@@ -63,6 +63,12 @@ int main() {
         check(lawB->getIdentifier() == "law-gravity-preset", "lawB retains unique ID 'law-gravity-preset'");
         check(lm.find("law-gravity-custom") == lawA.get(), "find('law-gravity-custom') resolves lawA");
         check(lm.find("law-gravity-preset") == lawB.get(), "find('law-gravity-preset') resolves lawB");
+
+        const std::size_t countBeforeDuplicate = lm.getAll().size();
+        auto duplicate = lm.createLaw("Different Display Name", "law-gravity-custom", {&author});
+        check(duplicate == nullptr, "explicit create refuses an already-registered identifier");
+        check(lm.getAll().size() == countBeforeDuplicate, "duplicate identifier does not change the Law register");
+        check(lm.find("law-gravity-custom") == lawA.get(), "duplicate create leaves the original identity binding intact");
     }
 
     // ------------------------------------------------------------------
