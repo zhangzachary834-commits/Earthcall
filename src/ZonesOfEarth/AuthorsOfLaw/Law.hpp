@@ -1117,51 +1117,37 @@ private:
     std::unordered_map<const Singular*, std::unordered_set<std::string>> _relationStateToRevalidate;
     void queueRelationStateRevalidation(const Relation& relation, const std::string& relationType);
     void revalidateRelationStateFacts();
-    // THE SLOW ADAPTER (FORMATION_RETE.md §8 rungs 5-6; Zach, 2026-09-16:
-    // the mechanism that pre-loads a Law's Relations "is also supposed to be in
-    // the slow adapter rather than constantly rebuilt every frame").
+    // THE SLOW ADAPTER (FORMATION_RETE.md §8 rungs 5-6; Zach, 2026-09-16: the
+    // mechanism that pre-loads a Law's Relations "is also supposed to be in the
+    // slow adapter rather than constantly rebuilt every frame"). It walks each
+    // law's `Related(kind, category)` roads on its own clock — one bounded unit
+    // of work per tick — and sweepSubjects reads the answer instead of deriving
+    // it. It refuses to answer whenever it cannot show its work is current, and
+    // the sweep then runs exactly as before, so it can cost time but never
+    // candidates.
     //
-    // 2026-09-17 correction: the old code called _adapter.step() from tick(),
-    // which gave the adapter a private COUNTER but not a private CAUSE of work.
-    // The adapter is now serviced by serviceSlowAdapterClock() on a wall-time
-    // cadence separate from LawManager::tick(). The main thread still executes
-    // the work, but a Frame/Law tick does not itself constitute an adapter tick.
-    // One due maintenance slice is allowed per service call and missed periods
-    // are NOT replayed, so a stall cannot create a catch-up burst.
-    //
-    // Kernel-derived scheduler state below is intentionally not authored world
-    // state yet. It is the smallest substrate rung for the independent clock;
-    // exact policy becomes authorable under ADAPTIVE_COMPUTE_MOMENTS.md.
+    // OFF BY DEFAULT while it has no measured win to show: `useSlowAdapter`
+    // gates the query, not the maintenance, so the structure is still built and
+    // still checked by tests. Zach, 2026-09-16: "Leave elements as inactive
+    // scaffolding if u measure it to be worse off dont delete it altogether."
     Relevance::SlowAdapter _adapter;
     void syncAdapterRoutes(Law& law);
     std::unordered_map<std::string, std::uint64_t> _adapterRouteRevision;
-    bool _useSlowAdapter = true;
-    bool _slowAdapterClockPrimed = false;
-    double _slowAdapterNextAt = 0.0;
-    std::uint64_t _slowAdapterMaintenanceRuns = 0;
-    static constexpr double kSlowAdapterPeriodSeconds = 0.100; // bootstrap 10 Hz
+    bool _useSlowAdapter = false;
 
 public:
     // Whether sweepSubjects may read the adapter's pre-loaded roads.
+    // Turning it on re-registers every law's roads: while it is off, nothing is
+    // noted and nothing is walked, so "off" costs exactly nothing rather than
+    // maintaining a structure nobody reads. Measured: maintaining it unread made
+    // chess_app_test ~4% slower, which is the whole reason it ships off.
     void setUseSlowAdapter(bool use) {
         if (use == _useSlowAdapter) return;
         _useSlowAdapter = use;
         _adapterRouteRevision.clear();
-        _slowAdapterClockPrimed = false;
-        _slowAdapterNextAt = 0.0;
-        _slowAdapterMaintenanceRuns = 0;
         if (!use) _adapter.clear();
     }
     bool usesSlowAdapter() const { return _useSlowAdapter; }
-
-    // SAME THREAD, INDEPENDENT CLOCK. The caller may poll this every frame, but
-    // the adapter advances only when wallSeconds reaches its own deadline.
-    // Returns roads touched by the admitted maintenance slice, or zero when the
-    // adapter was not due / is disabled / had nothing to do.
-    std::size_t serviceSlowAdapterClock(double wallSeconds);
-    double slowAdapterClockPeriodSeconds() const { return kSlowAdapterPeriodSeconds; }
-    std::uint64_t slowAdapterMaintenanceRuns() const { return _slowAdapterMaintenanceRuns; }
-
     const Relevance::SlowAdapter& slowAdapter() const { return _adapter; }
     Relevance::SlowAdapter& slowAdapter() { return _adapter; }
 
