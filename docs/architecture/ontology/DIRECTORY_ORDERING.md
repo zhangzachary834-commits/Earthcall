@@ -163,6 +163,7 @@ Earthcall/
           Person/
           Relation/
           ZonesOfEarth/
+      Terminal/            the Terminal modality (TerminalChannel, LineEditor, LawSentence)
     Time/                  Timeline · Moment · Event
       timeline.hpp/.cpp    (Timeline: relative temporal domain, a Singular)
       Event/               (the distinguished Moment: occurrence in time)
