@@ -1794,6 +1794,24 @@ std::shared_ptr<Law> LawManager::createLaw(const std::string& name,
     return law;
 }
 
+std::shared_ptr<Law> LawManager::createLaw(const std::string& name,
+                                           const std::string& identifier,
+                                           const std::vector<Singular*>& authors) {
+    // An explicit identity is a creation key, not a display-name alias.
+    // Refuse duplicates here so callers never receive a fresh Law that add()
+    // silently declined to register because the identifier already exists.
+    if (!identifier.empty() && find(identifier)) {
+        return nullptr;
+    }
+
+    auto law = std::make_shared<Law>(name, authors);
+    if (!identifier.empty()) {
+        law->setLawIdentifier(identifier);
+    }
+    add(law);
+    return law;
+}
+
 void LawManager::add(const std::shared_ptr<Law>& law) {
     if (!law) return;
     const std::string id = law->getIdentifier();
