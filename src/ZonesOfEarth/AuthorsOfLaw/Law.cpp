@@ -2133,9 +2133,20 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     }
     auto T1 = glfwGetTime();
 
-    // Query beings once per tick to avoid repeated allocations and provider
-    // calls during continuous law sweeps and candidate route evaluations.
-    const std::vector<Singular*> allBeings = Universe::instance().beings();
+    // Reuse one beings snapshot while the world's structural generation is
+    // unchanged. A Law can synchronously Create/Spawn/register a being during
+    // this tick, and the pre-optimization code asked Universe::beings() again
+    // at each later sweep. Preserve that same-tick visibility without paying
+    // to rebuild the provider vector for every Law when nothing structural
+    // changed.
+    std::vector<Singular*> allBeings = Universe::instance().beings();
+    std::uint64_t allBeingsRevision = Universe::instance().structuralRevision();
+    const auto refreshBeingsIfStructureChanged = [&]() {
+        const std::uint64_t revision = Universe::instance().structuralRevision();
+        if (revision == allBeingsRevision) return;
+        allBeings = Universe::instance().beings();
+        allBeingsRevision = Universe::instance().structuralRevision();
+    };
 
     // Introduce any being the network has not met. Only while connected: the
     // property-change callback installed by connectToEventBus() is what keeps
@@ -2177,6 +2188,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             Universe::EventScope eventScope(subject, eventObject);
 
             if (law->scope() == Law::Scope::Everyone) {
+                refreshBeingsIfStructureChanged();
                 std::vector<Singular*> subjects = sweepSubjects(*law, allBeings);
                 for (Singular* being : subjects) {
                     if (!being || Universe::instance().isUnmade(being)) continue;
@@ -2347,6 +2359,8 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         }
 
         // OnBecomeTrue and laws without Rete terminals: full sweep path.
+        // A previous Law in this same tick may have changed who exists.
+        refreshBeingsIfStructureChanged();
         std::vector<Singular*> subjects = sweepSubjects(*law, allBeings);
 
         for (Singular* subject : subjects) {
@@ -2377,6 +2391,9 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         }
     }
     auto T3 = glfwGetTime();
+    // Drive sessions historically took a fresh Universe snapshot at this
+    // point, after continuous Laws had run. Keep that observable boundary.
+    refreshBeingsIfStructureChanged();
     runDriveSessions(records, allBeings);
     auto T4 = glfwGetTime();
     reapUnmade();
