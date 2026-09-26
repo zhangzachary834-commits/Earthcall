@@ -627,6 +627,43 @@ int main() {
         assert(sawHighHp);
         assert(!sawLowHp);
 
+        // Pre-normalization must preserve the conservative referent-tail
+        // alias rule exactly. This is the production-path regression for the
+        // PR #386 optimization: an @-prefixed write may feed an unprefixed
+        // read through one of its normalized tails, with branch provenance,
+        // path, quantified-instance flag, and completeness all preserved.
+        auto prefixedWriter = std::make_shared<Law>("prefixed-writer");
+        prefixedWriter->setLawIdentifier("prefixed-writer");
+        prefixedWriter->setActionModel(
+            ActionNode::set("@event.subject.position.x", PropertyValue(500.0)));
+
+        auto tailReader = std::make_shared<Law>("tail-reader");
+        tailReader->setLawIdentifier("tail-reader");
+        tailReader->setConditionModel(ConditionNode::compare(
+            "position.x", ConditionNode::Op::Gt, PropertyValue(100.0)));
+
+        const Prophetic::LawFacts prefixedWriterFacts =
+            Prophetic::analyzeLaw(*prefixedWriter);
+        const Prophetic::LawFacts tailReaderFacts =
+            Prophetic::analyzeLaw(*tailReader);
+        assert(prefixedWriterFacts.writes.size() == 1);
+        assert(tailReaderFacts.branchReads.size() == 1);
+
+        Prophetic::Index normalizedTailGraph;
+        normalizedTailGraph.rebuild({prefixedWriter, tailReader});
+        assert(normalizedTailGraph.complete());
+        assert(normalizedTailGraph.relevanceComplete());
+        assert(normalizedTailGraph.relevanceEdges().size() == 1);
+
+        const auto& normalizedEdge = normalizedTailGraph.relevanceEdges().front();
+        assert(normalizedEdge.writerLawId == prefixedWriterFacts.writes[0].lawId);
+        assert(normalizedEdge.writerBranchId == prefixedWriterFacts.writes[0].branchId);
+        assert(normalizedEdge.readerLawId == tailReaderFacts.branchReads[0].lawId);
+        assert(normalizedEdge.readerBranchId == tailReaderFacts.branchReads[0].branchId);
+        assert(normalizedEdge.path == tailReaderFacts.branchReads[0].path);
+        assert(normalizedEdge.aboutInstances ==
+               tailReaderFacts.branchReads[0].aboutInstances);
+
         // Unknown-variable model: an unreadable condition makes the graph
         // incomplete, but it no longer erases unrelated edges that are
         // structurally known. Those edges remain diagnostic-only until

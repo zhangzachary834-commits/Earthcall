@@ -1,0 +1,90 @@
+{
+  "authors": [
+    "Zach"
+  ],
+  "identifier": "law-line-delete-when-confirmed",
+  "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
+  "law": {
+    "actionDescriptions": [
+      "destroy @event.object"
+    ],
+    "actionModel": {
+      "elementToken": "@event.object",
+      "kind": 16
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "Zach"
+    ],
+    "conditionDescriptions": [],
+    "conditionMode": "all",
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-line-delete-when-confirmed",
+    "name": "Law Line · delete only on a yes",
+    "provenance": [
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "directed": true,
+        "entityA": "law-line-delete-when-confirmed",
+        "entityB": "Zach",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1790386363
+          },
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1790386742
+          }
+        ],
+        "type": "authored-by",
+        "weight": 3.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "terminal-deletion-confirmed"
+  ]
+}

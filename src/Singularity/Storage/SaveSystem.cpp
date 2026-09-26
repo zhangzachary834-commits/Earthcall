@@ -14,7 +14,7 @@
 #include "Singularity/Storage/CloudStorage.hpp"
 #include "Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.hpp"
 #include "Identity/FirstMoverRegister.hpp"
-
+#include "Singularity/Storage/MigrationFramework.hpp"
 #include <zlib.h>
 #include <thread>
 #include <atomic>
@@ -107,7 +107,7 @@ std::string ensureSaveFolder() {
                                                  : std::filesystem::path(g_saveRoot);
     std::error_code ec;
     if (!std::filesystem::exists(p, ec)) {
-        if (!std::filesystem::create_directories(p, ec)) {
+        if (!std::filesystem::create_directories(p, ec) && !std::filesystem::exists(p, ec)) {
             std::cerr << "[SaveSystem] Failed to create saves folder: " << ec.message() << "\n";
             return "";
         }
@@ -128,7 +128,7 @@ std::string ensureSaveTypeFolder(SaveType type) {
     std::filesystem::path typeFolder = mainPath / getSaveTypeFolderName(type);
     std::error_code ec;
     if (!std::filesystem::exists(typeFolder, ec)) {
-        if (!std::filesystem::create_directory(typeFolder, ec)) {
+        if (!std::filesystem::create_directory(typeFolder, ec) && !std::filesystem::exists(typeFolder, ec)) {
             std::cerr << "[SaveSystem] Failed to create " << typeFolder.string() << " folder: " << ec.message() << "\n";
             return "";
         }
@@ -418,10 +418,21 @@ std::string writeSaveData(const nlohmann::json& j, const std::string& customLabe
     std::string filename = makeFilename(customLabel, type, ".ecform");
     if (filename.empty()) return "";
 
-    bool success = atomicWriteFile(filename, [&](std::ostream& out) {
-        out << j.dump(2);
-        return static_cast<bool>(out);
-    });
+    bool success = false;
+    if (filename.length() > 7 && filename.substr(filename.length() - 7) == ".ecform") {
+        nlohmann::json wrapper = nlohmann::json::object();
+        wrapper["MigrationRoot"] = j.dump(-1);
+        std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
+        success = atomicWriteFile(filename, [&](std::ostream& out) {
+            out.write(reinterpret_cast<const char*>(outBytes.data()), outBytes.size());
+            return static_cast<bool>(out);
+        });
+    } else {
+        success = atomicWriteFile(filename, [&](std::ostream& out) {
+            out << j.dump(-1);
+            return static_cast<bool>(out);
+        });
+    }
 
     if (!success) {
         std::cerr << "[SaveSystem] Failed to write " << filename << "\n";
@@ -609,31 +620,14 @@ nlohmann::json readSaveData(const std::string& filepath) {
     }
     
     // Check magic bytes or extension to determine if it's msgpack
-    bool isMsgpack = false;
-    if (actualPath.length() >= 7 && actualPath.substr(actualPath.length() - 7) == ".ecsave") {
-        isMsgpack = true;
-    } else if (actualPath.length() >= 7 && actualPath.substr(actualPath.length() - 7) == ".ecform") {
-        char firstChar = 0;
-        in.get(firstChar);
-        in.clear();
-        in.seekg(0, std::ios::beg);
-        if (firstChar != '{' && firstChar != '[' && firstChar != ' ' && firstChar != '\n' && firstChar != '\r' && firstChar != '\t') {
-            isMsgpack = true;
-        }
-    }
-
-    if (isMsgpack) {
+    if (actualPath.length() > 7 && actualPath.substr(actualPath.length() - 7) == ".ecsave") {
         std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
         std::vector<uint8_t> decompressed = decompressData(bytes);
         try {
             return nlohmann::json::from_msgpack(decompressed);
         } catch (...) {
-            try {
-                return nlohmann::json::parse(decompressed.begin(), decompressed.end());
-            } catch (...) {
-                std::cerr << "[SaveSystem] Malformed msgpack in: " << filepath << "\n";
-                return nlohmann::json();
-            }
+            std::cerr << "[SaveSystem] Malformed msgpack in: " << filepath << "\n";
+            return nlohmann::json();
         }
     } else {
         // Fallback to plain JSON
@@ -645,7 +639,10 @@ nlohmann::json readSaveData(const std::string& filepath) {
                       << ": " << e.what() << "\n";
             return nlohmann::json();
         }
-        return j;
+        
+        // Pass through the migration framework to ensure forward-compatibility
+        // and translation to Graph-based unified structure.
+        return Earthcall::Storage::MigrationFramework::migrateLegacySave(j);
     }
 }
 
@@ -827,7 +824,7 @@ bool unpackSaveToDirectory(const nlohmann::json& j, const std::string& directory
         finalDir.parent_path() / (finalDir.filename().string() + ".tmp_backup_" + suffix);
 
     std::filesystem::create_directories(stageDir, ec);
-    if (ec) {
+    if (ec && ec.value() != 0 && ec.value() != 17) { /* 17 = EEXIST */
         std::cerr << "[SaveSystem] Failed to create unpack staging directory " << stageDir
                   << ": " << ec.message() << "\n";
         return false;
@@ -845,7 +842,7 @@ bool unpackSaveToDirectory(const nlohmann::json& j, const std::string& directory
     auto ensureStageDir = [&](const std::filesystem::path& dir) {
         ec.clear();
         std::filesystem::create_directories(dir, ec);
-        if (ec) {
+        if (ec && ec.value() != 0 && ec.value() != 17) { /* 17 = EEXIST */
             std::cerr << "[SaveSystem] Failed to create staging directory " << dir
                       << ": " << ec.message() << "\n";
             allOk = false;
@@ -1318,7 +1315,7 @@ std::string zoneDirectory(const std::string& identifier) {
     const std::filesystem::path dir = std::filesystem::path(folder) / safe;
     std::error_code ec;
     std::filesystem::create_directories(dir, ec);
-    if (ec) {
+    if (ec && ec.value() != 0 && ec.value() != 17) { /* 17 = EEXIST */
         std::cerr << "[SaveSystem] Failed to create zone directory "
                   << dir.string() << ": " << ec.message() << "\n";
         return "";
@@ -1347,7 +1344,7 @@ bool writeZoneIdentity(const std::string& identifier, const nlohmann::json& j) {
     const std::string path = zoneIdentityPath(identifier);
     if (path.empty()) return false;
     return atomicWriteFile(path, [&](std::ostream& out) {
-        out << j.dump(2);
+        out << j.dump(-1);
         return static_cast<bool>(out);
     });
 }
@@ -1401,7 +1398,7 @@ std::string lawDirectory(const std::string& identifier) {
     const std::filesystem::path dir = sharedIdentityRoot("laws") / safe;
     std::error_code ec;
     std::filesystem::create_directories(dir, ec);
-    if (ec) {
+    if (ec && ec.value() != 0 && ec.value() != 17) { /* 17 = EEXIST */
         std::cerr << "[SaveSystem] Failed to create Law directory "
                   << dir.string() << ": " << ec.message() << "\n";
         return "";
@@ -1428,7 +1425,7 @@ bool writeLawIdentity(const std::string& identifier, const nlohmann::json& j) {
     const std::string path = lawIdentityPath(identifier);
     if (path.empty()) return false;
     return atomicWriteFile(path, [&](std::ostream& out) {
-        out << j.dump(2);
+        out << j.dump(-1);
         return static_cast<bool>(out);
     });
 }
@@ -1469,7 +1466,7 @@ std::string homeDirectory(const std::string& identifier) {
     const std::filesystem::path dir = std::filesystem::path(folder) / safe;
     std::error_code ec;
     std::filesystem::create_directories(dir, ec);
-    if (ec) {
+    if (ec && ec.value() != 0 && ec.value() != 17) { /* 17 = EEXIST */
         std::cerr << "[SaveSystem] Failed to create home directory "
                   << dir.string() << ": " << ec.message() << "\n";
         return "";
@@ -1498,7 +1495,7 @@ bool writeHomeIdentity(const std::string& identifier, const nlohmann::json& j) {
     const std::string path = homeIdentityPath(identifier);
     if (path.empty()) return false;
     return atomicWriteFile(path, [&](std::ostream& out) {
-        out << j.dump(2);
+        out << j.dump(-1);
         return static_cast<bool>(out);
     });
 }
