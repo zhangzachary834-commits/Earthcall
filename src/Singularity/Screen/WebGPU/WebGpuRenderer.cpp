@@ -2742,8 +2742,10 @@ void WebGpuRenderer::flushVolumeComposite() {
                 std::string diagnosticError;
                 if (reuseSourceGeometry && memo.prog.ok &&
                     !sdfwgsl::reuseVolumeSourceGeometry(memo.prog, diagnosticError)) {
-                    memo.prog.ok = false;
-                    memo.prog.error = diagnosticError;
+                    // The experiment may see a future shader shape. Keep its
+                    // original exact program rather than losing this medium.
+                    std::fprintf(stderr, "[WebGpuRenderer] %s; using exact volume shader\n",
+                                 diagnosticError.c_str());
                 }
                 if (diagnosticWork && memo.prog.ok &&
                     !sdfwgsl::instrumentVolumeWork(memo.prog, false, diagnosticError)) {
