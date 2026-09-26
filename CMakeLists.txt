@@ -334,6 +334,7 @@ if(NOT EMSCRIPTEN)
     set(PENDING_FEATURE_TESTS "")
     set(ALL_ACTIVE_TEST_TARGETS "")
 
+
     foreach(TEST_SOURCE ${TEST_FILES})
         get_filename_component(TEST_NAME ${TEST_SOURCE} NAME_WE)
 
