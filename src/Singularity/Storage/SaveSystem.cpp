@@ -418,21 +418,10 @@ std::string writeSaveData(const nlohmann::json& j, const std::string& customLabe
     std::string filename = makeFilename(customLabel, type, ".ecform");
     if (filename.empty()) return "";
 
-    bool success = false;
-    if (filename.length() > 7 && filename.substr(filename.length() - 7) == ".ecform") {
-        nlohmann::json wrapper = nlohmann::json::object();
-        wrapper["MigrationRoot"] = j.dump(-1);
-        std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
-        success = atomicWriteFile(filename, [&](std::ostream& out) {
-            out.write(reinterpret_cast<const char*>(outBytes.data()), outBytes.size());
-            return static_cast<bool>(out);
-        });
-    } else {
-        success = atomicWriteFile(filename, [&](std::ostream& out) {
-            out << j.dump(-1);
-            return static_cast<bool>(out);
-        });
-    }
+    bool success = atomicWriteFile(filename, [&](std::ostream& out) {
+        out << j.dump(2);
+        return static_cast<bool>(out);
+    });
 
     if (!success) {
         std::cerr << "[SaveSystem] Failed to write " << filename << "\n";
@@ -630,6 +619,18 @@ nlohmann::json readSaveData(const std::string& filepath) {
             return nlohmann::json();
         }
     } else {
+        // Check for MsgPack payload (e.g. .ecform binary wrapper)
+        if (in.peek() == 0x81 || in.peek() == 0x82 || (in.peek() & 0xF0) == 0x80) {
+            std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+            try {
+                return Earthcall::Storage::MigrationFramework::migrateLegacySave(nlohmann::json::from_msgpack(bytes));
+            } catch (...) {
+                // If msgpack parsing fails, fall back to plain JSON
+                in.seekg(0, std::ios::beg);
+                in.clear();
+            }
+        }
+
         // Fallback to plain JSON
         nlohmann::json j;
         try {
