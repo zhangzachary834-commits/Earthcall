@@ -12,6 +12,7 @@
 // backend first means Object construction never calls into OpenGL.
 
 #include "ConstructedBeing/Material/MaterialManager.hpp"
+#include "../support/secondary_scene_hit.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
@@ -2309,6 +2310,63 @@ int main() {
 
         renderer.setRadianceField(nullptr, 0);
         renderer.setRadianceVisibilityEnabled(false);
+    }
+
+    // --- RUNG 10A ZERO-PIXEL-AUTHORITY SECONDARY-HIT TRIBUNAL -----------
+    // This does NOT grant indirect-light pixels authority. It proves the scene
+    // consequence boundary against the existing CPU picking truth first.
+    {
+        using namespace Rung10TestSupport;
+        Object receiverA("rung10.receiver.A");
+        Object receiverB("rung10.receiver.B");
+        receiverA.setShapeKind(Object::ShapeKind::Cube);
+        receiverB.setShapeKind(Object::ShapeKind::Cube);
+        receiverA.setMaterialId("material.rung10.A");
+        receiverB.setMaterialId("material.rung10.B");
+        receiverA.setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+        receiverB.setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 0.0f, 0.0f)));
+        std::vector<Object*> scene{&receiverA, &receiverB};
+        const glm::vec3 origin(0.6f, 0.0f, 0.0f);
+        const glm::vec3 towardB(1.0f, 0.0f, 0.0f);
+
+        uint64_t queries = 0;
+        const SecondaryHit zero = querySecondaryHit(scene, origin, towardB, 0, 0, &queries);
+        assert(zero.state == SecondaryHitState::BudgetExhausted && queries == 0 &&
+               "bounce budget zero consulted secondary scene geometry");
+
+        const SecondaryHit hit = querySecondaryHit(scene, origin, towardB, 0, 1, &queries);
+        assert(hit.state == SecondaryHitState::Hit && queries == 1 &&
+               hit.objectId == receiverB.getIdentifier() &&
+               hit.materialId == receiverB.materialId() &&
+               "secondary scene query did not identify B and B's Material");
+        float directT = 0.0f; int directFace = -1; glm::vec2 directUV(0.0f);
+        assert(receiverB.raycastFace(origin, towardB, directT, directFace, directUV));
+        assert(std::fabs(hit.distance - directT) < 1e-5f &&
+               glm::length(hit.point - (origin + towardB * directT)) < 1e-5f &&
+               hit.face == directFace && glm::length(hit.normal - glm::vec3(-1.0f, 0.0f, 0.0f)) < 1e-5f &&
+               "secondary hit disagreed with exact cube reference geometry");
+
+        const SecondaryHit miss = querySecondaryHit(scene, origin, glm::vec3(0.0f, 1.0f, 0.0f), 0, 1, &queries);
+        assert(miss.state == SecondaryHitState::Miss && miss.objectId.empty() && miss.materialId.empty() &&
+               "secondary miss retained stale prior hit identity");
+
+        const float geometryDistance = hit.distance;
+        receiverB.setMaterialId("material.rung10.B.edited");
+        const SecondaryHit materialEdit = querySecondaryHit(scene, origin, towardB, 0, 1, &queries);
+        assert(materialEdit.objectId == receiverB.getIdentifier() &&
+               materialEdit.materialId == "material.rung10.B.edited" &&
+               std::fabs(materialEdit.distance - geometryDistance) < 1e-5f &&
+               "Material identity edit incorrectly changed scene-hit geometry");
+
+        receiverB.setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f)));
+        const SecondaryHit moved = querySecondaryHit(scene, origin, towardB, 1, 1, &queries);
+        assert(moved.state == SecondaryHitState::Hit && moved.objectId == receiverB.getIdentifier() &&
+               moved.materialId == receiverB.materialId() && moved.distance > materialEdit.distance + 1.5f &&
+               receiverA.getIdentifier() == "rung10.receiver.A" &&
+               "local B geometry edit did not repair the hit consequence independently of A identity");
+        std::printf("Rung-10A secondary hit: B=%s material=%s t=%.3f moved=%.3f queries=%llu\\n",
+                    hit.objectId.c_str(), materialEdit.materialId.c_str(), hit.distance, moved.distance,
+                    static_cast<unsigned long long>(queries));
     }
 
     // --- An unpainted cube draws as ONE merged mesh; painting a single face
