@@ -50,6 +50,8 @@
 
 - CRITICAL: Ensure Singular set-to-set Creation is working, that we have a window where I can easil and intuitively perform set-to-set Creation, and that Law creation uses Set to Set.
 
+- CRITICAL: BRUHHHHHHHHH WHY DOES IT SAY I CAN SPAWN A NEW ZACH?!?!?!?!? "Law authoring -> Action -> Spawn -> @Zach" BRUHHHHHHHHHHH DOES ACTUALLY SPAWN A NEW ZACH OR NOT?!?!?!? UR NOT SUPPOSED TO BE ABLE TO CREATE A PERSON VIA SET TO SET CREATION A PERSON IS STRICTLY A REAL LIFE PERSON THAT U HAVE TO REGISTER WITH DEDICATED CHANNEL AND WITH AN ID NOT AN IN WORLD BEING U CAN JUST CREATE AD HOC  
+
 - There is a rendering issue--the perlin noise floor when I move distort rather than appearing as the same shape. Same thing with shaders, moving around appears to distort shading rather than making them change naturally from the perspective. Patch this - Zach. WAIT **Part 2** BROOOOOO THE DISTORTION EFFECT LOOKS SO COOL WHEN I MOVE THROUGH THE FAR LANDS ZONE. NEED TO HAVE THIS AT THE RIGHT MOMENT. PLZ MAKE THIS AN AUTHORABLE PROEPRTY INSTAEDDDDDDDDDD - Zach *(2026-09-19: Zach's own patch attempt did not fix it — `08c028d0` "unsuccessful attempt to patch distortion bug"; still open.)*
 
 - ✅ **Basic 2D Button** — done and verified (2026-09-04): Authored a 2D shape with Laws to act as a button that moves when clicked without UI C++ code. → [full task](Specific%20Tasks/Interaction%20and%20Interface/Basic_2D_Button/Basic_2D_Button.md)

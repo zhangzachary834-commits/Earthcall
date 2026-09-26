@@ -31,6 +31,8 @@
 - [ ] **Ctrl-C** clears the line; on an empty line it warns once, then a second Ctrl-C quits. Afterwards the Terminal types and echoes normally.
 - [ ] Outside the Law Line Zone, click a cube in the world, then type `on tick then set ` and press Tab: that cube's properties are offered, with their live values.
 - [ ] Does it *feel* right? Menu height (`@terminal-channel.menuRows`, default 8), whether it opens on its own (`autoMenu`), the colours, and the hint footer (`hints`) are all registered properties if you want them different.
+- [ ] **Guidance** (after your "HALP IDK HOW TO USE THIS"): the empty line shows a `try:` example; while typing, `next: … e.g. …` says what comes next; Enter on an unfinished sentence keeps it and says what to add, rather than refusing; the menu never offers WritePixel/AddElement/AuthorZone, or "always" after "when they collide".
+- [ ] `my law called Blue when they collide then set color blue` authors (your sentence, one step from done).
 - [ ] The legacy `Run Earthcall Terminal.command` still behaves exactly as before.
 
 ## Volumetric Light Beams Shining Through Mist — Sanctuary of Sunlit Mist

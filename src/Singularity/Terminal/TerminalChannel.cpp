@@ -48,7 +48,12 @@ namespace Terminal {
 namespace {
 
 constexpr const char* kLineEntered = "terminal-line-entered";
-constexpr const char* kHistoryFile = "saves/logs/terminal-history.txt";
+// The Person's line history. EARTHCALL_TERMINAL_HISTORY moves it (probes and
+// tests must never write into — or clear — the Person's own history).
+std::string historyFile() {
+    const char* override = std::getenv("EARTHCALL_TERMINAL_HISTORY");
+    return override && *override ? override : "saves/logs/terminal-history.txt";
+}
 constexpr const char* kLogFile = "saves/logs/earthcall-terminal.log";
 
 // The event vocabulary, as it actually occurs: every event type the world has
@@ -124,6 +129,65 @@ std::string showValue(const PropertyValue& v) {
     if (std::holds_alternative<std::shared_ptr<PropertyList>>(v)) return "list";
     if (std::holds_alternative<std::shared_ptr<PropertyDict>>(v)) return "dictionary";
     return "…";
+}
+
+// Examples are built from the words THIS world has — a trigger preset if one
+// exists, the scoped being's own property, a value word — never a fixed
+// script, so they stay true as the vocabulary grows.
+std::string exampleTrigger(const LawSentence::Vocabulary& v) {
+    for (const auto& w : v.words) {
+        if (w.opcode != "preset") continue;
+        for (const auto& p : v.presets) {
+            if (p.lawId == w.lawId && !p.triggers.empty() && !p.condition && !p.action) return w.symbol;
+        }
+    }
+    // Otherwise the event this world has actually heard most often.
+    std::string best;
+    int bestCount = -1;
+    for (const auto& e : v.events) {
+        const auto it = heardEvents().find(e);
+        const int count = it == heardEvents().end() ? 0 : it->second;
+        if (count > bestCount) {
+            best = e;
+            bestCount = count;
+        }
+    }
+    return best.empty() ? "on tick" : "on " + best;
+}
+
+std::string examplePath(const LawSentence::Vocabulary& v) {
+    std::vector<std::string> props;
+    if (v.propertiesOf && !v.scopeBeing.empty()) props = v.propertiesOf(v.scopeBeing);
+    if (props.empty() || std::find(props.begin(), props.end(), "color") != props.end()) return "color";
+    return props.front();
+}
+
+std::string exampleValue(const LawSentence::Vocabulary& v, const std::string& path) {
+    if (path == "color") {
+        for (const auto& w : v.words) {
+            if (w.opcode != "value") continue;
+            for (const auto& p : v.presets) {
+                if (p.lawId == w.lawId && p.value && std::holds_alternative<glm::vec3>(*p.value)) return w.symbol;
+            }
+        }
+        return "1 0 0";
+    }
+    return "1";
+}
+
+std::string exampleAction(const LawSentence::Vocabulary& v) {
+    const std::string path = examplePath(v);
+    return "then set " + path + " " + exampleValue(v, path);
+}
+
+// "e.g." for whatever the sentence needs next.
+std::string exampleFor(const std::string& need, const LawSentence::Vocabulary& v) {
+    if (need.find("event") != std::string::npos) return exampleTrigger(v);
+    if (need.find("action") != std::string::npos) return exampleAction(v).substr(need.rfind("then", 0) == 0 ? 0 : 5);
+    if (need.find("condition") != std::string::npos) return "if " + examplePath(v) + " > 2";
+    if (need.find("property path") != std::string::npos) return examplePath(v);
+    if (need.find("value") != std::string::npos) return exampleValue(v, "color") + "  or  1";
+    return {};
 }
 
 // A level that laws may read and, when `writable`, write — over a member of
@@ -319,7 +383,7 @@ void TerminalChannel::attach(LawManager& laws) {
 
     // History survives the session.
     std::vector<std::string> history;
-    std::ifstream in(kHistoryFile);
+    std::ifstream in(historyFile());
     for (std::string line; std::getline(in, line);) {
         if (!line.empty()) history.push_back(line);
     }
@@ -330,6 +394,23 @@ void TerminalChannel::attach(LawManager& laws) {
         [this](const std::string& before) { return LawSentence::suggest(before, liveVocabulary()); },
         [this](const std::string& text) { return liveParse(text).spans; },
         [this](const std::string& text) { return statusOf(text); });
+    // Enter on a sentence that cannot be authored yet keeps the line and says
+    // what is missing, instead of filling the scrollback with refusals.
+    _editor.submitGate = [this](const std::string& text) -> std::string {
+        const std::string t = text.substr(text.find_first_not_of(" \t"));
+        if (t.rfind("??", 0) == 0 || t.back() == '?') return {};
+        const LawSentence::Parse p = LawSentence::parse(text, liveVocabulary());
+        if (p.ok || p.error.find("Metalaw") != std::string::npos) return {};   // Metalaws decide when spoken
+        if (p.error.rfind("still open:", 0) == 0) {
+            for (const auto& clause : p.openClauses) {
+                if (clause.find("(optional)") != std::string::npos) continue;
+                const std::string eg = exampleFor(clause, liveVocabulary());
+                return "not yet — add " + clause + (eg.empty() ? "" : ", e.g.  " + eg) +
+                       "   (or end with ? to preview)";
+            }
+        }
+        return "not yet — " + p.error;
+    };
 
     writeTty("\x1b[?2004h");   // bracketed paste: a pasted sentence arrives as one
     _attached = true;
@@ -416,7 +497,7 @@ void TerminalChannel::handleKeys(const std::vector<Key>& keys, double now) {
                 const std::string line = _editor.takeSubmitted();
                 printAbove(_editor.echo(line));
                 _pending.push_back(line);
-                std::ofstream(kHistoryFile, std::ios::app) << line << '\n';
+                std::ofstream(historyFile(), std::ios::app) << line << '\n';
                 break;
             }
             case LineEditor::Outcome::Interrupt:
@@ -649,7 +730,13 @@ const LawSentence::Parse& TerminalChannel::liveParse(const std::string& text) {
 
 std::vector<LineEditor::Status> TerminalChannel::statusOf(const std::string& text) {
     std::vector<LineEditor::Status> out;
-    if (text.find_first_not_of(" \t") == std::string::npos) return out;
+    if (text.find_first_not_of(" \t") == std::string::npos) {
+        const auto& v = liveVocabulary();
+        out.push_back({"try:  " + exampleTrigger(v) + " " + exampleAction(v), "note"});
+        out.push_back({"shape: [preset] [called <name>] [on <event> | when …] [if <condition>] then <action>",
+                       "note"});
+        return out;
+    }
     const LawSentence::Parse& p = liveParse(text);
     if (p.search) {
         const std::size_t shown = std::min<std::size_t>(p.candidates.size(), 6);
@@ -672,7 +759,8 @@ std::vector<LineEditor::Status> TerminalChannel::statusOf(const std::string& tex
             std::string next = p.error.substr(ends.size());
             const std::size_t was = next.rfind(" was expected");
             if (was != std::string::npos) next = next.substr(0, was);
-            out.push_back({"next: " + next, "note"});
+            const std::string eg = exampleFor(next, liveVocabulary());
+            out.push_back({"next: " + next + (eg.empty() ? "" : "     e.g.  " + eg), "note"});
             return out;
         }
         if (typingIt) return out;   // the menu is the answer while the word is unfinished
@@ -682,6 +770,13 @@ std::vector<LineEditor::Status> TerminalChannel::statusOf(const std::string& tex
     }
     out.push_back({p.preview(), "preview"});
     for (const auto& n : p.notes) out.push_back({n, "note"});
+    // What the sentence still needs, with a real example from this world.
+    for (const auto& clause : p.openClauses) {
+        if (clause.find("(optional)") != std::string::npos) continue;
+        const std::string eg = exampleFor(clause, liveVocabulary());
+        out.push_back({"next: " + clause + (eg.empty() ? "" : "     e.g.  " + eg), "note"});
+        break;
+    }
     return out;
 }
 
