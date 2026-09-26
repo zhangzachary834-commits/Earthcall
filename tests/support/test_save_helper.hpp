@@ -31,9 +31,38 @@ struct TempSaveRoot {
     }
 };
 
+struct SaveRootRestorer {
+    std::string previousRoot;
+    bool overridden = false;
+
+    SaveRootRestorer() {
+        previousRoot = SaveSystem::saveRoot();
+        std::filesystem::path currentP(previousRoot);
+        std::filesystem::path normalP = currentP.lexically_normal();
+        std::string normalStr = normalP.string();
+
+        if (previousRoot.empty() || normalStr == "saves" || normalStr == "./saves" ||
+            normalStr == "." || normalStr.empty()) {
+            std::filesystem::path tempDumps =
+                std::filesystem::temp_directory_path() / "earthcall_test_dumps";
+            std::filesystem::create_directories(tempDumps);
+            SaveSystem::setSaveRoot(tempDumps.string());
+            overridden = true;
+        }
+    }
+
+    ~SaveRootRestorer() {
+        if (overridden) {
+            SaveSystem::setSaveRoot(previousRoot);
+        }
+    }
+};
+
 inline void dump_test_save(const std::string& test_name, Zone& testWorld, LawManager& testLawManager, Person& testPlayer,
                            const std::string& filepathOverride = "") {
     std::cout << "[TestSaveHelper] Generating test save: " << test_name << "...\n";
+
+    SaveRootRestorer saveRootRestorer;
 
     ZoneManager mgr;
     auto zone = std::make_shared<Zone>(test_name, "test");
