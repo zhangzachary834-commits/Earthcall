@@ -10,6 +10,7 @@
 #include <iostream>
 #include <string>
 #include <stdexcept>
+#include <vector>
 
 int main() {
     std::cout << "Running test_save_helper_test...\n";
@@ -40,6 +41,7 @@ int main() {
         // Assert nothing written to ./saves/tests/
         assert(!std::filesystem::exists("saves/tests/" + testName + ".json"));
         assert(!std::filesystem::exists("saves/tests/" + testName + ".ecform"));
+        assert(!std::filesystem::exists(std::filesystem::path("saves/zones") / testName / "zone.json"));
 
         // Positively assert created under /tmp/earthcall_test_dumps/tests/
         assert(std::filesystem::exists(tempDumps / "tests" / (testName + ".json")) ||
@@ -82,8 +84,10 @@ int main() {
     assert(std::filesystem::exists(explicitOverride) ||
            std::filesystem::exists(explicitOverride.parent_path() / "custom_dump.ecform"));
     assert(SaveSystem::saveRoot() == customRoot.string());
+    assert(!std::filesystem::exists(std::filesystem::path("saves/zones") / "test_dump_override" / "zone.json"));
     assert(!std::filesystem::exists("custom_spelling_root"));
     std::filesystem::remove_all(explicitOverride.parent_path());
+    std::filesystem::remove_all(customRoot);
 
     // 4. Test the production RAII guard through the real helper. Inject a
     // failure only after dump_test_save() has switched the process-global
