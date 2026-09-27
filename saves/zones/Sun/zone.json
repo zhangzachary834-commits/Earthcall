@@ -871,6 +871,381 @@
             "v": 1
           }
         }
+      },
+      {
+        "objectID": "sun.solar-gate.dais.upper",
+        "center": [
+          0,
+          -0.22,
+          -11
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -0.22,
+          -11,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            6.25,
+            0.22,
+            2
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          6.45,
+          0.42,
+          2.2
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Gate Dais — Upper Platform"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "solar-gate-dais-002"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 2
+          }
+        }
+      },
+      {
+        "objectID": "sun.solar-gate.dais.middle",
+        "center": [
+          0,
+          -0.46,
+          -9.55
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -0.46,
+          -9.55,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            5.45,
+            0.18,
+            0.7
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          5.65,
+          0.38,
+          0.9
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Gate Dais — Middle Step"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "solar-gate-dais-002"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 2
+          }
+        }
+      },
+      {
+        "objectID": "sun.solar-gate.dais.entry",
+        "center": [
+          0,
+          -0.66,
+          -8.25
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -0.66,
+          -8.25,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            4.65,
+            0.16,
+            0.65
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          4.85,
+          0.36,
+          0.85
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Gate Dais — Entrance Step"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "solar-gate-dais-002"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 2
+          }
+        }
       }
     ],
     "relations": []
