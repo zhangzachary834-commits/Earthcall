@@ -116,6 +116,22 @@ std::string number(double d) {
     return buf;
 }
 
+bool isEventPath(const PropertyPath& path) {
+    const std::string text = path.toString();
+    return text.rfind("@event.", 0) == 0;
+}
+
+bool readsEventContext(const ConditionNode& node) {
+    if (isEventPath(node.path) || isEventPath(node.operandPath) || isEventPath(node.probe)) return true;
+    for (const auto& binding : node.bindings) {
+        if (isEventPath(binding.second)) return true;
+    }
+    for (const auto& child : node.children) {
+        if (readsEventContext(child)) return true;
+    }
+    return false;
+}
+
 // What a value looks like in the menu.
 std::string showValue(const PropertyValue& v) {
     if (const auto* d = std::get_if<double>(&v)) return number(*d);
@@ -1107,6 +1123,7 @@ std::string TerminalChannel::lawSummary(const Law& law, LawManager& laws) const 
 // is compiled and asked of each present being, nothing is applied.
 std::string TerminalChannel::dryRun(const LawSentence::Parse& p) {
     if (!p.condition) return "no IF: it acts on every subject it is given";
+    const bool eventRelative = readsEventContext(*p.condition);
     const auto predicate = p.condition->compile();
     std::vector<std::string> names;
     std::size_t count = 0;
@@ -1124,9 +1141,11 @@ std::string TerminalChannel::dryRun(const LawSentence::Parse& p) {
             names.push_back(label);
         }
     }
-    if (count == 0) return "right now the IF holds for nothing here";
-    return "right now the IF holds for " + std::to_string(count) + (count == 1 ? " being: " : " beings: ") +
-           join(names, ", ") + (count > names.size() ? ", …" : "");
+    const std::string caveat = eventRelative ? "hypothetical — no event supplied · " : "";
+    if (count == 0) return caveat + "right now the IF holds for nothing here";
+    return caveat + "right now the IF holds for " + std::to_string(count) +
+           (count == 1 ? " being: " : " beings: ") + join(names, ", ") +
+           (count > names.size() ? ", …" : "");
 }
 
 std::string TerminalChannel::footerText(bool& hears) {
