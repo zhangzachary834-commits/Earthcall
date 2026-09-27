@@ -1634,6 +1634,256 @@
             "v": 3
           }
         }
+      },
+      {
+        "objectID": "sun.processional-lantern.left",
+        "center": [
+          -5.15,
+          1.55,
+          1.35
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5.15,
+          1.55,
+          1.35,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.32,
+            2.35,
+            0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.52,
+          2.55,
+          0.52
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Processional Lantern Column — Left"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "processional-lantern-columns-004"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 4
+          }
+        }
+      },
+      {
+        "objectID": "sun.processional-lantern.right",
+        "center": [
+          5.15,
+          1.55,
+          1.35
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5.15,
+          1.55,
+          1.35,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.32,
+            2.35,
+            0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.52,
+          2.55,
+          0.52
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Processional Lantern Column — Right"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "processional-lantern-columns-004"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 4
+          }
+        }
       }
     ],
     "relations": []
