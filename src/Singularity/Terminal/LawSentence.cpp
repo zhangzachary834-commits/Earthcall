@@ -61,6 +61,27 @@ std::string trim(const std::string& s) {
     return s.substr(a, b - a);
 }
 
+// Damerau-Levenshtein (optimal string alignment) is used only to RANK
+// refusal guidance. It never turns an unknown event into a known one.
+std::size_t typoDistance(const std::string& a, const std::string& b) {
+    std::vector<std::vector<std::size_t>> d(a.size() + 1,
+                                            std::vector<std::size_t>(b.size() + 1));
+    for (std::size_t i = 0; i <= a.size(); ++i) d[i][0] = i;
+    for (std::size_t j = 0; j <= b.size(); ++j) d[0][j] = j;
+    for (std::size_t i = 1; i <= a.size(); ++i) {
+        for (std::size_t j = 1; j <= b.size(); ++j) {
+            const std::size_t cost = a[i - 1] == b[j - 1] ? 0 : 1;
+            d[i][j] = std::min({d[i - 1][j] + 1,
+                                d[i][j - 1] + 1,
+                                d[i - 1][j - 1] + cost});
+            if (i > 1 && j > 1 && a[i - 1] == b[j - 2] && a[i - 2] == b[j - 1]) {
+                d[i][j] = std::min(d[i][j], d[i - 2][j - 2] + 1);
+            }
+        }
+    }
+    return d[a.size()][b.size()];
+}
+
 enum class Form { Free, Prefix, Suffix };
 
 struct Spelling {
@@ -407,18 +428,35 @@ private:
         if (a.text.empty() || !looksLikePath(a.text)) refuse("'" + a.text + "' does not name an event", a.offset);
         if (a.quoted || mayMint || _vocab.events.empty()) return a.text;
         if (std::find(_vocab.events.begin(), _vocab.events.end(), a.text) != _vocab.events.end()) return a.text;
-        std::vector<std::string> near;
+        struct NearEvent {
+            std::size_t distance;
+            std::string name;
+        };
+        std::vector<NearEvent> ranked;
         const std::string want = lower(a.text);
+        const std::size_t typoLimit = want.size() < 5 ? 1 : 2;
         for (const auto& e : _vocab.events) {
             const std::string have = lower(e);
-            if (have.find(want) != std::string::npos || want.find(have) != std::string::npos ||
-                (want.size() >= 3 && have.compare(0, 3, want, 0, 3) == 0)) {
-                near.push_back(e);
-            }
+            const std::size_t distance = typoDistance(want, have);
+            const bool lexicalNeighbor =
+                have.find(want) != std::string::npos || want.find(have) != std::string::npos ||
+                (want.size() >= 3 && have.compare(0, 3, want, 0, 3) == 0);
+            if (lexicalNeighbor || distance <= typoLimit) ranked.push_back({distance, e});
         }
-        if (near.size() > 6) near.resize(6);
-        refuse("'" + a.text + "' is not an event this world knows, so the Law would never fire. "
-               "Pick one from the menu, or quote a new name on purpose: on \"" + a.text + "\"",
+        std::sort(ranked.begin(), ranked.end(), [](const NearEvent& x, const NearEvent& y) {
+            if (x.distance != y.distance) return x.distance < y.distance;
+            return lower(x.name) < lower(y.name);
+        });
+        std::vector<std::string> near;
+        for (const auto& candidate : ranked) {
+            if (near.size() == 6) break;
+            near.push_back(candidate.name);
+        }
+        const std::string hint = near.empty()
+                                     ? "Pick one from the menu"
+                                     : "Did you mean '" + near.front() + "'? Pick a known event";
+        refuse("'" + a.text + "' is not an event this world knows, so the Law would never fire. " +
+                   hint + ", or quote a new name on purpose: on \"" + a.text + "\"",
                a.offset, near);
     }
 
