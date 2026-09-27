@@ -40,12 +40,9 @@ bool PersonDatabase::loadPerson(const std::string& identifier, Person& outPerson
         return false;
     }
     
-    std::ifstream file(filepath);
-    if (!file.is_open()) return false;
-    
-    nlohmann::json j;
     try {
-        file >> j;
+        nlohmann::json j = SaveSystem::readSaveData(filepath);
+        if (j.is_null()) return false;
         outPerson.deserialize(j);
         return true;
     } catch (const std::exception& e) {
