@@ -838,11 +838,12 @@ std::string TerminalChannel::describeBeing(const std::string& beingId) const {
 const LawSentence::Vocabulary& TerminalChannel::liveVocabulary() {
     if (!_vocab || _vocabFrame != _frame) {
         _vocab = vocabulary(*_laws);
-        // Live reading must not act: a shared spelling is shown with its first
-        // meaning; the Metalaws decide for real when the sentence is spoken.
-        _vocab->resolve = [](const LawSentence::Ambiguity& a) {
-            return LawSentence::Resolution{a.candidates.front().individual(),
-                                           "a Metalaw decides which when it is spoken"};
+        // Live reading must not act OR pretend to resolve meaning. Preserve
+        // every grammar-admissible denotation while the Person is typing; the
+        // actual vocabulary() resolver invokes the world's Metalaws only when
+        // the sentence is spoken.
+        _vocab->resolve = [](const LawSentence::Ambiguity&) {
+            return LawSentence::Resolution{"", "a Metalaw decides which when it is spoken"};
         };
         _vocabFrame = _frame;
         _parse.reset();
