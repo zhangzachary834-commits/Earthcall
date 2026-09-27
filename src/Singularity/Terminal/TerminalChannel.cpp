@@ -1148,7 +1148,7 @@ std::string TerminalChannel::footerText(bool& hears) {
     }
     const std::string scope = _laws ? liveVocabulary().scopeBeing : std::string{};
     return zone + " · " + (hears ? "hears the line" : "does NOT hear the line") +
-           (scope.empty() ? "" : " · scope @" + scope) + " · as " + author + " · " + std::to_string(count) +
+           (scope.empty() ? "" : " · property suggestions @" + scope) + " · as " + author + " · " + std::to_string(count) +
            (count == 1 ? " live law" : " live laws");
 }
 
