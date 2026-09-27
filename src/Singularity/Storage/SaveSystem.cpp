@@ -630,8 +630,17 @@ nlohmann::json readSaveData(const std::string& filepath) {
             }
             return Earthcall::Storage::MigrationFramework::migrateLegacySave(wrapper);
         } catch (...) {
-            std::cerr << "[SaveSystem] Malformed msgpack ecform in: " << filepath << "\n";
-            return nlohmann::json();
+            try {
+                nlohmann::json wrapper = nlohmann::json::parse(bytes.begin(), bytes.end());
+                if (wrapper.contains("MigrationRoot") && wrapper["MigrationRoot"].is_string()) {
+                    nlohmann::json root = nlohmann::json::parse(wrapper["MigrationRoot"].get<std::string>());
+                    return Earthcall::Storage::MigrationFramework::migrateLegacySave(root);
+                }
+                return Earthcall::Storage::MigrationFramework::migrateLegacySave(wrapper);
+            } catch (...) {
+                std::cerr << "[SaveSystem] Malformed msgpack/JSON ecform in: " << filepath << "\n";
+                return nlohmann::json();
+            }
         }
     } else if (actualPath.length() > 7 && actualPath.substr(actualPath.length() - 7) == ".ecsave") {
         std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
@@ -1461,13 +1470,13 @@ nlohmann::json readLawIdentity(const std::string& identifier) {
 std::string resolveZoneIdentityPath(const std::string& identifier) {
     const std::string safe = sanitizeLabel(identifier);
     if (safe.empty()) return "";
-    return (sharedIdentityRoot("zones") / safe / "zone.json").string();
+    return (sharedIdentityRoot("zones") / safe / "zone.ecform").string();
 }
 
 std::string resolveHomeIdentityPath(const std::string& identifier) {
     const std::string safe = sanitizeLabel(identifier);
     if (safe.empty()) return "";
-    return (sharedIdentityRoot("homes") / safe / "home.json").string();
+    return (sharedIdentityRoot("homes") / safe / "home.ecform").string();
 }
 
 std::string resolveLawIdentityPath(const std::string& identifier) {
