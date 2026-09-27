@@ -246,8 +246,6 @@ public:
     const Formation& joys() const { return _joys; }
     bool satisfiesJoyBounds() const { return _joys.satisfiesJoyBounds(); }
     std::string propJoys() const { return _joys.getIdentifier(); }
-    virtual void load();
-    void unload();
     void syncFormationMembers(const std::vector<Singular*>& extraMembers = {});
     void applyFormationRelations();
 
