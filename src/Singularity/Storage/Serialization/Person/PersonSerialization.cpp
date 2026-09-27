@@ -105,12 +105,7 @@ void updatePriorPersonSerializations(const Person& person, const std::string& ol
             }
 
             try {
-                std::ifstream inFile(entry.path());
-                if (!inFile.is_open()) continue;
-                nlohmann::json j;
-                inFile >> j;
-                inFile.close();
-
+                nlohmann::json j = SaveSystem::readSaveData(entry.path().string());
                 if (!j.is_object()) continue;
                 bool modified = false;
 

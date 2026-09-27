@@ -1589,15 +1589,8 @@ void ZoneManager::saveState(const std::string& filename, SaveContext& ctx) {
         }
     }
 
-    std::vector<uint8_t> outBytes;
-    if (p.extension() == ".ecform") {
-        nlohmann::json wrapper = nlohmann::json::object();
-        wrapper["MigrationRoot"] = j.dump(-1);
-        outBytes = nlohmann::json::to_msgpack(wrapper);
-    } else {
-        std::string txt = j.dump(-1);
-        outBytes.assign(txt.begin(), txt.end());
-    }
+    std::string txt = j.dump(2);
+    std::vector<uint8_t> outBytes(txt.begin(), txt.end());
     if (!atomicWriteFile(p, outBytes)) {
         std::cerr << "[ZoneManager] saveState: failed to commit " << p << "\n";
         return;
