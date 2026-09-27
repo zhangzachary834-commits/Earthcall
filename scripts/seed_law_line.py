@@ -79,7 +79,8 @@ def law(identifier, name, *, enabled, activation=0, scope=0, condition=None, act
 
 # ---------------------------------------------------------------------------
 # The Laws Lexemes denote. An OPEN slot (empty path, empty event…) makes the
-# Law an opcode word; a Law with no open slot is a preset that fixes clauses.
+# Law an opcode word. A complete action-only Law can be a composable action
+# fragment; a Law that fixes trigger/scope/condition clauses is a preset.
 # All are disabled: they are meanings, not actors.
 # ---------------------------------------------------------------------------
 OPCODES = [

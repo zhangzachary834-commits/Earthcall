@@ -705,6 +705,16 @@ private:
             }
         }
         const std::string kind = verb->opcode.substr(7);
+        // A Lexeme can denote a complete authored action, including a compound
+        // Create/Synthesize tree or a channel action such as WritePixel. The
+        // Relation supplies its Law identity; the Metalaw seam above resolves
+        // shared spellings before we get here. Read the Law's exact model
+        // rather than inventing a second terminal grammar for every payload.
+        if (!verb->lexemeId.empty() && !verb->lawId.empty()) {
+            const auto it = std::find_if(_vocab.presets.begin(), _vocab.presets.end(),
+                [&](const Preset& p) { return p.lawId == verb->lawId && p.action.has_value(); });
+            if (it != _vocab.presets.end()) return *it->action;
+        }
         if (kind == "Set") {
             const std::string path = requirePath();
             (void)tryMatch({"filler.to"}, "filler");
@@ -1046,7 +1056,10 @@ std::vector<Word> canonicalWords() {
 std::string classify(const Law& law, const std::vector<std::string>& triggers, Preset& preset) {
     const bool hasAction = law.hasActionModel();
     const bool hasCondition = law.hasConditionModel();
-    if (hasAction && !hasCondition) {
+    if (hasAction && !hasCondition && triggers.empty() &&
+        law.activation() == Law::Activation::OnEvent &&
+        law.scope() == Law::Scope::Subject && !law.drives() &&
+        law.targets().getMembers().empty() && !law.jurisdiction()) {
         const ActionNode& a = *law.actionModel();
         using K = ActionNode::Kind;
         // "red": a Set with no path but a value. The Law holds what the word
@@ -1069,6 +1082,14 @@ std::string classify(const Law& law, const std::vector<std::string>& triggers, P
             default: break;
         }
         if (open) return std::string("action.") + ActionNode::kindName(a.kind);
+        // A closed action is still an action word. Keeping its authored tree
+        // intact lets the line compose every ActionNode kind without an
+        // ever-growing, hard-coded argument parser. Clauses on the source Law
+        // remain a whole-Law preset below.
+        preset = Preset{};
+        preset.lawId = law.getIdentifier();
+        preset.action = a;
+        return std::string("action.") + ActionNode::kindName(a.kind);
     }
     if (hasCondition && !hasAction) {
         const ConditionNode& c = *law.conditionModel();
@@ -1368,8 +1389,13 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
         const Expectation& e = parser.expectation();
         for (const auto& w : vocab.words) {
             if (admits(e.admit, w.opcode)) {
+                const bool completeAction = !w.lexemeId.empty() &&
+                    std::any_of(vocab.presets.begin(), vocab.presets.end(), [&](const Preset& p) {
+                        return p.lawId == w.lawId && p.action.has_value();
+                    });
                 offer(split, tail, w.symbol, w.description, roleOf(w.opcode),
-                      w.detail.empty() ? w.description : w.detail, argumentTemplate(w.opcode));
+                      w.detail.empty() ? w.description : w.detail,
+                      completeAction ? std::string{} : argumentTemplate(w.opcode));
             }
         }
         if (tail.find_first_of(" \t") != std::string::npos) continue;   // atoms are single words

@@ -35,6 +35,7 @@
 - [ ] **Guidance** (after your "HALP IDK HOW TO USE THIS"): the empty line shows a `try:` example; while typing, `next: … e.g. …` says what comes next; Enter on an unfinished sentence keeps it and says what to add, rather than refusing; the menu never offers WritePixel/AddElement/AuthorZone, or "always" after "when they collide".
 - [ ] `my law called Blue when they collide then set color blue` authors (your sentence, one step from done).
 - [ ] The legacy `Run Earthcall Terminal.command` still behaves exactly as before.
+- [ ] After you author an action-only Law with a complete `Create` or `WritePixel` model and a Lexeme that `denotes` it, type `on object-clicked then <your lexeme>` in the Law Line Zone: Tab should show the word without empty argument blanks, the resulting Law Graph should retain the exact action tree, and clicking should produce the authored effect. No new example Lexeme was seeded in this pass.
 
 **Rung 3 — what you asked for after that** (mouse, blanks, help, footer, dry run, deletion):
 
@@ -275,6 +276,7 @@ Zach has already loaded the current Forge and reported a sparse surface stamping
 - [ ] Save → reload → verify Law persists → save the Law/world → reload → reopen Law Author → verify the Law and its configuration remain
 - [x] Law Author Library & Relation Graph | Zach tested & committed (commits 90f9b182 and 614714df): Nested category DAGs, 69 Laws organized, Relation Graph draws Law-to-Law Relations.
 - [x] Searchable Property Lens redesign | Zach tested & verified (commits 90f9b182 and 614714df): Singular Type → Specific Singular → Specific Property 3-column control without dotted syntax, adaptive vector/color controls, @world/time context identification.
+- [ ] Law Author Property Lens terminology (2026-09-27): open a Condition or Action property path and confirm its unqualified binding reads “Current referent,” with the two old `@event.*` choices shown as “Event participant A/B”; check that editing the path still targets the same being as before.
 - [x] Law Author inspector redesign | Zach tested & verified (commits 90f9b182 and 614714df): Grouped palette sections, full-width labeled values, searchable Singular/concept selection.
 - [x] Property Writers reverse lookup | Zach tested & committed (commit 614714df: "added reverse search for action nodes on properties"): Reverse index over nested Action trees, grouping by Law/Relation/IF/Action, direct card focusing.
 - [x] Assets window: open → verify assets → save/load → verify again

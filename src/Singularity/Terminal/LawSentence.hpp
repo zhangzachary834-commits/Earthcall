@@ -32,7 +32,9 @@
 //   a condition with an OPEN slot (Compare with no path, Related with no
 //   type or other, IsKind(AnyBeing), Not with no child…)
 //       -> an operator / condition word                   "greater than", "is"
-//   a Law with no open slot
+//   a complete action-only Law
+//       -> an action fragment: the sentence takes its exact authored tree
+//   another Law with no open slot
 //       -> a PRESET: it fixes its activation, scope, triggers, and any
 //          condition (an empty All() fixes "no condition") or action
 //                                   "my event-triggered law", "always"
@@ -91,8 +93,8 @@ struct Preset {
 };
 
 // Read a denoted Law's models: which opcode is it? Returns "" when the Law
-// carries nothing a sentence can use (e.g. an open slot in a kind that has no
-// sentence form). `preset` is filled when the answer is "preset" or "value".
+// carries nothing a sentence can use. `preset` is filled for a whole-Law
+// preset, value word, or complete action fragment.
 std::string classify(const Law& law, const std::vector<std::string>& triggers, Preset& preset);
 
 // Two or more admissible meanings for the same spelling at the same place.

@@ -18,7 +18,7 @@ The Law Author is now an inspector workspace:
 - Event selection searches both event names and their human meanings; Singular endpoints and concepts have searchable palettes.
 - Authored mathematics uses readable variable binding, explicit lower/upper boundaries, and a searchable grouped mathematical-form palette.
 - The Property Lens places runtime reference in a horizontal semantic bar, then presents three load-bearing columns: exhaustive ontological Singular type, a live specific Singular filtered by that type, and only the properties returned by that instance's registry.
-- After a path is chosen, its reference can be rebound between Law subject, event subject, event object, and the selected named Singular. The lens descends through properties that point to nested Singulars. Vector-valued paths reveal whole-vector and x/y/z controls in real time, while color-shaped paths adapt those controls to whole-color and r/g/b. Context paths (`time`, `@world`) remain explicitly separate because they are readings, not properties owned by a fabricated Singular.
+- After a path is chosen, its reference can be rebound between the current node's referent, either legacy Event participant slot, and the selected named Singular. The lens descends through properties that point to nested Singulars. Vector-valued paths reveal whole-vector and x/y/z controls in real time, while color-shaped paths adapt those controls to whole-color and r/g/b. Context paths (`time`, `@world`) remain explicitly separate because they are readings, not properties owned by a fabricated Singular. Zach clarified on 2026-09-27 that there is no single “Law subject”: condition and action nodes bind referents independently, and the eventual Event scope is its own Singular plus Relations to its defining Singulars; the UI labels now say “Current referent” and “Event participant A/B” while saved paths keep their compatibility spelling.
 
 This pass changes only the authoring harness. It does not add domain classes, property vocabularies, action/condition enum values, or a second source of ontology truth.
 
@@ -31,3 +31,5 @@ This pass changes only the authoring harness. It does not add domain classes, pr
 - Person-facing layout and interaction checks are recorded in `docs/Agenda/Tasks/For Zach/Person Verification List.md`.
 
 Recorded by Codex, session `01a07a4c-2b09-7f62-b975-3a23084ddeaf`, 2026-09-07 03:35 PDT.
+
+2026-09-27 terminology correction: Zach identified “Law subject” as an underspecified fossil. The Property Lens now labels the unqualified path binding “Current referent” and the two saved Event slots “Event participant A/B”; this is a label correction over the existing runtime paths, pending Event-Relation traversal in the [regrounding task](../../Law%20and%20Reasoning/Law_Time_Authority_Relation_Regrounding/Law_Time_Authority_Relation_Regrounding.md). Codex · GPT-6 · session `codex-law-regrounding-20260927` · 2026-09-27T07:31:17Z.

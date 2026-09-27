@@ -738,7 +738,10 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws) {
         }
         v.words.push_back({lexeme->getSymbol(), opcode, lexeme->getIdentifier(), law->getIdentifier(),
                            law->name(), detail});
-        if (opcode == "preset" || opcode == "value") v.presets.push_back(preset);
+        if (opcode == "preset" || opcode == "value" ||
+            (opcode.rfind("action.", 0) == 0 && preset.action)) {
+            v.presets.push_back(preset);
+        }
     }
 
     std::set<std::string> events;

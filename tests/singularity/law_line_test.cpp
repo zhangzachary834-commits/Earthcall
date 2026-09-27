@@ -145,6 +145,43 @@ void grammar() {
     gtOpcode.setConditionModel(ConditionNode::compare("", ConditionNode::Op::Gt, PropertyValue{}));
     assert(LS::classify(gtOpcode, {}, unused) == "op.Gt");
 
+    // A denoting Lexeme can carry a complete ActionModel into an action
+    // clause. This preserves nested set-to-set creation and pixel operands
+    // exactly; neither gets flattened into a terminal-specific verb grammar.
+    Law createFragment("fashion a lit cube");
+    createFragment.setLawIdentifier("law-fragment-create");
+    createFragment.setActionModel(ActionNode::create(
+        0, "", {ActionNode::set("glow", PropertyValue(1.0))}));
+    LS::Preset createPayload;
+    assert(LS::classify(createFragment, {}, createPayload) == "action.Create");
+    assert(createPayload.action);
+    Law pixelFragment("ink a pixel");
+    pixelFragment.setLawIdentifier("law-fragment-pixel");
+    pixelFragment.setActionModel(ActionNode::writePixel(
+        "surface.face", "surface.u", "surface.v", "surface.ink"));
+    LS::Preset pixelPayload;
+    assert(LS::classify(pixelFragment, {}, pixelPayload) == "action.WritePixel");
+    assert(pixelPayload.action);
+    LS::Vocabulary fragments = baseVocabulary();
+    fragments.presets.push_back(createPayload);
+    fragments.presets.push_back(pixelPayload);
+    fragments.words.push_back({"fashion", "action.Create", "lex-fashion", "law-fragment-create"});
+    fragments.words.push_back({"ink-pixel", "action.WritePixel", "lex-ink", "law-fragment-pixel"});
+    const auto composed = LS::parse("on tick then fashion and ink-pixel", fragments);
+    assert(composed.ok && composed.action);
+    assert(composed.action->kind == ActionNode::Kind::Sequence);
+    assert(composed.action->children.size() == 2);
+    assert(composed.action->children[0].toJson() == createPayload.action->toJson());
+    assert(composed.action->children[1].toJson() == pixelPayload.action->toJson());
+    const auto menu = LS::suggest("on tick then fashi", fragments);
+    const auto suggestion = std::find_if(menu.begin(), menu.end(), [](const LS::Suggestion& s) {
+        return s.text == "fashion";
+    });
+    assert(suggestion != menu.end() && suggestion->snippet.empty());
+    // A source Law with its own when is a whole-Law preset. Its trigger may
+    // never disappear merely because its action payload is complete.
+    assert(LS::classify(createFragment, {"object-clicked"}, unused) == "preset");
+
     v.presets = {fixedEvent, fixedNone};
     v.words.push_back({"my event-triggered law", "preset", "lex_evt", "law-line-preset-event"});
     v.words.push_back({"my law with no condition", "preset", "lex_nocond", "law-line-preset-unconditioned"});
@@ -307,6 +344,13 @@ void channel() {
     graph.add(std::make_shared<Relation>("denotes", gtWord, *gtLaw, true, 1.0f));
     graph.add(std::make_shared<Relation>("denotes", isEq, *eqLaw, true, 1.0f));
     graph.add(std::make_shared<Relation>("denotes", isNe, *neLaw, true, 1.0f));
+    Singularity::Language::Lexeme illuminate("illuminate", "lex_illuminate");
+    auto illuminateLaw = std::make_shared<Law>("illuminate", std::vector<Singular*>{&zach});
+    illuminateLaw->setLawIdentifier("law-line-fragment-illuminate");
+    illuminateLaw->setEnabled(false);
+    illuminateLaw->setActionModel(ActionNode::set("glow", PropertyValue(6.0)));
+    laws.add(illuminateLaw);
+    graph.add(std::make_shared<Relation>("denotes", illuminate, *illuminateLaw, true, 1.0f));
 
     Universe::instance().setProvider([&](std::vector<Singular*>& out) {
         out.push_back(&zach);
@@ -362,6 +406,17 @@ void channel() {
     Core::EventBus::instance().publish(ECA::Event{"object-clicked", &cube, nullptr, std::time(nullptr), ""});
     laws.tick();
     assert(number(cube, "glow") == 1.0);
+
+    // The live channel discovers the denoting Relation, copies the complete
+    // authored action into a newborn Law, and that Law actually writes.
+    terminal->inject("on object-clicked then illuminate");
+    frame();
+    Law* illuminated = laws.getAll().back().get();
+    assert(illuminated->hasActionModel());
+    assert(illuminated->actionModel()->toJson() == illuminateLaw->actionModel()->toJson());
+    Core::EventBus::instance().publish(ECA::Event{"object-clicked", &cube, nullptr, std::time(nullptr), ""});
+    laws.tick();
+    assert(number(cube, "glow") == 6.0);
 
     // 2. Shared display names are legitimate; identity is the minted id.
     terminal->inject("my law called Red fires on tick then set glow 2");
