@@ -39,17 +39,14 @@ bool PersonDatabase::loadPerson(const std::string& identifier, Person& outPerson
     if (!std::filesystem::exists(filepath)) {
         return false;
     }
-    
-    std::ifstream file(filepath);
-    if (!file.is_open()) return false;
-    
-    nlohmann::json j;
+
     try {
-        file >> j;
+        nlohmann::json j = SaveSystem::readSaveData(filepath);
+        if (j.is_null() || j.empty()) return false;
         outPerson.deserialize(j);
         return true;
     } catch (const std::exception& e) {
-        std::cerr << "Failed to parse Person json: " << e.what() << std::endl;
+        std::cerr << "Failed to parse Person save data: " << e.what() << std::endl;
         return false;
     }
 }
