@@ -310,6 +310,12 @@ struct WebSocketServer::Impl {
                                               const nlohmann::json& context = nlohmann::json::object()) {
         auto& reg = Identity::FirstMoverRegister::instance();
         const Identity::SingularId* mover = auth.moverFor(connection);
+
+        if (!mover && Relation::s_developerMode) {
+            static Identity::SingularId legacyMover = Identity::SingularId::mintOpaque();
+            return legacyMover;
+        }
+
         const auto decision = Foreign::authorizeForeignActuation(
             reg, mover, resource, property, "websocket", unmappedReason);
         if (decision.allowed) return *mover;
@@ -545,9 +551,10 @@ struct WebSocketServer::Impl {
                             unmapped = "this being has no durable owner Earthcall can scope a write by yet";
                         }
                     }
+                    std::optional<Identity::SingularId> mover;
                     std::optional<Identity::FirstMoverSession> moverSession;
                     if (targetBeing) {
-                        auto mover = admit(hdl, clientId, "property_write_ack", resource, prop, unmapped,
+                        mover = admit(hdl, clientId, "property_write_ack", resource, prop, unmapped,
                                            {{"target", target}});
                         if (!mover) return;
                         moverSession.emplace(Identity::FirstMoverRegister::instance(), *mover);
@@ -572,6 +579,11 @@ struct WebSocketServer::Impl {
                             auto res = path.setValue(*targetBeing, val);
                             pathResultCode = static_cast<int>(res);
                             ok = (res == PropertyPath::PathResult::Ok || res == PropertyPath::PathResult::Unchanged);
+                            if (ok) {
+                                std::string onBehalfOf = j.value("onBehalfOf", "");
+                                std::string lawId = onBehalfOf.empty() ? "mcp" : "mcp (on behalf of " + onBehalfOf + ")";
+                                targetBeing->addStakeholder(prop, mover->toString(), lawId, std::time(nullptr));
+                            }
                         }
 
                         nlohmann::json reply;
@@ -689,6 +701,9 @@ struct WebSocketServer::Impl {
                 // Register with Zone and Global Objects for persistence
                 obj->addZoneDesignation(mgr.active().name());
                 obj->addZoneDesignation(mgr.active().getIdentifier());
+                std::string onBehalfOf = j.value("onBehalfOf", "");
+                std::string lawId = onBehalfOf.empty() ? "mcp" : "mcp (on behalf of " + onBehalfOf + ")";
+                obj->addStakeholder("spawn", mover->toString(), lawId, std::time(nullptr));
                 mgr.active().addObject(obj);
                 mgr.getGlobalObjects().push_back(obj);
                 // The act is the mover's; persisting every Zone afterwards is
