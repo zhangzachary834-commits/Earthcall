@@ -464,6 +464,13 @@ void channel() {
     frame();
     assert(mentions(printed.back(), "right now the IF holds for 1 being"));
 
+    // Event-relative dry runs have no occurrence to bind, so the line must say
+    // that this is a hypothetical event-less probe rather than a verdict.
+    terminal->inject("on object-clicked if @event.verb = \"object-clicked\" then set glow 1 ?");
+    frame();
+    assert(mentions(printed.back(), "hypothetical"));
+    assert(mentions(printed.back(), "no event supplied"));
+
     // 4. Nothing enters the world without an author.
     PropertyPath::parse("authorPath").setValue(*terminal, PropertyValue(std::string("@nobody.who")));
     const std::size_t beforeUnauthored = laws.getAll().size();
