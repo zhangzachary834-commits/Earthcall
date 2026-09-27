@@ -868,7 +868,7 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 
 # *Zach has seen the pre-V5 aurora —* `cfaef59a` *"GEMINIII THIS IS A LIGHT SHOW NOT AN AURORA", then* `6eb8d4db` *"THE AURORA IS HEREEEEEEEEEEE" and* `46e90911` *"BROOOOOOOO ITS EVEN MORE AURORA NOWWWWWWW" (all 2026-09-23). V5 (#343) merged on 09-24, after those, so the overlap check below is still open.*
 
-
+Zach: The msgpack itself works properly. I manually verified the new msgpack itself works and hydrates by clicking save -> compiling northern veil's zone.json to ecform, then temporarily deleting zone.json to rule out silent json fallback. It worked, and I then temporarily removed the entire legacy world folder and tried again it still worked. Northern veils still there, still ethereal and majestic. 
 
 ## Orphaned laws are re-authored onto you at load (added 2026-09-24)
 

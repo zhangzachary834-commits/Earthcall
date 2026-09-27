@@ -46,13 +46,17 @@
 ## Near-term priorities (2026-08-14 — from architecture review):
 - **⚑ AUTHOR: Architectural Revision of the Language System (2026-09-04)** — Review the data-driven refactor of the Synaptic Plasticity loop and confirm it aligns with semantic decay telos. → [full task](Specific%20Tasks/Channels%20and%20Language/AUTHOR_Language_System_Decay_Revision/AUTHOR_Language_System_Decay_Revision.md)
 
-- CRITICAL: Ensure the save system works. In this delicate state of the program's early generative phase, we don't want that to affect the save system to the point where developer worlds unstable or erased in the fragile states of testing and developing features that rely on the save system persisting my prior changes. – Zach
+- CRITICAL: Ensure the save system works. In this delicate state of the program's early generative phase, we don't want that to affect the save system to the point where developer worlds unstable or erased in the fragile states of testing and developing features that rely on the save system persisting my prior changes. – Zach. UPDATE: This is largely resolved we've been relying on the save system a lot and its holding up pretty well ✅. Just need to make sure the migration to msgpack now works in all its respects - Zach
 
 - CRITICAL: Ensure Singular set-to-set Creation is working, that we have a window where I can easil and intuitively perform set-to-set Creation, and that Law creation uses Set to Set.
 
 - CRITICAL: BRUHHHHHHHHH WHY DOES IT SAY I CAN SPAWN A NEW ZACH?!?!?!?!? "Law authoring -> Action -> Spawn -> @Zach" BRUHHHHHHHHHHH DOES ACTUALLY SPAWN A NEW ZACH OR NOT?!?!?!? UR NOT SUPPOSED TO BE ABLE TO CREATE A PERSON VIA SET TO SET CREATION A PERSON IS STRICTLY A REAL LIFE PERSON THAT U HAVE TO REGISTER WITH DEDICATED CHANNEL AND WITH AN ID NOT AN IN WORLD BEING U CAN JUST CREATE AD HOC  
 
 - There is a rendering issue--the perlin noise floor when I move distort rather than appearing as the same shape. Same thing with shaders, moving around appears to distort shading rather than making them change naturally from the perspective. Patch this - Zach. WAIT **Part 2** BROOOOOO THE DISTORTION EFFECT LOOKS SO COOL WHEN I MOVE THROUGH THE FAR LANDS ZONE. NEED TO HAVE THIS AT THE RIGHT MOMENT. PLZ MAKE THIS AN AUTHORABLE PROEPRTY INSTAEDDDDDDDDDD - Zach *(2026-09-19: Zach's own patch attempt did not fix it — `08c028d0` "unsuccessful attempt to patch distortion bug"; still open.)*
+
+- HIGH: Do a review of the Horizon's (Gemini 3.1 Pro) new msgpack save system 
+- Stress test the loop preexisting save file -> zone changes in world -> save -> new save file with both the preexisting state. Binary is very hard to read/write to deliberately manipulate—it's not like json where you know exactly where to inject new binary. If only the initial save process understood the meaning of the binary then future saves can't add anything new without corrupting it on all loop on all sorts of edge cases (if there are edge cases)
+- Make sure its still doing atomic file write practice
 
 - ✅ **Basic 2D Button** — done and verified (2026-09-04): Authored a 2D shape with Laws to act as a button that moves when clicked without UI C++ code. → [full task](Specific%20Tasks/Interaction%20and%20Interface/Basic_2D_Button/Basic_2D_Button.md)
 
@@ -561,6 +565,7 @@ on a quiet machine) so the tripwire tightens behind the fix.
 - Retire Law Drive, onEvent/whiletrue/onbecometrue into a rich OntoMath bounds framework over Moments in Timelines instead of bespoke temproal kinds
 - WHY DID WE MAKE AUTHORITY INTO A NUMBER LINE?!?!?!? Retire numerical law authority ranking for a hierarchical, category-relation based "authority-over" relations Directed Acyclic Graph, descending from fixed root nodes and never being higher except first movers being able to be higher than that.
 - Give room for horizontal mutually modifying laws.
+- BRUHHHHHH WHY DO WE HAVE "Event subject" vs "Law subject" BRHHHHHH NOOOOOOO WE JUST REIFIED EVENTS INTO MOMENT AND EVENTS 
 
 - I am already thinking of how to write the algorithm laws for the new broad vs narrow phase. There are probably frontier things I could look at but I wanna try coming up with things myself first because it's more fun that way.
 - SCREW HARDCODD COLLISION. SCRW HARDCODED NARROWPHASE AND BROADPHASE. O(BRUHHHHHH^2)
