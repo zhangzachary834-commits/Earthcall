@@ -192,7 +192,9 @@ public:
             }
         }
 
-        std::string id() const {
+        // Returns a const reference to cachedId / savedId to avoid temporary string heap allocations
+        // and copies on hot evaluation and tick loops.
+        const std::string& id() const {
             if (ptr) {
                 cachedId = ptr->getIdentifier();
                 return cachedId;
@@ -213,8 +215,8 @@ public:
     Singular* b() const { return _endpointB.ptr; }
     bool hasEndpoints() const { return _endpointA.hasValue() && _endpointB.hasValue(); }
 
-    std::string aId() const { return _endpointA.id(); }
-    std::string bId() const { return _endpointB.id(); }
+    const std::string& aId() const { return _endpointA.id(); }
+    const std::string& bId() const { return _endpointB.id(); }
 
     void bind(Singular* aBeing, Singular* bBeing) {
         _endpointA.bind(aBeing);
