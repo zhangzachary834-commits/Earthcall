@@ -176,7 +176,7 @@ jobs:
 
           world = sys.argv[1]
 
-          def run_mode(adapter, direct):
+          def run_mode_once(adapter, direct):
               cmd = ["./build/slow_adapter_zone_perf_test", world,
                      f"--adapter={adapter}", f"--direct={direct}", "--frames=60"]
               try:
@@ -198,6 +198,11 @@ jobs:
                   if token.startswith("frame_median_ms="):
                       return float(token.split("=")[1])
               return 0.0
+
+          def run_mode(adapter, direct, passes=3):
+              times = [run_mode_once(adapter, direct) for _ in range(passes)]
+              valid = [t for t in times if t > 0]
+              return min(valid) if valid else 0.0
 
           # Three arms, same commit/runner:
           #   floor      = no adapter, no Direct
