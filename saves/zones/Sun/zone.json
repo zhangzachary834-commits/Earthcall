@@ -18,6 +18,45 @@
       "specular": 1,
       "ambient": 0.2,
       "diffuse": 0.8
+    },
+    {
+      "name": "sun.solar-gate.gold",
+      "baseColor": [
+        1,
+        0.58,
+        0.12
+      ],
+      "opacity": 1,
+      "shininess": 56,
+      "specular": 0.9,
+      "ambient": 0.24,
+      "diffuse": 0.86
+    },
+    {
+      "name": "sun.processional-road.stone",
+      "baseColor": [
+        0.23,
+        0.16,
+        0.11
+      ],
+      "opacity": 1,
+      "shininess": 18,
+      "specular": 0.28,
+      "ambient": 0.18,
+      "diffuse": 0.82
+    },
+    {
+      "name": "sun.processional-lantern.amber",
+      "baseColor": [
+        1,
+        0.34,
+        0.055
+      ],
+      "opacity": 1,
+      "shininess": 72,
+      "specular": 0.95,
+      "ambient": 0.34,
+      "diffuse": 0.9
     }
   ],
   "name": "Sun",
@@ -481,6 +520,1909 @@
           "radianceWitness.role": {
             "t": "string",
             "v": "far"
+          }
+        }
+      },
+      {
+        "objectID": "sun.solar-gate.pillar.left",
+        "center": [
+          -5,
+          3.5,
+          -11
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5,
+          3.5,
+          -11,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.5,
+            3.5,
+            0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.7,
+          3.7,
+          0.7
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Gate — Left Pillar"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "solar-gate-001"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 1
+          }
+        }
+      },
+      {
+        "objectID": "sun.solar-gate.pillar.right",
+        "center": [
+          5,
+          3.5,
+          -11
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5,
+          3.5,
+          -11,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.5,
+            3.5,
+            0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.7,
+          3.7,
+          0.7
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Gate — Right Pillar"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "solar-gate-001"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 1
+          }
+        }
+      },
+      {
+        "objectID": "sun.solar-gate.crown",
+        "center": [
+          0,
+          7.15,
+          -11
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          7.15,
+          -11,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            5.5,
+            0.42,
+            0.55
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          5.7,
+          0.62,
+          0.75
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Gate — Crown Beam"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "solar-gate-001"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 1
+          },
+          "construction.geometryCorrection": {
+            "t": "string",
+            "v": "SdfPrim::Box ordinal corrected from 0 to 1"
+          }
+        }
+      },
+      {
+        "objectID": "sun.solar-gate.dais.upper",
+        "center": [
+          0,
+          -0.22,
+          -11
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -0.22,
+          -11,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            6.25,
+            0.22,
+            2
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          6.45,
+          0.42,
+          2.2
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Gate Dais — Upper Platform"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "solar-gate-dais-002"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 2
+          },
+          "construction.geometryCorrection": {
+            "t": "string",
+            "v": "SdfPrim::Box ordinal corrected from 0 to 1"
+          }
+        }
+      },
+      {
+        "objectID": "sun.solar-gate.dais.middle",
+        "center": [
+          0,
+          -0.46,
+          -9.55
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -0.46,
+          -9.55,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            5.45,
+            0.18,
+            0.7
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          5.65,
+          0.38,
+          0.9
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Gate Dais — Middle Step"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "solar-gate-dais-002"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 2
+          },
+          "construction.geometryCorrection": {
+            "t": "string",
+            "v": "SdfPrim::Box ordinal corrected from 0 to 1"
+          }
+        }
+      },
+      {
+        "objectID": "sun.solar-gate.dais.entry",
+        "center": [
+          0,
+          -0.66,
+          -8.25
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -0.66,
+          -8.25,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            4.65,
+            0.16,
+            0.65
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          4.85,
+          0.36,
+          0.85
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Gate Dais — Entrance Step"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "solar-gate-dais-002"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 2
+          },
+          "construction.geometryCorrection": {
+            "t": "string",
+            "v": "SdfPrim::Box ordinal corrected from 0 to 1"
+          }
+        }
+      },
+      {
+        "objectID": "sun.processional-road.center",
+        "center": [
+          0,
+          -0.82,
+          -2.8
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.processional-road.stone",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -0.82,
+          -2.8,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.23,
+            0.16,
+            0.11
+          ],
+          [
+            0.23,
+            0.16,
+            0.11
+          ],
+          [
+            0.23,
+            0.16,
+            0.11
+          ],
+          [
+            0.23,
+            0.16,
+            0.11
+          ],
+          [
+            0.23,
+            0.16,
+            0.11
+          ],
+          [
+            0.23,
+            0.16,
+            0.11
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            4.05,
+            0.12,
+            5.1
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          4.25,
+          0.32,
+          5.3
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Processional Road — Central Walk"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "solar-processional-road-003"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 3
+          },
+          "construction.geometryCorrection": {
+            "t": "string",
+            "v": "SdfPrim::Box ordinal corrected from 0 to 1"
+          }
+        }
+      },
+      {
+        "objectID": "sun.processional-road.edge.left",
+        "center": [
+          -4.38,
+          -0.67,
+          -2.8
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -4.38,
+          -0.67,
+          -2.8,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.18,
+            0.18,
+            5.1
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.38,
+          0.38,
+          5.3
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Processional Road — Left Gold Band"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "solar-processional-road-003"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 3
+          },
+          "construction.geometryCorrection": {
+            "t": "string",
+            "v": "SdfPrim::Box ordinal corrected from 0 to 1"
+          }
+        }
+      },
+      {
+        "objectID": "sun.processional-road.edge.right",
+        "center": [
+          4.38,
+          -0.67,
+          -2.8
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          4.38,
+          -0.67,
+          -2.8,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.18,
+            0.18,
+            5.1
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.38,
+          0.38,
+          5.3
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Processional Road — Right Gold Band"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "solar-processional-road-003"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 3
+          },
+          "construction.geometryCorrection": {
+            "t": "string",
+            "v": "SdfPrim::Box ordinal corrected from 0 to 1"
+          }
+        }
+      },
+      {
+        "objectID": "sun.processional-lantern.left",
+        "center": [
+          -5.15,
+          1.55,
+          1.35
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5.15,
+          1.55,
+          1.35,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.32,
+            2.35,
+            0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.52,
+          2.55,
+          0.52
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Processional Lantern Column — Left"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "processional-lantern-columns-004"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 4
+          }
+        }
+      },
+      {
+        "objectID": "sun.processional-lantern.right",
+        "center": [
+          5.15,
+          1.55,
+          1.35
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5.15,
+          1.55,
+          1.35,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.32,
+            2.35,
+            0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.52,
+          2.55,
+          0.52
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Processional Lantern Column — Right"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "processional-lantern-columns-004"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 4
+          }
+        }
+      },
+      {
+        "objectID": "sun.processional-lantern.head.left",
+        "center": [
+          -5.15,
+          4.12,
+          1.35
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.processional-lantern.amber",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5.15,
+          4.12,
+          1.35,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.62,
+            0.62,
+            0.62
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.82,
+          0.82,
+          0.82
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Processional Lantern — Left Amber Crown"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "processional-lantern-heads-005"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 5
+          }
+        }
+      },
+      {
+        "objectID": "sun.processional-lantern.head.right",
+        "center": [
+          5.15,
+          4.12,
+          1.35
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.processional-lantern.amber",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5.15,
+          4.12,
+          1.35,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.62,
+            0.62,
+            0.62
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.82,
+          0.82,
+          0.82
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Processional Lantern — Right Amber Crown"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "processional-lantern-heads-005"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 5
+          }
+        }
+      },
+      {
+        "objectID": "sun.solar-gate.finial.left",
+        "center": [
+          -5,
+          7.95,
+          -11
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.processional-lantern.amber",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5,
+          7.95,
+          -11,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.48,
+            0.48,
+            0.48
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.68,
+          0.68,
+          0.68
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Gate — Left Amber Finial"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "solar-gate-finials-006"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 6
+          }
+        }
+      },
+      {
+        "objectID": "sun.solar-gate.finial.right",
+        "center": [
+          5,
+          7.95,
+          -11
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.processional-lantern.amber",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5,
+          7.95,
+          -11,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.48,
+            0.48,
+            0.48
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.68,
+          0.68,
+          0.68
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Gate — Right Amber Finial"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "solar-gate-finials-006"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 6
           }
         }
       }
