@@ -1518,14 +1518,25 @@ std::vector<std::string> search(const std::string& rawQuery, const Vocabulary& v
         }
     }
     for (const auto& e : vocab.events) {
-        if (hit(e)) out.push_back("event    " + e);
+        const std::string description = vocab.describeEvent ? vocab.describeEvent(e) : std::string{};
+        if (hit(e) || (!description.empty() && hit(description))) {
+            out.push_back("event    " + e + (description.empty() ? "" : "  · " + description));
+        }
     }
     for (const auto& b : vocab.beings) {
-        if (hit(b)) out.push_back("being    @" + b);
+        const std::string description = vocab.describeBeing ? vocab.describeBeing(b) : std::string{};
+        if (hit(b) || (!description.empty() && hit(description))) {
+            out.push_back("being    @" + b + (description.empty() ? "" : "  · " + description));
+        }
     }
     if (vocab.propertiesOf && !vocab.scopeBeing.empty()) {
         for (const auto& p : vocab.propertiesOf(vocab.scopeBeing)) {
-            if (hit(p)) out.push_back("property " + p + "  (on @" + vocab.scopeBeing + ")");
+            const std::string description =
+                vocab.describeProperty ? vocab.describeProperty(vocab.scopeBeing, p) : std::string{};
+            if (hit(p) || (!description.empty() && hit(description))) {
+                out.push_back("property " + p + "  (on @" + vocab.scopeBeing + ")" +
+                              (description.empty() ? "" : "  · " + description));
+            }
         }
     }
     return out;

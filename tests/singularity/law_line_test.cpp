@@ -62,6 +62,18 @@ LS::Vocabulary baseVocabulary() {
         if (id == "cube") return std::vector<std::string>{"color", "glow", "hp"};
         return std::vector<std::string>{"brightness"};
     };
+    v.describeEvent = [](const std::string& event) {
+        return event == "object-clicked" ? std::string("event · heard 4×") : std::string("event");
+    };
+    v.describeBeing = [](const std::string& id) {
+        if (id == "cube") return std::string("object · Amber Cube");
+        if (id == "lamp") return std::string("object · Moon Lamp");
+        return std::string("being");
+    };
+    v.describeProperty = [](const std::string& id, const std::string& property) {
+        if (id == "cube" && property == "glow") return std::string("= 0.75");
+        return std::string{};
+    };
     return v;
 }
 
@@ -312,6 +324,24 @@ void grammar() {
         assert(contains(next, "then") && contains(next, "if") && contains(next, "or"));
         const auto hits = LS::search("glow", v);
         assert(!hits.empty());
+
+        // ?? searches the live descriptions the vocabulary already exposes,
+        // not only identifiers/spellings.
+        const auto eventMeaning = LS::search("heard 4", v);
+        assert(std::any_of(eventMeaning.begin(), eventMeaning.end(),
+                           [](const std::string& s) {
+                               return mentions(s, "object-clicked") && mentions(s, "heard 4");
+                           }));
+        const auto beingMeaning = LS::search("Amber", v);
+        assert(std::any_of(beingMeaning.begin(), beingMeaning.end(),
+                           [](const std::string& s) {
+                               return mentions(s, "@cube") && mentions(s, "Amber Cube");
+                           }));
+        const auto propertyMeaning = LS::search("0.75", v);
+        assert(std::any_of(propertyMeaning.begin(), propertyMeaning.end(),
+                           [](const std::string& s) {
+                               return mentions(s, "glow") && mentions(s, "= 0.75");
+                           }));
     }
 }
 
