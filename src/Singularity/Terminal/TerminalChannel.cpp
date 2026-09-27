@@ -1024,7 +1024,10 @@ void TerminalChannel::speak(LawManager& laws, const std::string& text) {
     laws.add(law);
     for (const auto& trigger : p.triggers) laws.bindTrigger(id, trigger);
 
-    // Keeping the Law means Zone membership, so Save Zone persists it.
+    // Keeping the Law means live Zone membership; durable persistence still
+    // requires an explicit Zone save. Say both truths instead of letting the
+    // green authored check imply that the new Law already survived a restart.
+    std::string persistence = " · live for this session (no active Zone to save)";
     if (ZoneManager* zones = ZoneManager::live()) {
         if (!zones->adoptLawIntoActiveZone(id)) {
             laws.remove(id);
@@ -1032,9 +1035,10 @@ void TerminalChannel::speak(LawManager& laws, const std::string& text) {
             say(_status);
             return;
         }
+        persistence = " · live in " + zones->active().name() + " · Save Zone to keep it after restart";
     }
     _lastCreated = id;
-    _status = "authored " + id + " (written by " + author->getIdentifier() + ")";
+    _status = "authored " + id + " (written by " + author->getIdentifier() + ")" + persistence;
     say(_status + "\n  " + _preview + notes);
 }
 
