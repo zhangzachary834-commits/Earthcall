@@ -630,8 +630,13 @@ nlohmann::json readSaveData(const std::string& filepath) {
             }
             return Earthcall::Storage::MigrationFramework::migrateLegacySave(wrapper);
         } catch (...) {
-            std::cerr << "[SaveSystem] Malformed msgpack ecform in: " << filepath << "\n";
-            return nlohmann::json();
+            try {
+                nlohmann::json j = nlohmann::json::parse(bytes);
+                return Earthcall::Storage::MigrationFramework::migrateLegacySave(j);
+            } catch (const std::exception& e) {
+                std::cerr << "[SaveSystem] Malformed msgpack ecform (and not valid JSON either) in: " << filepath << "\n";
+                return nlohmann::json();
+            }
         }
     } else if (actualPath.length() > 7 && actualPath.substr(actualPath.length() - 7) == ".ecsave") {
         std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());

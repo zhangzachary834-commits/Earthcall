@@ -445,12 +445,19 @@ void from_json(const nlohmann::json& j, Object& obj){
     }
 
     // Face colours
+    const bool ownsItsSurface = obj.materialId() == "material." + obj.getIdentifier();
+    auto alreadyPainted = materials.get(obj.materialId());
+    const bool texturesAlreadyHere = alreadyPainted && !alreadyPainted->faceTextures.empty();
+    
+    
+     
+
     if (j.contains("faceColors")) {
         const auto& faceCols = j["faceColors"];
-        const bool ownsItsSurface = obj.materialId() == "material." + obj.getIdentifier();
-        auto alreadyPainted = ownsItsSurface ? materials.get(obj.materialId()) : nullptr;
-        const bool texturesAlreadyHere =
-            alreadyPainted && !alreadyPainted->faceTextures.empty();
+        
+        
+        
+            
         for (size_t f = 0; f < faceCols.size() && f < 6; ++f) {
             obj.faceColors[f][0] = faceCols[f][0].get<float>();
             obj.faceColors[f][1] = faceCols[f][1].get<float>();
@@ -463,7 +470,7 @@ void from_json(const nlohmann::json& j, Object& obj){
         }
     }
 
-    if (j.contains("textureResolution") && j["textureResolution"].is_number_integer()) {
+    if (!texturesAlreadyHere && j.contains("textureResolution") && j["textureResolution"].is_number_integer()) {
         obj.setTextureResolution(j["textureResolution"].get<int>());
     }
 

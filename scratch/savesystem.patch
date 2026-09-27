@@ -1,0 +1,18 @@
+--- src/Singularity/Storage/SaveSystem.cpp
++++ src/Singularity/Storage/SaveSystem.cpp
+@@ -629,8 +629,13 @@
+                 return Earthcall::Storage::MigrationFramework::migrateLegacySave(root);
+             }
+             return Earthcall::Storage::MigrationFramework::migrateLegacySave(wrapper);
+         } catch (...) {
+-            std::cerr << "[SaveSystem] Malformed msgpack ecform in: " << filepath << "\n";
+-            return nlohmann::json();
++            try {
++                nlohmann::json j = nlohmann::json::parse(bytes);
++                return Earthcall::Storage::MigrationFramework::migrateLegacySave(j);
++            } catch (const std::exception& e) {
++                std::cerr << "[SaveSystem] Malformed msgpack ecform (and not valid JSON either) in: " << filepath << "\n";
++                return nlohmann::json();
++            }
+         }
+     } else if (actualPath.length() > 7 && actualPath.substr(actualPath.length() - 7) == ".ecsave") {

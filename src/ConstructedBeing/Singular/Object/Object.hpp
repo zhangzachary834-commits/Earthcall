@@ -273,9 +273,9 @@ private:
 public:
     // LEGACY flat colours kept for save/load compatibility (first 6 faces)
     float faceColors[6][3] = {
-        {1.f, 0.f, 0.f}, {1.f, 0.f, 0.f},
-        {0.f, 1.f, 0.f}, {0.f, 1.f, 0.f},
-        {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f}
+        {1.f, 1.f, 1.f}, {1.f, 1.f, 1.f},
+        {1.f, 1.f, 1.f}, {1.f, 1.f, 1.f},
+        {1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}
     };
 
     // Animation System code
