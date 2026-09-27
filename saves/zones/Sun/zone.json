@@ -2425,6 +2425,131 @@
             "v": 6
           }
         }
+      },
+      {
+        "objectID": "sun.processional-forecourt",
+        "center": [
+          0,
+          -0.8,
+          3.35
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.processional-road.stone",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -0.8,
+          3.35,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.23,
+            0.16,
+            0.11
+          ],
+          [
+            0.23,
+            0.16,
+            0.11
+          ],
+          [
+            0.23,
+            0.16,
+            0.11
+          ],
+          [
+            0.23,
+            0.16,
+            0.11
+          ],
+          [
+            0.23,
+            0.16,
+            0.11
+          ],
+          [
+            0.23,
+            0.16,
+            0.11
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            6.1,
+            0.14,
+            1.35
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          6.3,
+          0.34,
+          1.55
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Processional Forecourt"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "processional-forecourt-007"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 7
+          }
+        }
       }
     ],
     "relations": []
