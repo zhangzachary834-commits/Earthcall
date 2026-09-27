@@ -613,25 +613,35 @@ nlohmann::json readSaveData(const std::string& filepath) {
         }
     }
 
+    if (!std::filesystem::is_regular_file(actualPath, ec)) {
+        std::cerr << "[SaveSystem] Not a regular file: " << filepath << "\n";
+        return nlohmann::json();
+    }
+
     std::ifstream in(actualPath, std::ios::binary);
     if (!in.is_open()) {
         std::cerr << "[SaveSystem] Failed to open file for reading: " << filepath << "\n";
         return nlohmann::json();
     }
     
-    // Check magic bytes or extension to determine if it's msgpack
-    if (actualPath.length() > 7 && actualPath.substr(actualPath.length() - 7) == ".ecsave") {
+    nlohmann::json j;
+    if ((actualPath.length() > 7 && actualPath.substr(actualPath.length() - 7) == ".ecsave") ||
+        (actualPath.length() > 7 && actualPath.substr(actualPath.length() - 7) == ".ecform")) {
         std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
         std::vector<uint8_t> decompressed = decompressData(bytes);
         try {
-            return nlohmann::json::from_msgpack(decompressed);
+            j = nlohmann::json::from_msgpack(decompressed);
         } catch (...) {
-            std::cerr << "[SaveSystem] Malformed msgpack in: " << filepath << "\n";
-            return nlohmann::json();
+            // Fallback to plain JSON if msgpack parsing fails
+            try {
+                j = nlohmann::json::parse(bytes.begin(), bytes.end());
+            } catch (const std::exception& e) {
+                std::cerr << "[SaveSystem] Failed to parse file " << filepath
+                          << ": " << e.what() << "\n";
+                return nlohmann::json();
+            }
         }
     } else {
-        // Fallback to plain JSON
-        nlohmann::json j;
         try {
             in >> j;
         } catch (const std::exception& e) {
@@ -639,11 +649,15 @@ nlohmann::json readSaveData(const std::string& filepath) {
                       << ": " << e.what() << "\n";
             return nlohmann::json();
         }
-        
-        // Pass through the migration framework to ensure forward-compatibility
-        // and translation to Graph-based unified structure.
-        return Earthcall::Storage::MigrationFramework::migrateLegacySave(j);
     }
+
+    if (j.is_object() && j.contains("MigrationRoot") && j["MigrationRoot"].is_string()) {
+        try {
+            j = nlohmann::json::parse(j["MigrationRoot"].get<std::string>());
+        } catch (...) {}
+    }
+
+    return Earthcall::Storage::MigrationFramework::migrateLegacySave(j);
 }
 
 std::string createBackup(const std::string& originalFile, SaveType type) {
