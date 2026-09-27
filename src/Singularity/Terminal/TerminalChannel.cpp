@@ -657,6 +657,12 @@ void TerminalChannel::sense(LawManager& laws) {
             }
         }
         if (_attached && width() != _lastWidth) dirty = true;
+        if (_attached) {
+            bool hears = false;
+            const std::string liveFooter = footerText(hears);
+            const std::string liveMark = hears ? "32" : "33";
+            if (_editor.footer != liveFooter || _editor.footerMark != liveMark) dirty = true;
+        }
         if (_attached && (dirty || !_drawn)) draw();
     }
 #endif
@@ -773,15 +779,9 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws) {
         if (being && !being->getIdentifier().empty()) beings.insert(being->getIdentifier());
     }
     v.beings.assign(beings.begin(), beings.end());
-    // Bare paths complete against the authored scope being — or, when none
-    // is set, against whatever the Person last clicked in the world.
-    v.scopeBeing = _scopeBeing;
-    if (v.scopeBeing.empty()) {
-        PropertyValue focused;
-        if (lawGetValue(*this, PropertyPath::parse("@interaction-channel.focusedId"), focused)) {
-            if (const auto* id = std::get_if<std::string>(&focused)) v.scopeBeing = *id;
-        }
-    }
+    // Bare paths complete against the authored suggestion being — or, when
+    // none is set, against whatever the Person last clicked in the world.
+    v.scopeBeing = propertySuggestionBeing();
 
     v.propertiesOf = [](const std::string& id) {
         std::vector<std::string> names;
@@ -806,6 +806,15 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws) {
     };
     v.resolve = [this, &laws](const LawSentence::Ambiguity& a) { return resolveByMetalaw(laws, a); };
     return v;
+}
+
+std::string TerminalChannel::propertySuggestionBeing() const {
+    if (!_scopeBeing.empty()) return _scopeBeing;
+    PropertyValue focused;
+    if (lawGetValue(*this, PropertyPath::parse("@interaction-channel.focusedId"), focused)) {
+        if (const auto* id = std::get_if<std::string>(&focused)) return *id;
+    }
+    return {};
 }
 
 std::string TerminalChannel::describeProperty(const std::string& beingId, const std::string& property) const {
@@ -1146,7 +1155,7 @@ std::string TerminalChannel::footerText(bool& hears) {
             if (law && !law->isFirstMover() && law->isEnabled()) ++count;
         }
     }
-    const std::string scope = _laws ? liveVocabulary().scopeBeing : std::string{};
+    const std::string scope = _laws ? propertySuggestionBeing() : std::string{};
     return zone + " · " + (hears ? "hears the line" : "does NOT hear the line") +
            (scope.empty() ? "" : " · scope @" + scope) + " · as " + author + " · " + std::to_string(count) +
            (count == 1 ? " live law" : " live laws");
