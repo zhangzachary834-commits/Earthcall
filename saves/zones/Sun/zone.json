@@ -850,7 +850,7 @@
         ],
         "field": {
           "op": 0,
-          "prim": 0,
+          "prim": 1,
           "dims": [
             5.5,
             0.42,
@@ -882,6 +882,10 @@
           "construction.pass": {
             "t": "float",
             "v": 1
+          },
+          "construction.geometryCorrection": {
+            "t": "string",
+            "v": "SdfPrim::Box ordinal corrected from 0 to 1"
           }
         }
       },
@@ -975,7 +979,7 @@
         ],
         "field": {
           "op": 0,
-          "prim": 0,
+          "prim": 1,
           "dims": [
             6.25,
             0.22,
@@ -1007,6 +1011,10 @@
           "construction.pass": {
             "t": "float",
             "v": 2
+          },
+          "construction.geometryCorrection": {
+            "t": "string",
+            "v": "SdfPrim::Box ordinal corrected from 0 to 1"
           }
         }
       },
@@ -1100,7 +1108,7 @@
         ],
         "field": {
           "op": 0,
-          "prim": 0,
+          "prim": 1,
           "dims": [
             5.45,
             0.18,
@@ -1132,6 +1140,10 @@
           "construction.pass": {
             "t": "float",
             "v": 2
+          },
+          "construction.geometryCorrection": {
+            "t": "string",
+            "v": "SdfPrim::Box ordinal corrected from 0 to 1"
           }
         }
       },
@@ -1225,7 +1237,7 @@
         ],
         "field": {
           "op": 0,
-          "prim": 0,
+          "prim": 1,
           "dims": [
             4.65,
             0.16,
@@ -1257,6 +1269,10 @@
           "construction.pass": {
             "t": "float",
             "v": 2
+          },
+          "construction.geometryCorrection": {
+            "t": "string",
+            "v": "SdfPrim::Box ordinal corrected from 0 to 1"
           }
         }
       },
@@ -1350,7 +1366,7 @@
         ],
         "field": {
           "op": 0,
-          "prim": 0,
+          "prim": 1,
           "dims": [
             4.05,
             0.12,
@@ -1382,6 +1398,10 @@
           "construction.pass": {
             "t": "float",
             "v": 3
+          },
+          "construction.geometryCorrection": {
+            "t": "string",
+            "v": "SdfPrim::Box ordinal corrected from 0 to 1"
           }
         }
       },
@@ -1475,7 +1495,7 @@
         ],
         "field": {
           "op": 0,
-          "prim": 0,
+          "prim": 1,
           "dims": [
             0.18,
             0.18,
@@ -1507,6 +1527,10 @@
           "construction.pass": {
             "t": "float",
             "v": 3
+          },
+          "construction.geometryCorrection": {
+            "t": "string",
+            "v": "SdfPrim::Box ordinal corrected from 0 to 1"
           }
         }
       },
@@ -1600,7 +1624,7 @@
         ],
         "field": {
           "op": 0,
-          "prim": 0,
+          "prim": 1,
           "dims": [
             0.18,
             0.18,
@@ -1632,6 +1656,10 @@
           "construction.pass": {
             "t": "float",
             "v": 3
+          },
+          "construction.geometryCorrection": {
+            "t": "string",
+            "v": "SdfPrim::Box ordinal corrected from 0 to 1"
           }
         }
       },
