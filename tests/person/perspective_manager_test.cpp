@@ -131,6 +131,30 @@ void test_clear() {
     assert(manager.isActive());
 }
 
+void test_distinct_identities_same_spelling() {
+    PerspectiveManager manager;
+    // Two distinct perspectives sharing the same display name "Overview"
+    auto p1 = std::make_unique<PersonPerspective>("Overview", PersonPerspective::PerspectiveType::FirstPerson, "perspective-1");
+    auto p2 = std::make_unique<PersonPerspective>("Overview", PersonPerspective::PerspectiveType::TopDown, "perspective-2");
+
+    manager.addPerspective(std::move(p1));
+    manager.addPerspective(std::move(p2));
+
+    // Both should coexist because their identifiers differ
+    assert(manager.count() == 2);
+
+    // Switching by identifier resolves the exact perspective
+    manager.switchTo("perspective-2");
+    assert(manager.currentIndex() == 1);
+    assert(manager.current()->getIdentifier() == "perspective-2");
+    assert(manager.current()->getType() == PersonPerspective::PerspectiveType::TopDown);
+
+    manager.switchTo("perspective-1");
+    assert(manager.currentIndex() == 0);
+    assert(manager.current()->getIdentifier() == "perspective-1");
+    assert(manager.current()->getType() == PersonPerspective::PerspectiveType::FirstPerson);
+}
+
 } // namespace
 
 int main() {
@@ -140,6 +164,7 @@ int main() {
     test_remove_perspective();
     test_state_management();
     test_clear();
+    test_distinct_identities_same_spelling();
 
     std::puts("perspective_manager_test: ALL OK");
     return 0;

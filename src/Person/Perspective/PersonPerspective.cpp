@@ -1,9 +1,11 @@
 #include "PersonPerspective.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
+#include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
+#include "Identity/SingularId.hpp"
 
-PersonPerspective::PersonPerspective(const std::string& name, PerspectiveType type)
-    : _name(name), _type(type) {
+PersonPerspective::PersonPerspective(const std::string& name, PerspectiveType type, const std::string& identifier)
+    : Singular(), _identifier(identifier.empty() ? name : identifier), _name(name), _type(type) {
     // Initialize default view state based on type
     switch (_type) {
         case PerspectiveType::FirstPerson:
@@ -29,6 +31,12 @@ PersonPerspective::PersonPerspective(const std::string& name, PerspectiveType ty
             _viewState.target = {0.0f, 0.0f, -1.0f};
             break;
     }
+}
+
+void PersonPerspective::buildProperties() {
+    registerProperty(std::make_unique<PropertyRef<PersonPerspective, std::string>>(
+        "name", this, &PersonPerspective::_name));
+    registerTelosProperty();
 }
 
 void PersonPerspective::update(float deltaTime) {
