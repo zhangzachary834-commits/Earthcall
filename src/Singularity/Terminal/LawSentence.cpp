@@ -1357,9 +1357,11 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
     }
 
     std::map<std::string, Suggestion> best;   // by text: keep the best reading of it
+    std::map<std::string, std::set<std::string>> meaningsByText;
     const auto offer = [&](std::size_t from, const std::string& tail, const std::string& text,
                            const std::string& description, const std::string& role,
-                           const std::string& detail = {}, const std::string& snippet = {}) {
+                           const std::string& detail = {}, const std::string& snippet = {},
+                           const std::string& meaning = {}) {
         // A word that could only be refused ("author it in the Law Graph")
         // is never offered: the menu only holds words that can work here.
         if (description.find("Law Graph only") != std::string::npos) return;
@@ -1369,7 +1371,21 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
         auto it = best.find(key);
         if (it == best.end() || it->second.score < score) {
             best[key] = Suggestion{from, text, description, role, score, detail, snippet};
+            meaningsByText[key].clear();
+            if (!meaning.empty()) meaningsByText[key].insert(meaning);
+            return;
         }
+        if (it->second.score != score || meaning.empty()) return;
+        auto& meanings = meaningsByText[key];
+        if (!meanings.insert(meaning).second || meanings.size() < 2) return;
+        it->second.description = "shared spelling · Metalaw decides";
+        std::string joined;
+        for (const auto& denotation : meanings) {
+            if (!joined.empty()) joined += "  ·  ";
+            joined += denotation;
+        }
+        it->second.detail = joined;
+        it->second.snippet.clear();
     };
 
     for (std::size_t split : splits) {
@@ -1393,9 +1409,11 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
                     std::any_of(vocab.presets.begin(), vocab.presets.end(), [&](const Preset& p) {
                         return p.lawId == w.lawId && p.action.has_value();
                     });
+                const std::string meaning =
+                    w.opcode == "preset" ? "Law " + w.lawId : w.opcode + " (" + w.individual() + ")";
                 offer(split, tail, w.symbol, w.description, roleOf(w.opcode),
                       w.detail.empty() ? w.description : w.detail,
-                      completeAction ? std::string{} : argumentTemplate(w.opcode));
+                      completeAction ? std::string{} : argumentTemplate(w.opcode), meaning);
             }
         }
         if (tail.find_first_of(" \t") != std::string::npos) continue;   // atoms are single words
