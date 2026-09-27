@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "Universe.hpp"
+#include "Time/Event/Event.hpp"
 #include "json.hpp"
 
 #include <functional>
@@ -31,8 +32,10 @@ using MathBindings = std::map<std::string, PropertyPath>;
 //                               the subject is. The id may contain dots
 //                               ("@material.clay.baseColor"): the root is
 //                               matched LONGEST-FIRST, most specific wins.
-//   @event.subject.position.y   the triggering event's subject
-//   @event.object.position.y    the triggering event's OTHER participant
+//   @event.verb                 the triggering Event Moment's own property
+//   @event.start                its temporal coordinate
+//   @event.subject.position.y   legacy first-participant path
+//   @event.object.position.y    legacy second-participant path
 //                               (a collision has two)
 //   @world.<reading>            a WORLD READING about the subject, answered
 //                               by whichever modality channel registered it
@@ -53,15 +56,18 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
         return &subject;
     }
     if (path.segments[0] == "@event" && path.segments.size() >= 2) {
-        startIndex = 2;
         if (!Universe::instance().hasApplicationEvent()) return nullptr;
-        if (path.segments[1] == "subject") {
-            return Universe::instance().applicationEventSubject();
+        if (path.segments[1] == "subject" || path.segments[1] == "object") {
+            startIndex = 2;
+            return path.segments[1] == "subject"
+                ? Universe::instance().applicationEventSubject()
+                : Universe::instance().applicationEventObject();
         }
-        if (path.segments[1] == "object") {
-            return Universe::instance().applicationEventObject();
-        }
-        return nullptr;
+        startIndex = 1;
+        // A Rete fact owns this occurrence for the duration of application.
+        // PropertyPath's read API takes a mutable Singular, but the write
+        // bridge below refuses mutation of the historical Event snapshot.
+        return const_cast<Event*>(Universe::instance().applicationEvent());
     }
     // A being's identifier may itself contain dots: Material namespaces itself
     // as "material.<name>" so it cannot collide with an Object in the same path
@@ -230,6 +236,10 @@ inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyVal
 
 inline PropertyPath::PathResult lawSetValue(Singular& subject, const PropertyPath& path, const PropertyValue& v) {
     if (isTimePath(path)) return PropertyPath::PathResult::ReadOnly;
+    if (path.segments.size() >= 2 && path.segments[0] == "@event" &&
+        path.segments[1] != "subject" && path.segments[1] != "object") {
+        return PropertyPath::PathResult::ReadOnly;
+    }
     // A world reading is an observation, not a dial: the world is not written
     // by asserting a measurement of it.
     if (isWorldReadingPath(path) && worldReadings().count(path.fullId())) {

@@ -917,8 +917,13 @@ void addCandidate(std::set<std::string>& out, const std::string& candidate, cons
 void offerPaths(std::set<std::string>& out, const Vocabulary& vocab, const std::string& tail,
                 const std::string& word) {
     if (!tail.empty() && tail[0] == '@') {
-        for (const char* root : {"@event.subject.", "@event.object.", "@world."}) {
+        for (const char* root : {"@event.", "@event.subject.", "@event.object.", "@world."}) {
             addCandidate(out, root, tail, word);
+        }
+        if (startsWith(tail, "@event.")) {
+            for (const auto& property : vocab.eventProperties) {
+                addCandidate(out, "@event." + property, tail, word);
+            }
         }
         for (const auto& b : vocab.beings) {
             const std::string root = "@" + b + ".";
@@ -1439,12 +1444,20 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
                     }
                 }
                 if (!inside) {
-                    for (const char* root : {"@event.subject.", "@event.object.", "@world."}) {
-                        offer(split, tail, root, "whoever the event is about", "path");
+                    offer(split, tail, "@event.", "the Event Moment", "path");
+                    for (const char* root : {"@event.subject.", "@event.object."}) {
+                        offer(split, tail, root, "a participant in the event", "path");
                     }
+                    offer(split, tail, "@world.", "a world reading", "path");
                     for (const auto& b : vocab.beings) {
                         offer(split, tail, "@" + b + ".",
                               vocab.describeBeing ? vocab.describeBeing(b) : "", "being");
+                    }
+                }
+                if (startsWith(tail, "@event.")) {
+                    for (const auto& property : vocab.eventProperties) {
+                        offer(split, tail, "@event." + property,
+                              "property of the Event Moment", "path");
                     }
                 }
             } else if (vocab.propertiesOf && !vocab.scopeBeing.empty()) {

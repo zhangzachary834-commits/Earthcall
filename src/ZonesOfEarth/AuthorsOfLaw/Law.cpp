@@ -1960,6 +1960,7 @@ void LawManager::connectToEventBus() {
 
         ECA::LawAuditLogger::instance().log("EVENT", "Event \"" + e.type + "\" triggered (Subject: " + subjectId + ", Object: " + objectId + ")", {
             {"eventType", e.type},
+            {"eventId", e.getIdentifier()},
             {"subjectId", subjectId},
             {"objectId", objectId},
             {"timestamp", e.timestamp().toJson()}
@@ -1988,6 +1989,7 @@ void LawManager::connectToEventBus() {
         fact->subject = e.subject;
         fact->subjectId = subjectId;
         fact->object = e.object;
+        fact->occurrence = std::make_shared<ECA::Event>(e);
         _rete.assertFact(fact);
         _dirty = true;
 
@@ -2170,7 +2172,23 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                                         ? nullptr
                                         : activation.token.facts.front()->object;
 
-            Universe::EventScope eventScope(subject, eventObject);
+            // Keep the Event Singular itself available while these nodes
+            // evaluate. Rete owns the copy because the EventBus publisher may
+            // already have returned; participant aliases remain compatible.
+            const Event* occurrence = nullptr;
+            const auto& triggers = triggersOf(law->getIdentifier());
+            for (const auto& fact : activation.token.facts) {
+                if (fact && fact->occurrence &&
+                    (triggers.empty() ||
+                     std::find(triggers.begin(), triggers.end(), fact->type) != triggers.end())) {
+                    occurrence = fact->occurrence.get();
+                    break;
+                }
+            }
+            Universe::EventScope eventScope(
+                occurrence ? occurrence->subject : subject,
+                occurrence ? occurrence->object : eventObject,
+                occurrence);
 
             if (law->scope() == Law::Scope::Everyone) {
                 std::vector<Singular*> subjects = sweepSubjects(*law);

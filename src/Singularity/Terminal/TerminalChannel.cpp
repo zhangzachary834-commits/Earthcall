@@ -753,6 +753,15 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws) {
     }
     v.events.assign(events.begin(), events.end());
 
+    // Offer the Event Singular's registered properties from its registry,
+    // not a hand-maintained list. The old subject/object spellings remain
+    // participant aliases until Event-defining Relations become traversable.
+    ECA::Event eventProbe;
+    for (Property* property : eventProbe.listProperties()) {
+        if (!property || property->name() == "subject" || property->name() == "object") continue;
+        v.eventProperties.push_back(property->name());
+    }
+
     // The Laws spoken or authored here, by name — for "delete Blue".
     for (const auto& law : laws.getAll()) {
         if (!law || law->isFirstMover() || law.get() == this || !law->isEnabled()) continue;

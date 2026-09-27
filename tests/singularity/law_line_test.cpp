@@ -56,6 +56,7 @@ LS::Vocabulary baseVocabulary() {
     v.words = LS::canonicalWords();
     v.events = {"object-clicked", "tick", "terminal-line-entered"};
     v.beings = {"cube", "lamp"};
+    v.eventProperties = {"verb", "start", "occurrenceId"};
     v.scopeBeing = "cube";
     v.propertiesOf = [](const std::string& id) {
         if (id == "cube") return std::vector<std::string>{"color", "glow", "hp"};
@@ -75,6 +76,12 @@ void grammar() {
         assert(p.action->path.toString() == "color");
         assert(std::holds_alternative<glm::vec3>(p.action->operand));
         assert(p.scope == Law::Scope::Subject);
+    }
+    {
+        const auto p = LS::parse("on object-clicked if @event.verb = \"object-clicked\" then set glow 1",
+                                 baseVocabulary());
+        assert(p.ok);
+        assert(p.condition && p.condition->path.toString() == "@event.verb");
     }
     // --- and binds tighter than or; glued symbols need no spaces
     {
@@ -292,6 +299,11 @@ void grammar() {
         assert(contains(ev, "object-clicked"));
         const auto path = LS::complete("on tick then set @cube.gl", v);
         assert(contains(path, "@cube.glow"));
+        const auto eventPath = LS::complete("on object-clicked if @event.ver", v);
+        assert(contains(eventPath, "@event.verb"));
+        const auto eventSuggestions = LS::suggest("on object-clicked if @event.oc", v);
+        assert(std::any_of(eventSuggestions.begin(), eventSuggestions.end(),
+                           [](const LS::Suggestion& s) { return s.text == "@event.occurrenceId"; }));
         const auto scoped = LS::complete("on tick then set gl", v);
         assert(contains(scoped, "glow"));
         const auto glued = LS::complete("on tick if hp>", v);

@@ -111,6 +111,9 @@ int main() {
           "Tab completes the preset phrase");
     check(contains(Singularity::Terminal::LawSentence::complete("on object-clicked then set co", vocab), "color"),
           "Tab completes a property of the scoped cube");
+    check(contains(Singularity::Terminal::LawSentence::complete(
+                       "on object-clicked if @event.ver", vocab), "@event.verb"),
+          "Tab completes the registered Event Moment verb");
 
     Object* cube = nullptr;
     for (const auto& object : harness.zones.zones()[index]->getOwnedObjects()) {

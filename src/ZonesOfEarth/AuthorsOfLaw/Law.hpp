@@ -476,6 +476,11 @@ struct ReteFact {
     nlohmann::json value;
     Singular* subject{nullptr};
     Singular* object{nullptr};   // the event's OTHER participant (collision has two)
+    // The actual Event Moment that emitted an edge. EventBus delivery is
+    // synchronous, but its publisher may have passed a stack temporary;
+    // retaining a value copy keeps that Singular alive through Rete drain.
+    // State facts and legacy Custom events have no Event occurrence here.
+    std::shared_ptr<const ECA::Event> occurrence;
     bool isState{false};
     bool dirty{true};
 };

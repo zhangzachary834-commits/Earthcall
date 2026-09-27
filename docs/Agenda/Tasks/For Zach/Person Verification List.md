@@ -36,6 +36,7 @@
 - [ ] `my law called Blue when they collide then set color blue` authors (your sentence, one step from done).
 - [ ] The legacy `Run Earthcall Terminal.command` still behaves exactly as before.
 - [ ] After you author an action-only Law with a complete `Create` or `WritePixel` model and a Lexeme that `denotes` it, type `on object-clicked then <your lexeme>` in the Law Line Zone: Tab should show the word without empty argument blanks, the resulting Law Graph should retain the exact action tree, and clicking should produce the authored effect. No new example Lexeme was seeded in this pass.
+- [ ] In the Law Line Zone, type `on object-clicked if @event.ver` and inspect completion: it should offer `@event.verb` as a property of the Event Moment. Author an event-triggered condition using that path and confirm it fires on the chosen event. This checks the visible terminal behavior; the headless tests alone do not establish it. *Codex · GPT-6 · session `codex-law-regrounding-20260927` · 2026-09-27T17:10:24Z.*
 
 **Rung 3 — what you asked for after that** (mouse, blanks, help, footer, dry run, deletion):
 

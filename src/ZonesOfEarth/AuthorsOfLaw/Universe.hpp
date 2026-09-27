@@ -13,6 +13,7 @@
 class Singular;
 class Relation;
 class Timeline;
+class Event;
 
 // The law engine's working set — not a being, not the vessel (Ourverse),
 // not the womb that receives newborns (Zone). Continuous laws and quantified
@@ -203,17 +204,20 @@ public:
 
     class EventScope {
     public:
-        EventScope(Singular* subject, Singular* object) {
+        EventScope(Singular* subject, Singular* object,
+                   const Event* occurrence = nullptr) {
             Universe& u = Universe::instance();
             _hadEvent = u._eventSet;
             _savedSubject = u._eventSubject;
             _savedObject = u._eventObject;
-            u.setApplicationEvent(subject, object);
+            _savedOccurrence = u._eventOccurrence;
+            u.setApplicationEvent(subject, object, occurrence);
         }
         ~EventScope() {
             Universe& u = Universe::instance();
             u._eventSubject = _savedSubject;
             u._eventObject = _savedObject;
+            u._eventOccurrence = _savedOccurrence;
             u._eventSet = _hadEvent;
         }
         EventScope(const EventScope&) = delete;
@@ -223,6 +227,7 @@ public:
         bool _hadEvent = false;
         Singular* _savedSubject = nullptr;
         Singular* _savedObject = nullptr;
+        const Event* _savedOccurrence = nullptr;
     };
 
     // The event context: while laws respond to an event, this holds the
@@ -232,19 +237,23 @@ public:
     // CHOICE (a collision has two participants; the law may act on either,
     // both, or someone else entirely). LawManager arms this around event
     // rounds; outside an event response the roots are undefined.
-    void setApplicationEvent(Singular* subject, Singular* object) {
+    void setApplicationEvent(Singular* subject, Singular* object,
+                             const Event* occurrence = nullptr) {
         _eventSubject = subject;
         _eventObject = object;
+        _eventOccurrence = occurrence;
         _eventSet = true;
     }
     void clearApplicationEvent() {
         _eventSubject = nullptr;
         _eventObject = nullptr;
+        _eventOccurrence = nullptr;
         _eventSet = false;
     }
     bool hasApplicationEvent() const { return _eventSet; }
     Singular* applicationEventSubject() const { return _eventSubject; }
     Singular* applicationEventObject() const { return _eventObject; }
+    const Event* applicationEvent() const { return _eventOccurrence; }
 
     // ------------------------------------------------------------------
     // Unmaking is DEFERRED. A law that destroys a being does so in the
@@ -306,6 +315,7 @@ private:
 
     Singular* _eventSubject = nullptr;
     Singular* _eventObject = nullptr;
+    const Event* _eventOccurrence = nullptr; // borrowed from the draining Rete fact
     bool _eventSet = false;
 
     std::vector<Singular*> _unmaking;

@@ -114,6 +114,7 @@ struct Vocabulary {
     std::vector<Preset> presets;             // looked up by Word::lawId
     std::vector<std::string> events;         // event types the world knows
     std::vector<std::string> beings;         // identifiers, for @-completion
+    std::vector<std::string> eventProperties; // registered Event Singular paths
     std::string scopeBeing;                  // bare paths complete against this being
     std::function<std::vector<std::string>(const std::string& beingId)> propertiesOf;
     std::function<Resolution(const Ambiguity&)> resolve;   // the Metalaw seam
