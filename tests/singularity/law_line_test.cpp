@@ -262,6 +262,10 @@ void grammar() {
         assert(!unknown.ok && mentions(unknown.error, "not an event this world knows"));
         const auto near = LS::parse("on object then set glow 1", v);
         assert(!near.ok && contains(near.candidates, "object-clicked"));
+        const auto typo = LS::parse("on boject-clicked then set glow 1", v);
+        assert(!typo.ok);
+        assert(contains(typo.candidates, "object-clicked"));
+        assert(mentions(typo.error, "Did you mean 'object-clicked'?"));
         const auto minted = LS::parse("on \"door-opened\" then set glow 1", v);
         assert(minted.ok && minted.triggers == std::vector<std::string>{"door-opened"});
         const auto publish = LS::parse("on tick then publish door-opened", v);
