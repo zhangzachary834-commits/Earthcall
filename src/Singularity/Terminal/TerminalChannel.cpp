@@ -901,6 +901,14 @@ std::vector<LineEditor::Status> TerminalChannel::statusOf(const std::string& tex
         return out;
     }
     if (!p.error.empty()) {
+        // Ambiguity during live typing is truthful semantic plurality, not a
+        // malformed sentence. Keep it visually open until a Metalaw gets the
+        // authority to choose when the sentence is actually spoken.
+        if (p.error.find("no Metalaw resolves which one") != std::string::npos) {
+            out.push_back({"meaning stays open while typing · Metalaw decides when spoken", "preview"});
+            if (!p.candidates.empty()) out.push_back({"meanings: " + join(p.candidates, ", "), "note"});
+            return out;
+        }
         const std::size_t lead = text.find_first_not_of(" \t");
         const std::size_t at = (lead == std::string::npos ? 0 : lead) + p.errorOffset;
         // Still typing is not a mistake: a sentence that merely stops early,
