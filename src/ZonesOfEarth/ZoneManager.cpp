@@ -343,11 +343,8 @@ bool ZoneManager::switchTo(size_t index)
             }
         }
 
-        try {
-            _zones[_currentIndex]->load();
-            Core::EventBus::instance().publish(
-                ECA::Event{"zone-loaded", _zones[_currentIndex].get(), nullptr, std::time(nullptr)});
-        } catch (...) { std::cerr << "⚠️  Zone load failed." << std::endl; }
+        Core::EventBus::instance().publish(
+            ECA::Event{"zone-loaded", _zones[_currentIndex].get(), nullptr, std::time(nullptr)});
         describeCurrent();
         // The zone is a being: laws hear arrival (subject: the zone itself).
         Core::EventBus::instance().publish(
@@ -372,12 +369,7 @@ void ZoneManager::describeCurrent() const
 
 void ZoneManager::loadZone()
 {
-    if (_currentIndex < _zones.size())
-    {
-        // Unload previous zone if necessary
-        _zones[_currentIndex]->load();
-    }
-    else
+    if (_currentIndex >= _zones.size())
     {
         std::cerr << "⚠️ Cannot load zone: index out of bounds!" << std::endl;
     }
