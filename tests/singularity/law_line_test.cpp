@@ -221,6 +221,22 @@ void grammar() {
         assert(p.candidates.size() == 2);
     }
     {
+        // Tab must preserve the plurality that Relation exposed. The menu may
+        // filter meanings by grammatical position, but it must not crown one
+        // surviving denotation before a Metalaw has actually resolved it.
+        const auto menu = LS::suggest("on tick if hp ", v);
+        const auto shared = std::find_if(menu.begin(), menu.end(), [](const LS::Suggestion& s) {
+            return s.text == "is";
+        });
+        assert(shared != menu.end());
+        assert(mentions(shared->detail, "shared spelling"));
+        assert(mentions(shared->detail, "Metalaw decides"));
+        assert(mentions(shared->detail, "lex_is_a->law_eq"));
+        assert(mentions(shared->detail, "lex_is_b->law_ne"));
+        assert(!mentions(shared->detail, "lex_is_c->law_iskind"));
+        assert(shared->snippet.empty());
+    }
+    {
         LS::Vocabulary resolved = v;
         resolved.resolve = [](const LS::Ambiguity& a) {
             assert(a.symbol == "is" && a.slot == "operator");
