@@ -62,6 +62,19 @@ LS::Vocabulary baseVocabulary() {
         if (id == "cube") return std::vector<std::string>{"color", "glow", "hp"};
         return std::vector<std::string>{"brightness"};
     };
+    v.describeEvent = [](const std::string& event) {
+        return event == "object-clicked" ? std::string("event · heard 4×") : std::string("event");
+    };
+    v.describeBeing = [](const std::string& id) {
+        if (id == "cube") return std::string("object · Amber Cube");
+        if (id == "lamp") return std::string("object · Moon Lamp");
+        return std::string("being");
+    };
+    v.describeProperty = [](const std::string& id, const std::string& property) {
+        if (id == "cube" && property == "glow") return std::string("= 0.75");
+        return std::string{};
+    };
+    v.laws.push_back({"law-red", "Red", "on object-clicked · if hp > 2 · then set glow 1"});
     return v;
 }
 
@@ -228,6 +241,22 @@ void grammar() {
         assert(p.candidates.size() == 2);
     }
     {
+        // Tab must preserve the plurality that Relation exposed. The menu may
+        // filter meanings by grammatical position, but it must not crown one
+        // surviving denotation before a Metalaw has actually resolved it.
+        const auto menu = LS::suggest("on tick if hp ", v);
+        const auto shared = std::find_if(menu.begin(), menu.end(), [](const LS::Suggestion& s) {
+            return s.text == "is";
+        });
+        assert(shared != menu.end());
+        assert(mentions(shared->detail, "shared spelling"));
+        assert(mentions(shared->detail, "Metalaw decides"));
+        assert(mentions(shared->detail, "lex_is_a->law_eq"));
+        assert(mentions(shared->detail, "lex_is_b->law_ne"));
+        assert(!mentions(shared->detail, "lex_is_c->law_iskind"));
+        assert(shared->snippet.empty());
+    }
+    {
         LS::Vocabulary resolved = v;
         resolved.resolve = [](const LS::Ambiguity& a) {
             assert(a.symbol == "is" && a.slot == "operator");
@@ -262,6 +291,10 @@ void grammar() {
         assert(!unknown.ok && mentions(unknown.error, "not an event this world knows"));
         const auto near = LS::parse("on object then set glow 1", v);
         assert(!near.ok && contains(near.candidates, "object-clicked"));
+        const auto typo = LS::parse("on boject-clicked then set glow 1", v);
+        assert(!typo.ok);
+        assert(contains(typo.candidates, "object-clicked"));
+        assert(mentions(typo.error, "Did you mean 'object-clicked'?"));
         const auto minted = LS::parse("on \"door-opened\" then set glow 1", v);
         assert(minted.ok && minted.triggers == std::vector<std::string>{"door-opened"});
         const auto publish = LS::parse("on tick then publish door-opened", v);
@@ -312,6 +345,40 @@ void grammar() {
         assert(contains(next, "then") && contains(next, "if") && contains(next, "or"));
         const auto hits = LS::search("glow", v);
         assert(!hits.empty());
+
+        // ?? searches the live descriptions the vocabulary already exposes,
+        // not only identifiers/spellings.
+        const auto eventMeaning = LS::search("heard 4", v);
+        assert(std::any_of(eventMeaning.begin(), eventMeaning.end(),
+                           [](const std::string& s) {
+                               return mentions(s, "object-clicked") && mentions(s, "heard 4");
+                           }));
+        const auto beingMeaning = LS::search("Amber", v);
+        assert(std::any_of(beingMeaning.begin(), beingMeaning.end(),
+                           [](const std::string& s) {
+                               return mentions(s, "@cube") && mentions(s, "Amber Cube");
+                           }));
+        const auto propertyMeaning = LS::search("0.75", v);
+        assert(std::any_of(propertyMeaning.begin(), propertyMeaning.end(),
+                           [](const std::string& s) {
+                               return mentions(s, "glow") && mentions(s, "= 0.75");
+                           }));
+
+        // Authored Laws are searchable as Laws: by display name, stable id,
+        // or the existing read-back summary carried by Vocabulary::laws.
+        const auto lawByName = LS::search("Red", v);
+        assert(std::any_of(lawByName.begin(), lawByName.end(),
+                           [](const std::string& s) {
+                               return mentions(s, "law      Red") && mentions(s, "law-red");
+                           }));
+        const auto lawById = LS::search("law-red", v);
+        assert(std::any_of(lawById.begin(), lawById.end(),
+                           [](const std::string& s) { return mentions(s, "law      Red"); }));
+        const auto lawBySummary = LS::search("object-clicked", v);
+        assert(std::any_of(lawBySummary.begin(), lawBySummary.end(),
+                           [](const std::string& s) {
+                               return mentions(s, "law      Red") && mentions(s, "object-clicked");
+                           }));
     }
 }
 
@@ -463,6 +530,13 @@ void channel() {
     terminal->inject("on tick if hp > 2 then set glow 1 ?");
     frame();
     assert(mentions(printed.back(), "right now the IF holds for 1 being"));
+
+    // Event-relative dry runs have no occurrence to bind, so the line must say
+    // that this is a hypothetical event-less probe rather than a verdict.
+    terminal->inject("on object-clicked if @event.verb = \"object-clicked\" then set glow 1 ?");
+    frame();
+    assert(mentions(printed.back(), "hypothetical"));
+    assert(mentions(printed.back(), "no event supplied"));
 
     // 4. Nothing enters the world without an author.
     PropertyPath::parse("authorPath").setValue(*terminal, PropertyValue(std::string("@nobody.who")));
