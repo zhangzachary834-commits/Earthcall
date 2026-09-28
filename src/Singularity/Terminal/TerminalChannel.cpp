@@ -116,6 +116,22 @@ std::string number(double d) {
     return buf;
 }
 
+bool isEventPath(const PropertyPath& path) {
+    const std::string text = path.toString();
+    return text.rfind("@event.", 0) == 0;
+}
+
+bool readsEventContext(const ConditionNode& node) {
+    if (isEventPath(node.path) || isEventPath(node.operandPath) || isEventPath(node.probe)) return true;
+    for (const auto& binding : node.bindings) {
+        if (isEventPath(binding.second)) return true;
+    }
+    for (const auto& child : node.children) {
+        if (readsEventContext(child)) return true;
+    }
+    return false;
+}
+
 // What a value looks like in the menu.
 std::string showValue(const PropertyValue& v) {
     if (const auto* d = std::get_if<double>(&v)) return number(*d);
@@ -657,6 +673,12 @@ void TerminalChannel::sense(LawManager& laws) {
             }
         }
         if (_attached && width() != _lastWidth) dirty = true;
+        if (_attached) {
+            bool hears = false;
+            const std::string liveFooter = footerText(hears);
+            const std::string liveMark = hears ? "32" : "33";
+            if (_editor.footer != liveFooter || _editor.footerMark != liveMark) dirty = true;
+        }
         if (_attached && (dirty || !_drawn)) draw();
     }
 #endif
@@ -773,15 +795,9 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws) {
         if (being && !being->getIdentifier().empty()) beings.insert(being->getIdentifier());
     }
     v.beings.assign(beings.begin(), beings.end());
-    // Bare paths complete against the authored scope being — or, when none
-    // is set, against whatever the Person last clicked in the world.
-    v.scopeBeing = _scopeBeing;
-    if (v.scopeBeing.empty()) {
-        PropertyValue focused;
-        if (lawGetValue(*this, PropertyPath::parse("@interaction-channel.focusedId"), focused)) {
-            if (const auto* id = std::get_if<std::string>(&focused)) v.scopeBeing = *id;
-        }
-    }
+    // Bare paths complete against the authored suggestion being — or, when
+    // none is set, against whatever the Person last clicked in the world.
+    v.scopeBeing = propertySuggestionBeing();
 
     v.propertiesOf = [](const std::string& id) {
         std::vector<std::string> names;
@@ -806,6 +822,15 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws) {
     };
     v.resolve = [this, &laws](const LawSentence::Ambiguity& a) { return resolveByMetalaw(laws, a); };
     return v;
+}
+
+std::string TerminalChannel::propertySuggestionBeing() const {
+    if (!_scopeBeing.empty()) return _scopeBeing;
+    PropertyValue focused;
+    if (lawGetValue(*this, PropertyPath::parse("@interaction-channel.focusedId"), focused)) {
+        if (const auto* id = std::get_if<std::string>(&focused)) return *id;
+    }
+    return {};
 }
 
 std::string TerminalChannel::describeProperty(const std::string& beingId, const std::string& property) const {
@@ -838,11 +863,12 @@ std::string TerminalChannel::describeBeing(const std::string& beingId) const {
 const LawSentence::Vocabulary& TerminalChannel::liveVocabulary() {
     if (!_vocab || _vocabFrame != _frame) {
         _vocab = vocabulary(*_laws);
-        // Live reading must not act: a shared spelling is shown with its first
-        // meaning; the Metalaws decide for real when the sentence is spoken.
-        _vocab->resolve = [](const LawSentence::Ambiguity& a) {
-            return LawSentence::Resolution{a.candidates.front().individual(),
-                                           "a Metalaw decides which when it is spoken"};
+        // Live reading must not act OR pretend to resolve meaning. Preserve
+        // every grammar-admissible denotation while the Person is typing; the
+        // actual vocabulary() resolver invokes the world's Metalaws only when
+        // the sentence is spoken.
+        _vocab->resolve = [](const LawSentence::Ambiguity&) {
+            return LawSentence::Resolution{"", "a Metalaw decides which when it is spoken"};
         };
         _vocabFrame = _frame;
         _parse.reset();
@@ -900,6 +926,14 @@ std::vector<LineEditor::Status> TerminalChannel::statusOf(const std::string& tex
         return out;
     }
     if (!p.error.empty()) {
+        // Ambiguity during live typing is truthful semantic plurality, not a
+        // malformed sentence. Keep it visually open until a Metalaw gets the
+        // authority to choose when the sentence is actually spoken.
+        if (p.error.find("no Metalaw resolves which one") != std::string::npos) {
+            out.push_back({"meaning stays open while typing · Metalaw decides when spoken", "preview"});
+            if (!p.candidates.empty()) out.push_back({"meanings: " + join(p.candidates, ", "), "note"});
+            return out;
+        }
         const std::size_t lead = text.find_first_not_of(" \t");
         const std::size_t at = (lead == std::string::npos ? 0 : lead) + p.errorOffset;
         // Still typing is not a mistake: a sentence that merely stops early,
@@ -1033,7 +1067,10 @@ void TerminalChannel::speak(LawManager& laws, const std::string& text) {
     laws.add(law);
     for (const auto& trigger : p.triggers) laws.bindTrigger(id, trigger);
 
-    // Keeping the Law means Zone membership, so Save Zone persists it.
+    // Keeping the Law means live Zone membership; durable persistence still
+    // requires an explicit Zone save. Say both truths instead of letting the
+    // green authored check imply that the new Law already survived a restart.
+    std::string persistence = " · live for this session (no active Zone to save)";
     if (ZoneManager* zones = ZoneManager::live()) {
         if (!zones->adoptLawIntoActiveZone(id)) {
             laws.remove(id);
@@ -1041,9 +1078,10 @@ void TerminalChannel::speak(LawManager& laws, const std::string& text) {
             say(_status);
             return;
         }
+        persistence = " · live in " + zones->active().name() + " · Save Zone to keep it after restart";
     }
     _lastCreated = id;
-    _status = "authored " + id + " (written by " + author->getIdentifier() + ")";
+    _status = "authored " + id + " (written by " + author->getIdentifier() + ")" + persistence;
     say(_status + "\n  " + _preview + notes);
 }
 
@@ -1107,6 +1145,7 @@ std::string TerminalChannel::lawSummary(const Law& law, LawManager& laws) const 
 // is compiled and asked of each present being, nothing is applied.
 std::string TerminalChannel::dryRun(const LawSentence::Parse& p) {
     if (!p.condition) return "no IF: it acts on every subject it is given";
+    const bool eventRelative = readsEventContext(*p.condition);
     const auto predicate = p.condition->compile();
     std::vector<std::string> names;
     std::size_t count = 0;
@@ -1124,9 +1163,11 @@ std::string TerminalChannel::dryRun(const LawSentence::Parse& p) {
             names.push_back(label);
         }
     }
-    if (count == 0) return "right now the IF holds for nothing here";
-    return "right now the IF holds for " + std::to_string(count) + (count == 1 ? " being: " : " beings: ") +
-           join(names, ", ") + (count > names.size() ? ", …" : "");
+    const std::string caveat = eventRelative ? "hypothetical — no event supplied · " : "";
+    if (count == 0) return caveat + "right now the IF holds for nothing here";
+    return caveat + "right now the IF holds for " + std::to_string(count) +
+           (count == 1 ? " being: " : " beings: ") + join(names, ", ") +
+           (count > names.size() ? ", …" : "");
 }
 
 std::string TerminalChannel::footerText(bool& hears) {
@@ -1146,9 +1187,9 @@ std::string TerminalChannel::footerText(bool& hears) {
             if (law && !law->isFirstMover() && law->isEnabled()) ++count;
         }
     }
-    const std::string scope = _laws ? liveVocabulary().scopeBeing : std::string{};
+    const std::string scope = _laws ? propertySuggestionBeing() : std::string{};
     return zone + " · " + (hears ? "hears the line" : "does NOT hear the line") +
-           (scope.empty() ? "" : " · scope @" + scope) + " · as " + author + " · " + std::to_string(count) +
+           (scope.empty() ? "" : " · property suggestions @" + scope) + " · as " + author + " · " + std::to_string(count) +
            (count == 1 ? " live law" : " live laws");
 }
 
