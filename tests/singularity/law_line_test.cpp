@@ -249,8 +249,8 @@ void grammar() {
             return s.text == "is";
         });
         assert(shared != menu.end());
-        assert(mentions(shared->detail, "shared spelling"));
-        assert(mentions(shared->detail, "Metalaw decides"));
+        assert(mentions(shared->description, "shared spelling"));
+        assert(mentions(shared->description, "Metalaw decides"));
         assert(mentions(shared->detail, "lex_is_a->law_eq"));
         assert(mentions(shared->detail, "lex_is_b->law_ne"));
         assert(!mentions(shared->detail, "lex_is_c->law_iskind"));
