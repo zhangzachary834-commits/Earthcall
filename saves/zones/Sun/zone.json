@@ -5369,6 +5369,4005 @@
             "v": "4o temple concept — solid architecture only; no sky/cloud/aurora/volumetric additions"
           }
         }
+      },
+      {
+        "objectID": "sun.art.portal.left.base.lower",
+        "center": [
+          -5.35,
+          -0.47,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5.35,
+          -0.47,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1.18,
+            0.1,
+            1.08
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.3199999999999998,
+          0.24000000000000002,
+          1.2200000000000002
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "left pier — lower plinth"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.left.base.middle",
+        "center": [
+          -5.35,
+          -0.25,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5.35,
+          -0.25,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.98,
+            0.1,
+            0.91
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.12,
+          0.24000000000000002,
+          1.05
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "left pier — gold plinth course"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.left.base.upper",
+        "center": [
+          -5.35,
+          -0.03,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5.35,
+          -0.03,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.82,
+            0.1,
+            0.8
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.96,
+          0.24000000000000002,
+          0.9400000000000001
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "left pier — upper plinth"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.left.core",
+        "center": [
+          -5.35,
+          1.92,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5.35,
+          1.92,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.62,
+            1.78,
+            0.62
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.76,
+          1.92,
+          0.76
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "left pier — core"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.left.strip.front.inner",
+        "center": [
+          -5.069999999999999,
+          1.95,
+          3.6
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5.069999999999999,
+          1.95,
+          3.6,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.12,
+            1.58,
+            0.1
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.26,
+          1.7200000000000002,
+          0.24000000000000002
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "left pier — inner front pilaster"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.left.strip.front.outer",
+        "center": [
+          -5.63,
+          1.95,
+          3.6
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5.63,
+          1.95,
+          3.6,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.12,
+            1.58,
+            0.1
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.26,
+          1.7200000000000002,
+          0.24000000000000002
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "left pier — outer front pilaster"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.left.strip.outer",
+        "center": [
+          -6.029999999999999,
+          1.95,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -6.029999999999999,
+          1.95,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.1,
+            1.58,
+            0.38
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.24000000000000002,
+          1.7200000000000002,
+          0.52
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "left pier — outer engaged strip"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.left.neck",
+        "center": [
+          -5.35,
+          3.76,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5.35,
+          3.76,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.7,
+            0.1,
+            0.7
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.84,
+          0.24000000000000002,
+          0.84
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "left pier — necking"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.left.capital.lower",
+        "center": [
+          -5.35,
+          3.98,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5.35,
+          3.98,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.84,
+            0.11,
+            0.82
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.98,
+          0.25,
+          0.96
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "left pier — lower capital"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.left.capital.upper",
+        "center": [
+          -5.35,
+          4.22,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5.35,
+          4.22,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1,
+            0.11,
+            0.94
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.1400000000000001,
+          0.25,
+          1.08
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "left pier — upper capital course"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.left.abacus",
+        "center": [
+          -5.35,
+          4.46,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5.35,
+          4.46,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1.16,
+            0.11,
+            1.06
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.2999999999999998,
+          0.25,
+          1.2000000000000002
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "left pier — projecting abacus"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.right.base.lower",
+        "center": [
+          5.35,
+          -0.47,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5.35,
+          -0.47,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1.18,
+            0.1,
+            1.08
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.3199999999999998,
+          0.24000000000000002,
+          1.2200000000000002
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "right pier — lower plinth"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.right.base.middle",
+        "center": [
+          5.35,
+          -0.25,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5.35,
+          -0.25,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.98,
+            0.1,
+            0.91
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.12,
+          0.24000000000000002,
+          1.05
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "right pier — gold plinth course"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.right.base.upper",
+        "center": [
+          5.35,
+          -0.03,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5.35,
+          -0.03,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.82,
+            0.1,
+            0.8
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.96,
+          0.24000000000000002,
+          0.9400000000000001
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "right pier — upper plinth"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.right.core",
+        "center": [
+          5.35,
+          1.92,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5.35,
+          1.92,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.62,
+            1.78,
+            0.62
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.76,
+          1.92,
+          0.76
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "right pier — core"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.right.strip.front.inner",
+        "center": [
+          5.069999999999999,
+          1.95,
+          3.6
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5.069999999999999,
+          1.95,
+          3.6,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.12,
+            1.58,
+            0.1
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.26,
+          1.7200000000000002,
+          0.24000000000000002
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "right pier — inner front pilaster"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.right.strip.front.outer",
+        "center": [
+          5.63,
+          1.95,
+          3.6
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5.63,
+          1.95,
+          3.6,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.12,
+            1.58,
+            0.1
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.26,
+          1.7200000000000002,
+          0.24000000000000002
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "right pier — outer front pilaster"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.right.strip.outer",
+        "center": [
+          6.029999999999999,
+          1.95,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          6.029999999999999,
+          1.95,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.1,
+            1.58,
+            0.38
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.24000000000000002,
+          1.7200000000000002,
+          0.52
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "right pier — outer engaged strip"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.right.neck",
+        "center": [
+          5.35,
+          3.76,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5.35,
+          3.76,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.7,
+            0.1,
+            0.7
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.84,
+          0.24000000000000002,
+          0.84
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "right pier — necking"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.right.capital.lower",
+        "center": [
+          5.35,
+          3.98,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5.35,
+          3.98,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.84,
+            0.11,
+            0.82
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.98,
+          0.25,
+          0.96
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "right pier — lower capital"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.right.capital.upper",
+        "center": [
+          5.35,
+          4.22,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5.35,
+          4.22,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1,
+            0.11,
+            0.94
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.1400000000000001,
+          0.25,
+          1.08
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "right pier — upper capital course"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.right.abacus",
+        "center": [
+          5.35,
+          4.46,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5.35,
+          4.46,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1.16,
+            0.11,
+            1.06
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.2999999999999998,
+          0.25,
+          1.2000000000000002
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "right pier — projecting abacus"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.cornice.lower",
+        "center": [
+          0,
+          4.68,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          4.68,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            6.18,
+            0.1,
+            0.74
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          6.319999999999999,
+          0.24000000000000002,
+          0.88
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — lower cornice course"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.cornice.middle",
+        "center": [
+          0,
+          4.9,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          4.9,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            6.42,
+            0.1,
+            0.88
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          6.56,
+          0.24000000000000002,
+          1.02
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — projecting marble cornice"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.cornice.upper",
+        "center": [
+          0,
+          5.12,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          5.12,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            6.7,
+            0.1,
+            1
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          6.84,
+          0.24000000000000002,
+          1.1400000000000001
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — upper gold crown course"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.inner.left",
+        "center": [
+          -4.35,
+          2.28,
+          3.5
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -4.35,
+          2.28,
+          3.5,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.13,
+            1.72,
+            0.1
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.27,
+          1.8599999999999999,
+          0.24000000000000002
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — inner left gold frame"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.inner.right",
+        "center": [
+          4.35,
+          2.28,
+          3.5
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          4.35,
+          2.28,
+          3.5,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.13,
+            1.72,
+            0.1
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.27,
+          1.8599999999999999,
+          0.24000000000000002
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — inner right gold frame"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.inner.top",
+        "center": [
+          0,
+          4.02,
+          3.5
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          4.02,
+          3.5,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            4.48,
+            0.13,
+            0.1
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          4.62,
+          0.27,
+          0.24000000000000002
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — inner top gold frame"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.reveal.left",
+        "center": [
+          -4.62,
+          2.28,
+          3.7
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -4.62,
+          2.28,
+          3.7,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.12,
+            1.88,
+            0.18
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.26,
+          2.02,
+          0.32
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — left reveal"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.reveal.right",
+        "center": [
+          4.62,
+          2.28,
+          3.7
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          4.62,
+          2.28,
+          3.7,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.12,
+            1.88,
+            0.18
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.26,
+          2.02,
+          0.32
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — right reveal"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.reveal.top",
+        "center": [
+          0,
+          4.22,
+          3.7
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          4.22,
+          3.7,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            4.74,
+            0.12,
+            0.18
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          4.88,
+          0.26,
+          0.32
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — upper reveal"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "primitive-artistry-portal-013"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 13
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          }
+        }
       }
     ],
     "relations": []
