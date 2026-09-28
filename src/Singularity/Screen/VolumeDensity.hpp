@@ -16,6 +16,8 @@ namespace Rendering {
 // FieldNode remains the authored Singular; this value is the Screen channel's
 // bounded view of the truths needed by volumetric transport.
 struct VolumeDensityBinding {
+    // Stable authored producer identity carried to the already-known execution slot.
+    std::string producerId;
     // FieldNode placement. The established particle/FieldNode convention uses
     // local coordinates in [-1,+1], so scale is the origin-centred box
     // half-span: authored world bounds are origin ± abs(scale). V0 must not
@@ -123,6 +125,7 @@ inline bool readVolumeDensity(const geom::FieldNode& field,
     if (!field.volumeDensity || field.volumeDensity->pieces.empty()) return false;
 
     VolumeDensityBinding next;
+    next.producerId = field.getIdentifier();
     next.origin = field.origin;
     next.scale = field.scale;
     next.densityExpr = field.volumeDensity.get();
