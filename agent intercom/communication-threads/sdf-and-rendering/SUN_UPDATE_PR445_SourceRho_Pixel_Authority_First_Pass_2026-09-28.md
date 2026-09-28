@@ -108,3 +108,75 @@ If correctness is green, read the retained A/B numbers before any promotion verd
 If performance is neutral/negative, keep the negative result; do not tune the theorem until the measured cause is understood.
 
 If performance is positive, the next hostile pass is to repeat live invalidation under a larger already-known source set before considering MediumDensity. Density remains a separate future experiment and must preserve independent V4 self-emission.
+
+
+---
+
+## Continuation — 2026-09-28 16:15 PDT
+
+### Exact-head CI classification before repair
+
+The previous exact head `e173ea4d945c5d2ac63293def617d2bde12496d5` did **not** produce a SourceRho renderer economics verdict.
+
+Workflow #3944 failed while building `webgpu_source_rho_authority_perf_test` because the new harness treated `geom::SdfNode::leaf(...)` as a pointer:
+
+- line 102: `if (!field)` — invalid unary operation on value `SdfNode`;
+- line 168: `*field` — invalid indirection of value `SdfNode`.
+
+This is a harness compile bug, not evidence for or against the authority hypothesis.
+
+The other failed jobs on that workflow are currently classified as unrelated to this successor:
+
+- Slow Adapter independent clock reported its existing regression threshold failure;
+- Focused CPU tests reported failures in `law_line_test.cpp` and a JSON parse path;
+- the SourceRho perf target failure occurred in the SDF range-proxy job while compiling the newly added witness.
+
+No SourceRho A/B line was emitted because the witness never executed.
+
+### Surgical repair
+
+On the same active branch/PR, commit
+`f0b3e2834a04d55172c32c5eb5aa1795b9dd060d`
+repairs only the harness value semantics:
+
+- removes the invalid null check on value-returning `SdfNode::leaf(...)`;
+- passes `field` directly to `drawImplicit` instead of `*field`.
+
+No renderer authority semantics changed.
+
+### Integration gait
+
+Stable semantic base remains:
+
+`dbec8274ad3457a9e5421e89ad115548a17ace55`
+
+Current canonical examined this run:
+
+`6fb07823a1bea14c51725bdf58d44769938c1585`
+
+Canonical is 10 commits ahead of the stable base. Targeted compare shows Person/property/Second-Person docs/serialization work, Sun-zone content, a robot-fun document, and the successor handoff. None alters the experiment's production dependencies:
+
+- admitted radiance-source execution slots;
+- `producerId + SourceRho + radianceRevision + artifact generation` provenance;
+- EngineRender source-set revision semantics;
+- WebGPU SourceRho codegen/parameter collection;
+- V1–V4 volumetric channel separation.
+
+Therefore this canonical motion is **not** a semantic integration event. No merge/rebase is warranted.
+
+### New exact head / CI
+
+After the code repair, PR #445 head was
+`f0b3e2834a04d55172c32c5eb5aa1795b9dd060d`.
+
+Workflow #3985 was queued from that repair head. This Intercom continuation commit will become the new exact head and may trigger the corresponding documentation-only rerun.
+
+### Exact next continuation point
+
+Do not broaden authority and do not reconcile canonical merely because it moved.
+
+1. Read exact-head CI after this update.
+2. Confirm the SourceRho perf target now compiles and actually executes.
+3. If it executes, capture the retained `SOURCE_RHO_AUTH_PERF` A/B numbers plus correctness witnesses.
+4. Classify any remaining failures by semantic relevance rather than by file/job proximity.
+5. Only after correctness and hostile fail-open evidence are green may the A/B economics contribute to a promotion or negative verdict.
