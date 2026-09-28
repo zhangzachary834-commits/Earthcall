@@ -31,6 +31,27 @@ struct TempSaveRoot {
     }
 };
 
+struct SaveRootRestorer {
+    std::string previousRoot;
+    explicit SaveRootRestorer(const std::string& temporaryRoot)
+        : previousRoot(SaveSystem::saveRoot()) {
+        SaveSystem::setSaveRoot(temporaryRoot);
+    }
+    ~SaveRootRestorer() {
+        SaveSystem::setSaveRoot(previousRoot);
+    }
+};
+
+inline bool isDefaultSaveRoot(const std::string& root) {
+    if (root.empty()) return true;
+    std::error_code ec;
+    const std::filesystem::path p = std::filesystem::absolute(root, ec);
+    const std::filesystem::path defaultSaves = std::filesystem::absolute("saves", ec);
+    if (!ec && p == defaultSaves) return true;
+    const std::string norm = std::filesystem::path(root).lexically_normal().generic_string();
+    return norm == "saves" || norm == "./saves" || norm == "saves/";
+}
+
 inline void dump_test_save(const std::string& test_name, Zone& testWorld, LawManager& testLawManager, Person& testPlayer,
                            const std::string& filepathOverride = "") {
     std::cout << "[TestSaveHelper] Generating test save: " << test_name << "...\n";
@@ -94,15 +115,29 @@ inline void dump_test_save(const std::string& test_name, Zone& testWorld, LawMan
     ctx.unpackForAuthoring = false;
 
     std::string filepath = filepathOverride;
-    if (filepath.empty()) {
-        std::filesystem::path root = SaveSystem::saveRoot().empty()
-            ? (std::filesystem::temp_directory_path() / "earthcall_test_dumps")
-            : std::filesystem::path(SaveSystem::saveRoot());
-        std::filesystem::path testsFolder = root / "tests";
-        std::filesystem::create_directories(testsFolder);
-        filepath = (testsFolder / (test_name + ".json")).string();
+    const std::string rawRoot = SaveSystem::saveRoot();
+    const bool defaultRoot = isDefaultSaveRoot(rawRoot);
+    std::unique_ptr<SaveRootRestorer> restorer;
+
+    if (defaultRoot) {
+        const std::filesystem::path tempRoot =
+            std::filesystem::temp_directory_path() / "earthcall_test_dumps";
+        restorer = std::make_unique<SaveRootRestorer>(tempRoot.string());
+        if (filepath.empty()) {
+            const std::filesystem::path testsFolder = tempRoot / "tests";
+            std::filesystem::create_directories(testsFolder);
+            filepath = (testsFolder / (test_name + ".json")).string();
+        } else {
+            std::filesystem::create_directories(std::filesystem::path(filepath).parent_path());
+        }
     } else {
-        std::filesystem::create_directories(std::filesystem::path(filepath).parent_path());
+        if (filepath.empty()) {
+            const std::filesystem::path testsFolder = std::filesystem::path(rawRoot) / "tests";
+            std::filesystem::create_directories(testsFolder);
+            filepath = (testsFolder / (test_name + ".json")).string();
+        } else {
+            std::filesystem::create_directories(std::filesystem::path(filepath).parent_path());
+        }
     }
     mgr.saveState(filepath, ctx);
     
