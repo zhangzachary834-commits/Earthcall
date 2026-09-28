@@ -99,10 +99,6 @@ int main() {
 
     auto field = geom::SdfNode::leaf(
         geom::SdfPrim::Sphere, glm::vec3(1.0f));
-    if (!field) {
-        std::printf("SOURCE_RHO_AUTH_PERF FAIL sphere field\n");
-        return 1;
-    }
     const glm::vec3 extent(1.25f);
 
     RenderMaterial mat;
@@ -165,7 +161,7 @@ int main() {
         renderer.beginFrameOffscreen(
             target, W, H, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
         renderer.drawImplicit(
-            *field, extent, mat, nullptr, kMemoId,
+            field, extent, mat, nullptr, kMemoId,
             /*memoRevision=*/1, nullptr,
             /*memoParameterRevision=*/1);
         renderer.endFrame();
