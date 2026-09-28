@@ -3031,9 +3031,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.34,
-            2.45,
-            0.34
+            0.2,
+            2.3,
+            0.2
           ],
           "offset": [
             0,
@@ -3045,9 +3045,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.54,
-          2.65,
-          0.54
+          0.36,
+          2.46,
+          0.36
         ],
         "authoredProperties": {
           "displayName": {
@@ -3056,11 +3056,15 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "forecourt-pillars-009"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 9
+            "v": 14
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -3156,9 +3160,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.34,
-            2.45,
-            0.34
+            0.2,
+            2.3,
+            0.2
           ],
           "offset": [
             0,
@@ -3170,9 +3174,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.54,
-          2.65,
-          0.54
+          0.36,
+          2.46,
+          0.36
         ],
         "authoredProperties": {
           "displayName": {
@@ -3181,11 +3185,15 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "forecourt-pillars-009"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 9
+            "v": 14
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -3281,9 +3289,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            5.55,
-            0.22,
-            0.32
+            4.7,
+            0.12,
+            0.2
           ],
           "offset": [
             0,
@@ -3295,9 +3303,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          5.75,
-          0.42,
-          0.52
+          4.86,
+          0.28,
+          0.36
         ],
         "authoredProperties": {
           "displayName": {
@@ -3306,11 +3314,15 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "forecourt-portal-crown-010"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 10
+            "v": 14
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -3318,7 +3330,7 @@
         "objectID": "sun.forecourt.portal.finial.left",
         "center": [
           -5.35,
-          5.48,
+          6.08,
           4.28
         ],
         "authoritativeAxis": [
@@ -3363,7 +3375,7 @@
           1,
           0,
           -5.35,
-          5.48,
+          6.08,
           4.28,
           1
         ],
@@ -3406,9 +3418,9 @@
           "op": 0,
           "prim": 0,
           "dims": [
-            0.42,
-            0.42,
-            0.42
+            0.22,
+            0.22,
+            0.22
           ],
           "offset": [
             0,
@@ -3420,9 +3432,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.62,
-          0.62,
-          0.62
+          0.38,
+          0.38,
+          0.38
         ],
         "authoredProperties": {
           "displayName": {
@@ -3431,11 +3443,15 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "forecourt-portal-finials-011"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 11
+            "v": 14
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 sacred-orange demotion"
           }
         }
       },
@@ -3443,7 +3459,7 @@
         "objectID": "sun.forecourt.portal.finial.right",
         "center": [
           5.35,
-          5.48,
+          6.08,
           4.28
         ],
         "authoritativeAxis": [
@@ -3488,7 +3504,7 @@
           1,
           0,
           5.35,
-          5.48,
+          6.08,
           4.28,
           1
         ],
@@ -3531,9 +3547,9 @@
           "op": 0,
           "prim": 0,
           "dims": [
-            0.42,
-            0.42,
-            0.42
+            0.22,
+            0.22,
+            0.22
           ],
           "offset": [
             0,
@@ -3545,9 +3561,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.62,
-          0.62,
-          0.62
+          0.38,
+          0.38,
+          0.38
         ],
         "authoredProperties": {
           "displayName": {
@@ -3556,11 +3572,15 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "forecourt-portal-finials-011"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 11
+            "v": 14
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 sacred-orange demotion"
           }
         }
       },
@@ -3914,9 +3934,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.68,
-            1.82,
-            0.68
+            0.3,
+            1.45,
+            0.3
           ],
           "offset": [
             0,
@@ -3928,9 +3948,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.8800000000000001,
-          2.02,
-          0.8800000000000001
+          0.45999999999999996,
+          1.6099999999999999,
+          0.45999999999999996
         ],
         "authoredProperties": {
           "displayName": {
@@ -3939,15 +3959,19 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "temple-portal-detail-012"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 12
+            "v": 14
           },
           "visual.reference": {
             "t": "string",
             "v": "4o temple concept — solid architecture only; no sky/cloud/aurora/volumetric additions"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -4559,9 +4583,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.68,
-            1.82,
-            0.68
+            0.3,
+            1.45,
+            0.3
           ],
           "offset": [
             0,
@@ -4573,9 +4597,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.8800000000000001,
-          2.02,
-          0.8800000000000001
+          0.45999999999999996,
+          1.6099999999999999,
+          0.45999999999999996
         ],
         "authoredProperties": {
           "displayName": {
@@ -4584,15 +4608,19 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "temple-portal-detail-012"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 12
+            "v": 14
           },
           "visual.reference": {
             "t": "string",
             "v": "4o temple concept — solid architecture only; no sky/cloud/aurora/volumetric additions"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -4946,9 +4974,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            6.1,
-            0.18,
-            0.66
+            4.95,
+            0.08,
+            0.28
           ],
           "offset": [
             0,
@@ -4960,9 +4988,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          6.3,
-          0.38,
-          0.8600000000000001
+          5.11,
+          0.24,
+          0.44000000000000006
         ],
         "authoredProperties": {
           "displayName": {
@@ -4971,15 +4999,19 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "temple-portal-detail-012"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 12
+            "v": 14
           },
           "visual.reference": {
             "t": "string",
             "v": "4o temple concept — solid architecture only; no sky/cloud/aurora/volumetric additions"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -5075,9 +5107,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            6.38,
-            0.16,
-            0.78
+            5.1,
+            0.08,
+            0.32
           ],
           "offset": [
             0,
@@ -5089,9 +5121,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          6.58,
-          0.36,
-          0.98
+          5.26,
+          0.24,
+          0.48
         ],
         "authoredProperties": {
           "displayName": {
@@ -5100,15 +5132,19 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "temple-portal-detail-012"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 12
+            "v": 14
           },
           "visual.reference": {
             "t": "string",
             "v": "4o temple concept — solid architecture only; no sky/cloud/aurora/volumetric additions"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -5204,9 +5240,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            5.75,
-            0.08,
-            0.08
+            4.7,
+            0.04,
+            0.05
           ],
           "offset": [
             0,
@@ -5218,9 +5254,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          5.95,
-          0.28,
-          0.28
+          4.86,
+          0.2,
+          0.21000000000000002
         ],
         "authoredProperties": {
           "displayName": {
@@ -5229,15 +5265,19 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "temple-portal-detail-012"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 12
+            "v": 14
           },
           "visual.reference": {
             "t": "string",
             "v": "4o temple concept — solid architecture only; no sky/cloud/aurora/volumetric additions"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -5245,8 +5285,8 @@
         "objectID": "sun.visual.portal.sun-disc",
         "center": [
           0,
-          4.64,
-          3.28
+          5.12,
+          3.03
         ],
         "authoritativeAxis": [
           0,
@@ -5290,8 +5330,8 @@
           1,
           0,
           0,
-          4.64,
-          3.28,
+          5.12,
+          3.03,
           1
         ],
         "x2D": 100,
@@ -5333,9 +5373,9 @@
           "op": 0,
           "prim": 0,
           "dims": [
-            0.52,
-            0.52,
-            0.52
+            0.34,
+            0.34,
+            0.34
           ],
           "offset": [
             0,
@@ -5347,9 +5387,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.72,
-          0.72,
-          0.72
+          0.5,
+          0.5,
+          0.5
         ],
         "authoredProperties": {
           "displayName": {
@@ -5358,15 +5398,19 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "temple-portal-detail-012"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 12
+            "v": 14
           },
           "visual.reference": {
             "t": "string",
             "v": "4o temple concept — solid architecture only; no sky/cloud/aurora/volumetric additions"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 sacred-orange demotion"
           }
         }
       },
@@ -5374,7 +5418,7 @@
         "objectID": "sun.art.portal.left.base.lower",
         "center": [
           -5.35,
-          -0.47,
+          -0.46,
           4.28
         ],
         "authoritativeAxis": [
@@ -5419,7 +5463,7 @@
           1,
           0,
           -5.35,
-          -0.47,
+          -0.46,
           4.28,
           1
         ],
@@ -5462,9 +5506,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            1.18,
-            0.1,
-            1.08
+            1.35,
+            0.16,
+            1.25
           ],
           "offset": [
             0,
@@ -5476,9 +5520,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          1.3199999999999998,
-          0.24000000000000002,
-          1.2200000000000002
+          1.51,
+          0.32,
+          1.41
         ],
         "authoredProperties": {
           "displayName": {
@@ -5496,6 +5540,10 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -5503,7 +5551,7 @@
         "objectID": "sun.art.portal.left.base.middle",
         "center": [
           -5.35,
-          -0.25,
+          -0.16,
           4.28
         ],
         "authoritativeAxis": [
@@ -5548,7 +5596,7 @@
           1,
           0,
           -5.35,
-          -0.25,
+          -0.16,
           4.28,
           1
         ],
@@ -5591,9 +5639,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.98,
-            0.1,
-            0.91
+            1.12,
+            0.14,
+            1.05
           ],
           "offset": [
             0,
@@ -5605,9 +5653,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          1.12,
-          0.24000000000000002,
-          1.05
+          1.28,
+          0.30000000000000004,
+          1.21
         ],
         "authoredProperties": {
           "displayName": {
@@ -5625,6 +5673,10 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -5632,7 +5684,7 @@
         "objectID": "sun.art.portal.left.base.upper",
         "center": [
           -5.35,
-          -0.03,
+          0.12,
           4.28
         ],
         "authoritativeAxis": [
@@ -5677,7 +5729,7 @@
           1,
           0,
           -5.35,
-          -0.03,
+          0.12,
           4.28,
           1
         ],
@@ -5720,9 +5772,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.82,
-            0.1,
-            0.8
+            0.92,
+            0.13,
+            0.88
           ],
           "offset": [
             0,
@@ -5734,9 +5786,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.96,
-          0.24000000000000002,
-          0.9400000000000001
+          1.08,
+          0.29000000000000004,
+          1.04
         ],
         "authoredProperties": {
           "displayName": {
@@ -5754,6 +5806,10 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -5761,7 +5817,7 @@
         "objectID": "sun.art.portal.left.core",
         "center": [
           -5.35,
-          1.92,
+          1.95,
           4.28
         ],
         "authoritativeAxis": [
@@ -5806,7 +5862,7 @@
           1,
           0,
           -5.35,
-          1.92,
+          1.95,
           4.28,
           1
         ],
@@ -5849,9 +5905,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.62,
-            1.78,
-            0.62
+            0.7,
+            1.58,
+            0.7
           ],
           "offset": [
             0,
@@ -5863,9 +5919,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.76,
-          1.92,
-          0.76
+          0.86,
+          1.74,
+          0.86
         ],
         "authoredProperties": {
           "displayName": {
@@ -5883,15 +5939,19 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
       {
         "objectID": "sun.art.portal.left.strip.front.inner",
         "center": [
-          -5.069999999999999,
+          -5.05,
           1.95,
-          3.6
+          3.42
         ],
         "authoritativeAxis": [
           0,
@@ -5934,9 +5994,9 @@
           0,
           1,
           0,
-          -5.069999999999999,
+          -5.05,
           1.95,
-          3.6,
+          3.42,
           1
         ],
         "x2D": 100,
@@ -5978,9 +6038,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.12,
-            1.58,
-            0.1
+            0.18,
+            1.42,
+            0.16
           ],
           "offset": [
             0,
@@ -5992,9 +6052,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.26,
-          1.7200000000000002,
-          0.24000000000000002
+          0.33999999999999997,
+          1.5799999999999998,
+          0.32
         ],
         "authoredProperties": {
           "displayName": {
@@ -6012,15 +6072,19 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
       {
         "objectID": "sun.art.portal.left.strip.front.outer",
         "center": [
-          -5.63,
+          -5.6499999999999995,
           1.95,
-          3.6
+          3.42
         ],
         "authoritativeAxis": [
           0,
@@ -6063,9 +6127,9 @@
           0,
           1,
           0,
-          -5.63,
+          -5.6499999999999995,
           1.95,
-          3.6,
+          3.42,
           1
         ],
         "x2D": 100,
@@ -6107,9 +6171,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.12,
-            1.58,
-            0.1
+            0.18,
+            1.42,
+            0.16
           ],
           "offset": [
             0,
@@ -6121,9 +6185,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.26,
-          1.7200000000000002,
-          0.24000000000000002
+          0.33999999999999997,
+          1.5799999999999998,
+          0.32
         ],
         "authoredProperties": {
           "displayName": {
@@ -6141,13 +6205,17 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
       {
         "objectID": "sun.art.portal.left.strip.outer",
         "center": [
-          -6.029999999999999,
+          -6.17,
           1.95,
           4.28
         ],
@@ -6192,7 +6260,7 @@
           0,
           1,
           0,
-          -6.029999999999999,
+          -6.17,
           1.95,
           4.28,
           1
@@ -6236,9 +6304,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.1,
-            1.58,
-            0.38
+            0.16,
+            1.42,
+            0.4
           ],
           "offset": [
             0,
@@ -6250,9 +6318,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.24000000000000002,
-          1.7200000000000002,
-          0.52
+          0.32,
+          1.5799999999999998,
+          0.56
         ],
         "authoredProperties": {
           "displayName": {
@@ -6270,6 +6338,10 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -6277,7 +6349,7 @@
         "objectID": "sun.art.portal.left.neck",
         "center": [
           -5.35,
-          3.76,
+          3.66,
           4.28
         ],
         "authoritativeAxis": [
@@ -6322,7 +6394,7 @@
           1,
           0,
           -5.35,
-          3.76,
+          3.66,
           4.28,
           1
         ],
@@ -6365,9 +6437,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.7,
+            0.78,
             0.1,
-            0.7
+            0.78
           ],
           "offset": [
             0,
@@ -6379,9 +6451,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.84,
-          0.24000000000000002,
-          0.84
+          0.9400000000000001,
+          0.26,
+          0.9400000000000001
         ],
         "authoredProperties": {
           "displayName": {
@@ -6399,6 +6471,10 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -6406,7 +6482,7 @@
         "objectID": "sun.art.portal.left.capital.lower",
         "center": [
           -5.35,
-          3.98,
+          3.9,
           4.28
         ],
         "authoritativeAxis": [
@@ -6451,7 +6527,7 @@
           1,
           0,
           -5.35,
-          3.98,
+          3.9,
           4.28,
           1
         ],
@@ -6494,9 +6570,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.84,
-            0.11,
-            0.82
+            0.94,
+            0.13,
+            0.92
           ],
           "offset": [
             0,
@@ -6508,9 +6584,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.98,
-          0.25,
-          0.96
+          1.0999999999999999,
+          0.29000000000000004,
+          1.08
         ],
         "authoredProperties": {
           "displayName": {
@@ -6528,6 +6604,10 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -6535,7 +6615,7 @@
         "objectID": "sun.art.portal.left.capital.upper",
         "center": [
           -5.35,
-          4.22,
+          4.42,
           4.28
         ],
         "authoritativeAxis": [
@@ -6580,7 +6660,7 @@
           1,
           0,
           -5.35,
-          4.22,
+          4.42,
           4.28,
           1
         ],
@@ -6623,9 +6703,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            1,
-            0.11,
-            0.94
+            1.2,
+            0.13,
+            1.08
           ],
           "offset": [
             0,
@@ -6637,9 +6717,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          1.1400000000000001,
-          0.25,
-          1.08
+          1.3599999999999999,
+          0.29000000000000004,
+          1.24
         ],
         "authoredProperties": {
           "displayName": {
@@ -6657,6 +6737,10 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -6664,7 +6748,7 @@
         "objectID": "sun.art.portal.left.abacus",
         "center": [
           -5.35,
-          4.46,
+          4.68,
           4.28
         ],
         "authoritativeAxis": [
@@ -6709,7 +6793,7 @@
           1,
           0,
           -5.35,
-          4.46,
+          4.68,
           4.28,
           1
         ],
@@ -6752,9 +6836,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            1.16,
-            0.11,
-            1.06
+            1.35,
+            0.12,
+            1.18
           ],
           "offset": [
             0,
@@ -6766,9 +6850,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          1.2999999999999998,
-          0.25,
-          1.2000000000000002
+          1.51,
+          0.28,
+          1.3399999999999999
         ],
         "authoredProperties": {
           "displayName": {
@@ -6786,6 +6870,10 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -6793,7 +6881,7 @@
         "objectID": "sun.art.portal.right.base.lower",
         "center": [
           5.35,
-          -0.47,
+          -0.46,
           4.28
         ],
         "authoritativeAxis": [
@@ -6838,7 +6926,7 @@
           1,
           0,
           5.35,
-          -0.47,
+          -0.46,
           4.28,
           1
         ],
@@ -6881,9 +6969,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            1.18,
-            0.1,
-            1.08
+            1.35,
+            0.16,
+            1.25
           ],
           "offset": [
             0,
@@ -6895,9 +6983,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          1.3199999999999998,
-          0.24000000000000002,
-          1.2200000000000002
+          1.51,
+          0.32,
+          1.41
         ],
         "authoredProperties": {
           "displayName": {
@@ -6915,6 +7003,10 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -6922,7 +7014,7 @@
         "objectID": "sun.art.portal.right.base.middle",
         "center": [
           5.35,
-          -0.25,
+          -0.16,
           4.28
         ],
         "authoritativeAxis": [
@@ -6967,7 +7059,7 @@
           1,
           0,
           5.35,
-          -0.25,
+          -0.16,
           4.28,
           1
         ],
@@ -7010,9 +7102,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.98,
-            0.1,
-            0.91
+            1.12,
+            0.14,
+            1.05
           ],
           "offset": [
             0,
@@ -7024,9 +7116,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          1.12,
-          0.24000000000000002,
-          1.05
+          1.28,
+          0.30000000000000004,
+          1.21
         ],
         "authoredProperties": {
           "displayName": {
@@ -7044,6 +7136,10 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -7051,7 +7147,7 @@
         "objectID": "sun.art.portal.right.base.upper",
         "center": [
           5.35,
-          -0.03,
+          0.12,
           4.28
         ],
         "authoritativeAxis": [
@@ -7096,7 +7192,7 @@
           1,
           0,
           5.35,
-          -0.03,
+          0.12,
           4.28,
           1
         ],
@@ -7139,9 +7235,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.82,
-            0.1,
-            0.8
+            0.92,
+            0.13,
+            0.88
           ],
           "offset": [
             0,
@@ -7153,9 +7249,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.96,
-          0.24000000000000002,
-          0.9400000000000001
+          1.08,
+          0.29000000000000004,
+          1.04
         ],
         "authoredProperties": {
           "displayName": {
@@ -7173,6 +7269,10 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -7180,7 +7280,7 @@
         "objectID": "sun.art.portal.right.core",
         "center": [
           5.35,
-          1.92,
+          1.95,
           4.28
         ],
         "authoritativeAxis": [
@@ -7225,7 +7325,7 @@
           1,
           0,
           5.35,
-          1.92,
+          1.95,
           4.28,
           1
         ],
@@ -7268,9 +7368,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.62,
-            1.78,
-            0.62
+            0.7,
+            1.58,
+            0.7
           ],
           "offset": [
             0,
@@ -7282,9 +7382,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.76,
-          1.92,
-          0.76
+          0.86,
+          1.74,
+          0.86
         ],
         "authoredProperties": {
           "displayName": {
@@ -7302,15 +7402,19 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
       {
         "objectID": "sun.art.portal.right.strip.front.inner",
         "center": [
-          5.069999999999999,
+          5.05,
           1.95,
-          3.6
+          3.42
         ],
         "authoritativeAxis": [
           0,
@@ -7353,9 +7457,9 @@
           0,
           1,
           0,
-          5.069999999999999,
+          5.05,
           1.95,
-          3.6,
+          3.42,
           1
         ],
         "x2D": 100,
@@ -7397,9 +7501,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.12,
-            1.58,
-            0.1
+            0.18,
+            1.42,
+            0.16
           ],
           "offset": [
             0,
@@ -7411,9 +7515,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.26,
-          1.7200000000000002,
-          0.24000000000000002
+          0.33999999999999997,
+          1.5799999999999998,
+          0.32
         ],
         "authoredProperties": {
           "displayName": {
@@ -7431,15 +7535,19 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
       {
         "objectID": "sun.art.portal.right.strip.front.outer",
         "center": [
-          5.63,
+          5.6499999999999995,
           1.95,
-          3.6
+          3.42
         ],
         "authoritativeAxis": [
           0,
@@ -7482,9 +7590,9 @@
           0,
           1,
           0,
-          5.63,
+          5.6499999999999995,
           1.95,
-          3.6,
+          3.42,
           1
         ],
         "x2D": 100,
@@ -7526,9 +7634,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.12,
-            1.58,
-            0.1
+            0.18,
+            1.42,
+            0.16
           ],
           "offset": [
             0,
@@ -7540,9 +7648,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.26,
-          1.7200000000000002,
-          0.24000000000000002
+          0.33999999999999997,
+          1.5799999999999998,
+          0.32
         ],
         "authoredProperties": {
           "displayName": {
@@ -7560,13 +7668,17 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
       {
         "objectID": "sun.art.portal.right.strip.outer",
         "center": [
-          6.029999999999999,
+          6.17,
           1.95,
           4.28
         ],
@@ -7611,7 +7723,7 @@
           0,
           1,
           0,
-          6.029999999999999,
+          6.17,
           1.95,
           4.28,
           1
@@ -7655,9 +7767,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.1,
-            1.58,
-            0.38
+            0.16,
+            1.42,
+            0.4
           ],
           "offset": [
             0,
@@ -7669,9 +7781,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.24000000000000002,
-          1.7200000000000002,
-          0.52
+          0.32,
+          1.5799999999999998,
+          0.56
         ],
         "authoredProperties": {
           "displayName": {
@@ -7689,6 +7801,10 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -7696,7 +7812,7 @@
         "objectID": "sun.art.portal.right.neck",
         "center": [
           5.35,
-          3.76,
+          3.66,
           4.28
         ],
         "authoritativeAxis": [
@@ -7741,7 +7857,7 @@
           1,
           0,
           5.35,
-          3.76,
+          3.66,
           4.28,
           1
         ],
@@ -7784,9 +7900,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.7,
+            0.78,
             0.1,
-            0.7
+            0.78
           ],
           "offset": [
             0,
@@ -7798,9 +7914,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.84,
-          0.24000000000000002,
-          0.84
+          0.9400000000000001,
+          0.26,
+          0.9400000000000001
         ],
         "authoredProperties": {
           "displayName": {
@@ -7818,6 +7934,10 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -7825,7 +7945,7 @@
         "objectID": "sun.art.portal.right.capital.lower",
         "center": [
           5.35,
-          3.98,
+          3.9,
           4.28
         ],
         "authoritativeAxis": [
@@ -7870,7 +7990,7 @@
           1,
           0,
           5.35,
-          3.98,
+          3.9,
           4.28,
           1
         ],
@@ -7913,9 +8033,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.84,
-            0.11,
-            0.82
+            0.94,
+            0.13,
+            0.92
           ],
           "offset": [
             0,
@@ -7927,9 +8047,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.98,
-          0.25,
-          0.96
+          1.0999999999999999,
+          0.29000000000000004,
+          1.08
         ],
         "authoredProperties": {
           "displayName": {
@@ -7947,6 +8067,10 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -7954,7 +8078,7 @@
         "objectID": "sun.art.portal.right.capital.upper",
         "center": [
           5.35,
-          4.22,
+          4.42,
           4.28
         ],
         "authoritativeAxis": [
@@ -7999,7 +8123,7 @@
           1,
           0,
           5.35,
-          4.22,
+          4.42,
           4.28,
           1
         ],
@@ -8042,9 +8166,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            1,
-            0.11,
-            0.94
+            1.2,
+            0.13,
+            1.08
           ],
           "offset": [
             0,
@@ -8056,9 +8180,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          1.1400000000000001,
-          0.25,
-          1.08
+          1.3599999999999999,
+          0.29000000000000004,
+          1.24
         ],
         "authoredProperties": {
           "displayName": {
@@ -8076,6 +8200,10 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -8083,7 +8211,7 @@
         "objectID": "sun.art.portal.right.abacus",
         "center": [
           5.35,
-          4.46,
+          4.68,
           4.28
         ],
         "authoritativeAxis": [
@@ -8128,7 +8256,7 @@
           1,
           0,
           5.35,
-          4.46,
+          4.68,
           4.28,
           1
         ],
@@ -8171,9 +8299,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            1.16,
-            0.11,
-            1.06
+            1.35,
+            0.12,
+            1.18
           ],
           "offset": [
             0,
@@ -8185,9 +8313,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          1.2999999999999998,
-          0.25,
-          1.2000000000000002
+          1.51,
+          0.28,
+          1.3399999999999999
         ],
         "authoredProperties": {
           "displayName": {
@@ -8205,6 +8333,10 @@
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -8212,7 +8344,7 @@
         "objectID": "sun.art.portal.cornice.lower",
         "center": [
           0,
-          4.68,
+          4.94,
           4.28
         ],
         "authoritativeAxis": [
@@ -8257,7 +8389,7 @@
           1,
           0,
           0,
-          4.68,
+          4.94,
           4.28,
           1
         ],
@@ -8300,9 +8432,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            6.18,
-            0.1,
-            0.74
+            6.1,
+            0.15,
+            0.72
           ],
           "offset": [
             0,
@@ -8314,8 +8446,8 @@
           "t": 0.5
         },
         "fieldExtent": [
-          6.319999999999999,
-          0.24000000000000002,
+          6.26,
+          0.31,
           0.88
         ],
         "authoredProperties": {
@@ -8325,15 +8457,19 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "primitive-artistry-portal-013"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 13
+            "v": 14
           },
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -8341,7 +8477,7 @@
         "objectID": "sun.art.portal.cornice.middle",
         "center": [
           0,
-          4.9,
+          5.24,
           4.28
         ],
         "authoritativeAxis": [
@@ -8386,7 +8522,7 @@
           1,
           0,
           0,
-          4.9,
+          5.24,
           4.28,
           1
         ],
@@ -8429,9 +8565,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            6.42,
-            0.1,
-            0.88
+            6.45,
+            0.14,
+            0.9
           ],
           "offset": [
             0,
@@ -8443,9 +8579,9 @@
           "t": 0.5
         },
         "fieldExtent": [
-          6.56,
-          0.24000000000000002,
-          1.02
+          6.61,
+          0.30000000000000004,
+          1.06
         ],
         "authoredProperties": {
           "displayName": {
@@ -8454,15 +8590,19 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "primitive-artistry-portal-013"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 13
+            "v": 14
           },
           "visual.role": {
             "t": "string",
             "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
           }
         }
       },
@@ -8470,7 +8610,7 @@
         "objectID": "sun.art.portal.cornice.upper",
         "center": [
           0,
-          5.12,
+          5.53,
           4.28
         ],
         "authoritativeAxis": [
@@ -8515,7 +8655,7 @@
           1,
           0,
           0,
-          5.12,
+          5.53,
           4.28,
           1
         ],
@@ -8558,8 +8698,1197 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            6.7,
+            6.8,
+            0.14,
+            1.05
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          6.96,
+          0.30000000000000004,
+          1.21
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — upper gold crown course"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.inner.left",
+        "center": [
+          -4.15,
+          2.28,
+          3.25
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -4.15,
+          2.28,
+          3.25,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.13,
+            1.62,
+            0.12
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.29000000000000004,
+          1.78,
+          0.28
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — inner left gold frame"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.inner.right",
+        "center": [
+          4.15,
+          2.28,
+          3.25
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          4.15,
+          2.28,
+          3.25,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.13,
+            1.62,
+            0.12
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.29000000000000004,
+          1.78,
+          0.28
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — inner right gold frame"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.inner.top",
+        "center": [
+          0,
+          4.03,
+          3.25
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          4.03,
+          3.25,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            4.28,
+            0.13,
+            0.12
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          4.44,
+          0.29000000000000004,
+          0.28
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — inner top gold frame"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.reveal.left",
+        "center": [
+          -4.55,
+          2.28,
+          3.65
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -4.55,
+          2.28,
+          3.65,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.18,
+            1.8,
+            0.22
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.33999999999999997,
+          1.96,
+          0.38
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — left reveal"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.reveal.right",
+        "center": [
+          4.55,
+          2.28,
+          3.65
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          4.55,
+          2.28,
+          3.65,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.18,
+            1.8,
+            0.22
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.33999999999999997,
+          1.96,
+          0.38
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — right reveal"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.reveal.top",
+        "center": [
+          0,
+          4.18,
+          3.65
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          4.18,
+          3.65,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            4.73,
+            0.18,
+            0.22
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          4.890000000000001,
+          0.33999999999999997,
+          0.38
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — upper reveal"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primitive brushstroke; composed architectural detail"
+          },
+          "visual.reconciliation": {
+            "t": "string",
+            "v": "Pass #014 silhouette rebuild"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.left.base.crown",
+        "center": [
+          -5.35,
+          0.36,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5.35,
+          0.36,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.8,
             0.1,
+            0.76
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.9600000000000001,
+          0.26,
+          0.92
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "left pier — plinth crown"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primary mass transition"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.left.strip.inner",
+        "center": [
+          -4.529999999999999,
+          1.95,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -4.529999999999999,
+          1.95,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.16,
+            1.42,
+            0.32
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.32,
+          1.5799999999999998,
+          0.48
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "left pier — inner engaged strip"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "secondary silhouette"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.left.capital.middle",
+        "center": [
+          -5.35,
+          4.16,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5.35,
+          4.16,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1.08,
+            0.13,
             1
           ],
           "offset": [
@@ -8572,35 +9901,35 @@
           "t": 0.5
         },
         "fieldExtent": [
-          6.84,
-          0.24000000000000002,
-          1.1400000000000001
+          1.24,
+          0.29000000000000004,
+          1.16
         ],
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "portal — upper gold crown course"
+            "v": "left pier — middle capital course"
           },
           "construction.feature": {
             "t": "string",
-            "v": "primitive-artistry-portal-013"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 13
+            "v": 14
           },
           "visual.role": {
             "t": "string",
-            "v": "primitive brushstroke; composed architectural detail"
+            "v": "capital silhouette"
           }
         }
       },
       {
-        "objectID": "sun.art.portal.inner.left",
+        "objectID": "sun.art.portal.left.finial.base",
         "center": [
-          -4.35,
-          2.28,
-          3.5
+          -5.35,
+          5.88,
+          4.28
         ],
         "authoritativeAxis": [
           0,
@@ -8643,9 +9972,9 @@
           0,
           1,
           0,
-          -4.35,
-          2.28,
-          3.5,
+          -5.35,
+          5.88,
+          4.28,
           1
         ],
         "x2D": 100,
@@ -8687,9 +10016,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.13,
-            1.72,
-            0.1
+            0.42,
+            0.1,
+            0.42
           ],
           "offset": [
             0,
@@ -8701,35 +10030,164 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.27,
-          1.8599999999999999,
-          0.24000000000000002
+          0.58,
+          0.26,
+          0.58
         ],
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "portal — inner left gold frame"
+            "v": "left portal finial pedestal"
           },
           "construction.feature": {
             "t": "string",
-            "v": "primitive-artistry-portal-013"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 13
+            "v": 14
           },
           "visual.role": {
             "t": "string",
-            "v": "primitive brushstroke; composed architectural detail"
+            "v": "amber fixture support"
           }
         }
       },
       {
-        "objectID": "sun.art.portal.inner.right",
+        "objectID": "sun.art.portal.right.base.crown",
         "center": [
-          4.35,
-          2.28,
-          3.5
+          5.35,
+          0.36,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5.35,
+          0.36,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.8,
+            0.1,
+            0.76
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.9600000000000001,
+          0.26,
+          0.92
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "right pier — plinth crown"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primary mass transition"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.right.strip.inner",
+        "center": [
+          4.529999999999999,
+          1.95,
+          4.28
         ],
         "authoritativeAxis": [
           0,
@@ -8772,9 +10230,9 @@
           0,
           1,
           0,
-          4.35,
-          2.28,
-          3.5,
+          4.529999999999999,
+          1.95,
+          4.28,
           1
         ],
         "x2D": 100,
@@ -8816,9 +10274,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            0.13,
-            1.72,
-            0.1
+            0.16,
+            1.42,
+            0.32
           ],
           "offset": [
             0,
@@ -8830,35 +10288,1067 @@
           "t": 0.5
         },
         "fieldExtent": [
-          0.27,
-          1.8599999999999999,
-          0.24000000000000002
+          0.32,
+          1.5799999999999998,
+          0.48
         ],
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "portal — inner right gold frame"
+            "v": "right pier — inner engaged strip"
           },
           "construction.feature": {
             "t": "string",
-            "v": "primitive-artistry-portal-013"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 13
+            "v": 14
           },
           "visual.role": {
             "t": "string",
-            "v": "primitive brushstroke; composed architectural detail"
+            "v": "secondary silhouette"
           }
         }
       },
       {
-        "objectID": "sun.art.portal.inner.top",
+        "objectID": "sun.art.portal.right.capital.middle",
+        "center": [
+          5.35,
+          4.16,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5.35,
+          4.16,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1.08,
+            0.13,
+            1
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.24,
+          0.29000000000000004,
+          1.16
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "right pier — middle capital course"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "capital silhouette"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.right.finial.base",
+        "center": [
+          5.35,
+          5.88,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5.35,
+          5.88,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.42,
+            0.1,
+            0.42
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.58,
+          0.26,
+          0.58
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "right portal finial pedestal"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "amber fixture support"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.cornice.crown",
         "center": [
           0,
+          5.8,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          5.8,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            6.55,
+            0.1,
+            0.78
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          6.71,
+          0.26,
+          0.9400000000000001
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — crown course"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "primary skyline"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.cornice.return.left",
+        "center": [
+          -6.36,
+          5.5,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -6.36,
+          5.5,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.5,
+            0.18,
+            1.3
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.66,
+          0.33999999999999997,
+          1.46
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — left cornice return"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "corner silhouette"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.cornice.return.right",
+        "center": [
+          6.36,
+          5.5,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          6.36,
+          5.5,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.5,
+            0.18,
+            1.3
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.66,
+          0.33999999999999997,
+          1.46
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — right cornice return"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "corner silhouette"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.threshold.lower",
+        "center": [
+          0,
+          -0.52,
+          4.38
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -0.52,
+          4.38,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            4.6,
+            0.16,
+            0.75
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          4.76,
+          0.32,
+          0.91
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — lower ceremonial threshold"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "floor-to-portal anchor"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.threshold.gold",
+        "center": [
+          0,
+          -0.28,
+          4.2
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -0.28,
+          4.2,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            4,
+            0.08,
+            0.45
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          4.16,
+          0.24,
+          0.61
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — gold threshold course"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "floor-to-portal anchor"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.threshold.upper",
+        "center": [
+          0,
+          -0.1,
+          4.02
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.temple.marble",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -0.1,
           4.02,
-          3.5
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ],
+          [
+            0.88,
+            0.84,
+            0.72
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            3.6,
+            0.1,
+            0.3
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          3.7600000000000002,
+          0.26,
+          0.45999999999999996
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "portal — upper ceremonial threshold"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "floor-to-portal anchor"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.sun.ray.top",
+        "center": [
+          0,
+          5.72,
+          3.03
         ],
         "authoritativeAxis": [
           0,
@@ -8902,8 +11392,8 @@
           1,
           0,
           0,
-          4.02,
-          3.5,
+          5.72,
+          3.03,
           1
         ],
         "x2D": 100,
@@ -8945,9 +11435,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            4.48,
-            0.13,
-            0.1
+            0.08,
+            0.26,
+            0.08
           ],
           "offset": [
             0,
@@ -8959,35 +11449,35 @@
           "t": 0.5
         },
         "fieldExtent": [
-          4.62,
-          0.27,
-          0.24000000000000002
+          0.24,
+          0.42000000000000004,
+          0.24
         ],
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "portal — inner top gold frame"
+            "v": "solar emblem — top ray"
           },
           "construction.feature": {
             "t": "string",
-            "v": "primitive-artistry-portal-013"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 13
+            "v": 14
           },
           "visual.role": {
             "t": "string",
-            "v": "primitive brushstroke; composed architectural detail"
+            "v": "focal motif"
           }
         }
       },
       {
-        "objectID": "sun.art.portal.reveal.left",
+        "objectID": "sun.art.portal.sun.ray.bottom",
         "center": [
-          -4.62,
-          2.28,
-          3.7
+          0,
+          4.52,
+          3.03
         ],
         "authoritativeAxis": [
           0,
@@ -8996,265 +11486,7 @@
         ],
         "geometryType": 10,
         "shapeKind": 10,
-        "materialId": "sun.temple.marble",
-        "renderMode": 0,
-        "rotationResponsiveness": 10,
-        "shapeParams": [
-          1,
-          1,
-          1,
-          0.5,
-          0.35,
-          0.15,
-          2,
-          0.25,
-          0.12,
-          100,
-          100
-        ],
-        "targetRotation": [
-          0,
-          0,
-          0
-        ],
-        "transform": [
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          -4.62,
-          2.28,
-          3.7,
-          1
-        ],
-        "x2D": 100,
-        "y2D": 100,
-        "zOrder2D": 0,
-        "faceColors": [
-          [
-            0.88,
-            0.84,
-            0.72
-          ],
-          [
-            0.88,
-            0.84,
-            0.72
-          ],
-          [
-            0.88,
-            0.84,
-            0.72
-          ],
-          [
-            0.88,
-            0.84,
-            0.72
-          ],
-          [
-            0.88,
-            0.84,
-            0.72
-          ],
-          [
-            0.88,
-            0.84,
-            0.72
-          ]
-        ],
-        "field": {
-          "op": 0,
-          "prim": 1,
-          "dims": [
-            0.12,
-            1.88,
-            0.18
-          ],
-          "offset": [
-            0,
-            0,
-            0
-          ],
-          "p0": 0,
-          "p1": 0,
-          "t": 0.5
-        },
-        "fieldExtent": [
-          0.26,
-          2.02,
-          0.32
-        ],
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "portal — left reveal"
-          },
-          "construction.feature": {
-            "t": "string",
-            "v": "primitive-artistry-portal-013"
-          },
-          "construction.pass": {
-            "t": "float",
-            "v": 13
-          },
-          "visual.role": {
-            "t": "string",
-            "v": "primitive brushstroke; composed architectural detail"
-          }
-        }
-      },
-      {
-        "objectID": "sun.art.portal.reveal.right",
-        "center": [
-          4.62,
-          2.28,
-          3.7
-        ],
-        "authoritativeAxis": [
-          0,
-          1,
-          0
-        ],
-        "geometryType": 10,
-        "shapeKind": 10,
-        "materialId": "sun.temple.marble",
-        "renderMode": 0,
-        "rotationResponsiveness": 10,
-        "shapeParams": [
-          1,
-          1,
-          1,
-          0.5,
-          0.35,
-          0.15,
-          2,
-          0.25,
-          0.12,
-          100,
-          100
-        ],
-        "targetRotation": [
-          0,
-          0,
-          0
-        ],
-        "transform": [
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          4.62,
-          2.28,
-          3.7,
-          1
-        ],
-        "x2D": 100,
-        "y2D": 100,
-        "zOrder2D": 0,
-        "faceColors": [
-          [
-            0.88,
-            0.84,
-            0.72
-          ],
-          [
-            0.88,
-            0.84,
-            0.72
-          ],
-          [
-            0.88,
-            0.84,
-            0.72
-          ],
-          [
-            0.88,
-            0.84,
-            0.72
-          ],
-          [
-            0.88,
-            0.84,
-            0.72
-          ],
-          [
-            0.88,
-            0.84,
-            0.72
-          ]
-        ],
-        "field": {
-          "op": 0,
-          "prim": 1,
-          "dims": [
-            0.12,
-            1.88,
-            0.18
-          ],
-          "offset": [
-            0,
-            0,
-            0
-          ],
-          "p0": 0,
-          "p1": 0,
-          "t": 0.5
-        },
-        "fieldExtent": [
-          0.26,
-          2.02,
-          0.32
-        ],
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "portal — right reveal"
-          },
-          "construction.feature": {
-            "t": "string",
-            "v": "primitive-artistry-portal-013"
-          },
-          "construction.pass": {
-            "t": "float",
-            "v": 13
-          },
-          "visual.role": {
-            "t": "string",
-            "v": "primitive brushstroke; composed architectural detail"
-          }
-        }
-      },
-      {
-        "objectID": "sun.art.portal.reveal.top",
-        "center": [
-          0,
-          4.22,
-          3.7
-        ],
-        "authoritativeAxis": [
-          0,
-          1,
-          0
-        ],
-        "geometryType": 10,
-        "shapeKind": 10,
-        "materialId": "sun.temple.marble",
+        "materialId": "sun.solar-gate.gold",
         "renderMode": 0,
         "rotationResponsiveness": 10,
         "shapeParams": [
@@ -9289,8 +11521,8 @@
           1,
           0,
           0,
-          4.22,
-          3.7,
+          4.52,
+          3.03,
           1
         ],
         "x2D": 100,
@@ -9298,43 +11530,43 @@
         "zOrder2D": 0,
         "faceColors": [
           [
-            0.88,
-            0.84,
-            0.72
+            1,
+            0.58,
+            0.12
           ],
           [
-            0.88,
-            0.84,
-            0.72
+            1,
+            0.58,
+            0.12
           ],
           [
-            0.88,
-            0.84,
-            0.72
+            1,
+            0.58,
+            0.12
           ],
           [
-            0.88,
-            0.84,
-            0.72
+            1,
+            0.58,
+            0.12
           ],
           [
-            0.88,
-            0.84,
-            0.72
+            1,
+            0.58,
+            0.12
           ],
           [
-            0.88,
-            0.84,
-            0.72
+            1,
+            0.58,
+            0.12
           ]
         ],
         "field": {
           "op": 0,
           "prim": 1,
           "dims": [
-            4.74,
-            0.12,
-            0.18
+            0.08,
+            0.26,
+            0.08
           ],
           "offset": [
             0,
@@ -9346,26 +11578,284 @@
           "t": 0.5
         },
         "fieldExtent": [
-          4.88,
-          0.26,
-          0.32
+          0.24,
+          0.42000000000000004,
+          0.24
         ],
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "portal — upper reveal"
+            "v": "solar emblem — bottom ray"
           },
           "construction.feature": {
             "t": "string",
-            "v": "primitive-artistry-portal-013"
+            "v": "portal-silhouette-rebuild-014"
           },
           "construction.pass": {
             "t": "float",
-            "v": 13
+            "v": 14
           },
           "visual.role": {
             "t": "string",
-            "v": "primitive brushstroke; composed architectural detail"
+            "v": "focal motif"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.sun.ray.left",
+        "center": [
+          -0.62,
+          5.12,
+          3.03
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -0.62,
+          5.12,
+          3.03,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.28,
+            0.08,
+            0.08
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.44000000000000006,
+          0.24,
+          0.24
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "solar emblem — left ray"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "focal motif"
+          }
+        }
+      },
+      {
+        "objectID": "sun.art.portal.sun.ray.right",
+        "center": [
+          0.62,
+          5.12,
+          3.03
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0.62,
+          5.12,
+          3.03,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.28,
+            0.08,
+            0.08
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.44000000000000006,
+          0.24,
+          0.24
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "solar emblem — right ray"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "portal-silhouette-rebuild-014"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 14
+          },
+          "visual.role": {
+            "t": "string",
+            "v": "focal motif"
           }
         }
       }
