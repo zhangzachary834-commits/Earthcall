@@ -345,8 +345,7 @@ int main() {
         writer.persistZones();
     }
 
-    check(std::filesystem::exists(
-              sandbox / "zones" / zoneId / "zone.json"),
+    check(std::filesystem::exists(SaveSystem::zoneIdentityPath(zoneId)),
           "real Zone identity persistence writes the radiant Zone");
 
     {

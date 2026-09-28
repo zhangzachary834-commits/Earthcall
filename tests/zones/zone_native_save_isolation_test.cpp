@@ -49,15 +49,17 @@ std::string readBytes(const std::filesystem::path& path) {
 }
 
 bool containsObjectId(const std::filesystem::path& path, const std::string& id) {
-    std::ifstream input(path);
-    if (!input) return false;
-    nlohmann::json document;
-    input >> document;
-    if (!document.contains("world") || !document["world"].is_object() ||
-        !document["world"].contains("objects") || !document["world"]["objects"].is_array()) {
-        return false;
+    nlohmann::json document = SaveSystem::readSaveData(path.string());
+    if (document.is_null()) return false;
+    const nlohmann::json* objects = nullptr;
+    if (document.contains("world") && document["world"].is_object() &&
+        document["world"].contains("objects") && document["world"]["objects"].is_array()) {
+        objects = &document["world"]["objects"];
+    } else if (document.contains("objects") && document["objects"].is_array()) {
+        objects = &document["objects"];
     }
-    for (const auto& object : document["world"]["objects"]) {
+    if (!objects) return false;
+    for (const auto& object : *objects) {
         if (object.value("objectID", std::string{}) == id ||
             object.value("id", std::string{}) == id ||
             object.value("identifier", std::string{}) == id) {
@@ -104,8 +106,8 @@ int main() {
     // subject begins after this point: one Zone changes, one Zone is saved.
     manager.persistZones();
 
-    const auto alphaPath = sandbox / "zones" / "Alpha" / "zone.json";
-    const auto betaPath = sandbox / "zones" / "Beta" / "zone.json";
+    const auto alphaPath = SaveSystem::zoneIdentityPath("Alpha");
+    const auto betaPath = SaveSystem::zoneIdentityPath("Beta");
     check(std::filesystem::exists(alphaPath), "bulk seed created Alpha identity");
     check(std::filesystem::exists(betaPath), "bulk seed created Beta identity");
 
