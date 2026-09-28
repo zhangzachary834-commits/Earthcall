@@ -328,7 +328,10 @@ int main() {
         "authority_artifact_bytes=%zu authority_mask_bytes=%zu "
         "authority_setup_ns=%llu authority_repair_ns=%llu "
         "authority_repair_draw_ms=%.6f authority_repair_wgsl_bytes=%zu "
-        "proof_reads=%llu metadata_tests=%llu "
+        "vessel_observations=%llu semantic_builds=%llu semantic_cache_hits=%llu "
+        "slot_builds=%llu slot_repairs=%llu "
+        "handle_publications=%llu handle_validations=%llu "
+        "proof_reads=%llu metadata_tests=%llu proof_fallbacks=%llu "
         "authority_applications=%llu\n",
         kSamplePairs,
         exactWall, authorityWall, wallRatio,
@@ -354,10 +357,34 @@ int main() {
         repairDraw.stats.sdfWgslBytesGenerated,
         static_cast<unsigned long long>(
             authorityRenderer.renderedFieldSemanticObservationStats()
+                .vesselObservations),
+        static_cast<unsigned long long>(
+            authorityRenderer.renderedFieldSemanticObservationStats()
+                .semanticBuilds),
+        static_cast<unsigned long long>(
+            authorityRenderer.renderedFieldSemanticObservationStats()
+                .semanticCacheHits),
+        static_cast<unsigned long long>(
+            authorityRenderer.renderedFieldSemanticObservationStats()
+                .alignedSlotBuilds),
+        static_cast<unsigned long long>(
+            authorityRenderer.renderedFieldSemanticObservationStats()
+                .alignedSlotRepairs),
+        static_cast<unsigned long long>(
+            authorityRenderer.renderedFieldSemanticObservationStats()
+                .alignedHandlePublications),
+        static_cast<unsigned long long>(
+            authorityRenderer.renderedFieldSemanticObservationStats()
+                .alignedHandleValidations),
+        static_cast<unsigned long long>(
+            authorityRenderer.renderedFieldSemanticObservationStats()
                 .alignedProofReads),
         static_cast<unsigned long long>(
             authorityRenderer.renderedFieldSemanticObservationStats()
                 .alignedHandleMetadataTests),
+        static_cast<unsigned long long>(
+            authorityRenderer.renderedFieldSemanticObservationStats()
+                .alignedProofReadFallbacks),
         static_cast<unsigned long long>(
             authorityRenderer.renderedFieldSemanticObservationStats()
                 .authorityBypassesApplied));
