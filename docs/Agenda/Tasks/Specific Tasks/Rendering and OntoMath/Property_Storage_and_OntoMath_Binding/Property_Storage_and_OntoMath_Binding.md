@@ -1,6 +1,6 @@
 # PropertyPath and memory micromastery — storage and live OntoMath binding
 
-**Status:** Architecture drafted; implementation open.
+**Status:** Architecture drafted; narrow ambiguity and Person-identity refusal implemented; Zone-governed binding and memory micromastery remain open.
 
 **Architecture:** [`PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md`](../../../../../architecture/ontology/PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md).
 
@@ -70,10 +70,20 @@ Zach chose **the same enduring identity** across the relevant machines, machine-
 
 **Zach's 2026-09-28 definitions for this task:** Authorship is a Person's intentional act producing an outcome corresponding to the act's nature, even if that exact outcome was not intended. Ownership means every change to the owned thing must answer to its owner. Governance is scoped Property read/write authority without necessary ownership. Dependency exists where another Singular causally affects something in which a Person has an ownership stake, significantly affecting its telos. **Constitution stands above these:** a constitutive predicate of oneself or an inviolable human right. Zach grounds hardcoded Person guards against bodily and likeness violations and the guarantee of at least one Primary Home in Constitution. This task must not let read/write gates, Ourverse guardianship, or a dependent's stake override those guards. The [Second Person framework](../../../../../architecture/ourverse/SECOND_PERSON_FRAMEWORK.md#zachs-account-of-standing-and-constitution-2026-09-28) holds the shared definition.
 
-**Relation representation, Zach's correction:** These grounds must be **unique Relations, not hardcoded enums**. Their exact endpoints and whether "unique" denotes Relation kinds or canonical Relation instances are not yet specified. Do not turn the table of definitions into a C++ kind list or precommit a serialized topology.
+**Relation representation, Zach's correction:** Authorship, ownership, governance, dependency, and Constitution are **five distinct Relation kinds, like Category Relations, not hardcoded enums**. "Unique" distinguishes kinds; Zach did not require one canonical Relation instance per pair. Their exact endpoints and admission rules remain open. Do not turn the table of definitions into a C++ kind list or precommit a serialized topology.
+
+**Inter-Zone jurisdiction, Zach's correction:** Each Zone governs things owned within its bounds. A Zone governs what it reads and writes from its own jurisdiction and how it receives transmissions sent by another Zone; it cannot govern the other Zone's choice to send. An inter-Zone access therefore needs each participating Zone's own authored decision at its own boundary, without attributing the sender's authority to the receiver or vice versa. This states jurisdiction, not a default access decision when no Metalaw exists.
+
+**Implemented narrow continuity guard, 2026-09-28:** `Person::setPersonId` now refuses a different key ID after one has been established, and `personFromJson` checks a claimed ID before changing any Person field. This directly enforces Zach's refusal of silent reauthoring on the live Person and profile-load seam. It does not prove a file's initial identity claim, authorize key rotation, distribute a secret across machines, or make a PropertyPath resolve through Zone-held identity. The existing `Person` profile codec leaves signature proof with its caller. `person_serialization_test` exercises same-ID reuse, direct conflicting assignment, malformed ID, and a conflicting profile with attempted name and position changes. `person_serialization_test`, `person_database_test`, and `home_identity_continuity_test` passed; `person_home_migration_boot_test` compiled but timed out without a runtime verdict in this environment.
 
 *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:30 PDT. Zach supplied the same-identity, shared-recognition, Person-consent, Zone-key, single-Person-key, and micromastery directions; Codex recorded them and separated them from its security questions.*
 
 *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:47 PDT. Zach supplied the five-fold definition of standing and Constitution directly after Codex asked for its source; Codex linked it to this PropertyPath task without assigning new runtime powers.*
 
 *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:49 PDT. Zach clarified the Relation representation and rejected hardcoded enums; exact Relation topology is still an authorial decision.*
+
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 12:53 PDT. Zach chose five distinct Relation kinds and specified each Zone's jurisdiction over its own read/write acts and reception of inter-Zone transmissions.*
+
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 13:01 PDT. Codex implemented the narrow Person identity reassignment refusal from Zach's same-identity and Person-consent direction; the focused test passed. Zone resolution and key continuity remain open.*
+
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 13:04 PDT. Codex ran the Person profile, Person database, and Home identity tests; the broader migration boot test timed out and was not counted as a pass or failure.*

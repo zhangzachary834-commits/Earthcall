@@ -42,7 +42,7 @@ machinery built for the substrate case.
 
 ### Zach's account of standing and Constitution (2026-09-28)
 
-Zach supplied these distinctions directly in the PropertyPath and memory micromastery conversation. **They must be represented by unique Relations, not a hardcoded enum.** Preserve them as separate grounds of standing; do not turn a dependency into ownership or governance into authorship. The exact Relation endpoints, identity, and meaning of "unique" remain for Zach to specify:
+Zach supplied these distinctions directly in the PropertyPath and memory micromastery conversation. **They are five distinct Relation kinds, like Category Relations, not a hardcoded enum.** Preserve them as separate grounds of standing; do not turn a dependency into ownership or governance into authorship. Their exact endpoints and admission rules remain for Zach to specify:
 
 | Ground | Zach's meaning |
 |---|---|
@@ -54,11 +54,13 @@ Zach supplied these distinctions directly in the PropertyPath and memory microma
 
 Zach's examples of Constitution are the Person's Body and protection against another's theft or misrepresentation of their likeness, and the guarantee that every Person has **at least one Primary Home**. This does not declare every authored or dependent Property constitutionally guarded. `ZoneManager::enforcePrimaryHomeInvariant` already names and checks the at-least-one admission invariant; §2's proposed likeness channel checks remain design work. The distinction between a real human body and an avatar below remains in force.
 
-**Representation boundary:** Do not introduce `StakeKind`, `ConstitutionKind`, or a fixed C++ list of these grounds. Zach's Relation direction does not itself settle whether Constitution is also a Relation instance, which Singulars it joins, or whether "unique" names distinct kinds or canonical instances; ask before defining serialization or matching semantics.
+**Representation boundary:** Do not introduce `StakeKind`, `ConstitutionKind`, or a fixed C++ list of these grounds. Zach confirmed that Constitution is one of the five distinct Relation kinds; "unique" distinguishes the kinds, not one canonical Relation instance per pair. Which Singulars each Relation joins and how a claim gains standing still need authorial decisions before serialization or matching semantics are fixed.
 
 *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:47 PDT. The five definitions and three examples are Zach's; Codex placed them beside the existing stakes framework and checked the current Home invariant and proposed likeness boundary.*
 
 *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:49 PDT. Zach clarified that these grounds are unique Relations rather than hardcoded enums; their exact topology awaits his answer.*
+
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 12:53 PDT. Zach clarified that all five are distinct Relation kinds, analogous to Category Relations; no canonical per-pair instance rule was supplied.*
 
 ---
 
