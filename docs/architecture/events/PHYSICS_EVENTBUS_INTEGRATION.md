@@ -26,21 +26,12 @@ struct PhysicsCollisionEvent {
 ### 2. Automatic Event Publishing
 When objects collide in the physics system, a `PhysicsCollisionEvent` is automatically published to the EventBus. This happens in the existing collision detection code without removing any functionality.
 
-### 3. Default Event Listeners
-The `Physics::setupPhysicsEventListeners()` function sets up default listeners that:
-- Log collision details to console
-- Record collisions in the physics registry (existing functionality)
-- Provide hooks for additional collision responses
+### 3. Subscribing to Collision Events
+Systems can subscribe to `PhysicsCollisionEvent` directly on `Core::EventBus::instance()`.
 
 ## How to Use
 
-### Step 1: Initialize the Event System
-```cpp
-// Call this during your game initialization
-Physics::setupPhysicsEventListeners();
-```
-
-### Step 2: Add Custom Listeners
+### Step 1: Add Custom Listeners
 ```cpp
 auto& eventBus = Core::EventBus::instance();
 

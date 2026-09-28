@@ -5,10 +5,7 @@
 
 // Example of how to use the hybrid physics/EventBus system
 void setupPhysicsEventSystem() {
-    // 1. Set up the default physics event listeners
-    Physics::setupPhysicsEventListeners();
-    
-    // 2. Add custom listeners for specific collision types
+    // Custom listeners for specific collision types
     auto& eventBus = Core::EventBus::instance();
     
     // Listen for collisions involving specific object types
