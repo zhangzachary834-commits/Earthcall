@@ -62,6 +62,7 @@ LS::Vocabulary baseVocabulary() {
         if (id == "cube") return std::vector<std::string>{"color", "glow", "hp"};
         return std::vector<std::string>{"brightness"};
     };
+    v.laws.push_back({"law-red", "Red", "on object-clicked · if hp > 2 · then set glow 1"});
     return v;
 }
 
@@ -312,6 +313,22 @@ void grammar() {
         assert(contains(next, "then") && contains(next, "if") && contains(next, "or"));
         const auto hits = LS::search("glow", v);
         assert(!hits.empty());
+
+        // Authored Laws are searchable as Laws: by display name, stable id,
+        // or the existing read-back summary carried by Vocabulary::laws.
+        const auto lawByName = LS::search("Red", v);
+        assert(std::any_of(lawByName.begin(), lawByName.end(),
+                           [](const std::string& s) {
+                               return mentions(s, "law      Red") && mentions(s, "law-red");
+                           }));
+        const auto lawById = LS::search("law-red", v);
+        assert(std::any_of(lawById.begin(), lawById.end(),
+                           [](const std::string& s) { return mentions(s, "law      Red"); }));
+        const auto lawBySummary = LS::search("object-clicked", v);
+        assert(std::any_of(lawBySummary.begin(), lawBySummary.end(),
+                           [](const std::string& s) {
+                               return mentions(s, "law      Red") && mentions(s, "object-clicked");
+                           }));
     }
 }
 

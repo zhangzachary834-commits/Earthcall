@@ -1523,6 +1523,12 @@ std::vector<std::string> search(const std::string& rawQuery, const Vocabulary& v
     for (const auto& b : vocab.beings) {
         if (hit(b)) out.push_back("being    @" + b);
     }
+    for (const auto& law : vocab.laws) {
+        if (hit(law.name) || hit(law.id) || (!law.summary.empty() && hit(law.summary))) {
+            out.push_back("law      " + law.name + "  (" + law.id + ")" +
+                          (law.summary.empty() ? "" : "  · " + law.summary));
+        }
+    }
     if (vocab.propertiesOf && !vocab.scopeBeing.empty()) {
         for (const auto& p : vocab.propertiesOf(vocab.scopeBeing)) {
             if (hit(p)) out.push_back("property " + p + "  (on @" + vocab.scopeBeing + ")");
