@@ -46,6 +46,8 @@ The design must distinguish:
 
 These can coincide in ordinary use but must not be assumed to coincide. The authored relationships are:
 
+**Zach's 2026-09-27 correction:** These distinctions do not make a PropertyPath an identity holder. A path does not retain a Singular's ID on its own. A read is resolved under the Zones in which it occurs, including plural Zones in an inter-Zone transmission. A Zone is any domain or set over a mathematical or discrete bound, including a device domain; it need not be a digital 3D world. A path intended for one individual must reach that same individual or refuse; a changing Relation can select another bearer only when that changing referent is what the Person authored. Zone authorization to hold identity is rooted in Person-authorized First Mover action through owned machines and governance/ownership Relations, not inferred from the physical location of data. The exact machinery and conflict rules remain open; no path-owned ID or alternate permission system is prescribed here.
+
 | Relationship | Meaning after the source changes | Meaning after the source path is rebound | Ownership |
 |---|---|---|---|
 | **Follow path** | Read the new value through the path | Follow the new target | Path keeps no source value alive |
@@ -92,7 +94,7 @@ An authored container operation needs a bounded, typed effect: which path(s) it 
 
 ## 5. Safe storage and authority
 
-**Proposed substrate representation:** a table of value cells addressed by opaque, generation-checked runtime handles. The table controls allocation and reclamation. A handle can resolve to a typed cell or fail explicitly as expired/stale; it is never an arbitrary address and cannot be forged from a Property value. A stable authored referent and saved alias topology are serialized in human-legible form; runtime slot numbers, pointer values, and `StringId`s are rebuilt on load.
+**Proposed substrate representation:** a table of value cells addressed by opaque, generation-checked runtime handles. The table controls allocation and reclamation. A handle can resolve to a typed cell or fail explicitly as expired/stale; it is never an arbitrary address and cannot be forged from a Property value. Saved alias topology must preserve the authored relationships; how a referent is individuated and disclosed is subject to the Zone-governed identity direction above. Runtime slot numbers, pointer values, and `StringId`s are rebuilt on load.
 
 This proposal allows strong shared access, single-owner access, and weak observation as authored directions while keeping actual dereference in C++. It must define how unique ownership transfers, how strong cycles are rejected or collected, and what a weak observation returns after expiry. Copying a container must specify whether nested references are cloned, retained, or refused; the word “deep copy” alone is insufficient for cyclic or being-referencing graphs.
 
