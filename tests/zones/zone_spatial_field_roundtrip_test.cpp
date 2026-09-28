@@ -346,7 +346,7 @@ int main() {
     }
 
     check(std::filesystem::exists(
-              sandbox / "zones" / zoneId / "zone.json"),
+              sandbox / "zones" / zoneId / "zone.ecform"),
           "real Zone identity persistence writes the radiant Zone");
 
     {
