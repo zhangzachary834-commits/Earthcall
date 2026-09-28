@@ -160,6 +160,13 @@ protected:
     }
     void applyModel(const glm::mat4& model) override { _model = model; }
 
+    void onRadianceZeroAuthorityExperimentChanged() override {
+        // Authority changes emitted shader structure even when authored source
+        // revisions are unchanged. Force the next draw to rebuild the aligned
+        // source-layout identity and therefore the memoized WGSL.
+        _radianceSourcesLayoutRevision = 0xffffffffffffffffULL;
+    }
+
 private:
     WGPUDevice _device = nullptr;
     WGPUQueue  _queue  = nullptr;
@@ -312,6 +319,11 @@ private:
     bool _radianceSourcesLayoutOk = true;
     std::string _radianceSourcesLayoutError;
     uint64_t _radianceSourcesStructureRevision = 0;
+    // One byte per already-known source slot. 1 means the observer proved this
+    // SourceRho is exactly zero and the experimental compiler may emit return 0.
+    // The vector is rebuilt only when the source-set identity or experiment gate
+    // dirties shader structure.
+    std::vector<uint8_t> _radianceZeroAuthorityMask;
 
     // Pipeline-local parameter storage survives frame boundaries. The frame still
     // assembles the compact contiguous parameter vector in instance order, but an
