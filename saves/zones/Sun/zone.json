@@ -3175,6 +3175,131 @@
             "v": 9
           }
         }
+      },
+      {
+        "objectID": "sun.forecourt.portal.crown",
+        "center": [
+          0,
+          4.72,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.solar-gate.gold",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          4.72,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ],
+          [
+            1,
+            0.58,
+            0.12
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            5.85,
+            0.34,
+            0.46
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          6.05,
+          0.54,
+          0.66
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Forecourt Portal — Crown Lintel"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "forecourt-portal-crown-010"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 10
+          }
+        }
       }
     ],
     "relations": []
