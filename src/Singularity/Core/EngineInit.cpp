@@ -276,11 +276,6 @@ bool Engine::initLogic() {
     Singularity::Network::WebSocketServer::instance().start(8080);
 #endif
 
-    // Collisions feed the relation graph (recordCollision) as well as the
-    // ECA echo above; without this, PhysicsCollisionEvent had no listener
-    // and collision history never reached the relation registry.
-    Physics::setupPhysicsEventListeners();
-
     // Register core concepts like sound-emitters before laws are built
     ConceptRegistry::instance().registerCoreConcepts();
 
