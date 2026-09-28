@@ -1,3 +1,4 @@
+#include "Singularity/Storage/SaveSystem.hpp"
 // Zone-native Save Zone isolation.
 //
 // Zach's required ordinary path is Creator Console -> Zones -> Move to Zone
@@ -104,8 +105,8 @@ int main() {
     // subject begins after this point: one Zone changes, one Zone is saved.
     manager.persistZones();
 
-    const auto alphaPath = sandbox / "zones" / "Alpha" / "zone.json";
-    const auto betaPath = sandbox / "zones" / "Beta" / "zone.json";
+    const auto alphaPath = sandbox / "zones" / "Alpha" / "zone.ecform";
+    const auto betaPath = sandbox / "zones" / "Beta" / "zone.ecform";
     check(std::filesystem::exists(alphaPath), "bulk seed created Alpha identity");
     check(std::filesystem::exists(betaPath), "bulk seed created Beta identity");
 

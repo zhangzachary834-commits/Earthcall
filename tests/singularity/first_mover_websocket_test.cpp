@@ -139,6 +139,7 @@ void authenticate(Peer& p, const PrivateKey& key) {
 } // namespace
 
 int main() {
+    Relation::s_developerMode = false;
     const auto saves = std::filesystem::temp_directory_path() / "earthcall_fm_ws_saves";
     std::filesystem::remove_all(saves);
     std::filesystem::create_directories(saves);
@@ -283,5 +284,6 @@ int main() {
     return 0;
 }
 #else
-int main() { return 0; }
+int main() {
+    Relation::s_developerMode = false; return 0; }
 #endif

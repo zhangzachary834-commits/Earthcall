@@ -454,10 +454,6 @@ void from_json(const nlohmann::json& j, Object& obj){
 
     if (j.contains("faceColors")) {
         const auto& faceCols = j["faceColors"];
-        
-        
-        
-            
         for (size_t f = 0; f < faceCols.size() && f < 6; ++f) {
             obj.faceColors[f][0] = faceCols[f][0].get<float>();
             obj.faceColors[f][1] = faceCols[f][1].get<float>();
@@ -470,7 +466,7 @@ void from_json(const nlohmann::json& j, Object& obj){
         }
     }
 
-    if (!texturesAlreadyHere && j.contains("textureResolution") && j["textureResolution"].is_number_integer()) {
+    if (j.contains("textureResolution") && j["textureResolution"].is_number_integer()) {
         obj.setTextureResolution(j["textureResolution"].get<int>());
     }
 

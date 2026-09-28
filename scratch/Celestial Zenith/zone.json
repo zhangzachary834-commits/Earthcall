@@ -1,0 +1,1190 @@
+{
+  "world": {
+    "name": "Celestial Zenith",
+    "objects": [
+      {
+        "objectID": "zenith.altar.base",
+        "center": [
+          0,
+          1,
+          0
+        ],
+        "shapeKind": 9,
+        "materialId": "material.zenith.marble",
+        "shapeParams": [
+          4,
+          1,
+          4,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0.5,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          1,
+          0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.altar.halo",
+        "center": [
+          0,
+          8,
+          0
+        ],
+        "shapeKind": 8,
+        "materialId": "material.zenith.gold",
+        "shapeParams": [
+          0,
+          0,
+          0,
+          0,
+          6,
+          0.5,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          8,
+          0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.0.base",
+        "center": [
+          20.0,
+          5,
+          0.0
+        ],
+        "shapeKind": 3,
+        "materialId": "material.zenith.obsidian",
+        "shapeParams": [
+          2,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          20.0,
+          5,
+          0.0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.0.orb",
+        "center": [
+          20.0,
+          12,
+          0.0
+        ],
+        "shapeKind": 2,
+        "materialId": "material.zenith.glow_blue",
+        "shapeParams": [
+          1.5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          20.0,
+          12,
+          0.0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.1.base",
+        "center": [
+          17.321,
+          5,
+          10.0
+        ],
+        "shapeKind": 3,
+        "materialId": "material.zenith.obsidian",
+        "shapeParams": [
+          2,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          17.321,
+          5,
+          10.0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.1.orb",
+        "center": [
+          17.321,
+          12,
+          10.0
+        ],
+        "shapeKind": 2,
+        "materialId": "material.zenith.glow_pink",
+        "shapeParams": [
+          1.5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          17.321,
+          12,
+          10.0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.2.base",
+        "center": [
+          10.0,
+          5,
+          17.321
+        ],
+        "shapeKind": 3,
+        "materialId": "material.zenith.obsidian",
+        "shapeParams": [
+          2,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          10.0,
+          5,
+          17.321,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.2.orb",
+        "center": [
+          10.0,
+          12,
+          17.321
+        ],
+        "shapeKind": 2,
+        "materialId": "material.zenith.glow_blue",
+        "shapeParams": [
+          1.5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          10.0,
+          12,
+          17.321,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.3.base",
+        "center": [
+          0.0,
+          5,
+          20.0
+        ],
+        "shapeKind": 3,
+        "materialId": "material.zenith.obsidian",
+        "shapeParams": [
+          2,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0.0,
+          5,
+          20.0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.3.orb",
+        "center": [
+          0.0,
+          12,
+          20.0
+        ],
+        "shapeKind": 2,
+        "materialId": "material.zenith.glow_pink",
+        "shapeParams": [
+          1.5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0.0,
+          12,
+          20.0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.4.base",
+        "center": [
+          -10.0,
+          5,
+          17.321
+        ],
+        "shapeKind": 3,
+        "materialId": "material.zenith.obsidian",
+        "shapeParams": [
+          2,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -10.0,
+          5,
+          17.321,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.4.orb",
+        "center": [
+          -10.0,
+          12,
+          17.321
+        ],
+        "shapeKind": 2,
+        "materialId": "material.zenith.glow_blue",
+        "shapeParams": [
+          1.5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -10.0,
+          12,
+          17.321,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.5.base",
+        "center": [
+          -17.321,
+          5,
+          10.0
+        ],
+        "shapeKind": 3,
+        "materialId": "material.zenith.obsidian",
+        "shapeParams": [
+          2,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -17.321,
+          5,
+          10.0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.5.orb",
+        "center": [
+          -17.321,
+          12,
+          10.0
+        ],
+        "shapeKind": 2,
+        "materialId": "material.zenith.glow_pink",
+        "shapeParams": [
+          1.5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -17.321,
+          12,
+          10.0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.6.base",
+        "center": [
+          -20.0,
+          5,
+          0.0
+        ],
+        "shapeKind": 3,
+        "materialId": "material.zenith.obsidian",
+        "shapeParams": [
+          2,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -20.0,
+          5,
+          0.0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.6.orb",
+        "center": [
+          -20.0,
+          12,
+          0.0
+        ],
+        "shapeKind": 2,
+        "materialId": "material.zenith.glow_blue",
+        "shapeParams": [
+          1.5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -20.0,
+          12,
+          0.0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.7.base",
+        "center": [
+          -17.321,
+          5,
+          -10.0
+        ],
+        "shapeKind": 3,
+        "materialId": "material.zenith.obsidian",
+        "shapeParams": [
+          2,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -17.321,
+          5,
+          -10.0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.7.orb",
+        "center": [
+          -17.321,
+          12,
+          -10.0
+        ],
+        "shapeKind": 2,
+        "materialId": "material.zenith.glow_pink",
+        "shapeParams": [
+          1.5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -17.321,
+          12,
+          -10.0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.8.base",
+        "center": [
+          -10.0,
+          5,
+          -17.321
+        ],
+        "shapeKind": 3,
+        "materialId": "material.zenith.obsidian",
+        "shapeParams": [
+          2,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -10.0,
+          5,
+          -17.321,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.8.orb",
+        "center": [
+          -10.0,
+          12,
+          -17.321
+        ],
+        "shapeKind": 2,
+        "materialId": "material.zenith.glow_blue",
+        "shapeParams": [
+          1.5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -10.0,
+          12,
+          -17.321,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.9.base",
+        "center": [
+          -0.0,
+          5,
+          -20.0
+        ],
+        "shapeKind": 3,
+        "materialId": "material.zenith.obsidian",
+        "shapeParams": [
+          2,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -0.0,
+          5,
+          -20.0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.9.orb",
+        "center": [
+          -0.0,
+          12,
+          -20.0
+        ],
+        "shapeKind": 2,
+        "materialId": "material.zenith.glow_pink",
+        "shapeParams": [
+          1.5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -0.0,
+          12,
+          -20.0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.10.base",
+        "center": [
+          10.0,
+          5,
+          -17.321
+        ],
+        "shapeKind": 3,
+        "materialId": "material.zenith.obsidian",
+        "shapeParams": [
+          2,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          10.0,
+          5,
+          -17.321,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.10.orb",
+        "center": [
+          10.0,
+          12,
+          -17.321
+        ],
+        "shapeKind": 2,
+        "materialId": "material.zenith.glow_blue",
+        "shapeParams": [
+          1.5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          10.0,
+          12,
+          -17.321,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.11.base",
+        "center": [
+          17.321,
+          5,
+          -10.0
+        ],
+        "shapeKind": 3,
+        "materialId": "material.zenith.obsidian",
+        "shapeParams": [
+          2,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          17.321,
+          5,
+          -10.0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.pillar.11.orb",
+        "center": [
+          17.321,
+          12,
+          -10.0
+        ],
+        "shapeKind": 2,
+        "materialId": "material.zenith.glow_pink",
+        "shapeParams": [
+          1.5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          17.321,
+          12,
+          -10.0,
+          1
+        ]
+      },
+      {
+        "objectID": "zenith.floor",
+        "center": [
+          0,
+          -1,
+          0
+        ],
+        "shapeKind": 0,
+        "materialId": "material.zenith.obsidian",
+        "shapeParams": [
+          100,
+          1,
+          100,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -1,
+          0,
+          1
+        ]
+      }
+    ]
+  },
+  "materials": [
+    {
+      "name": "zenith.gold",
+      "baseColor": [
+        1.0,
+        0.84,
+        0.0
+      ],
+      "opacity": 1.0,
+      "shininess": 128.0,
+      "specular": 1.0,
+      "ambient": 0.4,
+      "diffuse": 0.9,
+      "faceTextures": []
+    },
+    {
+      "name": "zenith.obsidian",
+      "baseColor": [
+        0.05,
+        0.05,
+        0.08
+      ],
+      "opacity": 1.0,
+      "shininess": 64.0,
+      "specular": 0.8,
+      "ambient": 0.1,
+      "diffuse": 0.7,
+      "faceTextures": []
+    },
+    {
+      "name": "zenith.marble",
+      "baseColor": [
+        0.9,
+        0.9,
+        0.95
+      ],
+      "opacity": 1.0,
+      "shininess": 16.0,
+      "specular": 0.3,
+      "ambient": 0.3,
+      "diffuse": 0.8,
+      "faceTextures": []
+    },
+    {
+      "name": "zenith.glow_blue",
+      "baseColor": [
+        0.2,
+        0.6,
+        1.0
+      ],
+      "opacity": 1.0,
+      "shininess": 10.0,
+      "specular": 0.1,
+      "ambient": 1.0,
+      "diffuse": 1.0,
+      "faceTextures": []
+    },
+    {
+      "name": "zenith.glow_pink",
+      "baseColor": [
+        1.0,
+        0.3,
+        0.7
+      ],
+      "opacity": 1.0,
+      "shininess": 10.0,
+      "specular": 0.1,
+      "ambient": 1.0,
+      "diffuse": 1.0,
+      "faceTextures": []
+    }
+  ],
+  "formationRelations": [],
+  "lexemes": [],
+  "name": "Celestial Zenith",
+  "identifier": "Celestial Zenith"
+}

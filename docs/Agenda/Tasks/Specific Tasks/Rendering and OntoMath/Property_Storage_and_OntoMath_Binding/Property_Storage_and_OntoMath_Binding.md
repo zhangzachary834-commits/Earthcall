@@ -43,3 +43,13 @@
 ## Waiting use case: the Law Line (2026-09-25)
 
 The Law Line's `set glow to @lamp.brightness` is **refused** today, and it names this movement's "copy value" relationship (§2). Zach asked that no ad-hoc `operandPath` be added to `ActionNode` outside it. When this binding algebra lands, the Law Line needs only its grammar's refusal replaced by the new binding. → [Law_Line](../../Law%20and%20Reasoning/Law_Line/Law_Line.md) *(Claude Code · Claude Opus 5.5 · 2026-09-25)*
+
+## Zach's identity and authority direction (2026-09-27)
+
+Zach specified that a path intended to refer to an individual must bind that individual's durable identity, provided the path itself can individuate by ID. It must never silently route to another individual, and ambiguity between possible referents must refuse. He left open who adjudicates IDs and asked for help understanding the cryptographic boundary. For distinct paths sharing one value cell, write behavior **depends on their authority level**; no precedence rule was supplied. Zach further specified that permission to read an ID is decided by Metalaw authored by authority-bearing People. If the reader lacks that permission, a Metalaw must author another way to disambiguate. These are Zach's requirements, not a blanket permission to expose IDs in Law text.
+
+Source inspection found that `PropertyPath` stores property-name segments and runtime-interned `StringId`s, while `resolveLawRoot` resolves `@` roots through `getIdentifier()` text. `Person` has a key-based `SingularId`, but `Singular` has no common durable-ID contract; Objects, Zones, and Laws still return their text identifiers. Law path serialization writes the path string. Thus individual binding across save/reload is **not implemented**. A narrow safety repair now makes a qualified spelling refuse when the current root index contains two distinct bearers with that spelling; `property_path_precalc_test` covers read and write refusal (focused build and test passed). The root index still depends on structural revision and is not a durable binding.
+
+**⚑ AUTHOR — open:** How should a saved individual binding carry identity when its reader may not see the ID? What disambiguating mechanism should Metalaw author? Which authority level(s) govern writes through distinct paths sharing a cell, and how are conflicts settled? Do not infer answers from the current cache or introduce a storage/permission ontology around these questions.
+
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-27 22:12 PDT. Zach supplied the identity, ambiguity, ID-disclosure, and authority requirements; Codex inspected the code and added only the duplicate-spelling refusal.*

@@ -1248,22 +1248,30 @@ struct WebSocketServer::Impl {
                            "Person-presence resource a First Mover can be granted yet")) {
                     return;
                 }
+                bool switched = false;
                 if (j.contains("index")) {
                     size_t idx = j["index"].get<size_t>();
                     if (idx < mgr.zones().size()) {
-                        mgr.switchTo(idx);
-                        broadcast(buildWorldSnapshotJson().dump());
+                        switched = mgr.switchTo(idx);
                     }
                 } else if (j.contains("name")) {
                     std::string zname = j["name"].get<std::string>();
                     for (size_t i = 0; i < mgr.zones().size(); ++i) {
                         if (mgr.zones()[i] && mgr.zones()[i]->name() == zname) {
-                            mgr.switchTo(i);
-                            broadcast(buildWorldSnapshotJson().dump());
+                            switched = mgr.switchTo(i);
                             break;
                         }
                     }
                 }
+                nlohmann::json reply;
+                reply["type"] = "switch_zone_ack";
+                reply["status"] = switched ? "success" : "not_found";
+                if (switched) {
+                    reply["active_zone"] = mgr.active().name();
+                    reply["active_zone_index"] = mgr.currentIndex();
+                }
+                sendTo(hdl, reply.dump());
+                if (switched) broadcast(buildWorldSnapshotJson().dump());
                 return;
             }
 

@@ -1,3 +1,4 @@
+#include "Singularity/Storage/SaveSystem.hpp"
 // Cross-root proof for the Singular serialization topology. A session is a
 // graph of semantic roots, not a Zone-owned object bag.
 
@@ -85,9 +86,7 @@ int main() {
     sourceZones.saveState(sessionPath.string(), sourceContext);
 
     {
-        std::ifstream in(sessionPath);
-        nlohmann::json saved;
-        in >> saved;
+        nlohmann::json saved = SaveSystem::readSaveData(sessionPath.string());
         assert(saved.contains(kSemanticRootsKey));
         const auto& roots = saved[kSemanticRootsKey];
         assert(roots["format"] == kSemanticRootsFormat);

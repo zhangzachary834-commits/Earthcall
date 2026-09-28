@@ -28,8 +28,10 @@ using MathBindings = std::map<std::string, PropertyPath>;
 // ---------------------------------------------------------------------------
 // Qualified paths: WHOSE property a path names is the author's choice.
 //   position.y                  the law's subject (whoever it applies to)
-//   @being-id.position.y        that NAMED being (Universe lookup), whoever
-//                               the subject is. The id may contain dots
+//   @being-id.position.y        currently resolves by getIdentifier() text in
+//                               the live Universe, whoever the subject is.
+//                               This is not yet a durable ID-pinned binding.
+//                               The text may contain dots
 //                               ("@material.clay.baseColor"): the root is
 //                               matched LONGEST-FIRST, most specific wins.
 //   @event.verb                 the triggering Event Moment's own property
@@ -80,7 +82,9 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
     // "material.clay" beats one named "material", and the segments it consumed
     // are not offered to the property lookup.
     
-    // HOT PATH CACHE: avoid O(N^2) string comparisons and massive vector allocations
+    // HOT PATH CACHE: avoid O(N^2) string comparisons and massive vector allocations.
+    // The cache follows structuralRevision, not every possible mutation of a
+    // being's textual identifier. Durable individual bindings remain open work.
     static uint64_t s_lastRevision = 0;
     static std::unordered_map<Earthcall::StringId, Singular*> s_beingMap;
     static bool s_initialized = false;
@@ -93,10 +97,17 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
             if (being) {
                 const std::string ident = being->getIdentifier();
                 Earthcall::StringId key = Earthcall::StringInterner::intern("@" + ident);
-                s_beingMap[key] = being;
+                // Two distinct bearers with one spelling are ambiguous. Keep
+                // that spelling unresolved instead of letting provider order
+                // decide which individual a Law reads or writes.
+                auto bindIfUnique = [&](Earthcall::StringId name) {
+                    auto [it, inserted] = s_beingMap.emplace(name, being);
+                    if (!inserted && it->second != being) it->second = nullptr;
+                };
+                bindIfUnique(key);
                 if (ident == "Person" || ident == "person") {
-                    s_beingMap[Earthcall::StringInterner::intern("@player")] = being;
-                    s_beingMap[Earthcall::StringInterner::intern("@Player")] = being;
+                    bindIfUnique(Earthcall::StringInterner::intern("@player"));
+                    bindIfUnique(Earthcall::StringInterner::intern("@Player"));
                 }
             }
         }

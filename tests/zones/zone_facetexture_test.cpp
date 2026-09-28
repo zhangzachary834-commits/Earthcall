@@ -1,3 +1,4 @@
+#include "Singularity/Storage/SaveSystem.hpp"
 #include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
@@ -84,14 +85,12 @@ int main() {
 
     mgr.persistZones();
 
-    const auto zoneFilePath = sandbox / "zones" / zoneId / "zone.json";
-    check(std::filesystem::exists(zoneFilePath), "zone.json written to disk");
+    const auto zoneFilePath = sandbox / "zones" / zoneId / "zone.ecform";
+    check(std::filesystem::exists(zoneFilePath), "zone.ecform written to disk");
 
     // Verify zone.json contains materials array with faceTextures
     {
-        std::ifstream in(zoneFilePath);
-        nlohmann::json zj;
-        in >> zj;
+        nlohmann::json zj = SaveSystem::readSaveData(zoneFilePath.string());
         check(zj.contains("materials") && zj["materials"].is_array(), "zone.json contains materials array");
         check(!zj["materials"].empty(), "materials array is not empty");
         bool foundCubeMat = false;
@@ -149,14 +148,12 @@ int main() {
 
     // Pre-embed identity: objects and faceColors, no materials array.
     {
-        nlohmann::json stripped;
-        {
-            std::ifstream in(zoneFilePath);
-            in >> stripped;
-        }
+        nlohmann::json stripped = SaveSystem::readSaveData(zoneFilePath.string());
         stripped.erase("materials");
         {
-            std::ofstream out(zoneFilePath);
+            std::filesystem::remove(zoneFilePath);
+            auto fallback = zoneFilePath; fallback.replace_extension(".json");
+            std::ofstream out(fallback);
             out << stripped.dump(2);
         }
         materials.loadFromJson(nlohmann::json::array());

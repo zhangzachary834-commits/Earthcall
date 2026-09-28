@@ -1,3 +1,4 @@
+#include "Singularity/Storage/SaveSystem.hpp"
 // End-to-end witness for the seeded Law Line (scripts/seed_law_line.py).
 //
 // Boots the LawLine Zone identity and its shared Law roots in an isolated save
@@ -60,11 +61,7 @@ int main() {
     check(std::filesystem::exists(sourceZone), "LawLine Zone identity exists");
     if (!std::filesystem::exists(sourceZone)) return 1;
 
-    nlohmann::json zoneJson;
-    {
-        std::ifstream in(sourceZone);
-        in >> zoneJson;
-    }
+    nlohmann::json zoneJson = SaveSystem::readSaveData(sourceZone.string());
 
     Scratch scratch{std::filesystem::temp_directory_path() /
         ("earthcall_law_line_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))};

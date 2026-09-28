@@ -1,3 +1,4 @@
+#include "Singularity/Storage/SaveSystem.hpp"
 // Phase 3: the Person root codec preserves the profile schema while making
 // Person a first-class session serialization root.
 
@@ -73,9 +74,7 @@ int main() {
 
     // Verify valid file was updated and corrupted file did not crash execution
     {
-        std::ifstream checkGood(validPath);
-        nlohmann::json jGood;
-        checkGood >> jGood;
+        nlohmann::json jGood = SaveSystem::readSaveData(validPath);
         assert(jGood["person"]["displayName"] == "NewName");
     }
 
@@ -118,14 +117,10 @@ int main() {
     updatePriorPersonSerializations(alice1, "Alice");
 
     {
-        std::ifstream check1(pathPerson1);
-        nlohmann::json j1Check;
-        check1 >> j1Check;
+        nlohmann::json j1Check = SaveSystem::readSaveData(pathPerson1);
         assert(j1Check["person"]["displayName"] == "AliceRenamed");
 
-        std::ifstream check2(pathPerson2);
-        nlohmann::json j2Check;
-        check2 >> j2Check;
+        nlohmann::json j2Check = SaveSystem::readSaveData(pathPerson2);
         // Person 2 has a distinct personId (id2), so despite matching display name "Alice",
         // it MUST NOT be overwritten or collapsed!
         assert(j2Check["person"]["displayName"] == "Alice");
@@ -154,9 +149,7 @@ int main() {
     updatePriorPersonSerializations(dave, "");
 
     {
-        std::ifstream checkBob(pathBobLegacy);
-        nlohmann::json jBobCheck;
-        checkBob >> jBobCheck;
+        nlohmann::json jBobCheck = SaveSystem::readSaveData(pathBobLegacy);
         // Unkeyed legacy record for "Bob" MUST NOT be overwritten when oldName is empty!
         assert(jBobCheck["person"]["displayName"] == "Bob");
         assert(jBobCheck["person"]["soulName"] == "Bob");
