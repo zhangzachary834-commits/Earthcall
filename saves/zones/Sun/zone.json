@@ -2512,7 +2512,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -2602,7 +2602,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -2611,6 +2611,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -2645,7 +2649,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -2735,7 +2739,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -2744,6 +2748,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -2778,7 +2786,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -2788,12 +2796,12 @@
           0,
           0,
           0,
-          1,
-          0,
-          0,
-          0,
           0,
           1,
+          0,
+          0,
+          -1,
+          0,
           0,
           -4.6,
           0.62,
@@ -2868,7 +2876,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -2877,6 +2885,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -2911,7 +2923,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -2921,12 +2933,12 @@
           0,
           0,
           0,
-          1,
-          0,
-          0,
-          0,
           0,
           1,
+          0,
+          0,
+          -1,
+          0,
           0,
           -4.6,
           1.38,
@@ -3001,7 +3013,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -3010,6 +3022,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -3044,7 +3060,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -3054,12 +3070,12 @@
           0,
           0,
           0,
-          1,
-          0,
-          0,
-          0,
           0,
           1,
+          0,
+          0,
+          -1,
+          0,
           0,
           -4.6,
           2.42,
@@ -3134,7 +3150,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -3143,6 +3159,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -3177,7 +3197,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -3187,12 +3207,12 @@
           0,
           0,
           0,
-          1,
-          0,
-          0,
-          0,
           0,
           1,
+          0,
+          0,
+          -1,
+          0,
           0,
           -4.6,
           3.18,
@@ -3267,7 +3287,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -3276,6 +3296,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -3310,7 +3334,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -3400,7 +3424,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -3409,6 +3433,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -3443,7 +3471,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -3453,12 +3481,12 @@
           0,
           0,
           0,
-          1,
-          0,
-          0,
-          0,
           0,
           1,
+          0,
+          0,
+          -1,
+          0,
           0,
           -4.6,
           3.76,
@@ -3533,7 +3561,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -3542,6 +3570,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -3576,7 +3608,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -3666,7 +3698,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -3675,6 +3707,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -4108,7 +4144,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -4198,7 +4234,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -4207,6 +4243,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -4241,7 +4281,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -4331,7 +4371,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -4340,6 +4380,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -4374,7 +4418,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -4384,12 +4428,12 @@
           0,
           0,
           0,
-          1,
-          0,
-          0,
-          0,
           0,
           1,
+          0,
+          0,
+          -1,
+          0,
           0,
           4.6,
           0.62,
@@ -4464,7 +4508,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -4473,6 +4517,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -4507,7 +4555,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -4517,12 +4565,12 @@
           0,
           0,
           0,
-          1,
-          0,
-          0,
-          0,
           0,
           1,
+          0,
+          0,
+          -1,
+          0,
           0,
           4.6,
           1.38,
@@ -4597,7 +4645,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -4606,6 +4654,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -4640,7 +4692,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -4650,12 +4702,12 @@
           0,
           0,
           0,
-          1,
-          0,
-          0,
-          0,
           0,
           1,
+          0,
+          0,
+          -1,
+          0,
           0,
           4.6,
           2.42,
@@ -4730,7 +4782,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -4739,6 +4791,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -4773,7 +4829,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -4783,12 +4839,12 @@
           0,
           0,
           0,
-          1,
-          0,
-          0,
-          0,
           0,
           1,
+          0,
+          0,
+          -1,
+          0,
           0,
           4.6,
           3.18,
@@ -4863,7 +4919,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -4872,6 +4928,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -4906,7 +4966,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -4996,7 +5056,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -5005,6 +5065,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -5039,7 +5103,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -5049,12 +5113,12 @@
           0,
           0,
           0,
-          1,
-          0,
-          0,
-          0,
           0,
           1,
+          0,
+          0,
+          -1,
+          0,
           0,
           4.6,
           3.76,
@@ -5129,7 +5193,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -5138,6 +5202,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -5172,7 +5240,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -5262,7 +5330,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -5271,6 +5339,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -8231,7 +8303,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -8321,7 +8393,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -8330,6 +8402,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -8364,7 +8440,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -8454,7 +8530,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -8463,6 +8539,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -8497,7 +8577,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -8507,12 +8587,12 @@
           0,
           0,
           0,
-          1,
-          0,
-          0,
-          0,
           0,
           1,
+          0,
+          0,
+          -1,
+          0,
           0,
           -3.78,
           2.52,
@@ -8587,7 +8667,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -8596,6 +8676,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -8896,7 +8980,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -8986,7 +9070,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -8995,6 +9079,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -9029,7 +9117,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -9119,7 +9207,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -9128,6 +9216,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -9162,7 +9254,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -9172,12 +9264,12 @@
           0,
           0,
           0,
-          1,
-          0,
-          0,
-          0,
           0,
           1,
+          0,
+          0,
+          -1,
+          0,
           0,
           3.78,
           2.52,
@@ -9252,7 +9344,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -9261,6 +9353,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -9960,7 +10056,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -10050,7 +10146,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -10059,6 +10155,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -10093,7 +10193,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -10183,7 +10283,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -10192,6 +10292,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -10359,7 +10463,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -10369,12 +10473,12 @@
           0,
           0,
           0,
-          1,
-          0,
-          0,
-          0,
           0,
           1,
+          0,
+          0,
+          -1,
+          0,
           0,
           -6.15,
           3.36,
@@ -10449,7 +10553,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -10458,6 +10562,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -10758,7 +10866,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -10848,7 +10956,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -10857,6 +10965,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -10891,7 +11003,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -10981,7 +11093,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -10990,6 +11102,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -11157,7 +11273,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -11167,12 +11283,12 @@
           0,
           0,
           0,
-          1,
-          0,
-          0,
-          0,
           0,
           1,
+          0,
+          0,
+          -1,
+          0,
           0,
           6.15,
           3.36,
@@ -11247,7 +11363,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -11256,6 +11372,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -13019,7 +13139,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -13109,7 +13229,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -13118,6 +13238,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -13152,7 +13276,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -13242,7 +13366,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -13251,6 +13375,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -13418,7 +13546,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -13508,7 +13636,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -13517,6 +13645,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -13551,7 +13683,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -13641,7 +13773,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -13650,6 +13782,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -13817,7 +13953,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -13907,7 +14043,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -13916,6 +14052,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -13950,7 +14090,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -14040,7 +14180,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -14049,6 +14189,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -14216,7 +14360,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -14306,7 +14450,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -14315,6 +14459,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -14349,7 +14497,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -14439,7 +14587,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -14448,6 +14596,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -15147,7 +15299,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -15237,7 +15389,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -15246,6 +15398,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -15280,7 +15436,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -15370,7 +15526,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -15379,6 +15535,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -15546,7 +15706,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -15636,7 +15796,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -15645,6 +15805,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -15679,7 +15843,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -15769,7 +15933,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -15778,6 +15942,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -15945,7 +16113,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -16035,7 +16203,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -16044,6 +16212,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -16078,7 +16250,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -16168,7 +16340,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -16177,6 +16349,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -16344,7 +16520,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -16434,7 +16610,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -16443,6 +16619,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -16477,7 +16657,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -16567,7 +16747,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -16576,6 +16756,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -19536,7 +19720,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -19626,7 +19810,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -19635,6 +19819,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -19802,7 +19990,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          90,
           0,
           0
         ],
@@ -19812,12 +20000,12 @@
           0,
           0,
           0,
-          1,
-          0,
-          0,
-          0,
           0,
           1,
+          0,
+          0,
+          -1,
+          0,
           0,
           0,
           2.62,
@@ -19892,7 +20080,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -19901,6 +20089,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -22595,7 +22787,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          -90,
           0,
           0
         ],
@@ -22685,7 +22877,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -22694,6 +22886,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -22728,7 +22924,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          -90,
           0,
           0
         ],
@@ -22818,7 +23014,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -22827,6 +23023,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -22861,7 +23061,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          -90,
           0,
           0
         ],
@@ -22951,7 +23151,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -22960,6 +23160,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -22994,7 +23198,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          -90,
           0,
           0
         ],
@@ -23084,7 +23288,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -23093,6 +23297,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -23127,7 +23335,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          -90,
           0,
           0
         ],
@@ -23217,7 +23425,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -23226,6 +23434,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -23260,7 +23472,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          -90,
           0,
           0
         ],
@@ -23350,7 +23562,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -23359,6 +23571,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -23393,7 +23609,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          -90,
           0,
           0
         ],
@@ -23483,7 +23699,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -23492,6 +23708,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -23526,7 +23746,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          -90,
           0,
           0
         ],
@@ -23616,7 +23836,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -23625,6 +23845,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -23659,7 +23883,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          -90,
           0,
           0
         ],
@@ -23749,7 +23973,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -23758,6 +23982,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       },
@@ -23792,7 +24020,7 @@
           100
         ],
         "targetRotation": [
-          0,
+          -90,
           0,
           0
         ],
@@ -23882,7 +24110,7 @@
           },
           "construction.pass": {
             "t": "float",
-            "v": 18
+            "v": 19
           },
           "visual.role": {
             "t": "string",
@@ -23891,6 +24119,10 @@
           "visual.reference": {
             "t": "string",
             "v": "GPT-4o solar temple reference — curved architectural language"
+          },
+          "axis.fix": {
+            "t": "string",
+            "v": "persist transform orientation in targetRotation; orient collar tori around Y"
           }
         }
       }
