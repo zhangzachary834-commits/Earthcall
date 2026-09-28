@@ -139,7 +139,17 @@ int main() {
 
     exactRenderer.setRadianceSources(sources, kSourceSetRevision);
     authorityRenderer.setRadianceSources(sources, kSourceSetRevision);
+
+    // Charge semantic artifact construction explicitly. This setup happens once
+    // for the admitted source-set identity and must not disappear from the
+    // economics merely because steady-state frames are timed later.
+    const auto authoritySetupT0 = std::chrono::steady_clock::now();
     authorityRenderer.setRadianceZeroAuthorityExperimentEnabled(true);
+    const auto authoritySetupT1 = std::chrono::steady_clock::now();
+    const uint64_t authoritySetupNs =
+        static_cast<uint64_t>(
+            std::chrono::duration_cast<std::chrono::nanoseconds>(
+                authoritySetupT1 - authoritySetupT0).count());
 
     const glm::vec3 eye(0.0f, 0.0f, 3.2f);
     const glm::mat4 view =
@@ -265,6 +275,7 @@ int main() {
         "exact_cache_hits=%llu authority_cache_hits=%llu "
         "exact_param_upload_bytes=%zu authority_param_upload_bytes=%zu "
         "authority_artifact_bytes=%zu authority_mask_bytes=%zu "
+        "authority_setup_ns=%llu proof_reads=%llu metadata_tests=%llu "
         "authority_applications=%llu\n",
         kSamplePairs,
         exactWall, authorityWall, wallRatio,
@@ -284,6 +295,13 @@ int main() {
         authorityRenderer.renderedFieldSemanticObservationStats()
             .alignedSlotLogicalBytes,
         sources.size(),
+        static_cast<unsigned long long>(authoritySetupNs),
+        static_cast<unsigned long long>(
+            authorityRenderer.renderedFieldSemanticObservationStats()
+                .alignedProofReads),
+        static_cast<unsigned long long>(
+            authorityRenderer.renderedFieldSemanticObservationStats()
+                .alignedHandleMetadataTests),
         static_cast<unsigned long long>(
             authorityRenderer.renderedFieldSemanticObservationStats()
                 .authorityBypassesApplied));
