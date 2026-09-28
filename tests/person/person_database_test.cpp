@@ -229,6 +229,35 @@ static void testLoadPersonDeserializationFailure() {
     std::cout << "  loadPerson deserialization failure handling OK\n";
 }
 
+// --- WITNESS ANALYSIS & DOCUMENTATION ---
+// What the old test could prove:
+//   That PersonDatabase::loadPerson could load a Person profile when a matching
+//   .ecform binary file was created and present on disk.
+//
+// What the old test could NOT prove:
+//   That PersonDatabase::loadPerson could load legacy .json or .ecsave Person profiles
+//   via SaveSystem::readSaveData's extension resolution path when .ecform is absent.
+//   Before removing the premature `if (!std::filesystem::exists(filepath))` guard in
+//   PersonDatabase::loadPerson, loadPerson short-circuited on .ecform non-existence
+//   and failed for any legacy .json profile on disk.
+
+static void testLoadPersonLegacyJsonFormat() {
+    TestEnvironment env;
+    PersonDatabase& db = PersonDatabase::getInstance();
+
+    std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+    std::ofstream file(folder + "/LegacyAlice.json");
+    file << R"({"displayName": "LegacyAlice", "soulName": "LegacyAlice"})";
+    file.close();
+
+    Person loaded = createDummyPerson("Temp");
+    bool success = db.loadPerson("LegacyAlice", loaded);
+    assert(success && "loadPerson must succeed for legacy .json profiles via SaveSystem::readSaveData extension fallback");
+    assert(loaded.getDisplayName() == "LegacyAlice");
+
+    std::cout << "  loadPerson legacy json format OK\n";
+}
+
 static void testSaveAndLoadDistinctPersonsSameDisplayName() {
     TestEnvironment env;
     PersonDatabase& db = PersonDatabase::getInstance();
@@ -285,6 +314,7 @@ int main() {
     testLoadPersonUnreadableFile();
     testLoadPersonInvalidJsonStructure();
     testLoadPersonDeserializationFailure();
+    testLoadPersonLegacyJsonFormat();
     testSaveAndLoadDistinctPersonsSameDisplayName();
     std::cout << "person_database_test: ALL OK\n";
     return 0;
