@@ -45,9 +45,10 @@ public:
         uint64_t hypotheticalDensityBypasses = 0;
         uint64_t authorityBypassesApplied = 0;
 
-        // Rung 7 successor: diagnostic artifacts aligned 1:1 with the already-
-        // admitted renderer binding slots. Build/repair happens only at source-
-        // set admission; no pixel path consumes these artifacts.
+        // PR #369 successor artifacts aligned 1:1 with already-admitted
+        // renderer binding slots. Build/repair happens only at source-set
+        // admission. They remain non-authoritative by default; PR #445's
+        // explicitly gated SourceRho-zero experiment is the first consumer.
         uint64_t alignedSlotBuilds = 0;
         uint64_t alignedSlotRepairs = 0;
         uint64_t alignedSlotReuses = 0;
@@ -112,9 +113,10 @@ public:
             binding.producerId, binding.densityRevision);
     }
 
-    // Diagnostic-only theorem read. The proof is returned only after the same
-    // generation-bound provenance gate as handle validation. Renderer has no
-    // consumer for this API, so this still grants zero pixel authority.
+    // Provenance-gated theorem read. The proof is returned only after the same
+    // generation-bound gate as handle validation. The default renderer does not
+    // consume it; the separately gated PR #445 SourceRho-zero experiment may do
+    // so only at an already-known source slot during shader compilation.
     std::optional<ProofKind> inspectRadianceProof(
         const AlignedSlotHandle& handle,
         const RadianceSourceBinding& binding) {
