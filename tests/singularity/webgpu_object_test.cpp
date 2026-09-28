@@ -2147,8 +2147,18 @@ int main() {
         renderer.endFrame();
         unsigned char authorityZeroAgain[4];
         readCentre(authorityZeroAgain);
+        const Renderer::FrameStats authorityZeroAgainStats = renderer.frameStats();
+        const auto authorityZeroAgainObserver =
+            renderer.renderedFieldSemanticObservationStats();
+        assert(authorityRevisionFallback[0] > authorityZeroAgain[0] + 20 &&
+               "fresh zero theorem did not restore zero SourceRho pixels");
+        assert(authorityZeroAgainStats.sdfProgramCompiles == 1 &&
+               "fresh zero theorem did not rebuild authoritative shader structure");
+        assert(authorityZeroAgainObserver.authorityBypassesApplied >
+                   authorityAppliedAtZero &&
+               "fresh zero theorem was not re-established before producer replacement");
         const uint64_t authorityAppliedBeforeReplacement =
-            renderer.renderedFieldSemanticObservationStats().authorityBypassesApplied;
+            authorityZeroAgainObserver.authorityBypassesApplied;
 
         auto replacementRhoNode = scalarNode(0.45);
         OntoMath::Piecewise replacementRho =
