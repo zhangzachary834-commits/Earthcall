@@ -68,6 +68,24 @@ static void testSaveAndLoadPerson() {
     std::cout << "  savePerson and loadPerson OK\n";
 }
 
+static void testLoadPersonLegacyPlainJson() {
+    TestEnvironment env;
+    PersonDatabase& db = PersonDatabase::getInstance();
+
+    std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+    std::ofstream file(folder + "/LegacyAlice.ecform");
+    Person p = createDummyPerson("LegacyAlice");
+    file << p.serialize().dump();
+    file.close();
+
+    Person loaded = createDummyPerson("Temp");
+    bool success = db.loadPerson("LegacyAlice", loaded);
+    assert(success);
+    assert(loaded.getDisplayName() == "LegacyAlice");
+
+    std::cout << "  loadPerson legacy plain json OK\n";
+}
+
 static void testSavePersonEmptyName() {
     TestEnvironment env;
     PersonDatabase& db = PersonDatabase::getInstance();
@@ -275,6 +293,7 @@ int main() {
     std::cout << "person_database_test:\n";
     testGetInstanceSingleton();
     testSaveAndLoadPerson();
+    testLoadPersonLegacyPlainJson();
     testSavePersonEmptyName();
     testLoadPersonEmptyName();
     testLoadNonExistentPerson();
