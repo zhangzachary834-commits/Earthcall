@@ -2313,7 +2313,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* volumeChromaExpr,
                              const OntoMath::Piecewise* phaseExpr,
                              const OntoMath::Piecewise* emissionExpr,
-                             const OntoMath::Piecewise* responseExpr) {
+                             const OntoMath::Piecewise* responseExpr,
+                             const std::vector<uint8_t>* radianceZeroAuthority) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -2454,7 +2455,11 @@ ParameterBlock collectParams(const geom::SdfNode& root,
             const auto& source = (*radianceSources)[i];
             e.timeExpression = "RS[" + std::to_string(i) + "u].time.x";
 
-            if (source.radianceExpr && !source.radianceExpr->pieces.empty()) {
+            const bool authoritativeZeroRho =
+                radianceZeroAuthority && i < radianceZeroAuthority->size() &&
+                (*radianceZeroAuthority)[i] != 0;
+            if (!authoritativeZeroRho &&
+                source.radianceExpr && !source.radianceExpr->pieces.empty()) {
                 e.bindTime = true;
                 emitPiecewise(*source.radianceExpr, e, "p", "f32", throwaway);
                 e.bindTime = false;
@@ -2535,7 +2540,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* volumeChromaExpr,
                 const OntoMath::Piecewise* phaseExpr,
                 const OntoMath::Piecewise* emissionExpr,
-                const OntoMath::Piecewise* responseExpr) {
+                const OntoMath::Piecewise* responseExpr,
+                const std::vector<uint8_t>* radianceZeroAuthority) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -2892,7 +2898,12 @@ Program compile(const geom::SdfNode& root,
             e.timeExpression = "RS[" + suffix + "u].time.x";
 
             std::string radianceBody;
-            if (source.radianceExpr && !source.radianceExpr->pieces.empty()) {
+            const bool authoritativeZeroRho =
+                radianceZeroAuthority && i < radianceZeroAuthority->size() &&
+                (*radianceZeroAuthority)[i] != 0;
+            if (authoritativeZeroRho) {
+                radianceBody = "    return 0.0;\n";
+            } else if (source.radianceExpr && !source.radianceExpr->pieces.empty()) {
                 e.bindTime = true;
                 emitPiecewise(*source.radianceExpr, e, "p", "f32", radianceBody);
                 e.bindTime = false;
