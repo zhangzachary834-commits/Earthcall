@@ -243,6 +243,57 @@ int main() {
     const double gpuRatio =
         authorityGpu > 0.0 ? exactGpu / authorityGpu : 0.0;
 
+    // Incremental repair economics: mutate only source slot 0 from proven zero
+    // to authored nonzero. Time semantic admission/repair separately from the
+    // next draw's necessary shader-structure fallback.
+    auto repairedNode = scalarNode(0.55);
+    OntoMath::Piecewise repairedRho =
+        OntoMath::Piecewise::continuous(repairedNode);
+    std::vector<Rendering::RadianceSourceBinding> repairedSources = sources;
+    repairedSources[0].radianceExpr = &repairedRho;
+    repairedSources[0].radianceRevision = 51003;
+    const auto repairStatsBefore =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    const auto repairT0 = std::chrono::steady_clock::now();
+    authorityRenderer.setRadianceSources(repairedSources, 52002);
+    const auto repairT1 = std::chrono::steady_clock::now();
+    const uint64_t authorityRepairNs =
+        static_cast<uint64_t>(
+            std::chrono::duration_cast<std::chrono::nanoseconds>(
+                repairT1 - repairT0).count());
+    const auto repairStatsAfter =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    if (repairStatsAfter.alignedSlotRepairs !=
+            repairStatsBefore.alignedSlotRepairs + 1) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL incremental repair count before=%llu "
+            "after=%llu\n",
+            static_cast<unsigned long long>(
+                repairStatsBefore.alignedSlotRepairs),
+            static_cast<unsigned long long>(
+                repairStatsAfter.alignedSlotRepairs));
+        return 1;
+    }
+    const uint64_t authorityApplicationsBeforeRepairDraw =
+        repairStatsAfter.authorityBypassesApplied;
+    const Sample repairDraw = renderOne(authorityRenderer);
+    const auto repairStatsAfterDraw =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    if (repairDraw.stats.sdfProgramCompiles != 1) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL repaired zero->nonzero slot did not "
+            "recompile exact shader structure: compiles=%u\n",
+            repairDraw.stats.sdfProgramCompiles);
+        return 1;
+    }
+    if (repairStatsAfterDraw.authorityBypassesApplied !=
+            authorityApplicationsBeforeRepairDraw) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL repaired nonzero slot retained "
+            "authority\n");
+        return 1;
+    }
+
     if (exact.recurringCompiles != 0 || authority.recurringCompiles != 0) {
         std::printf(
             "SOURCE_RHO_AUTH_PERF FAIL measured frame recompiled "
@@ -275,7 +326,9 @@ int main() {
         "exact_cache_hits=%llu authority_cache_hits=%llu "
         "exact_param_upload_bytes=%zu authority_param_upload_bytes=%zu "
         "authority_artifact_bytes=%zu authority_mask_bytes=%zu "
-        "authority_setup_ns=%llu proof_reads=%llu metadata_tests=%llu "
+        "authority_setup_ns=%llu authority_repair_ns=%llu "
+        "authority_repair_draw_ms=%.6f authority_repair_wgsl_bytes=%zu "
+        "proof_reads=%llu metadata_tests=%llu "
         "authority_applications=%llu\n",
         kSamplePairs,
         exactWall, authorityWall, wallRatio,
@@ -296,6 +349,9 @@ int main() {
             .alignedSlotLogicalBytes,
         sources.size(),
         static_cast<unsigned long long>(authoritySetupNs),
+        static_cast<unsigned long long>(authorityRepairNs),
+        repairDraw.wallMs,
+        repairDraw.stats.sdfWgslBytesGenerated,
         static_cast<unsigned long long>(
             authorityRenderer.renderedFieldSemanticObservationStats()
                 .alignedProofReads),
