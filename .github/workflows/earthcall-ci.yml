@@ -175,6 +175,7 @@ jobs:
             webgpu_sdf_color_expr_test \
             webgpu_perlin_exact_gradient_test \
             webgpu_object_test \
+            webgpu_source_rho_authority_perf_test \
             webgpu_v5_overlap_physics_test \
             webgpu_volumetric_mist_test \
             sanctuary_of_sunlit_mist_test
@@ -222,6 +223,22 @@ jobs:
         run: |
           set -o pipefail
           ./build/webgpu_object_test 2>&1 | tee webgpu-object-parity.log
+
+      - name: Measure SourceRho authority A/B
+        shell: bash
+        run: |
+          set -o pipefail
+          ./build/webgpu_source_rho_authority_perf_test 2>&1 | tee source-rho-authority-ab.log
+          grep -F 'SOURCE_RHO_AUTH_PERF samples=' source-rho-authority-ab.log > source-rho-authority-ab-result.txt
+
+      - name: Upload SourceRho authority A/B
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-rho-authority-ab
+          path: source-rho-authority-ab-result.txt
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Verify V5 fused overlap physics
         shell: bash
