@@ -171,8 +171,22 @@ int main() {
         return s;
     };
 
-    // Warm independently so shader compilation, first uploads, and timestamp
-    // pipeline latency are outside the steady paired samples.
+    // Capture one-time compilation economics separately from steady execution.
+    // These cold samples are descriptive rather than a speed gate.
+    const Sample exactCold = renderOne(exactRenderer);
+    const Sample authorityCold = renderOne(authorityRenderer);
+    if (exactCold.stats.sdfProgramCompiles != 1 ||
+        authorityCold.stats.sdfProgramCompiles != 1) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL cold compile count "
+            "exact=%u authority=%u\n",
+            exactCold.stats.sdfProgramCompiles,
+            authorityCold.stats.sdfProgramCompiles);
+        return 1;
+    }
+
+    // Warm independently so timestamp pipeline latency and any first-frame
+    // residency effects are outside the steady paired samples.
     for (int i = 0; i < kWarmupFrames; ++i) {
         (void)renderOne(exactRenderer);
         (void)renderOne(authorityRenderer);
@@ -244,20 +258,32 @@ int main() {
         "exact_gpu_median_ms=%.6f authority_gpu_median_ms=%.6f "
         "gpu_ratio_exact_over_authority=%.6f "
         "exact_gpu_samples=%zu authority_gpu_samples=%zu "
+        "exact_cold_wall_ms=%.6f authority_cold_wall_ms=%.6f "
+        "exact_cold_wgsl_bytes=%zu authority_cold_wgsl_bytes=%zu "
+        "exact_cold_param_upload_bytes=%zu authority_cold_param_upload_bytes=%zu "
         "exact_recurring_compiles=%llu authority_recurring_compiles=%llu "
         "exact_cache_hits=%llu authority_cache_hits=%llu "
         "exact_param_upload_bytes=%zu authority_param_upload_bytes=%zu "
+        "authority_artifact_bytes=%zu authority_mask_bytes=%zu "
         "authority_applications=%llu\n",
         kSamplePairs,
         exactWall, authorityWall, wallRatio,
         exactGpu, authorityGpu, gpuRatio,
         exact.gpuMs.size(), authority.gpuMs.size(),
+        exactCold.wallMs, authorityCold.wallMs,
+        exactCold.stats.sdfWgslBytesGenerated,
+        authorityCold.stats.sdfWgslBytesGenerated,
+        exactCold.stats.sdfParameterBytesUploaded,
+        authorityCold.stats.sdfParameterBytesUploaded,
         static_cast<unsigned long long>(exact.recurringCompiles),
         static_cast<unsigned long long>(authority.recurringCompiles),
         static_cast<unsigned long long>(exact.cacheHits),
         static_cast<unsigned long long>(authority.cacheHits),
         exact.recurringParamUploadBytes,
         authority.recurringParamUploadBytes,
+        authorityRenderer.renderedFieldSemanticObservationStats()
+            .alignedSlotLogicalBytes,
+        sources.size(),
         static_cast<unsigned long long>(
             authorityRenderer.renderedFieldSemanticObservationStats()
                 .authorityBypassesApplied));
