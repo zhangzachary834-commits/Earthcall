@@ -50,10 +50,10 @@ std::string readBytes(const std::filesystem::path& path) {
 }
 
 bool containsObjectId(const std::filesystem::path& path, const std::string& id) {
-    std::ifstream input(path);
-    if (!input) return false;
-    nlohmann::json document;
-    input >> document;
+    auto document = SaveSystem::readSaveData(path.string());
+
+
+
     if (!document.contains("world") || !document["world"].is_object() ||
         !document["world"].contains("objects") || !document["world"]["objects"].is_array()) {
         return false;
