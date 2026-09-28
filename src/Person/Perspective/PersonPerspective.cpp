@@ -2,8 +2,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
-PersonPerspective::PersonPerspective(const std::string& name, PerspectiveType type)
-    : _name(name), _type(type) {
+PersonPerspective::PersonPerspective(const std::string& name, PerspectiveType type, const std::string& identifier)
+    : _name(name), _identifier(identifier.empty() ? name : identifier), _type(type) {
     // Initialize default view state based on type
     switch (_type) {
         case PerspectiveType::FirstPerson:

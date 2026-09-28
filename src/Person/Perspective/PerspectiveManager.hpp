@@ -16,7 +16,7 @@ public:
     // Core management functions
     void addPerspective(std::unique_ptr<PersonPerspective> perspective);
     void switchTo(size_t index);
-    void switchTo(const std::string& name);
+    void switchTo(const std::string& identifier);
     void removePerspective(size_t index);
     
     // State management
@@ -36,6 +36,6 @@ public:
     
     // Utility
     void clear();
-    bool hasPerspective(const std::string& name) const;
-    size_t findPerspective(const std::string& name) const;
+    bool hasPerspective(const std::string& identifier) const;
+    size_t findPerspective(const std::string& identifier) const;
 };
