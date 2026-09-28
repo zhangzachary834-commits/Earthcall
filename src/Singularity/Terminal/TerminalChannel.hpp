@@ -103,6 +103,7 @@ private:
     int width() const;
     std::string describeProperty(const std::string& beingId, const std::string& property) const;
     std::string describeBeing(const std::string& beingId) const;
+    std::string propertySuggestionBeing() const;
     // Rung 3 (Zach, 2026-09-25): the footer, help, confirmed deletion, dry run.
     std::string footerText(bool& hears);
     void showHelp();
