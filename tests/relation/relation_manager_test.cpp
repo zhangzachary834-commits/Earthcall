@@ -254,6 +254,48 @@ void test_relations_involving() {
     }
 }
 
+void test_indexed_queries() {
+    std::cout << "--- test_indexed_queries ---\n";
+    RelationManager rm;
+    DummySingular n1("node1");
+    DummySingular n2("node2");
+    DummySingular n3("node3");
+
+    auto r12 = std::make_shared<Relation>("knows", n1, n2, true);
+    auto r23 = std::make_shared<Relation>("knows", n2, n3, true);
+    auto r13 = std::make_shared<Relation>("likes", n1, n3, false);
+
+    rm.add(r12);
+    rm.add(r23);
+    rm.add(r13);
+
+    // Test getRelationsOf with Singular reference
+    auto relsN1 = rm.getRelationsOf(n1);
+    check(relsN1.size() == 2, "node1 should have 2 relations");
+
+    auto relsN2 = rm.getRelationsOf(n2);
+    check(relsN2.size() == 2, "node2 should have 2 relations");
+
+    // Test getRelationsOf with string identifier
+    auto relsN3Id = rm.getRelationsOf("node3");
+    check(relsN3Id.size() == 2, "node3 string lookup should find 2 relations");
+
+    // Test getRelationsBetween with Singular references
+    auto between13 = rm.getRelationsBetween(n1, n3);
+    check(between13.size() == 1, "Between node1 and node3 should find 1 relation");
+    if (!between13.empty()) {
+        check(between13[0]->type == "likes", "Relation between node1 and node3 should be 'likes'");
+    }
+
+    // Test getRelationsBetween with string IDs
+    auto between12Id = rm.getRelationsBetween("node1", "node2");
+    check(between12Id.size() == 1, "Between 'node1' and 'node2' string lookup should find 1 relation");
+
+    // Test findAdjacentEntities
+    auto adjN1 = rm.findAdjacentEntities("node1", "knows");
+    check(adjN1.size() == 1 && adjN1[0] == "node2", "findAdjacentEntities node1 'knows' should yield node2");
+}
+
 } // namespace
 
 int main() {
@@ -270,6 +312,7 @@ int main() {
     test_find_adjacent_entities();
     test_json_serialization();
     test_relations_involving();
+    test_indexed_queries();
     test_forget_type_lexeme();
     test_would_form_cycle_string_overload();
 
