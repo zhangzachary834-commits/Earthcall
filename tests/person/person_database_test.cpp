@@ -49,6 +49,20 @@ static void testGetInstanceSingleton() {
     std::cout << "  getInstance singleton behavior OK\n";
 }
 
+// Witness Gap Documentation:
+// OLD TEST (testSaveAndLoadPerson):
+// What it could prove: It proved basic file creation, name matching, and that PersonDatabase
+// could invoke savePerson and loadPerson without crashing when JSON payloads were handled.
+// What it COULD NOT prove: It could NOT prove that loadPerson traversed the actual production storage path!
+// Specifically, SaveSystem::writeSaveData serializes .ecform files as binary MessagePack (MsgPack)
+// with a MigrationRoot JSON wrapper. The old loadPerson implementation opened std::ifstream and attempted
+// to parse raw JSON directly via `file >> j`. On real MsgPack binary files saved by savePerson,
+// std::ifstream parsing threw a json.exception.parse_error.101 (invalid literal 0x81).
+//
+// NEW WITNESS TEST (testSaveAndLoadPersonMsgpackRealRuntimePath):
+// Traverses the real production runtime storage path: SaveSystem::writeSaveData (MsgPack .ecform)
+// -> SaveSystem::readSaveData -> Person::deserialize, proving end-to-end coherence on real saved profiles.
+
 static void testSaveAndLoadPerson() {
     TestEnvironment env;
     PersonDatabase& db = PersonDatabase::getInstance();
@@ -59,13 +73,37 @@ static void testSaveAndLoadPerson() {
 
     db.savePerson(original);
 
-
     Person loaded = createDummyPerson("Temp");
     bool success = db.loadPerson("Alice", loaded);
     assert(success);
     assert(loaded.getDisplayName() == "Alice");
 
     std::cout << "  savePerson and loadPerson OK\n";
+}
+
+static void testSaveAndLoadPersonMsgpackRealRuntimePath() {
+    TestEnvironment env;
+    PersonDatabase& db = PersonDatabase::getInstance();
+
+    Person original = createDummyPerson("WitnessPerson");
+    original.position() = glm::vec3(4.0f, 5.0f, 6.0f);
+
+    // 1. Traverse real save path (SaveSystem::writeSaveData produces binary MsgPack .ecform)
+    db.savePerson(original);
+
+    // Verify the saved file is indeed binary MsgPack and contains MigrationRoot
+    std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+    std::string filepath = folder + "/" + SaveSystem::sanitizeLabel("WitnessPerson") + ".ecform";
+    assert(std::filesystem::exists(filepath));
+
+    // 2. Traverse real load path via PersonDatabase::loadPerson (now using SaveSystem::readSaveData)
+    Person loaded = createDummyPerson("Temp");
+    bool success = db.loadPerson("WitnessPerson", loaded);
+    assert(success);
+    assert(loaded.getDisplayName() == "WitnessPerson");
+    assert(loaded.position().x == 4.0f);
+
+    std::cout << "  testSaveAndLoadPersonMsgpackRealRuntimePath (Witness) OK\n";
 }
 
 static void testSavePersonEmptyName() {
@@ -275,6 +313,7 @@ int main() {
     std::cout << "person_database_test:\n";
     testGetInstanceSingleton();
     testSaveAndLoadPerson();
+    testSaveAndLoadPersonMsgpackRealRuntimePath();
     testSavePersonEmptyName();
     testLoadPersonEmptyName();
     testLoadNonExistentPerson();
