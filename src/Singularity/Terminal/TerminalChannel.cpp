@@ -827,7 +827,7 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws) {
 std::string TerminalChannel::propertySuggestionBeing() const {
     if (!_scopeBeing.empty()) return _scopeBeing;
     PropertyValue focused;
-    if (lawGetValue(*this, PropertyPath::parse("@interaction-channel.focusedId"), focused)) {
+    if (lawGetValue(const_cast<TerminalChannel&>(*this), PropertyPath::parse("@interaction-channel.focusedId"), focused)) {
         if (const auto* id = std::get_if<std::string>(&focused)) return *id;
     }
     return {};
