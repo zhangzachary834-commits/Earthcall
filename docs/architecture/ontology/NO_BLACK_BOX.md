@@ -70,6 +70,13 @@ is itself a Singular whose gates register as ordinary bool properties
 (`@transfer-policy.gate.shape := false`). A field's *existence* is not a decision at all.
 It is registered, always.
 
+**Current implementation limit:** `TransferPolicy::canTransfer` gates set-to-set transfer;
+ordinary PropertyPath reads and writes do not yet pass through a general access decision.
+Zach's PropertyPath and memory micromastery direction requires read-only and read/write
+decisions, and ID disclosure under Metalaw, to grow from this one authority office rather
+than a competing permission system. See
+[`PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md`](PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md) §5a.
+
 ### 2a. Kernel guards are not black boxes — they are the opposite
 
 The one thing that legitimately refuses a Person in C++, unconditionally, is a kernel guard

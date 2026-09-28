@@ -138,8 +138,8 @@ widening the baseline.
 - **NO BIG CHUNGUS retrieval.** Retrieval must be proportional to the epistemic need: search before fetch; prefer exact symbol/error queries and bounded file, CI-log, and workflow slices; never ingest an entire large artifact when a narrow read answers the question. Expand incrementally only when needed — especially through GitHub Connector, where giant reads waste context and can time out.
 - **Stable identifiers.** Current Law text uses `@name` roots, longest dotted match;
   named beings need stable `getIdentifier()` slugs, not generated `law-7` ids.
-  Zach's 2026-09-27 rule: individual paths resolve through durable identity under
-  relevant Zones; paths hold no ID, and ambiguity refuses. See the Property storage task.
+  Zach's 2026-09-27/28 rule: individual paths resolve under relevant Zones;
+  paths hold no ID, ambiguity refuses, and Ourverses cannot reauthor Person identity; Law-governed read/write belongs with TransferPolicy. See the Property storage task.
 - **Append-only enums**, serialized as ints. Never renumber, never reuse a burned value.
 - **Nothing enters the world without an author.** `Law::applyTo` returns `Unauthored` and
   refuses to fire when `authors` is empty. This is structural, not conventional.

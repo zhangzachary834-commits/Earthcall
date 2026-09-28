@@ -1,4 +1,4 @@
-# Property storage and live OntoMath binding
+# PropertyPath and memory micromastery — storage and live OntoMath binding
 
 **Status:** Architecture drafted; implementation open.
 
@@ -32,7 +32,7 @@
 3. Implement checked value-cell lifetimes and save/load alias topology without exposing C++ addresses or granting a second permission system.
 4. Extend OntoMath bindings to preserve supported value types and resolve live Property references, with explicit type and channel refusals.
 5. Measure the existing interned-name/parallel-array layout against selective dense storage on representative authored worlds before changing the cache.
-6. Specify one Law-governed read/write/bind/share/derive access funnel and bootstrap its initial policy Laws through an attested First Mover without self-authorizing Law edits.
+6. Extend `TransferPolicy` into one Law-governed read/write/bind/share/derive access funnel and bootstrap its initial policy Laws through an attested First Mover without self-authorizing Law edits.
 
 **For future agents, including Jules:** `StringId` interns path names, `SingularId` identifies beings, and `Singular` already holds two parallel Property lookup arrays. Do not add a Property-Singular, a domain container class, a new enum kind, or a raw-pointer save representation. Read the architecture document's current-state table and proof plan before implementing. Save-file changes require Zach's authorization and the patch/stage/verify/atomic-rename process in `FIRST_MOVER_AUTHORING.md` §7.
 
@@ -52,8 +52,28 @@ Source inspection found that `PropertyPath` stores property-name segments and ru
 
 **Correction from Zach, 2026-09-27:** A PropertyPath is not a Singular and does not retain IDs of its own. The resolution of a read depends on the Zones in which it occurs, potentially **multiple Zones** when a PropertyPath is transmitted between them. A Zone is any domain or set over a mathematical or discrete bound through which Singulars participate and gain location; a device is a possible Zone, not merely a 3D digital world. The ID must terminate in ownership by a set of physical machines (the set may contain one or several), but a digitally constructed Zone may be authorized to hold it through governance and ownership Relations from a Person acting through First Mover channels on machines they own. Authorization does not imply that the data is physically stored on that Zone's machine. This belongs to the First Mover bootstrap problem. The previous question about how a *path* carries an ID was Codex's mistaken framing; the remaining problem is how Zones and their authority-bearing Relations resolve the path to the same individual without revealing or redirecting identity improperly.
 
-**⚑ AUTHOR — open:** What exactly is owned by the machine set: an ID record, a signing secret or attestation power, or both distinctly? Which Zones and Laws participate in an inter-Zone read or transmission? Which authority level(s) govern writes through distinct paths sharing a cell, and how are conflicts settled? Do not infer answers from the current cache or introduce a storage/permission ontology around these questions.
+**⚑ AUTHOR — still open:** Which Zones and Laws participate in an inter-Zone read or transmission? Which authority level(s) govern writes through distinct paths sharing a cell, and how are conflicts settled? Zach's answer about public-ID custody and Person signing follows below. Do not infer the remaining answers from the current cache or introduce a storage/permission ontology around them.
 
 *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-27 22:12 PDT. Zach supplied the identity, ambiguity, ID-disclosure, and authority requirements; Codex inspected the code and added only the duplicate-spelling refusal.*
 
 *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-27 23:18 PDT. Zach supplied the Zone-context and physical-machine-ownership correction; Codex removed its path-owned-ID interpretation. No durable identity routing is implemented by this note.*
+
+## Zach's shared-custody and Person-key decisions (2026-09-28)
+
+Zach chose **the same enduring identity** across the relevant machines, machine-authorized Zones, and several Ourverses. Their relation to the public ID is nuanced shared custody and guardianship: an Ourverse may participate in shared recognition, but may not rewrite the Person's key or author the ID into a different Person on its own. Such a change requires the Person's consent. Keep Zach's stakeholding distinctions—**authorship, ownership, governance, and dependency**—distinct; do not infer that a guardian or dependent thereby becomes an author. Zach then supplied his precise definitions and the higher ground of **Constitution**, recorded in the [Second Person framework](../../../../../architecture/ourverse/SECOND_PERSON_FRAMEWORK.md#zachs-account-of-standing-and-constitution-2026-09-28).
+
+**Signing custody:** Device keys are **Zone keys**. A Person has **one Person private key**, shared among that Person's own machines; an Ourverse does not receive that signing secret by virtue of recognizing the public ID. Zach chose this personalist identity direction after considering the ordinary device/Internet model. This states the intended custody boundary, not a completed key-distribution, recovery, revocation, or key-rotation protocol. Current `Identity::SingularId` makes a Person ID the Ed25519 public key, so changing that key also changes the current ID representation; continuity after loss or compromise remains to be authored and proved.
+
+**Access is micromastery:** Zach prefers *micromastery* to *management*. The same Law-governed PropertyPath movement must distinguish permitted reads from permitted writes, including read-only access, and unite that decision with `Singularity/TransferPolicy` rather than create another permission system. ID disclosure is separately governed by an authority-bearing Person's Metalaw; an authorized resolution need not reveal the ID. `TransferPolicy::canTransfer` currently covers set-to-set transfer, not general PropertyPath reads/writes, so this is a requirement for the extension, not an implemented behavior.
+
+**⚑ AUTHOR — still open:** Which exact Zones and Laws adjudicate an inter-Zone read, and what happens when their identity evidence conflicts? How is the one Person secret distributed only among Person-owned machines, recovered after all are lost, and retired after compromise without redirecting individual paths? What does Person consent require for key change? Which authority levels govern writes through different paths to one cell? Do not settle these by renaming a gate or inventing a new identity bearer.
+
+**Zach's 2026-09-28 definitions for this task:** Authorship is a Person's intentional act producing an outcome corresponding to the act's nature, even if that exact outcome was not intended. Ownership means every change to the owned thing must answer to its owner. Governance is scoped Property read/write authority without necessary ownership. Dependency exists where another Singular causally affects something in which a Person has an ownership stake, significantly affecting its telos. **Constitution stands above these:** a constitutive predicate of oneself or an inviolable human right. Zach grounds hardcoded Person guards against bodily and likeness violations and the guarantee of at least one Primary Home in Constitution. This task must not let read/write gates, Ourverse guardianship, or a dependent's stake override those guards. The [Second Person framework](../../../../../architecture/ourverse/SECOND_PERSON_FRAMEWORK.md#zachs-account-of-standing-and-constitution-2026-09-28) holds the shared definition.
+
+**Relation representation, Zach's correction:** These grounds must be **unique Relations, not hardcoded enums**. Their exact endpoints and whether "unique" denotes Relation kinds or canonical Relation instances are not yet specified. Do not turn the table of definitions into a C++ kind list or precommit a serialized topology.
+
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:30 PDT. Zach supplied the same-identity, shared-recognition, Person-consent, Zone-key, single-Person-key, and micromastery directions; Codex recorded them and separated them from its security questions.*
+
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:47 PDT. Zach supplied the five-fold definition of standing and Constitution directly after Codex asked for its source; Codex linked it to this PropertyPath task without assigning new runtime powers.*
+
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:49 PDT. Zach clarified the Relation representation and rejected hardcoded enums; exact Relation topology is still an authorial decision.*

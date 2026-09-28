@@ -486,10 +486,10 @@ on a quiet machine) so the tripwire tightens behind the fix.
 - OntoMath and ActionNode and possibly more should all be unified under a fundamental set of opcode invariants.
 
 ## OntoMath, Opcodes, and Properties
-- Specify Zone-governed PropertyPath identity resolution across inter-Zone reads, with physical machine ownership and Person-authorized First Mover governance; paths retain no IDs. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
+- Specify Zone-governed PropertyPath identity resolution across inter-Zone reads, with one Person identity, machine custody, authorized Zone stewardship, Ourverse recognition, and no path-owned ID. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
 - Specify authorable path-following, shared/unique/weak value-cell relationships, copies, and derivation while preserving Property as a predicate of a Singular. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
 - Make nested and shared Property writes safely observable to Law, OntoMath, and channel consumers. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
-- Govern memory and Property access with authored Laws, seeded through a First Mover because Law text itself occupies memory. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
+- Unite Law-governed memory and Property read/write micromastery with TransferPolicy, seeded through a First Mover because Law text itself occupies memory. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
 - Extend live OntoMath bindings to preserve supported Property value types and refuse unsupported operations explicitly. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
 - Benchmark checked Property storage and selective dense layouts against the existing interned-name lookup before choosing a cache design. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
 
