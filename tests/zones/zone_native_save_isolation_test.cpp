@@ -48,11 +48,8 @@ std::string readBytes(const std::filesystem::path& path) {
                        std::istreambuf_iterator<char>());
 }
 
-bool containsObjectId(const std::filesystem::path& path, const std::string& id) {
-    std::ifstream input(path);
-    if (!input) return false;
-    nlohmann::json document;
-    input >> document;
+bool containsObjectId(const std::string& zoneId, const std::string& id) {
+    nlohmann::json document = SaveSystem::readZoneIdentity(zoneId);
     if (!document.contains("world") || !document["world"].is_object() ||
         !document["world"].contains("objects") || !document["world"]["objects"].is_array()) {
         return false;
@@ -104,13 +101,11 @@ int main() {
     // subject begins after this point: one Zone changes, one Zone is saved.
     manager.persistZones();
 
-    const auto alphaPath = sandbox / "zones" / "Alpha" / "zone.json";
-    const auto betaPath = sandbox / "zones" / "Beta" / "zone.json";
-    check(std::filesystem::exists(alphaPath), "bulk seed created Alpha identity");
-    check(std::filesystem::exists(betaPath), "bulk seed created Beta identity");
+    check(SaveSystem::zoneIdentityExists("Alpha"), "bulk seed created Alpha identity");
+    check(SaveSystem::zoneIdentityExists("Beta"), "bulk seed created Beta identity");
 
-    const std::string betaBefore = readBytes(betaPath);
-    const std::string alphaBefore = readBytes(alphaPath);
+    const std::string betaBefore = SaveSystem::readZoneIdentity("Beta").dump();
+    const std::string alphaBefore = SaveSystem::readZoneIdentity("Alpha").dump();
 
     alpha->addObject(makeCube("alpha-after", glm::vec3(3.0f, 0.0f, 0.0f)));
 
@@ -118,15 +113,15 @@ int main() {
     // by Creator Console's Save Zone button for active Alpha.
     check(manager.persistActiveZone(), "Save Zone succeeds for active Alpha");
 
-    const std::string alphaAfter = readBytes(alphaPath);
-    const std::string betaAfter = readBytes(betaPath);
+    const std::string alphaAfter = SaveSystem::readZoneIdentity("Alpha").dump();
+    const std::string betaAfter = SaveSystem::readZoneIdentity("Beta").dump();
 
     check(alphaAfter != alphaBefore, "Alpha identity changes after Alpha is edited and saved");
-    check(containsObjectId(alphaPath, "alpha-after"),
+    check(containsObjectId("Alpha", "alpha-after"),
           "Alpha's newly authored being is present in Alpha identity");
     check(betaAfter == betaBefore,
           "Beta identity remains byte-for-byte unchanged when Alpha is saved");
-    check(containsObjectId(betaPath, "beta-stable"),
+    check(containsObjectId("Beta", "beta-stable"),
           "Beta's authored being remains present after Alpha-only save");
 
     check(!hasAnyRegularFile(sandbox / "worlds"),
