@@ -49,10 +49,8 @@ std::string readBytes(const std::filesystem::path& path) {
 }
 
 bool containsObjectId(const std::filesystem::path& path, const std::string& id) {
-    std::ifstream input(path);
-    if (!input) return false;
-    nlohmann::json document;
-    input >> document;
+    nlohmann::json document = SaveSystem::readSaveData(path.string());
+    if (!document.is_object()) return false;
     if (!document.contains("world") || !document["world"].is_object() ||
         !document["world"].contains("objects") || !document["world"]["objects"].is_array()) {
         return false;
@@ -104,8 +102,8 @@ int main() {
     // subject begins after this point: one Zone changes, one Zone is saved.
     manager.persistZones();
 
-    const auto alphaPath = sandbox / "zones" / "Alpha" / "zone.json";
-    const auto betaPath = sandbox / "zones" / "Beta" / "zone.json";
+    const auto alphaPath = sandbox / "zones" / "Alpha" / "zone.ecform";
+    const auto betaPath = sandbox / "zones" / "Beta" / "zone.ecform";
     check(std::filesystem::exists(alphaPath), "bulk seed created Alpha identity");
     check(std::filesystem::exists(betaPath), "bulk seed created Beta identity");
 
