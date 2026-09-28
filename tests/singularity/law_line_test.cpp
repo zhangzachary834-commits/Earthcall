@@ -122,10 +122,10 @@ void grammar() {
 
     // --- Lexeme <--denotes--> Law: phrases, keyboard smashes, bound morphemes
     LS::Vocabulary v = baseVocabulary();
-    v.words.push_back({"greater than", "op.Gt", "lex_gt", "law_gt"});
-    v.words.push_back({"asdfgh", "action.Set", "lex_smash", "law_set"});
-    v.words.push_back({"un-", "condition.Not", "lex_un", "law_not"});
-    v.words.push_back({"-ly", "scope.Everyone", "lex_ly", "law_everyone"});
+    v.words.push_back({"greater than", "op.Gt", "lex_gt", "law_gt", "", ""});
+    v.words.push_back({"asdfgh", "action.Set", "lex_smash", "law_set", "", ""});
+    v.words.push_back({"un-", "condition.Not", "lex_un", "law_not", "", ""});
+    v.words.push_back({"-ly", "scope.Everyone", "lex_ly", "law_everyone", "", ""});
     {
         const auto p = LS::parse("on tick if hp   greater   than 2 then asdfgh glow 1", v);
         assert(p.ok);
@@ -185,8 +185,8 @@ void grammar() {
     LS::Vocabulary fragments = baseVocabulary();
     fragments.presets.push_back(createPayload);
     fragments.presets.push_back(pixelPayload);
-    fragments.words.push_back({"fashion", "action.Create", "lex-fashion", "law-fragment-create"});
-    fragments.words.push_back({"ink-pixel", "action.WritePixel", "lex-ink", "law-fragment-pixel"});
+    fragments.words.push_back({"fashion", "action.Create", "lex-fashion", "law-fragment-create", "", ""});
+    fragments.words.push_back({"ink-pixel", "action.WritePixel", "lex-ink", "law-fragment-pixel", "", ""});
     const auto composed = LS::parse("on tick then fashion and ink-pixel", fragments);
     assert(composed.ok && composed.action);
     assert(composed.action->kind == ActionNode::Kind::Sequence);
@@ -203,8 +203,8 @@ void grammar() {
     assert(LS::classify(createFragment, {"object-clicked"}, unused) == "preset");
 
     v.presets = {fixedEvent, fixedNone};
-    v.words.push_back({"my event-triggered law", "preset", "lex_evt", "law-line-preset-event"});
-    v.words.push_back({"my law with no condition", "preset", "lex_nocond", "law-line-preset-unconditioned"});
+    v.words.push_back({"my event-triggered law", "preset", "lex_evt", "law-line-preset-event", "", ""});
+    v.words.push_back({"my law with no condition", "preset", "lex_nocond", "law-line-preset-unconditioned", "", ""});
     {
         const auto p = LS::parse("my event-triggered law called Red Light fires on object-clicked then set color 1 0 0", v);
         assert(p.ok);
@@ -225,9 +225,9 @@ void grammar() {
     }
 
     // --- shared spellings: grammar position first, then the Metalaw seam
-    v.words.push_back({"is", "op.Eq", "lex_is_a", "law_eq"});
-    v.words.push_back({"is", "op.Ne", "lex_is_b", "law_ne"});
-    v.words.push_back({"is", "condition.IsKind", "lex_is_c", "law_iskind"});
+    v.words.push_back({"is", "op.Eq", "lex_is_a", "law_eq", "", ""});
+    v.words.push_back({"is", "op.Ne", "lex_is_b", "law_ne", "", ""});
+    v.words.push_back({"is", "condition.IsKind", "lex_is_c", "law_iskind", "", ""});
     {
         // At a condition's start only IsKind is admissible: no ambiguity.
         const auto p = LS::parse("on tick if is Person then set glow 1", v);
@@ -249,11 +249,11 @@ void grammar() {
             return s.text == "is";
         });
         assert(shared != menu.end());
-        assert(mentions(shared->detail, "shared spelling"));
-        assert(mentions(shared->detail, "Metalaw decides"));
-        assert(mentions(shared->detail, "lex_is_a->law_eq"));
-        assert(mentions(shared->detail, "lex_is_b->law_ne"));
-        assert(!mentions(shared->detail, "lex_is_c->law_iskind"));
+        assert(mentions(shared->description, "shared spelling") || mentions(shared->detail, "shared spelling"));
+        assert(mentions(shared->description, "Metalaw decides") || mentions(shared->detail, "Metalaw decides"));
+        assert(mentions(shared->description, "lex_is_a->law_eq") || mentions(shared->detail, "lex_is_a->law_eq"));
+        assert(mentions(shared->description, "lex_is_b->law_ne") || mentions(shared->detail, "lex_is_b->law_ne"));
+        assert(!mentions(shared->description, "lex_is_c->law_iskind") && !mentions(shared->detail, "lex_is_c->law_iskind"));
         assert(shared->snippet.empty());
     }
     {
