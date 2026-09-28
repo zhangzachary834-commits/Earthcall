@@ -30,9 +30,35 @@ void test_add_perspective() {
     assert(manager.currentIndex() == 0); // Still 0
     assert(manager.hasPerspective("P2"));
 
-    // Test adding duplicate name
+    // Test adding duplicate identifier
     manager.addPerspective(std::make_unique<PersonPerspective>("P1", PersonPerspective::PerspectiveType::FreeCamera));
     assert(manager.count() == 2); // Should not add duplicate
+}
+
+void test_same_spelling_different_identifiers() {
+    PerspectiveManager manager;
+
+    // Two perspectives with the same display name "Overview", but unique identifiers
+    auto p1 = std::make_unique<PersonPerspective>("Overview", PersonPerspective::PerspectiveType::TopDown, "perspective.topdown.1");
+    auto p2 = std::make_unique<PersonPerspective>("Overview", PersonPerspective::PerspectiveType::Isometric, "perspective.isometric.2");
+
+    assert(p1->getName() == p2->getName());
+    assert(p1->getIdentifier() != p2->getIdentifier());
+
+    manager.addPerspective(std::move(p1));
+    manager.addPerspective(std::move(p2));
+
+    // Both perspectives should be successfully added since their identifiers are distinct
+    assert(manager.count() == 2);
+
+    assert(manager.hasPerspective("perspective.topdown.1"));
+    assert(manager.hasPerspective("perspective.isometric.2"));
+
+    manager.switchTo("perspective.isometric.2");
+    assert(manager.currentIndex() == 1);
+    assert(manager.current()->getName() == "Overview");
+    assert(manager.current()->getIdentifier() == "perspective.isometric.2");
+    assert(manager.current()->getType() == PersonPerspective::PerspectiveType::Isometric);
 }
 
 void test_switch_perspective() {
@@ -136,6 +162,7 @@ void test_clear() {
 int main() {
     test_initialization();
     test_add_perspective();
+    test_same_spelling_different_identifiers();
     test_switch_perspective();
     test_remove_perspective();
     test_state_management();
