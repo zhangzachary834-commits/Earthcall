@@ -3300,6 +3300,256 @@
             "v": 10
           }
         }
+      },
+      {
+        "objectID": "sun.forecourt.portal.finial.left",
+        "center": [
+          -5.35,
+          5.48,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.processional-lantern.amber",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -5.35,
+          5.48,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.42,
+            0.42,
+            0.42
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.62,
+          0.62,
+          0.62
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Forecourt Portal — Left Amber Finial"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "forecourt-portal-finials-011"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 11
+          }
+        }
+      },
+      {
+        "objectID": "sun.forecourt.portal.finial.right",
+        "center": [
+          5.35,
+          5.48,
+          4.28
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "sun.processional-lantern.amber",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          5.35,
+          5.48,
+          4.28,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ],
+          [
+            1,
+            0.34,
+            0.055
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.42,
+            0.42,
+            0.42
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.62,
+          0.62,
+          0.62
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Forecourt Portal — Right Amber Finial"
+          },
+          "construction.feature": {
+            "t": "string",
+            "v": "forecourt-portal-finials-011"
+          },
+          "construction.pass": {
+            "t": "float",
+            "v": 11
+          }
+        }
       }
     ],
     "relations": []
