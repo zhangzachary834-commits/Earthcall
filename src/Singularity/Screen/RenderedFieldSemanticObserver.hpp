@@ -15,11 +15,13 @@
 
 namespace Rendering {
 
-// Phase-B diagnostic seam for rendered-field semantic synthesis.
+// Rendered-field semantic synthesis and aligned execution artifacts.
 //
-// IMPORTANT: this observer has no API that returns theorem authority to the
-// renderer. It may classify and count conservative opportunities, but it cannot
-// alter pixels, shader control flow, marching, accumulation, or visibility.
+// Default renderer behavior remains exact. PR #369 established that an
+// already-known binding slot can consult a provenance-checked aligned artifact
+// without relevance search. A separately gated WebGPU experiment may consume
+// only the SourceRho literal-zero proof; every stale/unknown case still fails
+// open to exact authored execution.
 class RenderedFieldSemanticObserver {
 public:
     enum class Channel : uint8_t { SourceRho, MediumDensity };
@@ -69,6 +71,12 @@ public:
     bool enabled() const { return _enabled; }
 
     const Stats& stats() const { return _stats; }
+
+    // Count only authority that actually crossed into renderer execution.
+    // Diagnostic/hypothetical opportunities never call this.
+    void recordAuthorityBypassesApplied(uint64_t count) {
+        _stats.authorityBypassesApplied += count;
+    }
 
     // Generation-only diagnostics let tests prove local slot repair without
     // exposing a theorem-consumption API to renderer control flow.
