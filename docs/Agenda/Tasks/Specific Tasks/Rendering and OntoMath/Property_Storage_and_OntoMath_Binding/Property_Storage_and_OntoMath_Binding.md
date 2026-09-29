@@ -1,6 +1,6 @@
 # PropertyPath and memory micromastery — storage and live OntoMath binding
 
-**Status:** Architecture drafted; narrow ambiguity and Person-identity refusal implemented; Zone-governed binding and memory micromastery remain open.
+**Status:** Architecture drafted; narrow ambiguity, Person-identity, and structural read-only refusals implemented; Zone-governed binding and memory micromastery remain open.
 
 **Architecture:** [`PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md`](../../../../../architecture/ontology/PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md).
 
@@ -74,6 +74,10 @@ Zach chose **the same enduring identity** across the relevant machines, machine-
 
 **Inter-Zone jurisdiction, Zach's correction:** Each Zone governs things owned within its bounds. A Zone governs what it reads and writes from its own jurisdiction and how it receives transmissions sent by another Zone; it cannot govern the other Zone's choice to send. An inter-Zone access therefore needs each participating Zone's own authored decision at its own boundary, without attributing the sender's authority to the receiver or vice versa. This states jurisdiction, not a default access decision when no Metalaw exists.
 
+**Ordinary access default, Zach's 2026-09-28 answer:** Before a Zone has authored an access Metalaw, ordinary Property reads and writes remain **open unless an explicit reason closes them**. Existing structural read-only Properties and Kernel/Person guards are explicit reasons. `TransferPolicy`'s current `Gated` defaults describe set-to-set transfer, so they must not silently become default denials for ordinary PropertyPath reads or writes. An authored Zone decision may later close access at that Zone's own boundary; the representation and evaluation of that decision are still open. This answers the migration-default question without inventing a global access rule.
+
+**Implemented access-default guard, 2026-09-28:** `PropertyPath::setValue` now checks whether a registered Property has any setter before its equal-value `Unchanged` shortcut. `ComputedProperty`, `PropertyRef`, the terminal's `Level`, and the derived patch-info wrapper report their structural write capability; this is not a second access policy. `property_path_precalc_test` proves an ordinary read and write of `enabled` succeed while its *set-to-set transfer* gate is closed, and that both equal and different writes to Kernel `gate.position` refuse. The focused build and test passed. `object_concept_test`, `channel_paths_test`, and `time_flow_test` compiled but gave no runtime verdict before a desktop-runtime timeout; they were stopped without attributing a regression.
+
 **Implemented narrow continuity guard, 2026-09-28:** `Person::setPersonId` now refuses a different key ID after one has been established, and `personFromJson` checks a claimed ID before changing any Person field. This directly enforces Zach's refusal of silent reauthoring on the live Person and profile-load seam. It does not prove a file's initial identity claim, authorize key rotation, distribute a secret across machines, or make a PropertyPath resolve through Zone-held identity. The existing `Person` profile codec leaves signature proof with its caller. `person_serialization_test` exercises same-ID reuse, direct conflicting assignment, malformed ID, and a conflicting profile with attempted name and position changes. `person_serialization_test`, `person_database_test`, and `home_identity_continuity_test` passed; `person_home_migration_boot_test` compiled but timed out without a runtime verdict in this environment.
 
 *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:30 PDT. Zach supplied the same-identity, shared-recognition, Person-consent, Zone-key, single-Person-key, and micromastery directions; Codex recorded them and separated them from its security questions.*
@@ -87,3 +91,7 @@ Zach chose **the same enduring identity** across the relevant machines, machine-
 *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 13:01 PDT. Codex implemented the narrow Person identity reassignment refusal from Zach's same-identity and Person-consent direction; the focused test passed. Zone resolution and key continuity remain open.*
 
 *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 13:04 PDT. Codex ran the Person profile, Person database, and Home identity tests; the broader migration boot test timed out and was not counted as a pass or failure.*
+
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 13:15 PDT. Zach chose the ordinary-read/write migration default: open unless an explicit reason closes it. Codex kept it distinct from the pre-existing set-to-set TransferPolicy defaults and began a focused regression guard.*
+
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 13:18 PDT. Codex implemented and tested the structural read-only refusal and ordinary-access default guard; the broader desktop-runtime tests timed out without verdict.*

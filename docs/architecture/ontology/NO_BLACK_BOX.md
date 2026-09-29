@@ -76,6 +76,10 @@ Zach's PropertyPath and memory micromastery direction requires read-only and rea
 decisions, and ID disclosure under Metalaw, to grow from this one authority office rather
 than a competing permission system. See
 [`PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md`](PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md) §5a.
+Zach's 2026-09-28 migration default keeps ordinary reads and writes open unless an explicit
+reason closes them; the `Gated` entries above still describe set-to-set transfer, not
+ordinary PropertyPath access. A registered Property with no setter remains structurally
+read-only, including when a proposed write equals its present value.
 
 ### 2a. Kernel guards are not black boxes — they are the opposite
 
