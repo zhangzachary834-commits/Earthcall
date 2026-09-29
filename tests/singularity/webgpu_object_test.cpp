@@ -2201,6 +2201,171 @@ int main() {
                    authorityAppliedBeforeReplacement &&
                "replacement producer with nonzero rho received stale authority");
 
+        // Hostile live mutation #3: positive local-repair recovery, then an
+        // actual remove/re-add cycle while staying on the multi-source production
+        // path. A third nonzero guard source lets the vector shrink 3 -> 2 -> 3
+        // without falling back to the historical one-source compatibility path.
+        auto guardRhoNode = scalarNode(0.18);
+        auto guardChiNode = vectorNode(0.0, 1.0, 0.0);
+        OntoMath::Piecewise guardRho =
+            OntoMath::Piecewise::continuous(guardRhoNode);
+        OntoMath::Piecewise guardChi =
+            OntoMath::Piecewise::continuous(guardChiNode);
+        Rendering::RadianceSourceBinding guardSource = blueSource;
+        guardSource.producerId = "webgpu/authority-guard";
+        guardSource.position = glm::vec3(0.0f, 0.5f, 1.8f);
+        guardSource.radianceExpr = &guardRho;
+        guardSource.radianceRevision = 4604;
+        guardSource.chromaExpr = &guardChi;
+        guardSource.chromaRevision = 4605;
+
+        renderer.setRadianceSources({redSource, blueSource, guardSource}, 4705);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char authorityRecoveryPixel[4];
+        readCentre(authorityRecoveryPixel);
+        const auto authorityRecoveryObserver =
+            renderer.renderedFieldSemanticObservationStats();
+        assert(authorityRecoveryObserver.authorityBypassesApplied >
+                   authorityAppliedBeforeReplacement &&
+               "fresh local repair did not restore SourceRho zero authority");
+        const uint64_t authorityAppliedAtRecovery =
+            authorityRecoveryObserver.authorityBypassesApplied;
+        const uint64_t dropsBeforeRemoval =
+            authorityRecoveryObserver.alignedSlotDrops;
+
+        renderer.setRadianceSources({blueSource, guardSource}, 4706);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char authorityRemovedPixel[4];
+        readCentre(authorityRemovedPixel);
+        const auto authorityRemovedObserver =
+            renderer.renderedFieldSemanticObservationStats();
+        assert(abs(int(authorityRemovedPixel[0]) -
+                   int(authorityRecoveryPixel[0])) <= 2 &&
+               abs(int(authorityRemovedPixel[1]) -
+                   int(authorityRecoveryPixel[1])) <= 2 &&
+               abs(int(authorityRemovedPixel[2]) -
+                   int(authorityRecoveryPixel[2])) <= 2 &&
+               "removing an exactly-zero source changed rendered truth");
+        assert(authorityRemovedObserver.authorityBypassesApplied ==
+                   authorityAppliedAtRecovery &&
+               "nonzero survivors inherited removed SourceRho authority");
+        assert(authorityRemovedObserver.alignedSlotDrops > dropsBeforeRemoval &&
+               "source removal did not drop the retired aligned artifact");
+
+        const uint64_t buildsBeforeReadd =
+            authorityRemovedObserver.alignedSlotBuilds;
+        renderer.setRadianceSources({redSource, blueSource, guardSource}, 4707);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char authorityReaddedPixel[4];
+        readCentre(authorityReaddedPixel);
+        const auto authorityReaddedObserver =
+            renderer.renderedFieldSemanticObservationStats();
+        assert(abs(int(authorityReaddedPixel[0]) -
+                   int(authorityRemovedPixel[0])) <= 2 &&
+               abs(int(authorityReaddedPixel[1]) -
+                   int(authorityRemovedPixel[1])) <= 2 &&
+               abs(int(authorityReaddedPixel[2]) -
+                   int(authorityRemovedPixel[2])) <= 2 &&
+               "re-adding an exactly-zero source changed rendered truth");
+        assert(authorityReaddedObserver.alignedSlotBuilds > buildsBeforeReadd &&
+               "source re-add did not construct a fresh aligned artifact");
+        assert(authorityReaddedObserver.authorityBypassesApplied >
+                   authorityAppliedAtRecovery &&
+               "freshly re-added zero source did not regain authority");
+        const uint64_t authorityAppliedAtReadd =
+            authorityReaddedObserver.authorityBypassesApplied;
+
+        // Hostile live mutation #4: numeric slots are execution addresses, not
+        // lifetime identity. Move the nonzero blue source into the formerly-zero
+        // slot and the zero red source into slot 1. Correct authority follows the
+        // producer/provenance; stale slot-0 authority would visibly erase blue.
+        renderer.setRadianceSources({blueSource, redSource, guardSource}, 4708);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char authorityReorderedPixel[4];
+        readCentre(authorityReorderedPixel);
+        const auto authorityReorderedObserver =
+            renderer.renderedFieldSemanticObservationStats();
+        assert(abs(int(authorityReorderedPixel[0]) -
+                   int(authorityReaddedPixel[0])) <= 2 &&
+               abs(int(authorityReorderedPixel[1]) -
+                   int(authorityReaddedPixel[1])) <= 2 &&
+               abs(int(authorityReorderedPixel[2]) -
+                   int(authorityReaddedPixel[2])) <= 2 &&
+               "slot reorder attached zero authority to the wrong producer");
+        assert(authorityReorderedObserver.authorityBypassesApplied >
+                   authorityAppliedAtReadd &&
+               "zero authority did not follow the reordered producer identity");
+
+        // Hostile live mutation #5: byte-identical zero mathematics in the
+        // MediumDensity channel must remain a density theorem only. Remove the
+        // zero radiance producer, admit a zero-density vessel reusing the exact
+        // same Piecewise object, and keep a live nonzero radiance producer in its
+        // place. If channel sovereignty leaks, the live red contribution vanishes.
+        Rendering::VolumeDensityBinding channelTwinMedium;
+        channelTwinMedium.producerId = "webgpu/authority-density-twin";
+        channelTwinMedium.densityExpr = &rhoRed;
+        channelTwinMedium.densityRevision = 4603;
+        const uint64_t authorityAppliedBeforeChannelTwin =
+            authorityReorderedObserver.authorityBypassesApplied;
+        const uint64_t canonicalHitsBeforeChannelTwin =
+            authorityReorderedObserver.canonicalMathHits;
+        renderer.setVolumeDensitySources({channelTwinMedium}, 4801);
+        renderer.setRadianceSources(
+            {replacementRed, blueSource, guardSource}, 4709);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char authorityChannelTwinPixel[4];
+        readCentre(authorityChannelTwinPixel);
+        const auto authorityChannelTwinObserver =
+            renderer.renderedFieldSemanticObservationStats();
+        assert(authorityChannelTwinPixel[0] >
+                   authorityReorderedPixel[0] + 20 &&
+               "MediumDensity zero theorem leaked into live SourceRho authority");
+        assert(authorityChannelTwinObserver.authorityBypassesApplied ==
+                   authorityAppliedBeforeChannelTwin &&
+               "cross-channel zero theorem was counted as SourceRho authority");
+        assert(authorityChannelTwinObserver.hypotheticalDensityBypasses >= 1 &&
+               "byte-identical density-zero theorem was not independently observed");
+        assert(authorityChannelTwinObserver.canonicalMathHits >
+                   canonicalHitsBeforeChannelTwin &&
+               "byte-identical cross-channel math did not share canonical identity");
+
+        std::printf(
+            "SOURCE_RHO_HOSTILE_LIFETIME recovery=(%d,%d,%d) "
+            "removed=(%d,%d,%d) readded=(%d,%d,%d) reordered=(%d,%d,%d) "
+            "channelTwin=(%d,%d,%d) authorityApplications=%llu "
+            "slotBuilds=%llu slotRepairs=%llu slotDrops=%llu "
+            "proofFallbacks=%llu\n",
+            authorityRecoveryPixel[0], authorityRecoveryPixel[1],
+            authorityRecoveryPixel[2], authorityRemovedPixel[0],
+            authorityRemovedPixel[1], authorityRemovedPixel[2],
+            authorityReaddedPixel[0], authorityReaddedPixel[1],
+            authorityReaddedPixel[2], authorityReorderedPixel[0],
+            authorityReorderedPixel[1], authorityReorderedPixel[2],
+            authorityChannelTwinPixel[0], authorityChannelTwinPixel[1],
+            authorityChannelTwinPixel[2],
+            static_cast<unsigned long long>(
+                authorityChannelTwinObserver.authorityBypassesApplied),
+            static_cast<unsigned long long>(
+                authorityChannelTwinObserver.alignedSlotBuilds),
+            static_cast<unsigned long long>(
+                authorityChannelTwinObserver.alignedSlotRepairs),
+            static_cast<unsigned long long>(
+                authorityChannelTwinObserver.alignedSlotDrops),
+            static_cast<unsigned long long>(
+                authorityChannelTwinObserver.alignedProofReadFallbacks));
+
+        renderer.setVolumeDensitySources({}, 4802);
+
         // Restore constitutional default before leaving the Rung-7/8 fixture.
         renderer.setRadianceZeroAuthorityExperimentEnabled(false);
         renderer.setRenderedFieldSemanticObservationEnabled(false);
