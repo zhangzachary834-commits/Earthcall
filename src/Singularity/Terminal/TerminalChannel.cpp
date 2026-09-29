@@ -223,6 +223,7 @@ public:
     Earthcall::StringId nameId() const override { return _id; }
     std::string typeName() const override { return typeid(T).name(); }
     PropertyValue value() const override { return PropertyValue(*_member); }
+    bool isStructurallyWritable() const override { return _writable; }
     bool setValue(const PropertyValue& v) override {
         if (!_writable) return false;
         if (const auto* t = std::get_if<T>(&v)) {

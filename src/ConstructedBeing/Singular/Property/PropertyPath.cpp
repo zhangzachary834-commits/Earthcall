@@ -261,6 +261,10 @@ PropertyPath::PathResult PropertyPath::getValue(Singular& root, PropertyValue& o
 PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyValue& v, std::size_t startIndex) const {
     ResolvedSlot slot = resolve(root, startIndex);
 
+    // A read-only wrapper refuses even when the proposed value is identical.
+    // Equality is a value comparison, not authority to attempt a write.
+    if (slot.prop && !slot.prop->isStructurallyWritable()) return PathResult::ReadOnly;
+
     const auto announce = [&](PathResult result, Property* prop, Singular* on, const std::string& fallbackName = "") {
         if (result == PathResult::Ok && on) {
             Singular::notifyPropertyChanged(on, prop ? prop->name() : fallbackName);

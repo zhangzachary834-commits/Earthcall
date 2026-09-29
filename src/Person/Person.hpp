@@ -100,8 +100,14 @@ public:
     // Assigning identity is a distinct act from constructing a Person: a
     // Person may exist in a loaded world before their key is available, and
     // minting one on every construction would hand out a fresh identity to
-    // every temporary copy.
-    void setPersonId(const Identity::SingularId& id) { _personId = id; }
+    // every temporary copy. Once established, a different public key cannot
+    // silently reauthor this Person. Key rotation needs an explicit,
+    // Person-consented continuity protocol; none is represented by this setter.
+    bool setPersonId(const Identity::SingularId& id) {
+        if (!id.canAuthenticate() || (hasIdentity() && _personId != id)) return false;
+        _personId = id;
+        return true;
+    }
 
     // Singular interface implementation. Prefers the cryptographic identity;
     // falls back to the display name only for worlds saved before identities

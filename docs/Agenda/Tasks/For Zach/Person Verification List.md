@@ -4,6 +4,10 @@
 >
 > **Staleness sweep, 2026-09-24** — at Zach's request (*"look thru for whats been verified (including commit names bc i say stuff there)"*), Zach's own commit messages and in-file notes were read back into this list. Every box changed below cites the commit or note it came from; where the evidence is an inference rather than an explicit statement, the line says so — uncheck it if it's wrong. Sources used: `08c028d0` "go works also fixed chess edge case", `3cd9fcf3` "migrated Go", `f393d328` → `5f80e66f` → `3d875c13` (Prism Cathedral crash → cnoise3 fix → "IT WORKS"), Zach's note "RADIANCE RUNG 3-8 AND v0 … I ALREADY SAWWWWW", `d1b0112b` "THE CATHEDRAL LOOKS AWESOME NOWWWWW", `3c6a1828`, `980bd922`, `7fdbbedb`, `6eb8d4db`/`46e90911` (aurora), `1d84821f` (mist), and the Perlin intercom thread's recorded Person witnesses. Zach's `[~]` decision was applied to the items he had marked `[x]` while writing that they were broken or unclear. *— Claude Code · Claude Opus 5.5 · session* `8d0946b6-40ea-42c5-a42c-e34f35fa1137` *· 2026-09-24T13:17-07:00*
 
+## Constitutional Person movement
+
+- [ ] If an existing saved Law attempts to set your `position`, `velocity`, or `acceleration`, witness that it does not move you merely because you authored the Law; record any movement channel that still does. This remains open because the authored, revocable consent Relation has not yet been specified or wired. No save file was changed for this check. *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:23 PDT.*
+
 
 
 ## The Law Line — speak a Law in the Mac Terminal

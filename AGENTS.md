@@ -146,12 +146,12 @@ widening the baseline.
 - **Authority is clamped to 0** on every path that reads a file. Do not try to write an authority value below 0; it will be clamped, and the attempt is what gets noticed.
 - **Event-transitions must be edges, not levels.** Events are past-tense `noun-verbed` and publish on transitions. A
   per-frame "still happening" event is a bug—that is what `WhileTrue` is for. Continuous per-frame logic must use a separate framework.
-- **Kernel guards on the body are not settings.** A modality channel that reaches a
-  Person's body enforces its Person guards in C++, unconditionally — no parameter, no flag,
-  and never as law text, which could be authored away. The audio channel's infrasound floor
-  (`mathematics/ONTOMATH_FRAMEWORK.md` §7a) is the worked example: it refuses and says which frequency,
-  rather than silently filtering a Person's mathematics. Guards constrain the path to the
-  body, never the mathematics — a Person may still author and integrate a 7 Hz field.
+- **Kernel guards on the body are not settings.** They act in C++ before Metalaw bootstrap;
+  no authored policy can open them. The boundary refuses unconsented positive body/location
+  writes, not authored prohibitions on entering or remaining in a restricted area. A moving
+  Law needs the Person's signed, revocable consent sub-Relation; authorship is insufficient.
+  Without that proof Law movement refuses. The audio infrasound floor
+  (`mathematics/ONTOMATH_FRAMEWORK.md` §7a) likewise refuses at the body channel, loudly.
 - **Paint is on the Material, and materials are shared.** Writing paint through the material you *resolve* repaints every object naming it.
   Always paint via `Object::setFaceColor` / `Object::ownMaterial`, which diverge the object onto its own `material.<identifier>` on the first stroke.
   Never `materials.resolveOrDefault(obj->materialId())` — that is the bug, not the shortcut.

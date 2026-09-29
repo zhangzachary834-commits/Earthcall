@@ -57,6 +57,11 @@ public:
     virtual PropertyValue value() const = 0;
     virtual bool setValue(const PropertyValue& v) = 0;
 
+    // Whether this wrapper has a setter at all. This is substrate capability,
+    // not the Law/Zone access decision. PropertyPath checks it before treating
+    // an equal-value write as Unchanged: read-only never grants a no-op write.
+    virtual bool isStructurallyWritable() const { return true; }
+
     // Non-null when this property's value is itself a Singular — the
     // recursion point PropertyPath descends through for nested addresses.
     virtual Singular* asSingular() const { return nullptr; }

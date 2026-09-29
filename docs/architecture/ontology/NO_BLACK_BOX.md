@@ -76,12 +76,25 @@ Zach's PropertyPath and memory micromastery direction requires read-only and rea
 decisions, and ID disclosure under Metalaw, to grow from this one authority office rather
 than a competing permission system. See
 [`PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md`](PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md) §5a.
+Zach's 2026-09-28 migration default keeps ordinary reads and writes open unless an explicit
+reason closes them; the `Gated` entries above still describe set-to-set transfer, not
+ordinary PropertyPath access. A registered Property with no setter remains structurally
+read-only, including when a proposed write equals its present value.
 
 ### 2a. Kernel guards are not black boxes — they are the opposite
 
-The one thing that legitimately refuses a Person in C++, unconditionally, is a kernel guard
-on the path to a Person's body: the audio channel's infrasound floor
-(`ONTOMATH_FRAMEWORK.md` §7a) is the worked example.
+Constitutional Kernel guards legitimately refuse acts in C++ before any Metalaw or
+`TransferPolicy` bootstrap can alter them. Zach's 2026-09-28 example is a guard against
+another actor positively forcing a Person's body/location to a specific position; the
+audio channel's infrasound floor (`ONTOMATH_FRAMEWORK.md` §7a) is another worked example
+of a guard on the path to a Person's body. The Law motion guard currently follows the
+actual Person bearer of a qualified action path, not just the Law's nominal subject.
+Other actuation channels still need the same boundary traced and enforced; a generic
+`PropertyPath::setValue` has no actor information by itself.
+Zach clarified that this guard refuses unconsented positive body/location writes;
+it does not suppress authored Laws that prohibit a Person's presence in a
+restricted, dangerous, or private area. Such a Law may read location without
+claiming a destination for the Person.
 
 A guard is not a hidden field. It is a **loud refusal at the channel**:
 
@@ -95,6 +108,8 @@ A guard that achieved its refusal by *hiding the frequency field* would violate 
 refusal, and would also be worse at guarding — the Person would conclude the field did
 nothing rather than learn where the boundary is. **Refuse out loud; never refuse by
 concealment.**
+
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:26 PDT. Zach distinguished immutable constitutional bodily/location guards from bootstrapped TransferPolicy decisions; this section names the guard and its present channel coverage.*
 
 ### 2b. What is actually beneath the Kernel
 
