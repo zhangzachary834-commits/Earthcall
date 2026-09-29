@@ -143,7 +143,6 @@ private:
     void rebuildEndpointIndex() const;
     std::size_t _generation = 0;
     mutable std::size_t _indexedGeneration = static_cast<std::size_t>(-1);
-    mutable std::unordered_map<const Singular*, std::vector<Relation*>> _byEndpoint;
-    mutable std::unordered_map<std::string, std::vector<Relation*>> _byIdentifier;
-    mutable std::unordered_map<const Relation*, std::shared_ptr<Relation>> _sharedByPointer;
+    mutable std::unordered_map<const Singular*, std::vector<std::shared_ptr<Relation>>> _byEndpoint;
+    mutable std::unordered_map<std::string, std::vector<std::shared_ptr<Relation>>> _byIdentifier;
 };
