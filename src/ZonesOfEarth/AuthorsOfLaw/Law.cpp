@@ -106,7 +106,7 @@ nlohmann::json Law::ApplicationRecord::toJson() const {
         }
         nodes.push_back(std::move(entry));
     }
-    return nlohmann::json{
+    nlohmann::json record{
         {"timestamp", timestamp},
         {"lawId", lawId},
         {"targetId", targetId},
@@ -116,6 +116,8 @@ nlohmann::json Law::ApplicationRecord::toJson() const {
         {"actions", actionDescriptions},
         {"nodes", nodes}
     };
+    if (!refusalReason.empty()) record["refusalReason"] = refusalReason;
+    return record;
 }
 
 Law::Law(const std::string& name)
@@ -460,8 +462,10 @@ Law::ApplicationResult Law::applyToImpl(
     const Law* targetLaw = dynamic_cast<const Law*>(&target);
     const Zone* targetZone = dynamic_cast<const Zone*>(&target);
 
-    bool violatesKernelBoundary = _actionModel &&
+    const bool lacksPersonMotionConsent = _actionModel &&
         writesPersonsMotionWithoutActuationConsent(*_actionModel, target);
+    bool violatesKernelBoundary = lacksPersonMotionConsent;
+    bool personMotionRefused = false;
     if (_actionModel) {
         std::vector<PropertyPath> paths;
         _actionModel->collectPaths(paths);
@@ -495,6 +499,7 @@ Law::ApplicationResult Law::applyToImpl(
         result = ApplicationResult::AuthorityDenied;
     } else if (violatesKernelBoundary) {
         result = ApplicationResult::AuthorityDenied;
+        personMotionRefused = lacksPersonMotionConsent;
     } else if (_jurisdiction && !_jurisdiction->getFormation().hasMember(&target)) {
         result = ApplicationResult::AuthorityDenied;
     } else if (!conditionsAlreadySatisfied && !conditionsSatisfied(target)) {
@@ -553,6 +558,10 @@ Law::ApplicationResult Law::applyToImpl(
 
     _applicationLog.push_back(makeRecord(&target, result));
     _applicationLog.back().trace = trace;
+    if (personMotionRefused) {
+        _applicationLog.back().refusalReason =
+            "positive Person body/location write refused: no verified signed actuation consent";
+    }
 
     if (result == ApplicationResult::Applied) {
         // Report what the NODES did, not merely that we got here. A law whose

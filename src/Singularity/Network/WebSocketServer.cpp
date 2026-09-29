@@ -307,9 +307,26 @@ struct WebSocketServer::Impl {
                                               const std::string& resource,
                                               const std::string& property = "",
                                               const std::string& unmappedReason = "",
-                                              const nlohmann::json& context = nlohmann::json::object()) {
+                                              const nlohmann::json& context = nlohmann::json::object(),
+                                              const std::string& preflightRefusalCode = "") {
         auto& reg = Identity::FirstMoverRegister::instance();
         const Identity::SingularId* mover = auth.moverFor(connection);
+
+        // The legacy developer shortcut below cannot override either an
+        // intrinsic Person guard or an explicitly unmapped Zone operation.
+        if (!preflightRefusalCode.empty()) {
+            nlohmann::json reply{{"type", ackType}, {"status", "refused"},
+                                 {"reasonCode", preflightRefusalCode},
+                                 {"reason", unmappedReason.empty()
+                                     ? "this foreign actuation cannot be admitted"
+                                     : unmappedReason}};
+            for (auto it = context.begin(); it != context.end(); ++it) reply[it.key()] = it.value();
+            sendTo(hdl, reply.dump());
+            std::cerr << "[WebSocketServer] REFUSED " << ackType
+                      << " (" << preflightRefusalCode << "): "
+                      << reply["reason"].get<std::string>() << "\n";
+            return std::nullopt;
+        }
 
         if (!mover && Relation::s_developerMode) {
             static Identity::SingularId legacyMover = Identity::SingularId::mintOpaque();
@@ -526,14 +543,14 @@ struct WebSocketServer::Impl {
                         }
                     }
 
-                    // The durable resource this write lands in. A Person is
-                    // never a foreign resource: Kernel guards on the body.
+                    // The durable resource this write lands in. Foreign
+                    // Person grants are not mapped yet; the separate Kernel
+                    // guard below covers positive body/location writes.
                     std::string resource;
                     std::string unmapped;
                     if (targetBeing) {
                         if (dynamic_cast<Person*>(targetBeing)) {
-                            unmapped = "a Person's body and state are guarded in C++; no foreign "
-                                       "First Mover may write them";
+                            unmapped = "no Person-granted foreign resource is mapped for this write yet";
                         } else if (auto* law = dynamic_cast<Law*>(targetBeing)) {
                             resource = SaveSystem::resolveLawIdentityPath(law->getIdentifier());
                         } else if (auto* zone = dynamic_cast<Zone*>(targetBeing)) {
@@ -554,8 +571,19 @@ struct WebSocketServer::Impl {
                     std::optional<Identity::SingularId> mover;
                     std::optional<Identity::FirstMoverSession> moverSession;
                     if (targetBeing) {
+                        // Only positive body/location writes are intrinsic
+                        // refusals. Other Person properties still need a
+                        // Person-granted foreign resource; they are not
+                        // silently promoted to Kernel authority.
+                        const PropertyPath writePath = PropertyPath::parse(prop);
+                        const std::string firstProperty = writePath.segments.empty()
+                            ? std::string() : writePath.segments.front();
+                        const bool personMotionWrite = dynamic_cast<Person*>(targetBeing) &&
+                            (firstProperty == "position" || firstProperty == "velocity" ||
+                             firstProperty == "acceleration");
                         mover = admit(hdl, clientId, "property_write_ack", resource, prop, unmapped,
-                                           {{"target", target}});
+                                           {{"target", target}},
+                                           personMotionWrite ? "kernel-person-body" : "");
                         if (!mover) return;
                         moverSession.emplace(Identity::FirstMoverRegister::instance(), *mover);
                     }
@@ -1239,39 +1267,15 @@ struct WebSocketServer::Impl {
                     sendTo(hdl, reply.dump());
                 }
                 return;
-            }            // 11. Switch Zone
+            }
+            // 11. Switch Zone
             if (type == "switch_zone" || type == "change_zone") {
-                // The active Zone is where the Person is present. Moving it
-                // moves them; no mover scope names a Person's presence yet.
-                if (!admit(hdl, clientId, "switch_zone_ack", "", "",
-                           "switching the active Zone moves where the Person is present; there is no "
-                           "Person-presence resource a First Mover can be granted yet")) {
-                    return;
-                }
-                bool switched = false;
-                if (j.contains("index")) {
-                    size_t idx = j["index"].get<size_t>();
-                    if (idx < mgr.zones().size()) {
-                        switched = mgr.switchTo(idx);
-                    }
-                } else if (j.contains("name")) {
-                    std::string zname = j["name"].get<std::string>();
-                    for (size_t i = 0; i < mgr.zones().size(); ++i) {
-                        if (mgr.zones()[i] && mgr.zones()[i]->name() == zname) {
-                            switched = mgr.switchTo(i);
-                            break;
-                        }
-                    }
-                }
-                nlohmann::json reply;
-                reply["type"] = "switch_zone_ack";
-                reply["status"] = switched ? "success" : "not_found";
-                if (switched) {
-                    reply["active_zone"] = mgr.active().name();
-                    reply["active_zone_index"] = mgr.currentIndex();
-                }
-                sendTo(hdl, reply.dump());
-                if (switched) broadcast(buildWorldSnapshotJson().dump());
+                // This changes the active Zone's authored Law closure, not a
+                // Person's derived location. No foreign Zone activation
+                // resource is mapped yet; keep no latent switch path.
+                (void)admit(hdl, clientId, "switch_zone_ack", "", "",
+                            "foreign Zone activation has no authorized resource mapping",
+                            nlohmann::json::object(), "unmapped-resource");
                 return;
             }
 
@@ -1304,23 +1308,9 @@ struct WebSocketServer::Impl {
 
             // 13. Teleport Player
             if (type == "teleport_player" || type == "teleport") {
-                if (!admit(hdl, clientId, "teleport_ack", "", "",
-                           "a Person's body is guarded in C++; no foreign First Mover may move it")) {
-                    return;
-                }
-                if (j.contains("position") && j["position"].is_array() && j["position"].size() >= 3) {
-                    float px = j["position"][0].get<float>();
-                    float py = j["position"][1].get<float>();
-                    float pz = j["position"][2].get<float>();
-                    
-                    Person* p = ::Core::Engine::instance().getPerson();
-                    if (p) p->position() = glm::vec3(px, py, pz);
-                    
-                    ::Core::Camera* cam = ::Core::Engine::instance().getCamera();
-                    if (cam) cam->pos = glm::vec3(px, py + 1.8f, pz);
-
-                    broadcast(buildWorldSnapshotJson().dump());
-                }
+                (void)admit(hdl, clientId, "teleport_ack", "", "",
+                            "a Person's body is guarded in C++; no foreign First Mover may move it",
+                            nlohmann::json::object(), "kernel-person-body");
                 return;
             }
 

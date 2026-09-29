@@ -200,6 +200,11 @@ int main() {
             assert(forcedMotion.applyTo(otherSubject) ==
                    Law::ApplicationResult::AuthorityDenied);
             assert(nearf(person.position().y, 0.0f));
+            const auto refused = forcedMotion.applicationLog().back().toJson();
+            assert(refused.value("refusalReason", std::string()).find(
+                       "no verified signed actuation consent") != std::string::npos);
+            assert(refused["refusalReason"].get<std::string>().find(
+                       person.getIdentifier()) == std::string::npos);
 
             Law clearMotion("clear-qualified-motion");
             clearMotion.addAuthor(author);

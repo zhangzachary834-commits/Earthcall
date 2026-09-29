@@ -95,6 +95,11 @@ Zach clarified that this guard refuses unconsented positive body/location writes
 it does not suppress authored Laws that prohibit a Person's presence in a
 restricted, dangerous, or private area. Such a Law may read location without
 claiming a destination for the Person.
+The WebSocket foreign-actuation gate now refuses `teleport_player` and direct
+positive Person motion-property writes as intrinsic guards before its legacy
+developer-mode shortcut. It separately refuses foreign `switch_zone` as an
+unmapped Zone activation; `mgr.active()` is not a Person's derived location.
+the full in-process channel audit remains open.
 
 A guard is not a hidden field. It is a **loud refusal at the channel**:
 
@@ -110,6 +115,8 @@ nothing rather than learn where the boundary is. **Refuse out loud; never refuse
 concealment.**
 
 *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:26 PDT. Zach distinguished immutable constitutional bodily/location guards from bootstrapped TransferPolicy decisions; this section names the guard and its present channel coverage.*
+
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 22:43 PDT. Codex found the WebSocket developer-mode bypass and put the constitutional refusal ahead of it; the local-socket test passed with the required loopback permission.*
 
 ### 2b. What is actually beneath the Kernel
 

@@ -78,6 +78,9 @@ public:
         std::string lawId;
         std::string targetId;
         ApplicationResult result{ApplicationResult::NoTarget};
+        // A Kernel refusal must say what was refused without disclosing the
+        // protected Person's identifier through a qualified action path.
+        std::string refusalReason;
         std::vector<std::string> conditionDescriptions;
         std::vector<std::string> actionDescriptions;
 
