@@ -195,6 +195,16 @@ void test_string_queries_rename_and_equivalence() {
     check(rm.getRelationsOf("a-orig").empty(), "getRelationsOf('a-orig') returns empty after rename");
     check(rm.getRelationsBetween("a-orig", "b-orig").empty(), "getRelationsBetween('a-orig', 'b-orig') returns empty after rename");
 
+    // Query by the NEW live identifier. These are the decisive pre-PR
+    // full-scan semantics: bound endpoints expose their current identifiers.
+    check(rm.getRelationsOf("a-renamed").size() == 2,
+          "getRelationsOf('a-renamed') finds relations after live rename");
+    check(rm.getRelationsBetween("a-renamed", "b-orig").size() == 1,
+          "getRelationsBetween('a-renamed', 'b-orig') finds relation after live rename");
+    auto adjRenamed = rm.findAdjacentEntities("a-renamed");
+    check(adjRenamed.size() == 2,
+          "findAdjacentEntities('a-renamed') finds outgoing/undirected neighbors after live rename");
+
     // Impostor being takes the old identifier "a-orig"
     DummySingular impostor("a-orig");
     check(rm.getRelationsOf("a-orig").empty(), "impostor with old ID 'a-orig' does NOT falsely match rels of renamed boundA");
