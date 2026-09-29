@@ -277,3 +277,67 @@ Do not broaden to MediumDensity or generic authority.
 2. Treat the current renderer economics as **near-neutral / inconclusive**, not a win.
 3. Before any positive promotion verdict, complete the handoff's remaining hostile real-boundary lifetime cases (stale artifact generation, removal/re-addition, slot reorder/reuse, cross-channel attempt, byte-identical math in another channel) and a positive local-repair recovery case. The existing pixel witness already covers authored revision mutation and producer replacement/recycled revision.
 4. If the bounded experiment is ultimately judged economically neutral/negative, record that result rather than tuning or widening the theorem to manufacture a win.
+
+
+---
+
+## Continuation — hostile real-boundary lifetime pass
+
+### Status
+
+This successor is **not yet at definition of done**. The first real renderer A/B is near-neutral/inconclusive, and the handoff still requires hostile live mutation/lifetime evidence before any authority verdict.
+
+### What changed
+
+Commit `995dbcff5026b05af99e8c1f861231e9a9ad4ea3` extends only the existing native WebGPU pixel witness. No renderer authority theorem, production channel, or scope was widened.
+
+The new real-boundary sequence now exercises:
+
+1. **positive local-repair recovery** after producer replacement;
+2. **removal/re-addition** of the zero SourceRho while deliberately retaining >=2 live sources so the test stays on the real multi-source authority path;
+3. **fresh artifact construction after re-add**, checked through aligned-slot build/drop accounting and renewed authority application;
+4. **slot reorder/reuse** with the nonzero blue source moved into the formerly-authoritative numeric slot and the zero red producer moved to slot 1; rendered equivalence makes stale slot-zero authority observable;
+5. **cross-channel / byte-identical math sovereignty** by admitting a `MediumDensity` zero theorem that reuses the exact same zero `Piecewise` math identity while the current radiance source at the corresponding execution position is nonzero. Density proof observation must increase without any SourceRho authority application.
+
+The pre-existing observer witness still supplies the lower-level stale-generation check: old generation-bound handles fail after local repair, removal/re-add builds a fresh generation, and reordering invalidates handles for both moved producers. This pass pushes the externally observable consequences through the actual renderer/pixel boundary instead of duplicating a test-only stale-handle injection API.
+
+### Integration gait
+
+Stable semantic base remains:
+
+`dbec8274ad3457a9e5421e89ad115548a17ace55`
+
+Canonical remains:
+
+`6fb07823a1bea14c51725bdf58d44769938c1585`
+
+The previously targeted compare still shows no changes to the experiment's radiance-source execution identity, semantic observer provenance, WebGPU SourceRho codegen/parameter path, or V1-V4 channel semantics. There is still no semantic integration event and no reason to reconcile merely because canonical moved.
+
+### CI state
+
+Immediately after the hostile-boundary commit, exact head is:
+
+`995dbcff5026b05af99e8c1f861231e9a9ad4ea3`
+
+Workflow #4010 is queued with:
+
+- SDF range-proxy verification;
+- Slow Adapter independent clock;
+- Focused CPU tests.
+
+The preceding documentation-head workflow #4000 was cancelled by this branch advance and is not evidence for or against the experiment.
+
+### Rejected shortcuts
+
+- Do not declare the ~1% 12-sample wall-time result a production win.
+- Do not spawn a successor Sun yet; this bounded Sun still owes exact-head hostile-boundary evidence and final reconciliation/verdict.
+- Do not widen to MediumDensity authority. The density object in this pass is a sovereignty adversary only; it receives no renderer authority path.
+- Do not add a test-only stale-generation override to production code. Existing generation-bound observer evidence plus the real pixel consequences of repair/removal/reorder are the intended proof surface.
+
+### Exact next continuation point
+
+1. Classify exact-head workflow #4010.
+2. If the new WebGPU hostile lifetime witness fails, repair only the violated provenance/lifetime assumption on this same branch.
+3. If it is green, combine it with the observer stale-generation/channel proofs and the retained A/B economics.
+4. Decide the bounded SourceRho verdict without tuning the theorem to manufacture a benchmark win.
+5. Only when all definition-of-done evidence is green: perform the one deliberate final canonical reconciliation, rerun exact-head relevant evidence, write the final analysis + Agent Intercom verdict, land, and disable the automation.
