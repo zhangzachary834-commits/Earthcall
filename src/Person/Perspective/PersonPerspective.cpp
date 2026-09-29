@@ -1,9 +1,20 @@
 #include "PersonPerspective.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
-PersonPerspective::PersonPerspective(const std::string& name, PerspectiveType type)
-    : _name(name), _type(type) {
+void PersonPerspective::buildProperties() {
+    registerProperty(std::make_unique<PropertyRef<PersonPerspective, std::string>>(
+        "name", this, &PersonPerspective::_name));
+    registerProperty(std::make_unique<ComputedProperty<PersonPerspective, float>>(
+        "fov", this, &PersonPerspective::getFov, &PersonPerspective::setFov));
+    registerProperty(std::make_unique<ComputedProperty<PersonPerspective, glm::vec3>>(
+        "position", this, &PersonPerspective::getPosition, &PersonPerspective::setPositionProp));
+}
+
+PersonPerspective::PersonPerspective(const std::string& name, PerspectiveType type, const std::string& identifier)
+    : _identifier(identifier.empty() ? name : identifier), _name(name), _type(type) {
     // Initialize default view state based on type
     switch (_type) {
         case PerspectiveType::FirstPerson:

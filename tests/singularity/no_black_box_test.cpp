@@ -45,6 +45,7 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/Property.hpp"
 #include "Person/Person.hpp"
+#include "Person/Perspective/PersonPerspective.hpp"
 #include "Person/Soul/Soul.hpp"
 #include "Relation/Relation.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
@@ -339,6 +340,7 @@ int main() {
         Soul soul;               audit("Soul", soul);
         Ourverse ourverse;       audit("Ourverse", ourverse);
         Body body;               audit("Body", body);
+        PersonPerspective perspective("probe-perspective"); audit("PersonPerspective", perspective);
     }
 
     // ---- D. reachability from the authoring surface -----------------------

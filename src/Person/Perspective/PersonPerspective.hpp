@@ -3,8 +3,9 @@
 #include <string>
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
+#include "ConstructedBeing/Singular/Singular.hpp"
 
-class PersonPerspective {
+class PersonPerspective : public Singular {
 public:
     enum class PerspectiveType {
         FirstPerson,
@@ -34,14 +35,17 @@ public:
     };
 
 protected:
+    std::string _identifier;
     std::string _name;
     PerspectiveType _type;
     CameraSettings _settings;
     ViewState _viewState;
     bool _isActive = false;
 
+    void buildProperties() override;
+
 public:
-    PersonPerspective(const std::string& name, PerspectiveType type = PerspectiveType::ThirdPerson);
+    PersonPerspective(const std::string& name, PerspectiveType type = PerspectiveType::ThirdPerson, const std::string& identifier = "");
     virtual ~PersonPerspective() = default;
 
     // Core functionality
@@ -68,10 +72,16 @@ public:
     void reset();
     
     // Getters
+    std::string getIdentifier() const override { return _identifier; }
+    void setIdentifier(const std::string& id) { if (!id.empty()) _identifier = id; }
     const std::string& getName() const { return _name; }
     PerspectiveType getType() const { return _type; }
     const ViewState& getViewState() const { return _viewState; }
     const CameraSettings& getSettings() const { return _settings; }
+    float getFov() const { return _settings.fov; }
+    void setFov(const float& fov) { _settings.fov = fov; }
+    glm::vec3 getPosition() const { return _viewState.position; }
+    void setPositionProp(const glm::vec3& pos) { setPosition(pos); }
     
     // Matrix calculations
     glm::mat4 getViewMatrix() const;
