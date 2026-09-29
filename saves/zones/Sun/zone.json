@@ -23,14 +23,14 @@
       "name": "sun.solar-gate.gold",
       "baseColor": [
         1,
-        0.58,
-        0.12
+        0.735,
+        0.145
       ],
       "opacity": 1,
-      "shininess": 56,
-      "specular": 0.9,
-      "ambient": 0.24,
-      "diffuse": 0.86
+      "shininess": 90,
+      "specular": 0.98,
+      "ambient": 0.3,
+      "diffuse": 0.84
     },
     {
       "name": "sun.processional-road.stone",
@@ -74,19 +74,21 @@
     {
       "name": "sun.reset.ivory",
       "baseColor": [
-        0.96,
-        0.94,
-        0.86
+        0.985,
+        0.97,
+        0.925
       ],
       "opacity": 1,
-      "shininess": 34,
-      "specular": 0.46,
-      "ambient": 0.46,
-      "diffuse": 0.74,
+      "shininess": 24,
+      "specular": 0.28,
+      "ambient": 0.44,
+      "diffuse": 0.8,
       "colorExpr": {
-        "input": "y",
+        "input": "x",
         "pieces": [
           {
+            "hasLo": false,
+            "hasHi": false,
             "mathNode": {
               "op": 2,
               "children": [
@@ -95,26 +97,8 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 0.96,
+                        "c": 0.985,
                         "factors": {}
-                      },
-                      {
-                        "c": 0.018,
-                        "factors": {},
-                        "trans": [
-                          {
-                            "kind": 0,
-                            "var": "y",
-                            "scale": 2.15,
-                            "shift": 0
-                          },
-                          {
-                            "kind": 1,
-                            "var": "x",
-                            "scale": 1.35,
-                            "shift": 0
-                          }
-                        ]
                       }
                     ]
                   }
@@ -124,26 +108,8 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 0.94,
+                        "c": 0.97,
                         "factors": {}
-                      },
-                      {
-                        "c": 0.018,
-                        "factors": {},
-                        "trans": [
-                          {
-                            "kind": 0,
-                            "var": "y",
-                            "scale": 2.15,
-                            "shift": 0.72
-                          },
-                          {
-                            "kind": 1,
-                            "var": "x",
-                            "scale": 1.35,
-                            "shift": 0.43
-                          }
-                        ]
                       }
                     ]
                   }
@@ -153,26 +119,8 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 0.86,
+                        "c": 0.925,
                         "factors": {}
-                      },
-                      {
-                        "c": 0.018,
-                        "factors": {},
-                        "trans": [
-                          {
-                            "kind": 0,
-                            "var": "y",
-                            "scale": 2.15,
-                            "shift": 1.44
-                          },
-                          {
-                            "kind": 1,
-                            "var": "x",
-                            "scale": 1.35,
-                            "shift": 0.86
-                          }
-                        ]
                       }
                     ]
                   }
@@ -186,19 +134,21 @@
     {
       "name": "sun.reset.gold",
       "baseColor": [
-        0.95,
-        0.58,
-        0.14
+        1,
+        0.735,
+        0.145
       ],
       "opacity": 1,
-      "shininess": 82,
-      "specular": 0.94,
-      "ambient": 0.32,
-      "diffuse": 0.78,
+      "shininess": 94,
+      "specular": 0.98,
+      "ambient": 0.34,
+      "diffuse": 0.82,
       "colorExpr": {
-        "input": "y",
+        "input": "x",
         "pieces": [
           {
+            "hasLo": false,
+            "hasHi": false,
             "mathNode": {
               "op": 2,
               "children": [
@@ -207,26 +157,8 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 0.95,
+                        "c": 1,
                         "factors": {}
-                      },
-                      {
-                        "c": 0.024,
-                        "factors": {},
-                        "trans": [
-                          {
-                            "kind": 0,
-                            "var": "y",
-                            "scale": 3.1,
-                            "shift": 0
-                          },
-                          {
-                            "kind": 1,
-                            "var": "x",
-                            "scale": 1.75,
-                            "shift": 0
-                          }
-                        ]
                       }
                     ]
                   }
@@ -236,26 +168,8 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 0.58,
+                        "c": 0.735,
                         "factors": {}
-                      },
-                      {
-                        "c": 0.024,
-                        "factors": {},
-                        "trans": [
-                          {
-                            "kind": 0,
-                            "var": "y",
-                            "scale": 3.1,
-                            "shift": 0.72
-                          },
-                          {
-                            "kind": 1,
-                            "var": "x",
-                            "scale": 1.75,
-                            "shift": 0.43
-                          }
-                        ]
                       }
                     ]
                   }
@@ -265,26 +179,8 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 0.14,
+                        "c": 0.145,
                         "factors": {}
-                      },
-                      {
-                        "c": 0.024,
-                        "factors": {},
-                        "trans": [
-                          {
-                            "kind": 0,
-                            "var": "y",
-                            "scale": 3.1,
-                            "shift": 1.44
-                          },
-                          {
-                            "kind": 1,
-                            "var": "x",
-                            "scale": 1.75,
-                            "shift": 0.86
-                          }
-                        ]
                       }
                     ]
                   }
@@ -423,17 +319,17 @@
     {
       "name": "sun.citadel.solar-stone",
       "baseColor": [
+        0.988,
         0.97,
-        0.91,
-        0.72
+        0.92
       ],
       "opacity": 1,
-      "shininess": 10,
-      "specular": 0.1,
-      "ambient": 0.2,
-      "diffuse": 0.88,
+      "shininess": 8,
+      "specular": 0.08,
+      "ambient": 0.24,
+      "diffuse": 0.9,
       "colorExpr": {
-        "input": "y",
+        "input": "x",
         "pieces": [
           {
             "hasLo": false,
@@ -442,109 +338,484 @@
               "op": 2,
               "children": [
                 {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.97,
-                        "factors": {}
-                      },
-                      {
-                        "c": 0.001,
-                        "factors": {
-                          "y": 1
-                        }
-                      },
-                      {
-                        "c": 0.01,
-                        "factors": {},
-                        "trans": [
+                  "op": 4,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
                           {
-                            "kind": 0,
-                            "var": "y",
-                            "scale": 0.55,
-                            "shift": 0
-                          },
-                          {
-                            "kind": 1,
-                            "var": "x",
-                            "scale": 0.32,
-                            "shift": 0
+                            "c": 0.988,
+                            "factors": {}
                           }
                         ]
                       }
-                    ]
-                  }
+                    },
+                    {
+                      "op": 6,
+                      "children": [
+                        {
+                          "op": 26,
+                          "children": [
+                            {
+                              "op": 4,
+                              "children": [
+                                {
+                                  "op": 24,
+                                  "children": [
+                                    {
+                                      "op": 25,
+                                      "children": [
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 1,
+                                                "factors": {},
+                                                "trans": [
+                                                  {
+                                                    "kind": 1,
+                                                    "var": "x",
+                                                    "scale": 1.15,
+                                                    "shift": 0
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 22,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 6,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.82,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 24,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 1,
+                                                    "factors": {},
+                                                    "trans": [
+                                                      {
+                                                        "kind": 1,
+                                                        "var": "y",
+                                                        "scale": 0.68,
+                                                        "shift": 0.35
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 26,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.01200000000000001,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.93,
-                        "factors": {}
-                      },
-                      {
-                        "c": -0.004,
-                        "factors": {
-                          "y": 1
-                        }
-                      },
-                      {
-                        "c": 0.012,
-                        "factors": {},
-                        "trans": [
+                  "op": 4,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
                           {
-                            "kind": 0,
-                            "var": "y",
-                            "scale": 0.48,
-                            "shift": 0.55
-                          },
-                          {
-                            "kind": 1,
-                            "var": "x",
-                            "scale": 0.28,
-                            "shift": 0.35
+                            "c": 0.97,
+                            "factors": {}
                           }
                         ]
                       }
-                    ]
-                  }
+                    },
+                    {
+                      "op": 6,
+                      "children": [
+                        {
+                          "op": 26,
+                          "children": [
+                            {
+                              "op": 4,
+                              "children": [
+                                {
+                                  "op": 24,
+                                  "children": [
+                                    {
+                                      "op": 25,
+                                      "children": [
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 1,
+                                                "factors": {},
+                                                "trans": [
+                                                  {
+                                                    "kind": 1,
+                                                    "var": "x",
+                                                    "scale": 1.15,
+                                                    "shift": 0
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 22,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 6,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.82,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 24,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 1,
+                                                    "factors": {},
+                                                    "trans": [
+                                                      {
+                                                        "kind": 1,
+                                                        "var": "y",
+                                                        "scale": 0.68,
+                                                        "shift": 0.35
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 26,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": -0.21499999999999997,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.79,
-                        "factors": {}
-                      },
-                      {
-                        "c": -0.007,
-                        "factors": {
-                          "y": 1
-                        }
-                      },
-                      {
-                        "c": 0.014,
-                        "factors": {},
-                        "trans": [
+                  "op": 4,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
                           {
-                            "kind": 1,
-                            "var": "y",
-                            "scale": 0.42,
-                            "shift": 0.9
-                          },
-                          {
-                            "kind": 1,
-                            "var": "x",
-                            "scale": 0.3,
-                            "shift": 0.7
+                            "c": 0.92,
+                            "factors": {}
                           }
                         ]
                       }
-                    ]
-                  }
+                    },
+                    {
+                      "op": 6,
+                      "children": [
+                        {
+                          "op": 26,
+                          "children": [
+                            {
+                              "op": 4,
+                              "children": [
+                                {
+                                  "op": 24,
+                                  "children": [
+                                    {
+                                      "op": 25,
+                                      "children": [
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 1,
+                                                "factors": {},
+                                                "trans": [
+                                                  {
+                                                    "kind": 1,
+                                                    "var": "x",
+                                                    "scale": 1.15,
+                                                    "shift": 0
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 22,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 6,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.82,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 24,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 1,
+                                                    "factors": {},
+                                                    "trans": [
+                                                      {
+                                                        "kind": 1,
+                                                        "var": "y",
+                                                        "scale": 0.68,
+                                                        "shift": 0.35
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 26,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": -0.765,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
                 }
               ]
             }
@@ -964,1355 +1235,20 @@
           }
         ]
       },
-      "responseRole": "matte solar stone: authored diffuse receiving response"
+      "responseRole": "bright ivory solar stone with mathematically integrated true-gold seam hierarchy"
     },
     {
       "name": "sun.citadel.gilded",
       "baseColor": [
-        0.985,
-        0.59,
-        0.105
-      ],
-      "opacity": 1,
-      "shininess": 82,
-      "specular": 0.86,
-      "ambient": 0.2,
-      "diffuse": 0.72,
-      "colorExpr": {
-        "input": "y",
-        "pieces": [
-          {
-            "hasLo": false,
-            "hasHi": false,
-            "mathNode": {
-              "op": 2,
-              "children": [
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.985,
-                        "factors": {}
-                      },
-                      {
-                        "c": 0.01,
-                        "factors": {},
-                        "trans": [
-                          {
-                            "kind": 1,
-                            "var": "y",
-                            "scale": 0.85,
-                            "shift": 0
-                          },
-                          {
-                            "kind": 1,
-                            "var": "x",
-                            "scale": 0.45,
-                            "shift": 0
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.59,
-                        "factors": {}
-                      },
-                      {
-                        "c": 0.045,
-                        "factors": {},
-                        "trans": [
-                          {
-                            "kind": 0,
-                            "var": "y",
-                            "scale": 0.72,
-                            "shift": 0.45
-                          }
-                        ]
-                      },
-                      {
-                        "c": 0.01,
-                        "factors": {
-                          "z": 1
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.105,
-                        "factors": {}
-                      },
-                      {
-                        "c": 0.022,
-                        "factors": {},
-                        "trans": [
-                          {
-                            "kind": 1,
-                            "var": "x",
-                            "scale": 0.8,
-                            "shift": 0.75
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "responseExpr": {
-        "input": "x",
-        "pieces": [
-          {
-            "hasLo": false,
-            "hasHi": false,
-            "mathNode": {
-              "op": 2,
-              "children": [
-                {
-                  "op": 4,
-                  "children": [
-                    {
-                      "op": 4,
-                      "children": [
-                        {
-                          "op": 0,
-                          "scalarForm": {
-                            "terms": [
-                              {
-                                "c": 0.08,
-                                "factors": {}
-                              }
-                            ]
-                          }
-                        },
-                        {
-                          "op": 6,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.48,
-                                    "factors": {}
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "op": 26,
-                              "children": [
-                                {
-                                  "op": 7,
-                                  "children": [
-                                    {
-                                      "op": 1,
-                                      "var": "n"
-                                    },
-                                    {
-                                      "op": 2,
-                                      "children": [
-                                        {
-                                          "op": 5,
-                                          "children": [
-                                            {
-                                              "op": 0,
-                                              "scalarForm": {
-                                                "terms": [
-                                                  {
-                                                    "c": 0,
-                                                    "factors": {}
-                                                  }
-                                                ]
-                                              }
-                                            },
-                                            {
-                                              "op": 1,
-                                              "var": "wi.x"
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "op": 5,
-                                          "children": [
-                                            {
-                                              "op": 0,
-                                              "scalarForm": {
-                                                "terms": [
-                                                  {
-                                                    "c": 0,
-                                                    "factors": {}
-                                                  }
-                                                ]
-                                              }
-                                            },
-                                            {
-                                              "op": 1,
-                                              "var": "wi.y"
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "op": 5,
-                                          "children": [
-                                            {
-                                              "op": 0,
-                                              "scalarForm": {
-                                                "terms": [
-                                                  {
-                                                    "c": 0,
-                                                    "factors": {}
-                                                  }
-                                                ]
-                                              }
-                                            },
-                                            {
-                                              "op": 1,
-                                              "var": "wi.z"
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "op": 0,
-                                  "scalarForm": {
-                                    "terms": [
-                                      {
-                                        "c": 0,
-                                        "factors": {}
-                                      }
-                                    ]
-                                  }
-                                },
-                                {
-                                  "op": 0,
-                                  "scalarForm": {
-                                    "terms": [
-                                      {
-                                        "c": 1,
-                                        "factors": {}
-                                      }
-                                    ]
-                                  }
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "op": 4,
-                      "children": [
-                        {
-                          "op": 6,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.72,
-                                    "factors": {}
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "op": 24,
-                              "children": [
-                                {
-                                  "op": 26,
-                                  "children": [
-                                    {
-                                      "op": 7,
-                                      "children": [
-                                        {
-                                          "op": 1,
-                                          "var": "n"
-                                        },
-                                        {
-                                          "op": 10,
-                                          "children": [
-                                            {
-                                              "op": 4,
-                                              "children": [
-                                                {
-                                                  "op": 2,
-                                                  "children": [
-                                                    {
-                                                      "op": 5,
-                                                      "children": [
-                                                        {
-                                                          "op": 0,
-                                                          "scalarForm": {
-                                                            "terms": [
-                                                              {
-                                                                "c": 0,
-                                                                "factors": {}
-                                                              }
-                                                            ]
-                                                          }
-                                                        },
-                                                        {
-                                                          "op": 1,
-                                                          "var": "wi.x"
-                                                        }
-                                                      ]
-                                                    },
-                                                    {
-                                                      "op": 5,
-                                                      "children": [
-                                                        {
-                                                          "op": 0,
-                                                          "scalarForm": {
-                                                            "terms": [
-                                                              {
-                                                                "c": 0,
-                                                                "factors": {}
-                                                              }
-                                                            ]
-                                                          }
-                                                        },
-                                                        {
-                                                          "op": 1,
-                                                          "var": "wi.y"
-                                                        }
-                                                      ]
-                                                    },
-                                                    {
-                                                      "op": 5,
-                                                      "children": [
-                                                        {
-                                                          "op": 0,
-                                                          "scalarForm": {
-                                                            "terms": [
-                                                              {
-                                                                "c": 0,
-                                                                "factors": {}
-                                                              }
-                                                            ]
-                                                          }
-                                                        },
-                                                        {
-                                                          "op": 1,
-                                                          "var": "wi.z"
-                                                        }
-                                                      ]
-                                                    }
-                                                  ]
-                                                },
-                                                {
-                                                  "op": 2,
-                                                  "children": [
-                                                    {
-                                                      "op": 1,
-                                                      "var": "wo.x"
-                                                    },
-                                                    {
-                                                      "op": 1,
-                                                      "var": "wo.y"
-                                                    },
-                                                    {
-                                                      "op": 1,
-                                                      "var": "wo.z"
-                                                    }
-                                                  ]
-                                                }
-                                              ]
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "op": 0,
-                                      "scalarForm": {
-                                        "terms": [
-                                          {
-                                            "c": 0,
-                                            "factors": {}
-                                          }
-                                        ]
-                                      }
-                                    },
-                                    {
-                                      "op": 0,
-                                      "scalarForm": {
-                                        "terms": [
-                                          {
-                                            "c": 1,
-                                            "factors": {}
-                                          }
-                                        ]
-                                      }
-                                    }
-                                  ]
-                                },
-                                {
-                                  "op": 0,
-                                  "scalarForm": {
-                                    "terms": [
-                                      {
-                                        "c": 30,
-                                        "factors": {}
-                                      }
-                                    ]
-                                  }
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "op": 6,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.16,
-                                    "factors": {}
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "op": 24,
-                              "children": [
-                                {
-                                  "op": 5,
-                                  "children": [
-                                    {
-                                      "op": 0,
-                                      "scalarForm": {
-                                        "terms": [
-                                          {
-                                            "c": 1,
-                                            "factors": {}
-                                          }
-                                        ]
-                                      }
-                                    },
-                                    {
-                                      "op": 26,
-                                      "children": [
-                                        {
-                                          "op": 7,
-                                          "children": [
-                                            {
-                                              "op": 1,
-                                              "var": "n"
-                                            },
-                                            {
-                                              "op": 2,
-                                              "children": [
-                                                {
-                                                  "op": 1,
-                                                  "var": "wo.x"
-                                                },
-                                                {
-                                                  "op": 1,
-                                                  "var": "wo.y"
-                                                },
-                                                {
-                                                  "op": 1,
-                                                  "var": "wo.z"
-                                                }
-                                              ]
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "op": 0,
-                                          "scalarForm": {
-                                            "terms": [
-                                              {
-                                                "c": 0,
-                                                "factors": {}
-                                              }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          "op": 0,
-                                          "scalarForm": {
-                                            "terms": [
-                                              {
-                                                "c": 1,
-                                                "factors": {}
-                                              }
-                                            ]
-                                          }
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "op": 0,
-                                  "scalarForm": {
-                                    "terms": [
-                                      {
-                                        "c": 5,
-                                        "factors": {}
-                                      }
-                                    ]
-                                  }
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "op": 4,
-                  "children": [
-                    {
-                      "op": 4,
-                      "children": [
-                        {
-                          "op": 0,
-                          "scalarForm": {
-                            "terms": [
-                              {
-                                "c": 0.08,
-                                "factors": {}
-                              }
-                            ]
-                          }
-                        },
-                        {
-                          "op": 6,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.48,
-                                    "factors": {}
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "op": 26,
-                              "children": [
-                                {
-                                  "op": 7,
-                                  "children": [
-                                    {
-                                      "op": 1,
-                                      "var": "n"
-                                    },
-                                    {
-                                      "op": 2,
-                                      "children": [
-                                        {
-                                          "op": 5,
-                                          "children": [
-                                            {
-                                              "op": 0,
-                                              "scalarForm": {
-                                                "terms": [
-                                                  {
-                                                    "c": 0,
-                                                    "factors": {}
-                                                  }
-                                                ]
-                                              }
-                                            },
-                                            {
-                                              "op": 1,
-                                              "var": "wi.x"
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "op": 5,
-                                          "children": [
-                                            {
-                                              "op": 0,
-                                              "scalarForm": {
-                                                "terms": [
-                                                  {
-                                                    "c": 0,
-                                                    "factors": {}
-                                                  }
-                                                ]
-                                              }
-                                            },
-                                            {
-                                              "op": 1,
-                                              "var": "wi.y"
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "op": 5,
-                                          "children": [
-                                            {
-                                              "op": 0,
-                                              "scalarForm": {
-                                                "terms": [
-                                                  {
-                                                    "c": 0,
-                                                    "factors": {}
-                                                  }
-                                                ]
-                                              }
-                                            },
-                                            {
-                                              "op": 1,
-                                              "var": "wi.z"
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "op": 0,
-                                  "scalarForm": {
-                                    "terms": [
-                                      {
-                                        "c": 0,
-                                        "factors": {}
-                                      }
-                                    ]
-                                  }
-                                },
-                                {
-                                  "op": 0,
-                                  "scalarForm": {
-                                    "terms": [
-                                      {
-                                        "c": 1,
-                                        "factors": {}
-                                      }
-                                    ]
-                                  }
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "op": 4,
-                      "children": [
-                        {
-                          "op": 6,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.72,
-                                    "factors": {}
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "op": 24,
-                              "children": [
-                                {
-                                  "op": 26,
-                                  "children": [
-                                    {
-                                      "op": 7,
-                                      "children": [
-                                        {
-                                          "op": 1,
-                                          "var": "n"
-                                        },
-                                        {
-                                          "op": 10,
-                                          "children": [
-                                            {
-                                              "op": 4,
-                                              "children": [
-                                                {
-                                                  "op": 2,
-                                                  "children": [
-                                                    {
-                                                      "op": 5,
-                                                      "children": [
-                                                        {
-                                                          "op": 0,
-                                                          "scalarForm": {
-                                                            "terms": [
-                                                              {
-                                                                "c": 0,
-                                                                "factors": {}
-                                                              }
-                                                            ]
-                                                          }
-                                                        },
-                                                        {
-                                                          "op": 1,
-                                                          "var": "wi.x"
-                                                        }
-                                                      ]
-                                                    },
-                                                    {
-                                                      "op": 5,
-                                                      "children": [
-                                                        {
-                                                          "op": 0,
-                                                          "scalarForm": {
-                                                            "terms": [
-                                                              {
-                                                                "c": 0,
-                                                                "factors": {}
-                                                              }
-                                                            ]
-                                                          }
-                                                        },
-                                                        {
-                                                          "op": 1,
-                                                          "var": "wi.y"
-                                                        }
-                                                      ]
-                                                    },
-                                                    {
-                                                      "op": 5,
-                                                      "children": [
-                                                        {
-                                                          "op": 0,
-                                                          "scalarForm": {
-                                                            "terms": [
-                                                              {
-                                                                "c": 0,
-                                                                "factors": {}
-                                                              }
-                                                            ]
-                                                          }
-                                                        },
-                                                        {
-                                                          "op": 1,
-                                                          "var": "wi.z"
-                                                        }
-                                                      ]
-                                                    }
-                                                  ]
-                                                },
-                                                {
-                                                  "op": 2,
-                                                  "children": [
-                                                    {
-                                                      "op": 1,
-                                                      "var": "wo.x"
-                                                    },
-                                                    {
-                                                      "op": 1,
-                                                      "var": "wo.y"
-                                                    },
-                                                    {
-                                                      "op": 1,
-                                                      "var": "wo.z"
-                                                    }
-                                                  ]
-                                                }
-                                              ]
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "op": 0,
-                                      "scalarForm": {
-                                        "terms": [
-                                          {
-                                            "c": 0,
-                                            "factors": {}
-                                          }
-                                        ]
-                                      }
-                                    },
-                                    {
-                                      "op": 0,
-                                      "scalarForm": {
-                                        "terms": [
-                                          {
-                                            "c": 1,
-                                            "factors": {}
-                                          }
-                                        ]
-                                      }
-                                    }
-                                  ]
-                                },
-                                {
-                                  "op": 0,
-                                  "scalarForm": {
-                                    "terms": [
-                                      {
-                                        "c": 30,
-                                        "factors": {}
-                                      }
-                                    ]
-                                  }
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "op": 6,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.16,
-                                    "factors": {}
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "op": 24,
-                              "children": [
-                                {
-                                  "op": 5,
-                                  "children": [
-                                    {
-                                      "op": 0,
-                                      "scalarForm": {
-                                        "terms": [
-                                          {
-                                            "c": 1,
-                                            "factors": {}
-                                          }
-                                        ]
-                                      }
-                                    },
-                                    {
-                                      "op": 26,
-                                      "children": [
-                                        {
-                                          "op": 7,
-                                          "children": [
-                                            {
-                                              "op": 1,
-                                              "var": "n"
-                                            },
-                                            {
-                                              "op": 2,
-                                              "children": [
-                                                {
-                                                  "op": 1,
-                                                  "var": "wo.x"
-                                                },
-                                                {
-                                                  "op": 1,
-                                                  "var": "wo.y"
-                                                },
-                                                {
-                                                  "op": 1,
-                                                  "var": "wo.z"
-                                                }
-                                              ]
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "op": 0,
-                                          "scalarForm": {
-                                            "terms": [
-                                              {
-                                                "c": 0,
-                                                "factors": {}
-                                              }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          "op": 0,
-                                          "scalarForm": {
-                                            "terms": [
-                                              {
-                                                "c": 1,
-                                                "factors": {}
-                                              }
-                                            ]
-                                          }
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "op": 0,
-                                  "scalarForm": {
-                                    "terms": [
-                                      {
-                                        "c": 5,
-                                        "factors": {}
-                                      }
-                                    ]
-                                  }
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "op": 4,
-                  "children": [
-                    {
-                      "op": 4,
-                      "children": [
-                        {
-                          "op": 0,
-                          "scalarForm": {
-                            "terms": [
-                              {
-                                "c": 0.08,
-                                "factors": {}
-                              }
-                            ]
-                          }
-                        },
-                        {
-                          "op": 6,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.48,
-                                    "factors": {}
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "op": 26,
-                              "children": [
-                                {
-                                  "op": 7,
-                                  "children": [
-                                    {
-                                      "op": 1,
-                                      "var": "n"
-                                    },
-                                    {
-                                      "op": 2,
-                                      "children": [
-                                        {
-                                          "op": 5,
-                                          "children": [
-                                            {
-                                              "op": 0,
-                                              "scalarForm": {
-                                                "terms": [
-                                                  {
-                                                    "c": 0,
-                                                    "factors": {}
-                                                  }
-                                                ]
-                                              }
-                                            },
-                                            {
-                                              "op": 1,
-                                              "var": "wi.x"
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "op": 5,
-                                          "children": [
-                                            {
-                                              "op": 0,
-                                              "scalarForm": {
-                                                "terms": [
-                                                  {
-                                                    "c": 0,
-                                                    "factors": {}
-                                                  }
-                                                ]
-                                              }
-                                            },
-                                            {
-                                              "op": 1,
-                                              "var": "wi.y"
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "op": 5,
-                                          "children": [
-                                            {
-                                              "op": 0,
-                                              "scalarForm": {
-                                                "terms": [
-                                                  {
-                                                    "c": 0,
-                                                    "factors": {}
-                                                  }
-                                                ]
-                                              }
-                                            },
-                                            {
-                                              "op": 1,
-                                              "var": "wi.z"
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "op": 0,
-                                  "scalarForm": {
-                                    "terms": [
-                                      {
-                                        "c": 0,
-                                        "factors": {}
-                                      }
-                                    ]
-                                  }
-                                },
-                                {
-                                  "op": 0,
-                                  "scalarForm": {
-                                    "terms": [
-                                      {
-                                        "c": 1,
-                                        "factors": {}
-                                      }
-                                    ]
-                                  }
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "op": 4,
-                      "children": [
-                        {
-                          "op": 6,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.72,
-                                    "factors": {}
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "op": 24,
-                              "children": [
-                                {
-                                  "op": 26,
-                                  "children": [
-                                    {
-                                      "op": 7,
-                                      "children": [
-                                        {
-                                          "op": 1,
-                                          "var": "n"
-                                        },
-                                        {
-                                          "op": 10,
-                                          "children": [
-                                            {
-                                              "op": 4,
-                                              "children": [
-                                                {
-                                                  "op": 2,
-                                                  "children": [
-                                                    {
-                                                      "op": 5,
-                                                      "children": [
-                                                        {
-                                                          "op": 0,
-                                                          "scalarForm": {
-                                                            "terms": [
-                                                              {
-                                                                "c": 0,
-                                                                "factors": {}
-                                                              }
-                                                            ]
-                                                          }
-                                                        },
-                                                        {
-                                                          "op": 1,
-                                                          "var": "wi.x"
-                                                        }
-                                                      ]
-                                                    },
-                                                    {
-                                                      "op": 5,
-                                                      "children": [
-                                                        {
-                                                          "op": 0,
-                                                          "scalarForm": {
-                                                            "terms": [
-                                                              {
-                                                                "c": 0,
-                                                                "factors": {}
-                                                              }
-                                                            ]
-                                                          }
-                                                        },
-                                                        {
-                                                          "op": 1,
-                                                          "var": "wi.y"
-                                                        }
-                                                      ]
-                                                    },
-                                                    {
-                                                      "op": 5,
-                                                      "children": [
-                                                        {
-                                                          "op": 0,
-                                                          "scalarForm": {
-                                                            "terms": [
-                                                              {
-                                                                "c": 0,
-                                                                "factors": {}
-                                                              }
-                                                            ]
-                                                          }
-                                                        },
-                                                        {
-                                                          "op": 1,
-                                                          "var": "wi.z"
-                                                        }
-                                                      ]
-                                                    }
-                                                  ]
-                                                },
-                                                {
-                                                  "op": 2,
-                                                  "children": [
-                                                    {
-                                                      "op": 1,
-                                                      "var": "wo.x"
-                                                    },
-                                                    {
-                                                      "op": 1,
-                                                      "var": "wo.y"
-                                                    },
-                                                    {
-                                                      "op": 1,
-                                                      "var": "wo.z"
-                                                    }
-                                                  ]
-                                                }
-                                              ]
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "op": 0,
-                                      "scalarForm": {
-                                        "terms": [
-                                          {
-                                            "c": 0,
-                                            "factors": {}
-                                          }
-                                        ]
-                                      }
-                                    },
-                                    {
-                                      "op": 0,
-                                      "scalarForm": {
-                                        "terms": [
-                                          {
-                                            "c": 1,
-                                            "factors": {}
-                                          }
-                                        ]
-                                      }
-                                    }
-                                  ]
-                                },
-                                {
-                                  "op": 0,
-                                  "scalarForm": {
-                                    "terms": [
-                                      {
-                                        "c": 30,
-                                        "factors": {}
-                                      }
-                                    ]
-                                  }
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "op": 6,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.16,
-                                    "factors": {}
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "op": 24,
-                              "children": [
-                                {
-                                  "op": 5,
-                                  "children": [
-                                    {
-                                      "op": 0,
-                                      "scalarForm": {
-                                        "terms": [
-                                          {
-                                            "c": 1,
-                                            "factors": {}
-                                          }
-                                        ]
-                                      }
-                                    },
-                                    {
-                                      "op": 26,
-                                      "children": [
-                                        {
-                                          "op": 7,
-                                          "children": [
-                                            {
-                                              "op": 1,
-                                              "var": "n"
-                                            },
-                                            {
-                                              "op": 2,
-                                              "children": [
-                                                {
-                                                  "op": 1,
-                                                  "var": "wo.x"
-                                                },
-                                                {
-                                                  "op": 1,
-                                                  "var": "wo.y"
-                                                },
-                                                {
-                                                  "op": 1,
-                                                  "var": "wo.z"
-                                                }
-                                              ]
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "op": 0,
-                                          "scalarForm": {
-                                            "terms": [
-                                              {
-                                                "c": 0,
-                                                "factors": {}
-                                              }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          "op": 0,
-                                          "scalarForm": {
-                                            "terms": [
-                                              {
-                                                "c": 1,
-                                                "factors": {}
-                                              }
-                                            ]
-                                          }
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "op": 0,
-                                  "scalarForm": {
-                                    "terms": [
-                                      {
-                                        "c": 5,
-                                        "factors": {}
-                                      }
-                                    ]
-                                  }
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "responseRole": "gilded articulation: authored tight glint + grazing lift"
-    },
-    {
-      "name": "sun.citadel.solar-core",
-      "baseColor": [
         1,
-        0.335,
-        0.045
+        0.745,
+        0.145
       ],
       "opacity": 1,
-      "shininess": 18,
-      "specular": 0.24,
-      "ambient": 0.34,
-      "diffuse": 0.82,
+      "shininess": 96,
+      "specular": 1,
+      "ambient": 0.3,
+      "diffuse": 0.84,
       "colorExpr": {
         "input": "x",
         "pieces": [
@@ -2338,20 +1274,8 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 0.335,
+                        "c": 0.745,
                         "factors": {}
-                      },
-                      {
-                        "c": -0.03,
-                        "factors": {
-                          "x": 2
-                        }
-                      },
-                      {
-                        "c": -0.03,
-                        "factors": {
-                          "y": 2
-                        }
                       }
                     ]
                   }
@@ -2361,20 +1285,1295 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 0.045,
+                        "c": 0.145,
                         "factors": {}
-                      },
-                      {
-                        "c": -0.004,
-                        "factors": {
-                          "x": 2
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "responseExpr": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 4,
+                  "children": [
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.08,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.48,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 26,
+                              "children": [
+                                {
+                                  "op": 7,
+                                  "children": [
+                                    {
+                                      "op": 1,
+                                      "var": "n"
+                                    },
+                                    {
+                                      "op": 2,
+                                      "children": [
+                                        {
+                                          "op": 5,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "wi.x"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 5,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "wi.y"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 5,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "wi.z"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
                         }
-                      },
-                      {
-                        "c": -0.004,
-                        "factors": {
-                          "y": 2
+                      ]
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.72,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 24,
+                              "children": [
+                                {
+                                  "op": 26,
+                                  "children": [
+                                    {
+                                      "op": 7,
+                                      "children": [
+                                        {
+                                          "op": 1,
+                                          "var": "n"
+                                        },
+                                        {
+                                          "op": 10,
+                                          "children": [
+                                            {
+                                              "op": 4,
+                                              "children": [
+                                                {
+                                                  "op": 2,
+                                                  "children": [
+                                                    {
+                                                      "op": 5,
+                                                      "children": [
+                                                        {
+                                                          "op": 0,
+                                                          "scalarForm": {
+                                                            "terms": [
+                                                              {
+                                                                "c": 0,
+                                                                "factors": {}
+                                                              }
+                                                            ]
+                                                          }
+                                                        },
+                                                        {
+                                                          "op": 1,
+                                                          "var": "wi.x"
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "op": 5,
+                                                      "children": [
+                                                        {
+                                                          "op": 0,
+                                                          "scalarForm": {
+                                                            "terms": [
+                                                              {
+                                                                "c": 0,
+                                                                "factors": {}
+                                                              }
+                                                            ]
+                                                          }
+                                                        },
+                                                        {
+                                                          "op": 1,
+                                                          "var": "wi.y"
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "op": 5,
+                                                      "children": [
+                                                        {
+                                                          "op": 0,
+                                                          "scalarForm": {
+                                                            "terms": [
+                                                              {
+                                                                "c": 0,
+                                                                "factors": {}
+                                                              }
+                                                            ]
+                                                          }
+                                                        },
+                                                        {
+                                                          "op": 1,
+                                                          "var": "wi.z"
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "op": 2,
+                                                  "children": [
+                                                    {
+                                                      "op": 1,
+                                                      "var": "wo.x"
+                                                    },
+                                                    {
+                                                      "op": 1,
+                                                      "var": "wo.y"
+                                                    },
+                                                    {
+                                                      "op": 1,
+                                                      "var": "wo.z"
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 30,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.16,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 24,
+                              "children": [
+                                {
+                                  "op": 5,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 26,
+                                      "children": [
+                                        {
+                                          "op": 7,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "n"
+                                            },
+                                            {
+                                              "op": 2,
+                                              "children": [
+                                                {
+                                                  "op": 1,
+                                                  "var": "wo.x"
+                                                },
+                                                {
+                                                  "op": 1,
+                                                  "var": "wo.y"
+                                                },
+                                                {
+                                                  "op": 1,
+                                                  "var": "wo.z"
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 0,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 1,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 5,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
                         }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": 4,
+                  "children": [
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.08,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.48,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 26,
+                              "children": [
+                                {
+                                  "op": 7,
+                                  "children": [
+                                    {
+                                      "op": 1,
+                                      "var": "n"
+                                    },
+                                    {
+                                      "op": 2,
+                                      "children": [
+                                        {
+                                          "op": 5,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "wi.x"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 5,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "wi.y"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 5,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "wi.z"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.72,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 24,
+                              "children": [
+                                {
+                                  "op": 26,
+                                  "children": [
+                                    {
+                                      "op": 7,
+                                      "children": [
+                                        {
+                                          "op": 1,
+                                          "var": "n"
+                                        },
+                                        {
+                                          "op": 10,
+                                          "children": [
+                                            {
+                                              "op": 4,
+                                              "children": [
+                                                {
+                                                  "op": 2,
+                                                  "children": [
+                                                    {
+                                                      "op": 5,
+                                                      "children": [
+                                                        {
+                                                          "op": 0,
+                                                          "scalarForm": {
+                                                            "terms": [
+                                                              {
+                                                                "c": 0,
+                                                                "factors": {}
+                                                              }
+                                                            ]
+                                                          }
+                                                        },
+                                                        {
+                                                          "op": 1,
+                                                          "var": "wi.x"
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "op": 5,
+                                                      "children": [
+                                                        {
+                                                          "op": 0,
+                                                          "scalarForm": {
+                                                            "terms": [
+                                                              {
+                                                                "c": 0,
+                                                                "factors": {}
+                                                              }
+                                                            ]
+                                                          }
+                                                        },
+                                                        {
+                                                          "op": 1,
+                                                          "var": "wi.y"
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "op": 5,
+                                                      "children": [
+                                                        {
+                                                          "op": 0,
+                                                          "scalarForm": {
+                                                            "terms": [
+                                                              {
+                                                                "c": 0,
+                                                                "factors": {}
+                                                              }
+                                                            ]
+                                                          }
+                                                        },
+                                                        {
+                                                          "op": 1,
+                                                          "var": "wi.z"
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "op": 2,
+                                                  "children": [
+                                                    {
+                                                      "op": 1,
+                                                      "var": "wo.x"
+                                                    },
+                                                    {
+                                                      "op": 1,
+                                                      "var": "wo.y"
+                                                    },
+                                                    {
+                                                      "op": 1,
+                                                      "var": "wo.z"
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 30,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.16,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 24,
+                              "children": [
+                                {
+                                  "op": 5,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 26,
+                                      "children": [
+                                        {
+                                          "op": 7,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "n"
+                                            },
+                                            {
+                                              "op": 2,
+                                              "children": [
+                                                {
+                                                  "op": 1,
+                                                  "var": "wo.x"
+                                                },
+                                                {
+                                                  "op": 1,
+                                                  "var": "wo.y"
+                                                },
+                                                {
+                                                  "op": 1,
+                                                  "var": "wo.z"
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 0,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 1,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 5,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": 4,
+                  "children": [
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.08,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.48,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 26,
+                              "children": [
+                                {
+                                  "op": 7,
+                                  "children": [
+                                    {
+                                      "op": 1,
+                                      "var": "n"
+                                    },
+                                    {
+                                      "op": 2,
+                                      "children": [
+                                        {
+                                          "op": 5,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "wi.x"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 5,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "wi.y"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 5,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "wi.z"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.72,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 24,
+                              "children": [
+                                {
+                                  "op": 26,
+                                  "children": [
+                                    {
+                                      "op": 7,
+                                      "children": [
+                                        {
+                                          "op": 1,
+                                          "var": "n"
+                                        },
+                                        {
+                                          "op": 10,
+                                          "children": [
+                                            {
+                                              "op": 4,
+                                              "children": [
+                                                {
+                                                  "op": 2,
+                                                  "children": [
+                                                    {
+                                                      "op": 5,
+                                                      "children": [
+                                                        {
+                                                          "op": 0,
+                                                          "scalarForm": {
+                                                            "terms": [
+                                                              {
+                                                                "c": 0,
+                                                                "factors": {}
+                                                              }
+                                                            ]
+                                                          }
+                                                        },
+                                                        {
+                                                          "op": 1,
+                                                          "var": "wi.x"
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "op": 5,
+                                                      "children": [
+                                                        {
+                                                          "op": 0,
+                                                          "scalarForm": {
+                                                            "terms": [
+                                                              {
+                                                                "c": 0,
+                                                                "factors": {}
+                                                              }
+                                                            ]
+                                                          }
+                                                        },
+                                                        {
+                                                          "op": 1,
+                                                          "var": "wi.y"
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "op": 5,
+                                                      "children": [
+                                                        {
+                                                          "op": 0,
+                                                          "scalarForm": {
+                                                            "terms": [
+                                                              {
+                                                                "c": 0,
+                                                                "factors": {}
+                                                              }
+                                                            ]
+                                                          }
+                                                        },
+                                                        {
+                                                          "op": 1,
+                                                          "var": "wi.z"
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "op": 2,
+                                                  "children": [
+                                                    {
+                                                      "op": 1,
+                                                      "var": "wo.x"
+                                                    },
+                                                    {
+                                                      "op": 1,
+                                                      "var": "wo.y"
+                                                    },
+                                                    {
+                                                      "op": 1,
+                                                      "var": "wo.z"
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 30,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.16,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 24,
+                              "children": [
+                                {
+                                  "op": 5,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 26,
+                                      "children": [
+                                        {
+                                          "op": 7,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "n"
+                                            },
+                                            {
+                                              "op": 2,
+                                              "children": [
+                                                {
+                                                  "op": 1,
+                                                  "var": "wo.x"
+                                                },
+                                                {
+                                                  "op": 1,
+                                                  "var": "wo.y"
+                                                },
+                                                {
+                                                  "op": 1,
+                                                  "var": "wo.z"
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 0,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 1,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 5,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "responseRole": "true-gold sacred articulation retaining Pass #025 directional receiver response"
+    },
+    {
+      "name": "sun.citadel.solar-core",
+      "baseColor": [
+        1,
+        0.52,
+        0.06
+      ],
+      "opacity": 1,
+      "shininess": 16,
+      "specular": 0.22,
+      "ambient": 0.4,
+      "diffuse": 0.84,
+      "colorExpr": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.52,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.06,
+                        "factors": {}
                       }
                     ]
                   }
@@ -2797,7 +2996,514 @@
           }
         ]
       },
-      "responseRole": "solar core: authored broad low-gloss receiving response"
+      "responseRole": "brighter white-gold/amber solar heart retaining Pass #025 low-gloss receiver response"
+    },
+    {
+      "name": "sun.citadel.processional.ivory-gold-inlay",
+      "baseColor": [
+        0.992,
+        0.978,
+        0.94
+      ],
+      "opacity": 1,
+      "shininess": 38,
+      "specular": 0.4,
+      "ambient": 0.4,
+      "diffuse": 0.82,
+      "colorExpr": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 4,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.992,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 6,
+                      "children": [
+                        {
+                          "op": 26,
+                          "children": [
+                            {
+                              "op": 4,
+                              "children": [
+                                {
+                                  "op": 24,
+                                  "children": [
+                                    {
+                                      "op": 25,
+                                      "children": [
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 1,
+                                                "factors": {},
+                                                "trans": [
+                                                  {
+                                                    "kind": 1,
+                                                    "var": "x",
+                                                    "scale": 0.95,
+                                                    "shift": 0
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 28,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 6,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.55,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 24,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 1,
+                                                    "factors": {},
+                                                    "trans": [
+                                                      {
+                                                        "kind": 1,
+                                                        "var": "z",
+                                                        "scale": 0.34,
+                                                        "shift": 0.2
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 34,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.008000000000000007,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": 4,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.978,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 6,
+                      "children": [
+                        {
+                          "op": 26,
+                          "children": [
+                            {
+                              "op": 4,
+                              "children": [
+                                {
+                                  "op": 24,
+                                  "children": [
+                                    {
+                                      "op": 25,
+                                      "children": [
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 1,
+                                                "factors": {},
+                                                "trans": [
+                                                  {
+                                                    "kind": 1,
+                                                    "var": "x",
+                                                    "scale": 0.95,
+                                                    "shift": 0
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 28,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 6,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.55,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 24,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 1,
+                                                    "factors": {},
+                                                    "trans": [
+                                                      {
+                                                        "kind": 1,
+                                                        "var": "z",
+                                                        "scale": 0.34,
+                                                        "shift": 0.2
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 34,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": -0.21799999999999997,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": 4,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.94,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 6,
+                      "children": [
+                        {
+                          "op": 26,
+                          "children": [
+                            {
+                              "op": 4,
+                              "children": [
+                                {
+                                  "op": 24,
+                                  "children": [
+                                    {
+                                      "op": 25,
+                                      "children": [
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 1,
+                                                "factors": {},
+                                                "trans": [
+                                                  {
+                                                    "kind": 1,
+                                                    "var": "x",
+                                                    "scale": 0.95,
+                                                    "shift": 0
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 28,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 6,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.55,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 24,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 1,
+                                                    "factors": {},
+                                                    "trans": [
+                                                      {
+                                                        "kind": 1,
+                                                        "var": "z",
+                                                        "scale": 0.34,
+                                                        "shift": 0.2
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 34,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": -0.7799999999999999,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
     }
   ],
   "name": "Sun",
@@ -3544,7 +4250,7 @@
         ],
         "geometryType": 10,
         "shapeKind": 10,
-        "materialId": "sun.reset.darkstone",
+        "materialId": "sun.citadel.processional.ivory-gold-inlay",
         "renderMode": 0,
         "rotationResponsiveness": 10,
         "shapeParams": [
@@ -29327,7 +30033,7 @@
         ],
         "geometryType": 10,
         "shapeKind": 10,
-        "materialId": "sun.reset.ivory",
+        "materialId": "sun.citadel.processional.ivory-gold-inlay",
         "renderMode": 0,
         "rotationResponsiveness": 10,
         "shapeParams": [
@@ -34832,7 +35538,7 @@
                     "scalarForm": {
                       "terms": [
                         {
-                          "c": 2.6,
+                          "c": 3,
                           "factors": {}
                         }
                       ]
@@ -34906,7 +35612,7 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 0.64,
+                        "c": 0.76,
                         "factors": {}
                       }
                     ]
@@ -34917,7 +35623,7 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 0.18,
+                        "c": 0.24,
                         "factors": {}
                       }
                     ]
@@ -35032,24 +35738,24 @@
         "light.color": {
           "t": "vec3",
           "x": 1,
-          "y": 0.64,
-          "z": 0.18
+          "y": 0.76,
+          "z": 0.24
         },
         "light.intensity": {
           "t": "float",
-          "v": 1.15
+          "v": 1.25
         },
         "light.ambient": {
           "t": "float",
-          "v": 0.045
+          "v": 0.06
         },
         "light.diffuse": {
           "t": "float",
-          "v": 0.95
+          "v": 1
         },
         "light.specular": {
           "t": "float",
-          "v": 1.15
+          "v": 1.2
         },
         "light.attenuation.constant": {
           "t": "float",
@@ -35065,15 +35771,15 @@
         },
         "construction.feature": {
           "t": "string",
-          "v": "sun-solar-consecration-024"
+          "v": "sun-ivory-gold-hierarchy-026"
         },
         "construction.pass": {
           "t": "float",
-          "v": 24
+          "v": 26
         },
         "radiance.role": {
           "t": "string",
-          "v": "localized golden oculus source; rho × chi × alpha, independent from the preserved canonical sun.light-field"
+          "v": "localized white-gold oculus source supporting ivory structure and true-gold hierarchy; rho × chi × alpha remains distinct from canonical sun.light-field"
         }
       }
     }
