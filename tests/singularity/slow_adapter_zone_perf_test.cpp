@@ -47,6 +47,7 @@ struct Frame {
 }
 
 int main(int argc, char** argv) {
+    Relation::s_developerMode = false;
     if (argc < 3) {
         std::fprintf(stderr,
             "usage: slow_adapter_zone_perf_test <world.json> --adapter=on|off --direct=on|off [--frames=N]\n");

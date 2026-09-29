@@ -270,9 +270,11 @@ bool Formation::addRelation(const std::shared_ptr<Relation>& r) {
         if (std::find(pendingRelations.begin(), pendingRelations.end(), r) == pendingRelations.end()) {
             pendingRelations.push_back(r);
         }
-        std::fprintf(stderr,
-            "Formation '%s': PENDING relation '%s' (%s -> %s) waiting for Singular endpoints.\n",
-            getIdentifier().c_str(), r->type.c_str(), r->aId().c_str(), r->bId().c_str());
+        if (Relation::s_developerMode) {
+            std::fprintf(stderr,
+                "Formation '%s': PENDING relation '%s' (%s -> %s) waiting for Singular endpoints.\n",
+                getIdentifier().c_str(), r->type.c_str(), r->aId().c_str(), r->bId().c_str());
+        }
         return false;
     }
     if (!mayAdmitRelation(r)) {
@@ -586,7 +588,7 @@ std::shared_ptr<Formation> Formation::findOrCreateRelationFormation(const std::s
 }
 
 void Formation::integrateRelationTopology(const std::shared_ptr<Relation>& r) {
-    if (!r) return;
+    if (!r || !r->hasEndpoints()) return;
 
     Singular* memberA = r->a();
     Singular* memberB = r->b();
