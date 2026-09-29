@@ -180,3 +180,100 @@ Do not broaden authority and do not reconcile canonical merely because it moved.
 3. If it executes, capture the retained `SOURCE_RHO_AUTH_PERF` A/B numbers plus correctness witnesses.
 4. Classify any remaining failures by semantic relevance rather than by file/job proximity.
 5. Only after correctness and hostile fail-open evidence are green may the A/B economics contribute to a promotion or negative verdict.
+
+
+---
+
+## Continuation — exact-head #3987 first real renderer A/B
+
+Exact head at read: `6e7118c6c605b1d428620f6cc2490f8f8cb1557d`.
+
+Canonical remains `6fb07823a1bea14c51725bdf58d44769938c1585`; the previously recorded semantic-dependency comparison remains unchanged, so there is still no semantic integration event.
+
+### Correctness / execution status
+
+The SDF range-proxy job is green. In that exact-head job:
+
+- the SourceRho perf target builds successfully;
+- generic WebGPU SDF parity is green;
+- WebGPU object/radiance parity (including the current real pixel authority/fail-open witness) is green;
+- `Measure SourceRho authority A/B` is green;
+- the A/B artifact uploaded successfully;
+- V5 overlap and volumetric mist/source/occluder transport remain green.
+
+Thus the previous compile blocker is resolved and the real renderer witness actually executed.
+
+The Slow Adapter job still fails only at its independent authored-world adapter-impact threshold and is not presently classified as a SourceRho semantic failure. Focused CPU was still in progress at this update, so no final exact-head landing verdict is possible yet.
+
+### Retained real renderer economics
+
+Artifact `source-rho-authority-ab` from exact head reports:
+
+```
+samples=12
+exact_wall_median_ms=9.779542
+authority_wall_median_ms=9.681041
+ratio_exact_over_authority=1.010175
+
+exact_gpu_samples=0
+authority_gpu_samples=0
+
+exact_cold_wall_ms=326.370042
+authority_cold_wall_ms=316.681667
+exact_cold_wgsl_bytes=46694
+authority_cold_wgsl_bytes=46654
+exact_cold_param_upload_bytes=24
+authority_cold_param_upload_bytes=20
+
+exact_recurring_compiles=0
+authority_recurring_compiles=0
+exact_cache_hits=12
+authority_cache_hits=12
+exact_param_upload_bytes=0
+authority_param_upload_bytes=0
+
+authority_artifact_bytes=144
+authority_mask_bytes=2
+authority_setup_ns=13834
+authority_repair_ns=9333
+authority_repair_draw_ms=16.740917
+authority_repair_wgsl_bytes=46694
+
+vessel_observations=4
+semantic_builds=3
+semantic_cache_hits=1
+slot_builds=2
+slot_repairs=1
+handle_publications=4
+handle_validations=4
+proof_reads=4
+metadata_tests=16
+proof_fallbacks=3
+authority_applications=1
+```
+
+### Interpretation — do not overclaim
+
+This is the first actual production renderer A/B, and it does **not** reproduce PR #369's 28.9x micro-path advantage at frame scale.
+
+The warmed median is only ~1.0175% faster for authority (`9.779542 / 9.681041 = 1.010175`). That is directionally positive but too small, with only 12 paired samples, to call a material renderer win. GPU timestamp evidence is unavailable on this runner (zero GPU samples), so there is no GPU profitability claim.
+
+Cold wall time is directionally lower for authority by ~9.69 ms, WGSL shrinks by 40 bytes, and cold parameter upload shrinks by 4 bytes, while steady state has no recurring compiles or parameter uploads in either arm. The authority metadata itself costs 144 artifact bytes + 2 mask bytes; setup and local repair are microsecond-scale, but the repair draw is 16.74 ms and recompiles exact-sized WGSL after invalidation.
+
+The direct-key/no-hidden-search shape remains intact: the renderer consumes an already-selected source slot; no spatial theorem lookup, hierarchy walk, candidate scan, or per-pixel provenance query was introduced. The retained counters show fixed provenance work (4 proof reads / 16 metadata tests across setup-repair activity), not hidden relevance discovery.
+
+### Rejected hypotheses
+
+- **Rejected:** the earlier compile failure meant SourceRho authority lost economically. The witness had never executed.
+- **Rejected:** PR #369's 28.9x native decision-path ratio predicts a similarly dramatic frame-level gain. The real renderer result is ~1%.
+- **Rejected:** a ~1% 12-sample CPU-wall improvement with no GPU timestamps is enough to promote production pixel authority. It is not.
+- **Rejected:** current canonical motion requires reconciliation. The experiment dependencies remain untouched.
+
+### Exact next continuation point
+
+Do not broaden to MediumDensity or generic authority.
+
+1. Finish classifying exact-head #3987, especially Focused CPU.
+2. Treat the current renderer economics as **near-neutral / inconclusive**, not a win.
+3. Before any positive promotion verdict, complete the handoff's remaining hostile real-boundary lifetime cases (stale artifact generation, removal/re-addition, slot reorder/reuse, cross-channel attempt, byte-identical math in another channel) and a positive local-repair recovery case. The existing pixel witness already covers authored revision mutation and producer replacement/recycled revision.
+4. If the bounded experiment is ultimately judged economically neutral/negative, record that result rather than tuning or widening the theorem to manufacture a win.
