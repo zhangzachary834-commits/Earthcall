@@ -8,25 +8,14 @@
 
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 
-#include <uuid/uuid.h>
-
-namespace {
-std::string newOccurrenceId() {
-    uuid_t uuid;
-    uuid_generate(uuid);
-    char value[37];
-    uuid_unparse_lower(uuid, value);
-    return value;
-}
-}
+#include <sstream>
 
 Event::Event()
     : Moment(),
       type(""),
       subject(nullptr),
       object(nullptr),
-      author(""),
-      _occurrenceId(newOccurrenceId()) {}
+      author("") {}
 
 Event::Event(std::string verb, Singular* subj, Singular* obj,
              const Moment& when, std::string auth)
@@ -34,8 +23,7 @@ Event::Event(std::string verb, Singular* subj, Singular* obj,
       type(std::move(verb)),
       subject(subj),
       object(obj),
-      author(std::move(auth)),
-      _occurrenceId(newOccurrenceId()) {}
+      author(std::move(auth)) {}
 
 Event::Event(std::string verb, Singular* subj, Singular* obj,
              std::time_t unixSeconds, std::string auth)
@@ -43,14 +31,18 @@ Event::Event(std::string verb, Singular* subj, Singular* obj,
       type(std::move(verb)),
       subject(subj),
       object(obj),
-      author(std::move(auth)),
-      _occurrenceId(newOccurrenceId()) {}
+      author(std::move(auth)) {}
 
 std::string Event::getIdentifier() const {
-    // Identity cannot depend on a mutable verb, participant, or timestamp.
-    // Those are legible Event properties; the occurrence remains this one
-    // Singular even when one of them changes.
-    return "event." + _occurrenceId;
+    std::ostringstream id;
+    id << "event." << (type.empty() ? "untyped" : type) << ".";
+    if (subject) {
+        id << subject->getIdentifier();
+    } else {
+        id << "none";
+    }
+    id << "." << asSeconds();
+    return id.str();
 }
 
 std::string Event::propSubject() const {
@@ -89,9 +81,6 @@ void Event::buildProperties() {
     registerProperty(
         std::make_unique<ComputedProperty<Event, std::string>>(
             "author", this, &Event::propAuthor, &Event::setPropAuthor));
-    registerProperty(
-        std::make_unique<ComputedProperty<Event, std::string>>(
-            "occurrenceId", this, &Event::propOccurrenceId, nullptr));
 
     _propertiesBuilt = true;
 }
@@ -105,6 +94,5 @@ nlohmann::json Event::toJson() const {
     if (!author.empty()) {
         j["author"] = author;
     }
-    j["occurrenceId"] = _occurrenceId;
     return j;
 }

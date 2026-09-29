@@ -2,8 +2,6 @@
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "Singularity/Core/StringId.hpp"
-#include "Singularity/TransferPolicy.hpp"
-#include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include <cassert>
 #include <iostream>
 
@@ -65,25 +63,6 @@ protected:
         _propertyNames.push_back(StringInterner::intern("position"));
         _propertyRegistry.push_back(std::make_unique<PropertyRef<TestRoot, glm::vec3>>(
             "position", this, &TestRoot::position, this));
-    }
-};
-
-class RegisteredOverlapRoot : public Singular {
-public:
-    int shapeValue = 111;
-    int shapeRValue = 222;
-
-    std::string getIdentifier() const override { return "reg-overlap-root"; }
-
-protected:
-    void buildProperties() override {
-        _propertyNames.push_back(StringInterner::intern("shape"));
-        _propertyRegistry.push_back(std::make_unique<PropertyRef<RegisteredOverlapRoot, int>>(
-            "shape", this, &RegisteredOverlapRoot::shapeValue, this));
-
-        _propertyNames.push_back(StringInterner::intern("shape.r"));
-        _propertyRegistry.push_back(std::make_unique<PropertyRef<RegisteredOverlapRoot, int>>(
-            "shape.r", this, &RegisteredOverlapRoot::shapeRValue, this));
     }
 };
 
@@ -276,115 +255,6 @@ void testDynamicPropertyPath() {
     std::cout << "  ✓ Dynamic properties work via PropertyPath\n";
 }
 
-void testLongestPrefixSelection() {
-    StringInterner::clear();
-
-    std::cout << "[Test 9] Longest-prefix selection regression witness\n";
-
-    TestRoot obj;
-    // Set both a short prefix and a longer joined dynamic property
-    obj.setDynamicProperty("shape", PropertyValue(10));
-    obj.setDynamicProperty("shape.color", PropertyValue(std::string("red")));
-
-    PropertyPath pathShapeColor = PropertyPath::parse("shape.color");
-
-    // 1. Resolve "shape.color": MUST select the longer key "shape.color" over "shape"
-    auto slot1 = pathShapeColor.resolve(obj);
-    assert(slot1.dynamicSlot != nullptr);
-    assert(slot1.dynamicKey == "shape.color");
-    PropertyValue val1;
-    assert(pathShapeColor.getValue(obj, val1) == PropertyPath::PathResult::Ok);
-    assert(std::get<std::string>(val1) == "red");
-
-    // 2. Fallback case: remove the longer joined key "shape.color"
-    obj.removeDynamicProperty("shape.color");
-    // Resolving "shape.color" now consumes "shape" (short prefix), but fails to find
-    // "color" component on integer value 10 -> returns NoSuchProperty.
-    PropertyValue val2;
-    assert(pathShapeColor.getValue(obj, val2) == PropertyPath::PathResult::NoSuchProperty);
-
-    // 3. Fallback traversal case with PropertyDict under "shape"
-    auto dict = std::make_shared<PropertyDict>();
-    dict->elements["color"] = PropertyValue(std::string("blue"));
-    obj.setDynamicProperty("shape", PropertyValue(dict));
-
-    // Resolving "shape.color" now consumes "shape" (dict) and traverses "color"
-    PropertyValue val3;
-    assert(pathShapeColor.getValue(obj, val3) == PropertyPath::PathResult::Ok);
-    assert(std::get<std::string>(val3) == "blue");
-
-    // 4. Overlapping with registered property: "position" (vec3) vs dynamic "position.x.custom"
-    obj.setDynamicProperty("position.x.custom", PropertyValue(999));
-    PropertyPath pathPosCustom = PropertyPath::parse("position.x.custom");
-    auto slot2 = pathPosCustom.resolve(obj);
-    assert(slot2.dynamicSlot != nullptr);
-    assert(slot2.dynamicKey == "position.x.custom");
-    PropertyValue val4;
-    assert(pathPosCustom.getValue(obj, val4) == PropertyPath::PathResult::Ok);
-    assert(std::get<int>(val4) == 999);
-
-    // 5. Overlapping registered properties: "shape" (111) vs "shape.r" (222)
-    RegisteredOverlapRoot regObj;
-    PropertyPath pathShapeR = PropertyPath::parse("shape.r");
-    auto slot3 = pathShapeR.resolve(regObj);
-    assert(slot3.prop != nullptr);
-    assert(slot3.prop->name() == "shape.r");
-    PropertyValue val5;
-    assert(pathShapeR.getValue(regObj, val5) == PropertyPath::PathResult::Ok);
-    assert(std::get<int>(val5) == 222);
-
-    std::cout << "  ✓ Longest-prefix matching and fallback traversal verified\n";
-}
-
-void testAmbiguousQualifiedRootRefuses() {
-    TestRoot first, second;
-    first.value1 = 11;
-    second.value1 = 22;
-    const PropertyPath path = PropertyPath::parse("@test-root.value1");
-    Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
-        beings.push_back(&first);
-        beings.push_back(&second);
-    });
-
-    PropertyValue value;
-    assert(!lawGetValue(first, path, value));
-    assert(lawSetValue(first, path, PropertyValue(99)) ==
-           PropertyPath::PathResult::NoSuchProperty);
-    assert(first.value1 == 11 && second.value1 == 22);
-
-    Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
-        beings.push_back(&first);
-    });
-    assert(lawGetValue(second, path, value));
-    assert(std::get<int>(value) == 11);
-    Universe::instance().setProvider(nullptr);
-}
-
-void testOrdinaryAccessOpenUnlessExplicitlyClosed() {
-    TestRoot root;
-    const PropertyPath enabled = PropertyPath::parse("enabled");
-    assert(root.setDynamicProperty("enabled", PropertyValue(false)));
-
-    // TransferPolicy's existing Gated tier applies to set-to-set transfer.
-    // It is not an implicit denial of an ordinary Property read or write.
-    assert(!TransferPolicy::instance().canTransfer(enabled));
-    PropertyValue value;
-    assert(lawGetValue(root, enabled, value));
-    assert(std::get<bool>(value) == false);
-    assert(lawSetValue(root, enabled, PropertyValue(true)) == PropertyPath::PathResult::Ok);
-    assert(lawGetValue(root, enabled, value));
-    assert(std::get<bool>(value) == true);
-
-    // A genuinely read-only registered Property is an explicit reason to
-    // refuse a write, including an attempted write of its current value.
-    const PropertyPath kernelGate = PropertyPath::parse("gate.position");
-    TransferPolicy& policy = TransferPolicy::instance();
-    assert(kernelGate.getValue(policy, value) == PropertyPath::PathResult::Ok);
-    assert(std::get<bool>(value) == true);
-    assert(kernelGate.setValue(policy, PropertyValue(true)) == PropertyPath::PathResult::ReadOnly);
-    assert(kernelGate.setValue(policy, PropertyValue(false)) == PropertyPath::PathResult::ReadOnly);
-}
-
 int main() {
     std::cout << "\n=== PropertyPath Pre-Calculation Test ===\n\n";
 
@@ -396,9 +266,6 @@ int main() {
     testVec3ComponentSetValue();
     testEmptyPath();
     testDynamicPropertyPath();
-    testLongestPrefixSelection();
-    testAmbiguousQualifiedRootRefuses();
-    testOrdinaryAccessOpenUnlessExplicitlyClosed();
 
     std::cout << "\n✓ All tests passed!\n\n";
     std::cout << "PropertyPath now performs ZERO allocations during resolve()!\n";

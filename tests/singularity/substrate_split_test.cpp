@@ -1,4 +1,3 @@
-#include "Singularity/Storage/SaveSystem.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
@@ -125,7 +124,9 @@ int main() {
     // are exactly what a reader must resolve and verify to find it.
     std::filesystem::path matterPath;
     {
-        nlohmann::json fj = SaveSystem::readSaveData(formPath.string());
+        std::ifstream formIn(formPath);
+        nlohmann::json fj;
+        formIn >> fj;
         check(fj.contains("matterGeneration"), ".ecform names a matterGeneration (Invariant 4)");
         const std::string snapshotId = fj.value("matterGeneration", nlohmann::json{}).value("snapshotId", std::string{});
         check(!snapshotId.empty(), "matterGeneration carries a non-empty snapshotId");
@@ -135,7 +136,9 @@ int main() {
 
     // Test 2: Inspect .ecform JSON structure (ensure it's lean, readable, no binary base64)
     {
-        nlohmann::json fj = SaveSystem::readSaveData(formPath.string());
+        std::ifstream formIn(formPath);
+        nlohmann::json fj;
+        formIn >> fj;
 
         check(fj.contains("objects") && fj["objects"].is_array() && fj["objects"].size() == 3,
               ".ecform has 3 objects");

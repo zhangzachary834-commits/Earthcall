@@ -117,7 +117,7 @@ int main() {
     // Phase 2: an actual press-then-release move, driven end to end through
     // InteractionChannel::observe() — real picking chooses the subject.
     // ------------------------------------------------------------------
-    Object* state = findObj(*active, "state.chess");
+    Object* state = findCat("state.chess");
     Object* whitePawnE2 = findObj(*active, "piece-white-pawn-4-1");
     Object* board = findObj(*active, "object.chess.board");
     assert(state && whitePawnE2 && board);

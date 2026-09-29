@@ -210,7 +210,7 @@ int main() {
     nlohmann::json objectJson=*state;
     from_json(objectJson,decoded);
     check(near(number(decoded,"bloom"),number(*state,"bloom")),"expression survives actual Object serialization");
-    nlohmann::json savedJson = SaveSystem::readSaveData((scratch.path / "worlds/roundtrip.ecform").string());
+    std::ifstream savedFile(scratch.path / "worlds/roundtrip.ecform");nlohmann::json savedJson;savedFile>>savedJson;
     check(savedJson.dump().find("studio.author.astra")!=std::string::npos,"saved world retains the new author's identity");
     registerAudioSink(nullptr);
     std::printf("Living Studio: %d failures\n",failures);

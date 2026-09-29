@@ -652,11 +652,7 @@ bool pathPicker(const char* label, PropertyPath& path) {
         };
         if (!contextPath) {
             fieldCaption("Reference encoded by this path");
-            // Unqualified paths bind at the node being evaluated. There is no
-            // single ontological "Law subject": Create children, for example,
-            // bind to their newborn. The event pair are legacy path spellings
-            // until Event-defining Relations can be traversed here.
-            static const char* referenceLabels[] = {"Current referent", "Event participant A", "Event participant B"};
+            static const char* referenceLabels[] = {"Law subject", "Event subject", "Event other"};
             for (int i = 0; i < 3; ++i) {
                 if (i) ImGui::SameLine();
                 const bool active = currentReferent == i;
@@ -742,7 +738,7 @@ bool pathPicker(const char* label, PropertyPath& path) {
         ImGui::Separator();
 
         static const char* referents[] = {
-            "Current referent", "Event participant A", "Event participant B", "Named Singular", "World / time"
+            "Law subject", "Event subject", "Event other", "Named Singular", "World / time"
         };
         ImGui::TextDisabled("PATH REFERENCE — which actual being will carry the property at runtime?");
         for (int i = 0; i < 5; ++i) {

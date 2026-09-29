@@ -1,4 +1,3 @@
-#include "Singularity/Storage/SaveSystem.hpp"
 // Home / Zone manifesto — what one pass can hold.
 //
 // EarthcallOurverse.md: a Home is a Zone whose telos is dwelling; every
@@ -144,7 +143,7 @@ int main() {
           "primary Home serializes under saves/homes/, not saves/zones/");
     check(std::filesystem::exists(sandbox / "homes" / "Garden" / "home.json"),
           "an extra Home also lives in the homes identity store");
-    check(!std::filesystem::exists(sandbox / "zones" / "Home" / "zone.ecform"),
+    check(!std::filesystem::exists(sandbox / "zones" / "Home" / "zone.json"),
           "a Home is not written as a Zone identity file");
     check(mgr.authorZone("Home", zachId, Zone::kHomeKind, Zone::kOwnerKindPerson) == nullptr,
           "authorZone refuses the primary Home slug");

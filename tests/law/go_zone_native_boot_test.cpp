@@ -1,4 +1,3 @@
-#include "Singularity/Storage/SaveSystem.hpp"
 // Regression witness for Zach's 2026-09-19 request: Go must be a Zone,
 // not a world file a Person has to load through Assets first.
 //
@@ -98,7 +97,11 @@ int main() {
     check(std::filesystem::exists(sourceMatter), "Zone-native Go physical matter (.ecmatter) exists");
     if (!std::filesystem::exists(sourceZone)) return 1;
 
-    nlohmann::json zoneJson = SaveSystem::readSaveData(sourceZone.string());
+    nlohmann::json zoneJson;
+    {
+        std::ifstream input(sourceZone);
+        input >> zoneJson;
+    }
     check(zoneJson.value("identifier", std::string{}) == "Go",
           "identity is exactly Go");
     check(zoneJson.contains("lawRefs") && zoneJson["lawRefs"].is_array() &&

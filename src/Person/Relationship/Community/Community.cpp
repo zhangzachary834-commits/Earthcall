@@ -22,7 +22,11 @@ bool Community::involves(const std::string& entity) const {
     if (entity.empty()) return false;
     for (auto* m : getMembers()) {
         if (!m) continue;
-        if (m->getIdentifier() == entity) return true;
+        if (const auto* p = dynamic_cast<const Person*>(m)) {
+            if (p->matchesIdentifier(entity)) return true;
+        } else if (m->getIdentifier() == entity) {
+            return true;
+        }
     }
     return false;
 }

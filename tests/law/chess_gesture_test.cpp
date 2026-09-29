@@ -167,7 +167,7 @@ int main() {
     std::vector<Object*> reachable;
     for (const auto& obj : active->getOwnedObjects()) if (obj) reachable.push_back(obj.get());
 
-    Object* state = findObj(*active, "state.chess");
+    Object* state = categories.get("state.chess").get();
     assert(state);
 
     bool cursorLocked = false;

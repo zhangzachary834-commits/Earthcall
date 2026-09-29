@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "Universe.hpp"
-#include "Time/Event/Event.hpp"
 #include "json.hpp"
 
 #include <functional>
@@ -28,16 +27,12 @@ using MathBindings = std::map<std::string, PropertyPath>;
 // ---------------------------------------------------------------------------
 // Qualified paths: WHOSE property a path names is the author's choice.
 //   position.y                  the law's subject (whoever it applies to)
-//   @being-id.position.y        currently resolves by getIdentifier() text in
-//                               the live Universe, whoever the subject is.
-//                               This is not yet a durable ID-pinned binding.
-//                               The text may contain dots
+//   @being-id.position.y        that NAMED being (Universe lookup), whoever
+//                               the subject is. The id may contain dots
 //                               ("@material.clay.baseColor"): the root is
 //                               matched LONGEST-FIRST, most specific wins.
-//   @event.verb                 the triggering Event Moment's own property
-//   @event.start                its temporal coordinate
-//   @event.subject.position.y   legacy first-participant path
-//   @event.object.position.y    legacy second-participant path
+//   @event.subject.position.y   the triggering event's subject
+//   @event.object.position.y    the triggering event's OTHER participant
 //                               (a collision has two)
 //   @world.<reading>            a WORLD READING about the subject, answered
 //                               by whichever modality channel registered it
@@ -58,18 +53,15 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
         return &subject;
     }
     if (path.segments[0] == "@event" && path.segments.size() >= 2) {
+        startIndex = 2;
         if (!Universe::instance().hasApplicationEvent()) return nullptr;
-        if (path.segments[1] == "subject" || path.segments[1] == "object") {
-            startIndex = 2;
-            return path.segments[1] == "subject"
-                ? Universe::instance().applicationEventSubject()
-                : Universe::instance().applicationEventObject();
+        if (path.segments[1] == "subject") {
+            return Universe::instance().applicationEventSubject();
         }
-        startIndex = 1;
-        // A Rete fact owns this occurrence for the duration of application.
-        // PropertyPath's read API takes a mutable Singular, but the write
-        // bridge below refuses mutation of the historical Event snapshot.
-        return const_cast<Event*>(Universe::instance().applicationEvent());
+        if (path.segments[1] == "object") {
+            return Universe::instance().applicationEventObject();
+        }
+        return nullptr;
     }
     // A being's identifier may itself contain dots: Material namespaces itself
     // as "material.<name>" so it cannot collide with an Object in the same path
@@ -82,9 +74,7 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
     // "material.clay" beats one named "material", and the segments it consumed
     // are not offered to the property lookup.
     
-    // HOT PATH CACHE: avoid O(N^2) string comparisons and massive vector allocations.
-    // The cache follows structuralRevision, not every possible mutation of a
-    // being's textual identifier. Durable individual bindings remain open work.
+    // HOT PATH CACHE: avoid O(N^2) string comparisons and massive vector allocations
     static uint64_t s_lastRevision = 0;
     static std::unordered_map<Earthcall::StringId, Singular*> s_beingMap;
     static bool s_initialized = false;
@@ -97,17 +87,10 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
             if (being) {
                 const std::string ident = being->getIdentifier();
                 Earthcall::StringId key = Earthcall::StringInterner::intern("@" + ident);
-                // Two distinct bearers with one spelling are ambiguous. Keep
-                // that spelling unresolved instead of letting provider order
-                // decide which individual a Law reads or writes.
-                auto bindIfUnique = [&](Earthcall::StringId name) {
-                    auto [it, inserted] = s_beingMap.emplace(name, being);
-                    if (!inserted && it->second != being) it->second = nullptr;
-                };
-                bindIfUnique(key);
+                s_beingMap[key] = being;
                 if (ident == "Person" || ident == "person") {
-                    bindIfUnique(Earthcall::StringInterner::intern("@player"));
-                    bindIfUnique(Earthcall::StringInterner::intern("@Player"));
+                    s_beingMap[Earthcall::StringInterner::intern("@player")] = being;
+                    s_beingMap[Earthcall::StringInterner::intern("@Player")] = being;
                 }
             }
         }
@@ -247,10 +230,6 @@ inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyVal
 
 inline PropertyPath::PathResult lawSetValue(Singular& subject, const PropertyPath& path, const PropertyValue& v) {
     if (isTimePath(path)) return PropertyPath::PathResult::ReadOnly;
-    if (path.segments.size() >= 2 && path.segments[0] == "@event" &&
-        path.segments[1] != "subject" && path.segments[1] != "object") {
-        return PropertyPath::PathResult::ReadOnly;
-    }
     // A world reading is an observation, not a dial: the world is not written
     // by asserting a measurement of it.
     if (isWorldReadingPath(path) && worldReadings().count(path.fullId())) {

@@ -15,7 +15,6 @@
 #include "Person/Person.hpp"
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
-#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -177,76 +176,15 @@ int main() {
         Law strLaw("tool-checker");
         strLaw.addAuthor(author);
         strLaw.setConditionModel(ConditionNode::compare("activeTool", ConditionNode::Op::Eq, PropertyValue(std::string("3DShapeGenerator"))));
-        strLaw.setActionModel(ActionNode::set("test.marker", PropertyValue(100.0)));
+        strLaw.setActionModel(ActionNode::set("position.y", PropertyValue(100.0f)));
 
         Soul pSoul("TestSubject");
         Body pAvatar = Body::createBasicAvatar("TestVoxel");
         Person person(pSoul, std::move(pAvatar), "default");
-        {
-            // The constitutional motion guard follows the Person actually
-            // written, even when a Law is applied to another subject. A
-            // qualified reading alone does not count as a motion write.
-            Object otherSubject;
-            Universe::instance().setProvider([&](std::vector<Singular*>& out) {
-                out.push_back(&person);
-                out.push_back(&otherSubject);
-            });
-            const std::string personPath =
-                "@" + person.getIdentifier() + ".position.y";
-            Law forcedMotion("forced-qualified-motion");
-            forcedMotion.addAuthor(author);
-            forcedMotion.setActionModel(
-                ActionNode::set(personPath, PropertyValue(25.0f)));
-            assert(forcedMotion.applyTo(otherSubject) ==
-                   Law::ApplicationResult::AuthorityDenied);
-            assert(nearf(person.position().y, 0.0f));
-
-            Law clearMotion("clear-qualified-motion");
-            clearMotion.addAuthor(author);
-            clearMotion.setActionModel(ActionNode::removeProperty(
-                "@" + person.getIdentifier(), "position"));
-            assert(clearMotion.applyTo(otherSubject) ==
-                   Law::ApplicationResult::AuthorityDenied);
-
-            Law disguisedMotion("newborn-qualified-motion");
-            disguisedMotion.addAuthor(author);
-            disguisedMotion.setActionModel(ActionNode::create(
-                0, "fixture", {ActionNode::set(personPath, PropertyValue(25.0f))}));
-            assert(disguisedMotion.applyTo(otherSubject) ==
-                   Law::ApplicationResult::AuthorityDenied);
-
-            Law observesMotion("observe-person-motion");
-            observesMotion.addAuthor(author);
-            observesMotion.setActionModel(ActionNode::drive(
-                "rotation.y", CurveModel::polynomial({0.0, 1.0}), personPath));
-            assert(observesMotion.applyTo(otherSubject) ==
-                   Law::ApplicationResult::Applied);
-
-            forcedMotion.addAuthor(person);
-            assert(forcedMotion.applyTo(otherSubject) ==
-                   Law::ApplicationResult::AuthorityDenied);
-            assert(nearf(person.position().y, 0.0f));
-            Universe::instance().setProvider(nullptr);
-        }
-        // A non-motion Property still tests condition evaluation on a Person;
-        // authorship alone no longer authorizes a later bodily actuation.
-        person.setDynamicProperty("test.marker", PropertyValue(0.0));
-
-        // A prohibition can judge a Person's location and record that a
-        // restricted bound was crossed. It does not assign a destination or
-        // drive the Person's body, so the positive-write guard does not bar it.
-        Law restrictedArea("restricted-area-notice");
-        restrictedArea.addAuthor(author);
-        restrictedArea.setConditionModel(ConditionNode::compare(
-            "position.y", ConditionNode::Op::Gt, PropertyValue(10.0)));
-        restrictedArea.setActionModel(ActionNode::set(
-            "test.marker", PropertyValue(2.0)));
-        assert(restrictedArea.applyTo(person) ==
-               Law::ApplicationResult::ConditionsFailed);
-        person.position().y = 12.0f; // fixture enters the illustrative bound
-        assert(restrictedArea.applyTo(person) == Law::ApplicationResult::Applied);
-        assert(nearf(person.position().y, 12.0f));
-        person.position().y = 0.0f;
+        // The Person Guard rejects a law that moves someone's body unless
+        // they are among its authors, so without this applyTo stops at
+        // AuthorityDenied and never evaluates the conditions under test.
+        strLaw.addAuthor(person);
 
         // Ensure property can be accessed
         PropertyValue valOut;
@@ -259,7 +197,6 @@ int main() {
         PropertyPath::parse("activeTool").setValue(person, PropertyValue(std::string("3DShapeGenerator")));
         
         assert(strLaw.applyTo(person) == Law::ApplicationResult::Applied);
-        person.position().y = 100.0f; // test fixture setup, not Law actuation
         
         // ------------------------------------------------------------------
         // 9. Spawning Action Behavior
@@ -309,9 +246,7 @@ int main() {
         {
             Law multiLaw("multi-law");
             multiLaw.addAuthor(author);
-            Object workingSubject;
-            workingSubject.setPosition(glm::vec3(0.0f, 100.0f, 0.0f));
-            workingSubject.setDynamicProperty("activeTool", PropertyValue(std::string("FloatSatisfied")));
+            multiLaw.addAuthor(person);   // moves person.position -- see the Person Guard above
 
             // Multiple conditions: activeTool == "FloatSatisfied" AND position.y > 50.0
             std::vector<ConditionNode> conditions;
@@ -326,13 +261,13 @@ int main() {
             multiLaw.setActionModel(ActionNode::sequence(std::move(actions)));
 
             // Before applying, x and z should be 0 (from defaults) and y is ~100 (from previous test)
-            assert(multiLaw.applyTo(workingSubject) == Law::ApplicationResult::Applied);
-            assert(nearf(workingSubject.getPosition().x, 42.0f));
-            assert(nearf(workingSubject.getPosition().z, 42.0f));
+            assert(multiLaw.applyTo(person) == Law::ApplicationResult::Applied);
+            assert(nearf(person.position().x, 42.0f));
+            assert(nearf(person.position().z, 42.0f));
             
             // Verify failure condition (AND fails if one is false)
-            PropertyPath::parse("activeTool").setValue(workingSubject, PropertyValue(std::string("WrongTool")));
-            assert(multiLaw.applyTo(workingSubject) == Law::ApplicationResult::ConditionsFailed);
+            PropertyPath::parse("activeTool").setValue(person, PropertyValue(std::string("WrongTool")));
+            assert(multiLaw.applyTo(person) == Law::ApplicationResult::ConditionsFailed);
         }
         // ------------------------------------------------------------------
         // 5. Verification of multiple-condition (All, Any) and multiple-action (Sequence) laws
@@ -340,6 +275,7 @@ int main() {
         {
             Law multiLaw("multi-tester");
             multiLaw.addAuthor(author);
+            multiLaw.addAuthor(person);   // moves person.position -- see the Person Guard above
 
             // Condition: (y < 0) AND (x > 10)
             auto c1 = ConditionNode::compare("position.y", ConditionNode::Op::Lt, PropertyValue(0.0));

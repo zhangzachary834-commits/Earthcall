@@ -1,1 +1,107 @@
-{"authors":["grok-4.6"],"identifier":"law-chess-threefold-draw","injected_by":"GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request","law":{"actionDescriptions":["sequence(4)"],"actionModel":{"children":[{"kind":0,"operand":{"t":"bool","v":true},"path":"gameOver"},{"kind":0,"operand":{"t":"int","v":2},"path":"result"},{"kind":0,"operand":{"t":"bool","v":true},"path":"isDraw"},{"kind":0,"operand":{"t":"string","v":"Threefold repetition"},"path":"drawReason"}],"kind":5},"activation":0,"applicationLog":[{"actions":["sequence(4)"],"changed":false,"conditions":["all(3)"],"lawId":"law-chess-threefold-draw","nodes":[],"result":"conditions-failed","targetId":"state.chess","timestamp":1790460891},{"actions":["sequence(4)"],"changed":false,"conditions":["all(3)"],"lawId":"law-chess-threefold-draw","nodes":[],"result":"conditions-failed","targetId":"state.chess","timestamp":1790460906},{"actions":["sequence(4)"],"changed":false,"conditions":["all(3)"],"lawId":"law-chess-threefold-draw","nodes":[],"result":"conditions-failed","targetId":"state.chess","timestamp":1790460909},{"actions":["sequence(4)"],"changed":false,"conditions":["all(3)"],"lawId":"law-chess-threefold-draw","nodes":[],"result":"conditions-failed","targetId":"state.chess","timestamp":1790460914}],"authority":0,"authors":["grok-4.6"],"conditionDescriptions":["all(3)"],"conditionMode":"all","conditionModel":{"children":[{"kind":8,"otherId":"state.chess"},{"kind":0,"op":5,"operand":{"t":"int","v":6},"path":"repCount"},{"kind":0,"op":0,"operand":{"t":"bool","v":false},"path":"gameOver"}],"kind":3},"conditionSubjects":[],"drives":false,"enabled":true,"id":"law-chess-threefold-draw","name":"draw-on-threefold-repetition","provenance":[{"attachment":{"childAnchor":[0.0,0.0,0.0],"enabled":false,"inheritRotation":true,"inheritScale":true,"inheritTranslation":true,"localOffset":[1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0],"parentAnchor":[0.0,0.0,0.0]},"directed":true,"entityA":"law-chess-threefold-draw","entityB":"grok-4.6","events":[{"deltaWeight":1.0,"description":"authored-by","timestamp":1787390000}],"type":"authored-by","weight":1.0},{"attachment":{"childAnchor":[0.0,0.0,0.0],"enabled":false,"inheritRotation":true,"inheritScale":true,"inheritTranslation":true,"localOffset":[1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0],"parentAnchor":[0.0,0.0,0.0]},"directed":true,"entityA":"law-chess-threefold-draw","entityB":"grok-4.6","events":[{"deltaWeight":1.0,"description":"authored-by","timestamp":1790460881}],"type":"authored-by","weight":1.0}],"retrigger":0,"scope":0,"targets":[]},"triggers":["turn-changed"]}
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-threefold-draw",
+  "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+  "law": {
+    "id": "law-chess-threefold-draw",
+    "name": "draw-on-threefold-repetition",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "state.chess"
+        },
+        {
+          "kind": 0,
+          "path": "repCount",
+          "op": 5,
+          "operand": {
+            "t": "int",
+            "v": 6
+          }
+        },
+        {
+          "kind": 0,
+          "path": "gameOver",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 0,
+          "path": "gameOver",
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 0,
+          "path": "result",
+          "operand": {
+            "t": "int",
+            "v": 2
+          }
+        },
+        {
+          "kind": 0,
+          "path": "isDraw",
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 0,
+          "path": "drawReason",
+          "operand": {
+            "t": "string",
+            "v": "Threefold repetition"
+          }
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-chess-threefold-draw",
+        "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1787390000
+          }
+        ]
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": [
+    "turn-changed"
+  ]
+}
