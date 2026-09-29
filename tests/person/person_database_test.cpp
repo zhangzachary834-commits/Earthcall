@@ -229,6 +229,50 @@ static void testLoadPersonDeserializationFailure() {
     std::cout << "  loadPerson deserialization failure handling OK\n";
 }
 
+// WITNESS GAP DOCUMENTATION:
+// What the old test could prove:
+//   The previous test suite (testSaveAndLoadPerson) proved that a Person profile
+//   saved via PersonDatabase::savePerson (which writes an .ecform file) could be
+//   re-loaded successfully via PersonDatabase::loadPerson.
+// What the old test could NOT prove:
+//   The old test could not prove that PersonDatabase::loadPerson supported alternate
+//   save extensions (.json and .ecsave). Because PersonDatabase::loadPerson previously
+//   performed a premature std::filesystem::exists check hardcoded to .ecform, it bypassed
+//   SaveSystem::readSaveData's multi-extension resolution path for .json and .ecsave
+//   files. The unit test agreed with itself by using .ecform for both save and load,
+//   masking the load defect for .json and .ecsave profile files.
+static void testLoadPersonAlternateExtensions() {
+    TestEnvironment env;
+    PersonDatabase& db = PersonDatabase::getInstance();
+
+    std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+
+    // 1. Write a legacy profile ending in .json
+    Person pJson = createDummyPerson("LegacyJsonPerson");
+    std::ofstream jsonFile(folder + "/LegacyJson.json");
+    jsonFile << pJson.serialize().dump(-1);
+    jsonFile.close();
+
+    Person loadedJson = createDummyPerson("Temp");
+    bool successJson = db.loadPerson("LegacyJson", loadedJson);
+    assert(successJson);
+    assert(loadedJson.getDisplayName() == "LegacyJsonPerson");
+
+    // 2. Write a profile ending in .ecsave (msgpack bytes)
+    Person pSave = createDummyPerson("LegacySavePerson");
+    std::vector<uint8_t> msgpackBytes = nlohmann::json::to_msgpack(pSave.serialize());
+    std::ofstream saveFile(folder + "/LegacySave.ecsave", std::ios::binary);
+    saveFile.write(reinterpret_cast<const char*>(msgpackBytes.data()), msgpackBytes.size());
+    saveFile.close();
+
+    Person loadedSave = createDummyPerson("Temp");
+    bool successSave = db.loadPerson("LegacySave", loadedSave);
+    assert(successSave);
+    assert(loadedSave.getDisplayName() == "LegacySavePerson");
+
+    std::cout << "  loadPerson alternate extensions (.json and .ecsave) OK\n";
+}
+
 static void testSaveAndLoadDistinctPersonsSameDisplayName() {
     TestEnvironment env;
     PersonDatabase& db = PersonDatabase::getInstance();
@@ -285,6 +329,7 @@ int main() {
     testLoadPersonUnreadableFile();
     testLoadPersonInvalidJsonStructure();
     testLoadPersonDeserializationFailure();
+    testLoadPersonAlternateExtensions();
     testSaveAndLoadDistinctPersonsSameDisplayName();
     std::cout << "person_database_test: ALL OK\n";
     return 0;
