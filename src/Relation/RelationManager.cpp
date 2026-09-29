@@ -390,20 +390,9 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const Sin
 }
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const std::string& identifier) const {
-    if (identifier.empty()) return {};
-    if (_indexedGeneration != _generation) rebuildEndpointIndex();
     std::vector<std::shared_ptr<Relation>> result;
-    auto it = _byIdentifier.find(identifier);
-    if (it != _byIdentifier.end()) {
-        result.reserve(it->second.size());
-        for (Relation* r : it->second) {
-            if (r && r->involves(identifier)) {
-                auto sharedIt = _sharedByPointer.find(r);
-                if (sharedIt != _sharedByPointer.end()) {
-                    result.push_back(sharedIt->second);
-                }
-            }
-        }
+    for (const auto& r : relations) {
+        if (r && r->involves(identifier)) result.push_back(r);
     }
     return result;
 }
@@ -424,19 +413,9 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(cons
 }
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(const std::string& a, const std::string& b) const {
-    if (a.empty() || b.empty()) return {};
-    if (_indexedGeneration != _generation) rebuildEndpointIndex();
     std::vector<std::shared_ptr<Relation>> result;
-    auto it = _byIdentifier.find(a);
-    if (it != _byIdentifier.end()) {
-        for (Relation* r : it->second) {
-            if (r && r->isBetween(a, b)) {
-                auto sharedIt = _sharedByPointer.find(r);
-                if (sharedIt != _sharedByPointer.end()) {
-                    result.push_back(sharedIt->second);
-                }
-            }
-        }
+    for (const auto& r : relations) {
+        if (r && r->isBetween(a, b)) result.push_back(r);
     }
     return result;
 }
@@ -472,21 +451,16 @@ void RelationManager::loadFromJson(const nlohmann::json& j, const RelationEndpoi
 
 
 std::vector<std::string> RelationManager::findAdjacentEntities(const std::string& entityId, const std::string& relationType) const {
-    if (entityId.empty()) return {};
-    if (_indexedGeneration != _generation) rebuildEndpointIndex();
     std::vector<std::string> adjacent;
-    auto it = _byIdentifier.find(entityId);
-    if (it != _byIdentifier.end()) {
-        for (Relation* relPtr : it->second) {
-            if (!relPtr) continue;
-            const Relation& rel = *relPtr;
-            if (!relationType.empty() && rel.type != relationType) continue;
+    for (const auto& relPtr : relations) {
+        if (!relPtr) continue;
+        const Relation& rel = *relPtr;
+        if (!relationType.empty() && rel.type != relationType) continue;
 
-            if (rel.aId() == entityId) {
-                adjacent.push_back(rel.bId());
-            } else if (!rel.directed && rel.bId() == entityId) {
-                adjacent.push_back(rel.aId());
-            }
+        if (rel.aId() == entityId) {
+            adjacent.push_back(rel.bId());
+        } else if (!rel.directed && rel.bId() == entityId) {
+            adjacent.push_back(rel.aId());
         }
     }
     return adjacent;
