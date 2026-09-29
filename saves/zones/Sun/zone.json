@@ -419,6 +419,330 @@
       "specular": 0.92,
       "ambient": 0.42,
       "diffuse": 0.78
+    },
+    {
+      "name": "sun.citadel.solar-stone",
+      "baseColor": [
+        0.97,
+        0.91,
+        0.72
+      ],
+      "opacity": 1,
+      "shininess": 58,
+      "specular": 0.78,
+      "ambient": 0.28,
+      "diffuse": 0.84,
+      "colorExpr": {
+        "input": "y",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.97,
+                        "factors": {}
+                      },
+                      {
+                        "c": 0.001,
+                        "factors": {
+                          "y": 1
+                        }
+                      },
+                      {
+                        "c": 0.01,
+                        "factors": {},
+                        "trans": [
+                          {
+                            "kind": 0,
+                            "var": "y",
+                            "scale": 0.55,
+                            "shift": 0
+                          },
+                          {
+                            "kind": 1,
+                            "var": "x",
+                            "scale": 0.32,
+                            "shift": 0
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.93,
+                        "factors": {}
+                      },
+                      {
+                        "c": -0.004,
+                        "factors": {
+                          "y": 1
+                        }
+                      },
+                      {
+                        "c": 0.012,
+                        "factors": {},
+                        "trans": [
+                          {
+                            "kind": 0,
+                            "var": "y",
+                            "scale": 0.48,
+                            "shift": 0.55
+                          },
+                          {
+                            "kind": 1,
+                            "var": "x",
+                            "scale": 0.28,
+                            "shift": 0.35
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.79,
+                        "factors": {}
+                      },
+                      {
+                        "c": -0.007,
+                        "factors": {
+                          "y": 1
+                        }
+                      },
+                      {
+                        "c": 0.014,
+                        "factors": {},
+                        "trans": [
+                          {
+                            "kind": 1,
+                            "var": "y",
+                            "scale": 0.42,
+                            "shift": 0.9
+                          },
+                          {
+                            "kind": 1,
+                            "var": "x",
+                            "scale": 0.3,
+                            "shift": 0.7
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "sun.citadel.gilded",
+      "baseColor": [
+        0.985,
+        0.59,
+        0.105
+      ],
+      "opacity": 1,
+      "shininess": 96,
+      "specular": 1.08,
+      "ambient": 0.3,
+      "diffuse": 0.8,
+      "colorExpr": {
+        "input": "y",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.985,
+                        "factors": {}
+                      },
+                      {
+                        "c": 0.01,
+                        "factors": {},
+                        "trans": [
+                          {
+                            "kind": 1,
+                            "var": "y",
+                            "scale": 0.85,
+                            "shift": 0
+                          },
+                          {
+                            "kind": 1,
+                            "var": "x",
+                            "scale": 0.45,
+                            "shift": 0
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.59,
+                        "factors": {}
+                      },
+                      {
+                        "c": 0.045,
+                        "factors": {},
+                        "trans": [
+                          {
+                            "kind": 0,
+                            "var": "y",
+                            "scale": 0.72,
+                            "shift": 0.45
+                          }
+                        ]
+                      },
+                      {
+                        "c": 0.01,
+                        "factors": {
+                          "z": 1
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.105,
+                        "factors": {}
+                      },
+                      {
+                        "c": 0.022,
+                        "factors": {},
+                        "trans": [
+                          {
+                            "kind": 1,
+                            "var": "x",
+                            "scale": 0.8,
+                            "shift": 0.75
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "sun.citadel.solar-core",
+      "baseColor": [
+        1,
+        0.335,
+        0.045
+      ],
+      "opacity": 1,
+      "shininess": 88,
+      "specular": 1.02,
+      "ambient": 0.42,
+      "diffuse": 0.82,
+      "colorExpr": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.335,
+                        "factors": {}
+                      },
+                      {
+                        "c": -0.03,
+                        "factors": {
+                          "x": 2
+                        }
+                      },
+                      {
+                        "c": -0.03,
+                        "factors": {
+                          "y": 2
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.045,
+                        "factors": {}
+                      },
+                      {
+                        "c": -0.004,
+                        "factors": {
+                          "x": 2
+                        }
+                      },
+                      {
+                        "c": -0.004,
+                        "factors": {
+                          "y": 2
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
     }
   ],
   "name": "Sun",
@@ -27265,7 +27589,7 @@
         ],
         "geometryType": 10,
         "shapeKind": 10,
-        "materialId": "sun.reset.ivory",
+        "materialId": "sun.citadel.solar-stone",
         "renderMode": 0,
         "rotationResponsiveness": 10,
         "shapeParams": [
@@ -27309,34 +27633,34 @@
         "zOrder2D": 0,
         "faceColors": [
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ]
         ],
         "field": {
@@ -28772,11 +29096,11 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "sun-architectural-depth-023"
+            "v": "sun-solar-consecration-024"
           },
           "construction.pass": {
             "t": "float",
-            "v": 23
+            "v": 24
           },
           "visual.role": {
             "t": "string",
@@ -28789,6 +29113,10 @@
           "correction.reason": {
             "t": "string",
             "v": "Human render confirmed #022 scale/distance but exposed shallow bas-relief depth, sandcastle-like rounded crowns, and a surface-mounted solar emblem."
+          },
+          "surface.color.authority": {
+            "t": "string",
+            "v": "OntoMath colorExpr: warm ivory structural body -> upper champagne-gold hierarchy"
           }
         }
       },
@@ -28806,7 +29134,7 @@
         ],
         "geometryType": 10,
         "shapeKind": 10,
-        "materialId": "sun.reset.gold",
+        "materialId": "sun.citadel.gilded",
         "renderMode": 0,
         "rotationResponsiveness": 10,
         "shapeParams": [
@@ -28850,34 +29178,34 @@
         "zOrder2D": 0,
         "faceColors": [
           [
-            0.95,
-            0.58,
-            0.14
+            0.985,
+            0.59,
+            0.105
           ],
           [
-            0.95,
-            0.58,
-            0.14
+            0.985,
+            0.59,
+            0.105
           ],
           [
-            0.95,
-            0.58,
-            0.14
+            0.985,
+            0.59,
+            0.105
           ],
           [
-            0.95,
-            0.58,
-            0.14
+            0.985,
+            0.59,
+            0.105
           ],
           [
-            0.95,
-            0.58,
-            0.14
+            0.985,
+            0.59,
+            0.105
           ],
           [
-            0.95,
-            0.58,
-            0.14
+            0.985,
+            0.59,
+            0.105
           ]
         ],
         "field": {
@@ -29377,11 +29705,11 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "sun-architectural-depth-023"
+            "v": "sun-solar-consecration-024"
           },
           "construction.pass": {
             "t": "float",
-            "v": 23
+            "v": 24
           },
           "visual.role": {
             "t": "string",
@@ -29394,6 +29722,10 @@
           "correction.reason": {
             "t": "string",
             "v": "Human render confirmed #022 scale/distance but exposed shallow bas-relief depth, sandcastle-like rounded crowns, and a surface-mounted solar emblem."
+          },
+          "surface.color.authority": {
+            "t": "string",
+            "v": "OntoMath colorExpr: continuously authored gilded oculus/tracery"
           }
         }
       },
@@ -29411,7 +29743,7 @@
         ],
         "geometryType": 10,
         "shapeKind": 10,
-        "materialId": "sun.reset.amber",
+        "materialId": "sun.citadel.solar-core",
         "renderMode": 0,
         "rotationResponsiveness": 10,
         "shapeParams": [
@@ -29456,33 +29788,33 @@
         "faceColors": [
           [
             1,
-            0.34,
-            0.055
+            0.335,
+            0.045
           ],
           [
             1,
-            0.34,
-            0.055
+            0.335,
+            0.045
           ],
           [
             1,
-            0.34,
-            0.055
+            0.335,
+            0.045
           ],
           [
             1,
-            0.34,
-            0.055
+            0.335,
+            0.045
           ],
           [
             1,
-            0.34,
-            0.055
+            0.335,
+            0.045
           ],
           [
             1,
-            0.34,
-            0.055
+            0.335,
+            0.045
           ]
         ],
         "field": {
@@ -29514,11 +29846,11 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "sun-architectural-depth-023"
+            "v": "sun-solar-consecration-024"
           },
           "construction.pass": {
             "t": "float",
-            "v": 23
+            "v": 24
           },
           "visual.role": {
             "t": "string",
@@ -29531,6 +29863,10 @@
           "correction.reason": {
             "t": "string",
             "v": "Human render confirmed #022 scale/distance but exposed shallow bas-relief depth, sandcastle-like rounded crowns, and a surface-mounted solar emblem."
+          },
+          "surface.color.authority": {
+            "t": "string",
+            "v": "OntoMath colorExpr: amber core brightens toward its local center"
           }
         }
       },
@@ -29548,7 +29884,7 @@
         ],
         "geometryType": 10,
         "shapeKind": 10,
-        "materialId": "sun.reset.ivory",
+        "materialId": "sun.citadel.solar-stone",
         "renderMode": 0,
         "rotationResponsiveness": 10,
         "shapeParams": [
@@ -29592,34 +29928,34 @@
         "zOrder2D": 0,
         "faceColors": [
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ]
         ],
         "field": {
@@ -30299,11 +30635,11 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "sun-architectural-depth-023"
+            "v": "sun-solar-consecration-024"
           },
           "construction.pass": {
             "t": "float",
-            "v": 23
+            "v": 24
           },
           "visual.role": {
             "t": "string",
@@ -30316,6 +30652,10 @@
           "correction.reason": {
             "t": "string",
             "v": "Human render confirmed #022 scale/distance but exposed shallow bas-relief depth, sandcastle-like rounded crowns, and a surface-mounted solar emblem."
+          },
+          "surface.color.authority": {
+            "t": "string",
+            "v": "OntoMath colorExpr: warm ivory structural body -> upper champagne-gold hierarchy"
           }
         }
       },
@@ -30333,7 +30673,7 @@
         ],
         "geometryType": 10,
         "shapeKind": 10,
-        "materialId": "sun.reset.ivory",
+        "materialId": "sun.citadel.solar-stone",
         "renderMode": 0,
         "rotationResponsiveness": 10,
         "shapeParams": [
@@ -30377,34 +30717,34 @@
         "zOrder2D": 0,
         "faceColors": [
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ]
         ],
         "field": {
@@ -31084,11 +31424,11 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "sun-architectural-depth-023"
+            "v": "sun-solar-consecration-024"
           },
           "construction.pass": {
             "t": "float",
-            "v": 23
+            "v": 24
           },
           "visual.role": {
             "t": "string",
@@ -31101,6 +31441,10 @@
           "correction.reason": {
             "t": "string",
             "v": "Human render confirmed #022 scale/distance but exposed shallow bas-relief depth, sandcastle-like rounded crowns, and a surface-mounted solar emblem."
+          },
+          "surface.color.authority": {
+            "t": "string",
+            "v": "OntoMath colorExpr: warm ivory structural body -> upper champagne-gold hierarchy"
           }
         }
       },
@@ -31118,7 +31462,7 @@
         ],
         "geometryType": 10,
         "shapeKind": 10,
-        "materialId": "sun.reset.ivory",
+        "materialId": "sun.citadel.solar-stone",
         "renderMode": 0,
         "rotationResponsiveness": 10,
         "shapeParams": [
@@ -31162,34 +31506,34 @@
         "zOrder2D": 0,
         "faceColors": [
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ]
         ],
         "field": {
@@ -31725,11 +32069,11 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "sun-architectural-depth-023"
+            "v": "sun-solar-consecration-024"
           },
           "construction.pass": {
             "t": "float",
-            "v": 23
+            "v": 24
           },
           "visual.role": {
             "t": "string",
@@ -31742,6 +32086,10 @@
           "correction.reason": {
             "t": "string",
             "v": "Human render confirmed #022 scale/distance but exposed shallow bas-relief depth, sandcastle-like rounded crowns, and a surface-mounted solar emblem."
+          },
+          "surface.color.authority": {
+            "t": "string",
+            "v": "OntoMath colorExpr: warm ivory structural body -> upper champagne-gold hierarchy"
           }
         }
       },
@@ -31759,7 +32107,7 @@
         ],
         "geometryType": 10,
         "shapeKind": 10,
-        "materialId": "sun.reset.ivory",
+        "materialId": "sun.citadel.solar-stone",
         "renderMode": 0,
         "rotationResponsiveness": 10,
         "shapeParams": [
@@ -31803,34 +32151,34 @@
         "zOrder2D": 0,
         "faceColors": [
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ],
           [
-            0.96,
-            0.94,
-            0.86
+            0.97,
+            0.91,
+            0.72
           ]
         ],
         "field": {
@@ -32366,11 +32714,11 @@
           },
           "construction.feature": {
             "t": "string",
-            "v": "sun-architectural-depth-023"
+            "v": "sun-solar-consecration-024"
           },
           "construction.pass": {
             "t": "float",
-            "v": 23
+            "v": 24
           },
           "visual.role": {
             "t": "string",
@@ -32383,6 +32731,10 @@
           "correction.reason": {
             "t": "string",
             "v": "Human render confirmed #022 scale/distance but exposed shallow bas-relief depth, sandcastle-like rounded crowns, and a surface-mounted solar emblem."
+          },
+          "surface.color.authority": {
+            "t": "string",
+            "v": "OntoMath colorExpr: warm ivory structural body -> upper champagne-gold hierarchy"
           }
         }
       }
@@ -32392,5 +32744,283 @@
   "authors": [
     "Zach"
   ],
-  "injected_by": "GPT-5.6 Sol — OntoMath Radiance Rung 3, directed by Zach; Phase-2 witness preserved"
+  "injected_by": "GPT-5.6 Sol — OntoMath Radiance Rung 3, directed by Zach; Phase-2 witness preserved",
+  "spatialFields": [
+    {
+      "id": "sun.citadel.solar-radiance",
+      "origin": [
+        0,
+        13.05,
+        -30.3
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "field": {
+        "mode": "AST",
+        "baseDensity": 1,
+        "frequency": 1,
+        "amplitude": 1,
+        "astDefinition": {
+          "input": "x",
+          "pieces": [
+            {
+              "hasLo": false,
+              "hasHi": false,
+              "mathNode": {
+                "op": 23,
+                "children": [
+                  {
+                    "op": 0,
+                    "scalarForm": {
+                      "terms": [
+                        {
+                          "c": 2.6,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "op": 0,
+                    "scalarForm": {
+                      "terms": [
+                        {
+                          "c": 1,
+                          "factors": {}
+                        },
+                        {
+                          "c": 0.015,
+                          "factors": {
+                            "x": 2
+                          }
+                        },
+                        {
+                          "c": 0.006,
+                          "factors": {
+                            "y": 2
+                          }
+                        },
+                        {
+                          "c": 0.025,
+                          "factors": {
+                            "z": 2
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "vectorField": {
+        "mode": "Procedural",
+        "baseFlowX": 0,
+        "baseFlowY": 0,
+        "baseFlowZ": 0,
+        "frequency": 1,
+        "amplitude": 0
+      },
+      "lightChroma": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.64,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.18,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "lightAngular": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 4,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.22,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.78,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 24,
+                      "children": [
+                        {
+                          "op": 26,
+                          "children": [
+                            {
+                              "op": 1,
+                              "var": "omega.z"
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 2,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Solar Citadel — Oculus Radiance Source"
+        },
+        "light.source": {
+          "t": "bool",
+          "v": true
+        },
+        "light.enabled": {
+          "t": "bool",
+          "v": true
+        },
+        "light.color": {
+          "t": "vec3",
+          "x": 1,
+          "y": 0.64,
+          "z": 0.18
+        },
+        "light.intensity": {
+          "t": "float",
+          "v": 1.15
+        },
+        "light.ambient": {
+          "t": "float",
+          "v": 0.045
+        },
+        "light.diffuse": {
+          "t": "float",
+          "v": 0.95
+        },
+        "light.specular": {
+          "t": "float",
+          "v": 1.15
+        },
+        "light.attenuation.constant": {
+          "t": "float",
+          "v": 1
+        },
+        "light.attenuation.linear": {
+          "t": "float",
+          "v": 0
+        },
+        "light.attenuation.quadratic": {
+          "t": "float",
+          "v": 0
+        },
+        "construction.feature": {
+          "t": "string",
+          "v": "sun-solar-consecration-024"
+        },
+        "construction.pass": {
+          "t": "float",
+          "v": 24
+        },
+        "radiance.role": {
+          "t": "string",
+          "v": "localized golden oculus source; rho × chi × alpha, independent from the preserved canonical sun.light-field"
+        }
+      }
+    }
+  ]
 }
