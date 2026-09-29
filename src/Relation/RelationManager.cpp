@@ -152,10 +152,10 @@ void RelationManager::rebuildEndpointIndex() const {
     _byEndpoint.clear();
     _byIdentifier.clear();
     for (const auto& owned : relations) {
+        if (!owned) continue;
         Relation* r = owned.get();
-        if (!r) continue;
-        if (Singular* a = r->a()) _byEndpoint[a].push_back(r);
-        if (Singular* b = r->b(); b && b != r->a()) _byEndpoint[b].push_back(r);
+        if (Singular* a = r->a()) _byEndpoint[a].push_back(owned);
+        if (Singular* b = r->b(); b && b != r->a()) _byEndpoint[b].push_back(owned);
         // aId()/bId(): a bound endpoint's live name, an unbound one's kept name.
         // Reading it here also fills the endpoint's cached id, which is what
         // lets Relation::Endpoint::forget() keep the name when the being dies.
@@ -164,8 +164,8 @@ void RelationManager::rebuildEndpointIndex() const {
         // unindexed scan in the Related condition already relies on.
         const std::string aId = r->aId();
         const std::string bId = r->bId();
-        if (!aId.empty()) _byIdentifier[aId].push_back(r);
-        if (!bId.empty() && bId != aId) _byIdentifier[bId].push_back(r);
+        if (!aId.empty()) _byIdentifier[aId].push_back(owned);
+        if (!bId.empty() && bId != aId) _byIdentifier[bId].push_back(owned);
     }
     _indexedGeneration = _generation;
 }
@@ -173,14 +173,21 @@ void RelationManager::rebuildEndpointIndex() const {
 void RelationManager::relationsInvolving(const Singular& being, std::vector<Relation*>& out) const {
     out.clear();
     if (_indexedGeneration != _generation) rebuildEndpointIndex();
-    if (auto it = _byEndpoint.find(&being); it != _byEndpoint.end()) out = it->second;
+    if (auto it = _byEndpoint.find(&being); it != _byEndpoint.end()) {
+        out.reserve(it->second.size());
+        for (const auto& sp : it->second) {
+            if (sp) out.push_back(sp.get());
+        }
+    }
     const std::string id = being.getIdentifier();
     if (id.empty()) return;
     if (auto it = _byIdentifier.find(id); it != _byIdentifier.end()) {
-        for (Relation* r : it->second) {
-            // Degrees are small; a linear check keeps the list duplicate-free
-            // when an edge is known both by pointer and by name.
-            if (std::find(out.begin(), out.end(), r) == out.end()) out.push_back(r);
+        for (const auto& sp : it->second) {
+            if (!sp) continue;
+            Relation* r = sp.get();
+            if (std::find(out.begin(), out.end(), r) == out.end()) {
+                out.push_back(r);
+            }
         }
     }
 }
@@ -372,17 +379,34 @@ bool RelationManager::removeInvolving(const Singular* being) {
 }*/
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const Singular& being) const {
+    if (_indexedGeneration != _generation) rebuildEndpointIndex();
     std::vector<std::shared_ptr<Relation>> result;
-    for (const auto& r : relations) {
-        if (r && r->involves(being)) result.push_back(r);
+    if (auto it = _byEndpoint.find(&being); it != _byEndpoint.end()) {
+        for (const auto& sp : it->second) {
+            if (sp && sp->involves(being)) result.push_back(sp);
+        }
+    }
+    const std::string id = being.getIdentifier();
+    if (id.empty()) return result;
+    if (auto it = _byIdentifier.find(id); it != _byIdentifier.end()) {
+        for (const auto& sp : it->second) {
+            if (sp && sp->involves(being) && std::find(result.begin(), result.end(), sp) == result.end()) {
+                result.push_back(sp);
+            }
+        }
     }
     return result;
 }
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const std::string& identifier) const {
+    if (_indexedGeneration != _generation) rebuildEndpointIndex();
     std::vector<std::shared_ptr<Relation>> result;
-    for (const auto& r : relations) {
-        if (r && r->involves(identifier)) result.push_back(r);
+    if (auto it = _byIdentifier.find(identifier); it != _byIdentifier.end()) {
+        for (const auto& sp : it->second) {
+            if (sp && sp->involves(identifier) && std::find(result.begin(), result.end(), sp) == result.end()) {
+                result.push_back(sp);
+            }
+        }
     }
     return result;
 }
@@ -396,17 +420,46 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const std
 }*/
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(const Singular& a, const Singular& b) const {
+    if (_indexedGeneration != _generation) rebuildEndpointIndex();
     std::vector<std::shared_ptr<Relation>> result;
-    for (const auto& r : relations) {
-        if (r && r->isBetween(a, b)) result.push_back(r);
+    auto itA = _byEndpoint.find(&a);
+    auto itB = _byEndpoint.find(&b);
+
+    const std::vector<std::shared_ptr<Relation>>* candidates = nullptr;
+    if (itA != _byEndpoint.end() && (itB == _byEndpoint.end() || itA->second.size() <= itB->second.size())) {
+        candidates = &itA->second;
+    } else if (itB != _byEndpoint.end()) {
+        candidates = &itB->second;
+    }
+
+    if (candidates) {
+        for (const auto& sp : *candidates) {
+            if (sp && sp->isBetween(a, b)) result.push_back(sp);
+        }
+    } else {
+        return getRelationsBetween(a.getIdentifier(), b.getIdentifier());
     }
     return result;
 }
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(const std::string& a, const std::string& b) const {
+    if (_indexedGeneration != _generation) rebuildEndpointIndex();
     std::vector<std::shared_ptr<Relation>> result;
-    for (const auto& r : relations) {
-        if (r && r->isBetween(a, b)) result.push_back(r);
+
+    auto itA = _byIdentifier.find(a);
+    auto itB = _byIdentifier.find(b);
+
+    const std::vector<std::shared_ptr<Relation>>* candidates = nullptr;
+    if (itA != _byIdentifier.end() && (itB == _byIdentifier.end() || itA->second.size() <= itB->second.size())) {
+        candidates = &itA->second;
+    } else if (itB != _byIdentifier.end()) {
+        candidates = &itB->second;
+    }
+
+    if (candidates) {
+        for (const auto& sp : *candidates) {
+            if (sp && sp->isBetween(a, b)) result.push_back(sp);
+        }
     }
     return result;
 }
@@ -443,15 +496,19 @@ void RelationManager::loadFromJson(const nlohmann::json& j, const RelationEndpoi
 
 std::vector<std::string> RelationManager::findAdjacentEntities(const std::string& entityId, const std::string& relationType) const {
     std::vector<std::string> adjacent;
-    for (const auto& relPtr : relations) {
-        if (!relPtr) continue;
-        const Relation& rel = *relPtr;
-        if (!relationType.empty() && rel.type != relationType) continue;
+    if (_indexedGeneration != _generation) rebuildEndpointIndex();
+    auto itId = _byIdentifier.find(entityId);
+    if (itId != _byIdentifier.end()) {
+        for (const auto& sp : itId->second) {
+            if (!sp) continue;
+            const Relation& rel = *sp;
+            if (!relationType.empty() && rel.type != relationType) continue;
 
-        if (rel.aId() == entityId) {
-            adjacent.push_back(rel.bId());
-        } else if (!rel.directed && rel.bId() == entityId) {
-            adjacent.push_back(rel.aId());
+            if (rel.aId() == entityId) {
+                adjacent.push_back(rel.bId());
+            } else if (!rel.directed && rel.bId() == entityId) {
+                adjacent.push_back(rel.aId());
+            }
         }
     }
     return adjacent;
