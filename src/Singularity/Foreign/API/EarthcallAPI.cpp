@@ -490,9 +490,7 @@ bool EarthcallAPI::createObject(const std::string& type, const glm::vec3& positi
     std::cout << "🌍 Creating object: " << type 
               << " at (" << position.x << ", " << position.y << ", " << position.z << ")" << std::endl;
 
-    if (_zoneManager && !_zoneManager->zones().empty() &&
-        _zoneManager->currentIndex() < _zoneManager->zones().size() &&
-        _zoneManager->zones()[_zoneManager->currentIndex()]) {
+    if (_zoneManager) {
         auto obj = std::make_shared<Object>();
         obj->setPosition(position);
         obj->setObjectType(type);
@@ -542,9 +540,7 @@ bool EarthcallAPI::deleteObject(const std::string& id) {
     }
     
     std::cout << "🌍 Deleting object: " << id << std::endl;
-    if (_zoneManager && !_zoneManager->zones().empty() &&
-        _zoneManager->currentIndex() < _zoneManager->zones().size() &&
-        _zoneManager->zones()[_zoneManager->currentIndex()]) {
+    if (_zoneManager) {
         return _zoneManager->active().removeObjectById(id);
     }
     return false;

@@ -15,8 +15,8 @@
 class Event : public Moment {
 public:
     std::string type;             // The semantic verb/transition slug (e.g. "jump-started", "zone-entered")
-    Singular* subject = nullptr;  // Legacy participant A; defining Relations are a later rung
-    Singular* object = nullptr;   // Legacy participant B (optional), not a Law-wide subject
+    Singular* subject = nullptr;  // The primary being undergoing transition
+    Singular* object = nullptr;   // The secondary being/relatum/target (optional)
     std::string author;           // The author/First Mover of intention (optional)
 
     Event();
@@ -28,7 +28,6 @@ public:
     // Distinguishing accessors
     const std::string& verb() const { return type; }
     void setVerb(const std::string& v) { type = v; }
-    const std::string& occurrenceId() const { return _occurrenceId; }
 
     // Ontological truth: An Event IS the Moment.
     // timestamp() provides seamless backward compatibility and explicit temporal projection.
@@ -45,17 +44,11 @@ public:
     std::string propObject() const;
     std::string propAuthor() const { return author; }
     void setPropAuthor(const std::string& a) { author = a; }
-    std::string propOccurrenceId() const { return _occurrenceId; }
 
     nlohmann::json toJson() const;
 
 protected:
     void buildProperties() override;
-
-private:
-    // Identity is minted once and copied with the Event. Verb, participants,
-    // and even timestamp can coincide for two real transition edges.
-    std::string _occurrenceId;
 };
 
 inline void to_json(nlohmann::json& j, const Event& e) { j = e.toJson(); }

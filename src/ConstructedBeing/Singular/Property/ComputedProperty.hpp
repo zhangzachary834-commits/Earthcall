@@ -55,10 +55,6 @@ public:
         return false;
     }
 
-    bool isStructurallyWritable() const override {
-        return _setter != nullptr && is_property_value_alternative<T>;
-    }
-
     Singular* asSingular() const override {
         // Only the pointer case: the getter returns T by value, so a
         // Singular-derived value type would be the address of a temporary.

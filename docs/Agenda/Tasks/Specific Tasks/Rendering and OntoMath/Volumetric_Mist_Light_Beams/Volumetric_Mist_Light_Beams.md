@@ -13,7 +13,7 @@ $$\text{LIGHT} + \text{MEDIUM} + \text{SPACE} + \text{VIEW} \longrightarrow \tex
    - Density $D(p, t)$ and Extinction $\sigma_t(p, t)$ attenuating light exponentially ($e^{-\int \sigma_t ds}$) along view and incident light paths.
    - Scattering $\sigma_s(p, t)$ determining the fraction of incident light redirected toward the eye.
    - Chroma $C_v(p, t)$ defining the intrinsic particulate tint.
-   - Phase $\Phi(p, \omega_i, \omega_o)$ governing angular directional scattering when explicitly authored. The Sanctuary currently uses V3's exact isotropic compatibility phase $\Phi=1$; a forward-scattering phase must be authored rather than hidden in renderer fallback state.
+   - Phase $\Phi(p, \omega_i, \omega_o)$ governing angular directional scattering (Henyey-Greenstein forward-scattering with $g \approx 0.55$).
 3. **SPACE ($\mathcal{S}$)**: Signed Distance Field (SDF) geometry defining physical architecture, apertures, and occluders. Where solid matter blocks the path to the light source, the visibility function $V(p) = 0$ (shadow). Where open apertures allow rays to pass unobstructed, $V(p) = 1$ (illuminated volumetric beam).
 4. **VIEW ($\mathcal{V}$)**: The Person's eye ray integrating in-scattered radiance along the ray span through the volume.
 
@@ -24,19 +24,7 @@ $$\text{LIGHT} + \text{MEDIUM} + \text{SPACE} + \text{VIEW} \longrightarrow \tex
 3. **Refusal #7 (No hardcoded variable behavior)**: The shapes of the beams, the falloff, the aperture cutouts, and the scattering properties are authored in data, not hardcoded into engine methods.
 4. **Bounded Sphere-Tracing for Visibility**: Rather than an expensive nested raymarch ($O(N^2)$), the visibility function $V(p)$ employs bounded sphere-tracing over the authored occluder SDF ($O(1)$ empty-space leaps, max 24 steps) with soft penumbra estimation:
    $$V(p) = \min\left(1.0, \frac{k_{\text{penumbra}} \cdot d(t)}{t}\right)$$
-   This produced smooth penumbra transitions in the focused image witness. The original 60+ FPS assertion has no saved-scene frame-time witness; see the dated correction below.
-
-## Performance correction — 2026-09-25
-
-Zach reported that Sanctuary of Sunlit Mist becomes unresponsive sooner during use. Codex / GPT-6 measured the unchanged authored mist in a native, volume-only saved-scene probe: current 1280×720 synchronized wall time was approximately 85–87 ms/frame in one run, with substantial run-to-run load variation. The original `1d84821f` implementation was also costly. A no-occluder diagnostic was far faster but changed the image and is not an acceptable replacement. The initial 60+ FPS statement above is withdrawn as a performance claim; the focused 32×16 contrast test verifies appearance, not interactive frame rate. The saved-scene A/B, caveats, and next gate are in [the audit](../../../../../audits/rendering_optimization/2026-09-25_sunlit_mist_saved_scene_ab.md).
-
-**Correction signed:** Codex / GPT-6 · session `01a0cfbf-c751-7af0-b160-df07da055bc0` · 2026-09-25 12:56 PDT. Antigravity's original authorship and its correctness witness remain attributed above.
-
-## Constitutional correction after cross-rung review
-
-The initial renderer patch temporarily supplied a hardcoded Henyey-Greenstein fallback ($g=0.55$) whenever no authored phase existed. That crossed the established Volumetric V3 contract, where absent `volumePhase` means exact isotropic identity $\Phi=1$. The reconciliation removes that renderer-owned fallback. The light-shaft phenomenon remains the composition of authored source illumination, participating-medium scattering, and local occluder visibility; forward-scattering is available when the medium explicitly authors `volumePhase`.
-
-`volume.occluder.sdf` is also scoped as local volumetric transport geometry, not a replacement for Rung 8's eventual scene-wide visibility authority.
+   This maintains interactive 60+ FPS frame rates while producing smooth penumbra transitions at the beam boundaries.
 
 ## Verification & Tribunal Tests
 

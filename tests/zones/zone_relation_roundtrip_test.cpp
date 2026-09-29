@@ -2,7 +2,7 @@
 //
 // Ensures that:
 // 1. Zone formation relations (and lexemes) are saved by persistZones() into the
-//    Zone identity store (saves/zones/<id>/zone.ecform).
+//    Zone identity store (saves/zones/<id>/zone.json).
 // 2. Loading a Zone from identity or merging snapshot data restores the relation graph
 //    even when objects are already present (replaceObjects=false).
 // 3. ConditionNode::Kind::Related successfully queries the restored relation graph.
@@ -127,14 +127,14 @@ int main() {
         mgr.saveState(sessionFile, h.ctx);
     }
 
-    const auto zoneIdentityPath = sandbox / "zones" / "ChessArena" / "zone.ecform";
+    const auto zoneIdentityPath = sandbox / "zones" / "ChessArena" / "zone.json";
     check(std::filesystem::exists(zoneIdentityPath), "Zone identity written to disk");
 
     // 2. Verify formationRelations is stored in the identity file on disk
     {
-         
-         
-        nlohmann::json j = SaveSystem::readSaveData(zoneIdentityPath.string());
+        std::ifstream in(zoneIdentityPath);
+        nlohmann::json j;
+        in >> j;
         check(j.contains("formationRelations") && j["formationRelations"].is_array(),
               "Identity file contains formationRelations array");
         check(j["formationRelations"].size() == 2,
@@ -187,9 +187,9 @@ int main() {
         wipeAttemptMgr.addZone(emptyGraphZone);
         wipeAttemptMgr.persistZones();
 
-         
-         
-        nlohmann::json j = SaveSystem::readSaveData(zoneIdentityPath.string());
+        std::ifstream in(zoneIdentityPath);
+        nlohmann::json j;
+        in >> j;
         check(j["formationRelations"].size() == 2,
               "persistZones REFUSED to overwrite identity file with empty relations; 2 relations preserved");
     }

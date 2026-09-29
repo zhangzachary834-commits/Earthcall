@@ -19,15 +19,6 @@ and launches it. Keep the Terminal window open while the app runs; it displays a
 or launch failure instead of closing immediately. The same action from a terminal is
 `./scripts/build.sh webgpu run`.
 
-That Terminal window is also a modality of the running world: `Singularity/Terminal/TerminalChannel`
-holds it in raw mode and draws its own line editor (`LineEditor`: live menu, ghost text, colouring, a
-transient preview panel, history in `saves/logs/terminal-history.txt`) — the Law Line, where sentences
-become Laws. While it is attached, the app's stdout/stderr are relayed above the prompt and kept in
-`saves/logs/earthcall-terminal.log` (both gitignored). It attaches only when stdin and stdout are TTYs,
-so ctest and IDE launches leave it quiet; set `NO_COLOR` to drop colour. No dependency: libedit was
-tried and removed (its Tab cannot offer a selectable menu). →
-`docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Law_Line/Law_Line.md`
-
 ### One-click WASM launch (macOS)
 
 Double-click `Run Earthcall WASM.command` at the repository root. It uses Emscripten from
@@ -65,7 +56,7 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 247 registered (2026-09-25); WebGPU/GL tests require a desktop GPU/display session; frame_lag_test is machine-load-sensitive
+ctest --test-dir build --output-on-failure -j4        # 235 registered (2026-09-24); WebGPU/GL tests require a desktop GPU/display session; frame_lag_test is machine-load-sensitive
 cmake --build build --target lag                       # just the frame-cost probe, with its report
 ```
 

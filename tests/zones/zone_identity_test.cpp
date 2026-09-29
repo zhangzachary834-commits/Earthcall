@@ -124,14 +124,16 @@ int main() {
         mgr.saveStateWithLog("session_a", h.ctx);
     }
 
-    const auto homePath = sandbox / "homes" / "Home" / "home.ecform";
-    const auto workshopPath = sandbox / "zones" / "Workshop" / "zone.ecform";
+    const auto homePath = sandbox / "homes" / "Home" / "home.json";
+    const auto workshopPath = sandbox / "zones" / "Workshop" / "zone.json";
     check(std::filesystem::exists(homePath),
           "Save writes Home to saves/homes/Home/home.json");
     check(std::filesystem::exists(workshopPath),
           "Save writes Workshop to its own directory, not only the session file");
     {
-        nlohmann::json j = SaveSystem::readSaveData(worldA);
+        std::ifstream in(worldA);
+        nlohmann::json j;
+        in >> j;
         check(j.value("saveFormat", std::string{}) == "zone-identity-v1",
               "session file names the zone-identity format");
         check(j.contains("zoneRefs") && j["zoneRefs"].is_array() && j["zoneRefs"].size() >= 2,
@@ -155,7 +157,9 @@ int main() {
 
     check(std::filesystem::exists(homePath), "saving session B does not delete Home's identity file");
     {
-        nlohmann::json hj = SaveSystem::readSaveData(homePath.string());
+        std::ifstream in(homePath);
+        nlohmann::json hj;
+        in >> hj;
         bool stillHomeCube = false;
         if (hj.contains("world") && hj["world"].contains("objects")) {
             for (const auto& o : hj["world"]["objects"]) {

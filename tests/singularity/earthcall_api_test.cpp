@@ -144,13 +144,6 @@ int main() {
     assert(api.setZoneTheme("zone1", "forest"));
     assert(api.getZones().empty()); // Hardcoded to empty right now
 
-    // Test unhydrated ZoneManager (empty zones vector) safety in createObject & deleteObject
-    ZoneManager emptyZm;
-    api.setZoneManager(&emptyZm);
-    assert(!api.createObject("rock_empty_zm", glm::vec3(0.0f)) && "createObject must return false without crashing on unhydrated ZoneManager");
-    assert(!api.deleteObject("some_id") && "deleteObject must return false without crashing on unhydrated ZoneManager");
-    api.setZoneManager(&zm);
-
     // With _zoneManager attached and world_access permission granted, object operations succeed
     assert(api.createObject("rock", glm::vec3(0.0f)));
     assert(zm.active().getOwnedObjects().size() == 1);

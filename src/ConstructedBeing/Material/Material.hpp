@@ -17,7 +17,7 @@
 // and then a Singular is comprised of it.
 //
 // A Material is a being. It owns how a surface *appears* — not a GL concept but
-// authorable appearance data: albedo plus optional authored receiver-response math. Like
+// authorable appearance data: an albedo tint plus a Blinn-Phong response. Like
 // every Singular it registers its fields as Properties, so the Law system can
 // address `material.clay.baseColor` and a Law can change a material's colour the
 // same way a Law changes an Object's position. That legibility is the whole
@@ -58,17 +58,8 @@ public:
     // OntoMath-driven color evaluation for SDFs. If present, the WGSL backend
     // compiles this directly into the shader instead of using baseColor.
     std::shared_ptr<OntoMath::Piecewise> colorExpr;
-
-    // Rung 9: independently authored receiving-surface response. This is the
-    // Material being's f_r-like truth; absence preserves exact legacy shading.
-    // It deliberately does not reuse volume phase or source-radiance ownership.
-    std::shared_ptr<OntoMath::Piecewise> responseExpr;
-
-    // Historical revision remains the color-expression content revision.
     uint32_t getRevision() const { return _revision; }
     void bumpRevision() { ++_revision; }
-    uint32_t getResponseRevision() const { return _responseRevision; }
-    void bumpResponseRevision() { ++_responseRevision; }
 
     int textureResolution = 64;
     int textureWidth = 64;
@@ -86,7 +77,6 @@ private:
     // a material is re-identifying it. Everything else is Law-addressable.
     std::string _name = "default";
     uint32_t _revision = 0;
-    uint32_t _responseRevision = 0;
     void buildProperties() override;
 
 public:

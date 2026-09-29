@@ -476,11 +476,6 @@ struct ReteFact {
     nlohmann::json value;
     Singular* subject{nullptr};
     Singular* object{nullptr};   // the event's OTHER participant (collision has two)
-    // The actual Event Moment that emitted an edge. EventBus delivery is
-    // synchronous, but its publisher may have passed a stack temporary;
-    // retaining a value copy keeps that Singular alive through Rete drain.
-    // State facts and legacy Custom events have no Event occurrence here.
-    std::shared_ptr<const ECA::Event> occurrence;
     bool isState{false};
     bool dirty{true};
 };
@@ -805,11 +800,6 @@ private:
     // dropUnboundAlphaNodes removes a node nobody reads; node ids are never
     // reused, so a stale entry resolves to nothing and is simply rebuilt.
     std::unordered_map<std::string, std::size_t> _authoredAlphaIndex;
-    // Direct-address index: alpha node id -> current position in _alphaNodes.
-    // Holes (including beta ids from the shared node-id namespace and pruned
-    // alpha ids) contain size_t(-1). Cost therefore follows historical max id,
-    // not only the number of currently live alpha nodes.
-    std::vector<std::size_t> _alphaIndexById;
     // ONE counter for both tables. Alpha and beta ids are handed to callers as
     // bare `std::size_t` and are told apart afterwards by isAlphaNode(), which
     // answers by looking the id up in the alpha table — so two independent
@@ -832,9 +822,6 @@ public:
 class LawManager {
 public:
     std::shared_ptr<Law> createLaw(const std::string& name,
-                                   const std::vector<Singular*>& authors = {});
-    std::shared_ptr<Law> createLaw(const std::string& name,
-                                   const std::string& identifier,
                                    const std::vector<Singular*>& authors = {});
     void add(const std::shared_ptr<Law>& law);
     bool remove(const std::string& lawId);

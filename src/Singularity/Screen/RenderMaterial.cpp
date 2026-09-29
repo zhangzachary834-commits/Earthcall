@@ -15,8 +15,6 @@ RenderMaterial resolveRenderMaterial(const std::string& materialId, const FaceAl
         rm.diffuse   = m->diffuse;
         rm.colorExpr = m->colorExpr;
         rm.colorRevision = m->getRevision();
-        rm.responseExpr = m->responseExpr;
-        rm.responseRevision = m->getResponseRevision();
     }
     rm.textureId    = albedo.handle;
     rm.albedoPixels = albedo.pixels;

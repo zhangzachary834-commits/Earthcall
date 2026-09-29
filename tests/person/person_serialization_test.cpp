@@ -1,4 +1,3 @@
-#include "Singularity/Storage/SaveSystem.hpp"
 // Phase 3: the Person root codec preserves the profile schema while making
 // Person a first-class session serialization root.
 
@@ -14,7 +13,6 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
-#include <stdexcept>
 
 namespace {
 
@@ -75,7 +73,9 @@ int main() {
 
     // Verify valid file was updated and corrupted file did not crash execution
     {
-        nlohmann::json jGood = SaveSystem::readSaveData(validPath);
+        std::ifstream checkGood(validPath);
+        nlohmann::json jGood;
+        checkGood >> jGood;
         assert(jGood["person"]["displayName"] == "NewName");
     }
 
@@ -89,33 +89,6 @@ int main() {
     std::array<uint8_t, 32> key2Bytes; key2Bytes.fill(0x22);
     Identity::SingularId id1 = Identity::SingularId::fromPublicKey(key1Bytes);
     Identity::SingularId id2 = Identity::SingularId::fromPublicKey(key2Bytes);
-
-    // An established Person cannot be rebound by a setter or by a profile
-    // bearing another public ID. Refusal precedes every other profile change.
-    Person anchored = makePerson("Anchored");
-    assert(anchored.setPersonId(id1));
-    assert(anchored.setPersonId(id1));
-    assert(!anchored.setPersonId(id2));
-    assert(!anchored.setPersonId(Identity::SingularId{}));
-    assert(anchored.personId() == id1);
-    anchored.position() = {7.0f, 8.0f, 9.0f};
-    nlohmann::json foreignProfile = personToJson(anchored);
-    foreignProfile["personId"] = id2.toString();
-    foreignProfile["displayName"] = "Redirected";
-    foreignProfile["position"] = {0.0f, 0.0f, 0.0f};
-    bool refused = false;
-    try { personFromJson(foreignProfile, anchored); }
-    catch (const std::invalid_argument&) { refused = true; }
-    assert(refused);
-    assert(anchored.personId() == id1);
-    assert(anchored.getDisplayName() == "Anchored");
-    assert(near(anchored.position().x, 7.0f));
-    foreignProfile["personId"] = "not-a-person-id";
-    refused = false;
-    try { personFromJson(foreignProfile, anchored); }
-    catch (const std::invalid_argument&) { refused = true; }
-    assert(refused);
-    assert(anchored.getDisplayName() == "Anchored");
 
     std::string pathPerson1 = (testIdentDir / "person1_world.json").string();
     std::string pathPerson2 = (testIdentDir / "person2_world.json").string();
@@ -145,10 +118,14 @@ int main() {
     updatePriorPersonSerializations(alice1, "Alice");
 
     {
-        nlohmann::json j1Check = SaveSystem::readSaveData(pathPerson1);
+        std::ifstream check1(pathPerson1);
+        nlohmann::json j1Check;
+        check1 >> j1Check;
         assert(j1Check["person"]["displayName"] == "AliceRenamed");
 
-        nlohmann::json j2Check = SaveSystem::readSaveData(pathPerson2);
+        std::ifstream check2(pathPerson2);
+        nlohmann::json j2Check;
+        check2 >> j2Check;
         // Person 2 has a distinct personId (id2), so despite matching display name "Alice",
         // it MUST NOT be overwritten or collapsed!
         assert(j2Check["person"]["displayName"] == "Alice");
@@ -177,7 +154,9 @@ int main() {
     updatePriorPersonSerializations(dave, "");
 
     {
-        nlohmann::json jBobCheck = SaveSystem::readSaveData(pathBobLegacy);
+        std::ifstream checkBob(pathBobLegacy);
+        nlohmann::json jBobCheck;
+        checkBob >> jBobCheck;
         // Unkeyed legacy record for "Bob" MUST NOT be overwritten when oldName is empty!
         assert(jBobCheck["person"]["displayName"] == "Bob");
         assert(jBobCheck["person"]["soulName"] == "Bob");

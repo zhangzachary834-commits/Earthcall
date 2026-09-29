@@ -81,10 +81,6 @@ public:
         return false;
     }
 
-    bool isStructurallyWritable() const override {
-        return is_property_value_alternative<T>;
-    }
-
     Singular* asSingular() const override {
         if constexpr (std::is_pointer_v<T> &&
                       std::is_base_of_v<Singular, std::remove_pointer_t<T>>) {

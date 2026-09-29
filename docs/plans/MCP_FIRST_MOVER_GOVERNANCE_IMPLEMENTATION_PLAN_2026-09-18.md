@@ -34,14 +34,14 @@
 **Tests:** `first_mover_test` (+6), `foreign_actuation_test` (new, 7 cases incl. LawManager reload), `first_mover_websocket_test` (new: real socket, handshake, real spawn, refusals, per-connection auth, revocation), `mcp_first_mover_bridge_test` (new: real node bridge → real signer → real socket), `mcp_bridge_test.js` still 8/8.
 
 **Not done — named plainly (§19 last bullet):**
-- [x] §13.4 object/property provenance: foreign spawns and writes are now recorded via `addStakeholder` in WebSocketServer.cpp.
-- [x] `onBehalfOf` is on the wire for property_write and spawn_object, correctly recorded in provenance context.
+- §13.4 object/property provenance: foreign spawns and writes are logged to stderr, but no durable provenance relation records which mover made them.
+- `onBehalfOf` is not on the wire at all (§13.3 permits omitting it).
 - Person login is still headless (env passphrase). No interactive unlock UI.
-- [x] The register is now a Singular `first-movers` overriding `getIdentifier` and `buildProperties`.
-- [x] A mover-authored Law.s reach *when it fires* is governed by Law authority/targets/TransferPolicy, not by the mover.s file scope. Decide whether fire-time reach should also be bounded by the author.s scope (Decided: NO. Reach is bounded at injection time. Documented in FIRST_MOVER_AUTHORING.md).
-- [x] Legacy socket clients bypass mutation rejection gracefully using `legacy-person-session` when `Relation::s_developerMode` is active.
+- The register is not yet itself a Singular `first-movers` with properties (§8a of FIRST_MOVER_AUTHORING).
+- A mover-authored Law's reach *when it fires* is governed by Law authority/targets/TransferPolicy, not by the mover's file scope. Decide whether fire-time reach should also be bounded by the author's scope.
+- `bridge.py` (legacy Studio) and any other socket client now get `no-first-mover-session` for mutations until given a mover.
 - Signer custody: the mover passphrase lives in env or the Keychain; a process running as the user can still read the user's Keychain.
-- [x] Merge seam: Already resolved in master via unique_ptr refactor.
+- Merge seam: Sol's `sol/universal-singular-persistence-current-20260923` also edits `FirstMover::toJson/fromJson` and `loadFromJson`; rebase onto `unique_ptr` storage (`for (auto& mover : _movers)` becomes `mover->`).
 
 ---
 

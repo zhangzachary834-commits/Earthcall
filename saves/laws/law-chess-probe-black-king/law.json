@@ -1,1 +1,226 @@
-{"authors":["grok-4.6"],"identifier":"law-chess-probe-black-king","injected_by":"GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request","law":{"actionDescriptions":["sequence(7)"],"actionModel":{"children":[{"bindings":{"v":"blackKingX"},"function":{"input":"x","pieces":[{"mathNode":{"op":0,"scalarForm":{"terms":[{"c":1.0,"factors":{"v":1.0}}]}}}]},"kind":8,"path":"kingX"},{"bindings":{"v":"blackKingY"},"function":{"input":"x","pieces":[{"mathNode":{"op":0,"scalarForm":{"terms":[{"c":1.0,"factors":{"v":1.0}}]}}}]},"kind":8,"path":"kingY"},{"bindings":{"v":"blackKingX"},"function":{"input":"x","pieces":[{"mathNode":{"op":0,"scalarForm":{"terms":[{"c":1.0,"factors":{"v":1.0}},{"c":1.0,"factors":{}}]}}}]},"kind":8,"path":"kingXp1"},{"bindings":{"v":"blackKingX"},"function":{"input":"x","pieces":[{"mathNode":{"op":0,"scalarForm":{"terms":[{"c":1.0,"factors":{"v":1.0}},{"c":-1.0,"factors":{}}]}}}]},"kind":8,"path":"kingXm1"},{"bindings":{"v":"blackKingY"},"function":{"input":"x","pieces":[{"mathNode":{"op":0,"scalarForm":{"terms":[{"c":1.0,"factors":{"v":1.0}},{"c":1.0,"factors":{}}]}}}]},"kind":8,"path":"kingYp1"},{"bindings":{"v":"blackKingY"},"function":{"input":"x","pieces":[{"mathNode":{"op":0,"scalarForm":{"terms":[{"c":1.0,"factors":{"v":1.0}},{"c":-1.0,"factors":{}}]}}}]},"kind":8,"path":"kingYm1"},{"eventType":"check-scanned","kind":10,"publishSubject":"state.chess"}],"kind":5},"activation":0,"applicationLog":[{"actions":["sequence(7)"],"changed":false,"conditions":["all(2)"],"lawId":"law-chess-probe-black-king","nodes":[],"result":"conditions-failed","targetId":"state.chess","timestamp":1790460891},{"actions":["sequence(7)"],"changed":true,"conditions":["all(2)"],"lawId":"law-chess-probe-black-king","nodes":[{"action":"Map","path":"kingX","reason":"Unchanged","wrote":false},{"action":"Map","path":"kingY","wrote":true},{"action":"Map","path":"kingXp1","reason":"Unchanged","wrote":false},{"action":"Map","path":"kingXm1","reason":"Unchanged","wrote":false},{"action":"Map","path":"kingYp1","wrote":true},{"action":"Map","path":"kingYm1","wrote":true},{"action":"Publish","wrote":true}],"result":"applied","targetId":"state.chess","timestamp":1790460906},{"actions":["sequence(7)"],"changed":false,"conditions":["all(2)"],"lawId":"law-chess-probe-black-king","nodes":[],"result":"conditions-failed","targetId":"state.chess","timestamp":1790460909},{"actions":["sequence(7)"],"changed":true,"conditions":["all(2)"],"lawId":"law-chess-probe-black-king","nodes":[{"action":"Map","path":"kingX","reason":"Unchanged","wrote":false},{"action":"Map","path":"kingY","wrote":true},{"action":"Map","path":"kingXp1","reason":"Unchanged","wrote":false},{"action":"Map","path":"kingXm1","reason":"Unchanged","wrote":false},{"action":"Map","path":"kingYp1","wrote":true},{"action":"Map","path":"kingYm1","wrote":true},{"action":"Publish","wrote":true}],"result":"applied","targetId":"state.chess","timestamp":1790460914}],"authority":0,"authors":["grok-4.6"],"conditionDescriptions":["all(2)"],"conditionMode":"all","conditionModel":{"children":[{"kind":8,"otherId":"state.chess"},{"kind":0,"op":0,"operand":{"t":"int","v":1},"path":"turn"}],"kind":3},"conditionSubjects":[],"drives":false,"enabled":true,"id":"law-chess-probe-black-king","name":"probe-black-king","provenance":[{"attachment":{"childAnchor":[0.0,0.0,0.0],"enabled":false,"inheritRotation":true,"inheritScale":true,"inheritTranslation":true,"localOffset":[1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0],"parentAnchor":[0.0,0.0,0.0]},"directed":true,"entityA":"law-chess-probe-black-king","entityB":"grok-4.6","events":[{"deltaWeight":1.0,"description":"authored-by","timestamp":1787390000}],"type":"authored-by","weight":1.0},{"attachment":{"childAnchor":[0.0,0.0,0.0],"enabled":false,"inheritRotation":true,"inheritScale":true,"inheritTranslation":true,"localOffset":[1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0],"parentAnchor":[0.0,0.0,0.0]},"directed":true,"entityA":"law-chess-probe-black-king","entityB":"grok-4.6","events":[{"deltaWeight":1.0,"description":"authored-by","timestamp":1790460881}],"type":"authored-by","weight":1.0}],"retrigger":0,"scope":0,"targets":[]},"triggers":["king-probed"]}
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-probe-black-king",
+  "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+  "law": {
+    "id": "law-chess-probe-black-king",
+    "name": "probe-black-king",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "state.chess"
+        },
+        {
+          "kind": 0,
+          "path": "turn",
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 1
+          }
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "kingX",
+          "bindings": {
+            "v": "blackKingX"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "v": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "kingY",
+          "bindings": {
+            "v": "blackKingY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "v": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "kingXp1",
+          "bindings": {
+            "v": "blackKingX"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "v": 1.0
+                      }
+                    },
+                    {
+                      "c": 1.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "kingXm1",
+          "bindings": {
+            "v": "blackKingX"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "v": 1.0
+                      }
+                    },
+                    {
+                      "c": -1.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "kingYp1",
+          "bindings": {
+            "v": "blackKingY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "v": 1.0
+                      }
+                    },
+                    {
+                      "c": 1.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "kingYm1",
+          "bindings": {
+            "v": "blackKingY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "v": 1.0
+                      }
+                    },
+                    {
+                      "c": -1.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 10,
+          "eventType": "check-scanned",
+          "publishSubject": "state.chess",
+          "publishObject": ""
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-chess-probe-black-king",
+        "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1787390000
+          }
+        ]
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": [
+    "king-probed"
+  ]
+}

@@ -1,4 +1,3 @@
-#include "ZonesOfEarth/ZoneManager.hpp"
 #include "Law.hpp"
 #include "Identity/FirstMoverRegister.hpp"
 #include <string_view>
@@ -19,68 +18,8 @@
 
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Person/Person.hpp"
-#include "MathBinding.hpp"
 
 namespace {
-bool isPersonMotionProperty(const std::string& property) {
-    return property == "position" || property == "velocity" ||
-           property == "acceleration";
-}
-
-bool writesPersonsMotionWithoutActuationConsent(const ActionNode& action,
-                                                Singular& subject,
-                                                bool childrenOnNewborn = false) {
-    // Constitutional boundary on positive body/location writes. A Law may
-    // still read location to author a restriction such as "leave this private
-    // area"; this scan visits destinations, not condition paths or inputs.
-    const auto motionWrite = [&](const PropertyPath& destination,
-                                 const std::string& namedProperty = std::string()) {
-        // A Create child's plain path writes the newborn Object; its
-        // qualified path can still reach a Person outside the newborn.
-        if (childrenOnNewborn &&
-            (destination.segments.empty() || destination.segments[0].empty() ||
-             destination.segments[0][0] != '@')) return false;
-        std::size_t startIndex = 0;
-        Singular* bearer = resolveLawRoot(subject, destination, startIndex);
-        const auto* person = dynamic_cast<const Person*>(bearer);
-        if (!person) return false;
-        const std::string& property = namedProperty.empty()
-            ? (startIndex < destination.segments.size()
-                ? destination.segments[startIndex] : namedProperty)
-            : namedProperty;
-        // Authorship records who originated the Law. It cannot testify that
-        // this Person consents to this particular firing now. No Law
-        // actuation-consent evidence exists yet, so this boundary refuses.
-        return isPersonMotionProperty(property);
-    };
-
-    switch (action.kind) {
-        case ActionNode::Kind::Set:
-        case ActionNode::Kind::Add:
-        case ActionNode::Kind::Scale:
-        case ActionNode::Kind::Lerp:
-        case ActionNode::Kind::Drive:
-        case ActionNode::Kind::Map:
-        case ActionNode::Kind::Flow:
-            if (motionWrite(action.path)) return true;
-            break;
-        case ActionNode::Kind::RemoveProperty:
-            // Removing a registered Property clears its slot. Clearing a
-            // Person's motion Property is a motion write, including when the
-            // Law's subject is someone else and the owner path is qualified.
-            if (motionWrite(action.path, action.propertyName)) return true;
-            break;
-        default:
-            break;
-    }
-    for (const ActionNode& child : action.children) {
-        if (writesPersonsMotionWithoutActuationConsent(
-                child, subject,
-                childrenOnNewborn || action.kind == ActionNode::Kind::Create)) return true;
-    }
-    return false;
-}
-
 std::vector<std::string> formationMemberIds(const Formation& formation) {
     std::vector<std::string> ids;
     for (const auto* member : formation.getMembers()) {
@@ -458,17 +397,33 @@ Law::ApplicationResult Law::applyToImpl(
     // govern higher. This single check is what keeps the civic order from
     // collapsing into either chaos or tyranny.
     const Law* targetLaw = dynamic_cast<const Law*>(&target);
+    const Person* targetPerson = dynamic_cast<const Person*>(&target);
     const Zone* targetZone = dynamic_cast<const Zone*>(&target);
 
-    bool violatesKernelBoundary = _actionModel &&
-        writesPersonsMotionWithoutActuationConsent(*_actionModel, target);
+    bool violatesKernelBoundary = false;
     if (_actionModel) {
         std::vector<PropertyPath> paths;
         _actionModel->collectPaths(paths);
 
+        bool isSelfAuthored = false;
+        for (auto* author : _authors.getMembers()) {
+            if (author == &target) {
+                isSelfAuthored = true;
+                break;
+            }
+        }
+
         for (const auto& p : paths) {
             if (p.segments.empty()) continue;
             const std::string& root = p.segments.front();
+
+            // 1. Person Guard: Nobody else can move your body against your will.
+            if (targetPerson && !isSelfAuthored) {
+                if (root == "position" || root == "velocity" || root == "acceleration") {
+                    violatesKernelBoundary = true;
+                    break;
+                }
+            }
 
             // 3. Zone Exit Lock Rejection: Nobody can be locked in a zone against their will.
             if (targetZone) {
@@ -1481,13 +1436,8 @@ std::size_t ReteNetwork::addAlphaNode(const std::string& description, AlphaPredi
     node.description = description;
     node.predicate = std::move(predicate);
     node.source = source;
-    const std::size_t id = node.id;
     _alphaNodes.push_back(std::move(node));
-    if (id >= _alphaIndexById.size()) {
-        _alphaIndexById.resize(id + 1, static_cast<std::size_t>(-1));
-    }
-    _alphaIndexById[id] = _alphaNodes.size() - 1;
-    return id;
+    return _alphaNodes.back().id;
 }
 
 std::size_t ReteNetwork::addBetaNode(const std::string& description,
@@ -1707,15 +1657,6 @@ void ReteNetwork::dropUnboundAlphaNodes() {
                                   doomed.end();
                        }),
         _alphaNodes.end());
-
-    // Alpha ids are stable but vector indices are not: erase compacts survivors.
-    // Rebuild the direct-address table after pruning so every surviving id
-    // resolves to its new vector position and removed ids resolve to invalid.
-    std::fill(_alphaIndexById.begin(), _alphaIndexById.end(),
-              static_cast<std::size_t>(-1));
-    for (std::size_t i = 0; i < _alphaNodes.size(); ++i) {
-        _alphaIndexById[_alphaNodes[i].id] = i;
-    }
 }
 
 std::vector<ReteActivation> ReteNetwork::drainAgenda() {
@@ -1778,21 +1719,17 @@ nlohmann::json ReteNetwork::toJson() const {
 }
 
 const ReteNetwork::AlphaNode* ReteNetwork::findAlpha(std::size_t id) const {
-    if (id >= _alphaIndexById.size()) return nullptr;
-    const std::size_t index = _alphaIndexById[id];
-    if (index == static_cast<std::size_t>(-1) || index >= _alphaNodes.size()) {
-        return nullptr;
+    for (const auto& alpha : _alphaNodes) {
+        if (alpha.id == id) return &alpha;
     }
-    return &_alphaNodes[index];
+    return nullptr;
 }
 
 ReteNetwork::AlphaNode* ReteNetwork::findAlpha(std::size_t id) {
-    if (id >= _alphaIndexById.size()) return nullptr;
-    const std::size_t index = _alphaIndexById[id];
-    if (index == static_cast<std::size_t>(-1) || index >= _alphaNodes.size()) {
-        return nullptr;
+    for (auto& alpha : _alphaNodes) {
+        if (alpha.id == id) return &alpha;
     }
-    return &_alphaNodes[index];
+    return nullptr;
 }
 
 std::vector<Singular*> ReteNetwork::collectTerminalSubjects(
@@ -1834,24 +1771,6 @@ std::vector<Singular*> ReteNetwork::collectTerminalSubjects(
 std::shared_ptr<Law> LawManager::createLaw(const std::string& name,
                                            const std::vector<Singular*>& authors) {
     auto law = std::make_shared<Law>(name, authors);
-    add(law);
-    return law;
-}
-
-std::shared_ptr<Law> LawManager::createLaw(const std::string& name,
-                                           const std::string& identifier,
-                                           const std::vector<Singular*>& authors) {
-    // An explicit identity is a creation key, not a display-name alias.
-    // Refuse duplicates here so callers never receive a fresh Law that add()
-    // silently declined to register because the identifier already exists.
-    if (!identifier.empty() && find(identifier)) {
-        return nullptr;
-    }
-
-    auto law = std::make_shared<Law>(name, authors);
-    if (!identifier.empty()) {
-        law->setLawIdentifier(identifier);
-    }
     add(law);
     return law;
 }
@@ -2004,7 +1923,6 @@ void LawManager::connectToEventBus() {
 
         ECA::LawAuditLogger::instance().log("EVENT", "Event \"" + e.type + "\" triggered (Subject: " + subjectId + ", Object: " + objectId + ")", {
             {"eventType", e.type},
-            {"eventId", e.getIdentifier()},
             {"subjectId", subjectId},
             {"objectId", objectId},
             {"timestamp", e.timestamp().toJson()}
@@ -2033,7 +1951,6 @@ void LawManager::connectToEventBus() {
         fact->subject = e.subject;
         fact->subjectId = subjectId;
         fact->object = e.object;
-        fact->occurrence = std::make_shared<ECA::Event>(e);
         _rete.assertFact(fact);
         _dirty = true;
 
@@ -2216,23 +2133,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                                         ? nullptr
                                         : activation.token.facts.front()->object;
 
-            // Keep the Event Singular itself available while these nodes
-            // evaluate. Rete owns the copy because the EventBus publisher may
-            // already have returned; participant aliases remain compatible.
-            const Event* occurrence = nullptr;
-            const auto& triggers = triggersOf(law->getIdentifier());
-            for (const auto& fact : activation.token.facts) {
-                if (fact && fact->occurrence &&
-                    (triggers.empty() ||
-                     std::find(triggers.begin(), triggers.end(), fact->type) != triggers.end())) {
-                    occurrence = fact->occurrence.get();
-                    break;
-                }
-            }
-            Universe::EventScope eventScope(
-                occurrence ? occurrence->subject : subject,
-                occurrence ? occurrence->object : eventObject,
-                occurrence);
+            Universe::EventScope eventScope(subject, eventObject);
 
             if (law->scope() == Law::Scope::Everyone) {
                 std::vector<Singular*> subjects = sweepSubjects(*law);
@@ -2867,15 +2768,6 @@ void LawManager::reapUnmade() {
     // still exists — it is what catches beings the delete tool unmakes — but
     // a LawManager's own bookkeeping must not depend on having been connected
     // to a global bus that cannot be unsubscribed from.
-    // Laws among the victims are retired by THIS manager: they are ours to
-    // free, not a Zone's objects. Collected before anything is released.
-    std::vector<std::string> retiredLaws;
-    for (Singular* victim : victims) {
-        auto* law = dynamic_cast<Law*>(victim);
-        if (law && !law->isFirstMover() && find(law->getIdentifier()) == law) {
-            retiredLaws.push_back(law->getIdentifier());
-        }
-    }
     for (Singular* victim : victims) {
         releaseFromLaws(victim);
     }
@@ -2886,13 +2778,6 @@ void LawManager::reapUnmade() {
     // the being still exists — it must not be handed the corpse next tick.
     for (Singular* victim : victims) {
         _rete.retractFactsAbout(victim);
-    }
-    // Only now, with no fact or Law still pointing at them, free the Laws —
-    // and take them out of the active Zone's authored closure so Save Zone
-    // stops naming them.
-    for (const auto& id : retiredLaws) {
-        remove(id);
-        if (ZoneManager* zones = ZoneManager::live()) zones->retireLawFromActiveZone(id);
     }
 }
 

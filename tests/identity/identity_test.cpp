@@ -1,4 +1,3 @@
-#include "Singularity/Storage/SaveSystem.hpp"
 // Identity foundation: self-certifying ids and signed claims.
 //
 // These cases are written as the attacks they exist to stop, not as feature
@@ -273,7 +272,8 @@ static void testKeyStoreDetectsTampering() {
     assert(!file.empty());
 
     auto rewrite = [&](const std::string& field, const nlohmann::json& value) {
-        nlohmann::json j = SaveSystem::readSaveData(file.string());
+        nlohmann::json j;
+        { std::ifstream in(file); in >> j; }
         j[field] = value;
         { std::ofstream out(file, std::ios::trunc); out << j.dump(2); }
     };
@@ -287,7 +287,8 @@ static void testKeyStoreDetectsTampering() {
     assert(store.store(key, "pass"));
 
     // Flipping a ciphertext byte must fail the tag rather than yield garbage.
-    nlohmann::json j = SaveSystem::readSaveData(file.string());
+    nlohmann::json j;
+    { std::ifstream in(file); in >> j; }
     std::string ct = j["ciphertext"];
     ct[0] = (ct[0] == 'a') ? 'b' : 'a';
     rewrite("ciphertext", ct);

@@ -116,7 +116,7 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 247 registered (2026-09-25) — WebGPU/GL tests need a desktop GPU/display session; frame_lag_test is machine-load-sensitive (see below)
+ctest --test-dir build --output-on-failure -j4        # 235 registered (2026-09-24) — WebGPU/GL tests need a desktop GPU/display session; frame_lag_test is machine-load-sensitive (see below)
 cmake --build build --target lag                      # frame-cost probe alone, with its report
 ```
 
@@ -136,22 +136,22 @@ widening the baseline.
 ## Non-negotiables
 
 - **NO BIG CHUNGUS retrieval.** Retrieval must be proportional to the epistemic need: search before fetch; prefer exact symbol/error queries and bounded file, CI-log, and workflow slices; never ingest an entire large artifact when a narrow read answers the question. Expand incrementally only when needed — especially through GitHub Connector, where giant reads waste context and can time out.
-- **Stable identifiers.** Current Law text uses `@name` roots, longest dotted match;
-  named beings need stable `getIdentifier()` slugs, not generated `law-7` ids.
-  Zach's 2026-09-27/28 rule: individual paths resolve under relevant Zones;
-  paths hold no ID, ambiguity refuses, and Ourverses cannot reauthor Person identity; Law-governed read/write belongs with TransferPolicy. See the Property storage task.
+- **Stable identifiers.** Law text addresses beings by name (`@physical-channel.enabled`).
+  Generated ids (`law-7`) change between runs. Any being that law-text names must override
+  `getIdentifier()` with a stable slug. Namespaced ids may contain dots
+  (`material.clay`) — root resolution matches longest-first.
 - **Append-only enums**, serialized as ints. Never renumber, never reuse a burned value.
 - **Nothing enters the world without an author.** `Law::applyTo` returns `Unauthored` and
   refuses to fire when `authors` is empty. This is structural, not conventional.
 - **Authority is clamped to 0** on every path that reads a file. Do not try to write an authority value below 0; it will be clamped, and the attempt is what gets noticed.
 - **Event-transitions must be edges, not levels.** Events are past-tense `noun-verbed` and publish on transitions. A
   per-frame "still happening" event is a bug—that is what `WhileTrue` is for. Continuous per-frame logic must use a separate framework.
-- **Kernel guards on the body are not settings.** They act in C++ before Metalaw bootstrap;
-  no authored policy can open them. The boundary refuses unconsented positive body/location
-  writes, not authored prohibitions on entering or remaining in a restricted area. A moving
-  Law needs the Person's signed, revocable consent sub-Relation; authorship is insufficient.
-  Without that proof Law movement refuses. The audio infrasound floor
-  (`mathematics/ONTOMATH_FRAMEWORK.md` §7a) likewise refuses at the body channel, loudly.
+- **Kernel guards on the body are not settings.** A modality channel that reaches a
+  Person's body enforces its Person guards in C++, unconditionally — no parameter, no flag,
+  and never as law text, which could be authored away. The audio channel's infrasound floor
+  (`mathematics/ONTOMATH_FRAMEWORK.md` §7a) is the worked example: it refuses and says which frequency,
+  rather than silently filtering a Person's mathematics. Guards constrain the path to the
+  body, never the mathematics — a Person may still author and integrate a 7 Hz field.
 - **Paint is on the Material, and materials are shared.** Writing paint through the material you *resolve* repaints every object naming it.
   Always paint via `Object::setFaceColor` / `Object::ownMaterial`, which diverge the object onto its own `material.<identifier>` on the first stroke.
   Never `materials.resolveOrDefault(obj->materialId())` — that is the bug, not the shortcut.

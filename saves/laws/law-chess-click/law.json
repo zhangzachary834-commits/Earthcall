@@ -1,1 +1,381 @@
-{"authors":["grok-4.6"],"identifier":"law-chess-click","injected_by":"GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request","law":{"actionDescriptions":["sequence(5)"],"actionModel":{"children":[{"bindings":{"ptrX":"@interaction-channel.pointerWorld.x"},"function":{"input":"ptrX","pieces":[{"hi":-3.0,"includeHi":false,"includeLo":true,"lo":-4.0,"mathNode":{"op":0,"scalarForm":{"terms":[{"c":0.0,"factors":{}}]}}},{"hi":-2.0,"includeHi":false,"includeLo":true,"lo":-3.0,"mathNode":{"op":0,"scalarForm":{"terms":[{"c":1.0,"factors":{}}]}}},{"hi":-1.0,"includeHi":false,"includeLo":true,"lo":-2.0,"mathNode":{"op":0,"scalarForm":{"terms":[{"c":2.0,"factors":{}}]}}},{"hi":0.0,"includeHi":false,"includeLo":true,"lo":-1.0,"mathNode":{"op":0,"scalarForm":{"terms":[{"c":3.0,"factors":{}}]}}},{"hi":1.0,"includeHi":false,"includeLo":true,"lo":0.0,"mathNode":{"op":0,"scalarForm":{"terms":[{"c":4.0,"factors":{}}]}}},{"hi":2.0,"includeHi":false,"includeLo":true,"lo":1.0,"mathNode":{"op":0,"scalarForm":{"terms":[{"c":5.0,"factors":{}}]}}},{"hi":3.0,"includeHi":false,"includeLo":true,"lo":2.0,"mathNode":{"op":0,"scalarForm":{"terms":[{"c":6.0,"factors":{}}]}}},{"hi":4.0,"includeHi":true,"includeLo":true,"lo":3.0,"mathNode":{"op":0,"scalarForm":{"terms":[{"c":7.0,"factors":{}}]}}}]},"kind":8,"path":"@state.chess.targetX"},{"bindings":{"ptrZ":"@interaction-channel.pointerWorld.z"},"function":{"input":"ptrZ","pieces":[{"hi":-3.0,"includeHi":false,"includeLo":true,"lo":-4.0,"mathNode":{"op":0,"scalarForm":{"terms":[{"c":0.0,"factors":{}}]}}},{"hi":-2.0,"includeHi":false,"includeLo":true,"lo":-3.0,"mathNode":{"op":0,"scalarForm":{"terms":[{"c":1.0,"factors":{}}]}}},{"hi":-1.0,"includeHi":false,"includeLo":true,"lo":-2.0,"mathNode":{"op":0,"scalarForm":{"terms":[{"c":2.0,"factors":{}}]}}},{"hi":0.0,"includeHi":false,"includeLo":true,"lo":-1.0,"mathNode":{"op":0,"scalarForm":{"terms":[{"c":3.0,"factors":{}}]}}},{"hi":1.0,"includeHi":false,"includeLo":true,"lo":0.0,"mathNode":{"op":0,"scalarForm":{"terms":[{"c":4.0,"factors":{}}]}}},{"hi":2.0,"includeHi":false,"includeLo":true,"lo":1.0,"mathNode":{"op":0,"scalarForm":{"terms":[{"c":5.0,"factors":{}}]}}},{"hi":3.0,"includeHi":false,"includeLo":true,"lo":2.0,"mathNode":{"op":0,"scalarForm":{"terms":[{"c":6.0,"factors":{}}]}}},{"hi":4.0,"includeHi":true,"includeLo":true,"lo":3.0,"mathNode":{"op":0,"scalarForm":{"terms":[{"c":7.0,"factors":{}}]}}}]},"kind":8,"path":"@state.chess.targetY"},{"bindings":{"sx":"@state.chess.selectedX","tx":"@state.chess.targetX"},"function":{"input":"x","pieces":[{"mathNode":{"op":0,"scalarForm":{"terms":[{"c":1.0,"factors":{"tx":1.0}},{"c":-1.0,"factors":{"sx":1.0}}]}}}]},"kind":8,"path":"@state.chess.dx"},{"bindings":{"sy":"@state.chess.selectedY","ty":"@state.chess.targetY"},"function":{"input":"x","pieces":[{"mathNode":{"op":0,"scalarForm":{"terms":[{"c":1.0,"factors":{"ty":1.0}},{"c":-1.0,"factors":{"sy":1.0}}]}}}]},"kind":8,"path":"@state.chess.dy"},{"eventType":"square-clicked","kind":10}],"kind":5},"activation":0,"applicationLog":[{"actions":["sequence(5)"],"changed":true,"conditions":["any(2)"],"lawId":"law-chess-click","nodes":[{"action":"Map","path":"@state.chess.targetX","wrote":true},{"action":"Map","path":"@state.chess.targetY","wrote":true},{"action":"Map","path":"@state.chess.dx","wrote":true},{"action":"Map","path":"@state.chess.dy","wrote":true},{"action":"Publish","wrote":true}],"result":"applied","targetId":"object.chess.board","timestamp":1790460890},{"actions":["sequence(5)"],"changed":true,"conditions":["any(2)"],"lawId":"law-chess-click","nodes":[{"action":"Map","path":"@state.chess.targetX","reason":"Unchanged","wrote":false},{"action":"Map","path":"@state.chess.targetY","reason":"Unchanged","wrote":false},{"action":"Map","path":"@state.chess.dx","reason":"Unchanged","wrote":false},{"action":"Map","path":"@state.chess.dy","reason":"Unchanged","wrote":false},{"action":"Publish","wrote":true}],"result":"applied","targetId":"piece-white-pawn-3-1","timestamp":1790460890},{"actions":["sequence(5)"],"changed":true,"conditions":["any(2)"],"lawId":"law-chess-click","nodes":[{"action":"Map","path":"@state.chess.targetX","reason":"Unchanged","wrote":false},{"action":"Map","path":"@state.chess.targetY","wrote":true},{"action":"Map","path":"@state.chess.dx","wrote":true},{"action":"Map","path":"@state.chess.dy","reason":"Unchanged","wrote":false},{"action":"Publish","wrote":true}],"result":"applied","targetId":"object.chess.board","timestamp":1790460891},{"actions":["sequence(5)"],"changed":true,"conditions":["any(2)"],"lawId":"law-chess-click","nodes":[{"action":"Map","path":"@state.chess.targetX","wrote":true},{"action":"Map","path":"@state.chess.targetY","wrote":true},{"action":"Map","path":"@state.chess.dx","wrote":true},{"action":"Map","path":"@state.chess.dy","wrote":true},{"action":"Publish","wrote":true}],"result":"applied","targetId":"object.chess.board","timestamp":1790460894},{"actions":["sequence(5)"],"changed":true,"conditions":["any(2)"],"lawId":"law-chess-click","nodes":[{"action":"Map","path":"@state.chess.targetX","wrote":true},{"action":"Map","path":"@state.chess.targetY","wrote":true},{"action":"Map","path":"@state.chess.dx","wrote":true},{"action":"Map","path":"@state.chess.dy","wrote":true},{"action":"Publish","wrote":true}],"result":"applied","targetId":"piece-black-pawn-3-6","timestamp":1790460906},{"actions":["sequence(5)"],"changed":true,"conditions":["any(2)"],"lawId":"law-chess-click","nodes":[{"action":"Map","path":"@state.chess.targetX","reason":"Unchanged","wrote":false},{"action":"Map","path":"@state.chess.targetY","wrote":true},{"action":"Map","path":"@state.chess.dx","wrote":true},{"action":"Map","path":"@state.chess.dy","wrote":true},{"action":"Publish","wrote":true}],"result":"applied","targetId":"object.chess.board","timestamp":1790460906},{"actions":["sequence(5)"],"changed":true,"conditions":["any(2)"],"lawId":"law-chess-click","nodes":[{"action":"Map","path":"@state.chess.targetX","wrote":true},{"action":"Map","path":"@state.chess.targetY","wrote":true},{"action":"Map","path":"@state.chess.dx","wrote":true},{"action":"Map","path":"@state.chess.dy","wrote":true},{"action":"Publish","wrote":true}],"result":"applied","targetId":"piece-white-knight-6-0","timestamp":1790460908},{"actions":["sequence(5)"],"changed":true,"conditions":["any(2)"],"lawId":"law-chess-click","nodes":[{"action":"Map","path":"@state.chess.targetX","wrote":true},{"action":"Map","path":"@state.chess.targetY","wrote":true},{"action":"Map","path":"@state.chess.dx","wrote":true},{"action":"Map","path":"@state.chess.dy","wrote":true},{"action":"Publish","wrote":true}],"result":"applied","targetId":"object.chess.board","timestamp":1790460909},{"actions":["sequence(5)"],"changed":true,"conditions":["any(2)"],"lawId":"law-chess-click","nodes":[{"action":"Map","path":"@state.chess.targetX","wrote":true},{"action":"Map","path":"@state.chess.targetY","wrote":true},{"action":"Map","path":"@state.chess.dx","wrote":true},{"action":"Map","path":"@state.chess.dy","wrote":true},{"action":"Publish","wrote":true}],"result":"applied","targetId":"piece-black-rook-0-7","timestamp":1790460912},{"actions":["sequence(5)"],"changed":true,"conditions":["any(2)"],"lawId":"law-chess-click","nodes":[{"action":"Map","path":"@state.chess.targetX","reason":"Unchanged","wrote":false},{"action":"Map","path":"@state.chess.targetY","reason":"Unchanged","wrote":false},{"action":"Map","path":"@state.chess.dx","wrote":true},{"action":"Map","path":"@state.chess.dy","wrote":true},{"action":"Publish","wrote":true}],"result":"applied","targetId":"piece-black-rook-0-7","timestamp":1790460912},{"actions":["sequence(5)"],"changed":true,"conditions":["any(2)"],"lawId":"law-chess-click","nodes":[{"action":"Map","path":"@state.chess.targetX","wrote":true},{"action":"Map","path":"@state.chess.targetY","reason":"Unchanged","wrote":false},{"action":"Map","path":"@state.chess.dx","wrote":true},{"action":"Map","path":"@state.chess.dy","reason":"Unchanged","wrote":false},{"action":"Publish","wrote":true}],"result":"applied","targetId":"piece-black-knight-1-7","timestamp":1790460913},{"actions":["sequence(5)"],"changed":true,"conditions":["any(2)"],"lawId":"law-chess-click","nodes":[{"action":"Map","path":"@state.chess.targetX","wrote":true},{"action":"Map","path":"@state.chess.targetY","wrote":true},{"action":"Map","path":"@state.chess.dx","reason":"Unchanged","wrote":false},{"action":"Map","path":"@state.chess.dy","wrote":true},{"action":"Publish","wrote":true}],"result":"applied","targetId":"object.chess.board","timestamp":1790460914}],"authority":0,"authors":["grok-4.6"],"conditionDescriptions":["any(2)"],"conditionMode":"all","conditionModel":{"children":[{"kind":0,"op":0,"operand":{"t":"bool","v":true},"path":"isBoard"},{"kind":2,"otherId":"category.chess.piece","relationType":"instance-of"}],"kind":4},"conditionSubjects":[],"drives":false,"enabled":true,"id":"law-chess-click","name":"address-clicked-square","provenance":[{"attachment":{"childAnchor":[0.0,0.0,0.0],"enabled":false,"inheritRotation":true,"inheritScale":true,"inheritTranslation":true,"localOffset":[1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0],"parentAnchor":[0.0,0.0,0.0]},"directed":true,"entityA":"law-chess-click","entityB":"grok-4.6","events":[{"deltaWeight":1.0,"description":"authored-by","timestamp":1787390000}],"type":"authored-by","weight":1.0},{"attachment":{"childAnchor":[0.0,0.0,0.0],"enabled":false,"inheritRotation":true,"inheritScale":true,"inheritTranslation":true,"localOffset":[1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0],"parentAnchor":[0.0,0.0,0.0]},"directed":true,"entityA":"law-chess-click","entityB":"grok-4.6","events":[{"deltaWeight":1.0,"description":"authored-by","timestamp":1790460881}],"type":"authored-by","weight":1.0}],"retrigger":0,"scope":0,"targets":[]},"triggers":["object-clicked"]}
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-click",
+  "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+  "law": {
+    "id": "law-chess-click",
+    "name": "address-clicked-square",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 4,
+      "children": [
+        {
+          "kind": 0,
+          "path": "isBoard",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 2,
+          "relationType": "instance-of",
+          "otherId": "category.chess.piece"
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "@state.chess.targetX",
+          "bindings": {
+            "ptrX": "@interaction-channel.pointerWorld.x"
+          },
+          "function": {
+            "input": "ptrX",
+            "pieces": [
+              {
+                "lo": -4.0,
+                "hi": -3.0,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 0.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -3.0,
+                "hi": -2.0,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -2.0,
+                "hi": -1.0,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 2.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -1.0,
+                "hi": 0.0,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 3.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 0.0,
+                "hi": 1.0,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 4.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 1.0,
+                "hi": 2.0,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 5.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 2.0,
+                "hi": 3.0,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 6.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 3.0,
+                "hi": 4.0,
+                "includeLo": true,
+                "includeHi": true,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 7.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@state.chess.targetY",
+          "bindings": {
+            "ptrZ": "@interaction-channel.pointerWorld.z"
+          },
+          "function": {
+            "input": "ptrZ",
+            "pieces": [
+              {
+                "lo": -4.0,
+                "hi": -3.0,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 0.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -3.0,
+                "hi": -2.0,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -2.0,
+                "hi": -1.0,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 2.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -1.0,
+                "hi": 0.0,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 3.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 0.0,
+                "hi": 1.0,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 4.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 1.0,
+                "hi": 2.0,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 5.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 2.0,
+                "hi": 3.0,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 6.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 3.0,
+                "hi": 4.0,
+                "includeLo": true,
+                "includeHi": true,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 7.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@state.chess.dx",
+          "bindings": {
+            "tx": "@state.chess.targetX",
+            "sx": "@state.chess.selectedX"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "tx": 1.0
+                      }
+                    },
+                    {
+                      "c": -1.0,
+                      "factors": {
+                        "sx": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@state.chess.dy",
+          "bindings": {
+            "ty": "@state.chess.targetY",
+            "sy": "@state.chess.selectedY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "ty": 1.0
+                      }
+                    },
+                    {
+                      "c": -1.0,
+                      "factors": {
+                        "sy": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 10,
+          "eventType": "square-clicked",
+          "publishSubject": "",
+          "publishObject": ""
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-chess-click",
+        "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1787390000
+          }
+        ]
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}

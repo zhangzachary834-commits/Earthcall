@@ -319,6 +319,15 @@ void Zone::setOwner(const std::string& ownerId, const std::string& ownerKind) {
     if (!ownerId.empty() && !isPrimaryHome()) _deletable[ownerId] = true;
 }
 
+void Zone::load() {
+    std::cout << "🌍 Zone '" << _name << "' loaded with " << _objects.size() << " objects." << std::endl;
+}
+
+void Zone::unload() {
+    _objects.clear();
+    std::cout << "🌍 Zone '" << _name << "' unloaded." << std::endl;
+}
+
 void Zone::syncFormationMembers(const std::vector<Singular*>& extraMembers) {
     std::unordered_set<const Singular*> live;
     const auto admit = [&](Singular* member) {
