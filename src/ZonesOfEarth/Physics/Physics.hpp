@@ -120,28 +120,10 @@ namespace Physics {
                       float groundY       = 0.0f);
 
     // -----------------------------------------------------------------
-    // Relational physics registry
-    // -----------------------------------------------------------------
-    // Global collection of physics relations (gravity, collisions, etc.)
-    RelationManager& registry();
-
-    // Record that gravity is acting between an object and the environment
-    void recordGravity(const Singular& obj, const Singular& env, float strength = 1.0f);
-
-    // Record an object-object collision relation
-    void recordCollision(const Singular& a, const Singular& b, float strength = 1.0f);
-
-    // -----------------------------------------------------------------
     // Automatic bonding rules by ShapeKind pairs
     // -----------------------------------------------------------------
     void setAutoBond(Object::ShapeKind a, Object::ShapeKind b, bool enabled);
     bool getAutoBond(Object::ShapeKind a, Object::ShapeKind b);
-
-    // -----------------------------------------------------------------
-    // EventBus Integration
-    // -----------------------------------------------------------------
-    // Set up default physics event listeners (call this during initialization)
-    void setupPhysicsEventListeners();
 
     // -----------------------------------------------------------------
     // Physics Events for EventBus integration
