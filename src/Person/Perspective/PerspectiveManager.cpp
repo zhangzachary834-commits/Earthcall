@@ -16,8 +16,11 @@ void PerspectiveManager::addPerspective(std::unique_ptr<PersonPerspective> persp
     }
     
     // Check if perspective with same identifier already exists
-    if (hasPerspective(perspective->getIdentifier())) {
-        return; // Could throw or log warning
+    const std::string id = perspective->getIdentifier();
+    for (const auto& p : _perspectives) {
+        if (p && p->getIdentifier() == id) {
+            return; // Prevent duplicate identifiers
+        }
     }
     
     _perspectives.push_back(std::move(perspective));
@@ -140,8 +143,15 @@ bool PerspectiveManager::hasPerspective(const std::string& nameOrId) const {
 }
 
 size_t PerspectiveManager::findPerspective(const std::string& nameOrId) const {
+    // First try exact match on identifier
     for (size_t i = 0; i < _perspectives.size(); ++i) {
-        if (_perspectives[i] && (_perspectives[i]->getIdentifier() == nameOrId || _perspectives[i]->getName() == nameOrId)) {
+        if (_perspectives[i] && _perspectives[i]->getIdentifier() == nameOrId) {
+            return i;
+        }
+    }
+    // Fall back to display name match
+    for (size_t i = 0; i < _perspectives.size(); ++i) {
+        if (_perspectives[i] && _perspectives[i]->getName() == nameOrId) {
             return i;
         }
     }

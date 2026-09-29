@@ -5,6 +5,8 @@
 #include <glm/gtx/rotate_vector.hpp>
 
 void PersonPerspective::buildProperties() {
+    if (_propertiesBuilt) return;
+    _propertiesBuilt = true;
     registerProperty(std::make_unique<PropertyRef<PersonPerspective, std::string>>(
         "name", this, &PersonPerspective::_name));
     registerProperty(std::make_unique<ComputedProperty<PersonPerspective, float>>(
@@ -15,6 +17,7 @@ void PersonPerspective::buildProperties() {
 
 PersonPerspective::PersonPerspective(const std::string& name, PerspectiveType type, const std::string& identifier)
     : _identifier(identifier.empty() ? name : identifier), _name(name), _type(type) {
+    buildProperties();
     // Initialize default view state based on type
     switch (_type) {
         case PerspectiveType::FirstPerson:
