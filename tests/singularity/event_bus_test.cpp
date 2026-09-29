@@ -52,6 +52,25 @@ void testSynchronousPublishSubscribe() {
     EventBusTestFriend::clear();
 }
 
+void testUnsubscribe() {
+    std::cout << "[Test] Unsubscribe\n";
+
+    int calls = 0;
+    const auto id = EventBus::instance().subscribe<SimpleEvent>([&calls](const SimpleEvent&) {
+        ++calls;
+    });
+
+    EventBus::instance().publish(SimpleEvent{1});
+    assert(calls == 1);
+
+    EventBus::instance().unsubscribe<SimpleEvent>(id);
+    EventBus::instance().publish(SimpleEvent{2});
+    assert(calls == 1);
+
+    std::cout << "  ✓ Revoked listener was not called again\n";
+    EventBusTestFriend::clear();
+}
+
 void testPrioritizedSubscribe() {
     std::cout << "[Test] Prioritized Subscribe\n";
 
@@ -131,6 +150,7 @@ int main() {
     std::cout << "\n=== Core::EventBus Test Suite ===\n\n";
 
     testSynchronousPublishSubscribe();
+    testUnsubscribe();
     testPrioritizedSubscribe();
     testReentrantPublish();
     testAsyncPublish();

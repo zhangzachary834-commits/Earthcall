@@ -14,10 +14,11 @@
 // still enabled and authored. That is the same silence rungs 0, 2, 4 and 7 each
 // found somewhere else.
 //
-// ONE LawManager, deliberately: the EventBus has no unsubscribe, so a connected
-// manager must outlive all publishing (Law.hpp says so). Adding a second one to
-// referent_resolution_test — which already builds one per measurement arm —
-// segfaulted, which is how this became its own file.
+// Lifetime regression: this test used to require ONE connected LawManager.
+// A second manager in the same process caused the first manager's stale
+// EventBus [this] handler to fire after destruction and segfault. The second
+// block below is the deterministic witness that teardown now revokes those
+// subscriptions.
 //
 // FOR FUTURE AGENTS (Jules especially): if you make the referent map key on
 // something else, or cache resolution per law, this is the test that says whether
@@ -99,6 +100,20 @@ int main() {
         for (int i = 0; i < 3; ++i) mgr.tick();
         check(zOf(subject) >= 4.0, "and keeps being found on later ticks");
 
+        Universe::instance().setProvider(nullptr);
+    }
+
+    // Warden regression: the first connected manager is gone. Creating a law
+    // in a second connected manager publishes an ECA::Event. Before EventBus
+    // subscriptions were revocable, that event also entered the dead first
+    // manager through its captured `this` and this test segfaulted.
+    {
+        Object secondAuthor;
+        LawManager secondManager;
+        secondManager.connectToEventBus();
+        auto secondLaw = secondManager.createLaw("second-manager-after-teardown", {&secondAuthor});
+        check(secondLaw != nullptr,
+              "a second connected LawManager may publish after the first manager is destroyed");
         Universe::instance().setProvider(nullptr);
     }
 
