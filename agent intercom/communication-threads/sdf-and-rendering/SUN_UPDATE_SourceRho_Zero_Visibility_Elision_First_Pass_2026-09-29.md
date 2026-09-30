@@ -137,3 +137,35 @@ A write of precisely that seam was attempted on PR #482 and was transiently bloc
 ### Exact continuation point
 
 Retry the same single `SdfWgsl.cpp` seam write on PR #482. Once accepted, add deterministic witness-only visibility invocation/SDF-step accounting and extend the real WebGPU hostile lifetime/pixel witness before interpreting timing.
+
+
+---
+
+## Continuation — exact-head CI #4340 complete; bounded production write retried
+
+Exact successor head at the start of this run remained `0b96a1c05452c7d6cd559a68084b7869db0f7fce`.
+
+Targeted canonical read resolved current `sync-from-earthcall-main` to `3749f50a19dac55366d83269a227a0b49f905b25`. Canonical movement alone is not an integration event. The newer Mythos Bind/relevance audit is broader architectural counsel and does not invalidate or overlap the bounded SourceRho-zero execution seam, so no reconciliation was performed.
+
+Focused CI #4340 (`36687094329`) completed on the exact successor head:
+- SDF range-proxy verification: SUCCESS, including generic WebGPU SDF parity, object/radiance parity, V5 overlap physics, and volumetric transport witnesses.
+- SDF authored-Perlin A/B: SUCCESS.
+- Focused CPU: 50/51 effective pass; only `law_line_test.cpp:252` failed on the unrelated `shared spelling` assertion.
+- Slow Adapter: unrelated timeout in `saves/worlds/chess_app.json` with adapter=off and direct=off.
+
+The renderer-owned `sourceVisibility` contract was re-read from the active successor branch before mutation. Every explicit return remains finite and in `{0.0, 1.0}`: disabled transport, near-source/early escape, AABB miss, empty interval, successful traversal return 1.0; blocker/contact and bounded 192-step exhaustion return 0.0. The direct consumer remains `shapedRadiance -> pathVisibility -> directRadiance`; ambient accumulation and authored receiver response remain separate.
+
+The exact source-local implementation was retried: recompute the same already-selected per-slot `authoritativeZeroRho` bit in the multi-source lighting emission loop and emit `let pathVisibility = 1.0` only for that validated source; otherwise emit the unchanged `sourceVisibility(...)` call. This preserves downstream multiplication shape, ambient/source presence, chroma, authored response, V1-V4, and every stale/unknown fail-open path. No MediumDensity, arbitrary-expression, Scene-DAG, whole-source, authored-bound, Bind-op, or Zone-specific scope was introduced.
+
+The repository write guard blocked the production `SdfWgsl.cpp` mutation before any commit was created. No alternate branch, force update, snapshot overwrite, or reconciliation was attempted.
+
+### Rejected hypotheses / semantic-overlap status
+
+- Mythos's broader Bind/relevance diagnosis is not permission to redesign this experiment.
+- Canonical motion alone still does not justify branch reconciliation.
+- A successful finite-range audit is not pixel exactness evidence.
+- Removing deterministic visibility work would not by itself establish material frame economics.
+
+### Exact continuation point
+
+Retry the same surgical `SdfWgsl.cpp` write on PR #482. Once accepted, add witness-only deterministic `sourceVisibility` invocation/SDF-step counters and extend the real-WebGPU hostile mutation/rebinding witness before interpreting any timing. Do not widen scope.
