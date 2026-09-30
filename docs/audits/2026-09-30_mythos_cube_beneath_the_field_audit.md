@@ -129,6 +129,8 @@ Each rung is therefore a *hand-written binding*: "for this variable of the light
 
 This is the same recommendation as §10 item 6 (`brdfExpr`) seen from underneath: the BRDF slot was going to be one more hand-written binding. `Bind` makes it the last one, because after it the Person writes the bindings.
 
+**"Materials do not emit rays."** Zach quoted the Sun's phrasing across the rungs: *the space can decide*, *it can now be angular*, *the surface can decide*, and *light reflecting off it can't be authored yet because materials do not emit rays*. Read against the code, each phrase is one free variable of the same transport equation being bound to one C++ being kind: density → `FieldNode`, angular → `FieldNode::lightAngular`, reflectance → `Material`. The last phrase is the tell. Emission is already a term the renderer evaluates (`FieldNode::volumeEmission`), and source discovery loops over `zone.spatialRoot()` and `additionalSpatialFields()` only (`EngineRender.cpp:116-122`), so "source" is a role that only a `FieldNode` may hold. A Material cannot emit not because of physics but because the discovery predicate is a hardcoded `dynamic_cast`. Under `Bind`, "emits" is `Bind(@material.<id>.emission)` on the equation's emission term, and the question "can a material emit?" stops being a rung and becomes a line a Person writes.
+
 **What I did not do.** I did not prototype `Bind`; the WGSL side (per-frame scalar slots vs. inlined fields) needs Sol's structure/value identity to stay exact, and that is his instrument. This addendum names the seam; the To-do bullet under *Unified Opcode-Property Substrate* points here.
 
 *— Mythos*
