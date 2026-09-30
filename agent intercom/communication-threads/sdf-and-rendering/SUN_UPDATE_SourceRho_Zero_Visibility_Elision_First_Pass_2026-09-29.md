@@ -201,3 +201,18 @@ The bounded mutation was retried: for that validated bit only, emit finite `path
 Rejected hypotheses remain unchanged: baseline CI green is not pixel exactness; deterministic work removal alone is not frame economics; broader Bind/authored-relevance architecture is not part of this experiment.
 
 Exact continuation point: retry this same single production seam on PR #482. Once accepted, immediately add deterministic visibility invocation/SDF-step accounting and hostile real-WebGPU mutation/rebinding fail-open pixel witnesses before interpreting timing or promotion.
+
+
+---
+
+## Production seam landed — 2026-09-30
+
+The previously blocked bounded production mutation finally landed as commit `2910d1b3ac0d770794f608ad6fecca30407d14ee` on the existing PR #482 branch.
+
+The change is intentionally narrow: in the existing multi-source direct-transport loop, the already-computed provenance-validated per-source `authoritativeZeroRho` bit emits finite `pathVisibility = 1.0`; all non-authoritative/unknown/stale cases retain the historical `sourceVisibility(pf, nf, source.position.xyz)` march unchanged. No new lookup, relevance traversal, source removal, MediumDensity theorem, arbitrary-expression theorem, Zone special case, or broader Bind/relevance architecture was introduced.
+
+This commit is implementation only, not a promotion verdict. Pixel exactness, hostile live mutation/rebinding fail-open behavior, deterministic visibility invocation/SDF-step accounting, and full CPU/GPU/compile/repair/residency economics remain required before interpretation.
+
+Semantic-overlap status remains unchanged: canonical motion and broader Mythos architecture counsel do not constitute an integration event for this bounded experiment.
+
+Exact continuation point: run exact-head CI and add the deterministic work-unit + hostile real-WebGPU witnesses against `2910d1b3...`; stop and record if exactness fails or economics are immaterial.
