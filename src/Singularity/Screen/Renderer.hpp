@@ -242,19 +242,24 @@ public:
     }
     uint64_t volumeDensitySourcesRevision() const { return _volumeDensitySourcesRevision; }
 
-    // Scene-spatial synthesis Phase B: diagnostic only. The observer has no
-    // theorem-consumption API and therefore cannot alter rendered truth.
+    // Semantic observation remains inert by default. The separately gated
+    // SourceRho-zero authority experiment below is the only production consumer
+    // of an aligned proof; disabling observation also revokes that experiment so
+    // stale theorem state can never remain authoritative.
     void setRenderedFieldSemanticObservationEnabled(bool on) {
         const bool wasEnabled = _renderedFieldObserver.enabled();
         if (wasEnabled == on) return;
 
+        if (!on && _radianceZeroAuthorityExperimentEnabled) {
+            _radianceZeroAuthorityExperimentEnabled = false;
+            onRadianceZeroAuthorityExperimentChanged();
+        }
+
         _renderedFieldObserver.setEnabled(on);
         if (!on) return;
 
-        // Phase-B observation must describe the scene already admitted to the
-        // Renderer, not only source-set traffic that happens after enablement.
-        // This replay is diagnostic-only: theorem state has no authority path
-        // back into pixels, marching, accumulation, visibility, or WGSL.
+        // Observation must describe the scene already admitted to the Renderer,
+        // not only source-set traffic that happens after enablement.
         _renderedFieldObserver.observeRadianceSources(
             _radianceSources, _radianceSourcesRevision);
         _renderedFieldObserver.observeVolumeDensitySources(
@@ -266,6 +271,21 @@ public:
     const Rendering::RenderedFieldSemanticObserver::Stats&
     renderedFieldSemanticObservationStats() const {
         return _renderedFieldObserver.stats();
+    }
+
+    // Experimental authority boundary earned by PR #369. OFF is the permanent
+    // default. Turning it ON first enables/replays semantic observation, then a
+    // backend may consume only a provenance-checked SourceRho literal-zero proof.
+    // Unknown/stale/unsupported slots remain exact.
+    void setRadianceZeroAuthorityExperimentEnabled(bool on) {
+        if (_radianceZeroAuthorityExperimentEnabled == on) return;
+        if (on && !_renderedFieldObserver.enabled())
+            setRenderedFieldSemanticObservationEnabled(true);
+        _radianceZeroAuthorityExperimentEnabled = on;
+        onRadianceZeroAuthorityExperimentChanged();
+    }
+    bool radianceZeroAuthorityExperimentEnabled() const {
+        return _radianceZeroAuthorityExperimentEnabled;
     }
 
     // Rung 8 execution seam: visibility is DERIVED transport truth, never an
@@ -439,6 +459,36 @@ public:
     virtual void reloadShaders() {}
 
 protected:
+    // Build one fixed-size decision vector from the already-admitted source slots.
+    // No spatial lookup, hierarchy walk, record scan, or semantic hash search is
+    // permitted here. A missing/stale proof leaves the slot at 0 (exact).
+    std::vector<uint8_t> buildRadianceZeroAuthorityMask() {
+        std::vector<uint8_t> mask(_radianceSources.size(), 0);
+        if (!_radianceZeroAuthorityExperimentEnabled ||
+            !_renderedFieldObserver.enabled())
+            return mask;
+
+        for (size_t slot = 0; slot < _radianceSources.size(); ++slot) {
+            const auto handle = _renderedFieldObserver.publishRadianceHandle(slot);
+            if (!handle) continue;
+            const auto proof = _renderedFieldObserver.inspectRadianceProof(
+                *handle, _radianceSources[slot]);
+            if (proof &&
+                *proof == Rendering::RenderedFieldSemanticObserver::ProofKind::
+                              RadianceZeroContribution)
+                mask[slot] = 1;
+        }
+        return mask;
+    }
+
+    void recordRadianceZeroAuthorityApplied(uint64_t count) {
+        _renderedFieldObserver.recordAuthorityBypassesApplied(count);
+    }
+
+    // Backend hook: authority is shader structure for WebGPU, so changing the
+    // experiment gate must invalidate any pipeline memo that encoded the old mask.
+    virtual void onRadianceZeroAuthorityExperimentChanged() {}
+
     // The hooks a backend actually implements. The state above (model stack,
     // recorded camera, viewport) is shared and lives here.
     virtual void applyModel(const glm::mat4& /*model*/) {}
@@ -476,6 +526,7 @@ private:
     std::vector<Rendering::RadianceSourceBinding> _radianceSources;
     uint64_t _radianceSourcesRevision = 0;
     bool _radianceVisibilityEnabled = false;
+    bool _radianceZeroAuthorityExperimentEnabled = false;
     std::vector<Rendering::VolumeDensityBinding> _volumeDensitySources;
     uint64_t _volumeDensitySourcesRevision = 0;
     Rendering::RenderedFieldSemanticObserver _renderedFieldObserver;
