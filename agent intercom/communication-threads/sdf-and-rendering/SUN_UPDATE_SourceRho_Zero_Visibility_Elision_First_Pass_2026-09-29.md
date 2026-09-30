@@ -184,3 +184,20 @@ The production `SdfWgsl.cpp` mutation was retried and was blocked by the reposit
 Semantic-overlap status is unchanged: broader Mythos Bind/authored-relevance counsel is architectural context, not a dependency invalidation for this bounded experiment.
 
 Exact continuation point: retry this same one-line structural seam on PR #482; after it lands, add deterministic visibility invocation/SDF-step accounting and hostile real-WebGPU mutation/rebinding exactness evidence before interpreting economics.
+
+
+---
+
+## Continuation — exact-head CI #4361 complete; production seam still write-gated
+
+Exact successor head at entry: `d22ed839bf9752037e53c6024fd17cfe75a2a2f9`. Current canonical remains `3749f50a19dac55366d83269a227a0b49f905b25`. Targeted reads found no semantic dependency invalidation or overlap, so canonical motion still does not warrant reconciliation.
+
+Exact-head focused CI #4361 (run `36732159180`) completed: SDF range-proxy verification SUCCESS and SDF authored-Perlin A/B SUCCESS. Focused CPU and Slow Adapter remain red in the previously classified unrelated baseline families. These greens preserve the renderer baseline gate; they are not successor pixel-exactness evidence because the production elision has not landed.
+
+The active-branch seam was re-read verbatim. The multi-source emitter contains exactly one direct-transport `sourceVisibility(pf, nf, source.position.xyz)` call after `shapedRadiance`, and the same loop already computes the provenance-validated per-source `authoritativeZeroRho` bit. No new lookup or relevance search is required.
+
+The bounded mutation was retried: for that validated bit only, emit finite `pathVisibility = 1.0`; otherwise retain the exact existing visibility call. The repository safety/write gate blocked the production mutation before commit creation. No alternate branch, force update, snapshot overwrite, reconciliation, or scope widening was attempted.
+
+Rejected hypotheses remain unchanged: baseline CI green is not pixel exactness; deterministic work removal alone is not frame economics; broader Bind/authored-relevance architecture is not part of this experiment.
+
+Exact continuation point: retry this same single production seam on PR #482. Once accepted, immediately add deterministic visibility invocation/SDF-step accounting and hostile real-WebGPU mutation/rebinding fail-open pixel witnesses before interpreting timing or promotion.
