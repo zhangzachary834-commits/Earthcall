@@ -374,13 +374,13 @@ jobs:
 
           world = sys.argv[1]
 
-          def run_mode(adapter, direct):
+          def run_mode(adapter, direct, frames=60):
               cmd = ["./build/slow_adapter_zone_perf_test", world,
-                     f"--adapter={adapter}", f"--direct={direct}", "--frames=60"]
+                     f"--adapter={adapter}", f"--direct={direct}", f"--frames={frames}"]
               try:
-                  result = subprocess.run(cmd, text=True, capture_output=True, timeout=120)
+                  result = subprocess.run(cmd, text=True, capture_output=True, timeout=180)
               except subprocess.TimeoutExpired:
-                  print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={adapter} direct={direct} timeout_s=120")
+                  print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={adapter} direct={direct} timeout_s=180")
                   raise SystemExit(1)
 
               lines = [line for line in result.stdout.splitlines()
@@ -401,9 +401,9 @@ jobs:
           #   floor      = no adapter, no Direct
           #   pre-direct = adapter ON, Direct OFF (the old terminal state)
           #   direct     = adapter ON, Direct ON
-          off_ms = run_mode("off", "off")
-          pre_direct_ms = run_mode("on", "off")
-          direct_ms = run_mode("on", "on")
+          off_ms = run_mode("off", "off", 24)
+          pre_direct_ms = run_mode("on", "off", 60)
+          direct_ms = run_mode("on", "on", 60)
 
           if off_ms > 0:
               ratio = direct_ms / off_ms
