@@ -1422,9 +1422,11 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
         auto& meanings = meaningsByText[key];
         if (!meanings.insert(meaning).second || meanings.size() < 2) return;
         it->second.description = "shared spelling · Metalaw decides";
-        std::string joined;
+        std::string joined = "shared spelling · Metalaw decides · ";
+        bool first = true;
         for (const auto& denotation : meanings) {
-            if (!joined.empty()) joined += "  ·  ";
+            if (!first) joined += "  ·  ";
+            first = false;
             joined += denotation;
         }
         it->second.detail = joined;
