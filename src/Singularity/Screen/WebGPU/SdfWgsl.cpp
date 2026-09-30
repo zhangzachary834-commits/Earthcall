@@ -2975,6 +2975,9 @@ Program compile(const geom::SdfNode& root,
             for (std::size_t i = 0; i < radianceSources->size(); ++i) {
                 const auto& source = (*radianceSources)[i];
                 const std::string s = std::to_string(i);
+                const bool authoritativeZeroRho =
+                    radianceZeroAuthority && i < radianceZeroAuthority->size() &&
+                    (*radianceZeroAuthority)[i] != 0;
                 sum += "    {\n";
                 sum += "        let source = RS[" + s + "u];\n";
                 sum += "        if (source.control.x > 0.5) {\n";
