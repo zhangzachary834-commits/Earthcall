@@ -169,3 +169,18 @@ The repository write guard blocked the production `SdfWgsl.cpp` mutation before 
 ### Exact continuation point
 
 Retry the same surgical `SdfWgsl.cpp` write on PR #482. Once accepted, add witness-only deterministic `sourceVisibility` invocation/SDF-step counters and extend the real-WebGPU hostile mutation/rebinding witness before interpreting any timing. Do not widen scope.
+
+
+---
+
+## Retry pass — blocked writes retried 2026-09-30
+
+Exact successor head at entry: `bf0aee91b994cede7f1e284f768f60449141a8b7`.
+
+The bounded production seam was re-read verbatim before mutation. The intended change remains only the multi-source direct-transport line immediately after `shapedRadiance`: when the already-computed, provenance-validated per-source `authoritativeZeroRho` bit is true, emit finite `pathVisibility = 1.0`; otherwise emit the unchanged `sourceVisibility(pf, nf, source.position.xyz)` call. Ambient accumulation, source presence, authored response, chroma, independent V1-V4 semantics, and stale/unknown fail-open behavior remain untouched.
+
+The production `SdfWgsl.cpp` mutation was retried and was blocked by the repository write/safety gate before mutation. No alternate branch, force update, snapshot overwrite, canonical reconciliation, or scope widening was attempted.
+
+Semantic-overlap status is unchanged: broader Mythos Bind/authored-relevance counsel is architectural context, not a dependency invalidation for this bounded experiment.
+
+Exact continuation point: retry this same one-line structural seam on PR #482; after it lands, add deterministic visibility invocation/SDF-step accounting and hostile real-WebGPU mutation/rebinding exactness evidence before interpreting economics.
