@@ -1427,7 +1427,7 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
             if (!joined.empty()) joined += "  ·  ";
             joined += denotation;
         }
-        it->second.detail = joined;
+        it->second.detail = "shared spelling · Metalaw decides · " + joined;
         it->second.snippet.clear();
     };
 
