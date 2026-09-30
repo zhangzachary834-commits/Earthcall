@@ -455,6 +455,7 @@ on a quiet machine) so the tripwire tightens behind the fix.
 - Earthcall for Python.
 
 ## Unified Opcode-Property Substrate
+- **Give OntoMath a `Bind` op carrying a `PropertyPath`** — the Law world binds free variables to any being (`MathBindings`), the render world allows only `p,x,y,z`, so every radiance rung hand-wrote one binding as a named `FieldNode` slot plus a C++ precedence rule (nine slots, nineteen fixed names, 66 fallbacks); one op lowered to a `ParameterBlock` slot or an inlined Piecewise ends the rungs. → [audit §11](../../audits/2026-09-30_mythos_cube_beneath_the_field_audit.md) — Zach's hypothesis (2026-09-30), confirmed by Claude Fable 5.1 (Mythos).
 - OntoMath and ActionNode and possibly more should all be unified under a fundamental set of opcode invariants.
 
 ## OntoMath, Opcodes, and Properties

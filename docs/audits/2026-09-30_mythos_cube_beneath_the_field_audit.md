@@ -98,4 +98,37 @@ Zach's doctrine already says the right thing; the code still obeys the old one i
 
 None of these add a class for a domain noun. Every one of them *removes* one.
 
+---
+
+## 11. Addendum — Zach's hypothesis about the rungs, tested (2026-09-30, later the same session)
+
+**What Zach said.** Working Rungs 3–9 with the Sun, "every new rung was essentially hardcoding a new way to ask *what's the source of truth* for the same equation … 'this rung makes it so the MATERIAL can decide how light interacts with it' is a hardcoded 'material is the source of truth' thing." He suspected the renderer itself exerts pressure toward this, combined with the underdeveloped PropertyPath/opcode system.
+
+**Verdict: correct, and the mechanism is precise.** Earthcall has two expression-evaluation worlds that were never joined.
+
+*The Law world has bindings.* `MathBindings = std::map<std::string, PropertyPath>` (`MathBinding.hpp:25`): a free variable in an authored expression is bound to *whose* property answers it, and the qualifier is the author's choice — `position.y` (the subject), `@being-id.position.y` (a named being), `@event.subject…`. "WHOSE property a path names is the author's choice" is the doc comment. This is the unified source-of-truth mechanism. It exists, it is serialized, laws use it every tick.
+
+*The render world has no bindings.* In WGSL a Piecewise may reference exactly four names: the ambient point, `x`, `y`, `z` (`SdfWgsl.cpp:714-717`). `OntoMath::MathNode` has no Reference/Bind op — its op list is Scalar, Vector, ScalarField, VectorField, Round, Expr. So an authored expression on the GPU *cannot* say "the roughness is whatever `@material.clay.roughness` is" or "the chroma is the Person's joy colour." The only way for one being's truth to reach another being's equation is for C++ to carry it there by hand. That is what each rung did:
+
+| Rung adds | Where |
+|---|---|
+| one named `Piecewise` member on `FieldNode` | `volumeDensity`, `volumeExtinction`, `volumeScattering`, `volumeChroma`, `volumePhase`, `volumeEmission`, `lightChroma`, `lightAngular` (`FieldNode.hpp:129-196`) — nine slots |
+| one named property the renderer greps for | `"light.source"`, `"volumeOccluder"`, … — nineteen fixed names read by `EngineRender`, `AuthorableLight`, `VolumeDensity` |
+| one revision counter, one binding field, one uniform | `RadianceSourceBinding`, `VolumeDensityBinding`, `PersistentSdfParams` |
+| one precedence rule in C++ | 66 mentions of compat/fallback/priority across the five render files; e.g. "Null means the explicit compatibility law `sigma_t = 0.5 * D`; it never means borrow rho" |
+
+Each rung is therefore a *hand-written binding*: "for this variable of the lighting equation, the source of truth is this member on this kind of being, and if absent, this constant." Nine slots is nine bindings that a Person cannot re-point. "Material decides" (Rung 5) and "FieldNode decides" (Rungs 7–9) are the same act with a different hardcoded `PropertyPath`.
+
+**Why the renderer pushes this way.** WGSL is compiled: an expression's inputs must be either baked into shader structure or delivered as uniform slots. The path of least resistance is a named uniform per truth. But the emitter *already* has the neutral mechanism: `ParameterBlock` turns every numeric value into a parameter slot and keeps only structure in the WGSL (`SdfWgsl.hpp:~40`), refreshed per frame into `_persistentSdfParams`. A binding `@material.clay.roughness → slot 7` is one more parameter refreshed from a `PropertyPath` read. Nothing about the GPU forbids it; the two mechanisms simply never met.
+
+**The minimum invariant that ends the rungs.** Give `OntoMath::MathNode` one op, `Bind`, whose payload is a `PropertyPath` (the Law world's existing type), and make the emitter lower a `Bind` to a parameter slot when the path resolves to a scalar/vector per frame, or inline the referenced being's own Piecewise when it resolves to a field (the same subtree-sharing `SdfNode` already does). Then:
+
+- `FieldNode` keeps one authored `Piecewise` per *role* the equation names (density, extinction, chroma…) — or better, the lighting equation itself becomes an authored Piecewise whose free variables are bound, and there are no roles in C++ at all;
+- "Material decides" becomes `Bind(@material.<id>.brdf)` written by a Person, and "the Person's joys decide the chroma" becomes `Bind(@zach.joys.rootColour)` with no new rung;
+- every C++ precedence rule ("if absent, `0.5 * D`") becomes an authored default expression on `material.default` / `field.default`, legible and governable.
+
+This is the same recommendation as §10 item 6 (`brdfExpr`) seen from underneath: the BRDF slot was going to be one more hand-written binding. `Bind` makes it the last one, because after it the Person writes the bindings.
+
+**What I did not do.** I did not prototype `Bind`; the WGSL side (per-frame scalar slots vs. inlined fields) needs Sol's structure/value identity to stay exact, and that is his instrument. This addendum names the seam; the To-do bullet under *Unified Opcode-Property Substrate* points here.
+
 *— Mythos*
