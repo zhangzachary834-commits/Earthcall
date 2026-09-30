@@ -216,3 +216,22 @@ This commit is implementation only, not a promotion verdict. Pixel exactness, ho
 Semantic-overlap status remains unchanged: canonical motion and broader Mythos architecture counsel do not constitute an integration event for this bounded experiment.
 
 Exact continuation point: run exact-head CI and add the deterministic work-unit + hostile real-WebGPU witnesses against `2910d1b3...`; stop and record if exactness fails or economics are immaterial.
+
+
+---
+
+## Continuation — repaired emitter green; native pixel witness prepared but write-gated — 2026-09-30
+
+Entry successor head: `8b0f0ef76ff31883ff21c9b85429395d5ae5e82f`. Current canonical: `df68ceb42cc82549c4d5d84514951b9bc2f4f645`.
+
+Targeted canonical comparison found no changes in the bounded SourceRho authority/rendering dependency set, so canonical motion is not an integration event and no reconciliation is warranted.
+
+Exact-head focused CI #4387 (run `36762352474`) completed on the repaired emitter. SDF range-proxy verification, Focused CPU, and authored-Perlin A/B are green. Slow Adapter remains the separate failing lane. This establishes that the repaired emitter compiles and preserves the existing renderer baseline; it is not successor pixel-exactness evidence.
+
+The maintained native WebGPU authority witness was audited narrowly. It already reports cold/steady CPU wall time, GPU timestamps when available, WGSL size, parameter upload bytes, recurring compile/cache residency, authority artifact/mask residency, semantic setup cost, dirty-slot repair cost, and a live zero-to-nonzero fail-open recompilation. It does not currently read back framebuffer pixels. Its `authorityBypassesApplied` counter counts semantic authority applications, not executed visibility invocations or SDF visibility steps.
+
+A bounded next witness was prepared: add CopySrc/readback to the existing offscreen target, compare exact-vs-authority framebuffer bytes for the proven zero source, then compare exact-vs-authority bytes again after the existing live zero-to-nonzero dirty-slot repair. The repository safety gate blocked that test-file mutation before commit creation. No alternate branch, force update, snapshot overwrite, or scope widening was attempted.
+
+Rejected hypotheses: existing WebGPU baseline parity cannot substitute for this successor's pixel A/B; WGSL text or authority-application counts cannot substitute for executed visibility work units; timing cannot be interpreted before exactness.
+
+Exact continuation point: retry the native framebuffer-readback witness on this same PR. If pixel exactness passes, extend hostile rebinding/provenance fail-open cases and deterministic visibility invocation/SDF-step accounting, then interpret the already-maintained full economics. If exactness fails, record why and stop.
