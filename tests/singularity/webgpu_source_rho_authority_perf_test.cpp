@@ -49,7 +49,13 @@ double median(std::vector<double> values) {
 struct Sample {
     double wallMs = 0.0;
     Renderer::FrameStats stats;
+    std::vector<unsigned char> pixels;
 };
+
+struct MapResult { bool done = false; };
+void onMap(WGPUMapAsyncStatus, WGPUStringView, void* userdata, void*) {
+    static_cast<MapResult*>(userdata)->done = true;
+}
 
 struct Arm {
     std::vector<double> wallMs;
@@ -84,7 +90,7 @@ int main() {
     }
 
     WGPUTextureDescriptor td = {};
-    td.usage = WGPUTextureUsage_RenderAttachment;
+    td.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_CopySrc;
     td.dimension = WGPUTextureDimension_2D;
     td.size = {W, H, 1};
     td.format = WGPUTextureFormat_RGBA8Unorm;
@@ -94,6 +100,17 @@ int main() {
     WGPUTextureView target = wgpuTextureCreateView(texture, nullptr);
     if (!texture || !target) {
         std::printf("SOURCE_RHO_AUTH_PERF FAIL offscreen target\n");
+        return 1;
+    }
+
+    constexpr uint32_t kBytesPerRow = W * 4; // 5120, 256-byte aligned.
+    WGPUBufferDescriptor readbackDesc = {};
+    readbackDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead;
+    readbackDesc.size = static_cast<uint64_t>(kBytesPerRow) * H;
+    WGPUBuffer readback =
+        wgpuDeviceCreateBuffer(gpu.device, &readbackDesc);
+    if (!readback) {
+        std::printf("SOURCE_RHO_AUTH_PERF FAIL readback buffer\n");
         return 1;
     }
 
@@ -155,7 +172,43 @@ int main() {
     exactRenderer.setCamera(view, proj, eye);
     authorityRenderer.setCamera(view, proj, eye);
 
-    auto renderOne = [&](WebGpuRenderer& renderer) -> Sample {
+    auto readTargetPixels = [&]() -> std::vector<unsigned char> {
+        WGPUCommandEncoder enc =
+            wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
+        WGPUTexelCopyTextureInfo src = {};
+        src.texture = texture;
+        src.aspect = WGPUTextureAspect_All;
+        src.origin = {0, 0, 0};
+        WGPUTexelCopyBufferInfo dst = {};
+        dst.buffer = readback;
+        dst.layout.bytesPerRow = kBytesPerRow;
+        dst.layout.rowsPerImage = H;
+        WGPUExtent3D copySize = {W, H, 1};
+        wgpuCommandEncoderCopyTextureToBuffer(enc, &src, &dst, &copySize);
+        WGPUCommandBuffer cmd = wgpuCommandEncoderFinish(enc, nullptr);
+        wgpuQueueSubmit(gpu.queue, 1, &cmd);
+        wgpuCommandBufferRelease(cmd);
+        wgpuCommandEncoderRelease(enc);
+
+        MapResult mapped;
+        WGPUBufferMapCallbackInfo callback = {};
+        callback.mode = WGPUCallbackMode_AllowProcessEvents;
+        callback.callback = onMap;
+        callback.userdata1 = &mapped;
+        const uint64_t byteCount = static_cast<uint64_t>(kBytesPerRow) * H;
+        wgpuBufferMapAsync(
+            readback, WGPUMapMode_Read, 0, byteCount, callback);
+        while (!mapped.done)
+            wgpuDevicePoll(gpu.device, true, nullptr);
+        const auto* bytes = static_cast<const unsigned char*>(
+            wgpuBufferGetConstMappedRange(readback, 0, byteCount));
+        std::vector<unsigned char> out(bytes, bytes + byteCount);
+        wgpuBufferUnmap(readback);
+        return out;
+    };
+
+    auto renderOne = [&](WebGpuRenderer& renderer,
+                         bool capturePixels = false) -> Sample {
         renderer.setModel(glm::mat4(1.0f));
         const auto t0 = std::chrono::steady_clock::now();
         renderer.beginFrameOffscreen(
@@ -174,13 +227,20 @@ int main() {
         s.wallMs =
             std::chrono::duration<double, std::milli>(t1 - t0).count();
         s.stats = renderer.frameStats();
+        if (capturePixels)
+            s.pixels = readTargetPixels();
         return s;
     };
 
     // Capture one-time compilation economics separately from steady execution.
     // These cold samples are descriptive rather than a speed gate.
-    const Sample exactCold = renderOne(exactRenderer);
-    const Sample authorityCold = renderOne(authorityRenderer);
+    const Sample exactCold = renderOne(exactRenderer, true);
+    const Sample authorityCold = renderOne(authorityRenderer, true);
+    if (exactCold.pixels != authorityCold.pixels) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL zero-rho authority changed pixels\n");
+        return 1;
+    }
     if (exactCold.stats.sdfProgramCompiles != 1 ||
         authorityCold.stats.sdfProgramCompiles != 1) {
         std::printf(
@@ -272,7 +332,14 @@ int main() {
     }
     const uint64_t authorityApplicationsBeforeRepairDraw =
         repairStatsAfter.authorityBypassesApplied;
-    const Sample repairDraw = renderOne(authorityRenderer);
+    const Sample repairDraw = renderOne(authorityRenderer, true);
+    exactRenderer.setRadianceSources(repairedSources, 52002);
+    const Sample exactRepairDraw = renderOne(exactRenderer, true);
+    if (repairDraw.pixels != exactRepairDraw.pixels) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL zero->nonzero repair changed pixels\n");
+        return 1;
+    }
     const auto repairStatsAfterDraw =
         authorityRenderer.renderedFieldSemanticObservationStats();
     if (repairDraw.stats.sdfProgramCompiles != 1) {
@@ -385,6 +452,7 @@ int main() {
             authorityRenderer.renderedFieldSemanticObservationStats()
                 .authorityBypassesApplied));
 
+    wgpuBufferRelease(readback);
     wgpuTextureViewRelease(target);
     wgpuTextureRelease(texture);
     return 0;
