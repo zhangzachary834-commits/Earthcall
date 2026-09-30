@@ -105,3 +105,35 @@ No new semantic integration event was introduced by the recovery. The restored f
 3. Add deterministic witness-only counters for visibility invocations and SDF steps before interpreting timing.
 4. Exercise hostile live mutation/rebinding and exact pixel evidence.
 5. Keep ambient presence, response semantics, channel sovereignty, V1–V4, and exact fallback untouched.
+
+
+---
+
+## Continuation — exact-head CI classified; production seam write transiently blocked
+
+Exact head at start of this pass: `4f2dae852d9ae57aa964f76b10bb9492d199c54b`.
+
+Focused CI #4315 completed with the same unrelated red classifications already seen in the predecessor line:
+
+- SDF range-proxy verification: **SUCCESS**
+- SDF authored-Perlin A/B: **SUCCESS**
+- Focused CPU: 50/51 effective pass, failing only `law_line_test.cpp:252` on the unrelated `shared spelling` detail assertion
+- Slow Adapter: timeout in `saves/worlds/chess_app.json` with adapter=off and direct=off
+
+No SourceRho/WebGPU baseline regression is exposed by this exact-head run.
+
+Current canonical at targeted read: `7b70a0f17bf69d70a24fa8aeba8cbfcf45befa83`. Canonical motion by itself is not treated as an integration event.
+
+### Exact production seam
+
+The multi-source WGSL generator has one narrow direct-transport seam:
+
+`shapedRadiance -> pathVisibility = sourceVisibility(...) -> directRadiance`
+
+The same per-source `authoritativeZeroRho` bit already controls emission of the literal-zero rho body. The intended successor edit is therefore structural and source-local: for that validated bit only, emit finite constant `pathVisibility = 1.0`; otherwise retain the exact `sourceVisibility` call. Ambient, source existence, chroma, authored response, and all independent volumetric semantics remain untouched.
+
+A write of precisely that seam was attempted on PR #482 and was transiently blocked by the repository write guard. No alternate branch, force update, snapshot overwrite, or scope widening was attempted.
+
+### Exact continuation point
+
+Retry the same single `SdfWgsl.cpp` seam write on PR #482. Once accepted, add deterministic witness-only visibility invocation/SDF-step accounting and extend the real WebGPU hostile lifetime/pixel witness before interpreting timing.
