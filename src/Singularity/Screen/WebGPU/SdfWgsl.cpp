@@ -3005,7 +3005,10 @@ Program compile(const geom::SdfNode& root,
                 }
 
                 sum += "            let shapedRadiance = radialRadiance * angularRadiance;\n";
-                sum += "            let pathVisibility = sourceVisibility(pf, nf, source.position.xyz);\n";
+                if (authoritativeZeroRho)
+                    sum += "            let pathVisibility = 1.0;\n";
+                else
+                    sum += "            let pathVisibility = sourceVisibility(pf, nf, source.position.xyz);\n";
                 sum += "            let directRadiance = shapedRadiance * pathVisibility;\n";
                 sum += "            let diff = max(dot(nw, Ls), 0.0);\n";
                 sum += "            let specShape = inst.shading.z * "
