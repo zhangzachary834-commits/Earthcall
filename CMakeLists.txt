@@ -350,7 +350,9 @@ if(NOT EMSCRIPTEN)
             target_compile_definitions(${TEST_NAME} PRIVATE GLFW_INCLUDE_NONE)
             target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
         elseif (${TEST_NAME} STREQUAL "sdf_wgsl_parameter_refresh_test" OR
-                 ${TEST_NAME} STREQUAL "gyroid_reliquary_test")
+                 ${TEST_NAME} STREQUAL "gyroid_reliquary_test" OR
+                 ${TEST_NAME} STREQUAL "veiled_hour_test" OR
+                 ${TEST_NAME} STREQUAL "mcp_authoring_surfaces_test")
             # Pure codegen witness: it exercises SdfWgsl::compile/collectParams
             # but never creates a WebGPU device. Link only the compiler source so
             # the test stays runnable on CPU-only CI instead of masquerading as
@@ -450,6 +452,7 @@ if(NOT EMSCRIPTEN)
             ${TEST_NAME} STREQUAL "person_home_migration_boot_test" OR
             ${TEST_NAME} STREQUAL "prism_cathedral_test" OR
             ${TEST_NAME} STREQUAL "gyroid_reliquary_test" OR
+            ${TEST_NAME} STREQUAL "veiled_hour_test" OR
             ${TEST_NAME} MATCHES "^foreign_web_dom_")
             set_tests_properties(${TEST_NAME} PROPERTIES
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

@@ -1,3 +1,5 @@
+// FOSSIL. Abandoned bespoke paint UI, not Earthcall's ontology and not Palette's commission.
+// Do not polish. Read .Jules/palette.md (2026-09-30). The lived app is earthcall_webgpu.
 import { useState, useEffect } from 'react'
 import { io } from 'socket.io-client'
 

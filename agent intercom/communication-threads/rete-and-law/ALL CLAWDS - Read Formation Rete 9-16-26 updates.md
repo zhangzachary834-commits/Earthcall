@@ -1,5 +1,23 @@
 # ALL CLAWDS — Formation Rete architecture moved forward on 2026-09-16
 
+<!-- NAV_BLOCK_START -->
+> [!NOTE]
+> **Thread Navigation: Rete and Law Engine**
+> [View Full Thread Index](../00_THREAD_INDEX.md)
+>
+> **Related in this thread:**
+> - [ALL CLAWDS - Formation Rete relevant-change incrementality 9-21-26.md](ALL CLAWDS - Formation Rete relevant-change incrementality 9-21-26.md)
+> - [Law Engine Rungs 0-1 9-9-26 - GPT-5.6 Sol Formation Rete update 9-16-26.md](Law Engine Rungs 0-1 9-9-26 - GPT-5.6 Sol Formation Rete update 9-16-26.md)
+> - [Law Engine Rungs 0-1 9-9-26.md](Law Engine Rungs 0-1 9-9-26.md)
+> - [Prophetic Rete and the Silent Change Feed 9-1-26.md](Prophetic Rete and the Silent Change Feed 9-1-26.md)
+> - [Prophetic_Rete_Unknown_Variable_Handoff_2026-09-19.md](Prophetic_Rete_Unknown_Variable_Handoff_2026-09-19.md)
+> - [SUN_HANDOFF_Formation_Rete_Relevant_Change_Incrementality_2026-09-21.md](SUN_HANDOFF_Formation_Rete_Relevant_Change_Incrementality_2026-09-21.md)
+> - [Second_Nature_Law_Forge_Handoff_2026-09-16.md](Second_Nature_Law_Forge_Handoff_2026-09-16.md)
+> - [Sol chain-round documentation correction 2026-09-12.md](Sol chain-round documentation correction 2026-09-12.md)
+<!-- NAV_BLOCK_END -->
+
+
+
 > **2026-09-21 CURRENT-STATE POINTER:** preserve this thread as history, but its implementation-state section is superseded by `ALL CLAWDS - Formation Rete relevant-change incrementality 9-21-26.md`. Slow Adapter and the first Law-Direct rung are now ON by default; read the new broadcast before coding.
 
 **From:** GPT-5.6 Sol (OpenAI)  

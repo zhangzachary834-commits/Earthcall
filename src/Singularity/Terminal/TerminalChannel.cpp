@@ -1053,7 +1053,25 @@ void TerminalChannel::speak(LawManager& laws, const std::string& text) {
     }
 
     const std::string id = mintLawId();
-    auto law = std::make_shared<Law>(p.name.empty() ? text : p.name, std::vector<Singular*>{author});
+    std::string persistence;
+    const std::string refusal = enact(laws, p, text, {author}, id, persistence);
+    if (!refusal.empty()) {
+        _status = refusal;
+        say(_status);
+        return;
+    }
+    _lastCreated = id;
+    _status = "authored " + id + " (written by " + author->getIdentifier() + ")" + persistence;
+    say(_status + "\n  " + _preview + notes);
+}
+
+std::string TerminalChannel::enact(LawManager& laws, const LawSentence::Parse& p,
+                                   const std::string& text,
+                                   const std::vector<Singular*>& authors,
+                                   const std::string& id, std::string& persistence) {
+    if (authors.empty()) return "refused: nothing enters the world without an author";
+    if (laws.find(id)) return "refused: a Law named " + id + " already exists";
+    auto law = std::make_shared<Law>(p.name.empty() ? text : p.name, authors);
     law->setLawIdentifier(id);
     law->setActivation(p.activation);
     law->setScope(p.scope);
@@ -1071,19 +1089,72 @@ void TerminalChannel::speak(LawManager& laws, const std::string& text) {
     // Keeping the Law means live Zone membership; durable persistence still
     // requires an explicit Zone save. Say both truths instead of letting the
     // green authored check imply that the new Law already survived a restart.
-    std::string persistence = " · live for this session (no active Zone to save)";
+    persistence = " · live for this session (no active Zone to save)";
     if (ZoneManager* zones = ZoneManager::live()) {
         if (!zones->adoptLawIntoActiveZone(id)) {
             laws.remove(id);
-            _status = "refused: the new Law could not enter the active Zone's authored closure";
-            say(_status);
-            return;
+            return "refused: the new Law could not enter the active Zone's authored closure";
         }
         persistence = " · live in " + zones->active().name() + " · Save Zone to keep it after restart";
     }
-    _lastCreated = id;
-    _status = "authored " + id + " (written by " + author->getIdentifier() + ")" + persistence;
-    say(_status + "\n  " + _preview + notes);
+    return {};
+}
+
+bool TerminalChannel::isReadOnlySentence(const std::string& text) {
+    std::size_t b = text.find_first_not_of(" \t");
+    std::size_t e = text.find_last_not_of(" \t\r\n");
+    if (b == std::string::npos) return true;
+    return text.compare(b, 2, "??") == 0 || text[e] == '?';
+}
+
+TerminalChannel::ForeignSentence TerminalChannel::authorForeign(
+        LawManager& laws, const std::string& text,
+        const std::vector<Singular*>& authors, const std::string& identifier) {
+    ForeignSentence out;
+    const LawSentence::Parse p = LawSentence::parse(text, vocabulary(laws));
+    out.preview = p.preview();
+    out.openClauses = p.openClauses;
+    const std::string notes = p.notes.empty() ? std::string{} : join(p.notes, "; ");
+
+    if (p.search) {
+        out.status = "search";
+        out.candidates = p.candidates;
+        return out;
+    }
+    if (!p.ok) {
+        out.status = "refused";
+        out.error = p.error;
+        out.candidates = p.candidates;
+        return out;
+    }
+    if (p.previewOnly) {
+        out.status = "preview";
+        out.detail = dryRun(p) + (notes.empty() ? "" : "; " + notes);
+        return out;
+    }
+    if (p.immediate) {
+        out.status = "refused";
+        out.error = "an immediate act (\"delete ...\") needs the Terminal's confirming Metalaw; "
+                    "a foreign First Mover deletes a Law it may touch with delete_law";
+        return out;
+    }
+    if (identifier.empty()) {
+        out.status = "refused";
+        out.error = "an identifier is required so the act can be held to the mover's granted scope";
+        return out;
+    }
+    std::string persistence;
+    const std::string refusal = enact(laws, p, text, authors, identifier, persistence);
+    if (!refusal.empty()) {
+        out.status = "refused";
+        out.error = refusal;
+        return out;
+    }
+    out.status = "authored";
+    out.lawId = identifier;
+    out.detail = "written by " + authors.front()->getIdentifier() + persistence +
+                 (notes.empty() ? "" : "; " + notes);
+    return out;
 }
 
 void TerminalChannel::say(const std::string& text) { propSetOutput(text); }

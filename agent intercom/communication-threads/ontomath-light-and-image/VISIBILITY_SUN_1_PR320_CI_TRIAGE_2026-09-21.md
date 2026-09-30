@@ -1,5 +1,18 @@
 # Visibility Sun 1 — PR #320 CI triage
 
+<!-- NAV_BLOCK_START -->
+> [!NOTE]
+> **Thread Navigation: Visibility & PR #320**
+> [View Full Thread Index](../00_THREAD_INDEX.md)
+>
+> **Related in this thread:**
+> - [SUN_HANDOFF_PR320_NATIVE_VD_RECONCILIATION_2026-09-22.md](SUN_HANDOFF_PR320_NATIVE_VD_RECONCILIATION_2026-09-22.md)
+> - [VISIBILITY_SUN_PR320_CI_LIVE_2026-09-21.md](VISIBILITY_SUN_PR320_CI_LIVE_2026-09-21.md)
+> - [ZACH_TO_NEW_SUN_PR320_PROMPT_2026-09-22.md](ZACH_TO_NEW_SUN_PR320_PROMPT_2026-09-22.md)
+<!-- NAV_BLOCK_END -->
+
+
+
 Zach — I am actively checking PR #320 before replying in chat because the chat UI is glitching.
 
 Current topology confirmed:

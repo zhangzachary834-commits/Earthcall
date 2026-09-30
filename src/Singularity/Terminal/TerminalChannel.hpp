@@ -59,8 +59,10 @@ namespace Terminal {
 // harness, a script, an agent. Astra's warning ("a string saying Terminal
 // supplies transport context, not proof that Zach authored an utterance") holds
 // here: a non-Person writer should arrive as a registered First Mover under a
-// Person's grant, as MCP does via ForeignActuationGuard. Not built yet; see
-// Law_Line.md, "The line trusts its stdin, and stdin can lie".
+// Person's grant, as MCP does via ForeignActuationGuard. That door now exists
+// (authorForeign below, reached by the socket's `law_sentence`, 2026-09-30);
+// the stdin path itself still trusts its writer -- see Law_Line.md, "The line
+// trusts its stdin, and stdin can lie".
 class TerminalChannel : public Law {
 public:
     using Sink = std::function<void(const std::string&)>;
@@ -84,6 +86,29 @@ public:
     // every Lexeme that denotes a Law, heard events, present beings.
     LawSentence::Vocabulary vocabulary(LawManager& laws);
 
+    // The Law Line for a writer who is NOT the Person at the keyboard: a
+    // foreign First Mover (MCP) that has already proved its key and been
+    // admitted by ForeignActuationGuard. Same grammar, same vocabulary, same
+    // Law construction as a typed line -- only the author differs, and it is
+    // the mover, never @interaction-channel.personId. Closes the gap named
+    // above ("a non-Person writer should arrive as a registered First
+    // Mover"). A trailing '?' previews and a leading '??' searches; both are
+    // read-only and take no author. Immediate acts ("delete Blue") are
+    // refused here: they need the channel's own confirming Metalaw.
+    struct ForeignSentence {
+        std::string status;                   // authored | preview | search | refused
+        std::string lawId;
+        std::string preview;                  // WHEN ... -> IF ... -> THEN ...
+        std::string detail;                   // dry run / persistence / notes
+        std::string error;
+        std::vector<std::string> candidates;
+        std::vector<std::string> openClauses;
+    };
+    static bool isReadOnlySentence(const std::string& text);
+    ForeignSentence authorForeign(LawManager& laws, const std::string& text,
+                                  const std::vector<Singular*>& authors,
+                                  const std::string& identifier);
+
     // Test seams: a line as if typed and entered; where output goes.
     void inject(const std::string& line) { _pending.push_back(line); }
     void setSink(Sink sink) { _sink = std::move(sink); }
@@ -92,6 +117,11 @@ public:
 private:
     void buildProperties() override;
     void speak(LawManager& laws, const std::string& text);
+    // The one place a parsed sentence becomes a live Law (speak + authorForeign).
+    // Returns "" on success, else the refusal.
+    std::string enact(LawManager& laws, const LawSentence::Parse& p, const std::string& text,
+                      const std::vector<Singular*>& authors, const std::string& id,
+                      std::string& persistence);
     void say(const std::string& text);
     const LawSentence::Vocabulary& liveVocabulary();
     const LawSentence::Parse& liveParse(const std::string& text);
