@@ -889,3 +889,86 @@ Zach: The msgpack itself works properly. I manually verified the new msgpack its
   - Please load an existing bloated JSON save file (e.g., `clawd-monastery-save` or `synthesis_studio`), make a minor change, and save it.
   - Verify that the resulting `.ecform` file on disk has shrunk drastically (typically dropping from 200MB down to single digit MBs or less) due to the removal of `semanticRoots["zones"]` duplication, capping `stakeholders` history to 20, and disabling `j.dump(2)` whitespace bloating.
   - Verify that the world loads seamlessly despite these changes (backward compatibility is handled transparently via `materializeSemanticRoots` and the new `MigrationFramework`).
+
+---
+
+## The Gyroid Reliquary — first look (added 2026-09-29)
+
+*opencode (space-bunny-free) · session `gyroid-reliquary-2026-09-29` · 2026-09-29.
+[Full task](../Specific%20Tasks/Zones%20and%20Ourverse/The_Gyroid_Reliquary/The_Gyroid_Reliquary.md).*
+
+Zach asked for a new Zone, mind-blowing, unlike anything this Earth has ever seen.
+I built one and I can prove the mathematics is right — **119 checks green, 0
+ray-marcher tunnels in 3945 rays**, every landing on a surface the Zone actually
+authors, and all 47 of its expressions confirmed to **compile to WGSL**.
+
+*(Zach's first run spammed `SdfWgsl compile refused ... names the variable 'p'`
+forever and drew nothing. That was mine — every Piecewise declared an illegal
+piece-bound variable — and it is fixed and guarded; see task doc §4.5. The
+rebuild is what you want, not the binary you just ran.)*
+
+What I cannot do is see it. Everything below is something only you can judge, and
+every one of it is a thing I asserted that a human has to confirm.
+
+**How to get there:** launch Earthcall (`earthcall_webgpu` — *not* the OpenGL
+build, which falls back to a cached tessellation and would show you nothing like
+this), open the Zone list, and choose **The Gyroid Reliquary**. It is owned by
+you and deletable by you. It should be about the fifth zone down.
+
+- [ ] **First: confirm the log is quiet.** You should see no
+      `SdfWgsl compile refused` lines at all now. If any are left, paste one —
+      each carries the exact expression that refused, and I can read it straight
+      to the node.
+- [ ] **The first thing you see should be a woven sphere.** Look at it from
+      outside, from roughly 30 m. You should be able to see *through* it — the
+      lattice is a thin shell, so corridors run clean through — and the gold
+      Heart should be visible glowing at the centre. Say whether it reads as a
+      place or as a screensaver. I genuinely do not know which.
+- [ ] **Fly or walk inside, and tell me whether it holds up close.** From just
+      inside the vessel the walls are ~12 m apart and the labyrinth should feel
+      like architecture. This is the view I designed for and the one I most want
+      to be wrong about.
+- [ ] **Look up through the Oculus.** There is a 6 m hole cut straight through
+      the crown, and a white-gold beam in it. The beam is the only vertical in
+      the Zone. If it does not read as the thing the whole room is built around,
+      the composition is wrong and I would like to know.
+- [ ] **The Heart is the thing to check most carefully.** It should be *see-through
+      and woven* — you can look into it and out the far side, and it is visibly
+      made of the same lattice as the walls at a third of the size. It should
+      NOT look like a solid gold ball. (I got this wrong the first time: it came
+      out solid, with about a tenth of a metre of fluting on the skin. The test
+      that caught it now measures the Heart's solid fraction, 50.3%. Your eye is
+      still the authority on whether that looks *woven*.)
+- [ ] **Colour.** The membrane is meant to be opalescent — pale gold, rose and
+      ice-blue banding in three directions, phase-locked to the same gyroid the
+      walls are cut from. The Heart is gold, so there is a teal counter-light
+      ringing it at 16 m; without that complement the gold is just an orange
+      blob. Say whether the palette holds together or whether it is a clash.
+- [ ] **Frame rate, and this is the one I most expect to be a problem.** The
+      conservative distance function is what makes the Zone provably free of
+      holes, and it costs steps. I measured 95% of rays reaching the surface
+      within the renderer's 192-step budget from 32 m, but I have **no idea
+      what it feels like to fly around in it.** Please tell me if it is
+      unusable, and if so whether you would rather have (a) a smaller Reliquary,
+      (b) a slightly optimistic distance that trades the no-holes guarantee for
+      speed, or (c) something else. I would take your answer over my proof here.
+- [ ] **Look at the Glass Floor.** Two crossed wave trains under everything. The
+      Floor is the one shape the engine can *prove* is a heightfield, and also
+      the one place it declines to differentiate the wave, so its normals are
+      central-differenced rather than exact. Tell me whether you can see the
+      difference. I suspect you cannot, and I would rather know.
+
+**Two things I found in passing that are yours to decide, not mine:**
+
+- [ ] **`prism_cathedral_test` was already red, and I found out why.** It was
+      missing from a `WORKING_DIRECTORY` allow-list in `CMakeLists.txt`, so under
+      `ctest` it had been failing at *hydration* and never once reaching its
+      actual checks. I added the one-line fix (it was a list whose own comment
+      says to add tests to it). It now runs 91 checks and fails **2**, both about
+      Prism Cathedral's own authored radiance at Z=40 and Z=107. I did not touch
+      those — that save file isn't mine to edit without your say-so. Do you want
+      them chased?
+- [ ] **Growing the Reliquary is one number** (`‖p‖ − 30` in the authored
+      expression, plus its `fieldExtent` follows). I left it at 30 m so your
+      first look costs nothing, and I have not measured the frame cost of a wider
+      one. Worth trying at 60 once you have felt the 30 m version.
