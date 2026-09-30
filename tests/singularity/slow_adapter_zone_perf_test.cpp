@@ -72,12 +72,49 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
+    std::filesystem::path sourceRoot = "saves";
+    if (!std::filesystem::exists(sourceRoot / "worlds") && std::filesystem::exists("../saves/worlds")) {
+        sourceRoot = "../saves";
+    }
+    sourceRoot = std::filesystem::absolute(sourceRoot);
+
+    std::filesystem::path sandbox = std::filesystem::temp_directory_path() /
+        ("earthcall-perf-sandbox-" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()));
+    std::filesystem::create_directories(sandbox);
+
+    std::error_code ec;
+    if (std::filesystem::exists(sourceRoot / "zones", ec)) {
+        std::filesystem::copy(sourceRoot / "zones", sandbox / "zones",
+            std::filesystem::copy_options::recursive, ec);
+    }
+    if (std::filesystem::exists(sourceRoot / "laws", ec)) {
+        std::filesystem::copy(sourceRoot / "laws", sandbox / "laws",
+            std::filesystem::copy_options::recursive, ec);
+    }
+    if (std::filesystem::exists(sourceRoot / "homes", ec)) {
+        std::filesystem::copy(sourceRoot / "homes", sandbox / "homes",
+            std::filesystem::copy_options::recursive, ec);
+    }
+    if (std::filesystem::exists(sourceRoot / "worlds", ec)) {
+        std::filesystem::copy(sourceRoot / "worlds", sandbox / "worlds",
+            std::filesystem::copy_options::recursive, ec);
+    }
+
+    struct SandboxGuard {
+        std::filesystem::path path;
+        ~SandboxGuard() {
+            SaveSystem::setSaveRoot("");
+            std::error_code ignored;
+            std::filesystem::remove_all(path, ignored);
+        }
+    } guard{sandbox};
+
+    SaveSystem::setSaveRoot(sandbox.string());
     TestSupport::BootedEngineHarness h;
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld((sandbox / "worlds" / std::filesystem::path(world).filename()).string());
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
