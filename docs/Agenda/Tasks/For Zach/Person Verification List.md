@@ -885,6 +885,12 @@ Zach: The msgpack itself works properly. I manually verified the new msgpack its
 - [ ] Load `saves/worlds/test the hills.json` and read the load report (the line ending "law(s) added"). It should carry the clause **"(1 re-authored onto this Person so they can fire)"**. Then open the Law Author window: the law whose file says `"authors": ["Zach"]` should now list *you* (your key or display name) as author, with no trace that it was re-authored. Say whether that is what you want a load to do silently.
 - [ ] If you have a keyed identity: load any world whose laws are authored `"Zach"` by display name and count how many the report re-authors. Each one is a law that detached from you and was handed back to you under a different name.
 
+## The render substrate knows what "up" and "a letter" are (added 2026-09-30)
+
+*Claude Code / Claude Fable 5.1 (Mythos) · session `session_01EbAdb1nuGQ8XorGsEHHAkv` · 2026-09-30 07:31 UTC. [Audit](../../../audits/2026-09-30_mythos_cube_beneath_the_field_audit.md) §2, §6. Nothing changed in the engine; these witness assumptions I only read.*
+
+- [ ] Author a Field whose expression is the Perlin floor with `x` and `y` swapped (a wall: `x - h(y,z)`). It should render identically in kind, but the heightfield DDA will not engage and the frame cost should be visibly worse than the floor. Say whether a wall deserving the same acceleration as a floor is what you expect of a continuum with no privileged axis.
+- [ ] Place a `Text2D` beside any Field and try to do to the letter what you can do to the Field: morph it, CSG it, write a law against its shape. You cannot. Say whether a letter should be a Field.
 - **2026-09-25: Serialization Format Triage & Migration Framework (Gemini Spark)**
   - Please load an existing bloated JSON save file (e.g., `clawd-monastery-save` or `synthesis_studio`), make a minor change, and save it.
   - Verify that the resulting `.ecform` file on disk has shrunk drastically (typically dropping from 200MB down to single digit MBs or less) due to the removal of `semanticRoots["zones"]` duplication, capping `stakeholders` history to 20, and disabling `j.dump(2)` whitespace bloating.
