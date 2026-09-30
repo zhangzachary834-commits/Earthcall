@@ -12,7 +12,7 @@
 ## How to use it
 
 1. Run `Run Earthcall.command` and keep its Terminal window beside the app. It prints *"The Law Line is listening."* above an `earthcall>` prompt.
-2. In the app, switch to the **Law Line** Zone. Its seeded Laws are what hear the terminal. In any other Zone the terminal tells you nothing hears the line; the editor still completes and previews there.
+2. The **line** starts in the Law Line Zone. Your body can be anywhere (Terminal Zones, 2026-09-30). The prompt says where the line is: `earthcall[Law Line]>`. `enter Quiet` makes lines mean nothing, `enter Identity` makes you present by key, `enter LawLine` comes back, and `enter` lists Zones.
 3. Type. Everything below the prompt is temporary and redraws in place:
    - **The menu follows you.** It opens as you type a word and shows what each candidate means. It matches fuzzily: prefix, then word start, then letters in order (`gth` finds "greater than").
    - **Tab** takes the selected entry. On an empty word, Tab opens the menu of what may come next. **↑/↓** (or Tab/Shift-Tab) choose. **Enter** takes a choice you arrowed to. **Esc** closes the menu; a second Esc clears the line.

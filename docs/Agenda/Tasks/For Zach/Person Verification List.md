@@ -1,5 +1,18 @@
 # Person Verification List
 
+## Terminal Zones: `enter <zone>`, and keying yourself from the terminal
+
+*Claude Code · Claude Opus 5.5 · session `08b0f730-6e49-4c49-b27f-3a89c810ca4b` · 2026-09-30. Zach: "ALL MY LINES GO TO THE LAW AUTHORING CLI … TREAT THIS LIKE ZONES … MAKE AN OPCODE TO SWITCH". Rebuild `earthcall_webgpu`, then launch with `Run Earthcall.command`.*
+
+- [ ] The terminal prompt reads `earthcall[Law Line]>` even when your body is somewhere else, and a Law sentence there still authors a Law.
+- [ ] `enter Quiet`: the prompt changes, your body does **not** move in the app, and typing anything just scrolls. You should see one note that nothing hears the line there.
+- [ ] Walk your body into the Law Line Zone in the app while the line stays in Quiet. Typed lines must still **not** become Laws.
+- [ ] **Key yourself:** `enter Identity`. It should say your Person has no key yet and ask for a passphrase with bullets instead of letters. Type it twice. It should answer `keyed and present: 'Zach' is now did:…`. Check that `saves/persons/Zach.ecform` now has a `personId` and that the passphrase appears nowhere on screen or in `saves/logs/terminal-history.txt`.
+- [ ] Next launch: `enter Identity`, then type the passphrase once, and you should be `present`. A wrong one should say `did not open`. Ctrl-C at the passphrase prompt should cancel.
+- [ ] `enter World` works and hears nothing. That's on purpose, per your gate note.
+- [ ] `help` shows a ZONES line.
+
+
 ## Sonnet can author SDFs, volumes, and Law Line sentences (and the dev-mode door is shut)
 
 *Claude Code · Claude Opus 5.5 · session `08b0f730-6e49-4c49-b27f-3a89c810ca4b` · 2026-09-30. Zach: "make sure the SDFs work … volumetrics can be authored … Sonnet can use the new Law authoring CLI too". Needs the First Mover setup in the section below (your key unlocked, Sonnet granted `zones/SonnetGarden/**` and `laws/sonnet-*/**`). Restart the earthcall MCP server (`/mcp`) so it loads the two new tools.*

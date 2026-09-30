@@ -14,12 +14,16 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
+#include "Identity/FirstMoverRegister.hpp"
+#include "Identity/PersonPresence.hpp"
+#include "Singularity/Core/Engine.hpp"
 
 #include <algorithm>
 #include <cerrno>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <ctime>
 #include <filesystem>
 #include <fstream>
@@ -497,7 +501,19 @@ void TerminalChannel::draw() {
 #ifdef EARTHCALL_TERMINAL_POSIX
     if (!_attached) return;
     _editor.prompt = _prompt;
-    if (awaitingAnswer()) {
+    if (!_zone.empty()) {
+        // "earthcall> " -> "earthcall[LawLine]> "
+        std::string base = _prompt;
+        std::string tail;
+        const std::size_t gt = base.rfind('>');
+        if (gt != std::string::npos) { tail = base.substr(gt); base = base.substr(0, gt); }
+        _editor.prompt = base + "[" + zoneLabel() + "]" + tail;
+    }
+    _editor.secret = _secretStage != 0;
+    if (_secretStage == 1) _editor.prompt = "passphrase (hidden) › ";
+    if (_secretStage == 2) _editor.prompt = "choose a passphrase for your new key (hidden) › ";
+    if (_secretStage == 3) _editor.prompt = "type it again (hidden) › ";
+    if (awaitingAnswer() && _secretStage == 0) {
         // The Metalaw's question, about what was named, as the prompt itself.
         const std::string about = _pendingTargets.size() > 1 ? "one of these" : "“" + _pendingNames + "”";
         _editor.prompt = _question + " " + about + "? " +
@@ -574,7 +590,14 @@ void TerminalChannel::handleKeys(const std::vector<Key>& keys, double now) {
         }
         switch (_editor.press(key)) {
             case LineEditor::Outcome::Submitted: {
-                const std::string line = _editor.takeSubmitted();
+                std::string line = _editor.takeSubmitted();
+                if (_secretStage != 0) {
+                    // Never echoed, never in history: bullets and a note only.
+                    printAbove((_color ? "\x1b[2m" : "") + std::string("(passphrase entered · hidden)") +
+                               (_color ? "\x1b[0m" : ""));
+                    _pending.push_back(std::move(line));
+                    break;
+                }
                 printAbove(_editor.echo(line));
                 std::string t = line;
                 t.erase(0, t.find_first_not_of(" \t"));
@@ -595,6 +618,10 @@ void TerminalChannel::handleKeys(const std::vector<Key>& keys, double now) {
                 showHelp();
                 break;
             case LineEditor::Outcome::Interrupt:
+                if (_secretStage != 0) {
+                    cancelSecret("nothing unlocked");
+                    break;
+                }
                 if (awaitingAnswer()) {          // Ctrl-C is a no
                     cancelDeletion("nothing deleted");
                     break;
@@ -685,8 +712,16 @@ void TerminalChannel::sense(LawManager& laws) {
 #endif
 
     if (_pending.empty()) return;
+    placeLine();   // a line typed in the very first frame still has a location
     std::string line = _pending.front();
     _pending.pop_front();
+    // A secret line (Identity) is consumed here and nowhere else: never
+    // published, never _lastLine, never history, never a property.
+    if (_secretStage != 0) {
+        takeSecret(line);
+        if (_attached) draw();
+        return;
+    }
     // While a Metalaw's question waits, the next line is its answer — never a
     // new sentence. An empty line answers too: it is not a yes.
     if (awaitingAnswer()) {
@@ -695,19 +730,34 @@ void TerminalChannel::sense(LawManager& laws) {
         return;
     }
     if (line.find_first_not_of(" \t") == std::string::npos) return;
+    {
+        std::string t = line;
+        t.erase(0, t.find_first_not_of(" \t"));
+        while (!t.empty() && (t.back() == ' ' || t.back() == '\t')) t.pop_back();
+        if (handleEnter(t)) {
+            if (_attached) draw();
+            return;
+        }
+    }
 
     _lastLine = line;
     _linesEntered += 1.0;
     Core::EventBus::instance().publish(
         ECA::Event{kLineEntered, this, nullptr, std::time(nullptr), std::string{}});
     if (!laws.rete().hearsType(kLineEntered)) {
-        say("(no Law in this Zone hears terminal-line-entered, so nothing will act on that line. "
-            "The LawLine Zone carries the seed Laws that do.)");
+        say("(no Law where the line is hears terminal-line-entered, so nothing will act on that line. "
+            "`enter LawLine` to author Laws, `enter Identity` to become present, `enter` to list Zones.)");
     }
 }
 
 void TerminalChannel::act(LawManager& laws) {
     _laws = &laws;
+    placeLine();
+    // A Law asked the kernel to take one secret line (the Identity Zone).
+    if (_unlockRequests != _unlocksHandled) {
+        _unlocksHandled = _unlockRequests;
+        beginSecret();
+    }
     // A confirmed deletion: the deleting Metalaw ran this tick (or did not).
     if (!_deletingId.empty()) {
         const bool gone = laws.find(_deletingId) == nullptr && findBeing(_deletingId) == nullptr;
@@ -1157,6 +1207,182 @@ TerminalChannel::ForeignSentence TerminalChannel::authorForeign(
     return out;
 }
 
+// ---------------------------------------------------------------------------
+// Terminal Zones (Zach, 2026-09-30) -- Terminal_Zones.md. ⚠ GATE: nothing is
+// to be built on top of these two opcodes until Zach verifies them.
+// ---------------------------------------------------------------------------
+
+// Where the line should be, applied: the first visit puts it in the LawLine
+// Zone when there is one (the Terminal's purpose, so the Law Line keeps working
+// wherever the Person's body stands); a Law's write to `zone` moves it.
+void TerminalChannel::placeLine() {
+    if (!_zoneBootTried && ZoneManager::live()) {
+        _zoneBootTried = true;
+        if (_requestedZone.empty() && _zone.empty() &&
+            ZoneManager::live()->findZoneIndex("LawLine") != static_cast<size_t>(-1)) {
+            _requestedZone = "LawLine";
+        }
+    }
+    if (!_requestedZone.empty() && _requestedZone != _zone) {
+        const std::string target = _requestedZone;
+        if (!moveLine(target)) _requestedZone = _zone;   // stayed; the reason was said
+    }
+}
+
+std::string TerminalChannel::zoneLabel() const {
+    if (ZoneManager* zones = ZoneManager::live()) {
+        const size_t i = zones->findZoneIndex(_zone);
+        if (i != static_cast<size_t>(-1)) return zones->zones()[i]->name();
+    }
+    return _zone;
+}
+
+bool TerminalChannel::handleEnter(const std::string& t) {
+    const auto isWord = [&](const char* w) {
+        const std::size_t n = std::strlen(w);
+        if (t.size() < n) return false;
+        for (std::size_t i = 0; i < n; ++i) {
+            if (std::tolower(static_cast<unsigned char>(t[i])) != w[i]) return false;
+        }
+        return t.size() == n || t[n] == ' ';
+    };
+    if (!isWord("enter")) return false;
+    std::string target = t.size() > 5 ? t.substr(6) : std::string{};
+    target.erase(0, target.find_first_not_of(" \t"));
+    if (target.empty()) {
+        ZoneManager* zones = ZoneManager::live();
+        if (!zones) { say("(no Zones are live yet)"); return true; }
+        std::string out = "the line is in " + (_zone.empty() ? std::string("no Zone") : zoneLabel()) +
+                          ". Zones it can enter:";
+        for (const auto& z : zones->zones()) {
+            if (!z) continue;
+            out += "\n  " + z->name() + (z->name() != z->getIdentifier() ? "  (" + z->getIdentifier() + ")" : "");
+        }
+        say(out);
+        return true;
+    }
+    _requestedZone = target;
+    if (!moveLine(target)) _requestedZone = _zone;
+    return true;
+}
+
+bool TerminalChannel::moveLine(const std::string& target) {
+    ZoneManager* zones = ZoneManager::live();
+    if (!zones) {
+        say("refused: no Zones are live yet, so the line has nowhere to go");
+        return false;
+    }
+    const size_t index = zones->findZoneIndex(target);
+    if (index == static_cast<size_t>(-1)) {
+        say("refused: no single Zone is named '" + target + "' (type `enter` to list them)");
+        return false;
+    }
+    const std::string id = zones->zones()[index]->getIdentifier();
+    if (id == _zone) {
+        say("the line is already in " + zoneLabel());
+        return true;
+    }
+    // The same preflight a Person's walk uses: every Law root, author and
+    // trigger resolved before anything changes, or nothing changes.
+    if (!zones->holdZoneClosure(kLineHolder, index)) {
+        say("refused: " + zones->zones()[index]->name() +
+            "'s Laws could not be held (see the log above); the line stays in " +
+            (_zone.empty() ? std::string("no Zone") : zoneLabel()));
+        return false;
+    }
+    Singular* previous = nullptr;
+    if (!_zone.empty()) {
+        const size_t pi = zones->findZoneIndex(_zone);
+        if (pi != static_cast<size_t>(-1)) previous = zones->zones()[pi].get();
+    }
+    if (previous) {
+        Core::EventBus::instance().publish(
+            ECA::Event{"terminal-zone-exited", this, previous, std::time(nullptr), std::string{}});
+    }
+    _zone = id;
+    _requestedZone = id;
+    _vocab.reset();
+    _parse.reset();
+    say("the line is in " + zoneLabel());
+    Core::EventBus::instance().publish(
+        ECA::Event{"terminal-zone-entered", this, zones->zones()[index].get(), std::time(nullptr),
+                   std::string{}});
+    if (_laws && !_laws->rete().hearsType(kLineEntered)) {
+        say("  (nothing here hears a typed line: it will scroll and do nothing. `enter <zone>` leaves.)");
+    }
+    return true;
+}
+
+void TerminalChannel::beginSecret() {
+    Person* person = _presencePerson ? _presencePerson : Core::Engine::instance().getPerson();
+    if (!person) {
+        say("refused: no Person is loaded to become present");
+        return;
+    }
+    if (person->hasIdentity() &&
+        Identity::FirstMoverRegister::instance().isAuthenticatedPerson(person->personId())) {
+        say("'" + person->getDisplayName() + "' is already present (" +
+            person->personId().abbreviated() + ")");
+        return;
+    }
+    if (person->hasIdentity() || Identity::keyedProfileExists()) {
+        _secretStage = 1;
+        say("Identity: type your passphrase. It is hidden, never echoed, never kept. Ctrl-C cancels.");
+    } else {
+        _secretStage = 2;
+        say("Identity: '" + person->getDisplayName() + "' has no key yet. Choose a passphrase to KEY your "
+            "Person (you will type it twice). There is no recovery if it is lost. Ctrl-C cancels.");
+    }
+    _awaitingSecretFlag = true;
+    _editor.secret = true;
+    _editor.refresh();
+}
+
+void TerminalChannel::cancelSecret(const std::string& why) {
+    std::fill(_pendingSecret.begin(), _pendingSecret.end(), '\0');
+    _pendingSecret.clear();
+    _secretStage = 0;
+    _awaitingSecretFlag = false;
+    _editor.secret = false;
+    say("Identity: cancelled · " + why);
+}
+
+void TerminalChannel::takeSecret(std::string& secret) {
+    const auto wipe = [](std::string& v) { std::fill(v.begin(), v.end(), '\0'); v.clear(); };
+    Person* person = _presencePerson ? _presencePerson : Core::Engine::instance().getPerson();
+    if (!person) {
+        wipe(secret);
+        cancelSecret("no Person is loaded");
+        return;
+    }
+    if (_secretStage == 1) {
+        const auto r = Identity::unlockPresentPerson(*person, secret);
+        wipe(secret);
+        _secretStage = 0;
+        _awaitingSecretFlag = false;
+        _editor.secret = false;
+        say("Identity: " + r.report);
+        return;
+    }
+    if (_secretStage == 2) {
+        _pendingSecret = std::move(secret);
+        wipe(secret);
+        _secretStage = 3;
+        _editor.refresh();
+        return;
+    }
+    // Stage 3: confirmation.
+    const bool same = (secret == _pendingSecret);
+    Identity::PresenceResult r;
+    if (same) r = Identity::keyPresentPerson(*person, _pendingSecret);
+    wipe(secret);
+    wipe(_pendingSecret);
+    _secretStage = 0;
+    _awaitingSecretFlag = false;
+    _editor.secret = false;
+    say(same ? "Identity: " + r.report : "Identity: the two passphrases differ; nothing was keyed");
+}
+
 void TerminalChannel::say(const std::string& text) { propSetOutput(text); }
 
 void TerminalChannel::propSetOutput(const std::string& v) {
@@ -1512,6 +1738,10 @@ void TerminalChannel::showHelp() {
             }
         });
     };
+    section("ZONES", [&](HelpRow& r) {
+        r.add("enter <zone>  moves the line (not you): LawLine authors Laws, Identity makes you present, "
+              "Quiet hears nothing · `enter` lists", "3");
+    });
     section("WORDS", [&](HelpRow& r) { r.add("every word is a Lexeme that denotes a Law — add your own", "3"); });
     sample("preset", "presets", colorOf("preset"));
     sample("action", "actions", colorOf("action"));
@@ -1594,6 +1824,14 @@ void TerminalChannel::buildProperties() {
         "speakRequests", this, &TerminalChannel::propSpeakRequests,
         &TerminalChannel::propSetSpeakRequests));
     level("spokenRequests", &_spoken);
+    // Terminal Zones: where the line is. Writing it asks the line to move
+    // (applied in act(), through the same held-closure preflight as `enter`).
+    registerProperty(std::make_unique<ComputedProperty<TerminalChannel, std::string>>(
+        "zone", this, &TerminalChannel::propZone, &TerminalChannel::propSetZone));
+    // Identity: a Law bumps this to ask the kernel for ONE secret line.
+    writable("unlockRequests", &_unlockRequests);
+    level("unlocksHandled", &_unlocksHandled);
+    level("awaitingSecret", &_awaitingSecretFlag);
     level("linesEntered", &_linesEntered);
     level("attached", &_attached);
 }

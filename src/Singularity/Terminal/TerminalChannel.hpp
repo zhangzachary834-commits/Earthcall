@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 
+class Person;
+
 namespace Singularity {
 namespace Terminal {
 
@@ -109,6 +111,22 @@ public:
                                   const std::vector<Singular*>& authors,
                                   const std::string& identifier);
 
+    // ------------------------------------------------------------------
+    // Terminal Zones (Zach, 2026-09-30; Terminal_Zones.md). The line has a
+    // LOCATION: a real Zone whose Laws hear what is typed there. The Person's
+    // body stays where it is; only the line moves. `enter <zone>` is the one
+    // move opcode and works in every Zone (a Zone that decided whether you
+    // may leave it could trap the line). A Law moves it by writing `zone`.
+    // ⚠ GATE: build nothing on top of these opcodes until Zach verifies them
+    // as minimal-maximal invariants.
+    // ------------------------------------------------------------------
+    static constexpr const char* kLineHolder = "terminal-channel";
+    const std::string& zone() const { return _zone; }
+    bool awaitingSecret() const { return _secretStage != 0; }
+    // Test seam: the Person the Identity Zone makes present (default: the
+    // Engine's Person).
+    void setPresencePerson(Person* person) { _presencePerson = person; }
+
     // Test seams: a line as if typed and entered; where output goes.
     void inject(const std::string& line) { _pending.push_back(line); }
     void setSink(Sink sink) { _sink = std::move(sink); }
@@ -117,6 +135,13 @@ public:
 private:
     void buildProperties() override;
     void speak(LawManager& laws, const std::string& text);
+    void placeLine();
+    bool moveLine(const std::string& target);         // false = stayed, and said why
+    bool handleEnter(const std::string& trimmed);      // true = the line was `enter ...`
+    void beginSecret();
+    void takeSecret(std::string& secret);
+    void cancelSecret(const std::string& why);
+    std::string zoneLabel() const;
     // The one place a parsed sentence becomes a live Law (speak + authorForeign).
     // Returns "" on success, else the refusal.
     std::string enact(LawManager& laws, const LawSentence::Parse& p, const std::string& text,
@@ -148,6 +173,8 @@ private:
     void detach();
 
     std::string propOutput() const { return _output; }
+    std::string propZone() const { return _zone; }
+    void propSetZone(const std::string& v) { _requestedZone = v; }
     void propSetOutput(const std::string& v);
     double propSpeakRequests() const { return _speakRequests; }
     void propSetSpeakRequests(const double& v) { _speakRequests = v; }
@@ -160,6 +187,20 @@ private:
     double _speakRequests = 0.0;
     double _spoken = 0.0;
     std::string _authorPath = "@interaction-channel.personId";
+    // Terminal Zones: where the line is, where a Law asked it to go.
+    std::string _zone;
+    std::string _requestedZone;
+    bool _zoneBootTried = false;
+    // Identity: a Law asks (unlockRequests), the kernel takes one secret line.
+    double _unlockRequests = 0.0;
+    double _unlocksHandled = 0.0;
+    bool _awaitingSecretFlag = false;          // registered mirror of _secretStage
+    // NOT registered, named per NO_BLACK_BOX §5 (secrets beneath the Kernel):
+    // _secretStage (0 none, 1 unlock, 2 new passphrase, 3 confirm) and
+    // _pendingSecret (the first entry while keying, wiped after confirmation).
+    int _secretStage = 0;
+    std::string _pendingSecret;
+    Person* _presencePerson = nullptr;          // test seam; null = Engine's Person
     std::string _lexemeRelation = "denotes";
     std::string _scopeBeing;
     std::string _status;
