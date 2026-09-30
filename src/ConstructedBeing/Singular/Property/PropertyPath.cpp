@@ -126,20 +126,22 @@ PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t sta
             const auto& idsFromHere = _joinedIds[i];
             
             PropertyValue* foundDyn = nullptr;
-            for (std::size_t runLength = 1; runLength <= idsFromHere.size(); ++runLength) {
+            for (std::size_t runLength = idsFromHere.size(); runLength > 0; --runLength) {
                 Earthcall::StringId id = idsFromHere[runLength - 1];
                 if (PropertyValue* candidate = currentOwner->getDynamicPropertyPtr(id)) {
                     foundDyn = candidate;
                     consumed = runLength;
+                    break;
                 }
             }
 
             if (!foundDyn) {
-                for (std::size_t runLength = 1; runLength <= idsFromHere.size(); ++runLength) {
+                for (std::size_t runLength = idsFromHere.size(); runLength > 0; --runLength) {
                     Earthcall::StringId id = idsFromHere[runLength - 1];
                     if (Property* candidate = currentOwner->findProperty(id)) {
                         foundReg = candidate;
                         consumed = runLength;
+                        break;
                     }
                 }
             }
@@ -258,6 +260,10 @@ PropertyPath::PathResult PropertyPath::getValue(Singular& root, PropertyValue& o
 
 PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyValue& v, std::size_t startIndex) const {
     ResolvedSlot slot = resolve(root, startIndex);
+
+    // A read-only wrapper refuses even when the proposed value is identical.
+    // Equality is a value comparison, not authority to attempt a write.
+    if (slot.prop && !slot.prop->isStructurallyWritable()) return PathResult::ReadOnly;
 
     const auto announce = [&](PathResult result, Property* prop, Singular* on, const std::string& fallbackName = "") {
         if (result == PathResult::Ok && on) {

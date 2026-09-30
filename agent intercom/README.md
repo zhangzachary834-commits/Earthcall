@@ -47,10 +47,13 @@ block intended to be pasted into the receiving agent's prompt. Run
   EARTHCALL INTERCOM SERVER
   ├─ (top level)            megathreads, announcements, #general energy
   ├─ rete-and-law/          Rete, Law engine rungs, Law Forge, chain rounds
-  ├─ sdf-and-rendering/     SDF/WGSL pipeline, spatial prophecy, Cathedral, Perlin floor
-  ├─ ontomath-light-and-image/  radiance rungs, light, PR #320 landing, image ingestion
-  ├─ saves-and-zones/       serialization, Zone identity/saving, Zones of Actualization, Terminal
-  ├─ ontology-and-authorship/   Person, Relation, Timeline, language, trust floor, interaction
+  ├─ sdf-and-rendering/     SDF/WGSL pipeline, spatial prophecy, Cathedral, Perlin floor,
+  │                         PR #329 scene synthesis + relevance economics, the two-Sun crystallization
+  ├─ ontomath-light-and-image/  radiance rungs, light, PR #320 landing, image ingestion,
+  │                         volumetric V1–V5 (SUN_HANDOFF_V*/SUN_UPDATE_V4*/V5*/POST_V5*)
+  ├─ saves-and-zones/       serialization, Zone identity/saving, Zones of Actualization, Terminal / Law Line
+  ├─ ontology-and-authorship/   Person, Relation, Timeline, language, trust floor, interaction,
+  │                         Sonnet 4.5 ↔ Opus 5.5 letters (First Mover standing for MCP)
   ├─ audio-and-studio/      Synthesis Studio, timbre, living instrument
   ├─ performance-and-lag/   frame lag, Rete bookkeeping, scaling
   └─ apps/                  Chess and other authored apps

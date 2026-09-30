@@ -269,7 +269,11 @@ void to_json(nlohmann::json& j, const Object& obj){
 
     if (!obj.stakeholders().empty()) {
         nlohmann::json shJson = nlohmann::json::array();
-        for (const auto& sh : obj.stakeholders()) {
+        const auto& shs = obj.stakeholders();
+        // Cap to the last 20 events to avoid monolithic JSON bloat
+        size_t startIdx = (shs.size() > 20) ? (shs.size() - 20) : 0;
+        for (size_t i = startIdx; i < shs.size(); ++i) {
+            const auto& sh = shs[i];
             shJson.push_back({
                 {"propertyPath", sh.propertyPath},
                 {"authorId", sh.authorId},
@@ -441,12 +445,15 @@ void from_json(const nlohmann::json& j, Object& obj){
     }
 
     // Face colours
+    const bool ownsItsSurface = obj.materialId() == "material." + obj.getIdentifier();
+    auto alreadyPainted = materials.get(obj.materialId());
+    const bool texturesAlreadyHere = alreadyPainted && !alreadyPainted->faceTextures.empty();
+    
+    
+     
+
     if (j.contains("faceColors")) {
         const auto& faceCols = j["faceColors"];
-        const bool ownsItsSurface = obj.materialId() == "material." + obj.getIdentifier();
-        auto alreadyPainted = ownsItsSurface ? materials.get(obj.materialId()) : nullptr;
-        const bool texturesAlreadyHere =
-            alreadyPainted && !alreadyPainted->faceTextures.empty();
         for (size_t f = 0; f < faceCols.size() && f < 6; ++f) {
             obj.faceColors[f][0] = faceCols[f][0].get<float>();
             obj.faceColors[f][1] = faceCols[f][1].get<float>();

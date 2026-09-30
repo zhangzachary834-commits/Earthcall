@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
     assert(active->getIdentifier() == "Chess");
 
     Object* board = findObj(*active, "object.chess.board");
-    Object* state = findCat("state.chess");
+    Object* state = findObj(*active, "state.chess");
     Object* author = findCat("grok-4.6");
     Object* whiteQueen = findObj(*active, "piece-white-queen-3-0");
     Object* blackQueen = findObj(*active, "piece-black-queen-3-7");
@@ -170,7 +170,7 @@ int main(int argc, char** argv) {
     std::cout << "--- e2 pawn clicked, then e4 ---\n";
     click(harness.interaction, harness.lawManager, whitePawnE2, 0.5f, 0.3f, -2.5f);
     assert(asBool(*whitePawnE2, "isSelected"));
-    assert(asInt(*state, "selectedX") == 4);
+    if (asInt(*state, "selectedX") != 4) { std::cerr << "selectedX is " << asInt(*state, "selectedX") << "\n"; assert(false); }
     assert(asInt(*state, "selectedY") == 1);
 
     click(harness.interaction, harness.lawManager, board, 0.5f, 0.0f, -0.5f);

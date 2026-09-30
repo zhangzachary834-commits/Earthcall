@@ -139,6 +139,7 @@ void authenticate(Peer& p, const PrivateKey& key) {
 } // namespace
 
 int main() {
+    Relation::s_developerMode = false;
     const auto saves = std::filesystem::temp_directory_path() / "earthcall_fm_ws_saves";
     std::filesystem::remove_all(saves);
     std::filesystem::create_directories(saves);
@@ -237,10 +238,10 @@ int main() {
         r = await(a, ofType("create_law_ack"));
         assert(r["status"] == "refused" && r["reasonCode"] == "outside-scope");
 
-        // 6. The Person's body and presence have no mover coordinate.
+        // 6. Person motion is intrinsic; foreign Zone activation is unmapped.
         a.send({{"type", "teleport_player"}, {"position", {0, 50, 0}}});
         r = await(a, ofType("teleport_ack"));
-        assert(r["status"] == "refused" && r["reasonCode"] == "unmapped-resource");
+        assert(r["status"] == "refused" && r["reasonCode"] == "kernel-person-body");
         a.send({{"type", "switch_zone"}, {"index", 0}});
         r = await(a, ofType("switch_zone_ack"));
         assert(r["status"] == "refused" && r["reasonCode"] == "unmapped-resource");
@@ -275,6 +276,23 @@ int main() {
         a.close();
     }
 
+    // Developer mode may stand in for a foreign session in the old workshop
+    // path, but it never opens an intrinsic Person body/location guard.
+    Relation::s_developerMode = true;
+    {
+        Peer developer;
+        developer.connect();
+        waitOpen(developer);
+        developer.send({{"type", "teleport_player"}, {"position", {0, 50, 0}}});
+        auto r = await(developer, ofType("teleport_ack"));
+        assert(r["status"] == "refused" && r["reasonCode"] == "kernel-person-body");
+        developer.send({{"type", "switch_zone"}, {"index", 0}});
+        r = await(developer, ofType("switch_zone_ack"));
+        assert(r["status"] == "refused" && r["reasonCode"] == "unmapped-resource");
+        developer.close();
+    }
+    Relation::s_developerMode = false;
+
     server.stop();
     reg.clear();
     reg.clearAuthenticatedPersons();
@@ -283,5 +301,6 @@ int main() {
     return 0;
 }
 #else
-int main() { return 0; }
+int main() {
+    Relation::s_developerMode = false; return 0; }
 #endif

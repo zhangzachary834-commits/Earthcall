@@ -1,0 +1,23 @@
+--- src/Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.cpp
++++ src/Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.cpp
+@@ -445,17 +445,11 @@
+     }
+ 
+     // Face colours
+-    
+-    
+-     
+-
++    const bool ownsItsSurface = obj.materialId() == "material." + obj.getIdentifier();
++    auto alreadyPainted = ownsItsSurface ? materials.get(obj.materialId()) : nullptr;
++    const bool texturesAlreadyHere = alreadyPainted && !alreadyPainted->faceTextures.empty();
+     if (j.contains("faceColors")) {
+         const auto& faceCols = j["faceColors"];
+-        
+-        
+-        
+-            
+-        for (size_t f = 0; f < faceCols.size() && f < 6; ++f) {
++        for (size_t f = 0; f < faceCols.size() && f < 6; ++f) {
+             obj.faceColors[f][0] = faceCols[f][0].get<float>();
+             obj.faceColors[f][1] = faceCols[f][1].get<float>();

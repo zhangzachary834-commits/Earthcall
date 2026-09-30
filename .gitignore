@@ -321,3 +321,8 @@ Testing/
 
 # First Mover Register staging file (earthcall_first_mover writes then renames atomically)
 saves/identity/*.staged
+
+# The Law Line's per-machine session files (TerminalChannel): the Person's
+# command history and the relayed app output of the last run.
+saves/logs/terminal-history.txt
+saves/logs/earthcall-terminal.log

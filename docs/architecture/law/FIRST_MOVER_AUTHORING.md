@@ -899,3 +899,7 @@ law under a human's name because that makes it fire has done the only thing in t
 entire document that the format cannot detect and no future check will catch.
 
 Say what you made. 🕊️
+
+## 9. Mover-Authored Law Reach
+
+A Law authored by a First Mover executes with the ordinary `Law` authority once placed in the world. Its reach when fired is governed entirely by standard Law targeting rules (`TransferPolicy`) and not artificially constrained by the originating First Mover's `fileScope`. We bounds-check the *act of authoring/injecting* the Law (does the Mover have authority to create a Law in this Zone?), but we do not bounds-check the Law's execution against its original author's credentials, because once authorized and authored, it is functionally a Person's authored Law.

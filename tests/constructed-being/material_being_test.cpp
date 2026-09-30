@@ -46,6 +46,47 @@ int main() {
         std::printf("  being:   material.clay is law-addressable (shininess, baseColor driven)\n");
     }
 
+    // --- 1b. Rung 9 response is independent authored Material truth -----------
+    {
+        Material m("response_clay");
+        assert(m.findProperty("responseExpr") != nullptr);
+        assert(!m.responseExpr);
+        const uint32_t colorRevisionBefore = m.getRevision();
+        const uint32_t responseRevisionBefore = m.getResponseRevision();
+
+        auto root = std::make_shared<OntoMath::MathNode>();
+        root->op = OntoMath::MathNode::Op::VectorConstruct;
+        for (double value : {0.25, 0.5, 0.75}) {
+            auto c = std::make_unique<OntoMath::MathNode>();
+            c->op = OntoMath::MathNode::Op::ScalarLeaf;
+            c->scalarForm = OntoMath::ScalarForm::constant(value);
+            root->children.push_back(std::move(c));
+        }
+        OntoMath::Piecewise response = OntoMath::Piecewise::continuous(root);
+        const std::string serialized = response.toJson().dump();
+
+        assert(PropertyPath::parse("responseExpr").setValue(
+                   m, PropertyValue(serialized)) == PropertyPath::PathResult::Ok);
+        assert(m.responseExpr);
+        assert(m.getResponseRevision() == responseRevisionBefore + 1);
+        assert(m.getRevision() == colorRevisionBefore);
+        assert(m.responseExpr->toJson() == response.toJson());
+
+        const nlohmann::json saved = m.toJson();
+        assert(saved.contains("responseExpr"));
+        Material restored = Material::fromJson(saved);
+        assert(restored.responseExpr);
+        assert(restored.responseExpr->toJson() == response.toJson());
+
+        const uint32_t responseRevisionAfter = m.getResponseRevision();
+        assert(PropertyPath::parse("responseExpr").setValue(
+                   m, PropertyValue(std::string("{not-json"))) != PropertyPath::PathResult::Ok);
+        assert(m.getResponseRevision() == responseRevisionAfter);
+        assert(m.responseExpr->toJson() == response.toJson());
+
+        std::printf("  rung9:    responseExpr is Law-addressable, persisted, and revision-independent\n");
+    }
+
     // --- 2. The default material preserves the old global shading ------------
     {
         MaterialManager mm;
@@ -150,6 +191,8 @@ int main() {
         assert(m.findProperty("specular") != nullptr);
         assert(m.findProperty("ambient") != nullptr);
         assert(m.findProperty("diffuse") != nullptr);
+        assert(m.findProperty("colorExpr") != nullptr);
+        assert(m.findProperty("responseExpr") != nullptr);
         assert(m.findProperty("nonexistent") == nullptr);
         std::printf("  properties: all 6 properties registered and accessible\n");
     }

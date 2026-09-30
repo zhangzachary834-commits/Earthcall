@@ -1,3 +1,4 @@
+#include "Singularity/Storage/SaveSystem.hpp"
 // End-to-end and pedagogical verification test for Prism Cathedral Zone.
 //
 // Verifies that:
@@ -77,11 +78,11 @@ int main() {
     const fs::path zonePath = repoRoot / "saves/zones/Prism Cathedral/zone.json";
 
     // 1. Save file existence and Invariant 6 check
-    std::ifstream in(zonePath);
-    check(static_cast<bool>(in), "Prism Cathedral save file exists and is readable");
+    nlohmann::json zoneJson = SaveSystem::readSaveData(zonePath.string());
+    check(!zoneJson.empty(), "Prism Cathedral save file exists and is readable");
 
-    nlohmann::json zoneJson;
-    if (in) in >> zoneJson;
+    
+    
 
     check(zoneJson.value("identifier", "") == "Prism Cathedral",
           "Invariant 6: document identifier matches directory key exactly");
@@ -99,6 +100,7 @@ int main() {
     mgr.hydrateFromZoneStore();
 
     std::shared_ptr<Zone> cathedral = nullptr;
+    for (const auto& z : mgr.zones()) { if (z) std::cout << "Hydrated zone: " << z->getIdentifier() << "\n"; }
     for (const auto& z : mgr.zones()) {
         if (z && z->getIdentifier() == "Prism Cathedral") {
             cathedral = z;
@@ -133,12 +135,12 @@ int main() {
         // Pedagogical evaluation across Z:
         // Station 1: Z=40
         double valSt1 = evalScalarAt(root->field->astDefinition, 0.0, 0.0, 40.0);
-        check(valSt1 > 0.5, "Foundation 1 scalar radiance evaluates positive at Z=40");
+        std::cout << "AST JSON: " << root->field->astDefinition.toJson().dump(2) << std::endl; std::cout << "valSt1: " << valSt1 << std::endl; check(valSt1 > 0.5, "Foundation 1 scalar radiance evaluates positive at Z=40");
 
         // Station 3: Near vs Far
         double valNear = evalScalarAt(root->field->astDefinition, 0.0, 0.0, 107.0);
         double valFar = evalScalarAt(root->field->astDefinition, 0.0, 0.0, 119.0);
-        check(valNear > valFar * 1.5,
+        std::cout << "valNear: " << valNear << " valFar: " << valFar << std::endl; check(valNear > valFar * 1.5,
               "Rung 3 Near witness receives significantly stronger radiance than Far witness");
 
         // Station 5: Chroma evaluates as a Vector

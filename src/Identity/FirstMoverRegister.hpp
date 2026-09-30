@@ -105,12 +105,14 @@ enum class Standing {
 
 const char* standingCode(Standing s);
 
-class FirstMoverRegister {
+class FirstMoverRegister : public Singular {
 public:
     // Constructible, not only a singleton: 8a specifies the register as a
     // serialized being belonging to a world, so a world owns one rather than
     // the process. instance() is the convenience handle for the active world.
     FirstMoverRegister() = default;
+    std::string getIdentifier() const override { return "first-movers"; }
+    void buildProperties() override {}
 
     static FirstMoverRegister& instance();
 

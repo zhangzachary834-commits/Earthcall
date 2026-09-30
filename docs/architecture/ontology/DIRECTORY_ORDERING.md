@@ -107,8 +107,8 @@ Earthcall/
       Soul/
     Relation/              Relation · RelationManager
       Formation/
-      Traversal/
       py/
+      Traversal/
     Singularity/           the modality layer — where language stops mattering
       Audio/               the Sound modality (AudioSystem)
       Core/                Engine · EventBus · CreationChannel
@@ -120,14 +120,8 @@ Earthcall/
         Legacy/
         TalkingRobotGuyAPI/
       Foreign/             the Foreign software modality (ForeignChannel at the root)
-        API/               EarthcallAPI, SecurityManager
         Adapters/          MacOSAccessibilityAdapter
-        Sync/              AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
-        Web/               WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
-          web_ui/
-            public/
-            src/
-              assets/
+        API/               EarthcallAPI, SecurityManager
         mcp/               earthcall-mcp-server.js
         py/                app.py
           agent/
@@ -138,6 +132,12 @@ Earthcall/
             ui/
           templates/
           web/
+        Sync/              AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
+        Web/               WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
+          web_ui/
+            public/
+            src/
+              assets/
       Input/               the Input modality
         Interaction/       InteractionChannel, ControlPatterns
         Keyboard/          KeyboardHandler
@@ -163,18 +163,19 @@ Earthcall/
           Person/
           Relation/
           ZonesOfEarth/
+      Terminal/            the Terminal modality (TerminalChannel, LineEditor, LawSentence)
     Time/                  Timeline · Moment · Event
-      timeline.hpp/.cpp    (Timeline: relative temporal domain, a Singular)
       Event/               (the distinguished Moment: occurrence in time)
       Moment/              (instant or interval)
+      timeline.hpp/.cpp    (Timeline: relative temporal domain, a Singular)
     ZonesOfEarth/
       AuthorsOfLaw/        (Law)
         py/
       HomesOfEarth/
       Ourverse/
       Physics/
-      Zone/
       py/
+      Zone/
 
   docs/  tests/  examples/  scripts/  saves/  scratch/  web_ui/     the workshop
   third_party/  local_deps/  imgui/                                 the foreign

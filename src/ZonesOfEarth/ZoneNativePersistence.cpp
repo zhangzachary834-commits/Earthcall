@@ -91,6 +91,16 @@ bool ZoneManager::persistZone(size_t index) const {
     // membership mutation, not projecting the global register back to disk.
     if (priorIdentity.is_object() && priorIdentity.contains("lawRefs")) {
         doc["lawRefs"] = priorIdentity["lawRefs"];
+        // A Law retired from this Zone by an authored act (a confirmed
+        // deletion) leaves its membership; its own file stays as history.
+        if (doc["lawRefs"].is_array()) {
+            nlohmann::json kept = nlohmann::json::array();
+            for (const auto& ref : doc["lawRefs"]) {
+                if (ref.is_string() && isLawRetiredFrom(id, ref.get<std::string>())) continue;
+                kept.push_back(ref);
+            }
+            doc["lawRefs"] = std::move(kept);
+        }
     }
     if (index == _currentIndex && !_activeZoneLawIds.empty()) {
         if (!doc.contains("lawRefs")) doc["lawRefs"] = nlohmann::json::array();

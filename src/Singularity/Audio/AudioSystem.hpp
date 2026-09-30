@@ -112,8 +112,6 @@ public:
     void shutdown();
     void tick();
 
-    void setupAudioEventListeners();
-
     // First-mover governance is owned by Singularity::Audio::AudioChannel.
     // AudioSystem is the substrate below that boundary.
     void setOutputEnabled(bool enabled);

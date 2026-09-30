@@ -383,7 +383,10 @@ using TypeEnv = std::map<std::string, ValueKind>;
 //                  world-space normalized source -> sample.
 //   "wo.x/y/z"    V3 participating-medium outgoing propagation direction,
 //                  world-space normalized sample -> receiver/eye.
+//   "n"            Rung 9 receiving-surface normal, a Vector. It is admitted
+//                  only by a material-response execution context.
 inline constexpr const char* kAmbientPointVar = "p";
+inline constexpr const char* kSurfaceNormalVar = "n";
 inline constexpr const char* kTimeVar = "t";
 inline constexpr const char* kOmegaXVar = "omega.x";
 inline constexpr const char* kOmegaYVar = "omega.y";

@@ -119,9 +119,7 @@ int main() {
           "load report names the preserve so failure is loud");
 
     {
-        std::ifstream in(stash);
-        nlohmann::json j;
-        in >> j;
+        nlohmann::json j = SaveSystem::readSaveData(stash);
         bool stashedUnsaved = false;
         if (j.contains("zones")) {
             for (const auto& z : j["zones"]) {
@@ -154,9 +152,7 @@ int main() {
     check(hasObject(live, "unsaved-cube"), "loading before-load restores the unsaved cube");
     check(!hasObject(live, "saved-cube"), "snapshot restore does not import the other file's cube");
     {
-        std::ifstream in(stash);
-        nlohmann::json j;
-        in >> j;
+        nlohmann::json j = SaveSystem::readSaveData(stash);
         bool stillUnsaved = false;
         if (j.contains("zones")) {
             for (const auto& z : j["zones"]) {

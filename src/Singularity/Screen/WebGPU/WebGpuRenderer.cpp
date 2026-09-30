@@ -1416,6 +1416,12 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             static_cast<uint64_t>(std::hash<std::string>{}(emissionJson));
     }
 
+    // Rung 9: receiver-owned response has independent structure/value identity.
+    // It is inspected once for this material draw before any shader cache decision.
+    const auto responseLayout =
+        sdfwgsl::inspectResponseExpression(mat.responseExpr.get());
+    const std::string responseStructure = responseLayout.structure;
+
     if (multiSource) {
         if (_radianceSourcesLayoutRevision != radianceSourcesRevision()) {
             std::string structure = "sources:" + std::to_string(radianceSources().size()) + "\n";
@@ -1539,6 +1545,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         recordProgramRefusal("volume emission: " + emissionLayout.error);
         return;
     }
+    if (!responseLayout.ok) {
+        recordProgramRefusal("material response: " + responseLayout.error);
+        return;
+    }
 
     if (multiSource) {
         if (!_radianceSourcesLayoutOk) {
@@ -1586,6 +1596,11 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         const bool emissionStructureMatches =
             memo->emissionStructure == emissionStructure &&
             memo->emissionReadsOmega == emissionLayout.readsOmega;
+        const bool responseStructureMatches =
+            memo->responseStructure == responseStructure &&
+            memo->responseReadsNormal == responseLayout.readsNormal &&
+            memo->responseReadsWi == responseLayout.readsWi &&
+            memo->responseReadsWo == responseLayout.readsWo;
 
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
@@ -1596,6 +1611,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             volumeChromaStructureMatches &&
             phaseStructureMatches &&
             emissionStructureMatches &&
+            responseStructureMatches &&
             memo->colorExprPtr == mat.colorExpr.get()) {
             needsCompile = false;
 
@@ -1617,11 +1633,13 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                 phaseExpr && memo->phaseRevision != phaseRevision;
             const bool emissionValuesChanged =
                 emissionExpr && memo->emissionRevision != emissionRevision;
+            const bool responseValuesChanged =
+                mat.responseExpr && memo->responseRevision != mat.responseRevision;
             const bool valuesChanged =
                 memo->parameterRevision != memoParameterRevision ||
                 sourceValuesChanged || densityValuesChanged || extinctionValuesChanged ||
                 scatteringValuesChanged || volumeChromaValuesChanged ||
-                phaseValuesChanged || emissionValuesChanged;
+                phaseValuesChanged || emissionValuesChanged || responseValuesChanged;
 
             if (valuesChanged) {
                 sdfwgsl::ParameterBlock refreshed =
@@ -1630,7 +1648,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                                            radianceAngularExpr(), sourceSet,
                                            densityExpr, densityKind, extinctionExpr,
                                            scatteringExpr, volumeChromaExpr, phaseExpr,
-                                           emissionExpr);
+                                           emissionExpr, mat.responseExpr.get());
                 if (!refreshed.ok) {
                     recordProgramRefusal(refreshed.error);
                     return;
@@ -1648,6 +1666,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                     memo->volumeChromaRevision = volumeChromaRevision;
                     memo->phaseRevision = phaseRevision;
                     memo->emissionRevision = emissionRevision;
+                    memo->responseRevision = mat.responseRevision;
                 } else {
                     needsCompile = true;
                 }
@@ -1669,7 +1688,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                                      radianceAngularExpr(), sourceSet,
                                      densityExpr, densityKind, extinctionExpr,
                                      scatteringExpr, volumeChromaExpr, phaseExpr,
-                                     emissionExpr);
+                                     emissionExpr, mat.responseExpr.get());
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
@@ -1710,6 +1729,11 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->emissionRevision = emissionRevision;
             memo->emissionStructure = emissionStructure;
             memo->emissionReadsOmega = emissionLayout.readsOmega;
+            memo->responseRevision = mat.responseRevision;
+            memo->responseStructure = responseStructure;
+            memo->responseReadsNormal = responseLayout.readsNormal;
+            memo->responseReadsWi = responseLayout.readsWi;
+            memo->responseReadsWo = responseLayout.readsWo;
             memo->colorExprPtr = mat.colorExpr.get();
             memo->prog = std::move(localProg);
             memo->sp = sp;

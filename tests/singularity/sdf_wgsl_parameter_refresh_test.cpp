@@ -1476,6 +1476,177 @@ int main() {
               "legacy ambient compatibility remains outside direct-path visibility");
     }
 
+    // ---------------------------------------------------------------------
+    // 10. Rung 9 compiler boundary: receiving-surface response owns n/wi/wo,
+    //     has no invented clock, and separates structure from numeric values.
+    // ---------------------------------------------------------------------
+    {
+        const auto legacy = sdfwgsl::inspectResponseExpression(nullptr);
+        check(legacy.ok &&
+                  legacy.structure == "<material-response:legacy-blinn-phong>" &&
+                  legacy.parameterCount == 0,
+              "absent material response has explicit legacy compatibility identity");
+
+        auto wi = std::make_unique<OntoMath::MathNode>();
+        wi->op = OntoMath::MathNode::Op::VectorConstruct;
+        wi->children.push_back(variable(OntoMath::kWiXVar));
+        wi->children.push_back(variable(OntoMath::kWiYVar));
+        wi->children.push_back(variable(OntoMath::kWiZVar));
+
+        auto wo = std::make_unique<OntoMath::MathNode>();
+        wo->op = OntoMath::MathNode::Op::VectorConstruct;
+        wo->children.push_back(variable(OntoMath::kWoXVar));
+        wo->children.push_back(variable(OntoMath::kWoYVar));
+        wo->children.push_back(variable(OntoMath::kWoZVar));
+
+        auto nForWi = variable(OntoMath::kSurfaceNormalVar);
+        auto nForWo = variable(OntoMath::kSurfaceNormalVar);
+
+        auto nDotWi = std::make_unique<OntoMath::MathNode>();
+        nDotWi->op = OntoMath::MathNode::Op::Dot;
+        nDotWi->children.push_back(std::move(nForWi));
+        nDotWi->children.push_back(std::move(wi));
+
+        auto nDotWo = std::make_unique<OntoMath::MathNode>();
+        nDotWo->op = OntoMath::MathNode::Op::Dot;
+        nDotWo->children.push_back(std::move(nForWo));
+        nDotWo->children.push_back(std::move(wo));
+
+        auto responseRoot = std::make_shared<OntoMath::MathNode>();
+        responseRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        responseRoot->children.push_back(std::move(nDotWi));
+        responseRoot->children.push_back(std::move(nDotWo));
+        responseRoot->children.push_back(number(0.5));
+        OntoMath::Piecewise response = OntoMath::Piecewise::continuous(responseRoot);
+
+        const auto layoutBefore = sdfwgsl::inspectResponseExpression(&response);
+        const auto paramsBefore = sdfwgsl::collectResponseParams(&response);
+        check(layoutBefore.ok && paramsBefore.ok &&
+                  layoutBefore.readsNormal &&
+                  layoutBefore.readsWi &&
+                  layoutBefore.readsWo,
+              "material response independently admits receiver normal plus wi/wo");
+
+        responseRoot->children[2]->scalarForm.terms[0].coefficient = 0.8;
+        const auto layoutAfter = sdfwgsl::inspectResponseExpression(&response);
+        const auto paramsAfter = sdfwgsl::collectResponseParams(&response);
+        check(layoutAfter.ok && paramsAfter.ok &&
+                  layoutAfter.structure == layoutBefore.structure &&
+                  paramsAfter.values != paramsBefore.values,
+              "numeric response edit preserves structure and refreshes only parameters");
+
+        responseRoot->children[2] = std::move(variable(OntoMath::kWiZVar));
+        const auto structural = sdfwgsl::inspectResponseExpression(&response);
+        check(structural.ok && structural.structure != layoutBefore.structure,
+              "response topology edit changes response structural identity");
+
+        auto timedRoot = std::make_shared<OntoMath::MathNode>();
+        timedRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        timedRoot->children.push_back(variable(OntoMath::kTimeVar));
+        timedRoot->children.push_back(number(0.0));
+        timedRoot->children.push_back(number(0.0));
+        OntoMath::Piecewise timedResponse = OntoMath::Piecewise::continuous(timedRoot);
+        const auto timed = sdfwgsl::inspectResponseExpression(&timedResponse);
+        check(!timed.ok,
+              "Rung 9 refuses t until an honest Material-owned Timeline is admitted");
+
+        auto normalComponent = std::make_shared<OntoMath::MathNode>();
+        normalComponent->op = OntoMath::MathNode::Op::Component;
+        normalComponent->stringArg = "x";
+        normalComponent->children.push_back(variable(OntoMath::kSurfaceNormalVar));
+        OntoMath::Piecewise normalScalar =
+            OntoMath::Piecewise::continuous(normalComponent);
+        check(!sdfwgsl::inspectScalarExpression(&normalScalar, false).ok &&
+                  !sdfwgsl::inspectPhaseExpression(&normalScalar).ok,
+              "receiver normal cannot leak into generic field or volume-phase authority");
+
+        auto refusedRoot = std::make_shared<OntoMath::MathNode>();
+        refusedRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto raycast = std::make_unique<OntoMath::MathNode>();
+        raycast->op = OntoMath::MathNode::Op::Raycast;
+        refusedRoot->children.push_back(std::move(raycast));
+        refusedRoot->children.push_back(number(0.0));
+        refusedRoot->children.push_back(number(0.0));
+        OntoMath::Piecewise unsupported =
+            OntoMath::Piecewise::continuous(refusedRoot);
+        const auto refused = sdfwgsl::inspectResponseExpression(&unsupported);
+        check(!refused.ok,
+              "unsupported material-response math refuses instead of fabricating output");
+    }
+
+    // ---------------------------------------------------------------------
+    // Rung 9 production lowering: authored receiver response enters the real
+    // SDF surface shader without stealing source/visibility authority. Numeric
+    // edits reuse shader structure; structural edits change it.
+    // ---------------------------------------------------------------------
+    {
+        auto surface =
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+
+        auto responseRoot = std::make_shared<OntoMath::MathNode>();
+        responseRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        responseRoot->children.push_back(number(0.25));
+        responseRoot->children.push_back(number(0.5));
+        responseRoot->children.push_back(number(1.0));
+        OntoMath::Piecewise response =
+            OntoMath::Piecewise::continuous(responseRoot);
+
+        const auto legacy = sdfwgsl::compile(surface);
+        const auto authored = sdfwgsl::compile(
+            surface, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr, &response);
+
+        check(legacy.ok && authored.ok,
+              "legacy and authored-response surface programs both compile");
+        check(legacy.wgsl.find(
+                  "const HAS_AUTHORED_MATERIAL_RESPONSE: bool = false") !=
+                  std::string::npos &&
+              legacy.wgsl.find("inst.shading.x * ambientEnvelope") !=
+                  std::string::npos,
+              "absent response preserves the explicit legacy Blinn-Phong compatibility path");
+        check(authored.wgsl.find(
+                  "const HAS_AUTHORED_MATERIAL_RESPONSE: bool = true") !=
+                  std::string::npos &&
+              authored.wgsl.find("fn materialResponseEval") !=
+                  std::string::npos &&
+              authored.wgsl.find(
+                  "materialResponseEval(pf, nw, responseWi, V)") !=
+                  std::string::npos &&
+              authored.wgsl.find("receiverResponse * directRadiance") !=
+                  std::string::npos,
+              "authored response is evaluated after transport reaches the receiver");
+
+        const auto beforeParams = authored.params;
+        responseRoot->children[2]->scalarForm.terms[0].coefficient = 0.7;
+        const auto refreshed = sdfwgsl::collectParams(
+            surface, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr, &response);
+        const auto numericEdited = sdfwgsl::compile(
+            surface, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr, &response);
+
+        check(refreshed.ok && numericEdited.ok &&
+                  authored.wgsl == numericEdited.wgsl &&
+                  refreshed.values == numericEdited.params &&
+                  beforeParams != numericEdited.params,
+              "numeric response edit refreshes packed values without regenerating WGSL");
+
+        responseRoot->children[0] = variable(OntoMath::kWiXVar);
+        const auto structuralEdited = sdfwgsl::compile(
+            surface, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr, &response);
+        check(structuralEdited.ok &&
+                  structuralEdited.wgsl != numericEdited.wgsl &&
+                  structuralEdited.wgsl.find(
+                      "const MATERIAL_RESPONSE_READS_WI: bool = true") !=
+                      std::string::npos,
+              "response topology edit changes WGSL structure and records wi dependence");
+    }
+
     // Prism integration: V_transport and D_medium coexist without semantic aliasing.
     // The combined shader may contain both sourceVisibility() and volumeDensityEval(),
     // but visibility is a geometry query; participating-medium D is not promoted

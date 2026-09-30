@@ -259,9 +259,9 @@ it could grow but never shrink.
 
 - **`Create`** — mint a generic `Object` of an authored `ShapeKind` into the World
   (the law's target when it IS a world, otherwise the world in the Universe), placed by
-  an authored path or, absent one, where the law's subject stands, and labelled with an
+  an authored path or, absent one, where the current application referent stands, and labelled with an
   authored `objectType` that `Physics::LawTarget::limitByObjectType` already selects on.
-  Its **children run with the newborn as their subject**, so the whole action
+  Its **children run with the newborn as their current referent**, so the whole action
   vocabulary shapes it at birth: `Set` its position, `Map` its radius from another
   being's, grant it properties, compose it. Publishes `object-created`.
 - **`AddProperty` / `RemoveProperty`** — the vocabulary a *Person* adds, beside the
@@ -286,7 +286,8 @@ it could grow but never shrink.
   one is a dangling pointer waiting for the next quantifier sweep.
 
 Container, element, and victim are named with the same participant tokens `Publish`
-uses — `""` = the law's subject, `@event.subject` / `@event.object`, or a being id — so
+uses — `""` = the current application referent, `@event.subject` /
+`@event.object` = legacy event participant paths, or a being id — so
 "destroy whatever I collided with" is `Destroy("@event.object")`.
 
 Test: `tests/law_creation_test.cpp` (`make test-creation`) — 37 checks over birth,
@@ -360,16 +361,18 @@ function of time. Two forms:
   each tick. The authored model is `dp/dt`; OntoMath's exact
   `derivative`/`antiderivative` make Map and Flow exact counterparts.
 
-**Referents are the author's choice — the action phase names its own.** Every
-path carries a qualifier saying WHOSE property it is: plain (the law's
-subject), `@being-id.` (one specific being, Universe lookup),
+**Referents are the author's choice — condition and action nodes read their
+own.** Every path carries a qualifier saying WHOSE property it is: plain (the
+current application referent), `@being-id.` (one specific being, Universe lookup),
 `@event.subject.` / `@event.object.` (the triggering event's participants —
 a collision has two; the LawManager arms an application-event context around
 event rounds, and drive sessions remember their launching participants by id
-for their whole life). The event's beings are thus available BY CHOICE among
-all others, never a dichotomy. In the Law Author every property picker pairs
-WHAT (the property) with an "of ..." combo choosing WHOSE (subject / event
-participants / any live being).
+for their whole life), or `@event.` (registered properties of the Event Moment
+itself during an EventBus-triggered application). The Event Moment snapshot is
+read-only, while the old participant paths retain their compatibility meaning.
+The Law Author pairs WHAT (the property) with an "of ..." choice for the current
+referent, event participants, or a live being. Traversal of the Event's defining
+Relations is a later rung.
 
 **Driving is an authored choice, and any variable can be its domain.**
 `Law::drives()` (serialized; legible as the `drives` property → metalaws can

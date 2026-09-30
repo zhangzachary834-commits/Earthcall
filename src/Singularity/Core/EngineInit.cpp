@@ -43,6 +43,7 @@
 #include "Singularity/Storage/VirtualFileSystem.hpp"
 #include "Singularity/Storage/StreamChannel.hpp"
 #include "Singularity/Storage/FileWatcher.hpp"
+#include "Singularity/Terminal/TerminalChannel.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Storage/Serialization/Person/PersonSerialization.hpp"
 #include "Singularity/Audio/AudioRecorder.hpp"
@@ -315,6 +316,11 @@ bool Engine::initLogic() {
 
     // Register first-mover FileWatcher (reactive file sensing and live hot-reloading)
     Singularity::Storage::FileWatcher::syncRegister(*_lawManager);
+
+    // Register first-mover TerminalChannel: the Mac Terminal's command line
+    // (the window Run Earthcall.command opened) as a modality of this world.
+    // Lines become Laws only through the authored LawLine seed Laws.
+    Singularity::Terminal::TerminalChannel::syncRegister(*_lawManager);
 
     // Register first-mover AudioChannel (authored acoustic reality -> output substrate).
     // This owns the checked PlayAudio sink; AudioSystem below it owns only
