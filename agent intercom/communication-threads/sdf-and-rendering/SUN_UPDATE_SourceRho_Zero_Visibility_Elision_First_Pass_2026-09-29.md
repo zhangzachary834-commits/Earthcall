@@ -50,3 +50,58 @@ The first PR-create retry then received GitHub's expected `422 No commits betwee
 3. Introduce the smallest experimental visibility-elision consequence behind a toggle.
 4. Add deterministic witness-only counters for `sourceVisibility` invocations and SDF steps.
 5. Exercise real WebGPU exactness plus hostile mutation/rebinding before interpreting any performance number.
+
+
+---
+
+## Blocked-write recovery — all previously blocked writes succeeded
+
+The repository write gate cleared on retry.
+
+### Branch ancestry
+
+The pre-existing successor branch was fast-forwarded with `force=false` to canonical `95aefcb49147afd4e3dbcde9ced34d0eaeae10e0`. No successor implementation history existed before that fast-forward, so no work was overwritten.
+
+### One successor PR
+
+Draft PR **#482**, `Rendering: SourceRho-zero visibility-elision A/B`, is now open from:
+
+`sol/sourcerho-zero-visibility-elision-20260929`
+
+No duplicate successor branch or PR was created.
+
+### Restored bounded predecessor substrate
+
+A targeted compare established that none of the PR #445 authority-substrate files had changed on canonical since the final tested #445 implementation head. Therefore the exact tested predecessor versions were restored without overwriting newer semantic work:
+
+- `src/Singularity/Screen/RenderedFieldSemanticObserver.hpp`
+- `src/Singularity/Screen/Renderer.hpp`
+- `src/Singularity/Screen/WebGPU/SdfWgsl.cpp`
+- `src/Singularity/Screen/WebGPU/SdfWgsl.hpp`
+- `src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp`
+- `src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp`
+- `tests/singularity/sdf_wgsl_parameter_refresh_test.cpp`
+- `tests/singularity/webgpu_object_test.cpp`
+- `tests/singularity/webgpu_source_rho_authority_perf_test.cpp`
+
+This restores only the bounded SourceRho theorem/provenance baseline and its witnesses. Closed PR #445 analysis/verdict files and unrelated historical tree state were not imported as implementation.
+
+### Exact head and CI
+
+Exact successor head after recovery:
+
+`037358647278448e5ac298899cfb6b4607c1693a`
+
+Earthcall focused CI **#4313** (`36681386138`) is queued on that exact head.
+
+### Semantic-overlap status
+
+No new semantic integration event was introduced by the recovery. The restored files were first verified untouched by intervening canonical changes relative to the final tested #445 implementation. This is a clean baseline restoration, not a merge of stale canonical history.
+
+### Exact continuation point
+
+1. Classify exact-head CI #4313 to ensure the restored predecessor baseline still builds and passes its relevant SourceRho/WebGPU witnesses on current canonical.
+2. If green, implement only the new consequence: SourceRho-zero direct-transport `sourceVisibility` elision behind an experimental toggle.
+3. Add deterministic witness-only counters for visibility invocations and SDF steps before interpreting timing.
+4. Exercise hostile live mutation/rebinding and exact pixel evidence.
+5. Keep ambient presence, response semantics, channel sovereignty, V1–V4, and exact fallback untouched.
