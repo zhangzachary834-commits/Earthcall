@@ -540,7 +540,8 @@ struct MathNode {
     MathNode() = default;
     MathNode(const MathNode& o)
         : op(o.op), scalarForm(o.scalarForm), variableName(o.variableName),
-          stringArg(o.stringArg), unsupported(o.unsupported) {
+          stringArg(o.stringArg), matrixRows(o.matrixRows), matrixCols(o.matrixCols),
+          unsupported(o.unsupported) {
         children.reserve(o.children.size());
         for (const auto& c : o.children) {
             children.push_back(c ? std::make_unique<MathNode>(*c) : nullptr);
