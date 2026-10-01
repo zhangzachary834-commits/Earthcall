@@ -1,28 +1,30 @@
 # Integrating Formation Rete Tiered Relevance and the Object Hover Events System
 
-This addendum synthesizes the optimization strategies outlined in the [Formation Rete Tiered Relevance Ladder](../architecture/law/FORMATION_RETE_TIERED_RELEVANCE_LADDER.md) with the low-latency requirements of interactive input described in the [Object Hover Events System](../architecture/events/OBJECT_HOVER_EVENTS_SYSTEM.md). It details how real-time, per-frame interaction events rely on the rapid, direct semantic routes established by the Formation Rete ladder.
+This addendum relates the [Formation Rete Tiered Relevance Ladder](../architecture/law/FORMATION_RETE_TIERED_RELEVANCE_LADDER.md) to the low-latency interaction boundary described by the [Object Hover Events System](../architecture/events/OBJECT_HOVER_EVENTS_SYSTEM.md). It distinguishes the hover mechanism that exists today from the relevance-routing architecture that can narrow Law work around those changes.
 
-## The Problem of Interactive Latency
+## The existing interaction boundary
 
-The Object Hover Events system is designed to trigger when a user's pointer interacts with a spatial `Object`. As updated in the documentation, this interaction is now evaluated continuously via `InteractionChannel::observe`, which steps once per frame. Furthermore, the hover state is exposed directly as read-only property paths (`hovered` / `hoverPoint`) and globally as `@world.pointerOver`.
+Hover observation is already a per-frame input concern: `InteractionChannel::observe` drives hover state, and `hovered` / `hoverPoint` are registered read-only property paths. `@world.pointerOver` exposes the corresponding world-level reading.
 
-When a Person authors a Law dictating behavior upon hover—such as highlighting a button or triggering a sound—the system must evaluate that Law immediately. If the engine had to perform a full, $O(N)$ sweep (Tier 0 in the relevance ladder) of all objects to determine if the hovered object satisfied the Law's conditions, the resulting latency would destroy the fluidity of the interface. Interaction requires near-instantaneous response.
+That gives Laws a legible authored surface for interaction state. It does **not**, by itself, prove that every hover change is currently dispatched through a direct Formation-Rete subscription.
 
-## The Solution: Direct Relevance Traversal
+## The relevance-ladder interrelation
 
-The Formation Rete Tiered Relevance Ladder solves the interactive latency problem by pre-calculating and crystallizing the paths between Laws and the objects they care about.
+The Formation Rete document defines a ladder whose terminal optimization target is a proved route of the form `Law -> Singular(+PropertyPath)`. Its own wording is deliberately architectural: higher tiers are consumed only when their soundness and currency are established, with lower tiers retained as fallbacks and repair provenance.
 
-1.  **The Climb to Tier 6:** In the background, the slow adapter uses broad sweeps (Tier 1), cross-index graphs (Tier 2), and Category structures (Tier 3) to discover what a Law *might* affect. Eventually, it proves a direct, Tier 6 route: `Law -> Singular(+PropertyPath)`.
-2.  **The Hot Path:** When the `InteractionChannel` registers a hover event and updates `@world.pointerOver`, the hot path does not need to search. It checks if the updated `PropertyPath` is targeted by a crystallized Tier 6 route. If a Law specifically watches for hover state changes on that specific button, the engine traverses the direct edge, evaluating and executing the action in O(1) time.
+Hover properties are therefore a natural future beneficiary of that routing model. A mature integration can use Prophetic/Formation evidence to narrow which Law branches may care about a changed hover path, and—where a direct route has actually been proved and materialized—avoid repeating the broader discovery work that established it.
+
+This is a design relation, not a claim that the current hover hot path universally performs O(1) Law dispatch.
 
 ## 1. Interaction and Interrelation Thoughts
 
-*   **Asynchronous Proof, Synchronous Action:** These two documents highlight the dual heartbeat of Earthcall. The Object Hover system operates on the fast, synchronous heartbeat of the frame render and user input. The Formation Rete ladder operates on a slower, asynchronous heartbeat, doing the heavy lifting to prove relevance. The fast heartbeat is only possible because the slow heartbeat has paved the roads in advance.
-*   **The Power of Property Paths:** The hover system exposes its state as a `PropertyPath` (`hovered`). The Rete ladder resolves direct routes down to the `PropertyPath` level, rather than just the `Singular` level (as explained in the Property Predication addendum). This exact alignment means the engine knows not just that an object changed, but that the *specific aspect* the Law cares about (the hover state) changed, preventing false positive evaluations and saving precious milliseconds during user interaction.
-*   **Self-Refining Subscriptions:** The evolution of the Rete ladder toward "incremental maintenance and self-refining events" (mentioned in the Tiered Relevance doc) suggests that event channels themselves (like the Hover Event Bus) will eventually compile narrower subscriptions based on proved Prophetic dependencies. The Hover system won't just blindly fire events; it will know exactly which Laws are waiting for them.
+* **Fast observation, independently maintained relevance:** Hover observation belongs to the frame/input heartbeat. Formation Rete's slower adaptation can build or repair relevance structure independently. The architectural goal is for the fast path to consume already-proved structure when available without making correctness depend on that optimization being present.
+* **PropertyPath is the shared seam:** The hover system exposes authored state as property paths, while Formation Rete's terminal route qualifies a Singular by `PropertyPath` rather than inventing Property-beings. That makes hover a clean candidate for precise relevance without changing Earthcall's ontology.
+* **Fallbacks remain correctness-bearing:** A missing, stale, or unproved direct route must not make a hover-relevant Law deaf. The tiered document explicitly preserves lower safe tiers for that case.
+* **Self-refining subscriptions are prospective:** The companion relevance architecture points toward incremental maintenance and self-refining event subscriptions. Applying that idea to hover could eventually compile narrower subscriptions from proved dependencies, but this addendum does not claim that such hover-specific compilation is already implemented.
 
 ---
 
-**Generated by:** Gemini Experimental
+**Generated by:** Gemini Experimental; corrected for implementation-state truthfulness by GPT-5.6 Sol
 **Harness:** Standard Environment
 **Session ID:** 11215230410253600177
