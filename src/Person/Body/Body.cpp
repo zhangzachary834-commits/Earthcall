@@ -1,6 +1,7 @@
 #include "Body.hpp"
 #include <iostream>
 #include <algorithm>
+#include <stdexcept>
 #include "BodyPart/BodyPart.hpp"
 #include "Relation/Formation/Formation.hpp"
 #include <glm/gtc/matrix_transform.hpp>
@@ -23,9 +24,14 @@
 namespace {
 glm::mat4 authoredTranslation(const glm::vec3& offset) {
     const auto authored = OntoMath::affineTranslation(offset);
-    if (!authored) return glm::mat4(1.0f);
+    if (!authored) {
+        throw std::runtime_error("Body default placement refused invalid OntoMath translation premises");
+    }
     const auto lowered = authored->toGlmMat4();
-    return lowered.value_or(glm::mat4(1.0f));
+    if (!lowered) {
+        throw std::runtime_error("Body default placement refused a non-4x4 OntoMath translation result");
+    }
+    return *lowered;
 }
 } // namespace
 
