@@ -1132,10 +1132,10 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
                                    allowUnbound);
     };
 
-    // Rung 1 makes Matrix a legible TYPE without pretending the pre-existing
-    // scalar/vector operations know matrix algebra. Until Rung 2 appends the
-    // actual matrix operations, every existing operation refuses a Matrix child.
-    // A Matrix ValueLeaf itself is valid and carries its dimensions forward.
+    // Matrix is a legible TYPE, but the pre-existing scalar/vector operations
+    // do not acquire matrix meaning by accident. Only the dedicated Rung 2
+    // matrix operations below may consume Matrix children; legacy Add/Scale/etc.
+    // still refuse them. A Matrix ValueLeaf carries its dimensions forward.
     if (op != Op::ValueLeaf && !isMatrixOperation(op)) {
         for (std::size_t i = 0; i < children.size(); ++i) {
             auto childType = sub(i);
