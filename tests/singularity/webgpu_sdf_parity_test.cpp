@@ -331,6 +331,63 @@ int main() {
         cases.push_back({ "Expr(matrix)", n });
     }
 
+    // Transpose parity uses a non-symmetric map so transpose cannot collapse
+    // to the same coefficients. Inverse parity exercises the WGSL backend's
+    // OntoMath-derived numeric inverse path rather than a shader-owned algorithm.
+    const auto addMatrixFieldCase = [&](const char* name,
+                                        OntoMath::MathNode::Op unaryOp,
+                                        const double entries[9]) {
+        auto numberNode = [](double value) {
+            auto n = std::make_unique<OntoMath::MathNode>();
+            n->op = OntoMath::MathNode::Op::ScalarLeaf;
+            n->scalarForm.terms.push_back(OntoMath::Term(value));
+            return n;
+        };
+        auto matrix = std::make_unique<OntoMath::MathNode>();
+        matrix->op = OntoMath::MathNode::Op::MatrixConstruct;
+        matrix->matrixRows = 3;
+        matrix->matrixCols = 3;
+        for (int i = 0; i < 9; ++i) matrix->children.push_back(numberNode(entries[i]));
+        auto transformedMatrix = std::make_unique<OntoMath::MathNode>();
+        transformedMatrix->op = unaryOp;
+        transformedMatrix->children.push_back(std::move(matrix));
+        auto point = std::make_unique<OntoMath::MathNode>();
+        point->op = OntoMath::MathNode::Op::ValueLeaf;
+        point->variableName = OntoMath::kAmbientPointVar;
+        auto mapped = std::make_unique<OntoMath::MathNode>();
+        mapped->op = OntoMath::MathNode::Op::MatrixVectorMultiply;
+        mapped->children.push_back(std::move(transformedMatrix));
+        mapped->children.push_back(std::move(point));
+        auto length = std::make_unique<OntoMath::MathNode>();
+        length->op = OntoMath::MathNode::Op::Length;
+        length->children.push_back(std::move(mapped));
+        auto field = std::make_shared<OntoMath::MathNode>();
+        field->op = OntoMath::MathNode::Op::Sub;
+        field->children.push_back(std::move(length));
+        field->children.push_back(numberNode(0.55));
+        auto n = std::make_shared<geom::SdfNode>();
+        n->op = geom::SdfOp::Leaf;
+        n->prim = geom::SdfPrim::Expr;
+        n->mathNode = std::move(field);
+        cases.push_back({ name, n });
+    };
+    {
+        const double transposeEntries[9] = {
+            1.10, 0.20, 0.00,
+            0.00, 0.85, 0.15,
+            0.05, 0.00, 1.25
+        };
+        addMatrixFieldCase("Expr(transpose)", OntoMath::MathNode::Op::MatrixTranspose,
+                           transposeEntries);
+        const double inverseEntries[9] = {
+            1.40, 0.00, 0.00,
+            0.00, 0.80, 0.00,
+            0.00, 0.00, 1.20
+        };
+        addMatrixFieldCase("Expr(inverse)", OntoMath::MathNode::Op::MatrixInverse,
+                           inverseEntries);
+    }
+
     // Every operator.
     auto a = leaf(geom::SdfPrim::Sphere, glm::vec3(0.6f), 0.0f, glm::vec3(-0.25f, 0, 0));
     auto b = leaf(geom::SdfPrim::Box,    glm::vec3(0.45f), 0.0f, glm::vec3( 0.25f, 0, 0));
