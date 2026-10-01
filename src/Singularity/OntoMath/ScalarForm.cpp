@@ -936,6 +936,7 @@ const char* valueKindName(ValueKind k) {
     switch (k) {
         case ValueKind::Scalar:      return "Scalar";
         case ValueKind::Vector:      return "Vector";
+        case ValueKind::Matrix:      return "Matrix";
         case ValueKind::ScalarField: return "ScalarField";
         case ValueKind::VectorField: return "VectorField";
         case ValueKind::Unknown:     return "Unknown";
@@ -1088,6 +1089,23 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
                                    allowUnbound);
     };
 
+    // Rung 1 makes Matrix a legible TYPE without pretending the pre-existing
+    // scalar/vector operations know matrix algebra. Until Rung 2 appends the
+    // actual matrix operations, every existing operation refuses a Matrix child.
+    // A Matrix ValueLeaf itself is valid and carries its dimensions forward.
+    if (op != Op::ValueLeaf) {
+        for (std::size_t i = 0; i < children.size(); ++i) {
+            auto childType = sub(i);
+            if (!childType) return childType;
+            if (childType.kind == ValueKind::Matrix) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, std::string(mathOpName(op)) + " argument " +
+                          std::to_string(static_cast<int>(i)) +
+                          " is Matrix; core matrix operations land in OntoMath Rung 2"});
+            }
+        }
+    }
+
     switch (op) {
         case Op::Stochastic:
         case Op::ScalarLeaf: return TypeResult::ok(ValueKind::Scalar);
@@ -1098,6 +1116,12 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
                 return TypeResult::error(TypeDiagnostic{
                     path, "ValueLeaf names '" + variableName +
                           "', which has no declared signature in this environment"});
+            }
+            if (it->second.kind == ValueKind::Matrix &&
+                !it->second.hasValidMatrixShape()) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "ValueLeaf names matrix '" + variableName +
+                          "' with missing/invalid dimensions"});
             }
             return TypeResult::ok(it->second);
         }
