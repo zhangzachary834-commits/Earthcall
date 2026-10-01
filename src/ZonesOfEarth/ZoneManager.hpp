@@ -113,6 +113,7 @@ public:
     // can mint into the live working set. Tests that fire that action bind
     // their own. Not a second registry — one live pointer.
     void bindLive();
+    void unbindLive();
     static ZoneManager* live();
 
     // Bind the one running Law register. Zone activation resolves lawRefs
