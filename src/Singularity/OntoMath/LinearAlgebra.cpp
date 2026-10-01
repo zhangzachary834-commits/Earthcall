@@ -89,8 +89,9 @@ double pivotThreshold(double maxAbs) {
 } // namespace
 
 std::optional<MatrixValue> matrixIdentity(std::size_t dimension) {
-    if (dimension == 0) return std::nullopt;
-    std::vector<double> elements(dimension * dimension, 0.0);
+    std::size_t count = 0;
+    if (!shapeProduct(dimension, dimension, count)) return std::nullopt;
+    std::vector<double> elements(count, 0.0);
     for (std::size_t i = 0; i < dimension; ++i) {
         elements[i * dimension + i] = 1.0;
     }
@@ -137,7 +138,9 @@ std::optional<MatrixValue> matrixScale(const MatrixValue& matrix, double scalar)
 std::optional<MatrixValue> matrixMultiply(const MatrixValue& a, const MatrixValue& b) {
     if (!a.valid() || !b.valid() || a.cols() != b.rows()) return std::nullopt;
 
-    std::vector<double> out(a.rows() * b.cols(), 0.0);
+    std::size_t count = 0;
+    if (!shapeProduct(a.rows(), b.cols(), count)) return std::nullopt;
+    std::vector<double> out(count, 0.0);
     for (std::size_t r = 0; r < a.rows(); ++r) {
         for (std::size_t c = 0; c < b.cols(); ++c) {
             double sum = 0.0;
@@ -173,8 +176,9 @@ std::optional<glm::vec3> matrixMultiplyVec3(const MatrixValue& matrix,
 }
 
 std::optional<MatrixValue> matrixTranspose(const MatrixValue& matrix) {
-    if (!matrix.valid()) return std::nullopt;
-    std::vector<double> out(matrix.rows() * matrix.cols(), 0.0);
+    double maxAbs = 0.0;
+    if (!finiteMatrix(matrix, maxAbs)) return std::nullopt;
+    std::vector<double> out(matrix.elements().size(), 0.0);
     for (std::size_t r = 0; r < matrix.rows(); ++r) {
         for (std::size_t c = 0; c < matrix.cols(); ++c) {
             out[c * matrix.rows() + r] = matrix.at(r, c);
