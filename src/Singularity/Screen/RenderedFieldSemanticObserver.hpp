@@ -155,8 +155,20 @@ public:
         if (_haveRadianceSetRevision &&
             _lastRadianceSetRevision == setRevision &&
             _lastRadianceSetSize == sources.size()) {
-            ++_stats.radianceSetRevisionHits;
-            return;
+            bool alignedIdentityMatches = _radianceSlots.size() == sources.size();
+            for (size_t slot = 0; alignedIdentityMatches && slot < sources.size(); ++slot) {
+                const auto& artifact = _radianceSlots[slot];
+                const auto& source = sources[slot];
+                alignedIdentityMatches =
+                    artifact.channel == Channel::SourceRho &&
+                    artifact.producerId == source.producerId &&
+                    artifact.authoredRevision == source.radianceRevision;
+                _stats.alignedHandleMetadataTests += 3;
+            }
+            if (alignedIdentityMatches) {
+                ++_stats.radianceSetRevisionHits;
+                return;
+            }
         }
 
         _haveRadianceSetRevision = true;
