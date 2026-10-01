@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <utility>
 #include "Singularity/Screen/Renderer.hpp"
+#include <imgui.h>
 
 namespace {
 
@@ -1318,9 +1319,44 @@ void DesignSystem::render() const {
     if (_transformSystem) _transformSystem->renderTransforms();
 }
 
-void DesignSystem::renderUI() const {
-    // TODO: Implement UI rendering for the design system
-    // This would show tool panels, property panels, etc.
+void DesignSystem::renderUI() {
+    if (ImGui::Begin("Design System Tools")) {
+        ImGui::Text("Tools");
+        ImGui::Separator();
+
+        if (ImGui::RadioButton("Brush", _currentTool == Tool::Type::Brush)) setCurrentTool(Tool::Type::Brush);
+        if (ImGui::RadioButton("Eraser", _currentTool == Tool::Type::Eraser)) setCurrentTool(Tool::Type::Eraser);
+        if (ImGui::RadioButton("Selection", _currentTool == Tool::Type::Selection)) setCurrentTool(Tool::Type::Selection);
+        if (ImGui::RadioButton("Rectangle", _currentTool == Tool::Type::Rectangle)) setCurrentTool(Tool::Type::Rectangle);
+        if (ImGui::RadioButton("Ellipse", _currentTool == Tool::Type::Ellipse)) setCurrentTool(Tool::Type::Ellipse);
+        if (ImGui::RadioButton("Text", _currentTool == Tool::Type::Text)) setCurrentTool(Tool::Type::Text);
+        if (ImGui::RadioButton("Move", _currentTool == Tool::Type::Move)) setCurrentTool(Tool::Type::Move);
+
+        ImGui::Spacing();
+        ImGui::Text("Properties");
+        ImGui::Separator();
+
+        ImGui::Text("Layers: %d", static_cast<int>(_layers.size()));
+        ImGui::Text("Active Layer: %d", _activeLayer);
+
+        if (ImGui::Button("Add Layer")) addLayer();
+
+        if (_activeLayer >= 0 && _activeLayer < static_cast<int>(_layers.size())) {
+            float opacity = _layers[_activeLayer].opacity;
+            if (ImGui::SliderFloat("Opacity", &opacity, 0.0f, 1.0f)) {
+                setLayerOpacity(_activeLayer, opacity);
+            }
+        }
+
+        ImGui::Spacing();
+        ImGui::Text("History");
+        ImGui::Separator();
+
+        if (ImGui::Button("Undo")) undo();
+        ImGui::SameLine();
+        if (ImGui::Button("Redo")) redo();
+    }
+    ImGui::End();
 }
 
 void DesignSystem::undo() {
