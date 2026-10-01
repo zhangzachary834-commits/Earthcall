@@ -32,7 +32,7 @@ public:
 protected:
     void buildProperties() override {
         registerProperty(std::make_unique<PropertyRef<MatrixCarrier, MatrixValue>>(
-            "matrix", this, &_matrix));
+            "matrix", this, &MatrixCarrier::_matrix));
     }
 
 private:
