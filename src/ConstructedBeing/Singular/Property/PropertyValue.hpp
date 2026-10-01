@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include <algorithm>
 #include <cmath>
 #include <string>
@@ -42,6 +43,7 @@ using PropertyValue = std::variant<
     std::string,
     glm::vec3,
     glm::mat4,
+    OntoMath::MatrixValue,
     Singular*,
     Object*,
     Relation*,
@@ -66,6 +68,7 @@ inline bool isValueComparable(const PropertyValue& v) {
            std::holds_alternative<char>(v) || std::holds_alternative<long>(v) ||
            std::holds_alternative<std::string>(v) || std::holds_alternative<glm::vec3>(v) ||
            std::holds_alternative<glm::mat4>(v) ||
+           std::holds_alternative<OntoMath::MatrixValue>(v) ||
            std::holds_alternative<std::shared_ptr<PropertyDict>>(v) ||
            std::holds_alternative<std::shared_ptr<PropertyList>>(v);
 }
