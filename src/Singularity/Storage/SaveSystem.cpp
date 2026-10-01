@@ -1368,10 +1368,23 @@ bool writeZoneIdentity(const std::string& identifier, const nlohmann::json& j) {
     wrapper["MigrationRoot"] = j.dump(-1);
     std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
     
-    return atomicWriteFile(path, [&](std::ostream& out) {
+    bool ok = atomicWriteFile(path, [&](std::ostream& out) {
         out.write(reinterpret_cast<const char*>(outBytes.data()), outBytes.size());
         return static_cast<bool>(out);
     });
+
+    if (ok) {
+        std::string folder = ensureSaveTypeFolder(SaveType::ZONE);
+        if (!folder.empty()) {
+            const std::string safe = sanitizeLabel(identifier);
+            if (!safe.empty()) {
+                std::error_code ec;
+                std::filesystem::remove(std::filesystem::path(folder) / safe / "zone.json", ec);
+            }
+        }
+    }
+
+    return ok;
 }
 
 nlohmann::json readZoneIdentity(const std::string& identifier) {
@@ -1528,10 +1541,23 @@ bool writeHomeIdentity(const std::string& identifier, const nlohmann::json& j) {
     wrapper["MigrationRoot"] = j.dump(-1);
     std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
     
-    return atomicWriteFile(path, [&](std::ostream& out) {
+    bool ok = atomicWriteFile(path, [&](std::ostream& out) {
         out.write(reinterpret_cast<const char*>(outBytes.data()), outBytes.size());
         return static_cast<bool>(out);
     });
+
+    if (ok) {
+        std::string folder = ensureSaveTypeFolder(SaveType::HOME);
+        if (!folder.empty()) {
+            const std::string safe = sanitizeLabel(identifier);
+            if (!safe.empty()) {
+                std::error_code ec;
+                std::filesystem::remove(std::filesystem::path(folder) / safe / "home.json", ec);
+            }
+        }
+    }
+
+    return ok;
 }
 
 nlohmann::json readHomeIdentity(const std::string& identifier) {

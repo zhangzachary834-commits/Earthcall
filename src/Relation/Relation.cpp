@@ -297,7 +297,7 @@ float Relation::getWeight() const {
         return std::get<float>(out);
     }
     if (s_developerMode) {
-        std::cerr << "[Relation] AUDIT WARNING: weight not explicitly settled for Relation " << getIdentifier() << ". Falling back to 1.0f in developer mode." << std::endl;
+        const_cast<Relation*>(this)->setDynamicProperty("weight", PropertyValue(1.0f));
         return 1.0f;
     }
     throw std::runtime_error("Relation weight not explicitly settled by a Person.");

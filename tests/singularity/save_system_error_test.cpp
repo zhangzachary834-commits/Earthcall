@@ -79,6 +79,22 @@ int main() {
     nlohmann::json readHome = SaveSystem::readHomeIdentity("AtomicHome");
     check(readHome.contains("active") && readHome["active"] == true, "readHomeIdentity matches written atomic home document");
 
+    // Test 5b: Cleanup of stale fixed-name sidecar files (zone.json / home.json)
+    std::filesystem::path sidecarZoneJson = sandbox / "zones" / "AtomicZone" / "zone.json";
+    std::filesystem::path sidecarHomeJson = sandbox / "homes" / "AtomicHome" / "home.json";
+    {
+        std::ofstream zout(sidecarZoneJson);
+        zout << "{\"stale\": true}";
+        std::ofstream hout(sidecarHomeJson);
+        hout << "{\"stale\": true}";
+    }
+    check(std::filesystem::exists(sidecarZoneJson) && std::filesystem::exists(sidecarHomeJson),
+          "Created legacy zone.json and home.json sidecar fixtures");
+    check(SaveSystem::writeZoneIdentity("AtomicZone", zoneDoc), "writeZoneIdentity updates zone.ecform");
+    check(SaveSystem::writeHomeIdentity("AtomicHome", homeDoc), "writeHomeIdentity updates home.ecform");
+    check(!std::filesystem::exists(sidecarZoneJson), "writeZoneIdentity cleaned up stale zone.json sidecar");
+    check(!std::filesystem::exists(sidecarHomeJson), "writeHomeIdentity cleaned up stale home.json sidecar");
+
     auto treeFingerprint = [](const std::filesystem::path& dir) {
         std::vector<std::string> entries;
         std::error_code ec;
