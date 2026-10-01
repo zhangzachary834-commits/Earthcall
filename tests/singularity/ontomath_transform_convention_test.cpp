@@ -1,5 +1,7 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Person/Perspective/PersonPerspective.hpp"
+#include "Person/Body/Body.hpp"
+#include "Person/Body/BodyPart/BodyPart.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -118,6 +120,17 @@ int main() {
 
     assert(std::fabs(glm::dot(worldNormal, worldTangent)) < 1e-4f);
     assert(std::fabs(glm::dot(naiveNormal, worldTangent)) > 1e-2f);
+
+    // Rung 6 Body placement witness: the default avatar's authored offsets
+    // remain exactly the legacy placements while OntoMath now owns translation
+    // construction. Sample asymmetric and depth-bearing parts so axis/sign
+    // mistakes cannot hide behind symmetry.
+    Body avatar = Body::createBasicAvatar("ontomath-rung6-body");
+    const BodyPart* leftShoulder = avatar.getBodyPart("LeftShoulder");
+    const BodyPart* rightFoot = avatar.getBodyPart("RightFoot");
+    assert(leftShoulder && rightFoot);
+    assert(nearVec3(glm::vec3(leftShoulder->getTransform()[3]), glm::vec3(-0.35f, 0.6f, 0.0f)));
+    assert(nearVec3(glm::vec3(rightFoot->getTransform()[3]), glm::vec3(0.15f, -1.15f, 0.1f)));
 
     // PersonPerspective currently defines its view by glm::lookAt and its
     // standalone projection by glm::perspective. Pin that separately from the
