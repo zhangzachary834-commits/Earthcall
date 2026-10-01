@@ -1680,16 +1680,8 @@ void ZoneManager::saveState(const std::string& filename, SaveContext& ctx) {
         }
     }
 
-    std::vector<uint8_t> outBytes;
-    if (p.extension() == ".ecform") {
-        nlohmann::json wrapper = nlohmann::json::object();
-        wrapper["MigrationRoot"] = j.dump(-1);
-        outBytes = nlohmann::json::to_msgpack(wrapper);
-    } else {
-        std::string txt = j.dump(-1);
-        outBytes.assign(txt.begin(), txt.end());
-    }
-    if (!atomicWriteFile(p, outBytes)) {
+    std::string txt = j.dump(2);
+    if (!atomicWriteFile(p, txt)) {
         std::cerr << "[ZoneManager] saveState: failed to commit " << p << "\n";
         return;
     }
@@ -2427,10 +2419,8 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                         std::cerr << "[ZoneManager] Legacy migration matter write FAILED for "
                                   << filename << "\n";
                     } else {
-                        nlohmann::json wrapper = nlohmann::json::object();
-                        wrapper["MigrationRoot"] = j.dump(-1);
-                        std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
-                        if (atomicWriteFile(formPath, outBytes)) {
+                        std::string outTxt = j.dump(2);
+                        if (atomicWriteFile(formPath, outTxt)) {
                             cleanupPredecessorMatter(oldMatterPath);
                             logIo("Migrated legacy save '" + filename +
                                   "' to split substrate (.ecform + generation-coupled .ecmatter).");
