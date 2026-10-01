@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 
 #include <cassert>
+#include <cstdint>
 #include <cmath>
 #include <cstdio>
 #include <map>
