@@ -29,7 +29,9 @@ The foundation of `OntoMath` is exact symbolic math, avoiding approximations whe
 `ScalarForm` represents a continuous algebraic expression: a sum of terms where a term is `coefficient * Π var^exp * Π trans(scale·var + shift)`. Within it, algebra (+, ×) and basic calculus (derivatives) are exact.
 
 ### `MathNode` (AST)
-When we need complex vector calculations (Dot products, Cross products) or structured combinations of scalars, we construct a tree of `MathNode`s. 
+When we need complex vector calculations (Dot products, Cross products) or structured combinations of scalars, we construct a tree of `MathNode`s.
+
+**Linear-algebra sovereignty (Rung 1, 2026-09-30).** OntoMath now has a first-class, dimension-aware `MatrixValue` in `LinearAlgebra.hpp`. Its canonical logical storage is row-major and indexed as `(row, col)`; the GLM bridge explicitly converts to/from GLM's `matrix[column][row]` representation, so storage convention is not mathematical meaning. `ValueKind::Matrix` and `MathType::matrix(rows, cols)` make matrix dimensions legible to the type judgement. Rung 1 deliberately does **not** assign matrix meaning to existing scalar/vector ops: a Matrix `ValueLeaf` type-checks, but existing operations refuse Matrix children until append-only matrix operations land in Rung 2. Legacy `glm::mat4` remains accepted at property/save boundaries for compatibility and converts only through the explicit bridge.
 
 Supported Operations (append-only `MathNode::Op`, serialized as ints):
 - Leaves: `ScalarLeaf` (a `ScalarForm`), `ValueLeaf`, `VectorConstruct`, `Component`.
@@ -57,6 +59,7 @@ Mathematical laws in reality often only apply under certain conditions (e.g., gr
 - `Field`: Continuous Scalar and Vector fields.
 - `CurveModel`: 1D time-based parameter curves.
 - `ProbabilityForm`: Stochastic modeling.
+- `LinearAlgebra`: Dimension-aware matrix values and explicit substrate bridges; matrix operations themselves begin in Rung 2.
 
 By centralizing these in `OntoMath`, Earthcall ensures that any mathematical law authored by a `Person` can be reliably executed by any sub-system.
 
