@@ -68,14 +68,32 @@ int main() {
     nlohmann::json reloadedWorld = SaveSystem::readSaveData(updatedPath);
     check(reloadedWorld.contains("version") && reloadedWorld["version"] == 2, "Atomic write cleanly overwrites existing save file");
 
-    // Test 5: Atomic write-before-commit for writeZoneIdentity and writeHomeIdentity
+    // Test 5: Atomic write-before-commit and stale sidecar cleanup for writeZoneIdentity and writeHomeIdentity
+    std::filesystem::path legacyZoneJson = sandbox / "zones" / "AtomicZone" / "zone.json";
+    std::filesystem::create_directories(legacyZoneJson.parent_path());
+    {
+        std::ofstream out(legacyZoneJson);
+        out << "{\"identifier\": \"AtomicZone\", \"stale\": true}\n";
+    }
+    check(std::filesystem::exists(legacyZoneJson), "Legacy zone.json sidecar pre-created");
+
     nlohmann::json zoneDoc = {{"identifier", "AtomicZone"}, {"active", true}};
     check(SaveSystem::writeZoneIdentity("AtomicZone", zoneDoc), "writeZoneIdentity succeeds atomically");
+    check(!std::filesystem::exists(legacyZoneJson), "writeZoneIdentity automatically removed legacy zone.json sidecar");
     nlohmann::json readZone = SaveSystem::readZoneIdentity("AtomicZone");
     check(readZone.contains("active") && readZone["active"] == true, "readZoneIdentity matches written atomic zone document");
 
+    std::filesystem::path legacyHomeJson = sandbox / "homes" / "AtomicHome" / "home.json";
+    std::filesystem::create_directories(legacyHomeJson.parent_path());
+    {
+        std::ofstream out(legacyHomeJson);
+        out << "{\"identifier\": \"AtomicHome\", \"stale\": true}\n";
+    }
+    check(std::filesystem::exists(legacyHomeJson), "Legacy home.json sidecar pre-created");
+
     nlohmann::json homeDoc = {{"identifier", "AtomicHome"}, {"active", true}};
     check(SaveSystem::writeHomeIdentity("AtomicHome", homeDoc), "writeHomeIdentity succeeds atomically");
+    check(!std::filesystem::exists(legacyHomeJson), "writeHomeIdentity automatically removed legacy home.json sidecar");
     nlohmann::json readHome = SaveSystem::readHomeIdentity("AtomicHome");
     check(readHome.contains("active") && readHome["active"] == true, "readHomeIdentity matches written atomic home document");
 
