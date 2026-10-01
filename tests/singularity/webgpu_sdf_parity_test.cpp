@@ -293,6 +293,44 @@ int main() {
         cases.push_back({ "Expr(noise_offset)", n, glm::mat4(1.0f), 10 });
     }
 
+    // Rung 4 native matrix parity: the SAME authored MathNode is evaluated by
+    // the CPU raycaster and lowered to WGSL for the GPU. The non-uniform linear
+    // map makes row/column convention errors move the visible zero set.
+    // f(p) = length(M*p) - 0.55, M = diag(1.35, 0.75, 1.10).
+    {
+        auto numberNode = [](double value) {
+            auto n = std::make_unique<OntoMath::MathNode>();
+            n->op = OntoMath::MathNode::Op::ScalarLeaf;
+            n->scalarForm.terms.push_back(OntoMath::Term(value));
+            return n;
+        };
+        auto matrix = std::make_unique<OntoMath::MathNode>();
+        matrix->op = OntoMath::MathNode::Op::MatrixConstruct;
+        matrix->matrixRows = 3;
+        matrix->matrixCols = 3;
+        const double entries[9] = {1.35,0.0,0.0, 0.0,0.75,0.0, 0.0,0.0,1.10};
+        for (double value : entries) matrix->children.push_back(numberNode(value));
+        auto point = std::make_unique<OntoMath::MathNode>();
+        point->op = OntoMath::MathNode::Op::ValueLeaf;
+        point->variableName = OntoMath::kAmbientPointVar;
+        auto mapped = std::make_unique<OntoMath::MathNode>();
+        mapped->op = OntoMath::MathNode::Op::MatrixVectorMultiply;
+        mapped->children.push_back(std::move(matrix));
+        mapped->children.push_back(std::move(point));
+        auto length = std::make_unique<OntoMath::MathNode>();
+        length->op = OntoMath::MathNode::Op::Length;
+        length->children.push_back(std::move(mapped));
+        auto field = std::make_shared<OntoMath::MathNode>();
+        field->op = OntoMath::MathNode::Op::Sub;
+        field->children.push_back(std::move(length));
+        field->children.push_back(numberNode(0.55));
+        auto n = std::make_shared<geom::SdfNode>();
+        n->op = geom::SdfOp::Leaf;
+        n->prim = geom::SdfPrim::Expr;
+        n->mathNode = std::move(field);
+        cases.push_back({ "Expr(matrix)", n });
+    }
+
     // Every operator.
     auto a = leaf(geom::SdfPrim::Sphere, glm::vec3(0.6f), 0.0f, glm::vec3(-0.25f, 0, 0));
     auto b = leaf(geom::SdfPrim::Box,    glm::vec3(0.45f), 0.0f, glm::vec3( 0.25f, 0, 0));
