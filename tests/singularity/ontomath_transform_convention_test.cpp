@@ -67,6 +67,25 @@ int main() {
     assert(nearf(object.getTransform()[3][2], translation.z));
     assert(nearf(object.getTransform()[3][3], 1.0f));
 
+
+    // Rung 6 production-seam witness: repeat authored rotation on an already
+    // rotated, non-uniformly-scaled Object. ObjectMotion must preserve the
+    // existing translation and extracted scale while OntoMath owns the new
+    // T * Rx * Ry * Rz * S recomposition.
+    const glm::vec3 secondEulerDeg(-42.0f, 15.0f, 103.0f);
+    object.setRotationEulerDegrees(secondEulerDeg);
+
+    glm::mat4 secondExpected = glm::translate(glm::mat4(1.0f), translation);
+    secondExpected = glm::rotate(secondExpected, glm::radians(secondEulerDeg.x), glm::vec3(1, 0, 0));
+    secondExpected = glm::rotate(secondExpected, glm::radians(secondEulerDeg.y), glm::vec3(0, 1, 0));
+    secondExpected = glm::rotate(secondExpected, glm::radians(secondEulerDeg.z), glm::vec3(0, 0, 1));
+    secondExpected = glm::scale(secondExpected, scale);
+
+    assert(nearMat4(object.getTransform(), secondExpected));
+    assert(nearf(glm::length(glm::vec3(object.getTransform()[0])), scale.x));
+    assert(nearf(glm::length(glm::vec3(object.getTransform()[1])), scale.y));
+    assert(nearf(glm::length(glm::vec3(object.getTransform()[2])), scale.z));
+
     // Point and direction are not the same homogeneous thing. Translation
     // affects w=1 points and must not affect w=0 directions.
     const glm::vec3 localPoint(1.25f, -0.5f, 2.0f);
