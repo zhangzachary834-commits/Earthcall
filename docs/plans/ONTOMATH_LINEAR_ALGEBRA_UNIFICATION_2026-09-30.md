@@ -6,7 +6,7 @@
 **Base:** `sync-from-earthcall-main`  
 **Human direction:** OntoMath is Earthcall's pure mathematics engine. There must not be a competing mathematical system in renderer, physics, geometry, Object motion, camera code, or other C++ substrate. GLM may remain an execution kernel, but it must not remain a second source of mathematical meaning.
 
-**Status:** Rung 0 and Rung 1 landed on this branch on 2026-09-30. Rung 0 witnesses: `tests/singularity/ontomath_transform_convention_test.cpp`, `tests/singularity/ontomath_matrix_refusal_test.cpp`; inventory: `docs/audits/ONTOMATH_LINEAR_ALGEBRA_RUNG0_INVENTORY_2026-09-30.md`. Rung 1 adds `OntoMath::MatrixValue`, dimension-aware `MathType`, explicit `glm::mat4` bridging, JSON/msgpack persistence, and `tests/singularity/ontomath_matrix_value_test.cpp`. Matrix operations themselves remain deliberately absent until Rung 2.
+**Status:** Rungs 0, 1, and 2 landed on this branch on 2026-09-30. Rung 0 freezes the pre-unification transform constitution and inventories semantic-origin GLM calls. Rung 1 adds `OntoMath::MatrixValue`, dimension-aware `MathType`, explicit `glm::mat4` bridging, JSON/msgpack persistence, and `tests/singularity/ontomath_matrix_value_test.cpp`. Rung 2 appends `MathNode::Op` IDs 30–39 for matrix construction, identity, add/sub/scale/multiply, vec3 application, transpose, determinant, and inverse; adds CPU evaluation with explicit dimension/non-finite/singular refusal; adds `tests/singularity/ontomath_linear_algebra_test.cpp`; and explicitly refuses matrix WGSL lowering until Rung 4.
 
 ---
 
