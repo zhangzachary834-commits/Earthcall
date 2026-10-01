@@ -131,6 +131,27 @@ void test_clear() {
     assert(manager.isActive());
 }
 
+void test_distinct_identities_shared_spelling() {
+    PerspectiveManager manager;
+    // Two perspectives sharing the same display name "Orbit" but distinct identifiers
+    auto p1 = std::make_unique<PersonPerspective>("Orbit", PersonPerspective::PerspectiveType::ThirdPerson, "p-orbit-1");
+    auto p2 = std::make_unique<PersonPerspective>("Orbit", PersonPerspective::PerspectiveType::TopDown, "p-orbit-2");
+
+    manager.addPerspective(std::move(p1));
+    manager.addPerspective(std::move(p2));
+
+    // Both perspectives should be held because their identifiers are distinct
+    assert(manager.count() == 2);
+    assert(manager.hasPerspective("p-orbit-1"));
+    assert(manager.hasPerspective("p-orbit-2"));
+
+    // Switching by identifier should find the correct perspective
+    manager.switchTo("p-orbit-2");
+    assert(manager.currentIndex() == 1);
+    assert(manager.current()->getIdentifier() == "p-orbit-2");
+    assert(manager.current()->getName() == "Orbit");
+}
+
 } // namespace
 
 int main() {
@@ -140,6 +161,7 @@ int main() {
     test_remove_perspective();
     test_state_management();
     test_clear();
+    test_distinct_identities_shared_spelling();
 
     std::puts("perspective_manager_test: ALL OK");
     return 0;
