@@ -2555,13 +2555,17 @@ void LawManager::refreshVocabularyIndex(const std::vector<Singular*>& allBeings)
     _vocabularyBuiltAt = revision;
     if (_indexedNames.empty()) return;
 
-    // Pre-populate _vocabularyIndex for all _indexedNames so that vector addresses
-    // remain stable, and build a lookup map from string_view to target vector pointers.
-    // This avoids string allocations and map lookups inside the being iteration loop.
+    // Pre-populate _vocabularyIndex for all _indexedNames and reserve map capacity
+    // BEFORE taking addresses of element values, so no rehash invalidates value addresses.
+    _vocabularyIndex.reserve(_indexedNames.size());
+    for (const std::string& name : _indexedNames) {
+        _vocabularyIndex[name];
+    }
+
     std::unordered_map<std::string_view, std::vector<Singular*>*> vectorMap;
     vectorMap.reserve(_indexedNames.size());
-    for (const std::string& name : _indexedNames) {
-        vectorMap[name] = &_vocabularyIndex[name];
+    for (auto& [name, vec] : _vocabularyIndex) {
+        vectorMap[name] = &vec;
     }
 
     // ONE PASS PER BEING, not one per (being, name).
