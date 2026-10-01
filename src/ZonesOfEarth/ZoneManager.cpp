@@ -1554,13 +1554,10 @@ std::string commitMatterGeneration(const std::filesystem::path& ecformPath,
     std::string previousGenerationId;
     std::error_code rootEc;
     if (std::filesystem::exists(ecformPath, rootEc) && !rootEc) {
-        std::ifstream in(ecformPath);
-        if (in.is_open()) {
-            nlohmann::json prior = nlohmann::json::parse(in, nullptr, false);
-            if (!prior.is_discarded() && prior.contains("matterGeneration")) {
-                previousGenerationId =
-                    prior["matterGeneration"].value("snapshotId", std::string{});
-            }
+        nlohmann::json prior = SaveSystem::readSaveData(ecformPath.string());
+        if (prior.is_object() && prior.contains("matterGeneration")) {
+            previousGenerationId =
+                prior["matterGeneration"].value("snapshotId", std::string{});
         }
     }
 
