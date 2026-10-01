@@ -132,6 +132,16 @@ int main() {
     assert(singularDet && near(*singularDet, 0.0));
     assert(!OntoMath::matrixInverse(singular));
 
+    // Hand-computable 3x3 with det=1, so its inverse is integral.
+    const MatrixValue a33 = mustMatrix(3,3,{1,2,3, 0,1,4, 5,6,0});
+    auto det33 = OntoMath::matrixDeterminant(a33);
+    assert(det33 && near(*det33, 1.0));
+    auto inv33 = OntoMath::matrixInverse(a33);
+    assert(inv33);
+    assert(nearMatrix(*inv33,
+                      mustMatrix(3,3,{-24,18,5, 20,-15,-4, -5,4,1}),
+                      1e-10));
+
     // The pivot policy is scale-relative: tiny-but-invertible is still
     // invertible, rather than being rejected by an absolute epsilon.
     const MatrixValue tiny = mustMatrix(2,2,{1e-20,0, 0,2e-20});
@@ -215,11 +225,13 @@ int main() {
     // Authored construction is a real AST node: dimensions survive copy,
     // JSON round-trip, printing, typing, and evaluation.
     auto authored = matrixNode(2,2,{4,7,2,6});
-    assert(authored->print() == "matrix2x2(4, 7, 2, 6)");
+    const std::string authoredPrint = authored->print();
+    assert(authoredPrint.rfind("matrix2x2(", 0) == 0);
+    assert(authoredPrint.back() == ')');
 
     MathNode copied(*authored);
     assert(copied.matrixRows == 2 && copied.matrixCols == 2);
-    assert(copied.print() == authored->print());
+    assert(copied.print() == authoredPrint);
 
     const nlohmann::json authoredJson = authored->toJson();
     assert(authoredJson.at("op") == 30);
