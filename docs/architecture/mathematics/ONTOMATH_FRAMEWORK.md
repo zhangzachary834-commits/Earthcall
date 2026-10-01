@@ -35,7 +35,8 @@ When we need complex vector calculations (Dot products, Cross products) or struc
 
 Supported Operations (append-only `MathNode::Op`, serialized as ints):
 - Leaves: `ScalarLeaf` (a `ScalarForm`), `ValueLeaf`, `VectorConstruct`, `Component`.
-- Linear algebra: `Add`, `Sub`, `Scale`, `Dot`, `Cross`, `Hadamard`, `Normalize`, `Length`, `Project`, `Distance`, `Map`.
+- Vector/scalar algebra: `Add`, `Sub`, `Scale`, `Dot`, `Cross`, `Hadamard`, `Normalize`, `Length`, `Project`, `Distance`, `Map`.
+- Matrix algebra (Rung 2, append-only ops 30–39): `MatrixConstruct`, `MatrixIdentity`, `MatrixAdd`, `MatrixSub`, `MatrixScale`, `MatrixMultiply`, `MatrixVectorMultiply`, `MatrixTranspose`, `MatrixDeterminant`, `MatrixInverse`. Matrix dimensions are part of the type judgement. CPU evaluation is live; WGSL explicitly refuses these operations until the dedicated Rung 4 lowering lands.
 - CSG (one vocabulary with `geom::SdfOp`, also componentwise min/max on vectors): `Union` (20), `Intersection` (21), `Difference` (22). There is no `Op::Min` / `Op::Max`.
 - Rational / non-smooth, added 2026-08-18: `Div` (23), `Pow` (24), `Abs` (25), `Clamp` (26), `Sqrt` (27), `Tan` (28). `Div` is guarded by shared `kDegenerateDivisor`; CPU and WGSL both return `0.0` below the threshold. `Abs` / `Clamp` / `Sqrt` are Scalar→Scalar and Vector→Vector (componentwise).
 - Declared, not implemented: `Raycast` (16), `LineIntegral` (19). See §5.
@@ -59,7 +60,7 @@ Mathematical laws in reality often only apply under certain conditions (e.g., gr
 - `Field`: Continuous Scalar and Vector fields.
 - `CurveModel`: 1D time-based parameter curves.
 - `ProbabilityForm`: Stochastic modeling.
-- `LinearAlgebra`: Dimension-aware matrix values and explicit substrate bridges; matrix operations themselves begin in Rung 2.
+- `LinearAlgebra`: Dimension-aware matrix values, explicit substrate bridges, and the Rung 2 CPU algebra kernel (identity/add/sub/scale/multiply/vec3 application/transpose/determinant/inverse). Singular inverse and non-finite arithmetic refuse rather than fabricating values.
 
 By centralizing these in `OntoMath`, Earthcall ensures that any mathematical law authored by a `Person` can be reliably executed by any sub-system.
 
