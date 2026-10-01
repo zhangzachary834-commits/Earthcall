@@ -2558,6 +2558,21 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
             }
             return std::nullopt;
         }
+        case Op::MatrixConstruct:
+        case Op::MatrixIdentity:
+        case Op::MatrixAdd:
+        case Op::MatrixSub:
+        case Op::MatrixScale:
+        case Op::MatrixMultiply:
+        case Op::MatrixVectorMultiply:
+        case Op::MatrixTranspose:
+        case Op::MatrixDeterminant:
+        case Op::MatrixInverse:
+            // RangeValue currently has only Scalar and vec3 interval domains.
+            // Returning a scalar [-inf,+inf] for a Matrix would lie about the
+            // expression's type. Refuse range proof until a matrix interval
+            // domain exists; callers already treat nullopt as "cannot prove".
+            return std::nullopt;
         case Op::Noise: {
             // This bound is LOAD-BEARING, not decorative: geom::evalRange feeds it
             // to tessellation culling and the conservative zero-set hierarchy.
