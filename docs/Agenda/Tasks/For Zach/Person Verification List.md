@@ -1,5 +1,15 @@
 # Person Verification List
 
+## Double-click launchers: `Run Earthcall as Me.command` and `Earthcall First Movers.command`
+
+*Claude Code · Claude Opus 5.5 · session `08b0f730-6e49-4c49-b27f-3a89c810ca4b` · 2026-10-01. Zach: "make a executable thingy i can double click … separate the person verification executable from the first mover one". Both were run end to end in a sandbox (keying, wrong passphrases, adding, listing and removing a model). These are the checks only you can do.*
+
+- [ ] Double-click **Run Earthcall as Me**. A wrong passphrase should say `did not open your key` and ask again. The right one launches Earthcall, and the console says you're authenticated by key.
+- [ ] Double-click **Earthcall First Movers** → `1` → `Claude Sonnet 4.5` → your passphrase → press Return through the defaults. A file `Start Claude Sonnet 4.5.command` should appear in the repo folder.
+- [ ] With Earthcall running via "as Me", double-click **Start Claude Sonnet 4.5**. A Claude Code window opens on Sonnet 4.5, and its `earthcall_get_connection_status` says `authenticated: true`.
+- [ ] Open Keychain Access and search `earthcall-first-mover`. There should be one entry per model you added, and nothing for you (your passphrase is never stored).
+
+
 ## Terminal Zones: `enter <zone>`, and keying yourself from the terminal
 
 *Claude Code · Claude Opus 5.5 · session `08b0f730-6e49-4c49-b27f-3a89c810ca4b` · 2026-09-30. Zach: "ALL MY LINES GO TO THE LAW AUTHORING CLI … TREAT THIS LIKE ZONES … MAKE AN OPCODE TO SWITCH". Rebuild `earthcall_webgpu`, then launch with `Run Earthcall.command`.*
@@ -33,6 +43,7 @@
 ## Constitutional Person movement
 
 - [ ] If an existing saved Law attempts to set your `position`, `velocity`, or `acceleration`, witness that it does not move you merely because you authored the Law; record any movement channel that still does. This remains open because the authored, revocable consent Relation has not yet been specified or wired. No save file was changed for this check. *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:23 PDT.*
+- [ ] When authoring a live `Map`/`ValueLeaf` Law from a list/dictionary PropertyPath, confirm that changing the source leaf changes the intended visible result on the next firing, and that a refused read-only nested write names its refusal in the Law record; this pass verified serialized Laws headlessly and added no inhabited demonstration save or new control. General scalar cells, unique/weak bindings, alias-wide reactivity, and save topology remain open in [the Property memory task](../Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md). *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 12:29 PDT.*
 
 
 

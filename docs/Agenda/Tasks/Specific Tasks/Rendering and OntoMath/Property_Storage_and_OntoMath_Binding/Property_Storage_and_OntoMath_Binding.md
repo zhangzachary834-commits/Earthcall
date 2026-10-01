@@ -1,6 +1,6 @@
 # PropertyPath and memory micromastery — storage and live OntoMath binding
 
-**Status:** Architecture drafted; narrow ambiguity, Person-identity, and structural read-only refusals implemented; Zone-governed binding and memory micromastery remain open.
+**Status:** Narrow identity/access refusals and typed live bindings/container access implemented; general memory cells, Zone-governed binding, custody, and alias persistence remain open.
 
 **Architecture:** [`PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md`](../../../../../architecture/ontology/PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md).
 
@@ -30,7 +30,7 @@
 1. Specify path-following, cell sharing, unique ownership, weak observation, copying, and derivation as distinct authorable relationships, including the serialized compatibility contract.
 2. Make nested and shared Property writes observable to Law/Rete and channel consumers through a complete change feed.
 3. Implement checked value-cell lifetimes and save/load alias topology without exposing C++ addresses or granting a second permission system.
-4. Extend OntoMath bindings to preserve supported value types and resolve live Property references, with explicit type and channel refusals.
+4. Complete typed live Property bindings with authored cell relationships and explicit operation/channel refusals; preserve the implemented type-preserving read seam.
 5. Measure the existing interned-name/parallel-array layout against selective dense storage on representative authored worlds before changing the cache.
 6. Extend `TransferPolicy` into one Law-governed read/write/bind/share/derive access funnel and bootstrap its initial policy Laws through an attested First Mover without self-authorizing Law edits.
 
@@ -52,7 +52,7 @@ Source inspection found that `PropertyPath` stores property-name segments and ru
 
 **Correction from Zach, 2026-09-27:** A PropertyPath is not a Singular and does not retain IDs of its own. The resolution of a read depends on the Zones in which it occurs, potentially **multiple Zones** when a PropertyPath is transmitted between them. A Zone is any domain or set over a mathematical or discrete bound through which Singulars participate and gain location; a device is a possible Zone, not merely a 3D digital world. The ID must terminate in ownership by a set of physical machines (the set may contain one or several), but a digitally constructed Zone may be authorized to hold it through governance and ownership Relations from a Person acting through First Mover channels on machines they own. Authorization does not imply that the data is physically stored on that Zone's machine. This belongs to the First Mover bootstrap problem. The previous question about how a *path* carries an ID was Codex's mistaken framing; the remaining problem is how Zones and their authority-bearing Relations resolve the path to the same individual without revealing or redirecting identity improperly.
 
-**⚑ AUTHOR — still open:** Which Zones and Laws participate in an inter-Zone read or transmission? Which authority level(s) govern writes through distinct paths sharing a cell, and how are conflicts settled? Zach's answer about public-ID custody and Person signing follows below. Do not infer the remaining answers from the current cache or introduce a storage/permission ontology around them.
+**⚑ AUTHOR — remaining:** Zach subsequently specified that each Zone governs its own reads/writes and incoming reception, without governing another Zone's choices. Which authority level(s) govern writes through distinct paths sharing a cell, and how are conflicts settled? His answers about public-ID custody, Person signing, and bootstrap policy follow below. Do not infer the remaining answers from the current cache or introduce a storage/permission ontology around them.
 
 *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-27 22:12 PDT. Zach supplied the identity, ambiguity, ID-disclosure, and authority requirements; Codex inspected the code and added only the duplicate-spelling refusal.*
 
@@ -127,3 +127,13 @@ Zach chose **the same enduring identity** across the relevant machines, machine-
 *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 23:23 PDT. Codex narrowed the foreign Kernel path to positive Person motion writes, added an ID-safe Law refusal record, and passed the focused Law test. The final WebSocket rebuild and socket integration test passed with local loopback permission.*
 
 *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 23:27 PDT. Codex traced `ZoneManager::switchTo` and corrected the foreign switch refusal to unmapped Zone activation, rather than mislabeling the active-Zone selector as Person location. The corrected socket branch rebuilt and passed its focused integration test with local loopback permission.*
+
+## Raw memory micromastery rung (2026-10-01)
+
+Zach returned to his original low-level storage request and confirmed that shared writes update one cell, independently rebinding one path leaves the other on the old cell, unique ownership cannot silently become shared, and expired weak observation refuses. He requires topology to survive saving across Singulars and Zones. Custody must be configurable through authored policy: one authoritative Zone, synchronized local copies, a dedicated third Zone, or a super-Zone encompassing the participating bounds are all possible. Its Relation connects **Zone ↔ bearer, qualified by PropertyPath**; whether it qualifies the existing ownership/governance kinds or uses a distinct custody kind remains open. Nested deep-copy/cycle behavior also remains open after he asked for an explanation of nested list/dictionary memory. These are Zach's decisions; the general cell representation is not yet implemented.
+
+The current code now preserves `PropertyValue` types when reading live MathBindings rather than widening every numeric source to `double`. It also makes registered list/dictionary memory reachable through nested PropertyPaths, retains getter-returned containers during an access, strictly validates list indices and offsets, and refuses incomplete traversal. Registered read-only containers refuse nested writes; a getter/setter bridge without direct mutable storage reports `Unsupported`, avoiding a write behind its setter while still supporting whole-value replacement through that setter. Member-backed and authored containers retain their existing shared in-place element behavior. Assignment preserves a different container binding even when its contents agree, and notifies the rebound root. Content equality now traverses iteratively and refuses to prove distinct loops unchanged; this is comparison safety, not a copied-cycle policy. The focused witness uses serialized authored `Map`/`ValueLeaf` Laws for a container alias and an exact integer value and tests an 8,192-level equality walk. The final focused build and all four tests passed (`property_memory_access_test`, `property_path_precalc_test`, `law_model_test`, `ontomath_test`; 9.03 seconds total). This is not a full-suite or live Person verdict.
+
+**For future agents:** Do not interpret a typed `Map` passthrough as a general share/unique/weak cell operation or a deep copy. Scalar passthrough copies a value; existing list/dict passthrough retains a C++ shared reference. The current codec does not preserve this sharing across saves, and a nested write still notifies its reached root rather than every alias. Cross-Zone custody must be answered before implementing saved cell graphs. No inhabited save was changed in this pass.
+
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 13:00 PDT. Zach supplied the shared-write/rebinding, unique-conversion, weak-expiry, and cross-Zone persistence decisions; Codex implemented the unambiguous container-access and typed-binding foundation while custody and copy semantics remain open.*

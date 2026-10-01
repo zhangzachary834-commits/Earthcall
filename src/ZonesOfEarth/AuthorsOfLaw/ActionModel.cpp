@@ -52,6 +52,7 @@ const char* ActionNode::reasonName(PropertyPath::PathResult reason) {
         case PropertyPath::PathResult::ReadOnly: return "Read Only";
         case PropertyPath::PathResult::BadComponent: return "Bad Component";
         case PropertyPath::PathResult::Unchanged: return "Unchanged";
+        case PropertyPath::PathResult::Unsupported: return "Unsupported storage access";
     }
     return "Unknown";
 }
