@@ -357,19 +357,45 @@ int main() {
         return 1;
     }
 
-    // Hostile provenance witness: change the selected slot's producer identity
-    // while deliberately reusing the admitted source-set revision. The observer
-    // may still hold the old aligned artifact, so the real WebGPU consumer must
-    // reject that stale provenance and fail open to the exact visibility path.
+    // Re-admit the original proven-zero source under a fresh current revision
+    // before the hostile provenance case. This makes the following producer-id
+    // mutation reuse the actually admitted revision rather than rolling the
+    // source-set revision backward from the preceding zero->nonzero repair.
+    constexpr uint64_t kReboundSourceSetRevision = 52003;
+    authorityRenderer.setRadianceSources(sources, kReboundSourceSetRevision);
+    exactRenderer.setRadianceSources(sources, kReboundSourceSetRevision);
+    const Sample readmittedDraw = renderOne(authorityRenderer, true);
+    const Sample exactReadmittedDraw = renderOne(exactRenderer, true);
+    if (readmittedDraw.pixels != exactReadmittedDraw.pixels) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL zero authority re-admission changed pixels\n");
+        return 1;
+    }
+    const auto readmittedStats =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    if (readmittedStats.authorityBypassesApplied <=
+            repairStatsAfterDraw.authorityBypassesApplied) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL zero authority was not re-admitted "
+            "before hostile rebinding\n");
+        return 1;
+    }
+
+    // Hostile provenance witness: change only the selected slot's producer
+    // identity while deliberately reusing the currently admitted source-set
+    // revision. The real WebGPU consumer must reject the stale aligned proof
+    // and fail open to the exact visibility path.
     std::vector<Rendering::RadianceSourceBinding> reboundSources = sources;
     reboundSources[0].producerId = "perf/source-zero-rebound";
     const auto reboundStatsBefore =
         authorityRenderer.renderedFieldSemanticObservationStats();
     const uint64_t reboundApplicationsBefore =
         reboundStatsBefore.authorityBypassesApplied;
-    authorityRenderer.setRadianceSources(reboundSources, kSourceSetRevision);
+    authorityRenderer.setRadianceSources(
+        reboundSources, kReboundSourceSetRevision);
     const Sample reboundDraw = renderOne(authorityRenderer, true);
-    exactRenderer.setRadianceSources(reboundSources, kSourceSetRevision);
+    exactRenderer.setRadianceSources(
+        reboundSources, kReboundSourceSetRevision);
     const Sample exactReboundDraw = renderOne(exactRenderer, true);
     if (reboundDraw.pixels != exactReboundDraw.pixels) {
         std::printf(
