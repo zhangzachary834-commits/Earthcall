@@ -1368,10 +1368,17 @@ bool writeZoneIdentity(const std::string& identifier, const nlohmann::json& j) {
     wrapper["MigrationRoot"] = j.dump(-1);
     std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
     
-    return atomicWriteFile(path, [&](std::ostream& out) {
+    const bool ok = atomicWriteFile(path, [&](std::ostream& out) {
         out.write(reinterpret_cast<const char*>(outBytes.data()), outBytes.size());
         return static_cast<bool>(out);
     });
+
+    if (ok) {
+        std::error_code ec;
+        const std::filesystem::path legacyJson = std::filesystem::path(path).parent_path() / "zone.json";
+        std::filesystem::remove(legacyJson, ec);
+    }
+    return ok;
 }
 
 nlohmann::json readZoneIdentity(const std::string& identifier) {
@@ -1528,10 +1535,17 @@ bool writeHomeIdentity(const std::string& identifier, const nlohmann::json& j) {
     wrapper["MigrationRoot"] = j.dump(-1);
     std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
     
-    return atomicWriteFile(path, [&](std::ostream& out) {
+    const bool ok = atomicWriteFile(path, [&](std::ostream& out) {
         out.write(reinterpret_cast<const char*>(outBytes.data()), outBytes.size());
         return static_cast<bool>(out);
     });
+
+    if (ok) {
+        std::error_code ec;
+        const std::filesystem::path legacyJson = std::filesystem::path(path).parent_path() / "home.json";
+        std::filesystem::remove(legacyJson, ec);
+    }
+    return ok;
 }
 
 nlohmann::json readHomeIdentity(const std::string& identifier) {
