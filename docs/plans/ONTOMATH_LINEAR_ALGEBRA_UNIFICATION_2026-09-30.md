@@ -6,6 +6,8 @@
 **Base:** `sync-from-earthcall-main`  
 **Human direction:** OntoMath is Earthcall's pure mathematics engine. There must not be a competing mathematical system in renderer, physics, geometry, Object motion, camera code, or other C++ substrate. GLM may remain an execution kernel, but it must not remain a second source of mathematical meaning.
 
+**Status:** Rung 0 landed on this branch on 2026-09-30. Witnesses: `tests/singularity/ontomath_transform_convention_test.cpp`, `tests/singularity/ontomath_matrix_refusal_test.cpp`. Inventory: `docs/audits/ONTOMATH_LINEAR_ALGEBRA_RUNG0_INVENTORY_2026-09-30.md`. Rung 0 intentionally changes no production runtime semantics.
+
 ---
 
 ## 0. Constitutional invariant
