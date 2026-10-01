@@ -287,6 +287,12 @@ struct VolumeProgramInput {
 // header record; each medium's paramOffset points at its own parameter segment.
 Program compileVolumeSet(const std::vector<VolumeProgramInput>& media);
 
+// Test-only color-output instrumentation. Replaces the volume answer with
+// encoded work counts: R=view samples, G/B=shadow SDF evaluations for one
+// medium or occupied medium evaluations for a V5 set. Never enable on a live
+// authored frame; the ordinary compiler output remains unchanged.
+bool instrumentVolumeWork(Program& program, bool mediumSet, std::string& error);
+
 // Value-only companion to compileVolume(). Recollects numeric parameter slots
 // without regenerating shader source when structure is unchanged.
 ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
