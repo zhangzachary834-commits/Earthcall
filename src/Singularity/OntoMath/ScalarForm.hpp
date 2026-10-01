@@ -503,6 +503,18 @@ struct MathNode {
         Tan = 28,      // unary tangent (Scalar->Scalar)
         Noise = 29,    // Perlin noise (Vector->Scalar)
 
+        // Rung 2 linear algebra. APPEND-ONLY: 0..29 are already serialized.
+        MatrixConstruct = 30,       // rows*cols scalar children -> Matrix(rows, cols)
+        MatrixIdentity = 31,        // matrixRows == matrixCols, no children
+        MatrixAdd = 32,             // same-shape Matrix + Matrix
+        MatrixSub = 33,             // same-shape Matrix - Matrix
+        MatrixScale = 34,           // Scalar*Matrix or Matrix*Scalar
+        MatrixMultiply = 35,        // (m x n)(n x p) -> (m x p)
+        MatrixVectorMultiply = 36,  // current vec3 seam: Matrix(3x3) * Vector3
+        MatrixTranspose = 37,       // (m x n) -> (n x m)
+        MatrixDeterminant = 38,     // square Matrix -> Scalar
+        MatrixInverse = 39,         // invertible square Matrix -> same shape
+
         // Not a kind an author picks — the landing place for an op THIS BUILD
         // does not know: a save written by another version. It never
         // evaluates (nullopt), never type-checks, and refuses to compile to
@@ -516,6 +528,10 @@ struct MathNode {
     ScalarForm scalarForm;
     std::string variableName;
     std::string stringArg; // For Component index or Map func name
+    // MatrixConstruct / MatrixIdentity shape. Serialized only for those ops.
+    // These are mathematical dimensions, not GLM storage dimensions.
+    std::size_t matrixRows = 0;
+    std::size_t matrixCols = 0;
     std::vector<std::unique_ptr<MathNode>> children;
 
     // Unsupported payload: the node's original JSON, kept verbatim.
