@@ -131,6 +131,34 @@ void test_clear() {
     assert(manager.isActive());
 }
 
+void test_shared_spelling_distinct_identity() {
+    PerspectiveManager manager;
+    // Two distinct perspectives sharing the same display spelling "Overseer"
+    auto p1 = std::make_unique<PersonPerspective>("Overseer", PersonPerspective::PerspectiveType::ThirdPerson, "perspective_overseer_a");
+    auto p2 = std::make_unique<PersonPerspective>("Overseer", PersonPerspective::PerspectiveType::TopDown, "perspective_overseer_b");
+
+    assert(p1->getName() == p2->getName()); // Same display spelling
+    assert(p1->getIdentifier() != p2->getIdentifier()); // Distinct identity
+
+    manager.addPerspective(std::move(p1));
+    assert(manager.count() == 1);
+    assert(manager.hasPerspective("perspective_overseer_a"));
+
+    // Adding second perspective with identical display name but distinct identifier succeeds
+    manager.addPerspective(std::move(p2));
+    assert(manager.count() == 2);
+    assert(manager.hasPerspective("perspective_overseer_b"));
+
+    // Lookup and switching by distinct identifier reaches the correct perspective
+    manager.switchTo("perspective_overseer_b");
+    assert(manager.currentIndex() == 1);
+    assert(manager.current()->getType() == PersonPerspective::PerspectiveType::TopDown);
+
+    manager.switchTo("perspective_overseer_a");
+    assert(manager.currentIndex() == 0);
+    assert(manager.current()->getType() == PersonPerspective::PerspectiveType::ThirdPerson);
+}
+
 } // namespace
 
 int main() {
@@ -140,6 +168,7 @@ int main() {
     test_remove_perspective();
     test_state_management();
     test_clear();
+    test_shared_spelling_distinct_identity();
 
     std::puts("perspective_manager_test: ALL OK");
     return 0;
