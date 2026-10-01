@@ -829,7 +829,10 @@ std::shared_ptr<Zone> ZoneManager::authorZone(const std::string& identifier,
         obj->addZoneDesignation(zone->getIdentifier());
         globalObjects.push_back(obj);
     }
-    persistZones();
+    // Only the new Zone changed. persistZones() re-encoded every Zone (1.6 GB
+    // for the Cathedral alone) on the calling thread -- a multi-minute freeze
+    // for creating one empty Zone (found 2026-10-01).
+    persistZone(_zones.size() - 1);
     Core::EventBus::instance().publish(
         ECA::Event{"zone-authored", zone.get(), nullptr, std::time(nullptr)});
     return zone;
