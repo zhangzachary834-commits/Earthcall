@@ -32,10 +32,6 @@ Need to implement 2D physics as well as 3D, and 2D-3D interaction physics
 namespace Physics {
 
     static bool isFlying = false;
-    static bool g_legacyEngineEnabled = true;
-
-    bool getLegacyEngineEnabled() { return g_legacyEngineEnabled; }
-    void setLegacyEngineEnabled(bool enabled) { g_legacyEngineEnabled = enabled; }
 
     // Map Object* to RigidForm
     static std::unordered_map<Object*, RigidForm> g_objectForms;

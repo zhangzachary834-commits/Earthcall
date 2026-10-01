@@ -310,7 +310,7 @@ bool Engine::initLogic() {
 
     // Inject default physics laws (gravity and kinematics)
     for (const auto& law : Physics::createDefaultPhysicsLaws()) {
-        law->setEnabled(!Physics::getLegacyEngineEnabled());
+        law->setEnabled(true);
         _lawManager->add(law);
         // OnEvent laws need their triggers bound explicitly.
         // physics-acoustics is OnEvent with eventType = "contact-began"

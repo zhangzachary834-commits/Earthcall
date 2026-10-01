@@ -222,7 +222,6 @@ static nlohmann::json buildWorldSnapshotJson() {
     nlohmann::json phys;
     phys["flying"] = Physics::getFlying();
     phys["gravity_viz"] = Physics::getGravityVisualization();
-    phys["legacy_engine"] = Physics::getLegacyEngineEnabled();
     root["physics"] = phys;
 
     return root;
