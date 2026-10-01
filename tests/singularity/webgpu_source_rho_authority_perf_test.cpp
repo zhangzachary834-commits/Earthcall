@@ -357,6 +357,42 @@ int main() {
         return 1;
     }
 
+    // Hostile provenance witness: change the selected slot's producer identity
+    // while deliberately reusing the admitted source-set revision. The observer
+    // may still hold the old aligned artifact, so the real WebGPU consumer must
+    // reject that stale provenance and fail open to the exact visibility path.
+    std::vector<Rendering::RadianceSourceBinding> reboundSources = sources;
+    reboundSources[0].producerId = "perf/source-zero-rebound";
+    const auto reboundStatsBefore =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    const uint64_t reboundApplicationsBefore =
+        reboundStatsBefore.authorityBypassesApplied;
+    authorityRenderer.setRadianceSources(reboundSources, kSourceSetRevision);
+    const Sample reboundDraw = renderOne(authorityRenderer, true);
+    exactRenderer.setRadianceSources(reboundSources, kSourceSetRevision);
+    const Sample exactReboundDraw = renderOne(exactRenderer, true);
+    if (reboundDraw.pixels != exactReboundDraw.pixels) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL stale producer rebinding changed pixels\n");
+        return 1;
+    }
+    const auto reboundStatsAfter =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    if (reboundStatsAfter.alignedProofReadFallbacks <=
+            reboundStatsBefore.alignedProofReadFallbacks) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL stale producer rebinding did not "
+            "fail open through proof fallback\n");
+        return 1;
+    }
+    if (reboundStatsAfter.authorityBypassesApplied !=
+            reboundApplicationsBefore) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL stale producer rebinding retained "
+            "authority\n");
+        return 1;
+    }
+
     if (exact.recurringCompiles != 0 || authority.recurringCompiles != 0) {
         std::printf(
             "SOURCE_RHO_AUTH_PERF FAIL measured frame recompiled "
