@@ -19,6 +19,7 @@
 #include <atomic>
 #include "Singularity/Screen/HighlightSystem.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -121,12 +122,21 @@ glm::mat4 Object::composeTransformWithRotation(const glm::mat4& sourceTransform,
     glm::vec3 translation = glm::vec3(sourceTransform[3]);
     glm::vec3 scale = extractScaleFromTransform(sourceTransform);
 
-    glm::mat4 rebuilt = glm::translate(glm::mat4(1.0f), translation);
-    rebuilt = glm::rotate(rebuilt, glm::radians(rotationDegrees.x), glm::vec3(1.0f, 0.0f, 0.0f));
-    rebuilt = glm::rotate(rebuilt, glm::radians(rotationDegrees.y), glm::vec3(0.0f, 1.0f, 0.0f));
-    rebuilt = glm::rotate(rebuilt, glm::radians(rotationDegrees.z), glm::vec3(0.0f, 0.0f, 1.0f));
-    rebuilt = glm::scale(rebuilt, scale);
-    return rebuilt;
+    const auto authored = OntoMath::affineTRS(translation, rotationDegrees, scale);
+    if (!authored) {
+        std::fprintf(stderr,
+            "Object::composeTransformWithRotation: REFUSED non-finite or invalid affine premises; "
+            "the existing transform is preserved.\n");
+        return sourceTransform;
+    }
+    const auto lowered = authored->toGlmMat4();
+    if (!lowered) {
+        std::fprintf(stderr,
+            "Object::composeTransformWithRotation: REFUSED an affine result that cannot cross "
+            "the 4x4 GLM representation boundary; the existing transform is preserved.\n");
+        return sourceTransform;
+    }
+    return *lowered;
 }
 
 bool Object::advanceRotation(const glm::mat4& sourceTransform, float dt, glm::mat4& outTransform) {

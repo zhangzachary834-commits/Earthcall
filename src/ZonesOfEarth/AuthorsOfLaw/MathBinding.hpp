@@ -239,7 +239,7 @@ inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyVal
     std::size_t startIndex = 0;
     Singular* root = resolveLawRoot(subject, path, startIndex);
     bool ok = root && (path.getValue(*root, out, startIndex) == PropertyPath::PathResult::Ok);
-    if (ok && out.index() == 15) {
+    if (ok && std::holds_alternative<std::shared_ptr<PropertyDict>>(out)) {
         resolveSemanticTokenSlowPath(root, out);
     }
     return ok;
