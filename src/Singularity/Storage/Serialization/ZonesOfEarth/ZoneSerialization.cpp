@@ -1,3 +1,5 @@
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+
 #include "Singularity/OntoMath/Field.hpp"
 #include "Singularity/Core/StringId.hpp"
 #include "Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.hpp"
@@ -307,12 +309,22 @@ nlohmann::json zoneToJson(const Zone& zone) {
 
     nlohmann::json lexemes = nlohmann::json::array();
     for (Singular* member : zone.formation().getMembers()) {
+
         auto* lexeme = dynamic_cast<Singularity::Language::Lexeme*>(member);
         if (!lexeme) continue;
-        lexemes.push_back({
+        nlohmann::json item = {
             {"id", lexeme->getIdentifier()},
             {"symbol", lexeme->getSymbol()}
-        });
+        };
+        nlohmann::json dyn = nlohmann::json::object();
+        for (const auto& entry : lexeme->dynamicProperties()) {
+            dyn[Earthcall::StringInterner::resolve(entry.first)] = propertyValueToJson(entry.second);
+        }
+        if (!dyn.empty()) {
+            item["authoredProperties"] = std::move(dyn);
+        }
+        lexemes.push_back(item);
+
     }
     zj["lexemes"] = lexemes;
     zj["formationRelations"] = zone.formation().relations().toJson();
