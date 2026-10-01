@@ -177,6 +177,7 @@ jobs:
             webgpu_sdf_color_expr_test \
             webgpu_perlin_exact_gradient_test \
             webgpu_object_test \
+            webgpu_source_rho_authority_perf_test \
             webgpu_v5_overlap_physics_test \
             webgpu_volumetric_mist_test \
             sanctuary_of_sunlit_mist_test
@@ -224,6 +225,12 @@ jobs:
         run: |
           set -o pipefail
           ./build/webgpu_object_test 2>&1 | tee webgpu-object-parity.log
+
+      - name: Verify SourceRho zero-authority native pixel A/B
+        shell: bash
+        run: |
+          set -o pipefail
+          ./build/webgpu_source_rho_authority_perf_test 2>&1 | tee webgpu-source-rho-authority-perf.log
 
       - name: Verify V5 fused overlap physics
         shell: bash
