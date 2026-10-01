@@ -974,9 +974,19 @@ const char* mathOpName(MathNode::Op op) {
         case MathNode::Op::Abs:             return "Abs";
         case MathNode::Op::Clamp:           return "Clamp";
         case MathNode::Op::Sqrt:            return "Sqrt";
-        case MathNode::Op::Tan:             return "Tan";
-        case MathNode::Op::Noise:           return "Noise";
-        case MathNode::Op::Unsupported:     return "Unsupported";
+        case MathNode::Op::Tan:                  return "Tan";
+        case MathNode::Op::Noise:                return "Noise";
+        case MathNode::Op::MatrixConstruct:      return "MatrixConstruct";
+        case MathNode::Op::MatrixIdentity:       return "MatrixIdentity";
+        case MathNode::Op::MatrixAdd:            return "MatrixAdd";
+        case MathNode::Op::MatrixSub:            return "MatrixSub";
+        case MathNode::Op::MatrixScale:          return "MatrixScale";
+        case MathNode::Op::MatrixMultiply:       return "MatrixMultiply";
+        case MathNode::Op::MatrixVectorMultiply: return "MatrixVectorMultiply";
+        case MathNode::Op::MatrixTranspose:      return "MatrixTranspose";
+        case MathNode::Op::MatrixDeterminant:    return "MatrixDeterminant";
+        case MathNode::Op::MatrixInverse:        return "MatrixInverse";
+        case MathNode::Op::Unsupported:          return "Unsupported";
     }
     return "Unsupported";
 }
@@ -1017,6 +1027,16 @@ bool isKnownMathOp(int raw) {
         case MathNode::Op::Sqrt:
         case MathNode::Op::Tan:
         case MathNode::Op::Noise:
+        case MathNode::Op::MatrixConstruct:
+        case MathNode::Op::MatrixIdentity:
+        case MathNode::Op::MatrixAdd:
+        case MathNode::Op::MatrixSub:
+        case MathNode::Op::MatrixScale:
+        case MathNode::Op::MatrixMultiply:
+        case MathNode::Op::MatrixVectorMultiply:
+        case MathNode::Op::MatrixTranspose:
+        case MathNode::Op::MatrixDeterminant:
+        case MathNode::Op::MatrixInverse:
             return true;
         // Unsupported is where unknown ops LAND; it is never a stored value an
         // author picked, so it does not read back as known.
@@ -1052,6 +1072,29 @@ ValueKind widerScalar(ValueKind a, ValueKind b) {
     if (a == ValueKind::ScalarField || b == ValueKind::ScalarField) return ValueKind::ScalarField;
     if (a == ValueKind::Unknown || b == ValueKind::Unknown) return ValueKind::Unknown;
     return ValueKind::Scalar;
+}
+
+bool matrixShapeMatches(const MathType& a, const MathType& b) {
+    return a.kind == ValueKind::Matrix && b.kind == ValueKind::Matrix &&
+           a.rows == b.rows && a.cols == b.cols;
+}
+
+bool isMatrixOperation(MathNode::Op op) {
+    switch (op) {
+        case MathNode::Op::MatrixConstruct:
+        case MathNode::Op::MatrixIdentity:
+        case MathNode::Op::MatrixAdd:
+        case MathNode::Op::MatrixSub:
+        case MathNode::Op::MatrixScale:
+        case MathNode::Op::MatrixMultiply:
+        case MathNode::Op::MatrixVectorMultiply:
+        case MathNode::Op::MatrixTranspose:
+        case MathNode::Op::MatrixDeterminant:
+        case MathNode::Op::MatrixInverse:
+            return true;
+        default:
+            return false;
+    }
 }
 
 TypeResult arity(const std::string& path, MathNode::Op op, std::size_t got, std::size_t want) {
@@ -1093,7 +1136,7 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
     // scalar/vector operations know matrix algebra. Until Rung 2 appends the
     // actual matrix operations, every existing operation refuses a Matrix child.
     // A Matrix ValueLeaf itself is valid and carries its dimensions forward.
-    if (op != Op::ValueLeaf) {
+    if (op != Op::ValueLeaf && !isMatrixOperation(op)) {
         for (std::size_t i = 0; i < children.size(); ++i) {
             auto childType = sub(i);
             if (!childType) return childType;
@@ -1326,6 +1369,140 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
             auto t = sub(0); if (!t) return t;
             if (!vectorLike(*t)) return mismatch(path, op, 0, "Vector", *t);
             return TypeResult::ok(ValueKind::Scalar);
+        }
+        case Op::MatrixConstruct: {
+            if (matrixRows == 0 || matrixCols == 0) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "MatrixConstruct requires non-zero rows and columns"});
+            }
+            if (matrixRows > std::numeric_limits<std::size_t>::max() / matrixCols) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "MatrixConstruct dimensions overflow"});
+            }
+            const std::size_t want = matrixRows * matrixCols;
+            if (children.size() != want) return arity(path, op, children.size(), want);
+            for (std::size_t i = 0; i < children.size(); ++i) {
+                auto t = sub(i); if (!t) return t;
+                if (*t != ValueKind::Scalar && *t != ValueKind::Unknown) {
+                    return mismatch(path, op, static_cast<int>(i), "Scalar", *t);
+                }
+            }
+            return TypeResult::ok(MathType::matrix(matrixRows, matrixCols));
+        }
+        case Op::MatrixIdentity: {
+            if (!children.empty()) return arity(path, op, children.size(), 0);
+            if (matrixRows == 0 || matrixRows != matrixCols) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "MatrixIdentity requires one non-zero square dimension"});
+            }
+            return TypeResult::ok(MathType::matrix(matrixRows, matrixCols));
+        }
+        case Op::MatrixAdd:
+        case Op::MatrixSub: {
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto a = sub(0); if (!a) return a;
+            auto b = sub(1); if (!b) return b;
+            if (a.kind == ValueKind::Unknown && b.kind == ValueKind::Unknown)
+                return TypeResult::ok(ValueKind::Unknown);
+            if (a.kind == ValueKind::Unknown && b.kind == ValueKind::Matrix)
+                return TypeResult::ok(b.type);
+            if (b.kind == ValueKind::Unknown && a.kind == ValueKind::Matrix)
+                return TypeResult::ok(a.type);
+            if (a.kind != ValueKind::Matrix) return mismatch(path, op, 0, "Matrix", a.kind);
+            if (b.kind != ValueKind::Matrix) return mismatch(path, op, 1, "Matrix", b.kind);
+            if (!matrixShapeMatches(a.type, b.type)) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, std::string(mathOpName(op)) + " requires equal shapes, got " +
+                          std::to_string(a.type.rows) + "x" + std::to_string(a.type.cols) +
+                          " and " + std::to_string(b.type.rows) + "x" + std::to_string(b.type.cols)});
+            }
+            return TypeResult::ok(a.type);
+        }
+        case Op::MatrixScale: {
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto a = sub(0); if (!a) return a;
+            auto b = sub(1); if (!b) return b;
+            if (a.kind == ValueKind::Matrix &&
+                (b.kind == ValueKind::Scalar || b.kind == ValueKind::Unknown)) {
+                return TypeResult::ok(a.type);
+            }
+            if (b.kind == ValueKind::Matrix &&
+                (a.kind == ValueKind::Scalar || a.kind == ValueKind::Unknown)) {
+                return TypeResult::ok(b.type);
+            }
+            if (a.kind == ValueKind::Unknown && b.kind == ValueKind::Unknown)
+                return TypeResult::ok(ValueKind::Unknown);
+            return TypeResult::error(TypeDiagnostic{
+                path, "MatrixScale requires (Scalar, Matrix) or (Matrix, Scalar), got " +
+                      std::string(valueKindName(a.kind)) + " and " + valueKindName(b.kind)});
+        }
+        case Op::MatrixMultiply: {
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto a = sub(0); if (!a) return a;
+            auto b = sub(1); if (!b) return b;
+            if (a.kind == ValueKind::Unknown || b.kind == ValueKind::Unknown)
+                return TypeResult::ok(ValueKind::Unknown);
+            if (a.kind != ValueKind::Matrix) return mismatch(path, op, 0, "Matrix", a.kind);
+            if (b.kind != ValueKind::Matrix) return mismatch(path, op, 1, "Matrix", b.kind);
+            if (a.type.cols != b.type.rows) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "MatrixMultiply inner dimensions differ: " +
+                          std::to_string(a.type.cols) + " vs " + std::to_string(b.type.rows)});
+            }
+            return TypeResult::ok(MathType::matrix(a.type.rows, b.type.cols));
+        }
+        case Op::MatrixVectorMultiply: {
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto m = sub(0); if (!m) return m;
+            auto v = sub(1); if (!v) return v;
+            if (m.kind == ValueKind::Unknown || v.kind == ValueKind::Unknown)
+                return TypeResult::ok(ValueKind::Unknown);
+            if (m.kind != ValueKind::Matrix) return mismatch(path, op, 0, "Matrix", m.kind);
+            if (v.kind != ValueKind::Vector) return mismatch(path, op, 1, "Vector", v.kind);
+            const std::size_t vectorDim = v.type.vectorDimension ? v.type.vectorDimension : 3;
+            if (m.type.cols != vectorDim) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "MatrixVectorMultiply matrix columns " +
+                          std::to_string(m.type.cols) + " do not match vector dimension " +
+                          std::to_string(vectorDim)});
+            }
+            if (m.type.rows != 3) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "MatrixVectorMultiply currently returns Earthcall's vec3 and "
+                          "therefore requires exactly 3 matrix rows"});
+            }
+            return TypeResult::ok(MathType::vector(3));
+        }
+        case Op::MatrixTranspose: {
+            if (children.size() != 1) return arity(path, op, children.size(), 1);
+            auto m = sub(0); if (!m) return m;
+            if (m.kind == ValueKind::Unknown) return TypeResult::ok(ValueKind::Unknown);
+            if (m.kind != ValueKind::Matrix) return mismatch(path, op, 0, "Matrix", m.kind);
+            return TypeResult::ok(MathType::matrix(m.type.cols, m.type.rows));
+        }
+        case Op::MatrixDeterminant: {
+            if (children.size() != 1) return arity(path, op, children.size(), 1);
+            auto m = sub(0); if (!m) return m;
+            if (m.kind == ValueKind::Unknown) return TypeResult::ok(ValueKind::Scalar);
+            if (m.kind != ValueKind::Matrix) return mismatch(path, op, 0, "Matrix", m.kind);
+            if (m.type.rows != m.type.cols) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "MatrixDeterminant requires a square matrix, got " +
+                          std::to_string(m.type.rows) + "x" + std::to_string(m.type.cols)});
+            }
+            return TypeResult::ok(ValueKind::Scalar);
+        }
+        case Op::MatrixInverse: {
+            if (children.size() != 1) return arity(path, op, children.size(), 1);
+            auto m = sub(0); if (!m) return m;
+            if (m.kind == ValueKind::Unknown) return TypeResult::ok(ValueKind::Unknown);
+            if (m.kind != ValueKind::Matrix) return mismatch(path, op, 0, "Matrix", m.kind);
+            if (m.type.rows != m.type.cols) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "MatrixInverse requires a square matrix, got " +
+                          std::to_string(m.type.rows) + "x" + std::to_string(m.type.cols)});
+            }
+            return TypeResult::ok(m.type);
         }
         case Op::Unsupported:
             return TypeResult::error(TypeDiagnostic{
