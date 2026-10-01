@@ -1925,6 +1925,127 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
             return PropertyValue(static_cast<double>(glm::perlin(va)));
         }
 
+        // --- Rung 2: first-class matrix algebra ----------------------------
+        case Op::MatrixConstruct: {
+            if (matrixRows == 0 || matrixCols == 0 ||
+                matrixRows > std::numeric_limits<std::size_t>::max() / matrixCols ||
+                children.size() != matrixRows * matrixCols) {
+                return std::nullopt;
+            }
+            std::vector<double> elements;
+            elements.reserve(children.size());
+            for (const auto& child : children) {
+                if (!child) return std::nullopt;
+                auto value = child->evaluate(vars, subject);
+                double scalar = 0.0;
+                if (!value || !propertyValueToNumber(*value, scalar) ||
+                    !std::isfinite(scalar)) {
+                    return std::nullopt;
+                }
+                elements.push_back(scalar);
+            }
+            auto matrix = MatrixValue::create(matrixRows, matrixCols, std::move(elements));
+            if (!matrix) return std::nullopt;
+            return PropertyValue(std::move(*matrix));
+        }
+        case Op::MatrixIdentity: {
+            if (!children.empty() || matrixRows == 0 || matrixRows != matrixCols)
+                return std::nullopt;
+            auto matrix = matrixIdentity(matrixRows);
+            if (!matrix) return std::nullopt;
+            return PropertyValue(std::move(*matrix));
+        }
+        case Op::MatrixAdd:
+        case Op::MatrixSub: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evaluate(vars, subject);
+            auto b = children[1]->evaluate(vars, subject);
+            if (!a || !b ||
+                !std::holds_alternative<MatrixValue>(*a) ||
+                !std::holds_alternative<MatrixValue>(*b)) {
+                return std::nullopt;
+            }
+            auto result = (op == Op::MatrixAdd)
+                ? matrixAdd(std::get<MatrixValue>(*a), std::get<MatrixValue>(*b))
+                : matrixSubtract(std::get<MatrixValue>(*a), std::get<MatrixValue>(*b));
+            if (!result) return std::nullopt;
+            return PropertyValue(std::move(*result));
+        }
+        case Op::MatrixScale: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evaluate(vars, subject);
+            auto b = children[1]->evaluate(vars, subject);
+            if (!a || !b) return std::nullopt;
+
+            const MatrixValue* matrix = nullptr;
+            double scalar = 0.0;
+            if (std::holds_alternative<MatrixValue>(*a) &&
+                propertyValueToNumber(*b, scalar)) {
+                matrix = &std::get<MatrixValue>(*a);
+            } else if (std::holds_alternative<MatrixValue>(*b) &&
+                       propertyValueToNumber(*a, scalar)) {
+                matrix = &std::get<MatrixValue>(*b);
+            } else {
+                return std::nullopt;
+            }
+
+            auto result = matrixScale(*matrix, scalar);
+            if (!result) return std::nullopt;
+            return PropertyValue(std::move(*result));
+        }
+        case Op::MatrixMultiply: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evaluate(vars, subject);
+            auto b = children[1]->evaluate(vars, subject);
+            if (!a || !b ||
+                !std::holds_alternative<MatrixValue>(*a) ||
+                !std::holds_alternative<MatrixValue>(*b)) {
+                return std::nullopt;
+            }
+            auto result = matrixMultiply(std::get<MatrixValue>(*a),
+                                         std::get<MatrixValue>(*b));
+            if (!result) return std::nullopt;
+            return PropertyValue(std::move(*result));
+        }
+        case Op::MatrixVectorMultiply: {
+            if (children.size() != 2) return std::nullopt;
+            auto m = children[0]->evaluate(vars, subject);
+            auto v = children[1]->evaluate(vars, subject);
+            if (!m || !v ||
+                !std::holds_alternative<MatrixValue>(*m) ||
+                !std::holds_alternative<glm::vec3>(*v)) {
+                return std::nullopt;
+            }
+            auto result = matrixMultiplyVec3(std::get<MatrixValue>(*m),
+                                             std::get<glm::vec3>(*v));
+            if (!result) return std::nullopt;
+            return PropertyValue(*result);
+        }
+        case Op::MatrixTranspose: {
+            if (children.size() != 1) return std::nullopt;
+            auto m = children[0]->evaluate(vars, subject);
+            if (!m || !std::holds_alternative<MatrixValue>(*m)) return std::nullopt;
+            auto result = matrixTranspose(std::get<MatrixValue>(*m));
+            if (!result) return std::nullopt;
+            return PropertyValue(std::move(*result));
+        }
+        case Op::MatrixDeterminant: {
+            if (children.size() != 1) return std::nullopt;
+            auto m = children[0]->evaluate(vars, subject);
+            if (!m || !std::holds_alternative<MatrixValue>(*m)) return std::nullopt;
+            auto result = matrixDeterminant(std::get<MatrixValue>(*m));
+            if (!result) return std::nullopt;
+            return PropertyValue(*result);
+        }
+        case Op::MatrixInverse: {
+            if (children.size() != 1) return std::nullopt;
+            auto m = children[0]->evaluate(vars, subject);
+            if (!m || !std::holds_alternative<MatrixValue>(*m)) return std::nullopt;
+            auto result = matrixInverse(std::get<MatrixValue>(*m));
+            if (!result) return std::nullopt;
+            return PropertyValue(std::move(*result));
+        }
+
         // --- Sampling a field expression at a point ------------------------
         // SDF(f, q): evaluate f with the AMBIENT POINT rebound to q. The WGSL
         // emitter does the same thing by substituting q for its point
@@ -2026,6 +2147,33 @@ std::string MathNode::print() const {
         case Op::Sqrt:         return "sqrt(" + arg(0) + ")";
         case Op::Tan:          return "tan(" + arg(0) + ")";
         case Op::Noise:        return "noise(" + arg(0) + ")";
+        case Op::MatrixConstruct: {
+            std::string out = "matrix" + std::to_string(matrixRows) + "x" +
+                              std::to_string(matrixCols) + "(";
+            for (std::size_t i = 0; i < children.size(); ++i) {
+                if (i) out += ", ";
+                out += arg(i);
+            }
+            return out + ")";
+        }
+        case Op::MatrixIdentity:
+            return "identity(" + std::to_string(matrixRows) + ")";
+        case Op::MatrixAdd:
+            return "(" + arg(0) + " + " + arg(1) + ")";
+        case Op::MatrixSub:
+            return "(" + arg(0) + " - " + arg(1) + ")";
+        case Op::MatrixScale:
+            return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::MatrixMultiply:
+            return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::MatrixVectorMultiply:
+            return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::MatrixTranspose:
+            return "transpose(" + arg(0) + ")";
+        case Op::MatrixDeterminant:
+            return "det(" + arg(0) + ")";
+        case Op::MatrixInverse:
+            return "inverse(" + arg(0) + ")";
         case Op::SDF:          return "SDF(" + arg(0) + " @ " + arg(1) + ")";
         case Op::Gradient:     return "gradient(" + arg(0) + " @ " + arg(1) + ")";
         // Declared but not implemented anywhere (see evaluate() above) —
@@ -2490,6 +2638,9 @@ nlohmann::json MathNode::toJson() const {
         j["var"] = variableName;
     } else if (op == Op::Component || op == Op::Map) {
         j["arg"] = stringArg;
+    } else if (op == Op::MatrixConstruct || op == Op::MatrixIdentity) {
+        j["rows"] = matrixRows;
+        j["cols"] = matrixCols;
     }
     if (!children.empty()) {
         j["children"] = nlohmann::json::array();
@@ -2542,6 +2693,10 @@ std::unique_ptr<MathNode> MathNode::fromJson(const nlohmann::json& j) {
     } else if (j.contains("stringArg")) {
         node->stringArg = j["stringArg"].get<std::string>();
     }
+    if (node->op == Op::MatrixConstruct || node->op == Op::MatrixIdentity) {
+        node->matrixRows = j.value("rows", static_cast<std::size_t>(0));
+        node->matrixCols = j.value("cols", static_cast<std::size_t>(0));
+    }
     if (j.contains("children")) {
         for (const auto& c : j["children"]) {
             node->children.push_back(fromJson(c));
@@ -2554,7 +2709,8 @@ std::unique_ptr<MathNode> MathNode::fromJson(const nlohmann::json& j) {
     // names and every concrete type mismatch are caught and named. The node is
     // still returned — refusing to load law text is worse than loading it with
     // a complaint on the record — but nothing enters the world silently wrong.
-    if (!node->children.empty() || node->op == Op::Component || node->op == Op::Map) {
+    if (!node->children.empty() || node->op == Op::Component || node->op == Op::Map ||
+        isMatrixOperation(node->op)) {
         std::string error;
         if (!node->checkTypes(TypeEnv{}, error, nullptr, /*allowUnbound=*/true)) {
             std::fprintf(stderr, "[OntoMath] MathNode type error on load: %s\n",
