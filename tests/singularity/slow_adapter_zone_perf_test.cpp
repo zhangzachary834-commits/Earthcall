@@ -74,7 +74,14 @@ int main(int argc, char** argv) {
 
     // Protect the real Zone identity store exactly like frame_lag_test.
     TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+
+    // This probe immediately loads the requested authored world. Do not hydrate
+    // the entire repository Zone store once here and then ask loadState() to
+    // preserve that freshly-booted catalog as "unsaved work" before loading the
+    // actual benchmark world. loadState() hydrates the identity store itself
+    // before returning, so the measured post-load runtime still sees the normal
+    // authored store while avoiding a repository-scale before-load snapshot.
+    TestSupport::BootedEngineHarness h("Player", "humanoid", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);

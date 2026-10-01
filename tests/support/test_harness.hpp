@@ -46,7 +46,8 @@ struct BootedEngineHarness {
     Singularity::Input::InteractionChannel* interaction{nullptr};
 
     BootedEngineHarness(const std::string& playerName = "Player",
-                        const std::string& bodyType = "humanoid")
+                        const std::string& bodyType = "humanoid",
+                        bool hydrateZoneStoreAtBoot = true)
         : soul(playerName),
           body(bodyType, "default"),
           player(std::move(soul), std::move(body), "default") {
@@ -132,9 +133,16 @@ struct BootedEngineHarness {
         ctx.worldTime = &worldTime;
         ctx.unpackForAuthoring = false;
 
-        // 4. Perform app boot hydration FIRST (matching Engine::initLogic boot sequence)
+        // 4. Perform app boot hydration FIRST (matching Engine::initLogic boot sequence).
+        // Tests that immediately load an authored world may defer this initial pass:
+        // ZoneManager::loadState() performs the same store hydration before it
+        // returns. Deferral prevents a freshly booted test harness from being
+        // mistaken for unsaved live work and serialized wholesale into the
+        // before-load snapshot. Production-shaped tests keep the default true.
         zones.bindLawManager(&lawManager);
-        zones.hydrateFromZoneStore();
+        if (hydrateZoneStoreAtBoot) {
+            zones.hydrateFromZoneStore();
+        }
     }
 
     ~BootedEngineHarness() {
