@@ -3,6 +3,7 @@
 #include "Identity/IdentityLedger.hpp"
 #include "Identity/KeyStore.hpp"
 #include "Identity/FirstMoverRegister.hpp"
+#include "Identity/PersonPresence.hpp"
 #include <fstream>
 #include "Identity/PersonMigration.hpp"
 #include "Singularity/Input/Keyboard/KeyboardHandler.hpp"
@@ -94,67 +95,27 @@ const char* keyPassphrase() {
     return (p && *p) ? p : nullptr;
 }
 
+// Boot's door to presence (the Identity Zone is the other): both go through
+// Identity/PersonPresence so they cannot drift apart.
 void loadKeyedPersonProfile(Person& person) {
     if (person.hasIdentity()) return;
     const char* passphrase = keyPassphrase();
-    if (!passphrase) return;
-
-    const char* chosen = std::getenv("EARTHCALL_PERSON_ID");
-    std::vector<std::pair<Identity::SingularId, nlohmann::json>> keyed;
-    for (const auto& info : SaveSystem::listWorlds(SaveSystem::SaveType::PERSON)) {
-        nlohmann::json profile = SaveSystem::readSaveData(info.path);
-        if (!profile.is_object() || !profile.contains("personId") ||
-            !profile["personId"].is_string()) continue;
-        const auto id = Identity::SingularId::parse(profile["personId"].get<std::string>());
-        if (!id.canAuthenticate()) continue;
-        if (chosen && *chosen && id.toString() != chosen) continue;
-        keyed.emplace_back(id, std::move(profile));
-    }
-    if (keyed.empty()) return;
-    if (keyed.size() > 1) {
-        std::cerr << "[Identity] Several keyed Person profiles exist; set EARTHCALL_PERSON_ID "
-                     "to say which Person is present. Refusing to guess.\n";
-        return;
-    }
-
-    Identity::KeyStore keys;
-    auto key = keys.load(keyed.front().first, passphrase);
-    if (!key || key->id() != keyed.front().first) {
-        std::cerr << "[Identity] REFUSED Person unlock: the key for "
-                  << keyed.front().first.abbreviated()
-                  << " did not open with EARTHCALL_KEY_PASSPHRASE.\n";
-        return;
-    }
-    personFromJson(keyed.front().second, person);
-    if (person.personId() != keyed.front().first) {
-        std::cerr << "[Identity] REFUSED Person unlock: profile did not restore the "
-                     "identity its key proves.\n";
-        return;
-    }
-    std::cout << "[Identity] Restored keyed Person profile '" << person.getDisplayName()
-              << "' (" << person.personId().abbreviated() << ").\n";
+    if (!passphrase || !Identity::keyedProfileExists()) return;
+    const auto r = Identity::unlockPresentPerson(person, passphrase);
+    (r.ok ? std::cout : std::cerr) << "[Identity] " << r.report << "\n";
 }
 
 void seedTrustedPersonRoot(Person& person) {
-    auto& reg = Identity::FirstMoverRegister::instance();
     const char* passphrase = keyPassphrase();
     if (!person.hasIdentity() || !passphrase) {
         std::cout << "[Identity] No Person key unlocked this session; First Movers a "
-                     "Person granted stay inert (reads still work).\n";
+                     "Person granted stay inert (reads still work). Type `enter Identity` in "
+                     "the Terminal to become present.\n";
         return;
     }
-    Identity::KeyStore keys;
-    auto key = keys.load(person.personId(), passphrase);
-    if (!key || key->id() != person.personId()) {
-        std::cerr << "[Identity] REFUSED Person unlock for '" << person.getDisplayName()
-                  << "': KeyStore entry did not open or did not match.\n";
-        return;
-    }
-    if (reg.trustAuthenticatedPerson(*key)) {
-        person.login("key-" + person.personId().abbreviated());
-        std::cout << "[Identity] '" << person.getDisplayName()
-                  << "' authenticated by key; their First Mover grants may stand.\n";
-    }
+    if (Identity::FirstMoverRegister::instance().isAuthenticatedPerson(person.personId())) return;
+    const auto r = Identity::unlockPresentPerson(person, passphrase);
+    (r.ok ? std::cout : std::cerr) << "[Identity] " << r.report << "\n";
 }
 
 void loadFirstMoverRegister() {
@@ -212,15 +173,32 @@ bool Engine::initLogic() {
         // claiming a cryptographic personId is never trusted merely because it
         // is a file on disk: loadKeyedPersonProfile below admits it only when
         // its key unlocks.
-        const auto profiles = SaveSystem::listWorlds(SaveSystem::SaveType::PERSON);
-        if (profiles.size() == 1) {
-            const nlohmann::json profile = SaveSystem::readSaveData(profiles.front().path);
-            if (profile.is_object() && !profile.contains("personId")) {
-                personFromJson(profile, *_person);
-                std::cout << "[Init] Restored sole legacy Person profile '"
-                          << _person->getDisplayName() << "' (not logged in).\n";
+        // One Person, not two: a legacy profile whose name the migration
+        // ledger signed over to a keyed profile on disk is superseded by it
+        // (found 2026-09-30, the first time Zach keyed: boot saw Zach.ecform
+        // AND did_earthcall_....ecform, refused to guess, and every Law
+        // authored "Zach" stopped resolving).
+        std::vector<nlohmann::json> candidates;
+        for (const auto& info : SaveSystem::listWorlds(SaveSystem::SaveType::PERSON)) {
+            nlohmann::json profile = SaveSystem::readSaveData(info.path);
+            if (!profile.is_object()) continue;
+            if (!profile.contains("personId") &&
+                Identity::legacyProfileSuperseded(profile.value("displayName", std::string{}))) {
+                continue;
             }
-        } else if (profiles.size() > 1) {
+            candidates.push_back(std::move(profile));
+        }
+        if (candidates.size() == 1) {
+            // The profile says who is at the machine (name, body, place). It
+            // does NOT make them present: a keyed Person is trusted only when
+            // their key unlocks (EARTHCALL_KEY_PASSPHRASE or `enter Identity`).
+            personFromJson(candidates.front(), *_person);
+            std::cout << "[Init] Restored Person profile '" << _person->getDisplayName() << "'"
+                      << (_person->hasIdentity() ? " (" + _person->personId().abbreviated() +
+                                                   "; not present until their key unlocks)"
+                                                 : " (not logged in)")
+                      << ".\n";
+        } else if (candidates.size() > 1) {
             std::cerr << "[Init] Multiple Person profiles exist; refusing to guess which "
                          "Person is present.\n";
         }

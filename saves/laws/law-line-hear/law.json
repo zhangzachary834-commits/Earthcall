@@ -100,7 +100,16 @@
     ],
     "retrigger": 0,
     "scope": 0,
-    "targets": []
+    "targets": [],
+    "conditionModel": {
+      "kind": 0,
+      "path": "@terminal-channel.zone",
+      "op": 0,
+      "operand": {
+        "t": "string",
+        "v": "LawLine"
+      }
+    }
   },
   "triggers": [
     "terminal-line-entered"

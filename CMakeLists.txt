@@ -343,14 +343,16 @@ if(NOT EMSCRIPTEN)
 
         if (${TEST_NAME} STREQUAL "syntactic_parser_test" OR ${TEST_NAME} STREQUAL "utterance_test")
             add_executable(${TEST_NAME} ${TEST_SOURCE})
-            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
+            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
         elseif (${TEST_NAME} STREQUAL "brush_system_test")
             add_executable(${TEST_NAME} ${TEST_SOURCE})
             target_include_directories(${TEST_NAME} PRIVATE ${GLFW_SOURCE_DIR}/include ${GLFW_SOURCE_DIR}/deps)
             target_compile_definitions(${TEST_NAME} PRIVATE GLFW_INCLUDE_NONE)
-            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
+            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
         elseif (${TEST_NAME} STREQUAL "sdf_wgsl_parameter_refresh_test" OR
-                 ${TEST_NAME} STREQUAL "gyroid_reliquary_test")
+                 ${TEST_NAME} STREQUAL "gyroid_reliquary_test" OR
+                 ${TEST_NAME} STREQUAL "veiled_hour_test" OR
+                 ${TEST_NAME} STREQUAL "mcp_authoring_surfaces_test")
             # Pure codegen witness: it exercises SdfWgsl::compile/collectParams
             # but never creates a WebGPU device. Link only the compiler source so
             # the test stays runnable on CPU-only CI instead of masquerading as
@@ -450,6 +452,7 @@ if(NOT EMSCRIPTEN)
             ${TEST_NAME} STREQUAL "person_home_migration_boot_test" OR
             ${TEST_NAME} STREQUAL "prism_cathedral_test" OR
             ${TEST_NAME} STREQUAL "gyroid_reliquary_test" OR
+            ${TEST_NAME} STREQUAL "veiled_hour_test" OR
             ${TEST_NAME} MATCHES "^foreign_web_dom_")
             set_tests_properties(${TEST_NAME} PROPERTIES
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

@@ -651,6 +651,30 @@ int main() {
               "the Labyrinth Medium carries authored volumeDensity D(p, t)");
         check(f->volumeExtinction != nullptr && !f->volumeExtinction->pieces.empty(),
               "the Labyrinth Medium carries authored extinction, so transport has a real sigma_t");
+        // The occluder. An earlier version of this Zone asserted in writing that
+        // volumeOccluder was never read by the WGSL volume transport and left it
+        // unset. It IS read: the JSON key maps to MediumBinding::occluderSdf
+        // (VolumeDensity.hpp:166), is emitted as volumeSdfEval
+        // (SdfWgsl.cpp:3530), and is marched by volumeSourceVisibility to
+        // shadow the medium's own incident light. The mistake was grepping
+        // SdfWgsl.cpp for the JSON key rather than the C++ member name, and
+        // believing the absence. Asserted here so it cannot be unlearned.
+        check(f->volumeOccluder && geom::isSdfActive(f->volumeOccluder.get()),
+              "the Labyrinth Medium carries a real occluder, so the membrane casts "
+              "through the fog instead of the fog being painted in front of it");
+        if (f->volumeOccluder && geom::isSdfActive(f->volumeOccluder.get())) {
+            const auto occl = sdfwgsl::inspectOccluderLayout(f->volumeOccluder.get());
+            check(occl.ok, "the medium's occluder COMPILES to WGSL");
+            if (!occl.ok) std::cout << "       " << occl.error << std::endl;
+            // And it must actually occlude: the membrane's geometry is a real
+            // solid, so a sample inside it must read as blocked.
+            const float occlCentre = geom::evalSdf(*f->volumeOccluder, glm::vec3(0.0f));
+            const float occlFar = geom::evalSdf(*f->volumeOccluder, glm::vec3(20.0f, 20.0f, 20.0f));
+            report("occluder distance at the origin", occlCentre);
+            check(occlFar > 0.0f,
+                  "the occluder reads as open space somewhere (so it is a surface, not "
+                  "an infinite solid that would black out the whole fog)");
+        }
         check(f->volumeEmission == nullptr || f->volumeEmission->pieces.empty(),
               "DENSITY SOVEREIGNTY: the medium does not also emit — the gold light "
               "belongs to the Heart's source alone");

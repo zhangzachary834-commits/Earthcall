@@ -10,6 +10,7 @@
 #include "SaveContext.hpp"
 
 class LawManager;
+class Law;
 class Person;
 
 bool isObservationZone(const Zone& zone);
@@ -39,6 +40,24 @@ class ZoneManager {
     // remain visible in zone.json; this set only tells switchTo which runtime
     // registrations it must release on departure.
     std::unordered_set<std::string> _activeZoneLawIds;
+    // Other presences that hold a Zone's Law closure live (the Terminal line's
+    // location -- Terminal_Zones.md, Zach 2026-09-30), by holder identifier.
+    // Derived activation cache, like _activeZoneLawIds: the authored truth is
+    // each Zone's lawRefs. A Law live for several presences is shared and is
+    // removed only when none of them still needs it.
+    std::unordered_map<std::string, std::unordered_set<std::string>> _heldZoneLawIds;
+    std::unordered_map<std::string, std::string> _heldZoneOf;   // holder -> Zone identifier
+
+    struct PreparedZoneLaw {
+        std::string id;
+        std::shared_ptr<Law> law;
+        std::vector<std::string> triggers;
+    };
+    bool prepareZoneLawClosure(size_t index, std::vector<PreparedZoneLaw>& prepared,
+                               std::unordered_set<std::string>& requestedLawIds,
+                               nlohmann::json* identityOut = nullptr);
+    bool lawInUse(const std::string& lawId) const;
+    bool heldByAnyone(const std::string& lawId, const std::string& exceptHolder = {}) const;
     // Laws retired from a Zone by an authored act, by Zone identifier.
     std::unordered_map<std::string, std::unordered_set<std::string>> _retiredLawIdsByZone;
     // Residence index for locate(): being -> the Zone whose store holds it.
@@ -55,6 +74,18 @@ public:
 
     void addZone(std::shared_ptr<Zone> zone);
     bool switchTo(size_t index);
+    // A presence other than the Person holds a Zone's authored Law closure
+    // live: the same preflight as switchTo (nothing half-loads; a First Mover
+    // author must stand), without moving the Person or the world in front of
+    // them. Re-holding moves the holder; its previous Zone's Laws are released
+    // unless another presence still holds them. False, with the refusal on
+    // stderr, leaves the holder where it was.
+    bool holdZoneClosure(const std::string& holder, size_t index);
+    void releaseZoneClosure(const std::string& holder);
+    std::string heldZone(const std::string& holder) const;
+    // Zone index by identifier or display name (exact, then case-insensitive);
+    // npos when none or ambiguous.
+    size_t findZoneIndex(const std::string& nameOrId) const;
     void describeCurrent() const;
 
     void loadZone();

@@ -1,5 +1,6 @@
 #include "ZoneManager.hpp"
 #include "Identity/FirstMoverRegister.hpp"
+#include "Identity/PersonPresence.hpp"
 #include "HomesOfEarth/Home.hpp"
 #include "Identity/IdentityLedger.hpp"
 #include "Relation/Relation.hpp"
@@ -54,219 +55,316 @@ void ZoneManager::addZone(std::shared_ptr<Zone> zone)
     _zones.push_back(std::move(zone));
 }
 
+bool ZoneManager::lawInUse(const std::string& lawId) const {
+    if (_activeZoneLawIds.count(lawId) != 0) return true;
+    for (const auto& [holder, ids] : _heldZoneLawIds) {
+        if (ids.count(lawId) != 0) return true;
+    }
+    return false;
+}
+
+bool ZoneManager::heldByAnyone(const std::string& lawId, const std::string& exceptHolder) const {
+    for (const auto& [holder, ids] : _heldZoneLawIds) {
+        if (holder != exceptHolder && ids.count(lawId) != 0) return true;
+    }
+    return false;
+}
+
+bool ZoneManager::holdZoneClosure(const std::string& holder, size_t index) {
+    if (holder.empty() || index >= _zones.size() || !_zones[index]) return false;
+    std::vector<PreparedZoneLaw> prepared;
+    std::unordered_set<std::string> requested;
+    if (!prepareZoneLawClosure(index, prepared, requested)) return false;
+
+    if (_lawManager) {
+        for (auto& incoming : prepared) {
+            if (lawInUse(incoming.id) && _lawManager->find(incoming.id)) continue;   // shared
+            _lawManager->add(incoming.law);
+            for (const auto& trigger : incoming.triggers) {
+                _lawManager->bindTrigger(incoming.id, trigger);
+            }
+        }
+    }
+    const std::unordered_set<std::string> previous = _heldZoneLawIds[holder];
+    _heldZoneLawIds[holder] = std::move(requested);
+    _heldZoneOf[holder] = _zones[index]->getIdentifier();
+    if (_lawManager) {
+        for (const auto& id : previous) {
+            if (_heldZoneLawIds[holder].count(id) != 0) continue;
+            if (_activeZoneLawIds.count(id) != 0 || heldByAnyone(id, holder)) continue;
+            _lawManager->remove(id);
+        }
+    }
+    return true;
+}
+
+void ZoneManager::releaseZoneClosure(const std::string& holder) {
+    auto it = _heldZoneLawIds.find(holder);
+    if (it == _heldZoneLawIds.end()) return;
+    const std::unordered_set<std::string> ids = std::move(it->second);
+    _heldZoneLawIds.erase(it);
+    _heldZoneOf.erase(holder);
+    if (!_lawManager) return;
+    for (const auto& id : ids) {
+        if (_activeZoneLawIds.count(id) != 0 || heldByAnyone(id)) continue;
+        _lawManager->remove(id);
+    }
+}
+
+std::string ZoneManager::heldZone(const std::string& holder) const {
+    auto it = _heldZoneOf.find(holder);
+    return it == _heldZoneOf.end() ? std::string{} : it->second;
+}
+
+size_t ZoneManager::findZoneIndex(const std::string& nameOrId) const {
+    const auto lower = [](std::string v) {
+        for (auto& c : v) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        return v;
+    };
+    size_t found = static_cast<size_t>(-1);
+    for (size_t i = 0; i < _zones.size(); ++i) {
+        if (_zones[i] && (_zones[i]->getIdentifier() == nameOrId || _zones[i]->name() == nameOrId)) {
+            if (found != static_cast<size_t>(-1)) return static_cast<size_t>(-1);   // ambiguous
+            found = i;
+        }
+    }
+    if (found != static_cast<size_t>(-1)) return found;
+    const std::string want = lower(nameOrId);
+    for (size_t i = 0; i < _zones.size(); ++i) {
+        if (_zones[i] && (lower(_zones[i]->getIdentifier()) == want || lower(_zones[i]->name()) == want)) {
+            if (found != static_cast<size_t>(-1)) return static_cast<size_t>(-1);
+            found = i;
+        }
+    }
+    return found;
+}
+
+// The authored Law closure a Zone names, resolved completely BEFORE any live
+// state changes: every root read, every author resolved (a First Mover only
+// while it stands), every trigger checked. Shared by the Person's presence
+// (switchTo) and every other presence that holds a Zone (holdZoneClosure, the
+// Terminal line's location -- Terminal_Zones.md, Zach 2026-09-30). One
+// preflight, so a held Zone can never be looser than a walked-into one.
+bool ZoneManager::prepareZoneLawClosure(size_t index,
+                                        std::vector<PreparedZoneLaw>& prepared,
+                                        std::unordered_set<std::string>& requestedLawIds,
+                                        nlohmann::json* identityOut) {
+    if (index >= _zones.size()) return false;
+
+    const auto& targetZone = _zones[index];
+    if (!targetZone) {
+        std::cerr << "[zones] REFUSED activation: target Zone is null. "
+                     "Current Zone remains active.\n";
+        return false;
+    }
+    nlohmann::json identity;
+    identity = targetZone->isHome()
+        ? SaveSystem::readHomeIdentity(targetZone->getIdentifier())
+        : SaveSystem::readZoneIdentity(targetZone->getIdentifier());
+    if (identityOut) *identityOut = identity;
+    const nlohmann::json lawRefs = identity.is_object()
+        ? identity.value("lawRefs", nlohmann::json::array())
+        : nlohmann::json::array();
+    if (!lawRefs.is_array()) {
+        std::cerr << "[zones] REFUSED activation of '"
+                  << targetZone->getIdentifier()
+                  << "': lawRefs is not an array. Current Zone remains active.\n";
+        return false;
+    }
+    if (!lawRefs.empty() && !_lawManager) {
+        std::cerr << "[zones] REFUSED activation: Zone names authored Laws but no "
+                     "LawManager is bound. Current Zone remains active.\n";
+        return false;
+    }
+
+    const auto resolveReference = [&](const std::string& id,
+                                      bool preferPerson) -> Singular* {
+        if (id.empty()) return nullptr;
+
+        const auto appendUnique = [](std::vector<Singular*>& candidates, Singular* being) {
+            if (being && std::find(candidates.begin(), candidates.end(), being) == candidates.end()) {
+                candidates.push_back(being);
+            }
+        };
+        const auto identifierMatches = [&](Singular* being) {
+            if (!being) return false;
+            if (auto* person = dynamic_cast<Person*>(being)) {
+                return Identity::personAnswersTo(*person, id);   // ledger bridge once keyed
+            }
+            return being->getIdentifier() == id;
+        };
+
+        // Authorship can name a Person or a declared model-author Object.
+        // Prefer an actual Person when one answers the identifier so a
+        // legacy Object with the same slug can never impersonate them.
+        if (preferPerson) {
+            std::vector<Singular*> people;
+            for (Singular* being : Universe::instance().beings()) {
+                if (dynamic_cast<Person*>(being) && identifierMatches(being)) {
+                    appendUnique(people, being);
+                }
+            }
+            if (people.size() == 1) return people.front();
+            if (people.size() > 1) return nullptr;
+
+            // A recognized First Mover by cryptographic id (a Law an MCP
+            // mover authored). Only a mover that stands NOW resolves.
+            if (Singular* mover = Identity::FirstMoverRegister::instance().authorFor(id)) {
+                return mover;
+            }
+        }
+
+        // The Law roots named by targetZone->lawRefs belong to the closure
+        // being preflighted. Resolve unqualified references in that closure
+        // first. Forked Zones intentionally preserve author-marker identity
+        // (for example SynthesisStudio and its Living fork both carry the
+        // same historical model-author marker); a sibling copy must not make
+        // the target Zone's own referent ambiguous.
+        std::vector<Singular*> local;
+        if (identifierMatches(targetZone.get())) appendUnique(local, targetZone.get());
+        for (const auto& object : targetZone->getOwnedObjects()) {
+            if (identifierMatches(object.get())) appendUnique(local, object.get());
+        }
+        if (local.size() == 1) return local.front();
+        if (local.size() > 1) return nullptr;
+
+        // Shared/global beings are the next lexical scope. When authorship
+        // already checked Persons above, do not let the same Person appear a
+        // second time in this fallback scope.
+        std::vector<Singular*> shared;
+        for (Singular* being : Universe::instance().beings()) {
+            if (preferPerson && dynamic_cast<Person*>(being)) continue;
+            if (identifierMatches(being)) appendUnique(shared, being);
+        }
+        if (shared.size() == 1) return shared.front();
+        if (shared.size() > 1) return nullptr;
+
+        // Compatibility fallback for older cross-Zone references. Keep the
+        // old reach, but only after the target closure and shared Universe
+        // fail to answer; genuinely ambiguous sibling identifiers still fail
+        // closed instead of picking one arbitrarily.
+        std::vector<Singular*> siblings;
+        for (const auto& zone : _zones) {
+            if (!zone || zone.get() == targetZone.get()) continue;
+            if (identifierMatches(zone.get())) appendUnique(siblings, zone.get());
+            for (const auto& object : zone->getOwnedObjects()) {
+                if (identifierMatches(object.get())) appendUnique(siblings, object.get());
+            }
+        }
+        return siblings.size() == 1 ? siblings.front() : nullptr;
+    };
+
+    try {
+        for (const auto& refJson : lawRefs) {
+            if (!refJson.is_string()) throw std::runtime_error("lawRef is not a string");
+            const std::string ref = refJson.get<std::string>();
+            // Retired by an authored act this session, not yet saved away.
+            if (isLawRetiredFrom(targetZone->getIdentifier(), ref)) continue;
+            if (ref.empty() || !requestedLawIds.insert(ref).second) {
+                throw std::runtime_error("empty or duplicate lawRef '" + ref + "'");
+            }
+            const nlohmann::json root = SaveSystem::readLawIdentity(ref);
+            if (!root.is_object()) {
+                throw std::runtime_error("missing Law root '" + ref + "'");
+            }
+            if (root.value("identifier", std::string{}) != ref ||
+                !root.contains("law") || !root["law"].is_object()) {
+                throw std::runtime_error("Law root identity mismatch for '" + ref + "'");
+            }
+            auto law = Law::fromJson(root["law"]);
+            if (!law || law->getIdentifier() != ref) {
+                throw std::runtime_error("serialized Law id mismatch for '" + ref + "'");
+            }
+
+            const auto& lawJson = root["law"];
+            if (!lawJson.contains("authors") || !lawJson["authors"].is_array() ||
+                lawJson["authors"].empty()) {
+                throw std::runtime_error("Law '" + ref + "' has no recorded author");
+            }
+            for (const auto& authorJson : lawJson["authors"]) {
+                if (!authorJson.is_string()) {
+                    throw std::runtime_error("Law '" + ref + "' has a non-string author ref");
+                }
+                // Authorship is a Formation of Singular beings, not a Person-only slot.
+                // Declared model-author Objects remain Objects; never forge a Person
+                // identity merely to make a shared Law root load.
+                Singular* author = resolveReference(authorJson.get<std::string>(), true);
+                if (!author) {
+                    const auto moverId = Identity::SingularId::parse(authorJson.get<std::string>());
+                    auto& reg = Identity::FirstMoverRegister::instance();
+                    if (moverId.canAuthenticate() && reg.find(moverId)) {
+                        throw std::runtime_error("Law '" + ref + "' names First Mover author " +
+                                                 moverId.abbreviated() + " who does not stand: " +
+                                                 reg.explainStanding(moverId));
+                    }
+                    throw std::runtime_error("Law '" + ref + "' cannot resolve author '" +
+                                             authorJson.get<std::string>() + "'");
+                }
+                law->addAuthor(*author);
+            }
+            if (lawJson.contains("targets")) {
+                if (!lawJson["targets"].is_array()) {
+                    throw std::runtime_error("Law '" + ref + "' targets is not an array");
+                }
+                for (const auto& targetJson : lawJson["targets"]) {
+                    if (!targetJson.is_string()) {
+                        throw std::runtime_error("Law '" + ref + "' has a non-string target ref");
+                    }
+                    Singular* target = resolveReference(targetJson.get<std::string>(), false);
+                    if (!target) {
+                        throw std::runtime_error("Law '" + ref + "' cannot resolve target '" +
+                                                 targetJson.get<std::string>() + "'");
+                    }
+                    law->addTarget(*target);
+                }
+            }
+
+            std::vector<std::string> triggers;
+            const auto triggerJson = root.value("triggers", nlohmann::json::array());
+            if (!triggerJson.is_array()) {
+                throw std::runtime_error("Law '" + ref + "' triggers is not an array");
+            }
+            for (const auto& trigger : triggerJson) {
+                if (!trigger.is_string() || trigger.get<std::string>().empty()) {
+                    throw std::runtime_error("Law '" + ref + "' has an invalid trigger");
+                }
+                triggers.push_back(trigger.get<std::string>());
+            }
+            // A DISABLED Law is a source, not an actor: nothing wakes it, so
+            // lacking a trigger is not a defect. The Law Line's preset
+            // "my event-triggered law" is exactly such a Law — OnEvent, no
+            // trigger, the event left open for the sentence to name.
+            if (law->activation() == Law::Activation::OnEvent && triggers.empty() &&
+                law->isEnabled()) {
+                throw std::runtime_error("OnEvent Law '" + ref + "' names no trigger");
+            }
+
+            Law* existing = _lawManager ? _lawManager->find(ref) : nullptr;
+            if (existing && !lawInUse(ref)) {
+                throw std::runtime_error("Law id collision for '" + ref + "'");
+            }
+            prepared.push_back(PreparedZoneLaw{ref, std::move(law), std::move(triggers)});
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "[zones] REFUSED activation of '"
+                  << targetZone->getIdentifier()
+                  << "': " << e.what() << ". Current Zone and Laws remain active.\n";
+        return false;
+    }
+    return true;
+}
+
 bool ZoneManager::switchTo(size_t index)
 {
     if (index < _zones.size()) {
         // Resolve the complete authored Law closure before changing any live
         // state. A missing/malformed root, absent author/target, or identifier
         // collision leaves the current Zone and Law register untouched.
-        struct PreparedLaw {
-            std::string id;
-            std::shared_ptr<Law> law;
-            std::vector<std::string> triggers;
-        };
-        std::vector<PreparedLaw> prepared;
+        std::vector<PreparedZoneLaw> prepared;
         std::unordered_set<std::string> requestedLawIds;
-
-        const auto& targetZone = _zones[index];
-        if (!targetZone) {
-            std::cerr << "[zones] REFUSED activation: target Zone is null. "
-                         "Current Zone remains active.\n";
-            return false;
-        }
         nlohmann::json identity;
-        identity = targetZone->isHome()
-            ? SaveSystem::readHomeIdentity(targetZone->getIdentifier())
-            : SaveSystem::readZoneIdentity(targetZone->getIdentifier());
-        const nlohmann::json lawRefs = identity.is_object()
-            ? identity.value("lawRefs", nlohmann::json::array())
-            : nlohmann::json::array();
-        if (!lawRefs.is_array()) {
-            std::cerr << "[zones] REFUSED activation of '"
-                      << targetZone->getIdentifier()
-                      << "': lawRefs is not an array. Current Zone remains active.\n";
-            return false;
-        }
-        if (!lawRefs.empty() && !_lawManager) {
-            std::cerr << "[zones] REFUSED activation: Zone names authored Laws but no "
-                         "LawManager is bound. Current Zone remains active.\n";
-            return false;
-        }
-
-        const auto resolveReference = [&](const std::string& id,
-                                          bool preferPerson) -> Singular* {
-            if (id.empty()) return nullptr;
-
-            const auto appendUnique = [](std::vector<Singular*>& candidates, Singular* being) {
-                if (being && std::find(candidates.begin(), candidates.end(), being) == candidates.end()) {
-                    candidates.push_back(being);
-                }
-            };
-            const auto identifierMatches = [&](Singular* being) {
-                if (!being) return false;
-                if (auto* person = dynamic_cast<Person*>(being)) {
-                    return person->matchesIdentifier(id);
-                }
-                return being->getIdentifier() == id;
-            };
-
-            // Authorship can name a Person or a declared model-author Object.
-            // Prefer an actual Person when one answers the identifier so a
-            // legacy Object with the same slug can never impersonate them.
-            if (preferPerson) {
-                std::vector<Singular*> people;
-                for (Singular* being : Universe::instance().beings()) {
-                    if (dynamic_cast<Person*>(being) && identifierMatches(being)) {
-                        appendUnique(people, being);
-                    }
-                }
-                if (people.size() == 1) return people.front();
-                if (people.size() > 1) return nullptr;
-
-                // A recognized First Mover by cryptographic id (a Law an MCP
-                // mover authored). Only a mover that stands NOW resolves.
-                if (Singular* mover = Identity::FirstMoverRegister::instance().authorFor(id)) {
-                    return mover;
-                }
-            }
-
-            // The Law roots named by targetZone->lawRefs belong to the closure
-            // being preflighted. Resolve unqualified references in that closure
-            // first. Forked Zones intentionally preserve author-marker identity
-            // (for example SynthesisStudio and its Living fork both carry the
-            // same historical model-author marker); a sibling copy must not make
-            // the target Zone's own referent ambiguous.
-            std::vector<Singular*> local;
-            if (identifierMatches(targetZone.get())) appendUnique(local, targetZone.get());
-            for (const auto& object : targetZone->getOwnedObjects()) {
-                if (identifierMatches(object.get())) appendUnique(local, object.get());
-            }
-            if (local.size() == 1) return local.front();
-            if (local.size() > 1) return nullptr;
-
-            // Shared/global beings are the next lexical scope. When authorship
-            // already checked Persons above, do not let the same Person appear a
-            // second time in this fallback scope.
-            std::vector<Singular*> shared;
-            for (Singular* being : Universe::instance().beings()) {
-                if (preferPerson && dynamic_cast<Person*>(being)) continue;
-                if (identifierMatches(being)) appendUnique(shared, being);
-            }
-            if (shared.size() == 1) return shared.front();
-            if (shared.size() > 1) return nullptr;
-
-            // Compatibility fallback for older cross-Zone references. Keep the
-            // old reach, but only after the target closure and shared Universe
-            // fail to answer; genuinely ambiguous sibling identifiers still fail
-            // closed instead of picking one arbitrarily.
-            std::vector<Singular*> siblings;
-            for (const auto& zone : _zones) {
-                if (!zone || zone.get() == targetZone.get()) continue;
-                if (identifierMatches(zone.get())) appendUnique(siblings, zone.get());
-                for (const auto& object : zone->getOwnedObjects()) {
-                    if (identifierMatches(object.get())) appendUnique(siblings, object.get());
-                }
-            }
-            return siblings.size() == 1 ? siblings.front() : nullptr;
-        };
-
-        try {
-            for (const auto& refJson : lawRefs) {
-                if (!refJson.is_string()) throw std::runtime_error("lawRef is not a string");
-                const std::string ref = refJson.get<std::string>();
-                // Retired by an authored act this session, not yet saved away.
-                if (isLawRetiredFrom(targetZone->getIdentifier(), ref)) continue;
-                if (ref.empty() || !requestedLawIds.insert(ref).second) {
-                    throw std::runtime_error("empty or duplicate lawRef '" + ref + "'");
-                }
-                const nlohmann::json root = SaveSystem::readLawIdentity(ref);
-                if (!root.is_object()) {
-                    throw std::runtime_error("missing Law root '" + ref + "'");
-                }
-                if (root.value("identifier", std::string{}) != ref ||
-                    !root.contains("law") || !root["law"].is_object()) {
-                    throw std::runtime_error("Law root identity mismatch for '" + ref + "'");
-                }
-                auto law = Law::fromJson(root["law"]);
-                if (!law || law->getIdentifier() != ref) {
-                    throw std::runtime_error("serialized Law id mismatch for '" + ref + "'");
-                }
-
-                const auto& lawJson = root["law"];
-                if (!lawJson.contains("authors") || !lawJson["authors"].is_array() ||
-                    lawJson["authors"].empty()) {
-                    throw std::runtime_error("Law '" + ref + "' has no recorded author");
-                }
-                for (const auto& authorJson : lawJson["authors"]) {
-                    if (!authorJson.is_string()) {
-                        throw std::runtime_error("Law '" + ref + "' has a non-string author ref");
-                    }
-                    // Authorship is a Formation of Singular beings, not a Person-only slot.
-                    // Declared model-author Objects remain Objects; never forge a Person
-                    // identity merely to make a shared Law root load.
-                    Singular* author = resolveReference(authorJson.get<std::string>(), true);
-                    if (!author) {
-                        const auto moverId = Identity::SingularId::parse(authorJson.get<std::string>());
-                        auto& reg = Identity::FirstMoverRegister::instance();
-                        if (moverId.canAuthenticate() && reg.find(moverId)) {
-                            throw std::runtime_error("Law '" + ref + "' names First Mover author " +
-                                                     moverId.abbreviated() + " who does not stand: " +
-                                                     reg.explainStanding(moverId));
-                        }
-                        throw std::runtime_error("Law '" + ref + "' cannot resolve author '" +
-                                                 authorJson.get<std::string>() + "'");
-                    }
-                    law->addAuthor(*author);
-                }
-                if (lawJson.contains("targets")) {
-                    if (!lawJson["targets"].is_array()) {
-                        throw std::runtime_error("Law '" + ref + "' targets is not an array");
-                    }
-                    for (const auto& targetJson : lawJson["targets"]) {
-                        if (!targetJson.is_string()) {
-                            throw std::runtime_error("Law '" + ref + "' has a non-string target ref");
-                        }
-                        Singular* target = resolveReference(targetJson.get<std::string>(), false);
-                        if (!target) {
-                            throw std::runtime_error("Law '" + ref + "' cannot resolve target '" +
-                                                     targetJson.get<std::string>() + "'");
-                        }
-                        law->addTarget(*target);
-                    }
-                }
-
-                std::vector<std::string> triggers;
-                const auto triggerJson = root.value("triggers", nlohmann::json::array());
-                if (!triggerJson.is_array()) {
-                    throw std::runtime_error("Law '" + ref + "' triggers is not an array");
-                }
-                for (const auto& trigger : triggerJson) {
-                    if (!trigger.is_string() || trigger.get<std::string>().empty()) {
-                        throw std::runtime_error("Law '" + ref + "' has an invalid trigger");
-                    }
-                    triggers.push_back(trigger.get<std::string>());
-                }
-                // A DISABLED Law is a source, not an actor: nothing wakes it, so
-                // lacking a trigger is not a defect. The Law Line's preset
-                // "my event-triggered law" is exactly such a Law — OnEvent, no
-                // trigger, the event left open for the sentence to name.
-                if (law->activation() == Law::Activation::OnEvent && triggers.empty() &&
-                    law->isEnabled()) {
-                    throw std::runtime_error("OnEvent Law '" + ref + "' names no trigger");
-                }
-
-                Law* existing = _lawManager ? _lawManager->find(ref) : nullptr;
-                if (existing && _activeZoneLawIds.count(ref) == 0) {
-                    throw std::runtime_error("Law id collision for '" + ref + "'");
-                }
-                prepared.push_back(PreparedLaw{ref, std::move(law), std::move(triggers)});
-            }
-        } catch (const std::exception& e) {
-            std::cerr << "[zones] REFUSED activation of '"
-                      << targetZone->getIdentifier()
-                      << "': " << e.what() << ". Current Zone and Laws remain active.\n";
-            return false;
-        }
+        if (!prepareZoneLawClosure(index, prepared, requestedLawIds, &identity)) return false;
+        const auto& targetZone = _zones[index];
 
         if (!_zones.empty() && _currentIndex < _zones.size() && _currentIndex != index) {
             Core::EventBus::instance().publish(
@@ -275,11 +373,12 @@ bool ZoneManager::switchTo(size_t index)
 
         if (_lawManager) {
             for (const auto& id : _activeZoneLawIds) {
-                if (requestedLawIds.count(id) == 0) _lawManager->remove(id);
+                if (requestedLawIds.count(id) != 0) continue;
+                if (heldByAnyone(id)) continue;   // another presence still holds it
+                _lawManager->remove(id);
             }
             for (auto& incoming : prepared) {
-                if (_activeZoneLawIds.count(incoming.id) != 0 &&
-                    _lawManager->find(incoming.id)) {
+                if (lawInUse(incoming.id) && _lawManager->find(incoming.id)) {
                     continue;
                 }
                 _lawManager->add(incoming.law);

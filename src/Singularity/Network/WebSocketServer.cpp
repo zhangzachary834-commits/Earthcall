@@ -17,12 +17,15 @@
 #include "Singularity/OntoMath/CurveModel.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "Identity/FirstMoverRegister.hpp"
 #include "Singularity/Foreign/ForeignActuationGuard.hpp"
+#include "Singularity/Terminal/TerminalChannel.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "json.hpp"
 
@@ -66,6 +69,22 @@ static Object::ShapeKind parseShapeKind(const std::string& str, int intVal = 0) 
         return static_cast<Object::ShapeKind>(intVal);
     }
     return Object::ShapeKind::Cube;
+}
+
+// One string -> SDF door for every foreign path: the shorthand an author
+// writes (sphere(0.5), smoothUnion(...), move(...)) first, then the implicit
+// equation f(x,y,z). Refuses with both reasons rather than drawing nothing.
+static bool sdfFromText(const std::string& text, geom::SdfNode& out, std::string& error) {
+    std::string shorthandError;
+    if (geom::parseSdfShorthand(text, out, &shorthandError)) return true;
+    geom::SdfNode implicit = geom::makeImplicit(text);
+    if (!implicit.rpn.empty()) { out = std::move(implicit); return true; }
+    error = "'" + text + "' is neither SDF shorthand (" + shorthandError + ") nor an implicit "
+            "equation (numbers, x y z, + - * / ^, sqrt abs tan sin cos exp log, pi, e). Shorthand: "
+            "sphere(r) box(h|hx,hy,hz) roundBox(hx,hy,hz,r) ellipsoid(a,b,c) cylinder(r,h) cone(r,h) "
+            "torus(R,r) union(a,b,...) intersect(a,b,...) subtract(a,b) smoothUnion(a,b,k) morph(a,b,t) "
+            "move(shape,x,y,z)";
+    return false;
 }
 
 static nlohmann::json buildWorldSnapshotJson() {
@@ -312,8 +331,8 @@ struct WebSocketServer::Impl {
         auto& reg = Identity::FirstMoverRegister::instance();
         const Identity::SingularId* mover = auth.moverFor(connection);
 
-        // The legacy developer shortcut below cannot override either an
-        // intrinsic Person guard or an explicitly unmapped Zone operation.
+        // An intrinsic Person guard or an explicitly unmapped Zone operation
+        // refuses before any standing is consulted.
         if (!preflightRefusalCode.empty()) {
             nlohmann::json reply{{"type", ackType}, {"status", "refused"},
                                  {"reasonCode", preflightRefusalCode},
@@ -328,10 +347,15 @@ struct WebSocketServer::Impl {
             return std::nullopt;
         }
 
-        if (!mover && Relation::s_developerMode) {
-            static Identity::SingularId legacyMover = Identity::SingularId::mintOpaque();
-            return legacyMover;
-        }
+        // There is deliberately NO developer-mode shortcut here. One was added
+        // (2026-09-27) that minted a random, unregistered "legacy" mover for
+        // any unauthenticated connection whenever Relation::s_developerMode
+        // was on -- which is its default -- so every socket client was
+        // admitted. It also could not work: that mover has no standing, so
+        // SaveSystem refused its writes and its Laws came out Unauthored.
+        // A legacy client that must change the world gets its own First
+        // Mover (To-Do: "Give the Python Studio (bridge.py) its own First
+        // Mover"). Opus 5.5, 2026-09-30.
 
         const auto decision = Foreign::authorizeForeignActuation(
             reg, mover, resource, property, "websocket", unmappedReason);
@@ -529,6 +553,27 @@ struct WebSocketServer::Impl {
                                 }
                             }
                         }
+                        // 2b. FieldNodes a Zone owns (volumes, light fields,
+                        //     authored continua): active Zone first.
+                        if (!targetBeing) {
+                            const auto searchFields = [&](Zone& z) -> Singular* {
+                                if (auto* root = z.spatialRoot();
+                                    root && (root->getIdentifier() == target || root->getIdentifier() == normTarget)) {
+                                    return root;
+                                }
+                                for (const auto& f : z.additionalSpatialFields()) {
+                                    if (f && (f->getIdentifier() == target || f->getIdentifier() == normTarget)) return f.get();
+                                }
+                                return nullptr;
+                            };
+                            if (!mgr.zones().empty() && mgr.currentIndex() < mgr.zones().size() && mgr.zones()[mgr.currentIndex()]) {
+                                targetBeing = searchFields(mgr.active());
+                            }
+                            for (const auto& z : mgr.zones()) {
+                                if (targetBeing) break;
+                                if (z) targetBeing = searchFields(*z);
+                            }
+                        }
                         // 3. Search in LawManager (Laws and Modality Channels)
                         if (!targetBeing) {
                             LawManager* lm = ::Core::Engine::instance().getLawManager();
@@ -553,6 +598,14 @@ struct WebSocketServer::Impl {
                             unmapped = "no Person-granted foreign resource is mapped for this write yet";
                         } else if (auto* law = dynamic_cast<Law*>(targetBeing)) {
                             resource = SaveSystem::resolveLawIdentityPath(law->getIdentifier());
+                        } else if (auto* fieldNode = dynamic_cast<geom::FieldNode*>(targetBeing)) {
+                            for (const auto& z : mgr.zones()) {
+                                if (!z) continue;
+                                bool owns = z->spatialRoot() == fieldNode;
+                                for (const auto& f : z->additionalSpatialFields()) owns |= (f.get() == fieldNode);
+                                if (owns) { resource = containerResourceFor(*z); break; }
+                            }
+                            if (resource.empty()) unmapped = "this FieldNode has no owning Zone to scope the write by";
                         } else if (auto* zone = dynamic_cast<Zone*>(targetBeing)) {
                             resource = containerResourceFor(*zone);
                         } else if (auto* asObj = dynamic_cast<Object*>(targetBeing)) {
@@ -589,7 +642,14 @@ struct WebSocketServer::Impl {
                     }
 
                     if (targetBeing) {
-                        PropertyValue val = propertyValueFromJson(*valIt);
+                        // AST/SDF bridges carry their JSON as a string; a
+                        // caller that sends the document itself is not wrong.
+                        const bool jsonDocProperty =
+                            prop.size() > 4 && (prop.compare(prop.size() - 4, 4, ".ast") == 0 ||
+                                                prop.compare(prop.size() - 4, 4, ".sdf") == 0);
+                        PropertyValue val = (jsonDocProperty && (valIt->is_object() || valIt->is_array()))
+                            ? PropertyValue(valIt->dump())
+                            : propertyValueFromJson(*valIt);
                         bool ok = false;
                         int pathResultCode = 0;
 
@@ -597,8 +657,9 @@ struct WebSocketServer::Impl {
                         auto* obj = dynamic_cast<Object*>(targetBeing);
                         if (obj && (prop == "field.expr" || prop == "expr") && std::holds_alternative<std::string>(val)) {
                             std::string expr = std::get<std::string>(val);
-                            geom::SdfNode node = geom::makeImplicit(expr);
-                            if (!node.rpn.empty()) {
+                            geom::SdfNode node;
+                            std::string sdfError;
+                            if (sdfFromText(expr, node, sdfError)) {
                                 obj->setFieldShape(node, obj->getFieldExtent());
                                 ok = true;
                             }
@@ -609,7 +670,7 @@ struct WebSocketServer::Impl {
                             ok = (res == PropertyPath::PathResult::Ok || res == PropertyPath::PathResult::Unchanged);
                             if (ok) {
                                 std::string onBehalfOf = j.value("onBehalfOf", "");
-                                std::string lawId = onBehalfOf.empty() ? "mcp" : "mcp (on behalf of " + onBehalfOf + ")";
+                                std::string lawId = onBehalfOf.empty() ? "mcp" : "mcp (claims to act on behalf of " + onBehalfOf + ", unverified)";
                                 targetBeing->addStakeholder(prop, mover->toString(), lawId, std::time(nullptr));
                             }
                         }
@@ -676,7 +737,16 @@ struct WebSocketServer::Impl {
                             extent = glm::vec3(j["extent"][0].get<float>(), j["extent"][1].get<float>(), j["extent"][2].get<float>());
                         }
                     }
-                    geom::SdfNode node = geom::makeImplicit(expr);
+                    geom::SdfNode node;
+                    std::string sdfError;
+                    if (!sdfFromText(expr, node, sdfError)) {
+                        // Used to spawn an object with an empty field and
+                        // answer "success": an invisible being and a lie.
+                        nlohmann::json reply{{"type", ackType}, {"status", "invalid_arguments"},
+                                             {"reason", sdfError}};
+                        sendTo(hdl, reply.dump());
+                        return;
+                    }
                     obj->setFieldShape(node, extent);
                     if (j.contains("cellSize") && j["cellSize"].is_number()) {
                         obj->setFieldCellSize(j["cellSize"].get<float>());
@@ -730,7 +800,7 @@ struct WebSocketServer::Impl {
                 obj->addZoneDesignation(mgr.active().name());
                 obj->addZoneDesignation(mgr.active().getIdentifier());
                 std::string onBehalfOf = j.value("onBehalfOf", "");
-                std::string lawId = onBehalfOf.empty() ? "mcp" : "mcp (on behalf of " + onBehalfOf + ")";
+                std::string lawId = onBehalfOf.empty() ? "mcp" : "mcp (claims to act on behalf of " + onBehalfOf + ", unverified)";
                 obj->addStakeholder("spawn", mover->toString(), lawId, std::time(nullptr));
                 mgr.active().addObject(obj);
                 mgr.getGlobalObjects().push_back(obj);
@@ -749,6 +819,152 @@ struct WebSocketServer::Impl {
                 reply["isField"] = obj->hasField();
                 sendTo(hdl, reply.dump());
 
+                broadcast(buildWorldSnapshotJson().dump());
+                return;
+            }
+
+            // 4b. Author a FieldNode: a participating medium (volumetric fog,
+            //     glow, mist) or any other continuous field the Zone owns.
+            //     Volumes were already registered property paths on FieldNode
+            //     (volume.density.ast, ...), but no foreign path could create
+            //     one or even find one. Each channel is either an expression
+            //     string -- compiled by the same faithful lift SDF implicits
+            //     use, and REFUSED rather than approximated when it cannot be
+            //     lifted -- or a raw OntoMath Piecewise JSON document.
+            //     Opus 5.5, 2026-09-30, so Sonnet 4.5 could author volumes.
+            if (type == "author_field_node" || type == "author_volume") {
+                const std::string ackType = "author_field_node_ack";
+                const std::string id = j.value("identifier", j.value("id", std::string{}));
+                nlohmann::json context{{"identifier", id}};
+                if (id.empty()) {
+                    nlohmann::json reply{{"type", ackType}, {"status", "invalid_arguments"},
+                                         {"reason", "identifier is required"}};
+                    sendTo(hdl, reply.dump());
+                    return;
+                }
+                auto mover = admit(hdl, clientId, ackType, activeContainerResource(), "",
+                                   "no Zone or Home is active yet to own the field", context);
+                if (!mover) return;
+
+                // Compile everything BEFORE touching the world: a bad channel
+                // refuses the whole act, nothing is half-applied.
+                std::string compileError;
+                const auto compileChannel = [&](const char* key)
+                        -> std::optional<OntoMath::Piecewise> {
+                    if (!j.contains(key) || j[key].is_null()) return std::nullopt;
+                    const auto& v = j[key];
+                    if (v.is_string()) {
+                        const std::string expr = v.get<std::string>();
+                        geom::SdfNode lifted = geom::makeImplicit(expr);
+                        if (lifted.rpn.empty()) {
+                            compileError = std::string(key) + ": '" + expr + "' does not parse "
+                                "(numbers, x y z, + - * / ^, sqrt abs tan, sin/cos/exp/log of a bare variable, pi, e)";
+                            return std::nullopt;
+                        }
+                        if (!lifted.mathNode) {
+                            compileError = std::string(key) + ": '" + expr + "' parses but cannot be "
+                                "lifted into OntoMath exactly (sin/cos/exp/log need a bare variable); "
+                                "pass Piecewise JSON instead";
+                            return std::nullopt;
+                        }
+                        return OntoMath::Piecewise::continuous(lifted.mathNode);
+                    }
+                    if (v.is_object()) {
+                        OntoMath::Piecewise pw = OntoMath::Piecewise::fromJson(v);
+                        if (pw.pieces.empty()) {
+                            compileError = std::string(key) + ": Piecewise JSON has no pieces";
+                            return std::nullopt;
+                        }
+                        return pw;
+                    }
+                    compileError = std::string(key) + ": expected an expression string or Piecewise JSON";
+                    return std::nullopt;
+                };
+
+                struct Channel { const char* key; const std::shared_ptr<OntoMath::Piecewise> geom::FieldNode::* member; };
+                const Channel channels[] = {
+                    {"density", &geom::FieldNode::volumeDensity},
+                    {"extinction", &geom::FieldNode::volumeExtinction},
+                    {"scattering", &geom::FieldNode::volumeScattering},
+                    {"chroma", &geom::FieldNode::volumeChroma},
+                    {"phase", &geom::FieldNode::volumePhase},
+                    {"emission", &geom::FieldNode::volumeEmission},
+                };
+                std::vector<std::pair<const Channel*, OntoMath::Piecewise>> compiled;
+                for (const auto& ch : channels) {
+                    auto pw = compileChannel(ch.key);
+                    if (!compileError.empty()) break;
+                    if (pw) compiled.emplace_back(&ch, std::move(*pw));
+                }
+                std::optional<geom::SdfNode> occluder;
+                if (compileError.empty() && j.contains("occluder") && !j["occluder"].is_null()) {
+                    if (j["occluder"].is_string()) {
+                        geom::SdfNode n;
+                        std::string sdfError;
+                        if (!sdfFromText(j["occluder"].get<std::string>(), n, sdfError)) compileError = "occluder: " + sdfError;
+                        else occluder = std::move(n);
+                    } else if (j["occluder"].is_object()) {
+                        occluder = geom::sdfFromJson(j["occluder"]);
+                    } else {
+                        compileError = "occluder: expected an SDF expression string or SDF JSON";
+                    }
+                }
+                if (!compileError.empty()) {
+                    nlohmann::json reply{{"type", ackType}, {"status", "invalid_arguments"},
+                                         {"identifier", id}, {"reason", compileError}};
+                    sendTo(hdl, reply.dump());
+                    return;
+                }
+
+                Zone& zone = mgr.active();
+                std::shared_ptr<geom::FieldNode> node;
+                bool created = false;
+                for (const auto& f : zone.additionalSpatialFields()) {
+                    if (f && f->getIdentifier() == id) { node = f; break; }
+                }
+                if (!node && zone.spatialRoot() && zone.spatialRoot()->getIdentifier() == id) {
+                    // The Zone's own root field is the Zone's continuum, not a
+                    // being a mover spawns; editing it goes through
+                    // property_write on its registered paths.
+                    nlohmann::json reply{{"type", ackType}, {"status", "refused"},
+                                         {"reasonCode", "zone-spatial-root"}, {"identifier", id},
+                                         {"reason", "that identifier is the Zone's own spatial root; "
+                                                    "author a new field with another identifier"}};
+                    sendTo(hdl, reply.dump());
+                    return;
+                }
+                {
+                    Identity::FirstMoverSession moverSession(Identity::FirstMoverRegister::instance(), *mover);
+                    if (!node) {
+                        node = std::make_shared<geom::FieldNode>(id);
+                        created = true;
+                    }
+                    const auto vec3Of = [](const nlohmann::json& a, glm::vec3& out) {
+                        if (a.is_number()) { out = glm::vec3(a.get<float>()); return; }
+                        if (a.is_array() && a.size() >= 3)
+                            out = glm::vec3(a[0].get<float>(), a[1].get<float>(), a[2].get<float>());
+                    };
+                    if (j.contains("origin")) vec3Of(j["origin"], node->origin);
+                    else if (created && j.contains("position")) vec3Of(j["position"], node->origin);
+                    if (j.contains("scale")) vec3Of(j["scale"], node->scale);
+                    else if (created && j.contains("extent")) vec3Of(j["extent"], node->scale);
+                    for (auto& [ch, pw] : compiled) *((*node).*(ch->member)) = std::move(pw);
+                    if (occluder) *node->volumeOccluder = std::move(*occluder);
+                    node->addStakeholder("volume", mover->toString(), "mcp", std::time(nullptr));
+                    if (created) zone.addSpatialField(node);
+                }
+                Universe::instance().bumpStructuralRevision();
+                mgr.persistZones();   // engine's ordinary save, outside the session
+
+                nlohmann::json reply{{"type", ackType}, {"status", "success"},
+                                     {"identifier", id}, {"created", created},
+                                     {"zone", zone.getIdentifier()}};
+                nlohmann::json written = nlohmann::json::array();
+                for (auto& [ch, pw] : compiled) written.push_back(ch->key);
+                if (j.contains("occluder") && !j["occluder"].is_null()) written.push_back("occluder");
+                reply["channels"] = written;
+                reply["isVolume"] = node->volumeDensity && !node->volumeDensity->pieces.empty();
+                sendTo(hdl, reply.dump());
                 broadcast(buildWorldSnapshotJson().dump());
                 return;
             }
@@ -1234,6 +1450,82 @@ struct WebSocketServer::Impl {
                     reply["status"] = "law_manager_unavailable";
                     sendTo(hdl, reply.dump());
                 }
+                return;
+            }
+
+            // 9b. The Law Line, for a foreign First Mover: one natural-language
+            //     sentence ("on object-clicked if @self.color.r < 0.5 then set
+            //     color.r to 1"), parsed by the Terminal channel's own grammar
+            //     and vocabulary, authored by the proven mover. '?' previews and
+            //     '??' searches -- both read-only, open to anyone. Opus 5.5,
+            //     2026-09-30, so Sonnet 4.5 could use Zach's new Law CLI.
+            if (type == "law_sentence" || type == "author_law_sentence") {
+                const std::string ackType = "law_sentence_ack";
+                const std::string text = j.value("text", j.value("sentence", std::string{}));
+                std::string id = j.value("identifier", j.value("id", std::string{}));
+                if (!id.empty() && id[0] == '@') id = id.substr(1);
+                nlohmann::json context{{"identifier", id}, {"text", text}};
+
+                const bool readOnly = Terminal::TerminalChannel::isReadOnlySentence(text);
+                std::optional<Identity::SingularId> mover;
+                if (!readOnly) {
+                    // The gate first, as create_law does: a refusal must not
+                    // depend on whether a LawManager happens to be bound.
+                    mover = admit(hdl, clientId, ackType,
+                                  id.empty() ? std::string{} : SaveSystem::resolveLawIdentityPath(id), "",
+                                  "an identifier is required so the Law can be held to the mover's granted "
+                                  "scope (e.g. sonnet-<name>)", context);
+                    if (!mover) return;
+                }
+
+                LawManager* lm = ::Core::Engine::instance().getLawManager();
+                auto* terminal = lm ? Terminal::TerminalChannel::find(*lm) : nullptr;
+                if (!lm || !terminal) {
+                    nlohmann::json reply{{"type", ackType}, {"text", text},
+                                         {"status", lm ? "terminal_channel_unavailable" : "law_manager_unavailable"}};
+                    sendTo(hdl, reply.dump());
+                    return;
+                }
+
+                const auto replyWith = [&](const Terminal::TerminalChannel::ForeignSentence& r) {
+                    nlohmann::json reply{{"type", ackType}, {"status", r.status}, {"text", text},
+                                         {"preview", r.preview}};
+                    if (!r.lawId.empty()) reply["identifier"] = r.lawId;
+                    if (!r.detail.empty()) reply["detail"] = r.detail;
+                    if (!r.error.empty()) reply["reason"] = r.error;
+                    if (!r.candidates.empty()) reply["candidates"] = r.candidates;
+                    if (!r.openClauses.empty()) reply["openClauses"] = r.openClauses;
+                    sendTo(hdl, reply.dump());
+                };
+
+                if (readOnly) {
+                    replyWith(terminal->authorForeign(*lm, text, {}, ""));
+                    return;
+                }
+
+                // Adopting the Law into the active Zone edits that Zone's
+                // authored closure (its lawRefs): the mover needs that too.
+                const bool adopts = ZoneManager::live() != nullptr;
+                if (adopts && !admit(hdl, clientId, ackType, activeContainerResource(), "",
+                                     "no Zone or Home is active to hold the Law", context)) {
+                    return;
+                }
+
+                Terminal::TerminalChannel::ForeignSentence r;
+                {
+                    Identity::FirstMoverSession moverSession(Identity::FirstMoverRegister::instance(), *mover);
+                    r = terminal->authorForeign(*lm, text,
+                            Foreign::foreignLawAuthors(Identity::FirstMoverRegister::instance(), *mover), id);
+                }
+                if (r.status == "authored" && adopts) {
+                    // Durable now: the Zone's lawRefs and the Law's own root
+                    // (persistZones writes both) -- the engine's save, run
+                    // outside the mover session like every other persist.
+                    mgr.persistZones();
+                    r.detail += " · persisted with the Zone";
+                }
+                replyWith(r);
+                if (r.status == "authored") broadcast(buildWorldSnapshotJson().dump());
                 return;
             }
 

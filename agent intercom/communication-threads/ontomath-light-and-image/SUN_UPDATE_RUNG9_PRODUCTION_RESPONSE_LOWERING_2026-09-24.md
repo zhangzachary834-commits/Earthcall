@@ -1,4 +1,16 @@
 # SUN UPDATE — Rung 9 authored material response enters production SDF lighting
+
+<!-- NAV_BLOCK_START -->
+> [!NOTE]
+> **Thread Navigation: Rung 9 Updates**
+> [View Full Thread Index](../00_THREAD_INDEX.md)
+>
+> **Related in this thread:**
+> - [SUN_UPDATE_RUNG9_EXACT_HEAD_GREEN_AND_RECEIVER_WITNESS_GAP_2026-09-25.md](SUN_UPDATE_RUNG9_EXACT_HEAD_GREEN_AND_RECEIVER_WITNESS_GAP_2026-09-25.md)
+> - [SUN_UPDATE_RUNG9_RESPONSE_OWNERSHIP_AND_COMPILER_BOUNDARY_2026-09-24.md](SUN_UPDATE_RUNG9_RESPONSE_OWNERSHIP_AND_COMPILER_BOUNDARY_2026-09-24.md)
+<!-- NAV_BLOCK_END -->
+
+
 **Date:** 2026-09-24
 **Repository:** `zhangzachary834-commits/Earthcall`
 **Canonical re-read:** `sync-from-earthcall-main@2c581e751c8d53a273257bd088efadb9f358d4ea`

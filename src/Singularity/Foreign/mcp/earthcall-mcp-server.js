@@ -359,14 +359,14 @@ const TOOLS = [
   },
   {
     name: "earthcall_spawn_field",
-    description: "Spawns a signed distance field (SDF) implicit surface entity live into the active Earthcall zone (ShapeKind::Field, spatialKind = 1), rendered in real time via raymarching. Accepts formulas like 'sphere(0.5)', 'smoothUnion(sphere(0.5), box(0.4), 0.1)', 'torus(0.5, 0.2)', 'morph(sphere(0.5), box(0.4), 0.5)'.",
+    description: "Spawns a signed distance field (SDF) shape into the active Zone, raymarched live. `expr` is EITHER SDF shorthand -- sphere(r), box(h) or box(hx,hy,hz), roundBox(hx,hy,hz,r), ellipsoid(a,b,c), cylinder(r,halfHeight), cone(r,halfHeight), torus(R,r), union(a,b,...), intersect(a,b,...), subtract(a,b), smoothUnion(a,b,k), morph(a,b,t), move(shape,x,y,z) -- OR an implicit equation f(x,y,z)=0 over numbers, x y z, + - * / ^, sqrt abs tan sin cos exp log, pi, e (e.g. 'sqrt(x*x+y*y+z*z) - 0.5'). Anything else is refused with the reason; nothing invisible is ever spawned.",
     inputSchema: {
       type: "object",
       required: ["expr"],
       properties: {
         expr: {
           type: "string",
-          description: "SDF implicit formula, e.g. 'sphere(0.5)', 'box(0.5)', 'torus(0.5, 0.2)', 'cylinder(0.3, 0.6)', 'smoothUnion(sphere(0.5), box(0.4), 0.1)', 'morph(sphere(0.5), box(0.4), 0.5)'"
+          description: "SDF shorthand or implicit equation, e.g. 'sphere(0.5)', 'smoothUnion(sphere(0.4), move(torus(0.5,0.1),0,0.3,0), 0.2)', 'subtract(box(0.5), sphere(0.6))', or 'sqrt(x*x+y*y+z*z) - 0.5'"
         },
         name: {
           type: "string",
@@ -711,6 +711,38 @@ const TOOLS = [
     }
   },
   {
+    name: "earthcall_author_volume",
+    description: "Author (or update) a participating medium -- volumetric fog, mist, glow -- as a FieldNode the active Zone owns. Each channel is an expression string over x y z (numbers, + - * / ^, sqrt abs tan, sin/cos/exp/log of a BARE variable, pi, e) evaluated in the field's local box [-1,1]^3, or raw OntoMath Piecewise JSON. density is required to make it a medium. Scalar channels: density, extinction, scattering, phase, emission. chroma is a colour (vec3) and must be Piecewise JSON. occluder is SDF shorthand or an implicit equation carving light beams. A channel that cannot be compiled EXACTLY is refused, never approximated. Persists with the Zone. Your identifier must lie in your granted scope's Zone.",
+    inputSchema: {
+      type: "object",
+      required: ["identifier"],
+      properties: {
+        identifier: { type: "string", description: "Stable id for the field, e.g. 'sonnet-mist'. Re-using it updates the same field." },
+        origin: { type: "array", items: { type: "number" }, minItems: 3, maxItems: 3, description: "World centre of the field's box." },
+        scale: { type: "array", items: { type: "number" }, minItems: 3, maxItems: 3, description: "Half-extent of the box (world bounds = origin +/- scale)." },
+        density: { description: "D(x,y,z): e.g. '1 - sqrt(x*x+y*y+z*z)' (a soft ball), or Piecewise JSON." },
+        extinction: { description: "sigma_t(x,y,z); absent means 0.5 * density." },
+        scattering: { description: "sigma_s(x,y,z); absent means density." },
+        phase: { description: "Phase function value; absent means isotropic (1)." },
+        emission: { description: "Self-emitted radiance E_v; absent means none." },
+        chroma: { type: "object", description: "Medium colour, Piecewise JSON evaluating to a vec3." },
+        occluder: { type: "string", description: "SDF shorthand or implicit equation that blocks light through the medium." }
+      }
+    }
+  },
+  {
+    name: "earthcall_law_sentence",
+    description: "Author a Law as ONE natural-language sentence through Earthcall's Law Line (the Terminal's own grammar and vocabulary), e.g. 'on \"sonnet-bloomed\" then set glow 1' or 'on object-clicked if @self.glow < 1 then set glow 1'. End with '?' to PREVIEW (WHEN -> IF -> THEN, read-only) and start with '??' to SEARCH the vocabulary (e.g. '?? glow'); both work without standing. To author, give an identifier inside your granted scope (e.g. 'sonnet-bloom'): the Law is authored BY YOU (your First Mover id), adopted into the active Zone and persisted with it. Quote a new event name to mint it. Refusals come back with the grammar's reason and candidates.",
+    inputSchema: {
+      type: "object",
+      required: ["text"],
+      properties: {
+        text: { type: "string", description: "The Law sentence; trailing '?' previews, leading '??' searches." },
+        identifier: { type: "string", description: "Required to author (not for ?/??): the new Law's stable id, within your scope, e.g. 'sonnet-bloom'." }
+      }
+    }
+  },
+  {
     name: "earthcall_get_connection_status",
     description: "Returns the live connection status of the MCP bridge to Earthcall's C++ WebSocket server.",
     inputSchema: {
@@ -725,7 +757,8 @@ const MUTATING_TOOLS = new Set([
   "earthcall_delete_object", "earthcall_write_property", "earthcall_author_law",
   "earthcall_toggle_law", "earthcall_delete_law", "earthcall_switch_zone",
   "earthcall_create_zone", "earthcall_teleport_player", "earthcall_speak",
-  "earthcall_save_world", "earthcall_screen_record"
+  "earthcall_save_world", "earthcall_screen_record", "earthcall_author_volume",
+  "earthcall_law_sentence"
 ]);
 
 const asText = (obj) => ({ content: [{ type: "text", text: JSON.stringify(obj, null, 2) }] });
@@ -1120,6 +1153,27 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
         const ok = results.length > 0 && results.every(r => r.status === "success");
         return asText({ status: ok ? "success" : "not_done", screen_recorder_action: action, results });
+      }
+
+      case "earthcall_author_volume": {
+        if (!client.connected) {
+          throw new McpError(ErrorCode.InternalError, "Earthcall engine is offline.");
+        }
+        const payload = { type: "author_field_node", identifier: args.identifier };
+        for (const k of ["origin", "scale", "density", "extinction", "scattering", "phase",
+                         "emission", "chroma", "occluder"]) {
+          if (args[k] !== undefined) payload[k] = args[k];
+        }
+        return asText(await client.sendWithAck(payload, "author_field_node_ack"));
+      }
+
+      case "earthcall_law_sentence": {
+        if (!client.connected) {
+          throw new McpError(ErrorCode.InternalError, "Earthcall engine is offline.");
+        }
+        const payload = { type: "law_sentence", text: args.text };
+        if (args.identifier) payload.identifier = args.identifier;
+        return asText(await client.sendWithAck(payload, "law_sentence_ack"));
       }
 
       case "earthcall_list_saves": {

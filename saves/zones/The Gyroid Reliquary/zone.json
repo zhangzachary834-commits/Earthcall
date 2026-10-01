@@ -3191,10 +3191,149 @@
           }
         ]
       },
+      "volumeOccluder": {
+        "op": 0,
+        "prim": 7,
+        "dims": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "offset": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "p0": 0.0,
+        "p1": 0.0,
+        "t": 0.5,
+        "mathNode": {
+          "op": 6,
+          "children": [
+            {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.5453159268694552,
+                    "factors": {}
+                  }
+                ]
+              }
+            },
+            {
+              "op": 5,
+              "children": [
+                {
+                  "op": 25,
+                  "children": [
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 4,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1.0,
+                                    "factors": {},
+                                    "trans": [
+                                      {
+                                        "kind": 0,
+                                        "var": "x",
+                                        "scale": 0.5235987755982988,
+                                        "shift": 0.0
+                                      },
+                                      {
+                                        "kind": 1,
+                                        "var": "y",
+                                        "scale": 0.5235987755982988,
+                                        "shift": 0.0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1.0,
+                                    "factors": {},
+                                    "trans": [
+                                      {
+                                        "kind": 0,
+                                        "var": "y",
+                                        "scale": 0.5235987755982988,
+                                        "shift": 0.0
+                                      },
+                                      {
+                                        "kind": 1,
+                                        "var": "z",
+                                        "scale": 0.5235987755982988,
+                                        "shift": 0.0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 1.0,
+                                "factors": {},
+                                "trans": [
+                                  {
+                                    "kind": 0,
+                                    "var": "z",
+                                    "scale": 0.5235987755982988,
+                                    "shift": 0.0
+                                  },
+                                  {
+                                    "kind": 1,
+                                    "var": "x",
+                                    "scale": 0.5235987755982988,
+                                    "shift": 0.0
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.42,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
       "authoredProperties": {
         "displayName": {
           "t": "string",
-          "v": "The Labyrinth Medium \u2014 indigo fog, bounded by the membrane itself"
+          "v": "The Labyrinth Medium \u2014 indigo fog, shadowed by the membrane itself"
         },
         "light.source": {
           "t": "bool",
@@ -3250,9 +3389,13 @@
           "t": "float",
           "v": 45.0
         },
-        "reliquary.noVolumeOccluder": {
+        "reliquary.occluderIs": {
           "t": "string",
-          "v": "FieldNode serializes volumeOccluder but the WGSL volume transport never reads it; the membrane's own opaque surface does the occluding, so no occluder is authored."
+          "v": "the Membrane's own distance function, re-authored here so this medium's incident light is shadowed by the lattice. Marched by volumeSourceVisibility (SdfWgsl.cpp:3533-3555) via the emitted volumeSdfEval."
+        },
+        "reliquary.correctionNote": {
+          "t": "string",
+          "v": "An earlier version of this Zone recorded that volumeOccluder was never read by the WGSL volume transport, and left it unset. That was wrong: the JSON key maps to MediumBinding::occluderSdf and IS marched. The error was grepping SdfWgsl.cpp for the JSON key instead of the C++ member name. Corrected 2026-09-29."
         }
       }
     },
