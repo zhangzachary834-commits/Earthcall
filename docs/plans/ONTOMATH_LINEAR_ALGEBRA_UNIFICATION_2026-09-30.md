@@ -457,6 +457,9 @@ If the linear component is singular, the normal transform is undefined unless a 
 
 # 9. Rung 6 — Object, Body, Formation and creation migration
 
+**Status (2026-10-01): IN PROGRESS.** Exact-head `92e5846358c1fd430c1e6ef5b1271c36418b114a` passed the campaign-owned Focused CPU lane (including `ontomath_affine_sovereignty_test`) and the SDF/WGSL parity lane. The workflow remained globally red only because the pre-existing Slow Adapter performance arm failed. The first bounded Rung-6 migration now routes Object Euler recomposition through `OntoMath::affineTRS` and lowers the resulting authored `MatrixValue` through the explicit GLM representation bridge. Legacy transform decomposition/extraction remains unmigrated and is not claimed complete.
+
+
 ## Objective
 
 Remove direct transform mathematics from world-being code.
