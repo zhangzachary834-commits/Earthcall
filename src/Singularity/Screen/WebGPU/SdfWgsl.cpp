@@ -634,6 +634,23 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
                    ") / (2.0 * " + eps + "))";
         }
 
+        // --- Matrix algebra is CPU-authored in Rung 2; GPU lowering is Rung 4.
+        // Refuse explicitly rather than pretending these known ops are outside
+        // the enumeration or emitting a different shader-side mathematics.
+        case Op::MatrixConstruct:
+        case Op::MatrixIdentity:
+        case Op::MatrixAdd:
+        case Op::MatrixSub:
+        case Op::MatrixScale:
+        case Op::MatrixMultiply:
+        case Op::MatrixVectorMultiply:
+        case Op::MatrixTranspose:
+        case Op::MatrixDeterminant:
+        case Op::MatrixInverse:
+            e.refuse("OntoMath matrix algebra is authored and CPU-evaluable, but "
+                     "WGSL lowering does not land until linear-algebra Rung 4");
+            return "0.0";
+
         // --- Declared, not implemented, on EITHER path ----------------------
         case Op::Raycast:
             e.refuse("Raycast has no implementation on either path: it needs a "
