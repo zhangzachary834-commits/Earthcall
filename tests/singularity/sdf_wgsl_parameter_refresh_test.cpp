@@ -1718,6 +1718,16 @@ int main() {
         check(determinantLayout.parameterCount == 4,
               "2x2 MatrixConstruct keeps four authored numeric parameters");
 
+        // VALUE ONLY: matrix coefficients are ordinary authored parameters.
+        // Changing one coefficient must not regenerate shader structure.
+        det->children[0]->children[0]->scalarForm.terms[0].coefficient = 5.0;
+        const auto determinantEdited =
+            sdfwgsl::inspectScalarExpression(&determinantExpr);
+        check(determinantEdited.ok &&
+                  determinantEdited.structure == determinantLayout.structure &&
+                  determinantEdited.parameterCount == determinantLayout.parameterCount,
+              "numeric matrix edit preserves WGSL structure and parameter layout");
+
         // Matrix * vec3 is the first value-level parity seam used by future
         // transform migration. Component makes the vector result observable
         // through the existing scalar inspection path.
