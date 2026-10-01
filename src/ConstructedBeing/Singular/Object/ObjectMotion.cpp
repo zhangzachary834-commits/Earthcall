@@ -18,7 +18,6 @@
 #include <unordered_map>
 #include <atomic>
 #include "Singularity/Screen/HighlightSystem.hpp"
-#include "ZonesOfEarth/Physics/Physics.hpp"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -184,7 +183,6 @@ void Object::clearAutomations() {
 }
 
 void Object::advanceAutomations(float dt) {
-    if (!Physics::getLegacyEngineEnabled()) return;
     std::vector<std::string> finished;
     Automation::advance(_automation, dt, &finished);
     for (const auto& name : finished) {
@@ -194,12 +192,10 @@ void Object::advanceAutomations(float dt) {
 }
 
 glm::mat4 Object::sampleAutomations(const glm::mat4& base) const {
-    if (!Physics::getLegacyEngineEnabled()) return base;
     return Automation::compose(_automation, base);
 }
 
 bool Object::updateAutomations(float dt) {
-    if (!Physics::getLegacyEngineEnabled()) return false;
     if (!Automation::active(_automation)) return false;
     if (!_automation.restValid) {
         _automation.rest = transform;

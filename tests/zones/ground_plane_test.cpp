@@ -62,7 +62,6 @@ std::shared_ptr<Object> makeCube(const glm::vec3& p) {
 void freshPhysics() {
     Physics::resetRigidBodies();
     Physics::clearBonds();
-    Physics::setLegacyEngineEnabled(true);
 }
 
 void step(Zone& w, int frames) {

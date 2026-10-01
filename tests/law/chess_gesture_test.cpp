@@ -148,7 +148,7 @@ int main() {
     Singularity::Input::syncRegisterControlPatterns(harness.lawManager, categories, harness.player);
     Singularity::Screen::ScreenChannel::syncRegister(harness.lawManager);
     for (const auto& law : Physics::createDefaultPhysicsLaws()) {
-        law->setEnabled(!Physics::getLegacyEngineEnabled());
+        law->setEnabled(true);
         harness.lawManager.add(law);
         if (law->activation() == Law::Activation::OnEvent) {
             harness.lawManager.bindTrigger(law->getIdentifier(), law->ecaLoop().eventType);

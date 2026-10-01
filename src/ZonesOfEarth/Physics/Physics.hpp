@@ -14,9 +14,6 @@ class LawManager;
 // Its a first mover developer tool to test Laws in because default Physics provides a familiar and stable interface to work in
 // and real physics should ultimately become purely runtime-created Law Formations.
 namespace Physics {
-    // Legacy engine toggle
-    bool getLegacyEngineEnabled();
-    void setLegacyEngineEnabled(bool enabled);
     bool hasAnyActivePhysics(const LawManager* lm = nullptr);
 
 

@@ -88,11 +88,6 @@ namespace Rendering {
                 Physics::setGravityVisualization(gravViz);
             }
 
-            bool legacyPhysics = Physics::getLegacyEngineEnabled();
-            if (ImGui::Checkbox("Legacy Physics Engine", &legacyPhysics)) {
-                Physics::setLegacyEngineEnabled(legacyPhysics);
-            }
-
             ImGui::Separator();
             ImGui::TextColored(ImVec4(0.95f, 0.85f, 0.55f, 1.0f), "Active Physics Laws");
 
