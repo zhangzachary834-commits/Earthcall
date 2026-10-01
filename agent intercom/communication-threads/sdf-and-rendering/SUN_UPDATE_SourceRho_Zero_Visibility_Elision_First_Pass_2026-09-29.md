@@ -235,3 +235,27 @@ A bounded next witness was prepared: add CopySrc/readback to the existing offscr
 Rejected hypotheses: existing WebGPU baseline parity cannot substitute for this successor's pixel A/B; WGSL text or authority-application counts cannot substitute for executed visibility work units; timing cannot be interpreted before exactness.
 
 Exact continuation point: retry the native framebuffer-readback witness on this same PR. If pixel exactness passes, extend hostile rebinding/provenance fail-open cases and deterministic visibility invocation/SDF-step accounting, then interpret the already-maintained full economics. If exactness fails, record why and stop.
+
+
+---
+
+## Continuation — native SourceRho pixel witness is now CI-wired — 2026-09-30
+
+Successor PR remains #482 on `sol/sourcerho-zero-visibility-elision-20260929`. Native framebuffer exactness witness commit `6e4dbfaf3362208b4dddfd39aaf53e75db4431d8` remains the correctness payload.
+
+Targeted re-entry confirmed the successor workflow still omitted `webgpu_source_rho_authority_perf_test`: the SDF/WebGPU job built and ran neighboring WebGPU parity witnesses but never built or executed this SourceRho witness. Therefore prior generic WebGPU greens were explicitly rejected as successor pixel-exactness evidence.
+
+Commit `88acac26fefa300a6e207dcff70898e13d420834` makes only the bounded CI correction:
+- adds `webgpu_source_rho_authority_perf_test` to the existing SDF/WebGPU target build list;
+- runs that native witness in its own SourceRho zero-authority pixel A/B step;
+- retains its stdout economics log through `tee`.
+
+No renderer semantics, theorem, authority, MediumDensity behavior, V1–V4 behavior, Zone behavior, or relevance architecture changed in this pass.
+
+Semantic-overlap status: no canonical reconciliation was performed. Canonical motion by itself remains non-event; no newly observed semantic dependency invalidation justified reconciliation.
+
+Rejected hypotheses remain: generic WebGPU parity cannot substitute for this exact A/B; generated-WGSL inspection cannot substitute for framebuffer equality; timing cannot substitute for correctness.
+
+At the time of this update, GitHub had not yet associated a workflow run with exact head `88acac26...`. Therefore pixel exactness is still pending and no promotion/economics verdict is claimed.
+
+Exact continuation point: inspect exact-head CI for `88acac26...`. If the native SourceRho pixel witness fails, record the mismatch and stop the experiment. If byte-exact zero-rho and zero->nonzero repair comparisons pass, proceed only to hostile rebinding/provenance fail-open coverage and deterministic executed visibility-invocation/SDF-step accounting before interpreting economics.
