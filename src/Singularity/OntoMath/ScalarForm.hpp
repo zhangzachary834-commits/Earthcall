@@ -343,7 +343,42 @@ struct Fold {
 // binding environment exists yet). It unifies with everything, so arity and
 // structural errors are still caught while genuinely undecidable ones are
 // reported as undecided rather than invented.
-enum class ValueKind { Scalar, Vector, ScalarField, VectorField, Unknown };
+enum class ValueKind { Scalar, Vector, Matrix, ScalarField, VectorField, Unknown };
+
+// A compile-time signature for authored mathematics. Existing scalar/vector
+// callers can still construct one implicitly from ValueKind; Matrix carries
+// dimensions because "matrix" without rows/columns is not enough information
+// to prove multiplication compatibility in the next rung.
+struct MathType {
+    ValueKind kind = ValueKind::Unknown;
+    std::size_t vectorDimension = 0;
+    std::size_t rows = 0;
+    std::size_t cols = 0;
+
+    MathType() = default;
+    MathType(ValueKind k) : kind(k) {
+        if (k == ValueKind::Vector || k == ValueKind::VectorField) {
+            vectorDimension = 3; // existing authored vectors are vec3
+        }
+    }
+
+    static MathType vector(std::size_t dimension = 3) {
+        MathType t(ValueKind::Vector);
+        t.vectorDimension = dimension;
+        return t;
+    }
+
+    static MathType matrix(std::size_t r, std::size_t c) {
+        MathType t(ValueKind::Matrix);
+        t.rows = r;
+        t.cols = c;
+        return t;
+    }
+
+    bool hasValidMatrixShape() const {
+        return kind == ValueKind::Matrix && rows > 0 && cols > 0;
+    }
+};
 
 struct TypeDiagnostic {
     std::string nodePath;
@@ -357,16 +392,24 @@ const char* valueKindName(ValueKind k);
 struct TypeResult {
     bool success;
     ValueKind kind;
+    MathType type;
     TypeDiagnostic diagnostic;
 
-    static TypeResult ok(ValueKind k) { return {true, k, {}}; }
-    static TypeResult error(TypeDiagnostic d) { return {false, ValueKind::Scalar, std::move(d)}; }
+    static TypeResult ok(ValueKind k) {
+        return {true, k, MathType(k), {}};
+    }
+    static TypeResult ok(MathType t) {
+        return {true, t.kind, std::move(t), {}};
+    }
+    static TypeResult error(TypeDiagnostic d) {
+        return {false, ValueKind::Scalar, MathType(ValueKind::Scalar), std::move(d)};
+    }
     
     explicit operator bool() const { return success; }
     ValueKind operator*() const { return kind; }
 };
 
-using TypeEnv = std::map<std::string, ValueKind>;
+using TypeEnv = std::map<std::string, MathType>;
 
 // Canonical ambient names available to authored mathematics. A spatial field
 // is evaluated at p/x/y/z. Channels that explicitly admit world time may also
