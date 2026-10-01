@@ -1,6 +1,6 @@
 # Integrating OntoMath Raster Formations and GPU Micro-Mastery
 
-This addendum synthesizes the concepts defined in [OntoMath Raster Formation and Property-Singular-Graphs](../architecture/Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md) and the [CPU-GPU Micro-Mastery Memory Substrate](../architecture/Singularity/GPU_MICRO_MASTERY_ARCHITECTURE.md). It details how the architectural capability to elevate granular pixel regions into first-class `Singular` beings is directly sustained by the engine's ability to orchestrate zero-cost memory allocations.
+This addendum synthesizes the concepts defined in [OntoMath Raster Formation and Property-Singular-Graphs](../architecture/Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md) and the [CPU-GPU Micro-Mastery Memory Substrate](../architecture/Singularity/GPU_MICRO_MASTERY_ARCHITECTURE.md). It examines how the architectural capability to elevate granular pixel regions into first-class `Singular` beings relates to the GPU Micro-Mastery substrate, while distinguishing documented design intent from measured implementation guarantees.
 
 ## The Problem of Pixel Beings and High Throughput
 
@@ -10,16 +10,16 @@ This paradigm, known as Granular Pixel Mastery, creates an explosion in the numb
 
 ## The Solution: Micro-Mastery Sustains Ontological Purity
 
-The GPU Micro-Mastery Architecture resolves this paradox. By pre-allocating contiguous memory slabs (`GpuBufferPool`) and sub-allocating 256-byte aligned chunks for uniforms and storage via simple CPU pointer arithmetic, Earthcall effectively bypasses the graphics driver for per-frame dynamic updates.
+The GPU Micro-Mastery document proposes substrate techniques intended to make this kind of granularity economical, including pooled GPU resources and bounded sub-allocation rather than treating every authored being as a reason for an independent driver allocation. Those techniques are architectural mechanisms, not by themselves proof of a particular allocation count, mapping strategy, or frame-rate bound.
 
-When 5,000 pixel-beings update their properties (e.g., their `tint`, `opacity`, or spatial transforms), the `GpuBufferPool` writes directly into mapped memory. The cost of orchestrating these thousands of beings is reduced to zero driver allocations, allowing the engine to maintain the ontological purity of "everything is a Being" without sacrificing performance.
+Accordingly, a scene with thousands of granular pixel beings should be treated as a performance target requiring its own reproducible witness. This addendum does not claim that 5,000 independently authored pixel beings currently incur zero driver allocations or sustain a particular frame rate unless such a measurement is attached to the implementation.
 
 ## 1. Interaction and Interrelation Thoughts
 
 *   **Symbiosis of Form and Substrate:** The OntoMath Raster Formation defines *what* the system wants to achieve (a continuous mathematical definition of visual regions treated as discrete beings). The GPU Micro-Mastery Architecture provides the *how* (the physical substrate execution that makes it feasible). One is the theoretical model; the other is the necessary reality that keeps it from crashing the system.
 *   **Refusal #7 Alignment:** Both documents strictly adhere to Refusal #7 ("No new methods to define variable behavior"). Raster modifications are not hidden in C++ methods like `image->blur()`, but are authored Laws acting on properties. Similarly, the `GpuBufferPool` is an invariant pipeline that simply delivers the data of these Laws to the screen without dictating behavior. They work in tandem to ensure the machine obeys the authored word.
-*   **The RenderMode Bridge:** The concept of `RenderMode` (e.g., Analytic vs. Mesh) introduced in the Micro-Mastery document acts as a safety valve for the OntoMath Raster system. If the continuous mathematical evaluation of complex overlapping SDFs (the Granular Pixel Regions) causes GPU fragment starvation, the Person can use a Law to degrade the representation to a mesh. This allows the system to remain responsive while keeping the control in the hands of the Person, not a black-box engine decision.
-*   **A Continuous Conversation:** Reading these two documents together reveals a system that isn't just dreaming about an idealized ontology; it is actively building the hardware-level infrastructure to support it. The elevation of pixels to beings is only a meaningful feature because the substrate can actually render them at 60 FPS.
+*   **The RenderMode Bridge:** `RenderMode` (e.g., Analytic vs. Mesh) can serve as an architectural bridge between authored mathematical form and alternate execution representations. Whether, and through what authored Law contract, a Person may select such a representation is a design boundary that must be established by the implementation rather than assumed here. The important invariant is that an execution optimization must not silently change authored meaning.
+*   **A Continuous Conversation:** Reading these documents together identifies a concrete engineering obligation: granular authored ontology needs a substrate whose cost scales acceptably without collapsing authored distinctions. Claims such as 60 FPS for a particular granular scene belong to reproducible performance witnesses, not to this synthesis document.
 
 ---
 
