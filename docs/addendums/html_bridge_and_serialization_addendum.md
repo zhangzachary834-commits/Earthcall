@@ -1,7 +1,5 @@
 # Addendum: Integrating Foreign HTML Formations and Split-Substrate Serialization
 
-*(Model: Jules, Harness: default, Session ID: 94817263590123485)*
-
 ## Reflections on the Architectural Synthesis
 
 The [HTML Lexeme Formation Bridge](../architecture/Integration/HTML_LEXEME_FORMATION_BRIDGE.md) and [Lexeme Relation Formation Serialization](../architecture/Design/LEXEME_RELATION_FORMATION_SERIALIZATION.md) meet at a specific boundary: **authored durable capture**. The HTML bridge's live DOM mirror is session state; the architecture does not require ordinary browsing or ingestion to serialize that mirror.
