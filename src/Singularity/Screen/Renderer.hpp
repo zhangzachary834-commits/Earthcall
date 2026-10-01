@@ -220,7 +220,20 @@ public:
                             uint64_t revision) {
         _radianceSources = std::move(sources);
         _radianceSourcesRevision = revision;
+        const auto semanticStatsBefore =
+            _renderedFieldObserver.stats();
         _renderedFieldObserver.observeRadianceSources(_radianceSources, revision);
+        const auto& semanticStatsAfter =
+            _renderedFieldObserver.stats();
+        const bool alignedAuthorityChanged =
+            semanticStatsAfter.alignedSlotBuilds !=
+                semanticStatsBefore.alignedSlotBuilds ||
+            semanticStatsAfter.alignedSlotRepairs !=
+                semanticStatsBefore.alignedSlotRepairs ||
+            semanticStatsAfter.alignedSlotDrops !=
+                semanticStatsBefore.alignedSlotDrops;
+        if (_radianceZeroAuthorityExperimentEnabled && alignedAuthorityChanged)
+            onRadianceZeroAuthorityExperimentChanged();
     }
     const std::vector<Rendering::RadianceSourceBinding>& radianceSources() const {
         return _radianceSources;
