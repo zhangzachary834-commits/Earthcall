@@ -22,6 +22,7 @@
 #include "Singularity/Terminal/TerminalChannel.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "Identity/FirstMoverRegister.hpp"
+#include "Identity/PersonPresence.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
@@ -35,6 +36,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -116,6 +118,16 @@ int main() {
     assert(SaveSystem::writeLawIdentity("t-identity",
         lawRoot("t-identity", "terminal-zone-entered", lineIsIn("Identity"),
                 addOne("@terminal-channel.unlockRequests"))));
+    assert(SaveSystem::writeLawIdentity("t-by-zach",
+        lawRoot("t-by-zach", "terminal-line-entered", lineIsIn("ByZach"),
+                addOne("@terminal-channel.speakRequests"))));
+    {   // authored by the Person's NAME, as every Law in Zach's world is
+        auto root = SaveSystem::readLawIdentity("t-by-zach");
+        root["authors"] = {"Zach"};
+        root["law"]["authors"] = {"Zach"};
+        assert(SaveSystem::writeLawIdentity("t-by-zach", root));
+    }
+    declareZone("ByZach", {"t-by-zach"});
     declareZone("Body", {});
     {
         // The being the test Laws name as author (resolved like a legacy
@@ -242,6 +254,27 @@ int main() {
     assert(tester.hasIdentity());
     assert(reg.isAuthenticatedPerson(tester.personId()));
     std::cout << "  Identity keys an unkeyed Person with a confirmed hidden passphrase OK\n";
+
+    // 7b. The failure Zach hit on 2026-09-30: once keyed, the Person answers
+    //     to their did:, so every Law authored "Zach" stopped resolving and no
+    //     Zone could be held -- including Identity itself. The migration ledger
+    //     is the bridge (as for Home reclaim), never the spelling alone.
+    assert(tester.getIdentifier() != "Zach");
+    assert(Identity::personAnswersTo(tester, "Zach"));
+    assert(!Identity::personAnswersTo(tester, "Someone Else"));
+    type("enter ByZach");
+    assert(terminal->zone() == "ByZach");
+    assert(laws.find("t-by-zach") && laws.find("t-by-zach")->isAuthored());
+    // The old name-addressed profile is superseded, not a second Person.
+    {
+        nlohmann::json legacy{{"displayName", "Zach"}, {"soulName", "Zach"}};
+        const std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+        std::ofstream(folder + "/Zach.json") << legacy.dump();
+        assert(Identity::legacyProfileSuperseded("Zach"));
+        assert(!Identity::legacyProfileSuperseded("Someone Else"));
+    }
+    std::cout << "  after keying, Laws authored by the old name still load (ledger bridge); "
+                 "the old profile is superseded OK\n";
 
     // 8. Later: a wrong passphrase refuses; the right one makes them present.
     reg.clearAuthenticatedPersons();

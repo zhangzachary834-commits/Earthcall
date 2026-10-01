@@ -551,7 +551,7 @@ void channel() {
     const std::size_t printedBefore = printed.size();
     terminal->inject("on tick then set glow 5");
     frame();
-    assert(printed.size() == printedBefore + 1 && mentions(printed.back(), "no Law in this Zone hears"));
+    assert(printed.size() == printedBefore + 1 && mentions(printed.back(), "hears terminal-line-entered"));   // worded by where the LINE is since Terminal Zones
 }
 
 } // namespace

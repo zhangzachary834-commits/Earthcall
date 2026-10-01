@@ -173,15 +173,32 @@ bool Engine::initLogic() {
         // claiming a cryptographic personId is never trusted merely because it
         // is a file on disk: loadKeyedPersonProfile below admits it only when
         // its key unlocks.
-        const auto profiles = SaveSystem::listWorlds(SaveSystem::SaveType::PERSON);
-        if (profiles.size() == 1) {
-            const nlohmann::json profile = SaveSystem::readSaveData(profiles.front().path);
-            if (profile.is_object() && !profile.contains("personId")) {
-                personFromJson(profile, *_person);
-                std::cout << "[Init] Restored sole legacy Person profile '"
-                          << _person->getDisplayName() << "' (not logged in).\n";
+        // One Person, not two: a legacy profile whose name the migration
+        // ledger signed over to a keyed profile on disk is superseded by it
+        // (found 2026-09-30, the first time Zach keyed: boot saw Zach.ecform
+        // AND did_earthcall_....ecform, refused to guess, and every Law
+        // authored "Zach" stopped resolving).
+        std::vector<nlohmann::json> candidates;
+        for (const auto& info : SaveSystem::listWorlds(SaveSystem::SaveType::PERSON)) {
+            nlohmann::json profile = SaveSystem::readSaveData(info.path);
+            if (!profile.is_object()) continue;
+            if (!profile.contains("personId") &&
+                Identity::legacyProfileSuperseded(profile.value("displayName", std::string{}))) {
+                continue;
             }
-        } else if (profiles.size() > 1) {
+            candidates.push_back(std::move(profile));
+        }
+        if (candidates.size() == 1) {
+            // The profile says who is at the machine (name, body, place). It
+            // does NOT make them present: a keyed Person is trusted only when
+            // their key unlocks (EARTHCALL_KEY_PASSPHRASE or `enter Identity`).
+            personFromJson(candidates.front(), *_person);
+            std::cout << "[Init] Restored Person profile '" << _person->getDisplayName() << "'"
+                      << (_person->hasIdentity() ? " (" + _person->personId().abbreviated() +
+                                                   "; not present until their key unlocks)"
+                                                 : " (not logged in)")
+                      << ".\n";
+        } else if (candidates.size() > 1) {
             std::cerr << "[Init] Multiple Person profiles exist; refusing to guess which "
                          "Person is present.\n";
         }

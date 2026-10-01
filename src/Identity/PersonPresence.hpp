@@ -37,4 +37,17 @@ PresenceResult keyPresentPerson(Person& person, const std::string& passphrase);
 // Is there a keyed profile on disk the present Person could unlock into?
 bool keyedProfileExists();
 
+// Does this Person answer to `identifier` as an author or owner reference?
+// Their own identifier always; their display name only while unkeyed; once
+// keyed, an OLD name only through the migration ledger, which records that
+// this exact name was signed over to this exact key. Same bridge the Home
+// reclaim already uses (ZoneManager legacyOwnerNamesPerson). Without it every
+// Law authored as "Zach" stopped resolving the moment Zach took a key
+// (Law_Line.md: "A spoken Law must survive its author getting a key").
+bool personAnswersTo(const Person& person, const std::string& identifier);
+
+// A legacy profile is SUPERSEDED when the ledger has signed its name over to
+// a keyed profile that is also on disk: one Person, not two.
+bool legacyProfileSuperseded(const std::string& displayName);
+
 } // namespace Identity

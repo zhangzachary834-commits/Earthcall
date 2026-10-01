@@ -1,5 +1,6 @@
 #include "ZoneManager.hpp"
 #include "Identity/FirstMoverRegister.hpp"
+#include "Identity/PersonPresence.hpp"
 #include "HomesOfEarth/Home.hpp"
 #include "Identity/IdentityLedger.hpp"
 #include "Relation/Relation.hpp"
@@ -188,7 +189,7 @@ bool ZoneManager::prepareZoneLawClosure(size_t index,
         const auto identifierMatches = [&](Singular* being) {
             if (!being) return false;
             if (auto* person = dynamic_cast<Person*>(being)) {
-                return person->matchesIdentifier(id);
+                return Identity::personAnswersTo(*person, id);   // ledger bridge once keyed
             }
             return being->getIdentifier() == id;
         };
