@@ -6,17 +6,17 @@
 **Base:** `sync-from-earthcall-main`  
 **Human direction:** OntoMath is Earthcall's pure mathematics engine. There must not be a competing mathematical system in renderer, physics, geometry, Object motion, camera code, or other C++ substrate. GLM may remain an execution kernel, but it must not remain a second source of mathematical meaning.
 
-**Status:** Rung 0 landed on this branch on 2026-09-30. Witnesses: `tests/singularity/ontomath_transform_convention_test.cpp`, `tests/singularity/ontomath_matrix_refusal_test.cpp`. Inventory: `docs/audits/ONTOMATH_LINEAR_ALGEBRA_RUNG0_INVENTORY_2026-09-30.md`. Rung 0 intentionally changes no production runtime semantics.
+**Status:** Rung 0 and Rung 1 landed on this branch on 2026-09-30. Rung 0 witnesses: `tests/singularity/ontomath_transform_convention_test.cpp`, `tests/singularity/ontomath_matrix_refusal_test.cpp`; inventory: `docs/audits/ONTOMATH_LINEAR_ALGEBRA_RUNG0_INVENTORY_2026-09-30.md`. Rung 1 adds `OntoMath::MatrixValue`, dimension-aware `MathType`, explicit `glm::mat4` bridging, JSON/msgpack persistence, and `tests/singularity/ontomath_matrix_value_test.cpp`. Matrix operations themselves remain deliberately absent until Rung 2.
 
 ---
 
 ## 0. Constitutional invariant
 
-Earthcall currently has a mathematical sovereignty gap:
+At plan authoring time, Earthcall had the following mathematical sovereignty gap (Rung 1 has now closed the matrix-value/type portion, while transform authorship remains to migrate):
 
 - `OntoMath::MathNode` can author scalar and 3-vector algebra.
 - `PropertyValue` can carry `glm::mat4`.
-- the OntoMath type system has no Matrix / LinearMap kind;
+- the OntoMath type system had no Matrix / LinearMap kind; **Rung 1 now provides a dimension-aware Matrix kind/value, while authored matrix operations begin in Rung 2**;
 - affine transforms, inverse-transpose normals, camera matrices, quadric transforms, and other matrix mathematics are still originated directly in C++ / GLM and in hand-written WGSL.
 
 The target invariant is:
