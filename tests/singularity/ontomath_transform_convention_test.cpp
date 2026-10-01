@@ -132,6 +132,23 @@ int main() {
     assert(nearVec3(glm::vec3(leftShoulder->getTransform()[3]), glm::vec3(-0.35f, 0.6f, 0.0f)));
     assert(nearVec3(glm::vec3(rightFoot->getTransform()[3]), glm::vec3(0.15f, -1.15f, 0.1f)));
 
+    // Rung 6 BodyPart parity: production now asks OntoMath to compose
+    // dimensions and nested local offsets; these GLM expressions are the
+    // frozen legacy oracle only.
+    const glm::vec3 partDims(0.4f, 1.25f, 0.7f);
+    glm::mat4 partWorld = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, -0.5f, 1.25f));
+    partWorld = glm::rotate(partWorld, glm::radians(27.0f), glm::vec3(0, 1, 0));
+    BodyPart part("ontomath-rung6-bodypart", BodyPart::Type::Arm,
+                  ObjectTypes::ShapeKind::Cube, partDims, partWorld);
+    assert(nearMat4(part.getRaycastTransform(),
+                    partWorld * glm::scale(glm::mat4(1.0f), partDims)));
+
+    glm::mat4 localOffset =
+        glm::translate(glm::mat4(1.0f), glm::vec3(-0.2f, 0.35f, 0.15f));
+    Object* nested = part.addSubObject(ObjectTypes::ShapeKind::Cube, localOffset);
+    assert(nested);
+    assert(nearMat4(nested->getTransform(), partWorld * localOffset));
+
     // PersonPerspective currently defines its view by glm::lookAt and its
     // standalone projection by glm::perspective. Pin that separately from the
     // active renderer's backend-selected ZO/NO projection convention below.
