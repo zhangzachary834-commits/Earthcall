@@ -79,6 +79,16 @@ void listenForEvents() {
 
 // Individuated like a Lexeme (`lexeme_<uuid>`): the display name a sentence
 // gives may be shared by many Laws; the identifier never is.
+// `enter`, `enter <zone>`: the line's move, readable before any grammar.
+bool isEnterLine(const std::string& text) {
+    const std::size_t b = text.find_first_not_of(" \t");
+    if (b == std::string::npos || text.size() - b < 5) return false;
+    for (std::size_t i = 0; i < 5; ++i) {
+        if (std::tolower(static_cast<unsigned char>(text[b + i])) != "enter"[i]) return false;
+    }
+    return text.size() == b + 5 || text[b + 5] == ' ';
+}
+
 std::string mintLawId() {
     uuid_t uuid;
     uuid_generate(uuid);
@@ -418,6 +428,27 @@ void TerminalChannel::attach(LawManager& laws) {
 
     _editor.setProviders(
         [this](const std::string& before) {
+            if (!awaitingAnswer() && isEnterLine(before)) {
+                // `enter <zone>`: the menu offers the Zones the line can enter.
+                std::vector<LawSentence::Suggestion> out;
+                const std::size_t b = before.find_first_not_of(" \t");
+                std::size_t from = b + 5;
+                while (from < before.size() && before[from] == ' ') ++from;
+                if (from > before.size() || before.size() == b + 5) return out;
+                const std::string typed = lowerCopy(before.substr(from));
+                if (ZoneManager* zones = ZoneManager::live()) {
+                    for (const auto& z : zones->zones()) {
+                        if (!z) continue;
+                        const std::string name = z->name();
+                        if (lowerCopy(name).rfind(typed, 0) != 0 &&
+                            lowerCopy(z->getIdentifier()).rfind(typed, 0) != 0) continue;
+                        out.push_back({from, z->getIdentifier(), name == z->getIdentifier() ? "a Zone" : name,
+                                       "being", 1, "move the line (not your body) into " + name, {}});
+                    }
+                }
+                return out;
+            }
+            if (!awaitingAnswer() && !lawGrammarHere()) return std::vector<LawSentence::Suggestion>{};
             if (!awaitingAnswer()) return LawSentence::suggest(before, liveVocabulary());
             // Answering a question: the only words are its answers.
             const std::size_t space = before.find_last_of(' ');
@@ -438,26 +469,14 @@ void TerminalChannel::attach(LawManager& laws) {
             offer("no", "keep it");
             return out;
         },
-        [this](const std::string& text) { return liveParse(text).spans; },
+        [this](const std::string& text) {
+            if (isEnterLine(text) || !lawGrammarHere()) return std::vector<LawSentence::Span>{};
+            return liveParse(text).spans;
+        },
         [this](const std::string& text) { return statusOf(text); });
     // Enter on a sentence that cannot be authored yet keeps the line and says
     // what is missing, instead of filling the scrollback with refusals.
-    _editor.submitGate = [this](const std::string& text) -> std::string {
-        const std::string t = text.substr(text.find_first_not_of(" \t"));
-        if (awaitingAnswer() || t == "help" || t == "help " || t == "?") return {};
-        if (t.rfind("??", 0) == 0 || t.back() == '?') return {};
-        const LawSentence::Parse p = LawSentence::parse(text, liveVocabulary());
-        if (p.ok || p.error.find("Metalaw") != std::string::npos) return {};   // Metalaws decide when spoken
-        if (p.error.rfind("still open:", 0) == 0) {
-            for (const auto& clause : p.openClauses) {
-                if (clause.find("(optional)") != std::string::npos) continue;
-                const std::string eg = exampleFor(clause, liveVocabulary());
-                return "not yet — add " + clause + (eg.empty() ? "" : ", e.g.  " + eg) +
-                       "   (or end with ? to preview)";
-            }
-        }
-        return "not yet — " + p.error;
-    };
+    _editor.submitGate = [this](const std::string& text) { return submitRefusal(text); };
 
     writeTty("\x1b[?2004h");   // bracketed paste: a pasted sentence arrives as one
     _attached = true;
@@ -953,6 +972,26 @@ std::vector<LineEditor::Status> TerminalChannel::statusOf(const std::string& tex
         out.push_back({"only yes deletes · no, Esc or Ctrl-C keeps it", "note"});
         return out;
     }
+    if (isEnterLine(text)) {
+        std::string target = text.substr(text.find_first_not_of(" \t") + 5);
+        target.erase(0, target.find_first_not_of(" \t"));
+        while (!target.empty() && target.back() == ' ') target.pop_back();
+        ZoneManager* zones = ZoneManager::live();
+        if (target.empty()) {
+            out.push_back({"↵ lists the Zones the line can enter", "note"});
+        } else if (zones && zones->findZoneIndex(target) != static_cast<size_t>(-1)) {
+            out.push_back({"↵ moves the line into " + zones->zones()[zones->findZoneIndex(target)]->name() +
+                               " (your body stays where it is)", "preview"});
+        } else {
+            out.push_back({"no single Zone is named '" + target + "' · `enter` lists them", "error"});
+        }
+        return out;
+    }
+    if (!lawGrammarHere()) {
+        out.push_back({"the line is in " + zoneLabel() + ": the Law grammar is not read here · "
+                       "`enter LawLine` to author Laws", "note"});
+        return out;
+    }
     if (const std::size_t blank = text.find("\u2039"); blank != std::string::npos) {
         const std::size_t close = text.find("\u203A", blank);
         const std::string name = close == std::string::npos ? "‹…›" : text.substr(blank, close + 3 - blank);
@@ -1229,6 +1268,27 @@ void TerminalChannel::placeLine() {
     }
 }
 
+// Why Enter would keep this line instead of sending it ("" = it is sent).
+std::string TerminalChannel::submitRefusal(const std::string& text) {
+    const std::string t = text.substr(text.find_first_not_of(" \t"));
+    if (awaitingAnswer() || t == "help" || t == "help " || t == "?") return {};
+    // The line's move is never a Law sentence, and outside the Law Line
+    // the Law grammar has no say over what may be sent.
+    if (isEnterLine(text) || !lawGrammarHere()) return {};
+    if (t.rfind("??", 0) == 0 || t.back() == '?') return {};
+    const LawSentence::Parse p = LawSentence::parse(text, liveVocabulary());
+    if (p.ok || p.error.find("Metalaw") != std::string::npos) return {};   // Metalaws decide when spoken
+    if (p.error.rfind("still open:", 0) == 0) {
+        for (const auto& clause : p.openClauses) {
+            if (clause.find("(optional)") != std::string::npos) continue;
+            const std::string eg = exampleFor(clause, liveVocabulary());
+            return "not yet — add " + clause + (eg.empty() ? "" : ", e.g.  " + eg) +
+                   "   (or end with ? to preview)";
+        }
+    }
+    return "not yet — " + p.error;
+}
+
 std::string TerminalChannel::zoneLabel() const {
     if (ZoneManager* zones = ZoneManager::live()) {
         const size_t i = zones->findZoneIndex(_zone);
@@ -1470,10 +1530,13 @@ std::string TerminalChannel::dryRun(const LawSentence::Parse& p) {
 
 std::string TerminalChannel::footerText(bool& hears) {
     hears = _laws && _laws->rete().hearsType(kLineEntered);
-    std::string zone = "no Zone";
+    std::string body = "no Zone";
     if (ZoneManager* zones = ZoneManager::live()) {
-        if (!zones->zones().empty()) zone = zones->active().name();
+        if (!zones->zones().empty()) body = zones->active().name();
     }
+    // Two presences, both named: where the LINE is, and where the body is.
+    const std::string zone = "line: " + (_zone.empty() ? std::string("no Zone") : zoneLabel()) +
+                             " · body: " + body;
     std::string author = "nobody";
     PropertyValue who;
     if (lawGetValue(*this, PropertyPath::parse(_authorPath), who)) {

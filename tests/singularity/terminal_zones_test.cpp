@@ -186,6 +186,16 @@ int main() {
     assert(spoken() == before + 1);
     std::cout << "  the line starts in LawLine and is heard there OK\n";
 
+    // 1b. Zach, 2026-09-30: typing `enter Identity` in the Law Line did
+    //     nothing -- the editor's gate refused to SEND a line that is not a
+    //     Law sentence, so `enter` never reached the channel. The gate is the
+    //     real path a Person's Enter takes.
+    assert(terminal->submitRefusal("enter Identity").empty());
+    assert(terminal->submitRefusal("  ENTER   quiet ").empty());
+    assert(terminal->submitRefusal("enter").empty());
+    assert(!terminal->submitRefusal("frobnicate the glow").empty());   // Law grammar still guards LawLine
+    std::cout << "  Enter sends `enter <zone>` from the Law Line; the Law gate still guards sentences OK\n";
+
     // 2. `enter Quiet` moves only the line; LawLine's Laws are released.
     type("enter Quiet");
     assert(terminal->zone() == "Quiet");
@@ -194,6 +204,7 @@ int main() {
     before = spoken();
     type("on tick then set glow 1");
     assert(spoken() == before);
+    assert(terminal->submitRefusal("anything at all, not a Law").empty());   // no Law gate outside LawLine
     std::cout << "  enter Quiet moves only the line; nothing hears there OK\n";
 
     // 3. The body walks into LawLine while the line stays in Quiet: the

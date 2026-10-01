@@ -123,6 +123,9 @@ public:
     static constexpr const char* kLineHolder = "terminal-channel";
     const std::string& zone() const { return _zone; }
     bool awaitingSecret() const { return _secretStage != 0; }
+    // Why Enter would KEEP this line rather than send it ("" = sent). The
+    // editor's submit gate; public so tests witness what a Person's Enter does.
+    std::string submitRefusal(const std::string& text);
     // Test seam: the Person the Identity Zone makes present (default: the
     // Engine's Person).
     void setPresencePerson(Person* person) { _presencePerson = person; }
@@ -142,6 +145,10 @@ private:
     void takeSecret(std::string& secret);
     void cancelSecret(const std::string& why);
     std::string zoneLabel() const;
+    // The Law Line grammar (gate, menu, colouring) reads the line only where
+    // the line is in the Law Line -- or nowhere yet (legacy). Elsewhere a line
+    // is sent as typed and that Zone's Laws decide what it means.
+    bool lawGrammarHere() const { return _zone.empty() || _zone == "LawLine"; }
     // The one place a parsed sentence becomes a live Law (speak + authorForeign).
     // Returns "" on success, else the refusal.
     std::string enact(LawManager& laws, const LawSentence::Parse& p, const std::string& text,
