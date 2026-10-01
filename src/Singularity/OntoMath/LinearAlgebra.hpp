@@ -16,7 +16,7 @@ namespace OntoMath {
 // [column][row] conversion at the substrate boundary.
 class MatrixValue {
 public:
-    MatrixValue() = default;
+    MatrixValue() = delete;
 
     static std::optional<MatrixValue> create(std::size_t rows,
                                              std::size_t cols,
