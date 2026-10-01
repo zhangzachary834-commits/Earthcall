@@ -133,6 +133,7 @@ struct BootedEngineHarness {
         ctx.unpackForAuthoring = false;
 
         // 4. Perform app boot hydration FIRST (matching Engine::initLogic boot sequence)
+        zones.bindLive();
         zones.bindLawManager(&lawManager);
         zones.hydrateFromZoneStore();
     }
