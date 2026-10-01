@@ -51,4 +51,20 @@ private:
     std::vector<double> _elements;
 };
 
+// Shared numerical refusal threshold for pivot-based operations. The threshold
+// is relative to the largest finite coefficient in the matrix, so uniformly
+// scaling an invertible matrix does not by itself make it "singular".
+inline constexpr double kMatrixRelativePivotEpsilon = 1e-12;
+
+std::optional<MatrixValue> matrixIdentity(std::size_t dimension);
+std::optional<MatrixValue> matrixAdd(const MatrixValue& a, const MatrixValue& b);
+std::optional<MatrixValue> matrixSubtract(const MatrixValue& a, const MatrixValue& b);
+std::optional<MatrixValue> matrixScale(const MatrixValue& matrix, double scalar);
+std::optional<MatrixValue> matrixMultiply(const MatrixValue& a, const MatrixValue& b);
+std::optional<glm::vec3> matrixMultiplyVec3(const MatrixValue& matrix,
+                                            const glm::vec3& vector);
+std::optional<MatrixValue> matrixTranspose(const MatrixValue& matrix);
+std::optional<double> matrixDeterminant(const MatrixValue& matrix);
+std::optional<MatrixValue> matrixInverse(const MatrixValue& matrix);
+
 } // namespace OntoMath
