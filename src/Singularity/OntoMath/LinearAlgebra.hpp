@@ -67,4 +67,25 @@ std::optional<MatrixValue> matrixTranspose(const MatrixValue& matrix);
 std::optional<double> matrixDeterminant(const MatrixValue& matrix);
 std::optional<MatrixValue> matrixInverse(const MatrixValue& matrix);
 
+// Canonical affine mathematics. These functions own transform meaning; GLM is
+// only a representation/execution boundary. All affine transforms are 4x4
+// homogeneous matrices acting on column vectors.
+std::optional<MatrixValue> affineIdentity();
+std::optional<MatrixValue> affineTranslation(const glm::vec3& translation);
+std::optional<MatrixValue> affineScale(const glm::vec3& scale);
+std::optional<MatrixValue> affineAxisAngle(const glm::vec3& axis, double radians);
+std::optional<MatrixValue> affineEulerXYZDegrees(const glm::vec3& degrees);
+std::optional<MatrixValue> affineCompose(const MatrixValue& first,
+                                         const MatrixValue& second);
+std::optional<MatrixValue> affineTRS(const glm::vec3& translation,
+                                     const glm::vec3& eulerDegrees,
+                                     const glm::vec3& scale);
+std::optional<glm::vec3> transformPoint(const MatrixValue& affine,
+                                        const glm::vec3& point);
+std::optional<glm::vec3> transformDirection(const MatrixValue& affine,
+                                            const glm::vec3& direction);
+std::optional<glm::vec3> transformNormal(const MatrixValue& affine,
+                                         const glm::vec3& normal);
+std::optional<MatrixValue> inverseAffine(const MatrixValue& affine);
+
 } // namespace OntoMath
