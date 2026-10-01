@@ -1,28 +1,32 @@
-# Property-Graphs and Rete Memory Locality
+# Property-Graphs and Rete Change Visibility
 
-**How the Prophetic Rete network maintains O(1) condition evaluation when singulars are recursively nested inside the properties of other singulars.**
+**How recursive Property-Graphs expose a future Rete integration problem without claiming an O(1) nested-invalidation mechanism that Earthcall has not built.**
 
-**Status:** Conceptual interrelation.
+**Status:** Conceptual design question; the nested structural projection described below is not implemented.
 **Connected Documents:**
-*   `../Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md` (Singulars existing as properties of other Singulars)
-*   `../law/PROPHETIC_RETE.md` (Ahead-of-time law condition caching and Alpha/Beta memory)
+* `../Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md`
+* `../law/PROPHETIC_RETE.md`
 
 ---
 
 ## The Interrelation
 
-The `ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md` specification formalizes a radical architectural capability: a `PropertyValue` can hold an entire `Singular` being. This creates a recursive Property-Graph. A 2D image is not a texture; it is a root `Singular` whose properties hold thousands of pixel `Singular`s.
+The Property-Graph design allows a `PropertyValue` to contain another `Singular`, so authored structure can be recursively nested. Prophetic Rete, meanwhile, already uses ahead-of-time read/write analysis to avoid work that is proved irrelevant.
 
-This presents a massive theoretical problem for the `PROPHETIC_RETE.md` network. The Rete network achieves performance by caching conditions (Alpha memory). When an entity mutates, the EventBus notifies the Rete, which instantly updates the specific laws that care about that entity.
+Those facts create an integration question: when a Law reads through nested authored structure, what event and dependency representation makes a mutation of a descendant visible to the relevant Law without repeatedly traversing unrelated structure?
 
-But if a pixel `Singular` (which is deeply nested inside the `image` property of a `Canvas` Singular) changes its color, how does the Rete network know to trigger a Law that says `If Canvas.image contains red`? If the EventBus only broadcasts "Pixel #4025 changed", the Rete has no way to associate that pixel with the root Canvas without performing an O(N) traversal of the entire Property-Graph every frame, instantly destroying the engine's performance.
+The current repository does **not** establish the answer as an O(1) forwarding-listener scheme, nor does it prove that Rete memory mirrors the complete recursive Property-Graph. `PROPHETIC_RETE.md` documents a narrower implemented boundary: path-addressed writes and dynamic-property writes announce changes, direct C++ setters remain outside that property-layer feed, and the derived Prophetic relevance graph is not yet a hot-path narrowing decision.
 
-### Structural Alpha-Memory Projection
+### Candidate direction, not current fact
 
-The interrelation requires that the Rete's Alpha memory must map directly onto the recursive topology of the Property-Graph.
+A future integration could compile a nested read such as `A.property.sub_property` into explicit dependency/provenance edges. If descendant membership changes, those edges could be repaired incrementally so a descendant mutation can invalidate only the affected derived condition state.
 
-When a Law condition is compiled (e.g., `If A.property.sub_property == X`), the Rete network cannot just register a listener on `A`. It must inject forwarding listeners down the property chain.
+That design would need to specify and witness at least:
 
-When the pixel Singular is inserted into the Canvas's property, the Rete network dynamically binds the pixel's local mutation events to the Alpha memory node associated with the root Canvas. Therefore, when the pixel mutates, it fires a localized event that is structurally projected up the graph in O(1) time, directly invalidating the cached Rete condition for the root Law.
+1. how nested membership and replacement alter dependency edges;
+2. how aliases or a Singular reachable through multiple property paths are represented;
+3. how direct C++ mutations that bypass the property vocabulary become visible;
+4. how dependency currency is preserved across Law edits and graph mutations; and
+5. what complexity is actually achieved under measured workloads.
 
-Without this interrelation, the recursive Property-Graphs of the Design spec would be completely invisible to the Laws meant to govern them, breaking the fundamental promise of Earthcall's Legibility doctrine. The topological structure of the Rete memory must exactly mirror the topological nesting of the Singulars.
+Until those pieces exist, this document makes no O(1) complexity claim. The architectural requirement is only that nested authored structure must remain legible to Laws without turning an unproved optimization mechanism into ontology or implementation fact.
