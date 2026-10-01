@@ -251,6 +251,7 @@ jobs:
           name: webgpu-object-parity-log
           path: |
             webgpu-object-parity.log
+            webgpu-source-rho-authority-perf.log
             webgpu-v5-overlap-physics.log
             webgpu-volumetric-mist.log
           if-no-files-found: error
