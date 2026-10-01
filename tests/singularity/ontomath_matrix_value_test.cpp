@@ -59,6 +59,14 @@ int main() {
     assert(std::holds_alternative<MatrixValue>(roundTrip));
     assert(std::get<MatrixValue>(roundTrip) == *matrix);
 
+    // The Zone persistence format is msgpack over the same JSON structure.
+    // Prove dimensions and elements survive that binary boundary too.
+    const std::vector<std::uint8_t> packed = nlohmann::json::to_msgpack(j);
+    const nlohmann::json unpacked = nlohmann::json::from_msgpack(packed);
+    const PropertyValue msgpackRoundTrip = propertyValueFromJson(unpacked);
+    assert(std::holds_alternative<MatrixValue>(msgpackRoundTrip));
+    assert(std::get<MatrixValue>(msgpackRoundTrip) == *matrix);
+
     // Malformed serialized matrix shape REFUSES instead of padding/truncating.
     const nlohmann::json malformed = {
         {"t", "matrix"},
