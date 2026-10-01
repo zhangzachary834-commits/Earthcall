@@ -47,6 +47,28 @@ PresenceResult trust(Person& person, const PrivateKey& key) {
 
 bool keyedProfileExists() { return !keyedProfiles().empty(); }
 
+bool personAnswersTo(const Person& person, const std::string& identifier) {
+    if (identifier.empty()) return false;
+    if (person.matchesIdentifier(identifier)) return true;
+    if (!person.hasIdentity()) return false;
+    IdentityLedger ledger;
+    if (!ledger.load()) return false;
+    const auto migrated = ledger.find(identifier);
+    return migrated.has_value() && *migrated == person.personId();
+}
+
+bool legacyProfileSuperseded(const std::string& displayName) {
+    if (displayName.empty()) return false;
+    IdentityLedger ledger;
+    if (!ledger.load()) return false;
+    const auto migrated = ledger.find(displayName);
+    if (!migrated) return false;
+    for (const auto& [id, profile] : keyedProfiles()) {
+        if (id == *migrated) return true;
+    }
+    return false;
+}
+
 PresenceResult unlockPresentPerson(Person& person, const std::string& passphrase) {
     if (passphrase.empty()) return {false, "refused: empty passphrase"};
     KeyStore keys;

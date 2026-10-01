@@ -7,6 +7,7 @@
 - [ ] The terminal prompt reads `earthcall[Law Line]>` even when your body is somewhere else, and a Law sentence there still authors a Law.
 - [ ] `enter Quiet`: the prompt changes, your body does **not** move in the app, and typing anything just scrolls. You should see one note that nothing hears the line there.
 - [ ] Walk your body into the Law Line Zone in the app while the line stays in Quiet. Typed lines must still **not** become Laws.
+- [ ] **You are already keyed** (2026-09-30 14:53: `saves/persons/did_earthcall_zajm4zozes….ecform`). On boot the console should say `Restored Person profile 'Zach' (did:zajm…; not present until their key unlocks)`, with no "Multiple Person profiles" and no `cannot resolve author 'Zach'`. The prompt should read `earthcall[Law Line]>`.
 - [ ] **Key yourself:** `enter Identity`. It should say your Person has no key yet and ask for a passphrase with bullets instead of letters. Type it twice. It should answer `keyed and present: 'Zach' is now did:…`. Check that `saves/persons/Zach.ecform` now has a `personId` and that the passphrase appears nowhere on screen or in `saves/logs/terminal-history.txt`.
 - [ ] Next launch: `enter Identity`, then type the passphrase once, and you should be `present`. A wrong one should say `did not open`. Ctrl-C at the passphrase prompt should cancel.
 - [ ] `enter World` works and hears nothing. That's on purpose, per your gate note.

@@ -1,6 +1,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "Law.hpp"
 #include "Identity/FirstMoverRegister.hpp"
+#include "Identity/PersonPresence.hpp"
 #include <string_view>
 
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
@@ -3534,6 +3535,12 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
     const auto findBeing = [](const std::string& id) -> Singular* {
         for (Singular* being : Universe::instance().beings()) {
             if (being && being->getIdentifier() == id) return being;
+        }
+        // A keyed Person still answers to a name the migration ledger signed
+        // over to their key (Laws authored as "Zach" before Zach had one).
+        for (Singular* being : Universe::instance().beings()) {
+            if (auto* person = dynamic_cast<Person*>(being);
+                person && Identity::personAnswersTo(*person, id)) return being;
         }
         // A Law authored by a foreign First Mover (MCP) names that mover's
         // cryptographic id. It reattaches only while the mover stands.
