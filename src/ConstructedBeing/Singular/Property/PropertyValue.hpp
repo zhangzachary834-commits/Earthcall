@@ -56,8 +56,8 @@ using PropertyValue = std::variant<
 
 // Is this value one whose EQUALITY is the whole story?
 //
-// The scalars, the string, and the two glm types hold their content directly,
-// so comparing two of them answers "did anything change". The pointer and
+// The scalars, the string, the glm value types, and OntoMath::MatrixValue hold
+// their content directly, so comparing two of them answers "did anything change". The pointer and
 // shared_ptr alternatives do not: two equal pointers can address contents that
 // were mutated in place, and answering "unchanged" for those would lose a real
 // change. So the test is deliberately conservative — it says yes only where a
