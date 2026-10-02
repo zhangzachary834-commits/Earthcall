@@ -15,6 +15,7 @@
 #include <set>
 #include <utility>
 #include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 
 
 // Formation definition: bidirectional Singular Relation-graph with at least two Relations that look visually like a
@@ -651,7 +652,16 @@ void Formation::applyAttachmentRelations() {
 
             if (rel->attachment.inheritTranslation || rel->attachment.inheritRotation || rel->attachment.inheritScale) {
                 if (rel->attachment.inheritRotation && rel->attachment.inheritScale && rel->attachment.inheritTranslation) {
-                    nextTransform = parentTransform * rel->attachment.localOffset;
+                    const auto parentAuthored = OntoMath::MatrixValue::fromGlmMat4(parentTransform);
+                    const auto localAuthored = OntoMath::MatrixValue::fromGlmMat4(rel->attachment.localOffset);
+                    const auto composed = OntoMath::affineCompose(parentAuthored, localAuthored);
+                    const auto lowered = composed ? composed->toGlmMat4() : std::nullopt;
+                    if (!lowered) {
+                        std::fprintf(stderr,
+                            "Formation::applyAttachmentRelations: REFUSED invalid full-inheritance affine composition.\n");
+                        continue;
+                    }
+                    nextTransform = *lowered;
                 } else {
                     glm::vec3 translation = rel->attachment.inheritTranslation
                         ? glm::vec3(parentTransform * glm::vec4(glm::vec3(rel->attachment.localOffset[3]), 1.0f))
