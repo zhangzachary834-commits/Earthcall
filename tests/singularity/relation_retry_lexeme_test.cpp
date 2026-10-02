@@ -44,6 +44,12 @@ void testPendingRelationRetry() {
     assert(formation.getPendingRelations().size() == 1);
     assert(formation.relations().getAll().empty());
 
+    // Re-adding the same unbound relation should deduplicate in pendingRelations
+    bool addedAgain = formation.addRelation(rel);
+    assert(!addedAgain);
+    assert(formation.getPendingRelations().size() == 1);
+    assert(formation.relations().getAll().empty());
+
     // Add first member (objA) - rel should remain pending since objB is not in formation yet
     formation.addMember(objA.get());
     assert(formation.getPendingRelations().size() == 1);
