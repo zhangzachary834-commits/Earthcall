@@ -504,6 +504,8 @@ cached 4x4 runtime representation
 - save/load round trip;
 - Law-authored transform modifications remain reachable.
 
+> **Inert future-rung scaffold (2026-10-01):** `docs/plans/ONTOMATH_RUNGS_7_10_SCAFFOLD_2026-10-01.md` records the already-authorized Rung 7–10 boundaries and future witness surfaces. It is intentionally not wired to production, CMake, or CI and does **not** advance Rung 6 or mark any later rung started.
+
 ---
 
 # 10. Rung 7 — Physics, collision, raycast and picking migration
