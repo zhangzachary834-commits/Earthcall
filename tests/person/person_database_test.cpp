@@ -271,6 +271,37 @@ static void testSaveAndLoadDistinctPersonsSameDisplayName() {
     std::cout << "  savePerson and loadPerson distinct persons with same display name OK\n";
 }
 
+// --- WITNESS ANALYSIS & DOCUMENTATION ---
+// What the old test could prove:
+//   testSaveAndLoadPerson proved that a Person profile serialized by savePerson
+//   (which writes a binary .ecform file) can be loaded back via PersonDatabase::loadPerson.
+//
+// What the old test could NOT prove:
+//   The old test could not prove that loadPerson can load Person profiles formatted as
+//   .json or .ecsave (e.g. legacy profiles or exported JSON profiles) because loadPerson
+//   contained a premature file existence check restricted strictly to .ecform, bypassing
+//   SaveSystem::readSaveData's multi-extension resolution path.
+static void testLoadPersonLegacyJsonFormat() {
+    TestEnvironment env;
+    PersonDatabase& db = PersonDatabase::getInstance();
+
+    std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+    std::string jsonPath = folder + "/LegacyAlice.json";
+
+    Person dummy = createDummyPerson("LegacyAlice");
+    nlohmann::json j = dummy.serialize();
+    std::ofstream file(jsonPath);
+    file << j.dump();
+    file.close();
+
+    Person loaded = createDummyPerson("Temp");
+    bool success = db.loadPerson("LegacyAlice", loaded);
+    assert(success && "loadPerson must succeed when profile is formatted as .json");
+    assert(loaded.getDisplayName() == "LegacyAlice");
+
+    std::cout << "  loadPerson legacy .json format OK\n";
+}
+
 int main() {
     std::cout << "person_database_test:\n";
     testGetInstanceSingleton();
@@ -286,6 +317,7 @@ int main() {
     testLoadPersonInvalidJsonStructure();
     testLoadPersonDeserializationFailure();
     testSaveAndLoadDistinctPersonsSameDisplayName();
+    testLoadPersonLegacyJsonFormat();
     std::cout << "person_database_test: ALL OK\n";
     return 0;
 }
