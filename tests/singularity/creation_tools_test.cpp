@@ -19,6 +19,8 @@
 
 #include <cstdio>
 #include <string>
+#include <cmath>
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace {
 
@@ -93,6 +95,31 @@ int main() {
     check(read("activeColor", v) &&
               std::get<glm::vec3>(v) == glm::vec3(0.25f, 0.5f, 0.75f),
           "activeColor is registered and holds the written colour");
+
+    // Rung 6 OntoMath sovereignty: CreationChannel must preserve the frozen
+    // legacy T * Rx * Ry * Rz * S spawn transform while OntoMath owns it.
+    channel->cursorSpawnPos = glm::vec3(1.25f, -2.0f, 3.5f);
+    channel->cursorSpawnRot = glm::vec3(17.0f, -31.0f, 48.0f);
+    channel->cursorSpawnScale = glm::vec3(0.75f, 1.5f, 2.25f);
+    glm::mat4 legacySpawn =
+        glm::translate(glm::mat4(1.0f), channel->cursorSpawnPos);
+    legacySpawn = glm::rotate(legacySpawn, glm::radians(channel->cursorSpawnRot.x),
+                              glm::vec3(1.0f, 0.0f, 0.0f));
+    legacySpawn = glm::rotate(legacySpawn, glm::radians(channel->cursorSpawnRot.y),
+                              glm::vec3(0.0f, 1.0f, 0.0f));
+    legacySpawn = glm::rotate(legacySpawn, glm::radians(channel->cursorSpawnRot.z),
+                              glm::vec3(0.0f, 0.0f, 1.0f));
+    legacySpawn = glm::scale(legacySpawn, channel->cursorSpawnScale);
+    const glm::mat4 authoredSpawn = channel->getCursorSpawnTransform();
+    bool spawnParity = true;
+    for (int col = 0; col < 4; ++col) {
+        for (int row = 0; row < 4; ++row) {
+            spawnParity = spawnParity &&
+                std::abs(authoredSpawn[col][row] - legacySpawn[col][row]) < 1e-5f;
+        }
+    }
+    check(spawnParity,
+          "CreationChannel OntoMath spawn transform preserves legacy T*Rx*Ry*Rz*S");
 
     // ---- two latches: console Create is not the spawn law -------------------
     check(std::string(Rendering::toolNameForMode(Rendering::Mode3D::BrushCreate)) ==
