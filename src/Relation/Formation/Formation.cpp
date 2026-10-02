@@ -270,6 +270,9 @@ bool Formation::addRelation(const std::shared_ptr<Relation>& r) {
         if (std::find(pendingRelations.begin(), pendingRelations.end(), r) == pendingRelations.end()) {
             pendingRelations.push_back(r);
         }
+        std::fprintf(stderr,
+            "Formation '%s': PENDING relation '%s' (%s -> %s) waiting for Singular endpoints.\n",
+            getIdentifier().c_str(), r->type.c_str(), r->aId().c_str(), r->bId().c_str());
         return false;
     }
     if (!mayAdmitRelation(r)) {
@@ -303,12 +306,10 @@ void Formation::retryPendingRelations() {
     if (pendingRelations.empty() || _integrating) return;
     auto pending = pendingRelations;
     pendingRelations.clear();
-    _integrating = true;
     for (const auto& r : pending) {
         if (!r) continue;
         addRelation(r);
     }
-    _integrating = false;
 }
 
 bool Formation::removeRelation(const std::shared_ptr<Relation>& r) {

@@ -121,6 +121,7 @@ public:
 
     // Earthcall feature access
     void enableBrushSystemAccess(bool enable);
+    void enableDesignSystemAccess(bool enable); // Legacy no-op stub following DesignSystem retirement
     void enableAvatarSystemAccess(bool enable);
 
     // Communication

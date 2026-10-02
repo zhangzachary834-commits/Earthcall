@@ -532,6 +532,10 @@ void WebIntegrationManager::enableBrushSystemAccess(bool enable) {
     std::cout << "🎨 Brush system access " << (enable ? "enabled" : "disabled") << std::endl;
 }
 
+void WebIntegrationManager::enableDesignSystemAccess(bool enable) {
+    (void)enable;
+    std::cout << "🎨 Design system access retired (no-op)" << std::endl;
+}
 
 void WebIntegrationManager::enableAvatarSystemAccess(bool enable) {
     _avatarSystemAccess = enable;
