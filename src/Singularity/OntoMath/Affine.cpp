@@ -119,6 +119,33 @@ std::optional<MatrixValue> affineExtractRotationBasis(const MatrixValue& m) {
     return rotation;
 }
 
+std::optional<MatrixValue> affineSelectTRS(const MatrixValue& parent,
+                                           const MatrixValue& child,
+                                           const MatrixValue& localOffset,
+                                           bool inheritTranslation,
+                                           bool inheritRotation,
+                                           bool inheritScale) {
+    if (!parent.valid() || !child.valid() || !localOffset.valid() ||
+        parent.rows()!=4 || parent.cols()!=4 || child.rows()!=4 || child.cols()!=4 ||
+        localOffset.rows()!=4 || localOffset.cols()!=4) return std::nullopt;
+
+    const auto parentLocal=affineCompose(parent, localOffset);
+    if (!parentLocal) return std::nullopt;
+
+    const auto translation=inheritTranslation
+        ? transformPoint(parent, *affineExtractTranslation(localOffset))
+        : affineExtractTranslation(child);
+    const auto rotation=affineExtractRotationBasis(inheritRotation ? parent : child);
+    const auto scale=affineExtractScale(inheritScale ? *parentLocal : child);
+    if (!translation || !rotation || !scale) return std::nullopt;
+
+    const auto tm=affineTranslation(*translation);
+    const auto sm=affineScale(*scale);
+    if (!tm || !sm) return std::nullopt;
+    const auto tr=affineCompose(*tm, *rotation);
+    return tr ? affineCompose(*tr, *sm) : std::nullopt;
+}
+
 std::optional<MatrixValue> inverseAffine(const MatrixValue& m) {
     if (!m.valid()||m.rows()!=4||m.cols()!=4) return std::nullopt;
     constexpr double e=1e-10;
