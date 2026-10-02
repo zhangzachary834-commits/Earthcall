@@ -1376,7 +1376,7 @@ bool writeZoneIdentity(const std::string& identifier, const nlohmann::json& j) {
         const std::string safe = sanitizeLabel(identifier);
         if (!safe.empty()) {
             std::error_code ec;
-            std::filesystem::remove(sharedIdentityRoot("zones") / safe / "zone.json", ec);
+            std::filesystem::remove(std::filesystem::path(path).parent_path() / "zone.json", ec);
         }
     }
     return wrote;
@@ -1556,7 +1556,7 @@ bool writeHomeIdentity(const std::string& identifier, const nlohmann::json& j) {
         const std::string safe = sanitizeLabel(identifier);
         if (!safe.empty()) {
             std::error_code ec;
-            std::filesystem::remove(sharedIdentityRoot("homes") / safe / "home.json", ec);
+            std::filesystem::remove(std::filesystem::path(path).parent_path() / "home.json", ec);
         }
     }
     return wrote;
