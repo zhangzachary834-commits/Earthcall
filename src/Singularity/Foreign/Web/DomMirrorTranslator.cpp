@@ -345,18 +345,68 @@ bool DomMirrorTranslator::applyDelta(const DomDelta& delta, std::string* outErro
 
             case DomDeltaKind::AttributeRemove: {
                 auto nodeForm = findNodeFormation(rec.targetNodeToken);
-                if (nodeForm) {
-                    // Search for attribute member matching attributeName
-                    Singular* memberToRemove = nullptr;
-                    for (Singular* mem : nodeForm->getMembers()) {
-                        auto* lex = dynamic_cast<Singularity::Language::Lexeme*>(mem);
-                        if (lex && lex->getSymbol() == rec.attributeName) {
-                            memberToRemove = lex;
-                            break;
+                auto nodeLexeme = findNodeLexeme(rec.targetNodeToken);
+                if (nodeForm && nodeLexeme) {
+                    // Find formal relation edges connecting nodeLexeme -> attrLexeme ("has-attribute")
+                    std::vector<std::shared_ptr<Relation>> attrRelsToRemove;
+                    std::vector<std::shared_ptr<Relation>> valRelsToRemove;
+                    std::vector<Singular*> lexemesToRemove;
+
+                    for (const auto& rel : nodeForm->relations().getAll()) {
+                        if (!rel || rel->type != DomRelationType::kHasAttribute) continue;
+                        if (rel->a() == nodeLexeme.get()) {
+                            auto* attrLex = dynamic_cast<Singularity::Language::Lexeme*>(rel->b());
+                            if (attrLex && attrLex->getSymbol() == rec.attributeName) {
+                                attrRelsToRemove.push_back(rel);
+                                lexemesToRemove.push_back(attrLex);
+
+                                // Find associated value relation ("has-value") from attrLex -> valLex
+                                for (const auto& valRel : nodeForm->relations().getAll()) {
+                                    if (!valRel || valRel->type != DomRelationType::kHasValue) continue;
+                                    if (valRel->a() == attrLex) {
+                                        valRelsToRemove.push_back(valRel);
+                                        if (valRel->b()) {
+                                            lexemesToRemove.push_back(valRel->b());
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                    if (memberToRemove) {
-                        nodeForm->releaseMember(memberToRemove);
+
+                    // Remove formal relations from the formation and accounting
+                    for (const auto& rel : attrRelsToRemove) {
+                        nodeForm->removeRelation(rel);
+                        _allSessionRelations.erase(
+                            std::remove(_allSessionRelations.begin(), _allSessionRelations.end(), rel),
+                            _allSessionRelations.end());
+                    }
+                    for (const auto& rel : valRelsToRemove) {
+                        nodeForm->removeRelation(rel);
+                        _allSessionRelations.erase(
+                            std::remove(_allSessionRelations.begin(), _allSessionRelations.end(), rel),
+                            _allSessionRelations.end());
+                    }
+                    auto& nodeRels = _nodeRelations[rec.targetNodeToken];
+                    for (const auto& rel : attrRelsToRemove) {
+                        nodeRels.erase(std::remove(nodeRels.begin(), nodeRels.end(), rel), nodeRels.end());
+                    }
+                    for (const auto& rel : valRelsToRemove) {
+                        nodeRels.erase(std::remove(nodeRels.begin(), nodeRels.end(), rel), nodeRels.end());
+                    }
+
+                    // Release lexeme members from the formation and LanguageSystem
+                    for (Singular* mem : lexemesToRemove) {
+                        nodeForm->releaseMember(mem);
+                        if (auto* lex = dynamic_cast<Singularity::Language::Lexeme*>(mem)) {
+                            language.remove("@" + lex->getIdentifier());
+                            _allSessionLexemes.erase(
+                                std::remove_if(_allSessionLexemes.begin(), _allSessionLexemes.end(),
+                                               [lex](const std::shared_ptr<Singularity::Language::Lexeme>& p) {
+                                                   return p.get() == lex;
+                                               }),
+                                _allSessionLexemes.end());
+                        }
                     }
                 }
                 break;
