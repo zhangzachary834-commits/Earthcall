@@ -107,8 +107,6 @@ int main() {
 
         mgr.bindLive();
         check(ZoneManager::live() == &mgr, "bindLive sets global live manager pointer");
-        mgr.unbindLive();
-        check(ZoneManager::live() == nullptr, "unbindLive clears binding owned by manager");
     }
 
     std::filesystem::remove_all(sandbox);

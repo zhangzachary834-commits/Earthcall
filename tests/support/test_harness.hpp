@@ -139,10 +139,6 @@ struct BootedEngineHarness {
     }
 
     ~BootedEngineHarness() {
-        // bindLive() is process-global too; a block-scoped harness must not
-        // leave ZoneManager::live() pointing at its destroyed ZoneManager.
-        zones.unbindLive();
-
         // The Physics bridge is process-global; do not leave a dangling pointer
         // when a block-scoped harness goes away. Only clear the slot we own.
         if (Physics::getLawManager() == &lawManager) {
