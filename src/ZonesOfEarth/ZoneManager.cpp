@@ -492,6 +492,10 @@ void ZoneManager::bindLive() {
     installZoneReadings();
 }
 
+void ZoneManager::unbindLive() {
+    if (g_liveZones == this) g_liveZones = nullptr;
+}
+
 ZoneManager* ZoneManager::live() { return g_liveZones; }
 
 namespace {
