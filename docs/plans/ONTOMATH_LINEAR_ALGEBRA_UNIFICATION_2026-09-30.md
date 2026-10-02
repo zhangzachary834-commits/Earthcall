@@ -457,7 +457,7 @@ If the linear component is singular, the normal transform is undefined unless a 
 
 # 9. Rung 6 — Object, Body, Formation and creation migration
 
-**Status (2026-10-01): IN PROGRESS.** Exact-head `92e5846358c1fd430c1e6ef5b1271c36418b114a` passed the campaign-owned Focused CPU lane (including `ontomath_affine_sovereignty_test`) and the SDF/WGSL parity lane. The workflow remained globally red only because the pre-existing Slow Adapter performance arm failed. The first bounded Rung-6 migration now routes Object Euler recomposition through `OntoMath::affineTRS` and lowers the resulting authored `MatrixValue` through the explicit GLM representation bridge. Legacy transform decomposition/extraction remains unmigrated and is not claimed complete.
+**Status (2026-10-01): IN PROGRESS.** Rungs 0–5 remain complete. Rung 6 has now migrated Object Euler recomposition, Body default placement, BodyPart dimension/nested affine composition, and Formation full-inheritance `parent * localOffset` composition to OntoMath-owned affine meaning. Focused production witnesses pin Object rotation, Body placement, BodyPart raycast/nested composition, and Formation full-inheritance parity. The latest Formation witness head is `3619711614057bfd3fc335a08861d52ff735cd36`; exact-head CI is not yet claimed green until that head receives workflow evidence. Legacy Object/Automation decomposition, Formation partial-inheritance decomposition/rebuild, CreationChannel/ObjectConcept, First Mover creation/tool paths, and Law spawn/placement paths remain unmigrated and are not claimed complete.
 
 
 ## Objective
