@@ -151,6 +151,21 @@ int main() {
     assert(nested);
     assert(nearMat4(nested->getTransform(), partWorld * localOffset));
 
+    // Rung 6 affine decomposition witness: OntoMath owns the legacy column-length
+    // scale and normalized-column rotation basis used by Formation selective inheritance.
+    const auto decomposed = OntoMath::MatrixValue::fromGlmMat4(partWorld * glm::scale(glm::mat4(1.0f), partDims));
+    const auto extractedTranslation = OntoMath::affineExtractTranslation(decomposed);
+    const auto extractedScale = OntoMath::affineExtractScale(decomposed);
+    const auto extractedRotation = OntoMath::affineExtractRotationBasis(decomposed);
+    assert(extractedTranslation && extractedScale && extractedRotation);
+    assert(nearVec3(*extractedTranslation, glm::vec3(partWorld[3])));
+    assert(nearVec3(*extractedScale, partDims));
+    const auto loweredRotation = extractedRotation->toGlmMat4();
+    assert(loweredRotation);
+    assert(nearVec3(glm::vec3((*loweredRotation)[0]), glm::normalize(glm::vec3(partWorld[0]))));
+    assert(nearVec3(glm::vec3((*loweredRotation)[1]), glm::normalize(glm::vec3(partWorld[1]))));
+    assert(nearVec3(glm::vec3((*loweredRotation)[2]), glm::normalize(glm::vec3(partWorld[2]))));
+
     // Rung 6 Formation parity: full inheritance remains the frozen legacy
     // parent * localOffset composition, while production now delegates that
     // mathematical meaning to OntoMath.
