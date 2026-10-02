@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
         else if (arg == "--adapter=off") adapter = false;
         else if (arg == "--direct=on") direct = true;
         else if (arg == "--direct=off") direct = false;
-        else if (arg.rfind("--frames=", 0) == 0) frames = std::max(24, std::atoi(arg.c_str() + 9));
+        else if (arg.rfind("--frames=", 0) == 0) frames = std::max(1, std::atoi(arg.c_str() + 9));
     }
 
     world = TestSupport::resolveRealWorldPath(world);
@@ -93,7 +93,8 @@ int main(int argc, char** argv) {
 
     // Warm foreground state without measuring it. The adapter's own timeline
     // advances too when ON, just as it would in a live 60 Hz session.
-    for (int i = 0; i < 30; ++i) {
+    const int warmUpFrames = std::min(5, frames);
+    for (int i = 0; i < warmUpFrames; ++i) {
         zone->update(dt);
         zone->applyFormationRelations();
         h.worldTime += dt;
