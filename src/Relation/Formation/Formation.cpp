@@ -267,12 +267,17 @@ bool Formation::addRelation(const std::shared_ptr<Relation>& r) {
         }
     }
     if (!r->hasEndpoints()) {
-        if (std::find(pendingRelations.begin(), pendingRelations.end(), r) == pendingRelations.end()) {
+        const bool alreadyPending = std::any_of(
+            pendingRelations.begin(), pendingRelations.end(),
+            [&r](const std::shared_ptr<Relation>& p) {
+                return p && p->type == r->type && p->aId() == r->aId() && p->bId() == r->bId();
+            });
+        if (!alreadyPending) {
             pendingRelations.push_back(r);
+            std::fprintf(stderr,
+                "Formation '%s': PENDING relation '%s' (%s -> %s) waiting for Singular endpoints.\n",
+                getIdentifier().c_str(), r->type.c_str(), r->aId().c_str(), r->bId().c_str());
         }
-        std::fprintf(stderr,
-            "Formation '%s': PENDING relation '%s' (%s -> %s) waiting for Singular endpoints.\n",
-            getIdentifier().c_str(), r->type.c_str(), r->aId().c_str(), r->bId().c_str());
         return false;
     }
     if (!mayAdmitRelation(r)) {
@@ -304,12 +309,25 @@ bool Formation::addRelation(const std::shared_ptr<Relation>& r) {
 
 void Formation::retryPendingRelations() {
     if (pendingRelations.empty() || _integrating) return;
-    auto pending = pendingRelations;
+    _integrating = true;
+    auto pending = std::move(pendingRelations);
     pendingRelations.clear();
     for (const auto& r : pending) {
         if (!r) continue;
-        addRelation(r);
+        if (!r->hasEndpoints()) {
+            Singular* aBeing = r->a() ? r->a() : findMemberByIdentifier(r->aId());
+            Singular* bBeing = r->b() ? r->b() : findMemberByIdentifier(r->bId());
+            if (aBeing && bBeing) {
+                r->bind(aBeing, bBeing);
+            }
+        }
+        if (!r->hasEndpoints()) {
+            pendingRelations.push_back(r);
+        } else {
+            addRelation(r);
+        }
     }
+    _integrating = false;
 }
 
 bool Formation::removeRelation(const std::shared_ptr<Relation>& r) {
@@ -586,7 +604,7 @@ std::shared_ptr<Formation> Formation::findOrCreateRelationFormation(const std::s
 }
 
 void Formation::integrateRelationTopology(const std::shared_ptr<Relation>& r) {
-    if (!r) return;
+    if (!r || !r->hasEndpoints()) return;
 
     Singular* memberA = r->a();
     Singular* memberB = r->b();
