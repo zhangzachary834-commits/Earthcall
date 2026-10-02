@@ -75,6 +75,50 @@ std::optional<glm::vec3> transformPoint(const MatrixValue& m,const glm::vec3& p)
 std::optional<glm::vec3> transformDirection(const MatrixValue& m,const glm::vec3& d) {
     return applyHomogeneous(m,d,0.0);
 }
+std::optional<glm::vec3> affineExtractTranslation(const MatrixValue& m) {
+    if (!m.valid() || m.rows() != 4 || m.cols() != 4) return std::nullopt;
+    glm::vec3 t(static_cast<float>(m.at(0, 3)),
+                static_cast<float>(m.at(1, 3)),
+                static_cast<float>(m.at(2, 3)));
+    if (!finiteVec3(t)) return std::nullopt;
+    return t;
+}
+
+std::optional<glm::vec3> affineExtractScale(const MatrixValue& m) {
+    if (!m.valid() || m.rows() != 4 || m.cols() != 4) return std::nullopt;
+    glm::vec3 scale(0.0f);
+    for (std::size_t col = 0; col < 3; ++col) {
+        double squaredLength = 0.0;
+        for (std::size_t row = 0; row < 3; ++row) {
+            const double component = m.at(row, col);
+            squaredLength += component * component;
+        }
+        const double length = std::sqrt(squaredLength);
+        if (!std::isfinite(length)) return std::nullopt;
+        scale[static_cast<int>(col)] = static_cast<float>(length);
+    }
+    return finiteVec3(scale) ? std::optional<glm::vec3>(scale) : std::nullopt;
+}
+
+std::optional<MatrixValue> affineExtractRotationBasis(const MatrixValue& m) {
+    const auto scale = affineExtractScale(m);
+    if (!scale ||
+        scale->x <= kMatrixRelativePivotEpsilon ||
+        scale->y <= kMatrixRelativePivotEpsilon ||
+        scale->z <= kMatrixRelativePivotEpsilon) {
+        return std::nullopt;
+    }
+    auto rotation = matrixIdentity(4);
+    if (!rotation) return std::nullopt;
+    for (std::size_t col = 0; col < 3; ++col) {
+        const double divisor = static_cast<double>((*scale)[static_cast<int>(col)]);
+        for (std::size_t row = 0; row < 3; ++row) {
+            rotation->at(row, col) = m.at(row, col) / divisor;
+        }
+    }
+    return rotation;
+}
+
 std::optional<MatrixValue> inverseAffine(const MatrixValue& m) {
     if (!m.valid()||m.rows()!=4||m.cols()!=4) return std::nullopt;
     constexpr double e=1e-10;
