@@ -74,4 +74,5 @@ third_party/httplib/httplib.h
 /update_task.py
 *.orig
 *.rej
+scratch/capture-verification/
 saves/identity/*.staged
