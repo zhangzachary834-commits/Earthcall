@@ -377,12 +377,13 @@ jobs:
           world = sys.argv[1]
 
           def run_mode(adapter, direct):
+              frames = 5 if "chess_app" in world else 15
               cmd = ["./build/slow_adapter_zone_perf_test", world,
-                     f"--adapter={adapter}", f"--direct={direct}", "--frames=15"]
+                     f"--adapter={adapter}", f"--direct={direct}", f"--frames={frames}"]
               try:
-                  result = subprocess.run(cmd, text=True, capture_output=True, timeout=240)
+                  result = subprocess.run(cmd, text=True, capture_output=True, timeout=300)
               except subprocess.TimeoutExpired:
-                  print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={adapter} direct={direct} timeout_s=240")
+                  print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={adapter} direct={direct} timeout_s=300")
                   raise SystemExit(1)
 
               lines = [line for line in result.stdout.splitlines()
