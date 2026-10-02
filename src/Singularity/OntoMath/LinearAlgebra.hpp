@@ -87,5 +87,6 @@ std::optional<glm::vec3> transformDirection(const MatrixValue& affine,
 std::optional<glm::vec3> transformNormal(const MatrixValue& affine,
                                          const glm::vec3& normal);
 std::optional<MatrixValue> inverseAffine(const MatrixValue& affine);
+std::optional<glm::vec3> affineExtractScale(const MatrixValue& affine);
 
 } // namespace OntoMath
