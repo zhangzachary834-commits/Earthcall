@@ -121,6 +121,40 @@ int main() {
     check(spawnParity,
           "CreationChannel OntoMath spawn transform preserves legacy T*Rx*Ry*Rz*S");
 
+    // Rung 6 CursorSnap surface-offset parity. GLM below is a frozen legacy
+    // oracle only; production rotation/direction meaning belongs to OntoMath.
+    channel->placementMode = "CursorSnap";
+    channel->gridSnap = false;
+    channel->cursorSpawnRot = glm::vec3(21.0f, -34.0f, 57.0f);
+    channel->cursorSpawnScale = glm::vec3(1.4f, 0.8f, 2.2f);
+    channel->cursorHitPos = glm::vec3(-1.0f, 2.0f, 3.0f);
+    channel->cursorHitNormal = glm::normalize(glm::vec3(0.3f, 0.9f, -0.2f));
+
+    glm::mat4 legacySurfaceRotation(1.0f);
+    legacySurfaceRotation = glm::rotate(
+        legacySurfaceRotation, glm::radians(channel->cursorSpawnRot.x), glm::vec3(1, 0, 0));
+    legacySurfaceRotation = glm::rotate(
+        legacySurfaceRotation, glm::radians(channel->cursorSpawnRot.y), glm::vec3(0, 1, 0));
+    legacySurfaceRotation = glm::rotate(
+        legacySurfaceRotation, glm::radians(channel->cursorSpawnRot.z), glm::vec3(0, 0, 1));
+    const glm::vec3 legacyAxisX = glm::normalize(
+        glm::vec3(legacySurfaceRotation * glm::vec4(1, 0, 0, 0)));
+    const glm::vec3 legacyAxisY = glm::normalize(
+        glm::vec3(legacySurfaceRotation * glm::vec4(0, 1, 0, 0)));
+    const glm::vec3 legacyAxisZ = glm::normalize(
+        glm::vec3(legacySurfaceRotation * glm::vec4(0, 0, 1, 0)));
+    const glm::vec3 half = channel->cursorSpawnScale * 0.5f;
+    const float legacySurfaceOffset =
+        std::abs(glm::dot(channel->cursorHitNormal, legacyAxisX)) * half.x +
+        std::abs(glm::dot(channel->cursorHitNormal, legacyAxisY)) * half.y +
+        std::abs(glm::dot(channel->cursorHitNormal, legacyAxisZ)) * half.z;
+    const glm::vec3 expectedCursorSnap =
+        channel->cursorHitPos + channel->cursorHitNormal * legacySurfaceOffset;
+    const glm::vec3 actualCursorSnap =
+        channel->computeSpawnPosition(glm::vec3(99.0f), glm::vec3(0, 0, -1));
+    check(glm::length(actualCursorSnap - expectedCursorSnap) < 1e-5f,
+          "CreationChannel OntoMath CursorSnap surface offset preserves legacy rotated support axes");
+
     // ---- two latches: console Create is not the spawn law -------------------
     check(std::string(Rendering::toolNameForMode(Rendering::Mode3D::BrushCreate)) ==
               "ShapeGenerator3D",
