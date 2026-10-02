@@ -1325,6 +1325,15 @@ bool isUnpackedDirectoryNewer(const std::string& directoryPath, const std::strin
     return dirNewestTime > monolithicTime;
 }
 
+namespace {
+std::filesystem::path sharedIdentityRoot(const char* leaf) {
+    const std::filesystem::path root = g_saveRoot.empty()
+        ? std::filesystem::path("saves")
+        : std::filesystem::path(g_saveRoot);
+    return root / leaf;
+}
+} // namespace
+
 std::string zoneDirectory(const std::string& identifier) {
     std::string folder = ensureSaveTypeFolder(SaveType::ZONE);
     if (folder.empty()) return "";
@@ -1368,10 +1377,23 @@ bool writeZoneIdentity(const std::string& identifier, const nlohmann::json& j) {
     wrapper["MigrationRoot"] = j.dump(-1);
     std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
     
-    return atomicWriteFile(path, [&](std::ostream& out) {
+    const bool wrote = atomicWriteFile(path, [&](std::ostream& out) {
         out.write(reinterpret_cast<const char*>(outBytes.data()), outBytes.size());
         return static_cast<bool>(out);
     });
+
+    if (wrote) {
+        const std::string safe = sanitizeLabel(identifier);
+        if (!safe.empty()) {
+            const auto legacyJson = sharedIdentityRoot("zones") / safe / "zone.json";
+            std::error_code ec;
+            if (std::filesystem::exists(legacyJson, ec)) {
+                std::filesystem::remove(legacyJson, ec);
+            }
+        }
+    }
+
+    return wrote;
 }
 
 nlohmann::json readZoneIdentity(const std::string& identifier) {
@@ -1409,15 +1431,6 @@ std::vector<std::string> listZoneIdentities() {
     for (auto& rec : listZoneIdentityRecords()) out.push_back(std::move(rec.directoryKey));
     return out;
 }
-
-namespace {
-std::filesystem::path sharedIdentityRoot(const char* leaf) {
-    const std::filesystem::path root = g_saveRoot.empty()
-        ? std::filesystem::path("saves")
-        : std::filesystem::path(g_saveRoot);
-    return root / leaf;
-}
-} // namespace
 
 std::string lawDirectory(const std::string& identifier) {
     const std::string safe = sanitizeLabel(identifier);
@@ -1466,13 +1479,33 @@ nlohmann::json readLawIdentity(const std::string& identifier) {
 std::string resolveZoneIdentityPath(const std::string& identifier) {
     const std::string safe = sanitizeLabel(identifier);
     if (safe.empty()) return "";
-    return (sharedIdentityRoot("zones") / safe / "zone.json").string();
+    const std::filesystem::path dir = sharedIdentityRoot("zones") / safe;
+    std::error_code ec;
+    const auto ecformPath = dir / "zone.ecform";
+    if (std::filesystem::exists(ecformPath, ec) && std::filesystem::file_size(ecformPath, ec) > 0) {
+        return ecformPath.string();
+    }
+    const auto jsonPath = dir / "zone.json";
+    if (std::filesystem::exists(jsonPath, ec) && std::filesystem::file_size(jsonPath, ec) > 0) {
+        return jsonPath.string();
+    }
+    return ecformPath.string();
 }
 
 std::string resolveHomeIdentityPath(const std::string& identifier) {
     const std::string safe = sanitizeLabel(identifier);
     if (safe.empty()) return "";
-    return (sharedIdentityRoot("homes") / safe / "home.json").string();
+    const std::filesystem::path dir = sharedIdentityRoot("homes") / safe;
+    std::error_code ec;
+    const auto ecformPath = dir / "home.ecform";
+    if (std::filesystem::exists(ecformPath, ec) && std::filesystem::file_size(ecformPath, ec) > 0) {
+        return ecformPath.string();
+    }
+    const auto jsonPath = dir / "home.json";
+    if (std::filesystem::exists(jsonPath, ec) && std::filesystem::file_size(jsonPath, ec) > 0) {
+        return jsonPath.string();
+    }
+    return ecformPath.string();
 }
 
 std::string resolveLawIdentityPath(const std::string& identifier) {
@@ -1528,10 +1561,23 @@ bool writeHomeIdentity(const std::string& identifier, const nlohmann::json& j) {
     wrapper["MigrationRoot"] = j.dump(-1);
     std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
     
-    return atomicWriteFile(path, [&](std::ostream& out) {
+    const bool wrote = atomicWriteFile(path, [&](std::ostream& out) {
         out.write(reinterpret_cast<const char*>(outBytes.data()), outBytes.size());
         return static_cast<bool>(out);
     });
+
+    if (wrote) {
+        const std::string safe = sanitizeLabel(identifier);
+        if (!safe.empty()) {
+            const auto legacyJson = sharedIdentityRoot("homes") / safe / "home.json";
+            std::error_code ec;
+            if (std::filesystem::exists(legacyJson, ec)) {
+                std::filesystem::remove(legacyJson, ec);
+            }
+        }
+    }
+
+    return wrote;
 }
 
 nlohmann::json readHomeIdentity(const std::string& identifier) {
