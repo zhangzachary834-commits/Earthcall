@@ -41,6 +41,7 @@
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
 #include "Singularity/Storage/FileChannel.hpp"
+#include "Singularity/Core/CodecChannel.hpp"
 #include "Singularity/Storage/VirtualFileSystem.hpp"
 #include "Singularity/Storage/StreamChannel.hpp"
 #include "Singularity/Storage/FileWatcher.hpp"
@@ -283,6 +284,9 @@ bool Engine::initLogic() {
     // Register first-mover FileChannel (native computer filesystem sense and act)
     Singularity::Storage::FileChannel::syncRegister(*_lawManager);
 
+    // Register first-mover CodecChannel (semantic byte-transformations)
+    Singularity::Core::CodecChannel::syncRegister(*_lawManager);
+
     // Register first-mover ScreenRecorder (screen capture, video/frame stream, macOS permissions)
     Singularity::Screen::ScreenRecorder::syncRegister(*_lawManager);
 
@@ -294,6 +298,18 @@ bool Engine::initLogic() {
 
     // Register first-mover FileWatcher (reactive file sensing and live hot-reloading)
     Singularity::Storage::FileWatcher::syncRegister(*_lawManager);
+
+    // Decoupled hot-reload: listen to FileWatcher events via the EventBus
+    Core::EventBus::instance().subscribe<ECA::Event>([](const ECA::Event& ev) {
+        if (ev.type == "file-modified" || ev.type == "file-created") {
+            if (auto* watcher = dynamic_cast<Singularity::Storage::FileWatcher*>(ev.subject)) {
+                std::string path = watcher->propLastModifiedFile();
+                if (path.find(".wgsl") != std::string::npos || path.find("shader") != std::string::npos) {
+                    currentRenderer().reloadShaders();
+                }
+            }
+        }
+    });
 
     // Register first-mover TerminalChannel: the Mac Terminal's command line
     // (the window Run Earthcall.command opened) as a modality of this world.
@@ -508,7 +524,7 @@ bool Engine::initLogic() {
         mgr.getSaveLoadState().showSaveWindow = true;
         ensureCursorUnlocked();
     });
-    _mainMenu.addOption("Legacy Session Import / Recovery", GLFW_KEY_L, [this]() {
+    _mainMenu.addOption("Legacy Session Import / Recovery", GLFW_KEY_O, [this]() {
         mgr.updateSaveFiles();
         mgr.getSaveLoadState().showLoadWindow = true;
         ensureCursorUnlocked();
@@ -835,7 +851,7 @@ void Engine::registerCallbacks() {
                         if (channel) break;
                     }
                 }
-                ECA::Event ev{"onMouseClicked", channel, nullptr, std::time(nullptr)};
+                ECA::Event ev{"mouse-clicked", self->_person.get(), nullptr, std::time(nullptr)};
                 Core::EventBus::instance().publish(ev);
             }
         }

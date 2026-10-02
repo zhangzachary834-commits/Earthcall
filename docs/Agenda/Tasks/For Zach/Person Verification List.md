@@ -1117,3 +1117,11 @@ Zach asked to fix the Creator Console's Zone Window which was "just a pile of zo
 - [ ] **Select a Zone.** Check if the details (Name, ID, Objects, Relations, Actions) cleanly display on the right pane.
 - [ ] **Test the buttons.** The right pane has context-aware buttons ("Move to Zone", "Already Here", "Save Active Zone", "Save Zone"). Please verify that clicking them works exactly as before and the UI feedback (green/red text at the top) is clear.
 - [ ] **Does it feel like a "Creator" tool?** The styling has some minor ImGui coloring (`ImVec4(1.0f, 0.8f, 0.2f, 1.0f)` for titles) and clear spacing to match the console feel. Tell me if it feels less awkward.
+
+## Shape Generator 3D Law Modernization
+* **Date:** 2026-10-02
+* **What to check:** The old C++ tool bypass for the Shape Generator 3D has been completely removed. Object creation is now 100% Law-driven (via the `shape-generator-3d-law`). Please launch Earthcall and verify:
+  1. Pressing `O` (changed from `L`) toggles the Creator Console visibility/hotkey cleanly.
+  2. The Creator Console in "Create" mode uses the `shape-generator-3d-law` and renders a proper 3D ghost preview (instead of the ImGui text preview).
+  3. Clicking in the world in Create mode spawns the object correctly using the authored law.
+  4. Try spawning a Field object and ensure its implicit expression is preserved.
