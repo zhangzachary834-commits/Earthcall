@@ -212,12 +212,14 @@ void Formation::clearMembers() {
 
 void Formation::clearRelations() {
     relationMgr = RelationManager{};
+    pendingRelations.clear();
     subformations.clear();
 }
 
 void Formation::clear() {
     members.clear();
     relationMgr = RelationManager{};
+    pendingRelations.clear();
     subformations.clear();
     relationTypeTag.clear();
     _root = nullptr;
@@ -257,7 +259,7 @@ bool Formation::mayAdmitRelation(const std::shared_ptr<Relation>& r) const {
     return !reachesDirected(r->bId(), r->aId(), r->type);
 }
 
-bool Formation::addRelation(const std::shared_ptr<Relation>& r) {
+bool Formation::addRelation(const std::shared_ptr<Relation>& r, bool quiet) {
     if (!r) return false;
     if (!r->hasEndpoints()) {
         Singular* aBeing = r->a() ? r->a() : findMemberByIdentifier(r->aId());
@@ -267,29 +269,37 @@ bool Formation::addRelation(const std::shared_ptr<Relation>& r) {
         }
     }
     if (!r->hasEndpoints()) {
-        if (std::find(pendingRelations.begin(), pendingRelations.end(), r) == pendingRelations.end()) {
+        auto pit = std::find_if(pendingRelations.begin(), pendingRelations.end(),
+            [&r](const std::shared_ptr<Relation>& p) {
+                return p && p->type == r->type && p->aId() == r->aId() && p->bId() == r->bId();
+            });
+        if (pit == pendingRelations.end()) {
             pendingRelations.push_back(r);
-            std::fprintf(stderr,
-                "Formation '%s': PENDING relation '%s' (%s -> %s) waiting for Singular endpoints.\n",
-                getIdentifier().c_str(), r->type.c_str(), r->aId().c_str(), r->bId().c_str());
+            if (!quiet) {
+                std::fprintf(stderr,
+                    "Formation '%s': PENDING relation '%s' (%s -> %s) waiting for Singular endpoints.\n",
+                    getIdentifier().c_str(), r->type.c_str(), r->aId().c_str(), r->bId().c_str());
+            }
         }
         return false;
     }
     if (!mayAdmitRelation(r)) {
-        if (r->a() == r->b()) {
-            std::fprintf(stderr,
-                "Formation '%s': REFUSED relation '%s' from '%s' to itself. "
-                "A being is not its own ground.\n",
-                getIdentifier().c_str(), r->type.c_str(), r->aId().c_str());
-        } else {
-            std::fprintf(stderr,
-                "Formation '%s': REFUSED directed relation '%s' %s -> %s: it "
-                "closes a cycle among '%s' edges, and a kind that is its own "
-                "ancestor has no ground (AUTHORED_CATEGORIES.md §7). The edge is "
-                "refused whole; no other edge is dropped to 'break' the cycle, "
-                "because that would discard an authorship no one revoked.\n",
-                getIdentifier().c_str(), r->type.c_str(), r->aId().c_str(),
-                r->bId().c_str(), r->type.c_str());
+        if (!quiet) {
+            if (r->a() == r->b()) {
+                std::fprintf(stderr,
+                    "Formation '%s': REFUSED relation '%s' from '%s' to itself. "
+                    "A being is not its own ground.\n",
+                    getIdentifier().c_str(), r->type.c_str(), r->aId().c_str());
+            } else {
+                std::fprintf(stderr,
+                    "Formation '%s': REFUSED directed relation '%s' %s -> %s: it "
+                    "closes a cycle among '%s' edges, and a kind that is its own "
+                    "ancestor has no ground (AUTHORED_CATEGORIES.md §7). The edge is "
+                    "refused whole; no other edge is dropped to 'break' the cycle, "
+                    "because that would discard an authorship no one revoked.\n",
+                    getIdentifier().c_str(), r->type.c_str(), r->aId().c_str(),
+                    r->bId().c_str(), r->type.c_str());
+            }
         }
         return false;
     }
@@ -308,18 +318,23 @@ void Formation::retryPendingRelations() {
     pendingRelations.clear();
     for (const auto& r : pending) {
         if (!r) continue;
-        addRelation(r);
+        addRelation(r, true);
     }
 }
 
 bool Formation::removeRelation(const std::shared_ptr<Relation>& r) {
     bool removed = relationMgr.remove(r);
+    auto pit = std::find(pendingRelations.begin(), pendingRelations.end(), r);
+    if (pit != pendingRelations.end()) {
+        pendingRelations.erase(pit);
+        removed = true;
+    }
     for (auto it = subformations.begin(); it != subformations.end();) {
         if (!*it) {
             it = subformations.erase(it);
             continue;
         }
-        removed = (*it)->relationMgr.remove(r) || removed;
+        removed = (*it)->removeRelation(r) || removed;
         if ((*it)->relationMgr.getAll().empty()) {
             it = subformations.erase(it);
         } else {

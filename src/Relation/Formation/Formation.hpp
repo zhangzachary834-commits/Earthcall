@@ -140,7 +140,7 @@ public:
     //     an authorship no one asked to revoke.
     // Undirected relations are unaffected: a complete graph of mutual bonds is
     // a set, not a regress.
-    bool addRelation(const std::shared_ptr<Relation>& r);
+    bool addRelation(const std::shared_ptr<Relation>& r, bool quiet = false);
     bool removeRelation(const std::shared_ptr<Relation>& r);
 
     // Add a relation directly (alias for addRelation)
