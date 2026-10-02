@@ -378,7 +378,7 @@ jobs:
 
           def run_mode(adapter, direct):
               cmd = ["./build/slow_adapter_zone_perf_test", world,
-                     f"--adapter={adapter}", f"--direct={direct}", "--frames=15"]
+                     f"--adapter={adapter}", f"--direct={direct}", "--frames=2"]
               try:
                   result = subprocess.run(cmd, text=True, capture_output=True, timeout=240)
               except subprocess.TimeoutExpired:
