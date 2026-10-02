@@ -131,7 +131,7 @@ Body Body::createBasicAvatar(const std::string& artStyle) {
 
     // ----------------------- Head -----------------------
     auto* head = new Head();
-    head->setLocalTransform(authoredTranslation(glm::vec3(0.0f, 0.75f, 0.0f));
+    head->setLocalTransform(authoredTranslation(glm::vec3(0.0f, 0.75f, 0.0f)));
     avatar.addPart(head);
 
     // ----------------------- Torso ----------------------
