@@ -1097,3 +1097,14 @@ What I cannot do is see it. Everything below is yours to judge.
 - [ ] **Paste the Palette paragraph.** Open `.Jules/palette.md`, copy the block under "Paste this over the Google Jules task prompt", and replace the Jules Palette task with it. The repo cannot edit Google's prompt. Until you paste it, Palette's only brake is that journal, which their prompt does say to read first. Keep merging purple if the feeling is the point.
 - [ ] **Stand in the Sun before the next pass.** Boot `earthcall_webgpu`, enter the Sun Zone as it exists now (local history is through the ivory-and-gold passes; origin already has Pass #028). Stay long enough to know whether you would remain there. A receiver response and localized gold are the claim. Your eyes are the witness.
 - [ ] **Try to be pinned.** From a foreign mover (the websocket path the 2026-09-29 commit guarded), attempt `teleport_player` or a direct positive move of your body. It should refuse. A Law that only forbids a room should still be able to forbid the room. The feeling you are checking is the refusal to be grabbed, and the freedom to be told a place is closed.
+
+## Creator Console UI Improvement (added 2026-10-01)
+
+*Session c02f9271-25d2-430c-99b6-2a1144eb9c68. Gemini 3.1 Pro.*
+
+Zach asked to fix the Creator Console's Zone Window which was "just a pile of zones stacked on top of each other in a list and that's so awkward".
+
+- [ ] **Open the Creator Console (`F8`) and check the Zones tab.** It should now display a much cleaner **Master-Detail split view**, replacing the single vertical list.
+- [ ] **Select a Zone.** Check if the details (Name, ID, Objects, Relations, Actions) cleanly display on the right pane.
+- [ ] **Test the buttons.** The right pane has context-aware buttons ("Move to Zone", "Already Here", "Save Active Zone", "Save Zone"). Please verify that clicking them works exactly as before and the UI feedback (green/red text at the top) is clear.
+- [ ] **Does it feel like a "Creator" tool?** The styling has some minor ImGui coloring (`ImVec4(1.0f, 0.8f, 0.2f, 1.0f)` for titles) and clear spacing to match the console feel. Tell me if it feels less awkward.
