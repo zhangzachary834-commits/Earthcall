@@ -1325,15 +1325,6 @@ bool isUnpackedDirectoryNewer(const std::string& directoryPath, const std::strin
     return dirNewestTime > monolithicTime;
 }
 
-namespace {
-std::filesystem::path sharedIdentityRoot(const char* leaf) {
-    const std::filesystem::path root = g_saveRoot.empty()
-        ? std::filesystem::path("saves")
-        : std::filesystem::path(g_saveRoot);
-    return root / leaf;
-}
-} // namespace
-
 std::string zoneDirectory(const std::string& identifier) {
     std::string folder = ensureSaveTypeFolder(SaveType::ZONE);
     if (folder.empty()) return "";
@@ -1426,6 +1417,15 @@ std::vector<std::string> listZoneIdentities() {
     for (auto& rec : listZoneIdentityRecords()) out.push_back(std::move(rec.directoryKey));
     return out;
 }
+
+namespace {
+std::filesystem::path sharedIdentityRoot(const char* leaf) {
+    const std::filesystem::path root = g_saveRoot.empty()
+        ? std::filesystem::path("saves")
+        : std::filesystem::path(g_saveRoot);
+    return root / leaf;
+}
+} // namespace
 
 std::string lawDirectory(const std::string& identifier) {
     const std::string safe = sanitizeLabel(identifier);
