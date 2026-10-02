@@ -170,6 +170,7 @@ jobs:
             sdf_range_hierarchy_test \
             heightfield_predicate_test \
             scene_spatial_synthesis_dag_test \
+            secondary_surface_bvh_test \
             scene_spatial_ontomath_synthesis_test \
             rendered_field_piecewise_synthesis_test \
             rendered_field_direct_dispatch_test \
@@ -193,6 +194,7 @@ jobs:
           ./build/sdf_range_hierarchy_test
           ./build/heightfield_predicate_test
           ./build/scene_spatial_synthesis_dag_test
+          ./build/secondary_surface_bvh_test 2>&1 | tee rung10b-secondary-bvh.log
           ./build/scene_spatial_ontomath_synthesis_test
           ./build/rendered_field_piecewise_synthesis_test 2>&1 | tee aligned-authority-ab.log
           grep -F 'ALIGNED_AUTHORITY_AB ' aligned-authority-ab.log > aligned-authority-ab-result.txt
@@ -248,6 +250,7 @@ jobs:
             webgpu-object-parity.log
             webgpu-v5-overlap-physics.log
             webgpu-volumetric-mist.log
+            rung10b-secondary-bvh.log
           if-no-files-found: error
           retention-days: 7
 
