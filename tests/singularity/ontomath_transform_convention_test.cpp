@@ -2,6 +2,8 @@
 #include "Person/Perspective/PersonPerspective.hpp"
 #include "Person/Body/Body.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
+#include "Relation/Formation/Formation.hpp"
+#include "Relation/Relation.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -148,6 +150,35 @@ int main() {
     Object* nested = part.addSubObject(ObjectTypes::ShapeKind::Cube, localOffset);
     assert(nested);
     assert(nearMat4(nested->getTransform(), partWorld * localOffset));
+
+    // Rung 6 Formation parity: full inheritance remains the frozen legacy
+    // parent * localOffset composition, while production now delegates that
+    // mathematical meaning to OntoMath.
+    Object formationParent("ontomath-rung6-formation-parent");
+    Object formationChild("ontomath-rung6-formation-child");
+    glm::mat4 formationParentTransform =
+        glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, -1.0f, 2.0f));
+    formationParentTransform =
+        glm::rotate(formationParentTransform, glm::radians(31.0f), glm::vec3(0, 1, 0));
+    formationParentTransform =
+        glm::scale(formationParentTransform, glm::vec3(1.5f, 0.75f, 2.0f));
+    const glm::mat4 formationLocalOffset =
+        glm::translate(glm::mat4(1.0f), glm::vec3(-0.4f, 0.8f, 0.25f));
+    formationParent.setTransform(formationParentTransform);
+
+    auto attachment = std::make_shared<Relation>(
+        "ontomath-rung6-attachment", formationParent, formationChild, true);
+    attachment->attachment.enabled = true;
+    attachment->attachment.localOffset = formationLocalOffset;
+    attachment->attachment.inheritTranslation = true;
+    attachment->attachment.inheritRotation = true;
+    attachment->attachment.inheritScale = true;
+
+    Formation formation({&formationParent, &formationChild});
+    assert(formation.addRelation(attachment));
+    formation.applyAttachmentRelations();
+    assert(nearMat4(formationChild.getTransform(),
+                    formationParentTransform * formationLocalOffset));
 
     // PersonPerspective currently defines its view by glm::lookAt and its
     // standalone projection by glm::perspective. Pin that separately from the
