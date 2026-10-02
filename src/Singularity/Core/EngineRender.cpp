@@ -310,7 +310,7 @@ namespace Core {
         currentRenderer().setModel(glm::mat4(1.0f)); // back to world space
 
         if (_creatorConsoleOpen) {
-            Rendering::renderCreatorConsole3DPreviews(_person.get(), nullptr);
+            Rendering::renderCreatorConsole3DPreviews(_person.get(), nullptr, this);
         }
 
         // Draw the embodied Person as world geometry before volumetric

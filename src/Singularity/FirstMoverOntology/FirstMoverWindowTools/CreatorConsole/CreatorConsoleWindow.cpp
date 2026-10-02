@@ -1,3 +1,5 @@
+#include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/Core/CreationChannel.hpp"
 #include "CreatorConsoleWindow.hpp"
 #include <imgui.h>
 #include <GLFW/glfw3.h>
@@ -193,31 +195,34 @@ namespace Rendering {
         ImGui::End();
     }
 
-    void renderCreatorConsole3DPreviews(Person* player, Object* selected) {
+    void renderCreatorConsole3DPreviews(Person* player, Object* selected, Core::Engine* engine) {
         (void)player;
         (void)selected;
         auto& state = getCreatorConsoleState();
-        if (state.currentSection == CreatorSection::Create3D && state.current3DMode == Mode3D::BrushCreate) {
-            const char* kindStr = "Cube";
-            switch (state.polyhedron.shapeKind) {
-                case ObjectTypes::ShapeKind::Cube: kindStr = "Cube"; break;
-                case ObjectTypes::ShapeKind::Polyhedron: kindStr = "Polyhedron"; break;
-                case ObjectTypes::ShapeKind::Sphere: kindStr = "Sphere"; break;
-                case ObjectTypes::ShapeKind::Ellipsoid: kindStr = "Ellipsoid"; break;
-                case ObjectTypes::ShapeKind::Ovoid: kindStr = "Ovoid"; break;
-                case ObjectTypes::ShapeKind::Paraboloid: kindStr = "Paraboloid"; break;
-                case ObjectTypes::ShapeKind::Torus: kindStr = "Torus"; break;
-                case ObjectTypes::ShapeKind::Cylinder: kindStr = "Cylinder"; break;
-                case ObjectTypes::ShapeKind::Cone: kindStr = "Cone"; break;
-                case ObjectTypes::ShapeKind::RoundedBox: kindStr = "Rounded Box"; break;
-                default: break;
+        
+        Singularity::Core::CreationChannel* channel = nullptr;
+        if (engine) {
+            if (auto* lm = engine->getLawManager()) {
+                channel = Singularity::Core::CreationChannel::find(*lm);
             }
-
-            ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "Preview: [%s]", kindStr);
-            ImGui::SameLine();
-            ImGui::ColorButton("##previewColor", ImVec4(state.createColor.x, state.createColor.y, state.createColor.z, 1.0f),
-                               ImGuiColorEditFlags_NoTooltip, ImVec2(16, 16));
+        }
+        
+        if (channel && state.current3DMode == Mode3D::BrushCreate) {
+            glm::mat4 t = channel->getCursorSpawnTransform();
+            
+            Object ghost;
+            ghost.setShapeKind(static_cast<ObjectTypes::ShapeKind>(channel->activeShapeKind));
+            ghost.setTransform(t);
+            const int faces = ghost.getFaces() > 0 ? ghost.getFaces() : 6;
+            for (int f = 0; f < faces; ++f) {
+                ghost.setFaceColor(f, channel->activeColor.x, channel->activeColor.y, channel->activeColor.z);
+            }
+            
+            currentRenderer().setModel(t);
+            currentRenderer().setWireframe(true);
+            ghost.drawObject();
+            currentRenderer().setWireframe(false);
+            currentRenderer().setModel(glm::mat4(1.0f));
         }
     }
-
 } // namespace Rendering

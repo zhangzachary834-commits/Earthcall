@@ -167,7 +167,11 @@ void applySpawnOverrides(Object& newborn, Singular* source,
             } else if (k == static_cast<int>(Object::ShapeKind::Field)) {
                 PropertyValue exprVal;
                 std::string expr;
-                if (lawGetValue(*source, PropertyPath::parse("activeImplicitExpr"), exprVal) &&
+                PropertyPath exprPath = PropertyPath::parse("activeImplicitExpr");
+                if (!shapeKindPath.segments.empty() && shapeKindPath.segments[0].find("@") == 0) {
+                    exprPath = PropertyPath::parse(shapeKindPath.segments[0] + ".activeImplicitExpr");
+                }
+                if (lawGetValue(*source, exprPath, exprVal) &&
                     std::holds_alternative<std::string>(exprVal) && !std::get<std::string>(exprVal).empty()) {
                     expr = std::get<std::string>(exprVal);
                 }

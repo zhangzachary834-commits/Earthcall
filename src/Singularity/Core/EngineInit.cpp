@@ -524,7 +524,7 @@ bool Engine::initLogic() {
         mgr.getSaveLoadState().showSaveWindow = true;
         ensureCursorUnlocked();
     });
-    _mainMenu.addOption("Legacy Session Import / Recovery", GLFW_KEY_L, [this]() {
+    _mainMenu.addOption("Legacy Session Import / Recovery", GLFW_KEY_O, [this]() {
         mgr.updateSaveFiles();
         mgr.getSaveLoadState().showLoadWindow = true;
         ensureCursorUnlocked();
@@ -851,7 +851,7 @@ void Engine::registerCallbacks() {
                         if (channel) break;
                     }
                 }
-                ECA::Event ev{"onMouseClicked", channel, nullptr, std::time(nullptr)};
+                ECA::Event ev{"mouse-clicked", self->_person.get(), nullptr, std::time(nullptr)};
                 Core::EventBus::instance().publish(ev);
             }
         }
