@@ -195,6 +195,53 @@ int main() {
     assert(nearMat4(formationChild.getTransform(),
                     formationParentTransform * formationLocalOffset));
 
+    // Rung 6 Formation partial-inheritance parity: freeze the legacy selective
+    // contract. Translation comes from parent*local, rotation from the child's
+    // normalized basis, and scale from parent*local.
+    Object partialParent("ontomath-rung6-partial-parent");
+    Object partialChild("ontomath-rung6-partial-child");
+    glm::mat4 partialParentTransform =
+        glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 1.5f, 4.0f));
+    partialParentTransform =
+        glm::rotate(partialParentTransform, glm::radians(38.0f), glm::vec3(0, 1, 0));
+    partialParentTransform =
+        glm::scale(partialParentTransform, glm::vec3(1.25f, 0.8f, 1.7f));
+    glm::mat4 partialChildTransform =
+        glm::translate(glm::mat4(1.0f), glm::vec3(7.0f, -3.0f, 0.5f));
+    partialChildTransform =
+        glm::rotate(partialChildTransform, glm::radians(-23.0f), glm::vec3(1, 0, 0));
+    partialChildTransform =
+        glm::scale(partialChildTransform, glm::vec3(0.6f, 1.4f, 0.9f));
+    const glm::mat4 partialLocal =
+        glm::translate(glm::mat4(1.0f), glm::vec3(0.3f, -0.2f, 0.45f));
+    partialParent.setTransform(partialParentTransform);
+    partialChild.setTransform(partialChildTransform);
+
+    auto partialAttachment = std::make_shared<Relation>(
+        "ontomath-rung6-partial-attachment", partialParent, partialChild, true);
+    partialAttachment->attachment.enabled = true;
+    partialAttachment->attachment.localOffset = partialLocal;
+    partialAttachment->attachment.inheritTranslation = true;
+    partialAttachment->attachment.inheritRotation = false;
+    partialAttachment->attachment.inheritScale = true;
+
+    const glm::vec3 legacyTranslation =
+        glm::vec3(partialParentTransform * glm::vec4(glm::vec3(partialLocal[3]), 1.0f));
+    glm::mat4 legacyPartial = glm::translate(glm::mat4(1.0f), legacyTranslation);
+    legacyPartial[0] = glm::vec4(glm::normalize(glm::vec3(partialChildTransform[0])), 0.0f);
+    legacyPartial[1] = glm::vec4(glm::normalize(glm::vec3(partialChildTransform[1])), 0.0f);
+    legacyPartial[2] = glm::vec4(glm::normalize(glm::vec3(partialChildTransform[2])), 0.0f);
+    const glm::mat4 legacyParentLocal = partialParentTransform * partialLocal;
+    const glm::vec3 legacyScale(glm::length(glm::vec3(legacyParentLocal[0])),
+                                glm::length(glm::vec3(legacyParentLocal[1])),
+                                glm::length(glm::vec3(legacyParentLocal[2])));
+    legacyPartial = glm::scale(legacyPartial, legacyScale);
+
+    Formation partialFormation({&partialParent, &partialChild});
+    assert(partialFormation.addRelation(partialAttachment));
+    partialFormation.applyAttachmentRelations();
+    assert(nearMat4(partialChild.getTransform(), legacyPartial));
+
     // PersonPerspective currently defines its view by glm::lookAt and its
     // standalone projection by glm::perspective. Pin that separately from the
     // active renderer's backend-selected ZO/NO projection convention below.
