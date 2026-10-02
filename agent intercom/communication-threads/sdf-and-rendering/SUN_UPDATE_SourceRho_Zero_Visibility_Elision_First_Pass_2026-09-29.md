@@ -259,3 +259,55 @@ Rejected hypotheses remain: generic WebGPU parity cannot substitute for this exa
 At the time of this update, GitHub had not yet associated a workflow run with exact head `88acac26...`. Therefore pixel exactness is still pending and no promotion/economics verdict is claimed.
 
 Exact continuation point: inspect exact-head CI for `88acac26...`. If the native SourceRho pixel witness fails, record the mismatch and stop the experiment. If byte-exact zero-rho and zero->nonzero repair comparisons pass, proceed only to hostile rebinding/provenance fail-open coverage and deterministic executed visibility-invocation/SDF-step accounting before interpreting economics.
+
+
+---
+
+## Continuation — native pixel exactness green; hostile same-revision provenance repair awaiting tribunal — 2026-10-02
+
+Successor PR remains #482 on `sol/sourcerho-zero-visibility-elision-20260929`. Experiment head entering this update is `93def4500f47096307ee4b3670eaa3d9d2d114a9`.
+
+### Evidence accumulated since the last thread entry
+
+Exact-head focused CI #4475 executed the dedicated native SourceRho WebGPU A/B and passed. This is real framebuffer byte-exactness evidence for both:
+- proven-zero SourceRho authority versus the exact renderer; and
+- live zero-to-nonzero dirty-slot repair/fail-open versus the exact renderer.
+
+That green does not by itself establish hostile producer-rebinding provenance or material economics.
+
+The first hostile producer-rebinding witness (`e329662e0156db165096276eb4a92fbe0b3ebe82`) was rejected as ambiguous because it changed the source-set revision from the then-current `52002` back to `52001`; that could legitimately cause re-admission rather than exercise same-revision provenance failure. Diagnostic log retention was added in `86575f36abf63cef2180396de7eacb3ce5e89c90`.
+
+The corrected hostile witness landed as `8ede9e82f181d682f9f17494faef07e61080c803`: it first re-admits the original zero source under fresh revision `52003`, proves authority is active and byte-exact, then changes only `producerId` while retaining the same current revision `52003`. The hostile draw requires byte-exact pixels, an increase in `alignedProofReadFallbacks`, and no new `authorityBypassesApplied`.
+
+Exact-head CI #4602 reached that corrected witness and failed specifically with:
+`SOURCE_RHO_AUTH_PERF FAIL stale producer rebinding did not fail open through proof fallback`.
+
+The pixel comparison had already passed far enough to reach that discriminator. This was therefore diagnosed as a provenance hole rather than a framebuffer mismatch.
+
+### Bounded provenance repair
+
+The observer's same-source-set-revision/same-cardinality fast path was accepting the revision alone and returning before aligned-slot producer validation. Commit `656bc67e23196ca5ff69ce371411bbafa8fced4b` narrows that fast path: the already-aligned SourceRho slot must also match channel, producer identity, and authored radiance revision. This is direct-key validation only; it adds no world search, hierarchy traversal, Scene-DAG relevance, or new theorem.
+
+A second bounded consequence was then identified: when that same-revision validation repairs/drops aligned provenance, the WebGPU authority-bearing source layout/mask cached by source-set revision must be invalidated. Commit `93def4500f47096307ee4b3670eaa3d9d2d114a9` snapshots semantic observer stats around `observeRadianceSources` and invokes the existing authority-experiment invalidation only when aligned-slot builds, repairs, or drops actually change. The existing WebGPU hook then forces the next draw to rebuild the aligned source-layout identity and authority mask. This is conditional repair, not per-frame invalidation.
+
+### Current exact-head CI status
+
+Repeated exact-head attempts after `93def450...` have been blocked before the SourceRho step by the upstream `Run CPU SDF proof witnesses` gate. In those attempts the SourceRho witness target builds successfully, but GitHub explicitly skips `Verify SourceRho zero-authority native pixel A/B` after the upstream CPU SDF failure. These reds are not evidence that the two-part provenance repair failed; the hostile SourceRho tribunal has not executed on this head yet.
+
+### Direct-key / hidden-search accounting
+
+The experiment remains on the already-selected ordered source binding. Authority is represented by the fixed aligned per-source mask and the repaired same-revision check reads the already-aligned slot's channel/producer/revision identity directly. No world lookup, hierarchy walk, hash-based relevance discovery, Scene-DAG traversal, or Zone-specific query was introduced.
+
+### Semantic-overlap status and rejected hypotheses
+
+Canonical motion alone remains non-event. Targeted comparisons during the blocked-CI period found no semantic dependency invalidation in the bounded observer/renderer/WGSL/WebGPU/witness implementation. Canonical workflow edits did not absorb or semantically alter this PR's SourceRho witness wiring. No reconciliation is warranted yet.
+
+Rejected hypotheses remain:
+- an upstream CPU SDF failure that skips the SourceRho step is not a SourceRho exactness failure;
+- authority-application counts are not executed visibility work-unit counts;
+- native framebuffer exactness does not by itself establish material economics;
+- broader OntoMath Bind/authored-relevance architecture is counsel for separate work, not license to widen this experiment.
+
+### Exact continuation point
+
+Keep PR #482 and this same branch/head lineage. Obtain an exact-head run in which the corrected hostile SourceRho witness actually executes. Require simultaneously: byte-exact framebuffer, increased `alignedProofReadFallbacks` on same-revision producer rebinding, and no new stale `authorityBypassesApplied`. If that passes, add deterministic executed `sourceVisibility` invocation and SDF visibility-step counters, then combine those work units with the maintained CPU/GPU/compile/repair/residency measurements. If exactness fails, record why and stop. If economics are not material, record why and stop. Only an exact and material result may earn narrow consideration for SourceRho-zero direct-transport visibility elision.
