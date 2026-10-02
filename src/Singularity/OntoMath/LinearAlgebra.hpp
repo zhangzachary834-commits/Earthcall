@@ -90,5 +90,11 @@ std::optional<MatrixValue> inverseAffine(const MatrixValue& affine);
 std::optional<glm::vec3> affineExtractTranslation(const MatrixValue& affine);
 std::optional<MatrixValue> affineExtractRotationBasis(const MatrixValue& affine);
 std::optional<glm::vec3> affineExtractScale(const MatrixValue& affine);
+std::optional<MatrixValue> affineSelectTRS(const MatrixValue& parent,
+                                           const MatrixValue& child,
+                                           const MatrixValue& localOffset,
+                                           bool inheritTranslation,
+                                           bool inheritRotation,
+                                           bool inheritScale);
 
 } // namespace OntoMath
