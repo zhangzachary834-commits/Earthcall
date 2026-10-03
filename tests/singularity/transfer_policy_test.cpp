@@ -81,6 +81,37 @@ static void testCanTransfer() {
     std::cout << "  canTransfer resolution OK\n";
 }
 
+static void testPropertyReflection() {
+    auto& policy = TransferPolicy::instance();
+
+    // Enumerate registered properties via Singular::listProperties
+    auto props = policy.listProperties();
+    assert(!props.empty());
+
+    // Verify finding and reading registered gate properties
+    Property* shapeGateProp = policy.findProperty("gate.shape");
+    assert(shapeGateProp != nullptr);
+    assert(std::holds_alternative<bool>(shapeGateProp->value()));
+    assert(std::get<bool>(shapeGateProp->value()) == true);
+
+    // Modify gate value via PropertyPath / Property interface
+    policy.setOpen("shape", false);
+    assert(std::get<bool>(shapeGateProp->value()) == false);
+
+    // Verify Kernel gate property is read-only
+    Property* positionGateProp = policy.findProperty("gate.position");
+    assert(positionGateProp != nullptr);
+    assert(std::get<bool>(positionGateProp->value()) == true);
+    assert(!positionGateProp->isStructurallyWritable());
+    assert(!positionGateProp->setValue(PropertyValue(false)));
+    assert(std::get<bool>(positionGateProp->value()) == true);
+
+    // Reset shape gate state
+    policy.setOpen("shape", true);
+
+    std::cout << "  property reflection OK\n";
+}
+
 static void testSerialization() {
     auto& policy = TransferPolicy::instance();
 
@@ -110,6 +141,7 @@ int main() {
     testDefaultTiers();
     testGateOpenClose();
     testCanTransfer();
+    testPropertyReflection();
     testSerialization();
     std::cout << "transfer_policy_test: ALL OK\n";
     return 0;
