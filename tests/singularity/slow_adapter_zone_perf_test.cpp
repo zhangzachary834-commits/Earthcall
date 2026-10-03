@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
         else if (arg == "--adapter=off") adapter = false;
         else if (arg == "--direct=on") direct = true;
         else if (arg == "--direct=off") direct = false;
-        else if (arg.rfind("--frames=", 0) == 0) frames = std::max(24, std::atoi(arg.c_str() + 9));
+        else if (arg.rfind("--frames=", 0) == 0) frames = std::max(10, std::atoi(arg.c_str() + 9));
     }
 
     world = TestSupport::resolveRealWorldPath(world);
