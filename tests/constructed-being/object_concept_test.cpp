@@ -25,18 +25,13 @@ bool nearf(float a, float b, float eps = 1e-4f) { return std::fabs(a - b) < eps;
 } // namespace
 
 int main() {
-    if (!glfwInit()) {
-        std::fprintf(stderr, "object_concept_test: glfwInit failed\n");
-        return 1;
+    const bool glfwReady = glfwInit() == GLFW_TRUE;
+    GLFWwindow* window = nullptr;
+    if (glfwReady) {
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+        window = glfwCreateWindow(64, 64, "object_concept_test", nullptr, nullptr);
+        if (window) glfwMakeContextCurrent(window);
     }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "object_concept_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "object_concept_test: no GL context\n");
-        glfwTerminate();
-        return 1;
-    }
-    glfwMakeContextCurrent(window);
 
     {
         Object author;
@@ -311,8 +306,8 @@ int main() {
         Universe::instance().setProvider({});
     }
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
+    if (window) glfwDestroyWindow(window);
+    if (glfwReady) glfwTerminate();
     std::puts("object_concept_test: ALL OK");
     return 0;
 }
