@@ -117,6 +117,14 @@ void RelationManager::forgetTypeLexemeEverywhere(
     }
 }
 
+std::shared_ptr<Relation> RelationManager::retained(const Relation* relation) {
+    if (!relation) return {};
+    for (const auto* manager : liveManagers())
+        for (const auto& owned : manager->relations)
+            if (owned.get() == relation) return owned;
+    return {};
+}
+
 RelationManager::RelationManager() { liveManagers().insert(this); }
 
 RelationManager::RelationManager(const RelationManager& other)
@@ -187,6 +195,23 @@ void RelationManager::relationsInvolving(const Singular& being, std::vector<Rela
     }
 }
 
+
+bool RelationManager::retain(const std::shared_ptr<Relation>& r) {
+    if (!r || !r->hasEndpoints()) return false;
+    const auto truth = r->evaluateConstitutive();
+    if (truth == Relation::ConstitutiveStatus::Invalid || truth == Relation::ConstitutiveStatus::Violated) return false;
+    for (const auto& existing : relations) {
+        if (existing == r) return true;
+        if (!existing || existing->type != r->type || existing->directed != r->directed) continue;
+        const bool forward = existing->a() == r->a() && existing->b() == r->b();
+        const bool backward = !r->directed && existing->a() == r->b() && existing->b() == r->a();
+        if (forward || backward) return false;
+    }
+    if (r->type == "subcategory-of" && wouldFormCycle(r->a(), r->b(), r->type)) return false;
+    relations.push_back(r);
+    touch();
+    return true;
+}
 
 void RelationManager::add(const std::shared_ptr<Relation>& r) {
     if (!r) return;

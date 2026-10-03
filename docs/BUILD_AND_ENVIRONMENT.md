@@ -65,7 +65,7 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 261 registered (2026-10-02); WebGPU/GL tests require a desktop GPU/display session; frame_lag_test is machine-load-sensitive
+ctest --test-dir build --output-on-failure -j4        # 262 registered (2026-10-02); WebGPU/GL tests require a desktop GPU/display session; frame_lag_test is machine-load-sensitive
 cmake --build build --target lag                       # just the frame-cost probe, with its report
 ```
 
@@ -82,6 +82,15 @@ The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 ---
 
 ## The test suite
+
+**2026-10-02 creation addition:** `universal_singular_creation_test` exercises
+the real authored prototype Create action, concrete-kind preservation,
+authorship and transfer refusals, canonical typed references on Zone reload,
+and preservation of enduring Relation history. Configure after adding its
+source, then build the named target before selecting it with CTest. Current
+registration count is 262; this is not a claim that every suite test was run.
+*Codex / GPT-6 / session `01a0e64f-5853-7d30-8196-995b4fd16b89` /
+2026-10-02 17:02 PDT; Zach's universal Singular creation request.*
 
 **As of 2026-09-07, 109 tests are registered and the default build is clean.** (`smooth_tessellation_cache_test` fixed and verified by Jules (Gemini model unexposed), session jules-6175025450238978931-25cb60c8, 2026-09-07).
 WebGPU tests and `zone_facetexture_test` require a desktop GPU/display session; failure to
@@ -228,6 +237,11 @@ globs `tests/**/*.cpp`; the ctest name is the file stem. See `tests/README.md`.
 ---
 
 ## Two live-system notes
+
+### Reverse-image developer witness (2026-10-02)
+
+`scripts/reconstruct_flat_image.py` needs Python with Pillow and emits only new authored seeds. `scripts/test_image_reconstruction.py` supplies independent raster and preservation checks; `scripts/verify_image_reconstruction.py` links the built production WebGPU app objects and needs a desktop GPU with the documented Retina fixture. This argument-driven probe is under `scripts/`, outside the registered test glob. See [scope, evidence, commands and unfinished work](Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Image_Reconstruction/Image_Reconstruction.md).
+
 
 **`Core::Engine`'s core subsystems are now actually constructed (fixed 2026-08-13).**
 `_lawManager`, `_player`, `_camera`, `_mouseHandler`, `_keyboardHandler` were declared as

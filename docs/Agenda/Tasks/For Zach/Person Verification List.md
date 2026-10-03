@@ -1,5 +1,22 @@
 # Person Verification List
 
+## Universal Singular prototype creation
+
+*Codex / GPT-6 / session `01a0e64f-5853-7d30-8196-995b4fd16b89` /
+2026-10-02 17:02 PDT. Zach: Create should admit existing Singular subclasses
+without inventing another ontology, while unresolved meanings stay open.
+Headless tests exercise the authored action; these editor checks need your witness.*
+
+- [ ] Rebuild/run `earthcall_webgpu`, open a Law's Action editor, and choose **Create Singular**: an empty **Prototype** should expose the existing shaped Object controls; entering an actual `@identifier` should expose **Newborn identity**, name, and the two optional Relation participants.
+- [ ] If that action previously carried Object placement/type/shape settings, the editor should show the conflict; explicitly press **Clear shaped Object settings**, then shape the newborn with child actions.
+- [ ] Use a Lexeme prototype that exists in the active Zone, give the newborn an unused identity, and add a child `AddProperty`; fire the authored Law, Save Zone, and reload: the new Lexeme and authored property should remain, and another firing with the same requested identity should refuse in the Law's application record.
+- [ ] With an explicit TransferPolicy gate closed on the prototype, the Law's application record should name the refused source gate and no newborn should appear; opening the gate must be an authored action, not a consequence of clicking Create.
+
+No demonstration beings or inhabited saves were injected. Ourverse extent,
+Zone/Home owner inheritance, Event/Utterance occurrence birth, Timeline member
+birth, and selective replacement of closed transfers remain in
+[the creation task](../Specific%20Tasks/Interaction%20and%20Interface/Singular_and_Object_Set_to_Set_Creation/Singular_and_Object_Set_to_Set_Creation.md).
+
 ## Double-click launchers: `Run Earthcall as Me.command` and `Earthcall First Movers.command`
 
 *Claude Code · Claude Opus 5.5 · session `08b0f730-6e49-4c49-b27f-3a89c810ca4b` · 2026-10-01. Zach: "make a executable thingy i can double click … separate the person verification executable from the first mover one". Both were run end to end in a sandbox (keying, wrong passphrases, adding, listing and removing a model). These are the checks only you can do.*
@@ -1125,3 +1142,11 @@ Zach asked to fix the Creator Console's Zone Window which was "just a pile of zo
   2. The Creator Console in "Create" mode uses the `shape-generator-3d-law` and renders a proper 3D ghost preview (instead of the ImGui text preview).
   3. Clicking in the world in Create mode spawns the object correctly using the authored law.
   4. Try spawning a Field object and ensure its implicit expression is preserved.
+
+## Reverse image modality — first editable rung (2026-10-02)
+
+Codex · GPT-6 · session `01a0fe15-4fe2-7dc0-a2d0-7d823e4ad26c` · 15:57 PDT. Zach asked for both faithful display and reconstruction, fundamentally reconstruction. Machine evidence and next steps are in [the task](../Specific%20Tasks/Rendering%20and%20OntoMath/Image_Reconstruction/Image_Reconstruction.md).
+
+- [ ] Inspect `scratch/capture-verification/2026-10-02-01a0fe15/reverse/reconstructed.png` beside `source.png`: the promotion strip should have the same colors and lettering, without new seams.
+- [ ] Inspect `edited.png` and `painted.png`: only the selected lower yellow region should disappear or turn green; neighboring text and colored panels should stay unchanged.
+- [ ] Judge whether rectangle fragments are a useful first editing rung; meaningful button/text grouping and recovered 3D are still unfinished, and reconstructed panels do not yet carry the original chess behavior.

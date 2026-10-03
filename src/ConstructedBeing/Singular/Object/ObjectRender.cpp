@@ -1119,7 +1119,12 @@ void Object::draw2DObject(uint32_t screenW, uint32_t screenH) const {
         {x1, y1}, {x0, y1},
         {x0, y1}, {x0, y0},
     };
-    currentRenderer().drawLines2D(border, borderColor, 1.0f);
+    // Authored raster reconstructions need adjoining regions without invented
+    // seams. Existing plates retain their border unless the author says otherwise.
+    PropertyValue borderVisible;
+    const bool showBorder = !getDynamicProperty("border.visible", borderVisible) ||
+        !std::holds_alternative<bool>(borderVisible) || std::get<bool>(borderVisible);
+    if (showBorder) currentRenderer().drawLines2D(border, borderColor, 1.0f);
 
     // …and the label centred on the plate, in whichever of black or white the
     // fill can carry. Type size is `label.size2D` when the being authored one,

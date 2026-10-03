@@ -257,6 +257,12 @@ bool Formation::mayAdmitRelation(const std::shared_ptr<Relation>& r) const {
     return !reachesDirected(r->bId(), r->aId(), r->type);
 }
 
+bool Formation::retainRelation(const std::shared_ptr<Relation>& r) {
+    if (!mayAdmitRelation(r) || !relationMgr.retain(r)) return false;
+    integrateRelationTopology(r);
+    return true;
+}
+
 bool Formation::addRelation(const std::shared_ptr<Relation>& r) {
     if (!r) return false;
     if (!r->hasEndpoints()) {
@@ -570,7 +576,7 @@ std::shared_ptr<Formation> Formation::findOrCreateRelationFormation(const std::s
             primary->admitMember(member);
         }
         for (const auto& rel : secondary->relations().getAll()) {
-            primary->relations().add(rel);
+            primary->relations().retain(rel);
         }
     }
 
@@ -603,7 +609,8 @@ void Formation::integrateRelationTopology(const std::shared_ptr<Relation>& r) {
     // Share the relation rather than copying it: a subformation is a view onto
     // the same bond, not a second bond. Copies drifted whenever the original's
     // attachment was re-measured, and merges then carried stale duplicates.
-    groupedFormation->relationMgr.add(r);
+    // Deriving another view of this same bond is not another interaction.
+    groupedFormation->relationMgr.retain(r);
 }
 
 void Formation::reintegrateRelationsFor(Singular* s) {

@@ -317,6 +317,12 @@ struct ActionNode {
     // Spawn deliberately: same question, same answer.
     int createShapeKind = 0;
     std::string createType;
+    // For universal prototype birth, `path` selects an existing Singular
+    // (an @root or a Singular-valued PropertyPath). Empty keeps the historical
+    // shaped-Object constructor. These are identity/presentation inputs, not
+    // new domain kinds; containerToken/elementToken supply Relation endpoints.
+    std::string newbornId;
+    std::string newbornName;
 
     // AddProperty / RemoveProperty payload. `path` names WHOSE property (the
     // ordinary referent vocabulary: plain = subject, @being-id,
@@ -444,6 +450,9 @@ struct ActionNode {
     static ActionNode create(int shapeKind = 0,
                              const std::string& createType = "",
                              std::vector<ActionNode> children = {});
+    static ActionNode createFrom(const std::string& prototypePath,
+                                 const std::string& newbornId = "",
+                                 std::vector<ActionNode> children = {});
     static ActionNode addProperty(const std::string& ownerPath,
                                   const std::string& propertyName,
                                   PropertyValue initial);
