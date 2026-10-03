@@ -1,4 +1,5 @@
 #include "Automation.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -54,15 +55,13 @@ glm::vec3 extractEulerDegrees(const glm::mat4& m, const glm::vec3& scale) {
 }
 
 // Same composition order Object uses: T * Rx * Ry * Rz * S.
-glm::mat4 recompose(const glm::vec3& translation,
-                    const glm::vec3& eulerDeg,
-                    const glm::vec3& scale) {
-    glm::mat4 m = glm::translate(glm::mat4(1.0f), translation);
-    m = glm::rotate(m, glm::radians(eulerDeg.x), glm::vec3(1.0f, 0.0f, 0.0f));
-    m = glm::rotate(m, glm::radians(eulerDeg.y), glm::vec3(0.0f, 1.0f, 0.0f));
-    m = glm::rotate(m, glm::radians(eulerDeg.z), glm::vec3(0.0f, 0.0f, 1.0f));
-    m = glm::scale(m, scale);
-    return m;
+// OntoMath owns the authored affine meaning; GLM is only the runtime carrier.
+std::optional<glm::mat4> recompose(const glm::vec3& translation,
+                                   const glm::vec3& eulerDeg,
+                                   const glm::vec3& scale) {
+    const auto authored = OntoMath::affineTRS(translation, eulerDeg, scale);
+    if (!authored) return std::nullopt;
+    return authored->toGlmMat4();
 }
 
 } // namespace
@@ -140,7 +139,8 @@ glm::mat4 compose(const State& state, const glm::mat4& base) {
         touchedS[1] ? restScale.y * mulS.y : baseScale.y,
         touchedS[2] ? restScale.z * mulS.z : baseScale.z);
 
-    return recompose(outT, outR, outS);
+    const auto recomposed = recompose(outT, outR, outS);
+    return recomposed.value_or(base);
 }
 
 } // namespace Automation
