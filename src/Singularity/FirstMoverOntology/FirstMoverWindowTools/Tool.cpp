@@ -56,6 +56,17 @@ void deleteLegacyStrokesAt(Zone& zone, const glm::vec2& cursor, float radius, bo
 
 void configureStrokeTool(Zone& zone, Tool::Type type) {}
 
+std::optional<glm::mat4> localFromWorld(const glm::mat4& parentWorld,
+                                        const glm::mat4& worldTransform) {
+    const auto parent = OntoMath::MatrixValue::fromGlmMat4(parentWorld);
+    const auto world = OntoMath::MatrixValue::fromGlmMat4(worldTransform);
+    const auto inverseParent = OntoMath::inverseAffine(parent);
+    if (!inverseParent) return std::nullopt;
+    const auto local = OntoMath::affineCompose(*inverseParent, world);
+    if (!local) return std::nullopt;
+    return local->toGlmMat4();
+}
+
 void applyToolTransform(Object* obj, const glm::mat4& worldTransform, const glm::mat4* avatarRoot) {
     if (!obj) return;
 
@@ -66,8 +77,9 @@ void applyToolTransform(Object* obj, const glm::mat4& worldTransform, const glm:
     if (consoleState.selectedCharacterPart) {
         if (consoleState.selectedCharacterPart->getPrimaryObject() == obj) {
             if (avatarRoot) {
-                glm::mat4 local = glm::inverse(*avatarRoot) * worldTransform;
-                consoleState.selectedCharacterPart->setLocalTransform(local);
+                const auto local = localFromWorld(*avatarRoot, worldTransform);
+                if (!local) return;
+                consoleState.selectedCharacterPart->setLocalTransform(*local);
             } else {
                 consoleState.selectedCharacterPart->setTransform(worldTransform);
             }
@@ -75,8 +87,10 @@ void applyToolTransform(Object* obj, const glm::mat4& worldTransform, const glm:
         }
         for (size_t i = 0; i < consoleState.selectedCharacterPart->getSubObjectCount(); ++i) {
             if (consoleState.selectedCharacterPart->getSubObject(i) == obj) {
-                glm::mat4 localOffset = glm::inverse(consoleState.selectedCharacterPart->getTransform()) * worldTransform;
-                consoleState.selectedCharacterPart->setSubObjectLocalOffset(i, localOffset);
+                const auto localOffset = localFromWorld(
+                    consoleState.selectedCharacterPart->getTransform(), worldTransform);
+                if (!localOffset) return;
+                consoleState.selectedCharacterPart->setSubObjectLocalOffset(i, *localOffset);
                 return;
             }
         }
