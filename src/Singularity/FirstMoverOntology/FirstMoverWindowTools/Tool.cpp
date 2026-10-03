@@ -429,7 +429,130 @@ void Tool::UpdateShapeGeneratorPlacement(GLFWwindow *window, Core::Engine *engin
     channel.updatePlacement(camPos, camFront);
 }
 
+void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
+                            Singularity::Core::CreationChannel &channel,
+                            BodyPart* targetPart)
+{
+    if (!window || !engine) return;
 
+    // The edge is tracked BEFORE any gate below, and unconditionally. A gate
+    // that returns early without updating it leaves the tracker stale, so the
+    // first poll after the gate opens reads a button that has been held down
+    // for a while as a fresh press -- disarming the law mid-hold, or dragging
+    // off an ImGui window, would spawn on release of nothing.
+    static bool devToolMouseLeftPressedLast = false;
+    const bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    const bool justPressed = (engine && engine->consumeMouseLeftJustPressed()) ||
+                             (mouseLeftNow && !devToolMouseLeftPressedLast);
+    devToolMouseLeftPressedLast = mouseLeftNow;
+    if (!justPressed) return;
+
+    // First mover set down: the developer bypass does not spawn. The
+    // authored shape-generator law is a different being and has its own
+    // enabled bit.
+    if (!channel.isEnabled()) return;
+
+    // If the spawn law is armed, it owns the click. This bypass steps
+    // aside so one press is not two objects. Console Create mode is
+    // independent — it is what DISPATCHES this function, not this gate.
+    // Callers: CreationChannel::spawnLawArmed.
+    if (channel.spawnLawArmed) return;
+
+    // The law path's publisher (EngineInit::registerCallbacks) skips clicks
+    // ImGui has captured; this one polls GLFW directly and did not, so
+    // pressing this window's own "Refresh Test Saves" button spawned a cube
+    // behind it.
+    if (ImGui::GetIO().WantCaptureMouse) return;
+
+    if (channel.activeShapeKind == static_cast<int>(Object::ShapeKind::Polyhedron)) {
+        const auto& consoleState = Rendering::getCreatorConsoleState();
+        const auto& polyState = consoleState.polyhedron;
+        PolyhedronData polyData;
+
+        if (polyState.irregularType > 0) {
+            switch (polyState.irregularType) {
+                case 1: polyData = PolyhedronData::createPrism(polyState.irregularBaseSides, 0.5f, polyState.irregularHeight); break;
+                case 2: polyData = PolyhedronData::createAntiprism(polyState.irregularBaseSides, 0.5f, polyState.irregularHeight); break;
+                case 3: polyData = PolyhedronData::createPyramid(polyState.irregularBaseSides, 0.5f, polyState.irregularHeight); break;
+                case 4: polyData = PolyhedronData::createBipyramid(polyState.irregularBaseSides, 0.5f, polyState.irregularHeight); break;
+                case 5: polyData = PolyhedronData::createFrustum(polyState.irregularBaseSides, 0.5f, polyState.frustumTopScale * 0.5f, polyState.irregularHeight); break;
+                default: polyData = PolyhedronData::createRegularPolyhedron(polyState.currentType > 0 ? polyState.currentType : 4, 0.5f); break;
+            }
+        } else if (polyState.concaveType > 0) {
+            switch (polyState.concaveType) {
+                case 1: polyData = PolyhedronData::createConcavePolyhedron(polyState.currentType > 0 ? polyState.currentType : 4, 0.5f, polyState.concavityAmount); break;
+                case 2: polyData = PolyhedronData::createStarPolyhedron(polyState.currentType > 0 ? polyState.currentType : 4, 0.5f, polyState.spikeLength); break;
+                case 3: polyData = PolyhedronData::createCraterPolyhedron(polyState.currentType > 0 ? polyState.currentType : 4, 0.5f, polyState.craterDepth); break;
+                default: polyData = PolyhedronData::createRegularPolyhedron(polyState.currentType > 0 ? polyState.currentType : 4, 0.5f); break;
+            }
+        } else {
+            int faces = polyState.currentType > 0 ? polyState.currentType : 4;
+            polyData = PolyhedronData::createRegularPolyhedron(faces, 0.5f);
+        }
+
+        glm::mat4 t = channel.getCursorSpawnTransform();
+        Object* newObj = nullptr;
+        if (targetPart) {
+            glm::mat4 partWorld = targetPart->getTransform();
+            glm::mat4 localT = glm::inverse(partWorld) * t;
+            Object* sub = targetPart->addSubObject(Object::ShapeKind::Polyhedron, localT);
+            if (sub) {
+                sub->setShape(Object::ShapeKind::Polyhedron);
+                sub->setPolyhedronData(polyData);
+                for (int f = 0; f < sub->getFaces(); ++f)
+                    sub->setFaceColor(f, channel.activeColor.x, channel.activeColor.y, channel.activeColor.z);
+            }
+            newObj = sub;
+        } else {
+            auto obj = std::make_unique<Object>();
+            obj->setShape(Object::ShapeKind::Polyhedron);
+            obj->setPolyhedronData(polyData);
+            obj->setTransform(t);
+            obj->updateCollisionZone(t);
+            for (int f = 0; f < obj->getFaces(); ++f)
+                obj->setFaceColor(f, channel.activeColor.x, channel.activeColor.y, channel.activeColor.z);
+            newObj = obj.get();
+            mgr.active().addObject(std::move(obj));
+        }
+
+        if (newObj) {
+            channel.recordProvenance("authored-by", *newObj, channel, true, 1.0f);
+        }
+        return;
+    }
+
+    // Placement is already fresh: UpdateShapeGeneratorPlacement ran this frame,
+    // for BOTH paths. Reading it here is all this function does with it.
+    glm::mat4 t = channel.getCursorSpawnTransform();
+
+    Object::ShapeKind kind = static_cast<Object::ShapeKind>(channel.activeShapeKind);
+
+    Object* newObj = nullptr;
+    if (targetPart) {
+        glm::mat4 partWorld = targetPart->getTransform();
+        glm::mat4 localT = glm::inverse(partWorld) * t;
+        Object* sub = targetPart->addSubObject(kind, localT);
+        if (sub) sub->setShape(kind);
+        if (sub) {
+            for (int f = 0; f < sub->getFaces(); ++f)
+                sub->setFaceColor(f, channel.activeColor.x, channel.activeColor.y, channel.activeColor.z);
+        }
+        newObj = sub;
+    } else {
+        auto obj = std::make_unique<Object>();
+        obj->setShape(kind);
+        obj->setTransform(t);
+        obj->updateCollisionZone(t);
+        for (int f = 0; f < obj->getFaces(); ++f)
+            obj->setFaceColor(f, channel.activeColor.x, channel.activeColor.y, channel.activeColor.z);
+        newObj = obj.get();
+        mgr.active().addObject(std::move(obj));
+    }
+
+    if (newObj) {
+        channel.recordProvenance("authored-by", *newObj, channel, true, 1.0f);
+    }
+}
 
 void Tool::Pottery3D(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr, float dt,
                      const std::vector<Object*>& targets, const glm::mat4* avatarRoot)

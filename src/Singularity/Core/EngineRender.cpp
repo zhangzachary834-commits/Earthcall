@@ -13,7 +13,6 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
-#include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Singularity/Storage/FileWatcher.hpp"
 #include "Singularity/Audio/AudioRecorder.hpp"
@@ -310,7 +309,7 @@ namespace Core {
         currentRenderer().setModel(glm::mat4(1.0f)); // back to world space
 
         if (_creatorConsoleOpen) {
-            Rendering::renderCreatorConsole3DPreviews(_person.get(), nullptr, this);
+            Rendering::renderCreatorConsole3DPreviews(_person.get(), nullptr);
         }
 
         // Draw the embodied Person as world geometry before volumetric
@@ -401,19 +400,7 @@ namespace Core {
             if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
                 recorder->checkPendingSnapshot(fbW, fbH);
                 if (recorder->isRecording()) {
-                    // GLFW reports window points; recording uses framebuffer
-                    // pixels. Use the interaction channel's sensed pointer so
-                    // pointer lock and Retina scaling agree with live aiming.
-                    int cursorX = -1, cursorY = -1;
-                    if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {
-                        int winW = 0, winH = 0;
-                        glfwGetWindowSize(_window, &winW, &winH);
-                        if (winW > 0 && winH > 0) {
-                            cursorX = static_cast<int>(interaction->pointerX * fbW / winW);
-                            cursorY = static_cast<int>(interaction->pointerY * fbH / winH);
-                        }
-                    }
-                    recorder->stepFrame(fbW, fbH, nullptr, cursorX, cursorY);
+                    recorder->stepFrame(fbW, fbH);
                 }
             }
             if (auto* watcher = Singularity::Storage::FileWatcher::find(*_lawManager)) {

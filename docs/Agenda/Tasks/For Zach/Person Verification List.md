@@ -141,15 +141,6 @@
 
 ## Screen Recorder — Law-Authored Snapshot & Recording Controls
 
-*Codex · GPT-6 · session `01a0fe15-4fe2-7dc0-a2d0-7d823e4ad26c` · 2026-10-02 12:40 PDT; [native capture evidence](../../../audits/SCREEN_CAPTURE_NATIVE_VERIFICATION_2026-10-02.md).*
-
-- [x] Inspect the recorder's actual chess screenshot: Zach confirmed **“THATS THE ACTUAL CHESS ZONE”** and **“THE BUTTONS ARE THE RIGHT COLORS NOT RED GLITCH”** in this session.
-- [ ] In your ordinary Earthcall launch, trigger a viewport snapshot and compare the saved PNG with the visible world; authored 2D controls should match, while Creator Console/ImGui panels are outside viewport capture.
-- [ ] Start `png_sequence` recording, move/look around, pause/resume, stop, and inspect the saved frames for the intended view and cursor placement; two rapid starts and two rapid snapshots must preserve separate output files.
-- [ ] For host-display capture, grant the actual Earthcall launch process macOS Screen Recording permission and verify `mode=display` with `fallbackToViewport=false`; a refused capture must name its error and create no substitute image.
-- [ ] Choose whether window capture means Earthcall's whole app window or a selected foreign app window; it currently refuses instead of capturing the full desktop.
-- [ ] If MP4 is desired, make ffmpeg available on the launch process's PATH and verify playback after stop; this pass verifies missing/failed encoder refusal, not successful MP4 encoding.
-
 *Antigravity · 2026-09-23. Verification for user-authored Laws targeting* `@screen-recorder.snapshot` *and* `@screen-recorder.recording`*.*
 
 - [ ] Boot Earthcall (`earthcall_webgpu`).
@@ -1117,11 +1108,3 @@ Zach asked to fix the Creator Console's Zone Window which was "just a pile of zo
 - [ ] **Select a Zone.** Check if the details (Name, ID, Objects, Relations, Actions) cleanly display on the right pane.
 - [ ] **Test the buttons.** The right pane has context-aware buttons ("Move to Zone", "Already Here", "Save Active Zone", "Save Zone"). Please verify that clicking them works exactly as before and the UI feedback (green/red text at the top) is clear.
 - [ ] **Does it feel like a "Creator" tool?** The styling has some minor ImGui coloring (`ImVec4(1.0f, 0.8f, 0.2f, 1.0f)` for titles) and clear spacing to match the console feel. Tell me if it feels less awkward.
-
-## Shape Generator 3D Law Modernization
-* **Date:** 2026-10-02
-* **What to check:** The old C++ tool bypass for the Shape Generator 3D has been completely removed. Object creation is now 100% Law-driven (via the `shape-generator-3d-law`). Please launch Earthcall and verify:
-  1. Pressing `O` (changed from `L`) toggles the Creator Console visibility/hotkey cleanly.
-  2. The Creator Console in "Create" mode uses the `shape-generator-3d-law` and renders a proper 3D ghost preview (instead of the ImGui text preview).
-  3. Clicking in the world in Create mode spawns the object correctly using the authored law.
-  4. Try spawning a Field object and ensure its implicit expression is preserved.

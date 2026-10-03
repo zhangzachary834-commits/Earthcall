@@ -3189,8 +3189,6 @@ void WebGpuRenderer::releaseTexture(TextureHandle handle) {
 bool WebGpuRenderer::readPixels(uint8_t* outRgba, uint32_t width, uint32_t height) {
     if (!outRgba || width == 0 || height == 0) return false;
     if (!_device || !_queue || !_surfaceTex) return false;
-    if (_pass || width > wgpuTextureGetWidth(_surfaceTex) ||
-        height > wgpuTextureGetHeight(_surfaceTex)) return false;
 
     // WebGPU requires bytesPerRow to be 256-byte aligned
     const uint32_t bytesPerRow = (width * 4 + 255) & ~255;
@@ -3264,8 +3262,7 @@ bool WebGpuRenderer::readPixels(uint8_t* outRgba, uint32_t width, uint32_t heigh
         return false;
     }
 
-    const bool isBgra = (_colorFormat == WGPUTextureFormat_BGRA8Unorm ||
-                         _colorFormat == WGPUTextureFormat_BGRA8UnormSrgb);
+    const bool isBgra = (_colorFormat == WGPUTextureFormat_BGRA8Unorm);
     for (uint32_t y = 0; y < height; ++y) {
         const uint8_t* srcRow = mapped + y * bytesPerRow;
         uint8_t* dstRow = outRgba + y * (width * 4);
