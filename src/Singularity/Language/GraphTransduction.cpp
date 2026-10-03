@@ -348,7 +348,40 @@ GraphTransduction::Result GraphTransduction::buildFromTemplate(
         plan.relations.push_back(std::move(spec));
     }
 
-    return build(plan);
+    Result out = build(plan);
+    if (!out) return out;
+
+    // A target prototype is an authored template being, not merely a spelling.
+    // Preserve its authored dynamic properties on the fresh occurrence. This
+    // is intentionally shallow PropertyValue copying: a property that refers
+    // to another being remains that authored reference; GraphTransduction does
+    // not invent a second deep-copy ontology.
+    for (std::size_t i = 0; i < prototypes.size(); ++i) {
+        const Lexeme* prototype = prototypes[i];
+        auto target = i < out.targetLexemes.size() ? out.targetLexemes[i] : nullptr;
+        if (!prototype || !target) {
+            out.ok = false;
+            out.refusal = "target prototype property projection lost occurrence alignment";
+            out.targetFormation.reset();
+            out.targetRelations.clear();
+            out.targetLexemes.clear();
+            out.correspondenceRelations.clear();
+            return out;
+        }
+        for (const auto& [propertyId, value] : prototype->dynamicProperties()) {
+            if (!target->setDynamicProperty(propertyId, value)) {
+                out.ok = false;
+                out.refusal = "target occurrence refused an authored prototype property";
+                out.targetFormation.reset();
+                out.targetRelations.clear();
+                out.targetLexemes.clear();
+                out.correspondenceRelations.clear();
+                return out;
+            }
+        }
+    }
+
+    return out;
 }
 
 } // namespace Language

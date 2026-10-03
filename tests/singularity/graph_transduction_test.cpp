@@ -123,6 +123,19 @@ int main() {
     Lexeme protoCardA("article", "prototype.html.card.a");
     Lexeme protoCardB("article", "prototype.html.card.b");
 
+    // Prototype properties are part of the authored target template and must
+    // survive transduction without C++ inferring HTML kinds from tag spelling.
+    assert(protoSection.setDynamicProperty(
+        "html.nodeType", PropertyValue(std::string("element"))));
+    assert(protoHeading.setDynamicProperty(
+        "html.nodeType", PropertyValue(std::string("element"))));
+    assert(protoTitle.setDynamicProperty(
+        "html.nodeType", PropertyValue(std::string("text"))));
+    assert(protoCardA.setDynamicProperty(
+        "html.nodeType", PropertyValue(std::string("element"))));
+    assert(protoCardB.setDynamicProperty(
+        "html.nodeType", PropertyValue(std::string("element"))));
+
     Formation authoredRequest;
     assert(authoredRequest.setIdentifier("request.semantic-to-html"));
     for (Singular* s : std::vector<Singular*>{
@@ -174,6 +187,16 @@ int main() {
     assert(authoredA->getSymbol() == "article");
     assert(authoredB->getSymbol() == "article");
     assert(authoredA->getIdentifier() != authoredB->getIdentifier());
+
+    PropertyValue nodeType;
+    assert(authoredA->getDynamicProperty("html.nodeType", nodeType));
+    assert(std::holds_alternative<std::string>(nodeType));
+    assert(std::get<std::string>(nodeType) == "element");
+
+    auto authoredTitle = authored.findTarget("live.prototype.html.title");
+    assert(authoredTitle);
+    assert(authoredTitle->getDynamicProperty("html.nodeType", nodeType));
+    assert(std::get<std::string>(nodeType) == "text");
 
     assert(authored.targetRelations.size() == 6);
     // 5 source->target occurrence correspondences + 6 source-Relation ->
