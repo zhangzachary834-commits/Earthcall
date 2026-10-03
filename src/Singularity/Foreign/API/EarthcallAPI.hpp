@@ -9,8 +9,6 @@
 
 // Forward declarations
 class BrushSystem;
-class DesignSystem;
-
 class ZoneManager;
 
 namespace Integration {
@@ -92,7 +90,6 @@ public:
 
     // System Access Setters
     void setBrushSystem(BrushSystem* system) { _brushSystem = system; }
-    void setDesignSystem(DesignSystem* system) { _designSystem = system; }
     void setZoneManager(ZoneManager* manager) { _zoneManager = manager; }
 
     // Lifecycle
@@ -108,7 +105,6 @@ private:
 
     // System references
     BrushSystem* _brushSystem = nullptr;
-    DesignSystem* _designSystem = nullptr;
     ZoneManager* _zoneManager = nullptr;
 
     // Design Elements Storage
