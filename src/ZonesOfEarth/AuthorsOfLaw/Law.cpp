@@ -3032,11 +3032,11 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
     // (subject, event subject, event object).
     const std::vector<Singular*> beings = Universe::instance().beings();
 
-    // Map beings by identifier for O(1) lookups rather than O(N) linear vector scans and string allocations per session.
+    // Map beings by identifier for O(1) lookups, preserving first-match semantics.
     std::unordered_map<std::string, Singular*> beingMap;
     beingMap.reserve(beings.size());
     for (Singular* being : beings) {
-        if (being) beingMap[being->getIdentifier()] = being;
+        if (being) beingMap.emplace(being->getIdentifier(), being);
     }
 
     for (auto it = _driveSessions.begin(); it != _driveSessions.end();) {
