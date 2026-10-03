@@ -509,8 +509,9 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Engine *engine, ZoneManage
         Object* newObj = nullptr;
         if (targetPart) {
             glm::mat4 partWorld = targetPart->getTransform();
-            glm::mat4 localT = glm::inverse(partWorld) * t;
-            Object* sub = targetPart->addSubObject(Object::ShapeKind::Polyhedron, localT);
+            const auto localT = localFromWorld(partWorld, t);
+            if (!localT) return;
+            Object* sub = targetPart->addSubObject(Object::ShapeKind::Polyhedron, *localT);
             if (sub) {
                 sub->setShape(Object::ShapeKind::Polyhedron);
                 sub->setPolyhedronData(polyData);
@@ -545,8 +546,9 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Engine *engine, ZoneManage
     Object* newObj = nullptr;
     if (targetPart) {
         glm::mat4 partWorld = targetPart->getTransform();
-        glm::mat4 localT = glm::inverse(partWorld) * t;
-        Object* sub = targetPart->addSubObject(kind, localT);
+        const auto localT = localFromWorld(partWorld, t);
+        if (!localT) return;
+        Object* sub = targetPart->addSubObject(kind, *localT);
         if (sub) sub->setShape(kind);
         if (sub) {
             for (int f = 0; f < sub->getFaces(); ++f)
