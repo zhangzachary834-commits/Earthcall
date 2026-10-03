@@ -92,17 +92,24 @@ nlohmann::json findZachProfile() {
 
 } // namespace
 
+// Witness Gap Analysis:
+// What the old test could prove:
+//   It proved that if the original `saves/` folder on disk had `Zach.ecform` and legacy `home.json`
+//   files, the test could perform identity migration and verify that no 3rd home directory was minted.
+// What the old test could NOT prove:
+//   It checked file existence against `sourceSaves` BEFORE setting up or setting `SaveSystem::setSaveRoot`
+//   to `copiedSaves`. If `home.json` sidecars were removed or upgraded to `.ecform` in the real app or sandbox,
+//   the precondition check on `sourceSaves` would fail early before ever exercising the real sandbox path.
+//   Furthermore, checking `sourceSaves` directly tested the repository source tree rather than proving
+//   that the sandbox environment itself was properly populated and used during the test execution.
+
 int main() {
     namespace fs = std::filesystem;
 
-    const fs::path sourceSaves = fs::current_path() / "saves";
-    check(fs::exists(sourceSaves / "persons" / "Zach.ecform"),
-          "the checked-in legacy Zach profile is present");
-    check(fs::exists(sourceSaves / "homes" / "Home" / "home.json"),
-          "the checked-in primary Home is present");
-    check(fs::exists(sourceSaves / "homes" / "Home_of_Zach" / "home.json"),
-          "the historical duplicate Home is present");
-    if (failures) return 1;
+    fs::path sourceSaves = fs::current_path() / "saves";
+    if (!fs::exists(sourceSaves)) {
+        sourceSaves = fs::current_path() / ".." / "saves";
+    }
 
     const fs::path sandbox =
         fs::temp_directory_path() / "earthcall_person_home_migration_boot";
@@ -126,6 +133,15 @@ int main() {
     EnvRestore restoreHome("EARTHCALL_HOME");
     setEnv("EARTHCALL_HOME", sandbox.string());
     SaveSystem::setSaveRoot(copiedSaves.string());
+
+    // Verify preconditions against the copied sandbox save root that the test actually operates on
+    check(fs::exists(copiedSaves / "persons" / "Zach.ecform"),
+          "the copied legacy Zach profile is present in sandbox");
+    check(SaveSystem::homeIdentityExists("Home"),
+          "the copied primary Home is present in sandbox");
+    check(SaveSystem::homeIdentityExists("Home_of_Zach"),
+          "the historical duplicate Home is present in sandbox");
+    if (failures) return 1;
 
     const auto homesBefore = directoryNames(copiedSaves / "homes");
     check(homesBefore.count("Home") == 1 && homesBefore.count("Home_of_Zach") == 1,
