@@ -979,7 +979,7 @@ public:
 private:
     void maybeStartDriveSession(Law& law, Singular& subject);
     void restartDriveSession(Law& law, const std::string& subjectId);
-    void runDriveSessions(std::vector<Law::ApplicationRecord>& records);
+    void runDriveSessions(std::vector<Law::ApplicationRecord>& records, const std::vector<Singular*>& allBeings);
     // Apply, record, and start a drive session only if the law CHANGED
     // something (not merely if the action branch was reached).
     Law::ApplicationResult applyAndMaybeDrive(
@@ -993,7 +993,7 @@ private:
     // Whom an untargeted law sweeps: consume ONE already-selected sound route.
     // Route selection is refreshed outside the per-candidate loop and cached by
     // law id; steady-state selection is one unordered_map lookup.
-    std::vector<Singular*> sweepSubjects(const Law& law) const;
+    std::vector<Singular*> sweepSubjects(const Law& law, const std::vector<Singular*>& allBeings) const;
 
     enum class CandidateTier : std::uint8_t {
         Sweep,
@@ -1026,7 +1026,7 @@ private:
     };
     mutable std::unordered_map<std::string, CandidateRoute> _candidateRoutes;
     mutable std::uint64_t _candidateRouteRefreshCount = 0;
-    void refreshCandidateRoute(const Law& law) const;
+    void refreshCandidateRoute(const Law& law, const std::vector<Singular*>& allBeings) const;
     void invalidateCandidateRoute(const std::string& lawId) const {
         _candidateRoutes.erase(lawId);
     }
@@ -1066,7 +1066,7 @@ private:
     // which is a law reaching nobody. Correctness must not depend on call
     // order; tick() still calls it once up front so the per-law call is an
     // integer compare rather than N passes over the world.
-    void refreshVocabularyIndex() const;
+    void refreshVocabularyIndex(const std::vector<Singular*>& allBeings) const;
 
     // Do this law's subject-independent gates hold right now?
     //
