@@ -28,6 +28,14 @@ struct Kinds {
     Singularity::Language::Lexeme* next = nullptr;
     Singularity::Language::Lexeme* denotes = nullptr;
     Singularity::Language::Lexeme* candidateDenotation = nullptr;
+
+    // Higher semantic layer. semanticChild is the exact AST / intent-tree
+    // topology. expresses is provenance from a lexical occurrence to the
+    // semantic node it truthfully helped select; those provenance edges stay
+    // outside the semantic Formation so the semantic graph does not absorb
+    // its source layer as members.
+    Singularity::Language::Lexeme* semanticChild = nullptr;
+    Singularity::Language::Lexeme* expresses = nullptr;
 };
 
 struct Result {
@@ -42,8 +50,17 @@ struct Result {
     std::vector<std::shared_ptr<Relation>> lexicalRelations;
     std::vector<std::shared_ptr<Relation>> denotationRelations;
 
+    // Rung 3b: exact Law semantic tree manifested as Lexeme beings. The
+    // semantic tree is only present when the parse itself is semantically
+    // admissible (Parse::ok). A refused/open parse still has perfectly valid
+    // lexical + denotation layers above.
+    std::vector<std::shared_ptr<Singularity::Language::Lexeme>> semanticLexemes;
+    std::vector<std::shared_ptr<Relation>> semanticRelations;
+    std::vector<std::shared_ptr<Relation>> semanticProvenanceRelations;
+
     std::shared_ptr<Formation> lexicalFormation;
     std::shared_ptr<Formation> denotationFormation;
+    std::shared_ptr<Formation> semanticFormation;
 
     explicit operator bool() const { return ok; }
 };
@@ -55,6 +72,21 @@ struct Result {
 // - the occurrence carries language.candidates as a PropertyList;
 // - candidateDenotation edges point to every live authored Lexeme candidate;
 // - when one meaning was chosen, denotes points to that exact Lexeme too.
+//
+// For a successful parse, the same result also contains a rooted semantic
+// Formation:
+//
+//   Law intent
+//      +-- Condition tree
+//      +-- Action tree
+//      +-- trigger nodes
+//
+// Every ConditionNode / ActionNode is manifested as its own Lexeme with its
+// exact serialized model attached as semantic.model. semanticChild Relations
+// reproduce the model-tree topology. expresses provenance is conservative:
+// only parser occurrences whose own opcode proves they selected an action,
+// condition/operator, preset, activation/scope, trigger/name clause are linked.
+// We never guess that an arbitrary path/value atom belongs to a deep AST leaf.
 Result project(const std::string& text,
                const LawSentence::Vocabulary& vocabulary,
                const std::string& utteranceId,

@@ -1,6 +1,6 @@
 # Lexeme / Relation / Formation Transduction
 
-**Status:** Rungs 0–2 + Rung 3a implemented on `sol/lexeme-formation-transduction-20261002`  
+**Status:** Rungs 0–2 + Rungs 3a–3b implemented on `sol/lexeme-formation-transduction-20261002`  
 **Date:** 2026-10-02  
 **Human direction:** Zachary Zhang  
 **Implementation:** GPT-5.6 Sol
@@ -326,3 +326,46 @@ Formation that can feed the same GraphTransduction machinery as Rungs 0–2.
 
 After that, wire TerminalChannel to publish these layers for each spoken
 utterance instead of keeping them only as an explicit projection API.
+
+
+## Rung 3b implementation addendum — exact semantic Law tree
+
+Rung 3b now projects every successful LawSentence parse into a third, rooted
+semantic Formation.
+
+The root is one fresh Lexeme representing the Law intent. Its authored
+activation, scope, preview, name, and triggers are inspectable properties.
+Every composed ConditionNode and ActionNode becomes its own fresh semantic
+Lexeme. The exact node JSON is retained in semantic.model, while
+semantic.nodeType, semantic.kind, and semantic.description make the graph
+legible without reparsing that JSON.
+
+A single authored semantic-child Relation kind preserves the actual tree:
+
+    Law intent
+      -> condition root -> nested condition nodes
+      -> action root    -> nested action nodes
+      -> trigger nodes
+
+This means composition is not flattened. Sequence(Set, Add), for example, is
+three action beings connected by two action-to-action child edges.
+
+Lexical-to-semantic provenance is deliberately conservative. Only lexical
+occurrences whose own parser opcode proves a semantic role are connected by an
+authored expresses Relation. An action word or action clause points to the
+action root; a condition/operator word points to the condition root; activation,
+scope, preset, trigger/name clauses point to the Law-intent root. Bare path and
+value atoms are not guessed into deep AST leaves because the current parser does
+not yet retain that construction provenance.
+
+A refused or unresolved sentence still has valid lexical and denotation
+Formations but no semantic Formation. Earthcall therefore preserves ambiguity
+without pretending that an unaccepted reading already has a settled semantic
+being.
+
+### Next: Rung 3c
+
+The next rung is an intended-being layer above the Law AST. Its job is to prove
+that the same transduction machinery can consume meaning that is not merely a
+Law syntax tree, while keeping LawSentence as one modality-specific witness
+rather than declaring its grammar to be universal natural language.

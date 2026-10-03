@@ -32,7 +32,12 @@ int main() {
     auto denotesKind = language.intern("denotes", "relation-kind.occurrence-denotes");
     auto candidateKind = language.intern(
         "candidate-denotation", "relation-kind.candidate-denotation");
-    assert(doSet && doAdd && nextKind && denotesKind && candidateKind);
+    auto semanticChildKind = language.intern(
+        "semantic-child", "relation-kind.semantic-child");
+    auto expressesKind = language.intern(
+        "expresses", "relation-kind.lexical-expresses-semantic");
+    assert(doSet && doAdd && nextKind && denotesKind && candidateKind &&
+           semanticChildKind && expressesKind);
 
     LawSentence::Vocabulary vocab;
     vocab.words = LawSentence::canonicalWords();
@@ -49,7 +54,11 @@ int main() {
     };
 
     LawSentenceGraph::Kinds kinds{
-        nextKind.get(), denotesKind.get(), candidateKind.get()
+        nextKind.get(),
+        denotesKind.get(),
+        candidateKind.get(),
+        semanticChildKind.get(),
+        expressesKind.get()
     };
 
     // Unresolved plurality remains a graph instead of collapsing into a
@@ -123,6 +132,46 @@ int main() {
     assert(chosenEdges == 1);
     assert(candidateEdges == 2);
 
+    // Rung 3b: a successful sentence now has a rooted semantic Formation.
+    assert(resolved.semanticFormation);
+    assert(resolved.semanticFormation->root());
+    assert(resolved.semanticFormation->root()->getIdentifier() ==
+           "utterance.resolved.semantic.intent");
+
+    std::size_t actionNodes = 0;
+    for (const auto& node : resolved.semanticLexemes) {
+        if (!node) continue;
+        PropertyValue type;
+        if (!node->getDynamicProperty("semantic.nodeType", type) ||
+            !std::holds_alternative<std::string>(type)) {
+            continue;
+        }
+        if (std::get<std::string>(type) == "action") ++actionNodes;
+    }
+    assert(actionNodes == 1);
+    assert(!resolved.semanticRelations.empty());
+    for (const auto& relation : resolved.semanticRelations) {
+        assert(relation);
+        assert(relation->directed);
+        assert(relation->getTypeLexeme() == semanticChildKind.get());
+    }
+
+    bool doExpressesAction = false;
+    for (const auto& relation : resolved.semanticProvenanceRelations) {
+        assert(relation);
+        assert(relation->getTypeLexeme() == expressesKind.get());
+        if (relation->a() == chosenOccurrence.get()) {
+            PropertyValue nodeType;
+            if (relation->b() &&
+                relation->b()->getDynamicProperty("semantic.nodeType", nodeType) &&
+                std::holds_alternative<std::string>(nodeType) &&
+                std::get<std::string>(nodeType) == "action") {
+                doExpressesAction = true;
+            }
+        }
+    }
+    assert(doExpressesAction);
+
     // Lexical order is explicit Relation structure.
     assert(resolved.occurrences.size() >= 4);
     assert(resolved.lexicalRelations.size() == resolved.occurrences.size() - 1);
@@ -131,6 +180,62 @@ int main() {
         assert(relation->directed);
         assert(relation->getTypeLexeme() == nextKind.get());
     }
+
+    // Compound structure is preserved rather than flattened.
+    auto red = language.intern("red", "lexeme.value.red");
+    assert(red);
+    LawSentence::Vocabulary compoundVocab;
+    compoundVocab.words = LawSentence::canonicalWords();
+    compoundVocab.words.push_back({
+        "red", "value", red->getIdentifier(), "law.value.red",
+        "red value", {}
+    });
+    LawSentence::Preset redPreset;
+    redPreset.lawId = "law.value.red";
+    redPreset.value = PropertyValue(std::string("red"));
+    compoundVocab.presets.push_back(redPreset);
+    compoundVocab.resolve = [](const LawSentence::Ambiguity&) {
+        return LawSentence::Resolution{};
+    };
+
+    auto compound = LawSentenceGraph::project(
+        "then set color to red, add size by 2?",
+        compoundVocab,
+        "utterance.compound",
+        kinds);
+    assert(compound);
+    assert(compound.parse.ok);
+    assert(compound.parse.action);
+    assert(compound.parse.action->kind == ActionNode::Kind::Sequence);
+
+    actionNodes = 0;
+    for (const auto& node : compound.semanticLexemes) {
+        if (!node) continue;
+        PropertyValue type;
+        if (node->getDynamicProperty("semantic.nodeType", type) &&
+            std::holds_alternative<std::string>(type) &&
+            std::get<std::string>(type) == "action") {
+            ++actionNodes;
+        }
+    }
+    assert(actionNodes == 3);
+
+    std::size_t actionTreeEdges = 0;
+    for (const auto& relation : compound.semanticRelations) {
+        if (!relation || relation->getTypeLexeme() != semanticChildKind.get()) continue;
+        PropertyValue aType;
+        PropertyValue bType;
+        if (relation->a() && relation->b() &&
+            relation->a()->getDynamicProperty("semantic.nodeType", aType) &&
+            relation->b()->getDynamicProperty("semantic.nodeType", bType) &&
+            std::holds_alternative<std::string>(aType) &&
+            std::holds_alternative<std::string>(bType) &&
+            std::get<std::string>(aType) == "action" &&
+            std::get<std::string>(bType) == "action") {
+            ++actionTreeEdges;
+        }
+    }
+    assert(actionTreeEdges == 2);
 
     language.clear();
 
