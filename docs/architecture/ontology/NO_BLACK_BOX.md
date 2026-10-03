@@ -114,9 +114,9 @@ refusal, and would also be worse at guarding — the Person would conclude the f
 nothing rather than learn where the boundary is. **Refuse out loud; never refuse by
 concealment.**
 
-*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:26 PDT. Zach distinguished immutable constitutional bodily/location guards from bootstrapped TransferPolicy decisions; this section names the guard and its present channel coverage.*
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:26 PDT. Zach distinguished immutable constitutional bodily/location guards from bootstrapped TransferPolicy decisions; this section names the guard and its present channel coverage.*
 
-*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 22:43 PDT. Codex found the WebSocket developer-mode bypass and put the constitutional refusal ahead of it; the local-socket test passed with the required loopback permission.*
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 22:43 PDT. Codex found the WebSocket developer-mode bypass and put the constitutional refusal ahead of it; the local-socket test passed with the required loopback permission.*
 
 ### 2b. What is actually beneath the Kernel
 

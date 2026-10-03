@@ -1,6 +1,5 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "Law.hpp"
-#include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
 #include "Identity/FirstMoverRegister.hpp"
 #include "Identity/PersonPresence.hpp"
 #include <string_view>
@@ -541,7 +540,6 @@ Law::ApplicationResult Law::applyToImpl(
         // carries it out. This is where "did anything actually happen" is
         // answered — the application result only says the branch was reached.
         ActionNode::TraceScope traceScope;
-        SingularSetToSetCreation::AuthorScope creationAuthors(_authors.getMembers());
         for (const auto& action : _actions) {
             action.run(event, target);
         }

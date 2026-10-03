@@ -1,5 +1,4 @@
 #include "ActionModel.hpp"
-#include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
 
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
@@ -168,11 +167,7 @@ void applySpawnOverrides(Object& newborn, Singular* source,
             } else if (k == static_cast<int>(Object::ShapeKind::Field)) {
                 PropertyValue exprVal;
                 std::string expr;
-                PropertyPath exprPath = PropertyPath::parse("activeImplicitExpr");
-                if (!shapeKindPath.segments.empty() && shapeKindPath.segments[0].find("@") == 0) {
-                    exprPath = PropertyPath::parse(shapeKindPath.segments[0] + ".activeImplicitExpr");
-                }
-                if (lawGetValue(*source, exprPath, exprVal) &&
+                if (lawGetValue(*source, PropertyPath::parse("activeImplicitExpr"), exprVal) &&
                     std::holds_alternative<std::string>(exprVal) && !std::get<std::string>(exprVal).empty()) {
                     expr = std::get<std::string>(exprVal);
                 }
@@ -371,11 +366,6 @@ nlohmann::json ActionNode::toJson() const {
             break;
         case Kind::Create: {
             j["shapeKind"] = createShapeKind;
-            if (!path.empty()) j["path"] = path.toString();
-            if (!newbornId.empty()) j["newbornId"] = newbornId;
-            if (!newbornName.empty()) j["newbornName"] = newbornName;
-            if (!containerToken.empty()) j["containerToken"] = containerToken;
-            if (!elementToken.empty()) j["elementToken"] = elementToken;
             if (!createType.empty()) j["createType"] = createType;
             if (!spawnParentPath.empty()) j["spawnParentPath"] = spawnParentPath.toString();
             if (!spawnPlacementPath.empty()) j["spawnPlacementPath"] = spawnPlacementPath.toString();
@@ -432,8 +422,6 @@ ActionNode ActionNode::fromJson(const nlohmann::json& j) {
     n.publishObject = j.value("publishObject", std::string());
     n.createShapeKind = j.value("shapeKind", 0);
     n.createType = j.value("createType", std::string());
-    n.newbornId = j.value("newbornId", std::string());
-    n.newbornName = j.value("newbornName", std::string());
     n.propertyName = j.value("propertyName", std::string());
     if (j.contains("sourceToken")) n.containerToken = j["sourceToken"].get<std::string>();
     else n.containerToken = j.value("containerToken", std::string());
@@ -1025,53 +1013,6 @@ ECA::ActionExecutor ActionNode::compile() const {
         // being nobody captured for it.
         // ------------------------------------------------------------------
         case Kind::Create: {
-            if (!path.empty()) {
-                const auto source = path;
-                const auto id = newbornId;
-                const auto name = newbornName;
-                const auto endpointA = containerToken;
-                const auto endpointB = elementToken;
-                const auto parent = spawnParentPath;
-                const auto placement = spawnPlacementPath;
-                const bool hasLegacyOverrides = !spawnShapeKindPath.empty() || !spawnColorPath.empty() ||
-                                                !createType.empty() || createShapeKind != 0;
-                std::vector<ECA::ActionExecutor> runs;
-                for (const auto& child : children) runs.push_back(child.compile());
-                return [source, id, name, endpointA, endpointB, parent, placement, hasLegacyOverrides, runs](const ECA::Event& event, Singular& subject) {
-                    std::size_t start = 0;
-                    Singular* prototype = resolveLawRoot(subject, source, start);
-                    if (prototype && start != source.segments.size()) {
-                        PropertyValue value;
-                        prototype = nullptr;
-                        if (lawGetValue(subject, source, value)) {
-                            if (auto p = std::get_if<Singular*>(&value)) prototype = *p;
-                            else if (auto p = std::get_if<Object*>(&value)) prototype = *p;
-                            else if (auto p = std::get_if<Relation*>(&value)) prototype = *p;
-                            else if (auto p = std::get_if<Formation*>(&value)) prototype = *p;
-                        }
-                    }
-                    if (!prototype) { emitEffect("Create", false, "prototype path has no unambiguous Singular referent: " + source.toString()); return; }
-                    if (!parent.empty() || !placement.empty() || hasLegacyOverrides) {
-                        emitEffect("Create", false, "prototype birth uses authored child actions for placement and composition"); return;
-                    }
-                    Zone* destination = resolveZone(subject);
-                    SingularSetToSetCreation::Request request{*prototype, {prototype, &subject}, nullptr, nullptr, destination, id, name, {}};
-                    const auto endpoint = [&](const std::string& token) -> Singular* {
-                        if (token.empty()) return nullptr;
-                        auto qualified = PropertyPath::parse(token.front() == '@' ? token : "@" + token);
-                        std::size_t consumed = 0;
-                        auto* being = resolveLawRoot(subject, qualified, consumed);
-                        return consumed == qualified.segments.size() ? being : nullptr;
-                    };
-                    request.endpointA = endpoint(endpointA);
-                    request.endpointB = endpoint(endpointB);
-                    auto result = SingularSetToSetCreation::derive(request);
-                    if (!result) { emitEffect("Create", false, result.refusal); return; }
-                    for (const auto& run : runs) if (run) run(event, *result.newborn);
-                    emitEffect("Create", true, result.newborn->getIdentifier());
-                    Core::EventBus::instance().publish(ECA::Event{"singular-created", result.newborn, &subject, std::time(nullptr)});
-                };
-            }
             const int shapeKind = createShapeKind;
             const std::string type = createType;
             const PropertyPath parentPath = spawnParentPath;
@@ -1348,7 +1289,6 @@ std::string ActionNode::describe() const {
         case Kind::Flow: return "d(" + path.toString() + ")/dt = " + mapFunction.print();
         case Kind::Publish: return "publish '" + eventType + "'";
         case Kind::Create:
-            if (!path.empty()) return "create from " + path.toString();
             return "create object" + (createType.empty() ? std::string()
                                                          : " '" + createType + "'");
         case Kind::AddProperty: return "grant property '" + propertyName + "'";
@@ -1857,15 +1797,6 @@ ActionNode ActionNode::create(int shapeKind, const std::string& createType,
     n.createType = createType;
     n.children = std::move(children);
     return n;
-}
-
-ActionNode ActionNode::createFrom(const std::string& prototypePath, const std::string& id,
-                                  std::vector<ActionNode> children) {
-    ActionNode node = create();
-    node.path = PropertyPath::parse(prototypePath);
-    node.newbornId = id;
-    node.children = std::move(children);
-    return node;
 }
 
 ActionNode ActionNode::addProperty(const std::string& ownerPath,

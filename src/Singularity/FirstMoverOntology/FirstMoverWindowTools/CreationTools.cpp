@@ -101,15 +101,13 @@ void handleCreateLawKey(GLFWwindow* window, Core::Engine& engine,
     if (engine.getMainMenu().isOpen()) return;
     if (ImGui::GetIO().WantCaptureKeyboard) return;
 
+    // BENEATH THE KERNEL: edge latch so a held L publishes once, not
+    // as a per-frame level. Same reason Tool::ShapeGenerator3D tracks
+    // its mouse button before any gate.
     static bool lawModeKeyDownLast = false;
     const bool lawModeKeyDown = glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS;
     if (lawModeKeyDown && !lawModeKeyDownLast) {
-        auto& state = getCreatorConsoleState();
-        if (state.current3DMode == Mode3D::BrushCreate) {
-            state.current3DMode = Mode3D::None;
-        } else {
-            state.current3DMode = Mode3D::BrushCreate;
-        }
+        channel.spawnLawArmed = !channel.spawnLawArmed;
     }
     lawModeKeyDownLast = lawModeKeyDown;
 }
@@ -214,6 +212,7 @@ void dispatchActiveTool(GLFWwindow* window, Core::Engine* engine,
     switch (state.current3DMode) {
         case Mode3D::BrushCreate: {
             if (channel) {
+                Tool::ShapeGenerator3D(window, engine, zoneMgr, *channel, nullptr);
             }
             break;
         }

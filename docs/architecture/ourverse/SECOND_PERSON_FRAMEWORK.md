@@ -60,15 +60,15 @@ Zach's examples of Constitution are the Person's Body and protection against ano
 
 **Representation boundary:** Do not introduce `StakeKind`, `ConstitutionKind`, or a fixed C++ list of these grounds. Zach confirmed that Constitution is one of the five distinct Relation kinds; "unique" distinguishes the kinds, not one canonical Relation instance per pair. Which Singulars each Relation joins and how a claim gains standing still need authorial decisions before serialization or matching semantics are fixed.
 
-*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:47 PDT. The five definitions and three examples are Zach's; Codex placed them beside the existing stakes framework and checked the current Home invariant and proposed likeness boundary.*
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:47 PDT. The five definitions and three examples are Zach's; Codex placed them beside the existing stakes framework and checked the current Home invariant and proposed likeness boundary.*
 
-*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:49 PDT. Zach clarified that these grounds are unique Relations rather than hardcoded enums; their exact topology awaits his answer.*
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:49 PDT. Zach clarified that these grounds are unique Relations rather than hardcoded enums; their exact topology awaits his answer.*
 
-*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:26 PDT. Zach specified signed Person–Law consent as an ongoing, revocable sub-Relation beneath a constitutional Kernel refusal; Codex recorded the human-authored rule and current implementation limit.*
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:26 PDT. Zach specified signed Person–Law consent as an ongoing, revocable sub-Relation beneath a constitutional Kernel refusal; Codex recorded the human-authored rule and current implementation limit.*
 
-*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:29 PDT. Zach clarified that the constitutional guard is against positive body/location writes, not every authored location prohibition.*
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:29 PDT. Zach clarified that the constitutional guard is against positive body/location writes, not every authored location prohibition.*
 
-*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 12:53 PDT. Zach clarified that all five are distinct Relation kinds, analogous to Category Relations; no canonical per-pair instance rule was supplied.*
+*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 12:53 PDT. Zach clarified that all five are distinct Relation kinds, analogous to Category Relations; no canonical per-pair instance rule was supplied.*
 
 ---
 

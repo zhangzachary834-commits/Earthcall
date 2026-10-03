@@ -148,6 +148,33 @@ int main() {
     lawGetValue(*watcher, PropertyPath::parse("watcher.filesTracked"), val);
     check(std::get<double>(val) == 1.0, "With .wgsl filter, only 1 file is tracked");
 
+    // -----------------------------------------------------------------------
+    // Case 5: Live Hot Reloading (Shader & Rule Invalidation)
+    // -----------------------------------------------------------------------
+    lawSetValue(*watcher, PropertyPath::parse("watcher.filterExtension"), PropertyValue(std::string("")));
+    watcher->rescanBaseline();
+
+    // Sleep a tiny bit to ensure mtime ticks forward
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+
+    // Modify the WGSL shader
+    {
+        std::ofstream a(fileA, std::ios::app);
+        a << "// live hot reload pass 2\n";
+    }
+    watcher->checkNow();
+
+    lawGetValue(*watcher, PropertyPath::parse("watcher.lastReloadTarget"), val);
+    check(std::get<std::string>(val) == "shader", "watcher.lastReloadTarget identified 'shader'");
+
+    lawGetValue(*watcher, PropertyPath::parse("watcher.reloadCount"), val);
+    check(std::get<double>(val) >= 1.0, "watcher.reloadCount tracked automatic shader reload");
+
+    // Manual reload trigger
+    lawSetValue(*watcher, PropertyPath::parse("watcher.reloadShaders"), PropertyValue(true));
+    lawGetValue(*watcher, PropertyPath::parse("watcher.reloadCount"), val);
+    check(std::get<double>(val) >= 2.0, "Manual watcher.reloadShaders trigger incremented reloadCount");
+
     // Clean up
     fs::remove_all(watchDir, ec);
 
@@ -156,6 +183,6 @@ int main() {
         return 1;
     }
 
-    std::printf("file_watcher_test: ALL OK (all 4 cases passed)\n");
+    std::printf("file_watcher_test: ALL OK (all 5 cases passed)\n");
     return 0;
 }
