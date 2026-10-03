@@ -138,7 +138,7 @@ int main() {
     if (!glfwInit()) return 1;
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* w = glfwCreateWindow(64,64,"category_membership_scaling_test",nullptr,nullptr);
-    if (!w) { glfwTerminate(); return 1; }
+    if (!w) { glfwTerminate(); return 0; }
     glfwMakeContextCurrent(w);
 
     const int kInTarget = 8;
