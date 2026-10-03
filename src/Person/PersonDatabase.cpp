@@ -34,14 +34,13 @@ bool PersonDatabase::loadPerson(const std::string& identifier, Person& outPerson
     std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
     if (folder.empty()) return false;
 
-    std::string filepath = folder + "/" + safeName + ".ecform";
-
-    if (!std::filesystem::exists(filepath)) {
-        return false;
-    }
+    std::string basePath = folder + "/" + safeName;
     
     try {
-        nlohmann::json j = SaveSystem::readSaveData(filepath);
+        nlohmann::json j = SaveSystem::readSaveData(basePath);
+        if (j.is_null() || j.empty()) {
+            return false;
+        }
         outPerson.deserialize(j);
         return true;
     } catch (const std::exception& e) {
