@@ -54,9 +54,9 @@ Source inspection found that `PropertyPath` stores property-name segments and ru
 
 **⚑ AUTHOR — remaining:** Zach subsequently specified that each Zone governs its own reads/writes and incoming reception, without governing another Zone's choices. Which authority level(s) govern writes through distinct paths sharing a cell, and how are conflicts settled? His answers about public-ID custody, Person signing, and bootstrap policy follow below. Do not infer the remaining answers from the current cache or introduce a storage/permission ontology around them.
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-27 22:12 PDT. Zach supplied the identity, ambiguity, ID-disclosure, and authority requirements; Codex inspected the code and added only the duplicate-spelling refusal.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-27 22:12 PDT. Zach supplied the identity, ambiguity, ID-disclosure, and authority requirements; Codex inspected the code and added only the duplicate-spelling refusal.*
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-27 23:18 PDT. Zach supplied the Zone-context and physical-machine-ownership correction; Codex removed its path-owned-ID interpretation. No durable identity routing is implemented by this note.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-27 23:18 PDT. Zach supplied the Zone-context and physical-machine-ownership correction; Codex removed its path-owned-ID interpretation. No durable identity routing is implemented by this note.*
 
 ## Zach's shared-custody and Person-key decisions (2026-09-28)
 
@@ -94,39 +94,39 @@ Zach chose **the same enduring identity** across the relevant machines, machine-
 
 **Implemented narrow continuity guard, 2026-09-28:** `Person::setPersonId` now refuses a different key ID after one has been established, and `personFromJson` checks a claimed ID before changing any Person field. This directly enforces Zach's refusal of silent reauthoring on the live Person and profile-load seam. It does not prove a file's initial identity claim, authorize key rotation, distribute a secret across machines, or make a PropertyPath resolve through Zone-held identity. The existing `Person` profile codec leaves signature proof with its caller. `person_serialization_test` exercises same-ID reuse, direct conflicting assignment, malformed ID, and a conflicting profile with attempted name and position changes. `person_serialization_test`, `person_database_test`, and `home_identity_continuity_test` passed; `person_home_migration_boot_test` compiled but timed out without a runtime verdict in this environment.
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:30 PDT. Zach supplied the same-identity, shared-recognition, Person-consent, Zone-key, single-Person-key, and micromastery directions; Codex recorded them and separated them from its security questions.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:30 PDT. Zach supplied the same-identity, shared-recognition, Person-consent, Zone-key, single-Person-key, and micromastery directions; Codex recorded them and separated them from its security questions.*
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:47 PDT. Zach supplied the five-fold definition of standing and Constitution directly after Codex asked for its source; Codex linked it to this PropertyPath task without assigning new runtime powers.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:47 PDT. Zach supplied the five-fold definition of standing and Constitution directly after Codex asked for its source; Codex linked it to this PropertyPath task without assigning new runtime powers.*
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:49 PDT. Zach clarified the Relation representation and rejected hardcoded enums; exact Relation topology is still an authorial decision.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:49 PDT. Zach clarified the Relation representation and rejected hardcoded enums; exact Relation topology is still an authorial decision.*
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 12:53 PDT. Zach chose five distinct Relation kinds and specified each Zone's jurisdiction over its own read/write acts and reception of inter-Zone transmissions.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 12:53 PDT. Zach chose five distinct Relation kinds and specified each Zone's jurisdiction over its own read/write acts and reception of inter-Zone transmissions.*
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 13:01 PDT. Codex implemented the narrow Person identity reassignment refusal from Zach's same-identity and Person-consent direction; the focused test passed. Zone resolution and key continuity remain open.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 13:01 PDT. Codex implemented the narrow Person identity reassignment refusal from Zach's same-identity and Person-consent direction; the focused test passed. Zone resolution and key continuity remain open.*
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 13:04 PDT. Codex ran the Person profile, Person database, and Home identity tests; the broader migration boot test timed out and was not counted as a pass or failure.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 13:04 PDT. Codex ran the Person profile, Person database, and Home identity tests; the broader migration boot test timed out and was not counted as a pass or failure.*
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 13:15 PDT. Zach chose the ordinary-read/write migration default: open unless an explicit reason closes it. Codex kept it distinct from the pre-existing set-to-set TransferPolicy defaults and began a focused regression guard.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 13:15 PDT. Zach chose the ordinary-read/write migration default: open unless an explicit reason closes it. Codex kept it distinct from the pre-existing set-to-set TransferPolicy defaults and began a focused regression guard.*
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 13:18 PDT. Codex implemented and tested the structural read-only refusal and ordinary-access default guard; the broader desktop-runtime tests timed out without verdict.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 13:18 PDT. Codex implemented and tested the structural read-only refusal and ordinary-access default guard; the broader desktop-runtime tests timed out without verdict.*
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:14 PDT. Zach chose bootstrap Metalaws configuring TransferPolicy, downstream Law condition branches, and Prophetic Rete relevance over policy/actor/context changes. Codex recorded the ordering and separated current Prophetic analysis from a future access-decision cache.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:14 PDT. Zach chose bootstrap Metalaws configuring TransferPolicy, downstream Law condition branches, and Prophetic Rete relevance over policy/actor/context changes. Codex recorded the ordering and separated current Prophetic analysis from a future access-decision cache.*
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:18 PDT. Zach clarified that intrinsic bodily/location guards are hardcoded before policy bootstrap. Codex extended the existing Law motion guard to the actual Person bearer of qualified writes and recorded the current enforcement limit.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:18 PDT. Zach clarified that intrinsic bodily/location guards are hardcoded before policy bootstrap. Codex extended the existing Law motion guard to the actual Person bearer of qualified writes and recorded the current enforcement limit.*
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:23 PDT. Zach rejected Law authorship as recurring movement consent and chose an authored, revocable consent Relation. Codex made unproven Law movement refuse pending the Relation's exact semantics; focused tests passed.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:23 PDT. Zach rejected Law authorship as recurring movement consent and chose an authored, revocable consent Relation. Codex made unproven Law movement refuse pending the Relation's exact semantics; focused tests passed.*
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:27 PDT. Zach identified the Person and Law as consent endpoints, chose ongoing consent until the Person revokes, affirmed active/historical sub-Relation continuity, and required their signing key for creation and revocation. Codex recorded these constraints while leaving the unbuilt signed Relation mechanism open.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:27 PDT. Zach identified the Person and Law as consent endpoints, chose ongoing consent until the Person revokes, affirmed active/historical sub-Relation continuity, and required their signing key for creation and revocation. Codex recorded these constraints while leaving the unbuilt signed Relation mechanism open.*
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:29 PDT. Zach distinguished positive body/location writes from authored area prohibitions. Codex preserved the latter as a Law-readable location condition without claiming a particular response policy.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:29 PDT. Zach distinguished positive body/location writes from authored area prohibitions. Codex preserved the latter as a Law-readable location condition without claiming a particular response policy.*
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 22:43 PDT. On Zach's instruction to continue, Codex found and closed the WebSocket developer-mode bypass of the existing Person-body guard; the local-socket integration test passed outside the sandbox.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 22:43 PDT. On Zach's instruction to continue, Codex found and closed the WebSocket developer-mode bypass of the existing Person-body guard; the local-socket integration test passed outside the sandbox.*
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 23:00 PDT. Codex removed the latent foreign teleport and Zone-switch mutation branches, rebuilt the full core dependency for the focused test, and reran the WebSocket test successfully with local loopback permission.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 23:00 PDT. Codex removed the latent foreign teleport and Zone-switch mutation branches, rebuilt the full core dependency for the focused test, and reran the WebSocket test successfully with local loopback permission.*
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 23:23 PDT. Codex narrowed the foreign Kernel path to positive Person motion writes, added an ID-safe Law refusal record, and passed the focused Law test. The final WebSocket rebuild and socket integration test passed with local loopback permission.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 23:23 PDT. Codex narrowed the foreign Kernel path to positive Person motion writes, added an ID-safe Law refusal record, and passed the focused Law test. The final WebSocket rebuild and socket integration test passed with local loopback permission.*
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 23:27 PDT. Codex traced `ZoneManager::switchTo` and corrected the foreign switch refusal to unmapped Zone activation, rather than mislabeling the active-Zone selector as Person location. The corrected socket branch rebuilt and passed its focused integration test with local loopback permission.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 23:27 PDT. Codex traced `ZoneManager::switchTo` and corrected the foreign switch refusal to unmapped Zone activation, rather than mislabeling the active-Zone selector as Person location. The corrected socket branch rebuilt and passed its focused integration test with local loopback permission.*
 
 ## Raw memory micromastery rung (2026-10-01)
 
@@ -136,4 +136,4 @@ The current code now preserves `PropertyValue` types when reading live MathBindi
 
 **For future agents:** Do not interpret a typed `Map` passthrough as a general share/unique/weak cell operation or a deep copy. Scalar passthrough copies a value; existing list/dict passthrough retains a C++ shared reference. The current codec does not preserve this sharing across saves, and a nested write still notifies its reached root rather than every alias. Cross-Zone custody must be answered before implementing saved cell graphs. No inhabited save was changed in this pass.
 
-*Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 13:00 PDT. Zach supplied the shared-write/rebinding, unique-conversion, weak-expiry, and cross-Zone persistence decisions; Codex implemented the unambiguous container-access and typed-binding foundation while custody and copy semantics remain open.*
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 13:00 PDT. Zach supplied the shared-write/rebinding, unique-conversion, weak-expiry, and cross-Zone persistence decisions; Codex implemented the unambiguous container-access and typed-binding foundation while custody and copy semantics remain open.*

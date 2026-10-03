@@ -2,7 +2,7 @@
 
 ## Universal Singular prototype creation
 
-*Codex / GPT-6 / session `01a0e64f-5853-7d30-8196-995b4fd16b89` /
+*Codex / GPT-6.1 Sol / session `01a0e64f-5853-7d30-8196-995b4fd16b89` /
 2026-10-02 17:02 PDT. Zach: Create should admit existing Singular subclasses
 without inventing another ontology, while unresolved meanings stay open.
 Headless tests exercise the authored action; these editor checks need your witness.*
@@ -59,8 +59,8 @@ birth, and selective replacement of closed transfers remain in
 
 ## Constitutional Person movement
 
-- [ ] If an existing saved Law attempts to set your `position`, `velocity`, or `acceleration`, witness that it does not move you merely because you authored the Law; record any movement channel that still does. This remains open because the authored, revocable consent Relation has not yet been specified or wired. No save file was changed for this check. *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:23 PDT.*
-- [ ] When authoring a live `Map`/`ValueLeaf` Law from a list/dictionary PropertyPath, confirm that changing the source leaf changes the intended visible result on the next firing, and that a refused read-only nested write names its refusal in the Law record; this pass verified serialized Laws headlessly and added no inhabited demonstration save or new control. General scalar cells, unique/weak bindings, alias-wide reactivity, and save topology remain open in [the Property memory task](../Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md). *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 12:29 PDT.*
+- [ ] If an existing saved Law attempts to set your `position`, `velocity`, or `acceleration`, witness that it does not move you merely because you authored the Law; record any movement channel that still does. This remains open because the authored, revocable consent Relation has not yet been specified or wired. No save file was changed for this check. *Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:23 PDT.*
+- [ ] When authoring a live `Map`/`ValueLeaf` Law from a list/dictionary PropertyPath, confirm that changing the source leaf changes the intended visible result on the next firing, and that a refused read-only nested write names its refusal in the Law record; this pass verified serialized Laws headlessly and added no inhabited demonstration save or new control. General scalar cells, unique/weak bindings, alias-wide reactivity, and save topology remain open in [the Property memory task](../Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md). *Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 12:29 PDT.*
 
 
 

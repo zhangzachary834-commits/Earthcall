@@ -89,7 +89,7 @@ authorship and transfer refusals, canonical typed references on Zone reload,
 and preservation of enduring Relation history. Configure after adding its
 source, then build the named target before selecting it with CTest. Current
 registration count is 262; this is not a claim that every suite test was run.
-*Codex / GPT-6 / session `01a0e64f-5853-7d30-8196-995b4fd16b89` /
+*Codex / GPT-6.1 Sol / session `01a0e64f-5853-7d30-8196-995b4fd16b89` /
 2026-10-02 17:02 PDT; Zach's universal Singular creation request.*
 
 **As of 2026-09-07, 109 tests are registered and the default build is clean.** (`smooth_tessellation_cache_test` fixed and verified by Jules (Gemini model unexposed), session jules-6175025450238978931-25cb60c8, 2026-09-07).
@@ -199,7 +199,7 @@ honest rather than convenient:
 | `frame_lag_test` | the frame quietly getting dearer. Guards three things nothing else could see: that per-frame cost stays sub-quadratic in the population, that an *idle* world fires no laws and grows no objects (CLAUDE.md's edge-not-level rule, measured rather than asserted), and that no being registers a property path twice (the `buildProperties()`-in-a-constructor bug, which doubles the cost of every law evaluation and shows up nowhere else) |
 | `zone_home_ontology_test` | manifesto Home/Zone: primary Home kernel-locked per Person (not "any owned Zone"); owner is Person/Relationship/Community; community-home / community-zone authored kinds; AuthorZone mints extras; unused `class Home` retired |
 
-*Property-memory test entry and configured count: Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 12:29 PDT. The count comes from `ctest -N`; it is not a full-suite verdict.*
+*Property-memory test entry and configured count: Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 12:29 PDT. The count comes from `ctest -N`; it is not a full-suite verdict.*
 
 *Native screen-capture entry and refreshed configured count: Codex · GPT-6 · session `01a0fe15-4fe2-7dc0-a2d0-7d823e4ad26c` · 2026-10-02 12:40 PDT. Run the real engine witness with `python3 scratch/probes/screen_recorder_engine_probe.py` after building `earthcall_webgpu`; it links production objects and uses an isolated save root. See [the capture audit](audits/SCREEN_CAPTURE_NATIVE_VERIFICATION_2026-10-02.md).*
 

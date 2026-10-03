@@ -1,6 +1,6 @@
 // Zach's PropertyPath/memory micromastery direction: containers remain
 // predicates, shared writes reach shared storage, and paths retain no IDs.
-// Codex / GPT-6 / 01a0e64f-5853-7d30-8196-995b4fd16b89 / 2026-10-01.
+// Codex / GPT-6.1 Sol / 01a0e64f-5853-7d30-8196-995b4fd16b89 / 2026-10-01.
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"

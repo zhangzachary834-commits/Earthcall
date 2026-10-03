@@ -77,7 +77,7 @@ marks both reads and writes opaque. Changes to that action are already
 covered by Law text revision invalidation; no codec read-footprint cache is
 introduced. Narrowing requires an exact declared footprint before it may be
 added. Guarded by `universal_singular_creation_test` (both opacity flags).
-*Codex / GPT-6 / session `01a0e64f-5853-7d30-8196-995b4fd16b89` /
+*Codex / GPT-6.1 Sol / session `01a0e64f-5853-7d30-8196-995b4fd16b89` /
 2026-10-02 17:25 PDT; Zach's universal creation request.*
 
 | Structure | Derived from | Invalidated by | Guarded by |

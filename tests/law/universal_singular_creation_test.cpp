@@ -1,6 +1,6 @@
 // Zach: one Create/set-to-set operation for every admissible existing Singular,
 // with real human/First Mover/machine correspondents excluded.
-// Codex / GPT-6 / 01a0e64f-5853-7d30-8196-995b4fd16b89 / 2026-10-02.
+// Codex / GPT-6.1 Sol / 01a0e64f-5853-7d30-8196-995b4fd16b89 / 2026-10-02.
 #include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"

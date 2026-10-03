@@ -61,7 +61,7 @@ identities and persistence must accompany the eventual creation adapter.
 No Person, Relationship, or Community may own either layer the way
 they own a Home.
 
-*Clarification recorded by Codex / GPT-6 / session
+*Clarification recorded by Codex / GPT-6.1 Sol / session
 `01a0e64f-5853-7d30-8196-995b4fd16b89` / 2026-10-02 17:02 PDT;
 authorial decision: Zach.*
 
