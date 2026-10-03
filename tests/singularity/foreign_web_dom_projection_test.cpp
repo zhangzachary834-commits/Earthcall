@@ -4,12 +4,21 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 
 using namespace Singularity::Foreign::Web;
 using Singularity::Language::LanguageSystem;
 
 static std::string readFixture(const std::string& path) {
-    std::ifstream file(path);
+    std::string resolved = path;
+    for (const char* prefix : {"", "../", "../../"}) {
+        const std::string candidate = std::string(prefix) + path;
+        if (std::filesystem::exists(candidate)) {
+            resolved = candidate;
+            break;
+        }
+    }
+    std::ifstream file(resolved);
     assert(file.is_open());
     std::stringstream buffer;
     buffer << file.rdbuf();
