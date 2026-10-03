@@ -1,5 +1,6 @@
 #include "Singularity/Terminal/LawSentenceGraph.hpp"
 #include "Singularity/Language/GraphTransduction.hpp"
+#include "Singularity/Foreign/Web/HtmlFormationActPlanner.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -134,6 +135,14 @@ int main() {
         Lexeme setItem("li", "prototype.html.action.set.li");
         Lexeme addItem("li", "prototype.html.action.add.li");
 
+        // These are authored target-channel facts, not inferred from tag
+        // spelling. GraphTransduction carries them onto fresh occurrences.
+        for (Lexeme* element : std::vector<Lexeme*>{
+                 &article, &orderedList, &setItem, &addItem}) {
+            assert(element->setDynamicProperty(
+                "html.nodeType", PropertyValue(std::string("element"))));
+        }
+
         // ---------------- Law-authored semantic -> HTML template ----------------
         Formation request;
         assert(request.setIdentifier("request.language-to-html"));
@@ -245,6 +254,31 @@ int main() {
             }
         }
         assert(sawSiblingOrder);
+
+        // The same generated HTML Formation is immediately consumable by the
+        // structured browser Act planner. Because the desired root has no
+        // browser identity yet, only that root is eligible in wave 1.
+        HtmlFormationActPlanner::Request actRequest;
+        actRequest.desired = html.targetFormation.get();
+        actRequest.kinds = {domChildOf.get(), domNextSibling.get()};
+        actRequest.pageSessionId = "page-session.language-witness";
+        actRequest.operationPrefix = "op.language-render";
+        actRequest.externalParentToken = "node.body";
+        actRequest.rootSiblingIndex = 0;
+
+        HtmlFormationActPlanner::Bindings browserBindings;
+        auto readyActs = HtmlFormationActPlanner::readyInsertions(
+            actRequest, browserBindings);
+        assert(readyActs);
+        assert(!readyActs.complete);
+        assert(readyActs.acts.size() == 1);
+        assert(readyActs.acts.front().desiredId ==
+               html.targetFormation->root()->getIdentifier());
+        assert(readyActs.acts.front().act.kind == DomActKind::InsertElement);
+        assert(readyActs.acts.front().act.tagName == "article");
+        assert(readyActs.acts.front().act.parentToken == "node.body");
+        assert(readyActs.acts.front().act.targetNodeToken.empty());
+        assert(readyActs.acts.front().act.validate().valid);
 
         assert(intent->getIdentifier() == "utterance.html-witness.semantic.intent");
         assert(html.targetFormation->root()->getIdentifier() ==
