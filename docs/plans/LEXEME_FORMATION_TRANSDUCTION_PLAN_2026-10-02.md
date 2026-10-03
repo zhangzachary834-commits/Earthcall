@@ -1,6 +1,6 @@
 # Lexeme / Relation / Formation Transduction
 
-**Status:** Rung 0 implemented on `sol/lexeme-formation-transduction-20261002`  
+**Status:** Rungs 0–1 implemented on `sol/lexeme-formation-transduction-20261002`  
 **Date:** 2026-10-02  
 **Human direction:** Zachary Zhang  
 **Implementation:** GPT-5.6 Sol
@@ -22,7 +22,7 @@ authored Law and Metalaw resolve meaning
         ↓
 semantic Formation
         ↓
-authored manifestation Law
+authored manifestation graph
         ↓
 target Lexemes / Relations / Formations
         ↓
@@ -53,8 +53,8 @@ Destroying or replacing `H` must not silently destroy `S`. One source being
 may have many simultaneous manifestations (HTML, 2D, 3D, speech, serialization),
 and one target channel may choose among multiple authored representations.
 
-This is why Rung 0 creates fresh target Lexemes and separate correspondence
-Relations rather than mutating/retyping the source Formation.
+This is why the implementation creates fresh target Lexemes and separate
+correspondence Relations rather than mutating/retyping the source Formation.
 
 ## Rung 0 — detached graph transduction kernel [IMPLEMENTED]
 
@@ -73,29 +73,55 @@ It guarantees:
 
 - spelling is not identity;
 - duplicate target symbols remain separate occurrences;
+- many source meanings may contribute to one target occurrence without losing
+  provenance;
 - the source Formation is never reused as the target;
 - target Relation semantics are supplied by authored Relation-kind Lexemes when
   available, not by a new C++ enum;
-- every source-derived target occurrence must have an explicit correspondence
-  Relation kind, so provenance cannot silently disappear;
+- every source-derived target occurrence/Relation must have an explicit
+  correspondence Relation kind, so provenance cannot silently disappear;
 - the whole requested target is validated before publication;
 - no `LanguageSystem`, `Universe`, Zone, browser, or channel registration occurs
   inside the mechanism;
 - malformed plans publish nothing.
 
-The witness constructs:
+## Rung 1 — the mapping request is itself a Formation [IMPLEMENTED]
+
+Rung 0's hand-built C++ `Plan` is now only the substrate IR.
+
+`GraphTransduction::buildFromTemplate` consumes an ordinary Formation shaped
+like this:
 
 ```text
-semantic.page.formation
-    page
-    heading
-    "Welcome"
-    card A
-    card B
+semantic.page  --manifests-as--> Lexeme("section")
+semantic.title --manifests-as--> Lexeme("h1")
 
-              authored mapping
+Lexeme("h1") --dom-child-of--> Lexeme("section")
+```
 
-html.page.formation
+The right-hand Lexemes are **target prototypes**, not live DOM occurrences.
+Their Relations state the desired target topology.
+
+The transducer:
+
+1. finds source -> prototype mappings by an authored Relation-kind Lexeme
+   supplied by the caller;
+2. discovers the target prototypes without interpreting their spelling;
+3. clones each prototype into a fresh exact target occurrence identity;
+4. clones Relations among prototypes, preserving their authored kind,
+   direction, and weight;
+5. records both source-being -> target-occurrence and source-Relation ->
+   target-Relation provenance;
+6. returns the same detached Rung-0 result.
+
+There is deliberately no `TransductionRequest` C++ being and no HTML-specific
+rule table.
+
+The test constructs the requested semantic -> HTML graph entirely as ordinary
+Lexemes, Relations, and one Formation, then produces:
+
+```text
+html.authored.formation
     section
       ├── h1
       │    └── "Welcome"
@@ -103,33 +129,33 @@ html.page.formation
       └── article B
 ```
 
-Both articles have symbol `article` but different exact identities.
+The two `article` occurrences remain different beings.
 
-This is deliberately mechanism, not semantics. The test hand-builds the Plan so
-Rung 0 can prove the ontological boundary before authored Law begins deciding it.
+## Rung 2 — authored Law produces/edits the template Formation
 
-## Rung 1 — make the Plan itself Law-legible
+The next step is not to add a rule engine to `GraphTransduction`.
 
-Today `GraphTransduction::Plan` is C++ input. That is admissible only as the
-first substrate witness.
+Use existing Law operations to author the template graph itself:
 
-The next rung must make the requested mapping inspectable as ordinary Earthcall
-state. A transduction request should be a Singular / Formation whose properties
-and Relations name:
+- choose which source beings participate;
+- create/choose target prototype Lexemes;
+- add the source -> prototype mapping Relations;
+- add target-topology Relations;
+- choose the root prototype.
 
-- source Formation;
-- selected source occurrences;
-- target occurrence identities/symbols;
-- target Relation kinds/endpoints;
-- correspondence Relation kind;
-- target root.
+The transducer remains a dumb realization boundary over an already-authored
+graph.
 
-A Law then authors/modifies that request. The C++ kernel merely realizes the
-already-authored graph request transactionally.
+This is the rung where a Person can author rules such as:
 
-Do **not** grow `GraphTransduction` into a rule engine.
+```text
+semantic heading -> target prototype "h1"
+semantic card    -> target prototype "article"
+```
 
-## Rung 2 — layered Lexeme semantic graph
+without those mappings becoming C++ doctrine.
+
+## Rung 3 — layered Lexeme semantic graph for natural language
 
 Generalize the Law Line's current sentence-specific composition into explicit
 intermediate graph layers:
@@ -149,14 +175,14 @@ Requirements:
 - grammar/Formation context removes impossible meanings first;
 - remaining ambiguity is exposed to Metalaw rather than guessed;
 - phrases, prefixes, suffixes, and symbolic runs remain valid Lexemes;
-- semantic composition must preserve provenance back to the occurrences that
-  caused it.
+- semantic composition must preserve provenance back to every occurrence that
+  contributed to a composed meaning.
 
 The existing Law Line remains a valid Terminal modality; it should become one
 consumer/witness of the more general semantic graph rather than being deleted
 in favor of an opaque parser.
 
-## Rung 3 — semantic Formation -> HTML Formation by authored Law
+## Rung 4 — semantic Formation -> HTML Formation by authored Law
 
 Use the same native vocabulary as the existing DOM mirror:
 
@@ -177,7 +203,7 @@ No mapping such as `Heading == h1`, `Formation == section`, or
 The output is a target Formation of exact HTML occurrence Lexemes, still
 detached from the browser.
 
-## Rung 4 — target HTML Formation -> structured DOM Act
+## Rung 5 — target HTML Formation -> structured DOM Act
 
 Connect the generated HTML Formation to the existing Foreign/Web Act protocol.
 
@@ -197,7 +223,7 @@ Never make arbitrary JavaScript text the ordinary Law-facing operation.
 
 The browser remains truth: Act -> browser -> MutationObserver -> sensed graph.
 
-## Rung 5 — round-trip convergence
+## Rung 6 — round-trip convergence
 
 Prove:
 
@@ -216,11 +242,10 @@ The emitted target and sensed target may differ if the browser normalizes or pag
 JavaScript reacts. Earthcall must converge to sensed truth without overwriting the
 semantic source.
 
-## Rung 6 — language-to-language theorem witness
+## Rung 7 — language-to-language theorem witness
 
 Once the same machinery handles both semantic composition and manifestation,
-demonstrate two translations that do not mention HTML in their core algorithm,
-for example:
+demonstrate two translations that do not mention HTML in their core algorithm:
 
 ```text
 natural language -> semantic Formation -> HTML Formation
@@ -249,8 +274,8 @@ This work must refuse these shortcuts:
 
 ## Immediate next implementation
 
-Build Rung 1: represent a transduction request as ordinary Earthcall beings and
-Relations, then feed that authored request into the detached Rung-0 kernel.
+Build Rung 2: use existing Law creation/relation actions to author and mutate a
+template Formation, then invoke the detached transducer on that graph.
 
-That turns today's proof from "C++ can materialize the graph safely" into
-"Law can author the graph that should be materialized."
+That is the first end-to-end point where the requested manifestation itself is
+Person-authored Earthcall state rather than C++ fixture data.
