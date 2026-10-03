@@ -266,6 +266,18 @@
         });
     }
 
+    // Place a node at the authored sibling index. Index 0 is meaningful:
+    // append-only insertion cannot preserve authored DOM order.
+    function insertAt(parentNode, node, siblingIndex) {
+        const index = Number.isInteger(siblingIndex) && siblingIndex >= 0
+            ? siblingIndex
+            : parentNode.childNodes.length;
+        const before = index < parentNode.childNodes.length
+            ? parentNode.childNodes[index]
+            : null;
+        parentNode.insertBefore(node, before);
+    }
+
     // Apply structured Act from Earthcall with operation provenance
     window.__earthcall_apply_act = function(actPayload) {
         let act = null;
@@ -309,7 +321,7 @@
                     if (act.attributeName && act.attributeValue) {
                         newEl.setAttribute(act.attributeName, act.attributeValue);
                     }
-                    parentNode.appendChild(newEl);
+                    insertAt(parentNode, newEl, act.siblingIndex);
                     break;
                 }
                 case 'insertText': {
@@ -317,13 +329,13 @@
                     if (!parentNode) return { success: false, error: 'Parent node not found' };
                     const textNode = document.createTextNode(act.text || '');
                     getOrCreateToken(textNode);
-                    parentNode.appendChild(textNode);
+                    insertAt(parentNode, textNode, act.siblingIndex);
                     break;
                 }
                 case 'moveNode': {
                     const parentNode = tokenToNode.get(act.parentToken);
                     if (!parentNode) return { success: false, error: 'Parent node not found' };
-                    parentNode.appendChild(targetNode);
+                    insertAt(parentNode, targetNode, act.siblingIndex);
                     break;
                 }
                 default:
