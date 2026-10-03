@@ -1807,7 +1807,7 @@ bool actionKindPalette(ActionNode& node) {
         {ActionNode::Kind::AddElement,     "COMPOSITION",   "Add element", "Place a being inside a container's element Formation."},
         {ActionNode::Kind::RemoveElement,  "COMPOSITION",   "Remove element", "Take a being out of a container."},
         {ActionNode::Kind::Spawn,          "CREATION",      "Spawn concept", "Manifest the objects captured by an ObjectConcept."},
-        {ActionNode::Kind::Create,         "CREATION",      "Create Singular", "Derive a Singular from a prototype, or create a shaped Object."},
+        {ActionNode::Kind::Create,         "CREATION",      "Create object", "Mint and shape one new Object."},
         {ActionNode::Kind::Synthesize,     "CREATION",      "Synthesize", "Compose set-to-set creation from ordinary steps."},
         {ActionNode::Kind::Destroy,        "CREATION",      "Destroy", "Remove an Object from its Zone."},
         {ActionNode::Kind::Publish,        "SIGNALS",       "Publish event", "Mint an event that other Laws can hear."},
@@ -1844,8 +1844,6 @@ bool actionKindPalette(ActionNode& node) {
             const std::string label = std::string(choice.title) + "\n" + choice.summary;
             if (ImGui::Selectable(label.c_str(), node.kind == choice.kind, 0,
                                   ImVec2(0.0f, 44.0f))) {
-                if (choice.kind == ActionNode::Kind::Create && node.kind != choice.kind)
-                    node.path = PropertyPath{}; // the old action's property is not a prototype
                 node.kind = choice.kind;
                 seedActionKind(node);
                 changed = true;
@@ -2339,88 +2337,49 @@ bool editActionNode(ActionNode& node, const Law* currentLaw = nullptr) {
         // Creation, composition, and their counterparts.
         // ----------------------------------------------------------------
         case ActionNode::Kind::Create: {
-            fieldCaption("Prototype path", "An actual Singular reference, such as @lexeme.source-hope; leave empty to create a shaped Object.");
-            char prototypeBuf[256];
-            copyToBuf(prototypeBuf, sizeof(prototypeBuf), node.path.toString());
-            if (textField("Prototype", prototypeBuf, sizeof(prototypeBuf), "@identifier or a property containing a Singular")) {
-                node.path = PropertyPath::parse(prototypeBuf);
-                changed = true;
-            }
-            const bool fromPrototype = !node.path.empty();
-            ImGui::TextDisabled(fromPrototype ? "Derive the prototype's concrete Singular kind into this Zone."
-                                             : "Mint a new Object of the chosen shape into this Zone.");
+            ImGui::TextDisabled("Mint a new Object of the chosen shape and place it in the Zone.");
             ImGui::TextDisabled("Children run WITH THE NEWBORN AS SUBJECT — Set, Map, AddProperty");
             ImGui::TextDisabled("all shape the thing being born.");
             ImGui::Spacing();
 
-            if (fromPrototype) {
-                char identityBuf[256], nameBuf[256];
-                copyToBuf(identityBuf, sizeof(identityBuf), node.newbornId);
-                if (textField("Newborn identity", identityBuf, sizeof(identityBuf), "Empty: a fresh branch identity")) {
-                    node.newbornId = identityBuf;
-                    changed = true;
-                }
-                copyToBuf(nameBuf, sizeof(nameBuf), node.newbornName);
-                if (textField("Optional newborn name", nameBuf, sizeof(nameBuf), "Lexeme symbol, Law/Object display name, or recipe name")) {
-                    node.newbornName = nameBuf;
-                    changed = true;
-                }
-                ImGui::TextDisabled("For a Relation prototype, explicitly choose its two participants:");
-                if (singularTokenPicker("First participant", node.containerToken, "No participant supplied")) changed = true;
-                if (singularTokenPicker("Second participant", node.elementToken, "No participant supplied")) changed = true;
-                const bool legacySettings = node.createShapeKind != 0 || !node.createType.empty() ||
-                    !node.spawnParentPath.empty() || !node.spawnPlacementPath.empty() ||
-                    !node.spawnShapeKindPath.empty() || !node.spawnColorPath.empty();
-                if (legacySettings) {
-                    ImGui::TextWrapped("This action still carries shaped Object settings; prototype birth will refuse them. Use child actions to shape the newborn.");
-                    if (ImGui::Button("Clear shaped Object settings")) {
-                        node.createShapeKind = 0;
-                        node.createType.clear();
-                        node.spawnParentPath = node.spawnPlacementPath = node.spawnShapeKindPath = node.spawnColorPath = PropertyPath{};
-                        changed = true;
-                    }
-                }
-            } else {
-
-                static const char* shapeNames[] = {
-                    "Cube", "Polyhedron", "Sphere", "Cylinder", "Cone",
-                    "Ellipsoid", "Ovoid", "Paraboloid", "Torus", "RoundedBox",
-                    "Field", "Patch", "Shape2D", "Text2D"};
-                if (comboField("Shape", node.createShapeKind, shapeNames, 14)) {
-                    changed = true;
-                }
-                char typeBuf[64];
-                copyToBuf(typeBuf, sizeof(typeBuf), node.createType);
-                if (textField("Optional type label", typeBuf, sizeof(typeBuf),
-                              "Leave empty or name an authored classification label…")) {
-                    node.createType = typeBuf;
-                    changed = true;
-                }
-                if (ImGui::IsItemHovered()) {
-                    ImGui::SetTooltip("Object type label (optional) — conditions can select \"all things of type X\"");
-                }
-                ImGui::Spacing();
-
-                fieldCaption("Placement Path", "Initial position (vec3) or transform (mat4) for the newborn.");
-                if (pathPicker("Placement", node.spawnPlacementPath)) changed = true;
-                showLiveValueBadge(node.spawnPlacementPath, currentLaw, "vector");
-                ImGui::Spacing();
-
-                fieldCaption("Parent Container Path", "Optional container object id or reference to adopt the newborn.");
-                if (pathPicker("Parent", node.spawnParentPath)) changed = true;
-                showLiveValueBadge(node.spawnParentPath, currentLaw, "text");
-                ImGui::Spacing();
-
-                fieldCaption("Dynamic Shape Override Path", "Optional property path reading a runtime ShapeKind integer.");
-                if (pathPicker("Shape override", node.spawnShapeKindPath)) changed = true;
-                showLiveValueBadge(node.spawnShapeKindPath, currentLaw, "int");
-                ImGui::Spacing();
-
-                fieldCaption("Dynamic Color Override Path", "Optional property path reading a runtime vec3 color.");
-                if (pathPicker("Color override", node.spawnColorPath)) changed = true;
-                showLiveValueBadge(node.spawnColorPath, currentLaw, "color");
-                ImGui::Spacing();
+            static const char* shapeNames[] = {
+                "Cube", "Polyhedron", "Sphere", "Cylinder", "Cone",
+                "Ellipsoid", "Ovoid", "Paraboloid", "Torus", "RoundedBox",
+                "Field", "Patch", "Shape2D", "Text2D"};
+            if (comboField("Shape", node.createShapeKind, shapeNames, 14)) {
+                changed = true;
             }
+            char typeBuf[64];
+            copyToBuf(typeBuf, sizeof(typeBuf), node.createType);
+            if (textField("Optional type label", typeBuf, sizeof(typeBuf),
+                          "Leave empty or name an authored classification label…")) {
+                node.createType = typeBuf;
+                changed = true;
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Object type label (optional) — conditions can select \"all things of type X\"");
+            }
+            ImGui::Spacing();
+
+            fieldCaption("Placement Path", "Initial position (vec3) or transform (mat4) for the newborn.");
+            if (pathPicker("Placement", node.spawnPlacementPath)) changed = true;
+            showLiveValueBadge(node.spawnPlacementPath, currentLaw, "vector");
+            ImGui::Spacing();
+
+            fieldCaption("Parent Container Path", "Optional container object id or reference to adopt the newborn.");
+            if (pathPicker("Parent", node.spawnParentPath)) changed = true;
+            showLiveValueBadge(node.spawnParentPath, currentLaw, "text");
+            ImGui::Spacing();
+
+            fieldCaption("Dynamic Shape Override Path", "Optional property path reading a runtime ShapeKind integer.");
+            if (pathPicker("Shape override", node.spawnShapeKindPath)) changed = true;
+            showLiveValueBadge(node.spawnShapeKindPath, currentLaw, "int");
+            ImGui::Spacing();
+
+            fieldCaption("Dynamic Color Override Path", "Optional property path reading a runtime vec3 color.");
+            if (pathPicker("Color override", node.spawnColorPath)) changed = true;
+            showLiveValueBadge(node.spawnColorPath, currentLaw, "color");
+            ImGui::Spacing();
 
             ImGui::TextDisabled("Steps that shape the newborn:");
             if (ImGui::Button("+ Set##create")) {

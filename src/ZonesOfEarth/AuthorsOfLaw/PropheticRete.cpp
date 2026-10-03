@@ -384,16 +384,7 @@ void analyzeAction(const ActionNode& node, LawFacts& out) {
         // event mints a fact of a type this walk never sees. None of that is
         // enumerable from a path walk, and pretending otherwise is how a
         // filter derived from this index would start dropping real changes.
-        case ActionNode::Kind::Create:
-            structural("Create mints a being");
-            if (!node.path.empty()) {
-                // A whole prototype codec reads state beyond one leaf. Until
-                // the codec can enumerate that footprint, unknown must stay
-                // conservative; it must never turn a creation Law deaf.
-                out.opaqueReads = true;
-                out.notes.push_back("opaque read: Create derives a whole Singular prototype");
-            }
-            break;
+        case ActionNode::Kind::Create:      structural("Create mints a being"); break;
         case ActionNode::Kind::Spawn:       structural("Spawn instantiates a concept"); break;
         case ActionNode::Kind::Synthesize:  structural("Synthesize composes creation"); break;
         case ActionNode::Kind::Destroy:     structural("Destroy unmakes a being"); break;

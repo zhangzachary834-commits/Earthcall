@@ -32,10 +32,88 @@ namespace fs = std::filesystem;
 // Kernel-level atomic write counter for generating unique temporary files
 static std::atomic<uint64_t> s_atomicTempCounter{1};
 
+static const char kBase64Chars[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "0123456789+/";
 
+std::string FileChannel::base64Encode(const std::string& input) {
+    std::string out;
+    int val = 0;
+    int valb = -6;
+    for (unsigned char c : input) {
+        val = (val << 8) + c;
+        valb += 8;
+        while (valb >= 0) {
+            out.push_back(kBase64Chars[(val >> valb) & 0x3F]);
+            valb -= 6;
+        }
+    }
+    if (valb > -6) {
+        out.push_back(kBase64Chars[((val << 8) >> (valb + 8)) & 0x3F]);
+    }
+    while (out.size() % 4 != 0) {
+        out.push_back('=');
+    }
+    return out;
+}
 
+std::string FileChannel::base64Decode(const std::string& input) {
+    std::string out;
+    std::vector<int> T(256, -1);
+    for (int i = 0; i < 64; i++) {
+        T[static_cast<unsigned char>(kBase64Chars[i])] = i;
+    }
 
+    int val = 0;
+    int valb = -8;
+    for (unsigned char c : input) {
+        if (std::isspace(c)) continue;
+        if (c == '=') break;
+        if (T[c] == -1) continue;
+        val = (val << 6) + T[c];
+        valb += 6;
+        if (valb >= 0) {
+            out.push_back(static_cast<char>((val >> valb) & 0xFF));
+            valb -= 8;
+        }
+    }
+    return out;
+}
 
+std::string FileChannel::hexEncode(const std::string& input) {
+    static const char hexDigits[] = "0123456789abcdef";
+    std::string out;
+    out.reserve(input.size() * 2);
+    for (unsigned char c : input) {
+        out.push_back(hexDigits[(c >> 4) & 0x0F]);
+        out.push_back(hexDigits[c & 0x0F]);
+    }
+    return out;
+}
+
+std::string FileChannel::hexDecode(const std::string& input) {
+    std::string out;
+    auto hexVal = [](char c) -> int {
+        if (c >= '0' && c <= '9') return c - '0';
+        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+        return -1;
+    };
+    int hi = -1;
+    for (char c : input) {
+        if (std::isspace(static_cast<unsigned char>(c))) continue;
+        int v = hexVal(c);
+        if (v == -1) continue;
+        if (hi == -1) {
+            hi = v;
+        } else {
+            out.push_back(static_cast<char>((hi << 4) | v));
+            hi = -1;
+        }
+    }
+    return out;
+}
 
 std::string FileChannel::computeSha256(const std::string& data) {
 #ifndef __EMSCRIPTEN__
@@ -112,6 +190,16 @@ std::string FileChannel::detectMimeType(const std::string& path, const std::stri
         // WebAssembly: \0asm
         if (len >= 4 && bytes[0] == 0x00 && bytes[1] == 'a' && bytes[2] == 's' && bytes[3] == 'm') {
             return "application/wasm";
+        }
+        // JSON syntax check
+        size_t firstNonWs = content.find_first_not_of(" \t\r\n");
+        if (firstNonWs != std::string::npos && (content[firstNonWs] == '{' || content[firstNonWs] == '[')) {
+            size_t lastNonWs = content.find_last_not_of(" \t\r\n");
+            if (lastNonWs != std::string::npos && (content[lastNonWs] == '}' || content[lastNonWs] == ']')) {
+                if (nlohmann::json::accept(content)) {
+                    return "application/json";
+                }
+            }
         }
     }
 
@@ -378,7 +466,13 @@ bool FileChannel::executeRead() {
             _lastOperationSuccess = false;
             return false;
         }
-        _content = std::move(memData);
+        if (_encoding == "base64") {
+            _content = base64Encode(memData);
+        } else if (_encoding == "hex") {
+            _content = hexEncode(memData);
+        } else {
+            _content = std::move(memData);
+        }
         _bytesRead = static_cast<double>(_content.size());
         _status = "read-success";
         _lastError = "";
@@ -460,7 +554,14 @@ bool FileChannel::executeRead() {
             }
             raw = std::move(normalized);
         }
-        _content = std::move(raw);
+
+        if (_encoding == "base64") {
+            _content = base64Encode(raw);
+        } else if (_encoding == "hex") {
+            _content = hexEncode(raw);
+        } else {
+            _content = std::move(raw);
+        }
 
         _bytesRead = static_cast<double>(_content.size());
         _status = "read-success";
@@ -505,6 +606,11 @@ bool FileChannel::executeWrite() {
     // In-memory virtual file write
     if (VirtualFileSystem::isMemory(_path)) {
         std::string payload = _content;
+        if (_encoding == "base64") {
+            payload = base64Decode(_content);
+        } else if (_encoding == "hex") {
+            payload = hexDecode(_content);
+        }
         if (_writeMode == "append") {
             std::string existing;
             VirtualFileSystem::instance().readMemoryFile(_path, existing);
@@ -542,7 +648,13 @@ bool FileChannel::executeWrite() {
                 return false;
             }
         }
+
         std::string payload = _content;
+        if (_encoding == "base64") {
+            payload = base64Decode(_content);
+        } else if (_encoding == "hex") {
+            payload = hexDecode(_content);
+        }
 
         if (_writeMode == "append") {
             std::ofstream file(absPath, std::ios::out | std::ios::binary | std::ios::app);
@@ -962,9 +1074,45 @@ void FileChannel::propSetMoveTrigger(const bool& v) {
     }
 }
 
+std::string FileChannel::propContentBase64() const {
+    if (_encoding == "base64") {
+        return _content;
+    }
+    if (_encoding == "hex") {
+        return base64Encode(hexDecode(_content));
+    }
+    return base64Encode(_content);
+}
 
+void FileChannel::propSetContentBase64(const std::string& v) {
+    if (_encoding == "base64") {
+        _content = v;
+    } else if (_encoding == "hex") {
+        _content = hexEncode(base64Decode(v));
+    } else {
+        _content = base64Decode(v);
+    }
+}
 
+std::string FileChannel::propContentHex() const {
+    if (_encoding == "hex") {
+        return _content;
+    }
+    if (_encoding == "base64") {
+        return hexEncode(base64Decode(_content));
+    }
+    return hexEncode(_content);
+}
 
+void FileChannel::propSetContentHex(const std::string& v) {
+    if (_encoding == "hex") {
+        _content = v;
+    } else if (_encoding == "base64") {
+        _content = base64Encode(hexDecode(v));
+    } else {
+        _content = hexDecode(v);
+    }
+}
 
 bool FileChannel::propExists() const {
     if (_path.empty()) return false;
@@ -1123,8 +1271,30 @@ std::string FileChannel::propDirectory() const {
     }
 }
 
+bool FileChannel::propJsonValid() const {
+    if (_content.empty()) return false;
+    return nlohmann::json::accept(_content);
+}
 
+std::string FileChannel::propJsonCompact() const {
+    if (_content.empty()) return "";
+    try {
+        auto j = nlohmann::json::parse(_content);
+        return j.dump();
+    } catch (...) {
+        return "";
+    }
+}
 
+std::string FileChannel::propJsonPretty() const {
+    if (_content.empty()) return "";
+    try {
+        auto j = nlohmann::json::parse(_content);
+        return j.dump(2);
+    } catch (...) {
+        return "";
+    }
+}
 
 void FileChannel::buildProperties() {
     registerProperty(std::make_unique<ComputedProperty<FileChannel, bool>>(
@@ -1156,6 +1326,8 @@ void FileChannel::buildProperties() {
         "file.writeMode", this, &FileChannel::propWriteMode, &FileChannel::propSetWriteMode));
     registerProperty(std::make_unique<ComputedProperty<FileChannel, bool>>(
         "file.atomicWrite", this, &FileChannel::propAtomicWrite, &FileChannel::propSetAtomicWrite));
+    registerProperty(std::make_unique<ComputedProperty<FileChannel, std::string>>(
+        "file.encoding", this, &FileChannel::propEncoding, &FileChannel::propSetEncoding));
     registerProperty(std::make_unique<ComputedProperty<FileChannel, bool>>(
         "file.stripBom", this, &FileChannel::propStripBom, &FileChannel::propSetStripBom));
     registerProperty(std::make_unique<ComputedProperty<FileChannel, bool>>(
@@ -1182,6 +1354,11 @@ void FileChannel::buildProperties() {
         "file.errorCode", this, &FileChannel::propErrorCode, nullptr));
     registerProperty(std::make_unique<ComputedProperty<FileChannel, bool>>(
         "file.lastOperationSuccess", this, &FileChannel::propLastOperationSuccess, nullptr));
+
+    registerProperty(std::make_unique<ComputedProperty<FileChannel, std::string>>(
+        "file.contentBase64", this, &FileChannel::propContentBase64, &FileChannel::propSetContentBase64));
+    registerProperty(std::make_unique<ComputedProperty<FileChannel, std::string>>(
+        "file.contentHex", this, &FileChannel::propContentHex, &FileChannel::propSetContentHex));
 
     registerProperty(std::make_unique<ComputedProperty<FileChannel, bool>>(
         "file.exists", this, &FileChannel::propExists, nullptr));
@@ -1217,6 +1394,13 @@ void FileChannel::buildProperties() {
         "file.filename", this, &FileChannel::propFilename, nullptr));
     registerProperty(std::make_unique<ComputedProperty<FileChannel, std::string>>(
         "file.directory", this, &FileChannel::propDirectory, nullptr));
+
+    registerProperty(std::make_unique<ComputedProperty<FileChannel, bool>>(
+        "file.jsonValid", this, &FileChannel::propJsonValid, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<FileChannel, std::string>>(
+        "file.jsonCompact", this, &FileChannel::propJsonCompact, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<FileChannel, std::string>>(
+        "file.jsonPretty", this, &FileChannel::propJsonPretty, nullptr));
 }
 
 } // namespace Storage

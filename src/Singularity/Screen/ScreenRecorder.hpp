@@ -5,7 +5,6 @@
 #include <vector>
 #include <cstdint>
 #include <chrono>
-#include <cmath>
 
 namespace Singularity {
 namespace Screen {
@@ -19,7 +18,7 @@ namespace Screen {
 // - Multi-mode capture:
 //     * "viewport": in-engine framebuffer capture (100% self-contained, no OS permissions needed).
 //     * "display": host OS display capture via CoreGraphics (requires Screen Recording permission).
-//     * "window": currently refused; never substitutes a full-display capture.
+//     * "window": host OS window capture (requires Screen Recording permission).
 // - Multi-format output:
 //     * "ppm_sequence": high-speed uncompressed 24-bit RGB P6 stream for real-time capture.
 //     * "png_sequence": lossless compressed PNG frames via zlib.
@@ -29,7 +28,7 @@ namespace Screen {
 //     * Queries CGPreflightScreenCaptureAccess and AXIsProcessTrusted.
 //     * Gracefully falls back to in-engine viewport recording if OS permissions denied.
 //     * Informs the Person with diagnostic accessibility and privacy details.
-//     * Optional cursor overlay uses actual viewport coordinates supplied by the engine.
+//     * Supports optional cursor overlay tracking in recorded frames.
 class ScreenRecorder : public Law {
 public:
     ScreenRecorder();
@@ -50,8 +49,7 @@ public:
     bool isRecording() const { return _recording && !_paused; }
 
     // Step a frame in the active recording session
-    bool stepFrame(int viewportW, int viewportH, const uint8_t* optionalPixels = nullptr,
-                   int cursorX = -1, int cursorY = -1);
+    bool stepFrame(int viewportW, int viewportH, const uint8_t* optionalPixels = nullptr);
 
     // Capture an instantaneous snapshot (PNG or PPM)
     bool captureSnapshot(const std::string& customPath = "", int viewportW = 0, int viewportH = 0, const uint8_t* optionalPixels = nullptr);
@@ -85,31 +83,19 @@ private:
     void propSetRecording(const bool& v);
 
     bool propPaused() const { return _paused; }
-    void propSetPaused(const bool& v) { if (v) pauseRecording(); else resumeRecording(); }
+    void propSetPaused(const bool& v) { _paused = v; }
 
     std::string propMode() const { return _mode; }
-    void propSetMode(const std::string& v) {
-        if (_recording && v != _mode) { _lastError = "Stop recording before changing capture mode"; return; }
-        _mode = v;
-    }
+    void propSetMode(const std::string& v) { _mode = v; }
 
     std::string propFormat() const { return _format; }
-    void propSetFormat(const std::string& v) {
-        if (_recording && v != _format) { _lastError = "Stop recording before changing format"; return; }
-        _format = v;
-    }
+    void propSetFormat(const std::string& v) { _format = v; }
 
     std::string propOutputPath() const { return _outputPath; }
-    void propSetOutputPath(const std::string& v) {
-        if (_recording && v != _outputPath) { _lastError = "Stop recording before changing output path"; return; }
-        _outputPath = v;
-    }
+    void propSetOutputPath(const std::string& v) { _outputPath = v; }
 
     double propFps() const { return _fps; }
-    void propSetFps(const double& v) {
-        if (_recording && v != _fps) { _lastError = "Stop recording before changing frame rate"; return; }
-        _fps = std::isfinite(v) && v > 0.0 ? v : 30.0;
-    }
+    void propSetFps(const double& v) { _fps = v > 0.0 ? v : 30.0; }
 
     bool propRecordCursor() const { return _recordCursor; }
     void propSetRecordCursor(const bool& v) { _recordCursor = v; }

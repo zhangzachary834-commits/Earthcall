@@ -1,22 +1,5 @@
 # Person Verification List
 
-## Universal Singular prototype creation
-
-*Codex / GPT-6.1 Sol / session `01a0e64f-5853-7d30-8196-995b4fd16b89` /
-2026-10-02 17:02 PDT. Zach: Create should admit existing Singular subclasses
-without inventing another ontology, while unresolved meanings stay open.
-Headless tests exercise the authored action; these editor checks need your witness.*
-
-- [ ] Rebuild/run `earthcall_webgpu`, open a Law's Action editor, and choose **Create Singular**: an empty **Prototype** should expose the existing shaped Object controls; entering an actual `@identifier` should expose **Newborn identity**, name, and the two optional Relation participants.
-- [ ] If that action previously carried Object placement/type/shape settings, the editor should show the conflict; explicitly press **Clear shaped Object settings**, then shape the newborn with child actions.
-- [ ] Use a Lexeme prototype that exists in the active Zone, give the newborn an unused identity, and add a child `AddProperty`; fire the authored Law, Save Zone, and reload: the new Lexeme and authored property should remain, and another firing with the same requested identity should refuse in the Law's application record.
-- [ ] With an explicit TransferPolicy gate closed on the prototype, the Law's application record should name the refused source gate and no newborn should appear; opening the gate must be an authored action, not a consequence of clicking Create.
-
-No demonstration beings or inhabited saves were injected. Ourverse extent,
-Zone/Home owner inheritance, Event/Utterance occurrence birth, Timeline member
-birth, and selective replacement of closed transfers remain in
-[the creation task](../Specific%20Tasks/Interaction%20and%20Interface/Singular_and_Object_Set_to_Set_Creation/Singular_and_Object_Set_to_Set_Creation.md).
-
 ## Double-click launchers: `Run Earthcall as Me.command` and `Earthcall First Movers.command`
 
 *Claude Code · Claude Opus 5.5 · session `08b0f730-6e49-4c49-b27f-3a89c810ca4b` · 2026-10-01. Zach: "make a executable thingy i can double click … separate the person verification executable from the first mover one". Both were run end to end in a sandbox (keying, wrong passphrases, adding, listing and removing a model). These are the checks only you can do.*
@@ -59,8 +42,8 @@ birth, and selective replacement of closed transfers remain in
 
 ## Constitutional Person movement
 
-- [ ] If an existing saved Law attempts to set your `position`, `velocity`, or `acceleration`, witness that it does not move you merely because you authored the Law; record any movement channel that still does. This remains open because the authored, revocable consent Relation has not yet been specified or wired. No save file was changed for this check. *Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:23 PDT.*
-- [ ] When authoring a live `Map`/`ValueLeaf` Law from a list/dictionary PropertyPath, confirm that changing the source leaf changes the intended visible result on the next firing, and that a refused read-only nested write names its refusal in the Law record; this pass verified serialized Laws headlessly and added no inhabited demonstration save or new control. General scalar cells, unique/weak bindings, alias-wide reactivity, and save topology remain open in [the Property memory task](../Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md). *Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 12:29 PDT.*
+- [ ] If an existing saved Law attempts to set your `position`, `velocity`, or `acceleration`, witness that it does not move you merely because you authored the Law; record any movement channel that still does. This remains open because the authored, revocable consent Relation has not yet been specified or wired. No save file was changed for this check. *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:23 PDT.*
+- [ ] When authoring a live `Map`/`ValueLeaf` Law from a list/dictionary PropertyPath, confirm that changing the source leaf changes the intended visible result on the next firing, and that a refused read-only nested write names its refusal in the Law record; this pass verified serialized Laws headlessly and added no inhabited demonstration save or new control. General scalar cells, unique/weak bindings, alias-wide reactivity, and save topology remain open in [the Property memory task](../Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md). *Codex · GPT-6 · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 12:29 PDT.*
 
 
 
@@ -157,15 +140,6 @@ birth, and selective replacement of closed transfers remain in
 
 
 ## Screen Recorder — Law-Authored Snapshot & Recording Controls
-
-*Codex · GPT-6 · session `01a0fe15-4fe2-7dc0-a2d0-7d823e4ad26c` · 2026-10-02 12:40 PDT; [native capture evidence](../../../audits/SCREEN_CAPTURE_NATIVE_VERIFICATION_2026-10-02.md).*
-
-- [x] Inspect the recorder's actual chess screenshot: Zach confirmed **“THATS THE ACTUAL CHESS ZONE”** and **“THE BUTTONS ARE THE RIGHT COLORS NOT RED GLITCH”** in this session.
-- [ ] In your ordinary Earthcall launch, trigger a viewport snapshot and compare the saved PNG with the visible world; authored 2D controls should match, while Creator Console/ImGui panels are outside viewport capture.
-- [ ] Start `png_sequence` recording, move/look around, pause/resume, stop, and inspect the saved frames for the intended view and cursor placement; two rapid starts and two rapid snapshots must preserve separate output files.
-- [ ] For host-display capture, grant the actual Earthcall launch process macOS Screen Recording permission and verify `mode=display` with `fallbackToViewport=false`; a refused capture must name its error and create no substitute image.
-- [ ] Choose whether window capture means Earthcall's whole app window or a selected foreign app window; it currently refuses instead of capturing the full desktop.
-- [ ] If MP4 is desired, make ffmpeg available on the launch process's PATH and verify playback after stop; this pass verifies missing/failed encoder refusal, not successful MP4 encoding.
 
 *Antigravity · 2026-09-23. Verification for user-authored Laws targeting* `@screen-recorder.snapshot` *and* `@screen-recorder.recording`*.*
 
@@ -1134,19 +1108,3 @@ Zach asked to fix the Creator Console's Zone Window which was "just a pile of zo
 - [ ] **Select a Zone.** Check if the details (Name, ID, Objects, Relations, Actions) cleanly display on the right pane.
 - [ ] **Test the buttons.** The right pane has context-aware buttons ("Move to Zone", "Already Here", "Save Active Zone", "Save Zone"). Please verify that clicking them works exactly as before and the UI feedback (green/red text at the top) is clear.
 - [ ] **Does it feel like a "Creator" tool?** The styling has some minor ImGui coloring (`ImVec4(1.0f, 0.8f, 0.2f, 1.0f)` for titles) and clear spacing to match the console feel. Tell me if it feels less awkward.
-
-## Shape Generator 3D Law Modernization
-* **Date:** 2026-10-02
-* **What to check:** The old C++ tool bypass for the Shape Generator 3D has been completely removed. Object creation is now 100% Law-driven (via the `shape-generator-3d-law`). Please launch Earthcall and verify:
-  1. Pressing `O` (changed from `L`) toggles the Creator Console visibility/hotkey cleanly.
-  2. The Creator Console in "Create" mode uses the `shape-generator-3d-law` and renders a proper 3D ghost preview (instead of the ImGui text preview).
-  3. Clicking in the world in Create mode spawns the object correctly using the authored law.
-  4. Try spawning a Field object and ensure its implicit expression is preserved.
-
-## Reverse image modality — first editable rung (2026-10-02)
-
-Codex · GPT-6 · session `01a0fe15-4fe2-7dc0-a2d0-7d823e4ad26c` · 15:57 PDT. Zach asked for both faithful display and reconstruction, fundamentally reconstruction. Machine evidence and next steps are in [the task](../Specific%20Tasks/Rendering%20and%20OntoMath/Image_Reconstruction/Image_Reconstruction.md).
-
-- [ ] Inspect `scratch/capture-verification/2026-10-02-01a0fe15/reverse/reconstructed.png` beside `source.png`: the promotion strip should have the same colors and lettering, without new seams.
-- [ ] Inspect `edited.png` and `painted.png`: only the selected lower yellow region should disappear or turn green; neighboring text and colored panels should stay unchanged.
-- [ ] Judge whether rectangle fragments are a useful first editing rung; meaningful button/text grouping and recovered 3D are still unfinished, and reconstructed panels do not yet carry the original chess behavior.

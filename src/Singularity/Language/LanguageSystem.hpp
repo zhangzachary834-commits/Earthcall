@@ -32,10 +32,6 @@ public:
     // single-symbol index remains the legacy/default binding; exact identity is
     // always available through findById, and findAllBySymbol exposes ambiguity.
     std::shared_ptr<Lexeme> intern(const std::string& symbol, const std::string& stableId);
-    // Mechanical admission of an already-constructed Lexeme. Keeps graph
-    // endpoints and the language index on the SAME instance; identity collision
-    // refuses rather than substituting a different same-spelled being.
-    bool retainLexeme(std::shared_ptr<Lexeme> lexeme);
 
     // Legacy/default spelling lookup. When multiple live Lexemes share the same
     // spelling, this preserves the existing last-bound behavior but reports the

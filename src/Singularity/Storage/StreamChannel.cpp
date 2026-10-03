@@ -1,6 +1,5 @@
 #include "Singularity/Storage/StreamChannel.hpp"
 #include "Singularity/Storage/FileChannel.hpp"
-#include "Singularity/Core/CodecChannel.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 
 #include <sys/stat.h>
@@ -156,11 +155,11 @@ void StreamChannel::flush() {
 }
 
 std::string StreamChannel::propChunkDataBase64() const {
-    return Core::CodecChannel::base64Encode(_chunkData);
+    return FileChannel::base64Encode(_chunkData);
 }
 
 void StreamChannel::propSetChunkDataBase64(const std::string& v) {
-    _chunkData = Core::CodecChannel::base64Decode(v);
+    _chunkData = FileChannel::base64Decode(v);
 }
 
 void StreamChannel::propSetOpenTrigger(const bool& v) {
