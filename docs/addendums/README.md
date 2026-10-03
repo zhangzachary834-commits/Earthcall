@@ -16,3 +16,6 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating OntoMath Raster Formations and GPU Micro-Mastery](ontomath_raster_and_gpu_micro_mastery_addendum.md)
 *   [Integrating Geometry Substrate and Property Predication](geometry_substrate_and_property_predication_addendum.md)
 *   [Integrating Formation Rete Tiered Relevance and the Object Hover Events System](formation_rete_and_hover_events_addendum.md)
+*   [Integrating Event Bus and Semantic Relation Events](event_bus_and_relation_events_addendum.md)
+*   [Integrating Authored Categories and Directory Ordering](authored_categories_and_directory_ordering_addendum.md)
+*   [Integrating Foreign Databases and the No Black Box Principle](foreign_databases_and_no_black_box_addendum.md)
