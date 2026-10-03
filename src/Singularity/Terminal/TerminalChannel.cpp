@@ -9,6 +9,7 @@
 #include "Relation/Relation.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Core/StringId.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -95,6 +96,36 @@ std::string mintLawId() {
     char text[37];
     uuid_unparse_lower(uuid, text);
     return "law_" + std::string(text);
+}
+
+// Structural vocabulary of the Terminal modality's graph projection. These
+// are the graph equivalent of LawSentence's canonical structural words: they
+// do not decide domain meaning or HTML mappings. They merely name exact,
+// inspectable relations between graph layers.
+//
+// Call intern each time instead of caching shared_ptrs here. LanguageSystem
+// can be cleared/reloaded in tests and tooling; stable identity rebinds the
+// same first-mover vocabulary into the current language world.
+LawSentenceGraph::Kinds sentenceGraphKinds() {
+    auto& language = Singularity::Language::LanguageSystem::instance();
+    auto next = language.intern(
+        "lexical-next", "relation-kind.terminal.lexical-next");
+    auto denotes = language.intern(
+        "denotes", "relation-kind.terminal.occurrence-denotes");
+    auto candidate = language.intern(
+        "candidate-denotation", "relation-kind.terminal.candidate-denotation");
+    auto semanticChild = language.intern(
+        "semantic-child", "relation-kind.terminal.semantic-child");
+    auto expresses = language.intern(
+        "expresses", "relation-kind.terminal.lexical-expresses-semantic");
+
+    return LawSentenceGraph::Kinds{
+        next.get(),
+        denotes.get(),
+        candidate.get(),
+        semanticChild.get(),
+        expresses.get()
+    };
 }
 
 Singular* findBeing(const std::string& id) {
@@ -1100,8 +1131,46 @@ LawSentence::Resolution TerminalChannel::resolveByMetalaw(LawManager& laws,
     return r;
 }
 
+void TerminalChannel::retainSentenceGraph(
+        const std::string& text, const LawSentence::Parse& parsed) {
+    const std::string utteranceId =
+        "terminal-channel.utterance." + std::to_string(++_sentenceGraphSequence);
+
+    LawSentenceGraph::Result projected =
+        LawSentenceGraph::projectParsed(text, parsed, utteranceId, sentenceGraphKinds());
+
+    // Never let graph.* describe yesterday's sentence when today's projection
+    // failed. The old Result is released before the public IDs are cleared.
+    _sentenceGraph.reset();
+    _graphUtteranceId.clear();
+    _graphLexicalId.clear();
+    _graphDenotationId.clear();
+    _graphSemanticId.clear();
+
+    if (!projected) {
+        _graphStatus = "refused: " + projected.refusal;
+        return;
+    }
+
+    _sentenceGraph = std::move(projected);
+    _graphUtteranceId = utteranceId;
+    if (_sentenceGraph->lexicalFormation) {
+        _graphLexicalId = _sentenceGraph->lexicalFormation->getIdentifier();
+    }
+    if (_sentenceGraph->denotationFormation) {
+        _graphDenotationId = _sentenceGraph->denotationFormation->getIdentifier();
+    }
+    if (_sentenceGraph->semanticFormation) {
+        _graphSemanticId = _sentenceGraph->semanticFormation->getIdentifier();
+    }
+    _graphStatus = _graphSemanticId.empty()
+                       ? "projected lexical + denotation layers"
+                       : "projected lexical + denotation + semantic layers";
+}
+
 void TerminalChannel::speak(LawManager& laws, const std::string& text) {
     const LawSentence::Parse p = LawSentence::parse(text, vocabulary(laws));
+    if (!p.search) retainSentenceGraph(text, p);
     _preview = p.preview();
     _openClauses = join(p.openClauses, "; ");
 
@@ -1201,6 +1270,7 @@ TerminalChannel::ForeignSentence TerminalChannel::authorForeign(
         const std::vector<Singular*>& authors, const std::string& identifier) {
     ForeignSentence out;
     const LawSentence::Parse p = LawSentence::parse(text, vocabulary(laws));
+    if (!p.search) retainSentenceGraph(text, p);
     out.preview = p.preview();
     out.openClauses = p.openClauses;
     const std::string notes = p.notes.empty() ? std::string{} : join(p.notes, "; ");
@@ -1866,6 +1936,11 @@ void TerminalChannel::buildProperties() {
     level("preview", &_preview);
     level("openClauses", &_openClauses);
     level("lastCreated", &_lastCreated);
+    level("graph.utteranceId", &_graphUtteranceId);
+    level("graph.lexicalFormationId", &_graphLexicalId);
+    level("graph.denotationFormationId", &_graphDenotationId);
+    level("graph.semanticFormationId", &_graphSemanticId);
+    level("graph.status", &_graphStatus);
     level("ambiguity.symbol", &_ambiguitySymbol);
     level("ambiguity.slot", &_ambiguitySlot);
     level("ambiguity.candidates", &_ambiguityCandidates);

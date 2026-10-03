@@ -173,6 +173,17 @@ Result project(const std::string& text,
                const LawSentence::Vocabulary& vocabulary,
                const std::string& utteranceId,
                const Kinds& kinds) {
+    return projectParsed(
+        text,
+        LawSentence::parse(text, vocabulary),
+        utteranceId,
+        kinds);
+}
+
+Result projectParsed(const std::string& text,
+                     const LawSentence::Parse& parsed,
+                     const std::string& utteranceId,
+                     const Kinds& kinds) {
     Result out;
     if (utteranceId.empty()) {
         out.refusal = "utterance identity is empty";
@@ -183,7 +194,7 @@ Result project(const std::string& text,
         return out;
     }
 
-    out.parse = LawSentence::parse(text, vocabulary);
+    out.parse = parsed;
 
     std::vector<OccurrenceSeed> seeds;
     seeds.reserve(out.parse.spans.size() + out.parse.ambiguities.size());

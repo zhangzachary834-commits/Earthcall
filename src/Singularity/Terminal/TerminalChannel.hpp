@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Singularity/Terminal/LawSentence.hpp"
+#include "Singularity/Terminal/LawSentenceGraph.hpp"
 #include "Singularity/Terminal/LineEditor.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 
@@ -135,9 +136,17 @@ public:
     void setSink(Sink sink) { _sink = std::move(sink); }
     bool attached() const { return _attached; }
 
+    // The latest non-search Law-Line utterance, retained as explicit graph
+    // layers. The pointer stays valid until the next projected utterance or
+    // this channel's destruction.
+    const LawSentenceGraph::Result* lastSentenceGraph() const {
+        return _sentenceGraph ? &*_sentenceGraph : nullptr;
+    }
+
 private:
     void buildProperties() override;
     void speak(LawManager& laws, const std::string& text);
+    void retainSentenceGraph(const std::string& text, const LawSentence::Parse& parsed);
     void placeLine();
     bool moveLine(const std::string& target);         // false = stayed, and said why
     bool handleEnter(const std::string& trimmed);      // true = the line was `enter ...`
@@ -253,6 +262,19 @@ private:
     std::optional<LawSentence::Vocabulary> _vocab;
     std::string _parseText;
     std::optional<LawSentence::Parse> _parse;
+
+    // Latest explicit language graph. This is channel state, not a second
+    // parser: retainSentenceGraph consumes the Parse that speak/authorForeign
+    // already used. Formations own non-owning member pointers, so keeping the
+    // whole Result here pins its occurrence and semantic Lexemes together.
+    std::optional<LawSentenceGraph::Result> _sentenceGraph;
+    std::uint64_t _sentenceGraphSequence = 0;
+    std::string _graphUtteranceId;
+    std::string _graphLexicalId;
+    std::string _graphDenotationId;
+    std::string _graphSemanticId;
+    std::string _graphStatus;
+
     // Mouse reporting is on only while a menu or help is open; a cursor
     // report after each draw says which screen row the region starts on.
     bool _mouseOn = false;

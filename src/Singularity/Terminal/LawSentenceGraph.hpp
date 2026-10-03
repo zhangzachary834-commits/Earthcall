@@ -92,6 +92,14 @@ Result project(const std::string& text,
                const std::string& utteranceId,
                const Kinds& kinds);
 
+// Same projection, but from the exact Parse a modality already performed.
+// This matters for channels whose Vocabulary::resolve invokes Metalaws: graph
+// projection must not parse a second time and ask those Metalaws twice.
+Result projectParsed(const std::string& text,
+                     const LawSentence::Parse& parsed,
+                     const std::string& utteranceId,
+                     const Kinds& kinds);
+
 } // namespace LawSentenceGraph
 } // namespace Terminal
 } // namespace Singularity
