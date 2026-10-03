@@ -640,10 +640,10 @@ void Tool::Pottery3D(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
 
             const auto authoredTransform = OntoMath::affineTRS(
                 translation, glm::vec3(0.0f), glm::vec3(scaleX, scaleY, scaleZ));
-            if (!authoredTransform) continue;
-            const auto newT = authoredTransform->toGlmMat4();
-            if (!newT) continue;
-            applyToolTransform(hitObj, *newT, avatarRoot);
+            if (authoredTransform) {
+                const auto newT = authoredTransform->toGlmMat4();
+                if (newT) applyToolTransform(hitObj, *newT, avatarRoot);
+            }
             // hitObj->updateCollisionZone(newT); // handled by setTransform/setLocalTransform
         }
     }
