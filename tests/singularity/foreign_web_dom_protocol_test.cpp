@@ -264,6 +264,40 @@ int main() {
         assert(parsedAct.text == "Changed by Earthcall Law");
     }
 
+    // 11. Insert Acts have no target token until the browser creates the
+    // node and returns its exact token in the confirmation delta.
+    {
+        DomAct insertElement;
+        insertElement.protocolVersion = 1;
+        insertElement.pageSessionId = "page-session.a91f4b2c";
+        insertElement.operationId = "op.insert.element";
+        insertElement.kind = DomActKind::InsertElement;
+        insertElement.parentToken = "node.1";
+        insertElement.tagName = "section";
+        assert(insertElement.targetNodeToken.empty());
+        assert(insertElement.validate().valid);
+
+        DomAct insertText;
+        insertText.protocolVersion = 1;
+        insertText.pageSessionId = "page-session.a91f4b2c";
+        insertText.operationId = "op.insert.text";
+        insertText.kind = DomActKind::InsertText;
+        insertText.parentToken = "node.1";
+        insertText.text = "born in the browser";
+        assert(insertText.targetNodeToken.empty());
+        assert(insertText.validate().valid);
+
+        DomAct mutateExisting;
+        mutateExisting.protocolVersion = 1;
+        mutateExisting.pageSessionId = "page-session.a91f4b2c";
+        mutateExisting.operationId = "op.set.no-target";
+        mutateExisting.kind = DomActKind::SetText;
+        mutateExisting.text = "cannot address nothing";
+        ValidationResult missingTarget = mutateExisting.validate();
+        assert(!missingTarget.valid);
+        assert(missingTarget.error.find("targetNodeToken") != std::string::npos);
+    }
+
     std::cout << "foreign_web_dom_protocol_test PASSED!" << std::endl;
     return 0;
 }

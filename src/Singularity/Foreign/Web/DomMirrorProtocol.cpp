@@ -415,7 +415,13 @@ ValidationResult DomAct::validate() const {
     if (operationId.empty()) {
         return ValidationResult::fail("Act operationId cannot be empty");
     }
-    if (targetNodeToken.empty()) {
+    // Insert Acts create the target; there is no exact browser token until
+    // the browser mints one and reports it in the confirmation delta. Every
+    // other Act addresses an already-live occurrence and therefore must name
+    // its exact target token. The JS dispatcher follows this same rule.
+    const bool createsTarget =
+        kind == DomActKind::InsertElement || kind == DomActKind::InsertText;
+    if (!createsTarget && targetNodeToken.empty()) {
         return ValidationResult::fail("Act targetNodeToken cannot be empty");
     }
 
