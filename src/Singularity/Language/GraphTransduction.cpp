@@ -73,9 +73,23 @@ GraphTransduction::Result GraphTransduction::build(const Plan& plan) {
             if (!seen.insert(source).second) {
                 return std::string(what) + " repeats source " + source->getIdentifier();
             }
-            if (plan.sourceFormation && !plan.sourceFormation->hasMember(source)) {
-                return std::string("source being is outside the declared source Formation: ") +
-                       source->getIdentifier();
+            if (plan.sourceFormation) {
+                bool belongs = source == plan.sourceFormation ||
+                               plan.sourceFormation->hasMember(source);
+                if (!belongs) {
+                    if (const auto* sourceRelation = dynamic_cast<const Relation*>(source)) {
+                        for (const auto& held : plan.sourceFormation->relations().getAll()) {
+                            if (held.get() == sourceRelation) {
+                                belongs = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!belongs) {
+                    return std::string("source being is outside the declared source Formation: ") +
+                           source->getIdentifier();
+                }
             }
         }
         if (!sources.empty() && !hasCorrespondenceKind) {
