@@ -1,6 +1,6 @@
 # Lexeme / Relation / Formation Transduction
 
-**Status:** Rungs 0–2 + Rungs 3a–3b implemented on `sol/lexeme-formation-transduction-20261002`  
+**Status:** Rungs 0–2 + Rungs 3a–3b implemented; first language→HTML theorem witness added on `sol/lexeme-formation-transduction-20261002`  
 **Date:** 2026-10-02  
 **Human direction:** Zachary Zhang  
 **Implementation:** GPT-5.6 Sol
@@ -369,3 +369,35 @@ The next rung is an intended-being layer above the Law AST. Its job is to prove
 that the same transduction machinery can consume meaning that is not merely a
 Law syntax tree, while keeping LawSentence as one modality-specific witness
 rather than declaring its grammar to be universal natural language.
+
+
+## First closed-circuit witness — Law-Line language to HTML Formation
+
+The branch now carries one end-to-end executable theorem witness:
+
+    Terminal text
+      -> lexical occurrence Formation
+      -> denotation Formation
+      -> semantic Law Formation
+      -> persisted authored manifestation Law
+      -> manifestation-template Formation
+      -> GraphTransduction
+      -> HTML-shaped Lexeme Formation
+
+The witness sentence is intentionally inside the language Earthcall can
+truthfully read today. It does not claim that LawSentence is universal English.
+
+A composed action sentence becomes a semantic Law-intent graph. A separate,
+serialized-and-restored Law then authors mappings from selected semantic beings
+to target HTML prototype Lexemes and authors the target DOM-like topology with
+the same grounded dom-child-of / dom-next-sibling Relation kinds used by the
+HTML bridge vocabulary.
+
+GraphTransduction finally materializes a fresh target Formation. The semantic
+Law-intent being remains distinct from the target article occurrence; two
+semantic child actions become two distinct li occurrences even though their
+surface tag spelling is identical.
+
+This is the first executable closure of the two architectural rivers. Future
+natural-language layers can replace or extend the front semantic analysis
+without changing the manifestation kernel or HTML bridge.
