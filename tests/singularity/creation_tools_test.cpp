@@ -13,6 +13,7 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
@@ -154,6 +155,38 @@ int main() {
         channel->computeSpawnPosition(glm::vec3(99.0f), glm::vec3(0, 0, -1));
     check(glm::length(actualCursorSnap - expectedCursorSnap) < 1e-5f,
           "CreationChannel OntoMath CursorSnap surface offset preserves legacy rotated support axes");
+
+    // Rung 6 First Mover world->local parity. Production Tool.cpp now asks
+    // OntoMath for inverse(parent) * world; GLM here is only the frozen oracle.
+    glm::mat4 parentWorld = glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, -2.0f, 5.0f));
+    parentWorld = glm::rotate(parentWorld, glm::radians(29.0f), glm::vec3(0, 1, 0));
+    parentWorld = glm::scale(parentWorld, glm::vec3(1.25f, 0.75f, 1.8f));
+    glm::mat4 childWorld = glm::translate(glm::mat4(1.0f), glm::vec3(-4.0f, 6.0f, 2.0f));
+    childWorld = glm::rotate(childWorld, glm::radians(-17.0f), glm::vec3(1, 0, 0));
+    const glm::mat4 legacyLocal = glm::inverse(parentWorld) * childWorld;
+    const auto parentMath = OntoMath::MatrixValue::fromGlmMat4(parentWorld);
+    const auto childMath = OntoMath::MatrixValue::fromGlmMat4(childWorld);
+    const auto inverseParent = OntoMath::inverseAffine(parentMath);
+    const auto authoredLocal = inverseParent
+        ? OntoMath::affineCompose(*inverseParent, childMath)
+        : std::optional<OntoMath::MatrixValue>{};
+    const auto loweredLocal = authoredLocal
+        ? authoredLocal->toGlmMat4()
+        : std::optional<glm::mat4>{};
+    bool localParity = loweredLocal.has_value();
+    if (loweredLocal) {
+        for (int col = 0; col < 4; ++col)
+            for (int row = 0; row < 4; ++row)
+                localParity = localParity &&
+                    std::abs((*loweredLocal)[col][row] - legacyLocal[col][row]) < 1e-5f;
+    }
+    check(localParity,
+          "First Mover OntoMath world-to-local preserves legacy inverse(parent)*world");
+
+    const glm::mat4 singularParent =
+        glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 1.0f));
+    check(!OntoMath::inverseAffine(OntoMath::MatrixValue::fromGlmMat4(singularParent)),
+          "First Mover world-to-local refuses a singular parent instead of inventing a fallback");
 
     // ---- two latches: console Create is not the spawn law -------------------
     check(std::string(Rendering::toolNameForMode(Rendering::Mode3D::BrushCreate)) ==
