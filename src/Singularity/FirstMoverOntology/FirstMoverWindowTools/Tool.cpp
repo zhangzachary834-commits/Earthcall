@@ -3,6 +3,7 @@
 #include "Tool.hpp"
 #include "Singularity/Core/Engine.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "GLFW/glfw3.h"
@@ -623,9 +624,12 @@ void Tool::Pottery3D(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
                 scaleZ = std::max(0.05f, scaleZ + delta);
             }
 
-            glm::mat4 newT = glm::translate(glm::mat4(1.0f), translation);
-            newT = glm::scale(newT, glm::vec3(scaleX, scaleY, scaleZ));
-            applyToolTransform(hitObj, newT, avatarRoot);
+            const auto authoredTransform = OntoMath::affineTRS(
+                translation, glm::vec3(0.0f), glm::vec3(scaleX, scaleY, scaleZ));
+            if (!authoredTransform) continue;
+            const auto newT = authoredTransform->toGlmMat4();
+            if (!newT) continue;
+            applyToolTransform(hitObj, *newT, avatarRoot);
             // hitObj->updateCollisionZone(newT); // handled by setTransform/setLocalTransform
         }
     }
