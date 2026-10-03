@@ -95,9 +95,13 @@ int main() {
     Scratch scratch{std::filesystem::temp_directory_path() /
         ("earthcall_second_nature_forge_" + std::to_string(
             std::chrono::steady_clock::now().time_since_epoch().count()))};
+    const auto sourceZoneEcform = saves / "zones/SecondNatureLawForge/zone.ecform";
     const auto targetZoneDir = scratch.path / "zones/SecondNatureLawForge";
     std::filesystem::create_directories(targetZoneDir);
     std::filesystem::copy_file(sourceZone, targetZoneDir / "zone.json");
+    if (std::filesystem::exists(sourceZoneEcform)) {
+        std::filesystem::copy_file(sourceZoneEcform, targetZoneDir / "zone.ecform");
+    }
 
     std::size_t copiedRoots = 0;
     for (const auto& refJson : zoneJson["lawRefs"]) {
