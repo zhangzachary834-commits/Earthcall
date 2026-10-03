@@ -294,7 +294,7 @@ private:
         const std::string written = _text.substr(bestAt, bestLen);
         _pos = bestAt + bestLen;
         Word chosen = distinct.size() == 1 ? distinct.front() : resolve(written, slot, distinct, bestAt);
-        mark(bestAt, bestAt + bestLen, roleOf(chosen.opcode));
+        mark(bestAt, bestAt + bestLen, roleOf(chosen.opcode), &chosen);
         return chosen;
     }
 
@@ -305,8 +305,12 @@ private:
         if (_completing) return candidates.front();
         std::vector<std::string> names;
         for (const auto& c : candidates) names.push_back(c.individual() + " (" + c.opcode + ")");
+        const Ambiguity ambiguity{
+            written, slot, candidates, at, at + written.size()};
+        _out.ambiguities.push_back(ambiguity);
+
         Resolution r;
-        if (_vocab.resolve) r = _vocab.resolve(Ambiguity{written, slot, candidates});
+        if (_vocab.resolve) r = _vocab.resolve(ambiguity);
         for (const auto& c : candidates) {
             if (!r.chosen.empty() && c.individual() == r.chosen) {
                 _out.notes.push_back("'" + written + "' read as " + c.opcode + " (" +
@@ -808,8 +812,19 @@ private:
     std::vector<std::string> _suffixes;
     std::vector<Span> _spans;
 
-    void mark(std::size_t start, std::size_t end, const std::string& role) {
-        if (end > start) _spans.push_back({start, end, role});
+    void mark(std::size_t start, std::size_t end, const std::string& role,
+              const Word* word = nullptr) {
+        if (end <= start) return;
+        Span span;
+        span.start = start;
+        span.end = end;
+        span.role = role;
+        if (word) {
+            span.opcode = word->opcode;
+            span.lexemeId = word->lexemeId;
+            span.lawId = word->lawId;
+        }
+        _spans.push_back(std::move(span));
     }
 
     Parse _out;

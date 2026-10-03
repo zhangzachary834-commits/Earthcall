@@ -1,6 +1,6 @@
 # Lexeme / Relation / Formation Transduction
 
-**Status:** Rungs 0–2 implemented on `sol/lexeme-formation-transduction-20261002`  
+**Status:** Rungs 0–2 + Rung 3a implemented on `sol/lexeme-formation-transduction-20261002`  
 **Date:** 2026-10-02  
 **Human direction:** Zachary Zhang  
 **Implementation:** GPT-5.6 Sol
@@ -168,8 +168,43 @@ Earthcall state rather than fixture data.
 
 ## Rung 3 — layered Lexeme semantic graph for natural language
 
+### Rung 3a — lexical occurrence + denotation layers [IMPLEMENTED]
+
+The Law Line no longer discards semantic provenance after parsing a spelling.
+
+`Span` now carries the exact chosen `opcode`, `lexemeId`, and `lawId`.
+`Parse` retains every structured `Ambiguity` with its byte interval and full
+`Word` candidates, whether a Metalaw resolves it or leaves it open.
+
+`LawSentenceGraph::project` exposes this as ordinary Earthcall graph state:
+
+```text
+utterance.lexical
+    occurrence.0 --lexical-next--> occurrence.1 --> ...
+
+utterance.denotation
+    occurrence.0 --occurrence-denotes--> exact authored Lexeme
+    occurrence.0 --candidate-denotation--> candidate Lexeme A
+    occurrence.0 --candidate-denotation--> candidate Lexeme B
+```
+
+Each occurrence is a fresh Lexeme whose exact identity comes from the utterance
+identity + occurrence index, never its spelling. It carries inspectable
+`language.start/end/role/opcode/lexemeId/lawId` properties.
+
+Open ambiguity is not failure of representation. An unresolved spelling still
+becomes an occurrence whose `language.candidates` PropertyList names every
+candidate and whose candidate-denotation Relations preserve every live authored
+Lexeme possibility. When Metalaw chooses one, the candidate edges remain and an
+additional exact chosen-denotation edge records the narrowed reading.
+
+The projection does not reinterpret characters or perform a second parse. It is
+a graph manifestation of what the Terminal modality already read.
+
+### Rung 3b — semantic relation / intended-being layers [NEXT]
+
 Generalize the Law Line's current sentence-specific composition into explicit
-intermediate graph layers:
+higher graph layers:
 
 ```text
 characters
@@ -285,9 +320,9 @@ This work must refuse these shortcuts:
 
 ## Immediate next implementation
 
-Build Rung 3: make the Law Line's intermediate language structure explicit as
-individuated lexical-occurrence / denotation / semantic Formations, preserving
-open ambiguity for Metalaw.
+Build Rung 3b: project the composed ConditionNode / ActionNode / clause
+relationships into a semantic Relation Formation, then derive an intended-being
+Formation that can feed the same GraphTransduction machinery as Rungs 0–2.
 
-That is the point where natural-language input can enter the same graph river
-Rungs 0–2 now prove on the manifestation side.
+After that, wire TerminalChannel to publish these layers for each spoken
+utterance instead of keeping them only as an explicit projection API.

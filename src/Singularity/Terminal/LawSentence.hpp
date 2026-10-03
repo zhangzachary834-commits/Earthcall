@@ -102,6 +102,8 @@ struct Ambiguity {
     std::string symbol;               // as written in the sentence
     std::string slot;                 // "clause", "operator", "condition", "action", ...
     std::vector<Word> candidates;     // distinct meanings, individuated
+    std::size_t start = 0;            // byte range in the parsed text
+    std::size_t end = 0;
 };
 
 struct Resolution {
@@ -141,6 +143,14 @@ struct Span {
     std::size_t start = 0;
     std::size_t end = 0;
     std::string role;
+
+    // Exact semantic provenance for a spelling matched through the Lexeme /
+    // Law vocabulary. Atom spans (paths, names, literal values) leave these
+    // empty. Keeping this here prevents later graph layers from trying to
+    // reconstruct meaning from the surface string.
+    std::string opcode;
+    std::string lexemeId;
+    std::string lawId;
 };
 
 // The structural words and the engine's own opcode spellings.
@@ -165,6 +175,7 @@ struct Parse {
     std::size_t errorOffset = 0;              // byte offset into the sentence
     std::vector<std::string> candidates;      // ambiguity candidates / search hits
     std::vector<Span> spans;                  // offsets into the raw text given to parse()
+    std::vector<Ambiguity> ambiguities;        // every plural meaning encountered, resolved or not
     // "delete Blue": an action with nothing that says WHEN is an act for now,
     // not a Law — only Destroy is admitted, and only through a confirming
     // Metalaw (TerminalChannel). `destroyTarget` is the named thing.
