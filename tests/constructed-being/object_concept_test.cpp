@@ -93,7 +93,7 @@ int main() {
         assert(affineConcept->members().size() == 1);
         const glm::mat4 placement =
             glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, 1.0f, 6.0f));
-        auto affineBorn = affineConcept->instantiate(placement, nullptr);
+        auto affineBorn = affineConcept->instantiate(placement, static_cast<const std::vector<Object*>*>(nullptr));
         assert(affineBorn.size() == 1);
         const glm::mat4 legacyRelative =
             glm::translate(glm::mat4(1.0f), -rotatedSource.getPosition()) * sourceWorld;
