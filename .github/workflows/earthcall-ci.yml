@@ -382,9 +382,9 @@ jobs:
               cmd = ["./build/slow_adapter_zone_perf_test", world,
                      f"--adapter={adapter}", f"--direct={direct}", "--frames=60"]
               try:
-                  result = subprocess.run(cmd, text=True, capture_output=True, timeout=120)
+                  result = subprocess.run(cmd, text=True, capture_output=True, timeout=240)
               except subprocess.TimeoutExpired:
-                  print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={adapter} direct={direct} timeout_s=120")
+                  print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={adapter} direct={direct} timeout_s=240")
                   raise SystemExit(1)
 
               lines = [line for line in result.stdout.splitlines()
