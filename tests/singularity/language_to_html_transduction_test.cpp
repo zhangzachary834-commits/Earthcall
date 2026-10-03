@@ -17,6 +17,8 @@ using namespace Singularity::Terminal;
 using Singularity::Language::GraphTransduction;
 using Singularity::Language::LanguageSystem;
 using Singularity::Language::Lexeme;
+using Singularity::Foreign::Web::DomActKind;
+using Singularity::Foreign::Web::HtmlFormationActPlanner;
 
 namespace {
 

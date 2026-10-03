@@ -275,7 +275,12 @@ HtmlFormationActPlanner::Ready HtmlFormationActPlanner::readyInsertions(
         out.acts.push_back({candidate.desiredId, std::move(act)});
     }
 
-    out.complete = bindings.size() >= nodes.size();
+    out.complete = std::all_of(
+        nodes.begin(),
+        nodes.end(),
+        [&](const auto& entry) {
+            return bindings.find(entry.first) != bindings.end();
+        });
     out.ok = true;
     return out;
 }
