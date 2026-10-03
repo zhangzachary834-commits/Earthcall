@@ -268,12 +268,7 @@ nlohmann::json DomDeltaRecord::toJson() const {
         {"targetNodeToken", targetNodeToken}
     };
     if (!parentToken.empty()) j["parentToken"] = parentToken;
-    if (kind == DomActKind::InsertElement ||
-        kind == DomActKind::InsertText ||
-        kind == DomActKind::MoveNode ||
-        siblingIndex > 0) {
-        j["siblingIndex"] = siblingIndex;
-    }
+    if (siblingIndex > 0) j["siblingIndex"] = siblingIndex;
     if (node.has_value()) j["node"] = node->toJson();
     if (!attributeName.empty()) j["attributeName"] = attributeName;
     if (!attributeValue.empty()) j["attributeValue"] = attributeValue;
@@ -475,7 +470,12 @@ nlohmann::json DomAct::toJson() const {
     if (!attributeValue.empty()) j["attributeValue"] = attributeValue;
     if (!tagName.empty()) j["tagName"] = tagName;
     if (!parentToken.empty()) j["parentToken"] = parentToken;
-    if (siblingIndex > 0) j["siblingIndex"] = siblingIndex;
+    if (kind == DomActKind::InsertElement ||
+        kind == DomActKind::InsertText ||
+        kind == DomActKind::MoveNode ||
+        siblingIndex > 0) {
+        j["siblingIndex"] = siblingIndex;
+    }
     return j;
 }
 
