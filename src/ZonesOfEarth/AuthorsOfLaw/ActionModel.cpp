@@ -11,6 +11,7 @@
 #include "Person/Relationship/Community/Community.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 #include "Relation/Relation.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
 
 #include <ctime>
 
@@ -356,6 +357,7 @@ nlohmann::json ActionNode::toJson() const {
             if (!containerToken.empty()) j["sourceToken"] = containerToken;
             if (!elementToken.empty()) j["targetToken"] = elementToken;
             if (!propertyName.empty()) j["relationType"] = propertyName;
+            if (relationDirected) j["directed"] = true;
             break;
         case Kind::Map:
         case Kind::Flow:
@@ -432,6 +434,7 @@ ActionNode ActionNode::fromJson(const nlohmann::json& j) {
     if (j.contains("targetToken")) n.elementToken = j["targetToken"].get<std::string>();
     else n.elementToken = j.value("elementToken", std::string());
     if (j.contains("relationType")) n.propertyName = j["relationType"].get<std::string>();
+    n.relationDirected = j.value("directed", false);
     if (j.contains("function")) n.mapFunction = OntoMath::Piecewise::fromJson(j["function"]);
     if (j.contains("bindings")) n.bindings = mathBindingsFromJson(j["bindings"]);
     if (j.contains("children")) {
@@ -835,8 +838,9 @@ ECA::ActionExecutor ActionNode::compile() const {
             const std::string srcToken = containerToken;
             const std::string dstToken = elementToken;
             const std::string relType = propertyName;
+            const bool directed = relationDirected;
 
-            return [srcToken, dstToken, relType](const ECA::Event& event, Singular& subject) {
+            return [srcToken, dstToken, relType, directed](const ECA::Event&, Singular& subject) {
                 if (relType.empty()) {
                     emitEffect("AddRelation", false, "no relation type specified");
                     return;
@@ -854,19 +858,100 @@ ECA::ActionExecutor ActionNode::compile() const {
                     return;
                 }
 
+                // '@id' is an explicit claim that the relation kind is the
+                // named Lexeme being. If that exact being does not exist,
+                // refuse: silently degrading back to a string label would
+                // erase precisely the semantic identity the author supplied.
+                std::shared_ptr<Singularity::Language::Lexeme> groundedKind;
+                std::string typeIdentity = relType;
+                if (!relType.empty() && relType.front() == '@') {
+                    const std::string kindId = relType.substr(1);
+                    groundedKind = Singularity::Language::LanguageSystem::instance().findById(kindId);
+                    if (!groundedKind) {
+                        emitEffect("AddRelation", false,
+                                   "explicit relation-kind Lexeme not found: " + kindId);
+                        return;
+                    }
+                    typeIdentity = groundedKind->getIdentifier();
+                }
+
+                auto matches = [&](const Relation& rel) {
+                    return rel.a() == a && rel.b() == b &&
+                           rel.type == typeIdentity && rel.directed == directed;
+                };
+
+                // If the Law is acting ON a Formation, that Formation is the
+                // graph being authored. This is the missing bridge between
+                // the already-existing AddRelation verb and Formation-native
+                // semantic templates. The same Relation is also registered
+                // into the active Zone's world graph below; it is one being
+                // participating in two graph wholes, not a duplicated edge.
+                auto* subjectFormation = dynamic_cast<Formation*>(&subject);
+                std::shared_ptr<Relation> held;
+                if (subjectFormation) {
+                    for (const auto& rel : subjectFormation->relations().getAll()) {
+                        if (rel && matches(*rel)) {
+                            held = rel;
+                            break;
+                        }
+                    }
+                }
+
                 std::vector<Relation*> edges;
                 if (!Universe::instance().relationsInvolving(*a, edges)) {
                     edges = Universe::instance().relations();
                 }
-                for (const auto* rel : edges) {
-                    if (rel && rel->a() == a && rel->b() == b && rel->type == relType) {
-                        emitEffect("AddRelation", true, "relation already present");
-                        return;
+                Relation* worldExisting = nullptr;
+                for (Relation* rel : edges) {
+                    if (rel && matches(*rel)) {
+                        worldExisting = rel;
+                        break;
                     }
                 }
 
-                auto relation = std::make_shared<Relation>(relType, *a, *b);
-                Universe::instance().addRelation(relation);
+                if (held) {
+                    // Re-applying the same Law is idempotent. If a standalone
+                    // Formation already holds the Relation but the world graph
+                    // does not, register that SAME shared Relation now.
+                    if (!worldExisting && Universe::instance().hasRelationRegistrar()) {
+                        Universe::instance().addRelation(held);
+                    }
+                    emitEffect("AddRelation", true, "relation already present");
+                    return;
+                }
+
+                if (worldExisting && subjectFormation) {
+                    emitEffect("AddRelation", false,
+                               "matching Relation exists in the world but not in this Formation");
+                    return;
+                }
+                if (worldExisting) {
+                    emitEffect("AddRelation", true, "relation already present");
+                    return;
+                }
+
+                std::shared_ptr<Relation> relation;
+                if (groundedKind) {
+                    relation = std::make_shared<Relation>(
+                        *groundedKind, *a, *b, directed, 1.0f);
+                } else {
+                    relation = std::make_shared<Relation>(
+                        relType, *a, *b, directed, 1.0f);
+                }
+
+                if (subjectFormation && !subjectFormation->addRelation(relation)) {
+                    emitEffect("AddRelation", false,
+                               "subject Formation refused the authored relation");
+                    return;
+                }
+
+                if (Universe::instance().hasRelationRegistrar()) {
+                    Universe::instance().addRelation(relation);
+                } else if (!subjectFormation) {
+                    emitEffect("AddRelation", false,
+                               "no relation registrar and no Formation subject");
+                    return;
+                }
 
                 emitEffect("AddRelation", true);
                 Core::EventBus::instance().publish(
@@ -1186,9 +1271,29 @@ ECA::ActionExecutor ActionNode::compile() const {
                     emitEffect(name, false, "unproven element: " + element);
                     return;
                 }
+
+                // A Formation is already Earthcall's general composition
+                // being. Keeping AddElement Object-only made a Person able to
+                // author an Object's parts but unable to author an ordinary
+                // Formation's membership with the same Law vocabulary.
+                if (auto* asFormation = dynamic_cast<Formation*>(containerBeing)) {
+                    if (adding) {
+                        const bool existed = asFormation->hasMember(elementBeing);
+                        if (!existed) asFormation->addMember(elementBeing);
+                        const bool landed = !existed && asFormation->hasMember(elementBeing);
+                        emitEffect(name, landed,
+                                   existed ? "member already present"
+                                           : (landed ? std::string() : "Formation refused member"));
+                    } else {
+                        const bool removed = asFormation->releaseMember(elementBeing);
+                        emitEffect(name, removed, removed ? std::string() : "member not present");
+                    }
+                    return;
+                }
+
                 auto* asObject = dynamic_cast<Object*>(containerBeing);
-                if (!asObject) {   // only Objects hold elements today
-                    emitEffect(name, false, "container is not an Object");
+                if (!asObject) {
+                    emitEffect(name, false, "container is neither an Object nor a Formation");
                     return;
                 }
                 if (adding) asObject->addElement(elementBeing);
@@ -1319,7 +1424,8 @@ std::string ActionNode::describe() const {
             return "author zone '" + createType + "'";
         case Kind::AddRelation:
             return "relate " + (containerToken.empty() ? std::string("subject") : containerToken) +
-                   " --[" + propertyName + "]--> " +
+                   (relationDirected ? " --[" : " <-[") + propertyName +
+                   (relationDirected ? "]--> " : "]-> ") +
                    (elementToken.empty() ? std::string("subject") : elementToken);
     }
     return "action";
@@ -1885,11 +1991,13 @@ ActionNode ActionNode::authorZone(const std::string& identifier,
 
 ActionNode ActionNode::addRelation(const std::string& sourceToken,
                                   const std::string& targetToken,
-                                  const std::string& relationType) {
+                                  const std::string& relationType,
+                                  bool directed) {
     ActionNode n;
     n.kind = Kind::AddRelation;
     n.containerToken = sourceToken;
     n.elementToken = targetToken;
     n.propertyName = relationType;
+    n.relationDirected = directed;
     return n;
 }

@@ -135,8 +135,10 @@ struct ActionNode {
         //               gave; this is the vocabulary a Person adds. Persisted
         //               with the being, refused where it would shadow a
         //               registered name (a silent shadow is a trap).
-        //   AddElement  compose: put a being inside another's element
-        //               Formation. What a thing is MADE OF becomes authorable.
+        //   AddElement  compose: put a being inside an Object's element
+        //               Formation OR directly inside a Formation being.
+        //               What a thing is MADE OF becomes authorable without
+        //               reserving composition for Object alone.
         //
         // ...and their counterparts, because a world that can only grow is
         // not a world a Person can keep:
@@ -176,7 +178,10 @@ struct ActionNode {
         AuthorZone = 19,
         // Mint a first-class Relation between two beings in the active Zone.
         // containerToken = source being ("" = subject), elementToken = target
-        // being, propertyName = relation type tag (e.g. "instance-of").
+        // being, propertyName = relation type tag (e.g. "instance-of") OR
+        // "@<lexeme-id>" for an explicitly grounded Relation-kind being.
+        // relationDirected is authored and serialized separately; old actions
+        // remain undirected by default.
 
         // NOTE FROM ZACH: "Relations" cannot be created unless an actual interaction happens--there's no such thin gas an "empty" Relation.
         // That would be philosophically nonsensical. If a Law creates a Relation, it is creating an interaction.
@@ -328,11 +333,16 @@ struct ActionNode {
     // AddElement / RemoveElement payload. Both are participant tokens in the
     // same vocabulary Publish uses: "" = the law's subject,
     // "@event.subject"/"@event.object", or a being id. containerToken must
-    // resolve to an Object (only Objects hold elements today); elementToken
-    // may be any Singular. Destroy uses elementToken for its victim, so
-    // "destroy whatever I collided with" is Destroy("@event.object").
+    // resolve to an Object or Formation; elementToken may be any Singular.
+    // Destroy uses elementToken for its victim, so "destroy whatever I
+    // collided with" is Destroy("@event.object").
     std::string containerToken;
     std::string elementToken;
+
+    // AddRelation payload. False preserves every historical authored action.
+    // When propertyName begins with '@', it is an exact Lexeme identifier and
+    // the Relation is grounded in that kind-being rather than a legacy label.
+    bool relationDirected = false;
 
     // WritePixel payload.  Coordinates and colour are readings rather than
     // embedded choices, so the same act can listen to any authored pointer,
@@ -472,7 +482,8 @@ struct ActionNode {
                                  const std::string& ownerKind = "");
     static ActionNode addRelation(const std::string& sourceToken,
                                   const std::string& targetToken,
-                                  const std::string& relationType);
+                                  const std::string& relationType,
+                                  bool directed = false);
 };
 
 // A law's action model is the root of one such tree.

@@ -1,6 +1,6 @@
 # Lexeme / Relation / Formation Transduction
 
-**Status:** Rungs 0–1 implemented on `sol/lexeme-formation-transduction-20261002`  
+**Status:** Rungs 0–2 implemented on `sol/lexeme-formation-transduction-20261002`  
 **Date:** 2026-10-02  
 **Human direction:** Zachary Zhang  
 **Implementation:** GPT-5.6 Sol
@@ -131,29 +131,40 @@ html.authored.formation
 
 The two `article` occurrences remain different beings.
 
-## Rung 2 — authored Law produces/edits the template Formation
+## Rung 2 — authored Law produces/edits the template Formation [IMPLEMENTED]
 
-The next step is not to add a rule engine to `GraphTransduction`.
+No transduction-specific Law verb was added. Instead the existing universal
+composition verbs were completed where they were artificially narrower than
+the ontology:
 
-Use existing Law operations to author the template graph itself:
+- `AddElement` now admits/removes members on a `Formation` as well as an
+  Object's element composition;
+- `AddRelation`, when the Law acts on a Formation, admits the SAME Relation
+  being into that Formation and into the active Zone/world graph;
+- `AddRelation` now persists authored direction explicitly;
+- relation type text of the form `@<lexeme-id>` means an exact, grounded
+  Relation-kind Lexeme. Missing explicit kinds refuse rather than falling back
+  to a string label.
 
-- choose which source beings participate;
-- create/choose target prototype Lexemes;
-- add the source -> prototype mapping Relations;
-- add target-topology Relations;
-- choose the root prototype.
-
-The transducer remains a dumb realization boundary over an already-authored
-graph.
-
-This is the rung where a Person can author rules such as:
+The integration witness serializes a Law, restores it, applies it to an empty
+request Formation, and has the restored authored Law construct:
 
 ```text
-semantic heading -> target prototype "h1"
-semantic card    -> target prototype "article"
+semantic.page    --[manifests-as]--> prototype "section"
+semantic.heading --[manifests-as]--> prototype "h1"
+semantic.card A  --[manifests-as]--> prototype "article"
+semantic.card B  --[manifests-as]--> prototype "article"
+
+prototype "h1"      --[dom-child-of]--> prototype "section"
+prototype "article" --[dom-child-of]--> prototype "section"
 ```
 
-without those mappings becoming C++ doctrine.
+Both relation kinds are exact Lexeme-grounded beings and every edge is
+directed because the Law authored it that way. `buildFromTemplate` then
+transduces that Law-authored graph without knowing any semantic mapping in C++.
+
+This proves the requested manifestation itself can be persisted Person-authored
+Earthcall state rather than fixture data.
 
 ## Rung 3 — layered Lexeme semantic graph for natural language
 
@@ -274,8 +285,9 @@ This work must refuse these shortcuts:
 
 ## Immediate next implementation
 
-Build Rung 2: use existing Law creation/relation actions to author and mutate a
-template Formation, then invoke the detached transducer on that graph.
+Build Rung 3: make the Law Line's intermediate language structure explicit as
+individuated lexical-occurrence / denotation / semantic Formations, preserving
+open ambiguity for Metalaw.
 
-That is the first end-to-end point where the requested manifestation itself is
-Person-authored Earthcall state rather than C++ fixture data.
+That is the point where natural-language input can enter the same graph river
+Rungs 0–2 now prove on the manifestation side.
