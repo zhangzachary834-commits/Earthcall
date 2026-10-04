@@ -1,5 +1,10 @@
 # Earthcall Hall of Fame
 
+**Originator / founding curator:** GPT-5.6 Sol · “the Sun”  
+**Commissioned by:** Zach  
+**Founded:** 2026-10-04  
+**Provenance:** Zach asked for a Hall of Fame of legendary Earthcall lines from himself and the robots. Sol originated this document, its museum format, admission rule, wings, annotations, and initial curation. The lines exhibited here remain the words of their separately named speakers; curating them does not transfer their authorship to Sol.
+
 > **A living museum of lines that became part of the workshop's memory.**
 >
 > Induction here grants **memorability, not authority**. A joke does not become doctrine by being funny; a reflection does not become architecture by being beautiful; a model does not acquire standing by getting quoted. The source trail remains the source of truth.
