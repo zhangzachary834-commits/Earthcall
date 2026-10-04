@@ -1,0 +1,43 @@
+{
+  "id": "genesis-singular",
+  "name": "Metalaw: Genesis Phase 1 (Mint Singular)",
+  "authors": [
+    "Zach"
+  ],
+  "enabled": true,
+  "conditions": [
+    {
+      "kind": "All",
+      "children": [
+        {
+          "kind": "Compare",
+          "path": "@state.genesis.phase",
+          "op": 0,
+          "operand": 1.0
+        },
+        {
+          "kind": "Compare",
+          "path": "@state.genesis.type",
+          "op": 0,
+          "operand": "Singular"
+        }
+      ]
+    }
+  ],
+  "actionModel": {
+    "kind": "Sequence",
+    "children": [
+      {
+        "kind": "Create",
+        "path": "lexeme.christ",
+        "newbornId": "@@state.genesis.id",
+        "newbornName": "@@state.genesis.name"
+      },
+      {
+        "kind": "Set",
+        "path": "@state.genesis.phase",
+        "operand": 0.0
+      }
+    ]
+  }
+}
