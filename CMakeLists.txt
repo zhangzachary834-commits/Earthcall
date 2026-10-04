@@ -343,17 +343,32 @@ if(NOT EMSCRIPTEN)
 
         if (${TEST_NAME} STREQUAL "syntactic_parser_test" OR ${TEST_NAME} STREQUAL "utterance_test")
             add_executable(${TEST_NAME} ${TEST_SOURCE})
-            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
+            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
         elseif (${TEST_NAME} STREQUAL "brush_system_test")
             add_executable(${TEST_NAME} ${TEST_SOURCE})
             target_include_directories(${TEST_NAME} PRIVATE ${GLFW_SOURCE_DIR}/include ${GLFW_SOURCE_DIR}/deps)
             target_compile_definitions(${TEST_NAME} PRIVATE GLFW_INCLUDE_NONE)
-            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
-        elseif (${TEST_NAME} STREQUAL "sdf_wgsl_parameter_refresh_test")
+            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
+        elseif (${TEST_NAME} STREQUAL "sdf_wgsl_parameter_refresh_test" OR
+                 ${TEST_NAME} STREQUAL "gyroid_reliquary_test" OR
+                 ${TEST_NAME} STREQUAL "veiled_hour_test" OR
+                 ${TEST_NAME} STREQUAL "mcp_authoring_surfaces_test")
             # Pure codegen witness: it exercises SdfWgsl::compile/collectParams
             # but never creates a WebGPU device. Link only the compiler source so
             # the test stays runnable on CPU-only CI instead of masquerading as
             # a webgpu_* integration test.
+            #
+            # gyroid_reliquary_test is here for the same reason and with a
+            # sharper edge. It runs the production WGSL emitter over an authored
+            # Zone's radiance, chroma, angular, medium and geometry expressions
+            # on the CPU, purely to READ BACK its refusals. That is the only
+            # way to catch a Zone that is mathematically perfect and cannot be
+            # drawn: this one declared `"input": "p"` on every Piecewise, which
+            # emitPiecewise resolves through pointComponent, which binds no
+            # such variable — so every field refused to compile and the log
+            # spammed one line per frame per source, while 72 green checks
+            # agreed the Zone was perfect. No CPU evaluator cares (MathNode
+            # binds `p` happily), so this needs the real emitter.
             add_executable(${TEST_NAME}
                 ${TEST_SOURCE}
                 src/Singularity/Screen/WebGPU/SdfWgsl.cpp)
@@ -435,6 +450,9 @@ if(NOT EMSCRIPTEN)
             ${TEST_NAME} STREQUAL "synthesis_studio_living_test" OR
             ${TEST_NAME} STREQUAL "synthesis_studio_full_store_boot_test" OR
             ${TEST_NAME} STREQUAL "person_home_migration_boot_test" OR
+            ${TEST_NAME} STREQUAL "prism_cathedral_test" OR
+            ${TEST_NAME} STREQUAL "gyroid_reliquary_test" OR
+            ${TEST_NAME} STREQUAL "veiled_hour_test" OR
             ${TEST_NAME} MATCHES "^foreign_web_dom_")
             set_tests_properties(${TEST_NAME} PROPERTIES
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

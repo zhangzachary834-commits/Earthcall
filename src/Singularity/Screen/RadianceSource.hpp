@@ -12,6 +12,8 @@ namespace Rendering {
 // OntoMath source invariants. The FieldNode remains the identity and authoring
 // surface; this value is only the sensory channel's per-frame view of it.
 struct RadianceSourceBinding {
+    // Stable authored producer identity carried to the already-known execution slot.
+    std::string producerId;
     glm::vec3 position{0.0f};
     glm::vec3 ambientRadiance{0.2f};
     glm::vec3 diffuseRadiance{0.8f};

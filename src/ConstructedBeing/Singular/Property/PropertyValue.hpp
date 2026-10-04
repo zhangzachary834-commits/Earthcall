@@ -10,6 +10,7 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <unordered_map>
 
 class Singular;
 class Object;
@@ -52,14 +53,9 @@ using PropertyValue = std::variant<
     std::shared_ptr<OntoMath::VectorField>
 >;
 
-// Is this value one whose EQUALITY is the whole story?
-//
-// The scalars, the string, and the two glm types hold their content directly,
-// so comparing two of them answers "did anything change". The pointer and
-// shared_ptr alternatives do not: two equal pointers can address contents that
-// were mutated in place, and answering "unchanged" for those would lose a real
-// change. So the test is deliberately conservative — it says yes only where a
-// yes is provable.
+// Alternatives admitted to content comparison. Scalars and glm values carry
+// their contents directly; list/dictionary graphs use the checked traversal
+// below. Raw Singular pointers are not proof that their referent is unchanged.
 inline bool isValueComparable(const PropertyValue& v) {
     return std::holds_alternative<int>(v) || std::holds_alternative<float>(v) ||
            std::holds_alternative<double>(v) || std::holds_alternative<bool>(v) ||
@@ -71,7 +67,8 @@ inline bool isValueComparable(const PropertyValue& v) {
 }
 
 // "This write changed nothing" — the question every change feed should ask
-// before it wakes the world.
+// before it wakes the world. Content comparison and storage-binding comparison
+// are distinct below; the latter also detects equal-valued rebinding.
 //
 // A WhileTrue law re-writes its result every tick by design: the ambient theme
 // sets the same colour, the draw indicator sets the same label, the crystal's
@@ -93,35 +90,69 @@ struct PropertyDict {
 
 inline bool propertyValueUnchanged(const PropertyValue& a, const PropertyValue& b) {
     if (a.index() != b.index()) return false;
-    
-    if (std::holds_alternative<std::shared_ptr<PropertyDict>>(a)) {
-        auto pA = std::get<std::shared_ptr<PropertyDict>>(a);
-        auto pB = std::get<std::shared_ptr<PropertyDict>>(b);
-        if (pA == pB) return true;
-        if (!pA || !pB) return false;
-        if (pA->elements.size() != pB->elements.size()) return false;
-        for (const auto& [k, vA] : pA->elements) {
-            auto it = pB->elements.find(k);
-            if (it == pB->elements.end()) return false;
-            if (!propertyValueUnchanged(vA, it->second)) return false;
-        }
-        return true;
+    if (auto list = std::get_if<std::shared_ptr<PropertyList>>(&a)) {
+        if (*list == std::get<std::shared_ptr<PropertyList>>(b)) return true;
+    } else if (auto dict = std::get_if<std::shared_ptr<PropertyDict>>(&a)) {
+        if (*dict == std::get<std::shared_ptr<PropertyDict>>(b)) return true;
+    } else {
+        return isValueComparable(a) && a == b;
     }
-    
-    if (std::holds_alternative<std::shared_ptr<PropertyList>>(a)) {
-        auto pA = std::get<std::shared_ptr<PropertyList>>(a);
-        auto pB = std::get<std::shared_ptr<PropertyList>>(b);
-        if (pA == pB) return true;
-        if (!pA || !pB) return false;
-        if (pA->elements.size() != pB->elements.size()) return false;
-        for (size_t i = 0; i < pA->elements.size(); ++i) {
-            if (!propertyValueUnchanged(pA->elements[i], pB->elements[i])) return false;
+    // Scratch traversal state beneath the Kernel, not authored cell identity.
+    // Avoid the C++ call stack even for deep containers. Distinct cyclic
+    // graphs are not proof of an unchanged value: return false conservatively
+    // rather than invent cyclic equality or overflow the stack.
+    struct Comparison {
+        const PropertyValue* a;
+        const PropertyValue* b;
+        bool finish = false;
+    };
+    std::vector<Comparison> pending{{&a, &b}};
+    std::unordered_map<const void*, std::unordered_map<const void*, bool>> compared;
+    while (!pending.empty()) {
+        const auto next = pending.back();
+        pending.pop_back();
+        const auto& left = *next.a;
+        const auto& right = *next.b;
+        if (left.index() != right.index()) return false;
+        if (auto listA = std::get_if<std::shared_ptr<PropertyList>>(&left)) {
+            const auto& listB = std::get<std::shared_ptr<PropertyList>>(right);
+            if (*listA == listB) continue;
+            if (!*listA || !listB || (*listA)->elements.size() != listB->elements.size()) return false;
+            auto& pairs = compared[listA->get()];
+            if (next.finish) { pairs[listB.get()] = true; continue; }
+            const auto found = pairs.find(listB.get());
+            if (found != pairs.end()) {
+                if (!found->second) return false;
+                continue;
+            }
+            pairs[listB.get()] = false;
+            pending.push_back({next.a, next.b, true});
+            for (std::size_t i = 0; i < (*listA)->elements.size(); ++i) {
+                pending.push_back({&(*listA)->elements[i], &listB->elements[i]});
+            }
+        } else if (auto dictA = std::get_if<std::shared_ptr<PropertyDict>>(&left)) {
+            const auto& dictB = std::get<std::shared_ptr<PropertyDict>>(right);
+            if (*dictA == dictB) continue;
+            if (!*dictA || !dictB || (*dictA)->elements.size() != dictB->elements.size()) return false;
+            auto& pairs = compared[dictA->get()];
+            if (next.finish) { pairs[dictB.get()] = true; continue; }
+            const auto found = pairs.find(dictB.get());
+            if (found != pairs.end()) {
+                if (!found->second) return false;
+                continue;
+            }
+            pairs[dictB.get()] = false;
+            pending.push_back({next.a, next.b, true});
+            for (const auto& [key, value] : (*dictA)->elements) {
+                const auto foundValue = dictB->elements.find(key);
+                if (foundValue == dictB->elements.end()) return false;
+                pending.push_back({&value, &foundValue->second});
+            }
+        } else if (!isValueComparable(left) || left != right) {
+            return false;
         }
-        return true;
     }
-    
-    if (!isValueComparable(a)) return false;
-    return a == b;
+    return true;
 }
 
 // True when T is one of PropertyValue's alternatives. PropertyRef and
@@ -150,7 +181,19 @@ inline bool propertyValueToNumber(const PropertyValue& v, double& out) {
     }, v);
 }
 
-// A law Map that would write the value already held is not a write.
+// A container assignment can change its binding even when the contents agree.
+// Zach's shared-write/independent-rebinding rule requires preserving that
+// distinction. Comparisons of contents still use propertyValueUnchanged.
+inline bool propertyStorageUnchanged(const PropertyValue& a, const PropertyValue& b) {
+    if (a.index() != b.index()) return false;
+    if (auto list = std::get_if<std::shared_ptr<PropertyList>>(&a))
+        return *list == std::get<std::shared_ptr<PropertyList>>(b);
+    if (auto dict = std::get_if<std::shared_ptr<PropertyDict>>(&a))
+        return *dict == std::get<std::shared_ptr<PropertyDict>>(b);
+    return propertyValueUnchanged(a, b);
+}
+
+// A law Map that would write the value/binding already held is not a write.
 // Numeric alternatives compare as numbers so int 1 and double 1.0 agree.
 inline bool propertyValuesEquivalent(const PropertyValue& a, const PropertyValue& b) {
     double na = 0.0, nb = 0.0;
@@ -158,5 +201,5 @@ inline bool propertyValuesEquivalent(const PropertyValue& a, const PropertyValue
         const double scale = std::max(1.0, std::max(std::fabs(na), std::fabs(nb)));
         return std::fabs(na - nb) <= 1e-6 * scale;
     }
-    return propertyValueUnchanged(a, b);
+    return propertyStorageUnchanged(a, b);
 }

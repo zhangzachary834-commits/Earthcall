@@ -1,0 +1,796 @@
+{
+  "objects": [
+    {
+      "objectID": "card.grizzly_bears_1",
+      "shapeKind": 0,
+      "geometryType": 0,
+      "shapeParams": [
+        0.3,
+        0.01,
+        0.4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -2,
+        0,
+        0,
+        1
+      ],
+      "authors": [
+        "Gemini"
+      ],
+      "authoredProperties": {
+        "mtg.name": {
+          "t": "string",
+          "v": "Grizzly Bears"
+        },
+        "mtg.power": {
+          "t": "int",
+          "v": 2
+        },
+        "mtg.toughness": {
+          "t": "int",
+          "v": 2
+        },
+        "mtg.damage": {
+          "t": "int",
+          "v": 0
+        },
+        "mtg.type": {
+          "t": "string",
+          "v": "Creature"
+        },
+        "mtg.zone": {
+          "t": "string",
+          "v": "hand.1"
+        },
+        "mtg.handOrder": {
+          "t": "number",
+          "v": 0.0
+        }
+      }
+    },
+    {
+      "objectID": "card.lightning_bolt_1",
+      "shapeKind": 0,
+      "geometryType": 0,
+      "shapeParams": [
+        0.3,
+        0.01,
+        0.4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        2,
+        0,
+        0,
+        1
+      ],
+      "authors": [
+        "Gemini"
+      ],
+      "authoredProperties": {
+        "mtg.name": {
+          "t": "string",
+          "v": "Lightning Bolt"
+        },
+        "mtg.type": {
+          "t": "string",
+          "v": "Instant"
+        },
+        "mtg.zone": {
+          "t": "string",
+          "v": "hand.1"
+        },
+        "mtg.handOrder": {
+          "t": "number",
+          "v": 1.0
+        }
+      }
+    },
+    {
+      "objectID": "button.mtg.pass",
+      "shapeKind": 0,
+      "geometryType": 0,
+      "shapeParams": [
+        0.5,
+        0.1,
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        -1,
+        -5,
+        1
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Pass Priority"
+        }
+      }
+    }
+  ],
+  "formationRelations": [
+    {
+      "type": "instance-of",
+      "entityA": "card.grizzly_bears_1",
+      "entityB": "category.mtg.card",
+      "directed": true,
+      "authors": [
+        "Gemini"
+      ]
+    },
+    {
+      "type": "member-of",
+      "entityA": "card.grizzly_bears_1",
+      "entityB": "mtg.formation.battlefield",
+      "directed": true,
+      "authors": [
+        "Gemini"
+      ],
+      "authoredProperties": {
+        "mtg.layoutIndex": {
+          "t": "int",
+          "v": 0
+        }
+      }
+    },
+    {
+      "type": "instance-of",
+      "entityA": "card.lightning_bolt_1",
+      "entityB": "category.mtg.card",
+      "directed": true,
+      "authors": [
+        "Gemini"
+      ]
+    },
+    {
+      "type": "member-of",
+      "entityA": "card.lightning_bolt_1",
+      "entityB": "mtg.formation.hand.1",
+      "directed": true,
+      "authors": [
+        "Gemini"
+      ],
+      "authoredProperties": {
+        "mtg.layoutIndex": {
+          "t": "int",
+          "v": 0
+        }
+      }
+    },
+    {
+      "type": "tracks-state",
+      "entityA": "MTG",
+      "entityB": "state.mtg",
+      "directed": true,
+      "authors": [
+        "Gemini"
+      ]
+    }
+  ],
+  "laws": [],
+  "identifier": "MTG",
+  "name": "Magic: The Gathering",
+  "lexemes": [
+    {
+      "id": "mtg.formation.battlefield",
+      "symbol": "mtg.formation.battlefield"
+    },
+    {
+      "id": "mtg.formation.stack",
+      "symbol": "mtg.formation.stack"
+    },
+    {
+      "id": "mtg.formation.graveyard.1",
+      "symbol": "mtg.formation.graveyard.1"
+    },
+    {
+      "id": "mtg.formation.graveyard.2",
+      "symbol": "mtg.formation.graveyard.2"
+    },
+    {
+      "id": "mtg.formation.hand.1",
+      "symbol": "mtg.formation.hand.1"
+    },
+    {
+      "id": "mtg.formation.hand.2",
+      "symbol": "mtg.formation.hand.2"
+    },
+    {
+      "id": "mtg.formation.library.1",
+      "symbol": "mtg.formation.library.1"
+    },
+    {
+      "id": "mtg.formation.library.2",
+      "symbol": "mtg.formation.library.2"
+    },
+    {
+      "id": "category.mtg.card",
+      "symbol": "category.mtg.card"
+    },
+    {
+      "id": "state.mtg",
+      "symbol": "state.mtg",
+      "authoredProperties": {
+        "turnPhase": {
+          "t": "string",
+          "v": "main1"
+        },
+        "priorityPlayer": {
+          "t": "int",
+          "v": 1
+        },
+        "stackCounter": {
+          "t": "int",
+          "v": 0
+        }
+      }
+    }
+  ],
+  "authoredLaws": {
+    "mtg-pass-priority-untap": {
+      "name": "mtg-pass-priority-untap",
+      "authors": [
+        "Gemini"
+      ],
+      "enabled": true,
+      "eventFilter": {
+        "event": "pointer-click",
+        "bindings": {
+          "self": "subject"
+        }
+      },
+      "conditionModel": {
+        "kind": 3,
+        "children": [
+          {
+            "kind": 8,
+            "path": "@self",
+            "otherId": "button.mtg.pass"
+          },
+          {
+            "kind": 0,
+            "path": "@state.mtg.turnPhase",
+            "op": 0,
+            "operand": {
+              "t": "string",
+              "v": "untap"
+            }
+          }
+        ]
+      },
+      "actionModel": {
+        "kind": 0,
+        "path": "@state.mtg.turnPhase",
+        "op": 0,
+        "operand": {
+          "t": "string",
+          "v": "upkeep"
+        }
+      }
+    },
+    "mtg-pass-priority-upkeep": {
+      "name": "mtg-pass-priority-upkeep",
+      "authors": [
+        "Gemini"
+      ],
+      "enabled": true,
+      "eventFilter": {
+        "event": "pointer-click",
+        "bindings": {
+          "self": "subject"
+        }
+      },
+      "conditionModel": {
+        "kind": 3,
+        "children": [
+          {
+            "kind": 8,
+            "path": "@self",
+            "otherId": "button.mtg.pass"
+          },
+          {
+            "kind": 0,
+            "path": "@state.mtg.turnPhase",
+            "op": 0,
+            "operand": {
+              "t": "string",
+              "v": "upkeep"
+            }
+          }
+        ]
+      },
+      "actionModel": {
+        "kind": 0,
+        "path": "@state.mtg.turnPhase",
+        "op": 0,
+        "operand": {
+          "t": "string",
+          "v": "draw"
+        }
+      }
+    },
+    "mtg-pass-priority-draw": {
+      "name": "mtg-pass-priority-draw",
+      "authors": [
+        "Gemini"
+      ],
+      "enabled": true,
+      "eventFilter": {
+        "event": "pointer-click",
+        "bindings": {
+          "self": "subject"
+        }
+      },
+      "conditionModel": {
+        "kind": 3,
+        "children": [
+          {
+            "kind": 8,
+            "path": "@self",
+            "otherId": "button.mtg.pass"
+          },
+          {
+            "kind": 0,
+            "path": "@state.mtg.turnPhase",
+            "op": 0,
+            "operand": {
+              "t": "string",
+              "v": "draw"
+            }
+          }
+        ]
+      },
+      "actionModel": {
+        "kind": 0,
+        "path": "@state.mtg.turnPhase",
+        "op": 0,
+        "operand": {
+          "t": "string",
+          "v": "main1"
+        }
+      }
+    },
+    "mtg-pass-priority-main1": {
+      "name": "mtg-pass-priority-main1",
+      "authors": [
+        "Gemini"
+      ],
+      "enabled": true,
+      "eventFilter": {
+        "event": "pointer-click",
+        "bindings": {
+          "self": "subject"
+        }
+      },
+      "conditionModel": {
+        "kind": 3,
+        "children": [
+          {
+            "kind": 8,
+            "path": "@self",
+            "otherId": "button.mtg.pass"
+          },
+          {
+            "kind": 0,
+            "path": "@state.mtg.turnPhase",
+            "op": 0,
+            "operand": {
+              "t": "string",
+              "v": "main1"
+            }
+          }
+        ]
+      },
+      "actionModel": {
+        "kind": 0,
+        "path": "@state.mtg.turnPhase",
+        "op": 0,
+        "operand": {
+          "t": "string",
+          "v": "combat"
+        }
+      }
+    },
+    "mtg-pass-priority-combat": {
+      "name": "mtg-pass-priority-combat",
+      "authors": [
+        "Gemini"
+      ],
+      "enabled": true,
+      "eventFilter": {
+        "event": "pointer-click",
+        "bindings": {
+          "self": "subject"
+        }
+      },
+      "conditionModel": {
+        "kind": 3,
+        "children": [
+          {
+            "kind": 8,
+            "path": "@self",
+            "otherId": "button.mtg.pass"
+          },
+          {
+            "kind": 0,
+            "path": "@state.mtg.turnPhase",
+            "op": 0,
+            "operand": {
+              "t": "string",
+              "v": "combat"
+            }
+          }
+        ]
+      },
+      "actionModel": {
+        "kind": 0,
+        "path": "@state.mtg.turnPhase",
+        "op": 0,
+        "operand": {
+          "t": "string",
+          "v": "main2"
+        }
+      }
+    },
+    "mtg-pass-priority-main2": {
+      "name": "mtg-pass-priority-main2",
+      "authors": [
+        "Gemini"
+      ],
+      "enabled": true,
+      "eventFilter": {
+        "event": "pointer-click",
+        "bindings": {
+          "self": "subject"
+        }
+      },
+      "conditionModel": {
+        "kind": 3,
+        "children": [
+          {
+            "kind": 8,
+            "path": "@self",
+            "otherId": "button.mtg.pass"
+          },
+          {
+            "kind": 0,
+            "path": "@state.mtg.turnPhase",
+            "op": 0,
+            "operand": {
+              "t": "string",
+              "v": "main2"
+            }
+          }
+        ]
+      },
+      "actionModel": {
+        "kind": 0,
+        "path": "@state.mtg.turnPhase",
+        "op": 0,
+        "operand": {
+          "t": "string",
+          "v": "end"
+        }
+      }
+    },
+    "mtg-pass-priority-end": {
+      "name": "mtg-pass-priority-end",
+      "authors": [
+        "Gemini"
+      ],
+      "enabled": true,
+      "eventFilter": {
+        "event": "pointer-click",
+        "bindings": {
+          "self": "subject"
+        }
+      },
+      "conditionModel": {
+        "kind": 3,
+        "children": [
+          {
+            "kind": 8,
+            "path": "@self",
+            "otherId": "button.mtg.pass"
+          },
+          {
+            "kind": 0,
+            "path": "@state.mtg.turnPhase",
+            "op": 0,
+            "operand": {
+              "t": "string",
+              "v": "end"
+            }
+          }
+        ]
+      },
+      "actionModel": {
+        "kind": 0,
+        "path": "@state.mtg.turnPhase",
+        "op": 0,
+        "operand": {
+          "t": "string",
+          "v": "untap"
+        }
+      }
+    },
+    "mtg-cast-card": {
+      "name": "mtg-cast-card",
+      "authors": [
+        "Gemini"
+      ],
+      "enabled": true,
+      "eventFilter": {
+        "event": "pointer-click",
+        "bindings": {
+          "self": "subject"
+        }
+      },
+      "conditionModel": {
+        "kind": 3,
+        "children": [
+          {
+            "kind": 0,
+            "path": "@self.mtg.zone",
+            "op": 0,
+            "operand": {
+              "t": "string",
+              "v": "hand.1"
+            }
+          },
+          {
+            "kind": 0,
+            "path": "@state.mtg.turnPhase",
+            "op": 0,
+            "operand": {
+              "t": "string",
+              "v": "main1"
+            }
+          }
+        ]
+      },
+      "actionModel": {
+        "kind": 17,
+        "children": [
+          {
+            "kind": 0,
+            "path": "@self.mtg.zone",
+            "operand": {
+              "t": "string",
+              "v": "stack"
+            }
+          },
+          {
+            "kind": 8,
+            "path": "@self.mtg.stackOrder",
+            "function": {
+              "input": "x",
+              "pieces": [
+                {
+                  "mathNode": {
+                    "op": 1,
+                    "var": "c"
+                  }
+                }
+              ]
+            },
+            "bindings": {
+              "c": "@state.mtg.stackCounter"
+            }
+          },
+          {
+            "kind": 1,
+            "path": "@state.mtg.stackCounter",
+            "operand": {
+              "t": "number",
+              "v": 1.0
+            }
+          }
+        ]
+      }
+    },
+    "mtg-layout-stack": {
+      "name": "mtg-layout-stack",
+      "authors": [
+        "Gemini"
+      ],
+      "enabled": true,
+      "eventFilter": {
+        "event": "WhileTrue",
+        "bindings": {
+          "self": "subject"
+        }
+      },
+      "conditionModel": {
+        "kind": 0,
+        "path": "@self.mtg.zone",
+        "op": 0,
+        "operand": {
+          "t": "string",
+          "v": "stack"
+        }
+      },
+      "actionModel": {
+        "kind": 8,
+        "path": "@self.position",
+        "function": {
+          "input": "x",
+          "pieces": [
+            {
+              "mathNode": {
+                "op": 2,
+                "children": [
+                  {
+                    "op": 0,
+                    "scalarForm": {
+                      "terms": [
+                        {
+                          "c": 1.5,
+                          "factors": {
+                            "order": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "op": 0,
+                    "scalarForm": {
+                      "terms": [
+                        {
+                          "c": 0.5
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "op": 0,
+                    "scalarForm": {
+                      "terms": [
+                        {
+                          "c": -2.0
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "bindings": {
+          "order": "@self.mtg.stackOrder"
+        }
+      }
+    },
+    "mtg-layout-hand": {
+      "name": "mtg-layout-hand",
+      "authors": [
+        "Gemini"
+      ],
+      "enabled": true,
+      "eventFilter": {
+        "event": "WhileTrue",
+        "bindings": {
+          "self": "subject"
+        }
+      },
+      "conditionModel": {
+        "kind": 0,
+        "path": "@self.mtg.zone",
+        "op": 0,
+        "operand": {
+          "t": "string",
+          "v": "hand.1"
+        }
+      },
+      "actionModel": {
+        "kind": 8,
+        "path": "@self.position",
+        "function": {
+          "input": "x",
+          "pieces": [
+            {
+              "mathNode": {
+                "op": 2,
+                "children": [
+                  {
+                    "op": 0,
+                    "scalarForm": {
+                      "terms": [
+                        {
+                          "c": 1.5,
+                          "factors": {
+                            "order": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "op": 0,
+                    "scalarForm": {
+                      "terms": [
+                        {
+                          "c": 0.5
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "op": 0,
+                    "scalarForm": {
+                      "terms": [
+                        {
+                          "c": 2.0
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "bindings": {
+          "order": "@self.mtg.handOrder"
+        }
+      }
+    }
+  }
+}

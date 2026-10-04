@@ -1,0 +1,46 @@
+{
+    "id": "compiler-law",
+    "name": "Metalaw: Compile ECGraph to MsgPack",
+    "authors": ["Zach"],
+    "enabled": true,
+    "description": "Reads an .ecgraph file, compiles the Lexeme/Relation forms into JSON using CodecChannel, translates the JSON to MsgPack, and writes the binary .ecform.",
+    "conditions": [
+        {
+            "kind": "OnBecomeTrue",
+            "path": "@state.compiler.compileTrigger",
+            "threshold": 0
+        }
+    ],
+    "actionModel": {
+        "kind": "Sequence",
+        "children": [
+            {
+                "kind": "FileRead",
+                "input": "@state.compiler.inputFile",
+                "path": "@state.compiler.rawText"
+            },
+            {
+                "kind": "CodecTransform",
+                "propertyName": "ecgraphToJson",
+                "input": "@state.compiler.rawText",
+                "path": "@state.compiler.jsonAst"
+            },
+            {
+                "kind": "CodecTransform",
+                "propertyName": "jsonToMsgpack",
+                "input": "@state.compiler.jsonAst",
+                "path": "@state.compiler.msgpackBinary"
+            },
+            {
+                "kind": "FileWrite",
+                "input": "@state.compiler.msgpackBinary",
+                "path": "@state.compiler.outputFile"
+            },
+            {
+                "kind": "Set",
+                "path": "@state.compiler.compileTrigger",
+                "input": false
+            }
+        ]
+    }
+}

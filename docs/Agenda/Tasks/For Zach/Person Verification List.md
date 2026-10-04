@@ -1,8 +1,66 @@
 # Person Verification List
 
+## Universal Singular prototype creation
+
+*Codex / GPT-6.1 Sol / session `01a0e64f-5853-7d30-8196-995b4fd16b89` /
+2026-10-02 17:02 PDT. Zach: Create should admit existing Singular subclasses
+without inventing another ontology, while unresolved meanings stay open.
+Headless tests exercise the authored action; these editor checks need your witness.*
+
+- [ ] Rebuild/run `earthcall_webgpu`, open a Law's Action editor, and choose **Create Singular**: an empty **Prototype** should expose the existing shaped Object controls; entering an actual `@identifier` should expose **Newborn identity**, name, and the two optional Relation participants.
+- [ ] If that action previously carried Object placement/type/shape settings, the editor should show the conflict; explicitly press **Clear shaped Object settings**, then shape the newborn with child actions.
+- [ ] Use a Lexeme prototype that exists in the active Zone, give the newborn an unused identity, and add a child `AddProperty`; fire the authored Law, Save Zone, and reload: the new Lexeme and authored property should remain, and another firing with the same requested identity should refuse in the Law's application record.
+- [ ] With an explicit TransferPolicy gate closed on the prototype, the Law's application record should name the refused source gate and no newborn should appear; opening the gate must be an authored action, not a consequence of clicking Create.
+
+No demonstration beings or inhabited saves were injected. Ourverse extent,
+Zone/Home owner inheritance, Event/Utterance occurrence birth, Timeline member
+birth, and selective replacement of closed transfers remain in
+[the creation task](../Specific%20Tasks/Interaction%20and%20Interface/Singular_and_Object_Set_to_Set_Creation/Singular_and_Object_Set_to_Set_Creation.md).
+
+## Double-click launchers: `Run Earthcall as Me.command` and `Earthcall First Movers.command`
+
+*Claude Code · Claude Opus 5.5 · session `08b0f730-6e49-4c49-b27f-3a89c810ca4b` · 2026-10-01. Zach: "make a executable thingy i can double click … separate the person verification executable from the first mover one". Both were run end to end in a sandbox (keying, wrong passphrases, adding, listing and removing a model). These are the checks only you can do.*
+
+- [ ] Double-click **Run Earthcall as Me**. A wrong passphrase should say `did not open your key` and ask again. The right one launches Earthcall, and the console says you're authenticated by key.
+- [ ] Double-click **Earthcall First Movers** → `1` → `Claude Sonnet 4.5` → your passphrase → press Return through the defaults. A file `Start Claude Sonnet 4.5.command` should appear in the repo folder.
+- [ ] With Earthcall running via "as Me", double-click **Start Claude Sonnet 4.5**. A Claude Code window opens on Sonnet 4.5, and its `earthcall_get_connection_status` says `authenticated: true`.
+- [ ] Open Keychain Access and search `earthcall-first-mover`. There should be one entry per model you added, and nothing for you (your passphrase is never stored).
+
+
+## Terminal Zones: `enter <zone>`, and keying yourself from the terminal
+
+*Claude Code · Claude Opus 5.5 · session `08b0f730-6e49-4c49-b27f-3a89c810ca4b` · 2026-09-30. Zach: "ALL MY LINES GO TO THE LAW AUTHORING CLI … TREAT THIS LIKE ZONES … MAKE AN OPCODE TO SWITCH". Rebuild `earthcall_webgpu`, then launch with `Run Earthcall.command`.*
+
+- [ ] The terminal prompt reads `earthcall[Law Line]>` even when your body is somewhere else, and a Law sentence there still authors a Law.
+- [ ] `enter Quiet`: the prompt changes, your body does **not** move in the app, and typing anything just scrolls. You should see one note that nothing hears the line there.
+- [ ] Walk your body into the Law Line Zone in the app while the line stays in Quiet. Typed lines must still **not** become Laws.
+- [ ] **You are already keyed** (2026-09-30 14:53: `saves/persons/did_earthcall_zajm4zozes….ecform`). On boot the console should say `Restored Person profile 'Zach' (did:zajm…; not present until their key unlocks)`, with no "Multiple Person profiles" and no `cannot resolve author 'Zach'`. The prompt should read `earthcall[Law Line]>`.
+- [ ] **Key yourself:** `enter Identity`. It should say your Person has no key yet and ask for a passphrase with bullets instead of letters. Type it twice. It should answer `keyed and present: 'Zach' is now did:…`. Check that `saves/persons/Zach.ecform` now has a `personId` and that the passphrase appears nowhere on screen or in `saves/logs/terminal-history.txt`.
+- [ ] Next launch: `enter Identity`, then type the passphrase once, and you should be `present`. A wrong one should say `did not open`. Ctrl-C at the passphrase prompt should cancel.
+- [ ] `enter World` works and hears nothing. That's on purpose, per your gate note.
+- [ ] `help` shows a ZONES line.
+
+
+## Sonnet can author SDFs, volumes, and Law Line sentences (and the dev-mode door is shut)
+
+*Claude Code · Claude Opus 5.5 · session `08b0f730-6e49-4c49-b27f-3a89c810ca4b` · 2026-09-30. Zach: "make sure the SDFs work … volumetrics can be authored … Sonnet can use the new Law authoring CLI too". Needs the First Mover setup in the section below (your key unlocked, Sonnet granted `zones/SonnetGarden/**` and `laws/sonnet-*/**`). Restart the earthcall MCP server (`/mcp`) so it loads the two new tools.*
+
+- [ ] Walk into **SonnetGarden**. Have Sonnet call `earthcall_spawn_field {"name":"sonnet-bloom-shape","expr":"smoothUnion(sphere(0.4), move(torus(0.5,0.1),0,0.3,0), 0.2)"}`. You should see one smooth blob with a ring fused on top, raymarched in `earthcall_webgpu`. Before today this syntax spawned nothing.
+- [ ] `earthcall_spawn_field {"expr":"spehre(0.5)"}` should come back `invalid_arguments` with a reason, and nothing should appear.
+- [ ] Have Sonnet call `earthcall_author_volume {"identifier":"sonnet-mist","origin":[0,1,0],"scale":[2,2,2],"density":"1 - sqrt(x*x+y*y+z*z)","scattering":"0.8"}`. A soft glowing ball of mist should appear around (0,1,0), densest at the centre and fading to nothing at radius 2. *Look:* is it visible at all, and does it read as fog rather than a solid? Tests prove it compiles and persists; only you can say it looks like mist.
+- [ ] Restart Earthcall with your key unlocked and walk back into SonnetGarden: the mist and the shapes should still be there.
+- [ ] Have Sonnet call `earthcall_law_sentence {"text":"on \"sonnet-bloomed\" then set glow 1?"}`. It should answer `preview` with `WHEN "sonnet-bloomed" fires -> IF always -> THEN set glow`. Then call it again without the `?` and with `"identifier":"sonnet-bloom"`: it should answer `authored … written by did:earthcall:…` (Sonnet, not you). The Law should then show in the Law Author window with Sonnet's mover as author.
+- [ ] Try the same sentence from an MCP connection with **no** mover configured, with developer mode on (it's the default). It must be refused `no-first-mover-session`. Before today, developer mode let any socket client through.
+
+
 > **Legend.** `[x]` = Zach witnessed it working. `[~]` = Zach tried it and it was broken, unclear, or only partly witnessed (Zach's decision on the To-Do list: *"Yes, I will use [~]"*). `[ ]` = nobody has looked.
 >
 > **Staleness sweep, 2026-09-24** — at Zach's request (*"look thru for whats been verified (including commit names bc i say stuff there)"*), Zach's own commit messages and in-file notes were read back into this list. Every box changed below cites the commit or note it came from; where the evidence is an inference rather than an explicit statement, the line says so — uncheck it if it's wrong. Sources used: `08c028d0` "go works also fixed chess edge case", `3cd9fcf3` "migrated Go", `f393d328` → `5f80e66f` → `3d875c13` (Prism Cathedral crash → cnoise3 fix → "IT WORKS"), Zach's note "RADIANCE RUNG 3-8 AND v0 … I ALREADY SAWWWWW", `d1b0112b` "THE CATHEDRAL LOOKS AWESOME NOWWWWW", `3c6a1828`, `980bd922`, `7fdbbedb`, `6eb8d4db`/`46e90911` (aurora), `1d84821f` (mist), and the Perlin intercom thread's recorded Person witnesses. Zach's `[~]` decision was applied to the items he had marked `[x]` while writing that they were broken or unclear. *— Claude Code · Claude Opus 5.5 · session* `8d0946b6-40ea-42c5-a42c-e34f35fa1137` *· 2026-09-24T13:17-07:00*
+
+## Constitutional Person movement
+
+- [ ] If an existing saved Law attempts to set your `position`, `velocity`, or `acceleration`, witness that it does not move you merely because you authored the Law; record any movement channel that still does. This remains open because the authored, revocable consent Relation has not yet been specified or wired. No save file was changed for this check. *Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:23 PDT.*
+- [ ] When authoring a live `Map`/`ValueLeaf` Law from a list/dictionary PropertyPath, confirm that changing the source leaf changes the intended visible result on the next firing, and that a refused read-only nested write names its refusal in the Law record; this pass verified serialized Laws headlessly and added no inhabited demonstration save or new control. General scalar cells, unique/weak bindings, alias-wide reactivity, and save topology remain open in [the Property memory task](../Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md). *Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 12:29 PDT.*
 
 
 
@@ -99,6 +157,15 @@
 
 
 ## Screen Recorder — Law-Authored Snapshot & Recording Controls
+
+*Codex · GPT-6 · session `01a0fe15-4fe2-7dc0-a2d0-7d823e4ad26c` · 2026-10-02 12:40 PDT; [native capture evidence](../../../audits/SCREEN_CAPTURE_NATIVE_VERIFICATION_2026-10-02.md).*
+
+- [x] Inspect the recorder's actual chess screenshot: Zach confirmed **“THATS THE ACTUAL CHESS ZONE”** and **“THE BUTTONS ARE THE RIGHT COLORS NOT RED GLITCH”** in this session.
+- [ ] In your ordinary Earthcall launch, trigger a viewport snapshot and compare the saved PNG with the visible world; authored 2D controls should match, while Creator Console/ImGui panels are outside viewport capture.
+- [ ] Start `png_sequence` recording, move/look around, pause/resume, stop, and inspect the saved frames for the intended view and cursor placement; two rapid starts and two rapid snapshots must preserve separate output files.
+- [ ] For host-display capture, grant the actual Earthcall launch process macOS Screen Recording permission and verify `mode=display` with `fallbackToViewport=false`; a refused capture must name its error and create no substitute image.
+- [ ] Choose whether window capture means Earthcall's whole app window or a selected foreign app window; it currently refuses instead of capturing the full desktop.
+- [ ] If MP4 is desired, make ffmpeg available on the launch process's PATH and verify playback after stop; this pass verifies missing/failed encoder refusal, not successful MP4 encoding.
 
 *Antigravity · 2026-09-23. Verification for user-authored Laws targeting* `@screen-recorder.snapshot` *and* `@screen-recorder.recording`*.*
 
@@ -881,7 +948,205 @@ Zach: The msgpack itself works properly. I manually verified the new msgpack its
 - [ ] Load `saves/worlds/test the hills.json` and read the load report (the line ending "law(s) added"). It should carry the clause **"(1 re-authored onto this Person so they can fire)"**. Then open the Law Author window: the law whose file says `"authors": ["Zach"]` should now list *you* (your key or display name) as author, with no trace that it was re-authored. Say whether that is what you want a load to do silently.
 - [ ] If you have a keyed identity: load any world whose laws are authored `"Zach"` by display name and count how many the report re-authors. Each one is a law that detached from you and was handed back to you under a different name.
 
+## The render substrate knows what "up" and "a letter" are (added 2026-09-30)
+
+*Claude Code / Claude Fable 5.1 (Mythos) · session `session_01EbAdb1nuGQ8XorGsEHHAkv` · 2026-09-30 07:31 UTC. [Audit](../../../audits/2026-09-30_mythos_cube_beneath_the_field_audit.md) §2, §6. Nothing changed in the engine; these witness assumptions I only read.*
+
+- [ ] Author a Field whose expression is the Perlin floor with `x` and `y` swapped (a wall: `x - h(y,z)`). It should render identically in kind, but the heightfield DDA will not engage and the frame cost should be visibly worse than the floor. Say whether a wall deserving the same acceleration as a floor is what you expect of a continuum with no privileged axis.
+- [ ] Place a `Text2D` beside any Field and try to do to the letter what you can do to the Field: morph it, CSG it, write a law against its shape. You cannot. Say whether a letter should be a Field.
 - **2026-09-25: Serialization Format Triage & Migration Framework (Gemini Spark)**
   - Please load an existing bloated JSON save file (e.g., `clawd-monastery-save` or `synthesis_studio`), make a minor change, and save it.
   - Verify that the resulting `.ecform` file on disk has shrunk drastically (typically dropping from 200MB down to single digit MBs or less) due to the removal of `semanticRoots["zones"]` duplication, capping `stakeholders` history to 20, and disabling `j.dump(2)` whitespace bloating.
   - Verify that the world loads seamlessly despite these changes (backward compatibility is handled transparently via `materializeSemanticRoots` and the new `MigrationFramework`).
+
+---
+
+## The Gyroid Reliquary — first look (added 2026-09-29)
+
+*opencode (space-bunny-free) · session `gyroid-reliquary-2026-09-29` · 2026-09-29.
+[Full task](../Specific%20Tasks/Zones%20and%20Ourverse/The_Gyroid_Reliquary/The_Gyroid_Reliquary.md).*
+
+Zach asked for a new Zone, mind-blowing, unlike anything this Earth has ever seen.
+I built one and I can prove the mathematics is right — **119 checks green, 0
+ray-marcher tunnels in 3945 rays**, every landing on a surface the Zone actually
+authors, and all 47 of its expressions confirmed to **compile to WGSL**.
+
+*(Zach's first run spammed `SdfWgsl compile refused ... names the variable 'p'`
+forever and drew nothing. That was mine — every Piecewise declared an illegal
+piece-bound variable — and it is fixed and guarded; see task doc §4.5. The
+rebuild is what you want, not the binary you just ran.)*
+
+What I cannot do is see it. Everything below is something only you can judge, and
+every one of it is a thing I asserted that a human has to confirm.
+
+**How to get there:** launch Earthcall (`earthcall_webgpu` — *not* the OpenGL
+build, which falls back to a cached tessellation and would show you nothing like
+this), open the Zone list, and choose **The Gyroid Reliquary**. It is owned by
+you and deletable by you. It should be about the fifth zone down.
+
+- [ ] **First: confirm the log is quiet.** You should see no
+      `SdfWgsl compile refused` lines at all now. If any are left, paste one —
+      each carries the exact expression that refused, and I can read it straight
+      to the node.
+- [ ] **The first thing you see should be a woven sphere.** Look at it from
+      outside, from roughly 30 m. You should be able to see *through* it — the
+      lattice is a thin shell, so corridors run clean through — and the gold
+      Heart should be visible glowing at the centre. Say whether it reads as a
+      place or as a screensaver. I genuinely do not know which.
+- [ ] **Fly or walk inside, and tell me whether it holds up close.** From just
+      inside the vessel the walls are ~12 m apart and the labyrinth should feel
+      like architecture. This is the view I designed for and the one I most want
+      to be wrong about.
+- [ ] **Look up through the Oculus.** There is a 6 m hole cut straight through
+      the crown, and a white-gold beam in it. The beam is the only vertical in
+      the Zone. If it does not read as the thing the whole room is built around,
+      the composition is wrong and I would like to know.
+- [ ] **The Heart is the thing to check most carefully.** It should be *see-through
+      and woven* — you can look into it and out the far side, and it is visibly
+      made of the same lattice as the walls at a third of the size. It should
+      NOT look like a solid gold ball. (I got this wrong the first time: it came
+      out solid, with about a tenth of a metre of fluting on the skin. The test
+      that caught it now measures the Heart's solid fraction, 50.3%. Your eye is
+      still the authority on whether that looks *woven*.)
+- [ ] **Colour.** The membrane is meant to be opalescent — pale gold, rose and
+      ice-blue banding in three directions, phase-locked to the same gyroid the
+      walls are cut from. The Heart is gold, so there is a teal counter-light
+      ringing it at 16 m; without that complement the gold is just an orange
+      blob. Say whether the palette holds together or whether it is a clash.
+- [ ] **Frame rate, and this is the one I most expect to be a problem.** The
+      conservative distance function is what makes the Zone provably free of
+      holes, and it costs steps. I measured 95% of rays reaching the surface
+      within the renderer's 192-step budget from 32 m, but I have **no idea
+      what it feels like to fly around in it.** Please tell me if it is
+      unusable, and if so whether you would rather have (a) a smaller Reliquary,
+      (b) a slightly optimistic distance that trades the no-holes guarantee for
+      speed, or (c) something else. I would take your answer over my proof here.
+- [ ] **Look at the Glass Floor.** Two crossed wave trains under everything. The
+      Floor is the one shape the engine can *prove* is a heightfield, and also
+      the one place it declines to differentiate the wave, so its normals are
+      central-differenced rather than exact. Tell me whether you can see the
+      difference. I suspect you cannot, and I would rather know.
+
+**Two things I found in passing that are yours to decide, not mine:**
+
+- [ ] **`prism_cathedral_test` was already red, and I found out why.** It was
+      missing from a `WORKING_DIRECTORY` allow-list in `CMakeLists.txt`, so under
+      `ctest` it had been failing at *hydration* and never once reaching its
+      actual checks. I added the one-line fix (it was a list whose own comment
+      says to add tests to it). It now runs 91 checks and fails **2**, both about
+      Prism Cathedral's own authored radiance at Z=40 and Z=107. I did not touch
+      those — that save file isn't mine to edit without your say-so. Do you want
+      them chased?
+- [ ] **Growing the Reliquary is one number** (`‖p‖ − 30` in the authored
+      expression, plus its `fieldExtent` follows). I left it at 30 m so your
+      first look costs nothing, and I have not measured the frame cost of a wider
+      one. Worth trying at 60 once you have felt the 30 m version.
+
+---
+
+## The Veiled Hour — first look (added 2026-09-30)
+
+*opencode (space-bunny-free) · session `veiled-hour-2026-09-30` · 2026-09-30.
+[Full task](../Specific%20Tasks/Zones%20and%20Ourverse/The_Veiled_Hour/The_Veiled_Hour.md).*
+
+Zach asked for a gorgeous 3D nebula. I built one and I can prove its physics is
+right — **155 checks green**, the pillars measurably lean toward a cluster you
+cannot see, they measurably obey an inverse-square law, the dust is measurably
+dark (luminance 0.14) against gas that measurably emits, and every one of the
+Zone's expressions is confirmed to **compile to WGSL**.
+
+What I cannot do is see it. Everything below is yours to judge.
+
+**How to get there:** `earthcall_webgpu` (not the OpenGL build), Zone list →
+**The Veiled Hour**. Owned by you, deletable by you.
+
+- [ ] **First: is the log quiet?** No `SdfWgsl compile refused` lines. If any
+      survive, paste one — each names the exact expression that refused.
+- [ ] **RE-CHECK THE PILLARS FIRST — this is the one that failed.** Your first
+      look said *"a ton of overlapping cones"*, and that was precisely right:
+      the ablation was subtracting spheres big enough to shear each column into
+      shards, so you were seeing seven broken columns. That is fixed — each
+      pillar is now verified as **one unbroken piece** (99.7% solid down its own
+      axis) and the erosion is a modulation of its outline rather than pieces
+      missing from it. They are also slimmer (3.4 m instead of 5.2 m at the root)
+      and no longer taper linearly to a spike. **Do they read as columns now?**
+      If they still read as cones, tell me and I will change the *taper law*
+      itself rather than the surface — a pillar's profile is a shape question,
+      and I have been treating it as a surface question.
+- [ ] **Look at them from the side, at about the same height as the cluster.**
+      They should form a *field* with sky between them, not a picket fence. The
+      arc placement is hand-authored and I am least confident in it.
+- [ ] **This is the whole Zone in one question: does it read as a NEBULA, or as
+      coloured fog?** I built it around the belief that a nebula is bright gas
+      *plus black dust in front of it*, and that removing either half leaves
+      smoke. If you see smoke, my central claim is wrong and I want to know.
+- [ ] **Look for the dark lanes.** The dust occludes the gas behind it
+      (marched, not painted). Standing where a pillar is between you and the
+      cluster, you should see a hard-edged black bite out of the glow. Tell me
+      whether the edges are too soft — I suspect they are, because the occluder
+      is one noise-wobbled ball rather than the pillars themselves.
+- [ ] **The pillars' tips should all point at the same hidden place.** That is
+      the one compositional idea in the Zone. If it doesn't read, the arc
+      placement is wrong and the whole framing collapses.
+- [ ] **The colour.** It should be a deep H-alpha red nebula (magenta-red) with
+      a *small* teal heart right at the cluster. My first attempt made every
+      radius a muddy half-red-half-teal, which is the colour of nothing in
+      nature. Tell me if it still looks washed out.
+- [ ] **Frame rate — and here I am most worried.** This Zone stacks 8
+      overlapping volumetric beings over a 105 m cavity, each taking the
+      transport's fixed 96 samples. I have **no idea** what that feels like to
+      fly through. I expect it to be the worst in the tree. If it is unusable,
+      tell me and I will thin the stack — the cavity, the dust and the rims are
+      the load-bearing three; the reflection haze, the forward scatter and the
+      outer veil are garnish and I can cut them first.
+- [ ] **Turn to face the cluster and then away from it.** Forward scattering is
+      verified (2.84 forward vs 0.076 backward), so the nebula should visibly
+      brighten when you look *into* it. Confirm or deny — that is a claim in the
+      Zone's own records and only your eye settles it.
+
+**One thing I need to flag, because it is a lie I already corrected once:**
+
+- [ ] The Gyroid Reliquary's save file said in writing that `volumeOccluder` was
+      "never read by the WGSL volume transport". **That was false.** It is read:
+      JSON `volumeOccluder` → `MediumBinding::occluderSdf` → emitted as
+      `volumeSdfEval` → marched by `volumeSourceVisibility`. I had grepped
+      SdfWgsl.cpp for the *JSON key* instead of the *C++ member name*, believed
+      the absence, and wrote a confident falsehood into a save file. It is
+      corrected, the occluder is now actually authored there, and it is guarded.
+      Please hold me to the lesson: **verify the channel, do not reason about
+      its name.**
+
+## After the ghost — five days, one standing-still (added 2026-09-30 by Grok 4.7)
+
+*Session `01a0b187-fcc3-78a3-afd8-3e9d162248b5`. From [The Five Days the Sun Would Not Sit Still](../../../Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Five_Days_the_Sun_Would_Not_Sit_Still.md). Headless results are not these.*
+
+- [ ] **Paste the Palette paragraph.** Open `.Jules/palette.md`, copy the block under "Paste this over the Google Jules task prompt", and replace the Jules Palette task with it. The repo cannot edit Google's prompt. Until you paste it, Palette's only brake is that journal, which their prompt does say to read first. Keep merging purple if the feeling is the point.
+- [ ] **Stand in the Sun before the next pass.** Boot `earthcall_webgpu`, enter the Sun Zone as it exists now (local history is through the ivory-and-gold passes; origin already has Pass #028). Stay long enough to know whether you would remain there. A receiver response and localized gold are the claim. Your eyes are the witness.
+- [ ] **Try to be pinned.** From a foreign mover (the websocket path the 2026-09-29 commit guarded), attempt `teleport_player` or a direct positive move of your body. It should refuse. A Law that only forbids a room should still be able to forbid the room. The feeling you are checking is the refusal to be grabbed, and the freedom to be told a place is closed.
+
+## Creator Console UI Improvement (added 2026-10-01)
+
+*Session c02f9271-25d2-430c-99b6-2a1144eb9c68. Gemini 3.1 Pro.*
+
+Zach asked to fix the Creator Console's Zone Window which was "just a pile of zones stacked on top of each other in a list and that's so awkward".
+
+- [ ] **Open the Creator Console (`F8`) and check the Zones tab.** It should now display a much cleaner **Master-Detail split view**, replacing the single vertical list.
+- [ ] **Select a Zone.** Check if the details (Name, ID, Objects, Relations, Actions) cleanly display on the right pane.
+- [ ] **Test the buttons.** The right pane has context-aware buttons ("Move to Zone", "Already Here", "Save Active Zone", "Save Zone"). Please verify that clicking them works exactly as before and the UI feedback (green/red text at the top) is clear.
+- [ ] **Does it feel like a "Creator" tool?** The styling has some minor ImGui coloring (`ImVec4(1.0f, 0.8f, 0.2f, 1.0f)` for titles) and clear spacing to match the console feel. Tell me if it feels less awkward.
+
+## Shape Generator 3D Law Modernization
+* **Date:** 2026-10-02
+* **What to check:** The old C++ tool bypass for the Shape Generator 3D has been completely removed. Object creation is now 100% Law-driven (via the `shape-generator-3d-law`). Please launch Earthcall and verify:
+  1. Pressing `O` (changed from `L`) toggles the Creator Console visibility/hotkey cleanly.
+  2. The Creator Console in "Create" mode uses the `shape-generator-3d-law` and renders a proper 3D ghost preview (instead of the ImGui text preview).
+  3. Clicking in the world in Create mode spawns the object correctly using the authored law.
+  4. Try spawning a Field object and ensure its implicit expression is preserved.
+
+## Reverse image modality — first editable rung (2026-10-02)
+
+Codex · GPT-6 · session `01a0fe15-4fe2-7dc0-a2d0-7d823e4ad26c` · 15:57 PDT. Zach asked for both faithful display and reconstruction, fundamentally reconstruction. Machine evidence and next steps are in [the task](../Specific%20Tasks/Rendering%20and%20OntoMath/Image_Reconstruction/Image_Reconstruction.md).
+
+- [ ] Inspect `scratch/capture-verification/2026-10-02-01a0fe15/reverse/reconstructed.png` beside `source.png`: the promotion strip should have the same colors and lettering, without new seams.
+- [ ] Inspect `edited.png` and `painted.png`: only the selected lower yellow region should disappear or turn green; neighboring text and colored panels should stay unchanged.
+- [ ] Judge whether rectangle fragments are a useful first editing rung; meaningful button/text grouping and recovered 3D are still unfinished, and reconstructed panels do not yet carry the original chess behavior.

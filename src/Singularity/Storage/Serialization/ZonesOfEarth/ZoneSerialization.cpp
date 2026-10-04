@@ -1,3 +1,6 @@
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
+
 #include "Singularity/OntoMath/Field.hpp"
 #include "Singularity/Core/StringId.hpp"
 #include "Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.hpp"
@@ -6,6 +9,7 @@
 #include "Singularity/Storage/Serialization/ZonesOfEarth/HomeSerialization.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Relation/Relation.hpp"
 #include "ZonesOfEarth/HomesOfEarth/Home.hpp"
@@ -286,6 +290,14 @@ nlohmann::json zoneToJson(const Zone& zone) {
     }
     zj["deletable"] = del;
     zj["world"] = zoneObjectsToJson(zone);
+    if (!zone.storedSingulars().empty()) {
+        zj["storedSingulars"] = nlohmann::json::array();
+        for (const auto& being : zone.storedSingulars()) {
+            auto record = SingularSetToSetCreation::storedToJson(*being);
+            if (record.is_null()) throw std::runtime_error("stored Singular has no persistence codec");
+            zj["storedSingulars"].push_back(std::move(record));
+        }
+    }
     writeZoneBounds(zone, zj);
 
     // The Zone's continuous field root used to exist live, participate in the
@@ -307,12 +319,27 @@ nlohmann::json zoneToJson(const Zone& zone) {
 
     nlohmann::json lexemes = nlohmann::json::array();
     for (Singular* member : zone.formation().getMembers()) {
+
         auto* lexeme = dynamic_cast<Singularity::Language::Lexeme*>(member);
         if (!lexeme) continue;
-        lexemes.push_back({
+        // Stored Lexemes have a complete codec record above. Emitting the
+        // legacy projection too would overwrite restored typed references
+        // with the old property decoder's monostate values on hydration.
+        if (std::any_of(zone.storedSingulars().begin(), zone.storedSingulars().end(),
+                        [&](const auto& stored) { return stored.get() == member; })) continue;
+        nlohmann::json item = {
             {"id", lexeme->getIdentifier()},
             {"symbol", lexeme->getSymbol()}
-        });
+        };
+        nlohmann::json dyn = nlohmann::json::object();
+        for (const auto& entry : lexeme->dynamicProperties()) {
+            dyn[Earthcall::StringInterner::resolve(entry.first)] = propertyValueToJson(entry.second);
+        }
+        if (!dyn.empty()) {
+            item["authoredProperties"] = std::move(dyn);
+        }
+        lexemes.push_back(item);
+
     }
     zj["lexemes"] = lexemes;
     zj["formationRelations"] = zone.formation().relations().toJson();
@@ -399,6 +426,18 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
             zoneObjectsFromJson(zj, zone);
         }
     }
+    if (zj.contains("storedSingulars")) {
+        // Source Lexemes are references too. Admit their canonical identities
+        // before decoding newly stored graphs; later formation hydration uses
+        // the SAME language instances and restores legacy properties.
+        for (const auto& item : zj.value("lexemes", nlohmann::json::array())) {
+            const auto id = item.value("id", std::string{});
+            const auto symbol = item.value("symbol", std::string{});
+            if (!id.empty() && !symbol.empty())
+                zone.addToFormation(Singularity::Language::LanguageSystem::instance().intern(symbol, id).get());
+        }
+        SingularSetToSetCreation::restoreStored(zone, zj["storedSingulars"], replaceObjects);
+    } else if (replaceObjects) zone.clearStoredSingulars();
     // A non-empty zone here can mean two different things this function
     // cannot tell apart from replaceObjects alone: a Zone kept LIVE from the
     // running session (unsaved_preserve_test: another file's snapshot of the

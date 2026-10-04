@@ -1,4 +1,16 @@
 # SUN UPDATE — Rung 9 response ownership + compiler boundary
+
+<!-- NAV_BLOCK_START -->
+> [!NOTE]
+> **Thread Navigation: Rung 9 Updates**
+> [View Full Thread Index](../00_THREAD_INDEX.md)
+>
+> **Related in this thread:**
+> - [SUN_UPDATE_RUNG9_EXACT_HEAD_GREEN_AND_RECEIVER_WITNESS_GAP_2026-09-25.md](SUN_UPDATE_RUNG9_EXACT_HEAD_GREEN_AND_RECEIVER_WITNESS_GAP_2026-09-25.md)
+> - [SUN_UPDATE_RUNG9_PRODUCTION_RESPONSE_LOWERING_2026-09-24.md](SUN_UPDATE_RUNG9_PRODUCTION_RESPONSE_LOWERING_2026-09-24.md)
+<!-- NAV_BLOCK_END -->
+
+
 **Date:** 2026-09-24  
 **Repository:** `zhangzachary834-commits/Earthcall`  
 **PR:** #375 — `Rung 9: authored material response invariant`  

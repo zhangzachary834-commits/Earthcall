@@ -108,6 +108,11 @@ public:
     bool autoMenu = true;
     bool color = true;
     bool hints = true;
+    // A SECRET line (the Identity Zone's passphrase): drawn as bullets, never
+    // shown to the suggest/highlight/status providers, never kept in history,
+    // and never echoed by the channel. State beneath the Kernel (NO_BLACK_BOX
+    // §5) -- the channel sets it for exactly one line and clears it.
+    bool secret = false;
     int overlayRows = 18;
     // The status footer (plain text; the editor styles it) and the colour of
     // its leading mark — green when this Zone hears the line, yellow if not.

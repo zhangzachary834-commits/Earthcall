@@ -317,6 +317,12 @@ void LineEditor::edited(bool textChanged) {
     }
     _navigated = false;
     _selected = 0;
+    if (secret) {   // no provider ever sees a secret line
+        _suggestions.clear();
+        _status.clear();
+        _menuForced = false;
+        return;
+    }
     _suggestions = _suggest ? _suggest(_buffer.substr(0, _cursor)) : std::vector<LawSentence::Suggestion>{};
     _status = _statusFn ? _statusFn(_buffer) : std::vector<Status>{};
     if (_suggestions.empty()) _menuForced = false;
@@ -453,7 +459,7 @@ std::string LineEditor::historyMatch() const {
 }
 
 std::string LineEditor::ghost() const {
-    if (_cursor != _buffer.size() || _searching) return {};
+    if (secret || _cursor != _buffer.size() || _searching) return {};
     if (menuVisible() && _selected < static_cast<int>(_suggestions.size())) {
         const auto& s = _suggestions[_selected];
         const std::string tail = typedTail(s);
@@ -599,6 +605,15 @@ LineEditor::Outcome LineEditor::press(const Key& key) {
         case K::PasteBegin: _pasting = true; return Outcome::None;
         case K::PasteEnd: _pasting = false; edited(true); return Outcome::None;
         case K::Enter:
+            if (secret) {
+                if (_buffer.empty()) return Outcome::None;
+                _submitted = _buffer;                 // never into history
+                std::fill(_buffer.begin(), _buffer.end(), '\0');
+                _buffer.clear();
+                _cursor = 0;
+                edited(true);
+                return Outcome::Submitted;
+            }
             if (menuVisible() && _navigated) {
                 accept(_suggestions[_selected]);
                 return Outcome::None;
@@ -666,10 +681,12 @@ LineEditor::Outcome LineEditor::press(const Key& key) {
             if (menuVisible()) select(-1);
             return Outcome::None;
         case K::Up:
+            if (secret) return Outcome::None;   // history never enters a secret line
             if (menuVisible()) select(-1);
             else historyStep(-1);
             return Outcome::None;
         case K::Down:
+            if (secret) return Outcome::None;
             if (menuVisible()) select(+1);
             else historyStep(+1);
             return Outcome::None;
@@ -771,6 +788,7 @@ LineEditor::Outcome LineEditor::press(const Key& key) {
         case K::Redraw: return Outcome::Redraw;
         case K::Click: case K::Help: case K::CursorReport: return Outcome::None;   // handled above
         case K::HistorySearch:
+            if (secret) return Outcome::None;
             _searching = true;
             _query.clear();
             _searchSkip = 0;
@@ -886,10 +904,21 @@ LineEditor::Frame LineEditor::render(int width) const {
         before = visibleWidth(label) + visibleWidth(_query);
         total = visibleWidth(input);
     } else {
+        if (secret) {
+            // One bullet per character; the characters themselves never
+            // reach the screen.
+            std::string dots;
+            const std::size_t shown = visibleWidth(_buffer);
+            for (std::size_t k = 0; k < shown; ++k) dots += "\xE2\x80\xA2";
+            input = sgr("1;38;5;141", prompt) + dots;
+            before = visibleWidth(prompt) + visibleWidth(_buffer.substr(0, _cursor));
+            total = visibleWidth(prompt) + shown;
+        } else {
         const std::string g = ghost();
         input = sgr("1;38;5;141", prompt) + styled(_buffer, true) + sgr("2", g);
         before = visibleWidth(prompt) + visibleWidth(_buffer.substr(0, _cursor));
         total = visibleWidth(prompt) + visibleWidth(_buffer) + visibleWidth(g);
+        }
     }
     const int inputRows = total == 0 ? 1 : static_cast<int>((total + w - 1) / w);
     _inputRows = inputRows;

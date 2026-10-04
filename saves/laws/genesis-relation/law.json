@@ -1,0 +1,43 @@
+{
+  "id": "genesis-relation",
+  "name": "Metalaw: Genesis Phase 1 (Mint Relation)",
+  "authors": [
+    "Zach"
+  ],
+  "enabled": true,
+  "conditions": [
+    {
+      "kind": "All",
+      "children": [
+        {
+          "kind": "Compare",
+          "path": "@state.genesis.phase",
+          "op": 0,
+          "operand": 1.0
+        },
+        {
+          "kind": "Compare",
+          "path": "@state.genesis.type",
+          "op": 0,
+          "operand": "Relation"
+        }
+      ]
+    }
+  ],
+  "actionModel": {
+    "kind": "Sequence",
+    "children": [
+      {
+        "kind": "AddRelation",
+        "propertyName": "@@state.genesis.id",
+        "containerToken": "@@state.genesis.source",
+        "elementToken": "@@state.genesis.target"
+      },
+      {
+        "kind": "Set",
+        "path": "@state.genesis.phase",
+        "operand": 0.0
+      }
+    ]
+  }
+}

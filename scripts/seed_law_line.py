@@ -162,7 +162,11 @@ TRIGGER_PRESETS = [
 
 # The wiring: whether a Terminal line becomes a Law is the world's decision.
 WIRING = [
+    # Terminal Zones (Zach, 2026-09-30): a line is a Law sentence only while
+    # the LINE is in the Law Line -- wherever the Person's body stands.
     law("law-line-hear", "Law Line · a terminal line is a spoken law sentence", enabled=True,
+        condition={"kind": 0, "path": "@terminal-channel.zone", "op": 0,
+                   "operand": {"t": "string", "v": "LawLine"}},
         action={"kind": 10, "eventType": "law-sentence-spoken", "publishSubject": "", "publishObject": ""},
         triggers=["terminal-line-entered"]),
     law("law-line-speak", "Law Line · a spoken law sentence asks the Terminal to author it", enabled=True,

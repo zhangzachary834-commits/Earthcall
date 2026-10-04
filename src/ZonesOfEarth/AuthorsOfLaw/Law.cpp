@@ -1,6 +1,8 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "Law.hpp"
+#include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
 #include "Identity/FirstMoverRegister.hpp"
+#include "Identity/PersonPresence.hpp"
 #include <string_view>
 
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
@@ -19,8 +21,68 @@
 
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Person/Person.hpp"
+#include "MathBinding.hpp"
 
 namespace {
+bool isPersonMotionProperty(const std::string& property) {
+    return property == "position" || property == "velocity" ||
+           property == "acceleration";
+}
+
+bool writesPersonsMotionWithoutActuationConsent(const ActionNode& action,
+                                                Singular& subject,
+                                                bool childrenOnNewborn = false) {
+    // Constitutional boundary on positive body/location writes. A Law may
+    // still read location to author a restriction such as "leave this private
+    // area"; this scan visits destinations, not condition paths or inputs.
+    const auto motionWrite = [&](const PropertyPath& destination,
+                                 const std::string& namedProperty = std::string()) {
+        // A Create child's plain path writes the newborn Object; its
+        // qualified path can still reach a Person outside the newborn.
+        if (childrenOnNewborn &&
+            (destination.segments.empty() || destination.segments[0].empty() ||
+             destination.segments[0][0] != '@')) return false;
+        std::size_t startIndex = 0;
+        Singular* bearer = resolveLawRoot(subject, destination, startIndex);
+        const auto* person = dynamic_cast<const Person*>(bearer);
+        if (!person) return false;
+        const std::string& property = namedProperty.empty()
+            ? (startIndex < destination.segments.size()
+                ? destination.segments[startIndex] : namedProperty)
+            : namedProperty;
+        // Authorship records who originated the Law. It cannot testify that
+        // this Person consents to this particular firing now. No Law
+        // actuation-consent evidence exists yet, so this boundary refuses.
+        return isPersonMotionProperty(property);
+    };
+
+    switch (action.kind) {
+        case ActionNode::Kind::Set:
+        case ActionNode::Kind::Add:
+        case ActionNode::Kind::Scale:
+        case ActionNode::Kind::Lerp:
+        case ActionNode::Kind::Drive:
+        case ActionNode::Kind::Map:
+        case ActionNode::Kind::Flow:
+            if (motionWrite(action.path)) return true;
+            break;
+        case ActionNode::Kind::RemoveProperty:
+            // Removing a registered Property clears its slot. Clearing a
+            // Person's motion Property is a motion write, including when the
+            // Law's subject is someone else and the owner path is qualified.
+            if (motionWrite(action.path, action.propertyName)) return true;
+            break;
+        default:
+            break;
+    }
+    for (const ActionNode& child : action.children) {
+        if (writesPersonsMotionWithoutActuationConsent(
+                child, subject,
+                childrenOnNewborn || action.kind == ActionNode::Kind::Create)) return true;
+    }
+    return false;
+}
+
 std::vector<std::string> formationMemberIds(const Formation& formation) {
     std::vector<std::string> ids;
     for (const auto* member : formation.getMembers()) {
@@ -46,7 +108,7 @@ nlohmann::json Law::ApplicationRecord::toJson() const {
         }
         nodes.push_back(std::move(entry));
     }
-    return nlohmann::json{
+    nlohmann::json record{
         {"timestamp", timestamp},
         {"lawId", lawId},
         {"targetId", targetId},
@@ -56,6 +118,8 @@ nlohmann::json Law::ApplicationRecord::toJson() const {
         {"actions", actionDescriptions},
         {"nodes", nodes}
     };
+    if (!refusalReason.empty()) record["refusalReason"] = refusalReason;
+    return record;
 }
 
 Law::Law(const std::string& name)
@@ -398,34 +462,20 @@ Law::ApplicationResult Law::applyToImpl(
     // govern higher. This single check is what keeps the civic order from
     // collapsing into either chaos or tyranny.
     const Law* targetLaw = dynamic_cast<const Law*>(&target);
-    const Person* targetPerson = dynamic_cast<const Person*>(&target);
     const Zone* targetZone = dynamic_cast<const Zone*>(&target);
 
-    bool violatesKernelBoundary = false;
+    const bool lacksPersonMotionConsent = _actionModel &&
+        writesPersonsMotionWithoutActuationConsent(*_actionModel, target);
+    bool violatesKernelBoundary = lacksPersonMotionConsent;
+    bool personMotionRefused = false;
     if (_actionModel) {
         std::vector<PropertyPath> paths;
         _actionModel->collectPaths(paths);
-        
-        bool isSelfAuthored = false;
-        for (auto* author : _authors.getMembers()) {
-            if (author == &target) {
-                isSelfAuthored = true;
-                break;
-            }
-        }
 
         for (const auto& p : paths) {
             if (p.segments.empty()) continue;
             const std::string& root = p.segments.front();
-            
-            // 1. Person Guard: Nobody else can move your body against your will.
-            if (targetPerson && !isSelfAuthored) {
-                if (root == "position" || root == "velocity" || root == "acceleration") {
-                    violatesKernelBoundary = true;
-                    break;
-                }
-            }
-            
+
             // 3. Zone Exit Lock Rejection: Nobody can be locked in a zone against their will.
             if (targetZone) {
                 if (root == "canExit") {
@@ -451,6 +501,7 @@ Law::ApplicationResult Law::applyToImpl(
         result = ApplicationResult::AuthorityDenied;
     } else if (violatesKernelBoundary) {
         result = ApplicationResult::AuthorityDenied;
+        personMotionRefused = lacksPersonMotionConsent;
     } else if (_jurisdiction && !_jurisdiction->getFormation().hasMember(&target)) {
         result = ApplicationResult::AuthorityDenied;
     } else if (!conditionsAlreadySatisfied && !conditionsSatisfied(target)) {
@@ -490,6 +541,7 @@ Law::ApplicationResult Law::applyToImpl(
         // carries it out. This is where "did anything actually happen" is
         // answered — the application result only says the branch was reached.
         ActionNode::TraceScope traceScope;
+        SingularSetToSetCreation::AuthorScope creationAuthors(_authors.getMembers());
         for (const auto& action : _actions) {
             action.run(event, target);
         }
@@ -509,6 +561,10 @@ Law::ApplicationResult Law::applyToImpl(
 
     _applicationLog.push_back(makeRecord(&target, result));
     _applicationLog.back().trace = trace;
+    if (personMotionRefused) {
+        _applicationLog.back().refusalReason =
+            "positive Person body/location write refused: no verified signed actuation consent";
+    }
 
     if (result == ApplicationResult::Applied) {
         // Report what the NODES did, not merely that we got here. A law whose
@@ -3481,6 +3537,12 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
     const auto findBeing = [](const std::string& id) -> Singular* {
         for (Singular* being : Universe::instance().beings()) {
             if (being && being->getIdentifier() == id) return being;
+        }
+        // A keyed Person still answers to a name the migration ledger signed
+        // over to their key (Laws authored as "Zach" before Zach had one).
+        for (Singular* being : Universe::instance().beings()) {
+            if (auto* person = dynamic_cast<Person*>(being);
+                person && Identity::personAnswersTo(*person, id)) return being;
         }
         // A Law authored by a foreign First Mover (MCP) names that mover's
         // cryptographic id. It reattaches only while the mover stands.

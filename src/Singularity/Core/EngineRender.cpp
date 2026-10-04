@@ -13,6 +13,7 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
+#include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Singularity/Storage/FileWatcher.hpp"
 #include "Singularity/Audio/AudioRecorder.hpp"
@@ -140,7 +141,7 @@ namespace Core {
                 // discovery cannot silently lag a newly-authored channel. In
                 // particular, V4 E_v must participate in world-set revision.
                 Rendering::appendVolumeSetIdentity(
-                    volumeSetIdentity, field->getIdentifier(), medium);
+                    volumeSetIdentity, medium.producerId, medium);
                 volumeDensities.push_back(medium);
             }
 
@@ -148,6 +149,7 @@ namespace Core {
             if (!Rendering::readAuthorableLight(*field, light)) continue;
 
             Rendering::RadianceSourceBinding source;
+            source.producerId = field->getIdentifier();
             source.position = light.position;
             source.ambientRadiance = Rendering::lightAmbientRadiance(light);
             source.diffuseRadiance = Rendering::lightDiffuseRadiance(light);
@@ -185,7 +187,7 @@ namespace Core {
             // enablement and temporal coordinates live in the persistent source
             // storage buffer and must NOT serialize an entire FieldNode merely
             // to move/recolor/enable a source.
-            sourceSetIdentity += field->getIdentifier();
+            sourceSetIdentity += source.producerId;
             sourceSetIdentity += ":";
             sourceSetIdentity += std::to_string(source.radianceRevision);
             sourceSetIdentity += ":";
@@ -308,7 +310,7 @@ namespace Core {
         currentRenderer().setModel(glm::mat4(1.0f)); // back to world space
 
         if (_creatorConsoleOpen) {
-            Rendering::renderCreatorConsole3DPreviews(_person.get(), nullptr);
+            Rendering::renderCreatorConsole3DPreviews(_person.get(), nullptr, this);
         }
 
         // Draw the embodied Person as world geometry before volumetric
@@ -399,7 +401,19 @@ namespace Core {
             if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
                 recorder->checkPendingSnapshot(fbW, fbH);
                 if (recorder->isRecording()) {
-                    recorder->stepFrame(fbW, fbH);
+                    // GLFW reports window points; recording uses framebuffer
+                    // pixels. Use the interaction channel's sensed pointer so
+                    // pointer lock and Retina scaling agree with live aiming.
+                    int cursorX = -1, cursorY = -1;
+                    if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {
+                        int winW = 0, winH = 0;
+                        glfwGetWindowSize(_window, &winW, &winH);
+                        if (winW > 0 && winH > 0) {
+                            cursorX = static_cast<int>(interaction->pointerX * fbW / winW);
+                            cursorY = static_cast<int>(interaction->pointerY * fbH / winH);
+                        }
+                    }
+                    recorder->stepFrame(fbW, fbH, nullptr, cursorX, cursorY);
                 }
             }
             if (auto* watcher = Singularity::Storage::FileWatcher::find(*_lawManager)) {

@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 
+class Person;
+
 namespace Singularity {
 namespace Terminal {
 
@@ -59,8 +61,10 @@ namespace Terminal {
 // harness, a script, an agent. Astra's warning ("a string saying Terminal
 // supplies transport context, not proof that Zach authored an utterance") holds
 // here: a non-Person writer should arrive as a registered First Mover under a
-// Person's grant, as MCP does via ForeignActuationGuard. Not built yet; see
-// Law_Line.md, "The line trusts its stdin, and stdin can lie".
+// Person's grant, as MCP does via ForeignActuationGuard. That door now exists
+// (authorForeign below, reached by the socket's `law_sentence`, 2026-09-30);
+// the stdin path itself still trusts its writer -- see Law_Line.md, "The line
+// trusts its stdin, and stdin can lie".
 class TerminalChannel : public Law {
 public:
     using Sink = std::function<void(const std::string&)>;
@@ -84,6 +88,48 @@ public:
     // every Lexeme that denotes a Law, heard events, present beings.
     LawSentence::Vocabulary vocabulary(LawManager& laws);
 
+    // The Law Line for a writer who is NOT the Person at the keyboard: a
+    // foreign First Mover (MCP) that has already proved its key and been
+    // admitted by ForeignActuationGuard. Same grammar, same vocabulary, same
+    // Law construction as a typed line -- only the author differs, and it is
+    // the mover, never @interaction-channel.personId. Closes the gap named
+    // above ("a non-Person writer should arrive as a registered First
+    // Mover"). A trailing '?' previews and a leading '??' searches; both are
+    // read-only and take no author. Immediate acts ("delete Blue") are
+    // refused here: they need the channel's own confirming Metalaw.
+    struct ForeignSentence {
+        std::string status;                   // authored | preview | search | refused
+        std::string lawId;
+        std::string preview;                  // WHEN ... -> IF ... -> THEN ...
+        std::string detail;                   // dry run / persistence / notes
+        std::string error;
+        std::vector<std::string> candidates;
+        std::vector<std::string> openClauses;
+    };
+    static bool isReadOnlySentence(const std::string& text);
+    ForeignSentence authorForeign(LawManager& laws, const std::string& text,
+                                  const std::vector<Singular*>& authors,
+                                  const std::string& identifier);
+
+    // ------------------------------------------------------------------
+    // Terminal Zones (Zach, 2026-09-30; Terminal_Zones.md). The line has a
+    // LOCATION: a real Zone whose Laws hear what is typed there. The Person's
+    // body stays where it is; only the line moves. `enter <zone>` is the one
+    // move opcode and works in every Zone (a Zone that decided whether you
+    // may leave it could trap the line). A Law moves it by writing `zone`.
+    // ⚠ GATE: build nothing on top of these opcodes until Zach verifies them
+    // as minimal-maximal invariants.
+    // ------------------------------------------------------------------
+    static constexpr const char* kLineHolder = "terminal-channel";
+    const std::string& zone() const { return _zone; }
+    bool awaitingSecret() const { return _secretStage != 0; }
+    // Why Enter would KEEP this line rather than send it ("" = sent). The
+    // editor's submit gate; public so tests witness what a Person's Enter does.
+    std::string submitRefusal(const std::string& text);
+    // Test seam: the Person the Identity Zone makes present (default: the
+    // Engine's Person).
+    void setPresencePerson(Person* person) { _presencePerson = person; }
+
     // Test seams: a line as if typed and entered; where output goes.
     void inject(const std::string& line) { _pending.push_back(line); }
     void setSink(Sink sink) { _sink = std::move(sink); }
@@ -92,6 +138,22 @@ public:
 private:
     void buildProperties() override;
     void speak(LawManager& laws, const std::string& text);
+    void placeLine();
+    bool moveLine(const std::string& target);         // false = stayed, and said why
+    bool handleEnter(const std::string& trimmed);      // true = the line was `enter ...`
+    void beginSecret();
+    void takeSecret(std::string& secret);
+    void cancelSecret(const std::string& why);
+    std::string zoneLabel() const;
+    // The Law Line grammar (gate, menu, colouring) reads the line only where
+    // the line is in the Law Line -- or nowhere yet (legacy). Elsewhere a line
+    // is sent as typed and that Zone's Laws decide what it means.
+    bool lawGrammarHere() const { return _zone.empty() || _zone == "LawLine"; }
+    // The one place a parsed sentence becomes a live Law (speak + authorForeign).
+    // Returns "" on success, else the refusal.
+    std::string enact(LawManager& laws, const LawSentence::Parse& p, const std::string& text,
+                      const std::vector<Singular*>& authors, const std::string& id,
+                      std::string& persistence);
     void say(const std::string& text);
     const LawSentence::Vocabulary& liveVocabulary();
     const LawSentence::Parse& liveParse(const std::string& text);
@@ -103,6 +165,7 @@ private:
     int width() const;
     std::string describeProperty(const std::string& beingId, const std::string& property) const;
     std::string describeBeing(const std::string& beingId) const;
+    std::string propertySuggestionBeing() const;
     // Rung 3 (Zach, 2026-09-25): the footer, help, confirmed deletion, dry run.
     std::string footerText(bool& hears);
     void showHelp();
@@ -117,6 +180,8 @@ private:
     void detach();
 
     std::string propOutput() const { return _output; }
+    std::string propZone() const { return _zone; }
+    void propSetZone(const std::string& v) { _requestedZone = v; }
     void propSetOutput(const std::string& v);
     double propSpeakRequests() const { return _speakRequests; }
     void propSetSpeakRequests(const double& v) { _speakRequests = v; }
@@ -129,6 +194,20 @@ private:
     double _speakRequests = 0.0;
     double _spoken = 0.0;
     std::string _authorPath = "@interaction-channel.personId";
+    // Terminal Zones: where the line is, where a Law asked it to go.
+    std::string _zone;
+    std::string _requestedZone;
+    bool _zoneBootTried = false;
+    // Identity: a Law asks (unlockRequests), the kernel takes one secret line.
+    double _unlockRequests = 0.0;
+    double _unlocksHandled = 0.0;
+    bool _awaitingSecretFlag = false;          // registered mirror of _secretStage
+    // NOT registered, named per NO_BLACK_BOX §5 (secrets beneath the Kernel):
+    // _secretStage (0 none, 1 unlock, 2 new passphrase, 3 confirm) and
+    // _pendingSecret (the first entry while keying, wiped after confirmation).
+    int _secretStage = 0;
+    std::string _pendingSecret;
+    Person* _presencePerson = nullptr;          // test seam; null = Engine's Person
     std::string _lexemeRelation = "denotes";
     std::string _scopeBeing;
     std::string _status;
