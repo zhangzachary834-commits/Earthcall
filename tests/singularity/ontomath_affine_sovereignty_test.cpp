@@ -71,6 +71,15 @@ int main() {
     auto rd=OntoMath::transformDirection(*inv,*wd);
     assert(rp && rd && near3(*rp,p) && near3(*rd,p));
 
+    const glm::vec3 rayOriginWorld(8.0f, -3.5f, 4.0f);
+    const glm::vec3 rayDirectionWorld = glm::normalize(glm::vec3(-0.8f, 0.25f, -0.4f));
+    const auto rayOriginLocal = OntoMath::transformPoint(*inv, rayOriginWorld);
+    const auto rayDirectionLocal = OntoMath::transformDirection(*inv, rayDirectionWorld);
+    assert(rayOriginLocal && rayDirectionLocal);
+    const glm::mat4 legacyInverse = glm::inverse(ref);
+    assert(near3(*rayOriginLocal, glm::vec3(legacyInverse * glm::vec4(rayOriginWorld, 1.0f))));
+    assert(near3(*rayDirectionLocal, glm::vec3(legacyInverse * glm::vec4(rayDirectionWorld, 0.0f))));
+
     const glm::vec3 n=glm::normalize(glm::vec3(1,1,0));
     auto wn=OntoMath::transformNormal(*m,n); assert(wn);
     glm::vec3 refn=glm::transpose(glm::inverse(glm::mat3(ref)))*n;
