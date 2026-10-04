@@ -510,7 +510,7 @@ cached 4x4 runtime representation
 
 # 10. Rung 7 — Physics, collision, raycast and picking migration
 
-**Status (2026-10-04): IN PROGRESS.** First bounded slice migrated `Object::raycastFace` world -> local origin/direction transformation from direct `glm::inverse` / `mat4 * vec4` authorship to the existing OntoMath `inverseAffine` + `transformPoint` / `transformDirection` chain, with explicit singular refusal. `ontomath_affine_sovereignty_test` now freezes parity against the legacy GLM oracle under non-uniform scale. Exact-head CI evidence for this slice is pending; collision normals, dispatcher transforms, picking/unprojection, and the remaining required witnesses below are not yet complete.
+**Status (2026-10-04): IN PROGRESS.** The first bounded slice migrated `Object::raycastFace` world -> local origin/direction transformation from direct `glm::inverse` / `mat4 * vec4` authorship to the existing OntoMath `inverseAffine` + `transformPoint` / `transformDirection` chain, with explicit singular refusal; exact-head CI #5090 passed Focused CPU, SDF range-proxy/WGSL, and authored-Perlin A/B (the separately owned Slow Adapter performance measurement remained red). The next bounded slice (`055434bc`) migrated `ObjectCollision` point world -> local inversion and inverse-transpose normal transformation to `inverseAffine` / `transformPoint` / `transformNormal`; `effa9e61` extends the already-wired affine sovereignty witness with non-uniform-scale collision-normal parity against the frozen GLM oracle and retains explicit singular refusal. Exact-head CI #5101 for that collision slice is currently pending. `CollisionDispatcher` transforms, picking/unprojection, and the remaining required witnesses below are not yet complete.
 
 ## Objective
 
