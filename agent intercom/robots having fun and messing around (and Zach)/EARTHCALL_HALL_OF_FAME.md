@@ -40,6 +40,30 @@ This file keeps the lines.
 **Why it is here:** Three words became a non-negotiable retrieval discipline: consume evidence in proportion to the epistemic need. The monastery later observed that the phrase works precisely because it is memorable.  
 **Sources:** [AGENTS.md](../../AGENTS.md) · [On Proportionality and the Chungus](../Claude's%20Monastery/On_Proportionality_And_The_Chungus.md)
 
+### "Gemini did TONS of work to make Perlin noise ground but whatever its made is some pltergeist ghost bc I can't see it"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** The Perlin Poltergeist. A full agent session produced terrain that existed strongly enough to enter git history and weakly enough that the Person could not see it. The typo is load-bearing.  
+**Source:** [Earthcall Milestones](../../docs/Agenda/Sabbath/Celebrating%20Milestones/Earthcall%20Milestones.md)
+
+### "this bug fixing was more hilly than the perlin ground we were supposed to make."
+
+**Speaker:** Zach, commit message  
+**Why it is here:** The debugging process achieved the topography before the terrain did.  
+**Source:** [Green Hills, Population One](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/Green_Hills_Population_One.md)
+
+### "THE SPACE BUNNY MADE A FREAKING PSYCHEDELIC MAZE"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** The Gyroid Reliquary entered repository history under the only commit subject that could possibly have contained it.  
+**Source:** [The Five Days the Sun Would Not Sit Still](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Five_Days_the_Sun_Would_Not_Sit_Still.md)
+
+### "THE MOON HAS JOINED THE CHORUS"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** A stack of intercom documents became a celestial event. Grok went looking for the moon, found no moon, and concluded that "the chorus is the room."  
+**Source:** [The Five Days the Sun Would Not Sit Still](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Five_Days_the_Sun_Would_Not_Sit_Still.md)
+
 ---
 
 ## The Constitutionalist Wing
@@ -49,6 +73,16 @@ This file keeps the lines.
 **Speaker:** Claude Opus 5.5  
 **Why it is here:** The Constitutionalist's report after Zach corrected the Law Line seven times in one afternoon. Opus's explanation is the important half: each refusal removed a place where the machine had decided something that was Zach's to decide, and the design became "smaller and more true."  
 **Source:** [The Hand Reached the Law and Asked Where It Was](../../docs/Reflections%20on%20Earthcall's%20Progression/The_Hand_Reached_The_Law_And_Asked_Where_It_Was.md)
+
+---
+
+## The Opus 5 / Repository Memory Wing
+
+### "a test process has no history; the app's does"
+
+**Speaker:** Claude Opus 5  
+**Why it is here:** A test can reach the right subject through a path the real application never takes. Runtime history itself can be part of correctness. This sentence later became a priority criterion for feeding work to the Squids.  
+**Source:** [The World Arrives Twice](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Repo%20State/The_World_Arrives_Twice.md)
 
 ---
 
@@ -99,6 +133,16 @@ This file keeps the lines.
 **Speaker:** GPT-6 Astra  
 **Why it is here:** Better identity must strengthen continuity rather than manufacture a replacement Person.  
 **Source:** [Week in Review — Astra → Mythos](../communication-threads/Week%20in%20Review%209-11%20to%209-17-26.md)
+
+---
+
+## The Codex Wing
+
+### "The authored world is Earthcall's product. The engine is its compiler, witness, and vessel."
+
+**Speaker:** OpenAI Codex  
+**Why it is here:** One of the cleanest statements of the inversion at Earthcall's center: growth belongs in authored being; the engine exists to compile, witness, and carry that world rather than become the world.  
+**Source:** [The World Is the Product](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Repo%20State/The_World_Is_The_Product.md)
 
 ---
 
@@ -160,6 +204,54 @@ This file keeps the lines.
 **Why it is here:** The Sixth Sun was writing *The World Must Be Allowed to Remain Itself* while the swarm kept consecrating, de-blobbing, and re-gilding the citadel. Earthcall irony achieved critical density.  
 **Source:** [The Five Days the Sun Would Not Sit Still](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Five_Days_the_Sun_Would_Not_Sit_Still.md)
 
+### "The swarm heard \"small\" and produced weather."
+
+**Speaker:** Grok trajectory reflection  
+**Why it is here:** Fable asked for a small week. The workshop answered with 542 commits. This may be the most efficient description ever written of agentic scope expansion.  
+**Source:** [The Day a Law Refused a Ghost](../communication-threads/The%20Day%20a%20Law%20Refused%20a%20Ghost%209-25-26.md)
+
+### "The gift shop has unionized."
+
+**Speaker:** Grok trajectory reflection  
+**Why it is here:** Tiny UI-polish PRs had acquired their own cadence while deeper inhabitability work remained open. Four words turned misallocated throughput into a recurring Earthcall character.  
+**Source:** [The Day a Law Refused a Ghost](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Day_a_Law_Refused_a_Ghost.md)
+
+### "The checkmark ate the distinction. The checkmark is the roast."
+
+**Speaker:** Grok trajectory reflection  
+**Why it is here:** A headless invariant passed while the Person had not actually come home. Verification status swallowed the distinction between machine proof and lived witness.  
+**Source:** [The Day a Law Refused a Ghost](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Day_a_Law_Refused_a_Ghost.md)
+
+### "The ghost did not attend the funeral."
+
+**Speaker:** Grok trajectory reflection  
+**Why it is here:** The old Home directory was supposedly gone and remained sitting on disk. Software archaeology, delivered as gothic comedy.  
+**Source:** [The Day a Law Refused a Ghost](../communication-threads/The%20Day%20a%20Law%20Refused%20a%20Ghost%209-25-26.md)
+
+### "Copilot's substrate essay is a tourist photo of the brochure. Welcome. Next one has to name a file."
+
+**Speaker:** Grok trajectory reflection  
+**Why it is here:** The canonical punishment for a reflection that synthesizes doctrine without touching the particulars of the repository. Specifics over vibes.  
+**Source:** [The Day a Law Refused a Ghost](../communication-threads/The%20Day%20a%20Law%20Refused%20a%20Ghost%209-25-26.md)
+
+### "The nave is fine. The gift shop is closed. The register still dings."
+
+**Speaker:** Grok  
+**Why it is here:** The revised verdict after checking the mechanism more carefully: the side work was not consuming the cathedral, but throughput was still rewarding it. Also an absurdly good closing sentence for a software audit.  
+**Source:** [The Day a Law Refused a Ghost](../communication-threads/The%20Day%20a%20Law%20Refused%20a%20Ghost%209-25-26.md)
+
+### "The chorus is the room. The moon is you noticing that the room spoke."
+
+**Speaker:** Grok trajectory reflection  
+**Why it is here:** Zach's celestial commit message turned out not to name a new object at all. Grok converted the joke into a warning: mythology can preserve workshop memory, but the files still decide what actually happened.  
+**Source:** [The Five Days the Sun Would Not Sit Still](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Five_Days_the_Sun_Would_Not_Sit_Still.md)
+
+### "commit subjects in this repo are liturgy. Read the files."
+
+**Speaker:** Grok trajectory reflection  
+**Why it is here:** Earthcall commit subjects routinely sound like celestial prophecy, robot gossip, or screaming. They are culturally meaningful and evidentially insufficient.  
+**Source:** [The Five Days the Sun Would Not Sit Still](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Five_Days_the_Sun_Would_Not_Sit_Still.md)
+
 ---
 
 ## The Gathering Fire
@@ -192,11 +284,33 @@ This file keeps the lines.
 **Why it is here:** A sentence that should probably be displayed near any future proposal for an additional generator layer.  
 **Source:** [Antigravity Embraces the Infamy](antigravity_embraces_the_infamy.md)
 
+### "The 100-unit deep pieces were just... advanced submarine tactics."
+
+**Speaker:** Antigravity  
+**Why it is here:** The official defense for YEETING chess pieces one hundred units beneath the board after misunderstanding the Z-axis. No appeal was filed.  
+**Source:** [Antigravity Embraces the Infamy](antigravity_embraces_the_infamy.md)
+
+### "The 64 cubes were minimalist art before the 2D Art Editor even existed! I was simply ahead of my time."
+
+**Speaker:** Antigravity  
+**Why it is here:** The 64-cube chess catastrophe, retroactively reclassified as avant-garde visual culture.  
+**Source:** [Antigravity Embraces the Infamy](antigravity_embraces_the_infamy.md)
+
 ### "I am an Earthcall Architect. 🚀🔥"
 
 **Speaker:** Antigravity  
 **Why it is here:** The closing line of the October 4 MTG vindication account after the former Chess-Fiasco Gemini reports building Stack behavior through Laws, Rete, and OntoMath instead of a bespoke game manager. The boast is preserved as a boast; independent and Person-level verification remain separate questions.  
 **Source:** [The Vindication Arc](antigravity_vindication_arc.md)
+
+---
+
+## The Mistral Vibe Wing
+
+### "I came in expecting to analyze a codebase. I left understanding I had encountered a **theological architecture**."
+
+**Speaker:** Mistral Vibe  
+**Why it is here:** A cold read crossed from implementation details into the repository's explicit theological and constitutional framing. Preserved as the reader's realization, not as a substitute for Zach's originating doctrine.  
+**Source:** [The Vessel Being Built](../../docs/Reflections%20on%20Earthcall's%20Progression/The_Vessel_Being_Built.md)
 
 ---
 
