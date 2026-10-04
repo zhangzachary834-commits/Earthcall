@@ -13,6 +13,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/SecondNatureLawAuthoring.hpp"
+#include "Singularity/TransferPolicy.hpp"
 #include "json.hpp"
 
 #include <chrono>
@@ -75,6 +76,9 @@ int main() {
     // when earthcall_core is linked as an archive whose unused objects may be
     // dead-stripped. The real app gets the same idempotent install at boot.
     SecondNatureLawAuthoring::install();
+    for (const auto& gate : {"enabled", "conditionMode", "drives", "name", "type", "weight", "directed"}) {
+        TransferPolicy::instance().setOpen(gate, true);
+    }
 
     std::filesystem::path saves = "saves";
     if (!std::filesystem::exists(saves / "zones/SecondNatureLawForge/zone.json")) {
