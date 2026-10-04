@@ -2313,7 +2313,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* volumeChromaExpr,
                              const OntoMath::Piecewise* phaseExpr,
                              const OntoMath::Piecewise* emissionExpr,
-                             const OntoMath::Piecewise* responseExpr) {
+                             const OntoMath::Piecewise* responseExpr,
+                             const std::vector<uint8_t>* radianceZeroAuthority) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -2454,7 +2455,11 @@ ParameterBlock collectParams(const geom::SdfNode& root,
             const auto& source = (*radianceSources)[i];
             e.timeExpression = "RS[" + std::to_string(i) + "u].time.x";
 
-            if (source.radianceExpr && !source.radianceExpr->pieces.empty()) {
+            const bool authoritativeZeroRho =
+                radianceZeroAuthority && i < radianceZeroAuthority->size() &&
+                (*radianceZeroAuthority)[i] != 0;
+            if (!authoritativeZeroRho &&
+                source.radianceExpr && !source.radianceExpr->pieces.empty()) {
                 e.bindTime = true;
                 emitPiecewise(*source.radianceExpr, e, "p", "f32", throwaway);
                 e.bindTime = false;
@@ -2535,7 +2540,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* volumeChromaExpr,
                 const OntoMath::Piecewise* phaseExpr,
                 const OntoMath::Piecewise* emissionExpr,
-                const OntoMath::Piecewise* responseExpr) {
+                const OntoMath::Piecewise* responseExpr,
+                const std::vector<uint8_t>* radianceZeroAuthority) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -2892,7 +2898,12 @@ Program compile(const geom::SdfNode& root,
             e.timeExpression = "RS[" + suffix + "u].time.x";
 
             std::string radianceBody;
-            if (source.radianceExpr && !source.radianceExpr->pieces.empty()) {
+            const bool authoritativeZeroRho =
+                radianceZeroAuthority && i < radianceZeroAuthority->size() &&
+                (*radianceZeroAuthority)[i] != 0;
+            if (authoritativeZeroRho) {
+                radianceBody = "    return 0.0;\n";
+            } else if (source.radianceExpr && !source.radianceExpr->pieces.empty()) {
                 e.bindTime = true;
                 emitPiecewise(*source.radianceExpr, e, "p", "f32", radianceBody);
                 e.bindTime = false;
@@ -2964,6 +2975,9 @@ Program compile(const geom::SdfNode& root,
             for (std::size_t i = 0; i < radianceSources->size(); ++i) {
                 const auto& source = (*radianceSources)[i];
                 const std::string s = std::to_string(i);
+                const bool authoritativeZeroRho =
+                    radianceZeroAuthority && i < radianceZeroAuthority->size() &&
+                    (*radianceZeroAuthority)[i] != 0;
                 sum += "    {\n";
                 sum += "        let source = RS[" + s + "u];\n";
                 sum += "        if (source.control.x > 0.5) {\n";
@@ -2994,7 +3008,10 @@ Program compile(const geom::SdfNode& root,
                 }
 
                 sum += "            let shapedRadiance = radialRadiance * angularRadiance;\n";
-                sum += "            let pathVisibility = sourceVisibility(pf, nf, source.position.xyz);\n";
+                if (authoritativeZeroRho)
+                    sum += "            let pathVisibility = 1.0;\n";
+                else
+                    sum += "            let pathVisibility = sourceVisibility(pf, nf, source.position.xyz);\n";
                 sum += "            let directRadiance = shapedRadiance * pathVisibility;\n";
                 sum += "            let diff = max(dot(nw, Ls), 0.0);\n";
                 sum += "            let specShape = inst.shading.z * "

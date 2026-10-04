@@ -602,6 +602,71 @@ int main() {
     }
 
     // ---------------------------------------------------------------------
+    // PR #369 successor: codegen consumes an ALREADY-VALIDATED SourceRho-zero
+    // slot mask without doing theorem lookup itself. The authoritative arm must
+    // emit literal zero and omit only that rho expression's packed parameters.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+        auto zeroNode = std::shared_ptr<OntoMath::MathNode>(number(0.0).release());
+        auto liveNode = std::shared_ptr<OntoMath::MathNode>(number(0.5).release());
+        OntoMath::Piecewise zeroRho = OntoMath::Piecewise::continuous(zeroNode);
+        OntoMath::Piecewise liveRho = OntoMath::Piecewise::continuous(liveNode);
+
+        Rendering::RadianceSourceBinding zeroSource;
+        zeroSource.radianceExpr = &zeroRho;
+        Rendering::RadianceSourceBinding liveSource;
+        liveSource.radianceExpr = &liveRho;
+        std::vector<Rendering::RadianceSourceBinding> sources{
+            zeroSource, liveSource};
+
+        const auto exact =
+            sdfwgsl::compile(sphere, nullptr, nullptr, nullptr, nullptr, nullptr,
+                             &sources);
+        check(exact.ok, "exact multi-source control compiles before rho authority");
+
+        std::vector<uint8_t> noAuthority{0, 0};
+        const auto explicitExact =
+            sdfwgsl::compile(
+                sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources,
+                nullptr, sdfwgsl::DensityInputKind::LegacyField,
+                nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+                &noAuthority);
+        check(explicitExact.ok && explicitExact.wgsl == exact.wgsl &&
+                  sameFloats(explicitExact.params, exact.params),
+              "all-zero authority mask is byte/value identical to exact compilation");
+
+        std::vector<uint8_t> zeroAuthority{1, 0};
+        const auto authorized =
+            sdfwgsl::compile(
+                sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources,
+                nullptr, sdfwgsl::DensityInputKind::LegacyField,
+                nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+                &zeroAuthority);
+        const auto authorizedParams =
+            sdfwgsl::collectParams(
+                sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources,
+                nullptr, sdfwgsl::DensityInputKind::LegacyField,
+                nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+                &zeroAuthority);
+
+        check(authorized.ok && authorizedParams.ok,
+              "validated SourceRho-zero authority compiles and recollects");
+        check(authorized.wgsl.find(
+                  "fn lightRadiance_0(p: vec3<f32>) -> f32 {\n    return 0.0;\n}") !=
+                  std::string::npos,
+              "authorized source slot emits literal-zero radiance function");
+        check(authorized.wgsl.find("fn lightRadiance_1") != std::string::npos,
+              "unrelated source slot remains present under narrow authority");
+        check(authorized.params.size() + 1 == exact.params.size(),
+              "authority removes exactly one scalar rho parameter from packed values");
+        check(sameFloats(authorizedParams.values, authorized.params),
+              "authority collectParams layout exactly matches authoritative compile");
+        check(authorized.wgsl != exact.wgsl,
+              "authority is explicit shader structure rather than hidden value mutation");
+    }
+
+    // ---------------------------------------------------------------------
     // V0. Density sovereignty: D(p,t) is an explicit compiler input with its
     //     own structure/value identity and its own temporal coordinate.
     //     It must never borrow rho merely because both are scalar Piecewise.
