@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-01
 **Author:** Antigravity (Gemini 3.1 Pro)
-**Status:** IN PROGRESS
+**Status:** COMPLETED
 
 ## 1. The Core Philosophy (The Seven Refusals)
 MTG is completely governed by rules, state-based actions, and relational zones. Earthcall’s Rete/Law engine is uniquely suited to model this without a single new C++ class, heavily relying on **Refusal 7** (No new methods to define variable behavior).
@@ -56,5 +56,5 @@ To avoid the infamous 64-cube frag grenade:
 2. **[DONE] Wire the State:** Implemented `@state.mtg` and the turn-phase progression events. `button.mtg.pass` physically steps the game through `untap`, `upkeep`, `main1`, `combat`, `main2`, `end` using 7 Phase Progression Laws.
 3. **[DONE] Wire the Board:** Implemented physical layout Laws using `WhileTrue` and `ActionNode::Kind::Map` / `ActionNode::Kind::Set`. Hand cards snap to `[handOrder * 1.5, 0.5, 2.0]` and Stack cards snap to `[stackOrder * 1.5, 0.5, -2.0]`. Used `Lexeme`s instead of Formations to track zones (`@self.mtg.zone = "hand.1"`).
 4. **[DONE] Implement the Stack:** Wrote the Law `mtg-cast-card` which intercepts a `pointer-click` on a hand card during `main1`. It maps `@state.mtg.stackCounter` to the card's `mtg.stackOrder`, increments the counter, and sets the card's zone to `"stack"`.
-5. **[PENDING] Implement Card Resolution:** Add priority passing back and forth, and a law to resolve the highest `stackOrder` card.
-6. **[PENDING] Implement State-Based Actions:** Add lethal damage laws and graveyard transitions.
+5. **[DONE] Implement Card Resolution:** Created a `button.mtg.resolve` object. When clicked, it publishes a `resolve-stack` event. The `mtg-execute-resolve` Law catches this event, verifies the card is at the top of the stack (`@self.mtg.stackOrder == @state.mtg.topStackOrder`), moves it to the `"battlefield"`, sets its layout order, and decrements the stack counters.
+6. **[DONE] Implement State-Based Actions:** Added the `mtg-sba-lethal-damage` Law. It runs on `WhileTrue` and compares `@self.mtg.damage >= @self.mtg.toughness`. If true, it moves the card from `"battlefield"` to `"graveyard"`, incrementing the `graveyardCounter` and dynamically adjusting its layout position.
