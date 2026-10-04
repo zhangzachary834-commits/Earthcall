@@ -26,29 +26,13 @@
 #endif
 
 namespace {
-glm::vec3 extractScaleFromTransform(const glm::mat4& transform) {
-    glm::vec3 scale(glm::length(glm::vec3(transform[0])),
-                    glm::length(glm::vec3(transform[1])),
-                    glm::length(glm::vec3(transform[2])));
-    if (scale.x <= 1e-6f) scale.x = 1.0f;
-    if (scale.y <= 1e-6f) scale.y = 1.0f;
-    if (scale.z <= 1e-6f) scale.z = 1.0f;
+std::optional<glm::vec3> extractScaleFromTransform(const glm::mat4& transform) {
+    auto scale = OntoMath::affineExtractScale(OntoMath::MatrixValue::fromGlmMat4(transform));
+    if (!scale) return std::nullopt;
+    if (scale->x <= 1e-6f) scale->x = 1.0f;
+    if (scale->y <= 1e-6f) scale->y = 1.0f;
+    if (scale->z <= 1e-6f) scale->z = 1.0f;
     return scale;
-}
-
-glm::vec3 extractRotationDegreesFromTransform(const glm::mat4& transform) {
-    glm::vec3 scale = extractScaleFromTransform(transform);
-    glm::mat3 rotationBasis;
-    rotationBasis[0] = glm::vec3(transform[0]) / scale.x;
-    rotationBasis[1] = glm::vec3(transform[1]) / scale.y;
-    rotationBasis[2] = glm::vec3(transform[2]) / scale.z;
-
-    if (glm::determinant(rotationBasis) < 0.0f) {
-        rotationBasis[0] = -rotationBasis[0];
-    }
-
-    glm::quat rotation = glm::normalize(glm::quat_cast(rotationBasis));
-    return glm::degrees(glm::eulerAngles(rotation));
 }
 
 float wrapDegrees(float degrees) {
@@ -108,7 +92,10 @@ bool Object::hasPendingRotation() const {
 }
 
 void Object::syncRotationStateFromTransform(const glm::mat4& sourceTransform, bool syncTarget) {
-    rotationEulerDegrees = extractRotationDegreesFromTransform(sourceTransform);
+    const auto extracted = OntoMath::affineExtractEulerXYZDegrees(
+        OntoMath::MatrixValue::fromGlmMat4(sourceTransform));
+    if (!extracted) return;
+    rotationEulerDegrees = *extracted;
     rotationEulerDegrees.x = wrapDegrees(rotationEulerDegrees.x);
     rotationEulerDegrees.y = wrapDegrees(rotationEulerDegrees.y);
     rotationEulerDegrees.z = wrapDegrees(rotationEulerDegrees.z);
@@ -120,9 +107,10 @@ void Object::syncRotationStateFromTransform(const glm::mat4& sourceTransform, bo
 glm::mat4 Object::composeTransformWithRotation(const glm::mat4& sourceTransform,
                                                const glm::vec3& rotationDegrees) const {
     glm::vec3 translation = glm::vec3(sourceTransform[3]);
-    glm::vec3 scale = extractScaleFromTransform(sourceTransform);
+    const auto scale = extractScaleFromTransform(sourceTransform);
+    if (!scale) return sourceTransform;
 
-    const auto authored = OntoMath::affineTRS(translation, rotationDegrees, scale);
+    const auto authored = OntoMath::affineTRS(translation, rotationDegrees, *scale);
     if (!authored) {
         std::fprintf(stderr,
             "Object::composeTransformWithRotation: REFUSED non-finite or invalid affine premises; "

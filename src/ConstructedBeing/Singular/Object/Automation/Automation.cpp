@@ -34,24 +34,13 @@ float evalTrack(const Track& t, float time) {
     return t.bias + t.amplitude * waveValue(t.wave, p);
 }
 
-glm::vec3 extractScale(const glm::mat4& m) {
-    glm::vec3 s(glm::length(glm::vec3(m[0])),
-                glm::length(glm::vec3(m[1])),
-                glm::length(glm::vec3(m[2])));
-    if (s.x <= 1e-6f) s.x = 1.0f;
-    if (s.y <= 1e-6f) s.y = 1.0f;
-    if (s.z <= 1e-6f) s.z = 1.0f;
-    return s;
-}
-
-glm::vec3 extractEulerDegrees(const glm::mat4& m, const glm::vec3& scale) {
-    glm::mat3 basis;
-    basis[0] = glm::vec3(m[0]) / scale.x;
-    basis[1] = glm::vec3(m[1]) / scale.y;
-    basis[2] = glm::vec3(m[2]) / scale.z;
-    if (glm::determinant(basis) < 0.0f) basis[0] = -basis[0];
-    glm::quat q = glm::normalize(glm::quat_cast(basis));
-    return glm::degrees(glm::eulerAngles(q));
+std::optional<glm::vec3> extractScale(const glm::mat4& m) {
+    auto scale = OntoMath::affineExtractScale(OntoMath::MatrixValue::fromGlmMat4(m));
+    if (!scale) return std::nullopt;
+    if (scale->x <= 1e-6f) scale->x = 1.0f;
+    if (scale->y <= 1e-6f) scale->y = 1.0f;
+    if (scale->z <= 1e-6f) scale->z = 1.0f;
+    return scale;
 }
 
 // Same composition order Object uses: T * Rx * Ry * Rz * S.
@@ -115,13 +104,15 @@ glm::mat4 compose(const State& state, const glm::mat4& base) {
         }
     }
 
-    glm::vec3 baseScale = extractScale(base);
-    glm::vec3 baseEuler = extractEulerDegrees(base, baseScale);
-    glm::vec3 baseTrans = glm::vec3(base[3]);
-
+    const auto baseScale = extractScale(base);
+    const auto baseEuler = OntoMath::affineExtractEulerXYZDegrees(
+        OntoMath::MatrixValue::fromGlmMat4(base));
     const glm::mat4& rest = state.restValid ? state.rest : base;
-    glm::vec3 restScale = extractScale(rest);
-    glm::vec3 restEuler = extractEulerDegrees(rest, restScale);
+    const auto restScale = extractScale(rest);
+    const auto restEuler = OntoMath::affineExtractEulerXYZDegrees(
+        OntoMath::MatrixValue::fromGlmMat4(rest));
+    if (!baseScale || !baseEuler || !restScale || !restEuler) return base;
+    glm::vec3 baseTrans = glm::vec3(base[3]);
     glm::vec3 restTrans = glm::vec3(rest[3]);
 
     // Animated channels build on the rest pose; untouched channels follow the
@@ -131,13 +122,13 @@ glm::mat4 compose(const State& state, const glm::mat4& base) {
         touchedT[1] ? restTrans.y + offT.y : baseTrans.y,
         touchedT[2] ? restTrans.z + offT.z : baseTrans.z);
     glm::vec3 outR(
-        touchedR[0] ? restEuler.x + offR.x : baseEuler.x,
-        touchedR[1] ? restEuler.y + offR.y : baseEuler.y,
-        touchedR[2] ? restEuler.z + offR.z : baseEuler.z);
+        touchedR[0] ? restEuler->x + offR.x : baseEuler->x,
+        touchedR[1] ? restEuler->y + offR.y : baseEuler->y,
+        touchedR[2] ? restEuler->z + offR.z : baseEuler->z);
     glm::vec3 outS(
-        touchedS[0] ? restScale.x * mulS.x : baseScale.x,
-        touchedS[1] ? restScale.y * mulS.y : baseScale.y,
-        touchedS[2] ? restScale.z * mulS.z : baseScale.z);
+        touchedS[0] ? restScale->x * mulS.x : baseScale->x,
+        touchedS[1] ? restScale->y * mulS.y : baseScale->y,
+        touchedS[2] ? restScale->z * mulS.z : baseScale->z);
 
     const auto recomposed = recompose(outT, outR, outS);
     return recomposed.value_or(base);

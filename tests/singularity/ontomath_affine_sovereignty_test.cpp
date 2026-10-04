@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include <cassert>
 #include <cmath>
@@ -17,6 +18,20 @@ bool near4(const glm::mat4& a, const glm::mat4& b, float eps = 2e-4f) {
         if (!near(a[c][r],b[c][r],eps)) return false;
     return true;
 }
+glm::vec3 legacyEulerOracle(const glm::mat4& m) {
+    glm::vec3 scale(glm::length(glm::vec3(m[0])),
+                    glm::length(glm::vec3(m[1])),
+                    glm::length(glm::vec3(m[2])));
+    if (scale.x <= 1e-6f) scale.x = 1.0f;
+    if (scale.y <= 1e-6f) scale.y = 1.0f;
+    if (scale.z <= 1e-6f) scale.z = 1.0f;
+    glm::mat3 basis;
+    basis[0] = glm::vec3(m[0]) / scale.x;
+    basis[1] = glm::vec3(m[1]) / scale.y;
+    basis[2] = glm::vec3(m[2]) / scale.z;
+    if (glm::determinant(basis) < 0.0f) basis[0] = -basis[0];
+    return glm::degrees(glm::eulerAngles(glm::normalize(glm::quat_cast(basis))));
+}
 }
 
 int main() {
@@ -29,6 +44,19 @@ int main() {
     ref=glm::rotate(ref,glm::radians(r.z),glm::vec3(0,0,1));
     ref=glm::scale(ref,s);
     assert(near4(*gm,ref));
+
+    auto extractedEuler = OntoMath::affineExtractEulerXYZDegrees(*m);
+    assert(extractedEuler && near3(*extractedEuler, legacyEulerOracle(ref)));
+
+    const glm::vec3 reflectedScale(-2.0f, 3.0f, 0.5f);
+    glm::mat4 reflected = glm::translate(glm::mat4(1.0f), t);
+    reflected = glm::rotate(reflected, glm::radians(r.x), glm::vec3(1,0,0));
+    reflected = glm::rotate(reflected, glm::radians(r.y), glm::vec3(0,1,0));
+    reflected = glm::rotate(reflected, glm::radians(r.z), glm::vec3(0,0,1));
+    reflected = glm::scale(reflected, reflectedScale);
+    auto reflectedEuler = OntoMath::affineExtractEulerXYZDegrees(
+        OntoMath::MatrixValue::fromGlmMat4(reflected));
+    assert(reflectedEuler && near3(*reflectedEuler, legacyEulerOracle(reflected)));
 
     const glm::vec3 p(1.25f,-0.5f,2.0f);
     auto wp=OntoMath::transformPoint(*m,p);
