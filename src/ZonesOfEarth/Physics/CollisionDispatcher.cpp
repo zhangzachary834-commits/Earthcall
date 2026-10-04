@@ -531,7 +531,7 @@ CollisionResult sdfProbeCollision(const Object& a, const Object& b) {
     auto scan = [&](const Object& probeOwner, const Object& container, bool pointBelongsToA) {
         const auto affine = OntoMath::MatrixValue::fromGlmMat4(container.getRaycastTransform());
         const auto inv = OntoMath::inverseAffine(affine); // once per direction
-        if (!inv) continue;
+        if (!inv) return;
         for (const auto& wp : sampleWorldPoints(probeOwner)) {
             float v;
             if (!signedValueOnly(container, *inv, wp, v)) continue;
