@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
 
     // Warm foreground state without measuring it. The adapter's own timeline
     // advances too when ON, just as it would in a live 60 Hz session.
-    const int warmupFrames = (frames <= 3) ? 1 : std::min(5, frames);
+    const int warmupFrames = (frames <= 2) ? 0 : std::min(5, frames);
     for (int i = 0; i < warmupFrames; ++i) {
         zone->update(dt);
         zone->applyFormationRelations();
