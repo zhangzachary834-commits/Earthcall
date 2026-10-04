@@ -96,6 +96,20 @@ int main() {
         glm::transpose(glm::inverse(glm::mat3(ref))) * collisionLocalNormal;
     assert(near3(*collisionWorldNormal, collisionOracle));
 
+    // CollisionDispatcher uses the same authored inverse once per scan direction.
+    // Witness repeated world probes against the frozen legacy inverse oracle.
+    const auto dispatcherInverse = OntoMath::inverseAffine(*m);
+    assert(dispatcherInverse);
+    const glm::vec3 dispatcherProbeA(5.5f, -1.0f, 3.25f);
+    const glm::vec3 dispatcherProbeB(-2.0f, 4.5f, 1.0f);
+    const auto dispatcherLocalA = OntoMath::transformPoint(*dispatcherInverse, dispatcherProbeA);
+    const auto dispatcherLocalB = OntoMath::transformPoint(*dispatcherInverse, dispatcherProbeB);
+    assert(dispatcherLocalA && dispatcherLocalB);
+    assert(near3(*dispatcherLocalA,
+                 glm::vec3(legacyInverse * glm::vec4(dispatcherProbeA, 1.0f))));
+    assert(near3(*dispatcherLocalB,
+                 glm::vec3(legacyInverse * glm::vec4(dispatcherProbeB, 1.0f))));
+
     auto noT=OntoMath::affineTRS(glm::vec3(0),r,s); assert(noT);
     auto noTn=OntoMath::transformNormal(*noT,n); assert(noTn && near3(*wn,*noTn));
 
