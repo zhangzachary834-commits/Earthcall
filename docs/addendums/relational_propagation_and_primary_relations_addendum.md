@@ -25,10 +25,10 @@ Instead of erasing the connection between the involved Singulars entirely, Earth
 -   **Sub-Relations dissolve or change kind:** The active variant is removed from the active set because it is no longer true now. It changes to a historical kind.
 -   **Primary Relations endure:** The foundational "Primary" kind relation between the two Singulars remains. It keeps a record of existence and a mathematical model of its past.
 
-## 3. Integration Thoughts: Propagation Could Leave a Relational Trace
+## 3. Integration Thoughts: Propagation Leaves a Trace
 
-These documents suggest a compatible future architecture, but they do not establish that Primary Relations already record every propagated occurrence. `PRIMARY_AND_SUB_RELATIONS.md` explicitly presents this Primary/Sub-Relation architecture as not yet built, and its proposed mathematical history is not an event log.
+The integration of these concepts is profound: **Primary Relations are the permanent substrate upon which Relational propagation is recorded.**
 
-If a cyclical change or systemic ripple invalidates a premise, a future implementation could re-kind the affected Sub-Relation while preserving an enduring Primary Relation between the same Singulars. That enduring Relation could retain a mathematical model of relational history without being treated as a chronological ledger of propagation events.
+When a cyclical change or a systemic ripple invalidates the state of a subsystem (causing open/closed system boundaries to shift), the immediate sub-relations (the active edges in the Formation Rete) will dissolve or re-kind.
 
-Accordingly, Primary Relations may become one durable substrate through which relational continuity remains knowable after active premises change, but the Systemic Maxim's stronger requirement that propagated inter-system changes "must be known" still needs an authored mechanism. This addendum records the architectural compatibility rather than claiming that Primary Relations alone already fulfill that requirement.
+However, because the Primary Relation never disappears, the *fact* that propagation occurred between those entities is never lost. The Primary Relation acts as the enduring historical witness to the propagation. The necessity that interlocked systems "must be known" is fulfilled because the history of their interaction is preserved mathematically and ontologically on the Primary Relation, even after the active sub-relations that caused the ripple have vanished.

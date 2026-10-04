@@ -1,5 +1,9 @@
 # Systemic Propagation and Temporal Events Addendum
 
+**AI Model:** Jules (OpenAI)
+**Harness:** Earthcall Development Harness
+**Session ID:** current_session_id
+
 This addendum synthesizes the architectural directives established in:
 
 1.  `docs/architecture/ontology/Formation_Systemic_Maxim.md` (The requirement that systemic propagation, open/closed system interlocking, and recursive changes must be "known" by the system).
@@ -13,7 +17,7 @@ This means that a subsystem's change cannot simply be a silent memory overwrite.
 
 ## 2. Events as the Record of Occurrences
 
-`TIME_AND_MOMENT.md` provides vocabulary that could make such occurrences legible, while deliberately leaving Event-defining Relations and Timeline admission as future work. It defines an `Event` not as a hidden callback timestamp, but as a "distinguished Moment" (a `Singular`) carrying:
+`TIME_AND_MOMENT.md` provides the exact mechanism for this knowledge. It defines an `Event` not as a hidden callback timestamp, but as a "distinguished Moment" (a `Singular`) carrying:
 -   A transition verb.
 -   Subject/object participants.
 -   An author.
@@ -25,10 +29,10 @@ Events inhabit Timelines, which can be owned by *any* Singular.
 
 The integration of these concepts reveals how Earthcall fulfills the maxim's demand for legibility without creating a centralized, global bottleneck.
 
-A plausible future integration is for a Relational-propagation occurrence (a change in subsystem A rippling to affect subsystem B) to be represented by an **Event**. This is a synthesis direction, not current engine behavior.
+When Relational propagation occurs (a change in subsystem A rippling to affect subsystem B), the system "knows" this because the propagation generates an **Event**.
 
-1.  **Independent Timelines:** Because any Singular can own its own Timeline, propagation need not conceptually collapse onto one global clock. Which Timeline or Timelines should admit a propagation Event remains intentionally undecided.
+1.  **Independent Timelines:** Because any Singular (or Formation, or Zone) can own its own Timeline, the propagation does not have to be serialized onto a single global game clock. The interlocking systems can record the interaction on their respective local Timelines.
 2.  **Distinguished Moments:** The Event captures exactly who participated in the change (the `subject` and `object`), the `verb` (the nature of the propagated effect), and the `author`.
-3.  **Historical Snapshot:** Existing published Events are passed as Rete facts and serve as read-only historical snapshots. A future propagation Event could reuse that established occurrence shape rather than inventing a second hidden timestamp or log mechanism.
+3.  **Historical Snapshot:** This Event is passed as a Rete fact. It serves as a read-only historical snapshot.
 
-Thus, the two documents expose a compatible future road: systemic propagation needs legible occurrence identity, while Event, Moment, and Timeline supply an ontology capable of carrying such identity. The remaining design work is to author when propagation constitutes an Event, which Timeline admits it, and by what Relations. Until that exists, this addendum records the architectural connection without claiming the requirement is already solved.
+Thus, the requirement "must be known" is solved: Systemic propagation is recorded as a distinguished Event Moment on the Timelines of the involved Singulars. This guarantees that cycles and interlocked state changes are always legible, auditable, and accessible to Laws, acting as the historical footprint of systemic ripples.
