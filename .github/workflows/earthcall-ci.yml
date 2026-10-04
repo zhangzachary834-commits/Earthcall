@@ -332,7 +332,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
             -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
