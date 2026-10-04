@@ -15,11 +15,17 @@
 int main() {
     std::cout << "Running ActionModel Spawn Test..." << std::endl;
 
-    if (!glfwInit()) return 1;
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "action_spawn_test", nullptr, nullptr);
-    if (!window) { glfwTerminate(); return 1; }
-    glfwMakeContextCurrent(window);
+    // This is a Law/OntoMath semantic witness, not a rendering witness.
+    // A macOS CI runner may have no window server; keep a GL context when
+    // available, but never skip the spawn assertions merely because GLFW is
+    // unavailable.
+    const bool glfwReady = glfwInit() == GLFW_TRUE;
+    GLFWwindow* window = nullptr;
+    if (glfwReady) {
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+        window = glfwCreateWindow(64, 64, "action_spawn_test", nullptr, nullptr);
+        if (window) glfwMakeContextCurrent(window);
+    }
     
     // 1. Create a dummy concept
     auto concept = std::make_shared<ObjectConcept>("test-concept");
@@ -55,7 +61,7 @@ int main() {
     assert(glm::length(born->getPosition() - player.getPosition()) < 1e-4f);
     std::cout << "SUCCESS! Spawn preserved the subject-authored placement through OntoMath." << std::endl;
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
+    if (window) glfwDestroyWindow(window);
+    if (glfwReady) glfwTerminate();
     return 0;
 }
