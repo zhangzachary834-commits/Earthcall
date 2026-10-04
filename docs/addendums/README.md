@@ -19,3 +19,6 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating Event Bus and Semantic Relation Events](event_bus_and_relation_events_addendum.md)
 *   [Integrating Authored Categories and Directory Ordering](authored_categories_and_directory_ordering_addendum.md)
 *   [Integrating Foreign Databases and the No Black Box Principle](foreign_databases_and_no_black_box_addendum.md)
+*   [Integrating Spatial Relations and Property Predication](spatial_relations_and_property_predication_addendum.md)
+*   [Integrating Relational Propagation and Primary Relations](relational_propagation_and_primary_relations_addendum.md)
+*   [Integrating Systemic Propagation and Temporal Events](systemic_propagation_and_temporal_events_addendum.md)
