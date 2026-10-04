@@ -1,5 +1,7 @@
 #include <cassert>
 #include <iostream>
+#include <cmath>
+#include <GLFW/glfw3.h>
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
@@ -12,6 +14,12 @@
 
 int main() {
     std::cout << "Running ActionModel Spawn Test..." << std::endl;
+
+    if (!glfwInit()) return 1;
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    GLFWwindow* window = glfwCreateWindow(64, 64, "action_spawn_test", nullptr, nullptr);
+    if (!window) { glfwTerminate(); return 1; }
+    glfwMakeContextCurrent(window);
     
     // 1. Create a dummy concept
     auto concept = std::make_shared<ObjectConcept>("test-concept");
@@ -24,6 +32,7 @@ int main() {
     // 2. Create world and player
     Zone world("test-zone", "default");
     Object player;
+    player.setPosition(glm::vec3(2.5f, -1.25f, 7.0f));
     
     // 3. Create a Spawn ActionNode
     ActionNode node;
@@ -41,7 +50,12 @@ int main() {
     
     // Assert it worked
     assert(world.getOwnedObjects().size() == 1);
-    std::cout << "SUCCESS! 1 object spawned into the world." << std::endl;
-    
+    Object* born = world.getOwnedObjects().front().get();
+    assert(born);
+    assert(glm::length(born->getPosition() - player.getPosition()) < 1e-4f);
+    std::cout << "SUCCESS! Spawn preserved the subject-authored placement through OntoMath." << std::endl;
+
+    glfwDestroyWindow(window);
+    glfwTerminate();
     return 0;
 }
