@@ -1,4 +1,5 @@
 #include "CollisionDispatcher.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 
 #include "ConstructedBeing/Singular/Object/Object/PolyhedronData.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/ComplexShape.hpp"
@@ -42,9 +43,9 @@ glm::vec3 orientFromBToA(const Object& a, const Object& b, const glm::vec3& norm
 }
 
 glm::vec3 transformNormalToWorld(const glm::mat4& transform, const glm::vec3& localNormal) {
-    glm::mat3 linear(transform);
-    glm::vec3 worldNormal = glm::transpose(glm::inverse(linear)) * localNormal;
-    return safeNormalize(worldNormal);
+    const auto authored = OntoMath::MatrixValue::fromGlmMat4(transform);
+    const auto worldNormal = OntoMath::transformNormal(authored, localNormal);
+    return worldNormal ? safeNormalize(*worldNormal) : glm::vec3(0.0f);
 }
 
 SupportPoint support(const Object& a, const Object& b, const glm::vec3& dir) {
@@ -428,8 +429,12 @@ CollisionResult polyhedronSatCollision(const Object& a, const Object& b) {
 
 std::optional<std::pair<float, glm::vec3>> signedValueAndNormal(const Object& object, const glm::vec3& worldPoint) {
     glm::mat4 transform = object.getRaycastTransform();
-    glm::mat4 inv = glm::inverse(transform);
-    glm::vec3 localPoint = glm::vec3(inv * glm::vec4(worldPoint, 1.0f));
+    const auto affine = OntoMath::MatrixValue::fromGlmMat4(transform);
+    const auto inv = OntoMath::inverseAffine(affine);
+    if (!inv) return std::nullopt;
+    const auto localPointValue = OntoMath::transformPoint(*inv, worldPoint);
+    if (!localPointValue) return std::nullopt;
+    const glm::vec3 localPoint = *localPointValue;
     auto spatial = object.getSpatialKind();
 
     auto finiteDifference = [&](auto&& f) {
@@ -495,8 +500,10 @@ std::vector<glm::vec3> sampleWorldPoints(const Object& object) {
 // Returns false if the object kind has no implicit field / the point is outside a
 // polyhedron. Used by the narrowphase scan pass where most probe points are NOT
 // penetrating and the (6-eval) finite-difference gradient would be thrown away.
-bool signedValueOnly(const Object& object, const glm::mat4& inv, const glm::vec3& worldPoint, float& out) {
-    glm::vec3 localPoint = glm::vec3(inv * glm::vec4(worldPoint, 1.0f));
+bool signedValueOnly(const Object& object, const OntoMath::MatrixValue& inv, const glm::vec3& worldPoint, float& out) {
+    const auto localPointValue = OntoMath::transformPoint(inv, worldPoint);
+    if (!localPointValue) return false;
+    const glm::vec3 localPoint = *localPointValue;
     switch (object.getSpatialKind()) {
         case Object::SpatialKind::Field:
             out = geom::evalSdf(object.getFieldData(), localPoint); return true;
@@ -522,10 +529,12 @@ CollisionResult sdfProbeCollision(const Object& a, const Object& b) {
     Best best;
 
     auto scan = [&](const Object& probeOwner, const Object& container, bool pointBelongsToA) {
-        const glm::mat4 inv = glm::inverse(container.getRaycastTransform()); // once per direction
+        const auto affine = OntoMath::MatrixValue::fromGlmMat4(container.getRaycastTransform());
+        const auto inv = OntoMath::inverseAffine(affine); // once per direction
+        if (!inv) continue;
         for (const auto& wp : sampleWorldPoints(probeOwner)) {
             float v;
-            if (!signedValueOnly(container, inv, wp, v)) continue;
+            if (!signedValueOnly(container, *inv, wp, v)) continue;
             if (v >= 0.0f) continue;                 // outside: no penetration, skip
             const float depth = -v;
             if (!best.hit || depth > best.depth) {
