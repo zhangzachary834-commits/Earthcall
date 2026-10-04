@@ -326,6 +326,3 @@ saves/identity/*.staged
 # command history and the relayed app output of the last run.
 saves/logs/terminal-history.txt
 saves/logs/earthcall-terminal.log
-
-# Per-machine launchers written by "Earthcall First Movers.command"
-Start *.command

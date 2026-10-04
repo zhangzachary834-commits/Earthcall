@@ -518,7 +518,7 @@ on a quiet machine) so the tripwire tightens behind the fix.
 - Make nested and shared Property writes safely observable to Law, OntoMath, and channel consumers. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
 - Unite Law-governed memory and Property read/write micromastery with TransferPolicy, seeded through a First Mover because Law text itself occupies memory. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
 - Define and enforce the authored, revocable consent Relation required at each Law actuation that moves a Person, including qualified paths and other actuation channels. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
-- Complete typed live OntoMath bindings with authored cell relationships and explicit operation/channel refusals, building on the type-preserving read seam. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
+- Extend live OntoMath bindings to preserve supported Property value types and refuse unsupported operations explicitly. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
 - Benchmark checked Property storage and selective dense layouts against the existing interned-name lookup before choosing a cache design. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
 
 <a id="feature-sized"></a>

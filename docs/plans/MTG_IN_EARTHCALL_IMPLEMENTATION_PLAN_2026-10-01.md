@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-01
 **Author:** Antigravity (Gemini 3.1 Pro)
-**Status:** IN PROGRESS
+**Status:** DRAFT
 
 ## 1. The Core Philosophy (The Seven Refusals)
 MTG is completely governed by rules, state-based actions, and relational zones. Earthcall’s Rete/Law engine is uniquely suited to model this without a single new C++ class, heavily relying on **Refusal 7** (No new methods to define variable behavior).
@@ -52,9 +52,7 @@ To avoid the infamous 64-cube frag grenade:
 - When a card enters a Formation, an `update-layout` Law calculates non-overlapping X/Z coordinates dynamically based on the current count of cards in the Formation. 
 
 ## 6. Execution Steps
-1. **[DONE] Seed the World:** Create baseline `MTG/zone.json` save with test cards, fixing a C++ Engine Serialization Bug where `Lexeme` and `Relation` properties were dropped.
-2. **[DONE] Wire the State:** Implemented `@state.mtg` and the turn-phase progression events. `button.mtg.pass` physically steps the game through `untap`, `upkeep`, `main1`, `combat`, `main2`, `end` using 7 Phase Progression Laws.
-3. **[DONE] Wire the Board:** Implemented physical layout Laws using `WhileTrue` and `ActionNode::Kind::Map` / `ActionNode::Kind::Set`. Hand cards snap to `[handOrder * 1.5, 0.5, 2.0]` and Stack cards snap to `[stackOrder * 1.5, 0.5, -2.0]`. Used `Lexeme`s instead of Formations to track zones (`@self.mtg.zone = "hand.1"`).
-4. **[DONE] Implement the Stack:** Wrote the Law `mtg-cast-card` which intercepts a `pointer-click` on a hand card during `main1`. It maps `@state.mtg.stackCounter` to the card's `mtg.stackOrder`, increments the counter, and sets the card's zone to `"stack"`.
-5. **[PENDING] Implement Card Resolution:** Add priority passing back and forth, and a law to resolve the highest `stackOrder` card.
-6. **[PENDING] Implement State-Based Actions:** Add lethal damage laws and graveyard transitions.
+1. **Seed the World:** Create `scratch/seed_mtg_ontology.py` to generate the baseline `mtg.json` save with the Formations and test cards.
+2. **Wire the State:** Implement `@mtg-state` and the turn-phase progression events.
+3. **Wire the Board:** Implement physical layout Laws.
+4. **Implement the Stack:** Write the Laws for priority passing and basic casting.

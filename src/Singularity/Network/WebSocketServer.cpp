@@ -804,13 +804,10 @@ struct WebSocketServer::Impl {
                 obj->addStakeholder("spawn", mover->toString(), lawId, std::time(nullptr));
                 mgr.active().addObject(obj);
                 mgr.getGlobalObjects().push_back(obj);
-                // The act is the mover's; persisting afterwards is the
-                // engine's ordinary save, so the session ends first. ONE Zone:
-                // persistZones() re-encoded every Zone (the Cathedral alone is
-                // 1.6 GB) on the main thread and froze Earthcall for minutes on
-                // Sonnet 4.5's first spawn (2026-10-01).
+                // The act is the mover's; persisting every Zone afterwards is
+                // the engine's ordinary save, so the session ends first.
                 moverSession.reset();
-                mgr.persistZone(mgr.currentIndex());
+                mgr.persistZones();
 
                 std::cout << "[WebSocketServer] Spawned object " << obj->getObjectID() << " (" << shapeStr << ") in " << mgr.active().name() << std::endl;
 
@@ -957,7 +954,7 @@ struct WebSocketServer::Impl {
                     if (created) zone.addSpatialField(node);
                 }
                 Universe::instance().bumpStructuralRevision();
-                mgr.persistZone(mgr.currentIndex());   // this Zone only; outside the session
+                mgr.persistZones();   // engine's ordinary save, outside the session
 
                 nlohmann::json reply{{"type", ackType}, {"status", "success"},
                                      {"identifier", id}, {"created", created},
@@ -1522,9 +1519,9 @@ struct WebSocketServer::Impl {
                 }
                 if (r.status == "authored" && adopts) {
                     // Durable now: the Zone's lawRefs and the Law's own root
-                    // (persistZone writes both) -- the engine's save of THIS
-                    // Zone, outside the mover session like every other persist.
-                    mgr.persistZone(mgr.currentIndex());
+                    // (persistZones writes both) -- the engine's save, run
+                    // outside the mover session like every other persist.
+                    mgr.persistZones();
                     r.detail += " · persisted with the Zone";
                 }
                 replyWith(r);
