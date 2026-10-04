@@ -1,19 +1,27 @@
-#include "catch.hpp"
 #include "Singularity/Core/Engine.hpp"
 #include "Singularity/Core/CodecChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
-#include "ZonesOfEarth/Zone.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ConstructedBeing/Universe.hpp"
 #include <nlohmann/json.hpp>
+#include <iostream>
 
 using namespace Core;
 
-TEST_CASE("Genesis Bootstrap Flow", "[modality]") {
+void check(bool condition, const std::string& desc) {
+    if (!condition) {
+        std::cerr << "  FAILED: " << desc << "\n";
+        std::exit(1);
+    } else {
+        std::cout << "  ok: " << desc << "\n";
+    }
+}
+
+int main() {
     Universe::instance().clear();
     auto& c = CodecChannel::instance();
     
-    // We mock the seed JSON
     nlohmann::json seed = nlohmann::json::array();
     seed.push_back({
         {"type", "Singular"},
@@ -28,23 +36,15 @@ TEST_CASE("Genesis Bootstrap Flow", "[modality]") {
         {"name", "owns"}
     });
 
-    // Write to codec input to simulate FileRead
-    c.propSetInput(seed.dump());
-    
-    // The load-genesis-file law does: jsonArray = ecgraphToJson (which is just input for now)
-    // Wait, ecgraphToJson in CodecChannel.cpp just returns input if it's already JSON?
-    // Let's just bypass load-genesis-file and set jsonArray directly.
     c.propSetJsonArray(seed.dump());
     
     // The world-genesis Zone
     auto zone = Universe::instance().zones().front();
     zone->setIdentifier("world-genesis");
     
-    // Set phase 0
     PropertyValue phase(0.0);
     lawSetValue(*zone, PropertyPath::parse("state.genesis.phase"), phase);
 
-    // Build the ActionNodes manually to simulate the laws firing
     ActionNode stepAction;
     stepAction.kind = ActionNode::Kind::Sequence;
     
@@ -83,28 +83,30 @@ TEST_CASE("Genesis Bootstrap Flow", "[modality]") {
 
     ECA::Event ev;
     
-    // Tick 1: Phase 0 pops Singular
+    // Tick 1
     stepExe(ev, *zone);
     
     PropertyValue valType; lawGetValue(*zone, PropertyPath::parse("state.genesis.type"), valType);
-    REQUIRE(std::get<std::string>(valType) == "Singular");
+    check(std::get<std::string>(valType) == "Singular", "Phase 0 extracted type 'Singular'");
     
-    // Tick 2: Phase 1 creates Singular
+    // Tick 2
     singularExe(ev, *zone);
 
     auto player = resolveBeingToken("player-1", *zone);
-    REQUIRE(player != nullptr);
-    REQUIRE(player->getIdentifier() == "player-1");
+    check(player != nullptr, "player-1 was spawned into Universe");
+    check(player->getIdentifier() == "player-1", "player-1 has correct ID");
 
-    // Tick 3: Phase 0 pops Relation
+    // Tick 3
     stepExe(ev, *zone);
     lawGetValue(*zone, PropertyPath::parse("state.genesis.type"), valType);
-    REQUIRE(std::get<std::string>(valType) == "Relation");
+    check(std::get<std::string>(valType) == "Relation", "Phase 0 extracted type 'Relation'");
 
-    // Tick 4: Phase 1 adds Relation
+    // Tick 4
     relationExe(ev, *zone);
     
     auto world = resolveBeingToken("world-genesis", *zone);
     bool hasRel = Universe::instance().areRelated(world, player, "owns");
-    REQUIRE(hasRel == true);
+    check(hasRel == true, "world-genesis owns player-1");
+
+    return 0;
 }
