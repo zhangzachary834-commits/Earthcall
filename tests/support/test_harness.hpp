@@ -133,16 +133,11 @@ struct BootedEngineHarness {
         ctx.unpackForAuthoring = false;
 
         // 4. Perform app boot hydration FIRST (matching Engine::initLogic boot sequence)
-        zones.bindLive();
         zones.bindLawManager(&lawManager);
         zones.hydrateFromZoneStore();
     }
 
     ~BootedEngineHarness() {
-        // bindLive() is process-global too; a block-scoped harness must not
-        // leave ZoneManager::live() pointing at its destroyed ZoneManager.
-        zones.unbindLive();
-
         // The Physics bridge is process-global; do not leave a dangling pointer
         // when a block-scoped harness goes away. Only clear the slot we own.
         if (Physics::getLawManager() == &lawManager) {

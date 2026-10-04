@@ -75,11 +75,11 @@ int main() {
     // Exactly what Engine::initLogic does.
     auto law = Singularity::Core::createShapeGenerator3DLaw(player);
     lawManager.add(law);
-    lawManager.bindTrigger(law->getIdentifier(), "mouse-clicked");
+    lawManager.bindTrigger(law->getIdentifier(), "onMouseClicked");
 
     const auto click = [&]() {
         Core::EventBus::instance().publish(
-            ECA::Event{"mouse-clicked", &player, nullptr, 0});
+            ECA::Event{"onMouseClicked", &channel, nullptr, 0});
         lawManager.tick();
     };
 
@@ -96,7 +96,7 @@ int main() {
           "condition is unsatisfied while the spawn law is down");
 
     channel.active3DMode = "Create";
-    channel.setEnabled(false);
+    channel.spawnLawArmed = false;
     click();
     check(world.getOwnedObjects().empty(),
           "console Create alone does not fire the spawn law");
@@ -113,16 +113,16 @@ int main() {
               PropertyPath::PathResult::Ok,
           "the CreationChannel carries no 'type' property");
 
-    // ---- 3. it spawns when enabled in Create mode --------------
-    channel.active3DMode = "Create";
-    channel.setEnabled(true);
+    // ---- 3. it spawns when armed, even outside console Create --------------
+    channel.active3DMode = "Select";
+    channel.spawnLawArmed = true;
     channel.activeShapeKind = static_cast<int>(Object::ShapeKind::Sphere);
     channel.activeColor = glm::vec3(0.25f, 0.5f, 0.75f);
     channel.placementMode = "InFront";
     channel.cursorSpawnPos = glm::vec3(3.0f, 1.0f, -2.0f);
 
     check(law->conditionsSatisfied(channel),
-          "condition is satisfied once enabled in Create mode");
+          "condition is satisfied once spawnLawArmed, without console Create");
 
     click();
     check(world.getOwnedObjects().size() == 1, "an armed click births one Object");

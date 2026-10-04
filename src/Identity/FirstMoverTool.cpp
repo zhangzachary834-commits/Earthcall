@@ -18,13 +18,6 @@
 //   earthcall_first_mover revoke --mover <id>
 //       The granting Person withdraws standing.
 //
-//   earthcall_first_mover check-person
-//       Exit 0 if EARTHCALL_KEY_PASSPHRASE opens the Person's key, 1 if not,
-//       3 if the Person has no key yet. Prints nothing secret. For launchers.
-//
-//   earthcall_first_mover check-mover --mover <id>
-//       Exit 0 if EARTHCALL_MOVER_PASSPHRASE opens that mover's key, 1 if not.
-//
 //   earthcall_first_mover list
 //       Every mover, its scopes, and whether it would stand if its Person
 //       authenticated (quarantine is reported; nothing is hidden).
@@ -74,7 +67,6 @@ int usage() {
         "                               [--kind model|person] [--person <person-id>]\n"
         "  earthcall_first_mover revoke --mover <id> [--person <person-id>]\n"
         "  earthcall_first_mover list\n"
-        "  earthcall_first_mover check-person | check-mover --mover <id>   (exit 0 = passphrase opens the key)\n"
         "  earthcall_first_mover sign-challenge --mover <id> --challenge-id <c> --nonce <n> --connection <k>\n"
         "  (all accept --saves <dir>, default ./saves)\n\n"
         "  EARTHCALL_KEY_PASSPHRASE    unlocks the granting Person's key (grant, revoke)\n"
@@ -325,35 +317,6 @@ int cmdList(const Args& a) {
     return 0;
 }
 
-int cmdCheckPerson(const Args& a) {
-    bool anyKeyed = false;
-    for (const auto& info : SaveSystem::listWorlds(SaveSystem::SaveType::PERSON)) {
-        auto profile = SaveSystem::readSaveData(info.path);
-        if (profile.is_object() && profile.contains("personId")) { anyKeyed = true; break; }
-    }
-    if (!anyKeyed && get(a, "person").empty() && !env("EARTHCALL_PERSON_ID")) {
-        std::cout << "no keyed Person yet\n";
-        return 3;
-    }
-    if (!env("EARTHCALL_KEY_PASSPHRASE")) { std::cout << "keyed\n"; return 1; }
-    FirstMoverRegister reg;
-    auto key = authenticatePerson(a, reg);
-    if (!key) return 1;
-    std::cout << "unlocks " << key->id().abbreviated() << "\n";
-    return 0;
-}
-
-int cmdCheckMover(const Args& a) {
-    const char* pass = env("EARTHCALL_MOVER_PASSPHRASE");
-    const auto mover = SingularId::parse(get(a, "mover"));
-    if (!pass || !mover.canAuthenticate()) return 1;
-    KeyStore keys;
-    auto key = keys.load(mover, pass);
-    if (!key || key->id() != mover) { std::cerr << "refused: mover key did not unlock\n"; return 1; }
-    std::cout << "unlocks " << mover.abbreviated() << "\n";
-    return 0;
-}
-
 int cmdSign(const Args& a) {
     const char* pass = env("EARTHCALL_MOVER_PASSPHRASE");
     const auto mover = SingularId::parse(get(a, "mover"));
@@ -387,8 +350,6 @@ int main(int argc, char** argv) {
         if (args->command == "revoke") return cmdGrant(*args, true);
         if (args->command == "list") return cmdList(*args);
         if (args->command == "sign-challenge") return cmdSign(*args);
-        if (args->command == "check-person") return cmdCheckPerson(*args);
-        if (args->command == "check-mover") return cmdCheckMover(*args);
     } catch (const std::exception& e) {
         std::cerr << "failed: " << e.what() << "\n";
         return 1;

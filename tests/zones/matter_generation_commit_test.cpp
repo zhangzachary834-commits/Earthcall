@@ -73,15 +73,14 @@ std::vector<uint8_t> readBytes(const std::filesystem::path& p) {
 }
 
 nlohmann::json readEcform(const std::filesystem::path& p) {
-    return SaveSystem::readSaveData(p.string());
+    std::ifstream in(p);
+    if (!in) return nlohmann::json{};
+    return nlohmann::json::parse(in, nullptr, false);
 }
 
 void writeEcform(const std::filesystem::path& p, const nlohmann::json& j) {
-    nlohmann::json wrapper = nlohmann::json::object();
-    wrapper["MigrationRoot"] = j.dump(-1);
-    std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
-    std::ofstream out(p, std::ios::binary);
-    out.write(reinterpret_cast<const char*>(outBytes.data()), outBytes.size());
+    std::ofstream out(p);
+    out << j.dump(2);
 }
 
 glm::vec3 translationOf(const glm::mat4& m) { return glm::vec3(m[3][0], m[3][1], m[3][2]); }

@@ -189,10 +189,7 @@ struct ActionNode {
         // Elevate an OntoMath-selected set of surface samples into one named,
         // enumerable, persisted Property.  The selector's defined set over
         // local u/v is the region; no rectangle/category enum is introduced.
-        ElevatePixels = 22,
-        FileRead = 23,
-        FileWrite = 24,
-        CodecTransform = 25
+        ElevatePixels = 22
     };
 
     struct ExecutedEvent {
@@ -320,12 +317,6 @@ struct ActionNode {
     // Spawn deliberately: same question, same answer.
     int createShapeKind = 0;
     std::string createType;
-    // For universal prototype birth, `path` selects an existing Singular
-    // (an @root or a Singular-valued PropertyPath). Empty keeps the historical
-    // shaped-Object constructor. These are identity/presentation inputs, not
-    // new domain kinds; containerToken/elementToken supply Relation endpoints.
-    std::string newbornId;
-    std::string newbornName;
 
     // AddProperty / RemoveProperty payload. `path` names WHOSE property (the
     // ordinary referent vocabulary: plain = subject, @being-id,
@@ -453,9 +444,6 @@ struct ActionNode {
     static ActionNode create(int shapeKind = 0,
                              const std::string& createType = "",
                              std::vector<ActionNode> children = {});
-    static ActionNode createFrom(const std::string& prototypePath,
-                                 const std::string& newbornId = "",
-                                 std::vector<ActionNode> children = {});
     static ActionNode addProperty(const std::string& ownerPath,
                                   const std::string& propertyName,
                                   PropertyValue initial);
@@ -474,9 +462,6 @@ struct ActionNode {
     //   input: where to read the amplitude value
     //   propertyName: material/waveType string
     static ActionNode playAudio(const std::string& freqPath, const std::string& ampPath, const std::string& waveType = "");
-    static ActionNode fileRead(const std::string& pathProp, const std::string& destProp);
-    static ActionNode fileWrite(const std::string& pathProp, const std::string& contentProp);
-    static ActionNode codecTransform(const std::string& codecOperation, const std::string& inputProp, const std::string& destProp);
     static ActionNode writePixel(const std::string& facePath,
                                  const std::string& uPath,
                                  const std::string& vPath,

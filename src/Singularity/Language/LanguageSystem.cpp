@@ -141,18 +141,11 @@ std::shared_ptr<Lexeme> LanguageSystem::intern(const std::string& symbol, const 
     if (auto existing = findById(stableId)) return existing;
 
     auto lexeme = std::make_shared<Lexeme>(symbol, stableId);
-    retainLexeme(lexeme);
-    return lexeme;
-}
-
-bool LanguageSystem::retainLexeme(std::shared_ptr<Lexeme> lexeme) {
-    if (!lexeme || lexeme->getIdentifier().empty()) return false;
-    if (auto existing = findById(lexeme->getIdentifier())) return existing == lexeme;
     _lexemes.push_back(lexeme);
-    _symbolIndex[lexeme->getSymbol()] = lexeme;
-    _idIndex[lexeme->getIdentifier()] = lexeme;
-    noteSymbolAdded(lexeme->getSymbol());
-    return true;
+    _symbolIndex[symbol] = lexeme;
+    _idIndex[stableId] = lexeme;
+    noteSymbolAdded(symbol);
+    return lexeme;
 }
 
 std::vector<std::shared_ptr<Lexeme>> LanguageSystem::findAllBySymbol(const std::string& symbol) const {

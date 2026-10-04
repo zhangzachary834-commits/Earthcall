@@ -1,5 +1,4 @@
 #include "Singularity/Storage/FileChannel.hpp"
-#include "Singularity/Core/CodecChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 
@@ -215,6 +214,28 @@ int main() {
     lawGetValue(*channel, PropertyPath::parse("file.lineCount"), val);
     check(std::get<double>(val) == 3.0, "lineCount reports 3 lines");
 
+    // -----------------------------------------------------------------------
+    // Case 8: JSON Format Validation, Compaction, and Pretty-Printing
+    // -----------------------------------------------------------------------
+    std::string jsonRaw = "{\n  \"ontology\": \"Earthcall\",\n  \"active\": true,\n  \"count\": 42\n}";
+    lawSetValue(*channel, PropertyPath::parse("file.content"), PropertyValue(jsonRaw));
+    lawGetValue(*channel, PropertyPath::parse("file.jsonValid"), val);
+    check(std::get<bool>(val) == true, "jsonValid returns true for valid JSON");
+
+    lawGetValue(*channel, PropertyPath::parse("file.jsonCompact"), val);
+    check(std::get<std::string>(val) == "{\"active\":true,\"count\":42,\"ontology\":\"Earthcall\"}",
+          "jsonCompact formats compact JSON");
+
+    lawGetValue(*channel, PropertyPath::parse("file.jsonPretty"), val);
+    std::string pretty = std::get<std::string>(val);
+    check(pretty.find("  \"ontology\": \"Earthcall\"") != std::string::npos, "jsonPretty returns formatted JSON");
+
+    std::string invalidJson = "{ \"unclosed\": ";
+    lawSetValue(*channel, PropertyPath::parse("file.content"), PropertyValue(invalidJson));
+    lawGetValue(*channel, PropertyPath::parse("file.jsonValid"), val);
+    check(std::get<bool>(val) == false, "jsonValid returns false for invalid JSON");
+
+    // -----------------------------------------------------------------------
     // Case 9: Text Pre-Processing (UTF-8 BOM Stripping & CRLF Normalization)
     // -----------------------------------------------------------------------
     fs::path bomFile = testDir / "bom_test.txt";
@@ -229,6 +250,8 @@ int main() {
     lawSetValue(*channel, PropertyPath::parse("file.read"), PropertyValue(true));
     lawGetValue(*channel, PropertyPath::parse("file.content"), val);
     check(std::get<std::string>(val) == "{\"hello\":\"world\"}", "UTF-8 BOM stripped on read");
+    lawGetValue(*channel, PropertyPath::parse("file.jsonValid"), val);
+    check(std::get<bool>(val) == true, "JSON with stripped BOM accepted as valid JSON");
 
     // CRLF normalization
     fs::path crlfFile = testDir / "crlf_test.txt";
@@ -247,6 +270,39 @@ int main() {
     // -----------------------------------------------------------------------
     fs::path binFile = testDir / "binary_data.bin";
     std::string rawBinary;
+    rawBinary.push_back('\x00');
+    rawBinary.push_back('\xFF');
+    rawBinary.push_back('\x7F');
+    rawBinary.push_back('\x10');
+    rawBinary.push_back('\x00');
+    rawBinary.push_back('\x42');
+
+    std::string expectedBase64 = FileChannel::base64Encode(rawBinary);
+    std::string expectedHex = FileChannel::hexEncode(rawBinary);
+
+    lawSetValue(*channel, PropertyPath::parse("file.path"), PropertyValue(binFile.string()));
+    lawSetValue(*channel, PropertyPath::parse("file.encoding"), PropertyValue(std::string("base64")));
+    lawSetValue(*channel, PropertyPath::parse("file.content"), PropertyValue(expectedBase64));
+    lawSetValue(*channel, PropertyPath::parse("file.write"), PropertyValue(true));
+
+    lawGetValue(*channel, PropertyPath::parse("file.lastOperationSuccess"), val);
+    check(std::get<bool>(val) == true, "Binary write via Base64 encoding succeeded");
+
+    // Read back in Base64 mode
+    lawSetValue(*channel, PropertyPath::parse("file.content"), PropertyValue(std::string("")));
+    lawSetValue(*channel, PropertyPath::parse("file.read"), PropertyValue(true));
+    lawGetValue(*channel, PropertyPath::parse("file.content"), val);
+    check(std::get<std::string>(val) == expectedBase64, "Read in base64 mode matches expected Base64");
+
+    // Verify contentHex property
+    lawGetValue(*channel, PropertyPath::parse("file.contentHex"), val);
+    check(FileChannel::hexDecode(std::get<std::string>(val)) == rawBinary, "contentHex correctly converts binary payload");
+
+    // Check isBinary detection
+    lawSetValue(*channel, PropertyPath::parse("file.encoding"), PropertyValue(std::string("text")));
+    lawSetValue(*channel, PropertyPath::parse("file.read"), PropertyValue(true));
+    lawGetValue(*channel, PropertyPath::parse("file.isBinary"), val);
+    check(std::get<bool>(val) == true, "isBinary accurately detects null bytes in binary data");
 
     // -----------------------------------------------------------------------
     // Case 11: MIME Type & File Type Sniffing (Images, Audio, Models, etc.)
@@ -390,7 +446,11 @@ int main() {
     // Trigger JSON parse exceptions
     lawSetValue(*channel, PropertyPath::parse("file.content"), PropertyValue(std::string("invalid json")));
 
+    lawGetValue(*channel, PropertyPath::parse("file.jsonCompact"), val);
+    check(std::get<std::string>(val) == "", "jsonCompact gracefully returns empty string on parse error");
 
+    lawGetValue(*channel, PropertyPath::parse("file.jsonPretty"), val);
+    check(std::get<std::string>(val) == "", "jsonPretty gracefully returns empty string on parse error");
 
     // Trigger std::filesystem exceptions by providing strings with embedded nulls
     // std::filesystem::path throws an exception when constructed with null characters.

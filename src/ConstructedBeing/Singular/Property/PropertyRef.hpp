@@ -85,11 +85,6 @@ public:
         return is_property_value_alternative<T>;
     }
 
-    bool exposesMutableContainer() const override {
-        return std::is_same_v<T, std::shared_ptr<PropertyList>> ||
-               std::is_same_v<T, std::shared_ptr<PropertyDict>>;
-    }
-
     Singular* asSingular() const override {
         if constexpr (std::is_pointer_v<T> &&
                       std::is_base_of_v<Singular, std::remove_pointer_t<T>>) {

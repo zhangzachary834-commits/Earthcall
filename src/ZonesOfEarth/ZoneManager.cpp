@@ -492,10 +492,6 @@ void ZoneManager::bindLive() {
     installZoneReadings();
 }
 
-void ZoneManager::unbindLive() {
-    if (g_liveZones == this) g_liveZones = nullptr;
-}
-
 ZoneManager* ZoneManager::live() { return g_liveZones; }
 
 namespace {
@@ -833,10 +829,7 @@ std::shared_ptr<Zone> ZoneManager::authorZone(const std::string& identifier,
         obj->addZoneDesignation(zone->getIdentifier());
         globalObjects.push_back(obj);
     }
-    // Only the new Zone changed. persistZones() re-encoded every Zone (1.6 GB
-    // for the Cathedral alone) on the calling thread -- a multi-minute freeze
-    // for creating one empty Zone (found 2026-10-01).
-    persistZone(_zones.size() - 1);
+    persistZones();
     Core::EventBus::instance().publish(
         ECA::Event{"zone-authored", zone.get(), nullptr, std::time(nullptr)});
     return zone;
@@ -1558,10 +1551,13 @@ std::string commitMatterGeneration(const std::filesystem::path& ecformPath,
     std::string previousGenerationId;
     std::error_code rootEc;
     if (std::filesystem::exists(ecformPath, rootEc) && !rootEc) {
-        nlohmann::json prior = SaveSystem::readSaveData(ecformPath.string());
-        if (prior.is_object() && prior.contains("matterGeneration")) {
-            previousGenerationId =
-                prior["matterGeneration"].value("snapshotId", std::string{});
+        std::ifstream in(ecformPath);
+        if (in.is_open()) {
+            nlohmann::json prior = nlohmann::json::parse(in, nullptr, false);
+            if (!prior.is_discarded() && prior.contains("matterGeneration")) {
+                previousGenerationId =
+                    prior["matterGeneration"].value("snapshotId", std::string{});
+            }
         }
     }
 

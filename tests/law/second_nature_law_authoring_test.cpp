@@ -7,7 +7,6 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
-#include "Singularity/TransferPolicy.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -42,10 +41,6 @@ std::string readString(Singular& being, const std::string& property) {
 } // namespace
 
 int main() {
-    // A fixture explicitly authorizes taking complete prototype state.
-    auto& policy = TransferPolicy::instance();
-    for (const auto& [name, tier] : policy.gates())
-        if (tier != TransferPolicy::Tier::Kernel) policy.setOpen(name, true);
     LawManager laws;
     Physics::setLawManager(&laws);
 
@@ -68,7 +63,6 @@ int main() {
     auto prototype = std::make_shared<Law>("Prototype: click -> set", std::vector<Singular*>{&author});
     prototype->setLawIdentifier("law-prototype-click-set");
     prototype->setEnabled(false); // ordinary Law serving as a source/prototype
-    prototype->grantAuthority(3); // a reviewed source grant is not inherited
     prototype->setActivation(Law::Activation::OnEvent);
     prototype->setScope(Law::Scope::Subject);
     prototype->setConditionModel(ConditionNode::identity("$TARGET"));
@@ -110,7 +104,6 @@ int main() {
     Law* first = laws.find("law-prototype-click-set.branch-1");
     assert(first);
     assert(first != prototype.get());
-    assert(first->authorityLevel() == 0);
     assert(first->isEnabled());
     assert(!prototype->isEnabled());
     assert(first->authors().getMembers().size() == 1);
