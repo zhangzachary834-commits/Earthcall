@@ -1,0 +1,103 @@
+{
+  "id": "genesis-step",
+  "name": "Metalaw: Genesis Phase 0 (Read Node)",
+  "authors": [
+    "Zach"
+  ],
+  "enabled": true,
+  "description": "Pops one node from the ECGraph array.",
+  "conditions": [
+    {
+      "kind": "All",
+      "children": [
+        {
+          "kind": "Compare",
+          "path": "@state.genesis.phase",
+          "op": 0,
+          "operand": 0.0
+        },
+        {
+          "kind": "Not",
+          "children": [
+            {
+              "kind": "Compare",
+              "path": "@codec.codec.arrayEmpty",
+              "op": 0,
+              "operand": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actionModel": {
+    "kind": "Sequence",
+    "children": [
+      {
+        "kind": "Set",
+        "path": "@codec.codec.arrayShift",
+        "operand": true
+      },
+      {
+        "kind": "Set",
+        "path": "@codec.codec.queryKey",
+        "operand": "type"
+      },
+      {
+        "kind": "CodecTransform",
+        "propertyName": "jsonExtract",
+        "input": "@codec.codec.shiftItem",
+        "path": "@state.genesis.type"
+      },
+      {
+        "kind": "Set",
+        "path": "@codec.codec.queryKey",
+        "operand": "id"
+      },
+      {
+        "kind": "CodecTransform",
+        "propertyName": "jsonExtract",
+        "input": "@codec.codec.shiftItem",
+        "path": "@state.genesis.id"
+      },
+      {
+        "kind": "Set",
+        "path": "@codec.codec.queryKey",
+        "operand": "name"
+      },
+      {
+        "kind": "CodecTransform",
+        "propertyName": "jsonExtract",
+        "input": "@codec.codec.shiftItem",
+        "path": "@state.genesis.name"
+      },
+      {
+        "kind": "Set",
+        "path": "@codec.codec.queryKey",
+        "operand": "source"
+      },
+      {
+        "kind": "CodecTransform",
+        "propertyName": "jsonExtract",
+        "input": "@codec.codec.shiftItem",
+        "path": "@state.genesis.source"
+      },
+      {
+        "kind": "Set",
+        "path": "@codec.codec.queryKey",
+        "operand": "target"
+      },
+      {
+        "kind": "CodecTransform",
+        "propertyName": "jsonExtract",
+        "input": "@codec.codec.shiftItem",
+        "path": "@state.genesis.target"
+      },
+      {
+        "kind": "Set",
+        "path": "@state.genesis.phase",
+        "operand": 1.0
+      }
+    ]
+  }
+}
