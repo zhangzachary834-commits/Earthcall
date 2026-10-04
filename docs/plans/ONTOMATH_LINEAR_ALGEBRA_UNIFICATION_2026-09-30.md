@@ -510,6 +510,8 @@ cached 4x4 runtime representation
 
 # 10. Rung 7 — Physics, collision, raycast and picking migration
 
+**Status (2026-10-04): IN PROGRESS.** First bounded slice migrated `Object::raycastFace` world -> local origin/direction transformation from direct `glm::inverse` / `mat4 * vec4` authorship to the existing OntoMath `inverseAffine` + `transformPoint` / `transformDirection` chain, with explicit singular refusal. `ontomath_affine_sovereignty_test` now freezes parity against the legacy GLM oracle under non-uniform scale. Exact-head CI evidence for this slice is pending; collision normals, dispatcher transforms, picking/unprojection, and the remaining required witnesses below are not yet complete.
+
 ## Objective
 
 Remove the physics-side matrix gift shop.
