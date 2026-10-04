@@ -914,22 +914,6 @@ std::string TerminalChannel::describeProperty(const std::string& beingId, const 
 
 std::string TerminalChannel::describeBeing(const std::string& beingId) const {
     Singular* being = findBeing(beingId);
-    if (!being) {
-        // Lexemes are authored Relation endpoints and need not be registered as
-        // standalone Universe beings. They are still individuated beings that
-        // Law Line must be able to describe by their authored symbol.
-        for (Relation* relation : Universe::instance().relations()) {
-            if (!relation) continue;
-            for (Singular* endpoint : {relation->a(), relation->b()}) {
-                if (endpoint && endpoint->getIdentifier() == beingId &&
-                    dynamic_cast<Singularity::Language::Lexeme*>(endpoint)) {
-                    being = endpoint;
-                    break;
-                }
-            }
-            if (being) break;
-        }
-    }
     if (!being) return {};
     std::string kind = dynamic_cast<Person*>(being)                              ? "person"
                      : dynamic_cast<Zone*>(being)                                ? "zone"
@@ -938,12 +922,12 @@ std::string TerminalChannel::describeBeing(const std::string& beingId) const {
                      : dynamic_cast<Singularity::Language::Lexeme*>(being)       ? "lexeme"
                      : dynamic_cast<Object*>(being)                              ? "object"
                                                                                  : "being";
-    if (auto* lex = dynamic_cast<Singularity::Language::Lexeme*>(being)) return kind + " · " + lex->getSymbol();
     PropertyValue name;
     if (being->getDynamicProperty("displayName", name)) {
         if (const auto* s = std::get_if<std::string>(&name); s && !s->empty()) return kind + " · " + *s;
     }
     if (auto* law = dynamic_cast<Law*>(being)) return kind + " · " + law->name();
+    if (auto* lex = dynamic_cast<Singularity::Language::Lexeme*>(being)) return kind + " · " + lex->getSymbol();
     return kind;
 }
 

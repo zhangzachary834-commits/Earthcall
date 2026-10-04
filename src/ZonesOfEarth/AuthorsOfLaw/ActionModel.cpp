@@ -131,9 +131,6 @@ const char* ActionNode::kindName(Kind k) {
         case Kind::AddRelation: return "AddRelation";
         case Kind::WritePixel: return "WritePixel";
         case Kind::ElevatePixels: return "ElevatePixels";
-        case Kind::FileRead: return "FileRead";
-        case Kind::FileWrite: return "FileWrite";
-        case Kind::CodecTransform: return "CodecTransform";
     }
     return "Unknown";
 }
@@ -239,22 +236,7 @@ Singular* resolveBeingToken(const std::string& token, Singular& subject) {
         return Universe::instance().hasApplicationEvent()
                    ? Universe::instance().applicationEventObject() : nullptr;
     }
-
-    std::string resolvedId = token;
-    if (token.length() > 2 && token[0] == '@' && token[1] == '@') {
-        PropertyValue val;
-        if (lawGetValue(subject, PropertyPath::parse(token.substr(1)), val)) {
-            if (auto s = std::get_if<std::string>(&val)) {
-                resolvedId = *s;
-            } else {
-                return nullptr;
-            }
-        } else {
-            return nullptr;
-        }
-    }
-
-    const std::string id = (resolvedId[0] == '@') ? resolvedId.substr(1) : resolvedId;
+    const std::string id = (token[0] == '@') ? token.substr(1) : token;
     for (Singular* being : Universe::instance().beings()) {
         if (being && being->getIdentifier() == id) return being;
     }
@@ -364,13 +346,6 @@ nlohmann::json ActionNode::toJson() const {
             j["propertyName"] = propertyName;
             j["pixelFacePath"] = pixelFacePath.toString();
             j["selector"] = mapFunction.toJson();
-            break;
-        case Kind::FileRead:
-        case Kind::FileWrite:
-        case Kind::CodecTransform:
-            if (!path.empty()) j["path"] = path.toString();
-            if (!input.empty()) j["input"] = input.toString();
-            if (!propertyName.empty()) j["propertyName"] = propertyName;
             break;
         case Kind::AuthorZone:
             if (!createType.empty()) j["createType"] = createType;
@@ -742,48 +717,6 @@ ECA::ActionExecutor ActionNode::compile() const {
                 emitEffect("PlayAudio", true);
             };
         }
-        case Kind::FileRead: {
-            const PropertyPath sourcePath = input;
-            const PropertyPath destPath = path;
-            return [sourcePath, destPath](const ECA::Event&, Singular& subject) {
-                PropertyValue pvFile;
-                if (lawGetValue(subject, sourcePath, pvFile)) {
-                    lawSetValue(subject, PropertyPath::parse("@file-channel.file.path"), pvFile);
-                    lawSetValue(subject, PropertyPath::parse("@file-channel.file.read"), PropertyValue(true));
-                    PropertyValue content;
-                    if (lawGetValue(subject, PropertyPath::parse("@file-channel.file.content"), content)) {
-                        lawSetValue(subject, destPath, content);
-                    }
-                }
-            };
-        }
-        case Kind::FileWrite: {
-            const PropertyPath targetPathPath = path;
-            const PropertyPath contentPath = input;
-            return [targetPathPath, contentPath](const ECA::Event&, Singular& subject) {
-                PropertyValue pvFile, pvContent;
-                if (lawGetValue(subject, targetPathPath, pvFile) && lawGetValue(subject, contentPath, pvContent)) {
-                    lawSetValue(subject, PropertyPath::parse("@file-channel.file.path"), pvFile);
-                    lawSetValue(subject, PropertyPath::parse("@file-channel.file.content"), pvContent);
-                    lawSetValue(subject, PropertyPath::parse("@file-channel.file.write"), PropertyValue(true));
-                }
-            };
-        }
-        case Kind::CodecTransform: {
-            const std::string op = propertyName;
-            const PropertyPath sourcePath = input;
-            const PropertyPath destPath = path;
-            return [op, sourcePath, destPath](const ECA::Event&, Singular& subject) {
-                PropertyValue cv;
-                if (lawGetValue(subject, sourcePath, cv)) {
-                    lawSetValue(subject, PropertyPath::parse("@codec.codec.input"), cv);
-                    PropertyValue result;
-                    if (lawGetValue(subject, PropertyPath::parse("@codec.codec." + op), result)) {
-                        lawSetValue(subject, destPath, result);
-                    }
-                }
-            };
-        }
         case Kind::WritePixel: {
             const PropertyPath facePath = pixelFacePath;
             const PropertyPath uPath = pixelUPath;
@@ -912,18 +845,7 @@ ECA::ActionExecutor ActionNode::compile() const {
             const std::string relType = propertyName;
 
             return [srcToken, dstToken, relType](const ECA::Event& event, Singular& subject) {
-                auto resolveDynamicString = [&](const std::string& input) -> std::string {
-                    if (input.length() > 2 && input[0] == '@' && input[1] == '@') {
-                        PropertyValue val;
-                        if (lawGetValue(subject, PropertyPath::parse(input.substr(1)), val)) {
-                            if (auto s = std::get_if<std::string>(&val)) return *s;
-                        }
-                    }
-                    return input;
-                };
-                const std::string resolvedRelType = resolveDynamicString(relType);
-
-                if (resolvedRelType.empty()) {
+                if (relType.empty()) {
                     emitEffect("AddRelation", false, "no relation type specified");
                     return;
                 }
@@ -1116,20 +1038,6 @@ ECA::ActionExecutor ActionNode::compile() const {
                 std::vector<ECA::ActionExecutor> runs;
                 for (const auto& child : children) runs.push_back(child.compile());
                 return [source, id, name, endpointA, endpointB, parent, placement, hasLegacyOverrides, runs](const ECA::Event& event, Singular& subject) {
-                    auto resolveDynamicString = [&](const std::string& input) -> std::string {
-                        if (input.length() > 2 && input[0] == '@' && input[1] == '@') {
-                            PropertyValue val;
-                            if (lawGetValue(subject, PropertyPath::parse(input.substr(1)), val)) {
-                                if (auto s = std::get_if<std::string>(&val)) return *s;
-                            }
-                        }
-                        return input;
-                    };
-                    std::string resolvedId = resolveDynamicString(id);
-                    std::string resolvedName = resolveDynamicString(name);
-                    std::string resolvedEndpointA = resolveDynamicString(endpointA);
-                    std::string resolvedEndpointB = resolveDynamicString(endpointB);
-
                     std::size_t start = 0;
                     Singular* prototype = resolveLawRoot(subject, source, start);
                     if (prototype && start != source.segments.size()) {
@@ -1147,7 +1055,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                         emitEffect("Create", false, "prototype birth uses authored child actions for placement and composition"); return;
                     }
                     Zone* destination = resolveZone(subject);
-                    SingularSetToSetCreation::Request request{*prototype, {prototype, &subject}, nullptr, nullptr, destination, resolvedId, resolvedName, {}};
+                    SingularSetToSetCreation::Request request{*prototype, {prototype, &subject}, nullptr, nullptr, destination, id, name, {}};
                     const auto endpoint = [&](const std::string& token) -> Singular* {
                         if (token.empty()) return nullptr;
                         auto qualified = PropertyPath::parse(token.front() == '@' ? token : "@" + token);
@@ -1155,8 +1063,8 @@ ECA::ActionExecutor ActionNode::compile() const {
                         auto* being = resolveLawRoot(subject, qualified, consumed);
                         return consumed == qualified.segments.size() ? being : nullptr;
                     };
-                    request.endpointA = endpoint(resolvedEndpointA);
-                    request.endpointB = endpoint(resolvedEndpointB);
+                    request.endpointA = endpoint(endpointA);
+                    request.endpointB = endpoint(endpointB);
                     auto result = SingularSetToSetCreation::derive(request);
                     if (!result) { emitEffect("Create", false, result.refusal); return; }
                     for (const auto& run : runs) if (run) run(event, *result.newborn);
@@ -1459,12 +1367,6 @@ std::string ActionNode::describe() const {
             return "synthesize(" + std::to_string(children.size()) + " composed actions)";
         case Kind::PlayAudio:
             return kindName(kind);
-        case Kind::FileRead:
-            return "read file at " + input.toString() + " into " + path.toString();
-        case Kind::FileWrite:
-            return "write " + input.toString() + " to file at " + path.toString();
-        case Kind::CodecTransform:
-            return "transform " + input.toString() + " via " + propertyName + " into " + path.toString();
         case Kind::WritePixel:
             return "write pixel from " + pixelColorPath.toString();
         case Kind::ElevatePixels:
@@ -1597,12 +1499,6 @@ void ActionNode::collectPaths(std::vector<PropertyPath>& out) const {
             add(spawnShapeKindPath);
             add(spawnColorPath);
             return;
-        case Kind::FileRead:
-        case Kind::FileWrite:
-        case Kind::CodecTransform:
-            add(input);
-            add(path);
-            break;
         case Kind::WritePixel:
             add(pixelFacePath);
             add(pixelUPath);
@@ -2023,29 +1919,6 @@ ActionNode ActionNode::playAudio(const std::string& freqPath, const std::string&
     n.path = PropertyPath::parse(freqPath);
     n.input = PropertyPath::parse(ampPath);
     n.propertyName = waveType;
-    return n;
-}
-
-ActionNode ActionNode::fileRead(const std::string& inputProp, const std::string& destProp) {
-    ActionNode n;
-    n.kind = Kind::FileRead;
-    n.input = PropertyPath::parse(inputProp);
-    n.path = PropertyPath::parse(destProp);
-    return n;
-}
-ActionNode ActionNode::fileWrite(const std::string& pathProp, const std::string& contentProp) {
-    ActionNode n;
-    n.kind = Kind::FileWrite;
-    n.path = PropertyPath::parse(pathProp);
-    n.input = PropertyPath::parse(contentProp);
-    return n;
-}
-ActionNode ActionNode::codecTransform(const std::string& codecOperation, const std::string& inputProp, const std::string& destProp) {
-    ActionNode n;
-    n.kind = Kind::CodecTransform;
-    n.propertyName = codecOperation;
-    n.input = PropertyPath::parse(inputProp);
-    n.path = PropertyPath::parse(destProp);
     return n;
 }
 

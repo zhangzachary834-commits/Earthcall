@@ -189,10 +189,7 @@ struct ActionNode {
         // Elevate an OntoMath-selected set of surface samples into one named,
         // enumerable, persisted Property.  The selector's defined set over
         // local u/v is the region; no rectangle/category enum is introduced.
-        ElevatePixels = 22,
-        FileRead = 23,
-        FileWrite = 24,
-        CodecTransform = 25
+        ElevatePixels = 22
     };
 
     struct ExecutedEvent {
@@ -474,9 +471,6 @@ struct ActionNode {
     //   input: where to read the amplitude value
     //   propertyName: material/waveType string
     static ActionNode playAudio(const std::string& freqPath, const std::string& ampPath, const std::string& waveType = "");
-    static ActionNode fileRead(const std::string& pathProp, const std::string& destProp);
-    static ActionNode fileWrite(const std::string& pathProp, const std::string& contentProp);
-    static ActionNode codecTransform(const std::string& codecOperation, const std::string& inputProp, const std::string& destProp);
     static ActionNode writePixel(const std::string& facePath,
                                  const std::string& uPath,
                                  const std::string& vPath,

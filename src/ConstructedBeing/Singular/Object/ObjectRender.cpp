@@ -755,11 +755,7 @@ void Object::drawComplexModel() const {
     if (analytic) {
         rebuildRenderSdfCaches();
         if (_complexRenderSdf) {
-            float rExt = std::max(_shapeParams.r, _shapeParams.halfH);
-            if (_shapeKind == ShapeKind::RoundedBox) {
-                rExt = 0.5f + _shapeParams.fillet;
-            }
-            rExt += 0.25f;
+            const float rExt = std::max(_shapeParams.r, _shapeParams.halfH) + 0.25f;
             r.drawImplicit(*_complexRenderSdf, glm::vec3(std::max(rExt, 0.6f)),
                            resolveRenderMaterial(_materialId, faceAlbedo(0)), nullptr,
                            getMemoId(), getSdfStructureRevision(), nullptr,

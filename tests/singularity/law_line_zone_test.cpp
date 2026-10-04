@@ -104,12 +104,6 @@ int main() {
     check(has("my event-triggered law", "preset"), "'my event-triggered law' denotes a preset Law");
     check(has("always", "preset"), "'always' denotes the constantly-applied preset");
     check(has("grant", "action.AddProperty"), "'grant' denotes the AddProperty Law");
-    const auto grantWord = std::find_if(vocab.words.begin(), vocab.words.end(), [](const auto& w) {
-        return w.symbol == "grant" && !w.lexemeId.empty();
-    });
-    check(grantWord != vocab.words.end() && vocab.describeBeing &&
-              vocab.describeBeing(grantWord->lexemeId) == "lexeme · grant",
-          "Law Line describes a Lexeme with its authored symbol");
     check(contains(Singularity::Terminal::LawSentence::complete("my ev", vocab), "event-triggered law"),
           "Tab completes the preset phrase");
     check(contains(Singularity::Terminal::LawSentence::complete("on object-clicked then set co", vocab), "color"),

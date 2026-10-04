@@ -50,31 +50,8 @@ private:
     bool propJsonValid() const;
     std::string propJsonCompact() const;
     std::string propJsonPretty() const;
-    std::string propEcgraphToJson() const;
-    std::string propJsonToMsgpack() const;
-
-
-    // JSON Traversal Modality
-    std::string propJsonArray() const { return _jsonArray; }
-    void propSetJsonArray(const std::string& v) { _jsonArray = v; }
-
-    std::string propShiftItem() const { return _shiftItem; }
-    void propSetShiftItem(const std::string& v) { _shiftItem = v; }
-
-    bool propArrayShift() const { return false; }
-    void propSetArrayShift(const bool& v);
-
-    std::string propQueryKey() const { return _queryKey; }
-    void propSetQueryKey(const std::string& v) { _queryKey = v; }
-
-    std::string propQueryValue() const;
-    bool propArrayEmpty() const;
-    std::string propJsonExtract() const;
 
     std::string _input;
-    std::string _jsonArray;
-    std::string _shiftItem;
-    std::string _queryKey;
 };
 
 } // namespace Core
