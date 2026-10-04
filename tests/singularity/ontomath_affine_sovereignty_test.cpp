@@ -85,6 +85,17 @@ int main() {
     glm::vec3 refn=glm::transpose(glm::inverse(glm::mat3(ref)))*n;
     assert(near3(*wn,refn));
 
+    // Rung-7 collision-normal witness: non-uniform scale must preserve the
+    // frozen inverse-transpose oracle, while singular transforms must refuse.
+    const glm::vec3 collisionLocalNormal =
+        glm::normalize(glm::vec3(0.35f, -0.8f, 0.47f));
+    const auto collisionWorldNormal =
+        OntoMath::transformNormal(*m, collisionLocalNormal);
+    assert(collisionWorldNormal);
+    const glm::vec3 collisionOracle =
+        glm::transpose(glm::inverse(glm::mat3(ref))) * collisionLocalNormal;
+    assert(near3(*collisionWorldNormal, collisionOracle));
+
     auto noT=OntoMath::affineTRS(glm::vec3(0),r,s); assert(noT);
     auto noTn=OntoMath::transformNormal(*noT,n); assert(noTn && near3(*wn,*noTn));
 
