@@ -3,6 +3,9 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <memory>
+#include <functional>
+#include "json.hpp"
 
 class Singular;
 class Zone;
@@ -24,7 +27,7 @@ namespace SingularSetToSetCreation {
 
 struct Request {
     // The prototype is itself an ordinary Singular. Its runtime kind determines
-    // the newborn's runtime kind. There is no ObjectConcept/SingularConcept class.
+    // the newborn's runtime kind; it need not be wrapped in an ObjectConcept.
     Singular& prototype;
 
     // Full input set available to authored mappings. The prototype need not be
@@ -42,10 +45,27 @@ struct Request {
     // Explicit model-parameter substitutions. No guessing: if `$TARGET` is
     // present and no target was supplied, the caller should refuse.
     std::unordered_map<std::string, std::string> textBindings;
+    // Relations require authored endpoints, not an inferred clone of the
+    // enduring Relation between the prototype's original participants.
+    Singular* endpointA = nullptr;
+    Singular* endpointB = nullptr;
+};
+
+// Borrowed, operation-local author context beneath the Kernel. A Law arms
+// this from its actual authors; nested applications restore the outer context.
+// It is not an authority grant or an alternate permission system.
+class AuthorScope {
+public:
+    explicit AuthorScope(const std::vector<Singular*>& authors);
+    ~AuthorScope();
+    AuthorScope(const AuthorScope&) = delete;
+    AuthorScope& operator=(const AuthorScope&) = delete;
+private:
+    const std::vector<Singular*>* previous;
 };
 
 struct Result {
-    Singular* newborn = nullptr; // ownership belongs to the destination root
+    Singular* newborn = nullptr; // lifetime is retained by the destination root/register
     std::string refusal;
 
     explicit operator bool() const { return newborn != nullptr; }
@@ -55,5 +75,12 @@ struct Result {
 // Relation requires actual participants, etc.) constrain this operation rather
 // than spawning parallel CreatePerson/CreateRelation/CreateLaw mechanisms.
 Result derive(const Request& request);
+
+// Mechanical codec envelopes for already-existing concrete C++ storage.
+// Codec tags select constructors; they are not authored category identities.
+using Resolver = std::function<Singular*(const std::string&)>;
+nlohmann::json storedToJson(const Singular& being);
+std::shared_ptr<Singular> storedFromJson(const nlohmann::json& record, const Resolver& resolve);
+void restoreStored(Zone& zone, const nlohmann::json& records, bool replace);
 
 } // namespace SingularSetToSetCreation

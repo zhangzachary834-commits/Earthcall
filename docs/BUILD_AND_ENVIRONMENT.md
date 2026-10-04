@@ -65,7 +65,7 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 254 registered (2026-09-29); WebGPU/GL tests require a desktop GPU/display session; frame_lag_test is machine-load-sensitive
+ctest --test-dir build --output-on-failure -j4        # 262 registered (2026-10-02); WebGPU/GL tests require a desktop GPU/display session; frame_lag_test is machine-load-sensitive
 cmake --build build --target lag                       # just the frame-cost probe, with its report
 ```
 
@@ -82,6 +82,15 @@ The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 ---
 
 ## The test suite
+
+**2026-10-02 creation addition:** `universal_singular_creation_test` exercises
+the real authored prototype Create action, concrete-kind preservation,
+authorship and transfer refusals, canonical typed references on Zone reload,
+and preservation of enduring Relation history. Configure after adding its
+source, then build the named target before selecting it with CTest. Current
+registration count is 262; this is not a claim that every suite test was run.
+*Codex / GPT-6.1 Sol / session `01a0e64f-5853-7d30-8196-995b4fd16b89` /
+2026-10-02 17:02 PDT; Zach's universal Singular creation request.*
 
 **As of 2026-09-07, 109 tests are registered and the default build is clean.** (`smooth_tessellation_cache_test` fixed and verified by Jules (Gemini model unexposed), session jules-6175025450238978931-25cb60c8, 2026-09-07).
 WebGPU tests and `zone_facetexture_test` require a desktop GPU/display session; failure to
@@ -178,6 +187,8 @@ honest rather than convenient:
 | `object_roundtrip_test` | a field `to_json` writes and `from_json` drops. `faceColors` was write-only for a month with the write side making it look covered; `serialization_compat_test` covers the msgpack/Frontier *plumbing* and cannot see this |
 | `channel_paths_test` | the law-authoring picker offering a property path no registry answers. `CreationChannel::activeShapeKind` was advertised and unregistered, so every law reading it silently fell back |
 | `no_black_box_test` | refusal #6 — a being that registers nothing, a registry built twice, a setter that accepts a write and drops it, and a registered property the picker never offers |
+| `property_memory_access_test` | nested list/dictionary paths losing getter-returned memory, bypassing a read-only container, accepting a partial list index, widening an exact integer binding, losing equal-content rebinding, or overflowing the comparison stack; the second path runs serialized authored Laws for typed passthrough and existing container alias/rebinding behavior. General cells and persistent alias topology remain open in the Property storage task. |
+| `screen_recorder_test` / `webgpu_screen_recorder_test` | failed capture saved as a fabricated gradient, same-second recording overwrite, raw-session mixing, dead encoder pipes terminating the engine, and successful-looking screenshots with wrong native GPU pixels; the WebGPU witness requires a desktop surface and decodes recorded PNGs for full-pixel equality. |
 | `ground_plane_test` | a subsystem deciding, by list index, which being is the floor. `Zone::update` (formerly `World::update`) fell back to `_objects[1]` when nothing carried `baseline=ground` — and a Zone starts empty, so the **second being a Person spawned** silently became the ground. `Physics::integrate` then clamped its *centre* to its own *top*, lifting it half a height per substep, raising the floor, lifting it again: the whole world climbed at 30 m/s and every later spawn was teleported up to it |
 | `test_observation_load_test` | loading a test dump so a Person can see it. The Developer window called `loadState`, which erases Home, and never wrote `Person.position`, so `LocomotionChannel` snapped the camera back onto wherever the Person was standing. The live office is `ZoneManager::loadTestObservation` |
 | `world_switch_test` | two saved sessions mixing. json/.ecsave twins and a 0-byte file listed as separate worlds; a refused load retitled the live world; same-named Zones share identity (loading the other session does not rewind the Zone) |
@@ -187,6 +198,10 @@ honest rather than convenient:
 | `prophetic_rete_test` | **Section F is the point.** It guards the direction the Prophetic Rete analysis is allowed to be wrong in: a possibility-space filter that answers too NARROWLY makes a law go deaf — still registered, still enabled, still compiled, alpha memory simply empty — and nothing reports it. F fires real laws through a real `LawManager` and asserts they still hear, then checks all three fail-open paths (stale index, incomplete index, foreign alpha node). It also guards the change-feed fix: before 2026-09-01, `PropertyRef::set` was the ONLY caller of `notifyPropertyChanged` in the engine, so every `ComputedProperty`, every hand-written `Property` bridge, and every authored property was invisible to the Rete's dirty tracking. See `docs/architecture/law/PROPHETIC_RETE.md` §4 |
 | `frame_lag_test` | the frame quietly getting dearer. Guards three things nothing else could see: that per-frame cost stays sub-quadratic in the population, that an *idle* world fires no laws and grows no objects (CLAUDE.md's edge-not-level rule, measured rather than asserted), and that no being registers a property path twice (the `buildProperties()`-in-a-constructor bug, which doubles the cost of every law evaluation and shows up nowhere else) |
 | `zone_home_ontology_test` | manifesto Home/Zone: primary Home kernel-locked per Person (not "any owned Zone"); owner is Person/Relationship/Community; community-home / community-zone authored kinds; AuthorZone mints extras; unused `class Home` retired |
+
+*Property-memory test entry and configured count: Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 12:29 PDT. The count comes from `ctest -N`; it is not a full-suite verdict.*
+
+*Native screen-capture entry and refreshed configured count: Codex · GPT-6 · session `01a0fe15-4fe2-7dc0-a2d0-7d823e4ad26c` · 2026-10-02 12:40 PDT. Run the real engine witness with `python3 scratch/probes/screen_recorder_engine_probe.py` after building `earthcall_webgpu`; it links production objects and uses an isolated save root. See [the capture audit](audits/SCREEN_CAPTURE_NATIVE_VERIFICATION_2026-10-02.md).*
 
 If you add a field to `Object` that `to_json` writes, add it to `object_roundtrip_test`.
 
@@ -222,6 +237,11 @@ globs `tests/**/*.cpp`; the ctest name is the file stem. See `tests/README.md`.
 ---
 
 ## Two live-system notes
+
+### Reverse-image developer witness (2026-10-02)
+
+`scripts/reconstruct_flat_image.py` needs Python with Pillow and emits only new authored seeds. `scripts/test_image_reconstruction.py` supplies independent raster and preservation checks; `scripts/verify_image_reconstruction.py` links the built production WebGPU app objects and needs a desktop GPU with the documented Retina fixture. This argument-driven probe is under `scripts/`, outside the registered test glob. See [scope, evidence, commands and unfinished work](Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Image_Reconstruction/Image_Reconstruction.md).
+
 
 **`Core::Engine`'s core subsystems are now actually constructed (fixed 2026-08-13).**
 `_lawManager`, `_player`, `_camera`, `_mouseHandler`, `_keyboardHandler` were declared as

@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <ctime>
 #include <sstream>
+#include <stdexcept>
 
 Moment::Moment(Kind kind, OntoMath::ScalarForm start, OntoMath::ScalarForm end,
                double startCache, double endCache)
@@ -28,6 +29,22 @@ Moment::Moment(std::time_t unixSeconds)
 
 Moment::Moment(double seconds)
     : Moment(instant(seconds)) {}
+
+Moment::Moment(std::string identifier, const Moment& prototype)
+    : Moment(prototype) { _authoredIdentifier = std::move(identifier); }
+
+Moment Moment::fromJson(const nlohmann::json& state) {
+    const int kind = state.at("kind").get<int>();
+    if (kind != 0 && kind != 1) throw std::runtime_error("unsupported Moment kind");
+    const double start = state.at("start").get<double>();
+    const double end = state.value("end", start);
+    auto out = Moment(static_cast<Kind>(kind),
+                      state.contains("startForm") ? OntoMath::ScalarForm::fromJson(state["startForm"]) : OntoMath::ScalarForm::constant(start),
+                      state.contains("endForm") ? OntoMath::ScalarForm::fromJson(state["endForm"]) : OntoMath::ScalarForm::constant(end),
+                      start, end);
+    out._authoredIdentifier = state.value("id", std::string{});
+    return out;
+}
 
 Moment Moment::instant(double seconds) {
     return Moment(Kind::Instant,
@@ -50,6 +67,7 @@ Moment Moment::now() {
 }
 
 std::string Moment::getIdentifier() const {
+    if (!_authoredIdentifier.empty()) return _authoredIdentifier;
     std::ostringstream id;
     id << "moment." << _startCache;
     if (_kind == Kind::Interval) id << "-" << _endCache;
@@ -82,6 +100,8 @@ void Moment::setEnd(const double& t) {
 }
 
 void Moment::buildProperties() {
+    registerProperty(std::make_unique<ComputedProperty<Moment, std::string>>(
+        "identifier", this, &Moment::propIdentifier));
     registerProperty(
         std::make_unique<ComputedProperty<Moment, int>>(
             "kind", this, &Moment::propKind, &Moment::setKind));

@@ -1,92 +1,92 @@
 {
-  "authors": [
-    "Zach"
-  ],
-  "identifier": "law-line-op-ne",
-  "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
-  "law": {
-    "actionDescriptions": [],
-    "activation": 0,
-    "applicationLog": [],
-    "authority": 0,
     "authors": [
-      "Zach"
+        "Zach"
     ],
-    "conditionDescriptions": [
-      " != value"
-    ],
-    "conditionMode": "all",
-    "conditionModel": {
-      "kind": 0,
-      "op": 1,
-      "operand": {
-        "t": "none"
-      },
-      "path": ""
-    },
-    "conditionSubjects": [],
-    "drives": false,
-    "enabled": false,
-    "id": "law-line-op-ne",
-    "name": "means: differs from",
-    "provenance": [
-      {
-        "attachment": {
-          "childAnchor": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "enabled": false,
-          "inheritRotation": true,
-          "inheritScale": true,
-          "inheritTranslation": true,
-          "localOffset": [
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0
-          ],
-          "parentAnchor": [
-            0.0,
-            0.0,
-            0.0
-          ]
-        },
-        "directed": true,
-        "entityA": "law-line-op-ne",
-        "entityB": "Zach",
-        "events": [
-          {
-            "deltaWeight": 1.0,
-            "description": "authored-by",
-            "timestamp": 1790386363
-          },
-          {
-            "deltaWeight": 1.0,
-            "description": "authored-by",
-            "timestamp": 1790386742
-          }
+    "identifier": "law-line-op-ne",
+    "injected_by": "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25",
+    "law": {
+        "actionDescriptions": [],
+        "activation": 0,
+        "applicationLog": [],
+        "authority": 0,
+        "authors": [
+            "Zach"
         ],
-        "type": "authored-by",
-        "weight": 3.0
-      }
-    ],
-    "retrigger": 0,
-    "scope": 0,
-    "targets": []
-  },
-  "triggers": []
+        "conditionDescriptions": [
+            " != value"
+        ],
+        "conditionMode": "all",
+        "conditionModel": {
+            "kind": 0,
+            "op": 1,
+            "operand": {
+                "t": "none"
+            },
+            "path": ""
+        },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": false,
+        "id": "law-line-op-ne",
+        "name": "means: differs from",
+        "provenance": [
+            {
+                "attachment": {
+                    "childAnchor": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "enabled": false,
+                    "inheritRotation": true,
+                    "inheritScale": true,
+                    "inheritTranslation": true,
+                    "localOffset": [
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "parentAnchor": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "directed": true,
+                "entityA": "law-line-op-ne",
+                "entityB": "Zach",
+                "events": [
+                    {
+                        "deltaWeight": 1.0,
+                        "description": "authored-by",
+                        "timestamp": 1790386363
+                    },
+                    {
+                        "deltaWeight": 1.0,
+                        "description": "authored-by",
+                        "timestamp": 1790386742
+                    }
+                ],
+                "type": "authored-by",
+                "weight": 3.0
+            }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
+    },
+    "triggers": []
 }

@@ -350,9 +350,10 @@ bool Singular::setDynamicProperty(Earthcall::StringId id, const PropertyValue& v
     auto existing = _dynamicProperties.find(id);
     if (existing == _dynamicProperties.end()) {
         Universe::instance().bumpStructuralRevision();
-    } else if (propertyValueUnchanged(existing->second, stored)) {
+    } else if (propertyStorageUnchanged(existing->second, stored)) {
         // A write that changed nothing is not a change, and must not wake the
-        // change feed. See propertyValueUnchanged for why this matters more
+        // change feed. Container identity matters here even for equal contents;
+        // an independently rebound path must wake its dependents. This matters more
         // than it looks: every WhileTrue law re-writes its result every tick.
         existing->second = stored;
         return true;

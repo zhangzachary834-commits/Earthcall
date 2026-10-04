@@ -224,6 +224,8 @@ SmoothSurfaceData makeParaboloid(float a, float halfH) {
     s.form = SmoothSurfaceData::QuadricForm::Paraboloid;
     s.Q = Quadric::paraboloid(a);
     s.zTrim = glm::vec2(0.0f, 2.0f * halfH);
+    float r = std::sqrt(2.0f * halfH / std::max(1e-4f, a));
+    s.axes = glm::vec3(r, r, 2.0f * halfH);
     s.closed = false; s.orientable = true; s.hasBoundary = true; s.isVolume = false;
     return s;
 }
@@ -233,6 +235,7 @@ SmoothSurfaceData makeTorus(float majorR, float minorR) {
     s.model = SmoothSurfaceData::Model::Parametric;
     s.pkind = SmoothSurfaceData::ParametricKind::Torus;
     s.params = {majorR, minorR};
+    s.axes = glm::vec3(majorR + minorR, majorR + minorR, minorR);
     s.closed = true; s.orientable = true; s.hasBoundary = false; s.isVolume = true;
     return s;
 }
@@ -242,6 +245,7 @@ SmoothSurfaceData makeOvoid(float r, float asym) {
     s.model = SmoothSurfaceData::Model::Parametric;
     s.pkind = SmoothSurfaceData::ParametricKind::Ovoid;
     s.params = {r, asym};
+    s.axes = glm::vec3(r);
     s.closed = true; s.orientable = true; s.hasBoundary = false; s.isVolume = true;
     return s;
 }

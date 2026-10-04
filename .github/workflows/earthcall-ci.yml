@@ -62,6 +62,7 @@ jobs:
             earthcall_terminal \
             line_editor_test \
             law_line_test \
+            law_sentence_test \
             law_line_zone_test \
             destroy_law_test \
             language_identity_reference_test \
@@ -81,6 +82,8 @@ jobs:
             relation_manager_test \
             logos_modality_test \
             person_not_object_test \
+            zone_manager_test \
+            stale_sidecar_cleanup_test \
             zone_native_save_isolation_test \
             zone_spatial_field_roundtrip_test \
             perlin_zone_field_restore_test \
@@ -105,6 +108,7 @@ jobs:
             community_test \
             authorable_light_contract_test \
             timeline_test \
+            time_moment_test \
             law_file_tree_fossil_test \
             rete_state_ptr_index_test \
             relation_type_lexeme_lifetime_test \
@@ -133,7 +137,7 @@ jobs:
         run: |
           set -euxo pipefail
           ctest --test-dir build --output-on-failure \
-            -R '^(line_editor_test|law_line_test|law_line_zone_test|destroy_law_test|language_identity_reference_test|creation_tools_test|interaction_channel_test|creator_console_fixture_law_test|keyboard_shell_shortcuts_test|no_black_box_test|channel_paths_test|dynamic_property_reachability_test|property_path_precalc_test|law_identifier_index_test|relation_retry_lexeme_test|relation_manager_test|logos_modality_test|person_not_object_test|zone_native_save_isolation_test|zone_spatial_field_roundtrip_test|perlin_zone_field_restore_test|object_roundtrip_test|object_serialization_test|matter_semantic_precedence_test|shape_hydration_integrity_test|synthesis_studio_zone_closure_test|synthesis_studio_living_test|chess_zone_native_boot_test|synthesis_studio_full_store_boot_test|second_nature_law_authoring_test|second_nature_law_forge_zone_test|prophetic_rete_test|home_identity_continuity_test|person_migration_test|person_home_migration_boot_test|body_part_test|person_database_test|person_serialization_test|person_display_name_identity_test|community_test|authorable_light_contract_test|timeline_test|law_file_tree_fossil_test|rete_state_ptr_index_test|relation_type_lexeme_lifetime_test|jit_llvm_test|advanced_face_paint_test|action_model_test|async_state_logger_test|save_system_error_test|dump_test_save_isolation_test)$'
+            -R '^(line_editor_test|law_line_test|law_sentence_test|law_line_zone_test|destroy_law_test|language_identity_reference_test|creation_tools_test|interaction_channel_test|creator_console_fixture_law_test|keyboard_shell_shortcuts_test|no_black_box_test|channel_paths_test|dynamic_property_reachability_test|property_path_precalc_test|law_identifier_index_test|relation_retry_lexeme_test|relation_manager_test|logos_modality_test|person_not_object_test|zone_manager_test|stale_sidecar_cleanup_test|zone_native_save_isolation_test|zone_spatial_field_roundtrip_test|perlin_zone_field_restore_test|object_roundtrip_test|object_serialization_test|matter_semantic_precedence_test|shape_hydration_integrity_test|synthesis_studio_zone_closure_test|synthesis_studio_living_test|chess_zone_native_boot_test|synthesis_studio_full_store_boot_test|second_nature_law_authoring_test|second_nature_law_forge_zone_test|prophetic_rete_test|home_identity_continuity_test|person_migration_test|person_home_migration_boot_test|body_part_test|person_database_test|person_serialization_test|person_display_name_identity_test|community_test|authorable_light_contract_test|timeline_test|time_moment_test|law_file_tree_fossil_test|rete_state_ptr_index_test|relation_type_lexeme_lifetime_test|jit_llvm_test|advanced_face_paint_test|action_model_test|async_state_logger_test|save_system_error_test|dump_test_save_isolation_test)$'
 
   sdf-range-proxy-verification:
     name: SDF range-proxy verification (macOS)
@@ -376,13 +380,13 @@ jobs:
 
           world = sys.argv[1]
 
-          def run_mode_once(adapter, direct):
+          def run_mode(adapter, direct):
               cmd = ["./build/slow_adapter_zone_perf_test", world,
-                     f"--adapter={adapter}", f"--direct={direct}", "--frames=30"]
+                     f"--adapter={adapter}", f"--direct={direct}", "--frames=60"]
               try:
-                  result = subprocess.run(cmd, text=True, capture_output=True, timeout=240)
+                  result = subprocess.run(cmd, text=True, capture_output=True, timeout=120)
               except subprocess.TimeoutExpired:
-                  print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={adapter} direct={direct} timeout_s=240")
+                  print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={adapter} direct={direct} timeout_s=120")
                   raise SystemExit(1)
 
               lines = [line for line in result.stdout.splitlines()
@@ -398,10 +402,6 @@ jobs:
                   if token.startswith("frame_median_ms="):
                       return float(token.split("=")[1])
               return 0.0
-
-          def run_mode(adapter, direct):
-              # Run 3 times, take min to filter out CI noise
-              return min([run_mode_once(adapter, direct) for _ in range(3)])
 
           # Three arms, same commit/runner:
           #   floor      = no adapter, no Direct

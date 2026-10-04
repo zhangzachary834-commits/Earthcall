@@ -141,7 +141,7 @@ widening the baseline.
   Zach's 2026-09-27/28 rule: individual paths resolve under relevant Zones;
   paths hold no ID, ambiguity refuses, and Ourverses cannot reauthor Person identity; Law-governed read/write belongs with TransferPolicy. See the Property storage task.
 - **Append-only enums**, serialized as ints. Never renumber, never reuse a burned value.
-- **Nothing enters the world without an author.** `Law::applyTo` returns `Unauthored` and
+- **Nothing enters the world without an author.** Prototype Create retains concrete kinds and refuses unresolved birth semantics (see the Singular and Object Set-to-Set Creation task); `Law::applyTo` returns `Unauthored` and
   refuses to fire when `authors` is empty. This is structural, not conventional.
 - **Authority is clamped to 0** on every path that reads a file. Do not try to write an authority value below 0; it will be clamped, and the attempt is what gets noticed.
 - **Event-transitions must be edges, not levels.** Events are past-tense `noun-verbed` and publish on transitions. A

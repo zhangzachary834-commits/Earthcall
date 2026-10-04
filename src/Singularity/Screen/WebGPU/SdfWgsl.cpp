@@ -1760,7 +1760,7 @@ fn fs(in: VSOut) -> FSOut {
                     sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
                 gl = length(g);
             }
-            d = select(raw, raw / gl, gl > 1e-6);
+            d = select(raw, raw / max(gl, 0.3333), gl > 1e-6);
 
             if (d <= 0.0 || abs(d) < current_eps) {
                 hit = true;

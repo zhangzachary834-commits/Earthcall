@@ -1152,7 +1152,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           if (r.status !== "success") break;   // do not start after a refused format
         }
         const ok = results.length > 0 && results.every(r => r.status === "success");
-        return asText({ status: ok ? "success" : "not_done", screen_recorder_action: action, results });
+        return asText({
+          status: ok ? "accepted" : "not_done",
+          screen_recorder_action: action,
+          capture_verified: false,
+          note: "These acknowledgements confirm control writes only. A snapshot runs at the next rendered frame; recorder.status, recorder.lastError, and the output artifact determine capture success.",
+          results
+        });
       }
 
       case "earthcall_author_volume": {

@@ -141,6 +141,8 @@ public:
     // Undirected relations are unaffected: a complete graph of mutual bonds is
     // a set, not a regress.
     bool addRelation(const std::shared_ptr<Relation>& r);
+    // Restore/retain an existing bond; no new interaction has occurred.
+    bool retainRelation(const std::shared_ptr<Relation>& r);
     bool removeRelation(const std::shared_ptr<Relation>& r);
 
     // Add a relation directly (alias for addRelation)

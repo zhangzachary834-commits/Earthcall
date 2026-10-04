@@ -755,7 +755,11 @@ void Object::drawComplexModel() const {
     if (analytic) {
         rebuildRenderSdfCaches();
         if (_complexRenderSdf) {
-            const float rExt = std::max(_shapeParams.r, _shapeParams.halfH) + 0.25f;
+            float rExt = std::max(_shapeParams.r, _shapeParams.halfH);
+            if (_shapeKind == ShapeKind::RoundedBox) {
+                rExt = 0.5f + _shapeParams.fillet;
+            }
+            rExt += 0.25f;
             r.drawImplicit(*_complexRenderSdf, glm::vec3(std::max(rExt, 0.6f)),
                            resolveRenderMaterial(_materialId, faceAlbedo(0)), nullptr,
                            getMemoId(), getSdfStructureRevision(), nullptr,
@@ -1119,7 +1123,12 @@ void Object::draw2DObject(uint32_t screenW, uint32_t screenH) const {
         {x1, y1}, {x0, y1},
         {x0, y1}, {x0, y0},
     };
-    currentRenderer().drawLines2D(border, borderColor, 1.0f);
+    // Authored raster reconstructions need adjoining regions without invented
+    // seams. Existing plates retain their border unless the author says otherwise.
+    PropertyValue borderVisible;
+    const bool showBorder = !getDynamicProperty("border.visible", borderVisible) ||
+        !std::holds_alternative<bool>(borderVisible) || std::get<bool>(borderVisible);
+    if (showBorder) currentRenderer().drawLines2D(border, borderColor, 1.0f);
 
     // …and the label centred on the plate, in whichever of black or white the
     // fill can carry. Type size is `label.size2D` when the being authored one,
