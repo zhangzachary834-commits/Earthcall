@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <glm/gtc/quaternion.hpp>
 
 namespace OntoMath {
 namespace {
@@ -98,6 +99,23 @@ std::optional<glm::vec3> affineExtractScale(const MatrixValue& m) {
         scale[static_cast<int>(col)] = static_cast<float>(length);
     }
     return finiteVec3(scale) ? std::optional<glm::vec3>(scale) : std::nullopt;
+}
+
+std::optional<glm::vec3> affineExtractEulerXYZDegrees(const MatrixValue& m) {
+    const auto extracted = affineExtractScale(m);
+    if (!extracted) return std::nullopt;
+    glm::vec3 scale = *extracted;
+    if (scale.x <= 1e-6f) scale.x = 1.0f;
+    if (scale.y <= 1e-6f) scale.y = 1.0f;
+    if (scale.z <= 1e-6f) scale.z = 1.0f;
+    glm::mat3 basis;
+    for (int col = 0; col < 3; ++col)
+        for (int row = 0; row < 3; ++row)
+            basis[col][row] = static_cast<float>(m.at(row, col)) / scale[col];
+    if (glm::determinant(basis) < 0.0f) basis[0] = -basis[0];
+    const glm::vec3 degrees =
+        glm::degrees(glm::eulerAngles(glm::normalize(glm::quat_cast(basis))));
+    return finiteVec3(degrees) ? std::optional<glm::vec3>(degrees) : std::nullopt;
 }
 
 std::optional<MatrixValue> affineExtractRotationBasis(const MatrixValue& m) {
