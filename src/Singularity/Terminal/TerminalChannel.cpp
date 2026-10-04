@@ -927,6 +927,7 @@ std::string TerminalChannel::describeBeing(const std::string& beingId) const {
         if (const auto* s = std::get_if<std::string>(&name); s && !s->empty()) return kind + " · " + *s;
     }
     if (auto* law = dynamic_cast<Law*>(being)) return kind + " · " + law->name();
+    if (auto* lex = dynamic_cast<Singularity::Language::Lexeme*>(being)) return kind + " · " + lex->getSymbol();
     return kind;
 }
 
