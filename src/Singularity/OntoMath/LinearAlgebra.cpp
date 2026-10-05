@@ -321,4 +321,44 @@ std::optional<MatrixValue> matrixInverse(const MatrixValue& matrix) {
     return MatrixValue::create(n, n, std::move(right));
 }
 
+
+std::optional<MatrixValue> cameraLookAt(const glm::vec3& eye,
+                                         const glm::vec3& target,
+                                         const glm::vec3& up) {
+    if (!std::isfinite(eye.x) || !std::isfinite(eye.y) || !std::isfinite(eye.z) ||
+        !std::isfinite(target.x) || !std::isfinite(target.y) || !std::isfinite(target.z) ||
+        !std::isfinite(up.x) || !std::isfinite(up.y) || !std::isfinite(up.z)) {
+        return std::nullopt;
+    }
+    const glm::vec3 forward = target - eye;
+    if (glm::dot(forward, forward) <= std::numeric_limits<float>::epsilon() ||
+        glm::dot(up, up) <= std::numeric_limits<float>::epsilon() ||
+        glm::dot(glm::cross(forward, up), glm::cross(forward, up)) <=
+            std::numeric_limits<float>::epsilon()) {
+        return std::nullopt;
+    }
+    return MatrixValue::fromGlmMat4(glm::lookAt(eye, target, up));
+}
+
+std::optional<MatrixValue> cameraPerspective(double verticalFovRadians,
+                                              double aspect,
+                                              double nearPlane,
+                                              double farPlane,
+                                              bool zeroToOneDepth) {
+    if (!std::isfinite(verticalFovRadians) || !std::isfinite(aspect) ||
+        !std::isfinite(nearPlane) || !std::isfinite(farPlane) ||
+        verticalFovRadians <= 0.0 || verticalFovRadians >= 3.14159265358979323846 ||
+        aspect <= 0.0 || nearPlane <= 0.0 || farPlane <= nearPlane) {
+        return std::nullopt;
+    }
+    const float fov = static_cast<float>(verticalFovRadians);
+    const float a = static_cast<float>(aspect);
+    const float n = static_cast<float>(nearPlane);
+    const float f = static_cast<float>(farPlane);
+    const glm::mat4 projection = zeroToOneDepth
+        ? glm::perspectiveRH_ZO(fov, a, n, f)
+        : glm::perspectiveRH_NO(fov, a, n, f);
+    return MatrixValue::fromGlmMat4(projection);
+}
+
 } // namespace OntoMath
