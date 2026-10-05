@@ -1,3 +1,4 @@
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Singularity/Terminal/TerminalChannel.hpp"
 
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
@@ -805,9 +806,20 @@ void TerminalChannel::act(LawManager& laws) {
     }
 }
 
-LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws) {
+LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws, const std::string& speakingAuthor) {
     LawSentence::Vocabulary v;
     v.words = LawSentence::canonicalWords();
+    v.compileInvocation = [this, &laws](const nlohmann::json& input, bool readOnly) {
+        return compileByMetalaw(laws, input, readOnly);
+    };
+    std::string authorId = speakingAuthor;
+    if (authorId.empty()) {
+        PropertyValue author;
+        if (lawGetValue(*this, PropertyPath::parse(_authorPath), author))
+            if (auto id = std::get_if<std::string>(&author)) {
+                if (auto being = findBeing(*id)) authorId = being->getIdentifier();
+            }
+    }
 
     // Lexeme <--denotes--> Law: the Law holds the opcode, and its name is what
     // the menu says the word means.
@@ -819,6 +831,18 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws) {
         LawSentence::Preset preset;
         const std::string opcode = LawSentence::classify(*law, laws.triggersOf(law->getIdentifier()), preset);
         if (opcode.empty()) continue;
+        // A root pronoun is authored vocabulary too, not a Create special case.
+        PropertyValue rootMarker;
+        if (preset.value && law->getDynamicProperty("sentence.root", rootMarker) &&
+            rootMarker == PropertyValue(true)) {
+            if (auto root = std::get_if<std::string>(&*preset.value)) {
+                const auto resolved = *root == "$author" ? (authorId.empty() ? "" : "@" + authorId) : *root;
+                if (!resolved.empty()) {
+                    auto [entry, inserted] = v.pathRoots.emplace(lexeme->getSymbol(), resolved);
+                    if (!inserted && entry->second != resolved) entry->second.clear(); // ambiguity refuses; no last-writer selection
+                }
+            }
+        }
         // The menu's detail line says what the denoted Law actually holds.
         std::string detail;
         if (opcode == "value" && preset.value) {
@@ -830,6 +854,9 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws) {
         }
         v.words.push_back({lexeme->getSymbol(), opcode, lexeme->getIdentifier(), law->getIdentifier(),
                            law->name(), detail});
+        PropertyValue arguments;
+        if (law->getDynamicProperty("sentence.arguments", arguments))
+            if (auto text = std::get_if<std::string>(&arguments)) v.words.back().arguments = *text;
         if (opcode == "preset" || opcode == "value" ||
             (opcode.rfind("action.", 0) == 0 && preset.action)) {
             v.presets.push_back(preset);
@@ -954,6 +981,9 @@ const LawSentence::Vocabulary& TerminalChannel::liveVocabulary() {
         // every grammar-admissible denotation while the Person is typing; the
         // actual vocabulary() resolver invokes the world's Metalaws only when
         // the sentence is spoken.
+        _vocab->compileInvocation = [](const nlohmann::json&, bool) {
+            return LawSentence::Compilation{ActionNode::sequence({}), "", {}};
+        };
         _vocab->resolve = [](const LawSentence::Ambiguity&) {
             return LawSentence::Resolution{"", "a Metalaw decides which when it is spoken"};
         };
@@ -968,7 +998,16 @@ const LawSentence::Parse& TerminalChannel::liveParse(const std::string& text) {
         const bool question = !text.empty() && text.find_last_not_of(" \t") != std::string::npos &&
                               text[text.find_last_not_of(" \t")] == '?';
         // Read as a preview while typing: an unfinished sentence is not an error.
-        _parse = LawSentence::parse(question ? text : text + "?", liveVocabulary());
+        std::string splitError;
+        auto parts = LawSentence::sentences(question ? text : text + "?", splitError);
+        std::string tail = parts.size() > 1 ? parts.back() : (question ? text : text + "?");
+        _parse = LawSentence::parse(tail, liveVocabulary());
+        if (parts.size() > 1) {
+            auto offset = text.rfind(tail.substr(0, tail.size() - (tail.back() == '?' ? 1 : 0)));
+            if (offset != std::string::npos) {
+                for (auto& span : _parse->spans) { span.start += offset; span.end += offset; }
+            }
+        }
         _parseText = text;
     }
     return *_parse;
@@ -1117,7 +1156,211 @@ LawSentence::Resolution TerminalChannel::resolveByMetalaw(LawManager& laws,
     return r;
 }
 
+namespace {
+// The terminal is a structured-text channel. Template instantiation is an
+// irreducible structural operation: only $slot JSON pointers are substituted.
+// It knows no kinds, properties, creation policy, or action lowering rules.
+nlohmann::json instantiateSentenceTemplate(const nlohmann::json& pattern,
+                                           const nlohmann::json& input, unsigned depth = 0) {
+    if (depth >= 32) throw std::runtime_error("template nesting exceeds the channel's 32-level structural bound");
+    if (pattern.is_object() && pattern.contains("$slot")) {
+        if (pattern.size() != 1 || !pattern["$slot"].is_string())
+            throw std::runtime_error("$slot must be a single JSON-pointer reference");
+        return input.at(nlohmann::json::json_pointer(pattern["$slot"].get<std::string>()));
+    }
+    if (pattern.is_array()) {
+        auto result = nlohmann::json::array();
+        for (const auto& child : pattern) result.push_back(instantiateSentenceTemplate(child, input, depth + 1));
+        return result;
+    }
+    if (pattern.is_object()) {
+        auto result = nlohmann::json::object();
+        for (auto it = pattern.begin(); it != pattern.end(); ++it)
+            result[it.key()] = instantiateSentenceTemplate(it.value(), input, depth + 1);
+        return result;
+    }
+    return pattern;
+}
+
+// Syntax data is reflected exactly as a tree. Do not apply the PropertyValue
+// codec's vec3/mat4 heuristics to model arrays or interpret a syntax key "t"
+// as a type tag: a sixteen-child action list is still a list of syntax nodes.
+PropertyValue sentenceSyntaxValue(const nlohmann::json& value, unsigned depth = 0) {
+    if (depth >= 32) throw std::runtime_error("syntax reflection exceeds the channel's 32-level structural bound");
+    if (value.is_object()) {
+        auto dict = std::make_shared<PropertyDict>();
+        for (auto it = value.begin(); it != value.end(); ++it)
+            dict->elements[it.key()] = sentenceSyntaxValue(it.value(), depth + 1);
+        return dict;
+    }
+    if (value.is_array()) {
+        auto list = std::make_shared<PropertyList>();
+        for (const auto& item : value) list->elements.push_back(sentenceSyntaxValue(item, depth + 1));
+        return list;
+    }
+    return propertyValueFromJson(value);
+}
+
+void validateSentenceAction(const nlohmann::json& model, unsigned depth = 0) {
+    if (depth >= 32 || !model.is_object() || !model.contains("kind") || !model["kind"].is_number_integer())
+        throw std::runtime_error("compiler output must be an ActionModel with an integer kind (depth < 32)");
+    if (model["kind"].is_number_unsigned() &&
+        model["kind"].get<unsigned long long>() > static_cast<unsigned>(ActionNode::Kind::CodecTransform))
+        throw std::runtime_error("compiler output names an unsupported ActionModel kind");
+    const auto rawKind = model["kind"].get<long long>();
+    if (rawKind < 0 || rawKind > static_cast<int>(ActionNode::Kind::CodecTransform))
+        throw std::runtime_error("compiler output names an unsupported ActionModel kind");
+    const auto kind = static_cast<ActionNode::Kind>(rawKind);
+    if ((kind == ActionNode::Kind::Set || kind == ActionNode::Kind::Add || kind == ActionNode::Kind::Scale) &&
+        (!model.contains("path") || !model["path"].is_string() || model["path"].get<std::string>().empty() || !model.contains("operand")))
+        throw std::runtime_error("compiled property action requires a path and operand");
+    if (kind == ActionNode::Kind::Map) {
+        if (!model.contains("path") || !model["path"].is_string() || model["path"].get<std::string>().empty() ||
+            !model.contains("function") || !model.contains("bindings") || !model["bindings"].is_object())
+            throw std::runtime_error("compiled Map requires a path, function, and bindings");
+        auto function = OntoMath::Piecewise::fromJson(model["function"]);
+        if (function.pieces.empty()) throw std::runtime_error("compiled Map has no defined pieces");
+        for (const auto& piece : function.pieces) if (piece.mathNode) {
+            std::string error;
+            if (!piece.mathNode->checkTypes({}, error, nullptr, true)) throw std::runtime_error(error);
+        }
+    }
+    if (model.contains("children")) {
+        if (!model["children"].is_array()) throw std::runtime_error("action children must be an array");
+        for (const auto& child : model["children"]) validateSentenceAction(child, depth + 1);
+    }
+}
+} // namespace
+
+std::string TerminalChannel::propCompilationResult() const {
+    if (_compilationTemplate.empty() || !_compilationInput) return "";
+    // Recovered input preserves typed operands as serialization data. The
+    // raw JSON mirror is below the Kernel only while substituting this template.
+    PropertyValue raw;
+    if (!_compilationInput->elements.count("json")) return "";
+    raw = _compilationInput->elements.at("json");
+    const auto* text = std::get_if<std::string>(&raw);
+    if (!text) return "";
+    try {
+        return instantiateSentenceTemplate(nlohmann::json::parse(_compilationTemplate),
+                                           nlohmann::json::parse(*text)).dump();
+    } catch (const std::exception& e) {
+        return nlohmann::json{{"error", std::string("template refused: ") + e.what()}}.dump();
+    }
+}
+
+LawSentence::Compilation TerminalChannel::compileByMetalaw(LawManager& laws,
+                                                          const nlohmann::json& input,
+                                                          bool readOnly, nlohmann::json* document) {
+    if (readOnly) return {ActionNode::sequence({}), "", {}};
+    LawSentence::Compilation result;
+    PropertyValue sensed;
+    try { sensed = sentenceSyntaxValue(input); }
+    catch (const std::exception& e) { return {std::nullopt, e.what(), {}}; }
+    auto dict = std::get_if<std::shared_ptr<PropertyDict>>(&sensed);
+    if (!dict || !*dict) return {std::nullopt, "the invocation has no structural input record", {}};
+    _compilationInput = *dict;
+    _compilationInput->elements["json"] = input.dump();
+    _compilationTemplate.clear(); _compilationError.clear();
+    std::optional<nlohmann::json> chosen;
+    // Copy the register: compiler applications may legitimately change it.
+    const auto candidates = laws.getAll();
+    for (const auto& law : candidates) {
+        if (!law || law.get() == this) continue;
+        const auto& targets = law->targets().getMembers();
+        if (std::find(targets.begin(), targets.end(), static_cast<Singular*>(this)) == targets.end()) continue;
+        _compilationTemplate.clear(); _compilationError.clear();
+        if (law->applyTo(*this) != Law::ApplicationResult::Applied) continue;
+        if (!_compilationError.empty()) {
+            result.error = "Metalaw " + law->getIdentifier() + " refused: " + _compilationError;
+            break;
+        }
+        if (_compilationTemplate.empty()) continue;
+        try {
+            auto model = nlohmann::json::parse(propCompilationResult());
+            if (model.contains("error")) throw std::runtime_error(model["error"].get<std::string>());
+            if (!document) validateSentenceAction(model);
+            if (chosen && *chosen != model) throw std::runtime_error("multiple Metalaws supplied conflicting compilation models");
+            chosen = model;
+            result.laws.push_back(law->getIdentifier());
+        } catch (const std::exception& e) {
+            result.error = "Metalaw " + law->getIdentifier() + " compilation refused: " + e.what();
+            break;
+        }
+    }
+    if (result.error.empty() && chosen) {
+        try {
+            if (document) { *document = *chosen; result.action = ActionNode::sequence({}); }
+            else result.action = ActionNode::fromJson(*chosen);
+        }
+        catch (const std::exception& e) { result.error = std::string("invalid compiled ActionModel: ") + e.what(); }
+    }
+    if (!result.action && result.error.empty())
+        result.error = "no authored Metalaw compiled " + input.value("slot", "invocation") +
+                       " for " + input.value("selector", "") + "; no compiler fallback exists";
+    // Input remains legible as the last request; clear the live slot so a
+    // continuously evaluated Metalaw cannot answer a request that has ended.
+    _compilationInput->elements["slot"] = std::string{};
+    _compilationError = result.error;
+    return result;
+}
+
 void TerminalChannel::speak(LawManager& laws, const std::string& text) {
+    std::string splitError;
+    auto parts = LawSentence::sentences(text, splitError);
+    if (!splitError.empty()) { _status = "refused: " + splitError; say(_status); return; }
+    if (parts.size() > 1) {
+        _openClauses.clear();
+        const bool preview = isReadOnlySentence(text);
+        if (preview && !parts.back().empty() && parts.back().back() == '?') parts.back().pop_back();
+        nlohmann::json document;
+        LawSentence::Compilation compiled;
+        if (!preview) {
+            compiled = compileByMetalaw(laws, {{"slot", "sentences"}, {"opcode", "sentence.batch"}, {"sentences", parts}}, false, &document);
+            if (!compiled.error.empty()) { _status = "refused: " + compiled.error; say(_status); return; }
+            // The channel may register only the exact sensed sentences, once each,
+            // in source order. Policy must authorize that order through its template.
+            if (!document.is_object() || !document.contains("sentences") || document["sentences"] != nlohmann::json(parts)) {
+                _status = "refused: Metalaw must compile every sentence exactly once in source order"; say(_status); return;
+            }
+        }
+        auto words = preview ? liveVocabulary() : vocabulary(laws);
+        std::vector<LawSentence::Parse> parsed;
+        _preview.clear();
+        for (std::size_t i = 0; i < parts.size(); ++i) {
+            auto p = LawSentence::parse(parts[i] + (preview ? "?" : ""), words);
+            if (!p.ok || p.search || p.immediate || (!preview && p.previewOnly)) {
+                _status = "refused: sentence " + std::to_string(i + 1) + ": " +
+                          (p.error.empty() ? "batch accepts Law sentences only" : p.error);
+                say(_status); return;
+            }
+            p.presetLawIds.insert(p.presetLawIds.end(), compiled.laws.begin(), compiled.laws.end());
+            _preview += (i ? "\n" : "") + std::to_string(i + 1) + ". " + p.preview();
+            parsed.push_back(std::move(p));
+        }
+        if (preview) { _status = "preview"; say("preview: " + _preview); return; }
+        PropertyValue value;
+        std::string authorId;
+        if (lawGetValue(*this, PropertyPath::parse(_authorPath), value))
+            if (auto id = std::get_if<std::string>(&value)) authorId = *id;
+        auto author = findBeing(authorId);
+        if (!author) { _status = "refused: no author at " + _authorPath; say(_status); return; }
+        std::size_t registered = 0;
+        for (std::size_t i = 0; i < parsed.size(); ++i) {
+            auto id = mintLawId();
+            std::string persistence;
+            auto refusal = enact(laws, parsed[i], parts[i], {author}, id, persistence);
+            if (!refusal.empty()) {
+                _status = refusal + " · " + std::to_string(registered) + " earlier sentences registered";
+                say(_status); return;
+            }
+            _lastCreated = id;
+            ++registered;
+            say("authored " + id + " (sentence " + std::to_string(i + 1) + ", written by " + authorId + ")" + persistence);
+        }
+        _status = "authored " + std::to_string(registered) + " Laws in sentence order";
+        say(_status); return;
+    }
     const LawSentence::Parse p = LawSentence::parse(text, vocabulary(laws));
     _preview = p.preview();
     _openClauses = join(p.openClauses, "; ");
@@ -1176,6 +1419,7 @@ std::string TerminalChannel::enact(LawManager& laws, const LawSentence::Parse& p
                                    const std::vector<Singular*>& authors,
                                    const std::string& id, std::string& persistence) {
     if (authors.empty()) return "refused: nothing enters the world without an author";
+    if (p.compilationDeferred) return "refused: invocation compilation is deferred; preview syntax cannot become a Law";
     if (laws.find(id)) return "refused: a Law named " + id + " already exists";
     auto law = std::make_shared<Law>(p.name.empty() ? text : p.name, authors);
     law->setLawIdentifier(id);
@@ -1217,7 +1461,18 @@ TerminalChannel::ForeignSentence TerminalChannel::authorForeign(
         LawManager& laws, const std::string& text,
         const std::vector<Singular*>& authors, const std::string& identifier) {
     ForeignSentence out;
-    const LawSentence::Parse p = LawSentence::parse(text, vocabulary(laws));
+    std::string splitError;
+    auto parts = LawSentence::sentences(text, splitError);
+    if (!splitError.empty() || parts.size() > 1) {
+        out.status = "refused";
+        out.error = splitError.empty() ? "foreign authoring requires one separately authorized identifier per sentence; submit sentences individually" : splitError;
+        return out;
+    }
+    auto words = vocabulary(laws, authors.size() == 1 && authors.front() ? authors.front()->getIdentifier() : "");
+    // Several speakers provide no unique first-person referent. Never borrow
+    // the local keyboard Person's root for a foreign writer's "my".
+    if (authors.size() != 1 || !authors.front()) words.pathRoots.clear();
+    const LawSentence::Parse p = LawSentence::parse(text, words);
     out.preview = p.preview();
     out.openClauses = p.openClauses;
     const std::string notes = p.notes.empty() ? std::string{} : join(p.notes, "; ");
@@ -1293,6 +1548,15 @@ std::string TerminalChannel::submitRefusal(const std::string& text) {
     // the Law grammar has no say over what may be sent.
     if (isEnterLine(text) || !lawGrammarHere()) return {};
     if (t.rfind("??", 0) == 0 || t.back() == '?') return {};
+    std::string splitError;
+    auto parts = LawSentence::sentences(text, splitError);
+    if (!splitError.empty()) return "not yet — " + splitError;
+    for (const auto& part : parts) {
+        const auto parsed = LawSentence::parse(part, liveVocabulary());
+        if (!parsed.ok && parsed.error.find("Metalaw") == std::string::npos)
+            return "not yet — " + parsed.error;
+    }
+    if (parts.size() > 1) return {};
     const LawSentence::Parse p = LawSentence::parse(text, liveVocabulary());
     if (p.ok || p.error.find("Metalaw") != std::string::npos) return {};   // Metalaws decide when spoken
     if (p.error.rfind("still open:", 0) == 0) {
@@ -1883,6 +2147,11 @@ void TerminalChannel::buildProperties() {
     level("preview", &_preview);
     level("openClauses", &_openClauses);
     level("lastCreated", &_lastCreated);
+    level("compilation.input", &_compilationInput);
+    writable("compilation.template", &_compilationTemplate);
+    writable("compilation.error", &_compilationError);
+    registerProperty(std::make_unique<ComputedProperty<TerminalChannel, std::string>>(
+        "compilation.result", this, &TerminalChannel::propCompilationResult));
     level("ambiguity.symbol", &_ambiguitySymbol);
     level("ambiguity.slot", &_ambiguitySlot);
     level("ambiguity.candidates", &_ambiguityCandidates);

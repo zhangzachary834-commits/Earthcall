@@ -28,6 +28,10 @@ so ctest and IDE launches leave it quiet; set `NO_COLOR` to drop colour. No depe
 tried and removed (its Tab cannot offer a selectable menu). →
 `docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Law_Line/Law_Line.md`
 
+**2026-10-04 Law Line batches:** top-level `;` separates complete Law sentences; `law-line-compile-sentences` authorizes source-order registration. Authored aliases `add property`, `remove property`, and `modify property` use existing actions. Rebuild/restart; Save Zone keeps submitted Laws. See the Law Line task and Person Verification List for examples and native acceptance. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 19:46 PDT.
+
+**2026-10-04 Law Line creation:** `Create <Object, properties: {position: my.position + (0, -3, 0), authored: {purpose: "A foothold"}}>` is compiled through authored `law-line-compile-*` Metalaws; rebuild/restart the app to use the channel change. `scripts/seed_law_line.py` installs missing roots and appends missing Zone vocabulary while preserving existing bytes; it never rewrites existing Law roots. See [the Law Line task](Agenda/Tasks/Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md) for full syntax and scope, and [the creation audit](audits/LAW_LINE_CREATE_METALAW_2026-10-04.md) for verification. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 18:46 PDT.
+
 ### One-click WASM launch (macOS)
 
 Double-click `Run Earthcall WASM.command` at the repository root. It uses Emscripten from

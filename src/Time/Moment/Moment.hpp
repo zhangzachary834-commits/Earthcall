@@ -60,6 +60,7 @@ public:
     void setStart(const double& t);
     double propEnd() const { return _endCache; }
     void setEnd(const double& t);
+    long propCpuClockCycle() const;
 
     explicit operator std::time_t() const { return unixTime(); }
     explicit operator double() const { return asSeconds(); }

@@ -1,3 +1,4 @@
+#include <unordered_set>
 #include "Person/Person.hpp"
 #include "Person/PersonDatabase.hpp"
 #include "Identity/IdentityLedger.hpp"
@@ -422,6 +423,16 @@ bool Engine::initLogic() {
                 if (field) beings.push_back(field.get());
             }
         }
+        // Total named reach for the Zone's authored Singulars. Keep this
+        // enumeration aligned with tests/support/test_harness.hpp: Create
+        // prototypes must not be vocabulary-visible but PropertyPath-invisible.
+        // Deduplicate existing Objects/Laws/fields before adding Formation members
+        // and retained generic beings; their storage identity is not a new scope.
+        std::unordered_set<Singular*> provided(beings.begin(), beings.end());
+        for (auto* member : (mgr.active()).formation().getMembers())
+            if (member && provided.insert(member).second) beings.push_back(member);
+        for (const auto& stored : (mgr.active()).storedSingulars())
+            if (stored && provided.insert(stored.get()).second) beings.push_back(stored.get());
     });
 
     // The relation GRAPH — the edge view Related conditions query

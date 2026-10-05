@@ -8,6 +8,7 @@
 // the line is spoken, and the Law it authors must govern the seeded cube.
 
 #include "support/test_harness.hpp"
+#include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Terminal/TerminalChannel.hpp"
@@ -171,6 +172,142 @@ int main() {
     check(c && std::fabs(c->x - 1.0f) < 0.03f && std::fabs(c->y - 0.84f) < 0.03f && c->z < 0.03f,
           "'when hovered then set color gold' paints the cube gold on hover");
 
+    // The general Create notation crosses the real Terminal -> authored
+    // compiler Metalaws -> newborn action -> Zone persistence path.
+    {
+        auto* objectCompiler = harness.lawManager.find("law-line-compile-object");
+        check(objectCompiler != nullptr, "authored Object compiler is loaded");
+        auto& active = harness.zones.active();
+        const std::string sentence = "called Beneath Me when clicked if Identity @law-line-cube then "
+            "Create <Object, properties: {shape.kind: Cube, position: my.position + (0, -3, 0), "
+            "color: gold, authored: {purpose: \"A foothold\", visits: 0}} >";
+        harness.player.position() = glm::vec3(7, 9, -4);
+        const auto lawCount = harness.lawManager.getAll().size();
+        const auto objectsBefore = active.getOwnedObjects().size();
+        const auto compilerLogBefore = objectCompiler ? objectCompiler->applicationLog().size() : 0;
+        terminal->inject(sentence + "?"); frame();
+        check(harness.lawManager.getAll().size() == lawCount &&
+              (!objectCompiler || objectCompiler->applicationLog().size() == compilerLogBefore),
+              "preview creates no Law and executes no compiler Metalaw");
+        terminal->inject(sentence); frame();
+        auto status = printed.back();
+        std::cout << "    create> " << status << '\n';
+        PropertyValue created;
+        lawGetValue(*terminal, PropertyPath::parse("lastCreated"), created);
+        auto* creationLaw = std::holds_alternative<std::string>(created)
+            ? harness.lawManager.find(std::get<std::string>(created)) : nullptr;
+        check(creationLaw && creationLaw->name() == "Beneath Me" && creationLaw->actionModel() &&
+              creationLaw->actionModel()->kind == ActionNode::Kind::Create,
+              "Create invocation compiles into a named Law through seeded Metalaws");
+        if (creationLaw && creationLaw->name() == "Beneath Me") {
+            const auto model = creationLaw->actionModel()->toJson();
+            check(model["children"][1]["kind"] == static_cast<int>(ActionNode::Kind::Map) &&
+                  mentions(model.dump(), "@Zach.position"),
+                  "relative placement remains a Map bound to the actual speaking author");
+            Core::EventBus::instance().publish(ECA::Event{"object-clicked", cube, nullptr, std::time(nullptr)});
+            harness.lawManager.tick();
+            check(active.getOwnedObjects().size() == objectsBefore + 1, "a real click creates exactly one Object");
+            if (active.getOwnedObjects().size() > objectsBefore) {
+                auto* born = active.getOwnedObjects().back().get();
+                check(glm::length(born->getPosition() - glm::vec3(7, 6, -4)) < 0.0001f,
+                      "newborn centre is exactly three Y units below the Person");
+                PropertyValue purpose, visits, paint;
+                born->getDynamicProperty("purpose", purpose); born->getDynamicProperty("visits", visits);
+                lawGetValue(*born, PropertyPath::parse("color"), paint);
+                check(purpose == PropertyValue(std::string("A foothold")) && visits == PropertyValue(0.0),
+                      "authored initializers become newborn properties");
+                auto rgb = std::get_if<glm::vec3>(&paint);
+                check(rgb && glm::length(*rgb - glm::vec3(1, .84, 0)) < 0.0001f,
+                      "registered color initializer paints the newborn gold");
+                harness.player.position() = glm::vec3(-2, 20, 6);
+                Core::EventBus::instance().publish(ECA::Event{"object-clicked", cube, nullptr, std::time(nullptr)});
+                harness.lawManager.tick();
+                check(glm::length(active.getOwnedObjects().back()->getPosition() - glm::vec3(-2, 17, 6)) < .0001f,
+                      "another firing reads the Person's new position instead of freezing a preview value");
+            }
+            check(harness.zones.persistActiveZone(), "Save Zone persists the compiled creation Law and newborns");
+            auto restored = Law::fromJson(creationLaw->toJson());
+            check(restored->actionModel()->toJson() == model, "compiled creation and math models round-trip exactly");
+        }
+        if (objectCompiler) {
+            const auto original = *objectCompiler->actionModel();
+            objectCompiler->setEnabled(false);
+            const auto count = harness.lawManager.getAll().size();
+            terminal->inject("called Missing Compiler when clicked then Create <Object, properties: {}>"); frame();
+            check(harness.lawManager.getAll().size() == count && mentions(printed.back(), "no authored Metalaw"),
+                  "removing the compiler refuses authoring with no hidden Create fallback");
+            objectCompiler->setEnabled(true);
+            objectCompiler->setActionModel(ActionNode::set("compilation.template",
+                PropertyValue(std::string("{\"kind\":10,\"eventType\":\"compiler-changed\"}"))));
+            terminal->inject("called Compiler Changed when clicked then Create <Object, properties: {}>"); frame();
+            lawGetValue(*terminal, PropertyPath::parse("lastCreated"), created);
+            auto* changed = std::holds_alternative<std::string>(created)
+                ? harness.lawManager.find(std::get<std::string>(created)) : nullptr;
+            check(changed && changed->name() == "Compiler Changed" &&
+                  changed->actionModel()->kind == ActionNode::Kind::Publish,
+                  "editing the Metalaw changes the compiled model without editing C++");
+            objectCompiler->setActionModel(ActionNode::set("compilation.template",
+                PropertyValue(std::string("{\"kind\":999}"))));
+            const auto malformedCount = harness.lawManager.getAll().size();
+            terminal->inject("called Bad Compiler when clicked then Create <Object, properties: {}>"); frame();
+            check(harness.lawManager.getAll().size() == malformedCount && mentions(printed.back(), "unsupported"),
+                  "malformed compiler output refuses instead of becoming a default action");
+            objectCompiler->setActionModel(original);
+        }
+        auto conflict = std::make_shared<Law>("competing compiler", std::vector<Singular*>{&harness.player});
+        conflict->setLawIdentifier("test-conflicting-invocation-compiler");
+        conflict->addTarget(*terminal);
+        conflict->setConditionModel(ConditionNode::compare("compilation.input.slot", ConditionNode::Op::Eq,
+                                                         PropertyValue(std::string("invocation"))));
+        conflict->setActionModel(ActionNode::set("compilation.template",
+            PropertyValue(std::string("{\"kind\":10,\"eventType\":\"conflict\"}"))));
+        harness.lawManager.add(conflict);
+        const auto conflictingCount = harness.lawManager.getAll().size();
+        terminal->inject("called Conflict when clicked then Create <Object, properties: {}>"); frame();
+        check(harness.lawManager.getAll().size() == conflictingCount && mentions(printed.back(), "conflicting"),
+              "conflicting compiler outputs refuse without choosing register order");
+        harness.lawManager.remove(conflict->getIdentifier());
+        auto foreign = terminal->authorForeign(harness.lawManager,
+            "when clicked then Create <Object, properties: {position: my.position}>", {}, "unowned-create-test");
+        check(foreign.status == "refused", "a foreign sentence with no unique author cannot borrow the local Person's my root");
+        auto* rootWord = harness.lawManager.find("law-line-root-my");
+        PropertyValue rootMarker;
+        auto restoredRoot = rootWord ? Law::fromJson(rootWord->toJson()) : nullptr;
+        check(restoredRoot && restoredRoot->getDynamicProperty("sentence.root", rootMarker) && rootMarker == PropertyValue(true),
+              "authored root vocabulary survives the Law identity codec");
+        const auto menu = Singularity::Terminal::LawSentence::suggest("when clicked then Cre", terminal->vocabulary(harness.lawManager));
+        check(std::any_of(menu.begin(), menu.end(), [](const auto& suggestion) {
+            return suggestion.text == "Create" && mentions(suggestion.snippet, "properties:");
+        }), "Create completion offers its authored initializer signature");
+        terminal->inject("called New Lexeme when hovered if Identity @law-line-cube then "
+            "Create <@lexeme.law-line.gold.value-gold, properties: {authored: {testOrigin: \"terminal\"}}>"); frame();
+        const auto lexicalBefore = active.storedSingulars().size();
+        Core::EventBus::instance().publish(ECA::Event{"object-hover-entered", cube, nullptr, std::time(nullptr)});
+        harness.lawManager.tick();
+        check(active.storedSingulars().size() == lexicalBefore + 1,
+              "explicit Singular prototype uses the universal creation operation");
+        if (active.storedSingulars().size() > lexicalBefore) {
+            auto* lexical = active.storedSingulars().back().get();
+            PropertyValue origin;
+            lexical->getDynamicProperty("testOrigin", origin);
+            check(dynamic_cast<Singularity::Language::Lexeme*>(lexical) && origin == PropertyValue(std::string("terminal")),
+                  "prototype creation preserves Lexeme kind and applies authored newborn properties");
+        }
+        std::string many = "called Sixteen Fields when clicked then Create <Object, properties: {authored: {";
+        for (int i = 0; i < 16; ++i) many += (i ? ", " : "") + std::string("field") + std::to_string(i) + ": 1";
+        many += "}} >";
+        terminal->inject(many); frame();
+        check(mentions(printed.back(), "authored") && mentions(printed.back(), "Sixteen Fields"),
+              "sixteen initializer models remain structural lists rather than being decoded as a matrix");
+        const auto unknownCount = harness.lawManager.getAll().size();
+        terminal->inject("when clicked then Create <ImaginaryKind, properties: {}>"); frame();
+        check(harness.lawManager.getAll().size() == unknownCount && mentions(printed.back(), "no authored Metalaw"),
+              "unknown kind has no invented birth semantics");
+        terminal->inject("when clicked then Create <Object, properties: {position: (1, 2, 3), position: (4, 5, 6)}>"); frame();
+        check(harness.lawManager.getAll().size() == unknownCount && mentions(printed.back(), "duplicate initializer"),
+              "duplicate initializer refuses rather than silently overwriting authorial intent");
+    }
+
     // Zach's first unguided session (2026-09-25): after "when they collide"
     // the menu offered "always" (a contradicting preset) and actions with no
     // sentence form. It must offer only words that can work there.
@@ -222,6 +359,66 @@ int main() {
         }
         return ids;
     };
+    // Zach's one-line sentences are compiled by a saved Metalaw, then registered
+    // in lexical order; registration ordering does not promise Rete firing order.
+    const std::string batchLine = "called \"Batch Grant\" when clicked then add property @law-line-cube.batchNote to \"first;value\"; "
+                                  "called \"Batch Modify\" when clicked then modify property @law-line-cube.batchNote to \"second\"; "
+                                  "called \"Batch Remove\" when clicked then remove property @law-line-cube.batchNote";
+    auto beforeBatch = harness.lawManager.getAll().size();
+    terminal->inject(batchLine + "?"); frame();
+    check(harness.lawManager.getAll().size() == beforeBatch && mentions(printed.back(), "preview:"),
+          "a batch preview registers no Laws");
+    terminal->inject(batchLine); frame();
+    auto grantIds = lawNamed("Batch Grant"), modifyIds = lawNamed("Batch Modify"), removeIds = lawNamed("Batch Remove");
+    check(grantIds.size() == 1 && modifyIds.size() == 1 && removeIds.size() == 1,
+          "one line registers three separate Laws through the sentence Metalaw: " + printed.back());
+    if (!grantIds.empty() && !modifyIds.empty() && !removeIds.empty()) {
+        std::vector<std::string> order;
+        for (const auto& law : harness.lawManager.getAll())
+            if (law && law->name().rfind("Batch ", 0) == 0) order.push_back(law->name());
+        check(order == std::vector<std::string>{"Batch Grant", "Batch Modify", "Batch Remove"},
+              "LawManager registration follows source sentence order");
+        auto grant = harness.lawManager.find(grantIds[0]);
+        auto modify = harness.lawManager.find(modifyIds[0]);
+        auto remove = harness.lawManager.find(removeIds[0]);
+        PropertyValue note;
+        grant->applyTo(*cube);
+        check(cube->getDynamicProperty("batchNote", note) && std::get<std::string>(note) == "first;value",
+              "add property grants a real authored property and preserves a quoted semicolon");
+        modify->applyTo(*cube);
+        check(cube->getDynamicProperty("batchNote", note) && std::get<std::string>(note) == "second",
+              "modify property writes the existing property");
+        remove->applyTo(*cube);
+        check(!cube->getDynamicProperty("batchNote", note), "remove property erases the authored property");
+        modify->applyTo(*cube);
+        check(cube->getDynamicProperty("batchNote", note) && std::get<std::string>(note) == "second",
+              "modify retains existing Set semantics for a materialized authored accessor");
+        remove->applyTo(*cube);
+    }
+    beforeBatch = harness.lawManager.getAll().size();
+    terminal->inject("called Invalid Batch First when clicked then set glow 1; called Invalid Batch Second when clicked then"); frame();
+    check(harness.lawManager.getAll().size() == beforeBatch, "invalid later sentence registers no earlier sentence");
+    auto batchCompiler = harness.lawManager.find("law-line-compile-sentences");
+    check(batchCompiler != nullptr, "saved sentence compiler is present");
+    if (batchCompiler) {
+        batchCompiler->setEnabled(false);
+        terminal->inject("called No Compiler A when clicked then set glow 1; called No Compiler B when clicked then set glow 2"); frame();
+        check(harness.lawManager.getAll().size() == beforeBatch && mentions(printed.back(), "no authored Metalaw"),
+              "without the authored sentence Metalaw no batch fallback registers Laws");
+        batchCompiler->setEnabled(true);
+        auto original = *batchCompiler->actionModel();
+        batchCompiler->setActionModel(ActionNode::set("compilation.template", std::string("{\"sentences\":[]}")));
+        terminal->inject("called Wrong Order One when clicked then set glow 1; called Wrong Order Two when clicked then set glow 2"); frame();
+        check(harness.lawManager.getAll().size() == beforeBatch && mentions(printed.back(), "source order"),
+              "a compiler cannot drop or reorder the sensed sentences");
+        batchCompiler->setActionModel(original);
+    }
+    auto foreignBatch = terminal->authorForeign(harness.lawManager, batchLine, {&harness.player}, "foreign-batch");
+    check(foreignBatch.status == "refused" && harness.lawManager.getAll().size() == beforeBatch,
+          "foreign batch cannot escape its single-identifier authorization");
+    check(!Singularity::Terminal::LawSentence::suggest("called Earlier when clicked then set glow 1; then modify prop", terminal->vocabulary(harness.lawManager)).empty(),
+          "completion follows the final sentence in a batch");
+
     // Earlier in this test two Laws were spoken with the name Blue.
     const auto blues = lawNamed("Blue");
     check(blues.size() == 2, "two Laws named Blue exist");

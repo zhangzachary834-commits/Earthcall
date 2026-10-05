@@ -330,3 +330,6 @@ saves/logs/earthcall-terminal.log
 
 # Per-machine launchers written by "Earthcall First Movers.command"
 Start *.command
+
+# Law Line atomic patch backups preserve Person-authored save bytes.
+scratch/backups/law-line/

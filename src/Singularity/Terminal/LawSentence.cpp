@@ -1,3 +1,4 @@
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Singularity/Terminal/LawSentence.hpp"
 
 #include <algorithm>
@@ -202,8 +203,8 @@ struct Atom {
 
 class Parser {
 public:
-    Parser(std::string text, const Vocabulary& vocab, bool completing)
-        : _text(std::move(text)), _vocab(vocab), _completing(completing) {
+    Parser(std::string text, const Vocabulary& vocab, bool completing, bool readOnly = false)
+        : _text(std::move(text)), _vocab(vocab), _completing(completing), _readOnly(readOnly || completing) {
         for (const auto& w : _vocab.words) {
             _spellings.push_back(spell(w));
             if (_spellings.back().form == Form::Suffix) _suffixes.push_back(_spellings.back().stem);
@@ -283,13 +284,25 @@ private:
         }
         if (best.empty()) return std::nullopt;
 
-        // One meaning spelled twice (a canonical word and an alias of it) is
-        // not an ambiguity; two denoted preset Laws are two meanings.
+        // Ordinary opcode aliases remain one meaning. A parameterized
+        // invocation retains each denoted Law's identity: its authored compiler
+        // may distinguish two Lexemes with the same spelling/opcode.
+        std::size_t afterWord = bestAt + bestLen;
+        while (afterWord < _text.size() && isSpace(_text[afterWord])) ++afterWord;
+        const bool parameterized = afterWord < _text.size() && _text[afterWord] == '<';
         std::vector<Word> distinct;
         std::set<std::string> meanings;
         for (const Word* w : best) {
-            const std::string meaning = w->opcode == "preset" ? "preset:" + w->lawId : w->opcode;
+            if (parameterized && w->lexemeId.empty() && std::any_of(best.begin(), best.end(), [&](const Word* other) {
+                    return !other->lexemeId.empty() && other->opcode == w->opcode;
+                })) continue;
+            const std::string meaning = w->opcode == "preset" ? "preset:" + w->lawId
+                : parameterized && !w->lawId.empty() ? w->opcode + ":" + w->lawId : w->opcode;
             if (meanings.insert(meaning).second) distinct.push_back(*w);
+            else if (!w->lexemeId.empty()) {
+                for (auto& candidate : distinct)
+                    if (candidate.opcode == w->opcode && candidate.lexemeId.empty()) candidate = *w;
+            }
         }
         const std::string written = _text.substr(bestAt, bestLen);
         _pos = bestAt + bestLen;
@@ -303,6 +316,7 @@ private:
         // Tab only needs to know WHERE the sentence is, not which meaning
         // wins; Metalaws are consulted when the sentence is spoken.
         if (_completing) return candidates.front();
+        if (_readOnly) refuse("meaning stays open in preview; Metalaw decides which one when spoken", at);
         std::vector<std::string> names;
         for (const auto& c : candidates) names.push_back(c.individual() + " (" + c.opcode + ")");
         Resolution r;
@@ -731,6 +745,234 @@ private:
         return !atEnd() && _text[_pos] != ',' && !peekClauseWord();
     }
 
+    bool punctuation(char c) {
+        skipSpace();
+        if (_pos < _text.size() && _text[_pos] == c) { ++_pos; return true; }
+        return false;
+    }
+
+    void needPunctuation(char c) {
+        if (!punctuation(c)) {
+            if (atEnd() && _completing) throw Stop{};
+            refuse(std::string("expected '") + c + "' in the invocation", _pos);
+        }
+    }
+
+    // Expressions are the Terminal's notation for the existing typed OntoMath
+    // tree. Property initialization semantics (Set/Map/grant) are NOT chosen here.
+    struct Expression {
+        std::optional<PropertyValue> literal;
+        std::unique_ptr<OntoMath::MathNode> math;
+        MathBindings bindings;
+    };
+
+    std::unique_ptr<OntoMath::MathNode> mathOf(Expression& e) {
+        if (e.math) return std::move(e.math);
+        auto n = std::make_unique<OntoMath::MathNode>();
+        double d;
+        if (e.literal && propertyValueToNumber(*e.literal, d)) {
+            n->scalarForm = OntoMath::ScalarForm::constant(d);
+            return n;
+        }
+        if (e.literal) if (auto v = std::get_if<glm::vec3>(&*e.literal)) {
+            n->op = OntoMath::MathNode::Op::VectorConstruct;
+            for (int i = 0; i < 3; ++i) {
+                auto c = std::make_unique<OntoMath::MathNode>();
+                c->scalarForm = OntoMath::ScalarForm::constant((*v)[i]);
+                n->children.push_back(std::move(c));
+            }
+            return n;
+        }
+        refuse("arithmetic requires numeric or vector values", _pos);
+        return nullptr;
+    }
+
+    Expression expressionAtom() {
+        skipSpace();
+        if (punctuation('(')) {
+            Expression first = expression();
+            if (!punctuation(',')) { needPunctuation(')'); return first; }
+            Expression second = expression(); needPunctuation(',');
+            Expression third = expression(); needPunctuation(')');
+            auto n = std::make_unique<OntoMath::MathNode>();
+            n->op = OntoMath::MathNode::Op::VectorConstruct;
+            n->children.push_back(mathOf(first)); n->children.push_back(mathOf(second));
+            n->children.push_back(mathOf(third));
+            first.bindings.insert(second.bindings.begin(), second.bindings.end());
+            first.bindings.insert(third.bindings.begin(), third.bindings.end());
+            if (first.bindings.empty()) {
+                auto value = n->evaluate({});
+                if (!value) refuse("the vector expression is undefined", _pos);
+                return {*value, nullptr, {}};
+            }
+            return {std::nullopt, std::move(n), std::move(first.bindings)};
+        }
+        if (atEnd()) {
+            if (_completing) throw Stop{};
+            refuse("the sentence ends where an initializer value was expected", _pos);
+        }
+        // Typed memory literals use the existing property containers. A list
+        // stays a list; the parenthesized triple above is explicitly a vector.
+        if (punctuation('[')) {
+            auto list = std::make_shared<PropertyList>();
+            if (!punctuation(']')) do {
+                auto item = expression();
+                if (!item.literal) refuse("container literals require literal entries; bind dynamic containers through an existing Map", _pos);
+                list->elements.push_back(*item.literal);
+                if (punctuation(']')) break;
+                needPunctuation(',');
+            } while (true);
+            return {PropertyValue(list), nullptr, {}};
+        }
+        if (punctuation('{')) {
+            auto dict = std::make_shared<PropertyDict>();
+            if (!punctuation('}')) do {
+                const auto key = requireAtom("a dictionary key", &Expectation::value);
+                needPunctuation(':');
+                auto item = expression();
+                if (!item.literal) refuse("container literals require literal entries; bind dynamic containers through an existing Map", _pos);
+                if (!dict->elements.emplace(key.text, *item.literal).second)
+                    refuse("duplicate dictionary key '" + key.text + "'", key.offset);
+                if (punctuation('}')) break;
+                needPunctuation(',');
+            } while (true);
+            return {PropertyValue(dict), nullptr, {}};
+        }
+        // Authored value Lexemes retain their exact PropertyValue alternative.
+        bool pathAhead = _text[_pos] == '@';
+        for (const auto& [alias, root] : _vocab.pathRoots)
+            pathAhead = pathAhead || _text.compare(_pos, alias.size() + 1, alias + ".") == 0;
+        if (!pathAhead) if (auto w = tryMatch({"value"}, "value")) {
+            if (w->opcode == "value.true") return {PropertyValue(true), nullptr, {}};
+            if (w->opcode == "value.false") return {PropertyValue(false), nullptr, {}};
+            for (const auto& p : _vocab.presets) if (p.lawId == w->lawId && p.value)
+                return {*p.value, nullptr, {}};
+            refuse("the value Lexeme has no value", _pos);
+        }
+        if (_text[_pos] == '"') {
+            auto a = readAtomRaw();
+            return {PropertyValue(a.text), nullptr, {}};
+        }
+        // strtod reads a signed scalar without consuming a following operator.
+        const char* start = _text.c_str() + _pos;
+        char* end = nullptr;
+        const double d = std::strtod(start, &end);
+        if (end != start) {
+            if (!std::isfinite(d)) refuse("initializer numbers must be finite", _pos);
+            _pos += static_cast<std::size_t>(end - start);
+            return {PropertyValue(d), nullptr, {}};
+        }
+        auto a = requireAtom("a literal or property expression", &Expectation::value);
+        std::string path = a.text;
+        for (const auto& [alias, root] : _vocab.pathRoots) {
+            if (startsWith(path, alias + ".")) { path = root + path.substr(alias.size()); break; }
+        }
+        if (path.empty() || path.front() != '@' || path.find('.') == std::string::npos)
+            refuse("unknown value '" + a.text + "'; use a value Lexeme, quoted string, or qualified property path", a.offset);
+        auto n = std::make_unique<OntoMath::MathNode>();
+        n->op = OntoMath::MathNode::Op::ValueLeaf;
+        n->variableName = path;
+        return {std::nullopt, std::move(n), {{path, PropertyPath::parse(path)}}};
+    }
+
+    Expression expression(int precedence = 0) {
+        if (_expressionDepth >= 32) refuse("expression nesting exceeds the channel's 32-level structural bound", _pos);
+        ++_expressionDepth;
+        struct DepthScope { unsigned& depth; ~DepthScope() { --depth; } } depthScope{_expressionDepth};
+        Expression left = expressionAtom();
+        while (!atEnd()) {
+            const char op = _text[_pos];
+            const int next = op == '+' || op == '-' ? 1 : op == '*' || op == '/' ? 2 : 0;
+            if (next == 0 || next <= precedence) break;
+            ++_pos;
+            Expression right = expression(next);
+            auto n = std::make_unique<OntoMath::MathNode>();
+            n->op = op == '+' ? OntoMath::MathNode::Op::Add : op == '-' ? OntoMath::MathNode::Op::Sub
+                  : op == '*' ? OntoMath::MathNode::Op::Scale : OntoMath::MathNode::Op::Div;
+            n->children.push_back(mathOf(left)); n->children.push_back(mathOf(right));
+            left.bindings.insert(right.bindings.begin(), right.bindings.end());
+            left.literal.reset(); left.math = std::move(n);
+        }
+        if (left.math && left.bindings.empty()) {
+            auto value = left.math->evaluate({});
+            if (!value) refuse("the constant expression is undefined", _pos);
+            left.literal = *value; left.math.reset();
+        }
+        return left;
+    }
+
+    ActionNode compileInvocation(nlohmann::json request) {
+        if (!_vocab.compileInvocation) refuse("no Metalaw compiler is available for parameterized Lexemes", _pos);
+        auto result = _vocab.compileInvocation(request, _readOnly);
+        const auto wordLaw = request.value("wordLaw", "");
+        if (!wordLaw.empty() && std::find(_out.presetLawIds.begin(), _out.presetLawIds.end(), wordLaw) == _out.presetLawIds.end())
+            _out.presetLawIds.push_back(wordLaw);
+        if (!result.action) refuse(result.error.empty() ? "no Metalaw compiled this invocation" : result.error, _pos);
+        for (const auto& id : result.laws) {
+            if (std::find(_out.presetLawIds.begin(), _out.presetLawIds.end(), id) == _out.presetLawIds.end()) _out.presetLawIds.push_back(id);
+            _out.notes.push_back("compiled by Metalaw " + id);
+        }
+        if (_readOnly) {
+            _out.compilationDeferred = true;
+            const std::string note = "invocation syntax only; Metalaw compilation deferred until Enter";
+            if (std::find(_out.notes.begin(), _out.notes.end(), note) == _out.notes.end()) _out.notes.push_back(note);
+        }
+        return *result.action;
+    }
+
+    void initializers(const Word& word, const std::string& selector,
+                      const std::string& group, nlohmann::json& children,
+                      std::set<std::string>& seen) {
+        needPunctuation('{');
+        if (punctuation('}')) return;
+        do {
+            const auto key = requireAtom("a property name", &Expectation::path);
+            if (!looksLikePath(key.text) || key.quoted || key.text.front() == '@')
+                refuse("an initializer must name a newborn-relative property", key.offset);
+            needPunctuation(':');
+            if ((key.text == "authored" || key.text == "registered") && group.empty()) {
+                initializers(word, selector, key.text, children, seen);
+            } else {
+                if (!seen.insert(key.text).second) refuse("duplicate initializer '" + key.text + "'", key.offset);
+                auto e = expression();
+                nlohmann::json input{{"slot", "initializer"}, {"opcode", word.opcode},
+                    {"lexeme", word.lexemeId}, {"wordLaw", word.lawId}, {"selector", selector},
+                    {"group", group.empty() ? "registered" : group}, {"property", key.text},
+                    {"expression", !e.literal.has_value()}};
+                if (e.literal) input["operand"] = propertyValueToJson(*e.literal);
+                else {
+                    OntoMath::Piecewise f;
+                    OntoMath::Piecewise::Piece piece;
+                    piece.mathNode = std::move(e.math); f.pieces.push_back(std::move(piece));
+                    input["function"] = f.toJson();
+                    input["bindings"] = mathBindingsToJson(e.bindings);
+                }
+                children.push_back(compileInvocation(std::move(input)).toJson());
+            }
+            if (punctuation('}')) return;
+            needPunctuation(',');
+        } while (!atEnd());
+        refuse("the sentence ends before the property record closes", _pos);
+    }
+
+    ActionNode invocation(const Word& word) {
+        needPunctuation('<');
+        auto selector = requireAtom("a Singular kind or prototype", &Expectation::being);
+        if (!looksLikePath(selector.text) || selector.quoted)
+            refuse("the invocation selector must be a kind spelling or prototype path", selector.offset);
+        needPunctuation(',');
+        const auto label = requireAtom("properties", &Expectation::path);
+        if (label.text != "properties") refuse("the invocation takes properties: { ... }", label.offset);
+        needPunctuation(':');
+        nlohmann::json children = nlohmann::json::array();
+        std::set<std::string> seen;
+        initializers(word, selector.text, "", children, seen);
+        needPunctuation('>');
+        return compileInvocation({{"slot", "invocation"}, {"opcode", word.opcode},
+            {"lexeme", word.lexemeId}, {"wordLaw", word.lawId}, {"selector", selector.text},
+            {"prototype", selector.text.front() == '@'}, {"children", children}});
+    }
+
     ActionNode parseAction(std::optional<Word> verb) {
         const std::size_t at = _pos;
         if (!verb) {
@@ -742,6 +984,10 @@ private:
                        _pos);
             }
         }
+        // Parameter lists belong to the channel grammar for ANY action Lexeme.
+        // Its compiler is selected by authored Metalaws, never by this opcode.
+        skipSpace();
+        if (_pos < _text.size() && _text[_pos] == '<') return invocation(*verb);
         const std::string kind = verb->opcode.substr(7);
         // A Lexeme can denote a complete authored action, including a compound
         // Create/Synthesize tree or a channel action such as WritePixel. The
@@ -803,6 +1049,8 @@ private:
     std::string _text;
     const Vocabulary& _vocab;
     bool _completing = false;
+    bool _readOnly = false;
+    unsigned _expressionDepth = 0; // bounded parser stack beneath the Kernel
     std::size_t _pos = 0;
     std::vector<Spelling> _spellings;
     std::vector<std::string> _suffixes;
@@ -1199,7 +1447,8 @@ std::string Parse::preview() const {
         s += " fires";
     }
     s += "  ->  IF " + (condition ? condition->describe() : std::string("always"));
-    s += "  ->  THEN " + (action ? action->describe() : std::string("<action?>"));
+    s += "  ->  THEN " + (compilationDeferred ? std::string("<awaiting authored Metalaw compilation>")
+                           : action ? action->describe() : std::string("<action?>"));
     s += scope == Law::Scope::Everyone ? "  — on every being satisfying the IF"
                                        : "  — on the event's subject";
     for (const auto& id : presetLawIds) s += "  (preset " + id + ")";
@@ -1229,7 +1478,7 @@ Parse parse(const std::string& raw, const Vocabulary& vocab) {
         text.pop_back();
     }
 
-    Parser parser(text, vocab, false);
+    Parser parser(text, vocab, false, previewOnly);
     Parse out;
     try {
         parser.run();
@@ -1388,6 +1637,16 @@ int groupRank(const std::string& role) {
 } // namespace
 
 std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabulary& vocab) {
+    std::string splitError;
+    auto parts = sentences(beforeCursor + "?", splitError);
+    if (parts.size() > 1) {
+        auto tail = parts.back(); tail.pop_back();
+        auto offset = beforeCursor.rfind(tail);
+        auto out = suggest(tail, vocab);
+        for (auto& suggestion : out) suggestion.from += offset;
+        return out;
+    }
+
     const std::size_t n = beforeCursor.size();
     std::set<std::size_t> splits{n};
     const std::size_t floor = n > 48 ? n - 48 : 0;
@@ -1456,7 +1715,7 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
                     w.opcode == "preset" ? "Law " + w.lawId : w.opcode + " (" + w.individual() + ")";
                 offer(split, tail, w.symbol, w.description, roleOf(w.opcode),
                       w.detail.empty() ? w.description : w.detail,
-                      completeAction ? std::string{} : argumentTemplate(w.opcode), meaning);
+                      !w.arguments.empty() ? w.arguments : completeAction ? std::string{} : argumentTemplate(w.opcode), meaning);
             }
         }
         if (tail.find_first_of(" \t") != std::string::npos) continue;   // atoms are single words
@@ -1602,6 +1861,46 @@ std::vector<std::string> search(const std::string& rawQuery, const Vocabulary& v
         }
     }
     return out;
+}
+
+std::vector<std::string> sentences(const std::string& text, std::string& error) {
+    error.clear();
+    std::vector<std::string> out;
+    std::vector<char> brackets;
+    char quote = 0;
+    bool escaped = false;
+    std::size_t begin = 0;
+    auto append = [&](std::size_t end) {
+        auto part = text.substr(begin, end - begin);
+        auto first = part.find_first_not_of(" \t\r\n");
+        if (first == std::string::npos) { error = "empty sentence between separators"; return; }
+        out.push_back(part.substr(first, part.find_last_not_of(" \t\r\n") - first + 1));
+    };
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        char c = text[i];
+        if (quote) {
+            if (escaped) escaped = false;
+            else if (c == '\\') escaped = true;
+            else if (c == quote) quote = 0;
+            continue;
+        }
+        if (c == '"') { quote = c; continue; }
+        if (c == '(' || c == '[' || c == '{') brackets.push_back(c);
+        else if (c == ')' || c == ']' || c == '}') {
+            char expected = c == ')' ? '(' : c == ']' ? '[' : '{';
+            if (brackets.empty() || brackets.back() != expected) {
+                error = "unmatched sentence delimiter"; return {};
+            }
+            brackets.pop_back();
+        } else if (c == ';' && brackets.empty()) {
+            append(i);
+            if (!error.empty()) return {};
+            begin = i + 1;
+        }
+    }
+    append(text.size());
+    // Incomplete quotes/containers remain the ordinary parser's responsibility.
+    return error.empty() ? out : std::vector<std::string>{};
 }
 
 } // namespace LawSentence

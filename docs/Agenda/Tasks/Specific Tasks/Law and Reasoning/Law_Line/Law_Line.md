@@ -9,6 +9,38 @@
 - **Rung 2 (2026-09-25, same day):** an ergonomic line, and more authored words.
   - Zach asked for: "tab should be able to actually select one and arrow keys should be able to move between them … like claude code cli … show me stuff temporarily without sending as a full message … think about other design and ergonomics".
 
+## General Create initializers compiled by Metalaw — 2026-10-04
+
+Zach asked for `Create <SingularKind, properties: {…}>` containing existing and authored properties, and explicitly required Metalaws to compile the Create Lexemes into the final Law. This extends the existing `Create`/prototype operation; it does not add a spawn-below-me verb or an action-kind enum.
+
+Type a single line in `LawLine`:
+
+```text
+called Beneath Me when clicked then Create <Object, properties: {shape.kind: Cube, position: my.position + (0, -3, 0), color: gold, authored: {purpose: "A foothold"}}>
+```
+
+Clicking an object supplies the trigger. The newborn's **centre** takes the speaking author's current `position` minus three on Y at each firing; this is not a camera/feet measurement or a fixed coordinate captured when the sentence was entered. Add `if Identity @law-line-cube` before `then` to listen only to clicks on the seeded cube. Add `?` to inspect syntax without compiling or creating a Law. A syntax preview explicitly says compilation is deferred; it does not claim to have evaluated Metalaws. Save Zone retains the compiled Law and newborns.
+
+Flat initializers, or those inside `registered: {…}`, address existing property paths (e.g. `shape.kind`, not `shapeKind`). `authored: {…}` grants properties through the ordinary AddProperty action. Values include authored value words, quoted strings, booleans, finite numbers, parenthesized vector triples, literal lists/dictionaries, qualified property reads, and `+`, `-`, `*`, `/` expressions lowered to the existing typed OntoMath tree. Lists remain lists; `(1, 2, 3)` is a vector. Container entries must be literals; general dynamic container construction/alias topology remains in the Property storage task. Use whitespace around arithmetic on qualified paths because hyphens are also identifier characters.
+
+`Object` has an authored direct-birth rule. Other existing Singulars can use an explicit live prototype:
+
+```text
+when clicked then Create <@lexeme.law-line.gold.value-gold, properties: {authored: {purpose: "An authored branch"}}>
+```
+
+The existing universal adapter preserves the prototype's concrete kind and existing birth/authority refusals. An unconfigured kind spelling refuses; no constructor is guessed. Person/real-correspondent birth remains prohibited. Relation birth still needs explicit participants; this initializer surface does not yet provide participant slots or new identity/endpoint clauses.
+
+The channel reads the generic parameter record for **any** action Lexeme, plus expression notation. Each sensed initializer and final invocation becomes a registered `compilation.input` dictionary on the Terminal Law. Ordinary authored Laws targeting `terminal-channel` select an action-model template by condition and write `compilation.template` or `compilation.error`. The channel only substitutes JSON-pointer `$slot` references in that authored template and validates/deserializes the resulting existing ActionModel. Six seeded compiler Metalaws decide registered literal → Set, expression → Map, authored literal → AddProperty, authored expression → AddProperty + Map, Object invocation → Create, and prototype invocation → prototype Create. Removing a rule refuses; conflicting outputs refuse regardless of register order. The final sentence still uses the shared existing enact/persistence path, including foreign authorship. This is not a migration of every legacy sentence opcode to Metalaw.
+
+`Create`, `Cube`, and `my` are three new Lexemes denoting ordinary Laws. `Cube` denotes integer geometry value 0. The `my` word's denoted Law carries authored `sentence.root`; its `$author` value resolves to the actual speaker's identifier. A foreign sentence does not borrow the local Person's pronoun. `Create`'s completion signature is authored `sentence.arguments` data. Law identity serialization now retains authored properties so those declarations survive save/reload.
+
+Future agents: edit the six `law-line-compile-*` models to change compilation policy; do not put a `kind == Create` lowering switch in the parser. Compiled creation keeps existing child-action execution semantics and TransferPolicy gates; arbitrary initialization is not a new transactional world-mutation system. Inspect the action trace when an initializer is refused at runtime. Preview/completion/submit preflight must never apply compiler Metalaws.
+
+The seed added **nine Law roots, three Lexemes, three denotes Relations, and nine lawRefs**, authored by **Zach** and injected by **Codex / GPT-6.1 Sol**. Existing Zone bytes are preserved by insertion into its root arrays. Original bytes are retained under `scratch/backups/law-line/`; existing Law roots were not rewritten. Seed rerun is idempotent. The WebGPU app built and seven focused tests passed, with `law_line_zone_test` at 65/65 checks; live Person acceptance is pending. Source: `scripts/seed_law_line.py`; automated evidence and remaining Person checks are recorded in [the audit](../../../../../audits/LAW_LINE_CREATE_METALAW_2026-10-04.md) and [Person Verification](../../../For%20Zach/Person%20Verification%20List.md).
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 18:46 PDT — implementation of Zach's general Create notation and Metalaw compilation requirement.*
+
 ## How to use it
 
 1. Run `Run Earthcall.command` and keep its Terminal window beside the app. It prints *"The Law Line is listening."* above an `earthcall>` prompt.
@@ -108,7 +140,7 @@ Zach chose these from a proposal; he deferred typo-fixing and usage ranking ("ne
 - [ ] **The line trusts its stdin, and stdin can lie** (Astra's Crystal §13, conceded in *The Terminal That Was Built Writes Back*). Anything that types into the Terminal, including a test process, authors as the Person `@interaction-channel.personId` names. A non-Person writer should arrive as a registered First Mover under a Person's grant, the same discipline as MCP.
 - [x] **Fixed 2026-09-30 when it actually happened** (Zach keyed, and every Law authored "Zach" stopped resolving, including the Identity Zone's own Law). `Identity::personAnswersTo` bridges an old author name to a keyed Person **only** through the migration ledger, the same bridge Home reclaim uses. Boot treats a legacy profile the ledger signed over to a keyed profile on disk as superseded. Witness: `terminal_zones_test` 7b. Mythos's `was-called` Claim would make the ledger itself signed. Original item: **A spoken Law must survive its author getting a key** (Mythos, Interaction as Law thread, 2026-09-25). Spoken Laws record the author by the identifier `@interaction-channel.personId` resolves to *now*. That is spelling-resolved causation, and it unbinds when Zach takes a key. Untested. The fix is the `was-called` Claim Mythos proposed in `Succession_Is_Not_In_The_World`.
 - [ ] `set x to @other.path`: waits for the PropertyPath binding algebra ("copy value", [Property_Storage_and_OntoMath_Binding](../../Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)). The refusal already points there.
-- [ ] OntoMath expression text, so Map/Flow/Drive/Zone conditions have a sentence form.
+- [ ] Extend initializer arithmetic notation to general Map/Flow/Drive/Zone condition sentences; general Create initializer expressions are implemented above.
 - [ ] Timeline clauses (after the Law/Timeline ontology; TIME_AND_MOMENT.md).
 - [ ] Multi-line Python-style blocks (`when any:` / `then:` with indentation) for long chains. The editor would need Shift-Enter or a trailing `:` continuation.
 - [ ] Undo of the last spoken Law as an authored act (a Lexeme denoting a Law that retires a Law), not a verb.
@@ -170,3 +202,23 @@ Zach chose these from a proposal; he deferred typo-fixing and usage ranking ("ne
   - `substrate_split_test` and `matter_scoped_writer_test` turned red with PR #274 ("couple matter generation to semantic-root commit"), which changed `.ecmatter` generation after rung 1. Nothing in the Law Line touches that path.
 
 *Claude Code · Claude Opus 5.5 · session `01WXmPy9U71FLqizbRYzMToZ` · 2026-09-25.*
+
+## Ordered sentences and property vocabulary (2026-10-04)
+
+Zach requested multiple Law sentences in one submitted line, registered in the order written, plus add/remove/modify property. Separate complete sentences with top-level `;`:
+
+```text
+called "Add Note" when clicked then add property @law-line-cube.note to "hello"; called "Change Note" when hovered then modify property @law-line-cube.note to "updated"; called "Remove Note" when unhovered then remove property @law-line-cube.note
+```
+
+The saved `law-line-compile-sentences` Metalaw conditions on `compilation.input.slot = "sentences"` and `opcode = "sentence.batch"`, and supplies `{"sentences":{"$slot":"/sentences"}}` through `compilation.template`. The channel senses delimiter structure, asks the existing generic Metalaw template seam for the document, validates the exact once-only source order, parses every sentence, and registers through the existing `enact` path. Missing/disabled compiler, conflicting outputs, empty sentences, or invalid later syntax refuses registration. Compiler provenance is retained on every new Law. There is no automatic batch fallback. Registration order does not promise event agenda firing order; use `then ... and ...` within one Law when ordered action execution is required.
+
+A trailing `?` previews the whole batch without applying compiler Metalaws or registering Laws. Quoted semicolons and separators inside `()`, `[]`, or `{}` are preserved. Completion follows the final sentence. Immediate deletion/search cannot be mixed into a batch. Foreign `law_sentence` remains one separately authorized identifier per submission and explicitly refuses batches before compiling them.
+
+`add property` denotes the existing AddProperty Law, `remove property` denotes RemoveProperty, and `modify property` denotes Set. Add grants an authored property; modify uses existing Set/path semantics. A never-addressable missing path refuses; an authored accessor materialized before removal remains addressable and Set can restore its erased value. Remove erases authored properties; registered engine paths retain their existing clear-value behavior and authority gates. These aliases preserve numeric `add` and existing `remove`/Destroy spellings. Property changes happen when the resulting Law fires, not on submission. No new action kinds were added.
+
+All sentences are parsed before any are registered. Registration itself retains existing per-Law adoption semantics: a later adoption refusal reports how many earlier sentences registered; this is not a transactional mutation promise. Save Zone is still required to keep newly authored Laws after restart.
+
+The seed append adds three Lexemes and their denotes Relations to the existing LawLine Zone and adds the sentence compiler Law root. Zach is the recorded author; Codex is the injector. Old Zone bytes are preserved, backed up outside saves, and atomically patched; existing Law roots are kept.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 19:46 PDT — implementation of Zach's ordered sentence and property vocabulary request.*

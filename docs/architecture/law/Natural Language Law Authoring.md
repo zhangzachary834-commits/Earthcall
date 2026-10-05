@@ -56,3 +56,29 @@ Built terminal-first, per Zach's direction during planning. The Terminal window 
 - Design, Zach's corrections, and the implementation record: [plan](../../plans/NATURAL_LANGUAGE_LAW_AUTHORING_PLAN_2026-09-25.md)
 
 *— Claude Code · Claude Opus 5.5 · session `01WXmPy9U71FLqizbRYzMToZ` · 2026-09-25*
+
+### General creation notation (2026-10-04)
+
+Zach extended the requested surface to `Create <SingularKind, properties: {registered initializers, authored: {new properties}}>`, with Metalaws compiling Create Lexemes into the resulting Law. Implemented as generic parameterized-action syntax plus an authored Metalaw template protocol, reusing existing Create/prototype and OntoMath models. Detailed syntax, boundaries, and future-agent directions are in [the Law Line task](../../Agenda/Tasks/Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md). Syntax previews do not execute compilers; an absent or conflicting compiler refuses. This supersedes the earlier lack of general Create initializer syntax, while general legacy Map/Flow/Drive sentences remain open.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 18:46 PDT — Zach originated the creation notation and Metalaw requirement; Codex supplied the general structural substitution channel.*
+
+## Ordered sentences and property vocabulary (2026-10-04)
+
+Zach requested multiple Law sentences in one submitted line, registered in the order written, plus add/remove/modify property. Separate complete sentences with top-level `;`:
+
+```text
+called "Add Note" when clicked then add property @law-line-cube.note to "hello"; called "Change Note" when hovered then modify property @law-line-cube.note to "updated"; called "Remove Note" when unhovered then remove property @law-line-cube.note
+```
+
+The saved `law-line-compile-sentences` Metalaw conditions on `compilation.input.slot = "sentences"` and `opcode = "sentence.batch"`, and supplies `{"sentences":{"$slot":"/sentences"}}` through `compilation.template`. The channel senses delimiter structure, asks the existing generic Metalaw template seam for the document, validates the exact once-only source order, parses every sentence, and registers through the existing `enact` path. Missing/disabled compiler, conflicting outputs, empty sentences, or invalid later syntax refuses registration. Compiler provenance is retained on every new Law. There is no automatic batch fallback. Registration order does not promise event agenda firing order; use `then ... and ...` within one Law when ordered action execution is required.
+
+A trailing `?` previews the whole batch without applying compiler Metalaws or registering Laws. Quoted semicolons and separators inside `()`, `[]`, or `{}` are preserved. Completion follows the final sentence. Immediate deletion/search cannot be mixed into a batch. Foreign `law_sentence` remains one separately authorized identifier per submission and explicitly refuses batches before compiling them.
+
+`add property` denotes the existing AddProperty Law, `remove property` denotes RemoveProperty, and `modify property` denotes Set. Add grants an authored property; modify uses existing Set/path semantics. A never-addressable missing path refuses; an authored accessor materialized before removal remains addressable and Set can restore its erased value. Remove erases authored properties; registered engine paths retain their existing clear-value behavior and authority gates. These aliases preserve numeric `add` and existing `remove`/Destroy spellings. Property changes happen when the resulting Law fires, not on submission. No new action kinds were added.
+
+All sentences are parsed before any are registered. Registration itself retains existing per-Law adoption semantics: a later adoption refusal reports how many earlier sentences registered; this is not a transactional mutation promise. Save Zone is still required to keep newly authored Laws after restart.
+
+The seed append adds three Lexemes and their denotes Relations to the existing LawLine Zone and adds the sentence compiler Law root. Zach is the recorded author; Codex is the injector. Old Zone bytes are preserved, backed up outside saves, and atomically patched; existing Law roots are kept.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 19:46 PDT — implementation of Zach's ordered sentence and property vocabulary request.*

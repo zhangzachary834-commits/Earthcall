@@ -1,0 +1,73 @@
+{
+ "authors": [
+  "Zach"
+ ],
+ "identifier": "law-line-compile-authored-expression",
+ "injected_by": "Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-04",
+ "law": {
+  "activation": 0,
+  "applicationLog": [],
+  "authors": [
+   "Zach"
+  ],
+  "authority": 0,
+  "conditionMode": "all",
+  "conditionSubjects": [],
+  "drives": false,
+  "enabled": true,
+  "id": "law-line-compile-authored-expression",
+  "name": "Law Line · authored-expression",
+  "provenance": [
+   {
+    "directed": true,
+    "entityA": "law-line-compile-authored-expression",
+    "entityB": "Zach",
+    "events": [],
+    "type": "authored-by",
+    "weight": 1.0
+   }
+  ],
+  "retrigger": 0,
+  "scope": 0,
+  "targets": [
+   "terminal-channel"
+  ],
+  "conditionModel": {
+   "kind": 3,
+   "children": [
+    {
+     "kind": 0,
+     "path": "compilation.input.slot",
+     "op": 0,
+     "operand": "initializer"
+    },
+    {
+     "kind": 0,
+     "path": "compilation.input.group",
+     "op": 0,
+     "operand": "authored"
+    },
+    {
+     "kind": 0,
+     "path": "compilation.input.expression",
+     "op": 0,
+     "operand": true
+    },
+    {
+     "kind": 0,
+     "path": "compilation.input.opcode",
+     "op": 0,
+     "operand": "action.Create"
+    }
+   ]
+  },
+  "actionModel": {
+   "kind": 0,
+   "path": "compilation.template",
+   "operand": "{\"kind\": 5, \"children\": [{\"kind\": 12, \"propertyName\": {\"$slot\": \"/property\"}, \"operand\": {\"t\": \"none\"}}, {\"kind\": 8, \"path\": {\"$slot\": \"/property\"}, \"function\": {\"$slot\": \"/function\"}, \"bindings\": {\"$slot\": \"/bindings\"}}]}"
+  }
+ },
+ "triggers": [
+  "terminal-invocation-compilation-requested"
+ ]
+}
