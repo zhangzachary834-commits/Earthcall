@@ -73,6 +73,16 @@ std::optional<glm::vec3> unprojectNdcPoint(const MatrixValue& view,
                                            const MatrixValue& projection,
                                            const glm::vec3& ndc);
 
+
+std::optional<MatrixValue> cameraLookAt(const glm::vec3& eye,
+                                        const glm::vec3& target,
+                                        const glm::vec3& up);
+std::optional<MatrixValue> cameraPerspective(double verticalFovRadians,
+                                             double aspect,
+                                             double nearPlane,
+                                             double farPlane,
+                                             bool zeroToOneDepth);
+
 // Canonical affine mathematics. These functions own transform meaning; GLM is
 // only a representation/execution boundary. All affine transforms are 4x4
 // homogeneous matrices acting on column vectors.
