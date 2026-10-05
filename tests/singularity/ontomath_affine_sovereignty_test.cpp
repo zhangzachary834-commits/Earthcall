@@ -110,6 +110,36 @@ int main() {
     assert(near3(*dispatcherLocalB,
                  glm::vec3(legacyInverse * glm::vec4(dispatcherProbeB, 1.0f))));
 
+    // Rung-8 camera witnesses: OntoMath owns view/projection formulas while
+    // preserving the frozen GLM execution oracle.
+    const glm::vec3 cameraEye(4.0f, 3.0f, 8.0f);
+    const glm::vec3 cameraTarget(-1.0f, 0.5f, 0.0f);
+    const glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
+    const auto cameraView = OntoMath::cameraLookAt(cameraEye, cameraTarget, cameraUp);
+    assert(cameraView);
+    const auto cameraViewGlm = cameraView->toGlmMat4();
+    assert(cameraViewGlm);
+    const glm::mat4 cameraViewOracle = glm::lookAt(cameraEye, cameraTarget, cameraUp);
+    assert(nearMat4(*cameraViewGlm, cameraViewOracle));
+
+    const double cameraFov = glm::radians(61.0);
+    const double cameraAspect = 16.0 / 10.0;
+    const auto cameraProjection =
+        OntoMath::cameraPerspective(cameraFov, cameraAspect, 0.2, 600.0, false);
+    assert(cameraProjection);
+    const auto cameraProjectionGlm = cameraProjection->toGlmMat4();
+    assert(cameraProjectionGlm);
+    const glm::mat4 cameraProjectionOracle =
+        glm::perspectiveRH_NO(static_cast<float>(cameraFov),
+                              static_cast<float>(cameraAspect), 0.2f, 600.0f);
+    assert(nearMat4(*cameraProjectionGlm, cameraProjectionOracle));
+
+    assert(!OntoMath::cameraLookAt(cameraEye, cameraEye, cameraUp));
+    assert(!OntoMath::cameraLookAt(cameraEye, cameraTarget,
+                                   glm::normalize(cameraTarget - cameraEye)));
+    assert(!OntoMath::cameraPerspective(cameraFov, 0.0, 0.2, 600.0, false));
+    assert(!OntoMath::cameraPerspective(cameraFov, cameraAspect, 1.0, 0.5, false));
+
     // Rung-7 picking witness: OntoMath projective unprojection must preserve
     // the frozen legacy inverse(P * V) + homogeneous-divide formula.
     const glm::mat4 pickView = glm::lookAt(
