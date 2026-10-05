@@ -267,11 +267,13 @@ Singular* resolveBeingToken(const std::string& token, Singular& subject) {
 // first Zone the provider listed, which is the active one at boot.
 Zone* resolveZone(Singular& target) {
     if (auto* asZone = dynamic_cast<Zone*>(&target)) return asZone;
-    for (Singular* being : Universe::instance().beings()) {
-        if (being && being->getIdentifier() == "World") {
-            if (auto* z = dynamic_cast<Zone*>(being)) return z;
-        }
-    }
+    // EngineInit's Universe provider puts the active/rendered Zone first and
+    // then exposes inactive Zones for named reach and governance. A legacy
+    // spelling such as "World" cannot override that destination: doing so
+    // creates real, asset-visible Objects in a Zone the viewport never draws.
+    // Explicit Zone subjects still select their own destination above. Shared
+    // by Spawn, Create (including prototype birth), and AddRelation; guarded by
+    // law_creation_test, action_spawn_test, and the booted LawLine regression.
     for (Singular* being : Universe::instance().beings()) {
         if (auto* z = dynamic_cast<Zone*>(being)) return z;
     }

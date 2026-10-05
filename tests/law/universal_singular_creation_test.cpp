@@ -44,6 +44,7 @@ int main() {
         if (tier != TransferPolicy::Tier::Kernel) policy.setOpen(name, true);
     Object author("creation-author");
     Zone zone("universal-creation-zone", "Christ");
+    Zone inactiveWorld("World", "Christ");
     Zone* visible = &zone;
     auto a = std::make_shared<Object>("member-a");
     auto b = std::make_shared<Object>("member-b");
@@ -75,6 +76,7 @@ int main() {
         for (const auto& object : visible->objects()) beings.push_back(object.get());
         for (auto* member : visible->formation().getMembers()) beings.push_back(member);
         if (visible == &zone) for (auto* prototype : prototypes) beings.push_back(prototype);
+        beings.push_back(&inactiveWorld);
     });
     for (auto* prototype : prototypes) {
         Request request{*prototype, {a.get(), b.get()}, &author, nullptr, &zone, {}, {}, {}};
@@ -127,6 +129,7 @@ int main() {
     create.setActionModel(ActionNode::fromJson(node.toJson()));
     assert(create.applyTo(*a) == Law::ApplicationResult::Applied);
     auto* born = dynamic_cast<Singularity::Language::Lexeme*>(find(zone, "lexeme.authored-hope"));
+    assert(inactiveWorld.storedSingulars().empty());
     assert(born && born->getSymbol() == "hope");
     assert(born->getConceptualWeight() == 0.375f);
     PropertyValue focus;

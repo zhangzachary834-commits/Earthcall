@@ -107,6 +107,31 @@ void grammar() {
         assert(!LS::parse("on object-clicked then Create <Object, properties: {}>", v).ok);
     }
 
+    {
+        auto v = baseVocabulary();
+        nlohmann::json sensed;
+        v.compileInvocation = [&](const nlohmann::json& input, bool readOnly) {
+            sensed = input;
+            return LS::Compilation{ActionNode::publish(readOnly ? "preview" : "chosen-by-compiler"), "", {}};
+        };
+        auto p = LS::parse(R"(on tick then Lerp <path: "glow", operand: 10, factor: 0.25>)", v);
+        assert(p.ok && p.action->kind == ActionNode::Kind::Publish);
+        assert(sensed["slot"] == "arguments" && sensed["arguments"]["factor"] == 0.25);
+        p = LS::parse(R"(on tick then Sequence <children: [Set glow 1, Add glow 2]>)", v);
+        assert(p.ok && sensed["arguments"]["children"].size() == 2);
+        p = LS::parse(R"(on tick then Map <path: "glow", expression: @cube.hp + 2>)", v);
+        assert(p.ok && sensed["arguments"].contains("function") && sensed["arguments"]["bindings"].contains("@cube.hp"));
+        assert(!LS::parse(R"(on tick then Lerp <factor: 1, factor: 2>)", v).ok);
+        assert(!LS::parse(R"(on tick then Map <expression: 2, bindings: {}>)", v).ok);
+        std::string deep = "Set glow 1";
+        for (int depth = 0; depth < 33; ++depth) deep = "Sequence <children: [" + deep + "]>";
+        assert(!LS::parse("on tick then " + deep, v).ok);
+        v.compileInvocation = {};
+        assert(!LS::parse(R"(on tick then Lerp <path: "glow", operand: 1, factor: 0.25>)", v).ok);
+        for (int kind = 0; kind <= 25; ++kind)
+            assert(!LS::argumentTemplate(std::string("action.") + ActionNode::kindName(static_cast<ActionNode::Kind>(kind))).empty());
+    }
+
     // --- canonical spellings alone: the line works before any alias exists
     {
         const auto p = LS::parse("on object-clicked then set color 1 0 0", baseVocabulary());

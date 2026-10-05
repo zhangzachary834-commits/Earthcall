@@ -4,6 +4,7 @@
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 
 #include <cstdio>
+#include <cmath>
 #include <set>
 #include <string>
 #include <vector>
@@ -21,7 +22,7 @@ namespace {
 // WGSL note: select(falseValue, trueValue, condition) — the operand order is the
 // reverse of a C ternary, which is an easy way to invert a sign by accident.
 // ---------------------------------------------------------------------------
-const char* kPrimitives = R"WGSL(
+const char* kSdfBindings = R"WGSL(
 struct SdfInstanceData {
     model: mat4x4<f32>,
     invModel: mat4x4<f32>,
@@ -51,7 +52,10 @@ struct SdfInstanceData {
 // Positive-outside proof bitmap, packed 32 regular depth-N cells per u32.
 @group(1) @binding(2) var<storage, read> rangeProofWords: array<u32>;
 var<private> g_instIdx: u32;
+)WGSL";
 
+// Pure mathematical library shared by surface and direct Screen compilation.
+const char* kPrimitives = R"WGSL(
 fn dot2(v: vec2<f32>) -> f32 { return dot(v, v); }
 
 fn sdSphere(p: vec3<f32>, r: f32) -> f32 { return length(p) - r; }
@@ -314,6 +318,8 @@ struct Emit {
     int                next = 0; // next `let dN` temporary
     bool               sawExpr = false; // an implicit leaf appeared -> not a distance
     bool               bindTime = false; // expression-context capability, not authored state
+    bool               bindScreen = false; // physical framebuffer coordinate context
+    std::string        parameterOffset = "instances[g_instIdx].paramOffset";
     bool               bindOmega = false; // Rung-6 source angular radiance context
     bool               readOmega = false; // structural witness for source singularity handling
     bool               bindEmissionOmega = false; // V4 E_v owns a distinct omega context
@@ -341,7 +347,7 @@ struct Emit {
     // Record a number and return the WGSL expression that reads it.
     std::string param(float v) {
         char buf[128];
-        std::snprintf(buf, sizeof(buf), "P.v[instances[g_instIdx].paramOffset + %zu]", params.size());
+        std::snprintf(buf, sizeof(buf), "P.v[%s + %zu]", parameterOffset.c_str(), params.size());
         params.push_back(v);
         return buf;
     }
@@ -394,6 +400,14 @@ std::string emitRpn(const std::vector<geom::SdfToken>& rpn, Emit& e,
 // name but this compiler cannot bind is a REFUSAL, not "0.0": substituting zero
 // silently reinterprets f(t) as f(0), which is a different field.
 std::string pointComponent(const std::string& var, Emit& e, const std::string& pt) {
+    if (e.bindScreen) {
+        // SDF/Gradient rebind only p/x/y/z on the CPU. Other admitted scalars
+        // retain their original bindings, including normalized coordinates.
+        if (var == "u") return "(screenPoint.x / screen.size.x)";
+        if (var == "v") return "(screenPoint.y / screen.size.y)";
+        if (var == "width") return "screen.size.x";
+        if (var == "height") return "screen.size.y";
+    }
     if (var == "x" || var == "y" || var == "z") return "(" + pt + ")." + var;
     if (var == OntoMath::kTimeVar) {
         if (e.bindTime) return e.timeExpression;
@@ -1531,7 +1545,7 @@ fn sourceTransportSignedStep(p: vec3<f32>, damping: f32) -> f32 {
                 sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
             gradLen = length(g);
         }
-        return select(s.raw, s.raw / gradLen, gradLen > 1e-6);
+        return select(s.raw, s.raw / max(gradLen, 1.0), gradLen > 1e-6);
     }
     return sdfEval(p);
 }
@@ -1760,7 +1774,7 @@ fn fs(in: VSOut) -> FSOut {
                     sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
                 gl = length(g);
             }
-            d = select(raw, raw / max(gl, 0.3333), gl > 1e-6);
+            d = select(raw, raw / max(gl, 1.0), gl > 1e-6);
 
             if (d <= 0.0 || abs(d) < current_eps) {
                 hit = true;
@@ -1781,6 +1795,13 @@ fn fs(in: VSOut) -> FSOut {
             raw = sdfEval(p);
             d = raw;
 
+            if (omega > 1.0 && (d < 0.0 || d + prev_d < candidate_step)) {
+                t = t - candidate_step + prev_d;
+                omega = 1.0;
+                candidate_step = 0.0;
+                continue;
+            }
+
             if (d <= 0.0 || abs(d) < current_eps) {
                 hit = true;
                 if (d < 0.0 && prev_d > 0.0 && candidate_step > 0.0) {
@@ -1788,13 +1809,6 @@ fn fs(in: VSOut) -> FSOut {
                     t = (t - candidate_step) + candidate_step * frac;
                 }
                 break;
-            }
-
-            if (omega > 1.0 && d + prev_d < candidate_step) {
-                t = t - candidate_step + prev_d;
-                omega = 1.0;
-                candidate_step = 0.0;
-                continue;
             }
 
             prev_d = d;
@@ -2024,6 +2038,103 @@ fn fs(in: VSOut) -> FSOut {
 )WGSL";
 
 } // namespace
+
+Program compileScreenForm(const OntoMath::Piecewise& color,
+                          const OntoMath::Piecewise* opacity, bool bindTime) {
+    Program prog;
+    Emit e;
+    e.bindScreen = true;
+    e.bindTime = bindTime;
+    e.timeExpression = "screen.time.x";
+    e.parameterOffset = "0u";
+    OntoMath::TypeEnv env{{"p", OntoMath::ValueKind::Vector}};
+    for (const char* name : {"x", "y", "z", "u", "v", "width", "height"})
+        env[name] = OntoMath::ValueKind::Scalar;
+    if (bindTime) env["t"] = OntoMath::ValueKind::Scalar;
+
+    // Reuse the mathematical emitter, but preserve definedness separately from
+    // value: a hole means no Screen act, not an invented black sample. Pure
+    // whereLEZero admits arbitrary regions; world guards/calls/folds must be
+    // resolved by Law before crossing this parallel fragment boundary.
+    auto lower = [&](const OntoMath::Piecewise& form, bool vector) {
+        std::string body;
+        const auto kind = vector ? OntoMath::ValueKind::Vector : OntoMath::ValueKind::Scalar;
+        if (form.pieces.empty()) e.refuse("direct Screen expression has no pieces");
+        for (const auto& piece : form.pieces) {
+            if (piece.guard || piece.call || piece.fold) {
+                e.refuse("direct Screen refuses unresolved world guards, calls and folds");
+                break;
+            }
+            std::string why;
+            OntoMath::ValueKind actual = OntoMath::ValueKind::Unknown;
+            if (!piece.mathNode || !piece.mathNode->checkTypes(env, why, &actual, false) || actual != kind) {
+                e.refuse("direct Screen value must be " + std::string(OntoMath::valueKindName(kind)) + ": " + why);
+                break;
+            }
+            std::string condition = "true";
+            if (piece.hasLo || piece.hasHi) {
+                const auto it = env.find(form.inputVariable);
+                if (it == env.end() || it->second != OntoMath::ValueKind::Scalar) {
+                    e.refuse("direct Screen interval coordinate is unbound: " + form.inputVariable);
+                    break;
+                }
+                const std::string coordinate = pointComponent(form.inputVariable, e, "p");
+                if (piece.hasLo) condition += " && " + coordinate + (piece.includeLo ? " >= " : " > ") + e.param(piece.lo);
+                if (piece.hasHi) condition += " && " + coordinate + (piece.includeHi ? " <= " : " < ") + e.param(piece.hi);
+            }
+            if (piece.whereLEZero) {
+                if (!piece.whereLEZero->checkTypes(env, why, &actual, false) || actual != OntoMath::ValueKind::Scalar) {
+                    e.refuse("direct Screen region selector must be Scalar: " + why);
+                    break;
+                }
+                condition += " && (" + emitMathNode(*piece.whereLEZero, e, "p") + ") <= 0.0";
+            }
+            const std::string value = emitMathNode(*piece.mathNode, e, "p");
+            body += "    if (" + condition + ") { return " +
+                (vector ? "vec4<f32>(" + value + ", 1.0)" : value) + "; }\n";
+        }
+        body += vector ? "    return vec4<f32>(0.0);\n" : "    return 0.0;\n";
+        return body;
+    };
+    const std::string colorBody = lower(color, true);
+    const std::string opacityBody = opacity ? lower(*opacity, false) : "    return 1.0;\n";
+    for (float number : e.params)
+        if (!std::isfinite(number)) e.refuse("direct Screen parameter is not finite float32");
+    prog.ok = !e.refused;
+    prog.error = e.refusal;
+    prog.params = std::move(e.params);
+    if (!prog.ok) return prog;
+    // The fullscreen triangle merely launches one invocation per framebuffer
+    // sample. It is Kernel machinery, never an authored Shape or rectangle.
+    prog.wgsl = R"WGSL(
+struct ScreenCoordinates { size: vec4<f32>, time: vec4<f32> };
+struct Parameters { v: array<f32> };
+@group(0) @binding(0) var<uniform> screen: ScreenCoordinates;
+@group(0) @binding(1) var<storage, read> P: Parameters;
+var<private> screenPoint: vec3<f32>;
+)WGSL";
+    prog.wgsl += kPrimitives;
+    prog.wgsl += "fn screenColor(p: vec3<f32>) -> vec4<f32> {\n" + colorBody + "}\n";
+    prog.wgsl += "fn screenOpacity(p: vec3<f32>) -> f32 {\n" + opacityBody + "}\n";
+    prog.wgsl += R"WGSL(
+@vertex fn vs(@builtin(vertex_index) vertex: u32) -> @builtin(position) vec4<f32> {
+    var positions = array<vec2<f32>, 3>(vec2<f32>(-1.0,-1.0), vec2<f32>(3.0,-1.0), vec2<f32>(-1.0,3.0));
+    return vec4<f32>(positions[vertex], 0.0, 1.0);
+}
+@fragment fn fs(@builtin(position) pixel: vec4<f32>) -> @location(0) vec4<f32> {
+    let p = vec3<f32>(pixel.xy, 0.0);
+    screenPoint = p;
+    let color = screenColor(p);
+    let opacity = screenOpacity(p);
+    // Undefined, NaN and infinite samples produce no act. The destination's
+    // representable color range is the hardware UNORM conversion boundary.
+    if (color.a == 0.0 || !(opacity > 0.0) || !(opacity <= 3.402823e38) ||
+        !all(abs(color.rgb) <= vec3<f32>(3.402823e38))) { discard; }
+    return vec4<f32>(color.rgb, clamp(opacity, 0.0, 1.0));
+}
+)WGSL";
+    return prog;
+}
 
 ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
                                                bool bindTime) {
@@ -2557,7 +2668,7 @@ Program compile(const geom::SdfNode& root,
     }
 
     Program prog;
-    prog.wgsl = kPrimitives;
+    prog.wgsl = std::string(kSdfBindings) + kPrimitives;
 
     if (hasAnalyticGrad) {
         prog.wgsl += evalGradFunc;

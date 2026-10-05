@@ -88,6 +88,20 @@ struct BootedEngineHarness {
                 if (category) beings.push_back(category.get());
             }
             beings.push_back(&player);
+            // EngineInit exposes inactive Zones for named reach/governance.
+            // Omitting them hid resolveZone's stale preference for "World":
+            // native Create sent newborns there instead of the visible Zone.
+            // Keep this domain aligned with EngineInit.cpp, including fields.
+            if (auto* field = active->spatialRoot()) beings.push_back(field);
+            for (const auto& field : active->additionalSpatialFields())
+                if (field) beings.push_back(field.get());
+            for (const auto& zone : zones.zones()) {
+                if (!zone || zone.get() == active.get()) continue;
+                beings.push_back(zone.get());
+                if (auto* field = zone->spatialRoot()) beings.push_back(field);
+                for (const auto& field : zone->additionalSpatialFields())
+                    if (field) beings.push_back(field.get());
+            }
             // Total named reach for the Zone's authored Singulars. Keep this
             // enumeration aligned with Singularity/Core/EngineInit.cpp: Create
             // prototypes must not be vocabulary-visible but PropertyPath-invisible.

@@ -23,7 +23,11 @@ int main() {
     
     // 2. Create world and player
     Zone world("test-zone", "default");
+    Zone inactiveWorld("World", "default");
     Object player;
+    Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+        beings = {&world, &player, &inactiveWorld};
+    });
     
     // 3. Create a Spawn ActionNode
     ActionNode node;
@@ -41,7 +45,13 @@ int main() {
     
     // Assert it worked
     assert(world.getOwnedObjects().size() == 1);
-    std::cout << "SUCCESS! 1 object spawned into the world." << std::endl;
+    executor(event, player);
+    assert(world.getOwnedObjects().size() == 2);
+    assert(inactiveWorld.getOwnedObjects().empty());
+    executor(event, inactiveWorld);
+    assert(inactiveWorld.getOwnedObjects().size() == 1);
+    Universe::instance().setProvider(nullptr);
+    std::cout << "SUCCESS! Spawn respects active and explicit Zone destinations." << std::endl;
     
     return 0;
 }

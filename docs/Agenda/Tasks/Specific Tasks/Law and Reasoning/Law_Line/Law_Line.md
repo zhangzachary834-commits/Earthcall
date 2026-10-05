@@ -5,6 +5,11 @@
 
 ## Status
 
+- **Practical guide (2026-10-05):** [Writing Earthcall Laws for humans and agents](../../../../../architecture/law/LAW_AUTHORING_CLI_GUIDE.md) supplies beginner lessons, creation and property recipes, ordered programs, all 26 action kinds, troubleshooting, and the authored compiler workflow; see [the guide record](#authoring-guide-2026-10-05).
+
+- **Invisible Create fix (2026-10-05):** Zach's Objects and face assets existed but neither below-me nor view-relative cubes appeared. The birth resolver preferred inactive `World` over the active rendered Zone. That name preference is removed; the boot harness now includes inactive Zones and a full Engine/Terminal/Metalaw viewport capture shows the gold probe. Restart the rebuilt app to load the correction; [audit and native evidence](../../../../../audits/LAW_CREATE_ACTIVE_ZONE_ROUTING_FIX_2026-10-05.md). Existing Person-authored Laws and saves were not edited.
+- **Person confirmation and sky spiral (2026-10-05):** Zach confirmed visible cube creation and the original Stairmaker now work; [the three-Law add-on](../../../../../../examples/law_line_sky_stairway.txt) grows branching eight-stone spirals with hover turns and colour restoration, verified alongside the original program through 162 focused checks and a full native Engine capture ([audit](../../../../../audits/SKY_STAIRWAY_AUTHORED_PROGRAM_2026-10-05.md)).
+
 - **Rung 1 (2026-09-25):** built. Zach witnessed it: the "Red" sentence authored a Law, and the Law Graph showed the object-clicked trigger, `hp > 2`, and `set color 1 0 0`.
 - **Rung 2 (2026-09-25, same day):** an ergonomic line, and more authored words.
   - Zach asked for: "tab should be able to actually select one and arrow keys should be able to move between them … like claude code cli … show me stuff temporarily without sending as a full message … think about other design and ergonomics".
@@ -19,7 +24,7 @@ Type a single line in `LawLine`:
 called Beneath Me when clicked then Create <Object, properties: {shape.kind: Cube, position: my.position + (0, -3, 0), color: gold, authored: {purpose: "A foothold"}}>
 ```
 
-Clicking an object supplies the trigger. The newborn's **centre** takes the speaking author's current `position` minus three on Y at each firing; this is not a camera/feet measurement or a fixed coordinate captured when the sentence was entered. Add `if Identity @law-line-cube` before `then` to listen only to clicks on the seeded cube. Add `?` to inspect syntax without compiling or creating a Law. A syntax preview explicitly says compilation is deferred; it does not claim to have evaluated Metalaws. Save Zone retains the compiled Law and newborns.
+Clicking an object supplies the trigger. The newborn's **centre** takes the speaking author's current `position` minus three on Y at each firing, rather than a fixed coordinate captured when the sentence was entered. In the production locomotion channel that Person position is at the feet, with the camera above it by Body.eyeHeight; the newborn can therefore be below the floor. Add `if Identity @law-line-cube` before `then` to listen only to clicks on the seeded cube. Add `?` to inspect syntax without compiling or creating a Law. A syntax preview explicitly says compilation is deferred; it does not claim to have evaluated Metalaws. Save Zone retains the compiled Law and newborns.
 
 Flat initializers, or those inside `registered: {…}`, address existing property paths (e.g. `shape.kind`, not `shapeKind`). `authored: {…}` grants properties through the ordinary AddProperty action. Values include authored value words, quoted strings, booleans, finite numbers, parenthesized vector triples, literal lists/dictionaries, qualified property reads, and `+`, `-`, `*`, `/` expressions lowered to the existing typed OntoMath tree. Lists remain lists; `(1, 2, 3)` is a vector. Container entries must be literals; general dynamic container construction/alias topology remains in the Property storage task. Use whitespace around arithmetic on qualified paths because hyphens are also identifier characters.
 
@@ -40,6 +45,30 @@ Future agents: edit the six `law-line-compile-*` models to change compilation po
 The seed added **nine Law roots, three Lexemes, three denotes Relations, and nine lawRefs**, authored by **Zach** and injected by **Codex / GPT-6.1 Sol**. Existing Zone bytes are preserved by insertion into its root arrays. Original bytes are retained under `scratch/backups/law-line/`; existing Law roots were not rewritten. Seed rerun is idempotent. The WebGPU app built and seven focused tests passed, with `law_line_zone_test` at 65/65 checks; live Person acceptance is pending. Source: `scripts/seed_law_line.py`; automated evidence and remaining Person checks are recorded in [the audit](../../../../../audits/LAW_LINE_CREATE_METALAW_2026-10-04.md) and [Person Verification](../../../For%20Zach/Person%20Verification%20List.md).
 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 18:46 PDT — implementation of Zach's general Create notation and Metalaw compilation requirement.*
+
+## Continuous cubes below the author — 2026-10-05
+
+Zach reported that the supplied continuously firing Law was created but no cubes appeared. That example used `Identity @Zach`; Identity compares the exact `getIdentifier()`, while a keyed Person's identifier is a `did:earthcall:…` value, not their display name. The previous unkeyed test Person concealed this mismatch. Do not loosen Identity or treat a display name as an identity alias.
+
+The corrected [single-line example](../../../../../../examples/law_line_cubes_below.txt) is:
+
+```text
+called "Cubes Below Me" always if is a Person then Create <Object, properties: {shape.kind: Cube, position: my.position + (0, -3, 0), color: gold}>
+```
+
+`always` selects WhileTrue; the Person condition prevents each new Object from also becoming a spawning subject. In the current one-Person runtime it creates one cube each tick, with its centre three Y units below the actual speaking author. In a future multi-Person domain this condition matches each Person, while `my` still denotes the author; it is not an author-identity restriction. New cubes overlap while the author stands still and may be beneath the floor. This example is deliberately continuous, with no automatic stopping condition.
+
+The regression uses a test-only keyed Person and the actual Terminal → authored compiler Metalaws → LawManager tick path: the old exact-name guard creates nothing, the corrected example creates exactly one cube on each of two ticks, and the second placement follows the changed author position. `law_line_zone_test` passed. No production engine code, user-authored Laws, or inhabited saves were changed for this correction. The engine bridge was offline; native visibility remains a Person check.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 10:25 PDT — correction of the example supplied in response to Zach's continuous creation request.*
+
+### Native visibility witness — 2026-10-05
+
+Zach subsequently confirmed continuous firing and increasing Object count while seeing no cube below him. The [native WebGPU audit](../../../../../audits/LAW_LINE_CUBE_VISIBILITY_2026-10-05.md) submits the real example in an isolated LawLine fixture and draws the actual newborn. With the camera looking straight down, the cube changes 1,452 framebuffer bytes without a floor, while placing a floor at feet height hides every cube pixel. This proves the placement can render correctly while remaining occluded; it is not a capture of Zach's scene. F toggles flight and Space ascends, so a Person can rise more than three units above the floor and look down to check newly created cubes. Do not change the compiler to move below-feet creation above the floor.
+
+Zach also reported that `(0, 3, 0)` remained invisible. This keeps his scene diagnosis open: overhead placement can be outside the view. The separately tested `examples/law_line_visible_probe.txt` uses `becomes true` to create one cube at `my.cameraPos + my.cameraForward * 3`. With first-person perspective (1) and a level aim, it should appear directly ahead. The native probe verifies exact placement, no repeat birth on a second tick, and 2,393 changed framebuffer bytes with the floor present. Ask for the actual scene and newest Object position if this probe also remains invisible; do not claim this fixture resolves every live visibility failure.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 11:28 PDT.*
 
 ## How to use it
 
@@ -125,7 +154,7 @@ Zach chose these from a proposal; he deferred typo-fixing and usage ranking ("ne
 
 - **A word is a Lexeme that `denotes` a Law.** Add a Lexeme, add a Law, and relate them with `denotes`; the word works immediately. The menu's description is the Law's name.
   - **Action/operator words:** a Law whose model has an **open slot**. A Set with no path is an action word ("set", "make"). A Compare with no path is an operator ("greater than").
-  - **Complete action fragments (2026-09-27):** an action-only Law with no trigger, condition, non-default scope/activation, Drive flag, targets, or jurisdiction can contribute its exact ActionModel wherever an action is expected. `Create` with nested children and `WritePixel` work through the same `denotes` Relation; a Metalaw resolves a shared spelling. These are not seeded into the Law Line Zone yet.
+  - **Complete action fragments (2026-09-27):** an action-only Law with no trigger, condition, non-default scope/activation, Drive flag, targets, or jurisdiction can contribute its exact ActionModel wherever an action is expected. `Create` with nested children and `WritePixel` work through the same `denotes` Relation; a Metalaw resolves a shared spelling. Parameterized Create and the channel-action words are now seeded (2026-10-04/05); complete closed fragments still retain their exact authored trees.
   - **Value words:** a Set with **no path but a value**. "red" → (1, 0, 0); "on"/"yes" → true; "off"/"no" → false. "on" is also the structural trigger word, and the grammar position tells them apart.
   - **Presets:** a Law whose clauses must be kept together. It fixes activation, scope, triggers, and any condition or action. Examples: "my event-triggered law", "always", "when clicked", "on hover", "when touched", "when I land", "when I jump". The empty `All()` fixes "no condition".
 - **A Lexeme is any unit:** a phrase ("my law that fires when it becomes true"), a symbol run, a keyboard smash, a bound prefix `re-`, or a bound suffix `-ly`.
@@ -140,7 +169,7 @@ Zach chose these from a proposal; he deferred typo-fixing and usage ranking ("ne
 - [ ] **The line trusts its stdin, and stdin can lie** (Astra's Crystal §13, conceded in *The Terminal That Was Built Writes Back*). Anything that types into the Terminal, including a test process, authors as the Person `@interaction-channel.personId` names. A non-Person writer should arrive as a registered First Mover under a Person's grant, the same discipline as MCP.
 - [x] **Fixed 2026-09-30 when it actually happened** (Zach keyed, and every Law authored "Zach" stopped resolving, including the Identity Zone's own Law). `Identity::personAnswersTo` bridges an old author name to a keyed Person **only** through the migration ledger, the same bridge Home reclaim uses. Boot treats a legacy profile the ledger signed over to a keyed profile on disk as superseded. Witness: `terminal_zones_test` 7b. Mythos's `was-called` Claim would make the ledger itself signed. Original item: **A spoken Law must survive its author getting a key** (Mythos, Interaction as Law thread, 2026-09-25). Spoken Laws record the author by the identifier `@interaction-channel.personId` resolves to *now*. That is spelling-resolved causation, and it unbinds when Zach takes a key. Untested. The fix is the `was-called` Claim Mythos proposed in `Succession_Is_Not_In_The_World`.
 - [ ] `set x to @other.path`: waits for the PropertyPath binding algebra ("copy value", [Property_Storage_and_OntoMath_Binding](../../Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)). The refusal already points there.
-- [ ] Extend initializer arithmetic notation to general Map/Flow/Drive/Zone condition sentences; general Create initializer expressions are implemented above.
+- [ ] Extend arithmetic notation to Zone conditions and richer bounded-function authoring; Create initialization and named Map/Flow expressions plus Drive curve arguments are implemented.
 - [ ] Timeline clauses (after the Law/Timeline ontology; TIME_AND_MOMENT.md).
 - [ ] Multi-line Python-style blocks (`when any:` / `then:` with indentation) for long chains. The editor would need Shift-Enter or a trailing `:` continuation.
 - [ ] Undo of the last spoken Law as an authored act (a Lexeme denoting a Law that retires a Law), not a verb.
@@ -208,7 +237,7 @@ Zach chose these from a proposal; he deferred typo-fixing and usage ranking ("ne
 Zach requested multiple Law sentences in one submitted line, registered in the order written, plus add/remove/modify property. Separate complete sentences with top-level `;`:
 
 ```text
-called "Add Note" when clicked then add property @law-line-cube.note to "hello"; called "Change Note" when hovered then modify property @law-line-cube.note to "updated"; called "Remove Note" when unhovered then remove property @law-line-cube.note
+called "Add Note" when clicked then add property @law-line-cube.note to "hello"; called "Change Note" when hovered then modify property @law-line-cube.note to "updated"; called "Remove Note" when the pointer leaves then remove property @law-line-cube.note
 ```
 
 The saved `law-line-compile-sentences` Metalaw conditions on `compilation.input.slot = "sentences"` and `opcode = "sentence.batch"`, and supplies `{"sentences":{"$slot":"/sentences"}}` through `compilation.template`. The channel senses delimiter structure, asks the existing generic Metalaw template seam for the document, validates the exact once-only source order, parses every sentence, and registers through the existing `enact` path. Missing/disabled compiler, conflicting outputs, empty sentences, or invalid later syntax refuses registration. Compiler provenance is retained on every new Law. There is no automatic batch fallback. Registration order does not promise event agenda firing order; use `then ... and ...` within one Law when ordered action execution is required.
@@ -222,3 +251,74 @@ All sentences are parsed before any are registered. Registration itself retains 
 The seed append adds three Lexemes and their denotes Relations to the existing LawLine Zone and adds the sentence compiler Law root. Zach is the recorded author; Codex is the injector. Old Zone bytes are preserved, backed up outside saves, and atomically patched; existing Law roots are kept.
 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 19:46 PDT — implementation of Zach's ordered sentence and property vocabulary request.*
+
+## Named arguments for the remaining action kinds (2026-10-05)
+
+Zach requested argument forms for the missing action-operator kinds. Sixteen new Lexemes denote ordinary action Laws carrying authored `sentence.arguments` signatures; sixteen `law-line-compile-args-*` Metalaws compile their argument records. Their signatures and mapping into ActionModel fields live in saved authored data, not a per-kind parser branch.
+
+| Operator | Argument form |
+|---|---|
+| Lerp | `<path: "‹path›", operand: ‹value›, factor: ‹number›>` |
+| Drive | `<path: "‹path›", curve: {form: 1, coeffs: [0, 1]}, input: "‹path›">` |
+| Sequence | `<children: [‹action›, ‹action›]>` |
+| Parallel | `<children: [‹action›, ‹action›]>` |
+| Map | `<path: "‹path›", expression: ‹expression›>` |
+| Flow | `<path: "‹path›", expression: ‹rate expression›>` |
+| AddElement | `<container: "‹being›", element: "‹being›">` |
+| RemoveElement | `<container: "‹being›", element: "‹being›">` |
+| Synthesize | `<children: [‹action›, ‹action›]>` |
+| PlayAudio | `<frequencyPath: "‹path›", amplitudePath: "‹path›", timbre: "sine">` |
+| AuthorZone | `<identifier: "‹identifier›", zoneKind: "‹authored kind›", owner: "‹being›", ownerKind: "‹kind›">` |
+| WritePixel | `<facePath: "‹path›", uPath: "‹path›", vPath: "‹path›", colorPath: "‹path›">` |
+| ElevatePixels | `<name: "‹property›", facePath: "‹path›", selector: {‹Piecewise model›}>` |
+| FileRead | `<input: "‹file path property›", path: "‹destination property›">` |
+| FileWrite | `<path: "‹file path property›", input: "‹content property›">` |
+| CodecTransform | `<operation: "‹codec operation›", input: "‹source property›", path: "‹destination property›">` |
+
+For example, these are complete Law sentences:
+
+```text
+called "Blend Glow" when clicked then Lerp <path: "@law-line-cube.glow", operand: 1, factor: 0.25>
+called "Mapped Glow" when hovered then Map <path: "@law-line-cube.glow", expression: @law-line-cube.hp + 2>
+called "Ordered Glow" when clicked then Sequence <children: [Set glow to 2, Add glow by 3]>
+```
+
+Use a top-level `;` to submit several at once. A trailing `?` remains a read-only syntax preview. Quoted path/token arguments are literal references, read later by the action; `expression:` is the generic arithmetic form for Map/Flow and builds the existing Piecewise and MathBindings. `children:` takes nested action sentences, including parameterized Create. Literal dictionaries/lists preserve model structure; vectors retain the typed vector envelope. Drive accepts its existing CurveModel record: form 0 constant, 1 polynomial, 2 sinusoid. ElevatePixels accepts the existing Piecewise selector record with local coordinates, guards, and bounds; this pass does not invent a separate region language. File and codec arguments identify properties holding file names, contents, and source values; CodecTransform operation names are existing codec properties such as `jsonCompact`, `jsonPretty`, or `base64`.
+
+The generic template seam supports `$slot` JSON pointers plus an authored `$default` for optional inputs. Missing required inputs, duplicate arguments, unconsumed arguments, malformed models, or absent compiler Metalaws refuse. Optional owner/container/input/timbre values remain visible in compiler templates. A word with an authored signature cannot become an empty action merely by omitting its arguments. Complete closed fragments without that metadata retain their exact existing models. Completion displays the authored signature and merges canonical duplicates with the same spelling/opcode rather than inventing ambiguity.
+
+Runtime execution still uses existing ActionModel behavior and channel/TransferPolicy gates. Authoring a pixel, sound, file, or Zone action does not prove the channel accepted its later execution. Flow's expression syntax is available, but bounded continuous behavior still requires an appropriately authored Piecewise domain and activation; an unbounded constant-rate sample is a syntax example, not a recommended indefinite session. Registration and Save Zone semantics are unchanged.
+
+Save additions: 16 Lexemes, 16 denotes Relations, and 32 Law roots/references, all added to the existing LawLine closure under Zach's authorship with Codex injector attribution. Existing Zone bytes and Law roots are preserved; backups remain outside saves. Native interactive verification is recorded separately in the Person Verification List.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 00:09 PDT — Zach's missing action arguments request.*
+
+## Click-local stairway example correction (2026-10-05)
+
+Zach pasted the supplied four-sentence stairway and reported that clicking the cube did nothing. The original example restricted its maker Law to `Identity @law-line-cube`, while `enter LawLine` moves the Terminal line only, so another visible cube does not satisfy that condition. Its `my.position + (0, -3, 0)` placement can also leave new cubes below the floor. The exact original line does author and execute in isolation when its named cube is clicked; this is an example/context mismatch, not evidence of a broken compiler.
+
+The corrected [one-line example](../../../../../../examples/law_line_stairway.txt) uses `if not stair is true` so any clicked unmarked cube is a launcher. Its Create children read `@event.subject.position` and place three steps at offsets `(0, 1, 0)`, `(1, 2, 0)`, `(2, 3, 0)`, above the clicked cube. Hover paints a marked step gold, departure paints it blue, and clicking one raises it by 0.5 without recursively spawning more. Start the app, `enter LawLine`, and submit the file's single line; expect four numbered authored acknowledgments, then click a visible cube. Save Zone still controls persistence. Previously saved duplicate Laws can still affect the same events; this pass does not delete or disable a Person's program.
+
+The regression test loads the actual example file, authors it through Terminal's saved Metalaws, and sends pointer press/release through `InteractionChannel::observePending` and LawManager's event agenda. It verifies all three positions and the hover/leave/click effects. Earlier independent test fixture click Laws are disabled in the isolated test world before measuring this example. The engine was offline during diagnosis, so there is no claim of native pixel verification or confirmation of which cube Zach clicked. No production engine code or Person save was changed to fix this example.
+
+## Sky spiral add-on (2026-10-05)
+
+Zach confirmed the original Stairmaker works and asked for a cooler program. Keep the original four Laws enabled, submit `examples/law_line_sky_stairway.txt` once, then click an existing step. Eight cyan/violet flattened stones rise around a square spiral, ending in gold. Click any newly created stone to grow another turn from it; a stone grows its branch once, using visible authored `skyGrown` state. Hover highlights a jewel gold and turns it 25 degrees; departure restores its authored colour and orientation. The original click-to-rise behaviour remains active. The add-on requires no new compiler vocabulary or app rebuild; Save Zone persists submitted Laws and births.
+
+The new line compiles through the same authored Metalaws, includes only three additional Laws, and uses existing ellipsoid manifestation (`shape.kind: 5`) rather than pretending cube radius parameters reshape a cube. The real pointer-channel regression keeps the original four Laws live throughout the add-on checks. Native proof and fixture authorship are in [the audit](../../../../../audits/SKY_STAIRWAY_AUTHORED_PROGRAM_2026-10-05.md). Enhanced Person appearance/gesture/durability checks remain open.
+
+### Reactive hover follow-up
+
+An exploratory `always if skyStep is true and hovered is true then Flow <path: "rotation.y", expression: 45>` authored a valid WhileTrue/Everyone Law and rotated a hovering jewel when applied directly, but its reactive application log remained empty. `hovered` read true and the world clock had positive delta in that fixture. Investigate candidate/fact propagation for this registered derived property before offering continuously hovering animations; read `docs/architecture/law/PROPHETIC_RETE.md` and `DERIVED_STATE_LEDGER.md` before changing the index. Preserve the final event-based add-on and its pointer/native consumers. This is an observation from the exploratory fixture, not proof of a general engine-wide failure.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 00:47 PDT — correction of the supplied example following Zach's failed CLI attempt.*
+
+## Authoring guide — 2026-10-05
+
+Zach asked for a guide that humans and agents can learn from. [The guide](../../../../../architecture/law/LAW_AUTHORING_CLI_GUIDE.md) starts with a clicked colour change and progresses through preview, addressing, activation, authored state, Create, composition, and the maintained Stairmaker example files. Its agent section points to the shared structural parser, authored signatures/templates, authority boundaries, and isolated verification surfaces. It distinguishes acceptance, firing, manifestation, and persistence, including the keyed identity and inactive-World errors uncovered with Zach. No world saves are edited by this documentation pass.
+
+Verification: the guide's 13 executable lesson lines adopted the expected 17 Laws through the real Terminal/compiler path in a scratch copy of the isolated harness; preview adopted none, and all 176/176 checks passed (162 existing + 14 guide checks). [Result](../../../../../../scratch/verification/law-authoring-guide-2026-10-05/result.json). This is submission evidence plus existing functional checks, not a new native or advanced-channel witness.
+
+Beginner readability and a first exercise followed by Save Zone/restart are tracked in [Person Verification](../../../For%20Zach/Person%20Verification%20List.md). Future agents: update the guide alongside changed authored signatures or parser semantics, verify its executable snippets through the real Terminal/Metalaw path, and retain the distinction between placeholder signatures and proven runtime programs.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 13:16 PDT — Zach requested the guide; Codex organized the lessons and reference from current source and the preceding authored programs.*

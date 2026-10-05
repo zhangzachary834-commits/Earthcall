@@ -194,3 +194,21 @@ The stress witness is intentionally Chess-shaped and adversarial: 32 category me
 Pre-Direct repeatedly re-proves membership; Direct proves once and evaluates the residual. The test
 requires semantic parity, >=98% graph-query/fan-out elimination, >=2x wall-time speedup, and rapid
 amortization of the one-time promotion cost.
+
+
+## Direct Screen pipeline cache (2026-10-04)
+
+`WebGpuRenderer::_screenPipes` stores Kernel driver objects keyed by the complete emitted
+WGSL for a direct OntoMath Screen expression. Operator/coordinate/piece/selector changes
+select a different key; numeric coefficients and bounds remain storage-buffer values.
+`drawScreenForm` traverses current expression contents and uploads current parameters on
+every submission, so pointer identity is never an invalidation proof. Failed bindings,
+unsupported expressions, and source removal never draw a prior cached expression.
+Resources are released on renderer shutdown. CPU traversal and parameter uploads
+remain optimization work; future memoization must preserve this content-sensitive
+contract. The production-object witness is
+`scratch/probes/direct_screen_form_probe.py` (independent CPU evaluation plus native
+readback, structural/numeric edits and refusal/withdrawal).
+
+Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-04 21:10 PDT; Zach requested the direct medium under Refusals 1, 3 and 7.
