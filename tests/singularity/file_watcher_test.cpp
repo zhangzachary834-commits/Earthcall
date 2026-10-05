@@ -1,3 +1,19 @@
+// Witness verification test for FileWatcher runtime path
+//
+// WITNESS ANALYSIS:
+// What the existing unit test proved:
+//   Cases 1-4 directly invoked `FileWatcher::checkNow()` to verify internal diffing,
+//   event creation, callback dispatch, property values, and file extension filtering.
+//
+// What the existing unit test COULD NOT prove:
+//   It did not exercise `FileWatcher::tick()`, which is the actual production runtime
+//   entry point called inside `EngineRender.cpp` every frame. Because `tick()` implements
+//   time-interval gating (`_pollIntervalMs`), calling `checkNow()` in tests bypassed this
+//   production gating mechanism entirely, leaving time-based polling unverified in the test suite.
+//
+// Case 5 traverses the real runtime path (`tick()`) and proves that time-interval gating
+// functions properly under production frame tick conditions.
+
 #include "Singularity/Storage/FileWatcher.hpp"
 #include "Singularity/Storage/VirtualFileSystem.hpp"
 #include "Singularity/Core/EventBus.hpp"
@@ -148,6 +164,41 @@ int main() {
     lawGetValue(*watcher, PropertyPath::parse("watcher.filesTracked"), val);
     check(std::get<double>(val) == 1.0, "With .wgsl filter, only 1 file is tracked");
 
+    // -----------------------------------------------------------------------
+    // Case 5: Real Application Runtime Path Verification via FileWatcher::tick()
+    // -----------------------------------------------------------------------
+    // Reset filter extension to track all files again
+    lawSetValue(*watcher, PropertyPath::parse("watcher.filterExtension"), PropertyValue(std::string("")));
+    watcher->rescanBaseline();
+
+    lawSetValue(*watcher, PropertyPath::parse("watcher.pollIntervalMs"), PropertyValue(50.0));
+
+    // Establish a baseline poll timestamp via tick()
+    watcher->tick();
+
+    receivedType.clear();
+    receivedPath.clear();
+
+    // Modify fileA
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    {
+        std::ofstream a(fileA, std::ios::app);
+        a << "// tick test modification\n";
+    }
+
+    // Call tick() immediately before pollIntervalMs (50ms) has elapsed (~20ms elapsed).
+    // It should be gated by _pollIntervalMs and NOT trigger a scan yet.
+    watcher->tick();
+    check(receivedType.empty(), "tick() correctly gated scan when invoked before pollIntervalMs elapsed");
+
+    // Sleep past pollIntervalMs (40ms + 20ms = 60ms total)
+    std::this_thread::sleep_for(std::chrono::milliseconds(40));
+
+    // Call tick() after pollIntervalMs has elapsed — now it must traverse checkNow()
+    watcher->tick();
+    check(receivedType == "file-modified", "tick() traversed production path and detected 'file-modified' after interval");
+    check(receivedPath == fileA.lexically_normal().string(), "tick() reported modified file path via production callback");
+
     // Clean up
     fs::remove_all(watchDir, ec);
 
@@ -156,6 +207,6 @@ int main() {
         return 1;
     }
 
-    std::printf("file_watcher_test: ALL OK (all 4 cases passed)\n");
+    std::printf("file_watcher_test: ALL OK (all 5 cases passed)\n");
     return 0;
 }
