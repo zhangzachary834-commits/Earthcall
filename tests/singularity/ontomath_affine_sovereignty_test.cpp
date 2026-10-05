@@ -110,7 +110,30 @@ int main() {
     assert(near3(*dispatcherLocalB,
                  glm::vec3(legacyInverse * glm::vec4(dispatcherProbeB, 1.0f))));
 
-    auto noT=OntoMath::affineTRS(glm::vec3(0),r,s); assert(noT);
+    // Rung-7 picking witness: OntoMath projective unprojection must preserve
+    // the frozen legacy inverse(P * V) + homogeneous-divide formula.
+    const glm::mat4 pickView = glm::lookAt(
+        glm::vec3(3.0f, 2.0f, 7.0f), glm::vec3(0.0f, 0.5f, 0.0f), glm::vec3(0,1,0));
+    const glm::mat4 pickProjection =
+        glm::perspective(glm::radians(58.0f), 16.0f / 9.0f, 0.1f, 250.0f);
+    const auto authoredPickView = OntoMath::MatrixValue::fromGlmMat4(pickView);
+    const auto authoredPickProjection = OntoMath::MatrixValue::fromGlmMat4(pickProjection);
+    const glm::vec3 pickNdc(0.37f, -0.22f, -1.0f);
+    const auto pickWorld =
+        OntoMath::unprojectNdcPoint(authoredPickView, authoredPickProjection, pickNdc);
+    assert(pickWorld);
+    glm::vec4 pickOracle =
+        glm::inverse(pickProjection * pickView) * glm::vec4(pickNdc, 1.0f);
+    assert(std::abs(pickOracle.w) > 1e-6f);
+    pickOracle /= pickOracle.w;
+    assert(near3(*pickWorld, glm::vec3(pickOracle)));
+
+    const auto singularProjection =
+        OntoMath::MatrixValue::fromGlmMat4(glm::mat4(0.0f));
+    assert(!OntoMath::unprojectNdcPoint(
+        authoredPickView, singularProjection, glm::vec3(0.0f)));
+
+        auto noT=OntoMath::affineTRS(glm::vec3(0),r,s); assert(noT);
     auto noTn=OntoMath::transformNormal(*noT,n); assert(noTn && near3(*wn,*noTn));
 
     auto rz=OntoMath::affineAxisAngle(glm::vec3(0,0,1),glm::radians(90.0)); assert(rz);
