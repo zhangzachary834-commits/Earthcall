@@ -148,6 +148,32 @@ int main() {
     lawGetValue(*watcher, PropertyPath::parse("watcher.filesTracked"), val);
     check(std::get<double>(val) == 1.0, "With .wgsl filter, only 1 file is tracked");
 
+    // Case 5: exercise the runtime tick path and the authored checkNow trigger.
+    receivedType.clear();
+    receivedPath.clear();
+    lawSetValue(*watcher, PropertyPath::parse("watcher.filterExtension"), PropertyValue(std::string("")));
+    watcher->rescanBaseline();
+    lawSetValue(*watcher, PropertyPath::parse("watcher.pollIntervalMs"), PropertyValue(100.0));
+
+    fs::path fileD = watchDir / "tick_test.txt";
+    {
+        std::ofstream d(fileD);
+        d << "runtime tick test\n";
+    }
+
+    watcher->tick();
+    check(receivedType.empty(), "tick() is gated before pollIntervalMs elapses");
+    std::this_thread::sleep_for(std::chrono::milliseconds(110));
+    watcher->tick();
+    check(receivedType == "file-created", "tick() detected file creation after poll interval");
+    check(receivedPath == fileD.lexically_normal().string(), "tick() reported accurate file path");
+
+    receivedType.clear();
+    receivedPath.clear();
+    fs::remove(fileD, ec);
+    lawSetValue(*watcher, PropertyPath::parse("watcher.checkNow"), PropertyValue(true));
+    check(receivedType == "file-deleted", "watcher.checkNow property triggers immediate scan");
+
     // Clean up
     fs::remove_all(watchDir, ec);
 
@@ -156,6 +182,6 @@ int main() {
         return 1;
     }
 
-    std::printf("file_watcher_test: ALL OK (all 4 cases passed)\n");
+    std::printf("file_watcher_test: ALL OK (all 5 cases passed)\n");
     return 0;
 }
