@@ -175,6 +175,30 @@ std::optional<glm::vec3> matrixMultiplyVec3(const MatrixValue& matrix,
     return out;
 }
 
+std::optional<glm::vec3> unprojectNdcPoint(const MatrixValue& view,
+                                                   const MatrixValue& projection,
+                                                   const glm::vec3& ndc) {
+    if (!view.valid() || !projection.valid() ||
+        view.rows() != 4 || view.cols() != 4 ||
+        projection.rows() != 4 || projection.cols() != 4) return std::nullopt;
+    const auto vp = matrixMultiply(projection, view);
+    if (!vp) return std::nullopt;
+    const auto inverse = matrixInverse(*vp);
+    if (!inverse) return std::nullopt;
+    const double h[4] = {ndc.x, ndc.y, ndc.z, 1.0};
+    double world[4] = {};
+    for (std::size_t r = 0; r < 4; ++r)
+        for (std::size_t col = 0; col < 4; ++col)
+            world[r] += inverse->at(r, col) * h[col];
+    if (!std::isfinite(world[0]) || !std::isfinite(world[1]) ||
+        !std::isfinite(world[2]) || !std::isfinite(world[3]) ||
+        std::abs(world[3]) <= kMatrixRelativePivotEpsilon) return std::nullopt;
+    const double w = 1.0 / world[3];
+    return glm::vec3(static_cast<float>(world[0] * w),
+                     static_cast<float>(world[1] * w),
+                     static_cast<float>(world[2] * w));
+}
+
 std::optional<MatrixValue> matrixTranspose(const MatrixValue& matrix) {
     double maxAbs = 0.0;
     if (!finiteMatrix(matrix, maxAbs)) return std::nullopt;
