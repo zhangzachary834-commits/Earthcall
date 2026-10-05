@@ -9,6 +9,12 @@
 #include <stdexcept>
 #include <utility>
 
+#if defined(_MSC_VER)
+#include <intrin.h>
+#elif defined(__i386__) || defined(__x86_64__)
+#include <x86intrin.h>
+#endif
+
 namespace {
 std::atomic<unsigned long long> s_nextTimelineId{1};
 }
@@ -175,8 +181,20 @@ void Timeline::announceMomentChange() {
 }
 
 long Timeline::propCpuClockCycle() const {
-#if defined(__clang__) || defined(__GNUC__)
+#if defined(_MSC_VER)
+    return static_cast<long>(__rdtsc());
+#elif (defined(__i386__) || defined(__x86_64__)) && (defined(__GNUC__) || defined(__clang__))
+    return static_cast<long>(__rdtsc());
+#elif defined(__aarch64__) && (defined(__GNUC__) || defined(__clang__))
+    uint64_t val;
+    asm volatile("mrs %0, cntvct_el0" : "=r"(val));
+    return static_cast<long>(val);
+#elif defined(__has_builtin)
+#if __has_builtin(__builtin_readcyclecounter)
     return static_cast<long>(__builtin_readcyclecounter());
+#else
+    return 0;
+#endif
 #else
     return 0;
 #endif
