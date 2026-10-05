@@ -95,14 +95,10 @@ nlohmann::json findZachProfile() {
 int main() {
     namespace fs = std::filesystem;
 
-    const fs::path sourceSaves = fs::current_path() / "saves";
-    check(fs::exists(sourceSaves / "persons" / "Zach.ecform"),
-          "the checked-in legacy Zach profile is present");
-    check(fs::exists(sourceSaves / "homes" / "Home" / "home.json"),
-          "the checked-in primary Home is present");
-    check(fs::exists(sourceSaves / "homes" / "Home_of_Zach" / "home.json"),
-          "the historical duplicate Home is present");
-    if (failures) return 1;
+    fs::path sourceSaves = fs::current_path() / "saves";
+    if (!fs::exists(sourceSaves)) {
+        sourceSaves = fs::current_path() / ".." / "saves";
+    }
 
     const fs::path sandbox =
         fs::temp_directory_path() / "earthcall_person_home_migration_boot";
@@ -126,6 +122,15 @@ int main() {
     EnvRestore restoreHome("EARTHCALL_HOME");
     setEnv("EARTHCALL_HOME", sandbox.string());
     SaveSystem::setSaveRoot(copiedSaves.string());
+
+    // Verify fixture preconditions through the disposable sandbox the test actually exercises.
+    check(fs::exists(copiedSaves / "persons" / "Zach.ecform"),
+          "the copied legacy Zach profile is present in sandbox");
+    check(SaveSystem::homeIdentityExists("Home"),
+          "the copied primary Home is present in sandbox");
+    check(SaveSystem::homeIdentityExists("Home_of_Zach"),
+          "the historical duplicate Home is present in sandbox");
+    if (failures) return 1;
 
     const auto homesBefore = directoryNames(copiedSaves / "homes");
     check(homesBefore.count("Home") == 1 && homesBefore.count("Home_of_Zach") == 1,
