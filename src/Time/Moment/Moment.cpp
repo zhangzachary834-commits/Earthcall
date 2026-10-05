@@ -100,8 +100,23 @@ void Moment::setEnd(const double& t) {
 }
 
 long Moment::propCpuClockCycle() const {
-#if defined(__clang__) || defined(__GNUC__)
+#if defined(_M_IX86) || defined(_M_X64)
+#include <intrin.h>
+    return __rdtsc();
+#elif defined(__x86_64__) || defined(__i386__)
+    unsigned int lo, hi;
+    __asm__ __volatile__ ("rdtsc" : "=a" (lo), "=d" (hi));
+    return ((uint64_t)hi << 32) | lo;
+#elif defined(__aarch64__)
+    uint64_t tsc;
+    asm volatile("mrs %0, cntvct_el0" : "=r" (tsc));
+    return tsc;
+#elif defined(__has_builtin)
+#if __has_builtin(__builtin_readcyclecounter)
     return static_cast<long>(__builtin_readcyclecounter());
+#else
+    return 0;
+#endif
 #else
     return 0;
 #endif
