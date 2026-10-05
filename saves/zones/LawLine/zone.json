@@ -6190,6 +6190,90 @@
       ],
       "type": "denotes",
       "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.create.act-create",
+      "entityB": "law-line-act-create",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.cube.value-cube",
+      "entityB": "law-line-value-cube",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.my.root-my",
+      "entityB": "law-line-root-my",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.modify-property.act-set",
+      "entityB": "law-line-act-set",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.add-property.act-grant",
+      "entityB": "law-line-act-grant",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.remove-property.act-revoke",
+      "entityB": "law-line-act-revoke",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
     }
   ],
   "identifier": "LawLine",
@@ -6243,7 +6327,17 @@
     "law-line-ask-before-deleting",
     "law-line-delete-when-confirmed",
     "law_595f4e7e-255b-4232-9c06-4b888ca838f6",
-    "law_208c85cd-08a3-4a51-bdfd-8aa604188baf"
+    "law_208c85cd-08a3-4a51-bdfd-8aa604188baf",
+    "law-line-act-create",
+    "law-line-value-cube",
+    "law-line-root-my",
+    "law-line-compile-object",
+    "law-line-compile-prototype",
+    "law-line-compile-registered-value",
+    "law-line-compile-registered-expression",
+    "law-line-compile-authored-value",
+    "law-line-compile-authored-expression",
+    "law-line-compile-sentences"
   ],
   "lexemes": [
     {
@@ -6673,6 +6767,30 @@
     {
       "id": "lexeme.law-line.n.value-false",
       "symbol": "n"
+    },
+    {
+      "id": "lexeme.law-line.create.act-create",
+      "symbol": "Create"
+    },
+    {
+      "id": "lexeme.law-line.cube.value-cube",
+      "symbol": "Cube"
+    },
+    {
+      "id": "lexeme.law-line.my.root-my",
+      "symbol": "my"
+    },
+    {
+      "id": "lexeme.law-line.modify-property.act-set",
+      "symbol": "modify property"
+    },
+    {
+      "id": "lexeme.law-line.add-property.act-grant",
+      "symbol": "add property"
+    },
+    {
+      "id": "lexeme.law-line.remove-property.act-revoke",
+      "symbol": "remove property"
     }
   ],
   "materials": [

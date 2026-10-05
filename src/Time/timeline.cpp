@@ -174,6 +174,14 @@ void Timeline::announceMomentChange() {
     notifyPropertyChanged(this, "latestMoment");
 }
 
+long Timeline::propCpuClockCycle() const {
+#if defined(__clang__) || defined(__GNUC__)
+    return static_cast<long>(__builtin_readcyclecounter());
+#else
+    return 0;
+#endif
+}
+
 void Timeline::buildProperties() {
     registerProperty(
         std::make_unique<ComputedProperty<Timeline, bool>>(
@@ -193,5 +201,8 @@ void Timeline::buildProperties() {
     registerProperty(
         std::make_unique<ComputedProperty<Timeline, std::string>>(
             "latestMoment", this, &Timeline::propLatestMoment, nullptr));
+    registerProperty(
+        std::make_unique<ComputedProperty<Timeline, long>>(
+            "cpuClockCycle", this, &Timeline::propCpuClockCycle, nullptr));
     _propertiesBuilt = true;
 }

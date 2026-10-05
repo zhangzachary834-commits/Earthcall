@@ -79,6 +79,34 @@ LS::Vocabulary baseVocabulary() {
 }
 
 void grammar() {
+    // Zach's general initializer syntax is sensed structurally; its output
+    // model belongs to an authored compiler, not a Create parser branch.
+    {
+        auto v = baseVocabulary();
+        v.pathRoots["my"] = "@zach";
+        int calls = 0;
+        v.compileInvocation = [&](const nlohmann::json& input, bool readOnly) {
+            ++calls;
+            if (input["slot"] == "initializer") {
+                assert(input["property"] == "position");
+                assert(input["expression"] == true);
+                assert(input["bindings"].contains("@zach.position"));
+                const auto f = OntoMath::Piecewise::fromJson(input["function"]);
+                auto result = f.evaluate({{"@zach.position", glm::vec3(4, 8, -2)}});
+                assert(result && std::get<glm::vec3>(*result) == glm::vec3(4, 5, -2));
+            }
+            // Deliberately emit Publish, proving this grammar has no hidden
+            // fallback that turns a Create spelling into a Create model.
+            return LS::Compilation{ActionNode::publish(readOnly ? "preview" : "compiler-chose-this"), "", {}};
+        };
+        const auto p = LS::parse("when hp > 0 on object-clicked then Create <Object, properties: {position: my.position + (0, -3, 0)}>", v);
+        assert(p.ok && calls == 2 && p.action->kind == ActionNode::Kind::Publish);
+        const auto preview = LS::parse("on object-clicked then Create <Object, properties: {position: my.position + (0, -3, 0)}> ?", v);
+        assert(preview.ok && preview.previewOnly);
+        v.compileInvocation = {};
+        assert(!LS::parse("on object-clicked then Create <Object, properties: {}>", v).ok);
+    }
+
     // --- canonical spellings alone: the line works before any alias exists
     {
         const auto p = LS::parse("on object-clicked then set color 1 0 0", baseVocabulary());
@@ -557,6 +585,11 @@ void channel() {
 } // namespace
 
 int main() {
+    std::string splitError;
+    auto parts = LS::sentences("called A then Set note to \"a;b\"; called B then Create <Object, properties: {authored: {note: \"c;d\"}}>", splitError);
+    assert(splitError.empty() && parts.size() == 2 && parts.front().find("a;b") != std::string::npos);
+    assert(LS::sentences("then Set glow 1;;then Set glow 2", splitError).empty() && !splitError.empty());
+    assert(LS::sentences("then Set glow 1;", splitError).empty() && !splitError.empty());
     grammar();
     channel();
     std::cout << "law_line_test: OK\n";

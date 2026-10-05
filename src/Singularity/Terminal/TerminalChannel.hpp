@@ -86,7 +86,7 @@ public:
 
     // The live vocabulary: structural words, the engine's opcode spellings,
     // every Lexeme that denotes a Law, heard events, present beings.
-    LawSentence::Vocabulary vocabulary(LawManager& laws);
+    LawSentence::Vocabulary vocabulary(LawManager& laws, const std::string& authorId = "");
 
     // The Law Line for a writer who is NOT the Person at the keyboard: a
     // foreign First Mover (MCP) that has already proved its key and been
@@ -176,6 +176,8 @@ private:
     std::string dryRun(const LawSentence::Parse& p);
     std::string lawSummary(const Law& law, LawManager& laws) const;
     LawSentence::Resolution resolveByMetalaw(LawManager& laws, const LawSentence::Ambiguity& a);
+    LawSentence::Compilation compileByMetalaw(LawManager& laws, const nlohmann::json& input, bool readOnly, nlohmann::json* document = nullptr);
+    std::string propCompilationResult() const;
     void attach(LawManager& laws);
     void detach();
 
@@ -218,6 +220,12 @@ private:
     std::string _ambiguitySlot;
     std::string _ambiguityCandidates;
     std::string _ambiguityResolved;
+    // Generic invocation protocol. Input is channel-sensed syntax; templates
+    // and refusals are authored by Metalaws targeting this channel. The result
+    // is derived solely by structural JSON substitution, not by opcode lowering.
+    std::shared_ptr<PropertyDict> _compilationInput = std::make_shared<PropertyDict>();
+    std::string _compilationTemplate;
+    std::string _compilationError;
     bool _attached = false;
     // Confirmed deletion (registered): the question a Metalaw asks, and what
     // is waiting for the Person's answer.

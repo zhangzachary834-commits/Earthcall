@@ -426,6 +426,12 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
     if (j.contains("actionModel")) {
         law->setActionModel(ActionNode::fromJson(j["actionModel"]));
     }
+    // Authored compiler/root vocabulary lives on ordinary Laws too. Preserve
+    // their granted properties through the same typed codec used by Objects.
+    if (j.contains("authoredProperties") && j["authoredProperties"].is_object()) {
+        for (auto it = j["authoredProperties"].begin(); it != j["authoredProperties"].end(); ++it)
+            law->setDynamicProperty(it.key(), propertyValueFromJson(it.value()));
+    }
     // The law's descent, restored. `toJson` has always written provenance and
     // this never read it back, so "synthesized-from" — the whole record of
     // which laws a higher law was made out of — survived exactly until the
@@ -722,6 +728,12 @@ nlohmann::json Law::toJson() const {
     // survive save/load.
     if (_conditionModel) j["conditionModel"] = _conditionModel->toJson();
     if (_actionModel) j["actionModel"] = _actionModel->toJson();
+    if (!dynamicProperties().empty()) {
+        auto properties = nlohmann::json::object();
+        for (const auto& [id, value] : dynamicProperties())
+            properties[Earthcall::StringInterner::resolve(id)] = propertyValueToJson(value);
+        j["authoredProperties"] = std::move(properties);
+    }
     return j;
 }
 

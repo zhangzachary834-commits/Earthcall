@@ -1,5 +1,16 @@
 # Person Verification List
 
+## Law Line: Create initializers compiled by Metalaw
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 18:46 PDT — Zach requested general Singular creation with registered/authored initializers and Metalaw compilation.*
+
+- [ ] Rebuild/restart `earthcall_webgpu`, keep its Terminal open, and `enter LawLine`; completing `Create` should offer `<kind, properties: {property: value}>` blanks.
+- [ ] Type `called Beneath Me when clicked then Create <Object, properties: {shape.kind: Cube, position: my.position + (0, -3, 0), color: gold, authored: {purpose: "A foothold"}}>?`; the preview should say Metalaw compilation is deferred, with no new Law or cube.
+- [ ] Remove the trailing `?`, submit, then click an object: a gold cube's centre should be exactly three vertical units below your Person's position; move and click again, and the second cube should use your new position.
+- [ ] Inspect `Beneath Me` in the Law Graph: Create should contain Set/Map/AddProperty children, position should retain its current-Person binding plus `(0, -3, 0)`, and provenance should identify the compiler Laws.
+- [ ] Save Zone, restart, and check the Law, cubes, authored `purpose`, and `my`/`Create` vocabulary remain; assess whether the completion and deferred-preview wording are understandable.
+
+
 ## Universal Singular prototype creation
 
 *Codex / GPT-6.1 Sol / session `01a0e64f-5853-7d30-8196-995b4fd16b89` /
@@ -1150,3 +1161,11 @@ Codex · GPT-6 · session `01a0fe15-4fe2-7dc0-a2d0-7d823e4ad26c` · 15:57 PDT. Z
 - [ ] Inspect `scratch/capture-verification/2026-10-02-01a0fe15/reverse/reconstructed.png` beside `source.png`: the promotion strip should have the same colors and lettering, without new seams.
 - [ ] Inspect `edited.png` and `painted.png`: only the selected lower yellow region should disappear or turn green; neighboring text and colored panels should stay unchanged.
 - [ ] Judge whether rectangle fragments are a useful first editing rung; meaningful button/text grouping and recovered 3D are still unfinished, and reconstructed panels do not yet carry the original chess behavior.
+
+## Law Line ordered sentences and property words (2026-10-04)
+
+Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 19:46 PDT. Zach requested ordered multiple sentences and explicit property verbs.
+
+- [ ] Rebuild/restart WebGPU, `enter LawLine`, and submit the Add Note / Change Note / Remove Note line from [the task](../Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md): see three authored acknowledgments numbered 1, 2, 3 in source order.
+- [ ] Click the LawLine cube, hover, then leave it: inspect authored `note` as "hello", then "updated", then absent; confirm Tab works after a semicolon and a trailing `?` previews without creating Laws.
+- [ ] Save Zone, restart/reenter, and confirm the three authored Laws persist; the native interactive editor and visual experience remain for Zach to witness.

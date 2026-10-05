@@ -1,3 +1,4 @@
+#include <unordered_set>
 #pragma once
 
 #include "ConstructedBeing/CategoryManager.hpp"
@@ -87,6 +88,16 @@ struct BootedEngineHarness {
                 if (category) beings.push_back(category.get());
             }
             beings.push_back(&player);
+            // Total named reach for the Zone's authored Singulars. Keep this
+            // enumeration aligned with Singularity/Core/EngineInit.cpp: Create
+            // prototypes must not be vocabulary-visible but PropertyPath-invisible.
+            // Deduplicate existing Objects/Laws/fields before adding Formation members
+            // and retained generic beings; their storage identity is not a new scope.
+            std::unordered_set<Singular*> provided(beings.begin(), beings.end());
+            for (auto* member : (*active).formation().getMembers())
+                if (member && provided.insert(member).second) beings.push_back(member);
+            for (const auto& stored : (*active).storedSingulars())
+                if (stored && provided.insert(stored.get()).second) beings.push_back(stored.get());
         });
 
         Universe::instance().setRelationProvider([this](std::vector<Relation*>& relations) {

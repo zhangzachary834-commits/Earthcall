@@ -99,6 +99,14 @@ void Moment::setEnd(const double& t) {
     _endCache = t;
 }
 
+long Moment::propCpuClockCycle() const {
+#if defined(__clang__) || defined(__GNUC__)
+    return static_cast<long>(__builtin_readcyclecounter());
+#else
+    return 0;
+#endif
+}
+
 void Moment::buildProperties() {
     registerProperty(std::make_unique<ComputedProperty<Moment, std::string>>(
         "identifier", this, &Moment::propIdentifier));
@@ -111,5 +119,8 @@ void Moment::buildProperties() {
     registerProperty(
         std::make_unique<ComputedProperty<Moment, double>>(
             "end", this, &Moment::propEnd, &Moment::setEnd));
+    registerProperty(
+        std::make_unique<ComputedProperty<Moment, long>>(
+            "cpuClockCycle", this, &Moment::propCpuClockCycle));
     _propertiesBuilt = true;
 }
