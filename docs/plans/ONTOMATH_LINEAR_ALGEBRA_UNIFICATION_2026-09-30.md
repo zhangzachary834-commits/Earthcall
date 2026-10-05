@@ -547,6 +547,9 @@ Collision algorithms themselves (GJK, support mapping, collision policy) are not
 
 # 11. Rung 8 — Camera, renderer and shader migration
 
+**Status (2026-10-05): IN PROGRESS.** OntoMath now owns canonical camera look-at and perspective projection mathematics (including NO/ZO depth selection and explicit invalid/degenerate refusal). `EngineRender.cpp` delegates camera view/projection meaning to OntoMath and only binds camera/render parameters plus consumes the lowered GLM representation. Focused sovereignty witnesses cover camera-view parity, projection parity, refusal behavior, and world -> clip composition parity against frozen independent GLM oracles. Exact-head CI #5244 for the runtime camera migration remains queued; the newer world -> clip witness commit is `0a0fd769`. Do not claim this slice proven until exact-head campaign-owned lanes complete. Remaining Rung-8 work includes clip -> world, native-resolution image, SDF-normal/camera-motion evidence, and targeted renderer/shader model/normal-matrix migration.
+
+
 ## Objective
 
 Remove renderer-owned matrix semantics while preserving modality-specific responsibility.
