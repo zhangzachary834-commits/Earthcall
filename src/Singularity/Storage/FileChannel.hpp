@@ -144,6 +144,7 @@ private:
     std::string propDirectory() const;
 
     // JSON structured operations
+    bool propJsonValid() const;
 
     // State members
     bool _enabled = true;
