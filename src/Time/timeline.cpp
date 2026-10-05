@@ -175,8 +175,22 @@ void Timeline::announceMomentChange() {
 }
 
 long Timeline::propCpuClockCycle() const {
-#if defined(__clang__) || defined(__GNUC__)
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
+#  if defined(_MSC_VER)
+    return static_cast<long>(__rdtsc());
+#  elif defined(__has_builtin)
+#    if __has_builtin(__builtin_readcyclecounter)
     return static_cast<long>(__builtin_readcyclecounter());
+#    else
+    return 0;
+#    endif
+#  else
+    return 0;
+#  endif
+#elif defined(__aarch64__)
+    uint64_t val;
+    asm volatile("mrs %0, cntvct_el0" : "=r"(val));
+    return static_cast<long>(val);
 #else
     return 0;
 #endif
