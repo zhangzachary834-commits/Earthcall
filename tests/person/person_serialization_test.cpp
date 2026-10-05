@@ -185,6 +185,51 @@ int main() {
 
     std::filesystem::remove_all(testLegacyDir);
 
+    // Test that updatePriorPersonSerializations preserves binary msgpack .ecform files without corrupting them into plain JSON
+    std::filesystem::path testEcformDir = tempSaveRoot.path / "test_ecform_preservation";
+    std::filesystem::create_directories(testEcformDir);
+
+    std::string pathEcformHome = (testEcformDir / "home.ecform").string();
+    {
+        nlohmann::json homeDoc = {
+            {"name", "Home_of_Tester"},
+            {"owner", "OldTester"}
+        };
+        SaveSystem::writeHomeIdentity("Home_of_Tester", homeDoc);
+        // Move or copy to pathEcformHome under testEcformDir to ensure it's in the scanned save root
+    }
+
+    nlohmann::json initialHomeDoc = {
+        {"name", "TestHome"},
+        {"owner", "OldTester"}
+    };
+    nlohmann::json homeWrapper = nlohmann::json::object();
+    homeWrapper["MigrationRoot"] = initialHomeDoc.dump(-1);
+    std::vector<uint8_t> msgpackBytes = nlohmann::json::to_msgpack(homeWrapper);
+    {
+        std::ofstream ecFile(pathEcformHome, std::ios::binary);
+        ecFile.write(reinterpret_cast<const char*>(msgpackBytes.data()), msgpackBytes.size());
+    }
+
+    Person newTester = makePerson("NewTester");
+    updatePriorPersonSerializations(newTester, "OldTester");
+
+    {
+        // 1. Check that readSaveData can successfully parse the updated .ecform
+        nlohmann::json readBack = SaveSystem::readSaveData(pathEcformHome);
+        assert(!readBack.is_null() && !readBack.empty());
+        assert(readBack.contains("owner") && readBack["owner"] == "NewTester");
+
+        // 2. Check that the file content is actually msgpack binary and NOT text JSON
+        std::ifstream verifyBin(pathEcformHome, std::ios::binary);
+        std::string rawContent((std::istreambuf_iterator<char>(verifyBin)), std::istreambuf_iterator<char>());
+        assert(!rawContent.empty());
+        // Plain JSON text starts with '{', whereas msgpack object wrapper starts with a msgpack map header byte (e.g., 0x81)
+        assert(rawContent[0] != '{');
+    }
+
+    std::filesystem::remove_all(testEcformDir);
+
     std::puts("person_serialization_test: ALL OK");
     return 0;
 }
