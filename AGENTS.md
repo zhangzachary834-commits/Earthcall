@@ -58,7 +58,7 @@ Refusal 6 is the corollary: no subsystem may define what a thing's state *means*
 | write or edit a save file / seed a world | `law/FIRST_MOVER_AUTHORING.md` §4, §7 | you are acting as a First Mover; §7 is not optional |
 | add a directory | `ontology/DIRECTORY_ORDERING.md` §7 | the tree is the ontology |
 | connect hardware, a device, or a foreign process — or let a model change the world (MCP, socket) | `ontology/NEW_KIND_FRAMEWORK.md` §7b; `docs/plans/MCP_FIRST_MOVER_GOVERNANCE_IMPLEMENTATION_PLAN_2026-09-18.md` | a *modality channel* under `Singularity/`, never a domain folder; every foreign mutation passes `Singularity/Foreign/ForeignActuationGuard` as a Person-granted First Mover — reads stay open |
-| understand what a Law is at all | `law/LAW_AND_CREATION_SYSTEM.md` | the foundation the rest assumes |
+| understand what a Law is or write a CLI sentence | `law/LAW_AND_CREATION_SYSTEM.md`; [CLI guide](docs/architecture/law/LAW_AUTHORING_CLI_GUIDE.md) | the foundation the rest assumes |
 | undo a change, rewind, or ask whether something *can* be undone | `mathematics/ONTOMATH_FRAMEWORK.md` §6 | the past is integrated in closed form, never replayed from a log |
 | render an authored expression to a channel (sound, shader, physics; direct Screen fields: [task](docs/Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md)) | `mathematics/ONTOMATH_FRAMEWORK.md` §1, §7 | a channel reads OntoMath; it never decides what the thing is |
 | ask "why is it like this?" | `core/EarthcallOurverse.md`, `ontology/SUBSTRATE_ORDERING.md` | the ends the architecture serves |

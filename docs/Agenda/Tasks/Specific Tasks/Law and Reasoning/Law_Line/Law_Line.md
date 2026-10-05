@@ -5,6 +5,8 @@
 
 ## Status
 
+- **Practical guide (2026-10-05):** [Writing Earthcall Laws for humans and agents](../../../../../architecture/law/LAW_AUTHORING_CLI_GUIDE.md) supplies beginner lessons, creation and property recipes, ordered programs, all 26 action kinds, troubleshooting, and the authored compiler workflow; see [the guide record](#authoring-guide-2026-10-05).
+
 - **Invisible Create fix (2026-10-05):** Zach's Objects and face assets existed but neither below-me nor view-relative cubes appeared. The birth resolver preferred inactive `World` over the active rendered Zone. That name preference is removed; the boot harness now includes inactive Zones and a full Engine/Terminal/Metalaw viewport capture shows the gold probe. Restart the rebuilt app to load the correction; [audit and native evidence](../../../../../audits/LAW_CREATE_ACTIVE_ZONE_ROUTING_FIX_2026-10-05.md). Existing Person-authored Laws and saves were not edited.
 - **Person confirmation and sky spiral (2026-10-05):** Zach confirmed visible cube creation and the original Stairmaker now work; [the three-Law add-on](../../../../../../examples/law_line_sky_stairway.txt) grows branching eight-stone spirals with hover turns and colour restoration, verified alongside the original program through 162 focused checks and a full native Engine capture ([audit](../../../../../audits/SKY_STAIRWAY_AUTHORED_PROGRAM_2026-10-05.md)).
 
@@ -235,7 +237,7 @@ Zach chose these from a proposal; he deferred typo-fixing and usage ranking ("ne
 Zach requested multiple Law sentences in one submitted line, registered in the order written, plus add/remove/modify property. Separate complete sentences with top-level `;`:
 
 ```text
-called "Add Note" when clicked then add property @law-line-cube.note to "hello"; called "Change Note" when hovered then modify property @law-line-cube.note to "updated"; called "Remove Note" when unhovered then remove property @law-line-cube.note
+called "Add Note" when clicked then add property @law-line-cube.note to "hello"; called "Change Note" when hovered then modify property @law-line-cube.note to "updated"; called "Remove Note" when the pointer leaves then remove property @law-line-cube.note
 ```
 
 The saved `law-line-compile-sentences` Metalaw conditions on `compilation.input.slot = "sentences"` and `opcode = "sentence.batch"`, and supplies `{"sentences":{"$slot":"/sentences"}}` through `compilation.template`. The channel senses delimiter structure, asks the existing generic Metalaw template seam for the document, validates the exact once-only source order, parses every sentence, and registers through the existing `enact` path. Missing/disabled compiler, conflicting outputs, empty sentences, or invalid later syntax refuses registration. Compiler provenance is retained on every new Law. There is no automatic batch fallback. Registration order does not promise event agenda firing order; use `then ... and ...` within one Law when ordered action execution is required.
@@ -310,3 +312,13 @@ The new line compiles through the same authored Metalaws, includes only three ad
 An exploratory `always if skyStep is true and hovered is true then Flow <path: "rotation.y", expression: 45>` authored a valid WhileTrue/Everyone Law and rotated a hovering jewel when applied directly, but its reactive application log remained empty. `hovered` read true and the world clock had positive delta in that fixture. Investigate candidate/fact propagation for this registered derived property before offering continuously hovering animations; read `docs/architecture/law/PROPHETIC_RETE.md` and `DERIVED_STATE_LEDGER.md` before changing the index. Preserve the final event-based add-on and its pointer/native consumers. This is an observation from the exploratory fixture, not proof of a general engine-wide failure.
 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 00:47 PDT — correction of the supplied example following Zach's failed CLI attempt.*
+
+## Authoring guide — 2026-10-05
+
+Zach asked for a guide that humans and agents can learn from. [The guide](../../../../../architecture/law/LAW_AUTHORING_CLI_GUIDE.md) starts with a clicked colour change and progresses through preview, addressing, activation, authored state, Create, composition, and the maintained Stairmaker example files. Its agent section points to the shared structural parser, authored signatures/templates, authority boundaries, and isolated verification surfaces. It distinguishes acceptance, firing, manifestation, and persistence, including the keyed identity and inactive-World errors uncovered with Zach. No world saves are edited by this documentation pass.
+
+Verification: the guide's 13 executable lesson lines adopted the expected 17 Laws through the real Terminal/compiler path in a scratch copy of the isolated harness; preview adopted none, and all 176/176 checks passed (162 existing + 14 guide checks). [Result](../../../../../../scratch/verification/law-authoring-guide-2026-10-05/result.json). This is submission evidence plus existing functional checks, not a new native or advanced-channel witness.
+
+Beginner readability and a first exercise followed by Save Zone/restart are tracked in [Person Verification](../../../For%20Zach/Person%20Verification%20List.md). Future agents: update the guide alongside changed authored signatures or parser semantics, verify its executable snippets through the real Terminal/Metalaw path, and retain the distinction between placeholder signatures and proven runtime programs.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 13:16 PDT — Zach requested the guide; Codex organized the lessons and reference from current source and the preceding authored programs.*

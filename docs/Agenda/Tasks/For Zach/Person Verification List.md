@@ -1223,3 +1223,10 @@ Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-0
 - [ ] Click the crown or another new stone to grow another spiral from it; click the same grown stone again and confirm it rises with the original Law without duplicating its branch.
 - [ ] Hover a jewel: it turns gold and swivels 25 degrees; look away: its cyan/violet/gold colour and orientation return.
 - [ ] Save Zone, restart/reenter, and confirm the Laws, branch latches and stones persist; judge the visual feel and collision/walking behaviour separately from the native fixture proof.
+
+## Law authoring guide for humans and agents (2026-10-05)
+
+Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 13:16 PDT; Zach requested a practical learning guide. [Read it here](../../../architecture/law/LAW_AUTHORING_CLI_GUIDE.md).
+
+- [ ] Follow the opening lesson: preview Golden Touch, submit it in LawLine, click a visible Object, and confirm both the gold colour and that the explanation of author, subject, and Terminal/world Zones is understandable without reading source.
+- [ ] Save the intended Zone, restart it, and confirm this lesson's Law still fires; remove the lesson Law by its exact identifier and save if you do not want to retain it. Existing earlier persistence confirmation remains recorded separately.

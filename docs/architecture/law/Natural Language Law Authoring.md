@@ -1,3 +1,5 @@
+> **Learning to use it?** Read [Writing Earthcall Laws: a guide for humans and agents](LAW_AUTHORING_CLI_GUIDE.md) for pasteable lessons, the action reference, and current limits (2026-10-05). Zach's original design note follows, preserved below.
+
 So I think the simplest and most elegant solution to the tedious law-authoring is not to try to figure out all the nuances of developing a mature, heavily interconnected Formation-like 2D
 interface immediately that depends on configuring numerous prior states/laws to boostrap for this is to just let me be able to author them with a natural sentence.
 Like a terminal or Minecraft slash command, with preconfigured (note I say prefigured Singulars and Laws, not hard-coded)
@@ -68,7 +70,7 @@ Zach extended the requested surface to `Create <SingularKind, properties: {regis
 Zach requested multiple Law sentences in one submitted line, registered in the order written, plus add/remove/modify property. Separate complete sentences with top-level `;`:
 
 ```text
-called "Add Note" when clicked then add property @law-line-cube.note to "hello"; called "Change Note" when hovered then modify property @law-line-cube.note to "updated"; called "Remove Note" when unhovered then remove property @law-line-cube.note
+called "Add Note" when clicked then add property @law-line-cube.note to "hello"; called "Change Note" when hovered then modify property @law-line-cube.note to "updated"; called "Remove Note" when the pointer leaves then remove property @law-line-cube.note
 ```
 
 The saved `law-line-compile-sentences` Metalaw conditions on `compilation.input.slot = "sentences"` and `opcode = "sentence.batch"`, and supplies `{"sentences":{"$slot":"/sentences"}}` through `compilation.template`. The channel senses delimiter structure, asks the existing generic Metalaw template seam for the document, validates the exact once-only source order, parses every sentence, and registers through the existing `enact` path. Missing/disabled compiler, conflicting outputs, empty sentences, or invalid later syntax refuses registration. Compiler provenance is retained on every new Law. There is no automatic batch fallback. Registration order does not promise event agenda firing order; use `then ... and ...` within one Law when ordered action execution is required.

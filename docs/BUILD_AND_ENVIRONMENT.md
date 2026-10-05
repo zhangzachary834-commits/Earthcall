@@ -26,7 +26,8 @@ become Laws. While it is attached, the app's stdout/stderr are relayed above the
 `saves/logs/earthcall-terminal.log` (both gitignored). It attaches only when stdin and stdout are TTYs,
 so ctest and IDE launches leave it quiet; set `NO_COLOR` to drop colour. No dependency: libedit was
 tried and removed (its Tab cannot offer a selectable menu). →
-`docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Law_Line/Law_Line.md`
+`docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Law_Line/Law_Line.md`.
+For pasteable lessons and the action reference, read [the Law authoring CLI guide for humans and agents](architecture/law/LAW_AUTHORING_CLI_GUIDE.md).
 
 **2026-10-05 stairway example:** `examples/law_line_stairway.txt` is one pasteable line, tested through pointer press/release and authored Metalaws. It creates steps above the clicked cube; the earlier example required a specific `law-line-cube` and placed steps below the Person. `enter LawLine` moves only the Terminal line. Native appearance remains in Person Verification. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 00:47 PDT.
 

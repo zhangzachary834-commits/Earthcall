@@ -1795,6 +1795,13 @@ fn fs(in: VSOut) -> FSOut {
             raw = sdfEval(p);
             d = raw;
 
+            if (omega > 1.0 && (d < 0.0 || d + prev_d < candidate_step)) {
+                t = t - candidate_step + prev_d;
+                omega = 1.0;
+                candidate_step = 0.0;
+                continue;
+            }
+
             if (d <= 0.0 || abs(d) < current_eps) {
                 hit = true;
                 if (d < 0.0 && prev_d > 0.0 && candidate_step > 0.0) {
@@ -1802,13 +1809,6 @@ fn fs(in: VSOut) -> FSOut {
                     t = (t - candidate_step) + candidate_step * frac;
                 }
                 break;
-            }
-
-            if (omega > 1.0 && d + prev_d < candidate_step) {
-                t = t - candidate_step + prev_d;
-                omega = 1.0;
-                candidate_step = 0.0;
-                continue;
             }
 
             prev_d = d;
