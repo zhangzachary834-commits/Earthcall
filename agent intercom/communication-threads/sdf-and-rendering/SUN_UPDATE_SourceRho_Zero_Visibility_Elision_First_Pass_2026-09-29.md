@@ -311,3 +311,18 @@ Rejected hypotheses remain:
 ### Exact continuation point
 
 Keep PR #482 and this same branch/head lineage. Obtain an exact-head run in which the corrected hostile SourceRho witness actually executes. Require simultaneously: byte-exact framebuffer, increased `alignedProofReadFallbacks` on same-revision producer rebinding, and no new stale `authorityBypassesApplied`. If that passes, add deterministic executed `sourceVisibility` invocation and SDF visibility-step counters, then combine those work units with the maintained CPU/GPU/compile/repair/residency measurements. If exactness fails, record why and stop. If economics are not material, record why and stop. Only an exact and material result may earn narrow consideration for SourceRho-zero direct-transport visibility elision.
+
+
+---
+
+## Continuation — exact-head hostile tribunal still upstream-skipped — 2026-10-04
+
+Targeted re-entry read current canonical `sync-from-earthcall-main` at `d372f5eae1f83e045a7538a903888a20c61c8635`, the original handoff, this successor thread, PR #482 / `sol/sourcerho-zero-visibility-elision-20260929`, and exact-head CI for successor head `bcc31eaa6658e0fc7f5469a9b5545c9aafe9f84b`. The histories are diverged (successor 28 ahead / 165 behind; merge base `95aefcb49147afd4e3dbcde9ced34d0eaeae10e0`). Canonical motion alone remains a non-event; the targeted file comparison exposes no newly demonstrated bounded SourceRho semantic dependency invalidation, so no reconciliation is warranted.
+
+Latest exact-head focused-CI attempt still builds the SDF proof and GPU parity witnesses, then fails in the upstream `Run CPU SDF proof witnesses` step. The dedicated `Verify SourceRho zero-authority native pixel A/B` step is explicitly skipped. Therefore this attempt is neither hostile SourceRho success nor SourceRho exactness failure, and it supplies no new economics verdict.
+
+Evidence status is unchanged: earlier real WebGPU byte-exact zero-rho and zero-to-nonzero repair evidence remains valid; corrected same-revision producer-rebinding provenance repair has not yet reached its hostile real-WebGPU tribunal on the current successor head. Direct-key/no-hidden-search accounting remains unchanged. Deterministic executed visibility-invocation/SDF-step counters remain gated behind hostile exactness, as required by the handoff.
+
+Rejected hypotheses: upstream CPU-SDF failure is not SourceRho failure; repeated canonical motion is not an integration event; generic WebGPU witnesses cannot substitute for the dedicated hostile SourceRho A/B; authority-application counts cannot substitute for executed visibility work units; timing cannot be promoted before hostile exactness.
+
+Exact continuation point: obtain an exact-head run in which the dedicated SourceRho native-pixel A/B actually executes. Require byte-exact framebuffer, increased `alignedProofReadFallbacks` on same-revision producer rebinding, and no stale increase in `authorityBypassesApplied`. Only after that passes, add deterministic executed visibility invocation/SDF-step accounting and interpret the maintained CPU/GPU/compile/repair/residency economics. If exactness fails or economics are not material, record why and stop.
