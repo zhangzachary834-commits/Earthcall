@@ -180,16 +180,10 @@ void Timeline::announceMomentChange() {
 }
 
 long Timeline::propCpuClockCycle() const {
-#if defined(__has_builtin) && __has_builtin(__builtin_readcyclecounter)
-    return static_cast<long>(__builtin_readcyclecounter());
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER)
     return static_cast<long>(__rdtsc());
 #elif defined(__x86_64__) || defined(__i386__)
     return static_cast<long>(__rdtsc());
-#elif defined(__aarch64__) || defined(__arm64__)
-    unsigned long long val;
-    __asm__ __volatile__("mrs %0, cntvct_el0" : "=r" (val));
-    return static_cast<long>(val);
 #else
     return 0;
 #endif
