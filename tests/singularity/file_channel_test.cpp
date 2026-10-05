@@ -385,10 +385,16 @@ int main() {
     check(!fs::exists(movedFile), "File confirmed deleted from disk");
 
     // -----------------------------------------------------------------------
-    // Case 14: Exception Handling (try-catch blocks)
+    // Case 14: Exception Handling (try-catch blocks) & JSON Validation
     // -----------------------------------------------------------------------
-    // Trigger JSON parse exceptions
+    // Check JSON validation property file.jsonValid
+    lawSetValue(*channel, PropertyPath::parse("file.content"), PropertyValue(std::string("{\"earthcall\":true}")));
+    lawGetValue(*channel, PropertyPath::parse("file.jsonValid"), val);
+    check(std::get<bool>(val) == true, "file.jsonValid returns true for valid JSON content");
+
     lawSetValue(*channel, PropertyPath::parse("file.content"), PropertyValue(std::string("invalid json")));
+    lawGetValue(*channel, PropertyPath::parse("file.jsonValid"), val);
+    check(std::get<bool>(val) == false, "file.jsonValid returns false for invalid JSON content");
 
 
 
