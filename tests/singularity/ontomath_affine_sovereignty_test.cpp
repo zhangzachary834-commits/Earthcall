@@ -133,6 +133,17 @@ int main() {
     assert(!OntoMath::unprojectNdcPoint(
         authoredPickView, singularProjection, glm::vec3(0.0f)));
 
+    // Preserve ObjectEvents raw homogeneous hover-origin convention.
+    const auto hoverVp = OntoMath::matrixMultiply(authoredPickProjection, authoredPickView);
+    assert(hoverVp);
+    const auto hoverInv = OntoMath::matrixInverse(*hoverVp);
+    assert(hoverInv);
+    const auto hoverGlm = hoverInv->toGlmMat4();
+    assert(hoverGlm);
+    const glm::mat4 hoverOracle = glm::inverse(pickProjection * pickView);
+    const glm::vec4 hoverH(0,0,0,1);
+    assert(near3(glm::vec3(*hoverGlm * hoverH), glm::vec3(hoverOracle * hoverH)));
+
         auto noT=OntoMath::affineTRS(glm::vec3(0),r,s); assert(noT);
     auto noTn=OntoMath::transformNormal(*noT,n); assert(noTn && near3(*wn,*noTn));
 
