@@ -520,6 +520,29 @@ bool Engine::initLogic() {
             std::cerr << "[ZoneSave] Save Active Zone refused; active Zone remains live and no legacy session was written.\n";
         }
     });
+    _mainMenu.addOption("Export Zone as JSON", GLFW_KEY_J, [this]() {
+        ECA::Event ev{"export-json", &mgr.active(), nullptr, std::time(nullptr)};
+        Core::EventBus::instance().publish(ev);
+    });
+    _mainMenu.addOption("Export Zone as ECGRAPH", GLFW_KEY_E, [this]() {
+        ECA::Event ev{"export-ecform", &mgr.active(), nullptr, std::time(nullptr)};
+        Core::EventBus::instance().publish(ev);
+    });
+    _mainMenu.addOption("Enter New Zone (Hydrate ECGRAPH)", GLFW_KEY_N, [this]() {
+        std::string newId = "hydrated-" + std::to_string(std::time(nullptr));
+        auto zone = mgr.authorZone(newId, "", "empty");
+        if (zone) {
+            for (size_t i = 0; i < mgr.zones().size(); ++i) {
+                if (mgr.zones()[i]->getIdentifier() == newId) {
+                    mgr.switchTo(i);
+                    break;
+                }
+            }
+        }
+        // The load-genesis-file metalaw will automatically catch the fact that 
+        // @state.genesis.loaded is missing/false in this new zone and begin 
+        // hydrating from saves/seed.ecgraph.
+    });
     _mainMenu.addOption("Legacy Session Export...", GLFW_KEY_A, [this]() {
         mgr.getSaveLoadState().showSaveWindow = true;
         ensureCursorUnlocked();

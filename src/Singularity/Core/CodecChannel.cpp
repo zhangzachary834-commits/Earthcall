@@ -4,6 +4,11 @@
 #include <vector>
 #include <iomanip>
 #include <sstream>
+#include "Singularity/Storage/SaveSystem.hpp"
+#include "Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.hpp"
+#include "Singularity/Storage/Serialization/BinarySerializer.hpp"
+#include "Singularity/Storage/MigrationFramework.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
 
 namespace Singularity {
 namespace Core {
@@ -169,6 +174,28 @@ std::string CodecChannel::propJsonToMsgpack() const {
     }
 }
 
+std::string CodecChannel::propSerializeZoneJson() const {
+    if (auto* zm = ZoneManager::live()) {
+        try {
+            auto j = ::zoneToJson(zm->active());
+            return j.dump(4);
+        } catch (...) {}
+    }
+    return "";
+}
+
+std::string CodecChannel::propSerializeZoneEcform() const {
+    if (auto* zm = ZoneManager::live()) {
+        try {
+            auto j = ::zoneToJson(zm->active());
+            auto graph = Earthcall::Storage::MigrationFramework::migrateJsonToGraph(j);
+            std::vector<uint8_t> buf = Earthcall::Storage::BinarySerializer::writeBinaryToBuffer(graph);
+            return std::string(buf.begin(), buf.end());
+        } catch (...) {}
+    }
+    return "";
+}
+
 
 void CodecChannel::propSetArrayShift(const bool& v) {
     if (!v || _jsonArray.empty()) return;
@@ -239,6 +266,10 @@ void CodecChannel::buildProperties() {
         "codec.ecgraphToJson", this, &CodecChannel::propEcgraphToJson, nullptr));
     registerProperty(std::make_unique<ComputedProperty<CodecChannel, std::string>>(
         "codec.jsonToMsgpack", this, &CodecChannel::propJsonToMsgpack, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<CodecChannel, std::string>>(
+        "codec.serializeZoneJson", this, &CodecChannel::propSerializeZoneJson, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<CodecChannel, std::string>>(
+        "codec.serializeZoneEcform", this, &CodecChannel::propSerializeZoneEcform, nullptr));
 
     registerProperty(std::make_unique<ComputedProperty<CodecChannel, std::string>>(
         "codec.jsonArray", this, &CodecChannel::propJsonArray, &CodecChannel::propSetJsonArray));

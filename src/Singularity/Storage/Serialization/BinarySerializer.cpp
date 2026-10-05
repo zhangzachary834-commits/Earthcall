@@ -50,7 +50,7 @@ std::string BinarySerializer::readString(const std::vector<uint8_t>& buffer, siz
     return str;
 }
 
-bool BinarySerializer::writeBinary(const EcformGraph& graph, const std::string& filepath) {
+std::vector<uint8_t> BinarySerializer::writeBinaryToBuffer(const EcformGraph& graph) {
     std::vector<uint8_t> buffer;
     
     // Header
@@ -123,6 +123,11 @@ bool BinarySerializer::writeBinary(const EcformGraph& graph, const std::string& 
         }
     }
     
+    return buffer;
+}
+
+bool BinarySerializer::writeBinary(const EcformGraph& graph, const std::string& filepath) {
+    std::vector<uint8_t> buffer = writeBinaryToBuffer(graph);
     std::ofstream out(filepath, std::ios::binary);
     if (!out) return false;
     out.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());

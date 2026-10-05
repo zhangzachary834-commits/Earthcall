@@ -52,6 +52,8 @@ private:
     std::string propJsonPretty() const;
     std::string propEcgraphToJson() const;
     std::string propJsonToMsgpack() const;
+    std::string propSerializeZoneJson() const;
+    std::string propSerializeZoneEcform() const;
 
 
     // JSON Traversal Modality
