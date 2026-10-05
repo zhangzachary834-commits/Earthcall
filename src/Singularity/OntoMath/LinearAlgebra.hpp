@@ -66,6 +66,12 @@ std::optional<glm::vec3> matrixMultiplyVec3(const MatrixValue& matrix,
 std::optional<MatrixValue> matrixTranspose(const MatrixValue& matrix);
 std::optional<double> matrixDeterminant(const MatrixValue& matrix);
 std::optional<MatrixValue> matrixInverse(const MatrixValue& matrix);
+// Project an NDC point through inverse(projection * view), including the
+// homogeneous divide. This owns general picking/unprojection mathematics;
+ // callers still own viewport/pointer policy.
+std::optional<glm::vec3> unprojectNdcPoint(const MatrixValue& view,
+                                           const MatrixValue& projection,
+                                           const glm::vec3& ndc);
 
 // Canonical affine mathematics. These functions own transform meaning; GLM is
 // only a representation/execution boundary. All affine transforms are 4x4
