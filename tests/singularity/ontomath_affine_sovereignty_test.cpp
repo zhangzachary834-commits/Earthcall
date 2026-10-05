@@ -148,6 +148,15 @@ int main() {
         cameraProjectionOracle * cameraViewOracle * cameraWorldPoint;
     assert(glm::all(glm::epsilonEqual(cameraClip, cameraClipOracle, 1e-5f)));
 
+    // Rung-8 clip -> world witness: feed NDC derived from the frozen clip
+    // oracle back through OntoMath's canonical inverse(P * V) authority.
+    assert(std::abs(cameraClipOracle.w) > 1e-6f);
+    const glm::vec3 cameraNdc = glm::vec3(cameraClipOracle) / cameraClipOracle.w;
+    const auto cameraWorldRoundTrip =
+        OntoMath::unprojectNdcPoint(*cameraView, *cameraProjection, cameraNdc);
+    assert(cameraWorldRoundTrip);
+    assert(near3(*cameraWorldRoundTrip, glm::vec3(cameraWorldPoint), 1e-4f));
+
     assert(!OntoMath::cameraLookAt(cameraEye, cameraEye, cameraUp));
     assert(!OntoMath::cameraLookAt(cameraEye, cameraTarget,
                                    glm::normalize(cameraTarget - cameraEye)));
