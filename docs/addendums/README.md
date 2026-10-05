@@ -22,3 +22,6 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating Spatial Relations and Property Predication](spatial_relations_and_property_predication_addendum.md)
 *   [Integrating Relational Propagation and Primary Relations](relational_propagation_and_primary_relations_addendum.md)
 *   [Integrating Systemic Propagation and Temporal Events](systemic_propagation_and_temporal_events_addendum.md)
+*   [Integrating Person Interface and the Unified Brush System](person_interface_and_unified_brush_addendum.md)
+*   [Integrating the Save System Upgrade and WebSocket Cybersecurity](save_system_and_cybersecurity_addendum.md)
+*   [Integrating Shape Formation DAGs and Convex/Concave Polyhedrons](shape_formation_dag_and_convex_concave_addendum.md)
