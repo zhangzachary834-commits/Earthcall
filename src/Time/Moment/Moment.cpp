@@ -105,14 +105,16 @@ void Moment::setEnd(const double& t) {
 }
 
 long Moment::propCpuClockCycle() const {
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
+#if defined(__has_builtin) && __has_builtin(__builtin_readcyclecounter)
+    return static_cast<long>(__builtin_readcyclecounter());
+#elif defined(_MSC_VER)
     return static_cast<long>(__rdtsc());
-#elif defined(__aarch64__)
+#elif defined(__x86_64__) || defined(__i386__)
+    return static_cast<long>(__rdtsc());
+#elif defined(__aarch64__) || defined(__arm64__)
     unsigned long long val;
     __asm__ __volatile__("mrs %0, cntvct_el0" : "=r" (val));
     return static_cast<long>(val);
-#elif defined(__clang__) && __has_builtin(__builtin_readcyclecounter)
-    return static_cast<long>(__builtin_readcyclecounter());
 #else
     return 0;
 #endif
