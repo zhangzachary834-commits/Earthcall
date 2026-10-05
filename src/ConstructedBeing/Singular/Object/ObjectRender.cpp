@@ -8,6 +8,7 @@
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/RenderMaterial.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Menu/stb_easy_font.h"   // draw2DObject's labels
@@ -67,11 +68,16 @@ void appendQuadStrip(geom::TessMesh& m, const std::vector<geom::TessVertex>& s) 
 // transpose). Lets the cylinder/cone caps be positioned once instead of via the GL
 // matrix stack at draw time.
 geom::TessMesh transformedMesh(const geom::TessMesh& src, const glm::mat4& xf) {
-    glm::mat3 nrm = glm::mat3(glm::transpose(glm::inverse(xf)));
+    const auto authoredTransform = OntoMath::MatrixValue::fromGlmMat4(xf);
+    if (!authoredTransform) return src;
+
     geom::TessMesh m = src;
     for (auto& v : m.tris) {
-        v.pos    = glm::vec3(xf * glm::vec4(v.pos, 1.0f));
-        v.normal = glm::normalize(nrm * v.normal);
+        const auto position = OntoMath::transformPoint(*authoredTransform, v.pos);
+        const auto normal = OntoMath::transformNormal(*authoredTransform, v.normal);
+        if (!position || !normal) return src;
+        v.pos = *position;
+        v.normal = glm::normalize(*normal);
     }
     return m;
 }
