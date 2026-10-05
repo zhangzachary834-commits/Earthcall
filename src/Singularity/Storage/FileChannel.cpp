@@ -1123,7 +1123,10 @@ std::string FileChannel::propDirectory() const {
     }
 }
 
-
+bool FileChannel::propJsonValid() const {
+    if (_content.empty()) return false;
+    return nlohmann::json::accept(_content);
+}
 
 
 void FileChannel::buildProperties() {
@@ -1217,6 +1220,8 @@ void FileChannel::buildProperties() {
         "file.filename", this, &FileChannel::propFilename, nullptr));
     registerProperty(std::make_unique<ComputedProperty<FileChannel, std::string>>(
         "file.directory", this, &FileChannel::propDirectory, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<FileChannel, bool>>(
+        "file.jsonValid", this, &FileChannel::propJsonValid, nullptr));
 }
 
 } // namespace Storage
