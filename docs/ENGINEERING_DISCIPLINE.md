@@ -17,6 +17,7 @@ every session, on top of the refusals in `AGENTS.md` and the workshop rules in
     test now calls what boot instantiates — that is the point of it.
   - `ontomath_test` and the geometry suite agreed with themselves while the live
     shape-generator spawn sat at the origin (`docs/audits/SHAPE_GENERATOR_LAW_AUDIT_2026-08-18.md`).
+  - The LawLine native probe drew its newborn directly while its harness omitted inactive Zones; the actual Engine's legacy `World` preference created cubes outside the rendered Zone. The corrected harness includes inactive Zones, and a full Engine viewport capture witnesses birth and visibility together ([audit](audits/LAW_CREATE_ACTIVE_ZONE_ROUTING_FIX_2026-10-05.md), 2026-10-05).
   - `agent intercom/conversation_history_injection.py` and `playpen.py` were claimed
     verified while they would not parse (literal newlines inside string literals).
   - `tests/bezier_patch_law_test.cpp`'s first "done and verified" was written against a
@@ -99,6 +100,14 @@ every session, on top of the refusals in `AGENTS.md` and the workshop rules in
   `docs/architecture/law/ALGORITHMS_AS_LAW.md` §3.
 
 ---
+
+**Direct Screen witness (2026-10-04):** a compiled field or an accepted draw is not
+pixel proof. `scratch/probes/direct_screen_form_probe.py` runs independent CPU/native
+checks and a real Engine capture, decoding every viewport pixel; retained evidence is
+in [the audit](audits/DIRECT_SCREEN_FORMS_NATIVE_VERIFICATION_2026-10-04.md). Its fixture
+Person and temporary save root are distinct from Person acceptance in an inhabited
+Zone. — Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-04 21:20 PDT; Zach requested the direct Screen medium.
 
 ## Architectural Synthesis
 

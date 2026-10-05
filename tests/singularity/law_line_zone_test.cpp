@@ -17,6 +17,7 @@
 #include "json.hpp"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <ctime>
@@ -68,6 +69,10 @@ int main() {
         ("earthcall_law_line_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))};
     std::filesystem::create_directories(scratch.path / "zones/LawLine");
     std::filesystem::copy_file(sourceZone, scratch.path / "zones/LawLine/zone.json");
+    // Production exposes this inactive Zone alongside LawLine. Its literal
+    // name must never steal birth from the active/rendered Zone.
+    std::filesystem::create_directories(scratch.path / "zones/World");
+    std::filesystem::copy_file(saves / "zones/World/zone.json", scratch.path / "zones/World/zone.json");
     for (const auto& ref : zoneJson["lawRefs"]) {
         const std::string id = ref.get<std::string>();
         std::filesystem::create_directories(scratch.path / "laws" / id);
@@ -90,6 +95,9 @@ int main() {
     check(index < harness.zones.zones().size(), "boot discovers the LawLine Zone");
     if (index >= harness.zones.zones().size()) return 1;
     check(harness.zones.switchTo(index), "entering LawLine loads its Laws (disabled presets included)");
+    auto* inactiveWorld = harness.zones.zones()[harness.zones.findZoneIndex("World")].get();
+    const auto worldObjectsBefore = inactiveWorld->getOwnedObjects().size();
+    check(&harness.zones.active() != inactiveWorld, "the visible LawLine Zone is distinct from inactive World");
     check(harness.lawManager.find("law-line-preset-event") != nullptr, "the event-triggered preset is present");
     check(harness.lawManager.find("law-line-hear") != nullptr, "the hearing Law is present");
     harness.lawManager.tick();   // zone-entered -> the scope Law points bare paths at the cube
@@ -319,8 +327,10 @@ int main() {
         };
         check(!offered("always") && !offered("my constantly-applied law"),
               "the menu never offers a preset that contradicts 'when they collide'");
-        check(!offered("WritePixel") && !offered("AddElement") && !offered("AuthorZone"),
-              "the menu never offers an action with no sentence form");
+        const auto pixels = Singularity::Terminal::LawSentence::suggest("my law called Blue when they collide Wri", live);
+        check(std::any_of(pixels.begin(), pixels.end(), [](const auto& item) { return item.text == "WritePixel"; }) &&
+              offered("AddElement") && offered("AuthorZone"),
+              "bounded completion offers new argument forms when narrowed by their spelling");
         check(offered("then"), "the menu offers 'then' after a trigger preset");
     }
     terminal->inject("my law called Blue when they collide then set color blue");
@@ -419,6 +429,81 @@ int main() {
     check(!Singularity::Terminal::LawSentence::suggest("called Earlier when clicked then set glow 1; then modify prop", terminal->vocabulary(harness.lawManager)).empty(),
           "completion follows the final sentence in a batch");
 
+    // Every formerly missing kind traverses the actual saved compiler and
+    // injected Terminal hearing path, while its exact model round-trips.
+    const std::vector<std::pair<int, std::string>> argumentExamples = {
+        {3, R"(Lerp <path: "@law-line-cube.glow", operand: 10, factor: 0.25>)"},
+        {4, R"(Drive <path: "@law-line-cube.glow", curve: {form: 1, coeffs: [1, 2]}, input: "@law-line-cube.hp">)"},
+        {5, R"(Sequence <children: [Set glow to 2, Add glow by 3]>)"},
+        {6, R"(Parallel <children: [Set glow to 2, Add glow by 3]>)"},
+        {8, R"(Map <path: "@law-line-cube.glow", expression: @law-line-cube.hp + 2>)"},
+        {9, R"(Flow <path: "@law-line-cube.glow", expression: 2>)"},
+        {13, R"(AddElement <container: "law-line-cube", element: "lexeme.law-line.gold.value-gold">)"},
+        {15, R"(RemoveElement <container: "law-line-cube", element: "lexeme.law-line.gold.value-gold">)"},
+        {17, R"(Synthesize <children: [Create <Object, properties: {color: blue}>]>)"},
+        {18, R"(PlayAudio <frequencyPath: "tone.frequency", amplitudePath: "tone.amplitude", timbre: "sine">)"},
+        {19, R"(AuthorZone <identifier: "args-test-zone", zoneKind: "empty", owner: "Zach", ownerKind: "Person">)"},
+        {21, R"(WritePixel <facePath: "paint.face", uPath: "paint.u", vPath: "paint.v", colorPath: "paint.color">)"},
+        {22, R"(ElevatePixels <name: "region", facePath: "paint.face", selector: {pieces: []}>)"},
+        {23, R"(FileRead <input: "file.path", path: "file.content">)"},
+        {24, R"(FileWrite <path: "file.path", input: "file.content">)"},
+        {25, R"(CodecTransform <operation: "jsonCompact", input: "codec.source", path: "codec.result">)"},
+    };
+    for (const auto& example : argumentExamples) {
+        const auto name = "Args " + std::to_string(example.first);
+        auto before = harness.lawManager.getAll().size();
+        terminal->inject("called \"" + name + "\" on \"argument-test\" then " + example.second); frame();
+        const auto ids = lawNamed(name);
+        auto* authored = ids.empty() ? nullptr : harness.lawManager.find(ids.back());
+        const auto* model = authored ? authored->actionModel() : nullptr;
+        check(harness.lawManager.getAll().size() == before + 1 && model && static_cast<int>(model->kind) == example.first,
+              "saved compiler authors " + name + ": " + printed.back());
+        if (!model) continue;
+        check(ActionNode::fromJson(model->toJson()).toJson() == model->toJson(), name + " arguments round-trip exactly");
+        if (example.first == 3 || example.first == 4 || example.first == 5 || example.first == 8) {
+            cube->setDynamicProperty("glow", 2.0);
+            authored->applyTo(*cube);
+            PropertyValue actual;
+            double value = 0;
+            lawGetValue(*cube, PropertyPath::parse("glow"), actual); propertyValueToNumber(actual, value);
+            PropertyValue hp;
+            double hpNumber = 0;
+            lawGetValue(*cube, PropertyPath::parse("hp"), hp); propertyValueToNumber(hp, hpNumber);
+            const double expected = example.first == 3 ? 4.0 : example.first == 4 ? 1.0 + 2.0 * hpNumber : example.first == 5 ? 5.0 : hpNumber + 2.0;
+            check(std::abs(value - expected) < 0.001, name + " changes the live cube by its authored arguments");
+        }
+    }
+    {
+        auto before = harness.lawManager.getAll().size();
+        terminal->inject(R"(called "Missing Factor" on "argument-test" then Lerp <path: "glow", operand: 1>)"); frame();
+        check(harness.lawManager.getAll().size() == before, "missing required argument refuses instead of using a hidden default");
+        terminal->inject(R"(called "Typo Field" on "argument-test" then Lerp <path: "glow", operand: 1, factor: 0.5, typo: 3>)"); frame();
+        check(harness.lawManager.getAll().size() == before && mentions(printed.back(), "not consumed"), "unknown argument refuses instead of disappearing");
+        terminal->inject(R"(called "Duplicate Field" on "argument-test" then Lerp <path: "glow", operand: 1, factor: 0.5, factor: 0.2>)"); frame();
+        check(harness.lawManager.getAll().size() == before && mentions(printed.back(), "duplicate"), "duplicate argument refuses");
+        auto* compiler = harness.lawManager.find("law-line-compile-args-lerp");
+        if (compiler) {
+            auto applications = compiler->applicationLog().size();
+            terminal->inject(R"(called "Preview Lerp" on "argument-test" then Lerp <path: "glow", operand: 1, factor: 0.5>?)"); frame();
+            check(harness.lawManager.getAll().size() == before && compiler->applicationLog().size() == applications,
+                  "parameterized action preview executes no compiler");
+            compiler->setEnabled(false);
+            terminal->inject(R"(called "No Lerp Compiler" on "argument-test" then Lerp <path: "glow", operand: 1, factor: 0.5>)"); frame();
+            check(harness.lawManager.getAll().size() == before && mentions(printed.back(), "no authored Metalaw"), "new action argument form has no compiler fallback");
+            compiler->setEnabled(true);
+        }
+        terminal->inject(R"(called "Default Timbre" on "argument-test" then PlayAudio <frequencyPath: "tone.frequency", amplitudePath: "tone.amplitude">)"); frame();
+        auto defaults = lawNamed("Default Timbre");
+        auto defaultLaw = defaults.empty() ? nullptr : harness.lawManager.find(defaults.back());
+        check(defaultLaw && defaultLaw->actionModel() && defaultLaw->actionModel()->propertyName == "sine",
+              "optional timbre is supplied by the authored template default");
+        terminal->inject(R"(called "Bad Factor" on "argument-test" then Lerp <path: "glow", operand: 1, factor: "wrong type">)"); frame();
+        check(lawNamed("Bad Factor").empty(), "malformed typed argument refuses authoring");
+        auto menu = Singularity::Terminal::LawSentence::suggest("when clicked then Ler", terminal->vocabulary(harness.lawManager));
+        check(std::any_of(menu.begin(), menu.end(), [](const auto& item) { return item.text == "Lerp" && mentions(item.snippet, "factor"); }),
+              "completion displays the authored Lerp argument signature");
+    }
+
     // Earlier in this test two Laws were spoken with the name Blue.
     const auto blues = lawNamed("Blue");
     check(blues.size() == 2, "two Laws named Blue exist");
@@ -511,6 +596,192 @@ int main() {
     }
     check(denotes == zoneJson["formationRelations"].size(), "Save Zone keeps every Lexeme --denotes--> Law Relation");
 
+    // Zach reported that the exact supplied stairway line did nothing after
+    // clicking a cube. Cover both its specific-ID restriction and a corrected
+    // program via the actual pointer press/release channel, not applyTo alone.
+    {
+        // Earlier independent fixtures intentionally installed click/hover
+        // creation Laws. Quiet only those test fixtures before measuring this
+        // program's effects; keep all compiler and Terminal wiring Laws live.
+        for (const auto& law : harness.lawManager.getAll()) {
+            if (!law || law->isFirstMover()) continue;
+            const auto triggers = harness.lawManager.triggersOf(law->getIdentifier());
+            if (std::find(triggers.begin(), triggers.end(), "object-clicked") != triggers.end() ||
+                std::find(triggers.begin(), triggers.end(), "object-hover-entered") != triggers.end() ||
+                std::find(triggers.begin(), triggers.end(), "object-hover-exited") != triggers.end()) law->setEnabled(false);
+        }
+        const std::string original = R"(called "Stairmaker" when clicked if Identity @law-line-cube then Sequence <children: [Create <Object, properties: {shape.kind: Cube, position: my.position + (0, -3, 0), color: blue, authored: {stair: true}}>, Create <Object, properties: {shape.kind: Cube, position: my.position + (1, -2, 0), color: blue, authored: {stair: true}}>, Create <Object, properties: {shape.kind: Cube, position: my.position + (2, -1, 0), color: blue, authored: {stair: true}}>]>; called "Golden Welcome" when hovered if stair is true then Set color to gold; called "Blue Rest" when the pointer leaves if stair is true then Set color to blue; called "Ascending Stone" when clicked if stair is true then Add position.y by 0.5)";
+        auto before = harness.lawManager.getAll().size();
+        terminal->inject(original); frame();
+        check(harness.lawManager.getAll().size() == before + 4, "original stairway line authors four Laws: " + printed.back());
+        auto launcher = std::make_shared<Object>();
+        launcher->setObjectID("stairway-launcher");
+        launcher->setPosition(glm::vec3(8, 5, -6));
+        harness.zones.active().addObject(launcher);
+        auto objectCount = harness.zones.active().getOwnedObjects().size();
+        Core::EventBus::instance().publish(ECA::Event{"object-clicked", launcher.get(), nullptr, std::time(nullptr)});
+        harness.lawManager.tick();
+        check(harness.zones.active().getOwnedObjects().size() == objectCount,
+              "original stairway silently ignores a different clicked cube because of its Identity condition");
+        // Remove only this test's four newly registered Laws before comparing
+        // the corrected line; never change a Person's saved world to diagnose.
+        for (const auto& name : {"Stairmaker", "Golden Welcome", "Blue Rest", "Ascending Stone"})
+            for (const auto& id : lawNamed(name)) harness.lawManager.remove(id);
+        std::ifstream example(saves.parent_path() / "examples/law_line_stairway.txt");
+        std::string corrected;
+        std::getline(example, corrected);
+        check(example.good() && !corrected.empty(), "the pasteable stairway example is available");
+        before = harness.lawManager.getAll().size();
+        terminal->inject(corrected); frame();
+        check(harness.lawManager.getAll().size() == before + 4, "corrected stairway line authors four Laws: " + printed.back());
+        Singularity::Input::InteractionChannel::Sense pointer;
+        pointer.rayOrigin = launcher->getPosition() + glm::vec3(0, 0, 5);
+        pointer.rayDirection = glm::vec3(0, 0, -1);
+        auto click = [&](Object* target) {
+            pointer.rayOrigin = target->getPosition() + glm::vec3(0, 0, 5);
+            pointer.left = false; harness.interaction->observePending(pointer, {target}); harness.lawManager.tick();
+            pointer.left = true; harness.interaction->observePending(pointer, {target}); harness.lawManager.tick();
+            pointer.left = false; harness.interaction->observePending(pointer, {target}); harness.lawManager.tick();
+        };
+        click(launcher.get());
+        auto& objects = harness.zones.active().getOwnedObjects();
+        check(objects.size() == objectCount + 3, "real pointer click on an arbitrary cube creates three visible-height steps");
+        if (objects.size() >= objectCount + 3) {
+            for (int step = 0; step < 3; ++step) {
+                auto* born = objects[objectCount + step].get();
+                const auto expected = launcher->getPosition() + glm::vec3(step, step + 1, 0);
+                check(glm::length(born->getPosition() - expected) < 0.001f, "step uses the clicked cube position and rises above it");
+            }
+            auto* step = objects[objectCount].get();
+            pointer.rayOrigin = step->getPosition() + glm::vec3(0, 0, 5);
+            pointer.left = false; harness.interaction->observePending(pointer, {step}); harness.lawManager.tick();
+            PropertyValue color;
+            lawGetValue(*step, PropertyPath::parse("color"), color);
+            auto gold = std::get_if<glm::vec3>(&color);
+            check(gold && std::abs(gold->x - 1) < 0.01 && std::abs(gold->y - 0.84) < 0.01, "pointer hover really turns a created step gold");
+            float height = step->getPosition().y;
+            click(step);
+            check(std::abs(step->getPosition().y - height - 0.5) < 0.001 && objects.size() == objectCount + 3,
+                  "clicking a step raises it without recursively creating more steps");
+            pointer.rayOrigin = glm::vec3(100, 100, 100);
+            harness.interaction->observePending(pointer, {step}); harness.lawManager.tick();
+            lawGetValue(*step, PropertyPath::parse("color"), color);
+            auto blue = std::get_if<glm::vec3>(&color);
+            check(blue && blue->x == 0 && blue->y == 0 && blue->z == 1, "pointer departure really turns the step blue again");
+
+            // Zach confirmed the original Stairmaker works and asked for a
+            // richer program. This is an add-on: keep all four original Laws
+            // live to catch hover/leave/click collisions in the actual context.
+            std::ifstream skyExample(saves.parent_path() / "examples/law_line_sky_stairway.txt");
+            std::string skyLine;
+            std::getline(skyExample, skyLine);
+            before = harness.lawManager.getAll().size();
+            terminal->inject(skyLine); frame();
+            check(!skyLine.empty() && harness.lawManager.getAll().size() == before + 3,
+                  "spiral add-on authors three Laws through the existing Metalaws: " + printed.back());
+            const auto skyStart = objects.size();
+            click(step);
+            check(objects.size() == skyStart + 8,
+                  "clicking an existing step grows exactly eight spiral jewels alongside the original program");
+            PropertyValue grown;
+            step->getDynamicProperty("skyGrown", grown);
+            check(grown == PropertyValue(true), "growth is latched on the clicked step as authored state");
+            const std::array<glm::vec3, 8> spiralOffsets{{
+                {1,.55f,0}, {2,1.1f,0}, {2,1.65f,1}, {2,2.2f,2},
+                {1,2.75f,2}, {0,3.3f,2}, {0,3.85f,1}, {0,4.4f,0}}};
+            if (objects.size() >= skyStart + 8) {
+                for (std::size_t i = 0; i < spiralOffsets.size(); ++i) {
+                    auto* jewel = objects[skyStart + i].get();
+                    const auto& params = jewel->getShapeParams();
+                    check(glm::length(jewel->getPosition() - step->getPosition() - spiralOffsets[i]) < .001f &&
+                          jewel->getShapeKind() == Object::ShapeKind::Ellipsoid &&
+                          std::abs(params.r - .8f) < .001f && std::abs(params.ry - .16f) < .001f &&
+                          std::abs(params.rz - .65f) < .001f,
+                          "spiral placement and flattened jewel geometry use the authored initializer values");
+                }
+                const auto count = objects.size();
+                click(step);
+                check(objects.size() == count, "clicking an already grown step does not duplicate its spiral");
+                auto* jewel = objects[skyStart].get();
+                pointer.rayOrigin = jewel->getPosition() + glm::vec3(0, 0, 5);
+                pointer.left = false;
+                harness.interaction->observePending(pointer, {jewel});
+                const auto rotation = jewel->getRotationEulerDegrees();
+                harness.lawManager.tick();
+                lawGetValue(*jewel, PropertyPath::parse("color"), color);
+                gold = std::get_if<glm::vec3>(&color);
+                check(gold && glm::length(*gold - glm::vec3(1,.84f,0)) < .001f,
+                      "the original hover Law highlights a new jewel gold");
+                check(std::abs(jewel->getRotationEulerDegrees().y - rotation.y - 25) < .001f,
+                      "hovering a jewel turns it by the authored 25 degrees");
+                pointer.rayOrigin = glm::vec3(100, 100, 100);
+                harness.interaction->observePending(pointer, {jewel}); harness.lawManager.tick();
+                lawGetValue(*jewel, PropertyPath::parse("color"), color);
+                auto cyan = std::get_if<glm::vec3>(&color);
+                check(cyan && glm::length(*cyan - glm::vec3(0,1,1)) < .001f,
+                      "the add-on restores jewel colour after the original Blue Steps Law");
+                check(glm::length(jewel->getRotationEulerDegrees() - rotation) < .001f,
+                      "leaving restores the jewel's original orientation");
+                const auto stopped = jewel->getRotationEulerDegrees();
+                harness.lawManager.tick();
+                check(glm::length(jewel->getRotationEulerDegrees() - stopped) < .001f,
+                      "a settled jewel does not rotate without another hover event");
+                auto* crown = objects[skyStart + 7].get();
+                click(crown);
+                check(objects.size() == count + 8,
+                      "a new crown can grow the next full turn of the sky tower");
+            }
+        }
+    }
+
+    // Zach's CLI authored the continuous example but its Identity @Zach guard
+    // never matched his keyed Person. Display names are not identity aliases.
+    // Keep the actual Terminal/compiler/tick path in addition to that predicate
+    // witness; the earlier unkeyed harness concealed the example's mistake.
+    {
+        std::array<uint8_t, 32> fixtureKey{};
+        fixtureKey.fill(42);
+        check(harness.player.setPersonId(Identity::SingularId::fromPublicKey(fixtureKey)),
+              "continuous creation fixture uses a keyed Person");
+        check(harness.player.getIdentifier() != "Zach" &&
+              !ConditionNode::identity("Zach").compile()(ECA::Event{}, harness.player),
+              "Identity @Zach cannot match a keyed Person's display name");
+        terminal->inject("called Wrong Name always if Identity @Zach then Create <Object, properties: {shape.kind: Cube, position: my.position + (0, -3, 0), color: gold}>");
+        frame();
+        auto& objects = harness.zones.active().getOwnedObjects();
+        const auto beforeWrong = objects.size();
+        harness.lawManager.tick();
+        check(objects.size() == beforeWrong, "the original continuous example creates nothing for a keyed Person");
+
+        std::ifstream source(saves.parent_path() / "examples/law_line_cubes_below.txt");
+        std::string line; std::getline(source, line);
+        check(source.good() && !line.empty(), "continuous example is read from the pasteable artifact");
+        terminal->inject(line); frame();
+        PropertyValue last;
+        lawGetValue(*terminal, PropertyPath::parse("lastCreated"), last);
+        auto* continuous = std::holds_alternative<std::string>(last)
+            ? harness.lawManager.find(std::get<std::string>(last)) : nullptr;
+        check(continuous && continuous->name() == "Cubes Below Me" &&
+              continuous->activation() == Law::Activation::WhileTrue,
+              "the corrected sentence authors a continuously firing Law");
+        harness.player.position() = glm::vec3(7, 9, -4);
+        const auto before = objects.size();
+        harness.lawManager.tick();
+        check(objects.size() == before + 1, "continuous tick creates exactly one cube for the keyed Person");
+        if (objects.size() == before + 1)
+            check(glm::length(objects.back()->getPosition() - glm::vec3(7, 6, -4)) < 0.001f,
+                  "the continuous cube centre is three units below the actual author");
+        harness.player.position() = glm::vec3(-2, 20, 6);
+        harness.lawManager.tick();
+        check(objects.size() == before + 2, "the next tick creates one more cube without clicking");
+        if (objects.size() == before + 2)
+            check(glm::length(objects.back()->getPosition() - glm::vec3(-2, 17, 6)) < 0.001f,
+                  "continuous creation follows the author's changed position");
+        if (continuous) continuous->setEnabled(false);
+    }
+
+    check(inactiveWorld->getOwnedObjects().size() == worldObjectsBefore,
+          "inactive World receives no births from Laws running in the visible LawLine Zone");
     std::cout << "law_line_zone_test: " << (checks - failures) << "/" << checks << " checks passed\n";
     return failures == 0 ? 0 : 1;
 }

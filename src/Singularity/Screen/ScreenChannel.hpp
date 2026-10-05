@@ -4,8 +4,11 @@
 #include <glm/glm.hpp>
 #include <string>
 
+class Renderer;
+
 namespace Singularity {
 namespace Screen {
+
 
 // First-mover modality channel for Screen / GPU graphics rendering.
 //
@@ -45,6 +48,12 @@ public:
 
     static void syncRegister(LawManager& laws);
     static ScreenChannel* find(LawManager& laws);
+
+    // Explicit authored binding: output.colorPath names a typed VectorField on
+    // ANY Singular, not an Object kind. opacityPath/timePath are optional typed
+    // ScalarField/numeric bindings. Local output.color/opacity/time also work.
+    // All are ordinary AddProperty/Set vocabulary, not new action opcodes.
+    bool manifestOutput(Renderer& renderer, uint32_t width, uint32_t height);
 
     // Update live metrics from the active Renderer at the end of each frame.
     void updateMetrics(int drawCalls, int trianglesDrawn, double vramBytes,
@@ -122,6 +131,15 @@ public:
 
 private:
     void buildProperties() override;
+    // Derived Screen observations, registered read-only below. These report
+    // the actual channel act; they never hold authored expression state.
+    int _outputWidth = 0, _outputHeight = 0;
+    bool _outputDrawn = false;
+    std::string _outputLastRefusal;
+    int getOutputWidth() const { return _outputWidth; }
+    int getOutputHeight() const { return _outputHeight; }
+    bool getOutputDrawn() const { return _outputDrawn; }
+    std::string getOutputLastRefusal() const { return _outputLastRefusal; }
 
     // Getters for the derived metrics below: NO_BLACK_BOX.md §3 says a Law may
     // read anything, but "writable unless genuinely derived" — these are

@@ -955,9 +955,70 @@ private:
         refuse("the sentence ends before the property record closes", _pos);
     }
 
+    // Structural literal records use native JSON leaves and preserve explicit
+    // vector tags. The authored compiler, not this reader, selects model fields.
+    nlohmann::json argumentLiteral(const PropertyValue& value) {
+        if (auto dict = std::get_if<std::shared_ptr<PropertyDict>>(&value)) {
+            auto out = nlohmann::json::object();
+            if (*dict) for (const auto& entry : (*dict)->elements) out[entry.first] = argumentLiteral(entry.second);
+            return out;
+        }
+        if (auto list = std::get_if<std::shared_ptr<PropertyList>>(&value)) {
+            auto out = nlohmann::json::array();
+            if (*list) for (const auto& item : (*list)->elements) out.push_back(argumentLiteral(item));
+            return out;
+        }
+        if (auto str = std::get_if<std::string>(&value)) return *str;
+        if (auto boolean = std::get_if<bool>(&value)) return *boolean;
+        double number;
+        if (propertyValueToNumber(value, number)) return number;
+        return propertyValueToJson(value);
+    }
+
+    ActionNode namedInvocation(const Word& word, Atom key) {
+        auto args = nlohmann::json::object();
+        std::set<std::string> seen;
+        do {
+            if (!seen.insert(key.text).second) refuse("duplicate argument '" + key.text + "'", key.offset);
+            if (key.text == "children") {
+                needPunctuation('[');
+                auto children = nlohmann::json::array();
+                if (!punctuation(']')) do {
+                    children.push_back(parseAction(std::nullopt).toJson());
+                    if (punctuation(']')) break;
+                    needPunctuation(',');
+                } while (true);
+                args["children"] = children;
+            } else {
+                auto e = expression();
+                if (key.text == "expression") {
+                    if (seen.count("function") || seen.count("bindings"))
+                        refuse("expression duplicates function or bindings", key.offset);
+                    seen.insert("function"); seen.insert("bindings");
+                    OntoMath::Piecewise f;
+                    OntoMath::Piecewise::Piece piece;
+                    piece.mathNode = mathOf(e); f.pieces.push_back(std::move(piece));
+                    args["function"] = f.toJson(); args["bindings"] = mathBindingsToJson(e.bindings);
+                } else {
+                    if (!e.literal) refuse("argument '" + key.text + "' requires a literal; use expression: for bound mathematics", key.offset);
+                    args[key.text] = argumentLiteral(*e.literal);
+                }
+            }
+            if (punctuation('>')) break;
+            needPunctuation(',');
+            key = requireAtom("an argument name", &Expectation::path);
+            needPunctuation(':');
+        } while (true);
+        return compileInvocation({{"slot", "arguments"}, {"opcode", word.opcode},
+            {"lexeme", word.lexemeId}, {"wordLaw", word.lawId}, {"arguments", args}});
+    }
+
     ActionNode invocation(const Word& word) {
+        if (++_invocationDepth > 32) refuse("invocation nesting exceeds 32 levels", _pos);
+        struct Depth { unsigned& value; ~Depth() { --value; } } depth{_invocationDepth};
         needPunctuation('<');
         auto selector = requireAtom("a Singular kind or prototype", &Expectation::being);
+        if (punctuation(':')) return namedInvocation(word, selector);
         if (!looksLikePath(selector.text) || selector.quoted)
             refuse("the invocation selector must be a kind spelling or prototype path", selector.offset);
         needPunctuation(',');
@@ -989,6 +1050,8 @@ private:
         skipSpace();
         if (_pos < _text.size() && _text[_pos] == '<') return invocation(*verb);
         const std::string kind = verb->opcode.substr(7);
+        if (!verb->arguments.empty())
+            refuse((atEnd() ? "the sentence ends where " : "") + std::string("'") + verb->symbol + "' requires its authored argument form " + verb->arguments, at);
         // A Lexeme can denote a complete authored action, including a compound
         // Create/Synthesize tree or a channel action such as WritePixel. The
         // Relation supplies its Law identity; the Metalaw seam above resolves
@@ -1050,6 +1113,7 @@ private:
     const Vocabulary& _vocab;
     bool _completing = false;
     bool _readOnly = false;
+    unsigned _invocationDepth = 0; // bounded channel syntax stack beneath the Kernel
     unsigned _expressionDepth = 0; // bounded parser stack beneath the Kernel
     std::size_t _pos = 0;
     std::vector<Spelling> _spellings;
@@ -1278,7 +1342,7 @@ static std::string canonicalDescription(const std::string& op) {
         if (op == code) return text;
     }
     if (startsWith(op, "condition.")) return "condition (Law Graph only for now)";
-    if (startsWith(op, "action.")) return "action (Law Graph only for now)";
+    if (startsWith(op, "action.")) return "action · named arguments compiled by authored Metalaws";
     if (startsWith(op, "kind.")) return "a kind of being";
     return "";
 }
@@ -1325,9 +1389,9 @@ std::vector<Word> canonicalWords() {
                              "ForAll", "Overlaps"}) {
         w.push_back({kind, std::string("condition.") + kind, "", ""});
     }
-    // Every ActionNode kind, spelled as the engine spells it. Kinds without a
-    // sentence form are still words, so the refusal can name them.
-    for (int k = 0; k <= static_cast<int>(ActionNode::Kind::ElevatePixels); ++k) {
+    // Every ActionNode kind, spelled as the engine spells it. All can carry
+    // structural named arguments; authored Metalaws supply their meaning.
+    for (int k = 0; k <= static_cast<int>(ActionNode::Kind::CodecTransform); ++k) {
         const char* name = ActionNode::kindName(static_cast<ActionNode::Kind>(k));
         w.push_back({name, std::string("action.") + name, "", ""});
     }
@@ -1617,6 +1681,7 @@ std::string argumentTemplate(const std::string& op) {
     for (const auto& [code, text] : kTable) {
         if (op == code) return text;
     }
+    if (startsWith(op, "action.")) return "<‹argument›: ‹value›>";
     return {};
 }
 
@@ -1625,8 +1690,8 @@ namespace {
 // Tab on an empty word lists everything that may come next, grouped in the
 // order a sentence is usually built.
 int groupRank(const std::string& role) {
-    static const char* kOrder[] = {"preset", "activation", "action", "operator", "condition",
-                                   "kind", "value", "event", "path", "being", "clause",
+    static const char* kOrder[] = {"clause", "preset", "activation", "action", "operator", "condition",
+                                   "kind", "value", "event", "path", "being",
                                    "logic", "scope", "filler"};
     for (int i = 0; i < static_cast<int>(sizeof kOrder / sizeof *kOrder); ++i) {
         if (role == kOrder[i]) return i;
@@ -1706,6 +1771,12 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
         }
         const Expectation& e = parser.expectation();
         for (const auto& w : vocab.words) {
+            // Canonical and authored spellings of the same opcode are one
+            // meaning. Retain the authored signature instead of presenting a
+            // false ambiguity whose menu entry loses its arguments.
+            if (w.lexemeId.empty() && std::any_of(vocab.words.begin(), vocab.words.end(), [&](const Word& authored) {
+                    return !authored.lexemeId.empty() && authored.opcode == w.opcode && lower(authored.symbol) == lower(w.symbol);
+                })) continue;
             if (admits(e.admit, w.opcode)) {
                 const bool completeAction = !w.lexemeId.empty() &&
                     std::any_of(vocab.presets.begin(), vocab.presets.end(), [&](const Preset& p) {

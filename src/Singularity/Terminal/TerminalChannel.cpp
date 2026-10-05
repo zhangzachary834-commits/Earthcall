@@ -1158,15 +1158,18 @@ LawSentence::Resolution TerminalChannel::resolveByMetalaw(LawManager& laws,
 
 namespace {
 // The terminal is a structured-text channel. Template instantiation is an
-// irreducible structural operation: only $slot JSON pointers are substituted.
+// irreducible structural operation: $slot JSON pointers are substituted, with
+// an authored $default only when a referenced input is absent.
 // It knows no kinds, properties, creation policy, or action lowering rules.
 nlohmann::json instantiateSentenceTemplate(const nlohmann::json& pattern,
                                            const nlohmann::json& input, unsigned depth = 0) {
     if (depth >= 32) throw std::runtime_error("template nesting exceeds the channel's 32-level structural bound");
     if (pattern.is_object() && pattern.contains("$slot")) {
-        if (pattern.size() != 1 || !pattern["$slot"].is_string())
-            throw std::runtime_error("$slot must be a single JSON-pointer reference");
-        return input.at(nlohmann::json::json_pointer(pattern["$slot"].get<std::string>()));
+        if (pattern.size() > (pattern.contains("$default") ? 2 : 1) || !pattern["$slot"].is_string())
+            throw std::runtime_error("$slot must be a JSON-pointer reference with an optional $default");
+        const auto pointer = nlohmann::json::json_pointer(pattern["$slot"].get<std::string>());
+        if (!input.contains(pointer) && pattern.contains("$default")) return pattern["$default"];
+        return input.at(pointer);
     }
     if (pattern.is_array()) {
         auto result = nlohmann::json::array();
@@ -1214,12 +1217,12 @@ void validateSentenceAction(const nlohmann::json& model, unsigned depth = 0) {
     if ((kind == ActionNode::Kind::Set || kind == ActionNode::Kind::Add || kind == ActionNode::Kind::Scale) &&
         (!model.contains("path") || !model["path"].is_string() || model["path"].get<std::string>().empty() || !model.contains("operand")))
         throw std::runtime_error("compiled property action requires a path and operand");
-    if (kind == ActionNode::Kind::Map) {
+    if (kind == ActionNode::Kind::Map || kind == ActionNode::Kind::Flow) {
         if (!model.contains("path") || !model["path"].is_string() || model["path"].get<std::string>().empty() ||
             !model.contains("function") || !model.contains("bindings") || !model["bindings"].is_object())
-            throw std::runtime_error("compiled Map requires a path, function, and bindings");
+            throw std::runtime_error(std::string("compiled ") + ActionNode::kindName(kind) + " requires a path, function, and bindings");
         auto function = OntoMath::Piecewise::fromJson(model["function"]);
-        if (function.pieces.empty()) throw std::runtime_error("compiled Map has no defined pieces");
+        if (function.pieces.empty()) throw std::runtime_error(std::string("compiled ") + ActionNode::kindName(kind) + " has no defined pieces");
         for (const auto& piece : function.pieces) if (piece.mathNode) {
             std::string error;
             if (!piece.mathNode->checkTypes({}, error, nullptr, true)) throw std::runtime_error(error);
@@ -1277,6 +1280,20 @@ LawSentence::Compilation TerminalChannel::compileByMetalaw(LawManager& laws,
         }
         if (_compilationTemplate.empty()) continue;
         try {
+            auto pattern = nlohmann::json::parse(_compilationTemplate);
+            if (input.value("slot", "") == "arguments") {
+                std::set<std::string> fields;
+                std::function<void(const nlohmann::json&)> collect = [&](const nlohmann::json& node) {
+                    if (node.is_object() && node.contains("$slot") && node["$slot"].is_string()) {
+                        auto pointer = node["$slot"].get<std::string>();
+                        const std::string prefix = "/arguments/";
+                        if (pointer.rfind(prefix, 0) == 0) fields.insert(pointer.substr(prefix.size()).substr(0, pointer.substr(prefix.size()).find('/')));
+                    } else if (node.is_structured()) for (const auto& child : node) collect(child);
+                };
+                collect(pattern);
+                for (auto it = input["arguments"].begin(); it != input["arguments"].end(); ++it)
+                    if (!fields.count(it.key())) throw std::runtime_error("argument '" + it.key() + "' is not consumed by the authored template");
+            }
             auto model = nlohmann::json::parse(propCompilationResult());
             if (model.contains("error")) throw std::runtime_error(model["error"].get<std::string>());
             if (!document) validateSentenceAction(model);

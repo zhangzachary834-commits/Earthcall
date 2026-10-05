@@ -1,0 +1,61 @@
+{
+ "authors": [
+  "Zach"
+ ],
+ "identifier": "law-line-compile-args-elevatepixels",
+ "injected_by": "Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-04",
+ "law": {
+  "activation": 0,
+  "applicationLog": [],
+  "authors": [
+   "Zach"
+  ],
+  "authority": 0,
+  "conditionMode": "all",
+  "conditionSubjects": [],
+  "drives": false,
+  "enabled": true,
+  "id": "law-line-compile-args-elevatepixels",
+  "name": "Law Line · args-elevatepixels",
+  "provenance": [
+   {
+    "directed": true,
+    "entityA": "law-line-compile-args-elevatepixels",
+    "entityB": "Zach",
+    "events": [],
+    "type": "authored-by",
+    "weight": 1.0
+   }
+  ],
+  "retrigger": 0,
+  "scope": 0,
+  "targets": [
+   "terminal-channel"
+  ],
+  "conditionModel": {
+   "kind": 3,
+   "children": [
+    {
+     "kind": 0,
+     "path": "compilation.input.slot",
+     "op": 0,
+     "operand": "arguments"
+    },
+    {
+     "kind": 0,
+     "path": "compilation.input.opcode",
+     "op": 0,
+     "operand": "action.ElevatePixels"
+    }
+   ]
+  },
+  "actionModel": {
+   "kind": 0,
+   "path": "compilation.template",
+   "operand": "{\"kind\": 22, \"propertyName\": {\"$slot\": \"/arguments/name\"}, \"pixelFacePath\": {\"$slot\": \"/arguments/facePath\"}, \"selector\": {\"$slot\": \"/arguments/selector\"}}"
+  }
+ },
+ "triggers": [
+  "terminal-invocation-compilation-requested"
+ ]
+}

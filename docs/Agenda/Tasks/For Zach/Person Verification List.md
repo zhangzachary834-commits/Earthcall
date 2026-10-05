@@ -1,5 +1,19 @@
 # Person Verification List
 
+
+## Direct authored Screen forms
+
+*Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-04 21:10 PDT — Zach requested direct screen-pixel manifestation through
+OntoMath, without mandatory Object/Material/ShapeKind carriers.*
+
+- [ ] After rebuilding `earthcall_webgpu`, run `python3 scratch/probes/direct_screen_form_probe.py`; its isolated Engine window should show the authored red/green gradient with blue fixed at one-quarter, beneath compatibility HUD/tools.
+- [ ] Open the printed evidence directory's `direct-screen-gradient.png` and Engine capture: red should increase left to right and green top to bottom; judge whether the native appearance agrees with the intended form.
+- [ ] When adopting this path into an inhabited Zone, retain the appropriately authored initialization Law, Save Zone, restart, fire that Law, and verify the same source field and binding return; channel-only writes are ephemeral.
+- [ ] On a Retina display, confirm a selector aimed at one physical framebuffer sample is one physical pixel; window-point pointer targeting and a convenient mathematical field editor remain future work.
+
+See [contract, authoring recipe, evidence, and remaining work](../Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md).
+
 ## Law Line: Create initializers compiled by Metalaw
 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 18:46 PDT — Zach requested general Singular creation with registered/authored initializers and Metalaw compilation.*
@@ -1169,3 +1183,43 @@ Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-0
 - [ ] Rebuild/restart WebGPU, `enter LawLine`, and submit the Add Note / Change Note / Remove Note line from [the task](../Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md): see three authored acknowledgments numbered 1, 2, 3 in source order.
 - [ ] Click the LawLine cube, hover, then leave it: inspect authored `note` as "hello", then "updated", then absent; confirm Tab works after a semicolon and a trailing `?` previews without creating Laws.
 - [ ] Save Zone, restart/reenter, and confirm the three authored Laws persist; the native interactive editor and visual experience remain for Zach to witness.
+
+## Law Line remaining action arguments (2026-10-05)
+
+Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 00:09 PDT. Zach requested the missing argument forms.
+
+- [ ] Restart/rebuild WebGPU and `enter LawLine`; type `when clicked then Ler` and Tab: the Lerp signature should show path, operand, and factor; confirm Map/Flow, composition, audio/pixel/file/codec forms also appear.
+- [ ] Submit the Blend Glow and Ordered Glow examples in [the task](../Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md), click the cube, and inspect its `glow` value; append `?` first to confirm a preview creates no Laws.
+- [ ] Save Zone and restart/reenter to inspect the retained nested/parameterized models; separately witness any actual sound, surface edits, file operations, or Zone birth you author, since compiler success alone is not channel execution proof.
+
+## Keyed-Person continuous creation example (2026-10-05)
+
+- [ ] After saving any Laws you want to retain, restart the rebuilt WebGPU app; enter LawLine, submit `examples/law_line_visible_probe.txt`, and confirm one gold cube directly ahead in first-person view. The fixed resolver now creates in the active rendered Zone; old newborns in World were not moved. [Full Engine proof](../../../audits/LAW_CREATE_ACTIVE_ZONE_ROUTING_FIX_2026-10-05.md). — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 11:55 PDT.
+- [x] Recheck `examples/law_line_cubes_below.txt` in the active Zone: Zach confirmed visible cube creation works on 2026-10-05 after the destination fix; exact offsets are separately verified by the native/logic fixture.
+
+Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 10:25 PDT. Zach reported that the continuous Law was authored but no cube appeared; the supplied `Identity @Zach` guard used a display name instead of the keyed identifier.
+
+- [ ] In LawLine, submit `examples/law_line_cubes_below.txt` and confirm ongoing gold-cube creation without clicks; inspect the new Objects' position as author position minus three on Y, distinguishing hidden cubes beneath the floor from a Law that never fires.
+- [ ] If native visibility is uncertain, use a separately authored diagnostic with `(0, 3, 0)` to look above the Person, then disable it; below-position correctness is separately covered by the keyed runtime regression.
+- [ ] Disable continuous test Laws after a brief check so Objects do not accumulate indefinitely; inspect any saved duplicates before changing them.
+- [ ] Since the +3 offset also remained invisible, focus the scene, press 1 for first-person view, aim approximately level and submit `examples/law_line_visible_probe.txt`; confirm one gold cube directly ahead. If absent, retain a scene screenshot and the newest Object's position to separate live scene/rendering issues from the native fixture result.
+- [ ] With the below-feet Law active, focus the viewport, press F to enable flight, hold Space to rise more than three units above the floor, and look down for newly created cubes; if still absent, inspect live newborn positions and occluders. The [native fixture audit](../../../audits/LAW_LINE_CUBE_VISIBILITY_2026-10-05.md) proves floor occlusion, not the state of this scene. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 11:28 PDT.
+
+## Click-local stairway example (2026-10-05)
+
+Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 00:47 PDT. Zach reported that the supplied stairway did nothing after clicking the cube.
+
+- [ ] Start Earthcall, `enter LawLine`, paste the single line in `examples/law_line_stairway.txt`, and see "authored 4 Laws in sentence order"; click a visible unmarked cube and look for three blue steps above it.
+- [ ] Hover a step to see gold, move away to see blue, and click it to see a half-unit rise without another set of steps; distinguish this native visual witness from the pointer-channel harness result.
+- [ ] If previously saved copies of the old program remain, inspect them before disabling/deleting duplicates; this session does not automatically change Person-authored Laws.
+
+Zach confirmed on 2026-10-05 that he retried Stairmaker and it works after the active-Zone birth fix. This confirms live growth; individual hover/leave/rise and save/restart gestures above remain separate checks.
+
+## Sky spiral Stairmaker add-on (2026-10-05)
+
+Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 12:40 PDT; Zach asked to make his working Stairmaker cooler. [Native proof and scope](../../../audits/SKY_STAIRWAY_AUTHORED_PROGRAM_2026-10-05.md).
+
+- [ ] Keep the original Stairmaker Laws active; paste `examples/law_line_sky_stairway.txt` once and click an existing step: eight broad cyan/violet stones should spiral upward to a gold crown.
+- [ ] Click the crown or another new stone to grow another spiral from it; click the same grown stone again and confirm it rises with the original Law without duplicating its branch.
+- [ ] Hover a jewel: it turns gold and swivels 25 degrees; look away: its cyan/violet/gold colour and orientation return.
+- [ ] Save Zone, restart/reenter, and confirm the Laws, branch latches and stones persist; judge the visual feel and collision/walking behaviour separately from the native fixture proof.

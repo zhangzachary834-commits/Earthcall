@@ -5,13 +5,72 @@
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
+#include "Singularity/OntoMath/Field.hpp"
 
 #include <utility>
+#include <cmath>
+#include <cstdio>
 
 namespace Singularity {
 namespace Screen {
 
 ScreenChannel::ScreenChannel() = default;
+
+bool ScreenChannel::manifestOutput(Renderer& renderer, uint32_t width, uint32_t height) {
+    std::string refusal;
+    bool drawn = false;
+    // Binding values remain on their authored Singulars. Resolve afresh rather
+    // than retaining raw being pointers or stale field state across Zone loads.
+    auto read = [&](const char* pathName, const char* localName, PropertyValue& value) {
+        PropertyValue binding;
+        if (!getDynamicProperty(pathName, binding)) return getDynamicProperty(localName, value);
+        const auto* path = std::get_if<std::string>(&binding);
+        if (!path || path->empty() || path->front() != '@') {
+            refusal = std::string(pathName) + " must name a qualified PropertyPath";
+            return false;
+        }
+        if (!lawGetValue(*this, PropertyPath::parse(*path), value)) {
+            refusal = std::string(pathName) + " does not resolve: " + *path;
+            return false;
+        }
+        return true;
+    };
+    PropertyValue colorValue, opacityValue, timeValue;
+    if (isEnabled() && read("output.colorPath", "output.color", colorValue)) {
+        const auto* color = std::get_if<std::shared_ptr<OntoMath::VectorField>>(&colorValue);
+        std::shared_ptr<OntoMath::ScalarField> opacity;
+        double time = 0.0;
+        bool hasTime = false;
+        if (!color || !*color || (*color)->mode != OntoMath::VectorField::EvaluationMode::AST) {
+            refusal = "direct Screen color requires a typed AST VectorField";
+        }
+        if (read("output.opacityPath", "output.opacity", opacityValue)) {
+            const auto* field = std::get_if<std::shared_ptr<OntoMath::ScalarField>>(&opacityValue);
+            if (!field || !*field || (*field)->mode != OntoMath::ScalarField::EvaluationMode::AST)
+                refusal = "direct Screen opacity requires a typed AST ScalarField";
+            else opacity = *field;
+        }
+        if (read("output.timePath", "output.time", timeValue)) {
+            hasTime = propertyValueToNumber(timeValue, time) && std::isfinite(time);
+            if (!hasTime) refusal = "direct Screen time requires a finite numeric coordinate";
+        }
+        if (refusal.empty())
+            drawn = renderer.drawScreenForm((*color)->astDefinition,
+                opacity ? &opacity->astDefinition : nullptr, width, height,
+                hasTime ? &time : nullptr, refusal);
+    }
+    const auto observe = [&](auto& slot, const auto& value, const char* name) {
+        if (slot != value) { slot = value; Singular::notifyPropertyChanged(this, name); }
+    };
+    observe(_outputWidth, static_cast<int>(width), "output.width");
+    observe(_outputHeight, static_cast<int>(height), "output.height");
+    observe(_outputDrawn, drawn, "output.drawn");
+    if (refusal != _outputLastRefusal && !refusal.empty())
+        std::fprintf(stderr, "[screen] REFUSED direct output: %s\n", refusal.c_str());
+    observe(_outputLastRefusal, refusal, "output.lastRefusal");
+    return drawn;
+}
 
 void ScreenChannel::syncRegister(LawManager& laws) {
     // Idempotent-by-replacement, including after a test/channel teardown.
@@ -89,6 +148,14 @@ void ScreenChannel::updateMetrics(int dCalls, int tris, double vramBytes,
 
 void ScreenChannel::buildProperties() {
     registerEnabledProperty();
+    registerProperty(std::make_unique<ComputedProperty<ScreenChannel, int>>(
+        "output.width", this, &ScreenChannel::getOutputWidth));
+    registerProperty(std::make_unique<ComputedProperty<ScreenChannel, int>>(
+        "output.height", this, &ScreenChannel::getOutputHeight));
+    registerProperty(std::make_unique<ComputedProperty<ScreenChannel, bool>>(
+        "output.drawn", this, &ScreenChannel::getOutputDrawn));
+    registerProperty(std::make_unique<ComputedProperty<ScreenChannel, std::string>>(
+        "output.lastRefusal", this, &ScreenChannel::getOutputLastRefusal));
 
     // Derived telemetry: readable, never writable — see the getters' comment
     // in ScreenChannel.hpp. A null setter is ComputedProperty's read-only form

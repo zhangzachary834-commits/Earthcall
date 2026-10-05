@@ -171,11 +171,11 @@ def slot(name):
     return {"$slot": "/" + name}
 
 
-def compiler(identifier, conditions, template):
+def compiler(identifier, conditions, template, opcode="action.Create"):
     predicates = [{"kind": 0, "path": "compilation.input." + key, "op": 0,
                    "operand": value} for key, value in conditions.items()]
     predicates.append({"kind": 0, "path": "compilation.input.opcode", "op": 0,
-                       "operand": "action.Create"})
+                       "operand": opcode})
     result = law(identifier, "Law Line · " + identifier.replace("law-line-compile-", ""),
                  enabled=True, condition={"kind": 3, "children": predicates},
                  action={"kind": 0, "path": "compilation.template",
@@ -204,6 +204,47 @@ CREATE_COMPILERS = [
                  {"kind": 12, "propertyName": slot("property"), "operand": {"t": "none"}},
                  {"kind": 8, "path": slot("property"), "function": slot("function"), "bindings": slot("bindings")},
              ]}),
+]
+
+# Named argument schemas are authored compiler templates, never parser switches.
+def arg(name, default=None, optional=False):
+    ref = {"$slot": "/arguments/" + name}
+    if optional:
+        ref["$default"] = default
+    return ref
+
+
+ARGUMENT_ACTIONS = [
+    (3, "Lerp", {"path": arg("path"), "operand": arg("operand"), "factor": arg("factor")},
+     '<path: "‹path›", operand: ‹value›, factor: ‹number›>'),
+    (4, "Drive", {"path": arg("path"), "input": arg("input", "", True), "curve": arg("curve")},
+     '<path: "‹path›", curve: {form: 1, coeffs: [0, 1]}, input: "‹path›">'),
+    (5, "Sequence", {"children": arg("children")}, '<children: [‹action›, ‹action›]>'),
+    (6, "Parallel", {"children": arg("children")}, '<children: [‹action›, ‹action›]>'),
+    (8, "Map", {"path": arg("path"), "function": arg("function"), "bindings": arg("bindings")},
+     '<path: "‹path›", expression: ‹expression›>'),
+    (9, "Flow", {"path": arg("path"), "function": arg("function"), "bindings": arg("bindings")},
+     '<path: "‹path›", expression: ‹rate expression›>'),
+    (13, "AddElement", {"containerToken": arg("container", "", True), "elementToken": arg("element")},
+     '<container: "‹being›", element: "‹being›">'),
+    (15, "RemoveElement", {"containerToken": arg("container", "", True), "elementToken": arg("element")},
+     '<container: "‹being›", element: "‹being›">'),
+    (17, "Synthesize", {"children": arg("children")}, '<children: [‹action›, ‹action›]>'),
+    (18, "PlayAudio", {"path": arg("frequencyPath"), "input": arg("amplitudePath"),
+                       "propertyName": arg("timbre", "sine", True)},
+     '<frequencyPath: "‹path›", amplitudePath: "‹path›", timbre: "sine">'),
+    (19, "AuthorZone", {"createType": arg("identifier"), "propertyName": arg("zoneKind"),
+                        "elementToken": arg("owner", "", True), "containerToken": arg("ownerKind", "", True)},
+     '<identifier: "‹identifier›", zoneKind: "‹authored kind›", owner: "‹being›", ownerKind: "‹kind›">'),
+    (21, "WritePixel", {"pixelFacePath": arg("facePath"), "pixelUPath": arg("uPath"),
+                        "pixelVPath": arg("vPath"), "pixelColorPath": arg("colorPath")},
+     '<facePath: "‹path›", uPath: "‹path›", vPath: "‹path›", colorPath: "‹path›">'),
+    (22, "ElevatePixels", {"propertyName": arg("name"), "pixelFacePath": arg("facePath"), "selector": arg("selector")},
+     '<name: "‹property›", facePath: "‹path›", selector: {‹Piecewise model›}>'),
+    (23, "FileRead", {"input": arg("input"), "path": arg("path")}, '<input: "‹file path property›", path: "‹destination property›">'),
+    (24, "FileWrite", {"path": arg("path"), "input": arg("input")}, '<path: "‹file path property›", input: "‹content property›">'),
+    (25, "CodecTransform", {"propertyName": arg("operation"), "input": arg("input"), "path": arg("path")},
+     '<operation: "‹codec operation›", input: "‹source property›", path: "‹destination property›">'),
 ]
 
 # The wiring: whether a Terminal line becomes a Law is the world's decision.
@@ -295,6 +336,16 @@ def build():
         for symbol in symbols:
             lexeme_for(symbol, doc["identifier"])
     laws.extend(CREATE_COMPILERS)
+    for kind, name, fields, signature in ARGUMENT_ACTIONS:
+        identifier = "law-line-args-" + name.lower()
+        word = law(identifier, "means: " + name + " with authored arguments", enabled=False,
+                   action={"kind": kind})
+        word["law"]["authoredProperties"] = {"sentence.arguments": {"t": "string", "v": signature}}
+        word["injected_by"] = COMPILER_INJECTED_BY
+        laws.append(word)
+        lexeme_for(name, identifier)
+        laws.append(compiler("law-line-compile-args-" + name.lower(), {"slot": "arguments"},
+                             {"kind": kind, **fields}, opcode="action." + name))
     batch = law("law-line-compile-sentences", "Law Line · register sentences in source order",
                 enabled=True,
                 condition={"kind": 3, "children": [

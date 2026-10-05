@@ -6274,6 +6274,230 @@
           "timestamp": 1790380800
         }
       ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.lerp.args-lerp",
+      "entityB": "law-line-args-lerp",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.drive.args-drive",
+      "entityB": "law-line-args-drive",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.sequence.args-sequence",
+      "entityB": "law-line-args-sequence",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.parallel.args-parallel",
+      "entityB": "law-line-args-parallel",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.map.args-map",
+      "entityB": "law-line-args-map",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.flow.args-flow",
+      "entityB": "law-line-args-flow",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.addelement.args-addelement",
+      "entityB": "law-line-args-addelement",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.removeelement.args-removeelement",
+      "entityB": "law-line-args-removeelement",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.synthesize.args-synthesize",
+      "entityB": "law-line-args-synthesize",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.playaudio.args-playaudio",
+      "entityB": "law-line-args-playaudio",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.authorzone.args-authorzone",
+      "entityB": "law-line-args-authorzone",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.writepixel.args-writepixel",
+      "entityB": "law-line-args-writepixel",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.elevatepixels.args-elevatepixels",
+      "entityB": "law-line-args-elevatepixels",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.fileread.args-fileread",
+      "entityB": "law-line-args-fileread",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.filewrite.args-filewrite",
+      "entityB": "law-line-args-filewrite",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
+    },
+    {
+      "type": "denotes",
+      "entityA": "lexeme.law-line.codectransform.args-codectransform",
+      "entityB": "law-line-args-codectransform",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "denotes",
+          "deltaWeight": 1.0,
+          "timestamp": 1790380800
+        }
+      ]
     }
   ],
   "identifier": "LawLine",
@@ -6337,7 +6561,39 @@
     "law-line-compile-registered-expression",
     "law-line-compile-authored-value",
     "law-line-compile-authored-expression",
-    "law-line-compile-sentences"
+    "law-line-compile-sentences",
+    "law-line-args-lerp",
+    "law-line-compile-args-lerp",
+    "law-line-args-drive",
+    "law-line-compile-args-drive",
+    "law-line-args-sequence",
+    "law-line-compile-args-sequence",
+    "law-line-args-parallel",
+    "law-line-compile-args-parallel",
+    "law-line-args-map",
+    "law-line-compile-args-map",
+    "law-line-args-flow",
+    "law-line-compile-args-flow",
+    "law-line-args-addelement",
+    "law-line-compile-args-addelement",
+    "law-line-args-removeelement",
+    "law-line-compile-args-removeelement",
+    "law-line-args-synthesize",
+    "law-line-compile-args-synthesize",
+    "law-line-args-playaudio",
+    "law-line-compile-args-playaudio",
+    "law-line-args-authorzone",
+    "law-line-compile-args-authorzone",
+    "law-line-args-writepixel",
+    "law-line-compile-args-writepixel",
+    "law-line-args-elevatepixels",
+    "law-line-compile-args-elevatepixels",
+    "law-line-args-fileread",
+    "law-line-compile-args-fileread",
+    "law-line-args-filewrite",
+    "law-line-compile-args-filewrite",
+    "law-line-args-codectransform",
+    "law-line-compile-args-codectransform"
   ],
   "lexemes": [
     {
@@ -6791,6 +7047,70 @@
     {
       "id": "lexeme.law-line.remove-property.act-revoke",
       "symbol": "remove property"
+    },
+    {
+      "id": "lexeme.law-line.lerp.args-lerp",
+      "symbol": "Lerp"
+    },
+    {
+      "id": "lexeme.law-line.drive.args-drive",
+      "symbol": "Drive"
+    },
+    {
+      "id": "lexeme.law-line.sequence.args-sequence",
+      "symbol": "Sequence"
+    },
+    {
+      "id": "lexeme.law-line.parallel.args-parallel",
+      "symbol": "Parallel"
+    },
+    {
+      "id": "lexeme.law-line.map.args-map",
+      "symbol": "Map"
+    },
+    {
+      "id": "lexeme.law-line.flow.args-flow",
+      "symbol": "Flow"
+    },
+    {
+      "id": "lexeme.law-line.addelement.args-addelement",
+      "symbol": "AddElement"
+    },
+    {
+      "id": "lexeme.law-line.removeelement.args-removeelement",
+      "symbol": "RemoveElement"
+    },
+    {
+      "id": "lexeme.law-line.synthesize.args-synthesize",
+      "symbol": "Synthesize"
+    },
+    {
+      "id": "lexeme.law-line.playaudio.args-playaudio",
+      "symbol": "PlayAudio"
+    },
+    {
+      "id": "lexeme.law-line.authorzone.args-authorzone",
+      "symbol": "AuthorZone"
+    },
+    {
+      "id": "lexeme.law-line.writepixel.args-writepixel",
+      "symbol": "WritePixel"
+    },
+    {
+      "id": "lexeme.law-line.elevatepixels.args-elevatepixels",
+      "symbol": "ElevatePixels"
+    },
+    {
+      "id": "lexeme.law-line.fileread.args-fileread",
+      "symbol": "FileRead"
+    },
+    {
+      "id": "lexeme.law-line.filewrite.args-filewrite",
+      "symbol": "FileWrite"
+    },
+    {
+      "id": "lexeme.law-line.codectransform.args-codectransform",
+      "symbol": "CodecTransform"
     }
   ],
   "materials": [

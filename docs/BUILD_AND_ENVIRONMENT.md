@@ -28,9 +28,23 @@ so ctest and IDE launches leave it quiet; set `NO_COLOR` to drop colour. No depe
 tried and removed (its Tab cannot offer a selectable menu). →
 `docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Law_Line/Law_Line.md`
 
+**2026-10-05 stairway example:** `examples/law_line_stairway.txt` is one pasteable line, tested through pointer press/release and authored Metalaws. It creates steps above the clicked cube; the earlier example required a specific `law-line-cube` and placed steps below the Person. `enter LawLine` moves only the Terminal line. Native appearance remains in Person Verification. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 00:47 PDT.
+
+**2026-10-05 sky spiral add-on:** Zach confirmed the original Stairmaker and cube visibility work. Keep the original program enabled, paste `examples/law_line_sky_stairway.txt`, then click an existing step to grow eight coloured jewel steps; each new step can grow another spiral once, and hover turns/settles its orientation. No app rebuild or new vocabulary is needed. `law_line_zone_test` passes 162/162 checks; `python3 scratch/probes/law_line_visibility_probe.py --stairway` verifies growth and gestures in the full production Engine and captures the actual native spiral. Enhanced Person acceptance remains open. See [the audit](audits/SKY_STAIRWAY_AUTHORED_PROGRAM_2026-10-05.md). — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 12:40 PDT.
+
+**2026-10-05 Law Line action arguments:** the remaining 16 action kinds have authored named-argument signatures and compiler Metalaws; use `Lerp <path: "glow", operand: 1, factor: 0.25>` or `Map <path: "glow", expression: @law-line-cube.hp + 2>`. Rebuild/restart, and see the Law Line task for every signature and channel-execution limits. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 00:09 PDT.
+
 **2026-10-04 Law Line batches:** top-level `;` separates complete Law sentences; `law-line-compile-sentences` authorizes source-order registration. Authored aliases `add property`, `remove property`, and `modify property` use existing actions. Rebuild/restart; Save Zone keeps submitted Laws. See the Law Line task and Person Verification List for examples and native acceptance. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 19:46 PDT.
 
 **2026-10-04 Law Line creation:** `Create <Object, properties: {position: my.position + (0, -3, 0), authored: {purpose: "A foothold"}}>` is compiled through authored `law-line-compile-*` Metalaws; rebuild/restart the app to use the channel change. `scripts/seed_law_line.py` installs missing roots and appends missing Zone vocabulary while preserving existing bytes; it never rewrites existing Law roots. See [the Law Line task](Agenda/Tasks/Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md) for full syntax and scope, and [the creation audit](audits/LAW_LINE_CREATE_METALAW_2026-10-04.md) for verification. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 18:46 PDT.
+
+**2026-10-05 keyed-Person continuous example:** `examples/law_line_cubes_below.txt` uses `always if is a Person`, tested through Terminal/Metalaw/LawManager ticks with a keyed Person. `Identity @Zach` compares an exact identifier and does not match a keyed Person's display name. Three units below the author can be below the floor; native visibility remains open. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 10:25 PDT.
+
+**2026-10-05 cube visibility:** `python3 scratch/probes/law_line_visibility_probe.py` links an isolated native probe against the built WebGPU app objects and exercises the exact continuous Create line. The created cube renders without a floor; an opaque floor at feet height hides every pixel. Person.position is feet level, not camera height. See `docs/audits/LAW_LINE_CUBE_VISIBILITY_2026-10-05.md`; live scene acceptance remains open. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 11:28 PDT.
+
+**2026-10-05 confirmed Create routing fix:** `resolveZone` no longer lets an inactive Zone named World override the active/rendered Zone. The shared boot harness now exposes inactive Zones as the Engine does. Build/restart `earthcall_webgpu`; the original authored lines still apply. `python3 scratch/probes/law_line_visibility_probe.py --engine` exercises actual Engine/Terminal/Metalaw ticks and captures the visible gold cube at native resolution in an isolated fixture. See `docs/audits/LAW_CREATE_ACTIVE_ZONE_ROUTING_FIX_2026-10-05.md`. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 11:55 PDT.
+
+**Verification limit from that pass:** seven focused creation/Terminal/native-Zone checks passed; the broader run was stopped after a legacy chess capture assertion and expensive unrelated full-store pre-load serialization. The capture assertion also fails with pre-fix routing/harness code; the native Zone boot chess test passes. Historical green results below are dated evidence, not a current whole-suite claim. See [legacy test follow-up](Agenda/Tasks/Specific%20Tasks/Law%20and%20Reasoning/Legacy_Test_Store_Isolation/Legacy_Test_Store_Isolation.md).
 
 ### One-click WASM launch (macOS)
 
@@ -241,6 +255,19 @@ globs `tests/**/*.cpp`; the ctest name is the file stem. See `tests/README.md`.
 ---
 
 ## Two live-system notes
+
+### Direct Screen developer witness (2026-10-04)
+
+After building `earthcall_webgpu`, run `python3 scratch/probes/direct_screen_form_probe.py`
+in a desktop GPU/display session. It links actual production app objects and uses an
+isolated first-seed save root, checks independent CPU/native samples, then boots the
+Engine and decodes its viewport capture. The verified 2560 × 1440 frame matched all
+3,686,400 pixels with zero byte error. The existing shader parameter-refresh regression
+also passed; this is not a full-suite claim. Direct fields need no Object/Material/
+ShapeKind carrier. See [contract and authoring scope](Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md)
+and [native evidence](audits/DIRECT_SCREEN_FORMS_NATIVE_VERIFICATION_2026-10-04.md).
+— Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-04 21:20 PDT; Zach's direct-medium request.
 
 ### Reverse-image developer witness (2026-10-02)
 

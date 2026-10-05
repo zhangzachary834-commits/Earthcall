@@ -109,6 +109,9 @@ public:
     // every frame. WebGPU-specific for now, same as the frame-lifecycle methods
     // above; not on the Renderer interface because nothing else implements it yet.
     void drawParticles(const geom::FieldNode& field, int count);
+    bool drawScreenForm(const OntoMath::Piecewise& color, const OntoMath::Piecewise* opacity,
+                        uint32_t width, uint32_t height, const double* time,
+                        std::string& reason) override;
 
     void drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>>& segments,
                    const glm::vec4& color, float width, Blend blend) override;
@@ -161,6 +164,13 @@ protected:
     void applyModel(const glm::mat4& model) override { _model = model; }
 
 private:
+    // Kernel-only driver resources, keyed by emitted structure. Numeric field
+    // edits share pipelines; no authored meaning is stored in this cache.
+    struct ScreenPipeline {
+        WGPURenderPipeline pipe = nullptr;
+        WGPUBindGroupLayout bgl = nullptr;
+    };
+    std::map<std::string, ScreenPipeline> _screenPipes;
     WGPUDevice _device = nullptr;
     WGPUQueue  _queue  = nullptr;
     WGPUTextureFormat _colorFormat = WGPUTextureFormat_RGBA8Unorm;

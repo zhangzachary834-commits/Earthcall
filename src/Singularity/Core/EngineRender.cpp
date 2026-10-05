@@ -322,6 +322,13 @@ namespace Core {
 
         currentRenderer().composeVolumes();
 
+        // Direct authored Screen manifestation at physical framebuffer sample
+        // centres. No Object, Material, ShapeKind, or texture is an admission
+        // requirement. Compatibility HUD/tools are drawn afterwards.
+        if (screenChannel)
+            screenChannel->manifestOutput(currentRenderer(),
+                static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH));
+
         if (_currentPerspective != PerspectiveMode::FirstPerson) {
             _person->drawNametag();
         }
