@@ -174,11 +174,35 @@ void Timeline::announceMomentChange() {
     notifyPropertyChanged(this, "latestMoment");
 }
 
+#if defined(__x86_64__) || defined(__i386__)
+  #include <x86intrin.h>
+#endif
+
 long Timeline::propCpuClockCycle() const {
-#if defined(__clang__) || defined(__GNUC__)
+#if defined(__has_builtin)
+  #if __has_builtin(__builtin_readcyclecounter)
     return static_cast<long>(__builtin_readcyclecounter());
+  #else
+    #if defined(__x86_64__) || defined(__i386__)
+      return static_cast<long>(__rdtsc());
+    #elif defined(__aarch64__)
+      uint64_t val;
+      asm volatile("mrs %0, cntvct_el0" : "=r"(val));
+      return static_cast<long>(val);
+    #else
+      return 0;
+    #endif
+  #endif
 #else
-    return 0;
+    #if defined(__x86_64__) || defined(__i386__)
+      return static_cast<long>(__rdtsc());
+    #elif defined(__aarch64__)
+      uint64_t val;
+      asm volatile("mrs %0, cntvct_el0" : "=r"(val));
+      return static_cast<long>(val);
+    #else
+      return 0;
+    #endif
 #endif
 }
 

@@ -228,6 +228,8 @@ nlohmann::json bodyToJson(const Body& body) {
 }
 
 void bodyFromJson(const nlohmann::json& j, Body& body) {
+    if (j.contains("shape")) body.shape = j["shape"].get<std::string>();
+    if (j.contains("artStyle")) body.artStyle = j["artStyle"].get<std::string>();
     if (j.contains("height")) body.height = j["height"].get<float>();
 
     // Match saved parts to existing parts by name, or create new parts if they don't exist
@@ -251,7 +253,11 @@ void bodyFromJson(const nlohmann::json& j, Body& body) {
                 bodyPartFromJson(pj, *existingPart);
             } else {
                 // Create new part from save data
-                BodyPart* newPart = new BodyPart();
+                BodyPart::Type type = BodyPart::Type::Undefined;
+                if (pj.contains("type")) {
+                    type = static_cast<BodyPart::Type>(pj["type"].get<int>());
+                }
+                BodyPart* newPart = new BodyPart(name, type);
                 bodyPartFromJson(pj, *newPart);
                 body.addPart(newPart);
             }
