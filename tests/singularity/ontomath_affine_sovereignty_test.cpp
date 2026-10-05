@@ -134,6 +134,20 @@ int main() {
                               static_cast<float>(cameraAspect), 0.2f, 600.0f);
     assert(nearMat4(*cameraProjectionGlm, cameraProjectionOracle));
 
+    // Rung-8 world -> clip witness: composition belongs to OntoMath; compare
+    // clip coordinates against the frozen independent GLM projection * view oracle.
+    const auto cameraViewProjection =
+        OntoMath::matrixMultiply(*cameraProjection, *cameraView);
+    assert(cameraViewProjection);
+    const auto cameraViewProjectionGlm = cameraViewProjection->toGlmMat4();
+    assert(cameraViewProjectionGlm);
+    const glm::vec4 cameraWorldPoint(1.25f, -0.75f, 2.5f, 1.0f);
+    const glm::vec4 cameraClip =
+        *cameraViewProjectionGlm * cameraWorldPoint;
+    const glm::vec4 cameraClipOracle =
+        cameraProjectionOracle * cameraViewOracle * cameraWorldPoint;
+    assert(glm::all(glm::epsilonEqual(cameraClip, cameraClipOracle, 1e-5f)));
+
     assert(!OntoMath::cameraLookAt(cameraEye, cameraEye, cameraUp));
     assert(!OntoMath::cameraLookAt(cameraEye, cameraTarget,
                                    glm::normalize(cameraTarget - cameraEye)));
