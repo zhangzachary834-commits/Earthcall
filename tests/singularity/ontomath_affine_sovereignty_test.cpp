@@ -45,6 +45,29 @@ int main() {
     ref=glm::scale(ref,s);
     assert(near4(*gm,ref));
 
+    // Rung-8 renderer primitive-placement witness: cached mesh placement is
+    // OntoMath-authored while preserving the frozen legacy GLM T and T*R oracles.
+    const auto primitiveTranslation = OntoMath::affineTranslation({0.0f, 0.0f, -0.5f});
+    assert(primitiveTranslation);
+    const auto primitiveTranslationGlm = primitiveTranslation->toGlmMat4();
+    assert(primitiveTranslationGlm);
+    const glm::mat4 primitiveTranslationOracle =
+        glm::translate(glm::mat4(1.0f), {0.0f, 0.0f, -0.5f});
+    assert(near4(*primitiveTranslationGlm, primitiveTranslationOracle));
+
+    const auto primitiveFlip =
+        OntoMath::affineAxisAngle({1.0f, 0.0f, 0.0f}, M_PI);
+    assert(primitiveFlip);
+    const auto primitiveBottomPlacement =
+        OntoMath::affineCompose(*primitiveTranslation, *primitiveFlip);
+    assert(primitiveBottomPlacement);
+    const auto primitiveBottomPlacementGlm = primitiveBottomPlacement->toGlmMat4();
+    assert(primitiveBottomPlacementGlm);
+    const glm::mat4 primitiveBottomOracle =
+        primitiveTranslationOracle *
+        glm::rotate(glm::mat4(1.0f), static_cast<float>(M_PI), {1.0f, 0.0f, 0.0f});
+    assert(near4(*primitiveBottomPlacementGlm, primitiveBottomOracle));
+
     auto extractedEuler = OntoMath::affineExtractEulerXYZDegrees(*m);
     assert(extractedEuler && near3(*extractedEuler, legacyEulerOracle(ref)));
 
