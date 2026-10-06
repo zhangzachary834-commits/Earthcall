@@ -39,8 +39,8 @@ std::string base32Encode(const std::vector<uint8_t>& data) {
 }
 
 bool base32Decode(const std::string& text, std::vector<uint8_t>& out) {
-    out.clear();
-    out.reserve(text.size() * 5 / 8);
+    std::vector<uint8_t> result;
+    result.reserve(text.size() * 5 / 8);
 
     uint32_t buffer = 0;
     int bitsLeft = 0;
@@ -50,14 +50,13 @@ bool base32Decode(const std::string& text, std::vector<uint8_t>& out) {
             if (*p == c) { pos = p; break; }
         }
         if (!pos) {
-            out.clear();
             return false; // reject rather than skip: silent tolerance
                           // here would let two spellings of one id exist
         }
         buffer = (buffer << 5) | static_cast<uint32_t>(pos - kAlphabet);
         bitsLeft += 5;
         if (bitsLeft >= 8) {
-            out.push_back(static_cast<uint8_t>((buffer >> (bitsLeft - 8)) & 0xFF));
+            result.push_back(static_cast<uint8_t>((buffer >> (bitsLeft - 8)) & 0xFF));
             bitsLeft -= 8;
         }
     }
@@ -66,7 +65,6 @@ bool base32Decode(const std::string& text, std::vector<uint8_t>& out) {
     // complete bytes have been emitted. 5+ residual bits means the text has an
     // impossible character count (for example a one-character encoding).
     if (bitsLeft >= 5) {
-        out.clear();
         return false;
     }
 
@@ -76,11 +74,12 @@ bool base32Decode(const std::string& text, std::vector<uint8_t>& out) {
     if (bitsLeft > 0) {
         const uint32_t mask = (uint32_t{1} << bitsLeft) - 1u;
         if ((buffer & mask) != 0) {
-            out.clear();
             return false;
         }
     }
 
+    out.clear();
+    out.insert(out.end(), result.begin(), result.end());
     return true;
 }
 
