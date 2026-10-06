@@ -10,7 +10,7 @@
         "enabled": true,
         "authority": 0,
         "activation": 0,
-        "scope": 1,
+        "scope": 0,
         "drives": false,
         "retrigger": 0,
         "conditionMode": "all",
