@@ -1269,3 +1269,24 @@ Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-0
 
 - [ ] While present, with your body in LawLine, speak `called "Define Click" when clicked then add property @LawLine.meaning.object-clicked to "a Person pressed and released on a being"`, then click anything once so it fires. Next, type `on object-cl` and press Tab: the menu line for `object-clicked` shows your meaning.
 - [ ] Save Zone, restart, and Tab again: the meaning is still there. (Before today, any property added to a Zone vanished at Save Zone.)
+
+## Creator Console: Zone First Mover Workbench (2026-10-05)
+
+*Gemini · session `c02f9271-25d2-430c-99b6-2a1144eb9c68` · 2026-10-05.*
+
+Zach asked to make Earthcall's Zone Window in the Creator Console even better and pack it with more first-mover features.
+
+- [ ] **Open Creator Console (`F8`) -> Zones tab.**
+- [ ] **Left Pane (Zones Browser):**
+  - Check the search filter (`Filter...`): type part of a name or ID to ensure real-time zone filtering.
+  - Notice the badge tags: `[*]` for Active zone, `[H]` for Home, `[G]` for Gathering, `[D]` for Dimensional, along with object count tags `(# objs)`.
+- [ ] **Right Pane (4 Workspace Tabs):**
+  - **Overview Tab:** Check the Display Name editor with `Apply Name` button (updates display name without altering immutable identifier), Owner, Scope, Parent `Within` with `Jump to Parent` shortcut, and live **Kernel Telemetry** (Tick time, Physics ms, Ground scan ms, Automation ms, Substeps).
+  - **Objects Tab:** View all owned objects in the selected zone. Filter by object ID, see their shape kind and `(x, y, z)` coordinates, and click `Select 3D` on any object to immediately lock onto it in the 3D Tools / Paint consoles.
+  - **Relations Tab:** View the formation relations in the zone and the live Joy Bounds status (`Harmonious (Satisfied)` vs `Unsettled`).
+  - **Operations Tab:**
+    - Test **Move to Zone** and **Save Zone / Save Active Zone**.
+    - Test **Fork This Zone**: Enter a new ID and click `Fork This Zone` to branch/clone the entire zone structure.
+    - Test **Diff Against Active Zone**: Select an inactive zone, click `Compare with Active Zone`, and check the shared vs unique entity report.
+- [ ] **Top Bar:** Check the authored Kind selector (`Standard`, `Home`, `Community`) for new zones and the `Reload Store` button to hydrate identities from disk.
+
