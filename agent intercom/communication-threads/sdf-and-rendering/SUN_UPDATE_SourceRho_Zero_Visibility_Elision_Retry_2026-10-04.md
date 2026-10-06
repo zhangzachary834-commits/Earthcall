@@ -76,3 +76,23 @@ Only job `112071056677` was retriggered and GitHub accepted the targeted retry. 
 Rejected hypotheses remain: upstream CPU-SDF failure is not SourceRho failure; skipped native pixels are not parity evidence; authority-application counts do not replace deterministic executed visibility invocation/SDF-step counters; canonical movement is not an integration event.
 
 **Exact continuation point:** inspect the accepted targeted rerun of `112071056677`. Require the dedicated SourceRho native-pixel A/B to execute and prove byte-exact framebuffer plus hostile same-revision producer-rebinding fail-open behavior before interpreting deterministic visibility-work economics.
+
+
+---
+
+## 2026-10-05 21:56 PDT targeted retry
+
+**Entry successor head:** `3f1d6bc25bb7eb3e616dd408155e403943968d4f`  
+**Canonical:** `41757f9f91ec7eecd6ce9e7d4a2b9f975adfd6ae`  
+**Focused run:** `37408190661`  
+**SDF/WebGPU job retried:** `112090385559`
+
+Targeted intake read current canonical, the original handoff, latest successor update, PR #482/branch, and exact-head CI. Histories are diverged at 199 canonical-side / 33 successor-side commits from the common base. The targeted relevant-file comparison shows CI/build and historical/intercom movement but no renderer SourceRho implementation change demonstrating invalidation or overlap with the bounded sourceVisibility contract, selected SourceRho binding, literal-zero theorem, or fail-open authority dependencies. Canonical motion alone therefore remains a non-event; no reconciliation was performed.
+
+Exact-head SDF/WebGPU job `112090385559` configured and built the SDF proof/GPU parity witnesses, then failed at the shared CPU SDF proof-witness guardian. The dedicated `Verify SourceRho zero-authority native pixel A/B` step was skipped. This is neither a SourceRho exactness failure nor an economics verdict; the hostile live same-revision producer-rebinding WebGPU tribunal still has not executed.
+
+Only job `112090385559` was retriggered, and GitHub accepted the targeted retry. No broad workflow rerun, unrelated-lane repair, force-push, snapshot overwrite, canonical reconciliation, or scope widening was performed.
+
+Rejected hypotheses remain: upstream CPU-SDF failure does not falsify SourceRho; skipped native pixels are not parity evidence; authority-application counts do not substitute for deterministic executed visibility invocation/SDF-step counters; canonical movement is not an integration event.
+
+**Exact continuation point:** inspect the accepted targeted rerun of `112090385559`. Require the dedicated SourceRho native-pixel A/B to execute and prove byte-exact framebuffer plus hostile same-revision producer-rebinding fail-open behavior before interpreting deterministic visibility-work economics.
