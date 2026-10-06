@@ -69,12 +69,10 @@ void appendQuadStrip(geom::TessMesh& m, const std::vector<geom::TessVertex>& s) 
 // matrix stack at draw time.
 geom::TessMesh transformedMesh(const geom::TessMesh& src, const glm::mat4& xf) {
     const auto authoredTransform = OntoMath::MatrixValue::fromGlmMat4(xf);
-    if (!authoredTransform) return src;
-
     geom::TessMesh m = src;
     for (auto& v : m.tris) {
-        const auto position = OntoMath::transformPoint(*authoredTransform, v.pos);
-        const auto normal = OntoMath::transformNormal(*authoredTransform, v.normal);
+        const auto position = OntoMath::transformPoint(authoredTransform, v.pos);
+        const auto normal = OntoMath::transformNormal(authoredTransform, v.normal);
         if (!position || !normal) return src;
         v.pos = *position;
         v.normal = glm::normalize(*normal);
