@@ -56,7 +56,7 @@ namespace Rendering {
         {
             ImGui::TextDisabled("Author New Zone:");
             ImGui::SetNextItemWidth(150.0f);
-            ImGui::InputTextWithHint("##newZone", "Identifier...", s_newZoneName, IM_ARRAYSIZE(s_newZoneName));
+            bool enterPressed = ImGui::InputTextWithHint("##newZone", "Identifier...", s_newZoneName, IM_ARRAYSIZE(s_newZoneName), ImGuiInputTextFlags_EnterReturnsTrue);
             ImGui::SameLine();
 
             const char* const kindOptions[] = { "Standard", "Home", "Community" };
@@ -64,7 +64,7 @@ namespace Rendering {
             ImGui::Combo("##zoneKind", &s_newZoneKindIdx, kindOptions, IM_ARRAYSIZE(kindOptions));
             ImGui::SameLine();
 
-            if (ImGui::Button("Create Zone", ImVec2(90.0f, 0))) {
+            if (ImGui::Button("Create Zone", ImVec2(90.0f, 0)) || enterPressed) {
                 std::string newId(s_newZoneName);
                 if (!newId.empty()) {
                     std::string authoredKind = "";
@@ -231,9 +231,9 @@ namespace Rendering {
                         ImGui::TextDisabled("Display Name:");
                         ImGui::SameLine();
                         ImGui::SetNextItemWidth(140.0f);
-                        ImGui::InputText("##renameInput", s_renameBuf, sizeof(s_renameBuf));
+                        bool enterPressed = ImGui::InputText("##renameInput", s_renameBuf, sizeof(s_renameBuf), ImGuiInputTextFlags_EnterReturnsTrue);
                         ImGui::SameLine();
-                        if (ImGui::SmallButton("Apply Name")) {
+                        if (ImGui::SmallButton("Apply Name") || enterPressed) {
                             if (s_renameBuf[0] != '\0') {
                                 z->setName(s_renameBuf);
                                 s_zonePersistenceStatus = "Renamed display to '" + std::string(s_renameBuf) + "'.";
@@ -288,6 +288,8 @@ namespace Rendering {
                         ImGui::SetNextItemWidth(120.0f);
                         ImGui::InputTextWithHint("##objFilter", "Filter...", s_objectSearchFilter, sizeof(s_objectSearchFilter));
 
+                        std::vector<std::pair<Object*, size_t>> toTransfer;
+
                         std::string objFilterLower(s_objectSearchFilter);
                         std::transform(objFilterLower.begin(), objFilterLower.end(), objFilterLower.begin(), ::tolower);
 
@@ -314,14 +316,58 @@ namespace Rendering {
                                 ImGui::TextDisabled("[%s] (%.1f, %.1f, %.1f)", shapeName, pos.x, pos.y, pos.z);
 
                                 ImGui::SameLine();
-                                if (ImGui::SmallButton("Select 3D")) {
+                                if (ImGui::SmallButton("Select")) {
                                     state.selectedObject3D = obj.get();
                                     s_zonePersistenceStatus = "Focused '" + oid + "' in 3D Tools.";
                                 }
+                                
+                                ImGui::SameLine();
+                                if (ImGui::SmallButton("0,0,0")) {
+                                    obj->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+                                    s_zonePersistenceStatus = "Teleported '" + oid + "' to Origin.";
+                                }
+
+                                ImGui::SameLine();
+                                if (ImGui::Button("Transfer...")) {
+                                    ImGui::OpenPopup("TransferPopup");
+                                }
+                                
+                                if (ImGui::BeginPopup("TransferPopup")) {
+                                    ImGui::TextDisabled("Move to:");
+                                    ImGui::Separator();
+                                    for (size_t tIdx = 0; tIdx < zones.size(); ++tIdx) {
+                                        if (tIdx == static_cast<size_t>(s_selectedZone)) continue;
+                                        if (ImGui::MenuItem(zones[tIdx]->name().c_str())) {
+                                            toTransfer.push_back({obj.get(), tIdx});
+                                        }
+                                    }
+                                    ImGui::EndPopup();
+                                }
+                                
                                 ImGui::PopID();
                             }
                         }
                         ImGui::EndChild();
+
+                        // Apply Actions
+                        if (!toTransfer.empty()) {
+                            for (auto& pair : toTransfer) {
+                                auto* tObj = pair.first;
+                                size_t destIdx = pair.second;
+                                std::shared_ptr<Object> sharedObj;
+                                for (const auto& o : z->getOwnedObjects()) {
+                                    if (o.get() == tObj) {
+                                        sharedObj = o;
+                                        break;
+                                    }
+                                }
+                                if (sharedObj) {
+                                    z->removeObject(tObj);
+                                    zones[destIdx]->addObject(sharedObj);
+                                    s_zonePersistenceStatus = "Transferred '" + tObj->getIdentifier() + "' to " + zones[destIdx]->name() + ".";
+                                }
+                            }
+                        }
 
                         // Additional Substrate
                         ImGui::Spacing();
@@ -409,9 +455,9 @@ namespace Rendering {
                         // Fork / Clone Zone
                         ImGui::TextColored(ImVec4(0.9f, 0.8f, 0.5f, 1.0f), "Fork Zone (Branching & Cloning):");
                         ImGui::SetNextItemWidth(150.0f);
-                        ImGui::InputTextWithHint("##forkId", "New Fork ID...", s_forkZoneName, sizeof(s_forkZoneName));
+                        bool forkEnterPressed = ImGui::InputTextWithHint("##forkId", "New Fork ID...", s_forkZoneName, sizeof(s_forkZoneName), ImGuiInputTextFlags_EnterReturnsTrue);
                         ImGui::SameLine();
-                        if (ImGui::Button("Fork This Zone")) {
+                        if (ImGui::Button("Fork This Zone") || forkEnterPressed) {
                             std::string srcId = z->getIdentifier();
                             std::string newId(s_forkZoneName);
                             if (!newId.empty()) {

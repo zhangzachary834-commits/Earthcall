@@ -3,7 +3,7 @@
     "authors": [
         "Player"
     ],
-    "injected_by": "Antigravity - Neural Network Primer",
+    "injected_by": "Antigravity - ML",
     "law": {
         "id": "law-nn-forward",
         "name": "Neural Network Forward Pass",
@@ -26,10 +26,12 @@
             "children": [
                 {
                     "kind": 8,
-                    "path": "@node-out-1.position.y",
+                    "path": "@node-out.position.y",
                     "bindings": {
-                        "a": "@node-in-1.position.y",
-                        "b": "@node-in-2.position.y"
+                        "i1": "@node-in-1.position.y",
+                        "i2": "@node-in-2.position.y",
+                        "w1": "@node-w-1.position.y",
+                        "w2": "@node-w-2.position.y"
                     },
                     "function": {
                         "pieces": [
@@ -37,15 +39,17 @@
                                 "expr": {
                                     "terms": [
                                         {
-                                            "c": 0.8,
+                                            "c": 1.0,
                                             "factors": {
-                                                "a": 1
+                                                "w1": 1,
+                                                "i1": 1
                                             }
                                         },
                                         {
-                                            "c": 1.2,
+                                            "c": 1.0,
                                             "factors": {
-                                                "b": 1
+                                                "w2": 1,
+                                                "i2": 1
                                             }
                                         }
                                     ]
