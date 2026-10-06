@@ -13,6 +13,7 @@ bool near(float a, float b, float eps = 2e-4f) { return std::fabs(a-b) <= eps; }
 bool near3(const glm::vec3& a, const glm::vec3& b, float eps = 2e-4f) {
     return near(a.x,b.x,eps) && near(a.y,b.y,eps) && near(a.z,b.z,eps);
 }
+bool nearMat4(const glm::mat4& a, const glm::mat4& b, float eps = 2e-4f);
 bool near4(const glm::mat4& a, const glm::mat4& b, float eps = 2e-4f) {
     for (int c=0;c<4;++c) for (int r=0;r<4;++r)
         if (!near(a[c][r],b[c][r],eps)) return false;
