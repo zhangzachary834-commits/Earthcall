@@ -10,9 +10,9 @@
 #include <ctime>
 #include <sstream>
 #include <stdexcept>
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
 #  include <intrin.h>
-#elif defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
+#elif defined(__i386__) || defined(__x86_64__)
 #  include <x86intrin.h>
 #endif
 
@@ -105,10 +105,18 @@ void Moment::setEnd(const double& t) {
 }
 
 long Moment::propCpuClockCycle() const {
-#if defined(_MSC_VER)
+#if (defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))) || defined(__i386__) || defined(__x86_64__)
     return static_cast<long>(__rdtsc());
-#elif defined(__x86_64__) || defined(__i386__)
-    return static_cast<long>(__rdtsc());
+#elif defined(__aarch64__)
+    unsigned long long value = 0;
+    asm volatile("mrs %0, cntvct_el0" : "=r"(value));
+    return static_cast<long>(value);
+#elif defined(__has_builtin)
+#  if __has_builtin(__builtin_readcyclecounter)
+    return static_cast<long>(__builtin_readcyclecounter());
+#  else
+    return 0;
+#  endif
 #else
     return 0;
 #endif
