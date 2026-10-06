@@ -135,6 +135,10 @@ struct Vocabulary {
     // What the menu says beside a candidate. All optional; absent = blank.
     std::function<std::string(const std::string& beingId, const std::string& property)> describeProperty;
     std::function<std::string(const std::string& beingId)> describeBeing;
+    // Optional batch form of propertiesOf + describeProperty: each property
+    // with its description, from one lookup of the being. Preferred by the
+    // menu when set (per-name lookups made '@' completion quadratic).
+    std::function<std::vector<std::pair<std::string, std::string>>(const std::string& beingId)> describedPropertiesOf;
     std::function<std::string(const std::string& eventType)> describeEvent;
 
     // The Laws present, by display name — for naming a Law in a sentence

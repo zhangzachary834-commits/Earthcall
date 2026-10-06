@@ -1230,3 +1230,12 @@ Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-0
 
 - [ ] Follow the opening lesson: preview Golden Touch, submit it in LawLine, click a visible Object, and confirm both the gold colour and that the explanation of author, subject, and Terminal/world Zones is understandable without reading source.
 - [ ] Save the intended Zone, restart it, and confirm this lesson's Law still fires; remove the lesson Law by its exact identifier and save if you do not want to retain it. Existing earlier persistence confirmation remains recorded separately.
+
+## Law Line: set to a path (2026-10-05)
+
+*Claude Code · Claude Opus 5.5 · session `01WXmPy9U71FLqizbRYzMToZ` · 2026-10-05. [Record](../Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md#set-to-a-path-copy-value-2026-10-05)*
+
+- [x] *(Zach, 2026-10-05: "the tab itself works now")* Rebuild and restart, `enter LawLine`, then type `called "Copy Hp" when clicked then set @law-line-cube.glow to @law-line-` and press Tab. The menu should offer the cube's properties (e.g. `hp`). Finish with `hp`, press Enter, and you should see it authored.
+- [x] *(Zach, 2026-10-05: "yep it says 3 now". His pre-patch save had glow 0 and hp 3, so the click copied 0 → 3.)* Click the cube, then read `glow`: type `@law-line-cube.` and press Tab, and the menu shows `glow = …` and `hp = …`. It should equal the cube's `hp` (3 in the seed). *(Map half confirmed by Zach, 2026-10-05: "yep it says map". The glow value is still open.)*
+- [x] *(Zach, 2026-10-05: "the ecform does load i see the stairs and hover is yellow good and clicking on them branches more good")* Save Zone, restart, and check that LawLine still loads. Its save was patched in its native `zone.ecform` form, with one new lawRef `law-line-compile-assignment-expression`. Backup: `scratch/backups/law-line/LawLine-zone-before-law-line-patch-*.ecform`.
+- [x] *(Zach, 2026-10-05: "now that we fixed the alg", then "the tab itself works now")* (Lag fix, same day) After restarting the rebuilt app, type `@` and keep typing a being or path in LawLine. The menu should keep up with your typing, with no half-second stall per key.
