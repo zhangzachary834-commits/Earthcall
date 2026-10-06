@@ -13,7 +13,6 @@ bool near(float a, float b, float eps = 2e-4f) { return std::fabs(a-b) <= eps; }
 bool near3(const glm::vec3& a, const glm::vec3& b, float eps = 2e-4f) {
     return near(a.x,b.x,eps) && near(a.y,b.y,eps) && near(a.z,b.z,eps);
 }
-bool nearMat4(const glm::mat4& a, const glm::mat4& b, float eps = 2e-4f);
 bool near4(const glm::mat4& a, const glm::mat4& b, float eps = 2e-4f) {
     for (int c=0;c<4;++c) for (int r=0;r<4;++r)
         if (!near(a[c][r],b[c][r],eps)) return false;
@@ -121,7 +120,7 @@ int main() {
     const auto cameraViewGlm = cameraView->toGlmMat4();
     assert(cameraViewGlm);
     const glm::mat4 cameraViewOracle = glm::lookAt(cameraEye, cameraTarget, cameraUp);
-    assert(nearMat4(*cameraViewGlm, cameraViewOracle));
+    assert(near4(*cameraViewGlm, cameraViewOracle));
 
     const double cameraFov = glm::radians(61.0);
     const double cameraAspect = 16.0 / 10.0;
@@ -133,7 +132,7 @@ int main() {
     const glm::mat4 cameraProjectionOracle =
         glm::perspectiveRH_NO(static_cast<float>(cameraFov),
                               static_cast<float>(cameraAspect), 0.2f, 600.0f);
-    assert(nearMat4(*cameraProjectionGlm, cameraProjectionOracle));
+    assert(near4(*cameraProjectionGlm, cameraProjectionOracle));
 
     // Rung-8 world -> clip witness: composition belongs to OntoMath; compare
     // clip coordinates against the frozen independent GLM projection * view oracle.
