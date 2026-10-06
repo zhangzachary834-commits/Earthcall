@@ -1,33 +1,31 @@
 # Addendum: Integrating Hierarchy of Joys and First Mover Authoring
 
-*(Model: Gemini 1.5 Pro, Harness: Jules, Session ID: 596534326296339974)*
+*(Model: Gemini 1.5 Pro, Harness: Jules, Session ID: 596534326296339974; reviewed against canonical architecture by Sun Squid Intake III)*
 
 ## Reflections on the Architectural Synthesis
 
-Earthcall's architecture requires a careful balance between foundational ontology and the mechanical reality of creating worlds. This tension is directly addressed at the intersection of the [Hierarchy of Joys](../architecture/ontology/HIERARCHY_OF_JOYS.md) and [First Mover Authoring](../architecture/law/FIRST_MOVER_AUTHORING.md).
+Earthcall's [Hierarchy of Joys](../architecture/ontology/HIERARCHY_OF_JOYS.md) and [First Mover Authoring](../architecture/law/FIRST_MOVER_AUTHORING.md) meet at a useful boundary: direct serialization is powerful precisely because it can bypass ordinary Law application, while telic ordering remains authored world truth rather than a new C++ type system.
 
-### The Power of the First Mover
+### First Mover power is deliberately asymmetric
 
-First Mover Authoring defines the mechanism for bringing entities—Objects, Relations, Formations, Concepts, and Laws—into existence by writing directly into Earthcall's serialization formats. This is an immense power. By bypassing the standard "in-world" creation channels and Law applications, a First Mover injects being directly into the substrate.
+A First Mover can write beings directly into serialization. That route does not pass through the ordinary Law-application gauntlet. Hand-authored serialization is therefore a bootstrap and migration seam, not proof that injected data has acquired semantic authority merely by existing.
 
-Without strict constraints, this power could easily lead to an incoherent, unmoored world populated by arbitrary data structures disconnected from any larger meaning or order.
+Two concrete safeguards remain load-bearing. Serialized Law authority is clamped to the authored ceiling rather than trusted from the file, and serialized authors are reattached by identifier. A Law whose named author cannot be resolved remains unauthored and cannot fire.
 
-### The Liturgical Ordering
+### Telos is relational truth, not a mandatory magic string
 
-This is where the `Hierarchy of Joys` provides the necessary ontological structure. The Hierarchy defines `telos`—what a being is ordered toward—as a rooted Formation of Lexemes, ordered by `grounds` Relations. It is not just an arbitrary string; it is a relational truth.
+The Hierarchy represents telos with existing beings: a Lexeme names what a being is ordered toward; a rooted Formation of Lexemes carries the hierarchy; directed `grounds` Relations carry its order. Ranking is a bounded query. A being whose telos does not resolve into that hierarchy is **unranked (-1) and reported**, rather than silently assigned an invented place.
 
-When a First Mover crafts a save file, they are subject to this same liturgical ordering.
+That is intentionally different from saying serialization rejects every being lacking a ranked telos. The current rung explicitly does **not** close the kernel on `satisfiesJoyBounds` every tick. First Mover Authoring likewise does not define telos as a universal admission gate for serialized beings.
 
-### The Synthesis
+### The synthesis
 
-The synthesis of these two systems guarantees that even direct serialization injection must conform to the semantic truth of the world.
+1. First Mover serialization can establish beings and authored structure directly, but it cannot forge Law authority or a resolvable author.
+2. The Hierarchy supplies an inspectable vocabulary for authored telic ordering when a being carries telos.
+3. Unranked telos remains visible as unranked truth; it is not promoted by guesswork.
+4. Future Law or authoring policy may use that ordering in governance, but documentation should not claim an enforcement mechanism before the architecture actually defines one.
 
-When a First Mover authors a new Law or Concept via JSON injection, they must establish its place within the Hierarchy. They do this by setting its `telos` property to reference a valid Lexeme within the Hierarchy Formation.
-
-1. **Foundational Consistency:** An injected entity must be ordered toward something that exists in the root Formation. If a First Mover invents a new string and sets it as a telos, the system will reject or flag it as unranked, refusing to grant it authority in conflict resolution.
-2. **Accountability of Authorship:** First Mover Authoring requires the author to declare themselves in the provenance record. When combined with the Hierarchy of Joys, this means that not only is the injected entity accountable to a specific Person or model, but its *purpose* and *priority* are locked into the universal, authored ranking system.
-
-By enforcing the Hierarchy of Joys at the serialization level, Earthcall ensures that the immense power of First Mover injection cannot be used to subvert the fundamental "right ordering" of the world. Creation remains tied to meaning, even at the lowest level of the engine.
+Direct creation and right ordering can therefore meet without confusing aspiration with kernel behavior: the First Mover establishes substrate; the hierarchy makes authored purpose legible.
 
 ---
 
