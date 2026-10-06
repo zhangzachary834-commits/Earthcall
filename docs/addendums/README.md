@@ -22,3 +22,6 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating Spatial Relations and Property Predication](spatial_relations_and_property_predication_addendum.md)
 *   [Integrating Relational Propagation and Primary Relations](relational_propagation_and_primary_relations_addendum.md)
 *   [Integrating Systemic Propagation and Temporal Events](systemic_propagation_and_temporal_events_addendum.md)
+*   [Integrating Hierarchy of Joys and First Mover Authoring](hierarchy_of_joys_and_first_mover_authoring_addendum.md)
+*   [Integrating Law Migration Framework and Adaptive Compute Moments](law_migration_and_adaptive_compute_addendum.md)
+*   [Integrating SDF Spatial Prophetic Artifact and Performance as Truth](sdf_prophetic_and_performance_as_truth_addendum.md)
