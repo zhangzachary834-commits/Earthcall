@@ -1278,4 +1278,5 @@ private:
     int _maxChainRounds = 5;
 
     Earthcall::Execution::ExecutionChannel _executionChannel;
+    std::vector<uint64_t> _busSubscriptions;
 };

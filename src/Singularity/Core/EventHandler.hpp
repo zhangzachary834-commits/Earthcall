@@ -26,10 +26,10 @@ public:
     void registerHandler(const std::string& handlerName, 
                         const std::function<void(const Event&)>& handler,
                         int priority = 0) {
-        _handlers[handlerName] = [this, handler, priority]() {
-            EventBus::instance().subscribe<Event>(handler, priority);
-        };
-        _handlers[handlerName](); // Register immediately
+        if (_handlers.find(handlerName) != _handlers.end()) {
+            removeHandler(handlerName); // ensure no double-registration leaks
+        }
+        _handlers[handlerName] = EventBus::instance().subscribe<Event>(handler, priority);
     }
 
     // Register multiple handlers at once
@@ -80,10 +80,10 @@ public:
     size_t getHandlerCount() const { return _handlers.size(); }
 
 private:
-    std::unordered_map<std::string, std::function<void()>> _handlers;
+    std::unordered_map<std::string, uint64_t> _handlers;
     
     EventHandler() = default;
-    ~EventHandler() = default;
+    ~EventHandler();
     EventHandler(const EventHandler&) = delete;
     EventHandler& operator=(const EventHandler&) = delete;
 };

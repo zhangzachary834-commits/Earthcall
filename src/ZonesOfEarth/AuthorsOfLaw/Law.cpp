@@ -1918,6 +1918,10 @@ LawManager::~LawManager() {
         Universe::instance().setEventInterest(nullptr);
         s_singularHookOwner = nullptr;
     }
+    for (uint64_t subId : _busSubscriptions) {
+        Core::EventBus::instance().unsubscribe(subId);
+    }
+    _busSubscriptions.clear();
 }
 
 void LawManager::connectToEventBus() {
@@ -2022,7 +2026,7 @@ void LawManager::connectToEventBus() {
         _dirty = true;
     });
 
-    Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
+    _busSubscriptions.push_back(Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
         std::string subjectId = e.subject ? e.subject->getIdentifier() : "null";
         std::string objectId = e.object ? e.object->getIdentifier() : "null";
 
@@ -2091,9 +2095,9 @@ void LawManager::connectToEventBus() {
                 }
             }
         }
-    });
+    }));
 
-    Core::EventBus::instance().subscribe<Core::Event::Custom>([this](const Core::Event::Custom& e) {
+    _busSubscriptions.push_back(Core::EventBus::instance().subscribe<Core::Event::Custom>([this](const Core::Event::Custom& e) {
         if (!e.relation) return;
         
         std::string evType = e.relation->type;
@@ -2115,7 +2119,7 @@ void LawManager::connectToEventBus() {
         
         _rete.assertFact(fact);
         _dirty = true;
-    });
+    }));
 
 
     // Per-node action outcomes reach the audit log through the application

@@ -39,7 +39,7 @@ public:
     // Public types
     // ------------------------------------------------------------------
     using Listener = std::function<void(const void*)>;
-    struct ListenerEntry { int priority; Listener listener; };
+    struct ListenerEntry { uint64_t id; int priority; Listener listener; };
     
     // Lightweight metadata automatically attached to each event. Can be
     // extended later without breaking the templated interface.
@@ -63,15 +63,16 @@ public:
     // Subscription ------------------------------------------------------
     // ------------------------------------------------------------------
     template<typename Event>
-    void subscribe(const std::function<void(const Event&)>& handler, int priority = 0)
+    uint64_t subscribe(const std::function<void(const Event&)>& handler, int priority = 0)
     {
         std::lock_guard<std::mutex> lock(_mutex);
+        uint64_t id = ++_nextSubscriptionId;
         auto it = _listeners.find(typeid(Event));
         auto newVec = std::make_shared<std::vector<ListenerEntry>>();
         if (it != _listeners.end() && it->second) {
             *newVec = *it->second;
         }
-        newVec->emplace_back(ListenerEntry{priority, [handler](const void* ePtr){
+        newVec->emplace_back(ListenerEntry{id, priority, [handler](const void* ePtr){
             handler(*static_cast<const Event*>(ePtr));
         }});
         // Keep highest priority first for deterministic ordering.
@@ -79,10 +80,14 @@ public:
             return a.priority > b.priority;
         });
         _listeners[typeid(Event)] = newVec;
+        return id;
     }
 
     // Non-template version for internal use
-    void subscribe(const std::type_index& type, const Listener& listener, int priority = 0);
+    uint64_t subscribe(const std::type_index& type, const Listener& listener, int priority = 0);
+
+    // Unsubscribe by the ID returned from subscribe()
+    void unsubscribe(uint64_t subscriptionId);
 
     // ------------------------------------------------------------------
     // Publication (synchronous) -----------------------------------------
@@ -157,6 +162,7 @@ private:
     // Listener registry keyed by event type ---------------------------------
     std::unordered_map<std::type_index, std::shared_ptr<const std::vector<ListenerEntry>>> _listeners;
     std::mutex   _mutex;
+    uint64_t     _nextSubscriptionId = 0;
 
     // Async queue -----------------------------------------------------------
     using Job = std::function<void()>;

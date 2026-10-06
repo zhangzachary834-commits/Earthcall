@@ -27,6 +27,7 @@ namespace Input {
 class LocomotionChannel : public Law {
 public:
     LocomotionChannel();
+    ~LocomotionChannel();
 
     bool isFirstMover() const override { return true; }
     std::string getIdentifier() const override { return "locomotion-channel"; }
@@ -76,6 +77,7 @@ private:
     bool _idleActive      = false;
     bool _routingInstalled = false;
     bool _wasActuating     = false;
+    uint64_t _busSubscriptionId = 0;
 };
 
 } // namespace Input

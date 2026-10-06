@@ -8,14 +8,22 @@ EventHandler& EventHandler::instance() {
     return handler;
 }
 
+EventHandler::~EventHandler() {
+    clearAllHandlers();
+}
+
 void EventHandler::removeHandler(const std::string& handlerName) {
     auto it = _handlers.find(handlerName);
     if (it != _handlers.end()) {
+        EventBus::instance().unsubscribe(it->second);
         _handlers.erase(it);
     }
 }
 
 void EventHandler::clearAllHandlers() {
+    for (const auto& [name, id] : _handlers) {
+        EventBus::instance().unsubscribe(id);
+    }
     _handlers.clear();
 }
 

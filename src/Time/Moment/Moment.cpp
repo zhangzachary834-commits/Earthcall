@@ -100,8 +100,10 @@ void Moment::setEnd(const double& t) {
 }
 
 long Moment::propCpuClockCycle() const {
-#if defined(__clang__) || defined(__GNUC__)
+#if defined(__has_builtin) && __has_builtin(__builtin_readcyclecounter)
     return static_cast<long>(__builtin_readcyclecounter());
+#elif defined(__x86_64__) || defined(__i386__)
+    return static_cast<long>(__builtin_ia32_rdtsc());
 #else
     return 0;
 #endif
