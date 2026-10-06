@@ -164,18 +164,58 @@ Zach chose these from a proposal; he deferred typo-fixing and usage ranking ("ne
 
 ## Next rungs
 
-- [ ] **The Law Line in every Zone.** Laws are per-Zone membership (`lawRefs`), so the hearing Laws live in `LawLine`. Carrying them everywhere needs a Home/Ourverse carrier. ⚑ Zach's call.
+- [x] **The Law Line in every Zone**: superseded by [Terminal Zones](../../Interaction%20and%20Interface/Terminal_Zones/Terminal_Zones.md) (Zach's decision, 2026-09-30). The *line* holds the LawLine closure (`enter LawLine`) wherever the body stands, so no Home/Ourverse carrier is needed. Known limit, recorded there: LawLine's own beings (the cube, custom Lexemes) are visible to Laws only while the body is also in LawLine.
 - [x] **A non-Person writer can now arrive as a First Mover** (Claude Opus 5.5, session `08b0f730-6e49-4c49-b27f-3a89c810ca4b`, 2026-09-30, at Zach's request so Sonnet 4.5 could use the Law Line): `TerminalChannel::authorForeign` parses with the channel's own grammar and vocabulary and authors as the proven mover. `speak` and it share one `enact()`. It is reached over MCP as `earthcall_law_sentence`, which is socket `law_sentence` behind ForeignActuationGuard (scope over the Law's path and the active Zone). `?`/`??` stay read-only. Witness: `mcp_authoring_surfaces_test`, `mcp_first_mover_bridge_test`. The stdin path below is unchanged.
 - [ ] **The line trusts its stdin, and stdin can lie** (Astra's Crystal §13, conceded in *The Terminal That Was Built Writes Back*). Anything that types into the Terminal, including a test process, authors as the Person `@interaction-channel.personId` names. A non-Person writer should arrive as a registered First Mover under a Person's grant, the same discipline as MCP.
 - [x] **Fixed 2026-09-30 when it actually happened** (Zach keyed, and every Law authored "Zach" stopped resolving, including the Identity Zone's own Law). `Identity::personAnswersTo` bridges an old author name to a keyed Person **only** through the migration ledger, the same bridge Home reclaim uses. Boot treats a legacy profile the ledger signed over to a keyed profile on disk as superseded. Witness: `terminal_zones_test` 7b. Mythos's `was-called` Claim would make the ledger itself signed. Original item: **A spoken Law must survive its author getting a key** (Mythos, Interaction as Law thread, 2026-09-25). Spoken Laws record the author by the identifier `@interaction-channel.personId` resolves to *now*. That is spelling-resolved causation, and it unbinds when Zach takes a key. Untested. The fix is the `was-called` Claim Mythos proposed in `Succession_Is_Not_In_The_World`.
-- [ ] `set x to @other.path`: waits for the PropertyPath binding algebra ("copy value", [Property_Storage_and_OntoMath_Binding](../../Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)). The refusal already points there.
+- [x] `set x to @other.path` (2026-10-05, [record below](#set-to-a-path-copy-value-2026-10-05)): the binding movement's typed `Map` passthrough is its "copy value", so an authored compiler Metalaw lowers the read. There is no parser lowering and no `operandPath`.
 - [ ] Extend arithmetic notation to Zone conditions and richer bounded-function authoring; Create initialization and named Map/Flow expressions plus Drive curve arguments are implemented.
 - [ ] Timeline clauses (after the Law/Timeline ontology; TIME_AND_MOMENT.md).
 - [ ] Multi-line Python-style blocks (`when any:` / `then:` with indentation) for long chains. The editor would need Shift-Enter or a trailing `:` continuation.
-- [ ] Undo of the last spoken Law as an authored act (a Lexeme denoting a Law that retires a Law), not a verb.
+- [ ] Undo of the last spoken Law as an authored act (a Lexeme denoting a Law that retires a Law), not a verb. **Blocked (2026-10-05) on the same reference seam.**
+  - The last Law the line spoke is held only as the *string* `@terminal-channel.lastCreated`.
+  - Deleting "it" would mean treating a string as a being reference. That is the hardcoded string→typed coercion Zach refused (2026-09-25).
+  - It waits for a reference/alias cell in [Property_Storage_and_OntoMath_Binding](../../Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md).
+  - Meanwhile, `delete <name>` (with confirmation) undoes any spoken Law.
 - [ ] Event meanings in the menu. Today an event shows how often it was heard. A meaning needs an authored home, not a central table.
 - [ ] Migrate the legacy `earthcall_terminal` features (robot guy, word art, zone radar, lexeme constellation) onto the TerminalChannel, then retire it.
 - [ ] In-world text entry. Zach deferred this: "We don't want it in-world" for now.
+
+## Set to a path: copy value (2026-10-05)
+
+The rung Zach left open on 2026-09-25 was "operandPath needs to be considered alongside the broader PropertyPath-Memory movement". Since then, the [Property storage task](../../Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md) landed typed live bindings: a scalar `Map` passthrough (`ValueLeaf`) copies a typed value. That *is* its "copy value", so this rung reuses it and builds no new substrate.
+
+```text
+called "Copy Hp" when clicked then set @law-line-cube.glow to @law-line-cube.hp
+called "Double Hp" when clicked then set glow to @law-line-cube.hp * 2
+```
+
+- **The parser:** when Set's value starts with `@` or an authored root (`my.`), the parser senses the expression and sends a `{"slot": "assignment", "opcode": "action.Set", "property", "function", "bindings"}` record through the same Metalaw compiler seam Create initializers use.
+- **The Metalaw:** the saved Metalaw `law-line-compile-assignment-expression` turns that record into Map.
+  - Disable or remove it, and such a sentence refuses. There is no fallback.
+  - Literal Sets (`set glow to 1`, `set color red`) keep their exact existing model and never consult a compiler.
+- **Tab** after `to ` offers both value words and paths.
+- **Semantics:** the copy happens *when the Law fires*, as a value. It is not a live alias: later changes to `hp` do not flow into `glow` until the Law fires again. Aliases and shared cells remain the Property storage task's open work.
+
+**Seed:**
+- `scripts/seed_law_line.py` created `saves/laws/law-line-compile-assignment-expression/law.json`.
+  - Its author is Zach's keyed identity `did:earthcall:dmvokv…`, read from the world's own `law-line-hear`, because his in-app save now records that identity.
+  - It is `injected_by` Claude Opus 5.5.
+- The script appended its id to LawLine's `lawRefs`. Nothing else changed: no Lexemes, no Relations, and no existing entry.
+- LawLine is now saved natively (`zone.ecform`, Zach's commit `e4d7a72d`). So the patcher now edits the JSON inside the msgpack `MigrationRoot` wrapper with the same byte-preserving append. It backs up to `scratch/backups/law-line/` and renames atomically, and it would refuse any other ecform layout.
+- `EARTHCALL_SEED_ROOT` lets a dry run patch a scratch copy first. That was done before touching the world.
+
+**Witness:** `law_line_zone_test` 169/169. It covers:
+- the Map lowering;
+- the live copy;
+- arithmetic over a read;
+- the literal Set unchanged;
+- refusal without the Metalaw;
+- Tab offering the read path.
+
+The test itself was repaired for Zach's native save. It reads `zone.ecform` and gives its scratch Person the seed's keyed author. It also quiets Zach's own spoken `law_<uuid>` Laws in the scratch copy, because his Stairmaker answers every click.
+
+*Claude Code · Claude Opus 5.5 · session `01WXmPy9U71FLqizbRYzMToZ` · 2026-10-05.*
 
 ## Pitfalls for the next agent (Jules especially)
 
@@ -198,6 +238,10 @@ Zach chose these from a proposal; he deferred typo-fixing and usage ranking ("ne
 - **Destroy may now unmake a Law** (never a First Mover). `LawManager::reapUnmade` retires it *after* retracting its facts. `ZoneManager::retireLawFromActiveZone` records the retirement per Zone, because Save Zone otherwise only ever *appends* to `lawRefs`. Held by `destroy_law_test` and `law_line_zone_test`.
 - **The deletion Metalaws carry no `targets`.** Laws targeting `terminal-channel` are applied by the ambiguity resolver, and a deleting Law must never run there.
 - **Mouse reporting and cursor reports:** a click needs the terminal's answer to `ESC[6n` to know the region's screen row. Real terminals answer it; a test emulator must be told to (see the rung-3 probe). Reporting must be switched off on every exit path, including the signal handler.
+- **Never look a being up per menu item.** `findBeing(id)` rebuilds and scans the whole Universe, so calling it once per offered being made `@` completion O(N²). At 708 beings in Zach's LawLine save, that was 530 ms per keystroke (Zach, 2026-10-05: "whenever I enter @ its really laggy").
+  - `vocabulary()` now records each being's description as a string during its single walk, and `describedPropertiesOf` reads all of a being's properties from one lookup. Each keystroke now takes about 20 ms.
+  - Never cache `Singular*` in a vocabulary: it can outlive a tick, and Laws and Relations may leave without a structural-revision bump.
+  - Held by the `'@' completion is not quadratic` check in `law_line_zone_test`.
 - **Pad by visible width, never bytes.** `·`, `‹` and `›` are several bytes (the help page's key rows broke once).
 - **Never touch the Person's history when probing.** Set `EARTHCALL_TERMINAL_HISTORY` to a scratch file for any automated run. An agent's probe clean-up once deleted Zach's `saves/logs/terminal-history.txt` along with its own lines.
 - **One channel attaches, and only to a TTY.** Under ctest nothing attaches, which is why the tests use `inject()`, `setSink()`, and the pure `LineEditor`.

@@ -24,12 +24,14 @@ What it seeds:
 """
 import copy
 import json
+import struct
 import os
 import shutil
 import sys
 import time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# EARTHCALL_SEED_ROOT lets a dry run patch a scratch copy instead of the world.
+ROOT = os.environ.get("EARTHCALL_SEED_ROOT") or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AUTHOR = "Zach"
 INJECTED_BY = "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25"
 ZONE_ID = "LawLine"
@@ -206,6 +208,21 @@ CREATE_COMPILERS = [
              ]}),
 ]
 
+# `set <path> to <expression reading a path>`: the binding movement's "copy
+# value" is a scalar Map passthrough, so this authored rule lowers the sensed
+# assignment to Map. Remove it and such a Set refuses. (Claude Opus 5.5,
+# 2026-10-05, the Law Line's open "set x to @other.path" rung.)
+ASSIGNMENT_INJECTED_BY = "Claude Opus 5.5 (Claude Code) / 01WXmPy9U71FLqizbRYzMToZ / 2026-10-05"
+ASSIGNMENT_COMPILERS = [
+    compiler("law-line-compile-assignment-expression",
+             {"slot": "assignment", "expression": True},
+             {"kind": 8, "path": slot("property"), "function": slot("function"), "bindings": slot("bindings")},
+             opcode="action.Set"),
+]
+for _c in ASSIGNMENT_COMPILERS:
+    _c["injected_by"] = ASSIGNMENT_INJECTED_BY
+
+
 # Named argument schemas are authored compiler templates, never parser switches.
 def arg(name, default=None, optional=False):
     ref = {"$slot": "/arguments/" + name}
@@ -336,6 +353,7 @@ def build():
         for symbol in symbols:
             lexeme_for(symbol, doc["identifier"])
     laws.extend(CREATE_COMPILERS)
+    laws.extend(ASSIGNMENT_COMPILERS)
     for kind, name, fields, signature in ARGUMENT_ACTIONS:
         identifier = "law-line-args-" + name.lower()
         word = law(identifier, "means: " + name + " with authored arguments", enabled=False,
@@ -480,10 +498,30 @@ def write_zone_append(dest, old_bytes, old, new):
     os.replace(staged, dest)
 
 
+ECFORM_HEAD = b"\x81\xadMigrationRoot\xdb"
+
+
+def ecform_text(raw):
+    """The JSON text inside a native zone.ecform: a one-key msgpack map
+    {"MigrationRoot": str32}, as SaveSystem writes and reads it."""
+    assert raw[:len(ECFORM_HEAD)] == ECFORM_HEAD, "not a MigrationRoot ecform; refusing to guess its layout"
+    n = struct.unpack(">I", raw[len(ECFORM_HEAD):len(ECFORM_HEAD) + 4])[0]
+    body = raw[len(ECFORM_HEAD) + 4:]
+    assert len(body) == n, "ecform length disagrees with its contents; refusing"
+    return body
+
+
+def ecform_wrap(text):
+    return ECFORM_HEAD + struct.pack(">I", len(text)) + text
+
+
 def patch_zone(dest, seed):
-    """Add what the Zone lacks; never remove or rewrite anything it has."""
+    """Add what the Zone lacks; never remove or rewrite anything it has.
+    `dest` may be zone.json or the native zone.ecform an in-app save writes."""
+    native = dest.endswith(".ecform")
     with open(dest, "rb") as f:
-        old_bytes = f.read()
+        file_bytes = f.read()
+    old_bytes = ecform_text(file_bytes) if native else file_bytes
     old = json.loads(old_bytes)
     new = copy.deepcopy(old)
     have_lex = {l.get("id") for l in new.get("lexemes", [])}
@@ -515,8 +553,21 @@ def patch_zone(dest, seed):
     backups = os.path.join(ROOT, "scratch", "backups", "law-line")
     os.makedirs(backups, exist_ok=True)
     stamp = time.strftime("%Y%m%d-%H%M%S")
-    shutil.copy2(dest, os.path.join(backups, "%s-zone-before-law-line-patch-%s.json" % (ZONE_ID, stamp)))
-    write_zone_append(dest, old_bytes, old, new)
+    ext = ".ecform" if native else ".json"
+    shutil.copy2(dest, os.path.join(backups, "%s-zone-before-law-line-patch-%s%s" % (ZONE_ID, stamp, ext)))
+    if native:
+        contents = ecform_wrap(append_zone_bytes(old_bytes, old, new))
+        assert json.loads(ecform_text(contents)) == new
+        staged = dest + ".staged"
+        with open(staged, "wb") as f:
+            f.write(contents)
+        with open(staged, "rb") as f:
+            assert json.loads(ecform_text(f.read())) == new
+        with open(dest, "rb") as f:
+            assert f.read() == file_bytes, "save changed while staging; refusing: " + dest
+        os.replace(staged, dest)
+    else:
+        write_zone_append(dest, old_bytes, old, new)
     return added
 
 
@@ -526,6 +577,17 @@ def main():
     zone_seed = files.pop(zone_rel)
     changed = False
 
+    # Once the author keyed (Zach, 2026-09-30), his in-app saves record the
+    # seed Laws' author as his DID. A Law created now records the same present
+    # identity, read from the world's own hearing Law, never guessed.
+    present_authors = None
+    hear = os.path.join(ROOT, "saves", "laws", "law-line-hear", "law.json")
+    if os.path.exists(hear):
+        with open(hear) as f:
+            recorded = json.load(f).get("authors") or []
+        if recorded and all(a.startswith("did:earthcall:") for a in recorded):
+            present_authors = recorded
+
     for rel, doc in files.items():
         dest = os.path.join(ROOT, rel)
         if os.path.exists(dest):
@@ -533,11 +595,22 @@ def main():
                 if json.load(f) != doc:
                     print("kept as it is (differs from the seed; it is the world's now): " + rel)
             continue
+        if present_authors and doc.get("authors") == [AUTHOR]:
+            doc = copy.deepcopy(doc)
+            doc["authors"] = list(present_authors)
+            if isinstance(doc.get("law"), dict) and doc["law"].get("authors") == [AUTHOR]:
+                doc["law"]["authors"] = list(present_authors)
         write_staged(dest, doc)
         print("created " + rel)
         changed = True
 
     zone_dest = os.path.join(ROOT, zone_rel)
+    native = os.path.join(os.path.dirname(zone_dest), "zone.ecform")
+    if os.path.exists(native) and os.path.getsize(native) > 0:
+        # An in-app Save Zone wrote the native form (Zach, e4d7a72d), and the
+        # loader prefers it over zone.json. Patch THAT; a zone.json seeded
+        # beside it would be a shadow the world never reads.
+        zone_dest, zone_rel = native, os.path.relpath(native, ROOT)
     if not os.path.exists(zone_dest):
         write_staged(zone_dest, zone_seed)
         print("created " + zone_rel)
@@ -554,6 +627,7 @@ def main():
     else:
         print("authors: %s   original vocabulary injected_by: %s" % (AUTHOR, INJECTED_BY))
         print("Compiler additions injected_by: " + COMPILER_INJECTED_BY)
+        print("Assignment compiler injected_by: " + ASSIGNMENT_INJECTED_BY)
     return 0
 
 

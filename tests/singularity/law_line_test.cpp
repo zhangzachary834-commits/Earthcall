@@ -327,8 +327,10 @@ void grammar() {
         assert(!p.ok && mentions(p.error, "Law Graph"));
         const auto t = LS::parse("on timeline dawn then set glow 1", v);
         assert(!t.ok && mentions(t.error, "Timeline"));
+        // Reading another path is compiled by an authored Metalaw (the
+        // binding movement's "copy value"); with no compiler it refuses.
         const auto b = LS::parse("on tick then set glow @lamp.brightness", v);
-        assert(!b.ok && mentions(b.error, "binding"));
+        assert(!b.ok && mentions(b.error, "Metalaw"));
         const auto u = LS::parse("on tick then frobnicate glow", v);
         assert(!u.ok && u.errorOffset == std::string("on tick then ").size());
         const auto open = LS::parse("then set glow 1", v);

@@ -1065,6 +1065,33 @@ private:
         if (kind == "Set") {
             const std::string path = requirePath();
             (void)tryMatch({"filler.to"}, "filler");
+            // `set glow to @lamp.brightness` (or `my.position + (0, 1, 0)`): a
+            // value READ from another path is the binding movement's "copy
+            // value" (Property_Storage_and_OntoMath_Binding: a scalar Map
+            // passthrough copies a typed value). The parser only senses the
+            // expression; an authored compiler Metalaw decides what it becomes,
+            // exactly as Create initializers do. No Metalaw -> refusal. A
+            // literal value keeps Set's exact existing model.
+            skipSpace();
+            bool readsPath = !atEnd() && _text[_pos] == '@';
+            for (const auto& [alias, root] : _vocab.pathRoots)
+                readsPath = readsPath || _text.compare(_pos, alias.size() + 1, alias + ".") == 0;
+            if (readsPath) {
+                auto e = expression();
+                nlohmann::json input{{"slot", "assignment"}, {"opcode", verb->opcode},
+                    {"lexeme", verb->lexemeId}, {"wordLaw", verb->lawId}, {"property", path},
+                    {"expression", !e.literal.has_value()}};
+                if (e.literal) input["operand"] = propertyValueToJson(*e.literal);
+                else {
+                    OntoMath::Piecewise f;
+                    OntoMath::Piecewise::Piece piece;
+                    piece.mathNode = std::move(e.math); f.pieces.push_back(std::move(piece));
+                    input["function"] = f.toJson();
+                    input["bindings"] = mathBindingsToJson(e.bindings);
+                }
+                return compileInvocation(std::move(input));
+            }
+            if (atEnd() && _completing) _expect.path = true;   // a value, or a path to read one from
             return ActionNode::set(path, parseValue());
         }
         if (kind == "Add" || kind == "Scale") {
@@ -1818,14 +1845,19 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
                     if (startsWith(tail, root) && vocab.propertiesOf) {
                         inside = true;
                         const std::string rest = tail.substr(root.size());
-                        for (const auto& p : vocab.propertiesOf(b)) {
+                        const auto add = [&](const std::string& p, const auto& describe) {
                             const int score = fuzzyScore(rest, p);
-                            if (score == 0) continue;
+                            if (score == 0) return;
                             const std::string text = root + p;
                             auto it = best.find(lower(text));
                             if (it == best.end() || it->second.score < score) {
-                                best[lower(text)] = Suggestion{split, text, prop(b, p), "path", score};
+                                best[lower(text)] = Suggestion{split, text, describe(), "path", score};
                             }
+                        };
+                        if (vocab.describedPropertiesOf) {
+                            for (const auto& [p, d] : vocab.describedPropertiesOf(b)) add(p, [&] { return d; });
+                        } else {
+                            for (const auto& p : vocab.propertiesOf(b)) add(p, [&] { return prop(b, p); });
                         }
                     }
                 }
@@ -1846,6 +1878,8 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
                               "property of the Event Moment", "path");
                     }
                 }
+            } else if (vocab.describedPropertiesOf && !vocab.scopeBeing.empty()) {
+                for (const auto& [p, d] : vocab.describedPropertiesOf(vocab.scopeBeing)) offer(split, tail, p, d, "path");
             } else if (vocab.propertiesOf && !vocab.scopeBeing.empty()) {
                 for (const auto& p : vocab.propertiesOf(vocab.scopeBeing)) {
                     offer(split, tail, p, prop(vocab.scopeBeing, p), "path");

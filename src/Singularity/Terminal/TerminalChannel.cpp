@@ -36,6 +36,7 @@
 #include <thread>
 #include <type_traits>
 #include <typeinfo>
+#include <unordered_map>
 #include <uuid/uuid.h>
 
 #if !defined(_WIN32) && !defined(__EMSCRIPTEN__)
@@ -887,9 +888,19 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws, const std:
         v.laws.push_back({law->getIdentifier(), law->name(), lawSummary(*law, laws)});
     }
 
+    // One walk over the Universe, describing each being as it passes. The menu
+    // used to call describeBeing(id) per offered being, and each call rebuilt
+    // and scanned the whole Universe: O(N^2) per keystroke after '@' (Zach,
+    // 2026-10-05: "whenever I enter @ its really laggy"; 708 beings, ~0.5 s).
+    // Only STRINGS are kept, never Singular*: a vocabulary can outlive a tick,
+    // and Laws/Relations may leave without a structural-revision bump, so a
+    // cached pointer could dangle. A stale string is merely an old label.
     std::set<std::string> beings;
+    auto described = std::make_shared<std::unordered_map<std::string, std::string>>();
     for (Singular* being : Universe::instance().beings()) {
-        if (being && !being->getIdentifier().empty()) beings.insert(being->getIdentifier());
+        if (!being || being->getIdentifier().empty()) continue;
+        if (beings.insert(being->getIdentifier()).second)
+            (*described)[being->getIdentifier()] = describeSingular(being);
     }
     v.beings.assign(beings.begin(), beings.end());
     // Bare paths complete against the authored suggestion being — or, when
@@ -911,7 +922,33 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws, const std:
         return names;
     };
     v.describeProperty = [this](const std::string& b, const std::string& p) { return describeProperty(b, p); };
-    v.describeBeing = [this](const std::string& b) { return describeBeing(b); };
+    v.describeBeing = [this, described](const std::string& b) {
+        const auto it = described->find(b);
+        return it != described->end() ? it->second : describeBeing(b);   // e.g. a Lexeme only a Relation holds
+    };
+    // A being's properties with their current values, from ONE lookup (the
+    // per-property describeProperty re-found the being for every name).
+    v.describedPropertiesOf = [](const std::string& id) {
+        std::vector<std::pair<std::string, std::string>> out;
+        Singular* being = findBeing(id);
+        if (!being) return out;
+        std::vector<std::string> names;
+        for (Property* p : being->listProperties()) if (p) names.push_back(p->name());
+        for (const auto& entry : being->dynamicProperties())
+            names.push_back(Earthcall::StringInterner::resolve(entry.first));
+        std::sort(names.begin(), names.end());
+        names.erase(std::unique(names.begin(), names.end()), names.end());
+        for (const auto& name : names) {
+            PropertyValue value;
+            std::string shown;
+            if (lawGetValue(*being, PropertyPath::parse(name), value)) {
+                shown = showValue(value);
+                if (!shown.empty()) shown = "= " + shown;
+            }
+            out.emplace_back(name, std::move(shown));
+        }
+        return out;
+    };
     v.describeEvent = [](const std::string& e) {
         const auto it = heardEvents().find(e);
         return it == heardEvents().end() ? std::string("event")
@@ -957,6 +994,11 @@ std::string TerminalChannel::describeBeing(const std::string& beingId) const {
             if (being) break;
         }
     }
+    return describeSingular(being);
+}
+
+// What the menu says a being is, from the being itself (no lookup).
+std::string TerminalChannel::describeSingular(Singular* being) {
     if (!being) return {};
     std::string kind = dynamic_cast<Person*>(being)                              ? "person"
                      : dynamic_cast<Zone*>(being)                                ? "zone"

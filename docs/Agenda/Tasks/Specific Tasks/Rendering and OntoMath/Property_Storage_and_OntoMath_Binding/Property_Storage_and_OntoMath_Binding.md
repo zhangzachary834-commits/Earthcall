@@ -44,6 +44,11 @@
 
 The Law Line's `set glow to @lamp.brightness` is **refused** today, and it names this movement's "copy value" relationship (§2). Zach asked that no ad-hoc `operandPath` be added to `ActionNode` outside it. When this binding algebra lands, the Law Line needs only its grammar's refusal replaced by the new binding. → [Law_Line](../../Law%20and%20Reasoning/Law_Line/Law_Line.md) *(Claude Code · Claude Opus 5.5 · 2026-09-25)*
 
+**Update (2026-10-05):** the Law Line now uses this movement's typed scalar `Map` passthrough as "copy value".
+- `set glow to @lamp.brightness` is sensed by the parser and lowered to Map by the authored Metalaw `law-line-compile-assignment-expression`. There is still no `operandPath`.
+- It copies on firing; it is not an alias. When this task's alias/shared cells land, a "share" sentence would be a second authored compiler rule, not a parser change.
+- The Law Line's *Undo* rung waits here too. It needs a being-reference cell, because a string holding an identifier must not be coerced into a reference. → [Law_Line](../../Law%20and%20Reasoning/Law_Line/Law_Line.md#set-to-a-path-copy-value-2026-10-05) *(Claude Code · Claude Opus 5.5 · 2026-10-05)*
+
 ## Zach's identity and authority direction (2026-09-27)
 
 Zach specified that a path intended to refer to an individual must resolve to that individual's durable identity. It must never silently route to another individual, and ambiguity between possible referents must refuse. He left open who adjudicates IDs and asked for help understanding the cryptographic boundary. For distinct paths sharing one value cell, write behavior **depends on their authority level**; no precedence rule was supplied. Zach further specified that permission to read an ID is decided by Metalaw authored by authority-bearing People. If the reader lacks that permission, a Metalaw must author another way to disambiguate. The Zone-governed resolution and no-path-owned-ID correction below determines what "resolve" means here.

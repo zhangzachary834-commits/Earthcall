@@ -57,9 +57,13 @@ bool contains(const std::vector<std::string>& v, const std::string& s) {
 
 int main() {
     std::filesystem::path saves = "saves";
-    if (!std::filesystem::exists(saves / "zones/LawLine/zone.json")) saves = std::filesystem::path("..") / "saves";
+    if (!std::filesystem::exists(saves / "zones/LawLine")) saves = std::filesystem::path("..") / "saves";
     saves = std::filesystem::absolute(saves);
-    const auto sourceZone = saves / "zones/LawLine/zone.json";
+    // An in-app Save Zone writes the native zone.ecform (Zach's LawLine save,
+    // e4d7a72d); a fresh seed writes zone.json. Read whichever the Person's
+    // save holds, the way SaveSystem's zone identity path does.
+    auto sourceZone = saves / "zones/LawLine/zone.ecform";
+    if (!std::filesystem::exists(sourceZone)) sourceZone = saves / "zones/LawLine/zone.json";
     check(std::filesystem::exists(sourceZone), "LawLine Zone identity exists");
     if (!std::filesystem::exists(sourceZone)) return 1;
 
@@ -68,7 +72,7 @@ int main() {
     Scratch scratch{std::filesystem::temp_directory_path() /
         ("earthcall_law_line_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))};
     std::filesystem::create_directories(scratch.path / "zones/LawLine");
-    std::filesystem::copy_file(sourceZone, scratch.path / "zones/LawLine/zone.json");
+    std::filesystem::copy_file(sourceZone, scratch.path / "zones/LawLine" / sourceZone.filename());
     // Production exposes this inactive Zone alongside LawLine. Its literal
     // name must never steal birth from the active/rendered Zone.
     std::filesystem::create_directories(scratch.path / "zones/World");
@@ -87,6 +91,20 @@ int main() {
     std::vector<std::string> printed;
     terminal->setSink([&](const std::string& s) { printed.push_back(s); });
     harness.interaction->setPointingPerson(&harness.player);
+    // Zach keyed (2026-09-30), and his in-app Save Zone (e4d7a72d) rewrote the
+    // shared seed Laws' authors from "Zach" to his DID. The Zone refuses to
+    // activate Laws whose author no present Person answers to, so this scratch
+    // Person carries whichever identity the seed records -- never a rewrite of
+    // the copied Laws' authors, which would test a world that is not his.
+    {
+        const nlohmann::json hear = SaveSystem::readSaveData(
+            (scratch.path / "laws/law-line-hear/law.json").string());
+        const auto authors = hear.value("authors", nlohmann::json::array());
+        const std::string author = authors.empty() ? "" : authors[0].get<std::string>();
+        if (author.rfind("did:earthcall:", 0) == 0)
+            check(harness.player.setPersonId(Identity::SingularId::parse(author)),
+                  "the scratch Person answers to the seed Laws' keyed author");
+    }
 
     std::size_t index = harness.zones.zones().size();
     for (std::size_t i = 0; i < harness.zones.zones().size(); ++i) {
@@ -95,6 +113,12 @@ int main() {
     check(index < harness.zones.zones().size(), "boot discovers the LawLine Zone");
     if (index >= harness.zones.zones().size()) return 1;
     check(harness.zones.switchTo(index), "entering LawLine loads its Laws (disabled presets included)");
+    // The LawLine save is Zach's inhabited Zone: it also holds Laws he spoke
+    // (minted `law_<uuid>`, e.g. his Stairmaker, which adds three steps on any
+    // click). They are his program, not this fixture; quiet them in the
+    // scratch copy so every count below measures only what this test speaks.
+    for (const auto& law : harness.lawManager.getAll())
+        if (law && law->getIdentifier().rfind("law_", 0) == 0) law->setEnabled(false);
     auto* inactiveWorld = harness.zones.zones()[harness.zones.findZoneIndex("World")].get();
     const auto worldObjectsBefore = inactiveWorld->getOwnedObjects().size();
     check(&harness.zones.active() != inactiveWorld, "the visible LawLine Zone is distinct from inactive World");
@@ -210,7 +234,7 @@ int main() {
         if (creationLaw && creationLaw->name() == "Beneath Me") {
             const auto model = creationLaw->actionModel()->toJson();
             check(model["children"][1]["kind"] == static_cast<int>(ActionNode::Kind::Map) &&
-                  mentions(model.dump(), "@Zach.position"),
+                  mentions(model.dump(), "@" + harness.player.getIdentifier() + ".position"),
                   "relative placement remains a Map bound to the actual speaking author");
             Core::EventBus::instance().publish(ECA::Event{"object-clicked", cube, nullptr, std::time(nullptr)});
             harness.lawManager.tick();
@@ -471,6 +495,75 @@ int main() {
             lawGetValue(*cube, PropertyPath::parse("hp"), hp); propertyValueToNumber(hp, hpNumber);
             const double expected = example.first == 3 ? 4.0 : example.first == 4 ? 1.0 + 2.0 * hpNumber : example.first == 5 ? 5.0 : hpNumber + 2.0;
             check(std::abs(value - expected) < 0.001, name + " changes the live cube by its authored arguments");
+        }
+    }
+    // `set x to @other.path`: the binding movement's "copy value". The parser
+    // senses the read; the saved law-line-compile-assignment-expression
+    // Metalaw lowers it to a Map passthrough (Claude Opus 5.5, 2026-10-05).
+    {
+        const auto readNumber = [&](const char* path) {
+            PropertyValue v; double n = 0;
+            lawGetValue(*cube, PropertyPath::parse(path), v); propertyValueToNumber(v, n);
+            return n;
+        };
+        {
+            const auto menu = Singularity::Terminal::LawSentence::suggest(
+                "when clicked then set @law-line-cube.glow to @law-line-cube.h", terminal->vocabulary(harness.lawManager));
+            bool offersHp = false;
+            for (const auto& sg : menu) offersHp = offersHp || mentions(sg.text, "hp");
+            check(offersHp, "Tab completes the path a Set reads from");
+        }
+        {
+            // Zach, 2026-10-05: "whenever I enter @ its really laggy". Each
+            // offered being was described by re-walking the whole Universe:
+            // O(N^2) per keystroke, 530 ms at 708 beings in his LawLine save
+            // (Debug). Now one walk at vocabulary build: ~20 ms. The bound is
+            // >10x the fixed cost and well under the quadratic one, so load
+            // won't flake it but a regression to per-being lookups will trip it.
+            const auto& vv = terminal->vocabulary(harness.lawManager);
+            for (const char* line : {"when clicked then set @", "when clicked then set glow to @law"}) {
+                const auto t0 = std::chrono::steady_clock::now();
+                const auto menu = Singularity::Terminal::LawSentence::suggest(line, vv);
+                const auto ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+                std::cout << "    '@' menu over " << vv.beings.size() << " beings: " << ms << " ms\n";
+                check(!menu.empty() && (vv.beings.size() < 400 || ms < 250.0),
+                      std::string("'@' completion is not quadratic in the beings: ") + line);
+            }
+        }
+        auto before = harness.lawManager.getAll().size();
+        terminal->inject(R"(called "Copy Hp" on "argument-test" then set @law-line-cube.glow to @law-line-cube.hp)"); frame();
+        auto ids = lawNamed("Copy Hp");
+        auto* copy = ids.empty() ? nullptr : harness.lawManager.find(ids.back());
+        check(harness.lawManager.getAll().size() == before + 1 && copy && copy->actionModel() &&
+              copy->actionModel()->kind == ActionNode::Kind::Map,
+              "set to a path compiles to a Map passthrough by the saved Metalaw: " + printed.back());
+        if (copy) {
+            cube->setDynamicProperty("glow", 0.0);
+            copy->applyTo(*cube);
+            check(std::abs(readNumber("glow") - readNumber("hp")) < 0.001, "the copied value is the other path's live value");
+        }
+        terminal->inject(R"(called "Double Hp" on "argument-test" then set @law-line-cube.glow to @law-line-cube.hp * 2)"); frame();
+        ids = lawNamed("Double Hp");
+        auto* twice = ids.empty() ? nullptr : harness.lawManager.find(ids.back());
+        if (twice) {
+            cube->setDynamicProperty("glow", 0.0);
+            twice->applyTo(*cube);
+        }
+        check(twice && std::abs(readNumber("glow") - 2.0 * readNumber("hp")) < 0.001, "arithmetic over a read path is copied too");
+        before = harness.lawManager.getAll().size();
+        terminal->inject(R"(called "Literal Glow" on "argument-test" then set @law-line-cube.glow to 1)"); frame();
+        ids = lawNamed("Literal Glow");
+        auto* literal = ids.empty() ? nullptr : harness.lawManager.find(ids.back());
+        check(literal && literal->actionModel() && literal->actionModel()->kind == ActionNode::Kind::Set,
+              "a literal Set keeps its exact existing model (no compiler)");
+        if (auto* assign = harness.lawManager.find("law-line-compile-assignment-expression")) {
+            assign->setEnabled(false);
+            before = harness.lawManager.getAll().size();
+            terminal->inject(R"(called "No Copy Compiler" on "argument-test" then set @law-line-cube.glow to @law-line-cube.hp)"); frame();
+            check(harness.lawManager.getAll().size() == before, "without the assignment Metalaw, a path read refuses: " + printed.back());
+            assign->setEnabled(true);
+        } else {
+            check(false, "the assignment compiler Metalaw is in the LawLine closure");
         }
     }
     {
@@ -741,7 +834,9 @@ int main() {
     {
         std::array<uint8_t, 32> fixtureKey{};
         fixtureKey.fill(42);
-        check(harness.player.setPersonId(Identity::SingularId::fromPublicKey(fixtureKey)),
+        // Already keyed when the seed records a keyed author (see boot above).
+        const bool alreadyKeyed = harness.player.getIdentifier().rfind("did:earthcall:", 0) == 0;
+        check(alreadyKeyed || harness.player.setPersonId(Identity::SingularId::fromPublicKey(fixtureKey)),
               "continuous creation fixture uses a keyed Person");
         check(harness.player.getIdentifier() != "Zach" &&
               !ConditionNode::identity("Zach").compile()(ECA::Event{}, harness.player),

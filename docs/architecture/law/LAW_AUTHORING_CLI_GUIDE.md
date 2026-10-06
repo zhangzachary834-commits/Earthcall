@@ -120,7 +120,7 @@ Use `Map` to copy or calculate from another property:
 called "Copy Cube Colour" when clicked then Map <path: "color", expression: @law-line-cube.color>
 ```
 
-The older bare `Set color to @other.color` form currently refuses. `Map` supplies the expression/binding path. `Set color to 1 0 0` is a supported legacy vector form; inside argument records, prefer `(1, 0, 0)`.
+`Set color to @other.color` (and arithmetic such as `set glow to @lamp.hp * 2`) copies the other path's value each time the Law fires. The authored Metalaw `law-line-compile-assignment-expression` lowers it to the same `Map` passthrough, and without that Metalaw it refuses. It is a copy, not a live alias (2026-10-05). `Set color to 1 0 0` is a supported legacy vector form; inside argument records, prefer `(1, 0, 0)`.
 
 ## 4. Add, change, and remove authored properties
 
