@@ -1811,6 +1811,9 @@ fn fs(in: VSOut) -> FSOut {
                 break;
             }
 
+            if (omega == 1.0 && damping > 0.5 && d > prev_d) {
+                omega = 1.4;
+            }
             prev_d = d;
             candidate_step = max(omega * d, current_eps);
             // Same rule for distance-field marching: cell boundaries are not
