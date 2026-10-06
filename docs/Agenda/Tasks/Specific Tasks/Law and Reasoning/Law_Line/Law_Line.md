@@ -164,20 +164,44 @@ Zach chose these from a proposal; he deferred typo-fixing and usage ranking ("ne
 
 ## Next rungs
 
-- [x] **The Law Line in every Zone**: superseded by [Terminal Zones](../../Interaction%20and%20Interface/Terminal_Zones/Terminal_Zones.md) (Zach's decision, 2026-09-30). The *line* holds the LawLine closure (`enter LawLine`) wherever the body stands, so no Home/Ourverse carrier is needed. Known limit, recorded there: LawLine's own beings (the cube, custom Lexemes) are visible to Laws only while the body is also in LawLine.
+- [ ] **The Law Line in every Zone: only half done.** ⚑ Zach's call.
+  - [Terminal Zones](../../Interaction%20and%20Interface/Terminal_Zones/Terminal_Zones.md) moves LawLine's *Laws* with the line (`enter LawLine`).
+  - LawLine's *Lexemes and cube* stay visible only while the **body** is also in LawLine. The Universe provider reads the body's Zone.
+  - Witnessed 2026-10-05 in the real app: with the body in Sanctum of Beginnings, `called "Plain" when clicked then set color gold?` refused with *"a comparison was expected after 'clicked'"*. The `when clicked` preset words were absent, so `when` read as "if".
+  - (Corrected the same day; an earlier pass this session ticked this rung wrongly.)
+  - The fix would expose a held Zone's beings to Laws. That changes what every Law can see, so it waits for Zach.
+  - **Zach (2026-10-05):** first confirm the [Zone-bounds architecture](../../Architecture%20and%20Ontology/Zones_As_Mathematical_Bounds/Zones_As_Mathematical_Bounds.md), where a Zone is any mathematical domain. He named two models on a continuum: a discrete "command center" Zone others *relate* to, or native inclusion of all Zones bounded *within* a larger Zone.
+  - **Confirmed state:**
+    - Rung 1 is built: `within`, `dimension.*`, `placement.*`, `extent`, and `ZoneManager::locate`, sense-only, in `ZoneBounds.cpp` (Claude Opus 5.5, session `b0dcb70f`).
+    - Rungs 2–6 are not: running vs present, the law and beings closure as a union of Zones, and the beings providers ranging over running Zones.
+    - The command-center model exists only as Terminal Zones' held closure of *Laws*, plus `designatedZones` affiliation, with no relation-mediated vocabulary.
+    - So the fix belongs to Zone-bounds Rung 2 (or a command-center Relation), not a Terminal patch.
 - [x] **A non-Person writer can now arrive as a First Mover** (Claude Opus 5.5, session `08b0f730-6e49-4c49-b27f-3a89c810ca4b`, 2026-09-30, at Zach's request so Sonnet 4.5 could use the Law Line): `TerminalChannel::authorForeign` parses with the channel's own grammar and vocabulary and authors as the proven mover. `speak` and it share one `enact()`. It is reached over MCP as `earthcall_law_sentence`, which is socket `law_sentence` behind ForeignActuationGuard (scope over the Law's path and the active Zone). `?`/`??` stay read-only. Witness: `mcp_authoring_surfaces_test`, `mcp_first_mover_bridge_test`. The stdin path below is unchanged.
-- [ ] **The line trusts its stdin, and stdin can lie** (Astra's Crystal §13, conceded in *The Terminal That Was Built Writes Back*). Anything that types into the Terminal, including a test process, authors as the Person `@interaction-channel.personId` names. A non-Person writer should arrive as a registered First Mover under a Person's grant, the same discipline as MCP.
+- [x] **The line trusts its stdin, and stdin can lie** (Astra's Crystal §13). Closed 2026-10-05 by Zach's choice, "Require presence".
+  - A typed line authors (or asks to delete) only while the Person it would author as is **present**: they proved their key to this process this session (`enter Identity` + passphrase, or `EARTHCALL_KEY_PASSPHRASE` at boot). That is the same First Mover Register root MCP grants terminate in.
+  - Previews (`?`), search (`??`), and help stay open.
+  - A non-Person author is refused: a Person means a human.
+  - The footer says `(not present: enter Identity)`.
+  - It is a Kernel guard (`TerminalChannel::presenceRefusal`), not a property, so no Law can open it.
+  - Witness: `law_line_test` uses the real register with a freshly minted key (refused, then preview open, then trusted and authors). `law_line_zone_test` holds the refusal and then a C++-only seam, because a harness cannot hold Zach's private key.
+  - `Earthcall.command` sets no passphrase, so a Person runs `enter Identity` once per session.
 - [x] **Fixed 2026-09-30 when it actually happened** (Zach keyed, and every Law authored "Zach" stopped resolving, including the Identity Zone's own Law). `Identity::personAnswersTo` bridges an old author name to a keyed Person **only** through the migration ledger, the same bridge Home reclaim uses. Boot treats a legacy profile the ledger signed over to a keyed profile on disk as superseded. Witness: `terminal_zones_test` 7b. Mythos's `was-called` Claim would make the ledger itself signed. Original item: **A spoken Law must survive its author getting a key** (Mythos, Interaction as Law thread, 2026-09-25). Spoken Laws record the author by the identifier `@interaction-channel.personId` resolves to *now*. That is spelling-resolved causation, and it unbinds when Zach takes a key. Untested. The fix is the `was-called` Claim Mythos proposed in `Succession_Is_Not_In_The_World`.
 - [x] `set x to @other.path` (2026-10-05, [record below](#set-to-a-path-copy-value-2026-10-05)): the binding movement's typed `Map` passthrough is its "copy value", so an authored compiler Metalaw lowers the read. There is no parser lowering and no `operandPath`.
-- [ ] Extend arithmetic notation to Zone conditions and richer bounded-function authoring; Create initialization and named Map/Flow expressions plus Drive curve arguments are implemented.
+- [x] Arithmetic notation in Zone conditions (2026-10-05, [record below](#arithmetic-conditions-2026-10-05)). *Still open:* richer bounded-function authoring (piecewise domains, `near` over arithmetic).
 - [ ] Timeline clauses (after the Law/Timeline ontology; TIME_AND_MOMENT.md).
-- [ ] Multi-line Python-style blocks (`when any:` / `then:` with indentation) for long chains. The editor would need Shift-Enter or a trailing `:` continuation.
+- [x] Multi-line Python-style blocks (2026-10-05, [record below](#multi-line-blocks-2026-10-05)).
 - [ ] Undo of the last spoken Law as an authored act (a Lexeme denoting a Law that retires a Law), not a verb. **Blocked (2026-10-05) on the same reference seam.**
   - The last Law the line spoke is held only as the *string* `@terminal-channel.lastCreated`.
   - Deleting "it" would mean treating a string as a being reference. That is the hardcoded string→typed coercion Zach refused (2026-09-25).
   - It waits for a reference/alias cell in [Property_Storage_and_OntoMath_Binding](../../Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md).
   - Meanwhile, `delete <name>` (with confirmation) undoes any spoken Law.
-- [ ] Event meanings in the menu. Today an event shows how often it was heard. A meaning needs an authored home, not a central table.
+- [x] Event meanings in the menu (2026-10-05). Zach chose "just give events authored string property now no new fields", then "The Zone".
+  - **Where it lives:** an event's meaning is the authored string property `meaning.<event>` on a Zone, written by an ordinary Law: `called "Define Click" when … then add property @LawLine.meaning.object-clicked to "a Person pressed and released on a being"`.
+  - **What the menu shows:** `event · <meaning> · heard N×`, reading the line's Zone first, then the body's. Different Zones may mean different things.
+  - **Two fixes it needed:**
+    - `add property` now splits `@owner.name` by the *longest known being* (CLAUDE.md's longest-dotted-match rule). It used to split at the last dot.
+    - **Save Zone now keeps every authored Zone property**, under `authoredProperties`, the convention Lexemes already use. Before, AddProperty on a Zone vanished at Save Zone; only `dimension.*`, `placement.*`, and `extent` were written.
+  - **Witness:** 6 checks in `law_line_zone_test` (198/198), covering the split, the Zone carrying the meaning, the menu and Tab showing it, and Save Zone keeping it. Zone persistence suites show no new failures.
 - [ ] Migrate the legacy `earthcall_terminal` features (robot guy, word art, zone radar, lexeme constellation) onto the TerminalChannel, then retire it.
 - [ ] In-world text entry. Zach deferred this: "We don't want it in-world" for now.
 
@@ -214,6 +238,77 @@ called "Double Hp" when clicked then set glow to @law-line-cube.hp * 2
 - Tab offering the read path.
 
 The test itself was repaired for Zach's native save. It reads `zone.ecform` and gives its scratch Person the seed's keyed author. It also quiets Zach's own spoken `law_<uuid>` Laws in the scratch copy, because his Stairmaker answers every click.
+
+*Claude Code · Claude Opus 5.5 · session `01WXmPy9U71FLqizbRYzMToZ` · 2026-10-05.*
+
+## Arithmetic conditions (2026-10-05)
+
+```text
+called "Strong" when clicked if hp * 2 > glow + 1 then set color gold
+called "Mid" when hovered if @law-line-cube.hp between 2 and 4 then set glow 1
+```
+
+- **Sensing:** when either side of a comparison carries `+ - * /` (spaced, since hyphens are identifier characters), the parser reads both sides as OntoMath expressions.
+  - Bare paths (`hp`) read off the subject, exactly as plain comparisons do. `@being.path` reads that being.
+  - It sends `{slot: "condition", op, function, bindings, bound}` (or `lo`/`hi` for `between`) through the same Metalaw compiler seam.
+  - Both sides reading the world compare their difference with 0. `5 < f` is read as `f > 5`.
+- **Lowering:** seven saved Metalaws, `law-line-compile-condition-{eq,ne,lt,le,gt,ge,inrange}`, turn the record into the existing `ConditionNode::Kind::Zone` (f within closed `[lo, hi]`). No new condition kind or enum.
+  - Strict `>`, `<` and `is not` are `All(closed side, Not(equal))`. `Not(closed side)` would be *true* on undefined math, and a Law must never fire on undefined math.
+- **Unchanged and refused:**
+  - Plain `hp > 2` keeps its exact Compare model.
+  - Disable a compiler and its operator refuses over arithmetic.
+  - `near` over arithmetic refuses (use `between`).
+  - A trailing `?` previews without running a compiler.
+- **Seed:**
+  - Seven new Law files, authored by Zach's keyed identity and injected by Claude Opus 5.5.
+  - Seven lawRefs appended to LawLine's native `zone.ecform`, the same append-only patch with a backup as before.
+- **Witness:** 13 checks in `law_line_zone_test` (184/184), against the live cube:
+  - strict versus non-strict at equality;
+  - subject-relative and flipped forms;
+  - both sides live (the result changes when `glow` changes);
+  - `between`;
+  - undefined math is never satisfied;
+  - plain Compare is kept;
+  - preview runs no compiler;
+  - refusal without the Metalaw.
+
+*Claude Code · Claude Opus 5.5 · session `01WXmPy9U71FLqizbRYzMToZ` · 2026-10-05.*
+
+## Multi-line blocks (2026-10-05)
+
+A line ending in `:` opens a block. Each following line joins it, and an empty line folds the whole block into **one sentence of the same grammar**, which is then spoken like any typed line:
+
+```text
+earthcall[LawLine]> called "Guard" when clicked:
+                ...   if all:
+                ...     hp * 2 > 5
+                ...     glow < 1
+                ...   then:
+                ...     set color gold
+                ...     add glow by 1
+                ...
+⤷ called "Guard" when clicked if hp * 2 > 5 and glow < 1 then set color gold and add glow by 1
+```
+
+- **What a header's last word does to its children** (`LawSentence::unfoldBlock`, a pure function):
+  - `any` (dropped) or a trigger word (`on`) joins them with `or`.
+  - `all` (dropped), `if`/`when`, or `then` joins them with `and`.
+  - Any other word just continues the sentence.
+  - These meanings come from the vocabulary's structural opcodes, not English spellings.
+- **Nesting:** the same joiner nested flattens. Mixing `and`/`or` across nested headers refuses, because the condition grammar has no parentheses yet.
+- **Editing:**
+  - The prompt becomes `...`, and the next line is auto-indented (two deeper under a header).
+  - The menu, colouring, and status read the line *in its block's context*, with offsets mapped back to the line.
+  - Ctrl-C discards the block, and a trailing `?` on the last line previews.
+- **The block itself** is registered read-only as `@terminal-channel.block` (NO_BLACK_BOX).
+- **What the change touches:**
+  - The editor gained `submitEmpty`, so an empty Enter ends an open block (otherwise ignored, and never kept in history), and `prefill`.
+  - The submit gate passes block lines; they are judged together when the block ends.
+- **Witness:**
+  - `law_line_test` holds the fold's joiners, flattening, and refusals.
+  - `line_editor_test` holds empty submit and prefill.
+  - `law_line_zone_test` holds a block typed line by line: it authors nothing until the empty line, then one Law whose `if all:` holds and whose `then:` children both act. A mixed `and`/`or` block refuses.
+  - It was also driven in the real app through a pty: the prompt, auto-indent, `⤷` fold, and preview were seen. The app run left the LawLine save byte-identical (hash checked).
 
 *Claude Code · Claude Opus 5.5 · session `01WXmPy9U71FLqizbRYzMToZ` · 2026-10-05.*
 
