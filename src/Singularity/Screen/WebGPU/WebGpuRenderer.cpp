@@ -3,6 +3,7 @@
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/SdfRangeProof.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
@@ -12,12 +13,35 @@
 #include <cstdio>
 #include <cstring>
 #include <limits>
+#include <optional>
 #include <functional>
 #include <set>
 #include <string>
 #include <utility>
 
 namespace {
+
+struct AuthoredModelTransforms {
+    glm::mat4 inverse;
+    glm::mat4 normal;
+};
+
+// OntoMath owns the mathematical meaning of model inversion and normal
+// inverse-transpose. GLM matrices here are only lowered GPU representation.
+std::optional<AuthoredModelTransforms> deriveModelTransforms(const glm::mat4& model) {
+    const auto authoredModel = OntoMath::MatrixValue::fromGlmMat4(model);
+    const auto inverse = OntoMath::inverseAffine(authoredModel);
+    if (!inverse) return std::nullopt;
+
+    const auto normal = OntoMath::matrixTranspose(*inverse);
+    if (!normal) return std::nullopt;
+
+    const auto loweredInverse = inverse->toGlmMat4();
+    const auto loweredNormal = normal->toGlmMat4();
+    if (!loweredInverse || !loweredNormal) return std::nullopt;
+
+    return AuthoredModelTransforms{*loweredInverse, *loweredNormal};
+}
 
 // Vertex layout mirrors geom::TessVertex exactly: {pos(3), normal(3), uv(2)}.
 // A world-space Lambert term (ambient + diffuse*N·L) tints baseColor; front_facing
@@ -933,9 +957,12 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
     key.albedoView = albedoView;
     key.shading    = glm::vec4(mat.ambient, mat.diffuse, mat.specular, mat.shininess);
 
+    const auto authoredTransforms = deriveModelTransforms(_model);
+    if (!authoredTransforms) return;
+
     InstanceData inst;
     inst.model     = _model;
-    inst.normalMat = glm::transpose(glm::inverse(_model));
+    inst.normalMat = authoredTransforms->normal;
     inst.baseColor = glm::vec4(mat.baseColor, mat.opacity);
     _meshBatches[key].push_back(inst);
 
@@ -1756,9 +1783,13 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     ensureSdfCubeVerts();
     if (!_sdfCubeVerts) return;
 
+    const auto authoredTransforms = deriveModelTransforms(_model);
+    if (!authoredTransforms) return;
+
     SdfInstanceData inst;
     inst.model = _model;
-    inst.invModel = glm::inverse(_model);
+    inst.invModel = authoredTransforms->inverse;
+    inst.normalMat = authoredTransforms->normal;
     
     glm::vec3 albedo(1.0f);
     if (mat.albedoPixels && mat.albedoWidth > 0 && mat.albedoHeight > 0) {

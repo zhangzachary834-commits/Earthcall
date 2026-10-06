@@ -592,6 +592,7 @@ private:
     struct SdfInstanceData {
         glm::mat4 model;
         glm::mat4 invModel;
+        glm::mat4 normalMat;
         glm::vec4 baseColor;
         glm::vec4 shading;
         glm::vec4 extents;

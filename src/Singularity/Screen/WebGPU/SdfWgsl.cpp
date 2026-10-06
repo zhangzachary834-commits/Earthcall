@@ -25,6 +25,7 @@ const char* kPrimitives = R"WGSL(
 struct SdfInstanceData {
     model: mat4x4<f32>,
     invModel: mat4x4<f32>,
+    normalMat: mat4x4<f32>,
     baseColor: vec4<f32>,
     shading: vec4<f32>,
     extents: vec4<f32>,
@@ -1974,9 +1975,9 @@ fn fs(in: VSOut) -> FSOut {
     let pf = ro + rd * t;                                // field-space hit
     let pw = (inst.model * vec4<f32>(pf, 1.0)).xyz;         // world-space hit
     let nf = sdfNormal(pf);
-    // Normals transform by the inverse-transpose; invModel transposed gives it
-    // without shipping another matrix.
-    let nw = normalize((transpose(inst.invModel) * vec4<f32>(nf, 0.0)).xyz);
+    // OntoMath authors the inverse-transpose on CPU. The shader consumes the
+    // lowered normal matrix; it does not independently originate that meaning.
+    let nw = normalize((inst.normalMat * vec4<f32>(nf, 0.0)).xyz);
 
     let L = normalize(u.lightPos.xyz - pw);
     let V = normalize(u.eyePos.xyz - pw);

@@ -90,6 +90,18 @@ int main() {
     assert(!near3(*wp,*wd));
 
     auto inv=OntoMath::inverseAffine(*m); assert(inv);
+
+    // Rung-8 WebGPU instance derivation witness: renderer model inverse and
+    // normal matrix are OntoMath-authored, then merely lowered to GLM storage.
+    const auto rendererInverseGlm = inv->toGlmMat4();
+    assert(rendererInverseGlm);
+    assert(near4(*rendererInverseGlm, glm::inverse(ref)));
+    const auto rendererNormal = OntoMath::matrixTranspose(*inv);
+    assert(rendererNormal);
+    const auto rendererNormalGlm = rendererNormal->toGlmMat4();
+    assert(rendererNormalGlm);
+    assert(near4(*rendererNormalGlm, glm::transpose(glm::inverse(ref))));
+
     auto rp=OntoMath::transformPoint(*inv,*wp);
     auto rd=OntoMath::transformDirection(*inv,*wd);
     assert(rp && rd && near3(*rp,p) && near3(*rd,p));
