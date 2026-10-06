@@ -28,6 +28,20 @@ int main() {
         assert(r.method == CollisionMethod::GjkEpa);
     }
 
+
+    // 4. sameDirection
+    {
+        glm::vec3 a(1.0f, 0.0f, 0.0f);
+        glm::vec3 b(0.5f, 0.5f, 0.0f);
+        glm::vec3 c(-1.0f, 0.0f, 0.0f);
+        glm::vec3 d(0.0f, 1.0f, 0.0f);
+
+        assert(Physics::detail::sameDirection(a, b) == true);
+        assert(Physics::detail::sameDirection(a, a) == true);
+        assert(Physics::detail::sameDirection(a, c) == false);
+        assert(Physics::detail::sameDirection(a, d) == false);
+    }
+
     std::cout << "All CollisionDispatcher tests passed" << std::endl;
     return 0;
 }
