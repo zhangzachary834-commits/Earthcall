@@ -180,6 +180,27 @@ int main() {
     assert(cameraWorldRoundTrip);
     assert(near3(*cameraWorldRoundTrip, glm::vec3(cameraWorldPoint), 1e-4f));
 
+    // Rung-8 camera-motion witness: translating the camera rig and observed
+    // world point together must preserve view-space coordinates. OntoMath
+    // authors both view transforms; GLM appears only as the frozen oracle.
+    const glm::vec3 cameraMotion(2.25f, -1.5f, 3.75f);
+    const glm::vec3 cameraObservedPoint = glm::vec3(cameraWorldPoint);
+    const auto movedCameraView = OntoMath::cameraLookAt(
+        cameraEye + cameraMotion, cameraTarget + cameraMotion, cameraUp);
+    assert(movedCameraView);
+    const auto originalViewPoint =
+        OntoMath::transformPoint(*cameraView, cameraObservedPoint);
+    const auto movedViewPoint = OntoMath::transformPoint(
+        *movedCameraView, cameraObservedPoint + cameraMotion);
+    assert(originalViewPoint && movedViewPoint);
+    assert(near3(*originalViewPoint, *movedViewPoint, 1e-4f));
+    const glm::vec3 cameraMotionOracle = glm::vec3(
+        glm::lookAt(cameraEye + cameraMotion,
+                    cameraTarget + cameraMotion,
+                    cameraUp) *
+        glm::vec4(cameraObservedPoint + cameraMotion, 1.0f));
+    assert(near3(*movedViewPoint, cameraMotionOracle, 1e-4f));
+
     assert(!OntoMath::cameraLookAt(cameraEye, cameraEye, cameraUp));
     assert(!OntoMath::cameraLookAt(cameraEye, cameraTarget,
                                    glm::normalize(cameraTarget - cameraEye)));
