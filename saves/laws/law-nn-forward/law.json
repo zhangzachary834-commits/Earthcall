@@ -1,7 +1,7 @@
 {
     "identifier": "law-nn-forward",
     "authors": [
-        "Player"
+        "Zach"
     ],
     "injected_by": "Antigravity - ML",
     "law": {
@@ -15,7 +15,7 @@
         "retrigger": 0,
         "conditionMode": "all",
         "authors": [
-            "Player"
+            "Zach"
         ],
         "conditionModel": {
             "kind": 3,
