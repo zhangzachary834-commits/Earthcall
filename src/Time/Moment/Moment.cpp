@@ -10,10 +10,11 @@
 #include <ctime>
 #include <sstream>
 #include <stdexcept>
-#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
-#  include <intrin.h>
+
+#if defined(_MSC_VER)
+#include <intrin.h>
 #elif defined(__i386__) || defined(__x86_64__)
-#  include <x86intrin.h>
+#include <x86intrin.h>
 #endif
 
 Moment::Moment(Kind kind, OntoMath::ScalarForm start, OntoMath::ScalarForm end,
@@ -105,18 +106,20 @@ void Moment::setEnd(const double& t) {
 }
 
 long Moment::propCpuClockCycle() const {
-#if (defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))) || defined(__i386__) || defined(__x86_64__)
+#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+    return static_cast<long>(__rdtsc());
+#elif defined(__i386__) || defined(__x86_64__)
     return static_cast<long>(__rdtsc());
 #elif defined(__aarch64__)
-    unsigned long long value = 0;
-    asm volatile("mrs %0, cntvct_el0" : "=r"(value));
-    return static_cast<long>(value);
+    uint64_t val;
+    asm volatile("mrs %0, cntvct_el0" : "=r"(val));
+    return static_cast<long>(val);
 #elif defined(__has_builtin)
-#  if __has_builtin(__builtin_readcyclecounter)
+  #if __has_builtin(__builtin_readcyclecounter)
     return static_cast<long>(__builtin_readcyclecounter());
-#  else
+  #else
     return 0;
-#  endif
+  #endif
 #else
     return 0;
 #endif

@@ -451,20 +451,7 @@ void TerminalChannel::attach(LawManager& laws) {
                 return out;
             }
             if (!awaitingAnswer() && !lawGrammarHere()) return std::vector<LawSentence::Suggestion>{};
-            if (!awaitingAnswer()) {
-                long shift = 0;
-                const std::string context = blockContext(before, shift);
-                auto out = LawSentence::suggest(context, liveVocabulary());
-                if (shift == 0) return out;
-                std::vector<LawSentence::Suggestion> mapped;
-                for (auto& sg : out) {
-                    const long from = static_cast<long>(sg.from) - shift;
-                    if (from < 0) continue;   // belongs to an earlier line of the block
-                    sg.from = static_cast<std::size_t>(from);
-                    mapped.push_back(std::move(sg));
-                }
-                return mapped;
-            }
+            if (!awaitingAnswer()) return LawSentence::suggest(before, liveVocabulary());
             // Answering a question: the only words are its answers.
             const std::size_t space = before.find_last_of(' ');
             const std::string word = space == std::string::npos ? before : before.substr(space + 1);
@@ -486,34 +473,9 @@ void TerminalChannel::attach(LawManager& laws) {
         },
         [this](const std::string& text) {
             if (isEnterLine(text) || !lawGrammarHere()) return std::vector<LawSentence::Span>{};
-            long shift = 0;
-            const std::string context = blockContext(text, shift);
-            if (shift == 0) return liveParse(context).spans;
-            std::vector<LawSentence::Span> mapped;
-            for (auto span : liveParse(context).spans) {
-                const long start = static_cast<long>(span.start) - shift;
-                if (start < 0) continue;
-                span.start = static_cast<std::size_t>(start);
-                span.end = static_cast<std::size_t>(static_cast<long>(span.end) - shift);
-                mapped.push_back(span);
-            }
-            return mapped;
+            return liveParse(text).spans;
         },
-        [this](const std::string& text) {
-            long shift = 0;
-            const std::string context = blockContext(text, shift);
-            auto status = statusOf(context);
-            if (_block.empty()) return status;
-            for (auto& line : status) {
-                if (line.errorOffset == std::string::npos) continue;
-                const long at = static_cast<long>(line.errorOffset) - shift;
-                line.errorOffset = at < 0 ? std::string::npos : static_cast<std::size_t>(at);   // caret only on this line
-            }
-            status.insert(status.begin(), LineEditor::Status{
-                "block · line " + std::to_string(_block.size() + 1) + " · an empty line authors it · ctrl-c discards it",
-                "note", std::string::npos});
-            return status;
-        });
+        [this](const std::string& text) { return statusOf(text); });
     // Enter on a sentence that cannot be authored yet keeps the line and says
     // what is missing, instead of filling the scrollback with refusals.
     _editor.submitGate = [this](const std::string& text) { return submitRefusal(text); };
@@ -569,12 +531,6 @@ void TerminalChannel::draw() {
         _editor.prompt = base + "[" + zoneLabel() + "]" + tail;
     }
     _editor.secret = _secretStage != 0;
-    _editor.submitEmpty = !_block.empty();
-    if (!_block.empty()) {
-        // Python's continuation prompt, as wide as the real one.
-        const std::size_t width = visibleWidth(_editor.prompt);
-        _editor.prompt = std::string(width > 4 ? width - 4 : 0, ' ') + "... ";
-    }
     if (_secretStage == 1) _editor.prompt = "passphrase (hidden) › ";
     if (_secretStage == 2) _editor.prompt = "choose a passphrase for your new key (hidden) › ";
     if (_secretStage == 3) _editor.prompt = "type it again (hidden) › ";
@@ -691,12 +647,6 @@ void TerminalChannel::handleKeys(const std::vector<Key>& keys, double now) {
                     cancelDeletion("nothing deleted");
                     break;
                 }
-                if (!_block.empty()) {
-                    _block.clear();
-                    _editor.prefill("");
-                    printAbove("(block discarded; nothing authored)");
-                    break;
-                }
                 if (now - _lastInterrupt < 2.0) {
                     printAbove("(quitting Earthcall)");
 #ifdef EARTHCALL_TERMINAL_POSIX
@@ -799,35 +749,6 @@ void TerminalChannel::sense(LawManager& laws) {
         answer(laws, line);
         if (_attached) draw();
         return;
-    }
-    // A Python-style block: a line ending in ':' opens it, every line joins
-    // it, and an empty line folds it into one sentence of the same grammar.
-    if (lawGrammarHere()) {
-        std::string t = line;
-        while (!t.empty() && (t.back() == ' ' || t.back() == '\t')) t.pop_back();
-        const bool blank = t.find_first_not_of(" \t") == std::string::npos;
-        if (!_block.empty() || (!blank && t.back() == ':')) {
-            if (!blank) {
-                _block.push_back(t);
-                // Auto-indent: under a header, two deeper; otherwise the same.
-                const std::size_t indent = t.find_first_not_of(" \t");
-                if (_attached) {
-                    _editor.prefill(std::string(indent + (t.back() == ':' ? 2 : 0), ' '));
-                    draw();
-                }
-                return;
-            }
-            std::string error;
-            const std::string folded = LawSentence::unfoldBlock(_block, liveVocabulary(), error);
-            _block.clear();
-            if (!error.empty() || folded.empty()) {
-                say("refused: " + (error.empty() ? std::string("the block is empty") : error));
-                if (_attached) draw();
-                return;
-            }
-            say("⤷ " + folded);
-            line = folded;
-        }
     }
     if (line.find_first_not_of(" \t") == std::string::npos) return;
     {
@@ -1028,63 +949,13 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws, const std:
         }
         return out;
     };
-    // What an event means is AUTHORED, on the Zone: the string property
-    // `meaning.<event>` (Zach, 2026-10-05: "just give events authored string
-    // property now no new fields"; "The Zone"). Written by an ordinary
-    // AddProperty Law, saved with the Zone, and different Zones may mean
-    // different things. The line's own Zone speaks first, then the body's.
-    auto meanings = std::make_shared<std::map<std::string, std::string>>();
-    if (ZoneManager* zones = ZoneManager::live()) {
-        std::vector<Zone*> readers;
-        if (!_zone.empty()) if (Zone* line = zones->findZone(_zone)) readers.push_back(line);
-        if (!zones->zones().empty()) readers.push_back(&zones->active());
-        for (const auto& e : v.events) {
-            for (Zone* zone : readers) {
-                PropertyValue meaning;
-                if (lawGetValue(*zone, PropertyPath::parse("meaning." + e), meaning))
-                    if (const auto* text = std::get_if<std::string>(&meaning); text && !text->empty()) {
-                        (*meanings)[e] = *text;
-                        break;
-                    }
-            }
-        }
-    }
-    v.describeEvent = [meanings](const std::string& e) {
-        const auto m = meanings->find(e);
-        std::string out = m == meanings->end() ? std::string("event") : "event · " + m->second;
+    v.describeEvent = [](const std::string& e) {
         const auto it = heardEvents().find(e);
-        if (it != heardEvents().end()) out += " · heard " + std::to_string(it->second) + "×";
-        return out;
+        return it == heardEvents().end() ? std::string("event")
+                                         : "event · heard " + std::to_string(it->second) + "×";
     };
     v.resolve = [this, &laws](const LawSentence::Ambiguity& a) { return resolveByMetalaw(laws, a); };
     return v;
-}
-
-std::string TerminalChannel::propBlock() const {
-    std::string out;
-    for (const auto& l : _block) out += (out.empty() ? "" : "\n") + l;
-    return out;
-}
-
-std::string TerminalChannel::blockContext(const std::string& line, long& shift) {
-    shift = 0;
-    if (_block.empty() || !lawGrammarHere()) return line;
-    const std::size_t lead = line.find_first_not_of(" \t");
-    if (lead == std::string::npos) return line;
-    std::string own = line.substr(lead);
-    if (!own.empty() && own.back() == ':') return line;   // a header in progress reads alone
-    std::vector<std::string> lines = _block;
-    lines.push_back(line);
-    std::string error;
-    const std::string folded = LawSentence::unfoldBlock(lines, liveVocabulary(), error);
-    // The line's own text, trimmed by the fold, ends the folded sentence.
-    while (!own.empty() && (own.back() == ' ' || own.back() == '\t')) own.pop_back();
-    if (!error.empty() || folded.size() < own.size() ||
-        folded.compare(folded.size() - own.size(), own.size(), own) != 0) return line;
-    // Keep the typed trailing space: it means "the word is finished".
-    const std::string tail = line.substr(lead + own.size());
-    shift = static_cast<long>(folded.size() - own.size()) - static_cast<long>(lead);
-    return folded + tail;
 }
 
 std::string TerminalChannel::propertySuggestionBeing() const {
@@ -1152,11 +1023,8 @@ const LawSentence::Vocabulary& TerminalChannel::liveVocabulary() {
         // every grammar-admissible denotation while the Person is typing; the
         // actual vocabulary() resolver invokes the world's Metalaws only when
         // the sentence is spoken.
-        _vocab->compileInvocation = [](const nlohmann::json& input, bool) {
-            LawSentence::Compilation placeholder{std::nullopt, "", {}, std::nullopt};
-            if (input.value("slot", "") == "condition") placeholder.condition = ConditionNode::all({});
-            else placeholder.action = ActionNode::sequence({});
-            return placeholder;
+        _vocab->compileInvocation = [](const nlohmann::json&, bool) {
+            return LawSentence::Compilation{ActionNode::sequence({}), "", {}};
         };
         _vocab->resolve = [](const LawSentence::Ambiguity&) {
             return LawSentence::Resolution{"", "a Metalaw decides which when it is spoken"};
@@ -1429,13 +1297,7 @@ std::string TerminalChannel::propCompilationResult() const {
 LawSentence::Compilation TerminalChannel::compileByMetalaw(LawManager& laws,
                                                           const nlohmann::json& input,
                                                           bool readOnly, nlohmann::json* document) {
-    const bool conditionSlot = input.value("slot", "") == "condition";
-    if (readOnly) {
-        LawSentence::Compilation placeholder{std::nullopt, "", {}, std::nullopt};
-        if (conditionSlot) placeholder.condition = ConditionNode::all({});
-        else placeholder.action = ActionNode::sequence({});
-        return placeholder;
-    }
+    if (readOnly) return {ActionNode::sequence({}), "", {}};
     LawSentence::Compilation result;
     PropertyValue sensed;
     try { sensed = sentenceSyntaxValue(input); }
@@ -1476,11 +1338,7 @@ LawSentence::Compilation TerminalChannel::compileByMetalaw(LawManager& laws,
             }
             auto model = nlohmann::json::parse(propCompilationResult());
             if (model.contains("error")) throw std::runtime_error(model["error"].get<std::string>());
-            if (conditionSlot) {
-                const auto node = ConditionNode::fromJson(model);
-                if (node.kind == ConditionNode::Kind::Unsupported)
-                    throw std::runtime_error("the template is not a condition this build can read");
-            } else if (!document) validateSentenceAction(model);
+            if (!document) validateSentenceAction(model);
             if (chosen && *chosen != model) throw std::runtime_error("multiple Metalaws supplied conflicting compilation models");
             chosen = model;
             result.laws.push_back(law->getIdentifier());
@@ -1492,12 +1350,11 @@ LawSentence::Compilation TerminalChannel::compileByMetalaw(LawManager& laws,
     if (result.error.empty() && chosen) {
         try {
             if (document) { *document = *chosen; result.action = ActionNode::sequence({}); }
-            else if (conditionSlot) result.condition = ConditionNode::fromJson(*chosen);
             else result.action = ActionNode::fromJson(*chosen);
         }
-        catch (const std::exception& e) { result.error = std::string("invalid compiled model: ") + e.what(); }
+        catch (const std::exception& e) { result.error = std::string("invalid compiled ActionModel: ") + e.what(); }
     }
-    if (!result.action && !result.condition && result.error.empty())
+    if (!result.action && result.error.empty())
         result.error = "no authored Metalaw compiled " + input.value("slot", "invocation") +
                        " for " + input.value("selector", "") + "; no compiler fallback exists";
     // Input remains legible as the last request; clear the live slot so a
@@ -1507,38 +1364,7 @@ LawSentence::Compilation TerminalChannel::compileByMetalaw(LawManager& laws,
     return result;
 }
 
-std::string TerminalChannel::presenceRefusal() {
-    PropertyValue value;
-    std::string authorId;
-    if (lawGetValue(*this, PropertyPath::parse(_authorPath), value))
-        if (const auto* s = std::get_if<std::string>(&value)) authorId = *s;
-    Singular* author = findBeing(authorId);
-    if (!author)
-        return "refused: no author at " + _authorPath + " ('" + authorId + "'); nothing enters the world without one";
-    auto* person = dynamic_cast<Person*>(author);
-    if (!person)
-        return "refused: a typed line authors only as a Person (a human), and " + _authorPath +
-               " names a " + describeSingular(author) + " ('" + authorId + "')";
-    const bool present = _presenceCheck
-        ? _presenceCheck(*person)
-        : person->personId().canAuthenticate() &&
-              Identity::FirstMoverRegister::instance().isAuthenticatedPerson(person->personId());
-    if (present) return {};
-    return std::string("refused: you are not present yet, so the line will not author as you. ") +
-           (person->personId().canAuthenticate()
-                ? "`enter Identity` and type your passphrase, then `enter LawLine` again."
-                : "`enter Identity` to take a key (you have none yet), then `enter LawLine` again.") +
-           " (Previews with ?, search with ??, and help stay open.)";
-}
-
 void TerminalChannel::speak(LawManager& laws, const std::string& text) {
-    // Stdin trust (Astra's Crystal §13): whatever types here authors as the
-    // Person @interaction-channel.personId names, so it may do so only while
-    // that Person is PRESENT. Read-only lines never author and stay open.
-    if (!isReadOnlySentence(text)) {
-        const std::string refusal = presenceRefusal();
-        if (!refusal.empty()) { _status = refusal; say(_status); return; }
-    }
     std::string splitError;
     auto parts = LawSentence::sentences(text, splitError);
     if (!splitError.empty()) { _status = "refused: " + splitError; say(_status); return; }
@@ -1777,8 +1603,6 @@ void TerminalChannel::placeLine() {
 std::string TerminalChannel::submitRefusal(const std::string& text) {
     const std::string t = text.substr(text.find_first_not_of(" \t"));
     if (awaitingAnswer() || t == "help" || t == "help " || t == "?") return {};
-    // A block's lines are read together when it ends, never one by one.
-    if (lawGrammarHere() && (!_block.empty() || (!t.empty() && t.back() == ':'))) return {};
     // The line's move is never a Law sentence, and outside the Law Line
     // the Law grammar has no say over what may be sent.
     if (isEnterLine(text) || !lawGrammarHere()) return {};
@@ -2066,7 +1890,7 @@ std::string TerminalChannel::footerText(bool& hears) {
     }
     const std::string scope = _laws ? propertySuggestionBeing() : std::string{};
     return zone + " · " + (hears ? "hears the line" : "does NOT hear the line") +
-           (scope.empty() ? "" : " · property suggestions @" + scope) + " · as " + author + (lawGrammarHere() && !presenceRefusal().empty() ? " (not present: enter Identity)" : "") + " · " + std::to_string(count) +
+           (scope.empty() ? "" : " · property suggestions @" + scope) + " · as " + author + " · " + std::to_string(count) +
            (count == 1 ? " live law" : " live laws");
 }
 
@@ -2374,8 +2198,6 @@ void TerminalChannel::buildProperties() {
         registerProperty(std::make_unique<Level<T>>(name, member, false));
     };
     level("lastLine", &_lastLine);
-    registerProperty(std::make_unique<ComputedProperty<TerminalChannel, std::string>>(
-        "block", this, &TerminalChannel::propBlock));
     writable("prompt", &_prompt);
     writable("authorPath", &_authorPath);
     writable("lexemeRelation", &_lexemeRelation);

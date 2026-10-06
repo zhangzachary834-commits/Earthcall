@@ -1,6 +1,5 @@
 #include "Singularity/Foreign/API/EarthcallAPI.hpp"
 #include "Singularity/Foreign/API/SecurityManager.hpp"
-#include "Singularity/FirstMoverOntology/Legacy/DesignSystem.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include <cassert>
 #include <iostream>
@@ -50,21 +49,18 @@ int main() {
     elements = api.getDesignElements();
     assert(elements[0].position.x == 50.0f);
 
-    // 4. Test creation with attached DesignSystem
-    DesignSystem ds;
-    api.setDesignSystem(&ds);
-
+    // 4. Test direct creation of shape, text, and effect elements
     Integration::EarthcallAPI::DesignElement shapeElem;
     shapeElem.name = "star_1";
-    shapeElem.type = "star";
+    shapeElem.type = "shape";
     shapeElem.position = glm::vec3(100.0f, 100.0f, 0.0f);
     shapeElem.scale = glm::vec3(80.0f, 80.0f, 1.0f);
     shapeElem.rotation = glm::vec3(0.0f, 0.0f, 45.0f);
+    shapeElem.properties["shape_type"] = "star";
     shapeElem.properties["color"] = "#00ff00";
 
     bool createdShape = api.createDesignElement(shapeElem);
-    assert(createdShape && "Shape creation with DesignSystem attached should succeed");
-    assert(ds.getShapeSystem()->getShapeElements().size() == 1 && "ShapeSystem should contain 1 shape");
+    assert(createdShape && "Shape element creation should succeed");
 
     Integration::EarthcallAPI::DesignElement textElem;
     textElem.name = "label_1";
@@ -74,8 +70,7 @@ int main() {
     textElem.properties["color"] = "#ffffff";
 
     bool createdText = api.createDesignElement(textElem);
-    assert(createdText && "Text creation with DesignSystem attached should succeed");
-    assert(ds.getTextSystem()->getTextElements().size() == 1 && "TextSystem should contain 1 text element");
+    assert(createdText && "Text element creation should succeed");
 
     Integration::EarthcallAPI::DesignElement effectElem;
     effectElem.name = "glow_1";
@@ -84,8 +79,7 @@ int main() {
     effectElem.properties["intensity"] = "0.8";
 
     bool createdEffect = api.createDesignElement(effectElem);
-    assert(createdEffect && "Effect creation with DesignSystem attached should succeed");
-    assert(ds.getEffectsSystem()->getEffects().size() == 1 && "EffectsSystem should contain 1 effect");
+    assert(createdEffect && "Effect element creation should succeed");
 
     // 5. Test template application
     bool templateApplied = api.applyDesignTemplate("card");

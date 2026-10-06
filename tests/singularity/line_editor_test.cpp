@@ -263,20 +263,6 @@ void rendering() {
 
 } // namespace
 
-// Multi-line blocks: an empty Enter is submitted only while a block is open.
-void blocks() {
-    LineEditor e;
-    assert(e.press(Key{Key::Kind::Enter, {}}) == LineEditor::Outcome::None);   // ignored normally
-    e.submitEmpty = true;
-    assert(e.press(Key{Key::Kind::Enter, {}}) == LineEditor::Outcome::Submitted);
-    assert(e.takeSubmitted().empty());
-    assert(e.history().empty());                                               // never into history
-    e.prefill("    ");
-    assert(e.buffer() == "    ");
-    type(e, "hp > 2");
-    assert(e.buffer() == "    hp > 2");
-}
-
 void rungThree() {
     using K = Key::Kind;
     // The mouse: SGR reports; wheel 64/65; a left press is a click; a cursor
@@ -367,7 +353,6 @@ int main() {
     editing();
     rendering();
     rungThree();
-    blocks();
     std::cout << "line_editor_test: OK\n";
     return 0;
 }

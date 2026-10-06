@@ -3,6 +3,7 @@
 #include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
 #include "ConstructedBeing/Singular/Property/Property.hpp"
 #include "Singularity/Core/EventBus.hpp"
+#include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
@@ -139,6 +140,10 @@ bool instantiate(const ECA::Event& event) {
 
 void install() {
     static const bool installed = [] {
+        TransferPolicy::instance().setOpen("enabled", true);
+        TransferPolicy::instance().setOpen("conditionMode", true);
+        TransferPolicy::instance().setOpen("drives", true);
+        TransferPolicy::instance().setOpen("name", true);
         Core::EventBus::instance().subscribe<ECA::Event>(
             [](const ECA::Event& event) {
                 if (event.type == kInvokeEvent) (void)instantiate(event);

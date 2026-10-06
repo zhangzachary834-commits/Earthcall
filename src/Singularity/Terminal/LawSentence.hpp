@@ -116,9 +116,6 @@ struct Compilation {
     std::optional<ActionNode> action;
     std::string error;
     std::vector<std::string> laws;
-    // Set instead of `action` when the sensed slot is "condition" (arithmetic
-    // comparisons compiled by authored Metalaws into existing condition kinds).
-    std::optional<ConditionNode> condition;
 };
 
 struct Vocabulary {
@@ -222,17 +219,6 @@ std::string argumentTemplate(const std::string& opcode);
 
 // Top-level semicolons delimit channel sentences; quoted/container bytes stay intact.
 std::vector<std::string> sentences(const std::string& text, std::string& error);
-
-// A Python-style block folded into ONE sentence of the same grammar (the Law
-// Line's multi-line rung). Indentation nests; a line ending in ':' is a
-// header whose indented children are joined by what its last word means:
-//   "any" (dropped) or a trigger clause word ("on")      -> " or "
-//   "all" (dropped), a condition or action clause word   -> " and "
-//   anything else ("called Guard when clicked:")         -> " " (continuation)
-// The meanings come from the vocabulary's structural words, not spellings.
-// Mixing and/or across nested headers refuses: the condition grammar has no
-// parentheses yet. Blank lines are ignored. "" + error on refusal.
-std::string unfoldBlock(const std::vector<std::string>& lines, const Vocabulary& vocab, std::string& error);
 
 // "?? color" — every spelling, event, being, and scoped property whose text
 // contains the query, each labelled with what it is.

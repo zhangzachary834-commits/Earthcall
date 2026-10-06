@@ -113,11 +113,6 @@ public:
     // and never echoed by the channel. State beneath the Kernel (NO_BLACK_BOX
     // §5) -- the channel sets it for exactly one line and clears it.
     bool secret = false;
-    // While a multi-line block is open, Enter on an empty line is how the
-    // Person ends it, so an empty line is submitted (normally it is ignored).
-    bool submitEmpty = false;
-    // Put text on the line (auto-indent for the next line of a block).
-    void prefill(const std::string& text) { _buffer = text; _cursor = _buffer.size(); edited(true); }
     int overlayRows = 18;
     // The status footer (plain text; the editor styles it) and the colour of
     // its leading mark — green when this Zone hears the line, yellow if not.

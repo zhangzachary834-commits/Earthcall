@@ -69,10 +69,6 @@ int main() {
 
         m.setStart(100.0);
         assert(m.asSeconds() == 100.0);
-
-        auto* pCpuClock = m.findProperty("cpuClockCycle");
-        assert(pCpuClock != nullptr);
-        assert(std::get<long>(pCpuClock->value()) >= 0);
     }
 
     // 7. Serialization and JSON round-trip

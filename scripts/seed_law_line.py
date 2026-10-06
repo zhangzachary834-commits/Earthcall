@@ -223,43 +223,6 @@ for _c in ASSIGNMENT_COMPILERS:
     _c["injected_by"] = ASSIGNMENT_INJECTED_BY
 
 
-# `if hp * 2 > glow + 1`: an arithmetic comparison is sensed as
-# {function, bindings, bound} and these rules lower it to the existing Zone
-# condition (f within closed [lo, hi]). Strict comparisons are
-# "within the closed side AND NOT equal", never NOT(closed side): undefined
-# math must stay unsatisfied, and NOT(Zone) would hold on undefined math.
-# (Claude Opus 5.5, 2026-10-05, the Law Line's arithmetic-conditions rung.)
-def _zone(lo=None, hi=None):
-    node = {"kind": 6, "function": slot("function"), "bindings": slot("bindings")}
-    if lo is not None:
-        node["lo"] = lo
-    if hi is not None:
-        node["hi"] = hi
-    return node
-
-
-def _strictly(side):
-    return {"kind": 3, "children": [side, {"kind": 5, "children": [_zone(slot("bound"), slot("bound"))]}]}
-
-
-_CONDITION_TEMPLATES = {
-    "Ge": _zone(lo=slot("bound")),
-    "Le": _zone(hi=slot("bound")),
-    "Eq": _zone(lo=slot("bound"), hi=slot("bound")),
-    "Gt": _strictly(_zone(lo=slot("bound"))),
-    "Lt": _strictly(_zone(hi=slot("bound"))),
-    "Ne": _strictly(_zone()),
-    "InRange": _zone(lo=slot("lo"), hi=slot("hi")),
-}
-CONDITION_COMPILERS = [
-    compiler("law-line-compile-condition-" + op.lower(), {"slot": "condition", "op": op}, template,
-             opcode="condition.compare")
-    for op, template in _CONDITION_TEMPLATES.items()
-]
-for _c in CONDITION_COMPILERS:
-    _c["injected_by"] = ASSIGNMENT_INJECTED_BY
-
-
 # Named argument schemas are authored compiler templates, never parser switches.
 def arg(name, default=None, optional=False):
     ref = {"$slot": "/arguments/" + name}
@@ -391,7 +354,6 @@ def build():
             lexeme_for(symbol, doc["identifier"])
     laws.extend(CREATE_COMPILERS)
     laws.extend(ASSIGNMENT_COMPILERS)
-    laws.extend(CONDITION_COMPILERS)
     for kind, name, fields, signature in ARGUMENT_ACTIONS:
         identifier = "law-line-args-" + name.lower()
         word = law(identifier, "means: " + name + " with authored arguments", enabled=False,
@@ -665,7 +627,7 @@ def main():
     else:
         print("authors: %s   original vocabulary injected_by: %s" % (AUTHOR, INJECTED_BY))
         print("Compiler additions injected_by: " + COMPILER_INJECTED_BY)
-        print("Assignment and condition compilers injected_by: " + ASSIGNMENT_INJECTED_BY)
+        print("Assignment compiler injected_by: " + ASSIGNMENT_INJECTED_BY)
     return 0
 
 

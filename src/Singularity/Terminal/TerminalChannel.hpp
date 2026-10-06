@@ -129,15 +129,6 @@ public:
     // Test seam: the Person the Identity Zone makes present (default: the
     // Engine's Person).
     void setPresencePerson(Person* person) { _presencePerson = person; }
-    // Why a typed line may not author right now ("" = it may). Kernel guard,
-    // never a property: stdin authors only as a Person who is PRESENT, i.e.
-    // proved their key to this process this session (Identity unlock), the
-    // same root MCP grants terminate in. Zach, 2026-10-05: "Require presence".
-    std::string presenceRefusal();
-    // Test seam (C++ only, like setPresencePerson): replaces the register
-    // check so an isolated harness, which holds no real private key, can
-    // stand in for a present Person. Never reachable from Law or a socket.
-    void setPresenceCheckForTests(std::function<bool(const Person&)> check) { _presenceCheck = std::move(check); }
 
     // Test seams: a line as if typed and entered; where output goes.
     void inject(const std::string& line) { _pending.push_back(line); }
@@ -200,14 +191,6 @@ private:
 
     // Law-legible state (NO_BLACK_BOX: every field is a registered path).
     std::string _lastLine;
-    // Multi-line block (Python-style) being typed: its lines so far. Folded
-    // into one sentence by LawSentence::unfoldBlock when an empty line ends it.
-    // Registered read-only as `block` (lines joined by newlines).
-    std::vector<std::string> _block;
-    std::string propBlock() const;
-    // The line being typed, read in its open block's context: the folded text
-    // and how far the line's own offsets shift inside it (0 = no context).
-    std::string blockContext(const std::string& line, long& shift);
     std::string _output;
     std::string _prompt = "earthcall> ";
     double _linesEntered = 0.0;
@@ -228,7 +211,6 @@ private:
     int _secretStage = 0;
     std::string _pendingSecret;
     Person* _presencePerson = nullptr;          // test seam; null = Engine's Person
-    std::function<bool(const Person&)> _presenceCheck;   // test seam; empty = FirstMoverRegister
     std::string _lexemeRelation = "denotes";
     std::string _scopeBeing;
     std::string _status;

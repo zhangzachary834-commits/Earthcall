@@ -235,34 +235,6 @@ void writeZoneBounds(const Zone& zone, nlohmann::json& zj) {
     }
 }
 
-// Every OTHER authored property a Zone carries (e.g. an event's meaning,
-// `meaning.object-clicked`, Zach 2026-10-05), under "authoredProperties" as
-// Lexemes already store theirs. Before this, AddProperty on a Zone worked
-// until Save Zone and then silently vanished. The bounds families above keep
-// their own keys and are not repeated here.
-bool isBoundsProperty(const std::string& name) {
-    return name.rfind(Zone::kDimensionPrefix, 0) == 0 || name.rfind(Zone::kPlacementPrefix, 0) == 0 ||
-           name == Zone::kExtentLo || name == Zone::kExtentHi;
-}
-
-void writeZoneAuthoredProperties(const Zone& zone, nlohmann::json& zj) {
-    nlohmann::json authored = nlohmann::json::object();
-    for (const auto& [id, value] : zone.dynamicProperties()) {
-        const std::string& name = Earthcall::StringInterner::resolve(id);
-        if (name.empty() || isBoundsProperty(name)) continue;
-        authored[name] = propertyValueToJson(value);
-    }
-    if (!authored.empty()) zj["authoredProperties"] = std::move(authored);
-}
-
-void readZoneAuthoredProperties(Zone& zone, const nlohmann::json& zj) {
-    if (!zj.contains("authoredProperties") || !zj["authoredProperties"].is_object()) return;
-    for (auto it = zj["authoredProperties"].begin(); it != zj["authoredProperties"].end(); ++it) {
-        if (isBoundsProperty(it.key())) continue;
-        zone.setDynamicProperty(it.key(), propertyValueFromJson(it.value()));
-    }
-}
-
 void readZoneBounds(Zone& zone, const nlohmann::json& zj) {
     if (zj.contains("dimensions") && zj["dimensions"].is_object()) {
         for (auto it = zj["dimensions"].begin(); it != zj["dimensions"].end(); ++it) {
@@ -327,7 +299,6 @@ nlohmann::json zoneToJson(const Zone& zone) {
         }
     }
     writeZoneBounds(zone, zj);
-    writeZoneAuthoredProperties(zone, zj);
 
     // The Zone's continuous field root used to exist live, participate in the
     // Formation, expose PropertyPaths, and then simply disappear from saves.
@@ -408,7 +379,6 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
         zone.setScope(scopeFromName(zj["scope"].get<std::string>()));
     }
     readZoneBounds(zone, zj);
-    readZoneAuthoredProperties(zone, zj);
     if (zj.contains("qualities") && zj["qualities"].is_object()) {
         for (auto it = zj["qualities"].begin(); it != zj["qualities"].end(); ++it) {
             if (it.value().is_string()) {

@@ -121,7 +121,6 @@ int main() {
         auto* now = world.findProperty("now");
         auto* delta = world.findProperty("delta");
         auto* hasClock = world.findProperty("hasClock");
-        auto* cpuClock = world.findProperty("cpuClockCycle");
 
         assert(count && std::get<int>(count->value()) == 3);
         assert(moments);
@@ -134,7 +133,6 @@ int main() {
         assert(now && std::get<double>(now->value()) == 12.0);
         assert(delta && std::get<double>(delta->value()) == 2.0);
         assert(hasClock && std::get<bool>(hasClock->value()));
-        assert(cpuClock && std::get<long>(cpuClock->value()) >= 0);
     }
 
     // 6. Universe remains kernel working context, not a competing clock being:

@@ -655,23 +655,7 @@ private:
                        "author it in the Law Graph",
                    at);
         }
-        // Arithmetic on either side (`hp * 2 > glow + 1`) is sensed here and
-        // compiled by authored Metalaws into the existing Zone condition (an
-        // OntoMath function within bounds). Plain `path op value` keeps its
-        // exact Compare model. Arithmetic needs spaces around + - * / because
-        // hyphens are identifier characters.
-        skipSpace();
-        const std::size_t lhsAt = _pos;
-        const std::size_t spansAt = _spans.size();
-        const auto rewindToArithmetic = [&] {
-            _pos = lhsAt;
-            _spans.resize(spansAt);
-            return arithmeticComparison();
-        };
-        if (!atEnd() && (std::isdigit(static_cast<unsigned char>(_text[_pos])) || _text[_pos] == '('))
-            return rewindToArithmetic();
         const std::string path = requirePath();
-        if (arithmeticAhead()) return rewindToArithmetic();
         const std::size_t opAt = _pos;
         auto op = tryMatch({"op."}, "operator");
         if (!op) {
@@ -713,119 +697,12 @@ private:
             const std::size_t saved = _pos;
             const Atom a = readAtomRaw();
             if (looksLikePath(a.text)) {
-                if (arithmeticAhead()) return rewindToArithmetic();
                 mark(a.offset, _pos, "path");
                 return ConditionNode::comparePaths(path, cmp, a.text);
             }
             _pos = saved;
         }
-        {
-            const std::size_t rhsAt = _pos;
-            if (!atEnd() && !_text.empty() && _text[_pos] != '"' && !peekClauseWord()) {
-                const Atom a = readAtomRaw();
-                const bool more = arithmeticAhead();
-                _pos = rhsAt;
-                if (more && !a.quoted) return rewindToArithmetic();
-            }
-        }
         return ConditionNode::compare(path, cmp, parseValue());
-    }
-
-    // An infix + - * / follows (with a space after it, so `-3` and hyphenated
-    // names are not mistaken for subtraction).
-    bool arithmeticAhead() {
-        std::size_t p = _pos;
-        while (p < _text.size() && isSpace(_text[p])) ++p;
-        if (p + 1 >= _text.size() || p == _pos) return false;
-        const char c = _text[p];
-        return (c == '+' || c == '-' || c == '*' || c == '/') && isSpace(_text[p + 1]);
-    }
-
-    // `<expression> <op> <expression>`: sensed as a structural record; the
-    // authored law-line-compile-condition-* Metalaws decide the condition.
-    ConditionNode arithmeticComparison() {
-        struct Restore { bool& flag; bool old; ~Restore() { flag = old; } } restore{_subjectPaths, _subjectPaths};
-        _subjectPaths = true;
-        const auto functionRecord = [this](auto& e) {
-            OntoMath::Piecewise f;
-            OntoMath::Piecewise::Piece piece;
-            piece.mathNode = mathOf(e);
-            f.pieces.push_back(std::move(piece));
-            return f.toJson();
-        };
-        const std::size_t at = _pos;
-        Expression lhs = expression();
-        const std::size_t opAt = _pos;
-        auto op = tryMatch({"op."}, "operator");
-        if (!op) {
-            if (atEnd() && _completing) throw Stop{};
-            refuse("a comparison was expected after the expression", opAt);
-        }
-        std::string code = op->opcode.substr(3);
-        nlohmann::json input{{"slot", "condition"}, {"opcode", "condition.compare"},
-                             {"lexeme", op->lexemeId}, {"wordLaw", op->lawId}};
-        double number = 0;
-        if (code == "Near") refuse("'near' over arithmetic has no form yet; use 'between <low> and <high>'", opAt);
-        if (code == "InRange") {
-            Expression lo = expression();
-            if (!tryMatch({"logic.And"}, "logic")) {
-                if (atEnd() && _completing) throw Stop{};
-                refuse("'between' takes '<low> and <high>'", _pos);
-            }
-            Expression hi = expression();
-            double l = 0, h = 0;
-            if (!lo.literal || !hi.literal || !propertyValueToNumber(*lo.literal, l) || !propertyValueToNumber(*hi.literal, h))
-                refuse("'between' over arithmetic takes numeric bounds", opAt);
-            if (lhs.literal) refuse("the comparison reads no property; it is constant", at);
-            input["function"] = functionRecord(lhs);
-            input["bindings"] = mathBindingsToJson(lhs.bindings);
-            input["lo"] = propertyValueToJson(PropertyValue(l));
-            input["hi"] = propertyValueToJson(PropertyValue(h));
-        } else {
-            Expression rhs = expression();
-            if (lhs.literal && rhs.literal) refuse("the comparison reads no property; it is constant", at);
-            MathBindings bindings = lhs.bindings;
-            if (rhs.literal && propertyValueToNumber(*rhs.literal, number)) {
-                input["function"] = functionRecord(lhs);
-            } else if (lhs.literal && propertyValueToNumber(*lhs.literal, number)) {
-                // `5 < hp * 2` reads as `hp * 2 > 5`: the bound stays a number.
-                code = code == "Lt" ? "Gt" : code == "Gt" ? "Lt" : code == "Le" ? "Ge" : code == "Ge" ? "Le" : code;
-                input["function"] = functionRecord(rhs);
-                bindings = rhs.bindings;
-            } else {
-                // Both sides read the world: compare their difference with 0.
-                decltype(lhs) difference;
-                auto n = std::make_unique<OntoMath::MathNode>();
-                n->op = OntoMath::MathNode::Op::Sub;
-                n->children.push_back(mathOf(lhs));
-                n->children.push_back(mathOf(rhs));
-                difference.math = std::move(n);
-                bindings.insert(rhs.bindings.begin(), rhs.bindings.end());
-                input["function"] = functionRecord(difference);
-                number = 0;
-            }
-            input["bindings"] = mathBindingsToJson(bindings);
-            input["bound"] = propertyValueToJson(PropertyValue(number));
-        }
-        input["op"] = code;
-        return compileCondition(std::move(input));
-    }
-
-    ConditionNode compileCondition(nlohmann::json request) {
-        if (!_vocab.compileInvocation) refuse("no Metalaw compiler is available for arithmetic conditions", _pos);
-        auto result = _vocab.compileInvocation(request, _readOnly);
-        if (!result.condition)
-            refuse(result.error.empty() ? "no authored Metalaw compiled this condition; no fallback exists" : result.error, _pos);
-        for (const auto& id : result.laws) {
-            if (std::find(_out.presetLawIds.begin(), _out.presetLawIds.end(), id) == _out.presetLawIds.end()) _out.presetLawIds.push_back(id);
-            _out.notes.push_back("compiled by Metalaw " + id);
-        }
-        if (_readOnly) {
-            _out.compilationDeferred = true;
-            const std::string note = "condition syntax only; Metalaw compilation deferred until Enter";
-            if (std::find(_out.notes.begin(), _out.notes.end(), note) == _out.notes.end()) _out.notes.push_back(note);
-        }
-        return *result.condition;
     }
 
     static ConditionNode::BeingKind beingKind(const std::string& opcode) {
@@ -856,19 +733,8 @@ private:
         }
     }
 
-    // `@owner.name`: the owner is the LONGEST dotted prefix that names a known
-    // being (CLAUDE.md: "@name roots, longest dotted match"), so identifiers
-    // with dots and property names with dots (`@LawLine.meaning.object-clicked`)
-    // both split correctly. With no known prefix, the last dot splits, as before.
-    std::pair<std::string, std::string> ownerAndName(const std::string& token) const {
+    static std::pair<std::string, std::string> ownerAndName(const std::string& token) {
         if (token[0] == '@') {
-            std::size_t best = std::string::npos;
-            for (const auto& being : _vocab.beings) {
-                if (token.size() > being.size() + 2 && token.compare(1, being.size(), being) == 0 &&
-                    token[being.size() + 1] == '.' && (best == std::string::npos || being.size() + 1 > best))
-                    best = being.size() + 1;
-            }
-            if (best != std::string::npos) return {token.substr(0, best), token.substr(best + 1)};
             const auto dot = token.rfind('.');
             if (dot != std::string::npos && dot > 1) return {token.substr(0, dot), token.substr(dot + 1)};
         }
@@ -1001,10 +867,8 @@ private:
         for (const auto& [alias, root] : _vocab.pathRoots) {
             if (startsWith(path, alias + ".")) { path = root + path.substr(alias.size()); break; }
         }
-        const bool subjectPath = _subjectPaths && !a.quoted && !path.empty() && path.front() != '@' && looksLikePath(path);
-        if (!subjectPath && (path.empty() || path.front() != '@' || path.find('.') == std::string::npos))
+        if (path.empty() || path.front() != '@' || path.find('.') == std::string::npos)
             refuse("unknown value '" + a.text + "'; use a value Lexeme, quoted string, or qualified property path", a.offset);
-        mark(a.offset, _pos, "path");
         auto n = std::make_unique<OntoMath::MathNode>();
         n->op = OntoMath::MathNode::Op::ValueLeaf;
         n->variableName = path;
@@ -1278,9 +1142,6 @@ private:
     bool _readOnly = false;
     unsigned _invocationDepth = 0; // bounded channel syntax stack beneath the Kernel
     unsigned _expressionDepth = 0; // bounded parser stack beneath the Kernel
-    // Inside a condition, a bare path (`hp`) is read off the subject, as the
-    // plain comparison grammar already reads it. Elsewhere it stays refused.
-    bool _subjectPaths = false;
     std::size_t _pos = 0;
     std::vector<Spelling> _spellings;
     std::vector<std::string> _suffixes;
@@ -2105,86 +1966,6 @@ std::vector<std::string> search(const std::string& rawQuery, const Vocabulary& v
         }
     }
     return out;
-}
-
-std::string unfoldBlock(const std::vector<std::string>& lines, const Vocabulary& vocab, std::string& error) {
-    error.clear();
-    struct Line { int indent; std::string text; bool header; };
-    std::vector<Line> parsed;
-    for (const auto& raw : lines) {
-        int indent = 0;
-        std::size_t i = 0;
-        for (; i < raw.size() && (raw[i] == ' ' || raw[i] == '\t'); ++i) indent += raw[i] == '\t' ? 4 : 1;
-        std::string text = trim(raw.substr(i));
-        if (text.empty()) continue;
-        const bool header = text.back() == ':';
-        if (header) text = trim(text.substr(0, text.size() - 1));
-        parsed.push_back({indent, text, header});
-    }
-    if (parsed.empty()) return {};
-
-    // What a header's last word means, read from the structural vocabulary.
-    const auto opcodeOf = [&](const std::string& word) -> std::string {
-        const std::string w = lower(word);
-        for (const auto& v : vocab.words) if (lower(v.symbol) == w) return v.opcode;
-        for (const auto& v : canonicalWords()) if (lower(v.symbol) == w) return v.opcode;
-        return {};
-    };
-    const auto spelling = [&](const std::string& opcode, const char* fallback) -> std::string {
-        for (const auto& v : canonicalWords()) if (v.opcode == opcode) return v.symbol;
-        return fallback;
-    };
-    const std::string OR = " " + spelling("logic.Or", "or") + " ";
-    const std::string AND = " " + spelling("logic.And", "and") + " ";
-    const auto joinerOf = [&](std::string& text) -> std::string {
-        const std::size_t space = text.find_last_of(" \t");
-        const std::string last = space == std::string::npos ? text : text.substr(space + 1);
-        const std::string low = lower(last);
-        const auto drop = [&] { text = space == std::string::npos ? std::string{} : trim(text.substr(0, space)); };
-        if (low == "any") { drop(); return OR; }
-        if (low == "all") { drop(); return AND; }
-        const std::string op = opcodeOf(last);
-        if (op == "clause.trigger") return OR;
-        if (op == "clause.condition" || op == "clause.action") return AND;
-        return " ";
-    };
-
-    std::size_t at = 0;
-    // Render the lines from `at` whose indent exceeds `parentIndent`.
-    std::function<std::vector<std::string>(int, const std::string&)> children =
-        [&](int parentIndent, const std::string& parentJoiner) -> std::vector<std::string> {
-        std::vector<std::string> out;
-        if (at >= parsed.size()) return out;
-        const int level = parsed[at].indent;
-        while (at < parsed.size() && error.empty() && parsed[at].indent > parentIndent) {
-            if (parsed[at].indent != level) {
-                // Deeper than its siblings with no header above it: it simply continues that line.
-                if (parsed[at].indent > level && !out.empty()) { out.back() += " " + parsed[at].text; ++at; continue; }
-                error = "line " + std::to_string(at + 1) + " is indented less than its siblings but more than its header";
-                break;
-            }
-            Line line = parsed[at++];
-            if (!line.header) { out.push_back(line.text); continue; }
-            const std::string joiner = joinerOf(line.text);
-            const auto kids = children(line.indent, joiner);
-            if (!error.empty()) break;   // a refusal below wins; never overwrite it
-            if (kids.empty()) { error = "'" + line.text + ":' has no indented lines under it"; break; }
-            if (joiner != " " && parentJoiner != " " && joiner != parentJoiner) {
-                error = "'" + line.text + ":' mixes and/or inside another block; that needs parentheses the grammar does not have yet";
-                break;
-            }
-            std::string joined;
-            for (std::size_t k = 0; k < kids.size(); ++k) joined += (k ? joiner : std::string{}) + kids[k];
-            out.push_back(line.text.empty() ? joined : line.text + " " + joined);
-        }
-        return out;
-    };
-    const auto top = children(-1, " ");
-    if (!error.empty()) return {};
-    if (at < parsed.size()) { error = "line " + std::to_string(at + 1) + " is indented less than the block's first line"; return {}; }
-    std::string sentence;
-    for (std::size_t k = 0; k < top.size(); ++k) sentence += (k ? " " : "") + top[k];
-    return sentence;
 }
 
 std::vector<std::string> sentences(const std::string& text, std::string& error) {
