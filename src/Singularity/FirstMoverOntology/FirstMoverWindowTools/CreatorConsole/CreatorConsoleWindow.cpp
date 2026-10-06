@@ -188,8 +188,31 @@ namespace Rendering {
         if (!engine) engine = &Core::Engine::instance();
         if (!window && engine) window = engine->window();
 
-        ImGui::SetNextWindowSize(ImVec2(440, 660), ImGuiCond_FirstUseEver);
+        const ImGuiIO& io = ImGui::GetIO();
+        float displayH = io.DisplaySize.y;
+        float displayW = io.DisplaySize.x;
+        float maxH = (displayH > 200.0f) ? (displayH - 60.0f) : 500.0f;
+        float maxW = (displayW > 200.0f) ? (displayW - 40.0f) : 600.0f;
+        float normalH = std::clamp(460.0f, 280.0f, maxH);
+        float normalW = std::clamp(450.0f, 360.0f, maxW);
+
+        ImGui::SetNextWindowSizeConstraints(ImVec2(360.0f, 240.0f), ImVec2(maxW, maxH));
+        ImGui::SetNextWindowSize(ImVec2(normalW, normalH), ImGuiCond_FirstUseEver);
         if (ImGui::Begin("Creator Console [F8]", open, ImGuiWindowFlags_MenuBar)) {
+            // Safety guard: if window was saved with off-screen position or extreme height in imgui.ini, snap it back
+            ImVec2 curPos = ImGui::GetWindowPos();
+            ImVec2 curSize = ImGui::GetWindowSize();
+            if (displayH > 200.0f && displayW > 200.0f) {
+                if (curPos.y < 25.0f || curPos.y + curSize.y > displayH || curSize.y > maxH) {
+                    float fixedY = std::clamp(curPos.y, 30.0f, std::max(30.0f, displayH - normalH - 20.0f));
+                    float fixedX = std::clamp(curPos.x, 10.0f, std::max(10.0f, displayW - normalW - 20.0f));
+                    ImGui::SetWindowPos(ImVec2(fixedX, fixedY));
+                    if (curSize.y > maxH) {
+                        ImGui::SetWindowSize(ImVec2(curSize.x, normalH));
+                    }
+                }
+            }
+
             renderCreatorConsoleContent(player, selected, zoneMgr, window, engine);
         }
         ImGui::End();

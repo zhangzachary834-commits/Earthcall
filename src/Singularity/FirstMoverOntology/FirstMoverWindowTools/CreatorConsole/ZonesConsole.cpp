@@ -107,11 +107,11 @@ namespace Rendering {
 
         // Layout sizing: determine height dynamically with sensible bounds
         float availY = ImGui::GetContentRegionAvail().y;
-        float paneHeight = (availY > 260.0f) ? (availY - 30.0f) : 260.0f;
+        float paneHeight = std::clamp(availY - 25.0f, 180.0f, 280.0f);
         float listWidth = 190.0f;
 
         // 2. Left Master Pane: Zone List & Search Filter
-        ImGui::BeginChild("ZoneListPane", ImVec2(listWidth, paneHeight), true);
+        ImGui::BeginChild("ZoneListPane", ImVec2(listWidth, paneHeight), true, ImGuiWindowFlags_NoScrollbar);
         {
             ImGui::SetNextItemWidth(listWidth - 45.0f);
             ImGui::InputTextWithHint("##zoneFilter", "Filter...", s_zoneSearchFilter, sizeof(s_zoneSearchFilter));
@@ -124,7 +124,7 @@ namespace Rendering {
             std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), ::tolower);
 
             ImGui::Separator();
-            ImGui::BeginChild("ZoneListScroll", ImVec2(0, 0), false, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+            ImGui::BeginChild("ZoneListScroll", ImVec2(0, 0), false);
 
             for (size_t i = 0; i < zones.size(); ++i) {
                 const auto& z = zones[i];
@@ -291,7 +291,7 @@ namespace Rendering {
                         std::string objFilterLower(s_objectSearchFilter);
                         std::transform(objFilterLower.begin(), objFilterLower.end(), objFilterLower.begin(), ::tolower);
 
-                        ImGui::BeginChild("ZoneObjectScroll", ImVec2(0, 140.0f), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+                        ImGui::BeginChild("ZoneObjectScroll", ImVec2(0, 140.0f), true);
                         if (objs.empty()) {
                             ImGui::TextDisabled("No objects residing in this zone.");
                         } else {
@@ -346,7 +346,7 @@ namespace Rendering {
                         ImGui::TextColored(joyOk ? ImVec4(0.4f, 0.9f, 0.4f, 1.0f) : ImVec4(1.0f, 0.7f, 0.2f, 1.0f),
                                            "%s", joyOk ? "Harmonious (Satisfied)" : "Unsettled");
 
-                        ImGui::BeginChild("ZoneRelScroll", ImVec2(0, 140.0f), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+                        ImGui::BeginChild("ZoneRelScroll", ImVec2(0, 140.0f), true);
                         if (rels.empty()) {
                             ImGui::TextDisabled("No relations established in this zone formation.");
                         } else {
