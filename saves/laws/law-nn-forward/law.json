@@ -1,0 +1,62 @@
+{
+    "identifier": "law-nn-forward",
+    "authors": [
+        "Player"
+    ],
+    "injected_by": "Antigravity - Neural Network Primer",
+    "law": {
+        "id": "law-nn-forward",
+        "name": "Neural Network Forward Pass",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+            "Player"
+        ],
+        "conditionModel": {
+            "kind": 3,
+            "children": []
+        },
+        "actionModel": {
+            "kind": 5,
+            "children": [
+                {
+                    "kind": 8,
+                    "path": "@node-out-1.position.y",
+                    "bindings": {
+                        "a": "@node-in-1.position.y",
+                        "b": "@node-in-2.position.y"
+                    },
+                    "function": {
+                        "pieces": [
+                            {
+                                "expr": {
+                                    "terms": [
+                                        {
+                                            "c": 0.8,
+                                            "factors": {
+                                                "a": 1
+                                            }
+                                        },
+                                        {
+                                            "c": 1.2,
+                                            "factors": {
+                                                "b": 1
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "provenance": []
+    },
+    "triggers": []
+}
