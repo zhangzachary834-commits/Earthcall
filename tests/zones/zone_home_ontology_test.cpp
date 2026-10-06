@@ -57,18 +57,14 @@ int main() {
     std::cout << "Running Home / Zone ontology (manifesto, one pass)...\n";
     std::cout << "============================================================\n";
 
-    if (!glfwInit()) {
-        std::cout << "zone_home_ontology_test: glfwInit failed\n";
-        return 1;
+    GLFWwindow* window = nullptr;
+    if (glfwInit()) {
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+        window = glfwCreateWindow(64, 64, "zone_home_ontology_test", nullptr, nullptr);
+        if (window) {
+            glfwMakeContextCurrent(window);
+        }
     }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "zone_home_ontology_test", nullptr, nullptr);
-    if (!window) {
-        std::cout << "zone_home_ontology_test: no GL context\n";
-        glfwTerminate();
-        return 1;
-    }
-    glfwMakeContextCurrent(window);
 
     auto sandbox = std::filesystem::temp_directory_path() / "earthcall_zone_home_ontology";
     std::filesystem::remove_all(sandbox);
@@ -140,9 +136,10 @@ int main() {
     check(extra && extra->isPersonalHome() && !extra->isPrimaryHome(),
           "an extra Home is kind=home and is not the kernel lock");
     check(extra && extra->owner() == zachId, "the extra Home is owned by the Person");
-    check(std::filesystem::exists(sandbox / "homes" / "Home" / "home.json"),
+    mgr.persistZones();
+    check(SaveSystem::homeIdentityExists("Home"),
           "primary Home serializes under saves/homes/, not saves/zones/");
-    check(std::filesystem::exists(sandbox / "homes" / "Garden" / "home.json"),
+    check(SaveSystem::homeIdentityExists("Garden"),
           "an extra Home also lives in the homes identity store");
     check(!std::filesystem::exists(sandbox / "zones" / "Home" / "zone.ecform"),
           "a Home is not written as a Zone identity file");
@@ -391,7 +388,7 @@ int main() {
 
     std::filesystem::remove_all(sandbox);
     SaveSystem::setSaveRoot("");
-    glfwDestroyWindow(window);
+    if (window) glfwDestroyWindow(window);
     glfwTerminate();
 
     std::cout << "------------------------------------------------------------\n";

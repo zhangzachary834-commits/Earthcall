@@ -11,6 +11,12 @@
 #include <sstream>
 #include <stdexcept>
 
+#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+#include <intrin.h>
+#elif defined(__i386__) || defined(__x86_64__)
+#include <x86intrin.h>
+#endif
+
 Moment::Moment(Kind kind, OntoMath::ScalarForm start, OntoMath::ScalarForm end,
                double startCache, double endCache)
     : _kind(kind),
@@ -100,8 +106,20 @@ void Moment::setEnd(const double& t) {
 }
 
 long Moment::propCpuClockCycle() const {
-#if defined(__clang__) || defined(__GNUC__)
+#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+    return static_cast<long>(__rdtsc());
+#elif defined(__i386__) || defined(__x86_64__)
+    return static_cast<long>(__rdtsc());
+#elif defined(__aarch64__)
+    uint64_t val;
+    asm volatile("mrs %0, cntvct_el0" : "=r"(val));
+    return static_cast<long>(val);
+#elif defined(__has_builtin)
+#if __has_builtin(__builtin_readcyclecounter)
     return static_cast<long>(__builtin_readcyclecounter());
+#else
+    return 0;
+#endif
 #else
     return 0;
 #endif

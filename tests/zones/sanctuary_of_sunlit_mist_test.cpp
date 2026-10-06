@@ -44,10 +44,14 @@ int main() {
         return 1;
     }
 
-    // Ensure SaveSystem saveRoot points to the containing saves directory
-    const auto absWorld = std::filesystem::absolute(worldSavePath);
-    const auto savesDir = absWorld.parent_path().parent_path();
-    SaveSystem::setSaveRoot(savesDir.string());
+    const std::string beforeTreeHash =
+        TestSupport::hashDirectoryTree("saves/zones") + "|" +
+        TestSupport::hashDirectoryTree("saves/homes");
+    bool guardedSectionThrew = false;
+    std::string guardedSectionException;
+
+    try {
+        TestSupport::RealSaveTreeGuard realSaveTreeGuard(worldSavePath);
 
     ZoneManager mgr;
     Core::Camera camera;
@@ -158,6 +162,23 @@ int main() {
     check(findObj("mist.sanctuary.altar_table") != nullptr, "altar table object exists");
     check(findObj("mist.sanctuary.clerestory_lintel") != nullptr, "clerestory lintel object exists");
     check(findObj("mist.sanctuary.stele") != nullptr, "physics stele object exists");
+    } catch (const std::exception& e) {
+        guardedSectionThrew = true;
+        guardedSectionException = e.what();
+    } catch (...) {
+        guardedSectionThrew = true;
+        guardedSectionException = "non-std::exception thrown";
+    }
+
+    check(!guardedSectionThrew,
+          std::string("the guarded section completed without throwing") +
+              (guardedSectionThrew ? (" (threw: " + guardedSectionException + ")") : ""));
+    const std::string afterTreeHash =
+        TestSupport::hashDirectoryTree("saves/zones") + "|" +
+        TestSupport::hashDirectoryTree("saves/homes");
+    check(afterTreeHash == beforeTreeHash,
+          "saves/zones and saves/homes hash byte-identical after the guarded section — "
+          "the real identity tree was restored, even if the section above threw");
 
     std::cout << "------------------------------------------------------------\n";
     std::cout << g_checks - g_failures << "/" << g_checks << " checks passed\n";
