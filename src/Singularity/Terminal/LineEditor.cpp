@@ -618,7 +618,14 @@ LineEditor::Outcome LineEditor::press(const Key& key) {
                 accept(_suggestions[_selected]);
                 return Outcome::None;
             }
-            if (_buffer.find_first_not_of(' ') == std::string::npos) return Outcome::None;
+            if (_buffer.find_first_not_of(' ') == std::string::npos) {
+                if (!submitEmpty) return Outcome::None;
+                _submitted.clear();   // ends the block; never into history
+                _buffer.clear();
+                _cursor = 0;
+                edited(true);
+                return Outcome::Submitted;
+            }
             if (hasPlaceholders()) {
                 _notice = "fill the ‹blanks› first — tab jumps between them";
                 return Outcome::None;

@@ -13,6 +13,11 @@
 
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "Identity/FirstMoverRegister.hpp"
+#include "Identity/KeyPair.hpp"
+#include "Person/Body/Body.hpp"
+#include "Person/Person.hpp"
+#include "Person/Soul/Soul.hpp"
 #include "Relation/Relation.hpp"
 #include "Relation/RelationManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
@@ -321,6 +326,33 @@ void grammar() {
         assert(!p.notes.empty() && mentions(p.notes.front(), "Metalaw"));
     }
 
+    // --- multi-line blocks fold into one sentence of the same grammar
+    {
+        std::string err;
+        const auto folded = LS::unfoldBlock({
+            "called \"Guard\" when clicked:",
+            "  if all:",
+            "    hp > 2",
+            "    glow < 1",
+            "  then:",
+            "    set color gold",
+            "    add glow by 1",
+            ""}, v, err);
+        assert(err.empty());
+        assert(folded == "called \"Guard\" when clicked if hp > 2 and glow < 1 then set color gold and add glow by 1");
+        assert(LS::unfoldBlock({"on any:", "  object-clicked", "  object-hovered", "then set glow 1"}, v, err) ==
+               "on object-clicked or object-hovered then set glow 1" && err.empty());
+        assert(LS::unfoldBlock({"if any:", "  hp > 2", "  glow < 1"}, v, err) == "if hp > 2 or glow < 1");
+        // the same joiner nested flattens; a different one refuses
+        assert(LS::unfoldBlock({"if:", "  all:", "    hp > 2", "    glow < 1", "  hp < 9"}, v, err) ==
+               "if hp > 2 and glow < 1 and hp < 9" && err.empty());
+        assert(LS::unfoldBlock({"if any:", "  all:", "    hp > 2", "    glow < 1"}, v, err).empty() && mentions(err, "parentheses"));
+        assert(LS::unfoldBlock({"then:"}, v, err).empty() && mentions(err, "no indented lines"));
+        assert(LS::unfoldBlock({"  if:", "    hp > 2", "then set glow 1"}, v, err).empty() && mentions(err, "indented less"));
+        // a deeper line under a plain line simply continues it
+        assert(LS::unfoldBlock({"called Long when clicked", "    then set glow 1"}, v, err) == "called Long when clicked then set glow 1");
+    }
+
     // --- refusals that name themselves
     {
         const auto p = LS::parse("on tick then Map glow", v);
@@ -448,7 +480,13 @@ void channel() {
 
     Object zach;
     zach.setObjectID("zach");
-    zach.setDynamicProperty("who", PropertyValue(std::string("zach")));
+    // The line authors only as a PRESENT Person (stdin trust, 2026-10-05): a
+    // real Person, keyed with a fresh key and trusted through the real
+    // First Mover Register, exactly as the Identity unlock seats one.
+    Person person(Soul("Zach"), Body("humanoid", "default"), "default");
+    auto personKey = Identity::PrivateKey::generate();
+    assert(person.setPersonId(personKey.id()));
+    zach.setDynamicProperty("who", PropertyValue(person.getIdentifier()));
     Object cube;
     cube.setObjectID("cube");
     cube.setDynamicProperty("hp", PropertyValue(3.0));
@@ -488,6 +526,7 @@ void channel() {
 
     Universe::instance().setProvider([&](std::vector<Singular*>& out) {
         out.push_back(&zach);
+        out.push_back(&person);
         out.push_back(&cube);
         for (const auto& law : laws.getAll()) {
             if (law) out.push_back(law.get());
@@ -524,6 +563,19 @@ void channel() {
         terminal->act(laws);
     };
 
+    // 0. Stdin trust: until the Person proves their key to this process, a
+    //    typed line authors nothing; a preview still reads.
+    {
+        const std::size_t absentBefore = laws.getAll().size();
+        terminal->inject("my law called Absent fires on object-clicked then set glow 1");
+        frame();
+        assert(laws.getAll().size() == absentBefore && mentions(printed.back(), "not present"));
+        terminal->inject("my law called Absent fires on object-clicked then set glow 1?");
+        frame();
+        assert(laws.getAll().size() == absentBefore && mentions(printed.back(), "preview"));
+        assert(Identity::FirstMoverRegister::instance().trustAuthenticatedPerson(personKey));
+    }
+
     // 1. A sentence becomes a Law, written by the Person.
     const std::size_t before = laws.getAll().size();
     terminal->inject("my law called Red fires on object-clicked if hp greater than 2 then set glow 1");
@@ -532,7 +584,7 @@ void channel() {
     Law* red = laws.getAll().back().get();
     assert(red->name() == "Red");
     assert(red->getIdentifier().rfind("law_", 0) == 0);
-    assert(red->authors().getMembers().size() == 1 && red->authors().getMembers().front() == &zach);
+    assert(red->authors().getMembers().size() == 1 && red->authors().getMembers().front() == &person);
     assert(laws.triggersOf(red->getIdentifier()) == std::vector<std::string>{"object-clicked"});
     assert(!printed.empty() && mentions(printed.back(), "authored " + red->getIdentifier()));
 
