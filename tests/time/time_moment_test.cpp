@@ -67,6 +67,11 @@ int main() {
         assert(pEnd != nullptr);
         assert(std::get<double>(pEnd->value()) == 123.456);
 
+        auto* pCycle = m.findProperty("cpuClockCycle");
+        assert(pCycle != nullptr);
+        // Ensure property evaluation returns a value without throwing/crashing.
+        (void)pCycle->value();
+
         m.setStart(100.0);
         assert(m.asSeconds() == 100.0);
     }

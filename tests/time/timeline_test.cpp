@@ -121,8 +121,11 @@ int main() {
         auto* now = world.findProperty("now");
         auto* delta = world.findProperty("delta");
         auto* hasClock = world.findProperty("hasClock");
+        auto* cycle = world.findProperty("cpuClockCycle");
 
         assert(count && std::get<int>(count->value()) == 3);
+        assert(cycle != nullptr);
+        (void)cycle->value();
         assert(moments);
         const auto list = std::get<std::shared_ptr<PropertyList>>(moments->value());
         assert(list && list->elements.size() == 3);
