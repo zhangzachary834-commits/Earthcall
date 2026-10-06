@@ -29,7 +29,7 @@ def neuron(id_str, x, color, w1=0.1, w2=0.1):
         "shapeKind": 1, # Sphere
         "shape": {"r": 0.5},
         "materialId": "material.neuron_" + id_str,
-        "faceColors": [{"color": color}],
+        "faceColors": [color],
         "authoredProperties": {
             "activation": 0.0
         }

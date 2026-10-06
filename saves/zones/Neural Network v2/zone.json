@@ -76,13 +76,11 @@
             },
             "materialId": "material.neuron_node-in-1",
             "faceColors": [
-                {
-                    "color": [
-                        1,
-                        0,
-                        0
-                    ]
-                }
+                [
+                    1,
+                    0,
+                    0
+                ]
             ],
             "authoredProperties": {
                 "activation": 0.0
@@ -109,13 +107,11 @@
             },
             "materialId": "material.neuron_node-in-2",
             "faceColors": [
-                {
-                    "color": [
-                        0,
-                        1,
-                        0
-                    ]
-                }
+                [
+                    0,
+                    1,
+                    0
+                ]
             ],
             "authoredProperties": {
                 "activation": 0.0
@@ -142,13 +138,11 @@
             },
             "materialId": "material.neuron_node-h-1",
             "faceColors": [
-                {
-                    "color": [
-                        1,
-                        1,
-                        0
-                    ]
-                }
+                [
+                    1,
+                    1,
+                    0
+                ]
             ],
             "authoredProperties": {
                 "activation": 0.0,
@@ -177,13 +171,11 @@
             },
             "materialId": "material.neuron_node-h-2",
             "faceColors": [
-                {
-                    "color": [
-                        0,
-                        1,
-                        1
-                    ]
-                }
+                [
+                    0,
+                    1,
+                    1
+                ]
             ],
             "authoredProperties": {
                 "activation": 0.0,
@@ -212,13 +204,11 @@
             },
             "materialId": "material.neuron_node-out",
             "faceColors": [
-                {
-                    "color": [
-                        0,
-                        0,
-                        1
-                    ]
-                }
+                [
+                    0,
+                    0,
+                    1
+                ]
             ],
             "authoredProperties": {
                 "activation": 0.0,
@@ -247,13 +237,11 @@
             },
             "materialId": "material.neuron_node-target",
             "faceColors": [
-                {
-                    "color": [
-                        1,
-                        1,
-                        1
-                    ]
-                }
+                [
+                    1,
+                    1,
+                    1
+                ]
             ],
             "authoredProperties": {
                 "activation": 0.0

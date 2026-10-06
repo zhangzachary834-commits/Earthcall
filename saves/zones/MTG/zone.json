@@ -65,7 +65,8 @@
           "t": "number",
           "v": 0.0
         }
-      }
+      },
+      "materialId": "material.mtg.card.green"
     },
     {
       "objectID": "card.lightning_bolt_1",
@@ -120,7 +121,8 @@
           "t": "number",
           "v": 1.0
         }
-      }
+      },
+      "materialId": "material.mtg.card.red"
     },
     {
       "objectID": "button.mtg.pass",
@@ -160,7 +162,8 @@
           "t": "string",
           "v": "Pass Priority"
         }
-      }
+      },
+      "materialId": "material.mtg.button"
     },
     {
       "objectID": "button.mtg.resolve",
@@ -194,7 +197,37 @@
           "t": "string",
           "v": "Resolve"
         }
-      }
+      },
+      "materialId": "material.mtg.button.resolve"
+    },
+    {
+      "objectID": "object.mtg.table",
+      "shapeKind": 0,
+      "geometryType": 0,
+      "shapeParams": [
+        15.0,
+        0.2,
+        10.0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "material.mtg.table"
     }
   ],
   "formationRelations": [
@@ -1170,5 +1203,322 @@
         ]
       }
     }
-  }
+  },
+  "materials": [
+    {
+      "id": "material.mtg.card",
+      "colorExpr": {
+        "input": "x",
+        "pieces": [
+          {
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.95
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.95
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.9
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "material.mtg.button",
+      "colorExpr": {
+        "input": "x",
+        "pieces": [
+          {
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.2
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.8
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.4
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "material.mtg.table",
+      "colorExpr": {
+        "input": "x",
+        "pieces": [
+          {
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.3
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.15
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.05
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "material.mtg.button.resolve",
+      "colorExpr": {
+        "input": "x",
+        "pieces": [
+          {
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.9
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.4
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.1
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "material.mtg.skybox",
+      "colorExpr": {
+        "input": "x",
+        "pieces": [
+          {
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.05
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.05
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.1
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "material.mtg.card.green",
+      "colorExpr": {
+        "input": "x",
+        "pieces": [
+          {
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.2
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.8
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.2
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "material.mtg.card.red",
+      "colorExpr": {
+        "input": "x",
+        "pieces": [
+          {
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.9
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.2
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.2
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
 }
