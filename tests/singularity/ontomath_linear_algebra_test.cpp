@@ -316,6 +316,41 @@ int main() {
     assert(!OntoMath::matrixInverse(*nonFinite));
     assert(!OntoMath::matrixDeterminant(*nonFinite));
 
+    // Rung 8 SDF/renderer normal witness: under non-uniform scale, normals
+    // must follow inverse-transpose rather than the model linear transform.
+    // GLM below is an independent frozen oracle only; OntoMath authors the
+    // production meaning through affineTRS + transformNormal.
+    const glm::vec3 normalScale(2.0f, 0.5f, 3.0f);
+    const glm::vec3 normalEuler(17.0f, -31.0f, 43.0f);
+    const auto normalAffine = OntoMath::affineTRS(
+        glm::vec3(4.0f, -2.0f, 7.0f), normalEuler, normalScale);
+    assert(normalAffine);
+
+    const glm::vec3 localNormal = glm::normalize(glm::vec3(1.0f, 2.0f, -0.5f));
+    glm::vec3 localTangent = glm::cross(localNormal, glm::vec3(0.0f, 0.0f, 1.0f));
+    assert(glm::length(localTangent) > 1e-4f);
+    localTangent = glm::normalize(localTangent);
+
+    const auto authoredNormal = OntoMath::transformNormal(*normalAffine, localNormal);
+    const auto authoredTangent = OntoMath::transformDirection(*normalAffine, localTangent);
+    assert(authoredNormal && authoredTangent);
+    const glm::vec3 normalizedAuthoredNormal = glm::normalize(*authoredNormal);
+    assert(std::fabs(glm::dot(normalizedAuthoredNormal, *authoredTangent)) < 1e-4f);
+
+    glm::mat4 normalOracle = glm::translate(glm::mat4(1.0f), glm::vec3(4.0f, -2.0f, 7.0f));
+    normalOracle = glm::rotate(normalOracle, glm::radians(normalEuler.x), glm::vec3(1,0,0));
+    normalOracle = glm::rotate(normalOracle, glm::radians(normalEuler.y), glm::vec3(0,1,0));
+    normalOracle = glm::rotate(normalOracle, glm::radians(normalEuler.z), glm::vec3(0,0,1));
+    normalOracle = glm::scale(normalOracle, normalScale);
+    const glm::vec3 oracleNormal = glm::normalize(
+        glm::transpose(glm::inverse(glm::mat3(normalOracle))) * localNormal);
+    assert(glm::length(normalizedAuthoredNormal - oracleNormal) < 2e-5f);
+
+    // Translation is irrelevant to a normal, while a naive model-linear
+    // transform is observably wrong under this non-uniform scale.
+    const glm::vec3 naiveNormal = glm::normalize(glm::mat3(normalOracle) * localNormal);
+    assert(glm::length(normalizedAuthoredNormal - naiveNormal) > 1e-2f);
+
     std::puts("ontomath_linear_algebra_test: PASS");
     return 0;
 }
