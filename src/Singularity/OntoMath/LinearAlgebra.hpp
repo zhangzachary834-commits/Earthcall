@@ -66,6 +66,13 @@ std::optional<glm::vec3> matrixMultiplyVec3(const MatrixValue& matrix,
 std::optional<MatrixValue> matrixTranspose(const MatrixValue& matrix);
 std::optional<double> matrixDeterminant(const MatrixValue& matrix);
 std::optional<MatrixValue> matrixInverse(const MatrixValue& matrix);
+
+// Transform an implicit homogeneous quadric Q by a point-space transform T.
+// If x' = T x and x^T Q x = 0, the transformed surface is
+// x'^T (T^-T Q T^-1) x' = 0.
+std::optional<MatrixValue> transformQuadric(const MatrixValue& quadric,
+                                            const MatrixValue& pointTransform);
+
 // Project an NDC point through inverse(projection * view), including the
 // homogeneous divide. This owns general picking/unprojection mathematics;
  // callers still own viewport/pointer policy.
