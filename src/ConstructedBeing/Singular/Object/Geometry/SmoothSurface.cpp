@@ -1,7 +1,6 @@
 #include "SmoothSurface.hpp"
 #include "Singularity/OntoMath/LinearAlgebra.hpp"
 
-#include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
