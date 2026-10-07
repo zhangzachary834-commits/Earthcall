@@ -3045,11 +3045,25 @@ void WebGpuRenderer::drawSolid(const std::vector<glm::vec3>& tris, const glm::ve
 
 void WebGpuRenderer::begin2D(uint32_t width, uint32_t height) {
     // (0,0) at the TOP-LEFT, matching the boundary contract and glOrtho(0,w,h,0,-1,1).
-    // Built with the [0,1] clip depth WebGPU requires; depth is ignored anyway since
-    // the 2D pipelines compare Always.
+    // OntoMath owns the orthographic projection formula and WebGPU depth convention;
+    // this renderer only lowers the authored matrix into its API-facing cache.
+    const auto projection = OntoMath::cameraOrthographic(
+        0.0, static_cast<double>(width),
+        static_cast<double>(height), 0.0,
+        -1.0, 1.0, true);
+    if (!projection) {
+        _in2D = false;
+        _ortho2D = glm::mat4(1.0f);
+        return;
+    }
+    const auto lowered = projection->toGlmMat4();
+    if (!lowered) {
+        _in2D = false;
+        _ortho2D = glm::mat4(1.0f);
+        return;
+    }
     _in2D = true;
-    _ortho2D = glm::orthoZO(0.0f, static_cast<float>(width),
-                            static_cast<float>(height), 0.0f, -1.0f, 1.0f);
+    _ortho2D = *lowered;
 }
 
 void WebGpuRenderer::end2D() {
