@@ -363,4 +363,26 @@ std::optional<MatrixValue> cameraPerspective(double verticalFovRadians,
     return MatrixValue::fromGlmMat4(projection);
 }
 
+std::optional<MatrixValue> cameraOrthographic(double left,
+                                               double right,
+                                               double bottom,
+                                               double top,
+                                               double nearPlane,
+                                               double farPlane,
+                                               bool zeroToOneDepth) {
+    if (!std::isfinite(left) || !std::isfinite(right) ||
+        !std::isfinite(bottom) || !std::isfinite(top) ||
+        !std::isfinite(nearPlane) || !std::isfinite(farPlane) ||
+        right == left || top == bottom || farPlane == nearPlane) {
+        return std::nullopt;
+    }
+    const float l = static_cast<float>(left), r = static_cast<float>(right);
+    const float b = static_cast<float>(bottom), t = static_cast<float>(top);
+    const float n = static_cast<float>(nearPlane), f = static_cast<float>(farPlane);
+    const glm::mat4 projection = zeroToOneDepth
+        ? glm::orthoRH_ZO(l, r, b, t, n, f)
+        : glm::orthoRH_NO(l, r, b, t, n, f);
+    return MatrixValue::fromGlmMat4(projection);
+}
+
 } // namespace OntoMath
