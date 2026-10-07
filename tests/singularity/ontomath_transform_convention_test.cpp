@@ -276,6 +276,20 @@ int main() {
     assert(nearf(nearZO.z / nearZO.w, 0.0f));
     assert(nearf(farZO.z / farZO.w, 1.0f));
 
+    // Rung 8 orthographic authority: pin top-left WebGPU ZO and NO parity.
+    const auto orthoZO = OntoMath::cameraOrthographic(
+        0.0, 1920.0, 1080.0, 0.0, -1.0, 1.0, true);
+    const auto orthoNO = OntoMath::cameraOrthographic(
+        -3.0, 5.0, -2.0, 7.0, 0.25, 9.0, false);
+    assert(orthoZO && orthoNO);
+    assert(nearMat4(*orthoZO->toGlmMat4(),
+                    glm::orthoRH_ZO(0.0f, 1920.0f, 1080.0f, 0.0f, -1.0f, 1.0f)));
+    assert(nearMat4(*orthoNO->toGlmMat4(),
+                    glm::orthoRH_NO(-3.0f, 5.0f, -2.0f, 7.0f, 0.25f, 9.0f)));
+    assert(!OntoMath::cameraOrthographic(1.0, 1.0, -1.0, 1.0, 0.0, 1.0, true));
+    assert(!OntoMath::cameraOrthographic(-1.0, 1.0, 2.0, 2.0, 0.0, 1.0, true));
+    assert(!OntoMath::cameraOrthographic(-1.0, 1.0, -1.0, 1.0, 4.0, 4.0, true));
+
     // View-projection unprojection follows inverse(P*V), the convention used
     // by current cursor / interaction code.
     const glm::mat4 vp = projNO * expectedView;
