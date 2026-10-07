@@ -326,3 +326,57 @@ Evidence status is unchanged: earlier real WebGPU byte-exact zero-rho and zero-t
 Rejected hypotheses: upstream CPU-SDF failure is not SourceRho failure; repeated canonical motion is not an integration event; generic WebGPU witnesses cannot substitute for the dedicated hostile SourceRho A/B; authority-application counts cannot substitute for executed visibility work units; timing cannot be promoted before hostile exactness.
 
 Exact continuation point: obtain an exact-head run in which the dedicated SourceRho native-pixel A/B actually executes. Require byte-exact framebuffer, increased `alignedProofReadFallbacks` on same-revision producer rebinding, and no stale increase in `authorityBypassesApplied`. Only after that passes, add deterministic executed visibility invocation/SDF-step accounting and interpret the maintained CPU/GPU/compile/repair/residency economics. If exactness fails or economics are not material, record why and stop.
+
+
+---
+
+## 2026-10-07 local Metal tribunal + bounded producer-lifetime quarantine repair
+
+**Local tribunal head tested:** `e927358f2e517257212d9f8ee2633b08da846bd6`  
+**Successor repair commits:** `89078d75e0bbe04d8a47f833aa89ebbf3bfb1e0f`, `1b767d5f3efb10e8b717fbd646051fff35c61900`  
+**Canonical at repair intake:** `9d681833f2c062b0e7271ac613b66e2b496e5d4a`  
+**Exact-head focused CI after repair:** run `37697267183` (pending at inspection)
+
+A local Sonnet worker bypassed the repeatedly failing shared CPU-SDF guardian and ran the dedicated witness directly on native Metal from a detached worktree of the successor branch. Build of `webgpu_source_rho_authority_perf_test` succeeded; the executable initialized native WebGPU/Metal, exercised the OFF/ON A/B and earlier zero-to-nonzero repair cases, then exited 1 at the corrected same-revision producer-rebinding hostile case with:
+
+`SOURCE_RHO_AUTH_PERF FAIL stale producer rebinding retained authority`
+
+This is real SourceRho evidence, not another upstream CI classification. Pixel equality on the hostile rebound draw had already passed. The existing aggregate `alignedProofReadFallbacks` counter also increased, but source tracing showed that increase was ambiguous: the fixture's live nonzero slot legitimately owns `ProofKind::None`, so its normal fallback can satisfy a mere “counter increased” assertion even if the rebound zero slot reacquires authority.
+
+### Root-cause classification
+
+The failure is a producer-lifetime authority-continuity bug in the current successor behavior, with an additional witness-accounting ambiguity.
+
+On same-set-revision producer replacement, `observeRadianceSources` correctly notices the aligned identity mismatch and repairs the slot. However, the replacement still points at the same literal-zero Piecewise/revision, so `observeVessel` can immediately reuse the cached theorem. The repaired aligned slot therefore receives a fresh generation **and** the zero proof in the same admission. WebGPU correctly invalidates/rebuilds its authority-bearing layout, but `buildRadianceZeroAuthorityMask()` then validates that newly repaired slot and enables authority again on the first rebound draw. The stale generation itself is not reused; the bug is that lifetime replacement is allowed to reacquire theorem authority without first spending an exact/fail-open draw.
+
+This violates the handoff's explicit hostile rule that producer replacement in the same numeric slot must restore the exact `sourceVisibility` path before authority is accepted again.
+
+### Bounded repair
+
+Commit `89078d75...` adds a SourceRho-only authority quarantine to the aligned artifact lifecycle. A producer/channel lifetime replacement now:
+
+- mints a fresh aligned generation;
+- stores `ProofKind::None` for authority consumption on that admission even if the semantic theorem cache already knows the expression is literal zero;
+- marks only that SourceRho slot quarantined;
+- leaves ordinary authored-rho revision repair unchanged;
+- leaves MediumDensity behavior unchanged;
+- adds no search, hierarchy traversal, Scene-DAG relevance, hash lookup, or Zone special case.
+
+A second deliberate admission of the same rebound producer/revision revalidates only the quarantined already-selected slot, mints another fresh generation so no handle published during quarantine can inherit authority, clears the quarantine, and may restore the cached literal-zero theorem. The existing Renderer repair-stat invalidation then rebuilds the WebGPU authority mask exactly at those two lifecycle transitions.
+
+Commit `1b767d5f...` hardens the native witness so the aggregate fallback counter cannot hide slot-0 behavior. In this exact two-source fixture the hostile rebound draw must now produce exactly two proof fallbacks (quarantined zero slot + legitimate non-authoritative live slot), exactly one dirty-slot repair, byte-exact pixels, and **no** new authority application. It then performs a separate positive-recovery admission and requires exactly one local repair, byte-exact pixels, one normal live-slot fallback, and exactly one restored SourceRho authority application.
+
+### Semantic-overlap / integration status
+
+Targeted comparison at repair intake remained diverged but showed no canonical changes in the bounded observer/Renderer/WebGPU/SdfWgsl/native-witness dependency set. Canonical motion alone is not an integration event; no reconciliation was performed. An exact-head focused CI run has spawned for `1b767d5f...`, but it was still pending at inspection and is not yet evidence for or against the repair.
+
+### Rejected hypotheses
+
+- The local failure is not a GPU/environment/setup failure: native Metal initialized and the hostile branch executed.
+- Byte-exact hostile pixels do not excuse stale authority continuity; provenance/lifetime fail-open is an independent gate.
+- A generic increase in `alignedProofReadFallbacks` does not identify which slot failed open.
+- Recompiling after producer replacement does not itself make authority lawful; the rebuilt mask must first refuse the replacement lifetime.
+- The fix does not authorize MediumDensity, arbitrary expressions, whole-source elision, generic relevance, or any Zone-specific shortcut.
+- Timing/economics remain uninterpretable until the repaired hostile tribunal passes.
+
+**Exact continuation point:** first classify exact-head build/CPU CI for `1b767d5f...` without treating the shared CPU-SDF guardian as SourceRho evidence. Then rerun **only** `webgpu_source_rho_authority_perf_test` locally on native Metal at the repaired successor head. Require the hostile rebound draw to show byte-exact pixels, +2 proof fallbacks, +1 dirty-slot repair, and zero new authority applications; require the separate positive-recovery draw to remain byte exact and restore exactly one authority application. If that passes, proceed to the still-required removal/re-add, slot-reorder/reuse, stale-generation/experiment-transition hostile coverage and deterministic executed `sourceVisibility` invocation/SDF-step accounting before interpreting economics. If the repaired hostile case fails, record why and stop rather than widening scope.
