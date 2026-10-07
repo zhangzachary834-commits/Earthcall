@@ -1,5 +1,6 @@
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Singularity/Terminal/LawSentence.hpp"
+#include "Singularity/OntoMath/Field.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -297,7 +298,8 @@ private:
                     return !other->lexemeId.empty() && other->opcode == w->opcode;
                 })) continue;
             const std::string meaning = w->opcode == "preset" ? "preset:" + w->lawId
-                : parameterized && !w->lawId.empty() ? w->opcode + ":" + w->lawId : w->opcode;
+                : (parameterized || !w->expression.empty() || std::any_of(best.begin(), best.end(), [](const Word* other) { return !other->expression.empty(); })) && !w->lawId.empty()
+                    ? w->opcode + ":" + w->lawId : w->opcode;
             if (meanings.insert(meaning).second) distinct.push_back(*w);
             else if (!w->lexemeId.empty()) {
                 for (auto& candidate : distinct)
@@ -484,6 +486,14 @@ private:
             refuse("the sentence ends where a value was expected", _pos);
         }
         if (auto w = tryMatch({"value"}, "value")) {
+            skipSpace();
+            if (!atEnd() && _text[_pos] == '<') {
+                auto e = valueInvocation(*w);
+                if (!e.literal) refuse("a mathematical value must be quoted with $(...) inside a field", _pos);
+                return *e.literal;
+            }
+            if (!w->arguments.empty() || !w->expression.empty())
+                refuse("this value requires its authored argument form or mathematical quotation", _pos);
             if (w->opcode == "value.true" || w->opcode == "value.false") {
                 return PropertyValue(w->opcode == "value.true");
             }
@@ -921,8 +931,34 @@ private:
         return nullptr;
     }
 
+    PropertyValue structuralValue(const nlohmann::json& value, unsigned depth = 0) {
+        if (depth >= 64) refuse("compiled value exceeds 64 structural levels", _pos);
+        if (value.is_object()) {
+            auto dict = std::make_shared<PropertyDict>();
+            for (auto it = value.begin(); it != value.end(); ++it)
+                dict->elements[it.key()] = structuralValue(it.value(), depth + 1);
+            return dict;
+        }
+        if (value.is_array()) {
+            auto list = std::make_shared<PropertyList>();
+            for (const auto& item : value) list->elements.push_back(structuralValue(item, depth + 1));
+            return list;
+        }
+        return propertyValueFromJson(value);
+    }
+
     Expression expressionAtom() {
         skipSpace();
+        // Quotation senses existing math as data instead of evaluating it in
+        // the Terminal. Its variable meanings remain authored vocabulary and
+        // are admitted by the eventual modality, never chosen by this parser.
+        if (_text.compare(_pos, 2, "$(") == 0) {
+            _pos += 2; ++_quotedMathDepth;
+            struct Quote { unsigned& n; ~Quote() { --n; } } quote{_quotedMathDepth};
+            auto e = expression(); needPunctuation(')');
+            if (!e.bindings.empty()) refuse("quoted mathematics cannot capture live property bindings; use explicitly admitted coordinates", _pos);
+            return {structuralValue(mathOf(e)->toJson()), nullptr, {}};
+        }
         if (punctuation('(')) {
             Expression first = expression();
             if (!punctuation(',')) { needPunctuation(')'); return first; }
@@ -934,7 +970,7 @@ private:
             n->children.push_back(mathOf(third));
             first.bindings.insert(second.bindings.begin(), second.bindings.end());
             first.bindings.insert(third.bindings.begin(), third.bindings.end());
-            if (first.bindings.empty()) {
+            if (first.bindings.empty() && !_quotedMathDepth) {
                 auto value = n->evaluate({});
                 if (!value) refuse("the vector expression is undefined", _pos);
                 return {*value, nullptr, {}};
@@ -976,7 +1012,14 @@ private:
         bool pathAhead = _text[_pos] == '@';
         for (const auto& [alias, root] : _vocab.pathRoots)
             pathAhead = pathAhead || _text.compare(_pos, alias.size() + 1, alias + ".") == 0;
-        if (!pathAhead) if (auto w = tryMatch({"value"}, "value")) {
+        if (!pathAhead) if (auto w = tryMatch({"value"}, _quotedMathDepth ? "math" : "value")) {
+            skipSpace();
+            if (!atEnd() && _text[_pos] == '<') return valueInvocation(*w);
+            if (!w->arguments.empty()) refuse("'" + w->symbol + "' requires " + w->arguments, _pos);
+            if (!w->expression.empty()) {
+                try { return {std::nullopt, OntoMath::MathNode::fromJson(nlohmann::json::parse(w->expression)), {}}; }
+                catch (const std::exception& e) { refuse(std::string("invalid authored mathematical word: ") + e.what(), _pos); }
+            }
             if (w->opcode == "value.true") return {PropertyValue(true), nullptr, {}};
             if (w->opcode == "value.false") return {PropertyValue(false), nullptr, {}};
             for (const auto& p : _vocab.presets) if (p.lawId == w->lawId && p.value)
@@ -1029,7 +1072,7 @@ private:
             left.bindings.insert(right.bindings.begin(), right.bindings.end());
             left.literal.reset(); left.math = std::move(n);
         }
-        if (left.math && left.bindings.empty()) {
+        if (left.math && left.bindings.empty() && !_quotedMathDepth) {
             auto value = left.math->evaluate({});
             if (!value) refuse("the constant expression is undefined", _pos);
             left.literal = *value; left.math.reset();
@@ -1111,12 +1154,12 @@ private:
         return propertyValueToJson(value);
     }
 
-    ActionNode namedInvocation(const Word& word, Atom key) {
+    nlohmann::json namedArguments(Atom key, bool actionArguments) {
         auto args = nlohmann::json::object();
         std::set<std::string> seen;
         do {
             if (!seen.insert(key.text).second) refuse("duplicate argument '" + key.text + "'", key.offset);
-            if (key.text == "children") {
+            if (actionArguments && key.text == "children") {
                 needPunctuation('[');
                 auto children = nlohmann::json::array();
                 if (!punctuation(']')) do {
@@ -1127,7 +1170,7 @@ private:
                 args["children"] = children;
             } else {
                 auto e = expression();
-                if (key.text == "expression") {
+                if (actionArguments && key.text == "expression") {
                     if (seen.count("function") || seen.count("bindings"))
                         refuse("expression duplicates function or bindings", key.offset);
                     seen.insert("function"); seen.insert("bindings");
@@ -1145,8 +1188,64 @@ private:
             key = requireAtom("an argument name", &Expectation::path);
             needPunctuation(':');
         } while (true);
+        return args;
+    }
+
+    ActionNode namedInvocation(const Word& word, Atom key) {
         return compileInvocation({{"slot", "arguments"}, {"opcode", word.opcode},
-            {"lexeme", word.lexemeId}, {"wordLaw", word.lawId}, {"arguments", args}});
+            {"lexeme", word.lexemeId}, {"wordLaw", word.lawId}, {"arguments", namedArguments(key, true)}});
+    }
+
+    void validateMath(const OntoMath::MathNode& node, OntoMath::ValueKind expected = OntoMath::ValueKind::Unknown) {
+        const auto type = node.typeOf({}, "root", true);
+        if (!type) refuse(OntoMath::formatTypeDiagnostic(type.diagnostic), _pos);
+        if (expected != OntoMath::ValueKind::Unknown && *type != OntoMath::ValueKind::Unknown && *type != expected)
+            refuse(std::string("field expects ") + OntoMath::valueKindName(expected) + " mathematics", _pos);
+    }
+
+    void validateField(const OntoMath::Piecewise& form, OntoMath::ValueKind kind) {
+        for (const auto& piece : form.pieces) {
+            if (piece.mathNode) validateMath(*piece.mathNode, kind);
+            if (piece.whereLEZero) validateMath(*piece.whereLEZero, OntoMath::ValueKind::Scalar);
+        }
+    }
+
+    Expression valueInvocation(const Word& word) {
+        if (++_invocationDepth > 32) refuse("invocation nesting exceeds 32 levels", _pos);
+        struct Depth { unsigned& n; ~Depth() { --n; } } depth{_invocationDepth};
+        needPunctuation('<');
+        auto key = requireAtom("a value argument name", &Expectation::value); needPunctuation(':');
+        auto args = namedArguments(key, false);
+        if (!_vocab.compileInvocation) refuse("no Metalaw compiler is available for value Lexemes", _pos);
+        auto result = _vocab.compileInvocation({{"slot", "value"}, {"opcode", word.opcode},
+            {"lexeme", word.lexemeId}, {"wordLaw", word.lawId}, {"arguments", args}}, _readOnly);
+        if (!result.value) refuse(result.error.empty() ? "no Metalaw compiled this value" : result.error, _pos);
+        for (const auto& id : result.laws) {
+            if (std::find(_out.presetLawIds.begin(), _out.presetLawIds.end(), id) == _out.presetLawIds.end()) _out.presetLawIds.push_back(id);
+            _out.notes.push_back("compiled by Metalaw " + id);
+        }
+        if (std::find(_out.presetLawIds.begin(), _out.presetLawIds.end(), word.lawId) == _out.presetLawIds.end()) _out.presetLawIds.push_back(word.lawId);
+        if (_readOnly) {
+            _out.compilationDeferred = true;
+            const std::string note = "value syntax only; Metalaw compilation deferred until Enter";
+            if (std::find(_out.notes.begin(), _out.notes.end(), note) == _out.notes.end()) _out.notes.push_back(note);
+        }
+        try {
+            if (result.value->contains("math")) {
+                auto node = OntoMath::MathNode::fromJson(result.value->at("math"));
+                validateMath(*node);
+                return {std::nullopt, std::move(node), {}};
+            }
+            if (result.value->contains("literal"))
+                return {structuralValue(result.value->at("literal")), nullptr, {}};
+            auto value = propertyValueFromJson(result.value->at("value"));
+            if (auto field = std::get_if<std::shared_ptr<OntoMath::VectorField>>(&value); field && *field)
+                validateField((*field)->astDefinition, OntoMath::ValueKind::Vector);
+            if (auto field = std::get_if<std::shared_ptr<OntoMath::ScalarField>>(&value); field && *field)
+                validateField((*field)->astDefinition, OntoMath::ValueKind::Scalar);
+            return {std::move(value), nullptr, {}};
+        } catch (const std::exception& e) { refuse(std::string("compiled value refused: ") + e.what(), _pos); }
+        return {};
     }
 
     ActionNode invocation(const Word& word) {
@@ -1277,6 +1376,7 @@ private:
     bool _completing = false;
     bool _readOnly = false;
     unsigned _invocationDepth = 0; // bounded channel syntax stack beneath the Kernel
+    unsigned _quotedMathDepth = 0; // bounded syntax quotation depth beneath the Kernel
     unsigned _expressionDepth = 0; // bounded parser stack beneath the Kernel
     // Inside a condition, a bare path (`hp`) is read off the subject, as the
     // plain comparison grammar already reads it. Elsewhere it stays refused.

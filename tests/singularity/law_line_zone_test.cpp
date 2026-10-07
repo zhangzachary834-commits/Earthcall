@@ -15,6 +15,8 @@
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "json.hpp"
+#include "Singularity/Screen/ScreenChannel.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 
 #include <algorithm>
 #include <array>
@@ -1008,6 +1010,143 @@ int main() {
             check(glm::length(objects.back()->getPosition() - glm::vec3(-2, 17, 6)) < 0.001f,
                   "continuous creation follows the author's changed position");
         if (continuous) continuous->setEnabled(false);
+    }
+
+    // Zach requested direct 2D CLI wizardry. Exercise real authored compilers,
+    // LawManager activation, typed persistence and independent coordinate samples.
+    // Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-06.
+    {
+        using Singularity::Screen::ScreenChannel;
+        ScreenChannel::syncRegister(harness.lawManager);
+        auto* screen = ScreenChannel::find(harness.lawManager);
+        check(screen != nullptr, "direct Screen channel is available to CLI Laws");
+        auto submit = [&](const char* file) {
+            std::ifstream input(saves.parent_path() / "examples" / file);
+            std::string line; std::getline(input, line);
+            const auto before = harness.lawManager.getAll().size();
+            terminal->inject(line); frame();
+            // The channel adopts at act(), after the preceding three ticks.
+            harness.lawManager.tick(); harness.lawManager.tick();
+            check(harness.lawManager.getAll().size() > before,
+                  std::string("Screen example authors through Metalaws: ") + file + " / " + printed.back());
+        };
+        std::ifstream pixelFile(saves.parent_path() / "examples/law_line_screen_pixel.txt");
+        std::string pixelLine; std::getline(pixelFile, pixelLine);
+        const auto previewCount = harness.lawManager.getAll().size();
+        const auto* compiler = harness.lawManager.find("law-line-compile-value-vectorfield");
+        const auto compilerLog = compiler ? compiler->applicationLog().size() : 0;
+        terminal->inject(pixelLine + " ?"); frame();
+        check(harness.lawManager.getAll().size() == previewCount && compiler &&
+              compiler->applicationLog().size() == compilerLog,
+              "nested Screen value preview executes no compiler and registers no Law");
+        submit("law_line_screen_pixel.txt");
+        PropertyValue value;
+        bool typed = screen && screen->getDynamicProperty("output.color", value) &&
+                     std::holds_alternative<std::shared_ptr<OntoMath::VectorField>>(value);
+        check(typed, "CLI supplies a typed AST VectorField directly on Screen");
+        if (typed) {
+            auto field = std::get<std::shared_ptr<OntoMath::VectorField>>(value);
+            auto sample = [&](double x, double y) { return field->astDefinition.evaluate(
+                {{"p", glm::vec3(x,y,0)}, {"x",x}, {"y",y}}); };
+            const auto inside = sample(7.5, 9.5), outside = sample(8.5, 9.5);
+            check(inside && std::holds_alternative<glm::vec3>(*inside) && !outside,
+                  "physical pixel selector includes its centre and excludes the neighbouring centre");
+            const auto encoded = propertyValueToJson(value);
+            check(propertyValueToJson(propertyValueFromJson(encoded)) == encoded,
+                  "CLI field preserves full mathematics through typed serialization");
+        }
+        auto* fieldCompiler = harness.lawManager.find("law-line-compile-value-vectorfield");
+        if (fieldCompiler) fieldCompiler->setEnabled(false);
+        const auto beforeMissing = harness.lawManager.getAll().size();
+        terminal->inject(pixelLine); frame();
+        check(harness.lawManager.getAll().size() == beforeMissing && mentions(printed.back(), "no authored Metalaw"),
+              "missing field compiler refuses without a parser fallback");
+        if (fieldCompiler) fieldCompiler->setEnabled(true);
+        const auto beforeTypo = harness.lawManager.getAll().size();
+        terminal->inject("when clicked then add property @screen-channel.output.color to VectorField <piecez: []>"); frame();
+        check(harness.lawManager.getAll().size() == beforeTypo,
+              "unconsumed value argument refuses rather than dropping an author typo");
+        const auto badTypeCount = harness.lawManager.getAll().size();
+        terminal->inject("when clicked then add property @screen-channel.output.color to VectorField <pieces: [Piece <value: $(1)>]>"); frame();
+        check(harness.lawManager.getAll().size() == badTypeCount && mentions(printed.back(), "field expects Vector"),
+              "statically wrong field result type refuses during compilation");
+        auto competing = std::make_shared<Law>("competing value compiler", std::vector<Singular*>{&harness.player});
+        competing->setLawIdentifier("test-conflicting-value-compiler");
+        competing->addTarget(*terminal);
+        competing->setConditionModel(ConditionNode::all({
+            ConditionNode::compare("compilation.input.slot",ConditionNode::Op::Eq,std::string("value")),
+            ConditionNode::compare("compilation.input.wordLaw",ConditionNode::Op::Eq,std::string("law-line-value-constructor-vectorfield"))}));
+        // Consume the input argument, but produce a different valid envelope.
+        competing->setActionModel(ActionNode::set("compilation.template",std::string(
+            "{\"literal\":{\"$slot\":\"/arguments/pieces\"}}")));
+        harness.lawManager.add(competing);
+        const auto beforeConflict = harness.lawManager.getAll().size();
+        terminal->inject(pixelLine); frame();
+        check(harness.lawManager.getAll().size() == beforeConflict && mentions(printed.back(), "conflicting"),
+              "conflicting value Metalaws refuse regardless of registration order");
+        harness.lawManager.remove(competing->getIdentifier());
+        // Re-grant after a read materializes a lazy accessor: it is still
+        // authored state, not a first-mover path. Also cover scalar constructors.
+        if (screen) screen->findProperty("output.color");
+        terminal->inject("called Replace Field on \"screen-replace\" then add property @screen-channel.output.color to VectorField <pieces: [Piece <value: $(blue)>]>"); frame();
+        Core::EventBus::instance().publish(ECA::Event{"screen-replace",cube,nullptr,std::time(nullptr)}); harness.lawManager.tick();
+        bool replaced = screen && screen->getDynamicProperty("output.color",value) &&
+                        std::holds_alternative<std::shared_ptr<OntoMath::VectorField>>(value);
+        if (replaced) {
+            auto sample = std::get<std::shared_ptr<OntoMath::VectorField>>(value)->astDefinition.evaluate({});
+            replaced = sample && std::holds_alternative<glm::vec3>(*sample) &&
+                       glm::length(std::get<glm::vec3>(*sample)-glm::vec3(0,0,1))<.001f;
+        }
+        check(replaced,"AddProperty can replace a read authored field without shadowing an engine path");
+        terminal->inject("called Opacity Field on \"screen-opacity\" then add property @screen-channel.output.opacity to ScalarField <pieces: [Piece <value: $(Component <value: $((0.5,0.2,0.3)), index: \"x\">)>]>"); frame();
+        Core::EventBus::instance().publish(ECA::Event{"screen-opacity",cube,nullptr,std::time(nullptr)}); harness.lawManager.tick();
+        bool scalar = screen && screen->getDynamicProperty("output.opacity",value) &&
+                      std::holds_alternative<std::shared_ptr<OntoMath::ScalarField>>(value);
+        if (scalar) {
+            auto sample = std::get<std::shared_ptr<OntoMath::ScalarField>>(value)->astDefinition.evaluate({});
+            double alpha=0; scalar = sample && propertyValueToNumber(*sample,alpha) && std::abs(alpha-.5)<.001;
+        }
+        check(scalar,"ScalarField and Component compile and sample authored opacity");
+        terminal->inject("called Protect Engine Path on \"screen-protect\" then add property @screen-channel.enabled to false"); frame();
+        Core::EventBus::instance().publish(ECA::Event{"screen-protect",cube,nullptr,std::time(nullptr)}); harness.lawManager.tick();
+        check(screen && screen->isEnabled(),"AddProperty still refuses to shadow a registered engine property");
+        if (screen) screen->setDynamicProperty("enabled",true); // deliberately malformed test storage
+        Core::EventBus::instance().publish(ECA::Event{"screen-protect",cube,nullptr,std::time(nullptr)}); harness.lawManager.tick();
+        PropertyValue duplicate;
+        check(screen && screen->getDynamicProperty("enabled",duplicate) && duplicate==PropertyValue(true),
+              "a duplicate authored-storage name cannot make an engine accessor shadowable");
+        if (screen) screen->removeDynamicProperty("enabled");
+        Universe::instance().setClock(1, 0.1);
+        submit("law_line_screen_lens.txt");
+        bool diamond = screen && screen->getDynamicProperty("output.color",value) &&
+                       std::holds_alternative<std::shared_ptr<OntoMath::VectorField>>(value);
+        if (diamond) {
+            auto sample=std::get<std::shared_ptr<OntoMath::VectorField>>(value)->astDefinition.evaluate(
+                {{"p",glm::vec3(100,50,0)},{"x",100.0},{"y",50.0},{"u",.5},{"v",.5},
+                 {"width",200.0},{"height",100.0},{"t",0.0}});
+            diamond=sample && std::holds_alternative<glm::vec3>(*sample) &&
+                    glm::length(std::get<glm::vec3>(*sample)-glm::vec3(1,.92,.55))<.001f;
+        }
+        check(diamond,"authored math-context Metalaw reads y as a coordinate in the centre diamond");
+        terminal->inject("called Keep Yes on \"screen-yes\" then add property @screen-channel.testYes to y"); frame();
+        Core::EventBus::instance().publish(ECA::Event{"screen-yes",cube,nullptr,std::time(nullptr)}); harness.lawManager.tick();
+        PropertyValue yes;
+        check(screen && screen->getDynamicProperty("testYes",yes) && yes==PropertyValue(true),
+              "authored value-context Metalaw preserves the existing y/yes shorthand");
+        if(screen) screen->removeDynamicProperty("testYes");
+        double beforeTime = 0;
+        if (screen && screen->getDynamicProperty("output.time", value)) propertyValueToNumber(value, beforeTime);
+        harness.lawManager.tick();
+        double afterTime = 0;
+        if (screen && screen->getDynamicProperty("output.time", value)) propertyValueToNumber(value, afterTime);
+        check(afterTime > beforeTime, "authored Flow advances the explicitly supplied Screen time");
+        submit("law_line_screen_clear.txt");
+        check(screen && !screen->getDynamicProperty("output.color", value),
+              "CLI clear Law withdraws direct output without creating an Object or texture");
+        submit("law_line_screen_pixel.txt");
+        check(screen && screen->getDynamicProperty("output.color",value) &&
+              std::holds_alternative<std::shared_ptr<OntoMath::VectorField>>(value),
+              "a cleared authored field can be granted again through its surviving accessor");
     }
 
     check(inactiveWorld->getOwnedObjects().size() == worldObjectsBefore,

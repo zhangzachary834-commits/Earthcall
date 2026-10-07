@@ -934,6 +934,9 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws, const std:
         }
         v.words.push_back({lexeme->getSymbol(), opcode, lexeme->getIdentifier(), law->getIdentifier(),
                            law->name(), detail});
+        PropertyValue expression;
+        if (law->getDynamicProperty("sentence.math", expression))
+            if (auto text = std::get_if<std::string>(&expression)) v.words.back().expression = *text;
         PropertyValue arguments;
         if (law->getDynamicProperty("sentence.arguments", arguments))
             if (auto text = std::get_if<std::string>(&arguments)) v.words.back().arguments = *text;
@@ -1430,9 +1433,11 @@ LawSentence::Compilation TerminalChannel::compileByMetalaw(LawManager& laws,
                                                           const nlohmann::json& input,
                                                           bool readOnly, nlohmann::json* document) {
     const bool conditionSlot = input.value("slot", "") == "condition";
+    const bool valueSlot = input.value("slot", "") == "value";
     if (readOnly) {
         LawSentence::Compilation placeholder{std::nullopt, "", {}, std::nullopt};
-        if (conditionSlot) placeholder.condition = ConditionNode::all({});
+        if (valueSlot) placeholder.value = nlohmann::json{{"value", 0}};
+        else if (conditionSlot) placeholder.condition = ConditionNode::all({});
         else placeholder.action = ActionNode::sequence({});
         return placeholder;
     }
@@ -1461,7 +1466,7 @@ LawSentence::Compilation TerminalChannel::compileByMetalaw(LawManager& laws,
         if (_compilationTemplate.empty()) continue;
         try {
             auto pattern = nlohmann::json::parse(_compilationTemplate);
-            if (input.value("slot", "") == "arguments") {
+            if (input.value("slot", "") == "arguments" || valueSlot) {
                 std::set<std::string> fields;
                 std::function<void(const nlohmann::json&)> collect = [&](const nlohmann::json& node) {
                     if (node.is_object() && node.contains("$slot") && node["$slot"].is_string()) {
@@ -1480,6 +1485,10 @@ LawSentence::Compilation TerminalChannel::compileByMetalaw(LawManager& laws,
                 const auto node = ConditionNode::fromJson(model);
                 if (node.kind == ConditionNode::Kind::Unsupported)
                     throw std::runtime_error("the template is not a condition this build can read");
+            } else if (valueSlot) {
+                if (!model.is_object() || model.size() != 1 ||
+                    (!model.contains("value") && !model.contains("literal") && !model.contains("math")))
+                    throw std::runtime_error("a value compiler must return exactly one value, literal, or math envelope");
             } else if (!document) validateSentenceAction(model);
             if (chosen && *chosen != model) throw std::runtime_error("multiple Metalaws supplied conflicting compilation models");
             chosen = model;
@@ -1492,12 +1501,13 @@ LawSentence::Compilation TerminalChannel::compileByMetalaw(LawManager& laws,
     if (result.error.empty() && chosen) {
         try {
             if (document) { *document = *chosen; result.action = ActionNode::sequence({}); }
+            else if (valueSlot) result.value = *chosen;
             else if (conditionSlot) result.condition = ConditionNode::fromJson(*chosen);
             else result.action = ActionNode::fromJson(*chosen);
         }
         catch (const std::exception& e) { result.error = std::string("invalid compiled model: ") + e.what(); }
     }
-    if (!result.action && !result.condition && result.error.empty())
+    if (!result.action && !result.condition && !result.value && result.error.empty())
         result.error = "no authored Metalaw compiled " + input.value("slot", "invocation") +
                        " for " + input.value("selector", "") + "; no compiler fallback exists";
     // Input remains legible as the last request; clear the live slot so a

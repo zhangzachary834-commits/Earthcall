@@ -1290,3 +1290,12 @@ Zach asked to make Earthcall's Zone Window in the Creator Console even better an
     - Test **Diff Against Active Zone**: Select an inactive zone, click `Compare with Active Zone`, and check the shared vs unique entity report.
 - [ ] **Top Bar:** Check the authored Kind selector (`Standard`, `Home`, `Community`) for new zones and the `Reload Store` button to hydrate identities from disk.
 
+
+## Direct Screen CLI wizardry (2026-10-06)
+
+Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-06 18:22 PDT; Zach requested direct 2D authoring through Metalaws. [Guide](../../../architecture/law/LAW_AUTHORING_CLI_GUIDE.md#5a-direct-2d-screen-forms--fields-written-in-the-cli).
+
+- [ ] Restart the rebuilt WebGPU app, unlock in Identity, enter LawLine, preview and paste `examples/law_line_screen_lens.txt`: see the blue disc, gold diamond/four points, cyan circle, and smoothly pulsing gold ring over a dark gradient.
+- [ ] Resize the viewport and confirm the form stays centred and scales with framebuffer height; judge its visual feel separately from the native fixture proof.
+- [ ] Disable/delete Lens Time, paste the clear program, and confirm the ordinary 3D scene returns; preview must create no Laws or visible output.
+- [ ] Save the setup Laws in the intended Zone, restart/reenter, and confirm initialization restores the Lens; remove and save the lesson Laws when finished so they do not reapply on a later activation.

@@ -1,6 +1,6 @@
 # Writing Earthcall Laws: a guide for humans and agents
 
-**Current surface: 2026-10-05.** Written by Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 13:16 PDT.
+**Current surface: 2026-10-06.** Written by Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 13:16 PDT.
 
 Zach asked for a sentence authoring surface with preconfigured vocabulary, then specified general `Create` initializers, compilation by Metalaws, multiple sentences in written order, and property operations. He also tested the invisible cubes and confirmed that the corrected cube creation and original Stairmaker work. This guide turns those requests and discoveries into lessons for human authors and the agents helping them.
 
@@ -21,6 +21,8 @@ enter
 enter LawLine
 help
 ```
+
+If the Terminal says you are not present, `enter Identity` and follow its key/unlock prompt, then `enter LawLine` again. Typed authoring requires your authenticated presence; previews remain open.
 
 `enter` lists Terminal Zones. `enter LawLine` selects the Law-authoring meaning for your input. **It does not move your body or switch the visible world.** Use the app's Zone controls to choose the world you intend to work in. The prompt/footer distinguishes the Terminal's `lineZone`, the body's Zone, hearing, and the speaking author.
 
@@ -186,6 +188,46 @@ called "Cubes Below Me" always if is a Person then Create <Object, properties: {
 `Object` has the configured direct-birth rule. `Create <@prototype, properties: {…}>` can derive from a live, resolvable prototype through the existing concrete-kind adapter. An arbitrary kind word does not conjure a constructor. Person birth is not available through an ad hoc Object/clone sentence; Persons correspond to actual humans registered through identity channels. Relation creation still requires participants; this initializer syntax does not supply universal participant slots.
 
 `Cube` is an authored word denoting the existing geometry compatibility value. It does not make shape enums the ontology. In particular, `shape.r`, `shape.ry`, and `shape.rz` are not generic cube resizing controls. The sky example below uses an existing ellipsoid manifestation; authored form can also use the broader OntoMath surfaces described in the [2D/3D app guide](../Design/Building%202D%20and%203D%20Apps%20with%20Earthcall%20Guide.md).
+
+## 5a. Direct 2D Screen forms — fields written in the CLI
+
+**Added at Zach's request, 2026-10-06.** Rebuild/restart WebGPU to load the generic value constructor channel. The seed appends its Lexemes and compiler Laws to the native LawLine Zone while keeping your existing beings and Laws. Unlock your identity, then `enter LawLine`.
+
+Start with a full-frame gradient:
+
+```text
+called "Screen Gradient" becomes true if is a Person then add property @screen-channel.output.color to VectorField <pieces: [Piece <value: $((u, v, 0.25))>]>
+```
+
+This displays colour directly in Earthcall's physical framebuffer. The authored field does not need an Object, Material, FaceTexture, or ShapeKind. A previously configured `output.colorPath` takes precedence over local colour; use the clear recipe below before this small lesson if another output binding is active.
+
+`$(…)` **quotes mathematics for later sampling**. The Terminal retains the existing typed OntoMath tree; Screen binds its coordinates at each physical pixel. This notation belongs in Earthcall's line editor. Without quotation, a mathematical expression is evaluated as an ordinary initializer instead.
+
+| Word / notation | Meaning |
+|---|---|
+| `VectorField <pieces: […]>` | A typed vector-valued field; Screen colour expects a vector. |
+| `ScalarField <pieces: […]>` | A typed scalar-valued field; Screen opacity expects a scalar. |
+| `Piece <value: $(…), where: $(…)>` | Value applies where the signed selector is ≤ 0; omitted `where` admits the whole domain. |
+| `x`, `y`, `p` | Physical pixel centre coordinates; origin top-left, `p = (x, y, 0)`. |
+| `u`, `v` | Normalized physical coordinates, `x / width`, `y / height`. |
+| `width`, `height` | Current framebuffer dimensions; formulas adapt to resizing. |
+| `t` | Only the explicitly authored time value/binding; no implicit clock. |
+
+The existing `y`/yes shorthand and the mathematical `y` coordinate are separate authored meanings. Resolver Metalaws choose by the quotation context. Preview may report that this meaning stays open until Enter; it executes no resolver or compiler.
+
+The first applicable Piece wins. Put fine details before a full-screen background. Undefined regions leave the existing scene intact. Select physical pixel column 7, row 9 by quoting `Distance <a: $(p), b: $((7.5, 9.5, 0))> - 0.1`; the half-unit offset selects that pixel centre. [Gold Pixel: the complete one-line program](../../../examples/law_line_screen_pixel.txt).
+
+Mathematical constructor words are ordinary authored Lexemes: `Distance <a: $(…), b: $(…)>`, `Abs <value: $(…)>`, `Clamp <value: $(…), low: $(…), high: $(…)>`, plus Dot, Cross, Hadamard, Normalize, Length, Project, Union, Intersection, Difference, Pow, Sqrt, Tan, and Component. `Component` takes `value: $(…)` and an `index` string naming an existing axis (e.g. `"x"`). Sin/Cos/Exp/Ln use the existing ScalarForm transcendental factors: `Sin <variable: "t", scale: 2, shift: 0>`; scale/shift are optional. This form applies to a named coordinate, not an arbitrary function-call argument. Check current completion signatures.
+
+**Try [Luminous Lens](../../../examples/law_line_screen_lens.txt):** paste its single line once. It creates a dark blue gradient, a blue inner disc, cyan and pulsing gold rings, four golden points, and a luminous diamond at the centre. Its second Law uses Flow to advance the explicitly installed `output.time`. This is one composed field; it does not establish multiple independent display owners or an OS-wide screen controller.
+
+To restore the 3D scene, first disable/delete `Lens Time` if you installed it, then paste [Clear Direct Screen](../../../examples/law_line_screen_clear.txt). That Law removes the direct colour, opacity, and time bindings/values. Disable/delete previous setup Laws if you do not want them to reapply when you reenter/restart. Save Zone retains your setup Laws, not the engine-owned channel's transient state; the setup Law must run again on activation.
+
+The new compiler slot is `value`. Metalaws return exactly one `value` (serialized PropertyValue), `literal` (structural record), or `math` (existing MathNode) envelope. Typed fields, Piece selectors, and constructor lowering are authored templates. Coordinate words carry `sentence.math`; their meanings are not a parser switch. Wrong known field result types, unused/duplicate arguments, missing compilers, and conflicting compiler outputs refuse. Quoted live PropertyPath captures refuse; Screen samples explicitly admitted coordinates. Backend-specific unsupported mathematics and unbound time still refuse at manifestation.
+
+Focused verification: four CLI suites passed (the LawLine fixture has 220 checks). Native WebGPU captures of the gradient and both Lens times each matched all 3,686,400 pixels with zero byte error; the selected physical gold pixel also matched exactly. See [the audit and captures](../../audits/LAW_LINE_DIRECT_SCREEN_AUTHORING_2026-10-06.md). Real Person unlock/typing, resize, and save/restart acceptance remain open.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-06 18:22 PDT — Zach requested direct 2D CLI wizardry; the field/value seam and Luminous Lens program implement that direction.*
 
 ## 6. Several Laws on one line, or several actions in one Law
 

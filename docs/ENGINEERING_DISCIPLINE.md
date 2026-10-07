@@ -17,6 +17,7 @@ every session, on top of the refusals in `AGENTS.md` and the workshop rules in
     test now calls what boot instantiates — that is the point of it.
   - `ontomath_test` and the geometry suite agreed with themselves while the live
     shape-generator spawn sat at the origin (`docs/audits/SHAPE_GENERATOR_LAW_AUDIT_2026-08-18.md`).
+  - The direct Screen CLI gradient rendered, but replacing it with a one-pixel field left the old gradient: AddProperty mistook a lazily materialized authored accessor for a registered engine path. The shared accessor-origin check now preserves both authored replacement/re-grant and engine shadow refusal; see [the CLI Screen audit](audits/LAW_LINE_DIRECT_SCREEN_AUTHORING_2026-10-06.md).
   - The LawLine native probe drew its newborn directly while its harness omitted inactive Zones; the actual Engine's legacy `World` preference created cubes outside the rendered Zone. The corrected harness includes inactive Zones, and a full Engine viewport capture witnesses birth and visibility together ([audit](audits/LAW_CREATE_ACTIVE_ZONE_ROUTING_FIX_2026-10-05.md), 2026-10-05).
   - `agent intercom/conversation_history_injection.py` and `playpen.py` were claimed
     verified while they would not parse (literal newlines inside string literals).

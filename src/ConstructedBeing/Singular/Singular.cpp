@@ -370,6 +370,17 @@ bool Singular::setDynamicProperty(Earthcall::StringId id, const PropertyValue& v
     return true;
 }
 
+bool Singular::hasAuthoredPropertyAccessor(const std::string& name) const {
+    // Accessor origin is derived from the existing bridge, not cached state or
+    // a second authority office. Its value may be absent after RemoveProperty.
+    // A registered engine accessor wins even if malformed authored storage
+    // happens to contain a duplicate name; that must never open shadowing.
+    for (const auto& property : _propertyRegistry)
+        if (property && property->name() == name)
+            return dynamic_cast<const DynamicPropertyBridge*>(property.get()) != nullptr;
+    return hasDynamicProperty(name);
+}
+
 bool Singular::hasDynamicProperty(const std::string& name) const {
     return hasDynamicProperty(Earthcall::StringInterner::intern(name));
 }
