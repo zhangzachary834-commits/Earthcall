@@ -70,8 +70,21 @@ std::optional<MatrixValue> matrixInverse(const MatrixValue& matrix);
 // Transform an implicit homogeneous quadric Q by a point-space transform T.
 // If x' = T x and x^T Q x = 0, the transformed surface is
 // x'^T (T^-T Q T^-1) x' = 0.
-std::optional<MatrixValue> transformQuadric(const MatrixValue& quadric,
-                                            const MatrixValue& pointTransform);
+inline std::optional<MatrixValue> transformQuadric(const MatrixValue& quadric,
+                                                   const MatrixValue& pointTransform) {
+    if (!quadric.valid() || !pointTransform.valid() ||
+        quadric.rows() != 4 || quadric.cols() != 4 ||
+        pointTransform.rows() != 4 || pointTransform.cols() != 4) {
+        return std::nullopt;
+    }
+    const auto inverse = matrixInverse(pointTransform);
+    if (!inverse) return std::nullopt;
+    const auto inverseTranspose = matrixTranspose(*inverse);
+    if (!inverseTranspose) return std::nullopt;
+    const auto left = matrixMultiply(*inverseTranspose, quadric);
+    if (!left) return std::nullopt;
+    return matrixMultiply(*left, *inverse);
+}
 
 // Project an NDC point through inverse(projection * view), including the
 // homogeneous divide. This owns general picking/unprojection mathematics;
