@@ -31,20 +31,52 @@ EventBus& EventBus::instance() {
 // The priority is an integer that determines the order in which the subscribers are called.
 // The higher the priority, the earlier the subscriber is called.
 // The default priority is 0.
-void EventBus::subscribe(const std::type_index& type, const Listener& listener, int priority)
+uint64_t EventBus::subscribe(const std::type_index& type, const Listener& listener, int priority)
 {
     std::lock_guard<std::mutex> lock(_mutex);
+    uint64_t id = _nextSubscriptionId++;
     auto it = _listeners.find(type);
     auto newVec = std::make_shared<std::vector<ListenerEntry>>();
     if (it != _listeners.end() && it->second) {
         *newVec = *it->second;
     }
-    newVec->emplace_back(ListenerEntry{priority, listener});
+    newVec->emplace_back(ListenerEntry{id, priority, listener});
     // Keep highest priority first for deterministic ordering.
     std::sort(newVec->begin(), newVec->end(), [](const ListenerEntry& a, const ListenerEntry& b){
         return a.priority > b.priority;
     });
     _listeners[type] = newVec;
+    return id;
+}
+
+void EventBus::unsubscribe(uint64_t id)
+{
+    if (id == 0) return;
+    std::lock_guard<std::mutex> lock(_mutex);
+    for (auto& [type, vecPtr] : _listeners) {
+        if (!vecPtr) continue;
+        bool found = false;
+        for (const auto& entry : *vecPtr) {
+            if (entry.id == id) {
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            auto newVec = std::make_shared<std::vector<ListenerEntry>>();
+            for (const auto& entry : *vecPtr) {
+                if (entry.id != id) {
+                    newVec->push_back(entry);
+                }
+            }
+            if (newVec->empty()) {
+                vecPtr = nullptr;
+            } else {
+                vecPtr = newVec;
+            }
+            break;
+        }
+    }
 }
 
 void EventBus::clear()
