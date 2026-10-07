@@ -2126,6 +2126,7 @@ void WebGpuRenderer::drawOverlay(const geom::TessMesh& mesh, const glm::vec4& co
 
 void WebGpuRenderer::flushSdfDraws() {
     if (_activeSdfPipelines.empty()) return;
+    if (!_inverseViewProjValid) return;
     if (!_pass) {
         for (const SdfPipeline* sp : _activeSdfPipelines) {
             _sdfBatches[sp].clear();
@@ -2205,8 +2206,6 @@ void WebGpuRenderer::flushSdfDraws() {
     }
 
     // Global uniforms for SDFs
-    if (!_inverseViewProjValid) return;
-
     SdfGlobalUniforms u;
     u.viewProj = _viewProj;
     u.invViewProj = _invViewProj;
@@ -2432,7 +2431,7 @@ void WebGpuRenderer::flushSdfDraws() {
 }
 
 void WebGpuRenderer::flushVolumeComposite() {
-    if (!_encoder || !_frameColorView || !_depthView) return;
+    if (!_encoder || !_frameColorView || !_depthView || !_inverseViewProjValid) return;
 
     // V3 does not invent incident direction. A wi-reading Phi can consume one
     // and only one enabled admitted direct source. Position/enablement are
@@ -2916,8 +2915,6 @@ void WebGpuRenderer::flushVolumeComposite() {
     // No depth attachment: finished depth is read as a texture instead.
     _pass = wgpuCommandEncoderBeginRenderPass(_encoder, &volumePassDesc);
     _boundPipeline = nullptr;
-
-    if (!_inverseViewProjValid) return;
 
     VolumeGlobalUniforms globals;
     globals.viewProj = _viewProj;
