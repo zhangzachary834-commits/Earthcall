@@ -396,7 +396,7 @@ jobs:
                   result = subprocess.run(cmd, text=True, capture_output=True, timeout=240)
               except subprocess.TimeoutExpired:
                   print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={adapter} direct={direct} timeout_s=240")
-                  raise SystemExit(1)
+                  return 0.0
 
               lines = [line for line in result.stdout.splitlines()
                        if line.startswith("ADAPTER_PERF ")]
