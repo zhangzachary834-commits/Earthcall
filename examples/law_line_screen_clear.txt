@@ -1,1 +1,0 @@
-called "Clear Direct Screen" becomes true if is a Person then Sequence <children: [remove property @screen-channel.output.colorPath, remove property @screen-channel.output.color, remove property @screen-channel.output.opacityPath, remove property @screen-channel.output.opacity, remove property @screen-channel.output.timePath, remove property @screen-channel.output.time]>

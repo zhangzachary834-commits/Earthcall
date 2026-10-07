@@ -240,15 +240,3 @@ Following Zach's prompt to introduce familiar creative features characteristic o
 **Session:** `2026-09-14-02-45`  
 **Date:** 2026-09-14  
 **Timestamp:** 2026-09-14 02:49 PDT
-
-
-## Direct Screen boundary (2026-10-04)
-
-Zach requested a direct medium after distinguishing surface paint from “make my screen's
-pixel here display ___.” Surface paint above keeps its Object/Material semantics;
-[Direct Screen forms](../Direct_Screen_Forms/Direct_Screen_Forms.md) now provides an
-independent framebuffer act through the same authored OntoMath vocabulary. It does not
-require an Object, face, Material, texture, or ShapeKind. Its implementation and native
-verification do not imply that direct sample elevation or the interactive authoring
-surface is finished. — Codex / GPT-6.1 Sol / session
-`01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` / 2026-10-04 21:10 PDT.

@@ -1,17 +1,5 @@
 # Spike 2 Lag Regression: Handoff to Gemini Spark
 
-<!-- NAV_BLOCK_START -->
-> [!NOTE]
-> **Thread Navigation: Performance and Lag**
-> [View Full Thread Index](../00_THREAD_INDEX.md)
->
-> **Related in this thread:**
-> - [LAG_FIX_HANDOFF.md](LAG_FIX_HANDOFF.md)
-> - [Response_to_Opus5_Physics.md](Response_to_Opus5_Physics.md)
-<!-- NAV_BLOCK_END -->
-
-
-
 Hey Spark! Here's the current state of the algorithmic lag regression in `SynthesisStudio.LivingInstrument` (Spike 2).
 
 ## What has been fixed so far:

@@ -1,6 +1,6 @@
 # Time, Timeline, and Moment
 
-**Status:** Timeline first rung and Event occurrence legibility implemented.
+**Status:** Timeline first rung implemented on the OntoMath Radiance Rung 4 branch.
 The future Law <-> Timeline <-> Moment ontology is intentionally not decided by
 this implementation pass.
 
@@ -210,19 +210,7 @@ An Event does not wrap a hidden timestamp object. It is a Moment elevated by:
 - an author.
 
 Its temporal properties remain the Moment properties, while `verb`, `type`,
-`subject`, `object`, `author`, and `occurrenceId` add the distinction. Each
-constructed Event mints a stable occurrence identity; a copy retains it, and
-two transitions with the same verb, participants, and second still have distinct
-identities. Changing the verb or Moment bounds does not rename the Event.
-
-An EventBus publication now carries a copy of that Event Singular in its Rete
-fact. During an `OnEvent` Law application, `@event.verb`, `@event.start`,
-`@event.occurrenceId`, and the other registered Event/Moment properties read
-that occurrence. It is a read-only historical snapshot. The old
-`@event.subject.*` and `@event.object.*` paths still read participant beings
-for saved Law compatibility; they are not a new Law-wide subject ontology.
-`Core::Event::Custom` facts have no Event Moment snapshot yet. Event-defining
-Relations, Timeline admission, and Event load/round-trip remain future work.
+`subject`, `object`, and `author` add the distinction.
 
 This preserves the no-black-box rule and keeps Event inside the Time ontology
 rather than recreating private callback timestamp structs.
@@ -245,8 +233,8 @@ dt <- Universe::dt()
 
 and the action engine performs the corresponding continuous/drive behavior.
 
-That machinery remains operational; exposing an Event Moment to a triggered Law
-does not replace its activation, drive, or clock semantics.
+That machinery remains operational and is deliberately **not redesigned in this
+pass**.
 
 Its present implementation must therefore not be interpreted as the final
 ontology of temporal Law.

@@ -51,9 +51,6 @@ public:
     // Resets baseline snapshot of tracked files
     void rescanBaseline();
 
-    std::string propLastModifiedFile() const { return _lastModifiedFile; }
-
-
 private:
     void buildProperties() override;
 
@@ -81,6 +78,7 @@ private:
     double propPollIntervalMs() const { return _pollIntervalMs; }
     void propSetPollIntervalMs(const double& v) { _pollIntervalMs = v > 10.0 ? v : 10.0; }
 
+    std::string propLastModifiedFile() const { return _lastModifiedFile; }
     std::string propLastEventType() const { return _lastEventType; }
     double propLastEventTimestamp() const { return _lastEventTimestamp; }
     double propTotalEventsPublished() const { return _totalEventsPublished; }
@@ -89,6 +87,14 @@ private:
     bool propCheckNowTrigger() const { return _checkNowTrigger; }
     void propSetCheckNowTrigger(const bool& v);
 
+    bool propAutoReload() const { return _autoReload; }
+    void propSetAutoReload(const bool& v) { _autoReload = v; }
+
+    double propReloadCount() const { return _reloadCount; }
+    std::string propLastReloadTarget() const { return _lastReloadTarget; }
+
+    bool propReloadShadersTrigger() const { return _reloadShadersTrigger; }
+    void propSetReloadShadersTrigger(const bool& v);
 
     std::string propStatus() const { return _status; }
     std::string propLastError() const { return _lastError; }
@@ -108,6 +114,10 @@ private:
     std::string _status = "idle";
     std::string _lastError;
 
+    bool _autoReload = true;
+    double _reloadCount = 0.0;
+    std::string _lastReloadTarget = "none";
+    bool _reloadShadersTrigger = false;
 
     std::chrono::steady_clock::time_point _lastPollTime{};
     mutable std::mutex _mutex;

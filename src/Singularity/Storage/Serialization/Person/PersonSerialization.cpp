@@ -2,7 +2,6 @@
 
 #include "Person/Person.hpp"
 #include "Singularity/Storage/Serialization/Person/BodySerialization.hpp"
-#include <stdexcept>
 
 nlohmann::json personToJson(const Person& person) {
     nlohmann::json j;
@@ -23,21 +22,6 @@ void personFromJson(const nlohmann::json& j, Person& person) {
     if (!j.is_object()) {
         throw std::invalid_argument("JSON for Person deserialization must be an object");
     }
-    // Reject a conflicting identity before changing even a display name or
-    // Body field. A serialized public ID is a claim, never consent to turn an
-    // already identified Person into another bearer. Verification of an
-    // initially unbound Person's claimed key remains the caller's boundary.
-    if (j.contains("personId")) {
-        if (!j["personId"].is_string()) {
-            throw std::invalid_argument("Person deserialization refused malformed personId");
-        }
-        const Identity::SingularId claimed =
-            Identity::SingularId::parse(j["personId"].get<std::string>());
-        if (!claimed.canAuthenticate() ||
-            (person.hasIdentity() && person.personId() != claimed)) {
-            throw std::invalid_argument("Person deserialization refused conflicting personId");
-        }
-    }
     // Type-checked: profile/session files are untrusted by construction.
     if (j.contains("displayName") && j["displayName"].is_string()) {
         person.setDisplayName(j["displayName"].get<std::string>());
@@ -50,7 +34,7 @@ void personFromJson(const nlohmann::json& j, Person& person) {
     if (j.contains("personId") && j["personId"].is_string()) {
         Identity::SingularId claimed =
             Identity::SingularId::parse(j["personId"].get<std::string>());
-        (void)person.setPersonId(claimed);
+        if (claimed.canAuthenticate()) person.setPersonId(claimed);
     }
     if (j.contains("position") && j["position"].is_array() && j["position"].size() >= 3) {
         person.position() = glm::vec3(j["position"][0], j["position"][1], j["position"][2]);
@@ -121,7 +105,12 @@ void updatePriorPersonSerializations(const Person& person, const std::string& ol
             }
 
             try {
-                nlohmann::json j = SaveSystem::readSaveData(entry.path().string());
+                std::ifstream inFile(entry.path());
+                if (!inFile.is_open()) continue;
+                nlohmann::json j;
+                inFile >> j;
+                inFile.close();
+
                 if (!j.is_object()) continue;
                 bool modified = false;
 
@@ -227,17 +216,7 @@ void updatePriorPersonSerializations(const Person& person, const std::string& ol
                     const auto temporary = finalPath.string() + ".tmp-person-" +
                                            std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
                     bool wroteOk = false;
-                    if (ext == ".ecform") {
-                        nlohmann::json wrapper = nlohmann::json::object();
-                        wrapper["MigrationRoot"] = j.dump(-1);
-                        std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
-                        std::ofstream outFile(temporary, std::ios::binary);
-                        if (outFile.is_open()) {
-                            outFile.write(reinterpret_cast<const char*>(outBytes.data()), outBytes.size());
-                            outFile.flush();
-                            wroteOk = static_cast<bool>(outFile);
-                        }
-                    } else {
+                    {
                         std::ofstream outFile(temporary);
                         if (outFile.is_open()) {
                             outFile << j.dump(2);

@@ -26,28 +26,7 @@ become Laws. While it is attached, the app's stdout/stderr are relayed above the
 `saves/logs/earthcall-terminal.log` (both gitignored). It attaches only when stdin and stdout are TTYs,
 so ctest and IDE launches leave it quiet; set `NO_COLOR` to drop colour. No dependency: libedit was
 tried and removed (its Tab cannot offer a selectable menu). →
-`docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Law_Line/Law_Line.md`.
-For pasteable lessons and the action reference, read [the Law authoring CLI guide for humans and agents](architecture/law/LAW_AUTHORING_CLI_GUIDE.md).
-
-**2026-10-06 direct Screen CLI:** rebuild/restart `earthcall_webgpu`, unlock in Identity, then `enter LawLine`. The seeded VectorField/ScalarField/Piece and mathematical Lexemes compile through authored value Metalaws; paste `examples/law_line_screen_lens.txt` for the pulsing lens, and stop Lens Time then use `examples/law_line_screen_clear.txt` to restore the scene. [Contract and verification](Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md#cli-field-and-selector-authoring--2026-10-06). — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-06 18:22 PDT.
-
-**2026-10-05 stairway example:** `examples/law_line_stairway.txt` is one pasteable line, tested through pointer press/release and authored Metalaws. It creates steps above the clicked cube; the earlier example required a specific `law-line-cube` and placed steps below the Person. `enter LawLine` moves only the Terminal line. Native appearance remains in Person Verification. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 00:47 PDT.
-
-**2026-10-05 sky spiral add-on:** Zach confirmed the original Stairmaker and cube visibility work. Keep the original program enabled, paste `examples/law_line_sky_stairway.txt`, then click an existing step to grow eight coloured jewel steps; each new step can grow another spiral once, and hover turns/settles its orientation. No app rebuild or new vocabulary is needed. `law_line_zone_test` passes 162/162 checks; `python3 scratch/probes/law_line_visibility_probe.py --stairway` verifies growth and gestures in the full production Engine and captures the actual native spiral. Enhanced Person acceptance remains open. See [the audit](audits/SKY_STAIRWAY_AUTHORED_PROGRAM_2026-10-05.md). — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 12:40 PDT.
-
-**2026-10-05 Law Line action arguments:** the remaining 16 action kinds have authored named-argument signatures and compiler Metalaws; use `Lerp <path: "glow", operand: 1, factor: 0.25>` or `Map <path: "glow", expression: @law-line-cube.hp + 2>`. Rebuild/restart, and see the Law Line task for every signature and channel-execution limits. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 00:09 PDT.
-
-**2026-10-04 Law Line batches:** top-level `;` separates complete Law sentences; `law-line-compile-sentences` authorizes source-order registration. Authored aliases `add property`, `remove property`, and `modify property` use existing actions. Rebuild/restart; Save Zone keeps submitted Laws. See the Law Line task and Person Verification List for examples and native acceptance. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 19:46 PDT.
-
-**2026-10-04 Law Line creation:** `Create <Object, properties: {position: my.position + (0, -3, 0), authored: {purpose: "A foothold"}}>` is compiled through authored `law-line-compile-*` Metalaws; rebuild/restart the app to use the channel change. `scripts/seed_law_line.py` installs missing roots and appends missing Zone vocabulary while preserving existing bytes; it never rewrites existing Law roots. See [the Law Line task](Agenda/Tasks/Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md) for full syntax and scope, and [the creation audit](audits/LAW_LINE_CREATE_METALAW_2026-10-04.md) for verification. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 18:46 PDT.
-
-**2026-10-05 keyed-Person continuous example:** `examples/law_line_cubes_below.txt` uses `always if is a Person`, tested through Terminal/Metalaw/LawManager ticks with a keyed Person. `Identity @Zach` compares an exact identifier and does not match a keyed Person's display name. Three units below the author can be below the floor; native visibility remains open. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 10:25 PDT.
-
-**2026-10-05 cube visibility:** `python3 scratch/probes/law_line_visibility_probe.py` links an isolated native probe against the built WebGPU app objects and exercises the exact continuous Create line. The created cube renders without a floor; an opaque floor at feet height hides every pixel. Person.position is feet level, not camera height. See `docs/audits/LAW_LINE_CUBE_VISIBILITY_2026-10-05.md`; live scene acceptance remains open. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 11:28 PDT.
-
-**2026-10-05 confirmed Create routing fix:** `resolveZone` no longer lets an inactive Zone named World override the active/rendered Zone. The shared boot harness now exposes inactive Zones as the Engine does. Build/restart `earthcall_webgpu`; the original authored lines still apply. `python3 scratch/probes/law_line_visibility_probe.py --engine` exercises actual Engine/Terminal/Metalaw ticks and captures the visible gold cube at native resolution in an isolated fixture. See `docs/audits/LAW_CREATE_ACTIVE_ZONE_ROUTING_FIX_2026-10-05.md`. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 11:55 PDT.
-
-**Verification limit from that pass:** seven focused creation/Terminal/native-Zone checks passed; the broader run was stopped after a legacy chess capture assertion and expensive unrelated full-store pre-load serialization. The capture assertion also fails with pre-fix routing/harness code; the native Zone boot chess test passes. Historical green results below are dated evidence, not a current whole-suite claim. See [legacy test follow-up](Agenda/Tasks/Specific%20Tasks/Law%20and%20Reasoning/Legacy_Test_Store_Isolation/Legacy_Test_Store_Isolation.md).
+`docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Law_Line/Law_Line.md`
 
 ### One-click WASM launch (macOS)
 
@@ -86,7 +65,7 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 262 registered (2026-10-02); WebGPU/GL tests require a desktop GPU/display session; frame_lag_test is machine-load-sensitive
+ctest --test-dir build --output-on-failure -j4        # 247 registered (2026-09-25); WebGPU/GL tests require a desktop GPU/display session; frame_lag_test is machine-load-sensitive
 cmake --build build --target lag                       # just the frame-cost probe, with its report
 ```
 
@@ -103,15 +82,6 @@ The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 ---
 
 ## The test suite
-
-**2026-10-02 creation addition:** `universal_singular_creation_test` exercises
-the real authored prototype Create action, concrete-kind preservation,
-authorship and transfer refusals, canonical typed references on Zone reload,
-and preservation of enduring Relation history. Configure after adding its
-source, then build the named target before selecting it with CTest. Current
-registration count is 262; this is not a claim that every suite test was run.
-*Codex / GPT-6.1 Sol / session `01a0e64f-5853-7d30-8196-995b4fd16b89` /
-2026-10-02 17:02 PDT; Zach's universal Singular creation request.*
 
 **As of 2026-09-07, 109 tests are registered and the default build is clean.** (`smooth_tessellation_cache_test` fixed and verified by Jules (Gemini model unexposed), session jules-6175025450238978931-25cb60c8, 2026-09-07).
 WebGPU tests and `zone_facetexture_test` require a desktop GPU/display session; failure to
@@ -208,8 +178,6 @@ honest rather than convenient:
 | `object_roundtrip_test` | a field `to_json` writes and `from_json` drops. `faceColors` was write-only for a month with the write side making it look covered; `serialization_compat_test` covers the msgpack/Frontier *plumbing* and cannot see this |
 | `channel_paths_test` | the law-authoring picker offering a property path no registry answers. `CreationChannel::activeShapeKind` was advertised and unregistered, so every law reading it silently fell back |
 | `no_black_box_test` | refusal #6 — a being that registers nothing, a registry built twice, a setter that accepts a write and drops it, and a registered property the picker never offers |
-| `property_memory_access_test` | nested list/dictionary paths losing getter-returned memory, bypassing a read-only container, accepting a partial list index, widening an exact integer binding, losing equal-content rebinding, or overflowing the comparison stack; the second path runs serialized authored Laws for typed passthrough and existing container alias/rebinding behavior. General cells and persistent alias topology remain open in the Property storage task. |
-| `screen_recorder_test` / `webgpu_screen_recorder_test` | failed capture saved as a fabricated gradient, same-second recording overwrite, raw-session mixing, dead encoder pipes terminating the engine, and successful-looking screenshots with wrong native GPU pixels; the WebGPU witness requires a desktop surface and decodes recorded PNGs for full-pixel equality. |
 | `ground_plane_test` | a subsystem deciding, by list index, which being is the floor. `Zone::update` (formerly `World::update`) fell back to `_objects[1]` when nothing carried `baseline=ground` — and a Zone starts empty, so the **second being a Person spawned** silently became the ground. `Physics::integrate` then clamped its *centre* to its own *top*, lifting it half a height per substep, raising the floor, lifting it again: the whole world climbed at 30 m/s and every later spawn was teleported up to it |
 | `test_observation_load_test` | loading a test dump so a Person can see it. The Developer window called `loadState`, which erases Home, and never wrote `Person.position`, so `LocomotionChannel` snapped the camera back onto wherever the Person was standing. The live office is `ZoneManager::loadTestObservation` |
 | `world_switch_test` | two saved sessions mixing. json/.ecsave twins and a 0-byte file listed as separate worlds; a refused load retitled the live world; same-named Zones share identity (loading the other session does not rewind the Zone) |
@@ -219,10 +187,6 @@ honest rather than convenient:
 | `prophetic_rete_test` | **Section F is the point.** It guards the direction the Prophetic Rete analysis is allowed to be wrong in: a possibility-space filter that answers too NARROWLY makes a law go deaf — still registered, still enabled, still compiled, alpha memory simply empty — and nothing reports it. F fires real laws through a real `LawManager` and asserts they still hear, then checks all three fail-open paths (stale index, incomplete index, foreign alpha node). It also guards the change-feed fix: before 2026-09-01, `PropertyRef::set` was the ONLY caller of `notifyPropertyChanged` in the engine, so every `ComputedProperty`, every hand-written `Property` bridge, and every authored property was invisible to the Rete's dirty tracking. See `docs/architecture/law/PROPHETIC_RETE.md` §4 |
 | `frame_lag_test` | the frame quietly getting dearer. Guards three things nothing else could see: that per-frame cost stays sub-quadratic in the population, that an *idle* world fires no laws and grows no objects (CLAUDE.md's edge-not-level rule, measured rather than asserted), and that no being registers a property path twice (the `buildProperties()`-in-a-constructor bug, which doubles the cost of every law evaluation and shows up nowhere else) |
 | `zone_home_ontology_test` | manifesto Home/Zone: primary Home kernel-locked per Person (not "any owned Zone"); owner is Person/Relationship/Community; community-home / community-zone authored kinds; AuthorZone mints extras; unused `class Home` retired |
-
-*Property-memory test entry and configured count: Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 12:29 PDT. The count comes from `ctest -N`; it is not a full-suite verdict.*
-
-*Native screen-capture entry and refreshed configured count: Codex · GPT-6 · session `01a0fe15-4fe2-7dc0-a2d0-7d823e4ad26c` · 2026-10-02 12:40 PDT. Run the real engine witness with `python3 scratch/probes/screen_recorder_engine_probe.py` after building `earthcall_webgpu`; it links production objects and uses an isolated save root. See [the capture audit](audits/SCREEN_CAPTURE_NATIVE_VERIFICATION_2026-10-02.md).*
 
 If you add a field to `Object` that `to_json` writes, add it to `object_roundtrip_test`.
 
@@ -258,24 +222,6 @@ globs `tests/**/*.cpp`; the ctest name is the file stem. See `tests/README.md`.
 ---
 
 ## Two live-system notes
-
-### Direct Screen developer witness (2026-10-04)
-
-After building `earthcall_webgpu`, run `python3 scratch/probes/direct_screen_form_probe.py`
-in a desktop GPU/display session. It links actual production app objects and uses an
-isolated first-seed save root, checks independent CPU/native samples, then boots the
-Engine and decodes its viewport capture. The verified 2560 × 1440 frame matched all
-3,686,400 pixels with zero byte error. The existing shader parameter-refresh regression
-also passed; this is not a full-suite claim. Direct fields need no Object/Material/
-ShapeKind carrier. See [contract and authoring scope](Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md)
-and [native evidence](audits/DIRECT_SCREEN_FORMS_NATIVE_VERIFICATION_2026-10-04.md).
-— Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
-2026-10-04 21:20 PDT; Zach's direct-medium request.
-
-### Reverse-image developer witness (2026-10-02)
-
-`scripts/reconstruct_flat_image.py` needs Python with Pillow and emits only new authored seeds. `scripts/test_image_reconstruction.py` supplies independent raster and preservation checks; `scripts/verify_image_reconstruction.py` links the built production WebGPU app objects and needs a desktop GPU with the documented Retina fixture. This argument-driven probe is under `scripts/`, outside the registered test glob. See [scope, evidence, commands and unfinished work](Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Image_Reconstruction/Image_Reconstruction.md).
-
 
 **`Core::Engine`'s core subsystems are now actually constructed (fixed 2026-08-13).**
 `_lawManager`, `_player`, `_camera`, `_mouseHandler`, `_keyboardHandler` were declared as

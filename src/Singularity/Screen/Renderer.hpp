@@ -412,15 +412,6 @@ public:
     virtual void drawImage2D(const uint8_t* rgba, uint32_t width, uint32_t height,
                              const glm::vec4& rect, const glm::vec4& tint) = 0;
 
-    // Irreducible Screen act: sample an authored field at physical framebuffer
-    // centres. Backends must realize it or refuse, never substitute a Shape,
-    // texture or CPU image. A null temporal coordinate leaves t unbound.
-    virtual bool drawScreenForm(const OntoMath::Piecewise&, const OntoMath::Piecewise*,
-                                uint32_t, uint32_t, const double*, std::string& reason) {
-        reason = "direct Screen fields require the WebGPU backend";
-        return false;
-    }
-
     // -----------------------------------------------------------------------
     // Persistent textures — the per-face albedo the Face Brush paints. Unlike
     // drawImage2D's transient blit, these live across frames and are re-uploaded

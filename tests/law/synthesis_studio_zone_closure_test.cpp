@@ -1,4 +1,3 @@
-#include "Singularity/Storage/SaveSystem.hpp"
 // Regression witness for Zach's 2026-09-14 live report: the Living Studio's
 // buttons still visibly depressed, but notes were silent and the matching
 // resonance spheres no longer swelled. Generic control First Movers were alive;
@@ -65,7 +64,11 @@ int main() {
     check(std::filesystem::exists(sourceZone), "restored Living Studio Zone identity exists");
     if (!std::filesystem::exists(sourceZone)) return 1;
 
-    nlohmann::json zoneJson = SaveSystem::readSaveData(sourceZone.string());
+    nlohmann::json zoneJson;
+    {
+        std::ifstream in(sourceZone);
+        in >> zoneJson;
+    }
     check(zoneJson.contains("lawRefs") && zoneJson["lawRefs"].is_array() &&
               !zoneJson["lawRefs"].empty(),
           "Living Studio names a Zone-native authored Law closure");

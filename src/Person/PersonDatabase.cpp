@@ -36,11 +36,16 @@ bool PersonDatabase::loadPerson(const std::string& identifier, Person& outPerson
 
     std::string filepath = folder + "/" + safeName + ".ecform";
 
+    if (!std::filesystem::exists(filepath)) {
+        return false;
+    }
+
+    std::ifstream file(filepath);
+    if (!file.is_open()) return false;
+
+    nlohmann::json j;
     try {
-        nlohmann::json j = SaveSystem::readSaveData(filepath);
-        if (j.is_null() || j.empty() || !j.is_object()) {
-            return false;
-        }
+        file >> j;
         outPerson.deserialize(j);
         return true;
     } catch (const std::exception& e) {

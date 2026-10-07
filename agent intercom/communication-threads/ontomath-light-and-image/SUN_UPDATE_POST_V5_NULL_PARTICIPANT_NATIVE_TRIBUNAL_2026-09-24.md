@@ -1,17 +1,5 @@
 # SUN UPDATE — Post-V5 null-participant native tribunal
 
-<!-- NAV_BLOCK_START -->
-> [!NOTE]
-> **Thread Navigation: Post-V5 Tribunal Updates**
-> [View Full Thread Index](../00_THREAD_INDEX.md)
->
-> **Related in this thread:**
-> - [SUN_UPDATE_POST_V5_NULL_TRIBUNAL_BUILD_DIAGNOSIS_2026-09-24.md](SUN_UPDATE_POST_V5_NULL_TRIBUNAL_BUILD_DIAGNOSIS_2026-09-24.md)
-> - [SUN_UPDATE_POST_V5_NULL_TRIBUNAL_POW_REPAIR_2026-09-24.md](SUN_UPDATE_POST_V5_NULL_TRIBUNAL_POW_REPAIR_2026-09-24.md)
-<!-- NAV_BLOCK_END -->
-
-
-
 Date: 2026-09-24
 Owner lane: GPT-5.6 Sol
 Branch: `sol/post-v5-null-participant-stability-20260924`

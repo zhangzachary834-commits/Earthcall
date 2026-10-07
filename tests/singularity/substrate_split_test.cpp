@@ -1,4 +1,3 @@
-#include "Singularity/Storage/SaveSystem.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
@@ -125,7 +124,9 @@ int main() {
     // are exactly what a reader must resolve and verify to find it.
     std::filesystem::path matterPath;
     {
-        nlohmann::json fj = SaveSystem::readSaveData(formPath.string());
+        std::ifstream formIn(formPath);
+        nlohmann::json fj;
+        formIn >> fj;
         check(fj.contains("matterGeneration"), ".ecform names a matterGeneration (Invariant 4)");
         const std::string snapshotId = fj.value("matterGeneration", nlohmann::json{}).value("snapshotId", std::string{});
         check(!snapshotId.empty(), "matterGeneration carries a non-empty snapshotId");
@@ -135,7 +136,9 @@ int main() {
 
     // Test 2: Inspect .ecform JSON structure (ensure it's lean, readable, no binary base64)
     {
-        nlohmann::json fj = SaveSystem::readSaveData(formPath.string());
+        std::ifstream formIn(formPath);
+        nlohmann::json fj;
+        formIn >> fj;
 
         check(fj.contains("objects") && fj["objects"].is_array() && fj["objects"].size() == 3,
               ".ecform has 3 objects");
@@ -232,23 +235,15 @@ int main() {
         }
 
         const auto migratedForm = sandbox / "worlds" / "legacy_world.ecform";
-        check(!std::filesystem::exists(migratedForm), "No .ecform prior to loading legacy save");
+        const auto migratedMatter = sandbox / "worlds" / "legacy_world.ecmatter";
+        check(!std::filesystem::exists(migratedMatter), "No .ecmatter prior to loading legacy save");
 
         ZoneManager legacyMgr;
         legacyMgr.loadState(legPath.string(), ctx);
 
         check(legacyMgr.active().getOwnedObjects().size() == 1, "Legacy save objects hydrated");
         check(std::filesystem::exists(migratedForm), "Legacy loader transparently wrote .ecform");
-
-        std::filesystem::path migratedMatter;
-        {
-            nlohmann::json fj = SaveSystem::readSaveData(migratedForm.string());
-            if (fj.contains("matterGeneration")) {
-                const std::string snapshotId = fj["matterGeneration"].value("snapshotId", std::string{});
-                migratedMatter = sandbox / "worlds" / ("legacy_world." + snapshotId + ".ecmatter");
-            }
-        }
-        check(!migratedMatter.empty() && std::filesystem::exists(migratedMatter), "Legacy loader transparently wrote .ecmatter");
+        check(std::filesystem::exists(migratedMatter), "Legacy loader transparently wrote .ecmatter");
         check(SaveSystem::readMatterData(migratedMatter.string()).size() > 0, ".ecmatter contains non-empty binary payload");
     }
 

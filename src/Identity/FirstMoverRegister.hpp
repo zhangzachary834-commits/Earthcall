@@ -105,23 +105,12 @@ enum class Standing {
 
 const char* standingCode(Standing s);
 
-class FirstMoverRegister : public Singular {
+class FirstMoverRegister {
 public:
     // Constructible, not only a singleton: 8a specifies the register as a
     // serialized being belonging to a world, so a world owns one rather than
     // the process. instance() is the convenience handle for the active world.
     FirstMoverRegister() = default;
-    std::string getIdentifier() const override { return "first-movers"; }
-    // Law-legible, read-only: recognition is a covenant granted by a Person
-    // with their key (earthcall_first_mover), never a property write (8d).
-    // Not registered, named per NO_BLACK_BOX.md: the trusted-root key set
-    // (runtime proof, never serialized) and _retired (dead objects kept only
-    // so author pointers stay valid). Each mover is its own Singular.
-    void buildProperties() override;
-    double propMoverCount() const { return static_cast<double>(_movers.size()); }
-    bool propPersonPresent() const { return !_authenticatedPersons.empty(); }
-    std::string propSaveRoot() const { return _saveRoot.generic_string(); }
-    std::string propActiveMover() const { return _activeMover.toString(); }
 
     static FirstMoverRegister& instance();
 

@@ -3,36 +3,7 @@
 #include <glm/gtx/rotate_vector.hpp>
 
 PersonPerspective::PersonPerspective(const std::string& name, PerspectiveType type)
-    : _id(name), _name(name), _type(type) {
-    // Initialize default view state based on type
-    switch (_type) {
-        case PerspectiveType::FirstPerson:
-            _viewState.position = {0.0f, 1.7f, 0.0f}; // Eye level
-            _viewState.target = {0.0f, 1.7f, -1.0f};
-            break;
-        case PerspectiveType::ThirdPerson:
-            _viewState.position = {0.0f, 2.0f, 5.0f};
-            _viewState.target = {0.0f, 0.0f, 0.0f};
-            _viewState.distance = 5.0f;
-            break;
-        case PerspectiveType::TopDown:
-            _viewState.position = {0.0f, 10.0f, 0.0f};
-            _viewState.target = {0.0f, 0.0f, 0.0f};
-            _viewState.up = {0.0f, 0.0f, -1.0f};
-            break;
-        case PerspectiveType::Isometric:
-            _viewState.position = {5.0f, 5.0f, 5.0f};
-            _viewState.target = {0.0f, 0.0f, 0.0f};
-            break;
-        case PerspectiveType::FreeCamera:
-            _viewState.position = {0.0f, 0.0f, 5.0f};
-            _viewState.target = {0.0f, 0.0f, -1.0f};
-            break;
-    }
-}
-
-PersonPerspective::PersonPerspective(const std::string& id, const std::string& name, PerspectiveType type)
-    : _id(id), _name(name), _type(type) {
+    : _name(name), _type(type) {
     // Initialize default view state based on type
     switch (_type) {
         case PerspectiveType::FirstPerson:

@@ -1,781 +1,529 @@
 {
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-pawn-b-double",
+  "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+  "law": {
+    "id": "law-chess-pawn-b-double",
+    "name": "move-black-pawn-two",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
     "authors": [
-        "grok-4.6"
+      "grok-4.6"
     ],
-    "identifier": "law-chess-pawn-b-double",
-    "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
-    "law": {
-        "actionDescriptions": [
-            "sequence(19)"
-        ],
-        "actionModel": {
-            "children": [
-                {
-                    "bindings": {
-                        "gx": "gridX"
-                    },
-                    "function": {
-                        "input": "x",
-                        "pieces": [
-                            {
-                                "mathNode": {
-                                    "op": 0,
-                                    "scalarForm": {
-                                        "terms": [
-                                            {
-                                                "c": 1.0,
-                                                "factors": {
-                                                    "gx": 1.0
-                                                }
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "kind": 8,
-                    "path": "@state.chess.prevX"
-                },
-                {
-                    "bindings": {
-                        "gy": "gridY"
-                    },
-                    "function": {
-                        "input": "x",
-                        "pieces": [
-                            {
-                                "mathNode": {
-                                    "op": 0,
-                                    "scalarForm": {
-                                        "terms": [
-                                            {
-                                                "c": 1.0,
-                                                "factors": {
-                                                    "gy": 1.0
-                                                }
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "kind": 8,
-                    "path": "@state.chess.prevY"
-                },
-                {
-                    "kind": 0,
-                    "operand": {
-                        "t": "bool",
-                        "v": false
-                    },
-                    "path": "@state.chess.prevHasMoved"
-                },
-                {
-                    "bindings": {
-                        "hm": "hasMoved"
-                    },
-                    "function": {
-                        "input": "x",
-                        "pieces": [
-                            {
-                                "mathNode": {
-                                    "op": 0,
-                                    "scalarForm": {
-                                        "terms": [
-                                            {
-                                                "c": 1.0,
-                                                "factors": {
-                                                    "hm": 1.0
-                                                }
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "kind": 8,
-                    "path": "@state.chess.prevHasMoved"
-                },
-                {
-                    "kind": 0,
-                    "operand": {
-                        "t": "int",
-                        "v": 0
-                    },
-                    "path": "@state.chess.castleMove"
-                },
-                {
-                    "bindings": {
-                        "gx": "gridX"
-                    },
-                    "function": {
-                        "input": "x",
-                        "pieces": [
-                            {
-                                "mathNode": {
-                                    "op": 0,
-                                    "scalarForm": {
-                                        "terms": [
-                                            {
-                                                "c": 1.0,
-                                                "factors": {
-                                                    "gx": 1.0
-                                                }
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "kind": 8,
-                    "path": "@state.chess.nextEnPassantFile"
-                },
-                {
-                    "kind": 0,
-                    "operand": {
-                        "t": "int",
-                        "v": 5
-                    },
-                    "path": "@state.chess.nextEnPassantTargetY"
-                },
-                {
-                    "kind": 0,
-                    "operand": {
-                        "t": "int",
-                        "v": 4
-                    },
-                    "path": "@state.chess.nextEnPassantVictimY"
-                },
-                {
-                    "kind": 0,
-                    "operand": {
-                        "t": "int",
-                        "v": 0
-                    },
-                    "path": "@state.chess.repCount"
-                },
-                {
-                    "eventType": "enemy-captured",
-                    "kind": 10
-                },
-                {
-                    "bindings": {
-                        "tx": "@state.chess.targetX"
-                    },
-                    "function": {
-                        "input": "x",
-                        "pieces": [
-                            {
-                                "mathNode": {
-                                    "op": 0,
-                                    "scalarForm": {
-                                        "terms": [
-                                            {
-                                                "c": 1.0,
-                                                "factors": {
-                                                    "tx": 1.0
-                                                }
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "kind": 8,
-                    "path": "gridX"
-                },
-                {
-                    "bindings": {
-                        "ty": "@state.chess.targetY"
-                    },
-                    "function": {
-                        "input": "x",
-                        "pieces": [
-                            {
-                                "mathNode": {
-                                    "op": 0,
-                                    "scalarForm": {
-                                        "terms": [
-                                            {
-                                                "c": 1.0,
-                                                "factors": {
-                                                    "ty": 1.0
-                                                }
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "kind": 8,
-                    "path": "gridY"
-                },
-                {
-                    "bindings": {
-                        "tx": "@state.chess.targetX"
-                    },
-                    "function": {
-                        "input": "x",
-                        "pieces": [
-                            {
-                                "mathNode": {
-                                    "op": 0,
-                                    "scalarForm": {
-                                        "terms": [
-                                            {
-                                                "c": 1.0,
-                                                "factors": {
-                                                    "tx": 1.0
-                                                }
-                                            },
-                                            {
-                                                "c": -3.5,
-                                                "factors": {}
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "kind": 8,
-                    "path": "position.x"
-                },
-                {
-                    "bindings": {
-                        "ty": "@state.chess.targetY"
-                    },
-                    "function": {
-                        "input": "x",
-                        "pieces": [
-                            {
-                                "mathNode": {
-                                    "op": 0,
-                                    "scalarForm": {
-                                        "terms": [
-                                            {
-                                                "c": 1.0,
-                                                "factors": {
-                                                    "ty": 1.0
-                                                }
-                                            },
-                                            {
-                                                "c": -3.5,
-                                                "factors": {}
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "kind": 8,
-                    "path": "position.z"
-                },
-                {
-                    "bindings": {
-                        "ry": "restY"
-                    },
-                    "function": {
-                        "input": "x",
-                        "pieces": [
-                            {
-                                "mathNode": {
-                                    "op": 0,
-                                    "scalarForm": {
-                                        "terms": [
-                                            {
-                                                "c": 1.0,
-                                                "factors": {
-                                                    "ry": 1.0
-                                                }
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "kind": 8,
-                    "path": "position.y"
-                },
-                {
-                    "kind": 0,
-                    "operand": {
-                        "t": "bool",
-                        "v": false
-                    },
-                    "path": "isSelected"
-                },
-                {
-                    "kind": 0,
-                    "operand": {
-                        "t": "bool",
-                        "v": true
-                    },
-                    "path": "hasMoved"
-                },
-                {
-                    "kind": 0,
-                    "operand": {
-                        "t": "bool",
-                        "v": false
-                    },
-                    "path": "@state.chess.selectionActive"
-                },
-                {
-                    "eventType": "move-committed",
-                    "kind": 10,
-                    "publishSubject": "state.chess"
-                }
-            ],
-            "kind": 5
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 2,
+          "relationType": "instance-of",
+          "otherId": "category.chess.piece"
         },
-        "activation": 0,
-        "applicationLog": [
-            {
-                "actions": [
-                    "sequence(19)"
-                ],
-                "changed": true,
-                "conditions": [
-                    "all(14)"
-                ],
-                "lawId": "law-chess-pawn-b-double",
-                "nodes": [
-                    {
-                        "action": "Map",
-                        "path": "@state.chess.prevX",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Map",
-                        "path": "@state.chess.prevY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "@state.chess.prevHasMoved",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Map",
-                        "path": "@state.chess.prevHasMoved",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Set",
-                        "path": "@state.chess.castleMove",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Map",
-                        "path": "@state.chess.nextEnPassantFile",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "@state.chess.nextEnPassantTargetY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "@state.chess.nextEnPassantVictimY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "@state.chess.repCount",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Publish",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Map",
-                        "path": "gridX",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Map",
-                        "path": "gridY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Map",
-                        "path": "position.x",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Map",
-                        "path": "position.z",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Map",
-                        "path": "position.y",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "isSelected",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "hasMoved",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "@state.chess.selectionActive",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Publish",
-                        "wrote": true
-                    }
-                ],
-                "result": "applied",
-                "targetId": "piece-black-pawn-3-6",
-                "timestamp": 1790460906
-            }
-        ],
-        "authority": 0,
-        "authors": [
-            "grok-4.6"
-        ],
-        "conditionDescriptions": [
-            "all(14)"
-        ],
-        "conditionMode": "all",
-        "conditionModel": {
-            "children": [
-                {
-                    "kind": 2,
-                    "otherId": "category.chess.piece",
-                    "relationType": "instance-of"
-                },
-                {
-                    "kind": 0,
-                    "op": 0,
-                    "operand": {
-                        "t": "bool",
-                        "v": true
-                    },
-                    "path": "isSelected"
-                },
-                {
-                    "kind": 0,
-                    "op": 0,
-                    "operand": {
-                        "t": "bool",
-                        "v": true
-                    },
-                    "path": "onBoard"
-                },
-                {
-                    "kind": 0,
-                    "op": 0,
-                    "operand": {
-                        "t": "none"
-                    },
-                    "operandPath": "@state.chess.turn",
-                    "path": "chessColor"
-                },
-                {
-                    "kind": 0,
-                    "op": 0,
-                    "operand": {
-                        "t": "bool",
-                        "v": true
-                    },
-                    "path": "@state.chess.selectionActive"
-                },
-                {
-                    "kind": 0,
-                    "op": 0,
-                    "operand": {
-                        "t": "bool",
-                        "v": false
-                    },
-                    "path": "@state.chess.gameOver"
-                },
-                {
-                    "kind": 0,
-                    "op": 0,
-                    "operand": {
-                        "t": "int",
-                        "v": 0
-                    },
-                    "path": "chessRole"
-                },
-                {
-                    "kind": 0,
-                    "op": 0,
-                    "operand": {
-                        "t": "int",
-                        "v": 1
-                    },
-                    "path": "chessColor"
-                },
-                {
-                    "kind": 0,
-                    "op": 0,
-                    "operand": {
-                        "t": "bool",
-                        "v": false
-                    },
-                    "path": "hasMoved"
-                },
-                {
-                    "kind": 0,
-                    "op": 0,
-                    "operand": {
-                        "t": "int",
-                        "v": 6
-                    },
-                    "path": "gridY"
-                },
-                {
-                    "kind": 0,
-                    "op": 0,
-                    "operand": {
-                        "t": "int",
-                        "v": 0
-                    },
-                    "path": "@state.chess.dx"
-                },
-                {
-                    "kind": 0,
-                    "op": 0,
-                    "operand": {
-                        "t": "int",
-                        "v": -2
-                    },
-                    "path": "@state.chess.dy"
-                },
-                {
-                    "children": [
-                        {
-                            "beingKind": 1,
-                            "children": [
-                                {
-                                    "children": [
-                                        {
-                                            "kind": 2,
-                                            "otherId": "category.chess.piece",
-                                            "relationType": "instance-of"
-                                        },
-                                        {
-                                            "kind": 0,
-                                            "op": 0,
-                                            "operand": {
-                                                "t": "bool",
-                                                "v": true
-                                            },
-                                            "path": "onBoard"
-                                        },
-                                        {
-                                            "kind": 0,
-                                            "op": 0,
-                                            "operand": {
-                                                "t": "none"
-                                            },
-                                            "operandPath": "@state.chess.targetX",
-                                            "path": "gridX"
-                                        },
-                                        {
-                                            "kind": 0,
-                                            "op": 0,
-                                            "operand": {
-                                                "t": "none"
-                                            },
-                                            "operandPath": "@state.chess.targetY",
-                                            "path": "gridY"
-                                        }
-                                    ],
-                                    "kind": 3
-                                }
-                            ],
-                            "kind": 9
-                        }
-                    ],
-                    "kind": 5
-                },
-                {
-                    "children": [
-                        {
-                            "beingKind": 1,
-                            "children": [
-                                {
-                                    "children": [
-                                        {
-                                            "kind": 2,
-                                            "otherId": "category.chess.piece",
-                                            "relationType": "instance-of"
-                                        },
-                                        {
-                                            "kind": 0,
-                                            "op": 0,
-                                            "operand": {
-                                                "t": "bool",
-                                                "v": true
-                                            },
-                                            "path": "onBoard"
-                                        },
-                                        {
-                                            "kind": 0,
-                                            "op": 0,
-                                            "operand": {
-                                                "t": "none"
-                                            },
-                                            "operandPath": "@state.chess.selectedX",
-                                            "path": "gridX"
-                                        },
-                                        {
-                                            "kind": 0,
-                                            "op": 0,
-                                            "operand": {
-                                                "t": "none"
-                                            },
-                                            "operandPath": "@state.chess.midYBlack",
-                                            "path": "gridY"
-                                        }
-                                    ],
-                                    "kind": 3
-                                }
-                            ],
-                            "kind": 9
-                        }
-                    ],
-                    "kind": 5
-                }
-            ],
-            "kind": 3
+        {
+          "kind": 0,
+          "path": "isSelected",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
         },
-        "conditionSubjects": [],
-        "drives": false,
-        "enabled": true,
-        "id": "law-chess-pawn-b-double",
-        "name": "move-black-pawn-two",
-        "provenance": [
+        {
+          "kind": 0,
+          "path": "onBoard",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 0,
+          "path": "chessColor",
+          "op": 0,
+          "operandPath": "@state.chess.turn"
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.selectionActive",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.gameOver",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "kind": 0,
+          "path": "chessRole",
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "kind": 0,
+          "path": "chessColor",
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "kind": 0,
+          "path": "hasMoved",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "kind": 0,
+          "path": "gridY",
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 6
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.dx",
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.dy",
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": -2
+          }
+        },
+        {
+          "kind": 5,
+          "children": [
             {
-                "attachment": {
-                    "childAnchor": [
-                        0.0,
-                        0.0,
-                        0.0
-                    ],
-                    "enabled": false,
-                    "inheritRotation": true,
-                    "inheritScale": true,
-                    "inheritTranslation": true,
-                    "localOffset": [
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0
-                    ],
-                    "parentAnchor": [
-                        0.0,
-                        0.0,
-                        0.0
-                    ]
-                },
-                "directed": true,
-                "entityA": "law-chess-pawn-b-double",
-                "entityB": "grok-4.6",
-                "events": [
+              "kind": 9,
+              "beingKind": 1,
+              "children": [
+                {
+                  "kind": 3,
+                  "children": [
                     {
-                        "deltaWeight": 1.0,
-                        "description": "authored-by",
-                        "timestamp": 1787390000
-                    }
-                ],
-                "type": "authored-by",
-                "weight": 1.0
-            },
-            {
-                "attachment": {
-                    "childAnchor": [
-                        0.0,
-                        0.0,
-                        0.0
-                    ],
-                    "enabled": false,
-                    "inheritRotation": true,
-                    "inheritScale": true,
-                    "inheritTranslation": true,
-                    "localOffset": [
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0
-                    ],
-                    "parentAnchor": [
-                        0.0,
-                        0.0,
-                        0.0
-                    ]
-                },
-                "directed": true,
-                "entityA": "law-chess-pawn-b-double",
-                "entityB": "grok-4.6",
-                "events": [
+                      "kind": 2,
+                      "relationType": "instance-of",
+                      "otherId": "category.chess.piece"
+                    },
                     {
-                        "deltaWeight": 1.0,
-                        "description": "authored-by",
-                        "timestamp": 1790460881
+                      "kind": 0,
+                      "path": "onBoard",
+                      "op": 0,
+                      "operand": {
+                        "t": "bool",
+                        "v": true
+                      }
+                    },
+                    {
+                      "kind": 0,
+                      "path": "gridX",
+                      "op": 0,
+                      "operandPath": "@state.chess.targetX"
+                    },
+                    {
+                      "kind": 0,
+                      "path": "gridY",
+                      "op": 0,
+                      "operandPath": "@state.chess.targetY"
                     }
-                ],
-                "type": "authored-by",
-                "weight": 1.0
+                  ]
+                }
+              ]
             }
-        ],
-        "retrigger": 0,
-        "scope": 1,
-        "targets": []
+          ]
+        },
+        {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 9,
+              "beingKind": 1,
+              "children": [
+                {
+                  "kind": 3,
+                  "children": [
+                    {
+                      "kind": 2,
+                      "relationType": "instance-of",
+                      "otherId": "category.chess.piece"
+                    },
+                    {
+                      "kind": 0,
+                      "path": "onBoard",
+                      "op": 0,
+                      "operand": {
+                        "t": "bool",
+                        "v": true
+                      }
+                    },
+                    {
+                      "kind": 0,
+                      "path": "gridX",
+                      "op": 0,
+                      "operandPath": "@state.chess.selectedX"
+                    },
+                    {
+                      "kind": 0,
+                      "path": "gridY",
+                      "op": 0,
+                      "operandPath": "@state.chess.midYBlack"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
-    "triggers": [
-        "square-clicked"
-    ]
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "@state.chess.prevX",
+          "bindings": {
+            "gx": "gridX"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "gx": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@state.chess.prevY",
+          "bindings": {
+            "gy": "gridY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "gy": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.prevHasMoved",
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@state.chess.prevHasMoved",
+          "bindings": {
+            "hm": "hasMoved"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "hm": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.castleMove",
+          "operand": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@state.chess.nextEnPassantFile",
+          "bindings": {
+            "gx": "gridX"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "gx": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.nextEnPassantTargetY",
+          "operand": {
+            "t": "int",
+            "v": 5
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.nextEnPassantVictimY",
+          "operand": {
+            "t": "int",
+            "v": 4
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.repCount",
+          "operand": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "kind": 10,
+          "eventType": "enemy-captured",
+          "publishSubject": "",
+          "publishObject": ""
+        },
+        {
+          "kind": 8,
+          "path": "gridX",
+          "bindings": {
+            "tx": "@state.chess.targetX"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "tx": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "gridY",
+          "bindings": {
+            "ty": "@state.chess.targetY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "ty": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "position.x",
+          "bindings": {
+            "tx": "@state.chess.targetX"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "tx": 1.0
+                      }
+                    },
+                    {
+                      "c": -3.5,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "position.z",
+          "bindings": {
+            "ty": "@state.chess.targetY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "ty": 1.0
+                      }
+                    },
+                    {
+                      "c": -3.5,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "position.y",
+          "bindings": {
+            "ry": "restY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "ry": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 0,
+          "path": "isSelected",
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "kind": 0,
+          "path": "hasMoved",
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.selectionActive",
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "kind": 10,
+          "eventType": "move-committed",
+          "publishSubject": "state.chess",
+          "publishObject": ""
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-chess-pawn-b-double",
+        "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1787390000
+          }
+        ]
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": [
+    "square-clicked"
+  ]
 }

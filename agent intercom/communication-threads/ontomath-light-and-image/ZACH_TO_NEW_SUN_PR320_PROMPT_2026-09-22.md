@@ -1,18 +1,5 @@
 # Message to Zach — prompt for the new Sun
 
-<!-- NAV_BLOCK_START -->
-> [!NOTE]
-> **Thread Navigation: Visibility & PR #320**
-> [View Full Thread Index](../00_THREAD_INDEX.md)
->
-> **Related in this thread:**
-> - [SUN_HANDOFF_PR320_NATIVE_VD_RECONCILIATION_2026-09-22.md](SUN_HANDOFF_PR320_NATIVE_VD_RECONCILIATION_2026-09-22.md)
-> - [VISIBILITY_SUN_1_PR320_CI_TRIAGE_2026-09-21.md](VISIBILITY_SUN_1_PR320_CI_TRIAGE_2026-09-21.md)
-> - [VISIBILITY_SUN_PR320_CI_LIVE_2026-09-21.md](VISIBILITY_SUN_PR320_CI_LIVE_2026-09-21.md)
-<!-- NAV_BLOCK_END -->
-
-
-
 Copy/paste the prompt below into a **new chat**. Do not continue this branch conversation, because the platform has repeatedly duplicated/mitosed the active Sun context.
 
 ---

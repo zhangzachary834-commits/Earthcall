@@ -29,15 +29,6 @@ namespace geom { struct SdfNode; class FieldNode; }
 
 namespace sdfwgsl {
 
-// Direct framebuffer manifestation of authored mathematics. No geometry,
-// Material, or texture participates. x/y are physical pixel centres from the
-// top-left; u/v are normalized centres; p=(x,y,0), width/height are framebuffer
-// dimensions. t is admitted only when the caller supplies a temporal coordinate.
-struct Program;
-Program compileScreenForm(const OntoMath::Piecewise& color,
-                          const OntoMath::Piecewise* opacity = nullptr,
-                          bool bindTime = false);
-
 // Density input is a resolved compiler fact, not a null-pointer convention.
 // LegacyField preserves old generic FieldNode behavior; None is explicit absence;
 // Authored means densityExpr is the sole D(p,t) authority.

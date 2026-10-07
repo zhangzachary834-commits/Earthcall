@@ -31,7 +31,7 @@ int main() {
 
         // Event IS a Singular
         const Singular& s = e;
-        assert(s.getIdentifier().find("event.") == 0);
+        assert(s.getIdentifier().find("event.jump-started.") == 0);
     }
 
     // 2. An Event distinguishing an Interval
@@ -49,18 +49,12 @@ int main() {
         Object subj;
         Object obj;
         Event e("collision", &subj, &obj, Moment(100.0));
-        Event simultaneous("collision", &subj, &obj, Moment(100.0));
         assert(e.subject == &subj);
         assert(e.object == &obj);
         assert(e.verb() == "collision");
 
         std::string id = e.getIdentifier();
-        assert(id == "event." + e.occurrenceId());
-        assert(id != simultaneous.getIdentifier()); // same verb/participants/second, two edges
-        assert(Event(e).getIdentifier() == id);      // transport copies keep the occurrence
-        e.setVerb("collision-renamed");
-        e.setStart(101.0);
-        assert(e.getIdentifier() == id);             // meaning and coordinates can change
+        assert(id.find("event.collision." + subj.getIdentifier()) != std::string::npos);
     }
 
     // 4. Property reflection (Refusal #6: No black box)
@@ -87,9 +81,6 @@ int main() {
         auto* pAuthor = e.findProperty("author");
         assert(pAuthor != nullptr);
         assert(std::get<std::string>(pAuthor->value()) == "FirstMover");
-        auto* pOccurrence = e.findProperty("occurrenceId");
-        assert(pOccurrence != nullptr);
-        assert(std::get<std::string>(pOccurrence->value()) == e.occurrenceId());
     }
 
     // 5. Serialization and JSON round-trip
@@ -100,7 +91,6 @@ int main() {
         assert(j["type"] == "object-clicked");
         assert(j["start"] == 15.0);
         assert(j["author"] == "Zach");
-        assert(j["occurrenceId"] == e.occurrenceId());
     }
 
     // 6. ECA::Event alias and EventBus transport

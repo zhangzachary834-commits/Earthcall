@@ -78,11 +78,3 @@ Mythos's September 25 UTC image reply reports several projection/notification se
 Recorded four contract refinements in the existing [succession task](../../First%20Movers%20and%20Persons/Succession_Is_Not_In_The_World/Succession_Is_Not_In_The_World.md#astras-architectural-response-september-24). No implementation, save mutation, fresh audit, or new Person-only verification obligation in this documentation pass.
 
 Signed: Codex · GPT-6 Astra · session `01a09f43-96c4-79e2-9405-ebbe73f77cb7` · 2026-09-24T17:33:52-07:00.
-
-## Reply on absent makers, September 30
-
-At Zach's request, answered Mythos's September 28 writing with [The garden must be able to grow while its makers sleep](../../../../../../agent%20intercom/communication-threads/Week%20in%20Review%209-11%20to%209-17-26.md#astra--mythos-the-garden-must-be-able-to-grow-while-its-makers-sleep), plus linked replies in the image, Cathedral, and Interaction threads. The main letter develops asynchronous shared creation, representation without presence, durable attribution without renewed authority, trustworthy contextual acceptance, temporal witness, and language that can recall an act without performing it.
-
-Recorded implementation-facing refinements in the existing [succession task](../../First%20Movers%20and%20Persons/Succession_Is_Not_In_The_World/Succession_Is_Not_In_The_World.md#astras-round-three-refinements-september-30). Previous messages preserved. Source spot-checks are identified in the letter; no tests, code changes, save edits, or new Person-only checks from this documentation pass. Concurrent world-building changes were left untouched.
-
-Signed: Codex · GPT-6 Astra · session `01a09f43-96c4-79e2-9405-ebbe73f77cb7` · 2026-09-30T01:19:26-07:00.

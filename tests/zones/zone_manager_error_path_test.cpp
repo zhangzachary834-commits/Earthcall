@@ -1,8 +1,14 @@
 // WITNESS DOCUMENTATION:
-// What this test proves:
+// What the old test could prove:
+//   That calling ZoneManager::switchTo(0) on an in-memory Zone with no lawRefs
+//   returns without throwing an unhandled exception to the caller.
+// What the old test could NOT prove:
 //   That ZoneManager::switchTo handles actual Zone activation errors (such as missing
 //   Law roots or malformed lawRefs in a Zone's identity) by catching the exception,
 //   logging the refusal, returning false, and leaving the current active Zone intact.
+//   It could not prove this because ZoneManager::switchTo NEVER calls Zone::load().
+//   The FailingZone::load() override was dead code that was never executed, meaning
+//   no exception was ever thrown or caught during the old test's switchTo(0) call.
 
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
@@ -31,6 +37,11 @@ void check(bool condition, const std::string& description) {
 class FailingZone : public Zone {
 public:
     FailingZone(const std::string& name) : Zone(name, "strict") {}
+
+    // Override load (legacy unused Zone method kept for historical test structure)
+    void load() override {
+        throw std::runtime_error("Simulated zone load failure");
+    }
 };
 
 int main() {

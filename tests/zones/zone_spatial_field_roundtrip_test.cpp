@@ -1,4 +1,3 @@
-#include "Singularity/Storage/SaveSystem.hpp"
 // End-to-end witness for the Zone's continuous mathematical substrate.
 //
 // A Zone has always owned a geom::FieldNode and admitted it to its Formation,
@@ -347,7 +346,7 @@ int main() {
     }
 
     check(std::filesystem::exists(
-              sandbox / "zones" / zoneId / "zone.ecform"),
+              sandbox / "zones" / zoneId / "zone.json"),
           "real Zone identity persistence writes the radiant Zone");
 
     {

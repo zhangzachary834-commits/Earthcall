@@ -58,9 +58,9 @@ Refusal 6 is the corollary: no subsystem may define what a thing's state *means*
 | write or edit a save file / seed a world | `law/FIRST_MOVER_AUTHORING.md` §4, §7 | you are acting as a First Mover; §7 is not optional |
 | add a directory | `ontology/DIRECTORY_ORDERING.md` §7 | the tree is the ontology |
 | connect hardware, a device, or a foreign process — or let a model change the world (MCP, socket) | `ontology/NEW_KIND_FRAMEWORK.md` §7b; `docs/plans/MCP_FIRST_MOVER_GOVERNANCE_IMPLEMENTATION_PLAN_2026-09-18.md` | a *modality channel* under `Singularity/`, never a domain folder; every foreign mutation passes `Singularity/Foreign/ForeignActuationGuard` as a Person-granted First Mover — reads stay open |
-| understand what a Law is or write a CLI sentence | `law/LAW_AND_CREATION_SYSTEM.md`; [CLI guide](docs/architecture/law/LAW_AUTHORING_CLI_GUIDE.md) | the foundation the rest assumes |
+| understand what a Law is at all | `law/LAW_AND_CREATION_SYSTEM.md` | the foundation the rest assumes |
 | undo a change, rewind, or ask whether something *can* be undone | `mathematics/ONTOMATH_FRAMEWORK.md` §6 | the past is integrated in closed form, never replayed from a log |
-| render an authored expression to a channel (sound, shader, physics; direct Screen fields: [task](docs/Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md)) | `mathematics/ONTOMATH_FRAMEWORK.md` §1, §7 | a channel reads OntoMath; it never decides what the thing is |
+| render an authored expression to a channel (sound, shader, physics) | `mathematics/ONTOMATH_FRAMEWORK.md` §1, §7 | a channel reads OntoMath; it never decides what the thing is |
 | ask "why is it like this?" | `core/EarthcallOurverse.md`, `ontology/SUBSTRATE_ORDERING.md` | the ends the architecture serves |
 | touch the Hierarchy of Joys, telos, or "joyOrdering" | `ontology/HIERARCHY_OF_JOYS.md` | Lexemes are telos; the hierarchy is a Formation |
 | remove, break, or dissolve a Relation — or decide what a stale one becomes | `ontology/PRIMARY_AND_SUB_RELATIONS.md` §2, §7 | the primary Relation between two Singulars never disappears; sub-Relations dissolve only on proved impossibility |
@@ -116,7 +116,7 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 256 registered (2026-09-30) — WebGPU/GL tests need a desktop GPU/display session; frame_lag_test is machine-load-sensitive (see below)
+ctest --test-dir build --output-on-failure -j4        # 247 registered (2026-09-25) — WebGPU/GL tests need a desktop GPU/display session; frame_lag_test is machine-load-sensitive (see below)
 cmake --build build --target lag                      # frame-cost probe alone, with its report
 ```
 
@@ -136,22 +136,22 @@ widening the baseline.
 ## Non-negotiables
 
 - **NO BIG CHUNGUS retrieval.** Retrieval must be proportional to the epistemic need: search before fetch; prefer exact symbol/error queries and bounded file, CI-log, and workflow slices; never ingest an entire large artifact when a narrow read answers the question. Expand incrementally only when needed — especially through GitHub Connector, where giant reads waste context and can time out.
-- **Stable identifiers.** Current Law text uses `@name` roots, longest dotted match;
-  named beings need stable `getIdentifier()` slugs, not generated `law-7` ids.
-  Zach's 2026-09-27/28 rule: individual paths resolve under relevant Zones;
-  paths hold no ID, ambiguity refuses, and Ourverses cannot reauthor Person identity; Law-governed read/write belongs with TransferPolicy. See the Property storage task.
+- **Stable identifiers.** Law text addresses beings by name (`@physical-channel.enabled`).
+  Generated ids (`law-7`) change between runs. Any being that law-text names must override
+  `getIdentifier()` with a stable slug. Namespaced ids may contain dots
+  (`material.clay`) — root resolution matches longest-first.
 - **Append-only enums**, serialized as ints. Never renumber, never reuse a burned value.
-- **Nothing enters the world without an author.** Prototype Create retains concrete kinds and refuses unresolved birth semantics (see the Singular and Object Set-to-Set Creation task); `Law::applyTo` returns `Unauthored` and
+- **Nothing enters the world without an author.** `Law::applyTo` returns `Unauthored` and
   refuses to fire when `authors` is empty. This is structural, not conventional.
 - **Authority is clamped to 0** on every path that reads a file. Do not try to write an authority value below 0; it will be clamped, and the attempt is what gets noticed.
 - **Event-transitions must be edges, not levels.** Events are past-tense `noun-verbed` and publish on transitions. A
   per-frame "still happening" event is a bug—that is what `WhileTrue` is for. Continuous per-frame logic must use a separate framework.
-- **Kernel guards on the body are not settings.** They act in C++ before Metalaw bootstrap;
-  no authored policy can open them. The boundary refuses unconsented positive body/location
-  writes, not authored prohibitions on entering or remaining in a restricted area. A moving
-  Law needs the Person's signed, revocable consent sub-Relation; authorship is insufficient.
-  Without that proof Law movement refuses. The audio infrasound floor
-  (`mathematics/ONTOMATH_FRAMEWORK.md` §7a) likewise refuses at the body channel, loudly.
+- **Kernel guards on the body are not settings.** A modality channel that reaches a
+  Person's body enforces its Person guards in C++, unconditionally — no parameter, no flag,
+  and never as law text, which could be authored away. The audio channel's infrasound floor
+  (`mathematics/ONTOMATH_FRAMEWORK.md` §7a) is the worked example: it refuses and says which frequency,
+  rather than silently filtering a Person's mathematics. Guards constrain the path to the
+  body, never the mathematics — a Person may still author and integrate a 7 Hz field.
 - **Paint is on the Material, and materials are shared.** Writing paint through the material you *resolve* repaints every object naming it.
   Always paint via `Object::setFaceColor` / `Object::ownMaterial`, which diverge the object onto its own `material.<identifier>` on the first stroke.
   Never `materials.resolveOrDefault(obj->materialId())` — that is the bug, not the shortcut.

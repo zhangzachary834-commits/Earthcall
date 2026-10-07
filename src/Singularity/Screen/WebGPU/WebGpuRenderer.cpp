@@ -624,11 +624,6 @@ void WebGpuRenderer::shutdown() {
     _textures.clear();
     for (auto& kv : _flatPipes) wgpuRenderPipelineRelease(kv.second);
     _flatPipes.clear();
-    for (auto& kv : _screenPipes) {
-        wgpuRenderPipelineRelease(kv.second.pipe);
-        wgpuBindGroupLayoutRelease(kv.second.bgl);
-    }
-    _screenPipes.clear();
     if (_flatLayout)  { wgpuPipelineLayoutRelease(_flatLayout); _flatLayout = nullptr; }
     if (_flatShader)  { wgpuShaderModuleRelease(_flatShader); _flatShader = nullptr; }
     if (_flatBgl)     { wgpuBindGroupLayoutRelease(_flatBgl); _flatBgl = nullptr; }
@@ -3006,114 +3001,6 @@ void WebGpuRenderer::releaseFrameResources() {
 // Flat-colour primitives.
 // ---------------------------------------------------------------------------
 
-bool WebGpuRenderer::drawScreenForm(const OntoMath::Piecewise& color,
-                                    const OntoMath::Piecewise* opacity,
-                                    uint32_t width, uint32_t height,
-                                    const double* time, std::string& reason) {
-    reason.clear();
-    if (!_pass || width == 0 || height == 0 || width != _depthW || height != _depthH) {
-        reason = "direct Screen needs an active pass with matching framebuffer dimensions";
-        return false;
-    }
-    if (time && (!std::isfinite(*time) || !std::isfinite(static_cast<float>(*time)))) {
-        reason = "direct Screen temporal coordinate is not finite float32";
-        return false;
-    }
-    const auto program = sdfwgsl::compileScreenForm(color, opacity, time != nullptr);
-    if (!program.ok) { reason = program.error; return false; }
-    auto found = _screenPipes.find(program.wgsl);
-    if (found == _screenPipes.end()) {
-        WGPUShaderSourceWGSL src = {};
-        src.chain.sType = WGPUSType_ShaderSourceWGSL;
-        src.code = wgpu::Device::str(program.wgsl.c_str());
-        WGPUShaderModuleDescriptor shaderDesc = {};
-        shaderDesc.nextInChain = &src.chain;
-        WGPUShaderModule shader = wgpuDeviceCreateShaderModule(_device, &shaderDesc);
-        WGPUBindGroupLayoutEntry entries[2] = {};
-        entries[0].binding = 0;
-        entries[0].visibility = WGPUShaderStage_Fragment;
-        entries[0].buffer.type = WGPUBufferBindingType_Uniform;
-        entries[0].buffer.minBindingSize = 32;
-        entries[1].binding = 1;
-        entries[1].visibility = WGPUShaderStage_Fragment;
-        entries[1].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
-        entries[1].buffer.minBindingSize = 4;
-        WGPUBindGroupLayoutDescriptor bglDesc = {};
-        bglDesc.entryCount = 2; bglDesc.entries = entries;
-        WGPUBindGroupLayout bgl = wgpuDeviceCreateBindGroupLayout(_device, &bglDesc);
-        WGPUPipelineLayoutDescriptor layoutDesc = {};
-        layoutDesc.bindGroupLayoutCount = 1; layoutDesc.bindGroupLayouts = &bgl;
-        WGPUPipelineLayout layout = wgpuDeviceCreatePipelineLayout(_device, &layoutDesc);
-        WGPUBlendState blend = {};
-        blend.color.operation = WGPUBlendOperation_Add;
-        blend.color.srcFactor = WGPUBlendFactor_SrcAlpha;
-        blend.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
-        blend.alpha.operation = WGPUBlendOperation_Add;
-        blend.alpha.srcFactor = WGPUBlendFactor_One;
-        blend.alpha.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
-        WGPUColorTargetState target = {};
-        target.format = _colorFormat; target.writeMask = WGPUColorWriteMask_All;
-        target.blend = &blend;
-        WGPUFragmentState fragment = {};
-        fragment.module = shader; fragment.entryPoint = wgpu::Device::str("fs");
-        fragment.targetCount = 1; fragment.targets = &target;
-        WGPUDepthStencilState depth = {};
-        depth.format = WGPUTextureFormat_Depth24Plus;
-        depth.depthWriteEnabled = WGPUOptionalBool_False;
-        depth.depthCompare = WGPUCompareFunction_Always;
-        WGPURenderPipelineDescriptor desc = {};
-        desc.layout = layout;
-        desc.vertex.module = shader; desc.vertex.entryPoint = wgpu::Device::str("vs");
-        desc.fragment = &fragment;
-        desc.primitive.topology = WGPUPrimitiveTopology_TriangleList;
-        desc.primitive.frontFace = WGPUFrontFace_CCW;
-        desc.primitive.cullMode = WGPUCullMode_None;
-        desc.depthStencil = &depth;
-        desc.multisample.count = 1; desc.multisample.mask = ~0u;
-        WGPURenderPipeline pipe = wgpuDeviceCreateRenderPipeline(_device, &desc);
-        wgpuPipelineLayoutRelease(layout);
-        wgpuShaderModuleRelease(shader);
-        if (!pipe) {
-            wgpuBindGroupLayoutRelease(bgl);
-            reason = "WebGPU refused direct Screen pipeline";
-            return false;
-        }
-        found = _screenPipes.emplace(program.wgsl, ScreenPipeline{pipe, bgl}).first;
-    }
-    // Flush deferred world draws before the direct Screen act so they cannot
-    // unexpectedly repaint it at endFrame. No depth is sampled or modified.
-    flushMeshDraws();
-    flushSdfDraws();
-    struct Coordinates { glm::vec4 size; glm::vec4 time; };
-    const Coordinates coordinates{glm::vec4(width, height, 0, 0),
-                                  glm::vec4(time ? static_cast<float>(*time) : 0.0f, 0, 0, 0)};
-    const auto uniform = bufferPool().suballocateUniform(&coordinates, sizeof(coordinates));
-    const float zero = 0;
-    const size_t paramBytes = std::max(size_t(4), program.params.size() * sizeof(float));
-    const auto params = bufferPool().suballocateStorage(
-        program.params.empty() ? &zero : program.params.data(), paramBytes);
-    if (!uniform.valid || !params.valid) {
-        reason = "direct Screen GPU buffer allocation refused";
-        return false;
-    }
-    WGPUBindGroupEntry entries[2] = {};
-    entries[0].binding = 0; entries[0].buffer = uniform.buffer;
-    entries[0].offset = uniform.offset; entries[0].size = sizeof(coordinates);
-    entries[1].binding = 1; entries[1].buffer = params.buffer;
-    entries[1].offset = params.offset; entries[1].size = paramBytes;
-    WGPUBindGroupDescriptor groupDesc = {};
-    groupDesc.layout = found->second.bgl;
-    groupDesc.entryCount = 2; groupDesc.entries = entries;
-    WGPUBindGroup group = wgpuDeviceCreateBindGroup(_device, &groupDesc);
-    _frameBindGroups.push_back(group);
-    bindPipeline(found->second.pipe);
-    wgpuRenderPassEncoderSetBindGroup(_pass, 0, group, 0, nullptr);
-    wgpuRenderPassEncoderDraw(_pass, 3, 1, 0, 0);
-    ++mutableFrameStats().drawCalls;
-    ++mutableFrameStats().trianglesDrawn;
-    return true;
-}
-
 void WebGpuRenderer::drawSolid(const std::vector<glm::vec3>& tris, const glm::vec4& color,
                                Blend blend, bool depthWrite) {
     if (!_pass || tris.empty()) return;
@@ -3302,8 +3189,6 @@ void WebGpuRenderer::releaseTexture(TextureHandle handle) {
 bool WebGpuRenderer::readPixels(uint8_t* outRgba, uint32_t width, uint32_t height) {
     if (!outRgba || width == 0 || height == 0) return false;
     if (!_device || !_queue || !_surfaceTex) return false;
-    if (_pass || width > wgpuTextureGetWidth(_surfaceTex) ||
-        height > wgpuTextureGetHeight(_surfaceTex)) return false;
 
     // WebGPU requires bytesPerRow to be 256-byte aligned
     const uint32_t bytesPerRow = (width * 4 + 255) & ~255;
@@ -3377,8 +3262,7 @@ bool WebGpuRenderer::readPixels(uint8_t* outRgba, uint32_t width, uint32_t heigh
         return false;
     }
 
-    const bool isBgra = (_colorFormat == WGPUTextureFormat_BGRA8Unorm ||
-                         _colorFormat == WGPUTextureFormat_BGRA8UnormSrgb);
+    const bool isBgra = (_colorFormat == WGPUTextureFormat_BGRA8Unorm);
     for (uint32_t y = 0; y < height; ++y) {
         const uint8_t* srcRow = mapped + y * bytesPerRow;
         uint8_t* dstRow = outRgba + y * (width * 4);

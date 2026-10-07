@@ -38,7 +38,7 @@ double number(Singular& s, const std::string& path) {
     if (auto i=std::get_if<int>(&v)) return *i;
     return -998;
 }
-json read(const fs::path& p) { return SaveSystem::readSaveData(p.string()); }
+json read(const fs::path& p) { std::ifstream f(p); json j; f>>j; return j; }
 struct Scratch {
     fs::path path;
     ~Scratch() { SaveSystem::setSaveRoot(""); std::error_code ec; fs::remove_all(path,ec); }

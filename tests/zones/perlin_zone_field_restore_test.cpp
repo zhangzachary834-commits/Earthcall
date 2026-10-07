@@ -1,4 +1,3 @@
-#include "Singularity/Storage/SaveSystem.hpp"
 // Regression witness for Zach's 2026-09-14 report that the Perlin Noise Floor
 // hills had disappeared. The Zone identity had survived only as
 // ShapeKind::Field while its authored SDF tree + extent were missing, so
@@ -36,7 +35,9 @@ int main() {
     check(std::filesystem::exists(path), "restored NoiseFloorWorld Zone identity exists");
     if (!std::filesystem::exists(path)) return 1;
 
-    nlohmann::json zone = SaveSystem::readSaveData(path.string());
+    std::ifstream in(path);
+    nlohmann::json zone;
+    in >> zone;
 
     const nlohmann::json* ground = nullptr;
     for (const auto& object : zone["world"]["objects"]) {

@@ -302,8 +302,6 @@ int main() {
     cases.push_back({ "Morph",       binary(geom::SdfOp::Morph,       a, b, 0.35f) });
     cases.push_back({ "SmoothUnion", binary(geom::SdfOp::SmoothUnion, a, b, 0.3f) });
 
-
-
     // Nesting, to prove the emitter composes rather than only handling depth 1.
     cases.push_back({ "Nested",
         binary(geom::SdfOp::Subtract,

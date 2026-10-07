@@ -13,7 +13,6 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
-#include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Singularity/Storage/FileWatcher.hpp"
 #include "Singularity/Audio/AudioRecorder.hpp"
@@ -141,7 +140,7 @@ namespace Core {
                 // discovery cannot silently lag a newly-authored channel. In
                 // particular, V4 E_v must participate in world-set revision.
                 Rendering::appendVolumeSetIdentity(
-                    volumeSetIdentity, medium.producerId, medium);
+                    volumeSetIdentity, field->getIdentifier(), medium);
                 volumeDensities.push_back(medium);
             }
 
@@ -149,7 +148,6 @@ namespace Core {
             if (!Rendering::readAuthorableLight(*field, light)) continue;
 
             Rendering::RadianceSourceBinding source;
-            source.producerId = field->getIdentifier();
             source.position = light.position;
             source.ambientRadiance = Rendering::lightAmbientRadiance(light);
             source.diffuseRadiance = Rendering::lightDiffuseRadiance(light);
@@ -187,7 +185,7 @@ namespace Core {
             // enablement and temporal coordinates live in the persistent source
             // storage buffer and must NOT serialize an entire FieldNode merely
             // to move/recolor/enable a source.
-            sourceSetIdentity += source.producerId;
+            sourceSetIdentity += field->getIdentifier();
             sourceSetIdentity += ":";
             sourceSetIdentity += std::to_string(source.radianceRevision);
             sourceSetIdentity += ":";
@@ -310,7 +308,7 @@ namespace Core {
         currentRenderer().setModel(glm::mat4(1.0f)); // back to world space
 
         if (_creatorConsoleOpen) {
-            Rendering::renderCreatorConsole3DPreviews(_person.get(), nullptr, this);
+            Rendering::renderCreatorConsole3DPreviews(_person.get(), nullptr);
         }
 
         // Draw the embodied Person as world geometry before volumetric
@@ -321,13 +319,6 @@ namespace Core {
         }
 
         currentRenderer().composeVolumes();
-
-        // Direct authored Screen manifestation at physical framebuffer sample
-        // centres. No Object, Material, ShapeKind, or texture is an admission
-        // requirement. Compatibility HUD/tools are drawn afterwards.
-        if (screenChannel)
-            screenChannel->manifestOutput(currentRenderer(),
-                static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH));
 
         if (_currentPerspective != PerspectiveMode::FirstPerson) {
             _person->drawNametag();
@@ -408,19 +399,7 @@ namespace Core {
             if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
                 recorder->checkPendingSnapshot(fbW, fbH);
                 if (recorder->isRecording()) {
-                    // GLFW reports window points; recording uses framebuffer
-                    // pixels. Use the interaction channel's sensed pointer so
-                    // pointer lock and Retina scaling agree with live aiming.
-                    int cursorX = -1, cursorY = -1;
-                    if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {
-                        int winW = 0, winH = 0;
-                        glfwGetWindowSize(_window, &winW, &winH);
-                        if (winW > 0 && winH > 0) {
-                            cursorX = static_cast<int>(interaction->pointerX * fbW / winW);
-                            cursorY = static_cast<int>(interaction->pointerY * fbH / winH);
-                        }
-                    }
-                    recorder->stepFrame(fbW, fbH, nullptr, cursorX, cursorY);
+                    recorder->stepFrame(fbW, fbH);
                 }
             }
             if (auto* watcher = Singularity::Storage::FileWatcher::find(*_lawManager)) {

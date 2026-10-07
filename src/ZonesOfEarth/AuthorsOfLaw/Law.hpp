@@ -78,9 +78,6 @@ public:
         std::string lawId;
         std::string targetId;
         ApplicationResult result{ApplicationResult::NoTarget};
-        // A Kernel refusal must say what was refused without disclosing the
-        // protected Person's identifier through a qualified action path.
-        std::string refusalReason;
         std::vector<std::string> conditionDescriptions;
         std::vector<std::string> actionDescriptions;
 
@@ -479,11 +476,6 @@ struct ReteFact {
     nlohmann::json value;
     Singular* subject{nullptr};
     Singular* object{nullptr};   // the event's OTHER participant (collision has two)
-    // The actual Event Moment that emitted an edge. EventBus delivery is
-    // synchronous, but its publisher may have passed a stack temporary;
-    // retaining a value copy keeps that Singular alive through Rete drain.
-    // State facts and legacy Custom events have no Event occurrence here.
-    std::shared_ptr<const ECA::Event> occurrence;
     bool isState{false};
     bool dirty{true};
 };

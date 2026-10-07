@@ -1,16 +1,5 @@
 # SUN HANDOFF — Volumetric V1 Authored Extinction
 
-<!-- NAV_BLOCK_START -->
-> [!NOTE]
-> **Thread Navigation: Volumetric Handoffs**
-> [View Full Thread Index](../00_THREAD_INDEX.md)
->
-> **Related in this thread:**
-> - [SUN_HANDOFF_VOLUMETRIC_V2_AUTHORED_SCATTERING_CHROMA_2026-09-22.md](SUN_HANDOFF_VOLUMETRIC_V2_AUTHORED_SCATTERING_CHROMA_2026-09-22.md)
-<!-- NAV_BLOCK_END -->
-
-
-
 **Date:** 2026-09-22
 **Repository:** `zhangzachary834-commits/Earthcall`
 **Branch:** `sol/volumetric-v1-authored-extinction-20260922`

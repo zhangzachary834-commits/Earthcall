@@ -1,217 +1,53 @@
 {
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-check-evaluated",
+  "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+  "law": {
+    "id": "law-chess-check-evaluated",
+    "name": "publish-check-evaluated",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
     "authors": [
-        "grok-4.6"
+      "grok-4.6"
     ],
-    "identifier": "law-chess-check-evaluated",
-    "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
-    "law": {
-        "actionDescriptions": [
-            "publish 'check-evaluated'"
-        ],
-        "actionModel": {
-            "eventType": "check-evaluated",
-            "kind": 10,
-            "publishSubject": "state.chess"
-        },
-        "activation": 0,
-        "applicationLog": [
-            {
-                "actions": [
-                    "publish 'check-evaluated'"
-                ],
-                "changed": true,
-                "conditions": [
-                    "is(state.chess)"
-                ],
-                "lawId": "law-chess-check-evaluated",
-                "nodes": [
-                    {
-                        "action": "Publish",
-                        "wrote": true
-                    }
-                ],
-                "result": "applied",
-                "targetId": "state.chess",
-                "timestamp": 1790460891
-            },
-            {
-                "actions": [
-                    "publish 'check-evaluated'"
-                ],
-                "changed": true,
-                "conditions": [
-                    "is(state.chess)"
-                ],
-                "lawId": "law-chess-check-evaluated",
-                "nodes": [
-                    {
-                        "action": "Publish",
-                        "wrote": true
-                    }
-                ],
-                "result": "applied",
-                "targetId": "state.chess",
-                "timestamp": 1790460906
-            },
-            {
-                "actions": [
-                    "publish 'check-evaluated'"
-                ],
-                "changed": true,
-                "conditions": [
-                    "is(state.chess)"
-                ],
-                "lawId": "law-chess-check-evaluated",
-                "nodes": [
-                    {
-                        "action": "Publish",
-                        "wrote": true
-                    }
-                ],
-                "result": "applied",
-                "targetId": "state.chess",
-                "timestamp": 1790460909
-            },
-            {
-                "actions": [
-                    "publish 'check-evaluated'"
-                ],
-                "changed": true,
-                "conditions": [
-                    "is(state.chess)"
-                ],
-                "lawId": "law-chess-check-evaluated",
-                "nodes": [
-                    {
-                        "action": "Publish",
-                        "wrote": true
-                    }
-                ],
-                "result": "applied",
-                "targetId": "state.chess",
-                "timestamp": 1790460914
-            }
-        ],
-        "authority": 0,
-        "authors": [
-            "grok-4.6"
-        ],
-        "conditionDescriptions": [
-            "is(state.chess)"
-        ],
-        "conditionMode": "all",
-        "conditionModel": {
-            "kind": 8,
-            "otherId": "state.chess"
-        },
-        "conditionSubjects": [],
-        "drives": false,
-        "enabled": true,
-        "id": "law-chess-check-evaluated",
-        "name": "publish-check-evaluated",
-        "provenance": [
-            {
-                "attachment": {
-                    "childAnchor": [
-                        0.0,
-                        0.0,
-                        0.0
-                    ],
-                    "enabled": false,
-                    "inheritRotation": true,
-                    "inheritScale": true,
-                    "inheritTranslation": true,
-                    "localOffset": [
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0
-                    ],
-                    "parentAnchor": [
-                        0.0,
-                        0.0,
-                        0.0
-                    ]
-                },
-                "directed": true,
-                "entityA": "law-chess-check-evaluated",
-                "entityB": "grok-4.6",
-                "events": [
-                    {
-                        "deltaWeight": 1.0,
-                        "description": "authored-by",
-                        "timestamp": 1787390000
-                    }
-                ],
-                "type": "authored-by",
-                "weight": 1.0
-            },
-            {
-                "attachment": {
-                    "childAnchor": [
-                        0.0,
-                        0.0,
-                        0.0
-                    ],
-                    "enabled": false,
-                    "inheritRotation": true,
-                    "inheritScale": true,
-                    "inheritTranslation": true,
-                    "localOffset": [
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0
-                    ],
-                    "parentAnchor": [
-                        0.0,
-                        0.0,
-                        0.0
-                    ]
-                },
-                "directed": true,
-                "entityA": "law-chess-check-evaluated",
-                "entityB": "grok-4.6",
-                "events": [
-                    {
-                        "deltaWeight": 1.0,
-                        "description": "authored-by",
-                        "timestamp": 1790460881
-                    }
-                ],
-                "type": "authored-by",
-                "weight": 1.0
-            }
-        ],
-        "retrigger": 0,
-        "scope": 0,
-        "targets": []
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 8,
+      "otherId": "state.chess"
     },
-    "triggers": [
-        "check-scanned-done"
-    ]
+    "actionModel": {
+      "kind": 10,
+      "eventType": "check-evaluated",
+      "publishSubject": "state.chess",
+      "publishObject": ""
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-chess-check-evaluated",
+        "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1787390000
+          }
+        ]
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": [
+    "check-scanned-done"
+  ]
 }

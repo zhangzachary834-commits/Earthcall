@@ -2,8 +2,6 @@
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "Singularity/Core/StringId.hpp"
-#include "Singularity/TransferPolicy.hpp"
-#include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include <cassert>
 #include <iostream>
 
@@ -336,55 +334,6 @@ void testLongestPrefixSelection() {
     std::cout << "  ✓ Longest-prefix matching and fallback traversal verified\n";
 }
 
-void testAmbiguousQualifiedRootRefuses() {
-    TestRoot first, second;
-    first.value1 = 11;
-    second.value1 = 22;
-    const PropertyPath path = PropertyPath::parse("@test-root.value1");
-    Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
-        beings.push_back(&first);
-        beings.push_back(&second);
-    });
-
-    PropertyValue value;
-    assert(!lawGetValue(first, path, value));
-    assert(lawSetValue(first, path, PropertyValue(99)) ==
-           PropertyPath::PathResult::NoSuchProperty);
-    assert(first.value1 == 11 && second.value1 == 22);
-
-    Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
-        beings.push_back(&first);
-    });
-    assert(lawGetValue(second, path, value));
-    assert(std::get<int>(value) == 11);
-    Universe::instance().setProvider(nullptr);
-}
-
-void testOrdinaryAccessOpenUnlessExplicitlyClosed() {
-    TestRoot root;
-    const PropertyPath enabled = PropertyPath::parse("enabled");
-    assert(root.setDynamicProperty("enabled", PropertyValue(false)));
-
-    // TransferPolicy's existing Gated tier applies to set-to-set transfer.
-    // It is not an implicit denial of an ordinary Property read or write.
-    assert(!TransferPolicy::instance().canTransfer(enabled));
-    PropertyValue value;
-    assert(lawGetValue(root, enabled, value));
-    assert(std::get<bool>(value) == false);
-    assert(lawSetValue(root, enabled, PropertyValue(true)) == PropertyPath::PathResult::Ok);
-    assert(lawGetValue(root, enabled, value));
-    assert(std::get<bool>(value) == true);
-
-    // A genuinely read-only registered Property is an explicit reason to
-    // refuse a write, including an attempted write of its current value.
-    const PropertyPath kernelGate = PropertyPath::parse("gate.position");
-    TransferPolicy& policy = TransferPolicy::instance();
-    assert(kernelGate.getValue(policy, value) == PropertyPath::PathResult::Ok);
-    assert(std::get<bool>(value) == true);
-    assert(kernelGate.setValue(policy, PropertyValue(true)) == PropertyPath::PathResult::ReadOnly);
-    assert(kernelGate.setValue(policy, PropertyValue(false)) == PropertyPath::PathResult::ReadOnly);
-}
-
 int main() {
     std::cout << "\n=== PropertyPath Pre-Calculation Test ===\n\n";
 
@@ -397,8 +346,6 @@ int main() {
     testEmptyPath();
     testDynamicPropertyPath();
     testLongestPrefixSelection();
-    testAmbiguousQualifiedRootRefuses();
-    testOrdinaryAccessOpenUnlessExplicitlyClosed();
 
     std::cout << "\n✓ All tests passed!\n\n";
     std::cout << "PropertyPath now performs ZERO allocations during resolve()!\n";

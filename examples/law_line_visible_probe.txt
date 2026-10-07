@@ -1,1 +1,0 @@
-called "Visible Probe" becomes true if is a Person then Create <Object, properties: {shape.kind: Cube, position: my.cameraPos + my.cameraForward * 3, color: gold, authored: {visibilityProbe: true}}>

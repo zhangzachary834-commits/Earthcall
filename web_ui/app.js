@@ -1,5 +1,3 @@
-// FOSSIL. Do not polish. This page is not the Earthcall app. Palette's commission
-// is the Law Graph and the Creator Console inside earthcall_webgpu. Read .Jules/palette.md (2026-09-30).
 document.addEventListener('DOMContentLoaded', () => {
     const inputField = document.getElementById('utterance-input');
     const emitBtn = document.getElementById('emit-btn');

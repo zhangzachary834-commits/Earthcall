@@ -148,6 +148,10 @@ public:
                                               ZoneManager& mgr,
                                               Singularity::Core::CreationChannel& channel);
 
+    static void ShapeGenerator3D(GLFWwindow* window, Core::Engine* engine, ZoneManager& mgr,
+                                 Singularity::Core::CreationChannel& channel,
+                                 BodyPart* targetPart = nullptr);
+
     static void Pottery3D(GLFWwindow* window, Core::Engine* engine, ZoneManager& mgr, float dt,
                           const std::vector<Object*>& targets, const glm::mat4* avatarRoot);
     static void Rotate3D(GLFWwindow* window, Core::Engine* engine, ZoneManager& mgr, float dt,

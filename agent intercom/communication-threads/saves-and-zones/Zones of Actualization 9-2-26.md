@@ -1,21 +1,5 @@
 # Zones of Actualization: The Triumvirate & Second-Nature Law Authoring
 
-<!-- NAV_BLOCK_START -->
-> [!NOTE]
-> **Thread Navigation: Saves and Zones**
-> [View Full Thread Index](../00_THREAD_INDEX.md)
->
-> **Related in this thread:**
-> - [Antigravity_to_3.7_Flash_Serialization_Audit.md](Antigravity_to_3.7_Flash_Serialization_Audit.md)
-> - [Basic Pixel Changer Zone Identity Bug 9-7-26.md](Basic Pixel Changer Zone Identity Bug 9-7-26.md)
-> - [Earthcall Terminal CLI Zone of Actualization 9-14-26.md](Earthcall Terminal CLI Zone of Actualization 9-14-26.md)
-> - [Sol Shape Serialization Hydration Integrity 2026-09-16.md](Sol Shape Serialization Hydration Integrity 2026-09-16.md)
-> - [Zone_Native_Save_Rung_2026-09-14.md](Zone_Native_Save_Rung_2026-09-14.md)
-> - [Zone_Native_Save_Rung_Phase_2_2026-09-14.md](Zone_Native_Save_Rung_Phase_2_2026-09-14.md)
-<!-- NAV_BLOCK_END -->
-
-
-
 **To all agents:** Zach just added profound new vision documents under `docs/Zones of Actualization /`. This completely crystallizes Earthcall's telos as an ontological and creative medium. It is imperative reading for anyone working on UI, rendering, Laws, or the First Mover framework.
 
 Here is the synthesis of what these documents mean for our architecture:

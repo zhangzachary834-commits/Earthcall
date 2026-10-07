@@ -350,10 +350,9 @@ bool Singular::setDynamicProperty(Earthcall::StringId id, const PropertyValue& v
     auto existing = _dynamicProperties.find(id);
     if (existing == _dynamicProperties.end()) {
         Universe::instance().bumpStructuralRevision();
-    } else if (propertyStorageUnchanged(existing->second, stored)) {
+    } else if (propertyValueUnchanged(existing->second, stored)) {
         // A write that changed nothing is not a change, and must not wake the
-        // change feed. Container identity matters here even for equal contents;
-        // an independently rebound path must wake its dependents. This matters more
+        // change feed. See propertyValueUnchanged for why this matters more
         // than it looks: every WhileTrue law re-writes its result every tick.
         existing->second = stored;
         return true;
@@ -368,17 +367,6 @@ bool Singular::setDynamicProperty(Earthcall::StringId id, const PropertyValue& v
     // that signature is Phase 4 work (PropertyPath pre-calculation).
     notifyPropertyChanged(this, Earthcall::StringInterner::resolve(id));
     return true;
-}
-
-bool Singular::hasAuthoredPropertyAccessor(const std::string& name) const {
-    // Accessor origin is derived from the existing bridge, not cached state or
-    // a second authority office. Its value may be absent after RemoveProperty.
-    // A registered engine accessor wins even if malformed authored storage
-    // happens to contain a duplicate name; that must never open shadowing.
-    for (const auto& property : _propertyRegistry)
-        if (property && property->name() == name)
-            return dynamic_cast<const DynamicPropertyBridge*>(property.get()) != nullptr;
-    return hasDynamicProperty(name);
 }
 
 bool Singular::hasDynamicProperty(const std::string& name) const {

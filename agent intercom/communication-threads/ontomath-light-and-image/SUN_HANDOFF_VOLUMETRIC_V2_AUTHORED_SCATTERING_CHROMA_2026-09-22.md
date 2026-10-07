@@ -1,16 +1,5 @@
 # SUN HANDOFF — Volumetric V2 authored scattering + medium chroma
 
-<!-- NAV_BLOCK_START -->
-> [!NOTE]
-> **Thread Navigation: Volumetric Handoffs**
-> [View Full Thread Index](../00_THREAD_INDEX.md)
->
-> **Related in this thread:**
-> - [SUN_HANDOFF_VOLUMETRIC_V1_AUTHORED_EXTINCTION_2026-09-22.md](SUN_HANDOFF_VOLUMETRIC_V1_AUTHORED_EXTINCTION_2026-09-22.md)
-<!-- NAV_BLOCK_END -->
-
-
-
 Date: 2026-09-22
 Branch: `sol/volumetric-v2-authored-scattering-chroma-20260922`
 Base at start: `f284b7794cd4fb8002b9e6e560cb59c26f6f21ea` (V1 merge)

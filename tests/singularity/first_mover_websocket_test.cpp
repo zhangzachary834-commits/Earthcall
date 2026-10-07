@@ -139,11 +139,6 @@ void authenticate(Peer& p, const PrivateKey& key) {
 } // namespace
 
 int main() {
-    // Developer mode is ON (its default) for this whole test: the gate must
-    // not depend on it. A 2026-09-27 shortcut admitted every unauthenticated
-    // client whenever it was on, and this line used to be `= false`, which
-    // is how that stayed green.
-    Relation::s_developerMode = true;
     const auto saves = std::filesystem::temp_directory_path() / "earthcall_fm_ws_saves";
     std::filesystem::remove_all(saves);
     std::filesystem::create_directories(saves);
@@ -242,10 +237,10 @@ int main() {
         r = await(a, ofType("create_law_ack"));
         assert(r["status"] == "refused" && r["reasonCode"] == "outside-scope");
 
-        // 6. Person motion is intrinsic; foreign Zone activation is unmapped.
+        // 6. The Person's body and presence have no mover coordinate.
         a.send({{"type", "teleport_player"}, {"position", {0, 50, 0}}});
         r = await(a, ofType("teleport_ack"));
-        assert(r["status"] == "refused" && r["reasonCode"] == "kernel-person-body");
+        assert(r["status"] == "refused" && r["reasonCode"] == "unmapped-resource");
         a.send({{"type", "switch_zone"}, {"index", 0}});
         r = await(a, ofType("switch_zone_ack"));
         assert(r["status"] == "refused" && r["reasonCode"] == "unmapped-resource");
@@ -280,27 +275,6 @@ int main() {
         a.close();
     }
 
-    // Developer mode never stands in for a foreign session, and never opens
-    // an intrinsic Person body/location guard.
-    {
-        Peer developer;
-        developer.connect();
-        waitOpen(developer);
-        developer.send({{"type", "teleport_player"}, {"position", {0, 50, 0}}});
-        auto r = await(developer, ofType("teleport_ack"));
-        assert(r["status"] == "refused" && r["reasonCode"] == "kernel-person-body");
-        developer.send({{"type", "switch_zone"}, {"index", 0}});
-        r = await(developer, ofType("switch_zone_ack"));
-        assert(r["status"] == "refused" && r["reasonCode"] == "unmapped-resource");
-        // The bypass that used to live here: an unauthenticated client asking
-        // for a MAPPED act (a spawn into the active Zone) is refused.
-        developer.send({{"type", "spawn_object"}, {"name", "sneaky"}});
-        r = await(developer, ofType("spawn_object_ack"));
-        assert(r["status"] == "refused" && r["reasonCode"] == "no-first-mover-session");
-        developer.close();
-    }
-    Relation::s_developerMode = false;
-
     server.stop();
     reg.clear();
     reg.clearAuthenticatedPersons();
@@ -309,6 +283,5 @@ int main() {
     return 0;
 }
 #else
-int main() {
-    Relation::s_developerMode = false; return 0; }
+int main() { return 0; }
 #endif

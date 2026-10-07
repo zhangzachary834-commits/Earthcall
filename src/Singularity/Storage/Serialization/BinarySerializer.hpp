@@ -13,7 +13,6 @@ public:
     
     // Write an EcformGraph to a binary file
     static bool writeBinary(const EcformGraph& graph, const std::string& filepath);
-    static std::vector<uint8_t> writeBinaryToBuffer(const EcformGraph& graph);
     
     // Read an EcformGraph from a binary file
     static bool readBinary(const std::string& filepath, EcformGraph& outGraph);

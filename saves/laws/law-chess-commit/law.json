@@ -1,619 +1,225 @@
 {
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-commit",
+  "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+  "law": {
+    "id": "law-chess-commit",
+    "name": "commit-turn-if-safe",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
     "authors": [
-        "grok-4.6"
+      "grok-4.6"
     ],
-    "identifier": "law-chess-commit",
-    "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
-    "law": {
-        "actionDescriptions": [
-            "sequence(11)"
-        ],
-        "actionModel": {
-            "children": [
-                {
-                    "bindings": {
-                        "t": "turn"
-                    },
-                    "function": {
-                        "input": "x",
-                        "pieces": [
-                            {
-                                "mathNode": {
-                                    "op": 0,
-                                    "scalarForm": {
-                                        "terms": [
-                                            {
-                                                "c": 1.0,
-                                                "factors": {}
-                                            },
-                                            {
-                                                "c": -1.0,
-                                                "factors": {
-                                                    "t": 1.0
-                                                }
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "kind": 8,
-                    "path": "turn"
-                },
-                {
-                    "kind": 0,
-                    "operand": {
-                        "t": "int",
-                        "v": -1
-                    },
-                    "path": "selectedX"
-                },
-                {
-                    "kind": 0,
-                    "operand": {
-                        "t": "int",
-                        "v": -1
-                    },
-                    "path": "selectedY"
-                },
-                {
-                    "kind": 0,
-                    "operand": {
-                        "t": "int",
-                        "v": 0
-                    },
-                    "path": "castleMove"
-                },
-                {
-                    "bindings": {
-                        "f": "nextEnPassantFile"
-                    },
-                    "function": {
-                        "input": "x",
-                        "pieces": [
-                            {
-                                "mathNode": {
-                                    "op": 0,
-                                    "scalarForm": {
-                                        "terms": [
-                                            {
-                                                "c": 1.0,
-                                                "factors": {
-                                                    "f": 1.0
-                                                }
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "kind": 8,
-                    "path": "enPassantFile"
-                },
-                {
-                    "bindings": {
-                        "y": "nextEnPassantTargetY"
-                    },
-                    "function": {
-                        "input": "x",
-                        "pieces": [
-                            {
-                                "mathNode": {
-                                    "op": 0,
-                                    "scalarForm": {
-                                        "terms": [
-                                            {
-                                                "c": 1.0,
-                                                "factors": {
-                                                    "y": 1.0
-                                                }
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "kind": 8,
-                    "path": "enPassantTargetY"
-                },
-                {
-                    "bindings": {
-                        "y": "nextEnPassantVictimY"
-                    },
-                    "function": {
-                        "input": "x",
-                        "pieces": [
-                            {
-                                "mathNode": {
-                                    "op": 0,
-                                    "scalarForm": {
-                                        "terms": [
-                                            {
-                                                "c": 1.0,
-                                                "factors": {
-                                                    "y": 1.0
-                                                }
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "kind": 8,
-                    "path": "enPassantVictimY"
-                },
-                {
-                    "kind": 0,
-                    "operand": {
-                        "t": "int",
-                        "v": -1
-                    },
-                    "path": "nextEnPassantFile"
-                },
-                {
-                    "kind": 0,
-                    "operand": {
-                        "t": "int",
-                        "v": -1
-                    },
-                    "path": "nextEnPassantTargetY"
-                },
-                {
-                    "kind": 0,
-                    "operand": {
-                        "t": "int",
-                        "v": -1
-                    },
-                    "path": "nextEnPassantVictimY"
-                },
-                {
-                    "eventType": "turn-changed",
-                    "kind": 10,
-                    "publishSubject": "state.chess"
-                }
-            ],
-            "kind": 5
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "state.chess"
         },
-        "activation": 0,
-        "applicationLog": [
-            {
-                "actions": [
-                    "sequence(11)"
-                ],
-                "changed": true,
-                "conditions": [
-                    "all(3)"
-                ],
-                "lawId": "law-chess-commit",
-                "nodes": [
-                    {
-                        "action": "Map",
-                        "path": "turn",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "selectedX",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "selectedY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "castleMove",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Map",
-                        "path": "enPassantFile",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Map",
-                        "path": "enPassantTargetY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Map",
-                        "path": "enPassantVictimY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "nextEnPassantFile",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "nextEnPassantTargetY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "nextEnPassantVictimY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Publish",
-                        "wrote": true
-                    }
-                ],
-                "result": "applied",
-                "targetId": "state.chess",
-                "timestamp": 1790460891
-            },
-            {
-                "actions": [
-                    "sequence(11)"
-                ],
-                "changed": true,
-                "conditions": [
-                    "all(3)"
-                ],
-                "lawId": "law-chess-commit",
-                "nodes": [
-                    {
-                        "action": "Map",
-                        "path": "turn",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "selectedX",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "selectedY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "castleMove",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Map",
-                        "path": "enPassantFile",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Map",
-                        "path": "enPassantTargetY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Map",
-                        "path": "enPassantVictimY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "nextEnPassantFile",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "nextEnPassantTargetY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "nextEnPassantVictimY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Publish",
-                        "wrote": true
-                    }
-                ],
-                "result": "applied",
-                "targetId": "state.chess",
-                "timestamp": 1790460906
-            },
-            {
-                "actions": [
-                    "sequence(11)"
-                ],
-                "changed": true,
-                "conditions": [
-                    "all(3)"
-                ],
-                "lawId": "law-chess-commit",
-                "nodes": [
-                    {
-                        "action": "Map",
-                        "path": "turn",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "selectedX",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "selectedY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "castleMove",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Map",
-                        "path": "enPassantFile",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Map",
-                        "path": "enPassantTargetY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Map",
-                        "path": "enPassantVictimY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "nextEnPassantFile",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Set",
-                        "path": "nextEnPassantTargetY",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Set",
-                        "path": "nextEnPassantVictimY",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Publish",
-                        "wrote": true
-                    }
-                ],
-                "result": "applied",
-                "targetId": "state.chess",
-                "timestamp": 1790460909
-            },
-            {
-                "actions": [
-                    "sequence(11)"
-                ],
-                "changed": true,
-                "conditions": [
-                    "all(3)"
-                ],
-                "lawId": "law-chess-commit",
-                "nodes": [
-                    {
-                        "action": "Map",
-                        "path": "turn",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "selectedX",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "selectedY",
-                        "wrote": true
-                    },
-                    {
-                        "action": "Set",
-                        "path": "castleMove",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Map",
-                        "path": "enPassantFile",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Map",
-                        "path": "enPassantTargetY",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Map",
-                        "path": "enPassantVictimY",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Set",
-                        "path": "nextEnPassantFile",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Set",
-                        "path": "nextEnPassantTargetY",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Set",
-                        "path": "nextEnPassantVictimY",
-                        "reason": "Unchanged",
-                        "wrote": false
-                    },
-                    {
-                        "action": "Publish",
-                        "wrote": true
-                    }
-                ],
-                "result": "applied",
-                "targetId": "state.chess",
-                "timestamp": 1790460914
-            }
-        ],
-        "authority": 0,
-        "authors": [
-            "grok-4.6"
-        ],
-        "conditionDescriptions": [
-            "all(3)"
-        ],
-        "conditionMode": "all",
-        "conditionModel": {
-            "children": [
-                {
-                    "kind": 8,
-                    "otherId": "state.chess"
-                },
-                {
-                    "kind": 0,
-                    "op": 0,
-                    "operand": {
-                        "t": "bool",
-                        "v": false
-                    },
-                    "path": "inCheck"
-                },
-                {
-                    "kind": 0,
-                    "op": 0,
-                    "operand": {
-                        "t": "bool",
-                        "v": false
-                    },
-                    "path": "@state.chess.gameOver"
-                }
-            ],
-            "kind": 3
+        {
+          "kind": 0,
+          "path": "inCheck",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
         },
-        "conditionSubjects": [],
-        "drives": false,
-        "enabled": true,
-        "id": "law-chess-commit",
-        "name": "commit-turn-if-safe",
-        "provenance": [
-            {
-                "attachment": {
-                    "childAnchor": [
-                        0.0,
-                        0.0,
-                        0.0
-                    ],
-                    "enabled": false,
-                    "inheritRotation": true,
-                    "inheritScale": true,
-                    "inheritTranslation": true,
-                    "localOffset": [
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0
-                    ],
-                    "parentAnchor": [
-                        0.0,
-                        0.0,
-                        0.0
-                    ]
-                },
-                "directed": true,
-                "entityA": "law-chess-commit",
-                "entityB": "grok-4.6",
-                "events": [
-                    {
-                        "deltaWeight": 1.0,
-                        "description": "authored-by",
-                        "timestamp": 1787390000
-                    }
-                ],
-                "type": "authored-by",
-                "weight": 1.0
-            },
-            {
-                "attachment": {
-                    "childAnchor": [
-                        0.0,
-                        0.0,
-                        0.0
-                    ],
-                    "enabled": false,
-                    "inheritRotation": true,
-                    "inheritScale": true,
-                    "inheritTranslation": true,
-                    "localOffset": [
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0
-                    ],
-                    "parentAnchor": [
-                        0.0,
-                        0.0,
-                        0.0
-                    ]
-                },
-                "directed": true,
-                "entityA": "law-chess-commit",
-                "entityB": "grok-4.6",
-                "events": [
-                    {
-                        "deltaWeight": 1.0,
-                        "description": "authored-by",
-                        "timestamp": 1790460881
-                    }
-                ],
-                "type": "authored-by",
-                "weight": 1.0
-            }
-        ],
-        "retrigger": 0,
-        "scope": 0,
-        "targets": []
+        {
+          "kind": 0,
+          "path": "@state.chess.gameOver",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        }
+      ]
     },
-    "triggers": [
-        "check-evaluated"
-    ]
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "turn",
+          "bindings": {
+            "t": "turn"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {}
+                    },
+                    {
+                      "c": -1.0,
+                      "factors": {
+                        "t": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 0,
+          "path": "selectedX",
+          "operand": {
+            "t": "int",
+            "v": -1
+          }
+        },
+        {
+          "kind": 0,
+          "path": "selectedY",
+          "operand": {
+            "t": "int",
+            "v": -1
+          }
+        },
+        {
+          "kind": 0,
+          "path": "castleMove",
+          "operand": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "kind": 8,
+          "path": "enPassantFile",
+          "bindings": {
+            "f": "nextEnPassantFile"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "f": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "enPassantTargetY",
+          "bindings": {
+            "y": "nextEnPassantTargetY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "y": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "enPassantVictimY",
+          "bindings": {
+            "y": "nextEnPassantVictimY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "y": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 0,
+          "path": "nextEnPassantFile",
+          "operand": {
+            "t": "int",
+            "v": -1
+          }
+        },
+        {
+          "kind": 0,
+          "path": "nextEnPassantTargetY",
+          "operand": {
+            "t": "int",
+            "v": -1
+          }
+        },
+        {
+          "kind": 0,
+          "path": "nextEnPassantVictimY",
+          "operand": {
+            "t": "int",
+            "v": -1
+          }
+        },
+        {
+          "kind": 10,
+          "eventType": "turn-changed",
+          "publishSubject": "state.chess",
+          "publishObject": ""
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-chess-commit",
+        "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1787390000
+          }
+        ]
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": [
+    "check-evaluated"
+  ]
 }

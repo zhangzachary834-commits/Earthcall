@@ -1,5 +1,3 @@
-#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
-
 #include "Singularity/Storage/Serialization/Relation/RelationSerialization.hpp"
 
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
@@ -75,21 +73,10 @@ nlohmann::json relationToJson(const Relation& relation) {
                        {"weight", relation.getWeight()},
                        {"events", events},
                        {"attachment", relation.attachment.toJson()}};
-
     if (relation.hasGroundedType()) {
         out["typeId"] = relation.type;
     }
-
-    nlohmann::json dyn = nlohmann::json::object();
-    for (const auto& entry : relation.dynamicProperties()) {
-        dyn[Earthcall::StringInterner::resolve(entry.first)] = propertyValueToJson(entry.second);
-    }
-    if (!dyn.empty()) {
-        out["authoredProperties"] = std::move(dyn);
-    }
-
     return out;
-
 }
 
 Relation relationFromJson(const nlohmann::json& json,
@@ -106,21 +93,11 @@ Relation relationFromJson(const nlohmann::json& json,
             relation.events.push_back(RelationEvent::fromJson(item));
         }
     }
-
     if (json.contains("attachment")) {
         relation.attachment = Relation::AttachmentData::fromJson(json["attachment"]);
     }
 
-    if (json.contains("authoredProperties") && json["authoredProperties"].is_object()) {
-        for (auto it = json["authoredProperties"].begin(); it != json["authoredProperties"].end(); ++it) {
-            PropertyValue val = propertyValueFromJson(it.value());
-            if (Property* prop = relation.findProperty(it.key())) prop->setValue(val);
-            relation.setDynamicProperty(it.key(), val);
-        }
-    }
-
     const std::string savedA = json.value("entityA", std::string{});
-
     const std::string savedB = json.value("entityB", std::string{});
     relation._endpointA.savedId = savedA;
     relation._endpointB.savedId = savedB;

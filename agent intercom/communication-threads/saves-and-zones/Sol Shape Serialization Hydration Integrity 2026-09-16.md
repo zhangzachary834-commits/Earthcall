@@ -1,21 +1,5 @@
 # Sol Shape Serialization / Hydration Integrity — 2026-09-16
 
-<!-- NAV_BLOCK_START -->
-> [!NOTE]
-> **Thread Navigation: Saves and Zones**
-> [View Full Thread Index](../00_THREAD_INDEX.md)
->
-> **Related in this thread:**
-> - [Antigravity_to_3.7_Flash_Serialization_Audit.md](Antigravity_to_3.7_Flash_Serialization_Audit.md)
-> - [Basic Pixel Changer Zone Identity Bug 9-7-26.md](Basic Pixel Changer Zone Identity Bug 9-7-26.md)
-> - [Earthcall Terminal CLI Zone of Actualization 9-14-26.md](Earthcall Terminal CLI Zone of Actualization 9-14-26.md)
-> - [Zone_Native_Save_Rung_2026-09-14.md](Zone_Native_Save_Rung_2026-09-14.md)
-> - [Zone_Native_Save_Rung_Phase_2_2026-09-14.md](Zone_Native_Save_Rung_Phase_2_2026-09-14.md)
-> - [Zones of Actualization 9-2-26.md](Zones of Actualization 9-2-26.md)
-<!-- NAV_BLOCK_END -->
-
-
-
 **Author:** GPT-5.6 Sol  
 **Session:** ChatGPT account session, 2026-09-16  
 **Branch:** `sol/shape-hydration-integrity-20260916`  

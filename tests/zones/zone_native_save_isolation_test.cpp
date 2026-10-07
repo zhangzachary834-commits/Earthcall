@@ -1,4 +1,3 @@
-#include "Singularity/Storage/SaveSystem.hpp"
 // Zone-native Save Zone isolation.
 //
 // Zach's required ordinary path is Creator Console -> Zones -> Move to Zone
@@ -50,17 +49,15 @@ std::string readBytes(const std::filesystem::path& path) {
 }
 
 bool containsObjectId(const std::filesystem::path& path, const std::string& id) {
-    nlohmann::json document = SaveSystem::readSaveData(path.string());
-    if (document.is_null()) return false;
-    const nlohmann::json* arr = nullptr;
-    if (document.contains("world") && document["world"].is_object() &&
-        document["world"].contains("objects") && document["world"]["objects"].is_array()) {
-        arr = &document["world"]["objects"];
-    } else if (document.contains("objects") && document["objects"].is_array()) {
-        arr = &document["objects"];
+    std::ifstream input(path);
+    if (!input) return false;
+    nlohmann::json document;
+    input >> document;
+    if (!document.contains("world") || !document["world"].is_object() ||
+        !document["world"].contains("objects") || !document["world"]["objects"].is_array()) {
+        return false;
     }
-    if (!arr) return false;
-    for (const auto& object : *arr) {
+    for (const auto& object : document["world"]["objects"]) {
         if (object.value("objectID", std::string{}) == id ||
             object.value("id", std::string{}) == id ||
             object.value("identifier", std::string{}) == id) {
@@ -107,8 +104,8 @@ int main() {
     // subject begins after this point: one Zone changes, one Zone is saved.
     manager.persistZones();
 
-    const auto alphaPath = sandbox / "zones" / "Alpha" / "zone.ecform";
-    const auto betaPath = sandbox / "zones" / "Beta" / "zone.ecform";
+    const auto alphaPath = sandbox / "zones" / "Alpha" / "zone.json";
+    const auto betaPath = sandbox / "zones" / "Beta" / "zone.json";
     check(std::filesystem::exists(alphaPath), "bulk seed created Alpha identity");
     check(std::filesystem::exists(betaPath), "bulk seed created Beta identity");
 

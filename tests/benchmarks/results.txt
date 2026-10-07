@@ -103,4 +103,3 @@ ISOLATED PAIRWISE RELEVANCE PHASE (optimized-run helper A/B):
 
 NOTE: Pairwise-phase ratios isolate the changed loop and MUST NOT be cited as
 whole-Index::rebuild speedups. The production A/B above is the end-to-end result.
-

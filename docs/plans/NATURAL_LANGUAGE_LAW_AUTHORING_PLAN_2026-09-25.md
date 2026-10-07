@@ -147,9 +147,3 @@ Zach, after witnessing rung 1: *"tab shouldn't just display a list of all possib
 ---
 
 *Claude Code · Claude Opus 5.5 · session `01WXmPy9U71FLqizbRYzMToZ` · 2026-09-25T02:25-07:00. Zach originated the Law Line, its grammar, presets, Tab, the terminal-first order, the TerminalChannel, the legacy split, and corrections 1–7 above. Claude originated: the libedit callback-interface pump, reading a denoted Law's shape as its opcode (open slot vs preset), composable presets, the request-counter invocation, Metalaw application by `targets`, character-level spelling forms, and the disabled-Law loader refinement.*
-
-## 2026-09-27 addendum — complete authored action fragments
-
-Zach's new To-do notes ask for Lexeme–Relation–Metalaw authoring across every action, including nested `Create` and `WritePixel`, after the Law/Time/authority/Relation foundations are regrounded. A complete action-only Law denoted by a Lexeme now contributes its exact ActionModel as one action fragment in a Law Line sentence. The live `denotes` Relation supplies identity; the existing Metalaw seam resolves a shared spelling; a whole Law with its own temporal/scope clauses remains a preset. No new action kind or bespoke payload parser was added. The current migration order and remaining architectural work are in [the 2026-09-27 plan](LAW_TIME_AUTHORITY_AND_RELATION_REGROUNDING_PLAN_2026-09-27.md). `law_line_test`, `law_line_zone_test`, and `line_editor_test` passed, and `earthcall_webgpu` built. No in-app Person witness was performed for this extension.
-
-*Codex · GPT-6 · session `codex-law-regrounding-20260927` · 2026-09-27T07:31:17Z.*

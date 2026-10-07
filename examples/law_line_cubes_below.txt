@@ -1,1 +1,0 @@
-called "Cubes Below Me" always if is a Person then Create <Object, properties: {shape.kind: Cube, position: my.position + (0, -3, 0), color: gold}>
