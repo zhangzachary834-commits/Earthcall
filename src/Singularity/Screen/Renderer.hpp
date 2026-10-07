@@ -285,6 +285,12 @@ public:
     renderedFieldSemanticObservationStats() const {
         return _renderedFieldObserver.stats();
     }
+    // Generation-only diagnostics expose lifetime rollover without exposing a
+    // theorem-consumption API. Native hostile witnesses use this to prove that
+    // numeric slot reuse did not preserve an old authority generation.
+    uint64_t renderedFieldRadianceSlotGeneration(size_t slot) const {
+        return _renderedFieldObserver.alignedRadianceSlotGeneration(slot);
+    }
 
     // Experimental authority boundary earned by PR #369. OFF is the permanent
     // default. Turning it ON first enables/replays semantic observation, then a
