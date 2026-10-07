@@ -162,8 +162,9 @@ public:
                 alignedIdentityMatches =
                     artifact.channel == Channel::SourceRho &&
                     artifact.producerId == source.producerId &&
-                    artifact.authoredRevision == source.radianceRevision;
-                _stats.alignedHandleMetadataTests += 3;
+                    artifact.authoredRevision == source.radianceRevision &&
+                    !artifact.sourceRhoAuthorityQuarantined;
+                _stats.alignedHandleMetadataTests += 4;
             }
             if (alignedIdentityMatches) {
                 ++_stats.radianceSetRevisionHits;
@@ -233,6 +234,12 @@ private:
         uint64_t authoredRevision = 0;
         uint64_t generation = 0;
         ProofKind proof = ProofKind::None;
+
+        // A producer/channel lifetime replacement must spend at least one draw
+        // on the exact path before this slot may consume a cached SourceRho
+        // theorem again. Ordinary authored-revision repair does not set this:
+        // it already re-proves the current producer directly.
+        bool sourceRhoAuthorityQuarantined = false;
     };
 
     void updateAlignedSlot(
@@ -244,16 +251,36 @@ private:
         ProofKind proof) {
         if (slot < slots.size()) {
             auto& existing = slots[slot];
-            if (existing.producerId == producerId &&
+            const bool sameIdentity =
+                existing.producerId == producerId &&
                 existing.channel == channel &&
-                existing.authoredRevision == authoredRevision) {
+                existing.authoredRevision == authoredRevision;
+            if (sameIdentity) {
+                if (channel == Channel::SourceRho &&
+                    existing.sourceRhoAuthorityQuarantined) {
+                    // This is the deliberate positive-recovery admission after
+                    // one exact/fail-open lifetime transition. Revalidate only
+                    // this already-selected slot and mint a fresh generation so
+                    // no handle published during quarantine can gain authority.
+                    existing.proof = proof;
+                    existing.generation = ++_nextAlignedGeneration;
+                    existing.sourceRhoAuthorityQuarantined = false;
+                    ++_stats.alignedSlotRepairs;
+                    return;
+                }
                 ++_stats.alignedSlotReuses;
                 return;
             }
 
+            const bool sourceRhoLifetimeChanged =
+                channel == Channel::SourceRho &&
+                (existing.channel != channel ||
+                 existing.producerId != producerId);
             existing = AlignedSlotArtifact{
                 producerId, channel, authoredRevision,
-                ++_nextAlignedGeneration, proof};
+                ++_nextAlignedGeneration,
+                sourceRhoLifetimeChanged ? ProofKind::None : proof,
+                sourceRhoLifetimeChanged};
             ++_stats.alignedSlotRepairs;
             return;
         }
@@ -262,7 +289,7 @@ private:
         // binding vector. There is no identity lookup or theorem search here.
         slots.push_back(AlignedSlotArtifact{
             producerId, channel, authoredRevision,
-            ++_nextAlignedGeneration, proof});
+            ++_nextAlignedGeneration, proof, false});
         ++_stats.alignedSlotBuilds;
     }
 
