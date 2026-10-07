@@ -186,6 +186,7 @@ jobs:
             webgpu_perlin_exact_gradient_test \
             webgpu_object_test \
             webgpu_particle_test \
+            webgpu_ontomath_native_resolution_parity_test \
             webgpu_v5_overlap_physics_test \
             webgpu_volumetric_mist_test \
             sanctuary_of_sunlit_mist_test
@@ -237,6 +238,10 @@ jobs:
       - name: Verify WebGPU particle MVP path
         shell: bash
         run: ./build/webgpu_particle_test
+
+      - name: Verify OntoMath native-resolution image parity
+        shell: bash
+        run: ./build/webgpu_ontomath_native_resolution_parity_test
 
       - name: Verify V5 fused overlap physics
         shell: bash
