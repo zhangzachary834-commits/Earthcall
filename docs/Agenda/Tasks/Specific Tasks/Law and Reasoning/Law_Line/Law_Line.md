@@ -5,8 +5,6 @@
 
 ## Status
 
-- **Direct Screen authoring (2026-10-06):** nested value constructors and mathematical quotation compile through authored Metalaws into existing fields/selectors; [recipe, examples, and evidence](../../Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md#cli-field-and-selector-authoring--2026-10-06).
-
 - **Practical guide (2026-10-05):** [Writing Earthcall Laws for humans and agents](../../../../../architecture/law/LAW_AUTHORING_CLI_GUIDE.md) supplies beginner lessons, creation and property recipes, ordered programs, all 26 action kinds, troubleshooting, and the authored compiler workflow; see [the guide record](#authoring-guide-2026-10-05).
 
 - **Invisible Create fix (2026-10-05):** Zach's Objects and face assets existed but neither below-me nor view-relative cubes appeared. The birth resolver preferred inactive `World` over the active rendered Zone. That name preference is removed; the boot harness now includes inactive Zones and a full Engine/Terminal/Metalaw viewport capture shows the gold probe. Restart the rebuilt app to load the correction; [audit and native evidence](../../../../../audits/LAW_CREATE_ACTIVE_ZONE_ROUTING_FIX_2026-10-05.md). Existing Person-authored Laws and saves were not edited.

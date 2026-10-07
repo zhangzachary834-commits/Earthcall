@@ -1,21 +1,21 @@
 {
     "identifier": "law-nn-forward",
     "authors": [
-        "Zach"
+        "Player"
     ],
-    "injected_by": "Antigravity - ML Relations",
+    "injected_by": "Antigravity - Neural Network Primer",
     "law": {
         "id": "law-nn-forward",
-        "name": "NN Forward Pass",
+        "name": "Neural Network Forward Pass",
         "enabled": true,
         "authority": 0,
-        "activation": 1,
+        "activation": 0,
         "scope": 0,
         "drives": false,
         "retrigger": 0,
         "conditionMode": "all",
         "authors": [
-            "Zach"
+            "Player"
         ],
         "conditionModel": {
             "kind": 3,
@@ -26,12 +26,10 @@
             "children": [
                 {
                     "kind": 8,
-                    "path": "@node-h-1.authored.activation",
+                    "path": "@node-out-1.position.y",
                     "bindings": {
-                        "i1": "@node-in-1.authored.activation",
-                        "i2": "@node-in-2.authored.activation",
-                        "w1": "@node-h-1.authored.w1",
-                        "w2": "@node-h-1.authored.w2"
+                        "a": "@node-in-1.position.y",
+                        "b": "@node-in-2.position.y"
                     },
                     "function": {
                         "pieces": [
@@ -39,85 +37,15 @@
                                 "expr": {
                                     "terms": [
                                         {
-                                            "c": 1.0,
+                                            "c": 0.8,
                                             "factors": {
-                                                "i1": 1,
-                                                "w1": 1
+                                                "a": 1
                                             }
                                         },
                                         {
-                                            "c": 1.0,
+                                            "c": 1.2,
                                             "factors": {
-                                                "i2": 1,
-                                                "w2": 1
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                },
-                {
-                    "kind": 8,
-                    "path": "@node-h-2.authored.activation",
-                    "bindings": {
-                        "i1": "@node-in-1.authored.activation",
-                        "i2": "@node-in-2.authored.activation",
-                        "w1": "@node-h-2.authored.w1",
-                        "w2": "@node-h-2.authored.w2"
-                    },
-                    "function": {
-                        "pieces": [
-                            {
-                                "expr": {
-                                    "terms": [
-                                        {
-                                            "c": 1.0,
-                                            "factors": {
-                                                "i1": 1,
-                                                "w1": 1
-                                            }
-                                        },
-                                        {
-                                            "c": 1.0,
-                                            "factors": {
-                                                "i2": 1,
-                                                "w2": 1
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                },
-                {
-                    "kind": 8,
-                    "path": "@node-out.authored.activation",
-                    "bindings": {
-                        "i1": "@node-h-1.authored.activation",
-                        "i2": "@node-h-2.authored.activation",
-                        "w1": "@node-out.authored.w1",
-                        "w2": "@node-out.authored.w2"
-                    },
-                    "function": {
-                        "pieces": [
-                            {
-                                "expr": {
-                                    "terms": [
-                                        {
-                                            "c": 1.0,
-                                            "factors": {
-                                                "i1": 1,
-                                                "w1": 1
-                                            }
-                                        },
-                                        {
-                                            "c": 1.0,
-                                            "factors": {
-                                                "i2": 1,
-                                                "w2": 1
+                                                "b": 1
                                             }
                                         }
                                     ]

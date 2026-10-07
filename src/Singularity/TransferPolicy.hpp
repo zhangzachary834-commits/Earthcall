@@ -57,6 +57,14 @@ private:
 
     void buildProperties() override;
 
+    struct GateBridge {
+        TransferPolicy* policy;
+        std::string gate;
+        bool get() const { return policy->isOpen(gate); }
+        void set(const bool& v) { policy->setOpen(gate, v); }
+    };
+    std::vector<std::unique_ptr<GateBridge>> _bridges;
+
     std::map<std::string, Tier> _tiers;   // declared gates
     std::map<std::string, bool> _open;    // current state (Governable/Gated)
 };

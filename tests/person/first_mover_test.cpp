@@ -283,6 +283,7 @@ static void testGlobSemantics() {
     assert(!matchesGlob("worlds/*/a.ecsave", "worlds/a.ecsave"));
     assert(!matchesGlob("worlds/*/a.ecsave", "worlds/sub/b.ecsave"));
     assert(!matchesGlob("*.ecsave", "a.ecsave.old"));
+
     std::cout << "  glob semantics OK\n";
 }
 

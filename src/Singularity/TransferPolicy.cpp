@@ -63,22 +63,13 @@ bool TransferPolicy::canTransfer(const PropertyPath& source) const {
 // access through the ordinary property bridge. Kernel gates register
 // read-only: setValue refuses, exactly like writing to "time".
 void TransferPolicy::buildProperties() {
-    struct GateBridge {
-        // ComputedProperty wants member-function getters/setters; a tiny
-        // heap-stable closure object per gate does the adapting.
-        TransferPolicy* policy;
-        std::string gate;
-        bool get() const { return policy->isOpen(gate); }
-        void set(const bool& v) { policy->setOpen(gate, v); }
-    };
-    static std::vector<std::unique_ptr<GateBridge>> bridges;
-    bridges.clear();
+    _bridges.clear();
     for (const auto& entry : _tiers) {
         auto bridge = std::make_unique<GateBridge>();
         bridge->policy = this;
         bridge->gate = entry.first;
         GateBridge* raw = bridge.get();
-        bridges.push_back(std::move(bridge));
+        _bridges.push_back(std::move(bridge));
         if (entry.second == Tier::Kernel) {
             registerProperty(std::make_unique<ComputedProperty<GateBridge, bool>>(
                 "gate." + entry.first, raw, &GateBridge::get, nullptr));

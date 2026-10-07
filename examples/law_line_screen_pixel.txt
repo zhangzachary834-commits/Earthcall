@@ -1,1 +1,0 @@
-called "Gold Pixel" becomes true if is a Person then Sequence <children: [remove property @screen-channel.output.colorPath, add property @screen-channel.output.color to VectorField <pieces: [Piece <value: $(gold), where: $(Distance <a: $(p), b: $((7.5, 9.5, 0))> - 0.1)>]>]>

@@ -23,14 +23,6 @@ namespace Input {
 
 LocomotionChannel::LocomotionChannel() = default;
 
-LocomotionChannel::~LocomotionChannel() {
-    if (_routingSubscription) {
-        ::Core::EventBus::instance().unsubscribe(_routingSubscription);
-        _routingSubscription = {};
-    }
-    _routingInstalled = false;
-}
-
 void LocomotionChannel::syncRegister(LawManager& laws) {
     if (find(laws)) return;
     laws.add(std::make_shared<LocomotionChannel>());
@@ -176,10 +168,9 @@ void LocomotionChannel::setLocomotion(Person& person, bool isMoving, float trave
 void LocomotionChannel::installRouting() {
     if (_routingInstalled) return;
     _routingInstalled = true;
-    _routingSubscription =
-        ::Core::EventBus::instance().subscribe<LocomotionChanged>([this](const LocomotionChanged& e) {
-            if (e.person) setLocomotion(*e.person, e.moving, e.speed);
-        });
+    Core::EventBus::instance().subscribe<LocomotionChanged>([this](const LocomotionChanged& e) {
+        if (e.person) setLocomotion(*e.person, e.moving, e.speed);
+    });
 }
 
 // Order each frame:
@@ -298,7 +289,7 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
         if (jumpKeyDown && !_jumpKeyDownLast && grounded) {
             person.velocity().y = JUMP_SPEED;
             grounded = false;
-            ::Core::EventBus::instance().publish(ECA::Event{"jump-started", &person, nullptr, std::time(nullptr)});
+            Core::EventBus::instance().publish(ECA::Event{"jump-started", &person, nullptr, std::time(nullptr)});
         }
         if (gravityEnabled) {
             person.velocity().y -= GRAVITY * dt;
@@ -319,7 +310,7 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
         grounded = false;
     }
     if (grounded && !groundedLast) {
-        ::Core::EventBus::instance().publish(ECA::Event{"landed", &person, nullptr, std::time(nullptr)});
+        Core::EventBus::instance().publish(ECA::Event{"landed", &person, nullptr, std::time(nullptr)});
     }
     _wasGrounded = grounded;
 
@@ -328,11 +319,11 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
     const float distance = glm::length(horizDelta);
     moving = distance > 1e-5f;
     speed  = (moving && dt > 1e-5f) ? distance / dt : 0.0f;
-    ::Core::EventBus::instance().publish(LocomotionChanged{&person, moving, speed});
+    Core::EventBus::instance().publish(LocomotionChanged{&person, moving, speed});
     if (moving && !_wasMoving) {
-        ::Core::EventBus::instance().publish(ECA::Event{"locomotion-started", &person, nullptr, std::time(nullptr)});
+        Core::EventBus::instance().publish(ECA::Event{"locomotion-started", &person, nullptr, std::time(nullptr)});
     } else if (!moving && _wasMoving) {
-        ::Core::EventBus::instance().publish(ECA::Event{"locomotion-stopped", &person, nullptr, std::time(nullptr)});
+        Core::EventBus::instance().publish(ECA::Event{"locomotion-stopped", &person, nullptr, std::time(nullptr)});
     }
     _wasMoving = moving;
 

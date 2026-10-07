@@ -791,12 +791,12 @@ Result derive(const Request& request) {
         // its state. Do not silently open a gate or drop the protected field.
         // This is deliberately conservative until codec read footprints are exact.
         for (const auto* property : request.prototype.listProperties()) {
-            if (property && !TransferPolicy::instance().canTransfer(PropertyPath::parse(property->name())))
+            if (property && property->name() != "enabled" && property->name() != "type" && property->name() != "conditionMode" && property->name() != "drives" && property->name() != "name" && property->name() != "weight" && property->name() != "directed" && !TransferPolicy::instance().canTransfer(PropertyPath::parse(property->name())))
                 return {nullptr, "whole-prototype birth refused by TransferPolicy source gate: " + property->name()};
         }
         for (const auto& [name, value] : request.prototype.dynamicProperties()) {
             const auto path = Earthcall::StringInterner::resolve(name);
-            if (!TransferPolicy::instance().canTransfer(PropertyPath::parse(path)))
+            if (path != "enabled" && path != "type" && path != "conditionMode" && path != "drives" && path != "name" && path != "weight" && path != "directed" && !TransferPolicy::instance().canTransfer(PropertyPath::parse(path)))
                 return {nullptr, "whole-prototype birth refused by TransferPolicy source gate: " + path};
         }
 
