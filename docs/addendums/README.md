@@ -25,3 +25,5 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating Hierarchy of Joys and First Mover Authoring](hierarchy_of_joys_and_first_mover_authoring_addendum.md)
 *   [Integrating Law Migration Framework and Adaptive Compute Moments](law_migration_and_adaptive_compute_addendum.md)
 *   [Integrating SDF Spatial Prophetic Artifact and Performance as Truth](sdf_prophetic_and_performance_as_truth_addendum.md)
+*   [Integrating GPU Micro-Mastery and Native GPU OntoMath](gpu_micro_mastery_and_native_ontomath_addendum.md)
+*   [Integrating Professional 2D Design and Unified Brush Systems](professional_design_and_unified_brush_addendum.md)
