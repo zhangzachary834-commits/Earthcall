@@ -1265,6 +1265,7 @@ private:
     // compileConditionsToRete; see seedStateFacts for why the narrowing is
     // sound and why it is worth doing.
     std::unordered_set<std::string> _relationTypesInPlay;
+    std::vector<uint64_t> _eventBusSubscriptionIds;
     bool _connected = false;
     bool _dirty = false;
     TickTiming _tickTiming;

@@ -1912,12 +1912,18 @@ void LawManager::add(const std::shared_ptr<Law>& law) {
 static LawManager* s_singularHookOwner = nullptr;
 
 LawManager::~LawManager() {
+    for (uint64_t id : _eventBusSubscriptionIds) {
+        Core::EventBus::instance().unsubscribe(id);
+    }
+    _eventBusSubscriptionIds.clear();
+
     if (s_singularHookOwner == this) {
         Singular::setPropertyChangeCallback(nullptr);
         Singular::setBeingReleasedCallback(nullptr);
         Universe::instance().setEventInterest(nullptr);
         s_singularHookOwner = nullptr;
     }
+    _connected = false;
 }
 
 void LawManager::connectToEventBus() {
@@ -2022,6 +2028,7 @@ void LawManager::connectToEventBus() {
         _dirty = true;
     });
 
+    _eventBusSubscriptionIds.push_back(
     Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
         std::string subjectId = e.subject ? e.subject->getIdentifier() : "null";
         std::string objectId = e.object ? e.object->getIdentifier() : "null";
@@ -2091,8 +2098,9 @@ void LawManager::connectToEventBus() {
                 }
             }
         }
-    });
+    }));
 
+    _eventBusSubscriptionIds.push_back(
     Core::EventBus::instance().subscribe<Core::Event::Custom>([this](const Core::Event::Custom& e) {
         if (!e.relation) return;
         
@@ -2115,7 +2123,7 @@ void LawManager::connectToEventBus() {
         
         _rete.assertFact(fact);
         _dirty = true;
-    });
+    }));
 
 
     // Per-node action outcomes reach the audit log through the application
