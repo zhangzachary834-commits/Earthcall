@@ -418,25 +418,29 @@ void from_json(const nlohmann::json& j, Object& obj){
     // in .ecmatter, but an embedded legacy payload is still accepted when the
     // discriminant says this Object is a Polyhedron. An obsolete payload may
     // never overturn a newer declared shape.
-    if (obj.getShapeKind() == Object::ShapeKind::Polyhedron && j.contains("polyhedron")) {
+    if (obj.getShapeKind() == Object::ShapeKind::Polyhedron && j.contains("polyhedron") && j["polyhedron"].is_object()) {
         const auto& pj = j["polyhedron"];
         std::vector<glm::vec3> verts;
         std::vector<std::vector<int>> faces;
-        if (pj.contains("vertices")) {
+        if (pj.contains("vertices") && pj["vertices"].is_array()) {
             const auto& vs = pj["vertices"];
             verts.reserve(vs.size());
             for (const auto& vj : vs) {
-                if (vj.size() >= 3) verts.emplace_back(vj[0].get<float>(), vj[1].get<float>(), vj[2].get<float>());
+                if (vj.is_array() && vj.size() >= 3) verts.emplace_back(vj[0].get<float>(), vj[1].get<float>(), vj[2].get<float>());
             }
         }
-        if (pj.contains("faces")) {
+        if (pj.contains("faces") && pj["faces"].is_array()) {
             const auto& fs = pj["faces"];
             faces.reserve(fs.size());
             for (const auto& fj : fs) {
-                std::vector<int> face;
-                face.reserve(fj.size());
-                for (const auto& idx : fj) face.push_back(idx.get<int>());
-                faces.push_back(std::move(face));
+                if (fj.is_array()) {
+                    std::vector<int> face;
+                    face.reserve(fj.size());
+                    for (const auto& idx : fj) {
+                        if (idx.is_number_integer()) face.push_back(idx.get<int>());
+                    }
+                    faces.push_back(std::move(face));
+                }
             }
         }
         if (!verts.empty() && !faces.empty()) {
@@ -452,16 +456,18 @@ void from_json(const nlohmann::json& j, Object& obj){
     
      
 
-    if (j.contains("faceColors")) {
+    if (j.contains("faceColors") && j["faceColors"].is_array()) {
         const auto& faceCols = j["faceColors"];
         for (size_t f = 0; f < faceCols.size() && f < 6; ++f) {
-            obj.faceColors[f][0] = faceCols[f][0].get<float>();
-            obj.faceColors[f][1] = faceCols[f][1].get<float>();
-            obj.faceColors[f][2] = faceCols[f][2].get<float>();
-            if (ownsItsSurface && !texturesAlreadyHere) {
-                obj.setFaceColor(static_cast<int>(f),
-                                 obj.faceColors[f][0], obj.faceColors[f][1],
-                                 obj.faceColors[f][2]);
+            if (faceCols[f].is_array() && faceCols[f].size() >= 3) {
+                obj.faceColors[f][0] = faceCols[f][0].get<float>();
+                obj.faceColors[f][1] = faceCols[f][1].get<float>();
+                obj.faceColors[f][2] = faceCols[f][2].get<float>();
+                if (ownsItsSurface && !texturesAlreadyHere) {
+                    obj.setFaceColor(static_cast<int>(f),
+                                     obj.faceColors[f][0], obj.faceColors[f][1],
+                                     obj.faceColors[f][2]);
+                }
             }
         }
     }
