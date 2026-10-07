@@ -579,7 +579,7 @@ struct WebSocketServer::Impl {
                             LawManager* lm = ::Core::Engine::instance().getLawManager();
                             if (lm) {
                                 for (const auto& l : lm->getAll()) {
-                                    if (l && (l->getIdentifier() == target || l->getIdentifier() == normTarget || l->name() == target)) {
+                                    if (l && (l->getIdentifier() == target || l->getIdentifier() == normTarget)) {
                                         targetBeing = l.get();
                                         break;
                                     }

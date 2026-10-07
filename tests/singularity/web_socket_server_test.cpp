@@ -1,5 +1,6 @@
 #include "Singularity/Network/WebSocketServer.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include <cassert>
 #include <iostream>
 #include <string>
@@ -98,6 +99,23 @@ int main() {
     server.stop();
 
     std::cout << "[Test] WebSocketServer real network path verification succeeded." << std::endl;
+
+    // Regression test: Distinct Laws with identical display names ("Color Pulse") must be looked up by ID, not display name.
+    {
+        std::cout << "[Test] Verifying distinct laws sharing the same display name are distinguished by identifier..." << std::endl;
+        LawManager lm;
+        auto law1 = std::make_shared<Law>("Color Pulse");
+        law1->setLawIdentifier("law-color-pulse-alpha");
+        auto law2 = std::make_shared<Law>("Color Pulse");
+        law2->setLawIdentifier("law-color-pulse-beta");
+        lm.add(law1);
+        lm.add(law2);
+
+        assert(lm.find("law-color-pulse-alpha") == law1.get());
+        assert(lm.find("law-color-pulse-beta") == law2.get());
+        assert(lm.find("Color Pulse") == nullptr); // Lookup by display name must return nullptr
+        std::cout << "[Test] LawManager correctly resolves laws by unique identifier rather than display name." << std::endl;
+    }
 
     // Test unhydrated ZoneManager safety: clear zones to simulate startup before zone hydration
     std::cout << "[Test] Verifying WebSocketServer behavior when ZoneManager has no active zones..." << std::endl;
