@@ -132,8 +132,16 @@ int main() {
 
     mgr.loadState(legacyPath.string(), ctx);
 
-    const auto matterPath = std::filesystem::path(legacyPath).replace_extension(".ecmatter");
-    check(std::filesystem::exists(matterPath),
+    const auto ecformPath = std::filesystem::path(legacyPath).replace_extension(".ecform");
+    std::filesystem::path matterPath;
+    {
+        nlohmann::json fj = SaveSystem::readSaveData(ecformPath.string());
+        if (fj.contains("matterGeneration")) {
+            const std::string snapshotId = fj["matterGeneration"].value("snapshotId", std::string{});
+            matterPath = sandbox / "worlds" / ("legacy_world." + snapshotId + ".ecmatter");
+        }
+    }
+    check(!matterPath.empty() && std::filesystem::exists(matterPath),
           "legacy JSON splitter migrated the World to a .ecmatter sidecar");
 
     const auto ids = entityIdsInMatterFile(matterPath);

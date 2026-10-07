@@ -889,11 +889,13 @@ Zach’s goal is mastery down to individual pixels or meaningful pixel batches. 
 extension here is a **promotion rule** that preserves that intent without forcing the
 runtime to allocate a heavyweight C++ Object for every display sample:
 
-> **CURRENT STATUS — UNDER DEVELOPMENT:** Earthcall does not yet provide complete
-> granular pixel mastery in which OntoMath defines any pixel-colored region directly,
-> independently of flat `ShapeKind` carriers, and Screen compiles that authored field all
-> the way to efficient manifestation. The first selective-elevation and `WritePixel`
-> rungs exist; they prove the direction, not completion of the full framework.
+> **CURRENT STATUS — DIRECT SCREEN RUNG IMPLEMENTED; FULL AUTHORING UNDER DEVELOPMENT:**
+> Screen now admits typed authored OntoMath color/opacity fields directly at physical
+> framebuffer sample centres, independently of Object faces, Materials, textures, or
+> `ShapeKind` carriers. The shared GPU compiler supports piecewise intervals and pure
+> mathematical region selectors. Direct sample elevation, convenient field editing, and
+> authored multi-source composition remain unfinished. See [Direct Screen forms](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md)
+> for the exact contract, refusals, and native verification status.
 
 | Level | Representation | When it becomes a being |
 |---|---|---|
@@ -915,10 +917,17 @@ arbitrarily named Property to the defined set of a Person-authored OntoMath `Pie
 over local `u` and `v`. No rectangular or other named-region enum determines its bounds.
 The dense `FaceTexture` remains virtual until that authoring act, and Screen writes wake
 elevated Properties that contain the changed sample. Texture resolution and stroke history
-remain explicit debt, as do direct OntoMath-to-color-field compilation, arbitrary
-continuously changing regions, GPU evaluation at scale, and a finished Person-facing
-authoring surface. Do not describe granular pixel mastery as shipped, and do not fill the
-gap by adding more flat shape or region enums.
+remain explicit debt. The new direct Screen path compiles color and opacity mathematics
+without this texture carrier, rereads current field contents, and samples them on the GPU;
+`output.colorPath` can name a typed field on any addressable Singular. Its mathematical
+region can change with the authored expression or explicitly bound time. A finished
+Person-facing field editor and authored multi-source composition remain open. Do not
+describe the whole granular-mastery framework as complete or add flat shape/region enums
+to fill its remaining gaps.
+
+*Direct Screen extension: Codex / GPT-6.1 Sol / session
+`01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` / 2026-10-04 21:10 PDT;
+Zach requested the direct medium under Refusals 1, 3, and 7.*
 
 ### 7.5 2D-to-3D gradients
 
@@ -1322,7 +1331,7 @@ the prototype.
 | 2D authoring | screen-space rectangles/text render, serialize, and receive authored interaction; basic button and pixel writer are proven; pixel-set bounds are OntoMath | restore/replace the disabled design tools with Law/First-Mover authoring; OntoMath-native paths, strokes, and layouts |
 | 3D authoring | primitives, polyhedra, implicit Fields, Patches, Creator Console, Concepts, and Law creation exist | close live Shape Generator audit; deeper authored CAD/topology/continuity Law libraries |
 | Form | geometry, OntoMath, Materials, and Formations carry much of it | settle first-order Form ontology and authoring without reintroducing a hardcoded class hierarchy |
-| Materials/pixels | Materials are beings; textures persist; a pixel or OntoMath-selected set can be elevated as a live Property and written by Law | authorable resolution, authored stroke history/provenance, GPU compilation for large dynamic selections, and full no-black-box coverage |
+| Materials/pixels | Materials are beings; textures persist; a pixel or OntoMath-selected set can be elevated as a live Property and written by Law | direct Screen fields compile on GPU; finish Person-facing field authoring, authored composition, stroke provenance, and full no-black-box coverage |
 | Relations/Formations | first-class endpoints, weights, history, attachments, rooted Categories, and persistence exist | make them load-bearing across more engine actions; settle remaining manifesto/runtime definition tensions |
 | Categories | direct `instance-of` queries and rooted Category pattern exist | category home/registry, inherited closure propagation, conflict/diamond policy |
 | Concepts | Object set capture/instantiate and anchored Relations exist | generalize `ObjectConcept` toward Singular creation without duplicating ontology |

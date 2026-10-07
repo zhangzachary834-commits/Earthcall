@@ -58,9 +58,9 @@ Refusal 6 is the corollary: no subsystem may define what a thing's state *means*
 | write or edit a save file / seed a world | `law/FIRST_MOVER_AUTHORING.md` §4, §7 | you are acting as a First Mover; §7 is not optional |
 | add a directory | `ontology/DIRECTORY_ORDERING.md` §7 | the tree is the ontology |
 | connect hardware, a device, or a foreign process — or let a model change the world (MCP, socket) | `ontology/NEW_KIND_FRAMEWORK.md` §7b; `docs/plans/MCP_FIRST_MOVER_GOVERNANCE_IMPLEMENTATION_PLAN_2026-09-18.md` | a *modality channel* under `Singularity/`, never a domain folder; every foreign mutation passes `Singularity/Foreign/ForeignActuationGuard` as a Person-granted First Mover — reads stay open |
-| understand what a Law is at all | `law/LAW_AND_CREATION_SYSTEM.md` | the foundation the rest assumes |
+| understand what a Law is or write a CLI sentence | `law/LAW_AND_CREATION_SYSTEM.md`; [CLI guide](docs/architecture/law/LAW_AUTHORING_CLI_GUIDE.md) | the foundation the rest assumes |
 | undo a change, rewind, or ask whether something *can* be undone | `mathematics/ONTOMATH_FRAMEWORK.md` §6 | the past is integrated in closed form, never replayed from a log |
-| render an authored expression to a channel (sound, shader, physics) | `mathematics/ONTOMATH_FRAMEWORK.md` §1, §7 | a channel reads OntoMath; it never decides what the thing is |
+| render an authored expression to a channel (sound, shader, physics; direct Screen fields: [task](docs/Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md)) | `mathematics/ONTOMATH_FRAMEWORK.md` §1, §7 | a channel reads OntoMath; it never decides what the thing is |
 | ask "why is it like this?" | `core/EarthcallOurverse.md`, `ontology/SUBSTRATE_ORDERING.md` | the ends the architecture serves |
 | touch the Hierarchy of Joys, telos, or "joyOrdering" | `ontology/HIERARCHY_OF_JOYS.md` | Lexemes are telos; the hierarchy is a Formation |
 | remove, break, or dissolve a Relation — or decide what a stale one becomes | `ontology/PRIMARY_AND_SUB_RELATIONS.md` §2, §7 | the primary Relation between two Singulars never disappears; sub-Relations dissolve only on proved impossibility |
@@ -141,7 +141,7 @@ widening the baseline.
   Zach's 2026-09-27/28 rule: individual paths resolve under relevant Zones;
   paths hold no ID, ambiguity refuses, and Ourverses cannot reauthor Person identity; Law-governed read/write belongs with TransferPolicy. See the Property storage task.
 - **Append-only enums**, serialized as ints. Never renumber, never reuse a burned value.
-- **Nothing enters the world without an author.** `Law::applyTo` returns `Unauthored` and
+- **Nothing enters the world without an author.** Prototype Create retains concrete kinds and refuses unresolved birth semantics (see the Singular and Object Set-to-Set Creation task); `Law::applyTo` returns `Unauthored` and
   refuses to fire when `authors` is empty. This is structural, not conventional.
 - **Authority is clamped to 0** on every path that reads a file. Do not try to write an authority value below 0; it will be clamped, and the attempt is what gets noticed.
 - **Event-transitions must be edges, not levels.** Events are past-tense `noun-verbed` and publish on transitions. A

@@ -221,3 +221,19 @@ mathematics untouched.
 Verified by `tests/ontomath_sounding_test.cpp`; demonstrated audibly by
 `scratch/probes/one_expression_two_senses.cpp`, which prints one expression as an ASCII arch,
 writes it as a playable `.wav`, and reverses a `Flow` governed by its derivative.
+
+
+## 8. Direct Screen manifestation
+
+The Screen channel now reads authored `VectorField` color and optional `ScalarField`
+opacity directly at physical framebuffer sample centres. This uses the same MathNode
+calculus and WGSL emitter as surface expressions without an Object, Material, texture,
+or ShapeKind carrier. Pure `whereLEZero` guards author arbitrary regions; undefined
+regions produce no act. Its `x/y`, `u/v`, `p`, framebuffer dimension, and explicitly
+admitted `t` bindings are documented in [Direct Screen forms](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md).
+Unsupported world-dependent expressions refuse rather than inventing a result.
+The existing generic PropertyValue serializer now preserves the typed field's complete
+Field JSON payload; old tag-only records cannot recover lost mathematics.
+
+Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-04 21:10 PDT. Zach requested a directly authorable Screen medium.

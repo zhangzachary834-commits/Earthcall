@@ -86,7 +86,7 @@ public:
 
     // The live vocabulary: structural words, the engine's opcode spellings,
     // every Lexeme that denotes a Law, heard events, present beings.
-    LawSentence::Vocabulary vocabulary(LawManager& laws);
+    LawSentence::Vocabulary vocabulary(LawManager& laws, const std::string& authorId = "");
 
     // The Law Line for a writer who is NOT the Person at the keyboard: a
     // foreign First Mover (MCP) that has already proved its key and been
@@ -123,9 +123,21 @@ public:
     static constexpr const char* kLineHolder = "terminal-channel";
     const std::string& zone() const { return _zone; }
     bool awaitingSecret() const { return _secretStage != 0; }
+    // Why Enter would KEEP this line rather than send it ("" = sent). The
+    // editor's submit gate; public so tests witness what a Person's Enter does.
+    std::string submitRefusal(const std::string& text);
     // Test seam: the Person the Identity Zone makes present (default: the
     // Engine's Person).
     void setPresencePerson(Person* person) { _presencePerson = person; }
+    // Why a typed line may not author right now ("" = it may). Kernel guard,
+    // never a property: stdin authors only as a Person who is PRESENT, i.e.
+    // proved their key to this process this session (Identity unlock), the
+    // same root MCP grants terminate in. Zach, 2026-10-05: "Require presence".
+    std::string presenceRefusal();
+    // Test seam (C++ only, like setPresencePerson): replaces the register
+    // check so an isolated harness, which holds no real private key, can
+    // stand in for a present Person. Never reachable from Law or a socket.
+    void setPresenceCheckForTests(std::function<bool(const Person&)> check) { _presenceCheck = std::move(check); }
 
     // Test seams: a line as if typed and entered; where output goes.
     void inject(const std::string& line) { _pending.push_back(line); }
@@ -142,6 +154,10 @@ private:
     void takeSecret(std::string& secret);
     void cancelSecret(const std::string& why);
     std::string zoneLabel() const;
+    // The Law Line grammar (gate, menu, colouring) reads the line only where
+    // the line is in the Law Line -- or nowhere yet (legacy). Elsewhere a line
+    // is sent as typed and that Zone's Laws decide what it means.
+    bool lawGrammarHere() const { return _zone.empty() || _zone == "LawLine"; }
     // The one place a parsed sentence becomes a live Law (speak + authorForeign).
     // Returns "" on success, else the refusal.
     std::string enact(LawManager& laws, const LawSentence::Parse& p, const std::string& text,
@@ -158,6 +174,7 @@ private:
     int width() const;
     std::string describeProperty(const std::string& beingId, const std::string& property) const;
     std::string describeBeing(const std::string& beingId) const;
+    static std::string describeSingular(Singular* being);
     std::string propertySuggestionBeing() const;
     // Rung 3 (Zach, 2026-09-25): the footer, help, confirmed deletion, dry run.
     std::string footerText(bool& hears);
@@ -169,6 +186,8 @@ private:
     std::string dryRun(const LawSentence::Parse& p);
     std::string lawSummary(const Law& law, LawManager& laws) const;
     LawSentence::Resolution resolveByMetalaw(LawManager& laws, const LawSentence::Ambiguity& a);
+    LawSentence::Compilation compileByMetalaw(LawManager& laws, const nlohmann::json& input, bool readOnly, nlohmann::json* document = nullptr);
+    std::string propCompilationResult() const;
     void attach(LawManager& laws);
     void detach();
 
@@ -181,6 +200,14 @@ private:
 
     // Law-legible state (NO_BLACK_BOX: every field is a registered path).
     std::string _lastLine;
+    // Multi-line block (Python-style) being typed: its lines so far. Folded
+    // into one sentence by LawSentence::unfoldBlock when an empty line ends it.
+    // Registered read-only as `block` (lines joined by newlines).
+    std::vector<std::string> _block;
+    std::string propBlock() const;
+    // The line being typed, read in its open block's context: the folded text
+    // and how far the line's own offsets shift inside it (0 = no context).
+    std::string blockContext(const std::string& line, long& shift);
     std::string _output;
     std::string _prompt = "earthcall> ";
     double _linesEntered = 0.0;
@@ -201,6 +228,7 @@ private:
     int _secretStage = 0;
     std::string _pendingSecret;
     Person* _presencePerson = nullptr;          // test seam; null = Engine's Person
+    std::function<bool(const Person&)> _presenceCheck;   // test seam; empty = FirstMoverRegister
     std::string _lexemeRelation = "denotes";
     std::string _scopeBeing;
     std::string _status;
@@ -211,6 +239,12 @@ private:
     std::string _ambiguitySlot;
     std::string _ambiguityCandidates;
     std::string _ambiguityResolved;
+    // Generic invocation protocol. Input is channel-sensed syntax; templates
+    // and refusals are authored by Metalaws targeting this channel. The result
+    // is derived solely by structural JSON substitution, not by opcode lowering.
+    std::shared_ptr<PropertyDict> _compilationInput = std::make_shared<PropertyDict>();
+    std::string _compilationTemplate;
+    std::string _compilationError;
     bool _attached = false;
     // Confirmed deletion (registered): the question a Metalaw asks, and what
     // is waiting for the Person's answer.

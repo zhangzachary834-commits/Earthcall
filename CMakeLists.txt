@@ -543,3 +543,4 @@ if (EMSCRIPTEN)
     set_target_properties(earthcall_wasm PROPERTIES OUTPUT_NAME "earthcall")
     set_target_properties(earthcall_wasm PROPERTIES SUFFIX ".js")
 endif()
+

@@ -70,6 +70,8 @@ struct Word {
     std::string lawId;     // the Law this Lexeme denotes; "" for a canonical spelling
     std::string description;   // what the menu says it means (a denoted Law's name)
     std::string detail;        // the longer line under the menu when this word is selected
+    std::string arguments;     // optional authored sentence.arguments template
+    std::string expression; // authored sentence.math (serialized existing MathNode)
 
     // How an ambiguity names this candidate. A Lexeme that denotes several
     // Laws is several candidates, so the denoted Law is part of the name.
@@ -109,7 +111,25 @@ struct Resolution {
     std::string reason;   // who resolved it, or why nothing did
 };
 
+// Generic parameterized Lexeme invocation. The channel supplies syntax data;
+// an authored Metalaw supplies the model. No Create-specific lowering lives here.
+struct Compilation {
+    std::optional<ActionNode> action;
+    std::string error;
+    std::vector<std::string> laws;
+    // Set instead of `action` when the sensed slot is "condition" (arithmetic
+    // comparisons compiled by authored Metalaws into existing condition kinds).
+    std::optional<ConditionNode> condition;
+    // Generic value constructors return authored structural syntax. The reader
+    // admits literal / typed PropertyValue / MathNode envelopes, not domain verbs.
+    std::optional<nlohmann::json> value;
+};
+
 struct Vocabulary {
+    std::function<Compilation(const nlohmann::json&, bool readOnly)> compileInvocation;
+    // Root aliases are authored vocabulary data. $author is the speaking
+    // author's identifier, resolved by the channel before reading expressions.
+    std::map<std::string, std::string> pathRoots;
     std::vector<Word> words;                 // structural + canonical + denoting Lexemes
     std::vector<Preset> presets;             // looked up by Word::lawId
     std::vector<std::string> events;         // event types the world knows
@@ -122,6 +142,10 @@ struct Vocabulary {
     // What the menu says beside a candidate. All optional; absent = blank.
     std::function<std::string(const std::string& beingId, const std::string& property)> describeProperty;
     std::function<std::string(const std::string& beingId)> describeBeing;
+    // Optional batch form of propertiesOf + describeProperty: each property
+    // with its description, from one lookup of the being. Preferred by the
+    // menu when set (per-name lookups made '@' completion quadratic).
+    std::function<std::vector<std::pair<std::string, std::string>>(const std::string& beingId)> describedPropertiesOf;
     std::function<std::string(const std::string& eventType)> describeEvent;
 
     // The Laws present, by display name — for naming a Law in a sentence
@@ -149,6 +173,7 @@ std::vector<Word> canonicalWords();
 struct Parse {
     bool ok = false;
     bool previewOnly = false;   // sentence ended with '?'
+    bool compilationDeferred = false; // syntax is complete; no compiler ran in preview
     bool search = false;        // sentence began with '??'
 
     std::string name;
@@ -198,6 +223,20 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
 // order: Set -> "‹path› to ‹value›", Gt -> "‹value›", clause.trigger ->
 // "‹event›". Empty when the word takes nothing after it.
 std::string argumentTemplate(const std::string& opcode);
+
+// Top-level semicolons delimit channel sentences; quoted/container bytes stay intact.
+std::vector<std::string> sentences(const std::string& text, std::string& error);
+
+// A Python-style block folded into ONE sentence of the same grammar (the Law
+// Line's multi-line rung). Indentation nests; a line ending in ':' is a
+// header whose indented children are joined by what its last word means:
+//   "any" (dropped) or a trigger clause word ("on")      -> " or "
+//   "all" (dropped), a condition or action clause word   -> " and "
+//   anything else ("called Guard when clicked:")         -> " " (continuation)
+// The meanings come from the vocabulary's structural words, not spellings.
+// Mixing and/or across nested headers refuses: the condition grammar has no
+// parentheses yet. Blank lines are ignored. "" + error on refusal.
+std::string unfoldBlock(const std::vector<std::string>& lines, const Vocabulary& vocab, std::string& error);
 
 // "?? color" — every spelling, event, being, and scoped property whose text
 // contains the query, each labelled with what it is.

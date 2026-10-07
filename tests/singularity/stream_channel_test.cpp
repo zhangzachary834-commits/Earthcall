@@ -1,4 +1,5 @@
 #include "Singularity/Storage/StreamChannel.hpp"
+#include "Singularity/Core/CodecChannel.hpp"
 #include "Singularity/Storage/FileChannel.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
@@ -123,7 +124,7 @@ int main() {
     // Case 4: Base64 Chunk Data Property
     // -----------------------------------------------------------------------
     std::string binaryChunk = "\x00\xFF\x80\x40";
-    std::string b64Expected = FileChannel::base64Encode(binaryChunk);
+    std::string b64Expected = Singularity::Core::CodecChannel::base64Encode(binaryChunk);
 
     lawSetValue(*stream, PropertyPath::parse("stream.chunkDataBase64"), PropertyValue(b64Expected));
     lawGetValue(*stream, PropertyPath::parse("stream.chunkData"), val);

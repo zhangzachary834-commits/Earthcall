@@ -1,3 +1,4 @@
+#include <unordered_set>
 #pragma once
 
 #include "ConstructedBeing/CategoryManager.hpp"
@@ -87,6 +88,30 @@ struct BootedEngineHarness {
                 if (category) beings.push_back(category.get());
             }
             beings.push_back(&player);
+            // EngineInit exposes inactive Zones for named reach/governance.
+            // Omitting them hid resolveZone's stale preference for "World":
+            // native Create sent newborns there instead of the visible Zone.
+            // Keep this domain aligned with EngineInit.cpp, including fields.
+            if (auto* field = active->spatialRoot()) beings.push_back(field);
+            for (const auto& field : active->additionalSpatialFields())
+                if (field) beings.push_back(field.get());
+            for (const auto& zone : zones.zones()) {
+                if (!zone || zone.get() == active.get()) continue;
+                beings.push_back(zone.get());
+                if (auto* field = zone->spatialRoot()) beings.push_back(field);
+                for (const auto& field : zone->additionalSpatialFields())
+                    if (field) beings.push_back(field.get());
+            }
+            // Total named reach for the Zone's authored Singulars. Keep this
+            // enumeration aligned with Singularity/Core/EngineInit.cpp: Create
+            // prototypes must not be vocabulary-visible but PropertyPath-invisible.
+            // Deduplicate existing Objects/Laws/fields before adding Formation members
+            // and retained generic beings; their storage identity is not a new scope.
+            std::unordered_set<Singular*> provided(beings.begin(), beings.end());
+            for (auto* member : (*active).formation().getMembers())
+                if (member && provided.insert(member).second) beings.push_back(member);
+            for (const auto& stored : (*active).storedSingulars())
+                if (stored && provided.insert(stored.get()).second) beings.push_back(stored.get());
         });
 
         Universe::instance().setRelationProvider([this](std::vector<Relation*>& relations) {
@@ -133,11 +158,16 @@ struct BootedEngineHarness {
         ctx.unpackForAuthoring = false;
 
         // 4. Perform app boot hydration FIRST (matching Engine::initLogic boot sequence)
+        zones.bindLive();
         zones.bindLawManager(&lawManager);
         zones.hydrateFromZoneStore();
     }
 
     ~BootedEngineHarness() {
+        // bindLive() is process-global too; a block-scoped harness must not
+        // leave ZoneManager::live() pointing at its destroyed ZoneManager.
+        zones.unbindLive();
+
         // The Physics bridge is process-global; do not leave a dangling pointer
         // when a block-scoped harness goes away. Only clear the slot we own.
         if (Physics::getLawManager() == &lawManager) {

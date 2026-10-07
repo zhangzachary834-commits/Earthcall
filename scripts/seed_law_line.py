@@ -24,12 +24,14 @@ What it seeds:
 """
 import copy
 import json
+import struct
 import os
 import shutil
 import sys
 import time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# EARTHCALL_SEED_ROOT lets a dry run patch a scratch copy instead of the world.
+ROOT = os.environ.get("EARTHCALL_SEED_ROOT") or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AUTHOR = "Zach"
 INJECTED_BY = "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25"
 ZONE_ID = "LawLine"
@@ -94,13 +96,13 @@ OPCODES = [
     ("law-line-cond-iskind", "means: is a kind of", {"kind": 7, "beingKind": 0}, None, ["is a", "is an"]),
     ("law-line-cond-related", "means: related", {"kind": 2, "relationType": "", "otherId": ""}, None, ["related", "is related"]),
     ("law-line-cond-overlaps", "means: touching", {"kind": 11, "otherId": ""}, None, ["touching", "touches"]),
-    ("law-line-act-set", "means: set", None, {"kind": 0, "path": "", "operand": none()}, ["set", "make", "change"]),
+    ("law-line-act-set", "means: set", None, {"kind": 0, "path": "", "operand": none()}, ["set", "make", "change", "modify property"]),
     ("law-line-act-add", "means: add", None, {"kind": 1, "path": "", "operand": none()}, ["add", "increase", "raise"]),
     ("law-line-act-scale", "means: scale", None, {"kind": 2, "path": "", "operand": none()}, ["scale", "multiply"]),
     ("law-line-act-publish", "means: publish", None, {"kind": 10, "eventType": "", "publishSubject": "", "publishObject": ""}, ["publish", "announce"]),
     ("law-line-act-destroy", "means: destroy", None, {"kind": 16, "elementToken": ""}, ["destroy", "delete", "remove"]),
-    ("law-line-act-grant", "means: grant a property", None, {"kind": 12, "path": "", "propertyName": "", "operand": none()}, ["grant", "give"]),
-    ("law-line-act-revoke", "means: revoke a property", None, {"kind": 14, "path": "", "propertyName": ""}, ["revoke"]),
+    ("law-line-act-grant", "means: grant a property", None, {"kind": 12, "path": "", "propertyName": "", "operand": none()}, ["grant", "give", "add property"]),
+    ("law-line-act-revoke", "means: revoke a property", None, {"kind": 14, "path": "", "propertyName": ""}, ["revoke", "remove property"]),
     ("law-line-act-relate", "means: relate", None, {"kind": 20}, ["relate"]),
 ]
 
@@ -158,6 +160,188 @@ TRIGGER_PRESETS = [
      ["when i jump", "on jump"]),
     ("law-line-preset-zone-entered", "fires when this Zone opens", "zone-entered",
      ["when the zone opens"]),
+]
+
+# Zach, 2026-10-04: general Create initializers must compile by Metalaw.
+# Codex / GPT-6.1 Sol / session 01a10992-828e-7e80-890c-c64b09141e18.
+# These are ordinary authored Laws: changing or removing their templates
+# changes or refuses the resulting model, without changing the terminal parser.
+COMPILER_INJECTED_BY = "Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-04"
+
+
+def slot(name):
+    return {"$slot": "/" + name}
+
+
+def compiler(identifier, conditions, template, opcode="action.Create"):
+    predicates = [{"kind": 0, "path": "compilation.input." + key, "op": 0,
+                   "operand": value} for key, value in conditions.items()]
+    predicates.append({"kind": 0, "path": "compilation.input.opcode", "op": 0,
+                       "operand": opcode})
+    result = law(identifier, "Law Line · " + identifier.replace("law-line-compile-", ""),
+                 enabled=True, condition={"kind": 3, "children": predicates},
+                 action={"kind": 0, "path": "compilation.template",
+                         "operand": json.dumps(template)}, targets=["terminal-channel"], triggers=["terminal-invocation-compilation-requested"])
+    result["injected_by"] = COMPILER_INJECTED_BY
+    return result
+
+
+CREATE_COMPILERS = [
+    compiler("law-line-compile-object", {"slot": "invocation", "selector": "Object"},
+             {"kind": 11, "shapeKind": 0, "children": slot("children")}),
+    compiler("law-line-compile-prototype", {"slot": "invocation", "prototype": True},
+             {"kind": 11, "path": slot("selector"), "children": slot("children")}),
+    compiler("law-line-compile-registered-value",
+             {"slot": "initializer", "group": "registered", "expression": False},
+             {"kind": 0, "path": slot("property"), "operand": slot("operand")}),
+    compiler("law-line-compile-registered-expression",
+             {"slot": "initializer", "group": "registered", "expression": True},
+             {"kind": 8, "path": slot("property"), "function": slot("function"), "bindings": slot("bindings")}),
+    compiler("law-line-compile-authored-value",
+             {"slot": "initializer", "group": "authored", "expression": False},
+             {"kind": 12, "propertyName": slot("property"), "operand": slot("operand")}),
+    compiler("law-line-compile-authored-expression",
+             {"slot": "initializer", "group": "authored", "expression": True},
+             {"kind": 5, "children": [
+                 {"kind": 12, "propertyName": slot("property"), "operand": {"t": "none"}},
+                 {"kind": 8, "path": slot("property"), "function": slot("function"), "bindings": slot("bindings")},
+             ]}),
+]
+
+# `set <path> to <expression reading a path>`: the binding movement's "copy
+# value" is a scalar Map passthrough, so this authored rule lowers the sensed
+# assignment to Map. Remove it and such a Set refuses. (Claude Opus 5.5,
+# 2026-10-05, the Law Line's open "set x to @other.path" rung.)
+ASSIGNMENT_INJECTED_BY = "Claude Opus 5.5 (Claude Code) / 01WXmPy9U71FLqizbRYzMToZ / 2026-10-05"
+ASSIGNMENT_COMPILERS = [
+    compiler("law-line-compile-assignment-expression",
+             {"slot": "assignment", "expression": True},
+             {"kind": 8, "path": slot("property"), "function": slot("function"), "bindings": slot("bindings")},
+             opcode="action.Set"),
+]
+for _c in ASSIGNMENT_COMPILERS:
+    _c["injected_by"] = ASSIGNMENT_INJECTED_BY
+
+
+# `if hp * 2 > glow + 1`: an arithmetic comparison is sensed as
+# {function, bindings, bound} and these rules lower it to the existing Zone
+# condition (f within closed [lo, hi]). Strict comparisons are
+# "within the closed side AND NOT equal", never NOT(closed side): undefined
+# math must stay unsatisfied, and NOT(Zone) would hold on undefined math.
+# (Claude Opus 5.5, 2026-10-05, the Law Line's arithmetic-conditions rung.)
+def _zone(lo=None, hi=None):
+    node = {"kind": 6, "function": slot("function"), "bindings": slot("bindings")}
+    if lo is not None:
+        node["lo"] = lo
+    if hi is not None:
+        node["hi"] = hi
+    return node
+
+
+def _strictly(side):
+    return {"kind": 3, "children": [side, {"kind": 5, "children": [_zone(slot("bound"), slot("bound"))]}]}
+
+
+_CONDITION_TEMPLATES = {
+    "Ge": _zone(lo=slot("bound")),
+    "Le": _zone(hi=slot("bound")),
+    "Eq": _zone(lo=slot("bound"), hi=slot("bound")),
+    "Gt": _strictly(_zone(lo=slot("bound"))),
+    "Lt": _strictly(_zone(hi=slot("bound"))),
+    "Ne": _strictly(_zone()),
+    "InRange": _zone(lo=slot("lo"), hi=slot("hi")),
+}
+CONDITION_COMPILERS = [
+    compiler("law-line-compile-condition-" + op.lower(), {"slot": "condition", "op": op}, template,
+             opcode="condition.compare")
+    for op, template in _CONDITION_TEMPLATES.items()
+]
+for _c in CONDITION_COMPILERS:
+    _c["injected_by"] = ASSIGNMENT_INJECTED_BY
+
+
+# Zach: direct WebGPU 2D authoring through Metalaws, not texture painting.
+# Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-06.
+SCREEN_INJECTED_BY = "Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-06"
+
+
+def value_arg(name, default=None, optional=False):
+    out = {"$slot": "/arguments/" + name}
+    if optional:
+        out["$default"] = default
+    return out
+
+
+ZERO_MATH = {"op": 0, "scalarForm": {"terms": [{"c": 0, "factors": {}}]}}
+VALUE_CONSTRUCTORS = [
+    ("Piece", '<value: $(‹expression›), where: $(‹signed selector›)>',
+     {"literal": {"mathNode": value_arg("value"), "where": value_arg("where", ZERO_MATH, True)}}),
+    ("VectorField", '<pieces: [Piece <value: $(‹vector expression›), where: $(‹selector›)>]>',
+     {"value": {"t": "vector_field", "v": {"mode": "AST", "astDefinition": {"pieces": value_arg("pieces")}}}}),
+    ("ScalarField", '<pieces: [Piece <value: $(‹scalar expression›), where: $(‹selector›)>]>',
+     {"value": {"t": "scalar_field", "v": {"mode": "AST", "astDefinition": {"pieces": value_arg("pieces")}}}}),
+]
+# All numbers below are EXISTING serialized OntoMath ops, not new kinds.
+for _name, _op, _params in [
+    ("Dot", 7, ["a", "b"]), ("Cross", 8, ["a", "b"]),
+    ("Hadamard", 9, ["a", "b"]), ("Normalize", 10, ["value"]),
+    ("Length", 11, ["value"]), ("Project", 14, ["a", "b"]),
+    ("Distance", 15, ["a", "b"]), ("Union", 20, ["a", "b"]),
+    ("Intersection", 21, ["a", "b"]), ("Difference", 22, ["a", "b"]),
+    ("Pow", 24, ["a", "b"]), ("Abs", 25, ["value"]),
+    ("Clamp", 26, ["value", "low", "high"]), ("Sqrt", 27, ["value"]),
+    ("Tan", 28, ["value"]),
+]:
+    VALUE_CONSTRUCTORS.append((_name, '<' + ', '.join(p + ': $(‹expression›)' for p in _params) + '>',
+                               {"math": {"op": _op, "children": [value_arg(p) for p in _params]}}))
+VALUE_CONSTRUCTORS.append(("Component", '<value: $(‹vector›), index: "x">',
+                           {"math": {"op": 3, "arg": value_arg("index"), "children": [value_arg("value")]}}))
+for _name, _kind in [("Sin", 0), ("Cos", 1), ("Exp", 2), ("Ln", 3)]:
+    VALUE_CONSTRUCTORS.append((_name, '<variable: "‹coordinate›", scale: 1, shift: 0>',
+        {"math": {"op": 0, "scalarForm": {"terms": [{"c": 1, "factors": {}, "trans": [
+            {"kind": _kind, "var": value_arg("variable"), "scale": value_arg("scale", 1, True),
+             "shift": value_arg("shift", 0, True)}]}]}}}))
+
+
+# Named argument schemas are authored compiler templates, never parser switches.
+def arg(name, default=None, optional=False):
+    ref = {"$slot": "/arguments/" + name}
+    if optional:
+        ref["$default"] = default
+    return ref
+
+
+ARGUMENT_ACTIONS = [
+    (3, "Lerp", {"path": arg("path"), "operand": arg("operand"), "factor": arg("factor")},
+     '<path: "‹path›", operand: ‹value›, factor: ‹number›>'),
+    (4, "Drive", {"path": arg("path"), "input": arg("input", "", True), "curve": arg("curve")},
+     '<path: "‹path›", curve: {form: 1, coeffs: [0, 1]}, input: "‹path›">'),
+    (5, "Sequence", {"children": arg("children")}, '<children: [‹action›, ‹action›]>'),
+    (6, "Parallel", {"children": arg("children")}, '<children: [‹action›, ‹action›]>'),
+    (8, "Map", {"path": arg("path"), "function": arg("function"), "bindings": arg("bindings")},
+     '<path: "‹path›", expression: ‹expression›>'),
+    (9, "Flow", {"path": arg("path"), "function": arg("function"), "bindings": arg("bindings")},
+     '<path: "‹path›", expression: ‹rate expression›>'),
+    (13, "AddElement", {"containerToken": arg("container", "", True), "elementToken": arg("element")},
+     '<container: "‹being›", element: "‹being›">'),
+    (15, "RemoveElement", {"containerToken": arg("container", "", True), "elementToken": arg("element")},
+     '<container: "‹being›", element: "‹being›">'),
+    (17, "Synthesize", {"children": arg("children")}, '<children: [‹action›, ‹action›]>'),
+    (18, "PlayAudio", {"path": arg("frequencyPath"), "input": arg("amplitudePath"),
+                       "propertyName": arg("timbre", "sine", True)},
+     '<frequencyPath: "‹path›", amplitudePath: "‹path›", timbre: "sine">'),
+    (19, "AuthorZone", {"createType": arg("identifier"), "propertyName": arg("zoneKind"),
+                        "elementToken": arg("owner", "", True), "containerToken": arg("ownerKind", "", True)},
+     '<identifier: "‹identifier›", zoneKind: "‹authored kind›", owner: "‹being›", ownerKind: "‹kind›">'),
+    (21, "WritePixel", {"pixelFacePath": arg("facePath"), "pixelUPath": arg("uPath"),
+                        "pixelVPath": arg("vPath"), "pixelColorPath": arg("colorPath")},
+     '<facePath: "‹path›", uPath: "‹path›", vPath: "‹path›", colorPath: "‹path›">'),
+    (22, "ElevatePixels", {"propertyName": arg("name"), "pixelFacePath": arg("facePath"), "selector": arg("selector")},
+     '<name: "‹property›", facePath: "‹path›", selector: {‹Piecewise model›}>'),
+    (23, "FileRead", {"input": arg("input"), "path": arg("path")}, '<input: "‹file path property›", path: "‹destination property›">'),
+    (24, "FileWrite", {"path": arg("path"), "input": arg("input")}, '<path: "‹file path property›", input: "‹content property›">'),
+    (25, "CodecTransform", {"propertyName": arg("operation"), "input": arg("input"), "path": arg("path")},
+     '<operation: "‹codec operation›", input: "‹source property›", path: "‹destination property›">'),
 ]
 
 # The wiring: whether a Terminal line becomes a Law is the world's decision.
@@ -232,6 +416,78 @@ def build():
         laws.append(law(law_id, name, enabled=False, triggers=[trigger]))
         for s in symbols:
             lexeme_for(s, law_id)
+    # A word still denotes a Law holding its model; no special Create enum
+    # or terminal-specific spawn opcode is introduced.
+    create_word = law("law-line-act-create", "means: Create a Singular", enabled=False,
+                      action={"kind": 11, "shapeKind": 0})
+    create_word["law"]["authoredProperties"] = {
+        "sentence.arguments": {"t": "string", "v": "<‹kind›, properties: {‹property›: ‹value›}>"}}
+    cube_word = law("law-line-value-cube", "means: Cube geometry", enabled=False,
+                    action={"kind": 0, "path": "", "operand": {"t": "int", "v": 0}})
+    my_word = law("law-line-root-my", "means: the speaking author's root", enabled=False,
+                  action={"kind": 0, "path": "", "operand": "$author"})
+    my_word["law"]["authoredProperties"] = {"sentence.root": {"t": "bool", "v": True}}
+    for doc, symbols in [(create_word, ["Create"]), (cube_word, ["Cube"]), (my_word, ["my"] )]:
+        doc["injected_by"] = COMPILER_INJECTED_BY
+        laws.append(doc)
+        for symbol in symbols:
+            lexeme_for(symbol, doc["identifier"])
+    # Disabled value Laws denote constructors; Metalaws alone supply lowering.
+    for name, signature, template in VALUE_CONSTRUCTORS:
+        identifier = "law-line-value-constructor-" + name.lower()
+        doc = law(identifier, "means: " + name + " with authored arguments", enabled=False,
+                  action={"kind": 0, "path": "", "operand": 0})
+        doc["law"]["authoredProperties"] = {"sentence.arguments": {"t": "string", "v": signature}}
+        doc["injected_by"] = SCREEN_INJECTED_BY
+        laws.append(doc); lexeme_for(name, identifier)
+        rule = compiler("law-line-compile-value-" + name.lower(),
+                        {"slot": "value", "wordLaw": identifier}, template, opcode="value")
+        rule["injected_by"] = SCREEN_INJECTED_BY
+        laws.append(rule)
+    for name in ["x", "y", "z", "p", "u", "v", "width", "height", "t"]:
+        identifier = "law-line-coordinate-" + name
+        node = {"op": 1, "var": name} if name == "p" else {
+            "op": 0, "scalarForm": {"terms": [{"c": 1, "factors": {name: 1}}]}}
+        doc = law(identifier, "means: mathematical coordinate " + name, enabled=False,
+                  action={"kind": 0, "path": "", "operand": 0})
+        doc["law"]["authoredProperties"] = {"sentence.math": {"t": "string", "v": json.dumps(node)}}
+        doc["injected_by"] = SCREEN_INJECTED_BY
+        laws.append(doc); lexeme_for(name, identifier)
+    # Existing "y" is a yes alias. Keep its two authored meanings visible;
+    # context is resolved by Laws, never a parser spelling exception.
+    for context_slot, meaning in [("math", "lexeme.law-line.y.coordinate-y->law-line-coordinate-y"),
+                          ("value", "lexeme.law-line.y.value-true->law-line-value-true")]:
+        doc = law("law-line-resolve-y-" + context_slot, "Law Line · y in " + context_slot,
+                  enabled=True, activation=1, targets=["terminal-channel"],
+                  condition={"kind": 3, "children": [
+                      {"kind": 0, "path": "ambiguity.symbol", "op": 0, "operand": "y"},
+                      {"kind": 0, "path": "ambiguity.slot", "op": 0, "operand": context_slot}]},
+                  action={"kind": 0, "path": "ambiguity.resolved", "operand": meaning})
+        doc["injected_by"] = SCREEN_INJECTED_BY
+        laws.append(doc)
+    laws.extend(CREATE_COMPILERS)
+    laws.extend(ASSIGNMENT_COMPILERS)
+    laws.extend(CONDITION_COMPILERS)
+    for kind, name, fields, signature in ARGUMENT_ACTIONS:
+        identifier = "law-line-args-" + name.lower()
+        word = law(identifier, "means: " + name + " with authored arguments", enabled=False,
+                   action={"kind": kind})
+        word["law"]["authoredProperties"] = {"sentence.arguments": {"t": "string", "v": signature}}
+        word["injected_by"] = COMPILER_INJECTED_BY
+        laws.append(word)
+        lexeme_for(name, identifier)
+        laws.append(compiler("law-line-compile-args-" + name.lower(), {"slot": "arguments"},
+                             {"kind": kind, **fields}, opcode="action." + name))
+    batch = law("law-line-compile-sentences", "Law Line · register sentences in source order",
+                enabled=True,
+                condition={"kind": 3, "children": [
+                    {"kind": 0, "path": "compilation.input.slot", "op": 0, "operand": "sentences"},
+                    {"kind": 0, "path": "compilation.input.opcode", "op": 0, "operand": "sentence.batch"}]},
+                action={"kind": 0, "path": "compilation.template",
+                        "operand": json.dumps({"sentences": slot("sentences")})},
+                targets=["terminal-channel"], triggers=["terminal-invocation-compilation-requested"])
+    batch["injected_by"] = COMPILER_INJECTED_BY
+    laws.append(batch)
     laws.extend(WIRING)
 
     cube = {
@@ -277,7 +533,7 @@ def build():
     return files
 
 
-def write_staged(dest, doc):
+def write_staged(dest, doc, expected_bytes=None):
     os.makedirs(os.path.dirname(dest), exist_ok=True)
     staged = dest + ".staged"
     with open(staged, "w") as f:
@@ -285,6 +541,9 @@ def write_staged(dest, doc):
         f.write("\n")
     with open(staged) as f:
         assert json.load(f) == doc, "staged copy does not round-trip: " + dest
+    if expected_bytes is not None:
+        with open(dest, "rb") as f:
+            assert f.read() == expected_bytes, "save changed while staging; refusing: " + dest
     os.replace(staged, dest)
 
 
@@ -292,10 +551,92 @@ def relation_key(r):
     return (r.get("type"), r.get("entityA"), r.get("entityB"))
 
 
+def append_zone_bytes(old_bytes, old, new):
+    """Insert only added root-array entries; preserve all original bytes."""
+    text = old_bytes.decode("utf-8")
+    decoder = json.JSONDecoder()
+    cursor = text.index("{") + 1
+    edits = []
+    while True:
+        while cursor < len(text) and text[cursor].isspace():
+            cursor += 1
+        if text[cursor] == "}":
+            break
+        key, cursor = decoder.raw_decode(text, cursor)
+        while text[cursor].isspace():
+            cursor += 1
+        assert text[cursor] == ":"
+        cursor += 1
+        while text[cursor].isspace():
+            cursor += 1
+        value, end = decoder.raw_decode(text, cursor)
+        if key in ("lexemes", "formationRelations", "lawRefs"):
+            additions = new[key][len(old[key]):]
+            if additions:
+                close = end - 1
+                insertion = close
+                while insertion > cursor + 1 and text[insertion - 1].isspace():
+                    insertion -= 1
+                line_start = text.rfind("\n", cursor, close) + 1
+                indent = len(text[line_start:close]) if text[line_start:close].isspace() else 2
+                prefix = " " * (indent + 2)
+                entries = ["\n" + "\n".join(prefix + line for line in json.dumps(entry, ensure_ascii=False, indent=2).splitlines())
+                           for entry in additions]
+                fragment = ("," if value else "") + ",".join(entries)
+                if not value:
+                    fragment += "\n" + " " * indent
+                edits.append((insertion, fragment))
+        cursor = end
+        while text[cursor].isspace():
+            cursor += 1
+        if text[cursor] == ",":
+            cursor += 1
+        else:
+            assert text[cursor] == "}"
+            break
+    for at, fragment in sorted(edits, reverse=True):
+        text = text[:at] + fragment + text[at:]
+    assert json.loads(text) == new, "byte-preserving patch differs from intended Zone"
+    return text.encode("utf-8")
+
+
+def write_zone_append(dest, old_bytes, old, new):
+    staged = dest + ".staged"
+    contents = append_zone_bytes(old_bytes, old, new)
+    with open(staged, "wb") as f:
+        f.write(contents)
+    with open(staged, "rb") as f:
+        assert json.loads(f.read()) == new
+    with open(dest, "rb") as f:
+        assert f.read() == old_bytes, "save changed while staging; refusing: " + dest
+    os.replace(staged, dest)
+
+
+ECFORM_HEAD = b"\x81\xadMigrationRoot\xdb"
+
+
+def ecform_text(raw):
+    """The JSON text inside a native zone.ecform: a one-key msgpack map
+    {"MigrationRoot": str32}, as SaveSystem writes and reads it."""
+    assert raw[:len(ECFORM_HEAD)] == ECFORM_HEAD, "not a MigrationRoot ecform; refusing to guess its layout"
+    n = struct.unpack(">I", raw[len(ECFORM_HEAD):len(ECFORM_HEAD) + 4])[0]
+    body = raw[len(ECFORM_HEAD) + 4:]
+    assert len(body) == n, "ecform length disagrees with its contents; refusing"
+    return body
+
+
+def ecform_wrap(text):
+    return ECFORM_HEAD + struct.pack(">I", len(text)) + text
+
+
 def patch_zone(dest, seed):
-    """Add what the Zone lacks; never remove or rewrite anything it has."""
-    with open(dest) as f:
-        old = json.load(f)
+    """Add what the Zone lacks; never remove or rewrite anything it has.
+    `dest` may be zone.json or the native zone.ecform an in-app save writes."""
+    native = dest.endswith(".ecform")
+    with open(dest, "rb") as f:
+        file_bytes = f.read()
+    old_bytes = ecform_text(file_bytes) if native else file_bytes
+    old = json.loads(old_bytes)
     new = copy.deepcopy(old)
     have_lex = {l.get("id") for l in new.get("lexemes", [])}
     have_rel = {relation_key(r) for r in new.get("formationRelations", [])}
@@ -323,11 +664,24 @@ def patch_zone(dest, seed):
         else:
             assert new[key] == value, "patch would disturb " + key
 
-    backups = os.path.join(ROOT, "saves", "backups")
+    backups = os.path.join(ROOT, "scratch", "backups", "law-line")
     os.makedirs(backups, exist_ok=True)
     stamp = time.strftime("%Y%m%d-%H%M%S")
-    shutil.copy2(dest, os.path.join(backups, "%s-zone-before-law-line-patch-%s.json" % (ZONE_ID, stamp)))
-    write_staged(dest, new)
+    ext = ".ecform" if native else ".json"
+    shutil.copy2(dest, os.path.join(backups, "%s-zone-before-law-line-patch-%s%s" % (ZONE_ID, stamp, ext)))
+    if native:
+        contents = ecform_wrap(append_zone_bytes(old_bytes, old, new))
+        assert json.loads(ecform_text(contents)) == new
+        staged = dest + ".staged"
+        with open(staged, "wb") as f:
+            f.write(contents)
+        with open(staged, "rb") as f:
+            assert json.loads(ecform_text(f.read())) == new
+        with open(dest, "rb") as f:
+            assert f.read() == file_bytes, "save changed while staging; refusing: " + dest
+        os.replace(staged, dest)
+    else:
+        write_zone_append(dest, old_bytes, old, new)
     return added
 
 
@@ -337,6 +691,17 @@ def main():
     zone_seed = files.pop(zone_rel)
     changed = False
 
+    # Once the author keyed (Zach, 2026-09-30), his in-app saves record the
+    # seed Laws' author as his DID. A Law created now records the same present
+    # identity, read from the world's own hearing Law, never guessed.
+    present_authors = None
+    hear = os.path.join(ROOT, "saves", "laws", "law-line-hear", "law.json")
+    if os.path.exists(hear):
+        with open(hear) as f:
+            recorded = json.load(f).get("authors") or []
+        if recorded and all(a.startswith("did:earthcall:") for a in recorded):
+            present_authors = recorded
+
     for rel, doc in files.items():
         dest = os.path.join(ROOT, rel)
         if os.path.exists(dest):
@@ -344,11 +709,22 @@ def main():
                 if json.load(f) != doc:
                     print("kept as it is (differs from the seed; it is the world's now): " + rel)
             continue
+        if present_authors and doc.get("authors") == [AUTHOR]:
+            doc = copy.deepcopy(doc)
+            doc["authors"] = list(present_authors)
+            if isinstance(doc.get("law"), dict) and doc["law"].get("authors") == [AUTHOR]:
+                doc["law"]["authors"] = list(present_authors)
         write_staged(dest, doc)
         print("created " + rel)
         changed = True
 
     zone_dest = os.path.join(ROOT, zone_rel)
+    native = os.path.join(os.path.dirname(zone_dest), "zone.ecform")
+    if os.path.exists(native) and os.path.getsize(native) > 0:
+        # An in-app Save Zone wrote the native form (Zach, e4d7a72d), and the
+        # loader prefers it over zone.json. Patch THAT; a zone.json seeded
+        # beside it would be a shadow the world never reads.
+        zone_dest, zone_rel = native, os.path.relpath(native, ROOT)
     if not os.path.exists(zone_dest):
         write_staged(zone_dest, zone_seed)
         print("created " + zone_rel)
@@ -356,14 +732,18 @@ def main():
     else:
         added = patch_zone(zone_dest, zone_seed)
         if added:
-            print("patched %s: +%d Lexemes, +%d Relations, +%d lawRefs (old copy in saves/backups/)"
+            print("patched %s: +%d Lexemes, +%d Relations, +%d lawRefs (old bytes in scratch/backups/law-line/)"
                   % (zone_rel, added["lexemes"], added["relations"], added["lawRefs"]))
             changed = True
 
     if not changed:
         print("Law Line seed already present; nothing written.")
     else:
-        print("authors: %s   injected_by: %s" % (AUTHOR, INJECTED_BY))
+        print("authors: %s   original vocabulary injected_by: %s" % (AUTHOR, INJECTED_BY))
+        print("Compiler additions injected_by: " + COMPILER_INJECTED_BY)
+        print("Assignment and condition compilers injected_by: " + ASSIGNMENT_INJECTED_BY)
+        print("Direct field vocabulary injected_by: " + SCREEN_INJECTED_BY)
+        print("Recorded new-Law authors: " + ", ".join(present_authors or [AUTHOR]))
     return 0
 
 

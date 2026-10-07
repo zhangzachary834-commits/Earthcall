@@ -1,3 +1,4 @@
+#include <unordered_set>
 #include "Person/Person.hpp"
 #include "Person/PersonDatabase.hpp"
 #include "Identity/IdentityLedger.hpp"
@@ -41,10 +42,14 @@
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
 #include "Singularity/Storage/FileChannel.hpp"
+#include "Singularity/Core/CodecChannel.hpp"
 #include "Singularity/Storage/VirtualFileSystem.hpp"
 #include "Singularity/Storage/StreamChannel.hpp"
 #include "Singularity/Storage/FileWatcher.hpp"
 #include "Singularity/Terminal/TerminalChannel.hpp"
+#include "Singularity/Foreign/Shell/ShellChannel.hpp"
+#include "Singularity/Network/Http/HttpChannel.hpp"
+#include "Singularity/Network/Osc/OscChannel.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Storage/Serialization/Person/PersonSerialization.hpp"
 #include "Singularity/Audio/AudioRecorder.hpp"
@@ -283,6 +288,9 @@ bool Engine::initLogic() {
     // Register first-mover FileChannel (native computer filesystem sense and act)
     Singularity::Storage::FileChannel::syncRegister(*_lawManager);
 
+    // Register first-mover CodecChannel (semantic byte-transformations)
+    Singularity::Core::CodecChannel::syncRegister(*_lawManager);
+
     // Register first-mover ScreenRecorder (screen capture, video/frame stream, macOS permissions)
     Singularity::Screen::ScreenRecorder::syncRegister(*_lawManager);
 
@@ -295,10 +303,25 @@ bool Engine::initLogic() {
     // Register first-mover FileWatcher (reactive file sensing and live hot-reloading)
     Singularity::Storage::FileWatcher::syncRegister(*_lawManager);
 
+    // Decoupled hot-reload: listen to FileWatcher events via the EventBus
+    Core::EventBus::instance().subscribe<ECA::Event>([](const ECA::Event& ev) {
+        if (ev.type == "file-modified" || ev.type == "file-created") {
+            if (auto* watcher = dynamic_cast<Singularity::Storage::FileWatcher*>(ev.subject)) {
+                std::string path = watcher->propLastModifiedFile();
+                if (path.find(".wgsl") != std::string::npos || path.find("shader") != std::string::npos) {
+                    currentRenderer().reloadShaders();
+                }
+            }
+        }
+    });
+
     // Register first-mover TerminalChannel: the Mac Terminal's command line
     // (the window Run Earthcall.command opened) as a modality of this world.
     // Lines become Laws only through the authored LawLine seed Laws.
     Singularity::Terminal::TerminalChannel::syncRegister(*_lawManager);
+    Singularity::Foreign::Shell::ShellChannel::syncRegister(*_lawManager);
+    Singularity::Network::Http::HttpChannel::syncRegister(*_lawManager);
+    Singularity::Network::Osc::OscChannel::syncRegister(*_lawManager);
 
     // Register first-mover AudioChannel (authored acoustic reality -> output substrate).
     // This owns the checked PlayAudio sink; AudioSystem below it owns only
@@ -406,6 +429,16 @@ bool Engine::initLogic() {
                 if (field) beings.push_back(field.get());
             }
         }
+        // Total named reach for the Zone's authored Singulars. Keep this
+        // enumeration aligned with tests/support/test_harness.hpp: Create
+        // prototypes must not be vocabulary-visible but PropertyPath-invisible.
+        // Deduplicate existing Objects/Laws/fields before adding Formation members
+        // and retained generic beings; their storage identity is not a new scope.
+        std::unordered_set<Singular*> provided(beings.begin(), beings.end());
+        for (auto* member : (mgr.active()).formation().getMembers())
+            if (member && provided.insert(member).second) beings.push_back(member);
+        for (const auto& stored : (mgr.active()).storedSingulars())
+            if (stored && provided.insert(stored.get()).second) beings.push_back(stored.get());
     });
 
     // The relation GRAPH — the edge view Related conditions query
@@ -504,11 +537,34 @@ bool Engine::initLogic() {
             std::cerr << "[ZoneSave] Save Active Zone refused; active Zone remains live and no legacy session was written.\n";
         }
     });
+    _mainMenu.addOption("Export Zone as JSON", GLFW_KEY_J, [this]() {
+        ECA::Event ev{"export-json", &mgr.active(), nullptr, std::time(nullptr)};
+        Core::EventBus::instance().publish(ev);
+    });
+    _mainMenu.addOption("Export Zone as ECGRAPH", GLFW_KEY_E, [this]() {
+        ECA::Event ev{"export-ecform", &mgr.active(), nullptr, std::time(nullptr)};
+        Core::EventBus::instance().publish(ev);
+    });
+    _mainMenu.addOption("Enter New Zone (Hydrate ECGRAPH)", GLFW_KEY_N, [this]() {
+        std::string newId = "hydrated-" + std::to_string(std::time(nullptr));
+        auto zone = mgr.authorZone(newId, "", "empty");
+        if (zone) {
+            for (size_t i = 0; i < mgr.zones().size(); ++i) {
+                if (mgr.zones()[i]->getIdentifier() == newId) {
+                    mgr.switchTo(i);
+                    break;
+                }
+            }
+        }
+        // The load-genesis-file metalaw will automatically catch the fact that 
+        // @state.genesis.loaded is missing/false in this new zone and begin 
+        // hydrating from saves/seed.ecgraph.
+    });
     _mainMenu.addOption("Legacy Session Export...", GLFW_KEY_A, [this]() {
         mgr.getSaveLoadState().showSaveWindow = true;
         ensureCursorUnlocked();
     });
-    _mainMenu.addOption("Legacy Session Import / Recovery", GLFW_KEY_L, [this]() {
+    _mainMenu.addOption("Legacy Session Import / Recovery", GLFW_KEY_O, [this]() {
         mgr.updateSaveFiles();
         mgr.getSaveLoadState().showLoadWindow = true;
         ensureCursorUnlocked();
@@ -835,7 +891,7 @@ void Engine::registerCallbacks() {
                         if (channel) break;
                     }
                 }
-                ECA::Event ev{"onMouseClicked", channel, nullptr, std::time(nullptr)};
+                ECA::Event ev{"mouse-clicked", self->_person.get(), nullptr, std::time(nullptr)};
                 Core::EventBus::instance().publish(ev);
             }
         }
