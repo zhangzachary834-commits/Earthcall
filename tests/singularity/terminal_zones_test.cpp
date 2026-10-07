@@ -312,7 +312,5 @@ int main() {
     reg.clearAuthenticatedPersons();
     std::filesystem::remove_all(sandbox);
     std::cout << "terminal_zones_test: ALL OK\n";
-    // Static destruction runs normally: LawManager revokes its EventBus
-    // listeners in its destructor (law_manager_eventbus_lifetime_test).
     return 0;
 }

@@ -169,9 +169,8 @@ geom::FieldNode* fieldIn(Zone& z, const std::string& id) {
 void lawLineAsMover(FirstMoverRegister& reg, const PrivateKey& sonnet) {
     using Singularity::Terminal::TerminalChannel;
     LawManager laws;
-    // Not connectToEventBus(): authoring needs no event wiring. (The
-    // 2026-09-30 dangling-handler hazard that once made this mandatory is
-    // fixed; see law_manager_eventbus_lifetime_test.)
+    // Authoring needs no event wiring. (EventBus registrations installed by
+    // connectToEventBus() are unsubscribed in ~LawManager()).
     TerminalChannel::syncRegister(laws);
     TerminalChannel* terminal = TerminalChannel::find(laws);
     assert(terminal);

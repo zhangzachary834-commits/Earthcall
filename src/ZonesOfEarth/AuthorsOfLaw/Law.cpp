@@ -1912,17 +1912,10 @@ void LawManager::add(const std::shared_ptr<Law>& law) {
 static LawManager* s_singularHookOwner = nullptr;
 
 LawManager::~LawManager() {
-    // connectToEventBus() creates two callbacks that capture this. Revoke only
-    // this manager's registrations before its storage disappears; other
-    // subsystems' listeners remain untouched.
-    if (_ecaEventSubscription || _customEventSubscription) {
-        auto& eventBus = Core::EventBus::instance();
-        eventBus.unsubscribe(_ecaEventSubscription);
-        eventBus.unsubscribe(_customEventSubscription);
-        _ecaEventSubscription = {};
-        _customEventSubscription = {};
+    for (uint64_t id : _eventBusSubscriptionIds) {
+        Core::EventBus::instance().unsubscribe(id);
     }
-    _connected = false;
+    _eventBusSubscriptionIds.clear();
 
     if (s_singularHookOwner == this) {
         Singular::setPropertyChangeCallback(nullptr);
@@ -1930,6 +1923,7 @@ LawManager::~LawManager() {
         Universe::instance().setEventInterest(nullptr);
         s_singularHookOwner = nullptr;
     }
+    _connected = false;
 }
 
 void LawManager::connectToEventBus() {
@@ -1945,7 +1939,8 @@ void LawManager::connectToEventBus() {
     // rather than the trigger table, because laws can be bound to alpha
     // nodes directly (the graph editor does, and so do tests); a trigger-only
     // answer would call those laws deaf and silently stop feeding them.
-    // Captured by `this`; the owning static hook is cleared by the destructor.
+    // Captured by `this`: the LawManager is an engine-lifetime object, the
+    // same contract as the bus subscriptions below.
     Universe::instance().setEventInterest([this](const std::string& type) {
         return _rete.hearsType(type) || _rete.hasForeignBoundAlpha();
     });
@@ -2033,7 +2028,8 @@ void LawManager::connectToEventBus() {
         _dirty = true;
     });
 
-    _ecaEventSubscription = Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
+    _eventBusSubscriptionIds.push_back(
+    Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
         std::string subjectId = e.subject ? e.subject->getIdentifier() : "null";
         std::string objectId = e.object ? e.object->getIdentifier() : "null";
 
@@ -2102,9 +2098,10 @@ void LawManager::connectToEventBus() {
                 }
             }
         }
-    });
+    }));
 
-    _customEventSubscription = Core::EventBus::instance().subscribe<Core::Event::Custom>([this](const Core::Event::Custom& e) {
+    _eventBusSubscriptionIds.push_back(
+    Core::EventBus::instance().subscribe<Core::Event::Custom>([this](const Core::Event::Custom& e) {
         if (!e.relation) return;
         
         std::string evType = e.relation->type;
@@ -2126,7 +2123,7 @@ void LawManager::connectToEventBus() {
         
         _rete.assertFact(fact);
         _dirty = true;
-    });
+    }));
 
 
     // Per-node action outcomes reach the audit log through the application
@@ -2900,8 +2897,8 @@ void LawManager::reapUnmade() {
     // Release from OUR laws directly rather than waiting for the
     // "object-destroyed" announcement to come back around. The subscription
     // still exists — it is what catches beings the delete tool unmakes — but
-    // a LawManager's own bookkeeping must not depend on whether it is
-    // currently connected to the bus.
+    // a LawManager's own bookkeeping must not depend on having been connected
+    // to a global bus that cannot be unsubscribed from.
     // Laws among the victims are retired by THIS manager: they are ours to
     // free, not a Zone's objects. Collected before anything is released.
     std::vector<std::string> retiredLaws;

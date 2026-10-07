@@ -69,16 +69,15 @@ private:
     // wasGrounded exist only so SPACE and landing publish on the transition,
     // not as a per-frame level. walkActive / idleActive keep clip clocks from
     // restarting every frame. routingInstalled is the EventBus subscribe-once
-    // latch for this channel instance; routingSubscription is its lifetime
-    // ownership token. _wasActuating is the disable edge:
-    // dropping the first mover must clear clips it authored, once.
+    // latch; routingSubscription is its lifetime ownership token. _wasActuating
+    // is the disable edge: dropping the first mover must clear clips it authored, once.
     bool _jumpKeyDownLast = false;
     bool _wasGrounded     = false;
     bool _wasMoving       = false;
     bool _walkActive      = false;
     bool _idleActive      = false;
     bool _routingInstalled = false;
-    ::Core::EventBus::SubscriptionToken _routingSubscription;
+    uint64_t _routingSubscription = 0;
     bool _wasActuating     = false;
 };
 

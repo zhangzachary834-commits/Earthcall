@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../../ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
-#include "../Core/EventBus.hpp"
 
 #include <string>
 #include <vector>
@@ -73,7 +72,6 @@ public:
 
 private:
     LanguageSystem();
-    ~LanguageSystem();
     LanguageSystem(const LanguageSystem&) = delete;
     LanguageSystem& operator=(const LanguageSystem&) = delete;
 
@@ -104,11 +102,6 @@ private:
     };
     std::queue<PendingUtterance> _utteranceQueue;
     std::mutex _queueMutex;
-
-    // Beneath the Kernel (No Black Box exemption): the EventBus registration
-    // handle for the Utterance listener, which captures `this`. Revoked in the
-    // destructor; see EventBus::unsubscribe.
-    ::Core::EventBus::SubscriptionToken _utteranceSubscription;
 };
 
 } // namespace Language
