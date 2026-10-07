@@ -16,6 +16,7 @@
 #include "Singularity/OntoMath/ScalarForm.hpp"
 
 #include <cmath>
+#include <glm/gtc/matrix_transform.hpp>
 #include <cstdio>
 #include <string>
 
@@ -404,6 +405,34 @@ int main() {
         check(roundTrips,  "every quadric round-trips matrix -> ScalarForm -> matrix");
         check(gradsAgree,  "the matrix gradient equals ScalarForm::derivative for every quadric");
         check(coeffsAgree, "raycast's A/B/C equal the symbolic coefficients of f(o + t*d)");
+
+        // RUNG 9 -- translated quadrics must now flow through OntoMath's
+        // congruence authority, while preserving the historical GLM result.
+        // The oracle deliberately restates the pre-migration formula here in
+        // test code only; production may not originate this mathematics.
+        const glm::mat4 base = geom::Quadric::cone(0.65f);
+        const glm::vec3 shift(0.75f, -0.4f, 1.25f);
+        const glm::mat4 legacyM = glm::translate(glm::mat4(1.0f), -shift);
+        const glm::mat4 legacyTranslated = glm::transpose(legacyM) * base * legacyM;
+        const glm::mat4 ontoTranslated = geom::Quadric::translate(base, shift);
+        bool translatedParity = true;
+        for (int r = 0; r < 4; ++r)
+            for (int col = 0; col < 4; ++col)
+                if (!nearf(legacyTranslated[col][r], ontoTranslated[col][r], 1e-5f))
+                    translatedParity = false;
+        check(translatedParity,
+              "OntoMath quadric congruence preserves translated-quadric matrix parity");
+
+        const OntoMath::ScalarForm translatedForm = geom::Quadric::toScalarForm(ontoTranslated);
+        const glm::vec3 translatedSample(0.2f, -0.1f, 0.7f);
+        const glm::vec3 matrixGradient =
+            geom::Quadric::gradient(ontoTranslated, translatedSample);
+        const glm::vec3 formGradient =
+            geom::Quadric::gradientFromForm(translatedForm, translatedSample);
+        check(nearf(matrixGradient.x, formGradient.x, 1e-4f) &&
+                  nearf(matrixGradient.y, formGradient.y, 1e-4f) &&
+                  nearf(matrixGradient.z, formGradient.z, 1e-4f),
+              "translated quadric remains equivalent to its ScalarForm gradient");
     }
 
     // --- Tessellated normals must not depend on cell ASPECT RATIO -----------
