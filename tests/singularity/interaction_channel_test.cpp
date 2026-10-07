@@ -40,9 +40,9 @@ void check(bool ok, const std::string& what) {
     std::printf("  ok: %s\n", what.c_str());
 }
 
-// Every ECA::Event this test provokes, by type and subject. The bus has no
-// unsubscribe, so one subscription for the whole run and a clear() between
-// cases.
+// Every ECA::Event this test provokes, by type and subject. One stable
+// recorder subscription spans the whole run; Recorder::clear() resets only the
+// observed events between cases.
 struct Recorder {
     std::vector<std::pair<std::string, std::string>> events;
 
