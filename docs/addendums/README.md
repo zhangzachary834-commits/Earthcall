@@ -1,8 +1,9 @@
 # Documentation Addendums
 
 This directory contains synthesized addendums that tie together various architectural and ontological concepts within Earthcall. These documents are generated to ensure the documentation acts as a fluid, continuous conversation rather than isolated technical specifications.
-*   [Integrating Adaptive Compute and the Event Bus Call Stack](adaptive_compute_and_call_stack_addendum.md)
+
 *   [Integrating Adaptive Compute Moments and SDF Direct Profitability](adaptive_compute_and_sdf_profitability_addendum.md)
+*   [Integrating Adaptive Compute and the Event Bus Call Stack](adaptive_compute_and_call_stack_addendum.md)
 *   [Integrating Atomic Save Swaps and Macro Moments](atomic_save_swaps_as_macro_moments_addendum.md)
 *   [Integrating Authored Categories and Directory Ordering](authored_categories_and_directory_ordering_addendum.md)
 *   [Integrating Authored Domains, Unified Brushes, and Continuous Material Fields](ontomath_brush_materials_addendum.md)
