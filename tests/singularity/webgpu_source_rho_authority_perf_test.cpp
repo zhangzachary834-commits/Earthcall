@@ -404,11 +404,27 @@ int main() {
     }
     const auto reboundStatsAfter =
         authorityRenderer.renderedFieldSemanticObservationStats();
-    if (reboundStatsAfter.alignedProofReadFallbacks <=
-            reboundStatsBefore.alignedProofReadFallbacks) {
+    if (reboundStatsAfter.alignedSlotRepairs !=
+            reboundStatsBefore.alignedSlotRepairs + 1) {
         std::printf(
             "SOURCE_RHO_AUTH_PERF FAIL stale producer rebinding did not "
-            "fail open through proof fallback\n");
+            "quarantine exactly one dirty slot\n");
+        return 1;
+    }
+    // This fixture has exactly two sources. During the hostile rebound draw,
+    // slot 0 must be quarantined despite its cached literal-zero theorem and
+    // slot 1 is legitimately non-authoritative. Therefore BOTH proof reads
+    // must fail open. Requiring +2 prevents slot 1's normal ProofKind::None
+    // fallback from masquerading as evidence that the rebound slot refused.
+    if (reboundStatsAfter.alignedProofReadFallbacks !=
+            reboundStatsBefore.alignedProofReadFallbacks + 2) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL stale producer rebinding did not "
+            "fail open both source slots: before=%llu after=%llu\n",
+            static_cast<unsigned long long>(
+                reboundStatsBefore.alignedProofReadFallbacks),
+            static_cast<unsigned long long>(
+                reboundStatsAfter.alignedProofReadFallbacks));
         return 1;
     }
     if (reboundStatsAfter.authorityBypassesApplied !=
@@ -416,6 +432,52 @@ int main() {
         std::printf(
             "SOURCE_RHO_AUTH_PERF FAIL stale producer rebinding retained "
             "authority\n");
+        return 1;
+    }
+
+    // Positive recovery is deliberate and separate from the hostile draw.
+    // Re-admitting the SAME rebound producer/revision may revalidate only its
+    // quarantined aligned slot. The following draw must remain byte exact and
+    // may then apply exactly one SourceRho-zero authority decision again.
+    const auto recoveryStatsBefore =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    authorityRenderer.setRadianceSources(
+        reboundSources, kReboundSourceSetRevision);
+    const auto recoveryStatsAfterAdmission =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    if (recoveryStatsAfterAdmission.alignedSlotRepairs !=
+            recoveryStatsBefore.alignedSlotRepairs + 1) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL rebound positive recovery did not "
+            "repair exactly one quarantined slot\n");
+        return 1;
+    }
+    const Sample recoveredDraw = renderOne(authorityRenderer, true);
+    const Sample exactRecoveredDraw = renderOne(exactRenderer, true);
+    if (recoveredDraw.pixels != exactRecoveredDraw.pixels) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL rebound positive recovery changed "
+            "pixels\n");
+        return 1;
+    }
+    const auto recoveryStatsAfterDraw =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    if (recoveryStatsAfterDraw.alignedProofReadFallbacks !=
+            recoveryStatsBefore.alignedProofReadFallbacks + 1) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL rebound positive recovery proof "
+            "accounting unexpected: before=%llu after=%llu\n",
+            static_cast<unsigned long long>(
+                recoveryStatsBefore.alignedProofReadFallbacks),
+            static_cast<unsigned long long>(
+                recoveryStatsAfterDraw.alignedProofReadFallbacks));
+        return 1;
+    }
+    if (recoveryStatsAfterDraw.authorityBypassesApplied !=
+            recoveryStatsBefore.authorityBypassesApplied + 1) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL rebound positive recovery did not "
+            "restore exactly one authority application\n");
         return 1;
     }
 
