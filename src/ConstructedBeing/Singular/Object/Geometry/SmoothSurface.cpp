@@ -4,6 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <cmath>
+#include <stdexcept>
 
 namespace geom {
 
@@ -59,11 +60,19 @@ glm::mat4 translate(const glm::mat4& Q, const glm::vec3& t) {
     // Point-space translation is authored by OntoMath. transformQuadric owns
     // Q' = T^-T Q T^-1; GLM remains only the representation boundary here.
     const auto pointTransform = OntoMath::affineTranslation(t);
-    if (!pointTransform) return Q;
+    if (!pointTransform) {
+        throw std::runtime_error("OntoMath refused quadric point translation");
+    }
     const auto transformed = OntoMath::transformQuadric(
         OntoMath::MatrixValue::fromGlmMat4(Q), *pointTransform);
-    if (!transformed) return Q;
-    return transformed->toGlmMat4().value_or(Q);
+    if (!transformed) {
+        throw std::runtime_error("OntoMath refused quadric congruence transform");
+    }
+    const auto lowered = transformed->toGlmMat4();
+    if (!lowered) {
+        throw std::runtime_error("OntoMath quadric result cannot lower to glm::mat4");
+    }
+    return *lowered;
 }
 
 OntoMath::ScalarForm toScalarForm(const glm::mat4& Q) {
