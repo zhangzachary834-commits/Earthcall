@@ -294,3 +294,45 @@ Only job `113013136255` was retriggered and GitHub accepted the targeted retry. 
 Rejected hypotheses remain: upstream CPU-SDF failure does not falsify SourceRho; skipped native pixels are not parity evidence; authority-application counts do not substitute for deterministic executed visibility invocation/SDF-step counters; canonical movement is not an integration event.
 
 **Exact continuation point:** inspect the accepted targeted rerun of `113013136255`. Require the dedicated SourceRho native-pixel A/B to execute and prove byte-exact framebuffer plus hostile same-revision producer-rebinding fail-open behavior before interpreting deterministic visibility-work economics.
+
+
+---
+
+## 2026-10-07 16:12 PDT — patched native Metal tribunal PASS; hostile lifetime coverage extended
+
+**Native Metal head tested:** `8e0d886fceb3712def8facd094e51625f56a2dcb`  
+**Successor head after witness-extension work:** `ac2fb5c6fa79a4268ef09d07e826a9ccea65b066`  
+**Canonical at intake:** `f7ec902ddfce58ec6155f770e289c0c5af8a91d2`  
+**Divergence:** 229 successor-side / 50 canonical-side from merge base `95aefcb49147afd4e3dbcde9ced34d0eaeae10e0`
+
+The local Sonnet worker reran only the dedicated `webgpu_source_rho_authority_perf_test` on the repaired successor head. Build exited 0 and the witness exited 0 on native WebGPU/Metal. No code was edited locally.
+
+The repaired producer-rebinding tribunal therefore passes at the real GPU boundary:
+- exact/authority framebuffers remained byte-equal through measured frames, zero->nonzero repair, zero re-admission, hostile same-revision producer rebinding, and positive recovery;
+- hostile rebound spent the required exact/fail-open admission with no stale authority application;
+- the separate positive-recovery admission repaired the quarantined slot and restored authority;
+- the witness's per-stage +repair/+fallback/+authority assertions all passed even though only the cumulative summary is printed.
+
+Cumulative semantic counters on the passing run were: vessel observations 10; semantic builds 3; semantic cache hits 7; slot builds 2; slot repairs 4; handle publications 10; handle validations 10; proof reads 10; metadata tests 48; proof fallbacks 7; authority applications 3.
+
+Maintained economics on that run were descriptive only: 12 warmed pairs; CPU wall medians exact 2.599 ms vs authority 2.588 ms (ratio 1.004); cold wall exact 11.77 ms vs authority 6.22 ms; authority setup 6,167 ns; repair 6,459 ns; repair draw 6.44 ms; cold WGSL 46,694 exact vs 46,612 authority (82 bytes smaller); cold parameter upload 24 vs 20 bytes; recurring parameter upload 0/0; recurring compiles 0/0; cache hits 12/12; authority artifact 152 bytes plus 2-byte mask. GPU timestamp samples reported 0.000 ms and are not usable.
+
+This **does not** earn an economics verdict. The handoff requires deterministic executed `sourceVisibility` invocation and visibility-SDF-step counts before timing can be interpreted. A 1.004 wall ratio cannot distinguish “substantial shadow work vanished but another bottleneck dominates” from “the fixture executes little relevant shadow work.”
+
+### Extended hostile lifetime witness
+
+The next bounded pass added only diagnostic/witness surface:
+
+- `3dbe497a6e855c461e58bf5138c82c0bcc20c2ef`: Renderer exposes generation-only SourceRho slot diagnostics; no theorem-consumption API is exposed.
+- `367d3b43b575ad5eb832c1adc781219837be4462`: native witness extends real WebGPU coverage to experiment OFF/ON structural transition, producer removal/re-add while keeping the multi-source path active, and numeric slot reorder/reuse. Removal/re-add and reorder require an exact first draw with no inherited authority, followed by separate positive recovery.
+- `ac2fb5c6fa79a4268ef09d07e826a9ccea65b066`: corrected the removal/re-add generation witness to snapshot the zero producer's generation before removal. Re-add and reorder assert fresh generations so retired numeric slots cannot masquerade as lifetime identity.
+
+The new hostile cases are not yet native-Metal evidence; they require one focused rerun of the same executable. No production rendering semantics were widened, MediumDensity remains untouched, and no scene/world relevance lookup was added.
+
+### Integration gait
+
+Current canonical moved to `f7ec902d...`, but targeted comparison shows no changes in the bounded SourceRho observer/Renderer/WebGPU/SdfWgsl/native-witness dependency set. Canonical motion alone remains a non-event. No reconciliation, force update, or snapshot overwrite was performed.
+
+### Exact continuation point
+
+Run only `webgpu_source_rho_authority_perf_test` on native Metal at the current successor head after this Intercom append. Require all newly added OFF/ON, removal/re-add, fresh-generation, slot-reorder/reuse, fail-open, positive-recovery, and byte-exact assertions to pass. If they do, add witness-only deterministic executed `sourceVisibility` invocation and shadow-SDF-step counters in a separate diagnostic path with zero production overhead when disabled, then rerun exact-vs-authority work accounting before interpreting CPU/GPU economics. If any hostile case fails, classify and stop before adding counters or widening scope.
