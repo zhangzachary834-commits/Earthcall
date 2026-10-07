@@ -1,4 +1,5 @@
 #include "SmoothSurface.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -55,9 +56,14 @@ glm::mat4 paraboloid(float a) {
 }
 
 glm::mat4 translate(const glm::mat4& Q, const glm::vec3& t) {
-    // Points q satisfy (q−t) on the original surface: Q' = Mᵀ Q M, M = translate(−t).
-    glm::mat4 M = glm::translate(glm::mat4(1.0f), -t);
-    return glm::transpose(M) * Q * M;
+    // Point-space translation is authored by OntoMath. transformQuadric owns
+    // Q' = T^-T Q T^-1; GLM remains only the representation boundary here.
+    const auto pointTransform = OntoMath::affineTranslation(t);
+    if (!pointTransform) return Q;
+    const auto transformed = OntoMath::transformQuadric(
+        OntoMath::MatrixValue::fromGlmMat4(Q), *pointTransform);
+    if (!transformed) return Q;
+    return transformed->toGlmMat4().value_or(Q);
 }
 
 OntoMath::ScalarForm toScalarForm(const glm::mat4& Q) {
