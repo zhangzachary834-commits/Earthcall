@@ -82,6 +82,10 @@ std::optional<MatrixValue> cameraPerspective(double verticalFovRadians,
                                              double nearPlane,
                                              double farPlane,
                                              bool zeroToOneDepth);
+std::optional<MatrixValue> cameraOrthographic(double left, double right,
+                                              double bottom, double top,
+                                              double nearPlane, double farPlane,
+                                              bool zeroToOneDepth);
 
 // Canonical affine mathematics. These functions own transform meaning; GLM is
 // only a representation/execution boundary. All affine transforms are 4x4
