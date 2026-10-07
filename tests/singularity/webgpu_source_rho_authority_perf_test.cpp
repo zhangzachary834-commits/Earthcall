@@ -533,6 +533,8 @@ int main() {
     std::vector<Rendering::RadianceSourceBinding> withoutZeroSources{
         liveSource, liveSource2};
     constexpr uint64_t kRemovalSourceSetRevision = 52004;
+    const uint64_t retiredZeroGeneration =
+        authorityRenderer.renderedFieldRadianceSlotGeneration(0);
     const auto removalStatsBefore =
         authorityRenderer.renderedFieldSemanticObservationStats();
     authorityRenderer.setRadianceSources(
@@ -556,8 +558,6 @@ int main() {
     }
 
     constexpr uint64_t kReaddSourceSetRevision = 52005;
-    const auto retiredZeroGeneration =
-        authorityRenderer.renderedFieldRadianceSlotGeneration(0);
     const auto readdStatsBefore =
         authorityRenderer.renderedFieldSemanticObservationStats();
     authorityRenderer.setRadianceSources(
