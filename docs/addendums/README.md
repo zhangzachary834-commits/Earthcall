@@ -25,3 +25,5 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating Hierarchy of Joys and First Mover Authoring](hierarchy_of_joys_and_first_mover_authoring_addendum.md)
 *   [Integrating Law Migration Framework and Adaptive Compute Moments](law_migration_and_adaptive_compute_addendum.md)
 *   [Integrating SDF Spatial Prophetic Artifact and Performance as Truth](sdf_prophetic_and_performance_as_truth_addendum.md)
+*   [Integrating Adaptive Compute and the Event Bus Call Stack](adaptive_compute_and_call_stack_addendum.md)
+*   [Integrating Substrate Reversal and Trust Verification](substrate_reversal_and_trust_verification_addendum.md)
