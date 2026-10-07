@@ -592,7 +592,7 @@ Those are representation/modality concerns, not authored mathematics.
 
 # 12. Rung 9 — Quadric and remaining custom matrix algebra
 
-**Status (2026-10-07): IN PROGRESS.** The first production quadric seam now delegates translated implicit-surface congruence to `OntoMath::transformQuadric`, with `affineTranslation` authoring the point-space transform and GLM retained only as the lowered storage representation. `geometry_ontomath_test` freezes the historical GLM `M^T Q M` translation formula as an independent oracle and checks translated matrix/ScalarForm gradient equivalence. Impossible OntoMath/lowering results explicitly refuse via exception rather than silently returning an unchanged quadric. Exact-head CI for this production migration is pending; the immediately prior helper head `9c0e843e` passed all campaign-owned lanes in CI #5526, with only the separately owned Slow Adapter lane failing. Remaining Rung-9 witnesses (full primitive parity, translated ray intersection, and final custom-matrix audit) are not yet claimed complete.
+**Status (2026-10-07): IN PROGRESS.** The first production quadric seam now delegates translated implicit-surface congruence to `OntoMath::transformQuadric`, with `affineTranslation` authoring the point-space transform and GLM retained only as the lowered storage representation. `geometry_ontomath_test` freezes the historical GLM `M^T Q M` translation formula as an independent oracle and checks translated matrix/ScalarForm gradient equivalence. Impossible OntoMath/lowering results explicitly refuse via exception rather than silently returning an unchanged quadric. Exact-head CI for this production migration is pending; the immediately prior helper head `9c0e843e` passed all campaign-owned lanes in CI #5526, with only the separately owned Slow Adapter lane failing. The focused geometry witness now covers translated sphere/ellipsoid/cylinder/cone/paraboloid parity, translated matrix/ScalarForm gradient equivalence, and ray-intersection invariance by comparing a world-space ray against the translated quadric with the corresponding shifted local-space ray against the original. The obsolete production `glm/gtc/matrix_transform.hpp` dependency was removed from `SmoothSurface.cpp`. The final custom-matrix audit and exact-head CI remain before Rung 9 can be claimed complete.
 
 ## Objective
 
@@ -626,6 +626,8 @@ If both exist, conversion/equivalence must be defined and tested in OntoMath.
 ---
 
 # 13. Rung 10 — Quarantine GLM as backend machinery
+
+**Execution boundary (2026-10-07):** Rung 10 is intentionally a post-merge cleanup campaign. Finish Rung 9 and its exact-head tribunal on the current branch first; merge that additive/migration foundation only with Zach's explicit approval; then cut a fresh branch from the resulting canonical head to migrate any remaining legacy consumers, remove/quarantine obsolete semantic entry points, and install the anti-regrowth guardrail. This keeps replacement capability separable from destructive legacy removal and preserves a clean rollback/bisect boundary.
 
 ## Objective
 
