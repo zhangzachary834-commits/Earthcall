@@ -71,9 +71,7 @@ public:
     // Camera (view*proj + world eye position) is set once per frame; model is set
     // per object before its draws — together they replace the GL matrix stack. The
     // eye position drives the specular view vector.
-    void setCamera(const glm::mat4& viewProj, const glm::vec3& eyePos) {
-        _viewProj = viewProj; _eyePos = eyePos;
-    }
+    void setCamera(const glm::mat4& viewProj, const glm::vec3& eyePos);
     // Declaring the 2-arg overload above would otherwise HIDE the boundary's
     // 3-arg setCamera(view, proj, eye) for anyone holding a WebGpuRenderer by its
     // concrete type — a silent "too many arguments" at the call site.
@@ -152,13 +150,11 @@ protected:
     void applyBeginFrame(uint32_t width, uint32_t height,
                          const glm::vec4& clearColor) override;
 
-    // Interface camera: view and proj stay separate for OpenGL's sake, so collapse
-    // them here to the single view*proj uniform this backend actually wants.
+    // Interface camera/model hooks derive and cache renderer-facing matrices
+    // through OntoMath; hot draw loops consume only the lowered cached values.
     void applyCamera(const glm::mat4& view, const glm::mat4& proj,
-                     const glm::vec3& eyePos) override {
-        setCamera(proj * view, eyePos);
-    }
-    void applyModel(const glm::mat4& model) override { _model = model; }
+                     const glm::vec3& eyePos) override;
+    void applyModel(const glm::mat4& model) override;
 
 private:
     WGPUDevice _device = nullptr;
@@ -504,8 +500,12 @@ private:
     WGPUCommandEncoder   _encoder = nullptr;
     WGPURenderPassEncoder _pass   = nullptr;
     glm::mat4 _viewProj{1.0f};
+    glm::mat4 _invViewProj{1.0f};
     glm::mat4 _model{1.0f};
+    glm::mat4 _modelViewProj{1.0f};
     glm::vec3 _eyePos{0.0f};
+    bool _inverseViewProjValid = true;
+    bool _modelViewProjValid = true;
 
     // Optional execution timing. Query writes bracket the main command encoder's
     // render pass; each result is copied into a small readback ring and consumed

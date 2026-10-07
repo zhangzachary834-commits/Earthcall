@@ -43,6 +43,35 @@ std::optional<AuthoredModelTransforms> deriveModelTransforms(const glm::mat4& mo
     return AuthoredModelTransforms{*loweredInverse, *loweredNormal};
 }
 
+std::optional<glm::mat4> authoredProduct(const glm::mat4& left,
+                                         const glm::mat4& right) {
+    const auto product = OntoMath::matrixMultiply(
+        OntoMath::MatrixValue::fromGlmMat4(left),
+        OntoMath::MatrixValue::fromGlmMat4(right));
+    if (!product) return std::nullopt;
+    return product->toGlmMat4();
+}
+
+std::optional<glm::mat4> authoredInverse(const glm::mat4& matrix) {
+    const auto inverse =
+        OntoMath::matrixInverse(OntoMath::MatrixValue::fromGlmMat4(matrix));
+    if (!inverse) return std::nullopt;
+    return inverse->toGlmMat4();
+}
+
+std::optional<glm::mat4> authoredScaledProduct(const glm::mat4& viewProj,
+                                               const glm::mat4& model,
+                                               float uniformScale) {
+    const auto vpModel = OntoMath::matrixMultiply(
+        OntoMath::MatrixValue::fromGlmMat4(viewProj),
+        OntoMath::MatrixValue::fromGlmMat4(model));
+    const auto scale = OntoMath::affineScale(glm::vec3(uniformScale));
+    if (!vpModel || !scale) return std::nullopt;
+    const auto result = OntoMath::matrixMultiply(*vpModel, *scale);
+    if (!result) return std::nullopt;
+    return result->toGlmMat4();
+}
+
 // Vertex layout mirrors geom::TessVertex exactly: {pos(3), normal(3), uv(2)}.
 // A world-space Lambert term (ambient + diffuse*N·L) tints baseColor; front_facing
 // flips the normal so open surfaces (patches) light on both sides. Texture albedo
@@ -857,6 +886,37 @@ void WebGpuRenderer::present() {
     _surfaceTex = nullptr; // owned by the surface; not ours to release
 }
 
+void WebGpuRenderer::setCamera(const glm::mat4& viewProj, const glm::vec3& eyePos) {
+    _viewProj = viewProj;
+    _eyePos = eyePos;
+
+    const auto inverse = authoredInverse(_viewProj);
+    _inverseViewProjValid = inverse.has_value();
+    if (inverse) _invViewProj = *inverse;
+
+    const auto modelViewProj = authoredProduct(_viewProj, _model);
+    _modelViewProjValid = modelViewProj.has_value();
+    if (modelViewProj) _modelViewProj = *modelViewProj;
+}
+
+void WebGpuRenderer::applyCamera(const glm::mat4& view, const glm::mat4& proj,
+                                 const glm::vec3& eyePos) {
+    const auto authoredViewProj = authoredProduct(proj, view);
+    if (!authoredViewProj) {
+        _inverseViewProjValid = false;
+        _modelViewProjValid = false;
+        return;
+    }
+    setCamera(*authoredViewProj, eyePos);
+}
+
+void WebGpuRenderer::applyModel(const glm::mat4& model) {
+    _model = model;
+    const auto modelViewProj = authoredProduct(_viewProj, _model);
+    _modelViewProjValid = modelViewProj.has_value();
+    if (modelViewProj) _modelViewProj = *modelViewProj;
+}
+
 void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width, uint32_t height,
                                          const glm::vec4& clear) {
     mutableFrameStats() = FrameStats{};
@@ -915,8 +975,9 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
             edges.push_back(b); edges.push_back(c);
             edges.push_back(c); edges.push_back(a);
         }
+        if (!_modelViewProjValid) return;
         drawFlat(flatPipeline(WGPUPrimitiveTopology_LineList, Blend::Alpha, DepthMode::TestOnly),
-                 edges, _viewProj * _model,
+                 edges, _modelViewProj,
                  glm::vec4(mat.baseColor, mat.opacity));
         return;
     }
@@ -1984,8 +2045,10 @@ void WebGpuRenderer::drawParticles(const geom::FieldNode& field, int count) {
 
     bindPipeline(_particlePipe);
 
+    if (!_modelViewProjValid) return;
+
     ParticleUniforms pu;
-    pu.mvp = _viewProj * _model;
+    pu.mvp = _modelViewProj;
     pu.color = glm::vec4(0.6f, 0.8f, 1.0f, 0.9f);
     pu.originAndTravel = glm::vec4(field.origin, travel);
     pu.flowDir = glm::vec4(flowDir, 0.0f);
@@ -2044,8 +2107,9 @@ void WebGpuRenderer::drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>
     std::vector<glm::vec3> verts;
     verts.reserve(segments.size() * 2);
     for (const auto& s : segments) { verts.push_back(s.first); verts.push_back(s.second); }
+    if (!_modelViewProjValid) return;
     drawFlat(flatPipeline(WGPUPrimitiveTopology_LineList, blend, DepthMode::TestOnly),
-             verts, _viewProj * _model, color);
+             verts, _modelViewProj, color);
 }
 
 void WebGpuRenderer::drawOverlay(const geom::TessMesh& mesh, const glm::vec4& color,
@@ -2053,10 +2117,11 @@ void WebGpuRenderer::drawOverlay(const geom::TessMesh& mesh, const glm::vec4& co
     std::vector<glm::vec3> verts;
     verts.reserve(mesh.tris.size());
     for (const auto& v : mesh.tris) verts.push_back(v.pos);
-    glm::mat4 mvp = _viewProj * _model * glm::scale(glm::mat4(1.0f), glm::vec3(scale));
+    const auto mvp = authoredScaledProduct(_viewProj, _model, scale);
+    if (!mvp) return;
     drawFlat(flatPipeline(WGPUPrimitiveTopology_TriangleList,
                           additive ? Blend::Additive : Blend::Alpha, DepthMode::TestOnly),
-             verts, mvp, color);
+             verts, *mvp, color);
 }
 
 void WebGpuRenderer::flushSdfDraws() {
@@ -2140,9 +2205,11 @@ void WebGpuRenderer::flushSdfDraws() {
     }
 
     // Global uniforms for SDFs
+    if (!_inverseViewProjValid) return;
+
     SdfGlobalUniforms u;
     u.viewProj = _viewProj;
-    u.invViewProj = glm::inverse(_viewProj);
+    u.invViewProj = _invViewProj;
     u.lightPos = glm::vec4(lightPos(), 1.0f);
     u.eyePos = glm::vec4(_eyePos, 1.0f);
     u.lightAmbient = glm::vec4(lightAmbient(), 1.0f);
@@ -2162,10 +2229,14 @@ void WebGpuRenderer::flushSdfDraws() {
     // WebGPU uses; view space looks down -z.
     float farDist = 1e6f;
     {
-        const glm::vec4 farPt = glm::inverse(proj()) * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-        if (std::fabs(farPt.w) > 1e-9f) {
-            const float d = -(farPt.z / farPt.w);
-            if (std::isfinite(d) && d > 0.0f) farDist = d;
+        const auto inverseProjection = authoredInverse(proj());
+        if (inverseProjection) {
+            const glm::vec4 farPt =
+                *inverseProjection * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+            if (std::fabs(farPt.w) > 1e-9f) {
+                const float d = -(farPt.z / farPt.w);
+                if (std::isfinite(d) && d > 0.0f) farDist = d;
+            }
         }
     }
     u.limits = glm::vec4(farDist, float(_depthW), float(_depthH), _spaceDistortion);
@@ -2846,9 +2917,11 @@ void WebGpuRenderer::flushVolumeComposite() {
     _pass = wgpuCommandEncoderBeginRenderPass(_encoder, &volumePassDesc);
     _boundPipeline = nullptr;
 
+    if (!_inverseViewProjValid) return;
+
     VolumeGlobalUniforms globals;
     globals.viewProj = _viewProj;
-    globals.invViewProj = glm::inverse(_viewProj);
+    globals.invViewProj = _invViewProj;
     globals.eyePos = glm::vec4(_eyePos, 1.0f);
     globals.viewport = glm::vec4(static_cast<float>(_depthW),
                                  static_cast<float>(_depthH), 0.0f, 0.0f);
@@ -3036,8 +3109,9 @@ void WebGpuRenderer::drawSolid(const std::vector<glm::vec3>& tris, const glm::ve
                                Blend blend, bool depthWrite) {
     if (!_pass || tris.empty()) return;
     // In 2D scope the model transform is meaningless; otherwise these are world-space
-    // triangles under the current model, exactly like drawMesh.
-    const glm::mat4 mvp = _in2D ? _ortho2D : _viewProj * _model;
+    // triangles under the current OntoMath-authored view-projection/model cache.
+    if (!_in2D && !_modelViewProjValid) return;
+    const glm::mat4& mvp = _in2D ? _ortho2D : _modelViewProj;
     drawFlat(flatPipeline(WGPUPrimitiveTopology_TriangleList, blend,
                           depthWrite ? DepthMode::TestWrite : DepthMode::TestOnly),
              tris, mvp, color);

@@ -183,6 +183,43 @@ int main() {
         cameraProjectionOracle * cameraViewOracle * cameraWorldPoint;
     assert(glm::all(glm::epsilonEqual(cameraClip, cameraClipOracle, 1e-5f)));
 
+    // Rung-8 WebGPU cached-matrix witness: production derives view-projection,
+    // inverse view-projection, model-view-projection, and overlay scale through
+    // OntoMath once when their premises change; GLM below is oracle/execution only.
+    const auto rendererModelViewProjection =
+        OntoMath::matrixMultiply(*cameraViewProjection, *m);
+    assert(rendererModelViewProjection);
+    const auto rendererModelViewProjectionGlm =
+        rendererModelViewProjection->toGlmMat4();
+    assert(rendererModelViewProjectionGlm);
+    assert(near4(*rendererModelViewProjectionGlm,
+                 cameraProjectionOracle * cameraViewOracle * ref));
+
+    const auto rendererInverseViewProjection =
+        OntoMath::matrixInverse(*cameraViewProjection);
+    assert(rendererInverseViewProjection);
+    const auto rendererInverseViewProjectionGlm =
+        rendererInverseViewProjection->toGlmMat4();
+    assert(rendererInverseViewProjectionGlm);
+    assert(near4(*rendererInverseViewProjectionGlm,
+                 glm::inverse(cameraProjectionOracle * cameraViewOracle)));
+
+    const float overlayUniformScale = 1.35f;
+    const auto rendererOverlayScale =
+        OntoMath::affineScale(glm::vec3(overlayUniformScale));
+    assert(rendererOverlayScale);
+    const auto rendererModelScaled =
+        OntoMath::matrixMultiply(*m, *rendererOverlayScale);
+    assert(rendererModelScaled);
+    const auto rendererOverlayMvp =
+        OntoMath::matrixMultiply(*cameraViewProjection, *rendererModelScaled);
+    assert(rendererOverlayMvp);
+    const auto rendererOverlayMvpGlm = rendererOverlayMvp->toGlmMat4();
+    assert(rendererOverlayMvpGlm);
+    assert(near4(*rendererOverlayMvpGlm,
+                 cameraProjectionOracle * cameraViewOracle * ref *
+                 glm::scale(glm::mat4(1.0f), glm::vec3(overlayUniformScale))));
+
     // Rung-8 clip -> world witness: feed NDC derived from the frozen clip
     // oracle back through OntoMath's canonical inverse(P * V) authority.
     assert(std::abs(cameraClipOracle.w) > 1e-6f);
