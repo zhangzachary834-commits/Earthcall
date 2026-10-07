@@ -481,6 +481,222 @@ int main() {
         return 1;
     }
 
+    // Experiment OFF/ON is a structural authority transition, not a theorem
+    // lifetime change. OFF must restore exact visibility immediately; ON may
+    // rebuild and consume the still-current proven-zero slot again.
+    const auto experimentOffStatsBefore =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    authorityRenderer.setRadianceZeroAuthorityExperimentEnabled(false);
+    const Sample experimentOffDraw = renderOne(authorityRenderer, true);
+    const Sample exactExperimentOffDraw = renderOne(exactRenderer, true);
+    if (experimentOffDraw.pixels != exactExperimentOffDraw.pixels) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL experiment OFF changed pixels\n");
+        return 1;
+    }
+    const auto experimentOffStatsAfter =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    if (experimentOffStatsAfter.authorityBypassesApplied !=
+            experimentOffStatsBefore.authorityBypassesApplied) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL experiment OFF retained authority\n");
+        return 1;
+    }
+
+    const auto experimentOnStatsBefore =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    authorityRenderer.setRadianceZeroAuthorityExperimentEnabled(true);
+    const Sample experimentOnDraw = renderOne(authorityRenderer, true);
+    const Sample exactExperimentOnDraw = renderOne(exactRenderer, true);
+    if (experimentOnDraw.pixels != exactExperimentOnDraw.pixels) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL experiment ON changed pixels\n");
+        return 1;
+    }
+    const auto experimentOnStatsAfter =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    if (experimentOnStatsAfter.authorityBypassesApplied !=
+            experimentOnStatsBefore.authorityBypassesApplied + 1) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL experiment ON did not restore exactly "
+            "one authority application\n");
+        return 1;
+    }
+
+    // Removal/re-add hostile lifetime witness. Keep two sources throughout so
+    // the production multi-source WebGPU path stays active. Removing the zero
+    // producer replaces both numeric slots with live producers; re-adding the
+    // zero producer must not inherit its retired slot's authority generation.
+    Rendering::RadianceSourceBinding liveSource2 = liveSource;
+    liveSource2.producerId = "perf/source-live-2";
+    liveSource2.position = glm::vec3(0.0f, 1.5f, 2.6f);
+    std::vector<Rendering::RadianceSourceBinding> withoutZeroSources{
+        liveSource, liveSource2};
+    constexpr uint64_t kRemovalSourceSetRevision = 52004;
+    const auto removalStatsBefore =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    authorityRenderer.setRadianceSources(
+        withoutZeroSources, kRemovalSourceSetRevision);
+    exactRenderer.setRadianceSources(
+        withoutZeroSources, kRemovalSourceSetRevision);
+    const Sample removalDraw = renderOne(authorityRenderer, true);
+    const Sample exactRemovalDraw = renderOne(exactRenderer, true);
+    if (removalDraw.pixels != exactRemovalDraw.pixels) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL producer removal changed pixels\n");
+        return 1;
+    }
+    const auto removalStatsAfter =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    if (removalStatsAfter.authorityBypassesApplied !=
+            removalStatsBefore.authorityBypassesApplied) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL producer removal retained authority\n");
+        return 1;
+    }
+
+    constexpr uint64_t kReaddSourceSetRevision = 52005;
+    const auto retiredZeroGeneration =
+        authorityRenderer.renderedFieldRadianceSlotGeneration(0);
+    const auto readdStatsBefore =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    authorityRenderer.setRadianceSources(
+        reboundSources, kReaddSourceSetRevision);
+    exactRenderer.setRadianceSources(
+        reboundSources, kReaddSourceSetRevision);
+    const auto readdZeroGeneration =
+        authorityRenderer.renderedFieldRadianceSlotGeneration(0);
+    if (readdZeroGeneration == retiredZeroGeneration) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL producer re-add inherited retired "
+            "slot generation\n");
+        return 1;
+    }
+    const Sample readdDraw = renderOne(authorityRenderer, true);
+    const Sample exactReaddDraw = renderOne(exactRenderer, true);
+    if (readdDraw.pixels != exactReaddDraw.pixels) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL producer re-add fail-open changed "
+            "pixels\n");
+        return 1;
+    }
+    const auto readdStatsAfter =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    if (readdStatsAfter.authorityBypassesApplied !=
+            readdStatsBefore.authorityBypassesApplied) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL producer re-add inherited authority\n");
+        return 1;
+    }
+
+    // Positive recovery after re-add is a separate admission. Both numeric slots
+    // changed producer during remove/re-add, so both quarantines repair locally;
+    // only the zero SourceRho slot may become authoritative.
+    const auto readdRecoveryStatsBefore =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    authorityRenderer.setRadianceSources(
+        reboundSources, kReaddSourceSetRevision);
+    const auto readdRecoveryStatsAfterAdmission =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    if (readdRecoveryStatsAfterAdmission.alignedSlotRepairs !=
+            readdRecoveryStatsBefore.alignedSlotRepairs + 2) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL producer re-add recovery did not "
+            "repair exactly two quarantined slots\n");
+        return 1;
+    }
+    const Sample readdRecoveredDraw = renderOne(authorityRenderer, true);
+    const Sample exactReaddRecoveredDraw = renderOne(exactRenderer, true);
+    if (readdRecoveredDraw.pixels != exactReaddRecoveredDraw.pixels) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL producer re-add recovery changed "
+            "pixels\n");
+        return 1;
+    }
+    const auto readdRecoveryStatsAfterDraw =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    if (readdRecoveryStatsAfterDraw.authorityBypassesApplied !=
+            readdRecoveryStatsBefore.authorityBypassesApplied + 1) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL producer re-add recovery did not "
+            "restore exactly one authority application\n");
+        return 1;
+    }
+
+    // Slot reorder/reuse hostile witness. Swap the same two producers across
+    // numeric slots. Both old generations must retire, the first reordered draw
+    // must be exact, and authority may follow the zero producer only after the
+    // separate local recovery admission.
+    std::vector<Rendering::RadianceSourceBinding> reorderedSources{
+        liveSource, reboundSources[0]};
+    constexpr uint64_t kReorderSourceSetRevision = 52006;
+    const uint64_t generation0BeforeReorder =
+        authorityRenderer.renderedFieldRadianceSlotGeneration(0);
+    const uint64_t generation1BeforeReorder =
+        authorityRenderer.renderedFieldRadianceSlotGeneration(1);
+    const auto reorderStatsBefore =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    authorityRenderer.setRadianceSources(
+        reorderedSources, kReorderSourceSetRevision);
+    exactRenderer.setRadianceSources(
+        reorderedSources, kReorderSourceSetRevision);
+    const uint64_t generation0AfterReorder =
+        authorityRenderer.renderedFieldRadianceSlotGeneration(0);
+    const uint64_t generation1AfterReorder =
+        authorityRenderer.renderedFieldRadianceSlotGeneration(1);
+    if (generation0AfterReorder == generation0BeforeReorder ||
+        generation1AfterReorder == generation1BeforeReorder) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL slot reorder reused stale artifact "
+            "generation\n");
+        return 1;
+    }
+    const Sample reorderDraw = renderOne(authorityRenderer, true);
+    const Sample exactReorderDraw = renderOne(exactRenderer, true);
+    if (reorderDraw.pixels != exactReorderDraw.pixels) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL slot reorder fail-open changed pixels\n");
+        return 1;
+    }
+    const auto reorderStatsAfter =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    if (reorderStatsAfter.authorityBypassesApplied !=
+            reorderStatsBefore.authorityBypassesApplied) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL slot reorder reused stale authority\n");
+        return 1;
+    }
+
+    const auto reorderRecoveryStatsBefore =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    authorityRenderer.setRadianceSources(
+        reorderedSources, kReorderSourceSetRevision);
+    const auto reorderRecoveryStatsAfterAdmission =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    if (reorderRecoveryStatsAfterAdmission.alignedSlotRepairs !=
+            reorderRecoveryStatsBefore.alignedSlotRepairs + 2) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL slot reorder recovery did not repair "
+            "exactly two quarantined slots\n");
+        return 1;
+    }
+    const Sample reorderRecoveredDraw = renderOne(authorityRenderer, true);
+    const Sample exactReorderRecoveredDraw = renderOne(exactRenderer, true);
+    if (reorderRecoveredDraw.pixels != exactReorderRecoveredDraw.pixels) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL slot reorder recovery changed pixels\n");
+        return 1;
+    }
+    const auto reorderRecoveryStatsAfterDraw =
+        authorityRenderer.renderedFieldSemanticObservationStats();
+    if (reorderRecoveryStatsAfterDraw.authorityBypassesApplied !=
+            reorderRecoveryStatsBefore.authorityBypassesApplied + 1) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL slot reorder recovery did not restore "
+            "exactly one authority application\n");
+        return 1;
+    }
+
     if (exact.recurringCompiles != 0 || authority.recurringCompiles != 0) {
         std::printf(
             "SOURCE_RHO_AUTH_PERF FAIL measured frame recompiled "
