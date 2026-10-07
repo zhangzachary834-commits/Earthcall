@@ -31,3 +31,8 @@ The 2026-08-17 geometry-vs-OntoMath audit is historical; current math record is
 [`mathematics/GEOMETRY_EXECUTION_SUBSTRATE_MANIFESTO.md`](mathematics/GEOMETRY_EXECUTION_SUBSTRATE_MANIFESTO.md),
 and the remaining work is tracked in
 [`../Agenda/Tasks/Specific Tasks/Rendering and OntoMath/Geometry_OntoMath_Remaining_Rungs/Geometry_OntoMath_Remaining_Rungs.md`](../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Geometry_OntoMath_Remaining_Rungs/Geometry_OntoMath_Remaining_Rungs.md).
+
+## Cross-cutting Architecture Topics
+
+- [ADAPTIVE COMPUTE MOMENTS](./ADAPTIVE_COMPUTE_MOMENTS.md)
+- [SDF SPATIAL PROPHETIC DIRECT PROFITABILITY ARTIFACT](./SDF_SPATIAL_PROPHETIC_DIRECT_PROFITABILITY_ARTIFACT.md)
