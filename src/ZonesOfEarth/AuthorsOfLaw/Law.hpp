@@ -894,9 +894,9 @@ public:
     // evaluates the network and drains the agenda into applyTo. Event facts
     // are transient: consumed by the round that evaluates them.
     //
-    // EventBus registrations are owned by this manager and revoked in its
-    // destructor. Handlers still run on the publishing thread; keep Law events
-    // on the main thread for now.
+    // NOTE: EventBus subscriptions are stored in _eventBusSubscriptionIds and
+    // revoked in ~LawManager(). Handlers run on the publishing thread; keep
+    // publishing on the main thread for now.
     // ------------------------------------------------------------------
     void connectToEventBus();
     bool isConnected() const { return _connected; }
@@ -1265,12 +1265,8 @@ private:
     // compileConditionsToRete; see seedStateFacts for why the narrowing is
     // sound and why it is worth doing.
     std::unordered_set<std::string> _relationTypesInPlay;
+    std::vector<uint64_t> _eventBusSubscriptionIds;
     bool _connected = false;
-    // Beneath the Kernel (No Black Box exemption): EventBus registration
-    // handles for the two `this`-capturing listeners connectToEventBus()
-    // installs; revoked in ~LawManager.
-    Core::EventBus::SubscriptionToken _ecaEventSubscription;
-    Core::EventBus::SubscriptionToken _customEventSubscription;
     bool _dirty = false;
     TickTiming _tickTiming;
 

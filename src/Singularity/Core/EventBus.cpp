@@ -31,66 +31,57 @@ EventBus& EventBus::instance() {
 // The priority is an integer that determines the order in which the subscribers are called.
 // The higher the priority, the earlier the subscriber is called.
 // The default priority is 0.
-EventBus::SubscriptionToken EventBus::subscribe(
-    const std::type_index& type, const Listener& listener, int priority)
+uint64_t EventBus::subscribe(const std::type_index& type, const Listener& listener, int priority)
 {
     std::lock_guard<std::mutex> lock(_mutex);
-    const SubscriptionToken token{type, _nextSubscriptionId++};
-    auto active = std::make_shared<std::atomic_bool>(true);
+    uint64_t id = _nextSubscriptionId++;
     auto it = _listeners.find(type);
     auto newVec = std::make_shared<std::vector<ListenerEntry>>();
     if (it != _listeners.end() && it->second) {
         *newVec = *it->second;
     }
-    newVec->emplace_back(ListenerEntry{priority, token.id, active, listener});
+    newVec->emplace_back(ListenerEntry{id, priority, listener});
     // Keep highest priority first for deterministic ordering.
     std::sort(newVec->begin(), newVec->end(), [](const ListenerEntry& a, const ListenerEntry& b){
         return a.priority > b.priority;
     });
     _listeners[type] = newVec;
-    return token;
+    return id;
 }
 
-bool EventBus::unsubscribe(const SubscriptionToken& token)
+void EventBus::unsubscribe(uint64_t id)
 {
-    if (!token) return false;
-
+    if (id == 0) return;
     std::lock_guard<std::mutex> lock(_mutex);
-    auto it = _listeners.find(token.type);
-    if (it == _listeners.end() || !it->second) return false;
-
-    auto newVec = std::make_shared<std::vector<ListenerEntry>>(*it->second);
-    auto listenerIt = std::find_if(
-        newVec->begin(), newVec->end(),
-        [&](const ListenerEntry& entry) {
-            return entry.subscriptionId == token.id;
-        });
-    if (listenerIt == newVec->end()) return false;
-
-    if (listenerIt->active) {
-        listenerIt->active->store(false, std::memory_order_release);
+    for (auto& [type, vecPtr] : _listeners) {
+        if (!vecPtr) continue;
+        bool found = false;
+        for (const auto& entry : *vecPtr) {
+            if (entry.id == id) {
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            auto newVec = std::make_shared<std::vector<ListenerEntry>>();
+            for (const auto& entry : *vecPtr) {
+                if (entry.id != id) {
+                    newVec->push_back(entry);
+                }
+            }
+            if (newVec->empty()) {
+                vecPtr = nullptr;
+            } else {
+                vecPtr = newVec;
+            }
+            break;
+        }
     }
-    newVec->erase(listenerIt);
-    if (newVec->empty()) {
-        _listeners.erase(it);
-    } else {
-        _listeners[token.type] = newVec;
-    }
-    return true;
 }
 
 void EventBus::clear()
 {
     std::lock_guard<std::mutex> lock(_mutex);
-    for (const auto& [type, listeners] : _listeners) {
-        (void)type;
-        if (!listeners) continue;
-        for (const auto& entry : *listeners) {
-            if (entry.active) {
-                entry.active->store(false, std::memory_order_release);
-            }
-        }
-    }
     _listeners.clear();
 }
 

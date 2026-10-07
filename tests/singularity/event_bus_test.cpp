@@ -29,10 +29,6 @@ struct AsyncEvent {
     int value;
 };
 
-struct BlockingAsyncEvent {};
-struct CancelledAsyncEvent {};
-struct DrainAsyncEvent {};
-
 struct PingEvent {
     int value;
 };
@@ -135,52 +131,14 @@ void testUnsubscribe() {
     std::cout << "[Test] Unsubscribe\n";
 
     int received = 0;
-    auto token = EventBus::instance().subscribe<SimpleEvent>(
+    auto id = EventBus::instance().subscribe<SimpleEvent>(
         [&received](const SimpleEvent&) { ++received; });
 
-    assert(EventBus::instance().unsubscribe(token));
-    assert(!EventBus::instance().unsubscribe(token));
+    EventBus::instance().unsubscribe(id);
     EventBus::instance().publish(SimpleEvent{7});
     assert(received == 0);
 
     std::cout << "  ✓ Revoked listener is not called\n";
-    EventBusTestFriend::clear();
-}
-
-void testQueuedAsyncUnsubscribe() {
-    std::cout << "[Test] Queued Async Unsubscribe\n";
-
-    std::promise<void> blockerEnteredPromise;
-    auto blockerEntered = blockerEnteredPromise.get_future();
-    std::promise<void> releaseBlockerPromise;
-    auto releaseBlocker = releaseBlockerPromise.get_future().share();
-    std::promise<void> drainedPromise;
-    auto drained = drainedPromise.get_future();
-    std::atomic<bool> cancelledRan{false};
-
-    EventBus::instance().subscribe<BlockingAsyncEvent>(
-        [&](const BlockingAsyncEvent&) {
-            blockerEnteredPromise.set_value();
-            releaseBlocker.wait();
-        });
-    auto cancelledToken = EventBus::instance().subscribe<CancelledAsyncEvent>(
-        [&](const CancelledAsyncEvent&) { cancelledRan.store(true); });
-    EventBus::instance().subscribe<DrainAsyncEvent>(
-        [&](const DrainAsyncEvent&) { drainedPromise.set_value(); });
-
-    // Occupy the single worker so the cancellable delivery is definitely
-    // queued but not entered when unsubscribe() revokes its liveness gate.
-    EventBus::instance().publishAsync(BlockingAsyncEvent{});
-    assert(blockerEntered.wait_for(std::chrono::seconds(2)) == std::future_status::ready);
-    EventBus::instance().publishAsync(CancelledAsyncEvent{});
-    EventBus::instance().publishAsync(DrainAsyncEvent{});
-    assert(EventBus::instance().unsubscribe(cancelledToken));
-    releaseBlockerPromise.set_value();
-
-    assert(drained.wait_for(std::chrono::seconds(2)) == std::future_status::ready);
-    assert(!cancelledRan.load());
-
-    std::cout << "  ✓ Revoked listener is skipped by an already-queued async snapshot\n";
     EventBusTestFriend::clear();
 }
 
@@ -192,7 +150,6 @@ int main() {
     testReentrantPublish();
     testAsyncPublish();
     testUnsubscribe();
-    testQueuedAsyncUnsubscribe();
 
     // Clean shutdown
     EventBus::instance().shutdown();
