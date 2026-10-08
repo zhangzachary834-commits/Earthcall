@@ -263,6 +263,14 @@ Remove `@screen-channel.sample.request` to stop requests; clear output using the
 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-07 18:54 PDT — Zach originated the named-region direction; Codex implements explicit source editing, bounded sensing and the authored derivation recipe.*
 
+### A whole pixel-art editor from one paste
+
+[Atelier](../../../examples/law_line_pixel_art_editor.txt) authors a 16×16 direct Screen canvas, twelve ink swatches, eraser, one-step undo/redo, undoable clear, viewport PNG export and close. It is **one line containing 276 cooperating Law sentences**, compiled by the existing authored Metalaws. Paste it once after rebuilding/restarting, unlocking, `enter LawLine`, closing pointer-capturing panels and unlocking the cursor with Escape. Press Enter after pasting and allow the substantial program to finish compiling. Earlier display/world-click programs should be stopped if you do not want them running alongside it.
+
+Click a left swatch, then click/drag over the canvas. Right-hand tiles are undo, redo, clear, PNG, eraser, close from top to bottom. Artwork lives in your authored `atelier.*` properties; the generator installs no save or C++ app. The initialization marker preserves existing installed state. [Complete controls, limits and verification](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Law_Line_Pixel_Art_Editor/Law_Line_Pixel_Art_Editor.md).
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18`; Zach requested the whole editor through Law Line.*
+
 ## 6. Several Laws on one line, or several actions in one Law
 
 Use a top-level **semicolon** between complete Law sentences:

@@ -580,6 +580,7 @@ on a quiet machine) so the tripwire tightens behind the fix.
 
 <a id="production-facing-programs"></a>
 ## Production-facing Programs:
+- [Law Line pixel-art editor](Specific%20Tasks/Rendering%20and%20OntoMath/Law_Line_Pixel_Art_Editor/Law_Line_Pixel_Art_Editor.md): verify the one-paste authored editor with real pointer/Retina interaction and inhabited persistence; native pixel and focused behavior evidence is recorded.
 *(These are the **Zones of Actualization** — Zach's aspirational destination zones, written in his own voice at `docs/Zones of Actualization/`. Linked here 2026-09-03; the docs are the record, these bullets are the index.)*
 - **Sanctum of Beginnings** — the onboarding Zone authored in-world, teaching Christ and the Hierarchy of Joys *first* and the ontological primitives only after, ending at Time and Moment. → [vision doc](../../Zones%20of%20Actualization/Sanctum%20of%20Beginnings.md)
 - **Universal Artistic-Math-Simulation (AMS) environment Zone** — the origin motivation: art tools, modeling engines, and physics sims differ only in *which laws are authorable and when*, and Earthcall is the one that lets you author them at runtime. → [vision doc](../../Zones%20of%20Actualization/Universal%20Artistic-Math-Simulation%20Environment.md)

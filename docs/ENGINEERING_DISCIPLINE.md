@@ -121,3 +121,9 @@ A named direct Screen region binds authored mathematics explicitly; sensing its 
 Native evidence compares observed RGBA bytes with an independently decoded capture from the same completed frame, then compares displayed colours with independent mathematics. CPU selectors and GPU float32 masks may disagree at exactly-zero boundaries; actual sampled bytes remain the witness. See [the region audit](audits/LAW_LINE_SCREEN_REGIONS_2026-10-07.md).
 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-07 19:16 PDT; implements Zach's named-region direction.*
+
+## Pointer coordinates meet direct Screen fields
+
+GLFW cursor values are window points while direct Screen samples physical framebuffer pixels. A Law must compare them through a shared coordinate domain, not assume scale one. Interaction's normalized `pointerU`/`pointerV` projections derive from sensed window extent, announce changes and register read-only; authored fields bind `u`/`v` in the viewport. Keep control regions and tool meaning in Laws. Test foreign-panel capture, held-pointer entry and resize as well as colour readback. Newly adopted Laws require an application tick before inspecting their initialized state. [Authored atelier evidence](audits/LAW_LINE_PIXEL_ART_EDITOR_2026-10-07.md).
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18`; Zach's editor direction; native final execution `2026-10-08T07:19:33Z`.*

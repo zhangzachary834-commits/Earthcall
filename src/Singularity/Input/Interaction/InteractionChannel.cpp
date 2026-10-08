@@ -285,8 +285,16 @@ void InteractionChannel::observe(const Sense& sense,
     const glm::vec3 hitPoint = hit ? surface.point : glm::vec3(0.0f);
 
     // --- Hover edges -----------------------------------------------------------
+    const float previousU = propPointerU(), previousV = propPointerV();
+    const int previousWidth = windowWidth, previousHeight = windowHeight;
     pointerX = sense.pointerX;
     pointerY = sense.pointerY;
+    windowWidth = std::max(1, sense.windowWidth);
+    windowHeight = std::max(1, sense.windowHeight);
+    if (windowWidth != previousWidth) Singular::notifyPropertyChanged(this,"windowWidth");
+    if (windowHeight != previousHeight) Singular::notifyPropertyChanged(this,"windowHeight");
+    if (propPointerU() != previousU) Singular::notifyPropertyChanged(this,"pointerU");
+    if (propPointerV() != previousV) Singular::notifyPropertyChanged(this,"pointerV");
     hoveredId = hit ? hit->getIdentifier() : std::string();
     hoveredFace = hit ? surface.face : -1;
     hoveredU = hit ? bestUV.x : 0.0f;
@@ -595,6 +603,7 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
     glfwGetCursorPos(window, &cx, &cy);
     sense.pointerX = static_cast<float>(cx);
     sense.pointerY = static_cast<float>(cy);
+    glfwGetWindowSize(window, &sense.windowWidth, &sense.windowHeight);
 
     const bool windowFocused = (glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0);
     if (!windowFocused) {
@@ -793,6 +802,14 @@ void InteractionChannel::buildProperties() {
 
     flt("pointerX", &InteractionChannel::pointerX);
     flt("pointerY", &InteractionChannel::pointerY);
+    registerProperty(std::make_unique<ComputedProperty<InteractionChannel, int>>(
+        "windowWidth", this, &InteractionChannel::propWindowWidth, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<InteractionChannel, int>>(
+        "windowHeight", this, &InteractionChannel::propWindowHeight, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<InteractionChannel, float>>(
+        "pointerU", this, &InteractionChannel::propPointerU, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<InteractionChannel, float>>(
+        "pointerV", this, &InteractionChannel::propPointerV, nullptr));
     vector3("pointerWorld", &InteractionChannel::pointerWorld);
     // Scalar projections make the sensed point available to scalar OntoMath
     // without copying it into a second mutable channel state. Read-only is

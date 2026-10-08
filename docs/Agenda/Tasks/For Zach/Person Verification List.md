@@ -1,5 +1,18 @@
 # Person Verification List
 
+## One-paste Law Line pixel-art editor
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18`; Zach requested a whole 2D art editor through Law sentences.*
+
+- [ ] Rebuild/restart WebGPU, unlock, `enter LawLine`, close pointer-capturing panels, stop earlier conflicting display/click programs and release the cursor with Escape; paste the entire [editor line](../../../../examples/law_line_pixel_art_editor.txt) once, press Enter, and wait for 276 Laws to be acknowledged.
+- [ ] Choose left swatches and draw on the 16×16 grid; confirm ink selection, eraser and held-pointer cell entry feel correct, including fast movement between sensed frames.
+- [ ] Test the right-hand undo/redo arrows, red clear cross and undo-after-clear; confirm the one-step retained-value semantics match your expectation.
+- [ ] Click the teal down-arrow and inspect `@screen-recorder.lastSnapshotPath`; the PNG should show the completed viewport/editor chrome and correct colours.
+- [ ] Resize on Retina and another display if available; pointer addresses should match the displayed cells and tiles after scale/extent changes.
+- [ ] Click the grey close cross, submit the reopen line in the [task guide](../Specific%20Tasks/Rendering%20and%20OntoMath/Law_Line_Pixel_Art_Editor/Law_Line_Pixel_Art_Editor.md), and confirm artwork is retained.
+- [ ] Save the Laws and use the existing Person-state persistence workflow, restart, and confirm authored `atelier.*` artwork survives; Save Zone alone is not proof of Person-state retention.
+
+
 ## Law Line named Screen regions
 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-07 19:00 PDT — Zach requested the direct Screen region/property layer through Metalaws.*

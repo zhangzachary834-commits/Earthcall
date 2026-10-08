@@ -5,6 +5,7 @@
 #include "Person/Person.hpp"
 #include "Singularity/Input/Keyboard/KeyboardHandler.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
+#include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "Singularity/Terminal/TerminalChannel.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
@@ -26,7 +27,8 @@ static void require(bool value, const char* message) {
 }
 int main(int argc, char** argv) {
     std::cout.setf(std::ios::unitbuf);
-    require(argc == 2, "source repository argument supplied");
+    require(argc == 2 || argc == 3, "source repository argument supplied");
+    const bool artEditor=argc==3 && std::string(argv[2])=="--art-editor";
     const std::filesystem::path root = argv[1], saves = root / "saves";
     const auto stage = std::filesystem::current_path() / "saves";
     std::filesystem::create_directories(stage / "zones/LawLine");
@@ -273,6 +275,59 @@ int main(int argc, char** argv) {
             !screen->hasDynamicProperty("output.time"),"repeated authored clear withdraws output without recreating absent slots");
     screen->removeDynamicProperty("sample.request");
     evidence["repeatedClear"]=true;
+    if (artEditor) {
+        auto* interaction=Singularity::Input::InteractionChannel::find(laws);
+        require(interaction,"native Engine has interaction sense");
+        engine.ensureCursorUnlocked();
+        speak(file("law_line_pixel_art_editor.txt"));
+        const auto point=[&](double u,double v,bool held) {
+            Singularity::Input::InteractionChannel::Sense sense;
+            sense.windowWidth=1280;sense.windowHeight=720;
+            sense.pointerX=u*1280;sense.pointerY=v*720;sense.left=held;
+            interaction->pointerLocked=false;
+            interaction->observePending(sense,{});
+            for(int i=0;i<3;++i)laws.tick();
+        };
+        const auto click=[&](double u,double v) {point(u,v,false);point(u,v,true);point(u,v,false);};
+        auto reference=[](glm::vec3 first,glm::vec3 second) {
+            return [first,second](int x,int y,int w,int h)->std::optional<glm::vec3> {
+                const double u=(x+.5)/w,v=(y+.5)/h;
+                if(u<.18 || u>=.8 || v<.12 || v>=.88)return std::nullopt;
+                const int col=std::min(15,int((u-.18)/(.62/16))),row=std::min(15,int((v-.12)/(.76/16)));
+                const double x0=.18+col*.62/16,y0=.12+row*.76/16;
+                // Avoid exact GPU float32 edge parity; test cell interiors and
+                // gaps independently with a small uncertainty band excluded.
+                const double dx=std::min(u-x0,x0+.62/16-u),dy=std::min(v-y0,y0+.76/16-v);
+                if(std::abs(dx-.0007)<.000002 || std::abs(dy-.0007)<.000002)return std::nullopt;
+                if(dx<.0007 || dy<.0007)return glm::vec3(.055,.068,.11);
+                if(row==0 && col==0)return first;
+                if(row==0 && col==1)return second;
+                return glm::vec3(1);
+            };
+        };
+        capture("art-blank",reference(glm::vec3(1),glm::vec3(1)));
+        click(.199375,.14375);
+        capture("art-gold",reference(glm::vec3(1,.84,0),glm::vec3(1)));
+        click(.89,.20);
+        capture("art-undo",reference(glm::vec3(1),glm::vec3(1)));
+        click(.89,.33);
+        capture("art-redo",reference(glm::vec3(1,.84,0),glm::vec3(1)));
+        click(.08,.12+6*.059+.0215);click(.238125,.14375);
+        capture("art-cyan",reference(glm::vec3(1,.84,0),glm::vec3(0,.8,.85)));
+        click(.89,.72);click(.238125,.14375);
+        capture("art-erase",reference(glm::vec3(1,.84,0),glm::vec3(1)));
+        click(.89,.46);
+        capture("art-clear",reference(glm::vec3(1),glm::vec3(1)));
+        PropertyValue beforeExport,afterExport;
+        lawGetValue(*recorder,PropertyPath::parse("lastSnapshotPath"),beforeExport);
+        click(.89,.59);tick(.016f);
+        lawGetValue(*recorder,PropertyPath::parse("lastSnapshotPath"),afterExport);
+        require(afterExport!=beforeExport && std::filesystem::exists(std::get<std::string>(afterExport)),"authored export tile creates a real native PNG");
+        click(.89,.85);tick(.016f);
+        lawGetValue(*screen,PropertyPath::parse("output.drawn"),clearedDrawn);
+        require(clearedDrawn==PropertyValue(false),"authored close tile withdraws direct output");
+        evidence["artEditor"]={{"authoredLaws",276},{"canvas","16x16"},{"input","production observePending sense seam; no physical OS click claim"},{"export",true},{"close",true}};
+    }
     evidence["timeAdvanced"]=after-before;
     std::ofstream("result.json")<<evidence.dump(2)<<'\n';
     engine.shutdown();

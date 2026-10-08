@@ -1185,6 +1185,60 @@ int main() {
               "a cleared authored field can be granted again through its surviving accessor");
     }
 
+    // Zach: a whole art editor authored by one paste, through the saved
+    // sentence/compiler Metalaws. Its state is a Person predicate, not a class.
+    {
+        auto* screen=Singularity::Screen::ScreenChannel::find(harness.lawManager);
+        std::ifstream in(saves.parent_path() / "examples/law_line_pixel_art_editor.txt");
+        std::string program;std::getline(in,program);
+        const auto before=harness.lawManager.getAll().size();
+        auto syntax=Singularity::Terminal::LawSentence::parse(program.substr(0,program.find(';'))+"?",terminal->vocabulary(harness.lawManager));
+        if(!syntax.ok)std::cout << "EDITOR SYNTAX " << syntax.errorOffset << " " << syntax.error << " NEAR " << program.substr(syntax.errorOffset>80?syntax.errorOffset-80:0,160) << '\n';
+        terminal->inject(program);frame();harness.lawManager.tick();
+        check(harness.lawManager.getAll().size()==before+276,"one editor line registers its 276 authored Laws: "+printed.back());
+        PropertyValue state;
+        check(lawGetValue(harness.player,PropertyPath::parse("atelier.installed"),state) && state==PropertyValue(true),"editor initialization grants Person-owned state");
+        const auto colour=[&](int x,int y) {
+            PropertyValue value;
+            if(!lawGetValue(harness.player,PropertyPath::parse("atelier.canvas"),value) ||
+               !std::holds_alternative<std::shared_ptr<OntoMath::VectorField>>(value))return glm::vec3(-1);
+            const auto& form=std::get<std::shared_ptr<OntoMath::VectorField>>(value)->astDefinition;
+            auto sample=form.evaluate({{"u",.18+.62*(x+.5)/16},{"v",.12+.76*(y+.5)/16}});
+            return sample && std::holds_alternative<glm::vec3>(*sample)?std::get<glm::vec3>(*sample):glm::vec3(-1);
+        };
+        const auto point=[&](double u,double v,bool held,bool captured=false) {
+            Singularity::Input::InteractionChannel::Sense sense;
+            sense.windowWidth=1000;sense.windowHeight=500;
+            sense.pointerX=u*1000;sense.pointerY=v*500;sense.left=held;sense.uiCaptured=captured;
+            harness.interaction->pointerLocked=false;
+            harness.interaction->observePending(sense,{});
+            for(int i=0;i<3;++i)harness.lawManager.tick();
+        };
+        const auto click=[&](double u,double v) {point(u,v,false);point(u,v,true);point(u,v,false);};
+        check(colour(0,0)==glm::vec3(1),"initial canvas is white");
+        click(.199375,.14375);
+        check(glm::length(colour(0,0)-glm::vec3(1,.84,0))<1e-6f && colour(1,0)==glm::vec3(1),"pencil writes only the addressed pixel, through actual input sense");
+        click(.89,.20);check(colour(0,0)==glm::vec3(1),"authored undo restores immutable previous field");
+        click(.89,.33);check(glm::length(colour(0,0)-glm::vec3(1,.84,0))<1e-6f,"authored redo restores the painted field");
+        click(.08,.12+6*.059+.0215);click(.238125,.14375);
+        check(glm::length(colour(1,0)-glm::vec3(0,.8,.85))<1e-6f,"swatch selection reaches the next pixel");
+        click(.89,.72);click(.238125,.14375);
+        check(colour(1,0)==glm::vec3(1),"eraser chooses the authored white ink");
+        click(.08,.12+2*.059+.0215);
+        point(.277,.14375,true,true);point(.277,.14375,false);
+        check(colour(2,0)==glm::vec3(1),"foreign UI capture veto prevents paint");
+        point(.277,.14375,true);point(.315,.14375,true);point(.315,.14375,false);
+        check(glm::length(colour(2,0)-glm::vec3(1,.25,.35))<1e-6f && glm::length(colour(3,0)-glm::vec3(1,.25,.35))<1e-6f,"held pencil paints newly entered cells");
+        click(.89,.46);check(colour(0,0)==glm::vec3(1) && colour(3,0)==glm::vec3(1),"clear restores the blank artwork");
+        click(.89,.20);check(glm::length(colour(3,0)-glm::vec3(1,.25,.35))<1e-6f,"clear itself is undoable");
+        PropertyValue canvas;lawGetValue(harness.player,PropertyPath::parse("atelier.canvas"),canvas);
+        check(propertyValueToJson(propertyValueFromJson(propertyValueToJson(canvas)))==propertyValueToJson(canvas),"edited canvas preserves typed mathematics through storage codec");
+        click(.89,.85);
+        check(lawGetValue(harness.player,PropertyPath::parse("atelier.enabled"),state) && state==PropertyValue(false) &&
+              !screen->hasDynamicProperty("output.color"),"close stops display without deleting artwork or reinstalling");
+        check(glm::length(colour(3,0)-glm::vec3(1,.25,.35))<1e-6f,"closed editor retains authored artwork");
+    }
+
     check(inactiveWorld->getOwnedObjects().size() == worldObjectsBefore,
           "inactive World receives no births from Laws running in the visible LawLine Zone");
     std::cout << "law_line_zone_test: " << (checks - failures) << "/" << checks << " checks passed\n";
