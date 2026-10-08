@@ -1,4 +1,5 @@
 #include "ActionModel.hpp"
+#include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
 
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
@@ -53,6 +54,7 @@ const char* ActionNode::reasonName(PropertyPath::PathResult reason) {
         case PropertyPath::PathResult::ReadOnly: return "Read Only";
         case PropertyPath::PathResult::BadComponent: return "Bad Component";
         case PropertyPath::PathResult::Unchanged: return "Unchanged";
+        case PropertyPath::PathResult::Unsupported: return "Unsupported storage access";
     }
     return "Unknown";
 }
@@ -130,6 +132,9 @@ const char* ActionNode::kindName(Kind k) {
         case Kind::AddRelation: return "AddRelation";
         case Kind::WritePixel: return "WritePixel";
         case Kind::ElevatePixels: return "ElevatePixels";
+        case Kind::FileRead: return "FileRead";
+        case Kind::FileWrite: return "FileWrite";
+        case Kind::CodecTransform: return "CodecTransform";
     }
     return "Unknown";
 }
@@ -167,7 +172,11 @@ void applySpawnOverrides(Object& newborn, Singular* source,
             } else if (k == static_cast<int>(Object::ShapeKind::Field)) {
                 PropertyValue exprVal;
                 std::string expr;
-                if (lawGetValue(*source, PropertyPath::parse("activeImplicitExpr"), exprVal) &&
+                PropertyPath exprPath = PropertyPath::parse("activeImplicitExpr");
+                if (!shapeKindPath.segments.empty() && shapeKindPath.segments[0].find("@") == 0) {
+                    exprPath = PropertyPath::parse(shapeKindPath.segments[0] + ".activeImplicitExpr");
+                }
+                if (lawGetValue(*source, exprPath, exprVal) &&
                     std::holds_alternative<std::string>(exprVal) && !std::get<std::string>(exprVal).empty()) {
                     expr = std::get<std::string>(exprVal);
                 }
@@ -231,7 +240,22 @@ Singular* resolveBeingToken(const std::string& token, Singular& subject) {
         return Universe::instance().hasApplicationEvent()
                    ? Universe::instance().applicationEventObject() : nullptr;
     }
-    const std::string id = (token[0] == '@') ? token.substr(1) : token;
+
+    std::string resolvedId = token;
+    if (token.length() > 2 && token[0] == '@' && token[1] == '@') {
+        PropertyValue val;
+        if (lawGetValue(subject, PropertyPath::parse(token.substr(1)), val)) {
+            if (auto s = std::get_if<std::string>(&val)) {
+                resolvedId = *s;
+            } else {
+                return nullptr;
+            }
+        } else {
+            return nullptr;
+        }
+    }
+
+    const std::string id = (resolvedId[0] == '@') ? resolvedId.substr(1) : resolvedId;
     for (Singular* being : Universe::instance().beings()) {
         if (being && being->getIdentifier() == id) return being;
     }
@@ -244,11 +268,13 @@ Singular* resolveBeingToken(const std::string& token, Singular& subject) {
 // first Zone the provider listed, which is the active one at boot.
 Zone* resolveZone(Singular& target) {
     if (auto* asZone = dynamic_cast<Zone*>(&target)) return asZone;
-    for (Singular* being : Universe::instance().beings()) {
-        if (being && being->getIdentifier() == "World") {
-            if (auto* z = dynamic_cast<Zone*>(being)) return z;
-        }
-    }
+    // EngineInit's Universe provider puts the active/rendered Zone first and
+    // then exposes inactive Zones for named reach and governance. A legacy
+    // spelling such as "World" cannot override that destination: doing so
+    // creates real, asset-visible Objects in a Zone the viewport never draws.
+    // Explicit Zone subjects still select their own destination above. Shared
+    // by Spawn, Create (including prototype birth), and AddRelation; guarded by
+    // law_creation_test, action_spawn_test, and the booted LawLine regression.
     for (Singular* being : Universe::instance().beings()) {
         if (auto* z = dynamic_cast<Zone*>(being)) return z;
     }
@@ -342,6 +368,13 @@ nlohmann::json ActionNode::toJson() const {
             j["pixelFacePath"] = pixelFacePath.toString();
             j["selector"] = mapFunction.toJson();
             break;
+        case Kind::FileRead:
+        case Kind::FileWrite:
+        case Kind::CodecTransform:
+            if (!path.empty()) j["path"] = path.toString();
+            if (!input.empty()) j["input"] = input.toString();
+            if (!propertyName.empty()) j["propertyName"] = propertyName;
+            break;
         case Kind::AuthorZone:
             if (!createType.empty()) j["createType"] = createType;
             if (!propertyName.empty()) j["propertyName"] = propertyName;
@@ -366,6 +399,11 @@ nlohmann::json ActionNode::toJson() const {
             break;
         case Kind::Create: {
             j["shapeKind"] = createShapeKind;
+            if (!path.empty()) j["path"] = path.toString();
+            if (!newbornId.empty()) j["newbornId"] = newbornId;
+            if (!newbornName.empty()) j["newbornName"] = newbornName;
+            if (!containerToken.empty()) j["containerToken"] = containerToken;
+            if (!elementToken.empty()) j["elementToken"] = elementToken;
             if (!createType.empty()) j["createType"] = createType;
             if (!spawnParentPath.empty()) j["spawnParentPath"] = spawnParentPath.toString();
             if (!spawnPlacementPath.empty()) j["spawnPlacementPath"] = spawnPlacementPath.toString();
@@ -422,6 +460,8 @@ ActionNode ActionNode::fromJson(const nlohmann::json& j) {
     n.publishObject = j.value("publishObject", std::string());
     n.createShapeKind = j.value("shapeKind", 0);
     n.createType = j.value("createType", std::string());
+    n.newbornId = j.value("newbornId", std::string());
+    n.newbornName = j.value("newbornName", std::string());
     n.propertyName = j.value("propertyName", std::string());
     if (j.contains("sourceToken")) n.containerToken = j["sourceToken"].get<std::string>();
     else n.containerToken = j.value("containerToken", std::string());
@@ -721,6 +761,48 @@ ECA::ActionExecutor ActionNode::compile() const {
                 emitEffect("PlayAudio", true);
             };
         }
+        case Kind::FileRead: {
+            const PropertyPath sourcePath = input;
+            const PropertyPath destPath = path;
+            return [sourcePath, destPath](const ECA::Event&, Singular& subject) {
+                PropertyValue pvFile;
+                if (lawGetValue(subject, sourcePath, pvFile)) {
+                    lawSetValue(subject, PropertyPath::parse("@file-channel.file.path"), pvFile);
+                    lawSetValue(subject, PropertyPath::parse("@file-channel.file.read"), PropertyValue(true));
+                    PropertyValue content;
+                    if (lawGetValue(subject, PropertyPath::parse("@file-channel.file.content"), content)) {
+                        lawSetValue(subject, destPath, content);
+                    }
+                }
+            };
+        }
+        case Kind::FileWrite: {
+            const PropertyPath targetPathPath = path;
+            const PropertyPath contentPath = input;
+            return [targetPathPath, contentPath](const ECA::Event&, Singular& subject) {
+                PropertyValue pvFile, pvContent;
+                if (lawGetValue(subject, targetPathPath, pvFile) && lawGetValue(subject, contentPath, pvContent)) {
+                    lawSetValue(subject, PropertyPath::parse("@file-channel.file.path"), pvFile);
+                    lawSetValue(subject, PropertyPath::parse("@file-channel.file.content"), pvContent);
+                    lawSetValue(subject, PropertyPath::parse("@file-channel.file.write"), PropertyValue(true));
+                }
+            };
+        }
+        case Kind::CodecTransform: {
+            const std::string op = propertyName;
+            const PropertyPath sourcePath = input;
+            const PropertyPath destPath = path;
+            return [op, sourcePath, destPath](const ECA::Event&, Singular& subject) {
+                PropertyValue cv;
+                if (lawGetValue(subject, sourcePath, cv)) {
+                    lawSetValue(subject, PropertyPath::parse("@codec.codec.input"), cv);
+                    PropertyValue result;
+                    if (lawGetValue(subject, PropertyPath::parse("@codec.codec." + op), result)) {
+                        lawSetValue(subject, destPath, result);
+                    }
+                }
+            };
+        }
         case Kind::WritePixel: {
             const PropertyPath facePath = pixelFacePath;
             const PropertyPath uPath = pixelUPath;
@@ -849,7 +931,18 @@ ECA::ActionExecutor ActionNode::compile() const {
             const std::string relType = propertyName;
 
             return [srcToken, dstToken, relType](const ECA::Event& event, Singular& subject) {
-                if (relType.empty()) {
+                auto resolveDynamicString = [&](const std::string& input) -> std::string {
+                    if (input.length() > 2 && input[0] == '@' && input[1] == '@') {
+                        PropertyValue val;
+                        if (lawGetValue(subject, PropertyPath::parse(input.substr(1)), val)) {
+                            if (auto s = std::get_if<std::string>(&val)) return *s;
+                        }
+                    }
+                    return input;
+                };
+                const std::string resolvedRelType = resolveDynamicString(relType);
+
+                if (resolvedRelType.empty()) {
                     emitEffect("AddRelation", false, "no relation type specified");
                     return;
                 }
@@ -1029,6 +1122,67 @@ ECA::ActionExecutor ActionNode::compile() const {
         // being nobody captured for it.
         // ------------------------------------------------------------------
         case Kind::Create: {
+            if (!path.empty()) {
+                const auto source = path;
+                const auto id = newbornId;
+                const auto name = newbornName;
+                const auto endpointA = containerToken;
+                const auto endpointB = elementToken;
+                const auto parent = spawnParentPath;
+                const auto placement = spawnPlacementPath;
+                const bool hasLegacyOverrides = !spawnShapeKindPath.empty() || !spawnColorPath.empty() ||
+                                                !createType.empty() || createShapeKind != 0;
+                std::vector<ECA::ActionExecutor> runs;
+                for (const auto& child : children) runs.push_back(child.compile());
+                return [source, id, name, endpointA, endpointB, parent, placement, hasLegacyOverrides, runs](const ECA::Event& event, Singular& subject) {
+                    auto resolveDynamicString = [&](const std::string& input) -> std::string {
+                        if (input.length() > 2 && input[0] == '@' && input[1] == '@') {
+                            PropertyValue val;
+                            if (lawGetValue(subject, PropertyPath::parse(input.substr(1)), val)) {
+                                if (auto s = std::get_if<std::string>(&val)) return *s;
+                            }
+                        }
+                        return input;
+                    };
+                    std::string resolvedId = resolveDynamicString(id);
+                    std::string resolvedName = resolveDynamicString(name);
+                    std::string resolvedEndpointA = resolveDynamicString(endpointA);
+                    std::string resolvedEndpointB = resolveDynamicString(endpointB);
+
+                    std::size_t start = 0;
+                    Singular* prototype = resolveLawRoot(subject, source, start);
+                    if (prototype && start != source.segments.size()) {
+                        PropertyValue value;
+                        prototype = nullptr;
+                        if (lawGetValue(subject, source, value)) {
+                            if (auto p = std::get_if<Singular*>(&value)) prototype = *p;
+                            else if (auto p = std::get_if<Object*>(&value)) prototype = *p;
+                            else if (auto p = std::get_if<Relation*>(&value)) prototype = *p;
+                            else if (auto p = std::get_if<Formation*>(&value)) prototype = *p;
+                        }
+                    }
+                    if (!prototype) { emitEffect("Create", false, "prototype path has no unambiguous Singular referent: " + source.toString()); return; }
+                    if (!parent.empty() || !placement.empty() || hasLegacyOverrides) {
+                        emitEffect("Create", false, "prototype birth uses authored child actions for placement and composition"); return;
+                    }
+                    Zone* destination = resolveZone(subject);
+                    SingularSetToSetCreation::Request request{*prototype, {prototype, &subject}, nullptr, nullptr, destination, resolvedId, resolvedName, {}};
+                    const auto endpoint = [&](const std::string& token) -> Singular* {
+                        if (token.empty()) return nullptr;
+                        auto qualified = PropertyPath::parse(token.front() == '@' ? token : "@" + token);
+                        std::size_t consumed = 0;
+                        auto* being = resolveLawRoot(subject, qualified, consumed);
+                        return consumed == qualified.segments.size() ? being : nullptr;
+                    };
+                    request.endpointA = endpoint(resolvedEndpointA);
+                    request.endpointB = endpoint(resolvedEndpointB);
+                    auto result = SingularSetToSetCreation::derive(request);
+                    if (!result) { emitEffect("Create", false, result.refusal); return; }
+                    for (const auto& run : runs) if (run) run(event, *result.newborn);
+                    emitEffect("Create", true, result.newborn->getIdentifier());
+                    Core::EventBus::instance().publish(ECA::Event{"singular-created", result.newborn, &subject, std::time(nullptr)});
+                };
+            }
             const int shapeKind = createShapeKind;
             const std::string type = createType;
             const PropertyPath parentPath = spawnParentPath;
@@ -1139,7 +1293,10 @@ ECA::ActionExecutor ActionNode::compile() const {
                     emitEffect("AddProperty", false, "unproven owner: " + owner.toString());
                     return;
                 }
-                if (being->findProperty(name)) {   // never shadow a first mover
+                // Never shadow a registered engine path. A lazy authored
+                // accessor is still authored, including after its value was
+                // removed; re-granting it retains the projection/write gates.
+                if (being->findProperty(name) && !being->hasAuthoredPropertyAccessor(name)) {
                     emitEffect("AddProperty", false, "would shadow first-mover '" + name + "'");
                     return;
                 }
@@ -1312,6 +1469,7 @@ std::string ActionNode::describe() const {
         case Kind::Flow: return "d(" + path.toString() + ")/dt = " + mapFunction.print();
         case Kind::Publish: return "publish '" + eventType + "'";
         case Kind::Create:
+            if (!path.empty()) return "create from " + path.toString();
             return "create object" + (createType.empty() ? std::string()
                                                          : " '" + createType + "'");
         case Kind::AddProperty: return "grant property '" + propertyName + "'";
@@ -1330,6 +1488,12 @@ std::string ActionNode::describe() const {
             return "synthesize(" + std::to_string(children.size()) + " composed actions)";
         case Kind::PlayAudio:
             return kindName(kind);
+        case Kind::FileRead:
+            return "read file at " + input.toString() + " into " + path.toString();
+        case Kind::FileWrite:
+            return "write " + input.toString() + " to file at " + path.toString();
+        case Kind::CodecTransform:
+            return "transform " + input.toString() + " via " + propertyName + " into " + path.toString();
         case Kind::WritePixel:
             return "write pixel from " + pixelColorPath.toString();
         case Kind::ElevatePixels:
@@ -1462,6 +1626,12 @@ void ActionNode::collectPaths(std::vector<PropertyPath>& out) const {
             add(spawnShapeKindPath);
             add(spawnColorPath);
             return;
+        case Kind::FileRead:
+        case Kind::FileWrite:
+        case Kind::CodecTransform:
+            add(input);
+            add(path);
+            break;
         case Kind::WritePixel:
             add(pixelFacePath);
             add(pixelUPath);
@@ -1822,6 +1992,15 @@ ActionNode ActionNode::create(int shapeKind, const std::string& createType,
     return n;
 }
 
+ActionNode ActionNode::createFrom(const std::string& prototypePath, const std::string& id,
+                                  std::vector<ActionNode> children) {
+    ActionNode node = create();
+    node.path = PropertyPath::parse(prototypePath);
+    node.newbornId = id;
+    node.children = std::move(children);
+    return node;
+}
+
 ActionNode ActionNode::addProperty(const std::string& ownerPath,
                                    const std::string& propertyName,
                                    PropertyValue initial) {
@@ -1873,6 +2052,29 @@ ActionNode ActionNode::playAudio(const std::string& freqPath, const std::string&
     n.path = PropertyPath::parse(freqPath);
     n.input = PropertyPath::parse(ampPath);
     n.propertyName = waveType;
+    return n;
+}
+
+ActionNode ActionNode::fileRead(const std::string& inputProp, const std::string& destProp) {
+    ActionNode n;
+    n.kind = Kind::FileRead;
+    n.input = PropertyPath::parse(inputProp);
+    n.path = PropertyPath::parse(destProp);
+    return n;
+}
+ActionNode ActionNode::fileWrite(const std::string& pathProp, const std::string& contentProp) {
+    ActionNode n;
+    n.kind = Kind::FileWrite;
+    n.path = PropertyPath::parse(pathProp);
+    n.input = PropertyPath::parse(contentProp);
+    return n;
+}
+ActionNode ActionNode::codecTransform(const std::string& codecOperation, const std::string& inputProp, const std::string& destProp) {
+    ActionNode n;
+    n.kind = Kind::CodecTransform;
+    n.propertyName = codecOperation;
+    n.input = PropertyPath::parse(inputProp);
+    n.path = PropertyPath::parse(destProp);
     return n;
 }
 
