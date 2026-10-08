@@ -260,49 +260,6 @@ for _c in CONDITION_COMPILERS:
     _c["injected_by"] = ASSIGNMENT_INJECTED_BY
 
 
-# Zach: direct WebGPU 2D authoring through Metalaws, not texture painting.
-# Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-06.
-SCREEN_INJECTED_BY = "Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-06"
-
-
-def value_arg(name, default=None, optional=False):
-    out = {"$slot": "/arguments/" + name}
-    if optional:
-        out["$default"] = default
-    return out
-
-
-ZERO_MATH = {"op": 0, "scalarForm": {"terms": [{"c": 0, "factors": {}}]}}
-VALUE_CONSTRUCTORS = [
-    ("Piece", '<value: $(‹expression›), where: $(‹signed selector›)>',
-     {"literal": {"mathNode": value_arg("value"), "where": value_arg("where", ZERO_MATH, True)}}),
-    ("VectorField", '<pieces: [Piece <value: $(‹vector expression›), where: $(‹selector›)>]>',
-     {"value": {"t": "vector_field", "v": {"mode": "AST", "astDefinition": {"pieces": value_arg("pieces")}}}}),
-    ("ScalarField", '<pieces: [Piece <value: $(‹scalar expression›), where: $(‹selector›)>]>',
-     {"value": {"t": "scalar_field", "v": {"mode": "AST", "astDefinition": {"pieces": value_arg("pieces")}}}}),
-]
-# All numbers below are EXISTING serialized OntoMath ops, not new kinds.
-for _name, _op, _params in [
-    ("Dot", 7, ["a", "b"]), ("Cross", 8, ["a", "b"]),
-    ("Hadamard", 9, ["a", "b"]), ("Normalize", 10, ["value"]),
-    ("Length", 11, ["value"]), ("Project", 14, ["a", "b"]),
-    ("Distance", 15, ["a", "b"]), ("Union", 20, ["a", "b"]),
-    ("Intersection", 21, ["a", "b"]), ("Difference", 22, ["a", "b"]),
-    ("Pow", 24, ["a", "b"]), ("Abs", 25, ["value"]),
-    ("Clamp", 26, ["value", "low", "high"]), ("Sqrt", 27, ["value"]),
-    ("Tan", 28, ["value"]),
-]:
-    VALUE_CONSTRUCTORS.append((_name, '<' + ', '.join(p + ': $(‹expression›)' for p in _params) + '>',
-                               {"math": {"op": _op, "children": [value_arg(p) for p in _params]}}))
-VALUE_CONSTRUCTORS.append(("Component", '<value: $(‹vector›), index: "x">',
-                           {"math": {"op": 3, "arg": value_arg("index"), "children": [value_arg("value")]}}))
-for _name, _kind in [("Sin", 0), ("Cos", 1), ("Exp", 2), ("Ln", 3)]:
-    VALUE_CONSTRUCTORS.append((_name, '<variable: "‹coordinate›", scale: 1, shift: 0>',
-        {"math": {"op": 0, "scalarForm": {"terms": [{"c": 1, "factors": {}, "trans": [
-            {"kind": _kind, "var": value_arg("variable"), "scale": value_arg("scale", 1, True),
-             "shift": value_arg("shift", 0, True)}]}]}}}))
-
-
 # Named argument schemas are authored compiler templates, never parser switches.
 def arg(name, default=None, optional=False):
     ref = {"$slot": "/arguments/" + name}
@@ -432,39 +389,6 @@ def build():
         laws.append(doc)
         for symbol in symbols:
             lexeme_for(symbol, doc["identifier"])
-    # Disabled value Laws denote constructors; Metalaws alone supply lowering.
-    for name, signature, template in VALUE_CONSTRUCTORS:
-        identifier = "law-line-value-constructor-" + name.lower()
-        doc = law(identifier, "means: " + name + " with authored arguments", enabled=False,
-                  action={"kind": 0, "path": "", "operand": 0})
-        doc["law"]["authoredProperties"] = {"sentence.arguments": {"t": "string", "v": signature}}
-        doc["injected_by"] = SCREEN_INJECTED_BY
-        laws.append(doc); lexeme_for(name, identifier)
-        rule = compiler("law-line-compile-value-" + name.lower(),
-                        {"slot": "value", "wordLaw": identifier}, template, opcode="value")
-        rule["injected_by"] = SCREEN_INJECTED_BY
-        laws.append(rule)
-    for name in ["x", "y", "z", "p", "u", "v", "width", "height", "t"]:
-        identifier = "law-line-coordinate-" + name
-        node = {"op": 1, "var": name} if name == "p" else {
-            "op": 0, "scalarForm": {"terms": [{"c": 1, "factors": {name: 1}}]}}
-        doc = law(identifier, "means: mathematical coordinate " + name, enabled=False,
-                  action={"kind": 0, "path": "", "operand": 0})
-        doc["law"]["authoredProperties"] = {"sentence.math": {"t": "string", "v": json.dumps(node)}}
-        doc["injected_by"] = SCREEN_INJECTED_BY
-        laws.append(doc); lexeme_for(name, identifier)
-    # Existing "y" is a yes alias. Keep its two authored meanings visible;
-    # context is resolved by Laws, never a parser spelling exception.
-    for context_slot, meaning in [("math", "lexeme.law-line.y.coordinate-y->law-line-coordinate-y"),
-                          ("value", "lexeme.law-line.y.value-true->law-line-value-true")]:
-        doc = law("law-line-resolve-y-" + context_slot, "Law Line · y in " + context_slot,
-                  enabled=True, activation=1, targets=["terminal-channel"],
-                  condition={"kind": 3, "children": [
-                      {"kind": 0, "path": "ambiguity.symbol", "op": 0, "operand": "y"},
-                      {"kind": 0, "path": "ambiguity.slot", "op": 0, "operand": context_slot}]},
-                  action={"kind": 0, "path": "ambiguity.resolved", "operand": meaning})
-        doc["injected_by"] = SCREEN_INJECTED_BY
-        laws.append(doc)
     laws.extend(CREATE_COMPILERS)
     laws.extend(ASSIGNMENT_COMPILERS)
     laws.extend(CONDITION_COMPILERS)
@@ -742,8 +666,6 @@ def main():
         print("authors: %s   original vocabulary injected_by: %s" % (AUTHOR, INJECTED_BY))
         print("Compiler additions injected_by: " + COMPILER_INJECTED_BY)
         print("Assignment and condition compilers injected_by: " + ASSIGNMENT_INJECTED_BY)
-        print("Direct field vocabulary injected_by: " + SCREEN_INJECTED_BY)
-        print("Recorded new-Law authors: " + ", ".join(present_authors or [AUTHOR]))
     return 0
 
 

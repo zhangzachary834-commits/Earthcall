@@ -1269,10 +1269,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                     emitEffect("AddProperty", false, "unproven owner: " + owner.toString());
                     return;
                 }
-                // Never shadow a registered engine path. A lazy authored
-                // accessor is still authored, including after its value was
-                // removed; re-granting it retains the projection/write gates.
-                if (being->findProperty(name) && !being->hasAuthoredPropertyAccessor(name)) {
+                if (being->findProperty(name)) {   // never shadow a first mover
                     emitEffect("AddProperty", false, "would shadow first-mover '" + name + "'");
                     return;
                 }

@@ -127,7 +127,7 @@ Full-suite and Person acceptance remain separate from this focused native witnes
 
 ## Remaining work
 
-- CLI field/selector construction is implemented below; interactive editing and Person acceptance remain open.
+- Convenient Person-facing field/selector editing through authored vocabulary and Laws.
 - Authored composition, placement relative to other manifestations, and multi-Person
   visibility/authority semantics before introducing additional direct output sources.
 - Law-addressable observation/elevation of direct output samples without confusing an
@@ -137,17 +137,3 @@ Full-suite and Person acceptance remain separate from this focused native witnes
   explicitly admitted, and further non-WebGPU backend support.
 
 Person checks: [Person Verification List](../../../For%20Zach/Person%20Verification%20List.md).
-
-## CLI field and selector authoring — 2026-10-06
-
-Zach requested the missing Metalaw-driven sentence layer and “super cool 2D wizardry.” Nested value Lexemes now use the existing compiler seam with `slot = value`. Compiler output is a single `value`, `literal`, or `math` envelope, with ordinary authored template substitution. `$(…)` is structural quotation of existing OntoMath mathematics; coordinate words carry authored `sentence.math` data. No Screen-specific parser branch, visual class, action kind, or region enum was added.
-
-`VectorField`, `ScalarField`, and `Piece`, fifteen general mathematical operations, Component, four transcendental-factor constructors, and nine coordinate Lexemes are seeded with their corresponding meanings. Parameterized value lowering lives in 23 enabled compiler Metalaws; constructor meanings and coordinate meanings are disabled value Laws. Two further resolver Metalaws preserve the existing `y`/yes shorthand while reading `y` as the vertical coordinate in quoted mathematics. Preview supplies structural placeholders without executing any compiler; missing/conflicting compilers, unused arguments, and statically wrong result types refuse. Quoted live property captures refuse; explicitly admitted coordinate names remain the channel's contract.
-
-The [CLI guide](../../../../../architecture/law/LAW_AUTHORING_CLI_GUIDE.md#5a-direct-2d-screen-forms--fields-written-in-the-cli) documents the surface. [Gold Pixel](../../../../../../examples/law_line_screen_pixel.txt) selects one physical pixel. [Luminous Lens](../../../../../../examples/law_line_screen_lens.txt) composes a blue disc, gradient, cyan/gold rings, diamond, and four stars with an explicitly authored time/Flow Law. [Clear Direct Screen](../../../../../../examples/law_line_screen_clear.txt) withdraws channel output. Stop Lens Time separately; saving initialization Laws preserves the intended restart behavior.
-
-The shared seed appends **32 Lexemes, 32 denotes Relations, and 57 Law refs** to `saves/zones/LawLine/zone.ecform`, creates only missing Law files under `saves/laws/`, and preserves existing root bytes. Zach's existing keyed identity is the recorded human author; Codex is the injector. Backup: `scratch/backups/law-line/LawLine-zone-before-law-line-patch-20261006-181244.ecform`. A second seed run leaves the native Zone bytes identical. This is an authorized vocabulary/Metalaw bootstrap; it does not install the Lens or overwrite Person-authored programs.
-
-Verification and native capture are recorded in [the audit](../../../../../audits/LAW_LINE_DIRECT_SCREEN_AUTHORING_2026-10-06.md). Remaining: actual Person unlock/typing, appearance, resize, stopping, and save/restart acceptance; multi-source composition/authority and other backends remain outside this rung.
-
-*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-06 18:22 PDT.*
