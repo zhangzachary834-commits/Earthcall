@@ -21,8 +21,9 @@
 // everything else in a law's text; this is what makes an OntoMath expression
 // legible against real beings.
 //
-// Reading is strict: if any bound path fails to resolve to a number, the
-// whole read fails — a law must never evaluate mathematics on missing values.
+// Reading is strict and preserves the PropertyValue alternative. Each math
+// operation decides which types it admits; an identity variable need not
+// widen an integer or copy the storage behind a shared container.
 using MathBindings = std::map<std::string, PropertyPath>;
 
 // ---------------------------------------------------------------------------
@@ -271,12 +272,7 @@ inline std::optional<std::map<std::string, PropertyValue>> readMathBindings(
             return std::nullopt;
         }
         
-        double x = 0.0;
-        if (propertyValueToNumber(value, x)) {
-            vars[entry.first] = PropertyValue(x);
-        } else {
-            vars[entry.first] = value;
-        }
+        vars[entry.first] = std::move(value);
     }
     return vars;
 }
