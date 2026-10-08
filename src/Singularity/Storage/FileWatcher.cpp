@@ -27,6 +27,7 @@ void FileWatcher::syncRegister(LawManager& laws) {
     if (laws.find("file-watcher")) return;
 
     auto watcher = std::make_shared<FileWatcher>();
+    watcher->rescanBaseline();
     laws.add(watcher);
 }
 
