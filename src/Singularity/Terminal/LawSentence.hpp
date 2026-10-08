@@ -71,7 +71,6 @@ struct Word {
     std::string description;   // what the menu says it means (a denoted Law's name)
     std::string detail;        // the longer line under the menu when this word is selected
     std::string arguments;     // optional authored sentence.arguments template
-    std::string expression; // authored sentence.math (serialized existing MathNode)
 
     // How an ambiguity names this candidate. A Lexeme that denotes several
     // Laws is several candidates, so the denoted Law is part of the name.
@@ -120,9 +119,6 @@ struct Compilation {
     // Set instead of `action` when the sensed slot is "condition" (arithmetic
     // comparisons compiled by authored Metalaws into existing condition kinds).
     std::optional<ConditionNode> condition;
-    // Generic value constructors return authored structural syntax. The reader
-    // admits literal / typed PropertyValue / MathNode envelopes, not domain verbs.
-    std::optional<nlohmann::json> value;
 };
 
 struct Vocabulary {
