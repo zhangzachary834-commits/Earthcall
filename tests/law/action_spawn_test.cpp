@@ -26,7 +26,7 @@ int main() {
         window = glfwCreateWindow(64, 64, "action_spawn_test", nullptr, nullptr);
         if (window) glfwMakeContextCurrent(window);
     }
-    
+
     // 1. Create a dummy concept
     auto concept = std::make_shared<ObjectConcept>("test-concept");
     ObjectConcept::MemberTemplate mt;
@@ -34,32 +34,44 @@ int main() {
     mt.relativeTransform = glm::mat4(1.0f);
     concept->members().push_back(mt);
     ConceptRegistry::instance().add(concept);
-    
+
     // 2. Create world and player
     Zone world("test-zone", "default");
+    Zone inactiveWorld("World", "default");
     Object player;
     player.setPosition(glm::vec3(2.5f, -1.25f, 7.0f));
-    
+    Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+        beings = {&world, &player, &inactiveWorld};
+    });
+
     // 3. Create a Spawn ActionNode
     ActionNode node;
     node.kind = ActionNode::Kind::Spawn;
     // The registry keys by IDENTIFIER ("concept-N"), not by the display
     // name passed to the constructor — Spawn resolves the same way.
     node.conceptId = concept->getIdentifier();
-    
+
     // Compile it
     auto executor = node.compile();
-    
+
     // Execute it
     ECA::Event event{"onMouseClicked", &player, nullptr, 0};
     executor(event, world);
-    
-    // Assert it worked
+
+    // Assert both the OntoMath-authored placement and canonical Zone routing.
     assert(world.getOwnedObjects().size() == 1);
     Object* born = world.getOwnedObjects().front().get();
     assert(born);
     assert(glm::length(born->getPosition() - player.getPosition()) < 1e-4f);
-    std::cout << "SUCCESS! Spawn preserved the subject-authored placement through OntoMath." << std::endl;
+
+    executor(event, player);
+    assert(world.getOwnedObjects().size() == 2);
+    assert(inactiveWorld.getOwnedObjects().empty());
+    executor(event, inactiveWorld);
+    assert(inactiveWorld.getOwnedObjects().size() == 1);
+    Universe::instance().setProvider(nullptr);
+
+    std::cout << "SUCCESS! Spawn preserves OntoMath placement and Zone destinations." << std::endl;
 
     if (window) glfwDestroyWindow(window);
     if (glfwReady) glfwTerminate();

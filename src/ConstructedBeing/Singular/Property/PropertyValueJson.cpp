@@ -69,9 +69,9 @@ nlohmann::json propertyValueToJson(const PropertyValue& v) {
             }
             return nlohmann::json{{"t", "dict"}, {"v", obj}};
         } else if constexpr (std::is_same_v<X, std::shared_ptr<OntoMath::ScalarField>>) {
-            return nlohmann::json{{"t", "scalar_field"}};
+            return nlohmann::json{{"t", "scalar_field"}, {"v", x ? x->toJson() : nlohmann::json(nullptr)}};
         } else if constexpr (std::is_same_v<X, std::shared_ptr<OntoMath::VectorField>>) {
-            return nlohmann::json{{"t", "vector_field"}};
+            return nlohmann::json{{"t", "vector_field"}, {"v", x ? x->toJson() : nlohmann::json(nullptr)}};
         } else {
             // Singular*/Object*/Relation*/Formation* — identity, not value.
             return refJson(static_cast<const Singular*>(x));
@@ -114,6 +114,22 @@ PropertyValue propertyValueFromJson(const nlohmann::json& j) {
     }
 
     const std::string t = j.value("t", "none");
+    // Old tag-only records contain no recoverable mathematical value. Retain
+    // their prior undefined result rather than inventing a zero/default field.
+    if (t == "scalar_field" || t == "vector_field") {
+        if (!j.contains("v")) return PropertyValue{};
+        const auto& payload = j["v"];
+        if (payload.is_null()) {
+            if (t == "scalar_field") return PropertyValue(std::shared_ptr<OntoMath::ScalarField>{});
+            return PropertyValue(std::shared_ptr<OntoMath::VectorField>{});
+        }
+        if (!payload.is_object() || !payload.contains("mode")) return PropertyValue{};
+        const std::string mode = payload.value("mode", "");
+        if (mode != "AST" && mode != "Procedural") return PropertyValue{};
+        if (mode == "AST" && !payload.contains("astDefinition")) return PropertyValue{};
+        if (t == "scalar_field") return PropertyValue(OntoMath::ScalarField::fromJson(payload));
+        return PropertyValue(OntoMath::VectorField::fromJson(payload));
+    }
     if (t == "int") return PropertyValue(j.value("v", 0));
     if (t == "float") return PropertyValue(j.value("v", 0.0f));
     if (t == "double") return PropertyValue(j.value("v", 0.0));

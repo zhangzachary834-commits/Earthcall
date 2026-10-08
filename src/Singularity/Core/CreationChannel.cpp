@@ -172,16 +172,17 @@ std::shared_ptr<Law> createShapeGenerator3DLaw(Singular& author) {
     auto law = std::make_shared<FirstMoverLaw>("Tool: Shape Generator 3D");
     law->setLawIdentifier("shape-generator-3d-law");   // NOT setObjectID -- see Law.hpp
     law->setActivation(Law::Activation::OnEvent);
-    law->ecaLoop().eventType = "onMouseClicked";
+    law->ecaLoop().eventType = "mouse-clicked";
     law->addAuthor(author);
 
-    law->setConditionModel(ConditionNode::compare(
-        "spawnLawArmed", ConditionNode::Op::Eq, PropertyValue(true)));
+        auto enabledCond = ConditionNode::compare("@creation-channel.enabled", ConditionNode::Op::Eq, PropertyValue(true));
+    auto modeCond = ConditionNode::compare("@creation-channel.active3DMode", ConditionNode::Op::Eq, PropertyValue(std::string("Create")));
+    law->setConditionModel(ConditionNode::all({enabledCond, modeCond}));
 
     ActionNode spawn = ActionNode::spawn("concept-shape-3d");
-    spawn.spawnPlacementPath = PropertyPath::parse("cursorSpawnTransform");
-    spawn.spawnColorPath     = PropertyPath::parse("activeColor");
-    spawn.spawnShapeKindPath = PropertyPath::parse("activeShapeKind");
+    spawn.spawnPlacementPath = PropertyPath::parse("@creation-channel.cursorSpawnTransform");
+    spawn.spawnColorPath     = PropertyPath::parse("@creation-channel.activeColor");
+    spawn.spawnShapeKindPath = PropertyPath::parse("@creation-channel.activeShapeKind");
     law->setActionModel(spawn);
 
     if (!ConceptRegistry::instance().find("concept-shape-3d")) {
@@ -250,7 +251,7 @@ void syncRegisterCreatorTools(LawManager& laws, Singular& author) {
     if (!laws.find("shape-generator-3d-law")) {
         auto spawn = createShapeGenerator3DLaw(author);
         laws.add(spawn);
-        laws.bindTrigger(spawn->getIdentifier(), "onMouseClicked");
+        laws.bindTrigger(spawn->getIdentifier(), "mouse-clicked");
     }
 
     for (const auto& seed : kCreatorTools) {
@@ -259,7 +260,7 @@ void syncRegisterCreatorTools(LawManager& laws, Singular& author) {
         law->setLawIdentifier(seed.identifier);
         law->addAuthor(author);
         law->setConditionModel(ConditionNode::compare(
-            "active3DMode", ConditionNode::Op::Eq,
+            "@creation-channel.active3DMode", ConditionNode::Op::Eq,
             PropertyValue(std::string(seed.active3DMode))));
         laws.add(law);
     }
@@ -284,7 +285,7 @@ void syncRegisterManualDistanceKeyLaws(LawManager& laws, Singular& author) {
         law->setConditionModel(ConditionNode::all({
             ConditionNode::compare("placementMode", ConditionNode::Op::Eq,
                                    PropertyValue(std::string("ManualDistance"))),
-            ConditionNode::compare("active3DMode", ConditionNode::Op::Eq,
+            ConditionNode::compare("@creation-channel.active3DMode", ConditionNode::Op::Eq,
                                    PropertyValue(std::string("Create"))),
             ConditionNode::compare("@interaction-channel.keyDown", ConditionNode::Op::Eq,
                                    PropertyValue(true)),

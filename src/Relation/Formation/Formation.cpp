@@ -258,6 +258,12 @@ bool Formation::mayAdmitRelation(const std::shared_ptr<Relation>& r) const {
     return !reachesDirected(r->bId(), r->aId(), r->type);
 }
 
+bool Formation::retainRelation(const std::shared_ptr<Relation>& r) {
+    if (!mayAdmitRelation(r) || !relationMgr.retain(r)) return false;
+    integrateRelationTopology(r);
+    return true;
+}
+
 bool Formation::addRelation(const std::shared_ptr<Relation>& r) {
     if (!r) return false;
     if (!r->hasEndpoints()) {
@@ -270,10 +276,10 @@ bool Formation::addRelation(const std::shared_ptr<Relation>& r) {
     if (!r->hasEndpoints()) {
         if (std::find(pendingRelations.begin(), pendingRelations.end(), r) == pendingRelations.end()) {
             pendingRelations.push_back(r);
+            std::fprintf(stderr,
+                "Formation '%s': PENDING relation '%s' (%s -> %s) waiting for Singular endpoints.\n",
+                getIdentifier().c_str(), r->type.c_str(), r->aId().c_str(), r->bId().c_str());
         }
-        std::fprintf(stderr,
-            "Formation '%s': PENDING relation '%s' (%s -> %s) waiting for Singular endpoints.\n",
-            getIdentifier().c_str(), r->type.c_str(), r->aId().c_str(), r->bId().c_str());
         return false;
     }
     if (!mayAdmitRelation(r)) {
@@ -571,7 +577,7 @@ std::shared_ptr<Formation> Formation::findOrCreateRelationFormation(const std::s
             primary->admitMember(member);
         }
         for (const auto& rel : secondary->relations().getAll()) {
-            primary->relations().add(rel);
+            primary->relations().retain(rel);
         }
     }
 
@@ -604,7 +610,8 @@ void Formation::integrateRelationTopology(const std::shared_ptr<Relation>& r) {
     // Share the relation rather than copying it: a subformation is a view onto
     // the same bond, not a second bond. Copies drifted whenever the original's
     // attachment was re-measured, and merges then carried stale duplicates.
-    groupedFormation->relationMgr.add(r);
+    // Deriving another view of this same bond is not another interaction.
+    groupedFormation->relationMgr.retain(r);
 }
 
 void Formation::reintegrateRelationsFor(Singular* s) {
