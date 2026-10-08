@@ -15,11 +15,13 @@
 
 namespace Rendering {
 
-// Phase-B diagnostic seam for rendered-field semantic synthesis.
+// Rendered-field semantic synthesis and aligned execution artifacts.
 //
-// IMPORTANT: this observer has no API that returns theorem authority to the
-// renderer. It may classify and count conservative opportunities, but it cannot
-// alter pixels, shader control flow, marching, accumulation, or visibility.
+// Default renderer behavior remains exact. PR #369 established that an
+// already-known binding slot can consult a provenance-checked aligned artifact
+// without relevance search. A separately gated WebGPU experiment may consume
+// only the SourceRho literal-zero proof; every stale/unknown case still fails
+// open to exact authored execution.
 class RenderedFieldSemanticObserver {
 public:
     enum class Channel : uint8_t { SourceRho, MediumDensity };
@@ -43,9 +45,10 @@ public:
         uint64_t hypotheticalDensityBypasses = 0;
         uint64_t authorityBypassesApplied = 0;
 
-        // Rung 7 successor: diagnostic artifacts aligned 1:1 with the already-
-        // admitted renderer binding slots. Build/repair happens only at source-
-        // set admission; no pixel path consumes these artifacts.
+        // PR #369 successor artifacts aligned 1:1 with already-admitted
+        // renderer binding slots. Build/repair happens only at source-set
+        // admission. They remain non-authoritative by default; PR #445's
+        // explicitly gated SourceRho-zero experiment is the first consumer.
         uint64_t alignedSlotBuilds = 0;
         uint64_t alignedSlotRepairs = 0;
         uint64_t alignedSlotReuses = 0;
@@ -69,6 +72,12 @@ public:
     bool enabled() const { return _enabled; }
 
     const Stats& stats() const { return _stats; }
+
+    // Count only authority that actually crossed into renderer execution.
+    // Diagnostic/hypothetical opportunities never call this.
+    void recordAuthorityBypassesApplied(uint64_t count) {
+        _stats.authorityBypassesApplied += count;
+    }
 
     // Generation-only diagnostics let tests prove local slot repair without
     // exposing a theorem-consumption API to renderer control flow.
@@ -104,9 +113,10 @@ public:
             binding.producerId, binding.densityRevision);
     }
 
-    // Diagnostic-only theorem read. The proof is returned only after the same
-    // generation-bound provenance gate as handle validation. Renderer has no
-    // consumer for this API, so this still grants zero pixel authority.
+    // Provenance-gated theorem read. The proof is returned only after the same
+    // generation-bound gate as handle validation. The default renderer does not
+    // consume it; the separately gated PR #445 SourceRho-zero experiment may do
+    // so only at an already-known source slot during shader compilation.
     std::optional<ProofKind> inspectRadianceProof(
         const AlignedSlotHandle& handle,
         const RadianceSourceBinding& binding) {
@@ -145,8 +155,21 @@ public:
         if (_haveRadianceSetRevision &&
             _lastRadianceSetRevision == setRevision &&
             _lastRadianceSetSize == sources.size()) {
-            ++_stats.radianceSetRevisionHits;
-            return;
+            bool alignedIdentityMatches = _radianceSlots.size() == sources.size();
+            for (size_t slot = 0; alignedIdentityMatches && slot < sources.size(); ++slot) {
+                const auto& artifact = _radianceSlots[slot];
+                const auto& source = sources[slot];
+                alignedIdentityMatches =
+                    artifact.channel == Channel::SourceRho &&
+                    artifact.producerId == source.producerId &&
+                    artifact.authoredRevision == source.radianceRevision &&
+                    !artifact.sourceRhoAuthorityQuarantined;
+                _stats.alignedHandleMetadataTests += 4;
+            }
+            if (alignedIdentityMatches) {
+                ++_stats.radianceSetRevisionHits;
+                return;
+            }
         }
 
         _haveRadianceSetRevision = true;
@@ -211,6 +234,12 @@ private:
         uint64_t authoredRevision = 0;
         uint64_t generation = 0;
         ProofKind proof = ProofKind::None;
+
+        // A producer/channel lifetime replacement must spend at least one draw
+        // on the exact path before this slot may consume a cached SourceRho
+        // theorem again. Ordinary authored-revision repair does not set this:
+        // it already re-proves the current producer directly.
+        bool sourceRhoAuthorityQuarantined = false;
     };
 
     void updateAlignedSlot(
@@ -222,16 +251,36 @@ private:
         ProofKind proof) {
         if (slot < slots.size()) {
             auto& existing = slots[slot];
-            if (existing.producerId == producerId &&
+            const bool sameIdentity =
+                existing.producerId == producerId &&
                 existing.channel == channel &&
-                existing.authoredRevision == authoredRevision) {
+                existing.authoredRevision == authoredRevision;
+            if (sameIdentity) {
+                if (channel == Channel::SourceRho &&
+                    existing.sourceRhoAuthorityQuarantined) {
+                    // This is the deliberate positive-recovery admission after
+                    // one exact/fail-open lifetime transition. Revalidate only
+                    // this already-selected slot and mint a fresh generation so
+                    // no handle published during quarantine can gain authority.
+                    existing.proof = proof;
+                    existing.generation = ++_nextAlignedGeneration;
+                    existing.sourceRhoAuthorityQuarantined = false;
+                    ++_stats.alignedSlotRepairs;
+                    return;
+                }
                 ++_stats.alignedSlotReuses;
                 return;
             }
 
+            const bool sourceRhoLifetimeChanged =
+                channel == Channel::SourceRho &&
+                (existing.channel != channel ||
+                 existing.producerId != producerId);
             existing = AlignedSlotArtifact{
                 producerId, channel, authoredRevision,
-                ++_nextAlignedGeneration, proof};
+                ++_nextAlignedGeneration,
+                sourceRhoLifetimeChanged ? ProofKind::None : proof,
+                sourceRhoLifetimeChanged};
             ++_stats.alignedSlotRepairs;
             return;
         }
@@ -240,7 +289,7 @@ private:
         // binding vector. There is no identity lookup or theorem search here.
         slots.push_back(AlignedSlotArtifact{
             producerId, channel, authoredRevision,
-            ++_nextAlignedGeneration, proof});
+            ++_nextAlignedGeneration, proof, false});
         ++_stats.alignedSlotBuilds;
     }
 

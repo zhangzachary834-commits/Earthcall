@@ -1429,6 +1429,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
 
     if (multiSource) {
         if (_radianceSourcesLayoutRevision != radianceSourcesRevision()) {
+            std::vector<uint8_t> nextAuthorityMask =
+                buildRadianceZeroAuthorityMask();
             std::string structure = "sources:" + std::to_string(radianceSources().size()) + "\n";
             bool ok = true;
             std::string error;
@@ -1441,6 +1443,11 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
 
                 structure += "source[" + std::to_string(i) + "]\n";
                 structure += "rho:" + rho.structure + "\n";
+                structure += "rho-authority-zero:" +
+                             std::string(i < nextAuthorityMask.size() &&
+                                             nextAuthorityMask[i] != 0
+                                         ? "1\n"
+                                         : "0\n");
                 structure += "chi:" + chi.structure + "\n";
                 structure += "alpha:" + alpha.structure +
                              (alpha.readsOmega ? ":omega\n" : ":no-omega\n");
@@ -1468,8 +1475,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             _radianceSourcesLayoutStructure = std::move(structure);
             _radianceSourcesLayoutOk = ok;
             _radianceSourcesLayoutError = std::move(error);
+            _radianceZeroAuthorityMask = std::move(nextAuthorityMask);
         }
     } else {
+        _radianceZeroAuthorityMask.clear();
         // Exact Rungs 3-6 layout inspection.
         if (_radianceLayoutRevision != radianceRevision() ||
             _radianceLayoutExprPtr != radianceExpr()) {
@@ -1653,7 +1662,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                                            radianceAngularExpr(), sourceSet,
                                            densityExpr, densityKind, extinctionExpr,
                                            scatteringExpr, volumeChromaExpr, phaseExpr,
-                                           emissionExpr, mat.responseExpr.get());
+                                           emissionExpr, mat.responseExpr.get(),
+                                           sourceSet ? &_radianceZeroAuthorityMask : nullptr);
                 if (!refreshed.ok) {
                     recordProgramRefusal(refreshed.error);
                     return;
@@ -1693,7 +1703,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                                      radianceAngularExpr(), sourceSet,
                                      densityExpr, densityKind, extinctionExpr,
                                      scatteringExpr, volumeChromaExpr, phaseExpr,
-                                     emissionExpr, mat.responseExpr.get());
+                                     emissionExpr, mat.responseExpr.get(),
+                                     sourceSet ? &_radianceZeroAuthorityMask : nullptr);
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
@@ -1702,6 +1713,13 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         }
         sp = sdfPipeline(localProg.wgsl);
         if (!sp) return;
+
+        if (sourceSet && radianceZeroAuthorityExperimentEnabled()) {
+            uint64_t applied = 0;
+            for (uint8_t decision : _radianceZeroAuthorityMask)
+                if (decision != 0) ++applied;
+            if (applied != 0) recordRadianceZeroAuthorityApplied(applied);
+        }
 
         isProvenHeightfield = geom::isHeightfieldExpr(field, nullptr);
 
