@@ -371,3 +371,9 @@ lived beside it until 2026-08-11 and was deleted. Formation is `Relation/Formati
 (all includes point directly to `Relation/Formation/Formation.hpp`). Lexeme is a Singular, not a Language-channel type.
 
 **Test harnesses (`TestLabInterfaces/`, `TestLabAI/`)** sit at the repository root as external harness interfaces (renamed from `TestLab/` in commit e813b6b6 to distinguish interface tools from the ontology).
+
+## Named Screen-region witness — 2026-10-07
+
+Build `earthcall_webgpu` before running `python3 scratch/probes/law_line_screen_probe.py`. The probe links the production Engine with an isolated first-seed fixture, enters real Terminal sentences, and retains decoded native captures under `scratch/verification/law-line-screen-regions-2026-10-07/`. It needs desktop GPU/display access; a sandbox acquisition failure is not a rendering verdict. The fixture uses only a public author DID and the sanctioned presence test seam, disables its physical keyboard/mouse polling, and never unlocks a human identity or modifies inhabited saves. See [the region audit](audits/LAW_LINE_SCREEN_REGIONS_2026-10-07.md) for exact proof and remaining Person checks.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-07 19:16 PDT; Zach requested named Screen regions through Metalaws.*

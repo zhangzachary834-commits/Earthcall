@@ -440,6 +440,9 @@ int main() {
               "modify property writes the existing property");
         remove->applyTo(*cube);
         check(!cube->getDynamicProperty("batchNote", note), "remove property erases the authored property");
+        remove->applyTo(*cube);
+        check(!cube->getDynamicProperty("batchNote", note),
+              "repeated removal does not recreate an absent authored slot through its materialized accessor");
         modify->applyTo(*cube);
         check(cube->getDynamicProperty("batchNote", note) && std::get<std::string>(note) == "second",
               "modify retains existing Set semantics for a materialized authored accessor");
@@ -1140,6 +1143,39 @@ int main() {
         double afterTime = 0;
         if (screen && screen->getDynamicProperty("output.time", value)) propertyValueToNumber(value, afterTime);
         check(afterTime > beforeTime, "authored Flow advances the explicitly supplied Screen time");
+        submit("law_line_screen_region.txt");
+        PropertyValue regionColor,regionSelector;
+        check(screen && lawGetValue(*screen,PropertyPath::parse("halo.color"),regionColor) &&
+              std::holds_alternative<std::shared_ptr<OntoMath::VectorField>>(regionColor) &&
+              lawGetValue(*screen,PropertyPath::parse("halo.selector"),regionSelector) &&
+              std::holds_alternative<std::shared_ptr<OntoMath::ScalarField>>(regionSelector),
+              "ScreenRegion Metalaw authors two typed predicates on an existing Singular");
+        auto* regionCompiler=harness.lawManager.find("law-line-compile-value-screenregion");
+        check(regionCompiler!=nullptr,"the named region compiler is an ordinary registered Metalaw");
+        if (regionCompiler) regionCompiler->setEnabled(false);
+        const auto withoutRegion=harness.lawManager.getAll().size();
+        terminal->inject("called No Region when clicked then add property region to ScreenRegion <color: VectorField <pieces: [Piece <value: $(red)>]>, selector: ScalarField <pieces: [Piece <value: $(-1)>]>>"); frame();
+        check(harness.lawManager.getAll().size()==withoutRegion && mentions(printed.back(),"no authored Metalaw"),
+              "removing the ScreenRegion Metalaw refuses without bespoke CLI lowering");
+        if (regionCompiler) regionCompiler->setEnabled(true);
+        harness.player.setDynamicProperty("fieldWatch",false);
+        terminal->inject("called Field Watch becomes true if is a Person and @screen-channel.halo.color.astDefinition.pieces.0.mathNode.children.0.scalarForm.terms.0.c below 0.5 then set my.fieldWatch to true");frame();
+        harness.lawManager.tick();
+        check(harness.player.getDynamicProperty("fieldWatch",value) && value==PropertyValue(false),
+              "nested field watcher starts outside its satisfaction bound");
+        submit("law_line_screen_region_edit.txt");
+        check(harness.player.getDynamicProperty("fieldWatch",value) && value==PropertyValue(true),
+              "canonical granular field edits wake a dependent authored Law through the change feed");
+        check(screen && lawGetValue(*screen,PropertyPath::parse("halo.color"),value) &&
+              std::holds_alternative<std::shared_ptr<OntoMath::VectorField>>(value),
+              "granular edit retains a typed field rather than replacing it with a syntax record");
+        if (screen && std::holds_alternative<std::shared_ptr<OntoMath::VectorField>>(value)) {
+            const auto sample=std::get<std::shared_ptr<OntoMath::VectorField>>(value)->astDefinition.evaluate({{"p",glm::vec3(120.5,120.5,0)}});
+            check(sample && std::get<glm::vec3>(*sample)==glm::vec3(0,1,1),"three Law-addressed coefficients recolour the named region cyan");
+        }
+        PropertyValue ignored;
+        check(screen && PropertyPath::parse("sample.result").setValue(*screen,std::make_shared<PropertyDict>())==PropertyPath::PathResult::ReadOnly,
+              "Screen observations cannot be overwritten as authored state");
         submit("law_line_screen_clear.txt");
         check(screen && !screen->getDynamicProperty("output.color", value),
               "CLI clear Law withdraws direct output without creating an Object or texture");

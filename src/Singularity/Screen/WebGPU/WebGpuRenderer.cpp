@@ -3012,7 +3012,9 @@ bool WebGpuRenderer::drawScreenForm(const OntoMath::Piecewise& color,
                                     const double* time, std::string& reason) {
     reason.clear();
     if (!_pass || width == 0 || height == 0 || width != _depthW || height != _depthH) {
-        reason = "direct Screen needs an active pass with matching framebuffer dimensions";
+        reason = "direct Screen needs an active pass with matching framebuffer dimensions (requested " +
+                 std::to_string(width) + "x" + std::to_string(height) + ", target " +
+                 std::to_string(_depthW) + "x" + std::to_string(_depthH) + ", active=" + (_pass ? "true" : "false") + ")";
         return false;
     }
     if (time && (!std::isfinite(*time) || !std::isfinite(static_cast<float>(*time)))) {

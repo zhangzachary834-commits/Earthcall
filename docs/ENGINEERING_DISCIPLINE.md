@@ -113,3 +113,11 @@ Zone. — Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
 ## Architectural Synthesis
 
 For a high-level view on how Earthcall's distinct architectural pillars (like serialization, rendering, and networking) synthesize into a single, cohesive doctrine of Legibility and Agency, see [Unified Architectural Synthesis](architecture/interrelations/UNIFIED_ARCHITECTURAL_SYNTHESIS.md).
+
+## Source edits and completed viewport observations — 2026-10-07
+
+A named direct Screen region binds authored mathematics explicitly; sensing its displayed pixels does not establish an inverse from composited colour to a writable source. Preserve that distinction in callers and guides. A new sample token requests a new dated observation; source edits cannot silently reinterpret old snapshots. Read-only sensor records must also remain protected when a Law copies them into editable memory: getter isolation is necessary because container pointers otherwise alias. Verify both the field's readback and a dependent Law waking after a granular edit. Repeated removal of an authored slot must leave it absent even after its accessor has been materialized.
+
+Native evidence compares observed RGBA bytes with an independently decoded capture from the same completed frame, then compares displayed colours with independent mathematics. CPU selectors and GPU float32 masks may disagree at exactly-zero boundaries; actual sampled bytes remain the witness. See [the region audit](audits/LAW_LINE_SCREEN_REGIONS_2026-10-07.md).
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-07 19:16 PDT; implements Zach's named-region direction.*

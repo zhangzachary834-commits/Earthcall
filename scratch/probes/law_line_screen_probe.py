@@ -25,8 +25,8 @@ print('Native witness directory:',stage,flush=True)
 env={k:v for k,v in os.environ.items() if not k.startswith('EARTHCALL_')}
 env['EARTHCALL_TERMINAL_HISTORY']=str(stage/'history.txt')
 subprocess.run([str(stage/'screen'),str(root)],cwd=stage,env=env,check=True)
-report=root/'scratch/verification/law-line-screen-2026-10-06'
+report=root/'scratch/verification/law-line-screen-regions-2026-10-07'
 report.mkdir(parents=True,exist_ok=True)
-for name in ('result.json','gradient.png','pixel.png','lens-t0.png','lens-t1.png'):
+for name in ('result.json','gradient.png','pixel.png','lens-t0.png','lens-t1.png','region-gold.png','region-cyan.png','person-region.png'):
     shutil.copy2(stage/name,report/name)
 print('Retained evidence:',report)

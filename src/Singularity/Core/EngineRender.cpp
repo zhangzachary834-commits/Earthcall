@@ -384,6 +384,7 @@ namespace Core {
 
         if (_lawManager) {
             if (auto* sc = Singularity::Screen::ScreenChannel::find(*_lawManager)) {
+                sc->senseOutput(currentRenderer(),static_cast<uint32_t>(fbW),static_cast<uint32_t>(fbH));
                 const auto& stats = currentRenderer().frameStats();
                 sc->updateMetrics(static_cast<int>(stats.drawCalls),
                                   static_cast<int>(stats.trianglesDrawn),

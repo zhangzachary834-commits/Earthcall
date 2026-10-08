@@ -7,6 +7,9 @@
 #include "Relation/Formation/Formation.hpp"
 #include "Relation/Relation.hpp"
 #include "Singularity/OntoMath/Field.hpp"
+#include <stdexcept>
+#include <cmath>
+#include <limits>
 
 namespace {
 
@@ -15,6 +18,64 @@ nlohmann::json refJson(const Singular* s) {
 }
 
 } // namespace
+
+PropertyValue propertyStructureFromJson(const nlohmann::json& value, unsigned depth) {
+    if (depth >= 64) throw std::runtime_error("structural value exceeds 64 levels");
+    if (value.is_object()) {
+        auto dict = std::make_shared<PropertyDict>();
+        for (auto it=value.begin(); it!=value.end(); ++it)
+            dict->elements[it.key()] = propertyStructureFromJson(it.value(), depth+1);
+        return dict;
+    }
+    if (value.is_array()) {
+        auto list = std::make_shared<PropertyList>();
+        for (const auto& item:value) list->elements.push_back(propertyStructureFromJson(item, depth+1));
+        return list;
+    }
+    if (value.is_number_unsigned()) {
+        const auto n=value.get<unsigned long long>();
+        if (n>static_cast<unsigned long long>(std::numeric_limits<long>::max()))
+            throw std::runtime_error("structural integer exceeds PropertyValue long");
+        if (n<=static_cast<unsigned long long>(std::numeric_limits<int>::max())) return int(n);
+        return long(n);
+    }
+    if (value.is_number_integer()) {
+        const auto n=value.get<long long>();
+        if (n<std::numeric_limits<long>::min() || n>std::numeric_limits<long>::max())
+            throw std::runtime_error("structural integer exceeds PropertyValue long");
+        if (n>=std::numeric_limits<int>::min() && n<=std::numeric_limits<int>::max()) return int(n);
+        return long(n);
+    }
+    return propertyValueFromJson(value);
+}
+
+nlohmann::json propertyStructureToJson(const PropertyValue& value, unsigned depth) {
+    if (depth >= 64) throw std::runtime_error("structural value exceeds 64 levels");
+    if (auto dict=std::get_if<std::shared_ptr<PropertyDict>>(&value)) {
+        if (!*dict) return nullptr;
+        auto out=nlohmann::json::object();
+        for (const auto& [key,item]:(*dict)->elements) out[key]=propertyStructureToJson(item,depth+1);
+        return out;
+    }
+    if (auto list=std::get_if<std::shared_ptr<PropertyList>>(&value)) {
+        if (!*list) return nullptr;
+        auto out=nlohmann::json::array();
+        for (const auto& item:(*list)->elements) out.push_back(propertyStructureToJson(item,depth+1));
+        return out;
+    }
+    if (auto text=std::get_if<std::string>(&value)) return *text;
+    if (auto flag=std::get_if<bool>(&value)) return *flag;
+    if (auto integer=std::get_if<int>(&value)) return *integer;
+    if (auto integer=std::get_if<long>(&value)) return *integer;
+    if (auto character=std::get_if<char>(&value)) return int(*character);
+    double number=0;
+    if (propertyValueToNumber(value,number)) {
+        if (!std::isfinite(number)) throw std::runtime_error("nonfinite structural number");
+        return number;
+    }
+    if (std::holds_alternative<std::monostate>(value)) return nullptr;
+    throw std::runtime_error("value has no structural representation");
+}
 
 nlohmann::json propertyValueToJson(const PropertyValue& v) {
     return std::visit([](auto&& x) -> nlohmann::json {

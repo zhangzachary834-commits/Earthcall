@@ -1305,6 +1305,13 @@ ECA::ActionExecutor ActionNode::compile() const {
                     emitEffect("RemoveProperty", true);
                     return;
                 }
+                // A materialized authored accessor may outlive its storage.
+                // Clearing that bridge would grant the deleted slot again as
+                // monostate; repeated removal must leave it absent.
+                if (being->hasAuthoredPropertyAccessor(name)) {
+                    emitEffect("RemoveProperty", false, "no such authored property: " + name);
+                    return;
+                }
                 // A first-mover property is a C++ member: the slot cannot be
                 // erased, so it is CLEARED. Honest, and never silent about it.
                 if (Property* property = being->findProperty(name)) {

@@ -263,6 +263,7 @@ for _c in CONDITION_COMPILERS:
 # Zach: direct WebGPU 2D authoring through Metalaws, not texture painting.
 # Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-06.
 SCREEN_INJECTED_BY = "Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-06"
+REGION_INJECTED_BY = "Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-07"
 
 
 def value_arg(name, default=None, optional=False):
@@ -274,6 +275,15 @@ def value_arg(name, default=None, optional=False):
 
 ZERO_MATH = {"op": 0, "scalarForm": {"terms": [{"c": 0, "factors": {}}]}}
 VALUE_CONSTRUCTORS = [
+    # Zach: named displayed regions are predicates of their bearer, with
+    # explicit source mathematics. No ScreenRegion C++ class or kind tag.
+    # Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-07.
+    ("ScreenRegion", '<color: VectorField <pieces: [Piece <value: $(‹colour›)>]>, selector: ScalarField <pieces: [Piece <value: $(‹signed selector›)>]>>',
+     {"value": {"t": "dict", "v": {"color": value_arg("color"), "selector": value_arg("selector")}}}),
+    ("ScreenSample", '<region: "@‹bearer›.‹region›", x: 0, y: 0, width: 32, height: 32, limit: 128, token: "first">',
+     {"literal": {key: value_arg(key) for key in ("region", "x", "y", "width", "height", "limit", "token")}}),
+    ("ScreenSampleAtTime", '<region: "@‹bearer›.‹region›", x: 0, y: 0, width: 32, height: 32, limit: 128, token: "first", time: 0>',
+     {"literal": {key: value_arg(key) for key in ("region", "x", "y", "width", "height", "limit", "token", "time")}}),
     ("Piece", '<value: $(‹expression›), where: $(‹signed selector›)>',
      {"literal": {"mathNode": value_arg("value"), "where": value_arg("where", ZERO_MATH, True)}}),
     ("VectorField", '<pieces: [Piece <value: $(‹vector expression›), where: $(‹selector›)>]>',
@@ -434,15 +444,16 @@ def build():
             lexeme_for(symbol, doc["identifier"])
     # Disabled value Laws denote constructors; Metalaws alone supply lowering.
     for name, signature, template in VALUE_CONSTRUCTORS:
+        attribution = REGION_INJECTED_BY if name in ("ScreenRegion", "ScreenSample", "ScreenSampleAtTime") else SCREEN_INJECTED_BY
         identifier = "law-line-value-constructor-" + name.lower()
         doc = law(identifier, "means: " + name + " with authored arguments", enabled=False,
                   action={"kind": 0, "path": "", "operand": 0})
         doc["law"]["authoredProperties"] = {"sentence.arguments": {"t": "string", "v": signature}}
-        doc["injected_by"] = SCREEN_INJECTED_BY
+        doc["injected_by"] = attribution
         laws.append(doc); lexeme_for(name, identifier)
         rule = compiler("law-line-compile-value-" + name.lower(),
                         {"slot": "value", "wordLaw": identifier}, template, opcode="value")
-        rule["injected_by"] = SCREEN_INJECTED_BY
+        rule["injected_by"] = attribution
         laws.append(rule)
     for name in ["x", "y", "z", "p", "u", "v", "width", "height", "t"]:
         identifier = "law-line-coordinate-" + name
@@ -743,6 +754,7 @@ def main():
         print("Compiler additions injected_by: " + COMPILER_INJECTED_BY)
         print("Assignment and condition compilers injected_by: " + ASSIGNMENT_INJECTED_BY)
         print("Direct field vocabulary injected_by: " + SCREEN_INJECTED_BY)
+        print("Named region vocabulary injected_by: " + REGION_INJECTED_BY)
         print("Recorded new-Law authors: " + ", ".join(present_authors or [AUTHOR]))
     return 0
 

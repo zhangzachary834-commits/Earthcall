@@ -82,6 +82,13 @@ public:
         // return the only strong reference to a list/dict. These keep the
         // resolved element alive for this access; the PropertyPath holds none.
         std::vector<PropertyValue> containerPins;
+        // Operation-local structural view of a typed mathematical value.
+        // Writes validate and commit through its original setter/storage;
+        // this is a codec window, never a second canonical definition.
+        Property* structuredProperty = nullptr;
+        PropertyValue* structuredSource = nullptr;
+        PropertyValue structuredOriginal;
+        PropertyValue structuredView;
     };
 
     ResolvedSlot resolve(Singular& root, std::size_t startIndex = 0) const;
