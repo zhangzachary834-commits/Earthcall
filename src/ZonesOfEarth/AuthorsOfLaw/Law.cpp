@@ -1,5 +1,6 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "Law.hpp"
+#include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
 #include "Identity/FirstMoverRegister.hpp"
 #include "Identity/PersonPresence.hpp"
 #include <string_view>
@@ -425,6 +426,12 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
     if (j.contains("actionModel")) {
         law->setActionModel(ActionNode::fromJson(j["actionModel"]));
     }
+    // Authored compiler/root vocabulary lives on ordinary Laws too. Preserve
+    // their granted properties through the same typed codec used by Objects.
+    if (j.contains("authoredProperties") && j["authoredProperties"].is_object()) {
+        for (auto it = j["authoredProperties"].begin(); it != j["authoredProperties"].end(); ++it)
+            law->setDynamicProperty(it.key(), propertyValueFromJson(it.value()));
+    }
     // The law's descent, restored. `toJson` has always written provenance and
     // this never read it back, so "synthesized-from" — the whole record of
     // which laws a higher law was made out of — survived exactly until the
@@ -540,6 +547,7 @@ Law::ApplicationResult Law::applyToImpl(
         // carries it out. This is where "did anything actually happen" is
         // answered — the application result only says the branch was reached.
         ActionNode::TraceScope traceScope;
+        SingularSetToSetCreation::AuthorScope creationAuthors(_authors.getMembers());
         for (const auto& action : _actions) {
             action.run(event, target);
         }
@@ -720,6 +728,12 @@ nlohmann::json Law::toJson() const {
     // survive save/load.
     if (_conditionModel) j["conditionModel"] = _conditionModel->toJson();
     if (_actionModel) j["actionModel"] = _actionModel->toJson();
+    if (!dynamicProperties().empty()) {
+        auto properties = nlohmann::json::object();
+        for (const auto& [id, value] : dynamicProperties())
+            properties[Earthcall::StringInterner::resolve(id)] = propertyValueToJson(value);
+        j["authoredProperties"] = std::move(properties);
+    }
     return j;
 }
 
@@ -1898,6 +1912,18 @@ void LawManager::add(const std::shared_ptr<Law>& law) {
 static LawManager* s_singularHookOwner = nullptr;
 
 LawManager::~LawManager() {
+    // connectToEventBus() creates two callbacks that capture this. Revoke only
+    // this manager's registrations before its storage disappears; other
+    // subsystems' listeners remain untouched.
+    if (_ecaEventSubscription || _customEventSubscription) {
+        auto& eventBus = Core::EventBus::instance();
+        eventBus.unsubscribe(_ecaEventSubscription);
+        eventBus.unsubscribe(_customEventSubscription);
+        _ecaEventSubscription = {};
+        _customEventSubscription = {};
+    }
+    _connected = false;
+
     if (s_singularHookOwner == this) {
         Singular::setPropertyChangeCallback(nullptr);
         Singular::setBeingReleasedCallback(nullptr);
@@ -1919,8 +1945,7 @@ void LawManager::connectToEventBus() {
     // rather than the trigger table, because laws can be bound to alpha
     // nodes directly (the graph editor does, and so do tests); a trigger-only
     // answer would call those laws deaf and silently stop feeding them.
-    // Captured by `this`: the LawManager is an engine-lifetime object, the
-    // same contract as the bus subscriptions below.
+    // Captured by `this`; the owning static hook is cleared by the destructor.
     Universe::instance().setEventInterest([this](const std::string& type) {
         return _rete.hearsType(type) || _rete.hasForeignBoundAlpha();
     });
@@ -2008,7 +2033,7 @@ void LawManager::connectToEventBus() {
         _dirty = true;
     });
 
-    Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
+    _ecaEventSubscription = Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
         std::string subjectId = e.subject ? e.subject->getIdentifier() : "null";
         std::string objectId = e.object ? e.object->getIdentifier() : "null";
 
@@ -2079,7 +2104,7 @@ void LawManager::connectToEventBus() {
         }
     });
 
-    Core::EventBus::instance().subscribe<Core::Event::Custom>([this](const Core::Event::Custom& e) {
+    _customEventSubscription = Core::EventBus::instance().subscribe<Core::Event::Custom>([this](const Core::Event::Custom& e) {
         if (!e.relation) return;
         
         std::string evType = e.relation->type;
@@ -2875,8 +2900,8 @@ void LawManager::reapUnmade() {
     // Release from OUR laws directly rather than waiting for the
     // "object-destroyed" announcement to come back around. The subscription
     // still exists — it is what catches beings the delete tool unmakes — but
-    // a LawManager's own bookkeeping must not depend on having been connected
-    // to a global bus that cannot be unsubscribed from.
+    // a LawManager's own bookkeeping must not depend on whether it is
+    // currently connected to the bus.
     // Laws among the victims are retired by THIS manager: they are ours to
     // free, not a Zone's objects. Collected before anything is released.
     std::vector<std::string> retiredLaws;
