@@ -1,6 +1,7 @@
 #include "Body.hpp"
 #include <iostream>
 #include <algorithm>
+#include <stdexcept>
 #include "BodyPart/BodyPart.hpp"
 #include "Relation/Formation/Formation.hpp"
 #include <glm/gtc/matrix_transform.hpp>
@@ -17,6 +18,22 @@
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
+
+
+namespace {
+glm::mat4 authoredTranslation(const glm::vec3& offset) {
+    const auto authored = OntoMath::affineTranslation(offset);
+    if (!authored) {
+        throw std::runtime_error("Body default placement refused invalid OntoMath translation premises");
+    }
+    const auto lowered = authored->toGlmMat4();
+    if (!lowered) {
+        throw std::runtime_error("Body default placement refused a non-4x4 OntoMath translation result");
+    }
+    return *lowered;
+}
+} // namespace
 
 void Body::buildProperties() {
     registerProperty(std::make_unique<PropertyRef<Body, std::string>>(
@@ -114,77 +131,77 @@ Body Body::createBasicAvatar(const std::string& artStyle) {
 
     // ----------------------- Head -----------------------
     auto* head = new Head();
-    head->setLocalTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.75f, 0.0f)));
+    head->setLocalTransform(authoredTranslation(glm::vec3(0.0f, 0.75f, 0.0f)));
     avatar.addPart(head);
 
     // ----------------------- Torso ----------------------
     auto* torso = new Torso();
-    torso->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.3f, 0.0f)));
+    torso->setTransform(authoredTranslation(glm::vec3(0.0f, 0.3f, 0.0f)));
     avatar.addPart(torso);
 
     // ----------------------- Lower Torso ----------------
     auto* lowerTorso = new BodyPart("LowerTorso", BodyPart::Type::Torso,
                                     ObjectTypes::ShapeKind::Cube, {0.45f, 0.25f, 0.22f});
-    lowerTorso->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.15f, 0.0f)));
+    lowerTorso->setTransform(authoredTranslation(glm::vec3(0.0f, -0.15f, 0.0f)));
     avatar.addPart(lowerTorso);
 
     // ----------------------- Neck ----------------------
     auto* neck = new Neck();
-    neck->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.7f, 0.0f)));
+    neck->setTransform(authoredTranslation(glm::vec3(0.0f, 0.7f, 0.0f)));
     avatar.addPart(neck);
 
     // ----------------------- Shoulders -----------------
     auto* leftShoulder = new Shoulder(Shoulder::Side::Left);
-    leftShoulder->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(-0.35f, 0.6f, 0.0f)));
+    leftShoulder->setTransform(authoredTranslation(glm::vec3(-0.35f, 0.6f, 0.0f)));
     avatar.addPart(leftShoulder);
 
     auto* rightShoulder = new Shoulder(Shoulder::Side::Right);
-    rightShoulder->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.35f, 0.6f, 0.0f)));
+    rightShoulder->setTransform(authoredTranslation(glm::vec3(0.35f, 0.6f, 0.0f)));
     avatar.addPart(rightShoulder);
 
     // ----------------------- Arms -----------------------
     auto* leftArm = new Arm(Arm::Side::Left);
-    leftArm->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(-0.35f, 0.25f, 0.0f)));
+    leftArm->setTransform(authoredTranslation(glm::vec3(-0.35f, 0.25f, 0.0f)));
     avatar.addPart(leftArm);
 
     auto* rightArm = new Arm(Arm::Side::Right);
-    rightArm->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.35f, 0.25f, 0.0f)));
+    rightArm->setTransform(authoredTranslation(glm::vec3(0.35f, 0.25f, 0.0f)));
     avatar.addPart(rightArm);
 
     // -------------------- Forearms ---------------------
     auto* leftForeArm = new ForeArm(ForeArm::Side::Left);
-    leftForeArm->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(-0.35f, -0.05f, 0.0f)));
+    leftForeArm->setTransform(authoredTranslation(glm::vec3(-0.35f, -0.05f, 0.0f)));
     avatar.addPart(leftForeArm);
 
     auto* rightForeArm = new ForeArm(ForeArm::Side::Right);
-    rightForeArm->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.35f, -0.05f, 0.0f)));
+    rightForeArm->setTransform(authoredTranslation(glm::vec3(0.35f, -0.05f, 0.0f)));
     avatar.addPart(rightForeArm);
 
     // ----------------------- Legs -----------------------
     auto* leftLeg = new Leg(Leg::Side::Left);
-    leftLeg->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(-0.15f, -0.5f, 0.0f)));
+    leftLeg->setTransform(authoredTranslation(glm::vec3(-0.15f, -0.5f, 0.0f)));
     avatar.addPart(leftLeg);
 
     auto* rightLeg = new Leg(Leg::Side::Right);
-    rightLeg->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.15f, -0.5f, 0.0f)));
+    rightLeg->setTransform(authoredTranslation(glm::vec3(0.15f, -0.5f, 0.0f)));
     avatar.addPart(rightLeg);
 
     // -------------------- Forelegs ---------------------
     auto* leftForeLeg = new ForeLeg(ForeLeg::Side::Left);
-    leftForeLeg->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(-0.15f, -0.9f, 0.0f)));
+    leftForeLeg->setTransform(authoredTranslation(glm::vec3(-0.15f, -0.9f, 0.0f)));
     avatar.addPart(leftForeLeg);
 
     auto* rightForeLeg = new ForeLeg(ForeLeg::Side::Right);
-    rightForeLeg->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.15f, -0.9f, 0.0f)));
+    rightForeLeg->setTransform(authoredTranslation(glm::vec3(0.15f, -0.9f, 0.0f)));
     avatar.addPart(rightForeLeg);
 
     // ----------------------- Feet ----------------------
     auto* leftFoot = new Foot(Foot::Side::Left);
-    leftFoot->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(-0.15f, -1.15f, 0.1f)));
+    leftFoot->setTransform(authoredTranslation(glm::vec3(-0.15f, -1.15f, 0.1f)));
     avatar.addPart(leftFoot);
 
     auto* rightFoot = new Foot(Foot::Side::Right);
-    rightFoot->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.15f, -1.15f, 0.1f)));
+    rightFoot->setTransform(authoredTranslation(glm::vec3(0.15f, -1.15f, 0.1f)));
     avatar.addPart(rightFoot);
 
     return avatar;

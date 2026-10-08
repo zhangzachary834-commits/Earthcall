@@ -55,6 +55,11 @@ public:
     // All are ordinary AddProperty/Set vocabulary, not new action opcodes.
     bool manifestOutput(Renderer& renderer, uint32_t width, uint32_t height);
 
+    // Irreducible Sense boundary: one explicit request token captures selected
+    // pixels from this completed viewport frame. Meaning/selection, source
+    // fields, names and subsequent derivations remain authored data/Laws.
+    void senseOutput(Renderer& renderer, uint32_t width, uint32_t height);
+
     // Update live metrics from the active Renderer at the end of each frame.
     void updateMetrics(int drawCalls, int trianglesDrawn, double vramBytes,
                        double uniformBytes, int suballocations, int pipelineSwitches,
@@ -140,6 +145,15 @@ private:
     int getOutputHeight() const { return _outputHeight; }
     bool getOutputDrawn() const { return _outputDrawn; }
     std::string getOutputLastRefusal() const { return _outputLastRefusal; }
+    long _sampleFrame = 0;
+    std::string _sampleLastToken;
+    std::shared_ptr<PropertyDict> _sampleResult = std::make_shared<PropertyDict>();
+    long getSampleFrame() const { return _sampleFrame; }
+    std::string getSampleLastToken() const { return _sampleLastToken; }
+    std::shared_ptr<PropertyDict> getSampleResult() const;
+    int getSampleScanCeiling() const { return 1048576; }
+    int getSampleCountCeiling() const { return 65536; }
+    long getSampleReadbackByteCeiling() const { return 268435456L; }
 
     // Getters for the derived metrics below: NO_BLACK_BOX.md §3 says a Law may
     // read anything, but "writable unless genuinely derived" — these are

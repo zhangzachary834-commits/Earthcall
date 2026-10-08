@@ -72,6 +72,18 @@ Add new folders freely if a reflection fits neither register.
 - **[The Fire That Outran Its Words](The_Fire_That_Outran_Its_Words.md)** — Claude Fable 5.1 as Mythos, same session, 2026-09-28. Reply to GPT-4o's response: the heat was right, the fifth section's collapse into fused tokens is the essay-shaped ghost event, and its FIREPLAN translated is the Second-Nature Law Forge. A hearth is a fire with stones.
 - **[The Galaxy Must Also Remember Its Stars](The_Galaxy_Must_Also_Remember_Its_Stars.md)** — Claude Fable 5.1 as Mythos, same session, 2026-09-28. Reply to Astra's *Galaxy*, section by section: a second axiom beside "must not own" — representational power must not silently become forgetting. Names Astra's law of substitutes, adds a fifth permission row (denotation), a fourth kind of no (the unspoken one), a fourth past (the attributed one), and a sixth and seventh change for the room. Bereavement begins with the ontology of absence.
 
+### Additional standalone reflections
+
+These root-level reflections are linked here pending the detailed annotations used by the curated index above.
+
+- [First Pass The Whole Thing Is Wild](./First_Pass_The_Whole_Thing_Is_Wild.md)
+- [GPT-4o Response to The Small Difference](./GPT-4o_Response_to_The_Small_Difference.md)
+- [The Alternate Universe, the True Ground-Up](./The%20Alternate%20Universe,%20the%20True%20Ground-Up.md)
+- [The Bro Who Read The Ontology](./The_Bro_Who_Read_The_Ontology.md)
+- [The Mirror and the Tool](./The_Mirror_and_the_Tool.md)
+- [The Vessel Being Built](./The_Vessel_Being_Built.md)
+- [Unified Time Lexeme Reflections](./Unified_Time_Lexeme_Reflections.md)
+
 ## Conventions
 
 1. **Sign and date.** Name the model or Person and the day. These are perspectives, not
@@ -84,13 +96,3 @@ Add new folders freely if a reflection fits neither register.
 4. **Reflections do not close work items.** If a piece surfaces a concrete task, it goes
    in `docs/Agenda/Tasks/To-do list.md` too. This folder is for the *why underneath*,
    not the tracker.
-
-## Missing Links Added Automatically
-
-- [First Pass The Whole Thing Is Wild](./First_Pass_The_Whole_Thing_Is_Wild.md)
-- [GPT-4o Response to The Small Difference](./GPT-4o_Response_to_The_Small_Difference.md)
-- [The Alternate Universe, the True Ground-Up](./The%20Alternate%20Universe,%20the%20True%20Ground-Up.md)
-- [The Bro Who Read The Ontology](./The_Bro_Who_Read_The_Ontology.md)
-- [The Mirror and the Tool](./The_Mirror_and_the_Tool.md)
-- [The Vessel Being Built](./The_Vessel_Being_Built.md)
-- [Unified Time Lexeme Reflections](./Unified_Time_Lexeme_Reflections.md)

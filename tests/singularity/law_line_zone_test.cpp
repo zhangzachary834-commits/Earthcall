@@ -440,6 +440,9 @@ int main() {
               "modify property writes the existing property");
         remove->applyTo(*cube);
         check(!cube->getDynamicProperty("batchNote", note), "remove property erases the authored property");
+        remove->applyTo(*cube);
+        check(!cube->getDynamicProperty("batchNote", note),
+              "repeated removal does not recreate an absent authored slot through its materialized accessor");
         modify->applyTo(*cube);
         check(cube->getDynamicProperty("batchNote", note) && std::get<std::string>(note) == "second",
               "modify retains existing Set semantics for a materialized authored accessor");
@@ -1140,6 +1143,39 @@ int main() {
         double afterTime = 0;
         if (screen && screen->getDynamicProperty("output.time", value)) propertyValueToNumber(value, afterTime);
         check(afterTime > beforeTime, "authored Flow advances the explicitly supplied Screen time");
+        submit("law_line_screen_region.txt");
+        PropertyValue regionColor,regionSelector;
+        check(screen && lawGetValue(*screen,PropertyPath::parse("halo.color"),regionColor) &&
+              std::holds_alternative<std::shared_ptr<OntoMath::VectorField>>(regionColor) &&
+              lawGetValue(*screen,PropertyPath::parse("halo.selector"),regionSelector) &&
+              std::holds_alternative<std::shared_ptr<OntoMath::ScalarField>>(regionSelector),
+              "ScreenRegion Metalaw authors two typed predicates on an existing Singular");
+        auto* regionCompiler=harness.lawManager.find("law-line-compile-value-screenregion");
+        check(regionCompiler!=nullptr,"the named region compiler is an ordinary registered Metalaw");
+        if (regionCompiler) regionCompiler->setEnabled(false);
+        const auto withoutRegion=harness.lawManager.getAll().size();
+        terminal->inject("called No Region when clicked then add property region to ScreenRegion <color: VectorField <pieces: [Piece <value: $(red)>]>, selector: ScalarField <pieces: [Piece <value: $(-1)>]>>"); frame();
+        check(harness.lawManager.getAll().size()==withoutRegion && mentions(printed.back(),"no authored Metalaw"),
+              "removing the ScreenRegion Metalaw refuses without bespoke CLI lowering");
+        if (regionCompiler) regionCompiler->setEnabled(true);
+        harness.player.setDynamicProperty("fieldWatch",false);
+        terminal->inject("called Field Watch becomes true if is a Person and @screen-channel.halo.color.astDefinition.pieces.0.mathNode.children.0.scalarForm.terms.0.c below 0.5 then set my.fieldWatch to true");frame();
+        harness.lawManager.tick();
+        check(harness.player.getDynamicProperty("fieldWatch",value) && value==PropertyValue(false),
+              "nested field watcher starts outside its satisfaction bound");
+        submit("law_line_screen_region_edit.txt");
+        check(harness.player.getDynamicProperty("fieldWatch",value) && value==PropertyValue(true),
+              "canonical granular field edits wake a dependent authored Law through the change feed");
+        check(screen && lawGetValue(*screen,PropertyPath::parse("halo.color"),value) &&
+              std::holds_alternative<std::shared_ptr<OntoMath::VectorField>>(value),
+              "granular edit retains a typed field rather than replacing it with a syntax record");
+        if (screen && std::holds_alternative<std::shared_ptr<OntoMath::VectorField>>(value)) {
+            const auto sample=std::get<std::shared_ptr<OntoMath::VectorField>>(value)->astDefinition.evaluate({{"p",glm::vec3(120.5,120.5,0)}});
+            check(sample && std::get<glm::vec3>(*sample)==glm::vec3(0,1,1),"three Law-addressed coefficients recolour the named region cyan");
+        }
+        PropertyValue ignored;
+        check(screen && PropertyPath::parse("sample.result").setValue(*screen,std::make_shared<PropertyDict>())==PropertyPath::PathResult::ReadOnly,
+              "Screen observations cannot be overwritten as authored state");
         submit("law_line_screen_clear.txt");
         check(screen && !screen->getDynamicProperty("output.color", value),
               "CLI clear Law withdraws direct output without creating an Object or texture");
@@ -1147,6 +1183,60 @@ int main() {
         check(screen && screen->getDynamicProperty("output.color",value) &&
               std::holds_alternative<std::shared_ptr<OntoMath::VectorField>>(value),
               "a cleared authored field can be granted again through its surviving accessor");
+    }
+
+    // Zach: a whole art editor authored by one paste, through the saved
+    // sentence/compiler Metalaws. Its state is a Person predicate, not a class.
+    {
+        auto* screen=Singularity::Screen::ScreenChannel::find(harness.lawManager);
+        std::ifstream in(saves.parent_path() / "examples/law_line_pixel_art_editor.txt");
+        std::string program;std::getline(in,program);
+        const auto before=harness.lawManager.getAll().size();
+        auto syntax=Singularity::Terminal::LawSentence::parse(program.substr(0,program.find(';'))+"?",terminal->vocabulary(harness.lawManager));
+        if(!syntax.ok)std::cout << "EDITOR SYNTAX " << syntax.errorOffset << " " << syntax.error << " NEAR " << program.substr(syntax.errorOffset>80?syntax.errorOffset-80:0,160) << '\n';
+        terminal->inject(program);frame();harness.lawManager.tick();
+        check(harness.lawManager.getAll().size()==before+276,"one editor line registers its 276 authored Laws: "+printed.back());
+        PropertyValue state;
+        check(lawGetValue(harness.player,PropertyPath::parse("atelier.installed"),state) && state==PropertyValue(true),"editor initialization grants Person-owned state");
+        const auto colour=[&](int x,int y) {
+            PropertyValue value;
+            if(!lawGetValue(harness.player,PropertyPath::parse("atelier.canvas"),value) ||
+               !std::holds_alternative<std::shared_ptr<OntoMath::VectorField>>(value))return glm::vec3(-1);
+            const auto& form=std::get<std::shared_ptr<OntoMath::VectorField>>(value)->astDefinition;
+            auto sample=form.evaluate({{"u",.18+.62*(x+.5)/16},{"v",.12+.76*(y+.5)/16}});
+            return sample && std::holds_alternative<glm::vec3>(*sample)?std::get<glm::vec3>(*sample):glm::vec3(-1);
+        };
+        const auto point=[&](double u,double v,bool held,bool captured=false) {
+            Singularity::Input::InteractionChannel::Sense sense;
+            sense.windowWidth=1000;sense.windowHeight=500;
+            sense.pointerX=u*1000;sense.pointerY=v*500;sense.left=held;sense.uiCaptured=captured;
+            harness.interaction->pointerLocked=false;
+            harness.interaction->observePending(sense,{});
+            for(int i=0;i<3;++i)harness.lawManager.tick();
+        };
+        const auto click=[&](double u,double v) {point(u,v,false);point(u,v,true);point(u,v,false);};
+        check(colour(0,0)==glm::vec3(1),"initial canvas is white");
+        click(.199375,.14375);
+        check(glm::length(colour(0,0)-glm::vec3(1,.84,0))<1e-6f && colour(1,0)==glm::vec3(1),"pencil writes only the addressed pixel, through actual input sense");
+        click(.89,.20);check(colour(0,0)==glm::vec3(1),"authored undo restores immutable previous field");
+        click(.89,.33);check(glm::length(colour(0,0)-glm::vec3(1,.84,0))<1e-6f,"authored redo restores the painted field");
+        click(.08,.12+6*.059+.0215);click(.238125,.14375);
+        check(glm::length(colour(1,0)-glm::vec3(0,.8,.85))<1e-6f,"swatch selection reaches the next pixel");
+        click(.89,.72);click(.238125,.14375);
+        check(colour(1,0)==glm::vec3(1),"eraser chooses the authored white ink");
+        click(.08,.12+2*.059+.0215);
+        point(.277,.14375,true,true);point(.277,.14375,false);
+        check(colour(2,0)==glm::vec3(1),"foreign UI capture veto prevents paint");
+        point(.277,.14375,true);point(.315,.14375,true);point(.315,.14375,false);
+        check(glm::length(colour(2,0)-glm::vec3(1,.25,.35))<1e-6f && glm::length(colour(3,0)-glm::vec3(1,.25,.35))<1e-6f,"held pencil paints newly entered cells");
+        click(.89,.46);check(colour(0,0)==glm::vec3(1) && colour(3,0)==glm::vec3(1),"clear restores the blank artwork");
+        click(.89,.20);check(glm::length(colour(3,0)-glm::vec3(1,.25,.35))<1e-6f,"clear itself is undoable");
+        PropertyValue canvas;lawGetValue(harness.player,PropertyPath::parse("atelier.canvas"),canvas);
+        check(propertyValueToJson(propertyValueFromJson(propertyValueToJson(canvas)))==propertyValueToJson(canvas),"edited canvas preserves typed mathematics through storage codec");
+        click(.89,.85);
+        check(lawGetValue(harness.player,PropertyPath::parse("atelier.enabled"),state) && state==PropertyValue(false) &&
+              !screen->hasDynamicProperty("output.color"),"close stops display without deleting artwork or reinstalling");
+        check(glm::length(colour(3,0)-glm::vec3(1,.25,.35))<1e-6f,"closed editor retains authored artwork");
     }
 
     check(inactiveWorld->getOwnedObjects().size() == worldObjectsBefore,

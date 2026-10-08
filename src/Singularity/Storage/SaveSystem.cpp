@@ -1471,6 +1471,49 @@ nlohmann::json readLawIdentity(const std::string& identifier) {
     return readSaveData((sharedIdentityRoot("laws") / safe / "law.json").string());
 }
 
+namespace {
+std::string materialStem(const std::string& identifier) {
+    static const std::string prefix = "material.";
+    return identifier.rfind(prefix, 0) == 0 ? identifier.substr(prefix.size()) : identifier;
+}
+} // namespace
+
+// Pure path computation: a refused or absent root must not leave an empty
+// directory behind, so only the writer creates the folder.
+std::string materialIdentityPath(const std::string& identifier) {
+    const std::string safe = sanitizeLabel(materialStem(identifier));
+    if (safe.empty()) return "";
+    return (sharedIdentityRoot("materials") / safe / "material.json").string();
+}
+
+bool materialIdentityExists(const std::string& identifier) {
+    const std::string path = materialIdentityPath(identifier);
+    if (path.empty()) return false;
+    std::error_code ec;
+    return std::filesystem::is_regular_file(path, ec) && std::filesystem::file_size(path, ec) > 0;
+}
+
+bool writeMaterialIdentity(const std::string& identifier, const nlohmann::json& j) {
+    const std::string path = materialIdentityPath(identifier);
+    if (path.empty()) return false;
+    std::error_code ec;
+    std::filesystem::create_directories(std::filesystem::path(path).parent_path(), ec);
+    if (ec && ec.value() != 17) {
+        std::cerr << "[SaveSystem] Failed to create Material directory for "
+                  << identifier << ": " << ec.message() << "\n";
+        return false;
+    }
+    return atomicWriteFile(path, [&](std::ostream& out) {
+        out << j.dump(-1);
+        return static_cast<bool>(out);
+    });
+}
+
+nlohmann::json readMaterialIdentity(const std::string& identifier) {
+    if (!materialIdentityExists(identifier)) return nlohmann::json();
+    return readSaveData(materialIdentityPath(identifier));
+}
+
 std::string resolveZoneIdentityPath(const std::string& identifier) {
     const std::string safe = sanitizeLabel(identifier);
     if (safe.empty()) return "";

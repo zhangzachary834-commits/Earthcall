@@ -3,7 +3,8 @@ Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-06.
 Build earthcall_webgpu first. No inhabited save or identity key is modified.
 """
 from pathlib import Path
-import os, shlex, subprocess, tempfile, shutil
+import os, shlex, subprocess, tempfile, shutil, sys
+art_editor = '--art-editor' in sys.argv[1:]
 root = Path(__file__).resolve().parents[2]
 build = root / 'build'
 stage = Path(tempfile.mkdtemp(prefix='earthcall-cli-screen-'))
@@ -24,9 +25,11 @@ subprocess.run(link,cwd=build,check=True)
 print('Native witness directory:',stage,flush=True)
 env={k:v for k,v in os.environ.items() if not k.startswith('EARTHCALL_')}
 env['EARTHCALL_TERMINAL_HISTORY']=str(stage/'history.txt')
-subprocess.run([str(stage/'screen'),str(root)],cwd=stage,env=env,check=True)
-report=root/'scratch/verification/law-line-screen-2026-10-06'
+subprocess.run([str(stage/'screen'),str(root),*(['--art-editor'] if art_editor else [])],cwd=stage,env=env,check=True)
+report=root/('scratch/verification/law-line-pixel-art-editor-2026-10-07' if art_editor else 'scratch/verification/law-line-screen-regions-2026-10-07')
 report.mkdir(parents=True,exist_ok=True)
-for name in ('result.json','gradient.png','pixel.png','lens-t0.png','lens-t1.png'):
+names=['result.json','gradient.png','pixel.png','lens-t0.png','lens-t1.png','region-gold.png','region-cyan.png','person-region.png']
+if art_editor:names += ['art-'+name+'.png' for name in ('blank','gold','undo','redo','cyan','erase','clear')]
+for name in names:
     shutil.copy2(stage/name,report/name)
 print('Retained evidence:',report)

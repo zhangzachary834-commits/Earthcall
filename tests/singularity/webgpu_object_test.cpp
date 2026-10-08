@@ -2311,6 +2311,36 @@ int main() {
         renderer.setRadianceVisibilityEnabled(false);
     }
 
+    // --- Rung-8 WebGPU begin2D native pixel witness ----------------------------
+    // Production begin2D now consumes OntoMath's top-left ZO orthographic
+    // projection. Draw only the top-left quarter and prove through GPU readback
+    // that y=0 is still the framebuffer top rather than silently flipping.
+    {
+        const float halfW = static_cast<float>(W) * 0.5f;
+        const float halfH = static_cast<float>(H) * 0.5f;
+        const std::vector<glm::vec2> topLeftQuad = {
+            {0.0f, 0.0f}, {halfW, 0.0f}, {halfW, halfH},
+            {0.0f, 0.0f}, {halfW, halfH}, {0.0f, halfH},
+        };
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.begin2D(W, H);
+        renderer.drawTris2D(topLeftQuad, glm::vec4(1, 0, 1, 1));
+        renderer.end2D();
+        renderer.endFrame();
+
+        unsigned char topLeft2D[4];
+        unsigned char bottomLeft2D[4];
+        readAt(2, 2, topLeft2D);
+        readAt(2, H - 3, bottomLeft2D);
+        assert(topLeft2D[0] > 240 && topLeft2D[2] > 240 &&
+               topLeft2D[1] < 15 &&
+               "OntoMath-authored begin2D projection did not cover the top-left quarter");
+        assert(bottomLeft2D[0] < 15 && bottomLeft2D[1] < 15 &&
+               bottomLeft2D[2] < 15 &&
+               "OntoMath-authored begin2D projection flipped or stretched screen-space Y");
+    }
+
     // --- An unpainted cube draws as ONE merged mesh; painting a single face
     // must drop it straight back to the six-face path (remediation plan Phase
     // 4.2). This is the guard the plan calls for: the merge decision reads the

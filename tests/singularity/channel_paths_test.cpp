@@ -64,6 +64,8 @@ bool typeMatches(const char* declared, const PropertyValue& v) {
     if (t == "transform") return std::holds_alternative<glm::mat4>(v);
     if (t == "text")      return std::holds_alternative<std::string>(v);
     if (t == "toggle")    return std::holds_alternative<bool>(v);
+    if (t == "list")      return std::holds_alternative<std::shared_ptr<PropertyList>>(v);
+    if (t == "dictionary") return std::holds_alternative<std::shared_ptr<PropertyDict>>(v);
     if (t == "number") {
         double n = 0.0;
         return propertyValueToNumber(v, n);
