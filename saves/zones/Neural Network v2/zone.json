@@ -249,5 +249,13 @@
         }
     ],
     "isSpatial": true,
-    "isActive": false
+    "isActive": false,
+  "materialRefs": [
+    "material.neuron_node-h-1",
+    "material.neuron_node-h-2",
+    "material.neuron_node-in-1",
+    "material.neuron_node-in-2",
+    "material.neuron_node-out",
+    "material.neuron_node-target"
+  ]
 }

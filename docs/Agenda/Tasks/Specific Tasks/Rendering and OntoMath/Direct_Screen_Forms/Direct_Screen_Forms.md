@@ -130,8 +130,8 @@ Full-suite and Person acceptance remain separate from this focused native witnes
 - CLI field/selector construction is implemented below; interactive editing and Person acceptance remain open.
 - Authored composition, placement relative to other manifestations, and multi-Person
   visibility/authority semantics before introducing additional direct output sources.
-- Law-addressable observation/elevation of direct output samples without confusing an
-  ephemeral display observation with a persistent authored color value.
+- Person acceptance of the named-region observation/source-editing rung below, plus
+  interactive elevation and live projected addressing beyond explicit snapshots.
 - Content-sensitive CPU lowering and unchanged-parameter upload elimination.
 - Shared generic GPU lowering of world-dependent calls/folds, when their semantics are
   explicitly admitted, and further non-WebGPU backend support.
@@ -149,5 +149,23 @@ The [CLI guide](../../../../../architecture/law/LAW_AUTHORING_CLI_GUIDE.md#5a-di
 The shared seed appends **32 Lexemes, 32 denotes Relations, and 57 Law refs** to `saves/zones/LawLine/zone.ecform`, creates only missing Law files under `saves/laws/`, and preserves existing root bytes. Zach's existing keyed identity is the recorded human author; Codex is the injector. Backup: `scratch/backups/law-line/LawLine-zone-before-law-line-patch-20261006-181244.ecform`. A second seed run leaves the native Zone bytes identical. This is an authorized vocabulary/Metalaw bootstrap; it does not install the Lens or overwrite Person-authored programs.
 
 Verification and native capture are recorded in [the audit](../../../../../audits/LAW_LINE_DIRECT_SCREEN_AUTHORING_2026-10-06.md). Remaining: actual Person unlock/typing, appearance, resize, stopping, and save/restart acceptance; multi-source composition/authority and other backends remain outside this rung.
+
+## Named regions and completed viewport observations — 2026-10-07
+
+Zach selected the earlier explanation's unfinished direct projection/addressing layer and asked to implement it through the Law Line Metalaw architecture. This rung supplies authored named region records (`color` VectorField, `selector` ScalarField), explicit output binding, checked granular canonical field paths, bounded actual framebuffer sensing, and ordinary Laws carrying observations onto their bearer. No new visual class, category enum, action opcode or parser verb is introduced.
+
+`ScreenRegion`, `ScreenSample`, and `ScreenSampleAtTime` are three authored value constructors and three compiler Metalaws. The maintained one-line programs are [creation and observation](../../../../../../examples/law_line_screen_region.txt) and [cyan recolouring and resampling](../../../../../../examples/law_line_screen_region_edit.txt). The [CLI guide](../../../../../architecture/law/LAW_AUTHORING_CLI_GUIDE.md#5b-a-named-displayed-region-its-source-and-its-sensed-pixels) gives the request contract, coordinate/definedness rules and exact field path.
+
+`ScreenChannel::senseOutput` runs after the completed viewport pass and before the Dear ImGui overlay. It resolves a qualified region selector afresh, recomputes membership, and reads the renderer's actual RGBA8 bytes. A request token is one capture attempt; success/refusal replaces the read-only observation and announces `sample.result`. Source/selector edits require a new token for a new observation. Sample membership has no retained cache; recorded selector/frame/dimensions prevent an old result masquerading as a current projection.
+
+The edit destination is explicitly the region's authored source. Final composited pixels are observed, but do not identify which source to mutate. Region selector and colour support remain separately authored mathematics. This is an explicit snapshot/source-binding rung, not a universal automatic pixel l-value or inverse compositor. The old Object texture projection/cache remains a separate existing modality surface; this work does not declare its invalidation debt resolved. Multi-source/Person composition, authorial arbitration, interactive selection and live projected addressing remain open.
+
+Seed patch: `saves/zones/LawLine/zone.ecform` received three Lexemes, three denotes Relations and six Law references; the six new Law roots are under `saves/laws/law-line-{value-constructor,compile-value}-{screenregion,screensample,screensampleattime}/law.json`. Existing native Zone bytes are preserved by the targeted append patch; backup is `scratch/backups/law-line/LawLine-zone-before-law-line-patch-20261007-183800.ecform`. New Laws record Zach's existing keyed DID as author, with Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` as injector. No demonstration regions or Persons were injected into an inhabited world.
+
+Verification: eight focused suites passed; the final Law Line regression passed **231/231** checks. Native 2560×1440 Engine/Terminal/WebGPU captures verify **481** gold and cyan samples with **zero** same-frame RGBA byte error, Person-owned direct output, detached observation copies, budget refusal and repeated clearing. Reseeding is byte-identical; backup comparison verifies insertion-only preservation of the old authored graph.
+
+Verification and remaining acceptance: [region audit](../../../../../audits/LAW_LINE_SCREEN_REGIONS_2026-10-07.md), [Person checks](../../../For%20Zach/Person%20Verification%20List.md). The runtime probe uses an isolated first seed and public identity/presence test seam; it is not a human key-unlock witness.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-07 18:54 PDT.*
 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-06 18:22 PDT.*

@@ -1,0 +1,23 @@
+{
+  "identifier": "material.studio.G5",
+  "material": {
+    "baseColor": [
+      0.18,
+      0.88,
+      0.45
+    ],
+    "name": "studio.G5",
+    "opacity": 1.0
+  },
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": {
+    "agent": "Claude Code / Claude Sonnet 5.5, session 01GxayCUN2nc7DDaeg33kXhZ",
+    "date": "2026-10-07",
+    "recovered_from": [
+      "saves/worlds/synthesis_studio.json",
+      "saves/worlds/synthesis_studio_living.json"
+    ]
+  }
+}

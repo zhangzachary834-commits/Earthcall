@@ -221,6 +221,8 @@ const std::vector<PathOption>& knownPathOptions() {
             else if (std::holds_alternative<glm::mat4>(probe))     type = "transform";
             else if (std::holds_alternative<std::string>(probe))   type = "text";
             else if (std::holds_alternative<bool>(probe))          type = "toggle";
+            else if (std::holds_alternative<std::shared_ptr<PropertyList>>(probe)) type = "list";
+            else if (std::holds_alternative<std::shared_ptr<PropertyDict>>(probe)) type = "dictionary";
             options.push_back({property->name(), "Channel — Screen", type, isVec});
             if (isVec) {
                 options.push_back({property->name() + ".x", "Channel — Screen", "number", false});

@@ -512,6 +512,26 @@ int main() {
               "Rapid release-and-repress MUST publish the new press");
     }
 
+    // Same normalized viewport address under window resize and independent
+    // framebuffer scale; read-only projections must also wake dependent Laws.
+    {
+        InteractionChannel channel;
+        InteractionChannel::Sense sense;
+        sense.windowWidth=1000; sense.windowHeight=500;
+        sense.pointerX=250; sense.pointerY=125;
+        channel.observePending(sense,{});
+        check(channel.propPointerU()==.25f && channel.propPointerV()==.25f,"normalized cursor uses window points");
+        sense.windowWidth=2000; sense.windowHeight=1000;
+        channel.observePending(sense,{});
+        check(channel.propPointerU()==.125f && channel.propPointerV()==.125f,"resize changes normalized address without cursor movement");
+        PropertyValue value;
+        check(PropertyPath::parse("pointerU").getValue(channel,value)==PropertyPath::PathResult::Ok &&
+              PropertyPath::parse("pointerU").setValue(channel,.5)==PropertyPath::PathResult::ReadOnly,
+              "normalized pointer is registered and cannot be forged by a Law");
+        sense.windowWidth=0;sense.windowHeight=0;channel.observePending(sense,{});
+        check(std::isfinite(channel.propPointerU()) && std::isfinite(channel.propPointerV()),"zero-size/minimized window cannot divide by zero");
+    }
+
     Universe::instance().setProvider(nullptr);
 
     if (g_failures) {

@@ -1,5 +1,33 @@
 # Person Verification List
 
+## One-paste Law Line pixel-art editor
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18`; Zach requested a whole 2D art editor through Law sentences.*
+
+- [ ] Rebuild/restart WebGPU, unlock, `enter LawLine`, close pointer-capturing panels, stop earlier conflicting display/click programs and release the cursor with Escape; paste the entire [editor line](../../../../examples/law_line_pixel_art_editor.txt) once, press Enter, and wait for 276 Laws to be acknowledged.
+- [ ] Choose left swatches and draw on the 16×16 grid; confirm ink selection, eraser and held-pointer cell entry feel correct, including fast movement between sensed frames.
+- [ ] Test the right-hand undo/redo arrows, red clear cross and undo-after-clear; confirm the one-step retained-value semantics match your expectation.
+- [ ] Click the teal down-arrow and inspect `@screen-recorder.lastSnapshotPath`; the PNG should show the completed viewport/editor chrome and correct colours.
+- [ ] Resize on Retina and another display if available; pointer addresses should match the displayed cells and tiles after scale/extent changes.
+- [ ] Click the grey close cross, submit the reopen line in the [task guide](../Specific%20Tasks/Rendering%20and%20OntoMath/Law_Line_Pixel_Art_Editor/Law_Line_Pixel_Art_Editor.md), and confirm artwork is retained.
+- [ ] Save the Laws and use the existing Person-state persistence workflow, restart, and confirm authored `atelier.*` artwork survives; Save Zone alone is not proof of Person-state retention.
+
+
+## Law Line named Screen regions
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-07 19:00 PDT — Zach requested the direct Screen region/property layer through Metalaws.*
+
+- [ ] Rebuild/restart `earthcall_webgpu`, unlock your identity, `enter LawLine`, stop Lens Time if active, and clear earlier direct output; paste [My Named Region](../../../../examples/law_line_screen_region.txt) once.
+- [ ] Look near physical pixel `(120,120)` from the top-left: a small gold disc should appear, with a radius of 12.25 physical pixels; on Retina this is smaller in window points.
+- [ ] Inspect your Person's `haloReading`: it should contain `ok=true`, token `gold-halo`, a completed-viewport frame/dimensions, and selected sample coordinates/colours; confirm this is the aspect of your bearer you intended.
+- [ ] Paste [Recolour My Region](../../../../examples/law_line_screen_region_edit.txt): the disc should turn cyan, and `haloReading` should report token `cyan-halo` with cyan samples. Judge whether explicit source edits plus historical observations fit your vision of a region Property.
+- [ ] Change the sample request token after resizing; confirm the next result records the new framebuffer dimensions. Without a new token the previous snapshot should remain explicitly historical.
+- [ ] In the existing Law editor/path lens, `sample.result` should be described as a dictionary; a write to its canonical/nested channel observation should refuse. Editing a Law-carried copy on your Person must not alter the channel witness.
+- [ ] Remove `@screen-channel.sample.request`, paste Clear Direct Screen twice, and confirm the disc disappears with an empty `output.lastRefusal`; stopping must not recreate deleted authored slots.
+- [ ] Save the initialization/derivation Laws, restart and reactivate them, then check the region returns and a fresh observation is made. Automatic live projection, inverse composited-pixel painting, and multi-Person output arbitration remain open.
+
+See [authoring contract and example](../../../architecture/law/LAW_AUTHORING_CLI_GUIDE.md#5b-a-named-displayed-region-its-source-and-its-sensed-pixels).
+
 
 ## Direct authored Screen forms
 
@@ -1299,3 +1327,14 @@ Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-0
 - [ ] Resize the viewport and confirm the form stays centred and scales with framebuffer height; judge its visual feel separately from the native fixture proof.
 - [ ] Disable/delete Lens Time, paste the clear program, and confirm the ordinary 3D scene returns; preview must create no Laws or visible output.
 - [ ] Save the setup Laws in the intended Zone, restart/reenter, and confirm initialization restores the Lens; remove and save the lesson Laws when finished so they do not reapply on a later activation.
+
+
+## Zone Material closure + shared Material roots (2026-10-07)
+
+*Claude Code · Claude Sonnet 5.5 · session `01GxayCUN2nc7DDaeg33kXhZ` · 2026-10-07.* Zach asked to finish the Per-Zone serialization pathway. Tests are green; none of these were seen in the real app. [Task](../Specific%20Tasks/Serialization%20and%20Storage/Per_Zone_serialization_pathway/Per_Zone_serialization_pathway.md#2026-10-07--material-closure-shared-material-roots-save-zone-isolation)
+
+- [ ] **Fresh boot, no Assets load → Creator Console → Zones → Move to Zone** on **FarLands**, **SynthesisStudio**, **SynthesisStudio.LivingInstrument**, **Borealis Sanctuary**, **Sanctuary of Sunlit Mist**, **Northern Veil**: each should enter and look as it did (terrain/studio materials present). A refusal prints `[zones] REFUSED activation of '<Zone>': … Material …` in the log and keeps you where you were — tell me which Zone.
+- [ ] **Luna's Moon Robot** and **Neural Network v2**: their Materials were never authored anywhere, so I declared them as engine-default (white) shared roots. They should look **exactly as before** (white/face-coloured). If anything looks different, that is a regression. Repaint one and Save Zone — the colour should survive restart.
+- [ ] **Prism Cathedral**: its 13 Materials had a name/id mix-up (loader fix). It may now look **more coloured / different from before** (basalt, limestone, gold…). Please judge whether that is what you authored.
+- [ ] **Save Zone isolation**: Move to FarLands, change something, Save Zone, restart. Then check `git status saves/` — only FarLands' files (and `saves/materials/` if you repainted a shared Material) should change; no new `saves/worlds/` file.
+- [ ] **Shared Material**: repaint `cathedral_basalt` from Borealis Sanctuary, Save Zone, then enter Sanctuary of Sunlit Mist — it should show the same change (one root, `saves/materials/cathedral_basalt/`).
