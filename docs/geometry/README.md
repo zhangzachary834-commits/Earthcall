@@ -24,3 +24,12 @@ a `MathNode`, and the containment-tree question is still open.
 
 Do not add new Person-facing instructions here until the Create3D console and
 the law agree on one gesture.
+
+## Polyhedron Generator Historical Notes
+
+- [CONVEX CONCAVE IMPLEMENTATION SUMMARY](./CONVEX_CONCAVE_IMPLEMENTATION_SUMMARY.md)
+- [CONVEX CONCAVE POLYHEDRON GUIDE](./CONVEX_CONCAVE_POLYHEDRON_GUIDE.md)
+- [FORMATION ROBUSTNESS REPORT](./FORMATION_ROBUSTNESS_REPORT.md)
+- [POLYHEDRON GENERATOR GUIDE](./POLYHEDRON_GENERATOR_GUIDE.md)
+- [POLYHEDRON GUIDE](./POLYHEDRON_GUIDE.md)
+- [POLYHEDRON UPGRADE SUMMARY](./POLYHEDRON_UPGRADE_SUMMARY.md)
