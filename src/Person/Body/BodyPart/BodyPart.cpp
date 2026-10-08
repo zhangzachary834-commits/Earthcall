@@ -1,7 +1,28 @@
 #include "BodyPart.hpp"
 #include <algorithm>
+#include <stdexcept>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
+
+namespace {
+glm::mat4 authoredBodyPartScale(const glm::vec3& dimensions) {
+    const auto value = OntoMath::affineScale(dimensions);
+    if (!value) throw std::runtime_error("BodyPart OntoMath scale refusal");
+    const auto lowered = value->toGlmMat4();
+    if (!lowered) throw std::runtime_error("BodyPart OntoMath scale lowering refusal");
+    return *lowered;
+}
+glm::mat4 authoredBodyPartCompose(const glm::mat4& first, const glm::mat4& second) {
+    const auto value = OntoMath::affineCompose(
+        OntoMath::MatrixValue::fromGlmMat4(first),
+        OntoMath::MatrixValue::fromGlmMat4(second));
+    if (!value) throw std::runtime_error("BodyPart OntoMath composition refusal");
+    const auto lowered = value->toGlmMat4();
+    if (!lowered) throw std::runtime_error("BodyPart OntoMath composition lowering refusal");
+    return *lowered;
+}
+} // namespace
 
 BodyPart::BodyPart(const std::string& name, Type type, 
                    ObjectTypes::ShapeKind geometryType, const glm::vec3& dimensions)
@@ -39,7 +60,7 @@ void BodyPart::draw() const {
 
     // Draw primary shape under body part's world transform
     r.pushModel(_transform);
-    r.pushModel(glm::scale(glm::mat4(1.0f), _dimensions));
+    r.pushModel(authoredBodyPartScale(_dimensions));
     _primaryObject->drawObject();
     _primaryObject->drawHighlightOutline();
     r.popModel();
@@ -68,20 +89,20 @@ void BodyPart::setTransform(const glm::mat4& t) {
         _localTransform = t;
     }
 
-    glm::mat4 scaled = t * glm::scale(glm::mat4(1.0f), _dimensions);
+    glm::mat4 scaled = authoredBodyPartCompose(t, authoredBodyPartScale(_dimensions));
     _primaryObject->updateCollisionZone(scaled);
 
     // Propagate world transform to every sub-object so raycasting,
     // collision zones, and tool targeting all use correct positions.
     for (size_t i = 0; i < _subObjects.size(); ++i) {
         if (!_subObjects[i]) continue;
-        glm::mat4 worldT = t * _subObjectLocalOffsets[i];
+        glm::mat4 worldT = authoredBodyPartCompose(t, _subObjectLocalOffsets[i]);
         _subObjects[i]->setTransform(worldT);
     }
 }
 
 glm::mat4 BodyPart::getRaycastTransform() const {
-    return _transform * glm::scale(glm::mat4(1.0f), _dimensions);
+    return authoredBodyPartCompose(_transform, authoredBodyPartScale(_dimensions));
 }
 
 
@@ -110,7 +131,7 @@ Object* BodyPart::addSubObject(ObjectTypes::ShapeKind kind, const glm::mat4& loc
     auto obj = std::make_unique<Object>(subId);
     obj->setShape(kind);
 
-    glm::mat4 worldT = _transform * localOffset;
+    glm::mat4 worldT = authoredBodyPartCompose(_transform, localOffset);
     obj->setTransform(worldT);
     for (int f = 0; f < 6; ++f) obj->setFaceColor(f, color[0], color[1], color[2]);
     Object* raw = obj.get();
@@ -122,7 +143,7 @@ Object* BodyPart::addSubObject(ObjectTypes::ShapeKind kind, const glm::mat4& loc
 
 Object* BodyPart::addSubObject(std::unique_ptr<Object> obj, const glm::mat4& localOffset) {
     if (!obj) return nullptr;
-    glm::mat4 worldT = _transform * localOffset;
+    glm::mat4 worldT = authoredBodyPartCompose(_transform, localOffset);
     obj->setTransform(worldT);
     Object* raw = obj.get();
     _subObjects.push_back(std::move(obj));
@@ -166,7 +187,7 @@ void BodyPart::setSubObjectLocalOffset(size_t index, const glm::mat4& localOffse
     _subObjectLocalOffsets[index] = localOffset;
     // Recompute world transform for this sub-object
     if (_subObjects[index]) {
-        glm::mat4 worldT = _transform * localOffset;
+        glm::mat4 worldT = authoredBodyPartCompose(_transform, localOffset);
         _subObjects[index]->setTransform(worldT);
     }
 }

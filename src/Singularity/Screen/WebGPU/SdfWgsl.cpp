@@ -26,6 +26,7 @@ const char* kSdfBindings = R"WGSL(
 struct SdfInstanceData {
     model: mat4x4<f32>,
     invModel: mat4x4<f32>,
+    normalMat: mat4x4<f32>,
     baseColor: vec4<f32>,
     shading: vec4<f32>,
     extents: vec4<f32>,
@@ -646,6 +647,83 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
             }
             return "(vec3<f32>(" + comps[0] + ", " + comps[1] + ", " + comps[2] +
                    ") / (2.0 * " + eps + "))";
+        }
+
+        // --- Rung 4 matrix lowering -----------------------------------------
+        // WGSL stores matrices as columns (matCxR); MatrixConstruct authors
+        // logical rows. Reorder only at this backend boundary.
+        case Op::MatrixConstruct: {
+            if (node.matrixRows < 2 || node.matrixRows > 4 ||
+                node.matrixCols < 2 || node.matrixCols > 4) {
+                e.refuse("MatrixConstruct WGSL lowering supports dimensions 2..4");
+                return "0.0";
+            }
+            std::string out = "mat" + std::to_string(node.matrixCols) + "x" +
+                              std::to_string(node.matrixRows) + "<f32>(";
+            for (std::size_t c = 0; c < node.matrixCols; ++c) {
+                if (c) out += ", ";
+                out += "vec" + std::to_string(node.matrixRows) + "<f32>(";
+                for (std::size_t r = 0; r < node.matrixRows; ++r) {
+                    if (r) out += ", ";
+                    out += arg(r * node.matrixCols + c);
+                }
+                out += ")";
+            }
+            return out + ")";
+        }
+        case Op::MatrixIdentity: {
+            if (node.matrixRows < 2 || node.matrixRows > 4 ||
+                node.matrixRows != node.matrixCols) {
+                e.refuse("MatrixIdentity WGSL lowering supports square dimensions 2..4");
+                return "0.0";
+            }
+            const std::size_t n = node.matrixRows;
+            std::string out = "mat" + std::to_string(n) + "x" + std::to_string(n) + "<f32>(";
+            for (std::size_t c = 0; c < n; ++c) {
+                if (c) out += ", ";
+                out += "vec" + std::to_string(n) + "<f32>(";
+                for (std::size_t r = 0; r < n; ++r) {
+                    if (r) out += ", ";
+                    out += (r == c ? "1.0" : "0.0");
+                }
+                out += ")";
+            }
+            return out + ")";
+        }
+        case Op::MatrixAdd: return "(" + arg(0) + " + " + arg(1) + ")";
+        case Op::MatrixSub: return "(" + arg(0) + " - " + arg(1) + ")";
+        case Op::MatrixScale: return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::MatrixMultiply: return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::MatrixVectorMultiply: return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::MatrixTranspose: return "transpose(" + arg(0) + ")";
+        case Op::MatrixDeterminant: return "determinant(" + arg(0) + ")";
+        case Op::MatrixInverse: {
+            // WGSL has no inverse() primitive. Keep OntoMath as the sole
+            // inverse algorithm: binding-independent inverses become derived
+            // numeric parameters; a dynamic inverse refuses.
+            static const std::map<std::string, PropertyValue> kNoBindings;
+            auto value = node.evaluate(kNoBindings, nullptr);
+            if (!value || !std::holds_alternative<OntoMath::MatrixValue>(*value)) {
+                e.refuse("MatrixInverse WGSL lowering requires a binding-independent invertible matrix");
+                return "0.0";
+            }
+            const auto& inv = std::get<OntoMath::MatrixValue>(*value);
+            if (inv.rows() < 2 || inv.rows() > 4 || inv.rows() != inv.cols()) {
+                e.refuse("MatrixInverse WGSL lowering supports square dimensions 2..4");
+                return "0.0";
+            }
+            const std::size_t n = inv.rows();
+            std::string out = "mat" + std::to_string(n) + "x" + std::to_string(n) + "<f32>(";
+            for (std::size_t c = 0; c < n; ++c) {
+                if (c) out += ", ";
+                out += "vec" + std::to_string(n) + "<f32>(";
+                for (std::size_t r = 0; r < n; ++r) {
+                    if (r) out += ", ";
+                    out += e.param(static_cast<float>(inv.at(r, c)));
+                }
+                out += ")";
+            }
+            return out + ")";
         }
 
         // --- Declared, not implemented, on EITHER path ----------------------
@@ -1914,9 +1992,9 @@ fn fs(in: VSOut) -> FSOut {
     let pf = ro + rd * t;                                // field-space hit
     let pw = (inst.model * vec4<f32>(pf, 1.0)).xyz;         // world-space hit
     let nf = sdfNormal(pf);
-    // Normals transform by the inverse-transpose; invModel transposed gives it
-    // without shipping another matrix.
-    let nw = normalize((transpose(inst.invModel) * vec4<f32>(nf, 0.0)).xyz);
+    // OntoMath authors the inverse-transpose on CPU. The shader consumes the
+    // lowered normal matrix; it does not independently originate that meaning.
+    let nw = normalize((inst.normalMat * vec4<f32>(nf, 0.0)).xyz);
 
     let L = normalize(u.lightPos.xyz - pw);
     let V = normalize(u.eyePos.xyz - pw);
@@ -2077,7 +2155,7 @@ Program compileScreenForm(const OntoMath::Piecewise& color,
             std::string condition = "true";
             if (piece.hasLo || piece.hasHi) {
                 const auto it = env.find(form.inputVariable);
-                if (it == env.end() || it->second != OntoMath::ValueKind::Scalar) {
+                if (it == env.end() || it->second.kind != OntoMath::ValueKind::Scalar) {
                     e.refuse("direct Screen interval coordinate is unbound: " + form.inputVariable);
                     break;
                 }
