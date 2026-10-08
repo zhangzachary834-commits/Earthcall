@@ -33,6 +33,15 @@ jobs:
         destroy_law_test
         language_identity_reference_test
         creation_tools_test
+        action_spawn_test
+        object_concept_test
+        ontomath_transform_convention_test
+        ontomath_matrix_refusal_test
+        ontomath_matrix_value_test
+        ontomath_linear_algebra_test
+        ontomath_authoring_reachability_test
+        ontomath_affine_sovereignty_test
+        geometry_ontomath_test
         interaction_channel_test
         creator_console_fixture_law_test
         keyboard_shell_shortcuts_test
@@ -195,6 +204,8 @@ jobs:
             webgpu_sdf_color_expr_test \
             webgpu_perlin_exact_gradient_test \
             webgpu_object_test \
+            webgpu_particle_test \
+            webgpu_ontomath_native_resolution_parity_test \
             webgpu_v5_overlap_physics_test \
             webgpu_volumetric_mist_test \
             sanctuary_of_sunlit_mist_test
@@ -242,6 +253,14 @@ jobs:
         run: |
           set -o pipefail
           ./build/webgpu_object_test 2>&1 | tee webgpu-object-parity.log
+
+      - name: Verify WebGPU particle MVP path
+        shell: bash
+        run: ./build/webgpu_particle_test
+
+      - name: Verify OntoMath native-resolution image parity
+        shell: bash
+        run: ./build/webgpu_ontomath_native_resolution_parity_test
 
       - name: Verify V5 fused overlap physics
         shell: bash

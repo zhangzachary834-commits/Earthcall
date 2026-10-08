@@ -15,6 +15,7 @@
 #include <set>
 #include <utility>
 #include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 
 
 // Formation definition: bidirectional Singular Relation-graph with at least two Relations that look visually like a
@@ -658,36 +659,32 @@ void Formation::applyAttachmentRelations() {
 
             if (rel->attachment.inheritTranslation || rel->attachment.inheritRotation || rel->attachment.inheritScale) {
                 if (rel->attachment.inheritRotation && rel->attachment.inheritScale && rel->attachment.inheritTranslation) {
-                    nextTransform = parentTransform * rel->attachment.localOffset;
-                } else {
-                    glm::vec3 translation = rel->attachment.inheritTranslation
-                        ? glm::vec3(parentTransform * glm::vec4(glm::vec3(rel->attachment.localOffset[3]), 1.0f))
-                        : glm::vec3(childTransform[3]);
-
-                    glm::mat4 rebuilt = glm::translate(glm::mat4(1.0f), translation);
-                    if (rel->attachment.inheritRotation) {
-                        glm::vec3 parentX = glm::normalize(glm::vec3(parentTransform[0]));
-                        glm::vec3 parentY = glm::normalize(glm::vec3(parentTransform[1]));
-                        glm::vec3 parentZ = glm::normalize(glm::vec3(parentTransform[2]));
-                        glm::mat4 rotationOnly(1.0f);
-                        rotationOnly[0] = glm::vec4(parentX, 0.0f);
-                        rotationOnly[1] = glm::vec4(parentY, 0.0f);
-                        rotationOnly[2] = glm::vec4(parentZ, 0.0f);
-                        rebuilt *= rotationOnly;
-                    } else {
-                        glm::vec3 childX = glm::normalize(glm::vec3(childTransform[0]));
-                        glm::vec3 childY = glm::normalize(glm::vec3(childTransform[1]));
-                        glm::vec3 childZ = glm::normalize(glm::vec3(childTransform[2]));
-                        rebuilt[0] = glm::vec4(childX, 0.0f);
-                        rebuilt[1] = glm::vec4(childY, 0.0f);
-                        rebuilt[2] = glm::vec4(childZ, 0.0f);
+                    const auto parentAuthored = OntoMath::MatrixValue::fromGlmMat4(parentTransform);
+                    const auto localAuthored = OntoMath::MatrixValue::fromGlmMat4(rel->attachment.localOffset);
+                    const auto composed = OntoMath::affineCompose(parentAuthored, localAuthored);
+                    const auto lowered = composed ? composed->toGlmMat4() : std::nullopt;
+                    if (!lowered) {
+                        std::fprintf(stderr,
+                            "Formation::applyAttachmentRelations: REFUSED invalid full-inheritance affine composition.\n");
+                        continue;
                     }
-
-                    glm::vec3 scale = rel->attachment.inheritScale
-                        ? extractScale(parentTransform * rel->attachment.localOffset)
-                        : extractScale(childTransform);
-                    rebuilt = glm::scale(rebuilt, scale);
-                    nextTransform = rebuilt;
+                    nextTransform = *lowered;
+                } else {
+                    const auto parentAuthored = OntoMath::MatrixValue::fromGlmMat4(parentTransform);
+                    const auto childAuthored = OntoMath::MatrixValue::fromGlmMat4(childTransform);
+                    const auto localAuthored = OntoMath::MatrixValue::fromGlmMat4(rel->attachment.localOffset);
+                    const auto selected = OntoMath::affineSelectTRS(
+                        parentAuthored, childAuthored, localAuthored,
+                        rel->attachment.inheritTranslation,
+                        rel->attachment.inheritRotation,
+                        rel->attachment.inheritScale);
+                    const auto lowered = selected ? selected->toGlmMat4() : std::nullopt;
+                    if (!lowered) {
+                        std::fprintf(stderr,
+                            "Formation::applyAttachmentRelations: REFUSED invalid partial-inheritance affine composition.\n");
+                        continue;
+                    }
+                    nextTransform = *lowered;
                 }
             }
 

@@ -1,0 +1,811 @@
+# OntoMath Linear Algebra & Transform Sovereignty — Implementation Plan
+
+**Date:** 2026-09-30  
+**Author:** GPT-5.6 Sol ("The Sun") + Zachary Zhang  
+**Branch:** `sol/ontomath-linear-algebra-unification-20260930`  
+**Base:** `sync-from-earthcall-main`  
+**Human direction:** OntoMath is Earthcall's pure mathematics engine. There must not be a competing mathematical system in renderer, physics, geometry, Object motion, camera code, or other C++ substrate. GLM may remain an execution kernel, but it must not remain a second source of mathematical meaning.
+
+**Status:** Rungs 0–9 are complete on this campaign through the Rung 9 quadric/custom-matrix migration. The corrected reconciliation is ancestry-preserving and current with canonical `f7ec902ddfce58ec6155f770e289c0c5af8a91d2`. Exact-head campaign evidence on code-bearing head `e5af3dc653ea5202cb97b69bc9efa6987d0f1958` establishes the focused OntoMath/geometry witnesses and the SDF/WebGPU/native-resolution lanes as green. The overall workflow remains red only on failures independently reproduced on exact canonical: `second_nature_law_forge_zone_test`, `authorable_light_contract_test`, and the Slow Adapter authored-world performance lane. Rung 10 remains deliberately unstarted: it is a fresh post-landing cleanup/guardrail branch and requires Zach's explicit approval to merge Rungs 0–9 first. Rung 11 remains out of scope.
+
+---
+
+## 0. Constitutional invariant
+
+At plan authoring time, Earthcall had the following mathematical sovereignty gap (Rung 1 has now closed the matrix-value/type portion, while transform authorship remains to migrate):
+
+- `OntoMath::MathNode` can author scalar and 3-vector algebra.
+- `PropertyValue` can carry `glm::mat4`.
+- the OntoMath type system had no Matrix / LinearMap kind; **Rung 1 now provides a dimension-aware Matrix kind/value, while authored matrix operations begin in Rung 2**;
+- affine transforms, inverse-transpose normals, camera matrices, quadric transforms, and other matrix mathematics are still originated directly in C++ / GLM and in hand-written WGSL.
+
+The target invariant is:
+
+> **All mathematical semantics belong to OntoMath. Substrates may execute, lower, cache, or serialize OntoMath mathematics, but they may not independently define mathematical truth.**
+
+This is deliberately stronger than "put helper functions in a namespace."
+
+### Allowed
+
+```
+authored OntoMath Inverse(A)
+        ↓
+OntoMath CPU evaluator
+        ↓
+GLM / numerical kernel computes inverse
+```
+
+```
+authored OntoMath Transpose(Inverse(M))
+        ↓
+OntoMath WGSL compiler
+        ↓
+equivalent WGSL emitted or an exactly equivalent derived value supplied
+```
+
+### Forbidden
+
+```
+Physics.cpp      decides inverse(M)
+Renderer.cpp     decides inverse-transpose(M)
+ObjectMotion.cpp decides rotate/scale composition
+Camera.cpp       decides lookAt/perspective
+WGSL             independently re-states the formulas
+OntoMath         cannot represent any of them
+```
+
+GLM is therefore permitted as a **backend implementation library**, not as a parallel mathematical language.
+
+---
+
+## 1. Non-negotiable design rules
+
+1. **Semantic ownership before migration.** No call site is "cleaned up" by merely wrapping GLM. The operation must first exist as OntoMath-authored mathematics.
+2. **No domain-specific matrix classes.** Do not add `CameraMatrix`, `PhysicsMatrix`, `NormalMatrix`, `ObjectTransformMath`, or other nouns that fracture the mathematical vocabulary.
+3. **Dimension is part of mathematical type.** A matrix is not "sixteen floats." Matrix dimensions must be legible to type checking.
+4. **Refuse impossible mathematics.** Singular inverse, dimension mismatch, malformed construction, or unsupported backend lowering must return an explicit refusal / `nullopt`; never identity, zero, stale output, or a guessed result.
+5. **CPU and GPU are two evaluators of one authored expression.** Backend choice must not change the mathematical answer.
+6. **Caches are derived state only.** `invModel`, normal matrices, view-projection matrices, and similar values may be cached for performance, but the cache cannot become the source of truth.
+7. **Serialization preserves authored meaning.** Derived caches need not be serialized as authored mathematical truth.
+8. **Existing `MathNode::Op` numbering is append-only.** Current values through `Noise = 29` remain untouched; `Unsupported = 255` remains reserved.
+9. **Do not widen the migration by accident.** Complex-number algebra, arbitrary tensor calculus, sparse solvers, and numerical-analysis libraries are later OntoMath extensions unless a migration witness requires them.
+10. **Performance is not permission for semantic duplication.** Optimized closed forms are allowed only as proven lowerings of an OntoMath expression.
+
+---
+
+# 2. Migration ladder
+
+```
+[Rung 0 — Contract + witnesses]
+        |
+        v
+[Rung 1 — First-class Matrix / LinearMap value and type]
+        |
+        v
+[Rung 2 — Core authored linear algebra + CPU evaluator]
+        |
+        v
+[Rung 3 — Serialization, editor, printing, dependency/range discipline]
+        |
+        v
+[Rung 4 — GPU lowering / backend parity]
+        |
+        v
+[Rung 5 — Affine transform vocabulary in OntoMath]
+        |
+        v
+[Rung 6 — World/object/body/formation migration]
+        |
+        v
+[Rung 7 — Physics, collision, picking, ray-space migration]
+        |
+        v
+[Rung 8 — Camera + renderer + normal transform migration]
+        |
+        v
+[Rung 9 — Quadric and remaining custom matrix algebra migration]
+        |
+        v
+[Rung 10 — GLM semantic quarantine + anti-gift-shop guardrail]
+        |
+        v
+[Later — advanced linear algebra extensions]
+```
+
+Each rung must land with witnesses before the next subsystem migration begins.
+
+---
+
+# 3. Rung 0 — Freeze the mathematical contract
+
+## Objective
+
+Define the exact current semantics before changing representation, so the unification cannot silently change Earthcall's world.
+
+## Work
+
+Create tests recording:
+
+- matrix storage / indexing convention currently observable at serialization boundaries;
+- multiplication composition order;
+- object local -> world convention;
+- point transformation convention;
+- direction transformation convention;
+- normal inverse-transpose convention;
+- scale/rotation/translation ordering used by Object motion;
+- view matrix convention;
+- projection depth convention used by active render paths;
+- ray unprojection convention;
+- singular transform behavior currently relied upon by callers.
+
+Add a focused audit table of every production `src/` call to:
+
+- `glm::inverse`
+- `glm::transpose`
+- `glm::translate`
+- `glm::rotate`
+- `glm::scale`
+- `glm::determinant`
+- `glm::lookAt`
+- `glm::perspective*`
+- direct `mat4 * vec4` world/local transform sites
+
+Classify each hit as:
+
+1. **semantic origin** — must migrate;
+2. **OntoMath backend implementation** — allowed;
+3. **boundary conversion / upload** — allowed;
+4. **test reference implementation** — temporarily allowed;
+5. **dead/demo/smoke path** — clean separately.
+
+## Required witnesses
+
+- `ontomath_transform_convention_test`
+- `ontomath_matrix_refusal_test`
+- inventory document committed beside this plan
+
+No production behavior changes in Rung 0.
+
+---
+
+# 4. Rung 1 — First-class Matrix / LinearMap semantics
+
+## Objective
+
+Make matrices mathematically legible to OntoMath rather than merely storable by `PropertyValue`.
+
+## New pure value
+
+Add:
+
+```
+src/Singularity/OntoMath/LinearAlgebra.hpp
+src/Singularity/OntoMath/LinearAlgebra.cpp
+```
+
+Introduce a dimension-aware pure value, provisionally:
+
+```cpp
+namespace OntoMath {
+
+struct MatrixValue {
+    std::size_t rows;
+    std::size_t cols;
+    std::vector<double> elements; // canonical logical ordering, documented
+};
+
+}
+```
+
+The semantic type must not be named `Mat4`. Four-by-four is one important instance, not the ontology.
+
+The implementation may later add compact small-matrix storage without changing authored semantics.
+
+## Type system
+
+Extend the OntoMath type judgement so it can distinguish:
+
+- Scalar
+- Vector
+- Matrix
+- ScalarField
+- VectorField
+- Unknown
+
+A bare `ValueKind::Matrix` is insufficient for multiplication checks, so introduce dimension metadata in the type result rather than hiding it in runtime values.
+
+Provisionally:
+
+```cpp
+struct MathType {
+    ValueKind kind;
+    std::optional<std::size_t> vectorDim;
+    std::optional<std::size_t> rows;
+    std::optional<std::size_t> cols;
+};
+```
+
+Existing vector expressions remain 3D unless explicitly extended later. Do not break old saves merely to generalize vectors in this rung.
+
+## PropertyValue bridge
+
+Allow `PropertyValue` to carry the OntoMath matrix value.
+
+During migration, legacy `glm::mat4` properties may coexist at storage boundaries, but OntoMath must have an explicit lossless adapter:
+
+```
+glm::mat4 <-> OntoMath::MatrixValue(4,4)
+```
+
+That adapter is a representation bridge, not a second mathematical definition.
+
+## Required witnesses
+
+- construction and indexing round trip;
+- exact 4x4 GLM bridge round trip;
+- dimension metadata survives JSON/msgpack property round trip;
+- malformed matrix shape refuses;
+- old saves containing `glm::mat4` still load.
+
+---
+
+# 5. Rung 2 — Core authored linear algebra
+
+## Objective
+
+Make the mathematical operations themselves authorable and evaluable inside OntoMath.
+
+Append new `MathNode::Op` values after 29. Exact numeric assignments are fixed when implementation begins and then never renumbered.
+
+Required semantic operations:
+
+- matrix construction;
+- identity matrix;
+- matrix addition / subtraction;
+- scalar × matrix;
+- matrix × matrix;
+- matrix × vector where dimensions permit;
+- transpose;
+- determinant;
+- inverse.
+
+Strongly preferred in this rung if they simplify callers:
+
+- solve `Ax=b` as an authored operation;
+- trace;
+- matrix component access.
+
+Do **not** add `Translate`, `CameraPerspective`, or `NormalMatrix` as primitive matrix ops yet. Those are derived constructions in later rungs.
+
+## Refusal semantics
+
+- dimension mismatch -> refusal;
+- determinant on non-square matrix -> refusal;
+- inverse on non-square matrix -> refusal;
+- inverse on singular / numerically non-invertible matrix -> refusal with one shared threshold policy;
+- NaN / non-finite inputs -> refusal unless OntoMath already defines a different explicit policy.
+
+Never return identity for failed inverse.
+
+## CPU evaluator
+
+The CPU evaluator may use GLM for supported fixed-size matrices or an internal numerical kernel. The important boundary is:
+
+> only OntoMath implementation code chooses what `Inverse`, `Transpose`, `MatMul`, etc. mean.
+
+Domain callers never call the numerical kernel directly to originate those meanings.
+
+## Printing / legibility
+
+Every matrix expression must have a human-legible `MathNode::print()` form.
+
+Examples:
+
+```
+transpose(M)
+inverse(M)
+A * B
+A * v
+identity(4)
+matrix4(...)
+```
+
+No opaque "mat op 33".
+
+## Required witnesses
+
+- hand-computable 2x2 and 3x3 examples;
+- 4x4 affine examples;
+- associativity witness within floating tolerance;
+- determinant/inverse identities where defined;
+- singular inverse refusal;
+- dimension mismatch refusal;
+- authored JSON -> AST -> print -> evaluate round trip.
+
+---
+
+# 6. Rung 3 — Serialization, editor, authoring and inspection
+
+## Objective
+
+A mathematical operation that only C++ can construct is not yet fully Earthcall-native.
+
+## Serialization
+
+Extend `MathNode::toJson/fromJson` and unknown-op preservation for the new operations.
+
+Old builds encountering future ops must continue preserving unsupported payloads rather than destroying authored law text.
+
+## Math editor
+
+Extend `src/Singularity/Screen/MathEditors.cpp` with matrix operations.
+
+The editor must expose:
+
+- matrix dimensions;
+- matrix element expressions;
+- multiplication;
+- transpose;
+- inverse;
+- determinant;
+- identity.
+
+No renderer-specific names.
+
+## Law / property reachability
+
+Where a MatrixValue is registered as a property, make it legible to Law read/write paths at the same level of governance as existing scalar/vector values, subject to the normal property-authority rules.
+
+## Required witnesses
+
+- editor-created matrix AST round trip;
+- save/reload identity;
+- unsupported future op survives round trip;
+- property read/write round trip;
+- No Black Box test extended to MatrixValue.
+
+---
+
+# 7. Rung 4 — WGSL / GPU lowering
+
+## Objective
+
+The GPU becomes another evaluator of OntoMath matrix expressions, not a second author of matrix mathematics.
+
+## Rules
+
+- `SdfWgsl.cpp` or its successor lowers new matrix ops from the AST.
+- WGSL native matrix operators may be emitted where their semantics match exactly.
+- Where a GPU language lacks a required primitive, generate equivalent code or provide an exact derived value produced from the same OntoMath expression.
+- unsupported dimensions/operations refuse compilation explicitly.
+- numeric parameter edits must not force structural recompilation when existing OntoMath parameterization can preserve structure.
+
+## Important distinction
+
+Hand-written WGSL may still *execute* a matrix expression that has already been derived from OntoMath.
+
+It may not independently invent:
+
+```
+normal = transpose(inverse(model))
+```
+
+unless that emitted expression is the lowering of the corresponding OntoMath tree / standard function.
+
+## Required witnesses
+
+- CPU/WGSL matrix multiply parity;
+- CPU/WGSL transpose parity;
+- CPU/WGSL inverse parity for supported matrices;
+- refusal parity;
+- no stale GPU result after authored matrix parameter change.
+
+---
+
+# 8. Rung 5 — Canonical affine mathematics
+
+## Objective
+
+Define translation, scaling, rotation, affine composition, point/direction application, and normal transformation **inside OntoMath**.
+
+These should be built from the general linear algebra, not become a second special-purpose math engine.
+
+Canonical functions should include equivalents of:
+
+- identity affine transform;
+- translation;
+- non-uniform scale;
+- axis-angle rotation;
+- existing Euler composition convention as a named derived function;
+- compose;
+- transform point;
+- transform direction;
+- transform normal;
+- inverse affine transform.
+
+Point and direction must not be conflated:
+
+```
+point      -> homogeneous w = 1
+direction  -> homogeneous w = 0
+```
+
+Normal transformation is mathematically derived from the linear component:
+
+```
+n_world = normalize(transpose(inverse(L)) * n_local)
+```
+
+The inverse-transpose formula must exist once as OntoMath meaning.
+
+### Singular normal transform
+
+If the linear component is singular, the normal transform is undefined unless a separately authored fallback exists. It must not silently invent a normal.
+
+## Required witnesses
+
+- translation parity;
+- rotation parity;
+- non-uniform scaling parity;
+- composition order parity with current Object behavior;
+- point vs direction translation witness;
+- inverse round trip;
+- normal under non-uniform scale;
+- singular normal refusal.
+
+---
+
+# 9. Rung 6 — Object, Body, Formation and creation migration
+
+**Status (2026-10-03): IN PROGRESS.** Rungs 0–5 remain complete. Rung 6 has migrated Object Euler recomposition, Body default placement, BodyPart dimension/nested affine composition, Formation full/selective inheritance, CreationChannel spawn and CursorSnap rotated-axis transform meaning, ObjectConcept centroid-relative capture/newborn placement composition, and First Mover tool/creation parent-world → local derivation to OntoMath. `creation_tools_test` now pins First Mover rotated + non-uniform-scale world/local parity against a frozen GLM oracle and explicitly witnesses singular-parent refusal. Exact-head CI #4994 on `340c539a81366b7f1cf6ba4dbe5efc81ecb23b9f` passed the OntoMath-owned Focused CPU, SDF range-proxy/WGSL, and authored-Perlin A/B lanes; its overall red was the separate Slow Adapter lane. Law Spawn/Create placement now delegates translation authorship to OntoMath and `action_spawn_test` pins nonzero authored-subject placement through that path. Object and Automation decomposition now delegate scale/Euler extraction to OntoMath; `affineExtractEulerXYZDegrees` preserves the frozen reflected-basis/quaternion convention, and `ontomath_affine_sovereignty_test` includes a reflected non-uniform-scale GLM oracle. Exact-head CI #5086 on `4919367c5ad3fe5ae4f58685a04d98f2eb794623` passed the campaign-owned Focused CPU, SDF range-proxy/WGSL, and authored-Perlin A/B lanes; the overall workflow red is the separately owned Slow Adapter performance lane. A targeted production audit of the Rung 6 surfaces found no remaining direct semantic-origin `glm::translate`, `glm::rotate`, `glm::scale`, `glm::inverse`, `glm::transpose`, or `glm::determinant` calls. **Rung 6 is COMPLETE.**
+
+
+## Objective
+
+Remove direct transform mathematics from world-being code.
+
+Primary targets include current direct GLM semantics in:
+
+- `ObjectMotion.cpp`
+- `Body.cpp` / `BodyPart.cpp`
+- `Formation.cpp`
+- `CreationChannel.cpp`
+- `ObjectConcept.cpp`
+- `Automation.cpp`
+- First Mover creation/tool code
+- Law spawn/placement paths
+
+## Migration rule
+
+Callers ask OntoMath for the transform result or invoke an OntoMath-authored standard function.
+
+They may store the resulting 4x4 representation for hot runtime use.
+
+They may not re-derive the formula locally.
+
+Example target:
+
+```
+Object rotation state / authored parameters
+            ↓
+OntoMath affine expression
+            ↓
+OntoMath evaluate/lower
+            ↓
+cached 4x4 runtime representation
+```
+
+## Required witnesses
+
+- Object rotation behavior unchanged;
+- shape generator placement unchanged;
+- Body local/world transform parity;
+- Formation nested transform parity;
+- save/load round trip;
+- Law-authored transform modifications remain reachable.
+
+> **Inert future-rung scaffold (2026-10-01):** `docs/plans/ONTOMATH_RUNGS_7_10_SCAFFOLD_2026-10-01.md` records the already-authorized Rung 7–10 boundaries and future witness surfaces. It is intentionally not wired to production, CMake, or CI and does **not** advance Rung 6 or mark any later rung started.
+
+---
+
+# 10. Rung 7 — Physics, collision, raycast and picking migration
+
+**Status (2026-10-05): COMPLETE.** `Object::raycastFace` world -> local origin/direction transformation is OntoMath-owned with explicit singular refusal; exact-head CI #5090 passed Focused CPU, SDF range-proxy/WGSL, and authored-Perlin A/B. `ObjectCollision` point world -> local inversion and inverse-transpose normal transformation are OntoMath-owned, with non-uniform-scale collision-normal parity and singular-refusal evidence; exact-head CI #5102 passed the same campaign-owned lanes. `CollisionDispatcher` delegates inverse-transpose normals and signed-value world -> local probes to OntoMath while preserving one authored inverse per scan direction; repaired exact-head CI #5128 passed the campaign-owned lanes. Projective NDC unprojection is OntoMath-owned with parity and singular-refusal evidence; `InteractionChannel` and `CursorTools` delegate inverse-VP picking rays to that authority, with #5152 establishing the interaction slice. `ObjectEvents` now delegates projection-view composition/inversion to OntoMath while deliberately preserving its historical undivided homogeneous ray-origin convention. Exact-head CI #5212 on witness commit `11b32ec3` passed Focused CPU, SDF range-proxy/WGSL, and authored-Perlin A/B; its sole workflow failure was the separately owned Slow Adapter performance lane. Required Rung-7 witness coverage is now present for collision normals, raycast hits, transformed SDF signed values, picking (including the historical `ObjectEvents` origin convention), non-uniform scale, and explicit singular-transform refusal. The final targeted production audit found no remaining direct semantic-origin matrix shelf in the planned physics/picking target set. Exact-head CI #5213 on the resulting plan head again passed Focused CPU, SDF range-proxy/WGSL, and authored-Perlin A/B; its sole workflow failure was the separately owned Slow Adapter performance lane. **Rung 7 is COMPLETE. Rung 8 is the active frontier.**
+
+## Objective
+
+Remove the physics-side matrix gift shop.
+
+Primary targets:
+
+- `CollisionDispatcher.cpp`
+- `ObjectCollision.cpp`
+- `ObjectRaycast.cpp`
+- `ObjectEvents.cpp`
+- interaction/cursor unprojection paths
+
+Migrate:
+
+- world -> local point transformation;
+- local -> world support/normal transformation;
+- inverse transforms;
+- transpose operations;
+- ray unprojection math where it is general matrix mathematics.
+
+Collision algorithms themselves (GJK, support mapping, collision policy) are not "linear algebra" and remain in physics. Only their mathematical transforms move under OntoMath authority.
+
+## Required witnesses
+
+- collision normal parity;
+- raycast hit parity;
+- transformed SDF signed-value parity;
+- picking parity;
+- non-uniform-scale collision witness;
+- singular-transform refusal behavior is explicit.
+
+---
+
+# 11. Rung 8 — Camera, renderer and shader migration
+
+**Status (2026-10-06): IN PROGRESS.** OntoMath owns canonical camera look-at and perspective projection mathematics (including NO/ZO depth selection and explicit invalid/degenerate refusal), world -> clip composition, and clip -> world unprojection. `EngineRender.cpp` delegates camera view/projection meaning to OntoMath and only binds camera/render parameters plus consumes the lowered GLM representation. `ObjectRender.cpp` delegates baked mesh point/normal transforms to OntoMath and, as of `a3f38ac4`, the cached cylinder/cone/cap placement transforms are OntoMath-authored rather than originated by direct `glm::translate` / `glm::rotate` calls; `17a52dda` adds frozen-oracle parity witnesses for translation and the historical bottom-cap T*R composition. Exact-head CI #5395 on head `a8d55983` passed Focused CPU, SDF range-proxy/WGSL, and authored-Perlin A/B; its sole workflow failure was the separately owned Slow Adapter performance lane. That exact head includes the primitive-placement witnesses and the camera-motion invariant witness: translating eye, target, and the observed world point together preserves OntoMath-authored view-space coordinates, with GLM retained only as a frozen reference oracle. Commit `f1c34129` adds the focused Rung-8 SDF/renderer normal witness under non-uniform scale: OntoMath-authored `transformNormal` remains orthogonal to an OntoMath-transformed tangent, matches an independent frozen GLM inverse-transpose oracle, is translation-independent, and is observably distinct from the incorrect naive model-linear normal transform. Exact-head CI #5411 on `2692e1b9` passed Focused CPU, SDF range-proxy/WGSL, and authored-Perlin A/B; its sole workflow failure was the separately owned Slow Adapter performance lane. A branch-specific audit then found remaining WebGPU model semantics that default-branch search had missed. This pass migrates mesh normal-matrix derivation plus SDF inverse-model/normal-matrix derivation to OntoMath; WGSL now consumes the lowered normal matrix instead of independently originating `transpose(invModel)`. Exact-head CI #5424 on `d48b1a8f` found one campaign-owned witness mismatch: the authored-Perlin compute fixture still mirrored the pre-`normalMat` SDF instance layout. Commit `95743829` adds the missing identity `normalMat` field so that fixture again mirrors renderer storage. Exact-head CI #5438 on `1ff0a9f6` then passed Focused CPU and SDF range-proxy/WGSL but exposed a second stale mirror in `webgpu_sdf_range_perf_test`: `RuntimeTaxInstance` still uploaded the old 224-byte layout while production WGSL required 288 bytes. This pass adds identity `normalMat` there and updates the ABI assertion to 288; authored mathematics is unchanged and the existing authored-Perlin A/B CI target already exercises this witness. Exact-head CI #5441 on `a8c02f58` passed Focused CPU, SDF range-proxy/WGSL, and authored-Perlin A/B; its sole workflow failure remained the separately owned Slow Adapter performance lane. With the owned ABI repair green, this pass adds `OntoMath::cameraOrthographic` with explicit NO/ZO depth convention and degenerate-volume refusal. The focused transform-convention witness pins the historical top-left WebGPU viewport projection plus NO parity against independent GLM reference oracles. Exact-head CI #5449 on `0c211269` passed Focused CPU, SDF range-proxy/WGSL, and authored-Perlin A/B; its sole workflow failure remained the separately owned Slow Adapter performance lane. This pass migrates the production WebGPU `begin2D` call site from direct `glm::orthoZO` authorship to `OntoMath::cameraOrthographic`, lowering only at the renderer cache boundary. The already-CI-wired `webgpu_object_test` gains a native GPU readback witness that draws only the top-left quarter and proves the top-left framebuffer convention did not flip or stretch. Exact-head CI for the `begin2D` production migration was still running on the docs-only handoff head when this pass began, with no owned failure present. This pass moves the remaining targeted WebGPU view-projection/model composition and inverse-view-projection semantics under OntoMath: camera/model hooks derive cached view-projection, inverse view-projection, and model-view-projection values; wireframe/particle/line/solid draws consume the cache; overlay scale composition delegates to OntoMath; SDF/volume uniforms consume the OntoMath-derived inverse cache; and projection inversion for the SDF far-plane query delegates to OntoMath. `ontomath_affine_sovereignty_test` adds frozen-oracle witnesses for cached MVP/inverse-VP/overlay composition, and `webgpu_particle_test` is now wired into focused WebGPU CI. Exact-head CI #5497 on `6c364d4f` passed Focused CPU, SDF range-proxy/WGSL, and authored-Perlin A/B; its sole workflow failure remained the separately owned Slow Adapter performance lane. A branch-specific audit of `WebGpuRenderer.cpp` found zero remaining direct targeted semantic-origin hits for `glm::inverse` / `transpose` / `determinant` / `translate` / `rotate` / `scale` / `lookAt` / `perspective*` or raw `_viewProj * _model`. This pass adds the plan-required 1280x720 native-resolution full-frame WebGPU parity witness: the production OntoMath-authored camera/model path is compared byte-for-byte against an independently GLM-composed final-MVP oracle, with nonblank/non-full-frame guards. The witness is wired into focused WebGPU CI. Exact-head CI #5504 on `cf57db2973bafff42835caaed48d801831000228` passed the campaign-owned Focused CPU, SDF range-proxy/WGSL (including the 1280x720 native-resolution image-parity witness), and authored-Perlin A/B lanes; its sole workflow failure was the separately owned Slow Adapter performance lane. **Rung 8 is COMPLETE. Rung 9 is the active frontier.**
+
+
+## Objective
+
+Remove renderer-owned matrix semantics while preserving modality-specific responsibility.
+
+A Screen channel may decide **which** mathematical camera projection to request and which values bind its parameters. It may not privately define the projection formula.
+
+Migrate current direct meanings such as:
+
+- `lookAt`;
+- perspective projection;
+- view-projection composition;
+- inverse view-projection;
+- model transforms;
+- normal matrices.
+
+OntoMath should define the corresponding mathematical functions. Screen supplies authored/bound camera parameters and consumes their results.
+
+Renderer responsibilities that remain renderer-owned:
+
+- GPU buffer layout;
+- transpose/layout conversion required by an API;
+- upload;
+- batching;
+- draw ordering;
+- pipeline selection.
+
+Those are representation/modality concerns, not authored mathematics.
+
+## Required witnesses
+
+- camera view parity;
+- projection parity;
+- world -> clip parity;
+- clip -> world unprojection parity;
+- native-resolution render image parity;
+- SDF normal parity;
+- no camera motion regression.
+
+---
+
+# 12. Rung 9 — Quadric and remaining custom matrix algebra
+
+**Status (2026-10-07): COMPLETE.** The production quadric seam delegates translated implicit-surface congruence to `OntoMath::transformQuadric`, with `affineTranslation` authoring the point-space transform and GLM retained only as lowered storage/oracle substrate. `geometry_ontomath_test` freezes the historical GLM `M^T Q M` translation formula as an independent oracle and checks translated sphere/ellipsoid/cylinder/cone/paraboloid parity, matrix/ScalarForm gradient equivalence, and ray-intersection invariance. Impossible OntoMath/lowering results refuse explicitly rather than silently returning an unchanged quadric. The final targeted custom-matrix audit found no remaining direct semantic-origin `glm::inverse`, `glm::transpose`, `glm::determinant`, `glm::translate`, `glm::rotate`, or `glm::scale` calls in the planned Geometry/custom-matrix production surface. The first reconciliation attempt exposed a truncated compare-file audit; a full tree-SHA audit found 19 overlapping campaign/canonical paths, which were repaired without stale-file resurrection. On code-bearing exact head `e5af3dc653ea5202cb97b69bc9efa6987d0f1958`, focused CI run `37731468366` built and executed all Rung 9 witnesses, passed `geometry_ontomath_test`, passed all OntoMath matrix/affine/authoring witnesses, and passed the complete SDF/WebGPU lane including native-resolution image parity. The remaining workflow reds exactly match independent canonical run `37701062926` and are therefore inherited baseline failures, not demonstrated OntoMath regressions.
+
+## Rung 9 exact-head reconciliation tribunal (2026-10-07)
+
+The corrected full-tree canonical reconciliation at `8903fd7cf1b846c415742a4ea4ac84c2c40276fe` executed Earthcall focused CI run `37709565656` and **failed**. Crucially, the earlier missing-`propertyStorageUnchanged` compiler regression is gone. The new campaign-owned SDF build failure was `SdfWgsl.cpp:2158`: a Direct Screen interval-coordinate admission check compared a `MathType` to `ValueKind::Scalar`; the correct comparison is `it->second.kind`. Fixed by `a1a85f906961c5d61775f219397f81b27ec3a411`.
+
+Canonical `f7ec902ddfce58ec6155f770e289c0c5af8a91d2`, in its independent exact-head CI run `37701062926`, also fails `second_nature_law_forge_zone_test` (click does not derive newborn Law), `authorable_light_contract_test` (Sun source strength assertion), and the Slow Adapter authored-world performance lane (chess_app.json, 120-second timeout with adapter=off/direct=off). The reconciled campaign reports **exactly the same two focused CPU test failures** (71/73 pass) and the same Slow Adapter timeout, so these are **upstream baseline failures, not demonstrated OntoMath regressions**. Do not paper over them in this campaign or claim the overall workflow is green. The campaign's SDF lane must be rerun at its new exact head to establish the compiler fix.
+
+The Rung 9 `geometry_ontomath_test` checks translated sphere/ellipsoid/cylinder/cone/paraboloid matrices, independent GLM oracle parity, matrix-to-ScalarForm gradients, and ray intersections. It is now in the focused macOS `FOCUSED_TESTS` source-of-truth list and was both built and executed successfully on exact code head `e5af3dc653ea5202cb97b69bc9efa6987d0f1958` in CI `37731468366`. The SDF job on that same head completed successfully, including the named step `Verify OntoMath native-resolution image parity`, plus generic SDF parity, SDF distance parity, authored-color parity, object/radiance parity, particle MVP, V5 overlap physics, volumetric transport, and authored-Perlin gates. Focused CPU still reports the same two non-OntoMath failures as exact canonical; Slow Adapter correctness tests pass and only its canonical-existing performance measurement remains red. Therefore Rung 9's owned exact-head tribunal is complete. Preserve the no-default-merge gate and keep Rung 10 on its separate post-approval branch.
+
+## Objective
+
+Finish the older Geometry-OntoMath promise with the new general linear-algebra substrate.
+
+The current `SmoothSurface.cpp::Quadric` path contains:
+
+```
+Q' = transpose(M) * Q * M
+```
+
+That expression must become OntoMath-authored mathematics rather than custom GLM algebra followed by conversion into `ScalarForm`.
+
+Two valid representations may coexist if they are mathematically connected:
+
+1. a quadric as a degree-2 `ScalarForm`;
+2. a quadric as a symmetric matrix form.
+
+Neither may become an isolated engine.
+
+If both exist, conversion/equivalence must be defined and tested in OntoMath.
+
+## Required witnesses
+
+- sphere/ellipsoid/cylinder/cone/paraboloid parity;
+- translated quadric parity;
+- matrix-form <-> ScalarForm equivalence;
+- gradient/normal parity;
+- ray intersection parity.
+
+---
+
+# 13. Rung 10 — Quarantine GLM as backend machinery
+
+**Execution boundary (2026-10-07):** Rung 10 is intentionally a post-merge cleanup campaign. Finish Rung 9 and its exact-head tribunal on the current branch first; merge that additive/migration foundation only with Zach's explicit approval; then cut a fresh branch from the resulting canonical head to migrate any remaining legacy consumers, remove/quarantine obsolete semantic entry points, and install the anti-regrowth guardrail. This keeps replacement capability separable from destructive legacy removal and preserves a clean rollback/bisect boundary.
+
+## Objective
+
+Prevent the Mathematics Gift Shop from regrowing.
+
+Add a source-level architecture guard over production code.
+
+The guard should flag semantic-origin calls to:
+
+- `glm::inverse`
+- `glm::transpose`
+- `glm::determinant`
+- `glm::translate`
+- `glm::rotate`
+- `glm::scale`
+- `glm::lookAt`
+- `glm::perspective*`
+
+outside an explicit allowlist.
+
+Allowed regions should be narrow and named, for example:
+
+- OntoMath numerical backend;
+- OntoMath <-> GLM representation adapter;
+- renderer API-layout conversion where no mathematical meaning is originated;
+- tests intentionally serving as an independent reference oracle.
+
+The guard should fail CI when a new unauthorized semantic call appears.
+
+Do not simply ban `glm::mat4`. Runtime storage, graphics API interfaces, and caches may legitimately use it.
+
+The thing being banned is **unauthorized mathematical authorship**.
+
+## Exit criterion
+
+A repository search for the targeted operations in production code should have every remaining hit explained by one of the allowed categories.
+
+---
+
+# 14. Later OntoMath linear-algebra extensions
+
+These are intentionally **not required to complete transform sovereignty**, but the new type system should leave room for them:
+
+- arbitrary-dimensional vectors;
+- general rectangular matrices;
+- rank;
+- null space / column space;
+- linear-system solving;
+- LU decomposition;
+- QR decomposition;
+- eigenvalues / eigenvectors;
+- singular-value decomposition;
+- orthogonalization;
+- least squares;
+- sparse matrices;
+- complex scalars and complex matrices.
+
+When added, they belong to OntoMath first and receive backend lowerings second.
+
+Do not create a separate "ScientificMath", "PhysicsMath", "RendererMath", or "MatrixUtils" semantic system to add them.
+
+---
+
+# 15. Expected file surface
+
+Likely additions:
+
+```
+src/Singularity/OntoMath/LinearAlgebra.hpp
+src/Singularity/OntoMath/LinearAlgebra.cpp
+tests/singularity/ontomath_linear_algebra_test.cpp
+tests/singularity/ontomath_transform_convention_test.cpp
+tests/singularity/ontomath_matrix_cpu_gpu_parity_test.cpp
+tests/singularity/ontomath_math_sovereignty_test.cpp
+```
+
+Likely modifications:
+
+```
+src/Singularity/OntoMath/ScalarForm.hpp
+src/Singularity/OntoMath/ScalarForm.cpp
+src/ConstructedBeing/Singular/Property/PropertyValue.hpp
+src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp
+src/Singularity/Screen/MathEditors.cpp
+src/Singularity/Screen/WebGPU/SdfWgsl.cpp
+
+src/ConstructedBeing/Singular/Object/ObjectMotion.cpp
+src/ConstructedBeing/Singular/Object/ObjectCollision.cpp
+src/ConstructedBeing/Singular/Object/ObjectRaycast.cpp
+src/ConstructedBeing/Singular/Object/Object/ObjectEvents.cpp
+src/ConstructedBeing/Singular/Object/ObjectRender.cpp
+src/ConstructedBeing/Singular/Object/Geometry/SmoothSurface.cpp
+
+src/Person/Body/Body.cpp
+src/Person/Body/BodyPart/BodyPart.cpp
+src/Person/Perspective/PersonPerspective.cpp
+src/Relation/Formation/Formation.cpp
+
+src/ZonesOfEarth/Physics/CollisionDispatcher.cpp
+src/Singularity/Core/CreationChannel.cpp
+src/Singularity/Core/EngineRender.cpp
+src/Singularity/Input/Interaction/InteractionChannel.cpp
+src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
+src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp
+```
+
+This is an inventory, not permission for a giant one-commit rewrite. Each rung should remain reviewable.
+
+---
+
+# 16. Required compatibility constraints
+
+The unification must preserve:
+
+- existing saves;
+- append-only serialized MathNode op IDs;
+- exact authored ScalarForm / field semantics;
+- current Object transform convention unless a separately approved migration changes it;
+- CPU/GPU parity;
+- native-resolution rendering parity;
+- collision/raycast behavior;
+- law reachability;
+- No Black Box requirements;
+- unknown/future-op preservation;
+- performance-sensitive cacheability.
+
+No save migration may silently reinterpret a matrix's ordering or transform composition.
+
+---
+
+# 17. Performance policy
+
+OntoMath sovereignty does **not** require rebuilding ASTs or dynamically inverting matrices every draw call.
+
+The intended performance architecture is:
+
+```
+authored parameters / law state
+        ↓ dirty only when premises change
+OntoMath expression / compiled proof
+        ↓
+derived transform + inverse + normal matrix cache
+        ↓
+renderer / physics hot loops consume cache
+```
+
+This matches Earthcall's prophetic/incremental direction:
+
+> derive ahead of time; recompute only when mathematical premises change.
+
+An optimized cache is acceptable precisely because its truth is traceable back to OntoMath.
+
+---
+
+# 18. Completion definition
+
+This campaign is complete when all of the following are true:
+
+1. OntoMath can represent, type-check, serialize, print, and evaluate matrices.
+2. Core matrix algebra has CPU witnesses.
+3. GPU-supported matrix algebra has CPU/WGSL parity witnesses.
+4. Affine transforms are authored/derived in OntoMath.
+5. Object/Body/Formation transform composition no longer originates in scattered GLM calls.
+6. Physics/collision/raycast space transforms no longer originate in scattered GLM calls.
+7. camera/view/projection mathematics is OntoMath-owned.
+8. normal inverse-transpose has one mathematical source of truth.
+9. Quadric matrix algebra is no longer isolated custom algebra.
+10. all remaining production GLM matrix-operation hits are either OntoMath backend execution or representation/channel boundaries.
+11. CI prevents a new unauthorized math subsystem from appearing.
+
+At that point, Earthcall does not have "OntoMath plus renderer math plus physics math plus geometry math."
+
+It has **one mathematics, with many faithful execution channels.**
