@@ -2155,7 +2155,7 @@ Program compileScreenForm(const OntoMath::Piecewise& color,
             std::string condition = "true";
             if (piece.hasLo || piece.hasHi) {
                 const auto it = env.find(form.inputVariable);
-                if (it == env.end() || it->second != OntoMath::ValueKind::Scalar) {
+                if (it == env.end() || it->second.kind != OntoMath::ValueKind::Scalar) {
                     e.refuse("direct Screen interval coordinate is unbound: " + form.inputVariable);
                     break;
                 }
