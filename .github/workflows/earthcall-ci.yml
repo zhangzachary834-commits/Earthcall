@@ -41,6 +41,7 @@ jobs:
         ontomath_linear_algebra_test
         ontomath_authoring_reachability_test
         ontomath_affine_sovereignty_test
+        geometry_ontomath_test
         interaction_channel_test
         creator_console_fixture_law_test
         keyboard_shell_shortcuts_test
