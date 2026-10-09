@@ -1467,6 +1467,7 @@ std::string formatOperand(const PropertyValue& operand) {
     }
     if (std::holds_alternative<std::string>(operand)) {
         const std::string& s = std::get<std::string>(operand);
+        if (s.empty()) return "\"\"";
         if (s.find(' ') != std::string::npos) {
             return "\"" + s + "\"";
         }
