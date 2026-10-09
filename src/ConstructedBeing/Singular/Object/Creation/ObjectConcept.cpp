@@ -6,7 +6,6 @@
 #include "ConstructedBeing/Singular/Object/Object/ObjectIdentity.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Singularity/Core/EventBus.hpp"
-#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -364,11 +363,7 @@ std::shared_ptr<ObjectConcept> ObjectConcept::captureFromBeings(
         }
     }
     if (counted > 0) centroid /= static_cast<float>(counted);
-    const auto toCentroidAuthored = OntoMath::affineTranslation(-centroid);
-    if (!toCentroidAuthored) {
-        std::cerr << "[ObjectConcept] OntoMath refused centroid translation; capture aborted.\n";
-        return concept;
-    }
+    const glm::mat4 toCentroid = glm::translate(glm::mat4(1.0f), -centroid);
 
     for (auto* source : sourceSet) {
         if (!source) continue;
@@ -389,17 +384,7 @@ std::shared_ptr<ObjectConcept> ObjectConcept::captureFromBeings(
             if (member.hasPatch) {
                 member.patch = embodied->getPatchData();   // deep copy
             }
-            const auto embodiedTransform =
-                OntoMath::MatrixValue::fromGlmMat4(embodied->getTransform());
-            const auto relativeAuthored =
-                OntoMath::affineCompose(*toCentroidAuthored, embodiedTransform);
-            const auto relativeLowered =
-                relativeAuthored ? relativeAuthored->toGlmMat4() : std::nullopt;
-            if (!relativeLowered) {
-                std::cerr << "[ObjectConcept] OntoMath refused relative member transform; capture aborted.\n";
-                return concept;
-            }
-            member.relativeTransform = *relativeLowered;
+            member.relativeTransform = toCentroid * embodied->getTransform();
         } else {
             member.hasGeometry = false;
         }
@@ -557,18 +542,7 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
             } else {
                 newborn->setShape(member.kind, member.params);
             }
-            const auto placementAuthored = OntoMath::MatrixValue::fromGlmMat4(placement);
-            const auto relativeAuthored =
-                OntoMath::MatrixValue::fromGlmMat4(member.relativeTransform);
-            const auto newbornAuthored =
-                OntoMath::affineCompose(placementAuthored, relativeAuthored);
-            const auto newbornLowered =
-                newbornAuthored ? newbornAuthored->toGlmMat4() : std::nullopt;
-            if (!newbornLowered) {
-                std::cerr << "[ObjectConcept] OntoMath refused newborn placement composition.\n";
-                continue;
-            }
-            newborn->setTransform(*newbornLowered);
+            newborn->setTransform(placement * member.relativeTransform);
             newborn->updateCollisionZone(newborn->getTransform());  // like every creation tool
         } else {
             newborn->setPhysicalObject(0);   // it had no body; it is given none

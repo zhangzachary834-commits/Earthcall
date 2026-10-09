@@ -5,8 +5,6 @@
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
-#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
-#include "Singularity/OntoMath/Field.hpp"
 
 #include <cassert>
 #include <iostream>
@@ -20,10 +18,6 @@ public:
     int setterCalls = 0;
     Singular* child = nullptr;
     mutable int childReads = 0;
-    std::shared_ptr<OntoMath::VectorField> field = std::make_shared<OntoMath::VectorField>();
-    int fieldSetterCalls = 0;
-    std::shared_ptr<OntoMath::VectorField> readField() const { return field; }
-    void replaceField(const std::shared_ptr<OntoMath::VectorField>& v) { ++fieldSetterCalls; field=v; }
     std::string getIdentifier() const override { return "memory-subject"; }
     std::shared_ptr<PropertyDict> readLive() const { return live; }
     void replaceLive(const std::shared_ptr<PropertyDict>& value) { ++setterCalls; live = value; }
@@ -35,12 +29,6 @@ public:
     }
 protected:
     void buildProperties() override {
-        registerProperty(std::make_unique<PropertyRef<MemorySubject, std::shared_ptr<OntoMath::VectorField>>>(
-            "field", this, &MemorySubject::field));
-        registerProperty(std::make_unique<ComputedProperty<MemorySubject, std::shared_ptr<OntoMath::VectorField>>>(
-            "field-derived", this, &MemorySubject::readField));
-        registerProperty(std::make_unique<ComputedProperty<MemorySubject, std::shared_ptr<OntoMath::VectorField>>>(
-            "field-setter", this, &MemorySubject::readField, &MemorySubject::replaceField));
         registerProperty(std::make_unique<PropertyRef<MemorySubject, std::shared_ptr<PropertyDict>>>(
             "live", this, &MemorySubject::live));
         registerProperty(std::make_unique<ComputedProperty<MemorySubject, std::shared_ptr<PropertyDict>>>(
@@ -102,54 +90,6 @@ int main() {
     assert(PropertyPath::parse("live.value").setValue(subject, 8) == Result::Ok);
     assert(changed == "live");
     assert(std::get<int>(read(subject, "live.value")) == 8);
-    Singular::setPropertyChangeCallback(nullptr);
-
-    // Direct Screen region mathematics is an ordinary typed predicate. A
-    // nested write replaces validated canonical field data, wakes its root,
-    // and cannot tunnel through a read-only getter or a structural setter.
-    // Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-07.
-    auto vector = std::make_shared<OntoMath::MathNode>();
-    vector->op = OntoMath::MathNode::Op::VectorConstruct;
-    for (double component : {0.2,0.3,0.4}) {
-        auto leaf=std::make_unique<OntoMath::MathNode>();
-        leaf->scalarForm=OntoMath::ScalarForm::constant(component);
-        vector->children.push_back(std::move(leaf));
-    }
-    subject.field->mode=OntoMath::VectorField::EvaluationMode::AST;
-    subject.field->astDefinition=OntoMath::Piecewise::continuous(vector);
-    const std::string coefficient=".astDefinition.pieces.0.mathNode.children.0.scalarForm.terms.0.c";
-    double number=0;
-    assert(propertyValueToNumber(read(subject,"field"+coefficient),number) && number==0.2);
-    const auto oldField=subject.field;
-    changed.clear();
-    Singular::setPropertyChangeCallback([&](Singular* owner,const std::string& name){assert(owner==&subject);changed=name;});
-    assert(PropertyPath::parse("field"+coefficient).setValue(subject,0.8)==Result::Ok);
-    assert(changed=="field" && subject.field!=oldField);
-    auto sampled=subject.field->astDefinition.evaluate({});
-    assert(sampled && std::get<glm::vec3>(*sampled).x==0.8f);
-    assert(PropertyPath::parse("field-derived"+coefficient).setValue(subject,0.8)==Result::ReadOnly);
-    assert(PropertyPath::parse("field-setter"+coefficient).setValue(subject,0.6)==Result::Ok);
-    assert(subject.fieldSetterCalls==1 && changed=="field-setter");
-    const auto valid=subject.field->toJson();
-    assert(PropertyPath::parse("field.astDefinition.pieces.0.mathNode.op").setValue(subject,999)==Result::TypeMismatch);
-    assert(PropertyPath::parse("field.astDefinition.pieces.0.mathNode.op").setValue(subject,2.5)==Result::TypeMismatch);
-    assert(PropertyPath::parse("field"+coefficient).setValue(subject,std::numeric_limits<double>::infinity())==Result::TypeMismatch);
-    assert(PropertyPath::parse("field"+coefficient).setValue(subject,std::string("bad"))==Result::TypeMismatch);
-    assert(subject.field->toJson()==valid);
-    assert(PropertyPath::parse("field.frequency").setValue(subject,0.2)==Result::Ok);
-    assert(subject.field->frequency==0.2f);
-    assert(PropertyPath::parse("field"+coefficient).setValue(subject,0.60000001)==Result::Ok);
-    assert(propertyValueToNumber(read(subject,"field"+coefficient),number) && number==0.60000001);
-    assert(PropertyPath::parse("field.astDefinition.pieces.999.mathNode").setValue(subject,1)==Result::NoSuchProperty);
-    Singular::setPropertyChangeCallback(nullptr);
-    subject.setDynamicProperty("region",std::make_shared<PropertyDict>());
-    auto region=std::get<std::shared_ptr<PropertyDict>>(read(subject,"region"));
-    region->elements["color"]=subject.field;
-    changed.clear();
-    Singular::setPropertyChangeCallback([&](Singular* owner,const std::string& name){assert(owner==&subject);changed=name;});
-    assert(PropertyPath::parse("region.color"+coefficient).setValue(subject,0.9)==Result::Ok);
-    assert(changed=="region");
-    assert(propertyValueToJson(propertyValueFromJson(propertyValueToJson(read(subject,"region"))))==propertyValueToJson(read(subject,"region")));
     Singular::setPropertyChangeCallback(nullptr);
 
     subject.setDynamicProperty("paint", paint(0.2f));

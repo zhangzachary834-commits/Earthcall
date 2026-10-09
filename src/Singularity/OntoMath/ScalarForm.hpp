@@ -343,42 +343,7 @@ struct Fold {
 // binding environment exists yet). It unifies with everything, so arity and
 // structural errors are still caught while genuinely undecidable ones are
 // reported as undecided rather than invented.
-enum class ValueKind { Scalar, Vector, Matrix, ScalarField, VectorField, Unknown };
-
-// A compile-time signature for authored mathematics. Existing scalar/vector
-// callers can still construct one implicitly from ValueKind; Matrix carries
-// dimensions because "matrix" without rows/columns is not enough information
-// to prove multiplication compatibility in the next rung.
-struct MathType {
-    ValueKind kind = ValueKind::Unknown;
-    std::size_t vectorDimension = 0;
-    std::size_t rows = 0;
-    std::size_t cols = 0;
-
-    MathType() = default;
-    MathType(ValueKind k) : kind(k) {
-        if (k == ValueKind::Vector || k == ValueKind::VectorField) {
-            vectorDimension = 3; // existing authored vectors are vec3
-        }
-    }
-
-    static MathType vector(std::size_t dimension = 3) {
-        MathType t(ValueKind::Vector);
-        t.vectorDimension = dimension;
-        return t;
-    }
-
-    static MathType matrix(std::size_t r, std::size_t c) {
-        MathType t(ValueKind::Matrix);
-        t.rows = r;
-        t.cols = c;
-        return t;
-    }
-
-    bool hasValidMatrixShape() const {
-        return kind == ValueKind::Matrix && rows > 0 && cols > 0;
-    }
-};
+enum class ValueKind { Scalar, Vector, ScalarField, VectorField, Unknown };
 
 struct TypeDiagnostic {
     std::string nodePath;
@@ -392,24 +357,16 @@ const char* valueKindName(ValueKind k);
 struct TypeResult {
     bool success;
     ValueKind kind;
-    MathType type;
     TypeDiagnostic diagnostic;
 
-    static TypeResult ok(ValueKind k) {
-        return {true, k, MathType(k), {}};
-    }
-    static TypeResult ok(MathType t) {
-        return {true, t.kind, std::move(t), {}};
-    }
-    static TypeResult error(TypeDiagnostic d) {
-        return {false, ValueKind::Scalar, MathType(ValueKind::Scalar), std::move(d)};
-    }
+    static TypeResult ok(ValueKind k) { return {true, k, {}}; }
+    static TypeResult error(TypeDiagnostic d) { return {false, ValueKind::Scalar, std::move(d)}; }
     
     explicit operator bool() const { return success; }
     ValueKind operator*() const { return kind; }
 };
 
-using TypeEnv = std::map<std::string, MathType>;
+using TypeEnv = std::map<std::string, ValueKind>;
 
 // Canonical ambient names available to authored mathematics. A spatial field
 // is evaluated at p/x/y/z. Channels that explicitly admit world time may also
@@ -503,18 +460,6 @@ struct MathNode {
         Tan = 28,      // unary tangent (Scalar->Scalar)
         Noise = 29,    // Perlin noise (Vector->Scalar)
 
-        // Rung 2 linear algebra. APPEND-ONLY: 0..29 are already serialized.
-        MatrixConstruct = 30,       // rows*cols scalar children -> Matrix(rows, cols)
-        MatrixIdentity = 31,        // matrixRows == matrixCols, no children
-        MatrixAdd = 32,             // same-shape Matrix + Matrix
-        MatrixSub = 33,             // same-shape Matrix - Matrix
-        MatrixScale = 34,           // Scalar*Matrix or Matrix*Scalar
-        MatrixMultiply = 35,        // (m x n)(n x p) -> (m x p)
-        MatrixVectorMultiply = 36,  // current vec3 seam: Matrix(3x3) * Vector3
-        MatrixTranspose = 37,       // (m x n) -> (n x m)
-        MatrixDeterminant = 38,     // square Matrix -> Scalar
-        MatrixInverse = 39,         // invertible square Matrix -> same shape
-
         // Not a kind an author picks — the landing place for an op THIS BUILD
         // does not know: a save written by another version. It never
         // evaluates (nullopt), never type-checks, and refuses to compile to
@@ -528,10 +473,6 @@ struct MathNode {
     ScalarForm scalarForm;
     std::string variableName;
     std::string stringArg; // For Component index or Map func name
-    // MatrixConstruct / MatrixIdentity shape. Serialized only for those ops.
-    // These are mathematical dimensions, not GLM storage dimensions.
-    std::size_t matrixRows = 0;
-    std::size_t matrixCols = 0;
     std::vector<std::unique_ptr<MathNode>> children;
 
     // Unsupported payload: the node's original JSON, kept verbatim.
@@ -540,8 +481,7 @@ struct MathNode {
     MathNode() = default;
     MathNode(const MathNode& o)
         : op(o.op), scalarForm(o.scalarForm), variableName(o.variableName),
-          stringArg(o.stringArg), matrixRows(o.matrixRows), matrixCols(o.matrixCols),
-          unsupported(o.unsupported) {
+          stringArg(o.stringArg), unsupported(o.unsupported) {
         children.reserve(o.children.size());
         for (const auto& c : o.children) {
             children.push_back(c ? std::make_unique<MathNode>(*c) : nullptr);

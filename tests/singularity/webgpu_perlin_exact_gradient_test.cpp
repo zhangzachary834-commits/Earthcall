@@ -410,7 +410,6 @@ int main() {
         struct SimpleInstance {
             glm::mat4 model{1.0f};
             glm::mat4 invModel{1.0f};
-            glm::mat4 normalMat{1.0f};
             glm::vec4 baseColor{1.0f};
             glm::vec4 shading{1.0f};
             glm::vec4 extents{1000.0f, 30.0f, 1000.0f, 0.0f};

@@ -1,18 +1,27 @@
 # Addendum: Integrating File Watcher Tick, Time-Interval Polling Gating, Time Moments, and Law Property Predication
 
-## The actual clock boundary
+*(Model: Jules, Harness: default, Session ID: 13284209740648546535)*
 
-The [FileWatcher](../../src/Singularity/Storage/FileWatcher.cpp) is a Law-backed host-filesystem observer. `FileWatcher::tick()` first checks `_enabled`, then measures elapsed time with `std::chrono::steady_clock`. It calls `checkNow()` only when that elapsed duration reaches `_pollIntervalMs` (initialized to 250 ms). This is wall-clock throttling of directory scans, not a loop that polls continuously.
+## The Synchronization of External State and Authored Time
 
-`checkNow()` resolves the configured path, compares observed files with its baseline using modification times and sizes, updates tracking, and publishes `file-created`, `file-modified`, or `file-deleted` events through `Core::EventBus`. Registered C++ callbacks also receive these detected changes.
+Within Earthcall, the concept of time and state mutation is strictly governed. The system refuses to allow continuous, unbounded polling or raw hardware interrupts to bypass the architectural rules of the simulation. This becomes evident when we examine how the `FileWatcher` interacts with the engine's core temporal mechanisms.
 
-## Authored control versus simulation time
+### The File Watcher and Polling Gating
 
-The writable computed property `watcher.checkNow` calls `checkNow()` synchronously when set to `true`, then resets the trigger. This bypasses the *interval check* in `tick()`, but **not** the watcher's `_enabled` guard or path checks. The [file-watcher test](../../tests/singularity/file_watcher_test.cpp) exercises this through `lawSetValue` and verifies a deletion event.
+The `FileWatcher` (`FileWatcher::tick()`) does not spin freely. It is gated by `_pollIntervalMs`. This time-interval gating acts as a valve between the high-frequency reality of the host machine's file system and the controlled pace of the Earthcall engine. By enforcing a delay, the engine ensures that external state changes are batched and processed at a cadence that doesn't overwhelm the event bus or disrupt the discrete nature of simulation steps.
 
-Events currently use a default-constructed `Moment{}`. The implementation does **not** show the polling interval being scheduled by, quantized to, or synchronized with Timeline Moments; `_pollIntervalMs` measures host steady-clock time. The useful architectural connection is that a Law-exposed trigger can request an immediate filesystem observation while the ordinary path remains rate-limited. Do not infer stronger temporal ordering or complete event logging from this boundary alone.
+### Integration with Continuous Time Moments
 
-## Verification anchors
+This polling mechanism is directly tied to the concept of **Time Moments**. In Earthcall, time is not merely a float tracking seconds; it is a structured `Moment` that propagates through the Timeline. `FileWatcher::tick()` must align its checks with the advancement of these Moments. The external file system is inherently continuous and chaotic, but its representation within Earthcall must be discrete and orderly. The `_pollIntervalMs` effectively quantizes continuous external time into discrete chunks that align with the engine's macroscopic time-stepping.
 
-- [FileWatcher.cpp](../../src/Singularity/Storage/FileWatcher.cpp): `tick`, `checkNow`, `propSetCheckNowTrigger`, `buildProperties`.
-- [file_watcher_test.cpp](../../tests/singularity/file_watcher_test.cpp): Law-property trigger witness.
+### Law Property Predication and Overriding the Valve
+
+The true synthesis occurs when we introduce **Law Property Predication**. While `_pollIntervalMs` governs the automatic polling, Earthcall provides an authored path to override this: writing to the property `"watcher.checkNow"` via `lawSetValue`.
+
+This represents a profound inversion of control. Instead of the engine exclusively dictating when to look at the external world, an authored Law—running within the Prophetic Rete—can predicate an immediate file check based on semantic conditions within the Ourverse.
+
+By setting `"watcher.checkNow"`, a Law bridges the gap between authored intent and external hardware interaction. It transforms an asynchronous background task into a synchronous, predictable consequence of an in-world event. This ensures that even immediate, out-of-band state updates (like forcing a file reload) remain legible, intentional, and logged as part of the normal semantic flow of the simulation, honoring the No Black Box principle.
+
+### Conclusion
+
+The integration of `FileWatcher::tick()`, `_pollIntervalMs`, continuous Time Moments, and `watcher.checkNow` property predication exemplifies Earthcall's approach to boundary management. It tames the continuous chaos of external file systems into discrete, governable Moments, while simultaneously empowering authored Laws to strategically break that cadence when semantic necessity demands it.

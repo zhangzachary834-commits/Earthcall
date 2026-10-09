@@ -8,9 +8,6 @@
 #include "json.hpp"
 #include "Zone/Zone.hpp"
 #include "SaveContext.hpp"
-#include <memory>
-
-class Material;
 
 class LawManager;
 class Law;
@@ -59,15 +56,6 @@ class ZoneManager {
     bool prepareZoneLawClosure(size_t index, std::vector<PreparedZoneLaw>& prepared,
                                std::unordered_set<std::string>& requestedLawIds,
                                nlohmann::json* identityOut = nullptr);
-    // The Material half of a Zone's closure (Per-Zone serialization pathway,
-    // proof 4 and 5; Claude Sonnet 5.5, 2026-10-07). Every Material an Object
-    // in the stored identity names must resolve from that identity's own
-    // embedded `materials`, a shared root named by `materialRefs`
-    // (saves/materials/<stem>/material.json), or the built-in default -- NOT from
-    // whatever another Zone happened to leave in the live register. Resolved
-    // before any live state changes; a miss refuses with the old Zone intact.
-    bool prepareZoneMaterialClosure(size_t index, const nlohmann::json& identity,
-                                    std::vector<std::shared_ptr<Material>>& sharedRoots);
     bool lawInUse(const std::string& lawId) const;
     bool heldByAnyone(const std::string& lawId, const std::string& exceptHolder = {}) const;
     // Laws retired from a Zone by an authored act, by Zone identifier.

@@ -229,48 +229,6 @@ Focused verification: four CLI suites passed (the LawLine fixture has 220 checks
 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-06 18:22 PDT — Zach requested direct 2D CLI wizardry; the field/value seam and Luminous Lens program implement that direction.*
 
-## 5b. A named displayed region, its source, and its sensed pixels
-
-Zach asked for the unfinished direct Screen addressing layer to be authorable through Metalaws. `ScreenRegion`, `ScreenSample`, and `ScreenSampleAtTime` are now authored Lexemes denoting ordinary value Laws, with three separate compiler Metalaws. Their lowering is data in the LawLine seed; the parser has no switch for these names.
-
-A `ScreenRegion` supplies an ordinary dictionary with typed `color` and `selector` predicates. It can belong to an addressable Singular, including your Person. It is neither a new C++ class nor a new kind. Its colour field is the explicit edit destination; its selector independently says which displayed samples you want to observe. Colour is displayed by binding `@screen-channel.output.colorPath` to `"@bearer.region.color"`. The colour field's Piece guards determine its drawn support; naming an observation selector does not silently clip or rewrite that source.
-
-After clearing earlier direct output, paste [My Named Region](../../../examples/law_line_screen_region.txt). Its first sentence makes a gold disc of radius 12.25 physical pixels centred at `(120.5,120.5)`, binds its source and requests a readback. Its second sentence waits for that request to succeed, grants `my.haloReading`, then uses the existing authored Set/Map compiler to carry the observation onto your Person. The region source in this example is on Screen, an existing Singular; the observation becomes an aspect of your Person through Law. To make the source Person-owned too, grant it as `my.halo` and use your actual stable qualified identifier in the quoted output and sample binding strings. Quoted `"my.halo"` is text and does not expand the CLI's `my` path alias.
-
-[Recolour My Region](../../../examples/law_line_screen_region_edit.txt) writes the three existing RGB coefficients, makes the disc cyan, and requests another observation with a new token. Granular field paths expose the existing serialized mathematics:
-
-```text
-called "Red Coefficient" becomes true if is a Person then set @screen-channel.halo.color.astDefinition.pieces.0.mathNode.children.0.scalarForm.terms.0.c to 0.5
-```
-
-These are canonical field edits, validated and committed through the root's setter/storage. Tiny coefficient changes are preserved exactly. Invalid operations, dropped JSON members, wrong known result types, nonfinite values and absent indices refuse; derived getters remain read-only. A field edit replaces that bearer slot's typed value, without mutating other slots holding the old shared field pointer. Whole field replacement remains available through `VectorField`/`ScalarField`. Containers retain their existing explicit shared-binding semantics.
-
-| Authored request / derived observation | Contract |
-|---|---|
-| `sample.request` | A `ScreenSample <region: "@bearer.region", x: 108, y: 108, width: 25, height: 25, limit: 625, token: "gold-halo">` record on Screen. |
-| `region.selector` | AST ScalarField: defined finite values ≤ 0 select; positive/undefined values exclude. No implicit world guards, calls or folds. |
-| `x`, `y`, `width`, `height` | Explicit integer rectangle in physical pixels; top-left origin, entirely inside the current framebuffer. Membership is evaluated at pixel centres. |
-| `limit` | Author's maximum selected samples; exceeding it refuses with an empty list, never a partial success. Scan ceiling is 1,048,576 locations; count ceiling is 65,536 samples; readback ceiling is 256 MiB. |
-| `token` | Nonempty explicit request identity. Change it to recapture; both success and refusal consume it. Changing source, selector or rectangle with the same token does not reinterpret an old observation. |
-| `ScreenSampleAtTime` | Same arguments plus an explicit finite `time`; use when the selector reads `t`. Ordinary ScreenSample leaves `t` unbound. |
-| `sample.result` | Registered read-only snapshot: `ok`, `refusal`, `frame`, `width`, `height`, `stage`, `token`, `region`, `count`, `samples`; success also records selector mathematics and admitted time. |
-| `sample.result.samples.0.color` | Actual completed-viewport RGBA8 RGB bytes normalized to [0,1], with integer `x`/`y` and separate `alpha` on each row-major sample. Not a fresh evaluation of authored colour. |
-| `sample.frame`, `sample.lastToken`, `sample.scanCeiling`, `sample.countCeiling`, `sample.readbackByteCeiling` | Read-only channel observations/bounds. |
-
-Sampling happens after Engine's scene, direct output and compatibility HUD/2D draws, before the separate Dear ImGui overlay and presentation. The observation identifies that completed viewport stage, not an OS monitor or another app. It is a historical snapshot, not a continuously live region cache. Membership is recomputed for every request. Reads do not repaint; edits target the named source field, because composited pixels have no unique inverse to authored sources. `haloReading` is an ordinary Law-carried predicate; its editable copy cannot mutate the channel's protected `sample.result` through shared-container aliasing. The observation preserves the selector, frame and dimensions used to obtain it. Membership is evaluated by CPU mathematics; the displayed mask uses WebGPU float32 mathematics, which can differ at exactly-zero boundaries. Sampling always reports the actual displayed bytes, including background at such a boundary; it does not substitute an expected source colour.
-
-Remove `@screen-channel.sample.request` to stop requests; clear output using the earlier recipe. Save your initialization/derivation Laws, not ephemeral channel results. Interactive selection, inverse painting, multiple output owners and multi-Person composition still need their own specified semantics. [Contract and verification](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md#named-regions-and-completed-viewport-observations--2026-10-07).
-
-*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-07 18:54 PDT — Zach originated the named-region direction; Codex implements explicit source editing, bounded sensing and the authored derivation recipe.*
-
-### A whole pixel-art editor from one paste
-
-[Atelier](../../../examples/law_line_pixel_art_editor.txt) authors a 16×16 direct Screen canvas, twelve ink swatches, eraser, one-step undo/redo, undoable clear, viewport PNG export and close. It is **one line containing 276 cooperating Law sentences**, compiled by the existing authored Metalaws. Paste it once after rebuilding/restarting, unlocking, `enter LawLine`, closing pointer-capturing panels and unlocking the cursor with Escape. Press Enter after pasting and allow the substantial program to finish compiling. Earlier display/world-click programs should be stopped if you do not want them running alongside it.
-
-Click a left swatch, then click/drag over the canvas. Right-hand tiles are undo, redo, clear, PNG, eraser, close from top to bottom. Artwork lives in your authored `atelier.*` properties; the generator installs no save or C++ app. The initialization marker preserves existing installed state. [Complete controls, limits and verification](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Law_Line_Pixel_Art_Editor/Law_Line_Pixel_Art_Editor.md).
-
-*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18`; Zach requested the whole editor through Law Line.*
-
 ## 6. Several Laws on one line, or several actions in one Law
 
 Use a top-level **semicolon** between complete Law sentences:

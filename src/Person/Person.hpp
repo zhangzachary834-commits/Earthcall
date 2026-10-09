@@ -2,8 +2,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "Body/Body.hpp"
-#include "Voice/Voice.hpp"
+#include "Body.hpp"
 #include <glm/glm.hpp>
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
@@ -64,12 +63,6 @@ public:
 
     void addBody(Body&& newBody) { bodies.push_back(std::move(newBody)); }
     void setActiveBody(int index) { if(index >= 0 && index < static_cast<int>(bodies.size())) activeBodyIndex = index; }
-
-    Voice& getVoice() { return voices[activeVoiceIndex]; }
-    const Voice& getVoice() const { return voices[activeVoiceIndex]; }
-
-    void addVoice(Voice&& newVoice) { voices.push_back(std::move(newVoice)); }
-    void setActiveVoice(int index) { if(index >= 0 && index < static_cast<int>(voices.size())) activeVoiceIndex = index; }
 
     // Logging into the device, the signal of when app/computer should interface with Person and when not to
     void login(const std::string& sessionId = "");
@@ -147,9 +140,6 @@ private:
     std::shared_ptr<Singularity::Language::Lexeme> _called;
     std::vector<Body> bodies;
     int activeBodyIndex = 0;
-
-    std::vector<Voice> voices;
-    int activeVoiceIndex = 0;
 
     // Vessel location. Registered properties, not public fields; the camera
     // (where they look from) stays above. Perspective holds view, not feet.
