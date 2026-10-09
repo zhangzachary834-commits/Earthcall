@@ -8,6 +8,7 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Object/Object/ObjectEvents.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -23,12 +24,25 @@ bool Object::isMouseHovering(const glm::vec2& mousePos, const glm::mat4& viewMat
     screenPos.y = -screenPos.y; // Flip Y coordinate
     
     // Create ray from camera through mouse position
-    glm::mat4 invVP = glm::inverse(projectionMatrix * viewMatrix);
-    glm::vec4 worldPos = invVP * screenPos;
+    const auto authoredView = OntoMath::MatrixValue::fromGlmMat4(viewMatrix);
+    const auto authoredProjection = OntoMath::MatrixValue::fromGlmMat4(projectionMatrix);
+    const auto vp = OntoMath::matrixMultiply(authoredProjection, authoredView);
+    if (!vp) return false;
+    const auto inverseVp = OntoMath::matrixInverse(*vp);
+    if (!inverseVp) return false;
+    const auto loweredInverseVp = inverseVp->toGlmMat4();
+    if (!loweredInverseVp) return false;
+
+    // Preserve this legacy hover path exactly: the screen point receives the
+    // perspective divide, while the ray origin intentionally uses the raw
+    // homogeneous xyz from inverse(VP) * (0,0,0,1).
+    glm::vec4 worldPos = *loweredInverseVp * screenPos;
+    if (worldPos.w == 0.0f) return false;
     worldPos /= worldPos.w;
 
-    glm::vec3 rayOrigin = glm::vec3(invVP * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-    glm::vec3 rayDirection = glm::normalize(glm::vec3(worldPos) - rayOrigin);
+    const glm::vec3 rayOrigin =
+        glm::vec3(*loweredInverseVp * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    const glm::vec3 rayDirection = glm::normalize(glm::vec3(worldPos) - rayOrigin);
     
     // Check intersection with object's collision zone
     return isMouseHovering(rayOrigin + rayDirection * 10.0f); // Check at reasonable distance

@@ -1687,6 +1687,112 @@ int main() {
               "Rung-8 V does not reinterpret participating-medium D as opaque geometry");
     }
 
+    // ---------------------------------------------------------------------
+    // Rung 4 linear algebra: the GPU emitter consumes the SAME MathNode matrix
+    // tree as the CPU. WGSL's column-major constructor is only a representation
+    // boundary; authored MatrixConstruct remains logical row-major.
+    // ---------------------------------------------------------------------
+    {
+        const auto matrix2 = [&](double a00, double a01, double a10, double a11) {
+            auto m = std::make_shared<OntoMath::MathNode>();
+            m->op = OntoMath::MathNode::Op::MatrixConstruct;
+            m->matrixRows = 2;
+            m->matrixCols = 2;
+            m->children.push_back(number(a00));
+            m->children.push_back(number(a01));
+            m->children.push_back(number(a10));
+            m->children.push_back(number(a11));
+            return m;
+        };
+
+        auto det = std::make_shared<OntoMath::MathNode>();
+        det->op = OntoMath::MathNode::Op::MatrixDeterminant;
+        det->children.push_back(std::make_unique<OntoMath::MathNode>(
+            *matrix2(1.0, 2.0, 3.0, 4.0)));
+        OntoMath::Piecewise determinantExpr = OntoMath::Piecewise::continuous(det);
+        const auto determinantLayout =
+            sdfwgsl::inspectScalarExpression(&determinantExpr);
+        check(determinantLayout.ok &&
+                  determinantLayout.structure.find("determinant(mat2x2<f32>") != std::string::npos,
+              "matrix determinant lowers through the shared OntoMath WGSL emitter");
+        check(determinantLayout.parameterCount == 4,
+              "2x2 MatrixConstruct keeps four authored numeric parameters");
+
+        // VALUE ONLY: matrix coefficients are ordinary authored parameters.
+        // Changing one coefficient must not regenerate shader structure.
+        det->children[0]->children[0]->scalarForm.terms[0].coefficient = 5.0;
+        const auto determinantEdited =
+            sdfwgsl::inspectScalarExpression(&determinantExpr);
+        check(determinantEdited.ok &&
+                  determinantEdited.structure == determinantLayout.structure &&
+                  determinantEdited.parameterCount == determinantLayout.parameterCount,
+              "numeric matrix edit preserves WGSL structure and parameter layout");
+
+        // Matrix * vec3 is the first value-level parity seam used by future
+        // transform migration. Component makes the vector result observable
+        // through the existing scalar inspection path.
+        auto m3 = std::make_unique<OntoMath::MathNode>();
+        m3->op = OntoMath::MathNode::Op::MatrixIdentity;
+        m3->matrixRows = 3;
+        m3->matrixCols = 3;
+        auto mv = std::make_unique<OntoMath::MathNode>();
+        mv->op = OntoMath::MathNode::Op::MatrixVectorMultiply;
+        mv->children.push_back(std::move(m3));
+        mv->children.push_back(vector3(2.0, 3.0, 4.0));
+        auto component = std::make_shared<OntoMath::MathNode>();
+        component->op = OntoMath::MathNode::Op::Component;
+        component->stringArg = "x";
+        component->children.push_back(std::move(mv));
+        OntoMath::Piecewise vectorExpr = OntoMath::Piecewise::continuous(component);
+        const auto vectorLayout = sdfwgsl::inspectScalarExpression(&vectorExpr);
+        check(vectorLayout.ok &&
+                  vectorLayout.structure.find("mat3x3<f32>") != std::string::npos,
+              "matrix-vector multiply lowers without a renderer-owned transform formula");
+
+        // WGSL has no inverse() builtin. The backend therefore does NOT grow a
+        // second inverse algorithm: a binding-independent inverse is evaluated
+        // by OntoMath and supplied as derived parameters.
+        auto inverse = std::make_unique<OntoMath::MathNode>();
+        inverse->op = OntoMath::MathNode::Op::MatrixInverse;
+        inverse->children.push_back(std::make_unique<OntoMath::MathNode>(
+            *matrix2(1.0, 2.0, 3.0, 4.0)));
+        auto inverseDet = std::make_shared<OntoMath::MathNode>();
+        inverseDet->op = OntoMath::MathNode::Op::MatrixDeterminant;
+        inverseDet->children.push_back(std::move(inverse));
+        OntoMath::Piecewise inverseExpr = OntoMath::Piecewise::continuous(inverseDet);
+        const auto inverseLayout = sdfwgsl::inspectScalarExpression(&inverseExpr);
+        check(inverseLayout.ok && inverseLayout.parameterCount == 4,
+              "binding-independent inverse lowers as OntoMath-derived parameters");
+
+        auto singularInverse = std::make_unique<OntoMath::MathNode>();
+        singularInverse->op = OntoMath::MathNode::Op::MatrixInverse;
+        singularInverse->children.push_back(std::make_unique<OntoMath::MathNode>(
+            *matrix2(1.0, 2.0, 2.0, 4.0)));
+        auto singularDet = std::make_shared<OntoMath::MathNode>();
+        singularDet->op = OntoMath::MathNode::Op::MatrixDeterminant;
+        singularDet->children.push_back(std::move(singularInverse));
+        OntoMath::Piecewise singularExpr = OntoMath::Piecewise::continuous(singularDet);
+        const auto singularLayout = sdfwgsl::inspectScalarExpression(&singularExpr);
+        check(!singularLayout.ok &&
+                  singularLayout.error.find("binding-independent invertible matrix") != std::string::npos,
+              "singular inverse refusal survives the GPU lowering boundary");
+
+        auto tooLarge = std::make_shared<OntoMath::MathNode>();
+        tooLarge->op = OntoMath::MathNode::Op::MatrixIdentity;
+        tooLarge->matrixRows = 5;
+        tooLarge->matrixCols = 5;
+        auto tooLargeDet = std::make_shared<OntoMath::MathNode>();
+        tooLargeDet->op = OntoMath::MathNode::Op::MatrixDeterminant;
+        tooLargeDet->children.push_back(std::make_unique<OntoMath::MathNode>(*tooLarge));
+        OntoMath::Piecewise unsupportedDim =
+            OntoMath::Piecewise::continuous(tooLargeDet);
+        const auto dimensionRefusal =
+            sdfwgsl::inspectScalarExpression(&unsupportedDim);
+        check(!dimensionRefusal.ok &&
+                  dimensionRefusal.error.find("dimensions 2..4") != std::string::npos,
+              "WGSL-unsupported matrix dimensions refuse explicitly");
+    }
+
     if (failures) {
         std::printf("sdf_wgsl_parameter_refresh_test: %d failure(s)\n", failures);
         return 1;

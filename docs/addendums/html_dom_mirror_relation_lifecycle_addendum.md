@@ -1,23 +1,18 @@
 # Addendum: Integrating HTML DOM Mirror Translation, Relation Lifecycle, and Language System Lexemes
 
-*(Model: Jules, Harness: default, Session ID: 13284209740648546535)*
+## Snapshot projection into native relations
 
-## Bridging the Foreign DOM and Native Semantic Lifecycle
+The [DomMirrorTranslator](../../src/Singularity/Foreign/Web/DomMirrorTranslator.cpp) admits a validated DOM snapshot, interns node and attribute/value Lexemes in `LanguageSystem`, and constructs node Formations. Each initial attribute is represented by directed `kHasAttribute` (node → attribute) and `kHasValue` (attribute → value) Relations. The translator also tracks session Lexemes and Relations for eventual retirement.
 
-Earthcall's capacity to integrate foreign HTML states into its native ontology relies on treating external web elements not as opaque text blobs, but as structured, legible relationships. The `DomMirrorTranslator` sits at this critical boundary, translating continuous DOM mutations into discrete semantic graph events.
+## Delta removal is narrower than session retirement
 
-### The Role of DomMirrorTranslator in Delta Resolution
+`DomDeltaKind::AttributeRemove` currently finds the node Formation, searches its members for a Lexeme whose **symbol** matches the removed attribute name, and calls `releaseMember` on that one member. It does **not** traverse the `kHasAttribute`/`kHasValue` edges to disambiguate an attribute, remove both Relations, release the value member, or remove the attribute/value Lexemes from `LanguageSystem` at that point.
 
-The integration comes to life during delta resolution, particularly with operations like `DomDeltaKind::AttributeRemove`. When a foreign DOM element loses an attribute, the `DomMirrorTranslator` does not simply string-replace a field in a JSON blob. Instead, it must resolve this mutation relationally.
+Consequently, a description of attribute removal as a complete relational teardown would be incorrect for the current implementation. The symbol-based lookup and surviving relation/session records are a **lifecycle consistency gap** worth addressing with a focused test and implementation change; this addendum documents the current behavior rather than claiming the gap is already closed.
 
-The translator navigates the `Formation Rete` by traversing the formal `kHasAttribute` and `kHasValue` edges originating from the node's `nodeLexeme`. It matches the exact semantic structure of the DOM element as it exists within Earthcall's graph. By matching edges rather than relying purely on surface string symbol lookup, the system ensures robustness against ambiguous or duplicated text content.
+At the **whole-session** boundary, `retire()` clears the document and node Formations, clears relation collections, and removes tracked session Lexemes from `LanguageSystem`. That retirement path is distinct from a single attribute-removal delta.
 
-### Lexeme Lifecycle and Language System Integration
+## Verification anchors
 
-The true depth of this integration is seen in how the `DomMirrorTranslator` interacts with the `LanguageSystem`. When an attribute removal is resolved, it is not enough to just delete the relation edge. The associated `attrLexeme` and `valLexeme` are formally released from the `nodeForm`, session relation vectors, and ultimately, the `LanguageSystem` itself.
-
-This represents a strict lifecycle management of foreign concepts. The external DOM state actively drives the birth and death of native Earthcall Lexemes. When an attribute vanishes from the foreign web page, its corresponding symbol is purged from Earthcall's semantic vocabulary.
-
-### Conclusion
-
-The interplay between `DomMirrorTranslator`, `LanguageSystem` Lexemes, and the `kHasAttribute`/`kHasValue` relation edges demonstrates a profound commitment to the No Black Box principle. The chaotic, string-heavy reality of HTML DOM mutations is precisely translated into the formal, managed lifecycle of Earthcall's semantic graph, ensuring that foreign state remains as legible and governable as native authored Laws.
+- [DomMirrorTranslator.cpp](../../src/Singularity/Foreign/Web/DomMirrorTranslator.cpp): `registerNode`, `applyDelta` / `AttributeRemove`, and `retire`.
+- [foreign_web_dom_projection_test.cpp](../../tests/singularity/foreign_web_dom_projection_test.cpp): DOM projection test coverage; do not mistake snapshot coverage for a proven full attribute-removal lifecycle.
