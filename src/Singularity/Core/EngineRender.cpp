@@ -298,6 +298,7 @@ namespace Core {
                 currentRenderer().setHeightGridDdaEnabled(screenChannel->heightGridDdaEnabled);
                 currentRenderer().setSpaceDistortion(float(screenChannel->spaceDistortion));
                 currentRenderer().setSdfRangeProxyEnabled(screenChannel->sdfRangeProxyEnabled);
+                currentRenderer().setVolumeZeroProofEnabled(screenChannel->volumeZeroProofEnabled);
             }
             auto tB0 = std::chrono::steady_clock::now();
             currentRenderer().beginFrame(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH), clearColor);
@@ -412,6 +413,9 @@ namespace Core {
                                   static_cast<int>(stats.sdfRangeProxyCulledDraws),
                                   static_cast<int>(stats.sdfRangeTraversalDraws),
                                   static_cast<double>(stats.sdfRangeNodeBytesUploaded));
+                sc->updateVolumeZeroProofMetrics(
+                    static_cast<int>(stats.volumeZeroProofCellsProven),
+                    static_cast<int>(stats.volumeZeroProofCellsTotal));
             }
             if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
                 recorder->checkPendingSnapshot(fbW, fbH);

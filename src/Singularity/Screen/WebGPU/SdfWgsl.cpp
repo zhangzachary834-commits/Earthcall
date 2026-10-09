@@ -3578,17 +3578,38 @@ fn worldAtDepth(pixel: vec2<f32>, depth: f32) -> vec3<f32> {
 // True only where the CPU proved this medium's authored density <= 0 for the
 // whole cell holding local point p, so evaluating D there cannot add anything.
 // Absent proof, a point outside the box, or a clear bit: evaluate exactly.
-fn volumeZeroProven(inst: VolumeInstanceData, p: vec3<f32>) -> bool {
-    if (inst.zeroProofPresent == 0u) { return false; }
+// xyz = the proof cell holding local point p; w = 1 iff that cell is proven.
+fn volumeZeroProofCell(inst: VolumeInstanceData, p: vec3<f32>) -> vec4<u32> {
+    if (inst.zeroProofPresent == 0u) { return vec4<u32>(0u); }
     let dims = vec3<u32>(inst.zeroProofDims & 1023u,
                          (inst.zeroProofDims >> 10u) & 1023u,
                          (inst.zeroProofDims >> 20u) & 1023u);
     let local = (p + inst.halfExtent.xyz) / (2.0 * inst.halfExtent.xyz);
-    if (any(local < vec3<f32>(0.0)) || any(local >= vec3<f32>(1.0))) { return false; }
+    if (any(local < vec3<f32>(0.0)) || any(local >= vec3<f32>(1.0))) { return vec4<u32>(0u); }
     let cell = min(vec3<u32>(local * vec3<f32>(dims)), dims - vec3<u32>(1u));
     let index = cell.x + dims.x * (cell.y + dims.y * cell.z);
     let word = u32(P.v[inst.zeroProofOffset + index / 24u]);
-    return ((word >> (index % 24u)) & 1u) == 1u;
+    return vec4<u32>(cell, (word >> (index % 24u)) & 1u);
+}
+
+fn volumeZeroProven(inst: VolumeInstanceData, p: vec3<f32>) -> bool {
+    return volumeZeroProofCell(inst, p).w == 1u;
+}
+
+// Grid walk: for a sample in a proven-empty cell, the ray parameter where the
+// ray leaves that cell (every sample before it lies in the same cell, so it
+// contributes exactly nothing); -1 when the cell is not proven. The proof was
+// made over each cell enlarged by 1%, which absorbs f32 rounding at the exit.
+fn volumeZeroCellExit(inst: VolumeInstanceData, p: vec3<f32>,
+                      ro: vec3<f32>, rd: vec3<f32>) -> f32 {
+    let cell = volumeZeroProofCell(inst, p);
+    if (cell.w != 1u) { return -1.0; }
+    let dims = vec3<u32>(inst.zeroProofDims & 1023u,
+                         (inst.zeroProofDims >> 10u) & 1023u,
+                         (inst.zeroProofDims >> 20u) & 1023u);
+    let cellSize = 2.0 * inst.halfExtent.xyz / vec3<f32>(dims);
+    let cellMin = inst.origin.xyz - inst.halfExtent.xyz + vec3<f32>(cell.xyz) * cellSize;
+    return rayAabbWorld(ro, rd, cellMin, cellMin + cellSize).y;
 }
 )WGSL";
 
@@ -3824,10 +3845,15 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
         let sampleT = t0 + (f32(i) + 0.5) * stepLength;
         let worldP = ro + rd * sampleT;
         let p = worldP - inst.origin.xyz;
-        var density = 0.0;
-        if (!volumeZeroProven(inst, p)) {
-            density = max(volumeDensityEval(p), 0.0);
+        // Grid walk: this sample and every later one before the ray leaves its
+        // proven-empty cell contribute exactly nothing. Jump past them (the
+        // loop's own increment then lands on the first sample beyond the exit).
+        let zeroExit = volumeZeroCellExit(inst, p, ro, rd);
+        if (zeroExit >= 0.0) {
+            i = max(i, i32(ceil((zeroExit - t0) / stepLength - 0.5)) - 1);
+            continue;
         }
+        let density = max(volumeDensityEval(p), 0.0);
 
         if (density > 0.0) {
             // V1: authored sigma_t(p,t) is independent from D. If absent,
@@ -4164,6 +4190,38 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
         for (var step = 0; step < 96; step = step + 1) {
             let sampleT = segmentStart + (f32(step) + 0.5) * stepLength;
             let worldP = ro + rd * sampleT;
+
+            // Grid walk (VolumeZeroProof): if every medium holding this sample
+            // has it in a proven-empty cell, nothing here or before the ray's
+            // nearest exit from those cells can contribute. Jump past them.
+            // A sample no medium holds (only possible by rounding at a segment
+            // edge) skips just itself.
+            var walkAllProven = true;
+            var walkHeld = false;
+            var walkExit = segmentEnd;
+)WGSL";
+    for (std::size_t i = 0; i < media.size(); ++i) {
+        const std::string n = std::to_string(i);
+        const std::string inst = std::to_string(i + 1) + "u";
+        out.wgsl +=
+            "            {\n"
+            "                let walkInst" + n + " = instances[" + inst + "];\n"
+            "                if (all(worldP >= walkInst" + n + ".origin.xyz - walkInst" + n + ".halfExtent.xyz) && "
+                "all(worldP <= walkInst" + n + ".origin.xyz + walkInst" + n + ".halfExtent.xyz)) {\n"
+            "                    walkHeld = true;\n"
+            "                    let cellExit" + n + " = volumeZeroCellExit(walkInst" + n +
+                ", worldP - walkInst" + n + ".origin.xyz, ro, rd);\n"
+            "                    if (cellExit" + n + " < 0.0) { walkAllProven = false; }\n"
+            "                    else { walkExit = min(walkExit, cellExit" + n + "); }\n"
+            "                }\n"
+            "            }\n";
+    }
+    out.wgsl += R"WGSL(
+            if (!walkHeld) { walkExit = sampleT; }
+            if (walkAllProven) {
+                step = max(step, i32(ceil((walkExit - segmentStart) / stepLength - 0.5)) - 1);
+                continue;
+            }
 
             // Transport directions are properties of this world-space sample,
             // not of medium ordering. Per-medium Phi/E_v evaluators consume

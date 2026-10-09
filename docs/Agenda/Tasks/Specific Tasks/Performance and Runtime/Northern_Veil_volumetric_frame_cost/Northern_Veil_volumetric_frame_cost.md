@@ -30,8 +30,13 @@ Candidate fixes, in order:
    - **Cache:** keyed by density revision (Derived-State Ledger entry, 2026-10-09).
    - **Results:** ~96% of every Northern Veil curtain's cells are proven empty. A–B at 640×360: four curtains **94–101 → 34–35 ms**; at 1280×720 **395–404 → 112–115 ms**; one curtain 8.7 → 2.8 ms. The full RGBA hash is identical in every block.
    - **Witnesses:** `volume_zero_proof_test` (CPU, 16,000-point soundness sweep) and `webgpu_volume_zero_proof_test` (byte-identical framebuffer, both pipelines, two times).
-   - **Still slow:** about 9 fps at 720p on an M5. The remaining cost is the 96-per-segment loop itself, plus real density in occupied cells.
-2. **Exact next step:** skip whole runs of loop iterations whose samples all fall in proven cells, by stepping the cell grid along each segment. This keeps the same sample positions, so it stays byte-identical.
+   - **Switch:** authored as ScreenChannel `volumeZeroProofEnabled`, wired like the Suns' `sdfRangeProxyEnabled`. It defaults **on** (Zach, 2026-10-09) because the native witness already proves parity, and exposes read-only `volumeZeroProofCellsProven/Total`. Guarded in `channel_paths_test`.
+   - **Breakdown after the proof (640×360, scratch diagnostic):** about 22 ms of the ~33 ms is the sample loop visiting proven-empty samples (every cell forced empty: 22–23 ms, black image), and about 11 ms is real medium math. This is why step 2 below is next.
+2. ✅ **Grid walk over the proof (image-exact) — landed 2026-10-09 (uncommitted).**
+   - **Mechanism:** when every medium holding a sample has it in a proven cell, `volumeZeroCellExit()` returns where the ray leaves those cells, and both shader loops jump to the first sample beyond the nearest exit.
+   - **Why it is exact:** sample positions are unchanged, and a skipped sample would have added exactly +0 (the ray stays in a convex cell until it exits, and the 1% proof enlargement absorbs exit rounding).
+   - **Results:** A–B with the same probe, 640×360, four curtains: exact 95–100, proof only 32–33, **proof + walk 18.6–19.5 ms/frame**. At 1280×720: exact 454–461 → **72–77 ms**. The full RGBA hash is identical to exact in every block, and `webgpu_volume_zero_proof_test` is 12/12 byte-identical.
+   - **Remaining:** about 13–14 fps at 720p on an M5. What is left is real medium math near the sheets plus the walk's own cost.
 3. **⚑ AUTHOR — sample placement.** Allocating samples by distance along the ray instead of 96 per segment changes pixels (a different quadrature of the same integral). It can be made as accurate or more accurate, and it was anticipated in [V5 follow-ups](../../Rendering%20and%20OntoMath/Visual_radiance_V5_and_Rung_8_followups/Visual_radiance_V5_and_Rung_8_followups.md) ("error-controlled local quadrature"). Zach decides, because the image changes.
 
 ## Cause 2 (CPU, ~7 ms/frame): JSON serialization as change detection — fixed
