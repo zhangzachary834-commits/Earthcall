@@ -664,6 +664,63 @@ int main() {
               "authority collectParams layout exactly matches authoritative compile");
         check(authorized.wgsl != exact.wgsl,
               "authority is explicit shader structure rather than hidden value mutation");
+
+        // The diagnostic variant counts actual fragment execution on the GPU.
+        // It is NOT the default shader: ordinary exact/authority programs must
+        // contain no atomic instructions and no diagnostic bind-group declaration.
+        const auto countedExact = sdfwgsl::compile(
+            sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            &noAuthority, true);
+        const auto countedAuthority = sdfwgsl::compile(
+            sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            &zeroAuthority, true);
+        check(countedExact.ok && countedAuthority.ok,
+              "witness-only exact and zero-authority GPU work codegen admits");
+        const std::string workBinding =
+            "@group(2) @binding(0) var<storage, read_write> visibilityWork";
+        const std::string invocationAtomic =
+            "atomicAdd(&visibilityWork[sourceSlot * 2u], 1u)";
+        const std::string sdfAtomic =
+            "atomicAdd(&visibilityWork[sourceSlot * 2u + 1u], 1u)";
+        check(exact.wgsl.find(workBinding) == std::string::npos &&
+                  authorized.wgsl.find(workBinding) == std::string::npos &&
+                  exact.wgsl.find("atomicAdd(") == std::string::npos &&
+                  authorized.wgsl.find("atomicAdd(") == std::string::npos,
+              "uninstrumented exact and authority shaders have no witness binding/atomics");
+        check(countedExact.wgsl.find(workBinding) != std::string::npos &&
+                  countedExact.wgsl.find(invocationAtomic) != std::string::npos &&
+                  countedExact.wgsl.find(sdfAtomic) != std::string::npos &&
+                  countedExact.wgsl.find(sdfAtomic) !=
+                      countedExact.wgsl.rfind(sdfAtomic),
+              "diagnostic shader counts executed calls, initial surface probe and loop steps");
+        check(countedExact.wgsl.find(
+                  "sourceVisibility(pf, nf, source.position.xyz, 0u)") !=
+                  std::string::npos &&
+                  countedExact.wgsl.find(
+                      "sourceVisibility(pf, nf, source.position.xyz, 1u)") !=
+                      std::string::npos,
+              "exact arm measures both ordered source identities");
+        check(countedAuthority.wgsl.find(
+                  "sourceVisibility(pf, nf, source.position.xyz, 0u)") ==
+                  std::string::npos &&
+                  countedAuthority.wgsl.find(
+                      "sourceVisibility(pf, nf, source.position.xyz, 1u)") !=
+                      std::string::npos &&
+                  countedAuthority.wgsl.find("let pathVisibility = 1.0;") !=
+                      std::string::npos,
+              "authority removes only the proven-zero source transport call");
+        check(sameFloats(countedExact.params, exact.params) &&
+                  sameFloats(countedAuthority.params, authorized.params),
+              "test-only GPU work counters cannot change authored parameter packing");
+        check(countedExact.wgsl.find("ambientTerm += inst.shading.x * ambientEnvelope") !=
+                  std::string::npos &&
+                  countedAuthority.wgsl.find("ambientTerm += inst.shading.x * ambientEnvelope") !=
+                      std::string::npos,
+              "both diagnostic arms preserve independent ambient source presence");
     }
 
     // ---------------------------------------------------------------------
