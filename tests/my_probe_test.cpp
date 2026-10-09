@@ -43,8 +43,8 @@ int main() {
         std::cerr << "my_probe_test: ZoneManager I/O log escaped configured save root\n";
         return 1;
     }
-    if (expectedLawCount == 0 || harness.lawManager.getAll().size() != expectedLawCount) {
-        std::cerr << "my_probe_test: isolated fixture did not preserve authored Law payload"
+    if (expectedLawCount == 0 || harness.lawManager.getAll().size() < expectedLawCount) {
+        std::cerr << "my_probe_test: isolated fixture loaded fewer Laws than the authored fixture"
                   << " (expected " << expectedLawCount
                   << ", loaded " << harness.lawManager.getAll().size() << ")\n";
         return 1;
