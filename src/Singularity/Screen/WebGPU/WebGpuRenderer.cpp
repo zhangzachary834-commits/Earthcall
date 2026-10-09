@@ -590,6 +590,12 @@ void WebGpuRenderer::shutdown() {
     releasePersistentSdfParams();
     releasePersistentSdfRangeNodes();
     releasePersistentRadianceSources();
+    if (_visibilityWorkBuffer) {
+        wgpuBufferRelease(_visibilityWorkBuffer);
+        _visibilityWorkBuffer = nullptr;
+    }
+    _visibilityWorkCapacityBytes = 0;
+    _visibilityWorkSlotCount = 0;
     _meshCache.shutdown();
     _bufferPool.shutdown();
     releaseFrameResources();
@@ -602,6 +608,8 @@ void WebGpuRenderer::shutdown() {
     for (auto& kv : _sdfPipes) {
         if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
         if (kv.second.bgl)  wgpuBindGroupLayoutRelease(kv.second.bgl);
+        if (kv.second.visibilityWorkBgl)
+            wgpuBindGroupLayoutRelease(kv.second.visibilityWorkBgl);
     }
     _sdfPipes.clear();
     for (auto& kv : _volumePipes) {
@@ -1105,10 +1113,32 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
 
     SdfPipeline out;
     out.usesRadianceSources = usesRadianceSources;
+    out.visibilityWorkDiagnostics =
+        wgsl.find("@group(2) @binding(0) var<storage, read_write> visibilityWork") !=
+        std::string::npos;
     out.bgl = wgpuDeviceCreateBindGroupLayout(_device, &bgld);
-    WGPUBindGroupLayout meshLayouts[2] = { out.bgl, _sdfInstanceBgl };
+    if (!out.bgl) { wgpuShaderModuleRelease(shader); return nullptr; }
+    if (out.visibilityWorkDiagnostics) {
+        WGPUBindGroupLayoutEntry diagnosticEntry = {};
+        diagnosticEntry.binding = 0;
+        diagnosticEntry.visibility = WGPUShaderStage_Fragment;
+        diagnosticEntry.buffer.type = WGPUBufferBindingType_Storage;
+        diagnosticEntry.buffer.minBindingSize = 2 * sizeof(uint32_t);
+        WGPUBindGroupLayoutDescriptor diagnosticDesc = {};
+        diagnosticDesc.entryCount = 1;
+        diagnosticDesc.entries = &diagnosticEntry;
+        out.visibilityWorkBgl =
+            wgpuDeviceCreateBindGroupLayout(_device, &diagnosticDesc);
+        if (!out.visibilityWorkBgl) {
+            wgpuBindGroupLayoutRelease(out.bgl);
+            wgpuShaderModuleRelease(shader);
+            return nullptr;
+        }
+    }
+    WGPUBindGroupLayout meshLayouts[3] = {
+        out.bgl, _sdfInstanceBgl, out.visibilityWorkBgl };
     WGPUPipelineLayoutDescriptor pld = {};
-    pld.bindGroupLayoutCount = 2;
+    pld.bindGroupLayoutCount = out.visibilityWorkDiagnostics ? 3 : 2;
     pld.bindGroupLayouts = meshLayouts;
     WGPUPipelineLayout layout = wgpuDeviceCreatePipelineLayout(_device, &pld);
 
@@ -1157,6 +1187,7 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
     wgpuShaderModuleRelease(shader);
     if (!out.pipe) {
         wgpuBindGroupLayoutRelease(out.bgl);
+        if (out.visibilityWorkBgl) wgpuBindGroupLayoutRelease(out.visibilityWorkBgl);
         return nullptr;
     }
     return &(_sdfPipes[wgsl] = out);
@@ -1614,6 +1645,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
             sourceStructureMatches &&
+            memo->visibilityWorkDiagnostics ==
+                (multiSource && _sourceVisibilityWorkDiagnosticsEnabled) &&
             densityStructureMatches &&
             extinctionStructureMatches &&
             scatteringStructureMatches &&
@@ -1699,7 +1732,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                                      densityExpr, densityKind, extinctionExpr,
                                      scatteringExpr, volumeChromaExpr, phaseExpr,
                                      emissionExpr, mat.responseExpr.get(),
-                                     sourceSet ? &_radianceZeroAuthorityMask : nullptr);
+                                     sourceSet ? &_radianceZeroAuthorityMask : nullptr,
+                                     multiSource && _sourceVisibilityWorkDiagnosticsEnabled);
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
@@ -1723,6 +1757,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->parameterRevision = memoParameterRevision;
             memo->colorRevision = mat.colorRevision;
             memo->multiSource = multiSource;
+            memo->visibilityWorkDiagnostics =
+                multiSource && _sourceVisibilityWorkDiagnosticsEnabled;
             memo->radianceRevision = radianceRevision();
             memo->radianceStructureRevision = _radianceStructureRevision;
             memo->chromaRevision = radianceChromaRevision();
@@ -2059,6 +2095,35 @@ void WebGpuRenderer::flushSdfDraws() {
         return;
     }
     
+    // Witness-only executed GPU work: clear a per-source pair of atomic counters
+    // before the diagnostic draw. Never allocate, bind, or clear this storage
+    // for ordinary production frames (including the timing-only A/B).
+    _visibilityWorkSlotCount = 0;
+    if (_sourceVisibilityWorkDiagnosticsEnabled && radianceSources().size() > 1) {
+        const uint64_t words = radianceSources().size() * 2u;
+        const uint64_t bytes = words * sizeof(uint32_t);
+        if (!_visibilityWorkBuffer || _visibilityWorkCapacityBytes < bytes) {
+            WGPUBufferDescriptor diagnosticDesc = {};
+            diagnosticDesc.usage = WGPUBufferUsage_Storage |
+                                   WGPUBufferUsage_CopySrc |
+                                   WGPUBufferUsage_CopyDst;
+            diagnosticDesc.size = bytes;
+            WGPUBuffer next = wgpuDeviceCreateBuffer(_device, &diagnosticDesc);
+            if (next) {
+                if (_visibilityWorkBuffer) wgpuBufferRelease(_visibilityWorkBuffer);
+                _visibilityWorkBuffer = next;
+                _visibilityWorkCapacityBytes = bytes;
+            }
+        }
+        if (_visibilityWorkBuffer && _visibilityWorkCapacityBytes >= bytes) {
+            std::vector<uint32_t> zeros(static_cast<size_t>(words), 0u);
+            wgpuQueueWriteBuffer(_queue, _visibilityWorkBuffer, 0,
+                                 zeros.data(), bytes);
+            _visibilityWorkSlotCount =
+                static_cast<uint32_t>(radianceSources().size());
+        }
+    }
+
     // Rung 7 source records are shared across every SDF pipeline in the frame.
     // Upload only when their byte representation changes; source time and
     // placement are values, not reasons to rebuild WGSL.
@@ -2329,7 +2394,29 @@ void WebGpuRenderer::flushSdfDraws() {
         WGPUBindGroup instBindGroup = wgpuDeviceCreateBindGroup(_device, &ibgDesc);
         _frameBindGroups.push_back(instBindGroup);
 
-        bindPipeline(sp->pipe);
+        if (sp->visibilityWorkDiagnostics) {
+            if (!_visibilityWorkBuffer || _visibilityWorkSlotCount == 0) {
+                std::fprintf(stderr, "[WebGPU] SourceRho diagnostic storage unavailable\n");
+                continue;
+            }
+            WGPUBindGroupEntry diagEntry = {};
+            diagEntry.binding = 0;
+            diagEntry.buffer = _visibilityWorkBuffer;
+            diagEntry.size = uint64_t(_visibilityWorkSlotCount) * 2u *
+                             sizeof(uint32_t);
+            WGPUBindGroupDescriptor diagDesc = {};
+            diagDesc.layout = sp->visibilityWorkBgl;
+            diagDesc.entryCount = 1;
+            diagDesc.entries = &diagEntry;
+            WGPUBindGroup diagnosticBg =
+                wgpuDeviceCreateBindGroup(_device, &diagDesc);
+            if (!diagnosticBg) continue;
+            _frameBindGroups.push_back(diagnosticBg);
+            bindPipeline(sp->pipe);
+            wgpuRenderPassEncoderSetBindGroup(_pass, 2, diagnosticBg, 0, nullptr);
+        } else {
+            bindPipeline(sp->pipe);
+        }
         wgpuRenderPassEncoderSetBindGroup(_pass, 0, bg, 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(_pass, 1, instBindGroup, 0, nullptr);
         wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, _sdfCubeVerts, 0, 36 * sizeof(glm::vec3));
