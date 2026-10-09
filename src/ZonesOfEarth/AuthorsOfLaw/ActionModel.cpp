@@ -1460,12 +1460,60 @@ ECA::ActionExecutor ActionNode::compile() const {
     return [](const ECA::Event&, Singular&) {};
 }
 
+namespace {
+std::string formatOperand(const PropertyValue& operand) {
+    if (std::holds_alternative<std::monostate>(operand)) {
+        return "";
+    }
+    if (std::holds_alternative<std::string>(operand)) {
+        const std::string& s = std::get<std::string>(operand);
+        if (s.find(' ') != std::string::npos) {
+            return "\"" + s + "\"";
+        }
+        return s;
+    }
+    if (std::holds_alternative<bool>(operand)) {
+        return std::get<bool>(operand) ? "true" : "false";
+    }
+    if (std::holds_alternative<glm::vec3>(operand)) {
+        const glm::vec3& v = std::get<glm::vec3>(operand);
+        auto fmtNum = [](float val) {
+            std::string s = std::to_string(val);
+            s.erase(s.find_last_not_of('0') + 1, std::string::npos);
+            if (s.back() == '.') s.pop_back();
+            return s;
+        };
+        return "(" + fmtNum(v.x) + ", " + fmtNum(v.y) + ", " + fmtNum(v.z) + ")";
+    }
+    double n = 0.0;
+    if (propertyValueToNumber(operand, n)) {
+        std::string s = std::to_string(n);
+        s.erase(s.find_last_not_of('0') + 1, std::string::npos);
+        if (s.back() == '.') s.pop_back();
+        return s;
+    }
+    return "...";
+}
+} // namespace
+
 std::string ActionNode::describe() const {
     switch (kind) {
-        case Kind::Set: return "set " + path.toString();
-        case Kind::Add: return "add to " + path.toString();
-        case Kind::Scale: return "scale " + path.toString();
-        case Kind::Lerp: return "lerp " + path.toString();
+        case Kind::Set: {
+            std::string valStr = formatOperand(operand);
+            return "set " + path.toString() + (valStr.empty() ? "" : " " + valStr);
+        }
+        case Kind::Add: {
+            std::string valStr = formatOperand(operand);
+            return "add " + (valStr.empty() ? "" : valStr + " ") + "to " + path.toString();
+        }
+        case Kind::Scale: {
+            std::string valStr = formatOperand(operand);
+            return "scale " + path.toString() + (valStr.empty() ? "" : " by " + valStr);
+        }
+        case Kind::Lerp: {
+            std::string valStr = formatOperand(operand);
+            return "lerp " + path.toString() + (valStr.empty() ? "" : " toward " + valStr);
+        }
         case Kind::Drive:
             return "drive " + path.toString() +
                    (input.empty() ? " from event-time" : " from " + input.toString());
@@ -1479,7 +1527,10 @@ std::string ActionNode::describe() const {
             if (!path.empty()) return "create from " + path.toString();
             return "create object" + (createType.empty() ? std::string()
                                                          : " '" + createType + "'");
-        case Kind::AddProperty: return "grant property '" + propertyName + "'";
+        case Kind::AddProperty: {
+            std::string valStr = formatOperand(operand);
+            return "grant property '" + propertyName + "'" + (valStr.empty() ? "" : " = " + valStr);
+        }
         case Kind::RemoveProperty: return "remove property '" + propertyName + "'";
         case Kind::AddElement:
             return "add " + (elementToken.empty() ? std::string("subject") : elementToken) +
