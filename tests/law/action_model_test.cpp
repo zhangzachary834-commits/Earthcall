@@ -71,6 +71,7 @@ int main() {
         ActionNode titleNode = ActionNode::set("title", "Hello World");
         assert(titleNode.describe() == "set title \"Hello World\"");
 
+        assert(ActionNode::set("label", std::string{}).describe() == R"(set label "")");
         ActionNode boolNode = ActionNode::set("enabled", true);
         assert(boolNode.describe() == "set enabled true");
 
