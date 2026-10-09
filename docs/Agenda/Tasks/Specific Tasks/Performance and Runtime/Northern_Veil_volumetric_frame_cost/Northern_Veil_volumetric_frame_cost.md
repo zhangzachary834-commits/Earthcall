@@ -22,8 +22,17 @@ All four at 320×180: 32 ms; at 1280×720: 418 ms. The cost is per pixel, and **
 `src/Singularity/Screen/WebGPU/SdfWgsl.cpp` `compileVolumeSet` (~line 4092–4143) sorts every medium's entry/exit along the ray, then takes **96 samples in every occupied segment** and evaluates every medium at each sample. Four overlapping boxes cut one ray into up to 7 segments, so up to 672 samples × 4 media. Each curtain is a thin sheet inside a box up to 160×36×46, so most samples evaluate the full noise expression only to find density 0.
 
 Candidate fixes, in order:
-1. **Prove empty air empty (image-exact).** Bound each medium's authored density over regions with OntoMath `evalRange` and skip proven-zero sub-intervals, with exact fallback. This is the Sun lineage's own method (PR #259's `SdfRangeHierarchy`), which explicitly excluded FieldNode volume density. Pixel parity is the gate.
-2. **⚑ AUTHOR — sample placement.** Allocating samples by distance along the ray instead of 96 per segment changes pixels (a different quadrature of the same integral). It can be made as accurate or more accurate, and it was anticipated in [V5 follow-ups](../../Rendering%20and%20OntoMath/Visual_radiance_V5_and_Rung_8_followups/Visual_radiance_V5_and_Rung_8_followups.md) ("error-controlled local quadrature"). Zach decides, because the image changes.
+1. ✅ **Prove empty air empty (image-exact) — landed 2026-10-09.**
+   - **Mechanism:** `Rendering::buildVolumeZeroProof` (`src/Singularity/Screen/VolumeZeroProof.*`) tiles any medium's box with ~32k near-cubic cells. It proves coarse-to-fine, with OntoMath `MathNode::evalRange`, which cells can only give D <= 0, each tested 1% enlarged.
+   - **Shader:** `volumeZeroProven()` skips evaluating D there. Sample positions and counts are unchanged.
+   - **Generic, per Zach ("DONT MAKE IT RELY ON HARDCODING AURORA/ZONE/OBJECT-SPECIFIC MATH"):** no medium-specific code. Time and unbound variables are never bound, so they only defeat a proof.
+   - **Enabling change:** `MathNode::evalRange` gained `Clamp`, which previously bounded to [-inf, inf]. This is a sound over-approximation, per PROPHETIC_RETE §2.
+   - **Cache:** keyed by density revision (Derived-State Ledger entry, 2026-10-09).
+   - **Results:** ~96% of every Northern Veil curtain's cells are proven empty. A–B at 640×360: four curtains **94–101 → 34–35 ms**; at 1280×720 **395–404 → 112–115 ms**; one curtain 8.7 → 2.8 ms. The full RGBA hash is identical in every block.
+   - **Witnesses:** `volume_zero_proof_test` (CPU, 16,000-point soundness sweep) and `webgpu_volume_zero_proof_test` (byte-identical framebuffer, both pipelines, two times).
+   - **Still slow:** about 9 fps at 720p on an M5. The remaining cost is the 96-per-segment loop itself, plus real density in occupied cells.
+2. **Exact next step:** skip whole runs of loop iterations whose samples all fall in proven cells, by stepping the cell grid along each segment. This keeps the same sample positions, so it stays byte-identical.
+3. **⚑ AUTHOR — sample placement.** Allocating samples by distance along the ray instead of 96 per segment changes pixels (a different quadrature of the same integral). It can be made as accurate or more accurate, and it was anticipated in [V5 follow-ups](../../Rendering%20and%20OntoMath/Visual_radiance_V5_and_Rung_8_followups/Visual_radiance_V5_and_Rung_8_followups.md) ("error-controlled local quadrature"). Zach decides, because the image changes.
 
 ## Cause 2 (CPU, ~7 ms/frame): JSON serialization as change detection — fixed
 

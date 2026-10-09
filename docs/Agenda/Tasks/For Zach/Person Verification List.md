@@ -1348,3 +1348,10 @@ Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-0
 - [ ] Rebuild `earthcall_webgpu`, enter **Northern Veil**, and confirm the four curtains look exactly as before (same colours, shimmer, overlap). Expect **no** felt speedup yet: the CPU cost fell from ~7 to ~0.8 ms/frame, but the frame is GPU-bound at ~100 ms.
 - [ ] Through MCP `earthcall_author_volume` (or a Law writing `volume.emission.ast`), change one curtain's emission; it should change on screen at once. If it takes about a second instead, or the terminal prints `[FieldNode] … changed without noteAuthoredMathWritten()`, a writer was missed — report the line.
 - [ ] Decide what to do with `saves/worlds/chess_app.ecform`: the 2026-10-09 test run rewrote its matter snapshot pointer (`7431ca37…` → `556fa746…`). `git restore` returns it to the committed version.
+
+## Northern Veil with the zero-density proof (added 2026-10-09)
+
+*Claude Code · Claude Opus 5.5 · session `session_01NJy6VrPVNcHAnggwFyTsmF` · 2026-10-09. [Full task](../Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md).*
+
+- [ ] Rebuild `earthcall_webgpu` and enter **Northern Veil**. The curtains should look exactly as before; the native witness proved the pixels byte-identical. It should feel about 3× smoother, but not yet smooth (~9 fps at 720p measured). The first entry may hitch ~0.3 s per curtain in Debug while the proofs build once.
+- [ ] Look for any hole, seam, or blocky edge in or around a curtain that wasn't there before. A proof that wrongly skipped real density would show up as a sharp-edged gap aligned to an invisible grid.
