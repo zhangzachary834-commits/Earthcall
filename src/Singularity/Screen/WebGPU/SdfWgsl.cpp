@@ -2976,11 +2976,8 @@ Program compile(const geom::SdfNode& root,
                 "fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {\n",
                 "fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWorld: vec3<f32>, sourceSlot: u32) -> f32 {\n"
                 "    atomicAdd(&visibilityWork[sourceSlot * 2u], 1u);\n");
-            // Every executed transport SDF probe, including the surface probe.
-            patchWitnessMarcher(
-                "    let surfaceSignedStep = sourceTransportSignedStep(surfacePoint, damping);\n",
-                "    atomicAdd(&visibilityWork[sourceSlot * 2u + 1u], 1u);\n"
-                "    let surfaceSignedStep = sourceTransportSignedStep(surfacePoint, damping);\n");
+            // Count ONLY actual shadow-march loop steps. The initial surface
+            // bias probe does not demonstrate that the expensive march ran.
             patchWitnessMarcher(
                 "        let dShadow = sourceTransportSignedStep(pShadow, damping);\n",
                 "        atomicAdd(&visibilityWork[sourceSlot * 2u + 1u], 1u);\n"
