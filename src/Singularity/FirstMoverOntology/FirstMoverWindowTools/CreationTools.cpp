@@ -11,6 +11,7 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "Singularity/Screen/GL/GluCompat.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "Singularity/Screen/HighlightSystem.hpp"
 
 #include <imgui.h>
@@ -160,9 +161,16 @@ void stepMorphTool(GLFWwindow* window, Core::Engine* engine,
             if (ecgl::project(wv.x, wv.y, wv.z, mv, pr, vp, &sx, &sy, &sz)) {
                 GLdouble nx, ny, nz;
                 if (ecgl::unProject(winX, winY, sz, mv, pr, vp, &nx, &ny, &nz)) {
-                    glm::vec3 local = glm::vec3(glm::inverse(xf) *
-                        glm::vec4((float)nx, (float)ny, (float)nz, 1.0f));
-                    obj->setPolyhedronVertexLocal(state.morphVertexIndex, local);
+                    const auto inverseXf =
+                        OntoMath::inverseAffine(OntoMath::MatrixValue::fromGlmMat4(xf));
+                    const auto local = inverseXf
+                        ? OntoMath::transformPoint(
+                              *inverseXf,
+                              glm::vec3((float)nx, (float)ny, (float)nz))
+                        : std::nullopt;
+                    if (local) {
+                        obj->setPolyhedronVertexLocal(state.morphVertexIndex, *local);
+                    }
                 }
             }
         }
@@ -189,9 +197,16 @@ void stepMorphTool(GLFWwindow* window, Core::Engine* engine,
             if (ecgl::project(wv.x, wv.y, wv.z, mv, pr, vp, &sx, &sy, &sz)) {
                 GLdouble nx, ny, nz;
                 if (ecgl::unProject(winX, winY, sz, mv, pr, vp, &nx, &ny, &nz)) {
-                    glm::vec3 local = glm::vec3(glm::inverse(xf) *
-                        glm::vec4((float)nx, (float)ny, (float)nz, 1.0f));
-                    obj->setPatchControlLocal(state.patchCtrlIndex, local);
+                    const auto inverseXf =
+                        OntoMath::inverseAffine(OntoMath::MatrixValue::fromGlmMat4(xf));
+                    const auto local = inverseXf
+                        ? OntoMath::transformPoint(
+                              *inverseXf,
+                              glm::vec3((float)nx, (float)ny, (float)nz))
+                        : std::nullopt;
+                    if (local) {
+                        obj->setPatchControlLocal(state.patchCtrlIndex, *local);
+                    }
                 }
             }
         }
