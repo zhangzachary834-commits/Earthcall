@@ -1,45 +1,48 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <string>
 
 int main() {
-    std::filesystem::path fossilPath1 = "src/ZonesOfEarth/AuthorsOfLaw/Law.cpp.new";
-    if (std::filesystem::exists(fossilPath1)) {
-        std::cerr << "FAIL: Legacy fossil file exists: " << fossilPath1 << "\n";
-        return 1;
+    namespace fs = std::filesystem;
+    const fs::path toolRelative = "src/Singularity/FirstMoverOntology/FirstMoverWindowTools/Tool.cpp";
+    fs::path root;
+    bool found = false;
+    for (const fs::path& candidate : {fs::path("."), fs::path(".."), fs::path("../..")}) {
+        if (fs::is_regular_file(candidate / toolRelative)) {
+            root = candidate;
+            found = true;
+            break;
+        }
     }
-    std::filesystem::path fossilPath2 = "src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.cpp";
-    if (std::filesystem::exists(fossilPath2)) {
-        std::cerr << "FAIL: Legacy fossil file exists: " << fossilPath2 << "\n";
-        return 1;
-    }
-
-    std::filesystem::path toolFilePath = "src/Singularity/FirstMoverOntology/FirstMoverWindowTools/Tool.cpp";
-    if (!std::filesystem::exists(toolFilePath)) {
-        toolFilePath = "../src/Singularity/FirstMoverOntology/FirstMoverWindowTools/Tool.cpp";
-    }
-    if (!std::filesystem::exists(toolFilePath)) {
-        toolFilePath = "../../src/Singularity/FirstMoverOntology/FirstMoverWindowTools/Tool.cpp";
-    }
-    if (!std::filesystem::exists(toolFilePath)) {
+    if (!found) {
         std::cerr << "FAIL: Could not locate Tool.cpp for fossil inspection\n";
         return 1;
     }
 
-    std::ifstream toolFile(toolFilePath);
-    if (!toolFile) {
-        std::cerr << "FAIL: Could not open Tool.cpp at " << toolFilePath << "\n";
-        return 1;
+    for (const fs::path& fossil : {
+             fs::path("src/ZonesOfEarth/AuthorsOfLaw/Law.cpp.new"),
+             fs::path("src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.cpp")}) {
+        if (fs::exists(root / fossil)) {
+            std::cerr << "FAIL: Legacy fossil file exists: " << root / fossil << "\n";
+            return 1;
+        }
     }
 
-    std::string content((std::istreambuf_iterator<char>(toolFile)), std::istreambuf_iterator<char>());
-    if (content.find("eraseLegacyStrokeSegments") != std::string::npos ||
-        content.find("deleteLegacyStrokesAt") != std::string::npos ||
-        content.find("configureStrokeTool") != std::string::npos ||
-        content.find("raycastCollisionAABB") != std::string::npos) {
-        std::cerr << "FAIL: Legacy stroke/raycast fossil stubs exist in Tool.cpp\n";
+    std::ifstream toolFile(root / toolRelative);
+    if (!toolFile) {
+        std::cerr << "FAIL: Could not open Tool.cpp at " << root / toolRelative << "\n";
         return 1;
+    }
+    const std::string content((std::istreambuf_iterator<char>(toolFile)),
+                              std::istreambuf_iterator<char>());
+    for (const std::string& fossil : {"eraseLegacyStrokeSegments", "deleteLegacyStrokesAt",
+                                     "configureStrokeTool", "raycastCollisionAABB"}) {
+        if (content.find(fossil) != std::string::npos) {
+            std::cerr << "FAIL: Legacy stroke/raycast fossil stub exists: " << fossil << "\n";
+            return 1;
+        }
     }
 
     std::cout << "PASS: Legacy fossil files and stubs are absent.\n";
