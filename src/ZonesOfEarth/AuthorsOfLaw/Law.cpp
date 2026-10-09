@@ -3057,13 +3057,20 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
     // (subject, event subject, event object).
     const std::vector<Singular*> beings = Universe::instance().beings();
 
+    // Bolt Optimization: Pre-populate beingMap to convert O(N) linear vector scans
+    // with virtual getIdentifier() string allocations into O(1) map lookups.
+    std::unordered_map<std::string, Singular*> beingMap;
+    beingMap.reserve(beings.size());
+    for (Singular* being : beings) {
+        if (being) beingMap.emplace(being->getIdentifier(), being);
+    }
+
     for (auto it = _driveSessions.begin(); it != _driveSessions.end();) {
         Law* law = find(it->lawId);
         const auto findBeing = [&](const std::string& id) -> Singular* {
             if (id.empty()) return nullptr;
-            for (Singular* being : beings) {
-                if (being && being->getIdentifier() == id) return being;
-            }
+            auto itMap = beingMap.find(id);
+            if (itMap != beingMap.end()) return itMap->second;
             if (law) {
                 for (Singular* target : law->targets().getMembers()) {
                     if (!target || Universe::instance().isUnmade(target)) continue;
