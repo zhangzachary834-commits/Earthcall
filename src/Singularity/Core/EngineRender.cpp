@@ -172,25 +172,20 @@ namespace Core {
             source.temporalDelta = sourceDelta;
             source.enabled = light.enabled;
 
+            const uint64_t mathRevision = field->verifiedAuthoredMathRevision();
             if (field->field &&
                 field->field->mode == OntoMath::ScalarField::EvaluationMode::AST &&
                 !field->field->astDefinition.pieces.empty()) {
-                const std::string json = field->field->astDefinition.toJson().dump();
                 source.radianceExpr = &field->field->astDefinition;
-                source.radianceRevision =
-                    static_cast<uint64_t>(std::hash<std::string>{}(json));
+                source.radianceRevision = Rendering::authoredChannelRevision(mathRevision, 0);
             }
             if (field->lightChroma && !field->lightChroma->pieces.empty()) {
-                const std::string json = field->lightChroma->toJson().dump();
                 source.chromaExpr = field->lightChroma.get();
-                source.chromaRevision =
-                    static_cast<uint64_t>(std::hash<std::string>{}(json));
+                source.chromaRevision = Rendering::authoredChannelRevision(mathRevision, 8);
             }
             if (field->lightAngular && !field->lightAngular->pieces.empty()) {
-                const std::string json = field->lightAngular->toJson().dump();
                 source.angularExpr = field->lightAngular.get();
-                source.angularRevision =
-                    static_cast<uint64_t>(std::hash<std::string>{}(json));
+                source.angularRevision = Rendering::authoredChannelRevision(mathRevision, 9);
             }
 
             // Rung 7 structural/value invalidation is intentionally bounded.
