@@ -1348,3 +1348,11 @@ Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-0
 - [ ] Rebuild `earthcall_webgpu`, enter **Northern Veil**, and confirm the four curtains look exactly as before (same colours, shimmer, overlap). Expect **no** felt speedup yet: the CPU cost fell from ~7 to ~0.8 ms/frame, but the frame is GPU-bound at ~100 ms.
 - [ ] Through MCP `earthcall_author_volume` (or a Law writing `volume.emission.ast`), change one curtain's emission; it should change on screen at once. If it takes about a second instead, or the terminal prints `[FieldNode] … changed without noteAuthoredMathWritten()`, a writer was missed — report the line.
 - [ ] Decide what to do with `saves/worlds/chess_app.ecform`: the 2026-10-09 test run rewrote its matter snapshot pointer (`7431ca37…` → `556fa746…`). `git restore` returns it to the committed version.
+
+## Northern Veil with the zero-density proof (added 2026-10-09)
+
+*Claude Code · Claude Opus 5.5 · session `session_01NJy6VrPVNcHAnggwFyTsmF` · 2026-10-09. [Full task](../Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md).*
+
+- [ ] Rebuild `earthcall_webgpu` and enter **Northern Veil**. The curtains should look exactly as before; the native witness proved the pixels byte-identical. With the later grid walk it should feel about 5× smoother, though not yet fully smooth (~13–14 fps at 720p measured). The first entry may hitch ~0.3 s per curtain in Debug while the proofs build once.
+- [ ] Compare by eye: set the Screen channel's `volumeZeroProofEnabled` to false (Law Line or MCP `earthcall_write_property`), then back to true. The curtains must look identical, and only the smoothness should change. `volumeZeroProofCellsProven` / `volumeZeroProofCellsTotal` on the same channel show the proof is live (about 131860 / 136772 in Northern Veil).
+- [ ] Look for any hole, seam, or blocky edge in or around a curtain that wasn't there before. A proof that wrongly skipped real density would show up as a sharp-edged gap aligned to an invisible grid.

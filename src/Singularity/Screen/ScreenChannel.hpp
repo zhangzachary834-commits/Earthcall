@@ -100,6 +100,21 @@ public:
     // corpus validates the activation rung; a Person/Law can explicitly enable
     // it for measurement through this same authored ScreenChannel property.
     bool      sdfRangeProxyEnabled = false;
+    // Zero-density proof for participating media (Rendering::VolumeZeroProof):
+    // skips evaluating a medium's density only where OntoMath interval
+    // arithmetic proved it can never be positive. Unlike the range proxy it is
+    // ON by default -- Zach's call, 2026-10-09 -- because its native witness
+    // (webgpu_volume_zero_proof_test) already shows a byte-identical
+    // framebuffer and the real Northern Veil save ran ~3x faster. A Person/Law
+    // can switch it off here to compare.
+    bool      volumeZeroProofEnabled = true;
+    // Derived: cells proven empty / cells tiled, over the media drawn last frame.
+    int       volumeZeroProofCellsProven = 0;
+    int       volumeZeroProofCellsTotal = 0;
+    void updateVolumeZeroProofMetrics(int cellsProven, int cellsTotal) {
+        volumeZeroProofCellsProven = cellsProven;
+        volumeZeroProofCellsTotal = cellsTotal;
+    }
     bool      recording = false;
     bool      snapshotTrigger = false;
     glm::vec3 backgroundColor{0.1f, 0.1f, 0.15f};
@@ -186,6 +201,8 @@ private:
     int    getSdfRangeProxyCulledDraws() const { return sdfRangeProxyCulledDraws; }
     int    getSdfRangeTraversalDraws() const { return sdfRangeTraversalDraws; }
     double getSdfRangeNodeBytesUploaded() const { return sdfRangeNodeBytesUploaded; }
+    int    getVolumeZeroProofCellsProven() const { return volumeZeroProofCellsProven; }
+    int    getVolumeZeroProofCellsTotal() const { return volumeZeroProofCellsTotal; }
 
     std::string _name{"screen-channel"};
 };

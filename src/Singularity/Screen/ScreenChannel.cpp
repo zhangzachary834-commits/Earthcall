@@ -347,6 +347,9 @@ void ScreenChannel::buildProperties() {
     boolean("heightGridDdaEnabled", &ScreenChannel::heightGridDdaEnabled);
     floating("spaceDistortion", &ScreenChannel::spaceDistortion);
     boolean("sdfRangeProxyEnabled", &ScreenChannel::sdfRangeProxyEnabled);
+    boolean("volumeZeroProofEnabled", &ScreenChannel::volumeZeroProofEnabled);
+    readOnlyInt("volumeZeroProofCellsProven", &ScreenChannel::getVolumeZeroProofCellsProven);
+    readOnlyInt("volumeZeroProofCellsTotal", &ScreenChannel::getVolumeZeroProofCellsTotal);
     vector3("backgroundColor", &ScreenChannel::backgroundColor);
 
     // Illumination placement is first-order authored state. These names are

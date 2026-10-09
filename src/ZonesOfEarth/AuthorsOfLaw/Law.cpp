@@ -2220,9 +2220,12 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     // snapshot — the reactive path would answer confidently from stale values.
     // Disconnected, the sweep below reads the beings themselves and is right.
     //
-    // Bolt Optimization: Universe::instance().beings() rebuilds a 4000+ element
-    // std::vector every call. Gate this per-frame loop on Universe::structuralRevision()
-    // so steady frames pay zero allocation and zero being loop overhead.
+    // The first sweep seeds every available being. Further sweeps are needed
+    // only after a structural revision: admitted/released beings or new authored
+    // property names bump that revision. In between, connectToEventBus() keeps
+    // existing facts current through the property-change and relation callbacks.
+    // This avoids the temporary Universe::beings() vector on steady frames.
+    // dynamic_property_reachability_test witnesses BOTH invalidation paths.
     if (_connected) {
         const uint64_t currentRevision = Universe::instance().structuralRevision();
         if (_lastSeededStructuralRevision != currentRevision) {
