@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
+#include <cstring>
 #include <memory>
 #include <vector>
 
@@ -301,6 +302,105 @@ int main() {
     const double authorityGpu = median(authority.gpuMs);
     const double gpuRatio =
         authorityGpu > 0.0 ? exactGpu / authorityGpu : 0.0;
+
+    // Separate GPU-executed atomic-count draws, AFTER all 12 uninstrumented
+    // pairs. Storage, shaders, readback, and their costs are excluded from
+    // the timing experiment. Two words per source: invocations and actual
+    // signed-distance probes (surface probe plus each entered shadow iteration).
+    auto readVisibilityWork = [&](WebGpuRenderer& renderer)
+            -> std::vector<uint32_t> {
+        const uint32_t sourceCount =
+            renderer.sourceVisibilityWorkDiagnosticsSlotCount();
+        WGPUBuffer gpuCounters =
+            renderer.sourceVisibilityWorkDiagnosticsBuffer();
+        if (!gpuCounters || sourceCount != sources.size()) return {};
+        const uint64_t bytes = uint64_t(sourceCount) * 2u * sizeof(uint32_t);
+        WGPUBufferDescriptor desc = {};
+        desc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead;
+        desc.size = bytes;
+        WGPUBuffer readbackCounters = wgpuDeviceCreateBuffer(gpu.device, &desc);
+        if (!readbackCounters) return {};
+        WGPUCommandEncoder enc =
+            wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
+        wgpuCommandEncoderCopyBufferToBuffer(
+            enc, gpuCounters, 0, readbackCounters, 0, bytes);
+        WGPUCommandBuffer cmd = wgpuCommandEncoderFinish(enc, nullptr);
+        wgpuQueueSubmit(gpu.queue, 1, &cmd);
+        wgpuCommandBufferRelease(cmd);
+        wgpuCommandEncoderRelease(enc);
+
+        struct ReadStatus { bool done = false; bool ok = false; };
+        ReadStatus status;
+        WGPUBufferMapCallbackInfo callback = {};
+        callback.mode = WGPUCallbackMode_AllowProcessEvents;
+        callback.callback = [](WGPUMapAsyncStatus result, WGPUStringView,
+                               void* user, void*) {
+            auto* st = static_cast<ReadStatus*>(user);
+            st->ok = result == WGPUMapAsyncStatus_Success;
+            st->done = true;
+        };
+        callback.userdata1 = &status;
+        wgpuBufferMapAsync(readbackCounters, WGPUMapMode_Read, 0, bytes, callback);
+        while (!status.done)
+            wgpuDevicePoll(gpu.device, true, nullptr);
+        std::vector<uint32_t> work;
+        if (status.ok) {
+            const void* mapped =
+                wgpuBufferGetConstMappedRange(readbackCounters, 0, bytes);
+            if (mapped) {
+                work.resize(sourceCount * 2u);
+                std::memcpy(work.data(), mapped, bytes);
+            }
+            wgpuBufferUnmap(readbackCounters);
+        }
+        wgpuBufferRelease(readbackCounters);
+        return work;
+    };
+
+    exactRenderer.setSourceVisibilityWorkDiagnosticsEnabled(true);
+    authorityRenderer.setSourceVisibilityWorkDiagnosticsEnabled(true);
+    const Sample countedExact = renderOne(exactRenderer, true);
+    const auto exactWork = readVisibilityWork(exactRenderer);
+    const Sample countedAuthority = renderOne(authorityRenderer, true);
+    const auto authorityWork = readVisibilityWork(authorityRenderer);
+    if (countedExact.pixels != countedAuthority.pixels ||
+        countedExact.pixels != exactCold.pixels ||
+        countedAuthority.pixels != authorityCold.pixels) {
+        std::printf("SOURCE_RHO_AUTH_PERF FAIL diagnostic counters changed pixels\n");
+        return 1;
+    }
+    if (exactWork.size() != 4 || authorityWork.size() != 4 ||
+        exactWork[0] == 0 || exactWork[1] == 0 ||
+        exactWork[2] == 0 || exactWork[3] == 0 ||
+        authorityWork[0] != 0 || authorityWork[1] != 0 ||
+        authorityWork[2] != exactWork[2] ||
+        authorityWork[3] != exactWork[3]) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL executed visibility work "
+            "exact=(%u,%u;%u,%u) authority=(%u,%u;%u,%u)\n",
+            exactWork.size() == 4 ? exactWork[0] : 0,
+            exactWork.size() == 4 ? exactWork[1] : 0,
+            exactWork.size() == 4 ? exactWork[2] : 0,
+            exactWork.size() == 4 ? exactWork[3] : 0,
+            authorityWork.size() == 4 ? authorityWork[0] : 0,
+            authorityWork.size() == 4 ? authorityWork[1] : 0,
+            authorityWork.size() == 4 ? authorityWork[2] : 0,
+            authorityWork.size() == 4 ? authorityWork[3] : 0);
+        return 1;
+    }
+    std::printf(
+        "SOURCE_RHO_AUTH_PERF GPU_EXECUTED visibility "
+        "exact_zero=(%u calls,%u sdf_probes) "
+        "authority_zero=(%u calls,%u sdf_probes) "
+        "exact_live=(%u calls,%u sdf_probes) "
+        "authority_live=(%u calls,%u sdf_probes)\n",
+        exactWork[0], exactWork[1], authorityWork[0], authorityWork[1],
+        exactWork[2], exactWork[3], authorityWork[2], authorityWork[3]);
+
+    // Leave all hostile producer/revision/lifetime witnesses uninstrumented,
+    // but with the now-explicitly-enabled real visibility calculation.
+    exactRenderer.setSourceVisibilityWorkDiagnosticsEnabled(false);
+    authorityRenderer.setSourceVisibilityWorkDiagnosticsEnabled(false);
 
     // Incremental repair economics: mutate only source slot 0 from proven zero
     // to authored nonzero. Time semantic admission/repair separately from the
