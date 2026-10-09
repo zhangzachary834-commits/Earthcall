@@ -691,6 +691,13 @@ int main() {
                   exact.wgsl.find("atomicAdd(") == std::string::npos &&
                   authorized.wgsl.find("atomicAdd(") == std::string::npos,
               "uninstrumented exact and authority shaders have no witness binding/atomics");
+        check(exact.wgsl.find(
+                  "return select(s.raw, s.raw / max(gradLen, 1.0), gradLen > 1e-6)") !=
+                  std::string::npos &&
+                  authorized.wgsl.find(
+                      "return select(s.raw, s.raw / max(gradLen, 1.0), gradLen > 1e-6)") !=
+                      std::string::npos,
+              "exact and authority shadow marches use canonical gradient damping");
         check(countedExact.wgsl.find(workBinding) != std::string::npos &&
                   countedExact.wgsl.find(invocationAtomic) != std::string::npos &&
                   countedExact.wgsl.find(sdfAtomic) != std::string::npos &&
