@@ -1,11 +1,33 @@
 #include "support/test_harness.hpp"
 #include <iostream>
 #include <chrono>
+#include <filesystem>
+
+struct Scratch {
+    std::filesystem::path path;
+    ~Scratch() {
+        SaveSystem::setSaveRoot("");
+        std::error_code ec;
+        std::filesystem::remove_all(path, ec);
+    }
+};
 
 int main() {
+    const auto source = TestSupport::resolveRealWorldPath("saves/worlds/synthesis_studio_living.json");
+    if (!std::filesystem::exists(source)) {
+        std::cerr << "my_probe_test: source world not found: " << source << "\n";
+        return 1;
+    }
+
+    Scratch scratch{std::filesystem::temp_directory_path() /
+        ("earthcall-probe-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))};
+    std::filesystem::create_directories(scratch.path / "worlds");
+    const auto world = scratch.path / "worlds/living.json";
+    std::filesystem::copy_file(source, world);
+
+    SaveSystem::setSaveRoot(scratch.path.string());
     TestSupport::BootedEngineHarness harness;
-    std::string filename = "saves/worlds/synthesis_studio_living.json";
-    harness.loadWorld(filename);
+    harness.loadWorld(world.string());
     
     // warm up
     for (int i=0; i<5; ++i) harness.lawManager.tick();
