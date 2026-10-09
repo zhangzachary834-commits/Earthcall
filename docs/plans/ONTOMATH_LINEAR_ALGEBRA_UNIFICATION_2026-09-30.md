@@ -635,6 +635,14 @@ If both exist, conversion/equivalence must be defined and tested in OntoMath.
 
 # 13. Rung 10 — Quarantine GLM as backend machinery
 
+**Status (2026-10-08): IN PROGRESS — guardrail and targeted production migration implemented; exact-head CI pending.** PR #498 was explicitly approved and merged by Zach. Rung 10 therefore began on fresh branch `sol/ontomath-rung10-glm-quarantine-20261008` from live canonical `64b36416eb4296040d386c9b18537c1b483dd642`, not on the Rungs 0–9 campaign branch.
+
+The first pass installs `tests/singularity/gift_shop_guardrail_test.cpp`, a source-level CI ratchet that walks `src/`, strips comments/string literals, reports every violation before exit, and refuses targeted semantic-origin GLM calls outside five exact named substrate/oracle files. It is in the focused CPU list and runs from the repository root. No legacy-debt allowlist was added.
+
+That same pass migrated the remaining targeted production consumers discovered from the canonical census: PersonPerspective camera view/projection; Person pose translation/parent-rest inverse/composition; EngineUpdate local-space conversions; CreationTools unprojection; CreationWindow and Creator Console/asset placement translations; and Object collision support-direction pullback. The latter is now named in OntoMath as `pullbackCovector` (A^T d), deliberately distinct from inverse-transpose `transformNormal`; its witness also proves the pullback remains defined for singular affine maps where a normal transform must refuse.
+
+The branch-local targeted census currently reports **zero unauthorized hits**. The remaining targeted GLM calls are confined to exact allowed boundaries: `OntoMath/LinearAlgebra.cpp`, `OntoMath/Affine.cpp`, `Screen/GL/GluCompat.cpp`, and the two standalone WebGPU smoke/oracle programs. Exact-head CI is still required before Rung 10 may be called complete. Rung 11 / Bind / Person authority remains explicitly out of scope.
+
 **Execution boundary (2026-10-07):** Rung 10 is intentionally a post-merge cleanup campaign. Finish Rung 9 and its exact-head tribunal on the current branch first; merge that additive/migration foundation only with Zach's explicit approval; then cut a fresh branch from the resulting canonical head to migrate any remaining legacy consumers, remove/quarantine obsolete semantic entry points, and install the anti-regrowth guardrail. This keeps replacement capability separable from destructive legacy removal and preserves a clean rollback/bisect boundary.
 
 ## Objective
