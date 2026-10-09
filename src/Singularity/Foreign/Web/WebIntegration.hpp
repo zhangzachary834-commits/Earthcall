@@ -121,7 +121,6 @@ public:
 
     // Earthcall feature access
     void enableBrushSystemAccess(bool enable);
-    void enableDesignSystemAccess(bool enable);
     void enableAvatarSystemAccess(bool enable);
 
     // Communication
