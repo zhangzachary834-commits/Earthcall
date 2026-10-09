@@ -2219,9 +2219,20 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     // a seeded fact current, and a snapshot nothing refreshes is worse than no
     // snapshot — the reactive path would answer confidently from stale values.
     // Disconnected, the sweep below reads the beings themselves and is right.
+    //
+    // The first sweep seeds every available being. Further sweeps are needed
+    // only after a structural revision: admitted/released beings or new authored
+    // property names bump that revision. In between, connectToEventBus() keeps
+    // existing facts current through the property-change and relation callbacks.
+    // This avoids the temporary Universe::beings() vector on steady frames.
+    // dynamic_property_reachability_test witnesses BOTH invalidation paths.
     if (_connected) {
-        for (Singular* being : Universe::instance().beings()) {
-            seedStateFacts(being);
+        const uint64_t currentRevision = Universe::instance().structuralRevision();
+        if (_lastSeededStructuralRevision != currentRevision) {
+            _lastSeededStructuralRevision = currentRevision;
+            for (Singular* being : Universe::instance().beings()) {
+                seedStateFacts(being);
+            }
         }
     }
 
