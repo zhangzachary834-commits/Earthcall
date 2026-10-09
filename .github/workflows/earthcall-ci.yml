@@ -182,6 +182,12 @@ jobs:
             webgpu_volumetric_mist_test \
             sanctuary_of_sunlit_mist_test
 
+      - name: Verify SourceRho zero-authority native pixel A/B
+        shell: bash
+        run: |
+          set -o pipefail
+          ./build/webgpu_source_rho_authority_perf_test 2>&1 | tee webgpu-source-rho-authority-perf.log
+
       - name: Run CPU SDF proof witnesses
         shell: bash
         run: |
@@ -225,12 +231,6 @@ jobs:
         run: |
           set -o pipefail
           ./build/webgpu_object_test 2>&1 | tee webgpu-object-parity.log
-
-      - name: Verify SourceRho zero-authority native pixel A/B
-        shell: bash
-        run: |
-          set -o pipefail
-          ./build/webgpu_source_rho_authority_perf_test 2>&1 | tee webgpu-source-rho-authority-perf.log
 
       - name: Verify V5 fused overlap physics
         shell: bash
