@@ -47,7 +47,8 @@ struct BootedEngineHarness {
     Singularity::Input::InteractionChannel* interaction{nullptr};
 
     BootedEngineHarness(const std::string& playerName = "Player",
-                        const std::string& bodyType = "humanoid")
+                        const std::string& bodyType = "humanoid",
+                        bool hydrateAllZones = true)
         : soul(playerName),
           body(bodyType, "default"),
           player(std::move(soul), std::move(body), "default") {
@@ -160,7 +161,9 @@ struct BootedEngineHarness {
         // 4. Perform app boot hydration FIRST (matching Engine::initLogic boot sequence)
         zones.bindLive();
         zones.bindLawManager(&lawManager);
-        zones.hydrateFromZoneStore();
+        if (hydrateAllZones) {
+            zones.hydrateFromZoneStore();
+        }
     }
 
     ~BootedEngineHarness() {
