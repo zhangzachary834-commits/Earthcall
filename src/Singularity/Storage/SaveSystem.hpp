@@ -158,16 +158,6 @@ bool lawIdentityExists(const std::string& identifier);
 bool writeLawIdentity(const std::string& identifier, const nlohmann::json& j);
 nlohmann::json readLawIdentity(const std::string& identifier);
 
-// Shared Material identity store (Claude Sonnet 5.5, 2026-10-07; Per-Zone
-// serialization pathway, proof 5). A Material two Zones both use lives ONCE at
-// saves/materials/<stem>/material.json and each Zone names it through
-// `materialRefs`, exactly as `lawRefs` names a Law. <stem> is the Material's
-// name without the "material." prefix (its identifier is "material." + name).
-std::string materialIdentityPath(const std::string& identifier);
-bool materialIdentityExists(const std::string& identifier);
-bool writeMaterialIdentity(const std::string& identifier, const nlohmann::json& j);
-nlohmann::json readMaterialIdentity(const std::string& identifier);
-
 // Where an identity WOULD live, computed without touching the filesystem.
 // The *Directory/*IdentityPath builders above create their folder as a side
 // effect; foreign actuation resolves a resource BEFORE deciding whether the

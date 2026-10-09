@@ -4,7 +4,6 @@
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Singularity/Core/EventBus.hpp"
-#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
@@ -614,12 +613,8 @@ ECA::ActionExecutor ActionNode::compile() const {
                                 placement = std::get<glm::mat4>(pv);
                                 placementSet = true;
                             } else if (std::holds_alternative<glm::vec3>(pv)) {
-                                const auto authored = OntoMath::affineTranslation(std::get<glm::vec3>(pv));
-                                const auto lowered = authored ? authored->toGlmMat4() : std::nullopt;
-                                if (lowered) {
-                                    placement = *lowered;
-                                    placementSet = true;
-                                }
+                                placement = glm::translate(glm::mat4(1.0f), std::get<glm::vec3>(pv));
+                                placementSet = true;
                             }
                         }
                         // An authored placement that fails to read must ABORT
@@ -632,24 +627,12 @@ ECA::ActionExecutor ActionNode::compile() const {
                             return;
                         }
                     } else if (auto* subjectObj = dynamic_cast<Object*>(event.subject)) {
-                        const auto authored = OntoMath::affineTranslation(subjectObj->getPosition());
-                        const auto lowered = authored ? authored->toGlmMat4() : std::nullopt;
-                        if (!lowered) {
-                            emitEffect("Spawn", false, "OntoMath refused subject placement");
-                            return;
-                        }
-                        placement = *lowered;
+                        placement = glm::translate(glm::mat4(1.0f), subjectObj->getPosition());
                     } else {
                         PropertyValue posVal;
                         if (lawGetValue(*event.subject, PropertyPath::parse("position"), posVal) &&
                             std::holds_alternative<glm::vec3>(posVal)) {
-                            const auto authored = OntoMath::affineTranslation(std::get<glm::vec3>(posVal));
-                            const auto lowered = authored ? authored->toGlmMat4() : std::nullopt;
-                            if (!lowered) {
-                                emitEffect("Spawn", false, "OntoMath refused position placement");
-                                return;
-                            }
-                            placement = *lowered;
+                            placement = glm::translate(glm::mat4(1.0f), std::get<glm::vec3>(posVal));
                         }
                     }
                 }
@@ -1228,14 +1211,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                 } else if (auto* asObject = dynamic_cast<Object*>(&target)) {
                     position = asObject->getPosition();
                 }
-                const auto authoredPlacement = OntoMath::affineTranslation(position);
-                const auto loweredPlacement =
-                    authoredPlacement ? authoredPlacement->toGlmMat4() : std::nullopt;
-                if (!loweredPlacement) {
-                    emitEffect("Create", false, "OntoMath refused placement");
-                    return;
-                }
-                newborn->setTransform(*loweredPlacement);
+                newborn->setTransform(glm::translate(glm::mat4(1.0f), position));
                 newborn->updateCollisionZone(newborn->getTransform());
 
                 // The newborn is the SUBJECT of this node's children, so the
@@ -1327,13 +1303,6 @@ ECA::ActionExecutor ActionNode::compile() const {
                 // law and law may take it back.
                 if (being->removeDynamicProperty(name)) {
                     emitEffect("RemoveProperty", true);
-                    return;
-                }
-                // A materialized authored accessor may outlive its storage.
-                // Clearing that bridge would grant the deleted slot again as
-                // monostate; repeated removal must leave it absent.
-                if (being->hasAuthoredPropertyAccessor(name)) {
-                    emitEffect("RemoveProperty", false, "no such authored property: " + name);
                     return;
                 }
                 // A first-mover property is a C++ member: the slot cannot be

@@ -49,21 +49,6 @@ red the moment the map stops noticing the world's shape move.
 
 ## 1. The ledger
 
-### Direct Screen region observations (2026-10-07)
-
-Zach requested named displayed regions, granular Property paths and Metalaw authoring. This is a sensing snapshot/source-editing rung, not a membership cache or an inverse compositor.
-
-| Structure | Derived from | Invalidated / renewed by | Guarded by |
-|---|---|---|---|
-| `PropertyPath::ResolvedSlot::structuredView` | Current typed field's complete codec representation | Rebuilt on every operation; discarded afterward; successful edit validates and replaces canonical storage and notifies its bearer root | `property_memory_access_test`, `law_line_zone_test` nested field watcher |
-| Screen request membership | Current qualified region selector, physical rectangle, framebuffer dimensions, explicit time | Recomputed for every new request token; no retained membership cache | Native Law Line Screen probe: independently counted selected centres and neighbours |
-| `ScreenChannel::_sampleResult` | Actual completed-viewport RGBA8 readback and that request's selector/frame/dimensions | Replaced by each explicit new token, including an empty refused observation on failure; unchanged token retains an explicitly historical snapshot | Native region probe: fresh colours, frame retention, no partial budget result |
-| Sensor observation read/copy | `_sampleResult` | A detached typed snapshot is returned on every read; canonical storage cannot escape through Map/ValueLeaf aliases | Native region probe: editing Person-carried memory cannot mutate the channel witness |
-
-Field edits do not reinterpret past observations; recapture needs a new token. Carried observation memory remains ordinarily editable on its bearer, with the read-only channel snapshot as the sensing witness. The existing Object texture `_regionCache` is not repaired or certified by this work. See [contract and remaining work](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md#named-regions-and-completed-viewport-observations--2026-10-07).
-
-*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-07 19:08 PDT.*
-
 ### On `ReteNetwork` (`src/ZonesOfEarth/AuthorsOfLaw/Law.hpp`)
 
 | Structure | Derived from | Invalidated by | Guarded by |

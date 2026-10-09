@@ -13,15 +13,12 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
-#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 
 #include <cstdio>
 #include <string>
-#include <cmath>
-#include <glm/gtc/matrix_transform.hpp>
 
 namespace {
 
@@ -96,97 +93,6 @@ int main() {
     check(read("activeColor", v) &&
               std::get<glm::vec3>(v) == glm::vec3(0.25f, 0.5f, 0.75f),
           "activeColor is registered and holds the written colour");
-
-    // Rung 6 OntoMath sovereignty: CreationChannel must preserve the frozen
-    // legacy T * Rx * Ry * Rz * S spawn transform while OntoMath owns it.
-    channel->cursorSpawnPos = glm::vec3(1.25f, -2.0f, 3.5f);
-    channel->cursorSpawnRot = glm::vec3(17.0f, -31.0f, 48.0f);
-    channel->cursorSpawnScale = glm::vec3(0.75f, 1.5f, 2.25f);
-    glm::mat4 legacySpawn =
-        glm::translate(glm::mat4(1.0f), channel->cursorSpawnPos);
-    legacySpawn = glm::rotate(legacySpawn, glm::radians(channel->cursorSpawnRot.x),
-                              glm::vec3(1.0f, 0.0f, 0.0f));
-    legacySpawn = glm::rotate(legacySpawn, glm::radians(channel->cursorSpawnRot.y),
-                              glm::vec3(0.0f, 1.0f, 0.0f));
-    legacySpawn = glm::rotate(legacySpawn, glm::radians(channel->cursorSpawnRot.z),
-                              glm::vec3(0.0f, 0.0f, 1.0f));
-    legacySpawn = glm::scale(legacySpawn, channel->cursorSpawnScale);
-    const glm::mat4 authoredSpawn = channel->getCursorSpawnTransform();
-    bool spawnParity = true;
-    for (int col = 0; col < 4; ++col) {
-        for (int row = 0; row < 4; ++row) {
-            spawnParity = spawnParity &&
-                std::abs(authoredSpawn[col][row] - legacySpawn[col][row]) < 1e-5f;
-        }
-    }
-    check(spawnParity,
-          "CreationChannel OntoMath spawn transform preserves legacy T*Rx*Ry*Rz*S");
-
-    // Rung 6 CursorSnap surface-offset parity. GLM below is a frozen legacy
-    // oracle only; production rotation/direction meaning belongs to OntoMath.
-    channel->placementMode = "CursorSnap";
-    channel->gridSnap = false;
-    channel->cursorSpawnRot = glm::vec3(21.0f, -34.0f, 57.0f);
-    channel->cursorSpawnScale = glm::vec3(1.4f, 0.8f, 2.2f);
-    channel->cursorHitPos = glm::vec3(-1.0f, 2.0f, 3.0f);
-    channel->cursorHitNormal = glm::normalize(glm::vec3(0.3f, 0.9f, -0.2f));
-
-    glm::mat4 legacySurfaceRotation(1.0f);
-    legacySurfaceRotation = glm::rotate(
-        legacySurfaceRotation, glm::radians(channel->cursorSpawnRot.x), glm::vec3(1, 0, 0));
-    legacySurfaceRotation = glm::rotate(
-        legacySurfaceRotation, glm::radians(channel->cursorSpawnRot.y), glm::vec3(0, 1, 0));
-    legacySurfaceRotation = glm::rotate(
-        legacySurfaceRotation, glm::radians(channel->cursorSpawnRot.z), glm::vec3(0, 0, 1));
-    const glm::vec3 legacyAxisX = glm::normalize(
-        glm::vec3(legacySurfaceRotation * glm::vec4(1, 0, 0, 0)));
-    const glm::vec3 legacyAxisY = glm::normalize(
-        glm::vec3(legacySurfaceRotation * glm::vec4(0, 1, 0, 0)));
-    const glm::vec3 legacyAxisZ = glm::normalize(
-        glm::vec3(legacySurfaceRotation * glm::vec4(0, 0, 1, 0)));
-    const glm::vec3 half = channel->cursorSpawnScale * 0.5f;
-    const float legacySurfaceOffset =
-        std::abs(glm::dot(channel->cursorHitNormal, legacyAxisX)) * half.x +
-        std::abs(glm::dot(channel->cursorHitNormal, legacyAxisY)) * half.y +
-        std::abs(glm::dot(channel->cursorHitNormal, legacyAxisZ)) * half.z;
-    const glm::vec3 expectedCursorSnap =
-        channel->cursorHitPos + channel->cursorHitNormal * legacySurfaceOffset;
-    const glm::vec3 actualCursorSnap =
-        channel->computeSpawnPosition(glm::vec3(99.0f), glm::vec3(0, 0, -1));
-    check(glm::length(actualCursorSnap - expectedCursorSnap) < 1e-5f,
-          "CreationChannel OntoMath CursorSnap surface offset preserves legacy rotated support axes");
-
-    // Rung 6 First Mover world->local parity. Production Tool.cpp now asks
-    // OntoMath for inverse(parent) * world; GLM here is only the frozen oracle.
-    glm::mat4 parentWorld = glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, -2.0f, 5.0f));
-    parentWorld = glm::rotate(parentWorld, glm::radians(29.0f), glm::vec3(0, 1, 0));
-    parentWorld = glm::scale(parentWorld, glm::vec3(1.25f, 0.75f, 1.8f));
-    glm::mat4 childWorld = glm::translate(glm::mat4(1.0f), glm::vec3(-4.0f, 6.0f, 2.0f));
-    childWorld = glm::rotate(childWorld, glm::radians(-17.0f), glm::vec3(1, 0, 0));
-    const glm::mat4 legacyLocal = glm::inverse(parentWorld) * childWorld;
-    const auto parentMath = OntoMath::MatrixValue::fromGlmMat4(parentWorld);
-    const auto childMath = OntoMath::MatrixValue::fromGlmMat4(childWorld);
-    const auto inverseParent = OntoMath::inverseAffine(parentMath);
-    const auto authoredLocal = inverseParent
-        ? OntoMath::affineCompose(*inverseParent, childMath)
-        : std::optional<OntoMath::MatrixValue>{};
-    const auto loweredLocal = authoredLocal
-        ? authoredLocal->toGlmMat4()
-        : std::optional<glm::mat4>{};
-    bool localParity = loweredLocal.has_value();
-    if (loweredLocal) {
-        for (int col = 0; col < 4; ++col)
-            for (int row = 0; row < 4; ++row)
-                localParity = localParity &&
-                    std::abs((*loweredLocal)[col][row] - legacyLocal[col][row]) < 1e-5f;
-    }
-    check(localParity,
-          "First Mover OntoMath world-to-local preserves legacy inverse(parent)*world");
-
-    const glm::mat4 singularParent =
-        glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 1.0f));
-    check(!OntoMath::inverseAffine(OntoMath::MatrixValue::fromGlmMat4(singularParent)),
-          "First Mover world-to-local refuses a singular parent instead of inventing a fallback");
 
     // ---- two latches: console Create is not the spawn law -------------------
     check(std::string(Rendering::toolNameForMode(Rendering::Mode3D::BrushCreate)) ==

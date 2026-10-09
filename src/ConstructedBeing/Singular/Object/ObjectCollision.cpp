@@ -19,7 +19,6 @@
 #include "Singularity/Screen/HighlightSystem.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
-#include "Singularity/OntoMath/LinearAlgebra.hpp"
 
 
 
@@ -29,12 +28,11 @@
 
 namespace {
 glm::vec3 transformNormalToWorld(const glm::mat4& transform, const glm::vec3& localNormal) {
-    const auto authored = OntoMath::MatrixValue::fromGlmMat4(transform);
-    const auto worldNormal = OntoMath::transformNormal(authored, localNormal);
-    if (!worldNormal) return glm::vec3(0.0f, 1.0f, 0.0f);
-    const float len = glm::length(*worldNormal);
+    glm::mat3 linear(transform);
+    glm::vec3 worldNormal = glm::transpose(glm::inverse(linear)) * localNormal;
+    float len = glm::length(worldNormal);
     if (len <= 1e-6f) return glm::vec3(0.0f, 1.0f, 0.0f);
-    return *worldNormal / len;
+    return worldNormal / len;
 }
 
 glm::vec3 closestPointOnTriangle(const glm::vec3& p,
@@ -752,12 +750,8 @@ bool Object::computePointPenetration(const glm::vec3& point, glm::vec3& outCorre
     }
 
     glm::mat4 collisionTransform = getRaycastTransform();
-    const auto collisionAffine = OntoMath::MatrixValue::fromGlmMat4(collisionTransform);
-    const auto inverseCollision = OntoMath::inverseAffine(collisionAffine);
-    if (!inverseCollision) return false;
-    const auto localPointValue = OntoMath::transformPoint(*inverseCollision, point);
-    if (!localPointValue) return false;
-    const glm::vec3 localPoint = *localPointValue;
+    glm::mat4 inv = glm::inverse(collisionTransform);
+    glm::vec3 localPoint = glm::vec3(inv * glm::vec4(point, 1.0f));
 
     glm::vec3 localSurface(0.0f);
     glm::vec3 localNormal(0.0f, 1.0f, 0.0f);
