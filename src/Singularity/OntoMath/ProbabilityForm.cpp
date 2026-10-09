@@ -9,8 +9,66 @@ static thread_local std::mt19937 generator(std::random_device{}());
 
 double Distribution::sample() const {
     if (kind == Kind::Symbolic) {
-        // TODO: Inverse transform sampling or rejection sampling for the symbolic PDF
-        return expectedValue();
+        if (!pdf) return 0.0;
+
+        // Metropolis-Hastings MCMC Sampler
+        // 1. Find a starting point (use exact Expected Value if available, else 0.0)
+        double currentX = expectedValue();
+        if (std::isnan(currentX)) {
+            currentX = 0.0;
+        }
+
+        // 2. Determine optimal proposal step size using exact Variance!
+        // This is a beautiful synergy of analytical math driving the numerical sampler.
+        double var = variance();
+        double sigma = (std::isnan(var) || var <= 0.0) ? 1.0 : std::sqrt(var);
+        
+        std::normal_distribution<double> proposalDist(0.0, sigma);
+        std::uniform_real_distribution<double> uniformDist(0.0, 1.0);
+
+        auto evalPdf = [&](double x) -> double {
+            std::map<std::string, PropertyValue> vars;
+            vars[variableName] = PropertyValue(x);
+            auto res = pdf->evaluate(vars);
+            if (!res) return 0.0;
+            double val = 0.0;
+            propertyValueToNumber(*res, val);
+            return std::max(0.0, val);
+        };
+
+        double currentP = evalPdf(currentX);
+
+        // If the starting point has zero probability (e.g. out of bounds), we need to find ANY valid piece.
+        if (currentP <= 0.0) {
+            for (const auto& piece : pdf->pieces) {
+                if (piece.hasLo && piece.hasHi) {
+                    currentX = (piece.lo + piece.hi) / 2.0;
+                    currentP = evalPdf(currentX);
+                    if (currentP > 0.0) break;
+                } else if (piece.hasLo) {
+                    currentX = piece.lo + 1.0;
+                    currentP = evalPdf(currentX);
+                    if (currentP > 0.0) break;
+                }
+            }
+        }
+
+        // 3. Burn-in Phase (100 steps is sufficient for an optimal step size to converge locally)
+        const int BURN_IN_STEPS = 100;
+        for (int i = 0; i < BURN_IN_STEPS; ++i) {
+            double candX = currentX + proposalDist(generator);
+            double candP = evalPdf(candX);
+            
+            if (candP > 0.0) {
+                double alpha = (currentP > 0.0) ? (candP / currentP) : 2.0; // Always accept if current was 0
+                if (alpha >= 1.0 || uniformDist(generator) < alpha) {
+                    currentX = candX;
+                    currentP = candP;
+                }
+            }
+        }
+        
+        return currentX;
     }
 
     if (params.empty() && kind != Kind::Uniform && kind != Kind::Gaussian && kind != Kind::Exponential) return 0.0;
