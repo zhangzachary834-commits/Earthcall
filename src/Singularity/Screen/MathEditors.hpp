@@ -20,12 +20,6 @@ using PathPickerFn = std::function<bool(const char* label, PropertyPath& path)>;
 bool editMathBindings(MathBindings& bindings, const PathPickerFn& pathPicker);
 bool editExpression(OntoMath::ScalarForm& e, const MathBindings& bindings);
 bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings);
-
-// Pure authoring helper shared by the ImGui editor and focused tests. It
-// initializes the structural shape/arity an author would get when choosing an
-// operation from the editor, without requiring an ImGui frame.
-void initializeMathNodeForEditor(OntoMath::MathNode& node, OntoMath::MathNode::Op op);
-
 bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings);
 
 // The registry of NAMED functions — define once, call anywhere (recursion

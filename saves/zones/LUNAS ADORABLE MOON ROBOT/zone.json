@@ -1722,12 +1722,5 @@
         "zOrder2D": 0
       }
     ]
-  },
-  "materialRefs": [
-    "material.luna-moonlight",
-    "material.luna.heartlight",
-    "material.luna.moonsteel",
-    "material.luna.starlight",
-    "material.luna.sunbeam"
-  ]
+  }
 }

@@ -37,8 +37,6 @@ struct SoundEmitterInstance {
     ma_sound* sound = nullptr;
     ma_waveform* waveform = nullptr;
     ma_waveform_type currentWaveType = ma_waveform_type_sine;
-    double currentFrequency = -1.0;
-    double currentAmplitude = -1.0;
 };
 
 struct AudioSystem::AudioState {
@@ -284,29 +282,6 @@ void AudioSystem::tick() {
             continue;
         }
 
-        if (frequency < kAudibleFloorHz) {
-            for (auto it = _state->activeEmitters.begin();
-                 it != _state->activeEmitters.end(); ++it) {
-                if ((*it)->subject != obj) continue;
-                ma_sound_stop((*it)->sound);
-                ma_sound_uninit((*it)->sound);
-                delete (*it)->sound;
-                if ((*it)->waveform) {
-                    ma_waveform_uninit((*it)->waveform);
-                    delete (*it)->waveform;
-                }
-                delete *it;
-                _state->activeEmitters.erase(it);
-                break;
-            }
-            std::cerr << "AudioSystem: refused " << frequency
-                      << " Hz legacy oscillator below the " << kAudibleFloorHz
-                      << " Hz Person-body floor.\n";
-            continue;
-        }
-        if (frequency > 20000.0) frequency = 20000.0;
-        amplitude = std::clamp(amplitude, 0.0, 1.0);
-
         // 2. Ontological Occlusion (Muffling)
         if (lawGetValue(*obj, PropertyPath::parse("acoustic.lowpassCutoff"), pv)) {
             double cutoff = 22000.0;
@@ -334,8 +309,6 @@ void AudioSystem::tick() {
             instance = new SoundEmitterInstance();
             instance->subject = obj;
             instance->currentWaveType = waveType;
-            instance->currentFrequency = frequency;
-            instance->currentAmplitude = amplitude;
 
             ma_waveform_config config = ma_waveform_config_init(
                 _state->engine.pDevice->playback.format,
@@ -363,14 +336,8 @@ void AudioSystem::tick() {
                 ma_waveform_set_type(instance->waveform, waveType);
                 instance->currentWaveType = waveType;
             }
-            if (instance->currentAmplitude != amplitude) {
-                ma_waveform_set_amplitude(instance->waveform, amplitude);
-                instance->currentAmplitude = amplitude;
-            }
-            if (instance->currentFrequency != frequency) {
-                ma_waveform_set_frequency(instance->waveform, frequency);
-                instance->currentFrequency = frequency;
-            }
+            ma_waveform_set_amplitude(instance->waveform, amplitude);
+            ma_waveform_set_frequency(instance->waveform, frequency);
             
             glm::vec3 pos = obj->getPosition();
             ma_sound_set_position(instance->sound, pos.x, pos.y, pos.z);

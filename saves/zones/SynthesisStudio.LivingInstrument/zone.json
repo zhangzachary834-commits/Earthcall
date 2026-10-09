@@ -42497,27 +42497,5 @@
         "zOrder2D": -1000
       }
     ]
-  },
-  "materialRefs": [
-    "material.studio.A5",
-    "material.studio.B5",
-    "material.studio.C5",
-    "material.studio.D5",
-    "material.studio.E5",
-    "material.studio.F5",
-    "material.studio.G5",
-    "material.studio.btn.blue",
-    "material.studio.btn.gold",
-    "material.studio.canvas",
-    "material.studio.crystal",
-    "material.studio.handle",
-    "material.studio.sign",
-    "material.studio.sign.blue",
-    "material.studio.sign.dark",
-    "material.studio.sign.gold",
-    "material.studio.slate",
-    "material.studio.socket",
-    "material.studio.track",
-    "material.studio.walnut"
-  ]
+  }
 }
