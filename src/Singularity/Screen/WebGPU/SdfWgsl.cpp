@@ -2541,7 +2541,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* phaseExpr,
                 const OntoMath::Piecewise* emissionExpr,
                 const OntoMath::Piecewise* responseExpr,
-                const std::vector<uint8_t>* radianceZeroAuthority) {
+                const std::vector<uint8_t>* radianceZeroAuthority,
+                bool witnessVisibilityWorkCounters) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -2956,7 +2957,35 @@ Program compile(const geom::SdfNode& root,
         prog.wgsl += "const SOURCE_DIRECTION_EPS: f32 = " +
                      wgslLiteral(OntoMath::kDirectionEpsilon) + ";\n";
 
+        // Opt-in GPU-executed diagnostics, emitted only for native witness draws.
+        // Production shaders have no diagnostic storage or atomic instructions.
         std::string marcher = kMarcher;
+        if (witnessVisibilityWorkCounters) {
+            prog.wgsl += "\n@group(2) @binding(0) var<storage, read_write> "
+                         "visibilityWork: array<atomic<u32>>;\n";
+            auto patchWitnessMarcher = [&](const std::string& needle,
+                                           const std::string& replacement) {
+                const auto at = marcher.find(needle);
+                if (at == std::string::npos) {
+                    e.refuse("SourceRho witness could not instrument the exact visibility marcher");
+                    return;
+                }
+                marcher.replace(at, needle.size(), replacement);
+            };
+            patchWitnessMarcher(
+                "fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {\n",
+                "fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWorld: vec3<f32>, sourceSlot: u32) -> f32 {\n"
+                "    atomicAdd(&visibilityWork[sourceSlot * 2u], 1u);\n");
+            // Every executed transport SDF probe, including the surface probe.
+            patchWitnessMarcher(
+                "    let surfaceSignedStep = sourceTransportSignedStep(surfacePoint, damping);\n",
+                "    atomicAdd(&visibilityWork[sourceSlot * 2u + 1u], 1u);\n"
+                "    let surfaceSignedStep = sourceTransportSignedStep(surfacePoint, damping);\n");
+            patchWitnessMarcher(
+                "        let dShadow = sourceTransportSignedStep(pShadow, damping);\n",
+                "        atomicAdd(&visibilityWork[sourceSlot * 2u + 1u], 1u);\n"
+                "        let dShadow = sourceTransportSignedStep(pShadow, damping);\n");
+        }
         const std::string lightingBegin =
             "    let L = normalize(u.lightPos.xyz - pw);\n";
         const std::string lightingEnd =
@@ -3010,6 +3039,9 @@ Program compile(const geom::SdfNode& root,
                 sum += "            let shapedRadiance = radialRadiance * angularRadiance;\n";
                 if (authoritativeZeroRho)
                     sum += "            let pathVisibility = 1.0;\n";
+                else if (witnessVisibilityWorkCounters)
+                    sum += "            let pathVisibility = sourceVisibility(pf, nf, source.position.xyz, " +
+                           s + "u);\n";
                 else
                     sum += "            let pathVisibility = sourceVisibility(pf, nf, source.position.xyz);\n";
                 sum += "            let directRadiance = shapedRadiance * pathVisibility;\n";
