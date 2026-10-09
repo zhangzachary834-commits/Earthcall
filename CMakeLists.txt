@@ -454,6 +454,7 @@ if(NOT EMSCRIPTEN)
             ${TEST_NAME} STREQUAL "gyroid_reliquary_test" OR
             ${TEST_NAME} STREQUAL "veiled_hour_test" OR
             ${TEST_NAME} STREQUAL "zone_material_corpus_test" OR
+            ${TEST_NAME} STREQUAL "gift_shop_guardrail_test" OR
             ${TEST_NAME} MATCHES "^foreign_web_dom_")
             set_tests_properties(${TEST_NAME} PROPERTIES
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
