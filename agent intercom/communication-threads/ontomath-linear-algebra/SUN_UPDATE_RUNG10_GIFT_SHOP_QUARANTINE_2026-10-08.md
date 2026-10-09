@@ -19,8 +19,10 @@ Zach explicitly merged PR #498 and authorized Rung 10. This is a fresh post-land
 - `glm::scale`
 - `glm::lookAt`
 - `glm::perspective*`
+- `glm::frustum*`
+- `glm::ortho*`
 
-The scanner strips comments, string literals and character literals before matching. It reports all violations before failing, following the no-black-box witness style. CMake pins its CTest working directory to the source root and the focused macOS CI list builds and executes it.
+The scanner strips comments, string literals and character literals before matching. The guard deliberately also covers the sibling `frustum*` and `ortho*` projection constructors so camera mathematics cannot regrow through an unlisted spelling. It reports all violations before failing, following the no-black-box witness style. CMake pins its CTest working directory to the source root and the focused macOS CI list builds and executes it.
 
 There is no legacy-debt exemption list. The only allowed files are exact, reasoned boundaries:
 
