@@ -1,3 +1,4 @@
+#include "Person/Person.hpp"
 #include "InteractionChannel.hpp"
 
 #include "ConstructedBeing/Singular/Object/Object.hpp"
@@ -118,7 +119,7 @@ void InteractionChannel::publishEdge(const std::string& type, Singular* subject)
         ECA::Event{type, subject, agent, std::time(nullptr)});
 }
 
-void InteractionChannel::setPointingPerson(Singular* person) { _person = person; }
+void InteractionChannel::setPointingPerson(Person* person) { _person = person; }
 
 std::string InteractionChannel::propPersonId() const {
     return _person ? _person->getIdentifier() : std::string();

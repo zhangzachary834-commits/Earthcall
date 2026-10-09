@@ -5,6 +5,7 @@
 class Law;
 class LawManager;
 class Singular;
+class Person;
 
 namespace Rendering {
 
@@ -17,14 +18,14 @@ inline constexpr const char* kCreatorConsoleFixtureLawId =
 // Factory kept outside Engine::update so tests instantiate exactly the being
 // the live engine uses. The Person is still the author: first-mover means the
 // truth is engine-backed and not serialized, never "authorless".
-std::shared_ptr<Law> createCreatorConsoleFixtureLaw(Singular& author,
+std::shared_ptr<Law> createCreatorConsoleFixtureLaw(Person& author,
                                                     bool initiallyVisible);
 
 // Idempotently place the fixture law into the live LawManager. Returns the
 // existing law first-wins so a Person's current enabled/disabled choice is not
 // reset every frame.
 Law* syncRegisterCreatorConsoleFixtureLaw(LawManager& laws,
-                                          Singular& author,
+                                          Person& author,
                                           bool initiallyVisible);
 
 // Reconcile the native ImGui/Dock bool with the fixture Law's enabled bit.

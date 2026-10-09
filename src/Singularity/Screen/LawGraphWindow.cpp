@@ -3557,7 +3557,7 @@ void refreshEditBuffers() {
 
 } // namespace
 
-void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
+void renderLawGraphWindow(bool* open, LawManager& laws, Person& person,
                           Singular* testSubject) {
     // The author is an inspector workspace: generous control targets, quiet
     // surfaces, and enough spacing to scan authored meaning before values.

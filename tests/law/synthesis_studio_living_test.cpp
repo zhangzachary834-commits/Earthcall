@@ -1,6 +1,7 @@
 // Codex (GPT-6 Astra), session 01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44,
 // 2026-09-08: Zach's living instrument, through real boot/load/pick/Law/save.
 // Every write is confined to a disposable SaveRoot. No real Zone store is read.
+#include "Person/Person.hpp"
 #include "support/test_harness.hpp"
 #include "Singularity/Input/Interaction/ControlPatterns.hpp"
 #include "Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.hpp"
@@ -56,8 +57,8 @@ int main() {
     Object* state=find("state.studio");
     check(state && find("studio.author.astra"), "authored state and declared model author exist");
     if (!state) return 1;
-    Singular* author=nullptr;
-    for (auto* s: Universe::instance().beings()) if (s->getIdentifier()=="Zach") author=s;
+    Person* author=nullptr;
+    for (auto* s: Universe::instance().beings()) if (s->getIdentifier()=="Zach") author=static_cast<Person*>(s);
     check(author!=nullptr, "original human authorial marker resolves");
     if (!author) return 1;
     Singularity::Input::syncRegisterControlPatterns(h.lawManager, categories, *author);

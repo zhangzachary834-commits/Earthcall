@@ -3,6 +3,7 @@
 #include "Singularity/Screen/MathEditors.hpp"
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "Person/Person.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
@@ -130,7 +131,7 @@ PropertyMapping rowToMapping(const std::string& path, const TransferRow& row) {
 }
 
 std::shared_ptr<ObjectConcept> captureWithMappings(
-    const std::vector<Singular*>& sources, Singular& author) {
+    const std::vector<Singular*>& sources, Person& author) {
     const std::string name = g.nameBuf[0] ? g.nameBuf : "Concept";
     auto concept = ObjectConcept::captureFromBeings(sources, name, &author);
     for (const auto& entry : g.rows) {
@@ -163,7 +164,7 @@ glm::mat4 placementFor(const std::vector<Singular*>& sources, Object* selected) 
 
 } // namespace
 
-void renderCreationContent(Singular& author, Object* selected, Zone& zone) {
+void renderCreationContent(Person& author, Object* selected, Zone& zone) {
     // ----------------------------------------------------------------
     // The source set: which beings the new set derives FROM.
     // ----------------------------------------------------------------
@@ -393,7 +394,7 @@ void renderCreationContent(Singular& author, Object* selected, Zone& zone) {
                         "law's SPAWN action.");
 }
 
-void renderCreationWindow(bool* open, Singular& author, Object* selected, Zone& zone) {
+void renderCreationWindow(bool* open, Person& author, Object* selected, Zone& zone) {
     if (!open || !*open) return;
     ImGui::SetNextWindowSize(ImVec2(560, 620), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("Singular Set-to-Set Creation", open)) {

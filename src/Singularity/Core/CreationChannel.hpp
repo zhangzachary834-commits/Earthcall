@@ -4,6 +4,8 @@
 #include <glm/glm.hpp>
 #include <string>
 
+class Person;
+
 namespace Singularity {
 namespace Core {
 
@@ -95,17 +97,17 @@ private:
 //
 // Registers concept "concept-shape-3d" into the ConceptRegistry as a side
 // effect if it is not already there; the law's Spawn action resolves it by id.
-std::shared_ptr<Law> createShapeGenerator3DLaw(Singular& author);
+std::shared_ptr<Law> createShapeGenerator3DLaw(Person& author);
 
 // The rest of the Creator Console 3D tools, as first movers. Console
 // Create is tool-create-3d-law (bypass). The spawn law is a different
 // being and arms on spawnLawArmed. Each tool is a named FirstMoverLaw
 // so a Person can set it down. Sense/Act stay in Tool::*.
-void syncRegisterCreatorTools(LawManager& laws, Singular& author);
+void syncRegisterCreatorTools(LawManager& laws, Person& author);
 
 // The ManualDistance arrow/PageUp/PageDown controls are first-mover Laws too:
 // InteractionChannel senses the held key; these Laws own the 0.1/frame nudge.
-void syncRegisterManualDistanceKeyLaws(LawManager& laws, Singular& author);
+void syncRegisterManualDistanceKeyLaws(LawManager& laws, Person& author);
 
 // Stable identifier for the first-mover law that owns this active3DMode
 // string ("Create", "Select", ...). Empty when no tool is armed.

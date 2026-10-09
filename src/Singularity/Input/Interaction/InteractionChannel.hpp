@@ -8,6 +8,7 @@
 
 struct GLFWwindow;
 class Object;
+class Person;
 class ZoneManager;
 
 namespace Core { class Camera; }
@@ -134,7 +135,7 @@ public:
     // The Person whose hand this channel senses (Engine::getPerson). Every
     // edge names them: as the agent (event object) of a gesture on a being,
     // or as the subject of one that addressed no being.
-    void setPointingPerson(Singular* person);
+    void setPointingPerson(Person* person);
 
     // Registered as "@world.pointerOver" / "@world.pointerDistance": readings
     // ABOUT the subject rather than properties ON it, so "if the pointer is
@@ -258,7 +259,7 @@ private:
 
     // The Person whose hand this is — the agent of every edge. Identity
     // pointer, owned by the Engine; exposed as the read-only `personId`.
-    Singular* _person = nullptr;
+    Person* _person = nullptr;
 
     // What the channel itself last wrote to the held state. A difference at
     // the next observe() is an AUTHORED write (a law's Set), reported as edges.

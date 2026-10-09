@@ -1,6 +1,7 @@
 #pragma once
 
 class Singular;
+class Person;
 class Object;
 class Zone;
 
@@ -14,7 +15,7 @@ namespace Rendering {
 //
 // `selected` is the 3D selection (source-set building + placement);
 // `author` signs captured concepts; newborns join the Zone.
-void renderCreationWindow(bool* open, Singular& author, Object* selected, Zone& zone);
-void renderCreationContent(Singular& author, Object* selected, Zone& zone);
+void renderCreationWindow(bool* open, Person& author, Object* selected, Zone& zone);
+void renderCreationContent(Person& author, Object* selected, Zone& zone);
 
 } // namespace Rendering

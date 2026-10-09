@@ -10,6 +10,7 @@
 // is how the chrome writes registered paths. apply3DMode writes console
 // Create (active3DMode); L writes spawnLawArmed. Two latches.
 
+#include "Person/Person.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
@@ -244,7 +245,10 @@ int main() {
           "apply3DMode arms Tool::Type::FaceBrush");
 
     // ---- Creator Console tools as first movers -----------------------------
-    Object author("creator-tools-author");
+        Soul authorSoul("creator-tools-author");
+    Body authorBody("humanoid", "default");
+    Person author(std::move(authorSoul), std::move(authorBody), "default");
+    author.setDisplayName("creator-tools-author");
     Singularity::Core::syncRegisterCreatorTools(laws, author);
     check(laws.find("shape-generator-3d-law") != nullptr,
           "the spawn law is registered as its own being");

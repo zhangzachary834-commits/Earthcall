@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+class Person;
+
 namespace Rendering {
 
 // One card in the law graph: a flattened view of a Law's event binding,
@@ -67,7 +69,7 @@ ActionNode* actionAt(ActionNode& root, const std::vector<int>& path);
 // binding into the Rete network, and the concept registry listing.
 // `testSubject` (usually the selected 3D object) enables the "apply now"
 // feedback loop — authoring without feedback is guessing.
-void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
+void renderLawGraphWindow(bool* open, LawManager& laws, Person& person,
                           Singular* testSubject = nullptr);
 
 } // namespace Rendering

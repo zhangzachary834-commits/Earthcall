@@ -1,3 +1,4 @@
+#include "Person/Person.hpp"
 #include "CreatorConsoleFixtureLaw.hpp"
 
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
@@ -6,7 +7,7 @@
 
 namespace Rendering {
 
-std::shared_ptr<Law> createCreatorConsoleFixtureLaw(Singular& author,
+std::shared_ptr<Law> createCreatorConsoleFixtureLaw(Person& author,
                                                     bool initiallyVisible) {
     auto law = std::make_shared<FirstMoverLaw>("Fixture: Creator Console Visibility");
     law->setLawIdentifier(kCreatorConsoleFixtureLawId);
@@ -16,7 +17,7 @@ std::shared_ptr<Law> createCreatorConsoleFixtureLaw(Singular& author,
 }
 
 Law* syncRegisterCreatorConsoleFixtureLaw(LawManager& laws,
-                                          Singular& author,
+                                          Person& author,
                                           bool initiallyVisible) {
     if (Law* existing = laws.find(kCreatorConsoleFixtureLawId)) return existing;
 

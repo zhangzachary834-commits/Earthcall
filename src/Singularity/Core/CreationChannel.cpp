@@ -1,3 +1,4 @@
+#include "Person/Person.hpp"
 #include "CreationChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
@@ -168,7 +169,7 @@ glm::mat4 CreationChannel::getCursorSpawnTransform() const {
     return *lowered;
 }
 
-std::shared_ptr<Law> createShapeGenerator3DLaw(Singular& author) {
+std::shared_ptr<Law> createShapeGenerator3DLaw(Person& author) {
     auto law = std::make_shared<FirstMoverLaw>("Tool: Shape Generator 3D");
     law->setLawIdentifier("shape-generator-3d-law");   // NOT setObjectID -- see Law.hpp
     law->setActivation(Law::Activation::OnEvent);
@@ -247,7 +248,7 @@ const char* creatorToolLawIdForMode(const std::string& active3DMode) {
     return "";
 }
 
-void syncRegisterCreatorTools(LawManager& laws, Singular& author) {
+void syncRegisterCreatorTools(LawManager& laws, Person& author) {
     if (!laws.find("shape-generator-3d-law")) {
         auto spawn = createShapeGenerator3DLaw(author);
         laws.add(spawn);
@@ -268,7 +269,7 @@ void syncRegisterCreatorTools(LawManager& laws, Singular& author) {
     syncRegisterManualDistanceKeyLaws(laws, author);
 }
 
-void syncRegisterManualDistanceKeyLaws(LawManager& laws, Singular& author) {
+void syncRegisterManualDistanceKeyLaws(LawManager& laws, Person& author) {
     CreationChannel* channel = CreationChannel::find(laws);
     if (!channel) return;
 

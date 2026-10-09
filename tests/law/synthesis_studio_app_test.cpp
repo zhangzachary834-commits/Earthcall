@@ -1,3 +1,4 @@
+#include "Person/Person.hpp"
 // The Synthesis Studio, held to its own save file.
 //
 // The previous version of this test passed 5/5 and proved almost nothing. It
@@ -17,6 +18,7 @@
 // nothing, this fails — which is the only arrangement under which the test is
 // a regression net for the studio rather than a second copy of it.
 
+#include "Person/Person.hpp"
 #include "ConstructedBeing/CategoryManager.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/RelationManager.hpp"
@@ -650,7 +652,7 @@ int main() {
               "caption text2d does not swallow clicks at (80, 50)");
 
         // Register control patterns (control-button-law, control-toggle-law)
-        Singular* author = findBeing("Zach");
+        Person* author = static_cast<Person*>(findBeing("Zach"));
         if (author) {
             Singularity::Input::syncRegisterControlPatterns(laws, categories, *author);
         }

@@ -1,3 +1,4 @@
+#include "Person/Person.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -17,8 +18,10 @@ int main() {
 
     // Setup Universe, Zone, Author, and Categories
     Zone zone("test-zone", "default");
-    Object author;
-    author.setObjectID("author.person");
+        Soul authorSoul("author.person");
+    Body authorBody("humanoid", "default");
+    Person author(std::move(authorSoul), std::move(authorBody), "default");
+    author.setDisplayName("author.person");
     CategoryManager categories;
     Singularity::Input::seedControlCategories(categories, author);
     Singularity::Input::seedArtCategories(categories, author);

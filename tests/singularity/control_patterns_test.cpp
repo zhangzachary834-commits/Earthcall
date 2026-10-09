@@ -12,6 +12,7 @@
 // also inside the captured set. A hundred instantiated buttons, none of them
 // buttons, all of them looking right.
 
+#include "Person/Person.hpp"
 #include "ConstructedBeing/CategoryManager.hpp"
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
@@ -89,8 +90,10 @@ int main() {
         }
     });
 
-    Object author;
-    author.setObjectID("first-mover");
+        Soul authorSoul("first-mover");
+    Body authorBody("humanoid", "default");
+    Person author(std::move(authorSoul), std::move(authorBody), "default");
+    author.setDisplayName("first-mover");
 
     CategoryManager cats;
     LawManager laws;

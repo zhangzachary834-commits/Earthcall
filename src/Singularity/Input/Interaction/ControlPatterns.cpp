@@ -1,3 +1,4 @@
+#include "Person/Person.hpp"
 #include "ControlPatterns.hpp"
 
 #include "ConstructedBeing/CategoryManager.hpp"
@@ -43,7 +44,7 @@ OntoMath::Piecewise everywhere(OntoMath::ScalarForm form, const std::string& var
 // that changes between runs. Every first mover built in C++ made that mistake
 // once.
 std::shared_ptr<Law> beginPattern(const std::string& name, const std::string& id,
-                                  const std::string& eventType, Singular& author) {
+                                  const std::string& eventType, Person& author) {
     auto law = std::make_shared<FirstMoverLaw>(name);
     law->setLawIdentifier(id);
     law->addAuthor(author);
@@ -63,7 +64,7 @@ ConditionNode inCategory(const char* categoryId) {
 // The taxonomy
 // ---------------------------------------------------------------------------
 
-void seedControlCategories(CategoryManager& categories, Singular& author) {
+void seedControlCategories(CategoryManager& categories, Person& author) {
     auto root = categories.create(Control::kCategoryRoot);
     if (!root) return;
 
@@ -107,7 +108,7 @@ bool makeControl(Object& being, const std::string& categoryId,
 // §6a — Button
 // ---------------------------------------------------------------------------
 
-std::shared_ptr<Law> createButtonLaw(Singular& author) {
+std::shared_ptr<Law> createButtonLaw(Person& author) {
     auto law = beginPattern("Control: Button", "control-button-law",
                             "object-clicked", author);
     law->setConditionModel(inCategory(Control::kCategoryButton));
@@ -144,7 +145,7 @@ std::shared_ptr<Law> createButtonLaw(Singular& author) {
 // double coerces back through lawSetValue's coerceLike.
 // ---------------------------------------------------------------------------
 
-std::shared_ptr<Law> createToggleLaw(Singular& author) {
+std::shared_ptr<Law> createToggleLaw(Person& author) {
     auto law = beginPattern("Control: Toggle", "control-toggle-law",
                             "object-clicked", author);
     law->setConditionModel(inCategory(Control::kCategoryToggle));
@@ -163,7 +164,7 @@ std::shared_ptr<Law> createToggleLaw(Singular& author) {
 // §6c — Slider
 // ---------------------------------------------------------------------------
 
-std::shared_ptr<Law> createSliderLaw(Singular& author) {
+std::shared_ptr<Law> createSliderLaw(Person& author) {
     auto law = std::make_shared<FirstMoverLaw>("Control: Slider");
     law->setLawIdentifier("control-slider-law");
     law->addAuthor(author);
@@ -235,7 +236,7 @@ std::shared_ptr<Law> createSliderLaw(Singular& author) {
 // §6d — Tuner
 // ---------------------------------------------------------------------------
 
-std::shared_ptr<Law> createTunerLaw(Singular& author) {
+std::shared_ptr<Law> createTunerLaw(Person& author) {
     auto law = beginPattern("Control: Tuner", "control-tuner-law",
                             "object-scrolled", author);
     law->setConditionModel(inCategory(Control::kCategoryTuner));
@@ -261,7 +262,7 @@ std::shared_ptr<Law> createTunerLaw(Singular& author) {
 // §6e — Key command
 // ---------------------------------------------------------------------------
 
-std::shared_ptr<Law> createKeyCommandLaw(Singular& author, const std::string& key) {
+std::shared_ptr<Law> createKeyCommandLaw(Person& author, const std::string& key) {
     auto law = beginPattern("Control: Key \"" + key + "\"",
                             "control-key-" + key + "-law", "key-pressed", author);
     law->setConditionModel(ConditionNode::all(
@@ -276,7 +277,7 @@ std::shared_ptr<Law> createKeyCommandLaw(Singular& author, const std::string& ke
 // §6f — Hover response
 // ---------------------------------------------------------------------------
 
-std::shared_ptr<Law> createHoverResponseLaw(Singular& author) {
+std::shared_ptr<Law> createHoverResponseLaw(Person& author) {
     auto law = std::make_shared<FirstMoverLaw>("Control: Hover response");
     law->setLawIdentifier("control-hover-response-law");
     law->addAuthor(author);
@@ -302,7 +303,7 @@ std::shared_ptr<Law> createHoverResponseLaw(Singular& author) {
 // Art & Stroke Patterns
 // ---------------------------------------------------------------------------
 
-void seedArtCategories(CategoryManager& categories, Singular& author) {
+void seedArtCategories(CategoryManager& categories, Person& author) {
     auto root = categories.create(Control::kCategoryArtRoot);
     if (!root) return;
 
@@ -315,7 +316,7 @@ void seedArtCategories(CategoryManager& categories, Singular& author) {
         "authored-by", *root, author, true, 1.0f));
 }
 
-std::shared_ptr<Law> createStrokeDrawingLaw(Singular& author) {
+std::shared_ptr<Law> createStrokeDrawingLaw(Person& author) {
     auto law = std::make_shared<FirstMoverLaw>("Art: Draw Stroke");
     law->setLawIdentifier("art-stroke-draw-law");
     law->addAuthor(author);
@@ -337,7 +338,7 @@ std::shared_ptr<Law> createStrokeDrawingLaw(Singular& author) {
     return law;
 }
 
-std::shared_ptr<Law> createStrokeAcousticLaw(Singular& author) {
+std::shared_ptr<Law> createStrokeAcousticLaw(Person& author) {
     auto law = beginPattern("Art: Stroke Acoustic Reaction", "art-stroke-sound-law",
                             "object-hover-entered", author);
     law->setConditionModel(inCategory(Control::kCategoryStroke));
@@ -345,7 +346,7 @@ std::shared_ptr<Law> createStrokeAcousticLaw(Singular& author) {
     return law;
 }
 
-std::shared_ptr<Law> createStrokeGlowLaw(Singular& author) {
+std::shared_ptr<Law> createStrokeGlowLaw(Person& author) {
     auto law = std::make_shared<FirstMoverLaw>("Art: Stroke Illumination");
     law->setLawIdentifier("art-stroke-glow-law");
     law->addAuthor(author);
@@ -372,7 +373,7 @@ const std::vector<std::string>& controlPatternLawIds() {
 }
 
 void syncRegisterControlPatterns(LawManager& laws, CategoryManager& categories,
-                                 Singular& author) {
+                                 Person& author) {
     seedControlCategories(categories, author);
     // The art taxonomy is seeded on the same footing as the control taxonomy,
     // and for a concrete reason: Zone hydration runs at BOOT, before any world

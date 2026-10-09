@@ -9,6 +9,7 @@
 class CategoryManager;
 class Object;
 class Singular;
+class Person;
 
 namespace Singularity {
 namespace Input {
@@ -78,7 +79,7 @@ inline constexpr const char* kActivated = "control-activated";
 // land wherever the engine pointed the relation registrar. No registrar = the
 // hierarchy is not made, which is the standing rule: structure is never
 // silently dropped somewhere unfindable.
-void seedControlCategories(CategoryManager& categories, Singular& author);
+void seedControlCategories(CategoryManager& categories, Person& author);
 
 // Admit a being into a control category and grant it the vocabulary it needs.
 // This is the gesture a Person makes with the tools, available to C++ callers
@@ -100,7 +101,7 @@ bool makeControl(Object& being, const std::string& categoryId,
 // ------------------------------------------------------------------
 
 // object-clicked -> Publish control-activated. §6a.
-std::shared_ptr<Law> createButtonLaw(Singular& author);
+std::shared_ptr<Law> createButtonLaw(Person& author);
 
 // object-clicked -> flip controlOn, as ONE law with the flip in the
 // mathematics. Authored first as the obvious pair ("if off, turn on" / "if on,
@@ -109,43 +110,43 @@ std::shared_ptr<Law> createButtonLaw(Singular& author);
 // click nets no change. The full account is in the .cpp; the rule it is an
 // instance of is that two laws whose actions satisfy each other's conditions
 // are a loop, not a branch. §6b.
-std::shared_ptr<Law> createToggleLaw(Singular& author);
+std::shared_ptr<Law> createToggleLaw(Person& author);
 
 // WhileTrue, driven by drag: controlValue := v + dragX·step, clamped to
 // [controlMin, controlMax] when the being authored a range. §6c.
-std::shared_ptr<Law> createSliderLaw(Singular& author);
+std::shared_ptr<Law> createSliderLaw(Person& author);
 
 // object-scrolled -> controlValue := v + s·n. §6d.
-std::shared_ptr<Law> createTunerLaw(Singular& author);
+std::shared_ptr<Law> createTunerLaw(Person& author);
 
 // key-pressed on the focused being, matching one key -> Publish
 // control-activated. `key` is matched against
 // @interaction-channel.lastKey. §6e.
-std::shared_ptr<Law> createKeyCommandLaw(Singular& author, const std::string& key);
+std::shared_ptr<Law> createKeyCommandLaw(Person& author, const std::string& key);
 
 // WhileTrue over every being the pointer is on. Left with no action model on
 // purpose: the FEEDBACK is the authored half, and the engine has no business
 // deciding what "pointed at" should look like. Registered so it appears in the
 // Law Graph as a written invitation rather than as absent machinery.
-std::shared_ptr<Law> createHoverResponseLaw(Singular& author);
+std::shared_ptr<Law> createHoverResponseLaw(Person& author);
 
 // Seed the categories and register every archetype into `laws`, binding each
 // to the event that wakes it. Idempotent — safe on every boot and after a
 // world load, which is what makes these first movers rather than save data.
 // Seed art tool categories (category.art and category.art.stroke).
-void seedArtCategories(CategoryManager& categories, Singular& author);
+void seedArtCategories(CategoryManager& categories, Person& author);
 
 // WhileTrue drawing law that spawns stroke Singulars along @interaction-channel.pointerWorld.
-std::shared_ptr<Law> createStrokeDrawingLaw(Singular& author);
+std::shared_ptr<Law> createStrokeDrawingLaw(Person& author);
 
 // OnEvent law that triggers acoustic response on object-hover-entered for strokes.
-std::shared_ptr<Law> createStrokeAcousticLaw(Singular& author);
+std::shared_ptr<Law> createStrokeAcousticLaw(Person& author);
 
 // WhileTrue law that illuminates strokes when pointer is over them.
-std::shared_ptr<Law> createStrokeGlowLaw(Singular& author);
+std::shared_ptr<Law> createStrokeGlowLaw(Person& author);
 
 void syncRegisterControlPatterns(LawManager& laws, CategoryManager& categories,
-                                 Singular& author);
+                                 Person& author);
 
 // The identifiers the archetypes answer to, for callers that need to find,
 // disable, or govern them (the Law Graph, tests, a metalaw).
