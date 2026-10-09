@@ -1531,7 +1531,7 @@ fn sourceTransportSignedStep(p: vec3<f32>, damping: f32) -> f32 {
                 sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
             gradLen = length(g);
         }
-        return select(s.raw, s.raw / gradLen, gradLen > 1e-6);
+        return select(s.raw, s.raw / max(gradLen, 1.0), gradLen > 1e-6);
     }
     return sdfEval(p);
 }
