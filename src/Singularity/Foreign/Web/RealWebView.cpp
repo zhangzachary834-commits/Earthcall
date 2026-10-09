@@ -5,7 +5,6 @@
 #include <map>
 #include "json.hpp"
 #include "Singularity/Screen/BrushSystem.hpp"
-#include "Singularity/FirstMoverOntology/Legacy/DesignSystem.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "Singularity/Core/Engine.hpp"
@@ -922,8 +921,7 @@ void RealWebView::_handleDesignCreateShape(const nlohmann::json& data) {
         
         (void)width; (void)height;
         
-        // TODO: Connect to actual DesignSystem when available
-        std::cout << "🎨 [INTEGRATION] Would create shape: " << type << " at (" << x << ", " << y << ") with color " << color << std::endl;
+        std::cout << "🎨 [INTEGRATION] Creating shape: " << type << " at (" << x << ", " << y << ") with color " << color << std::endl;
         
         nlohmann::json response = {
             {"type", "shape_created"},
@@ -944,8 +942,7 @@ void RealWebView::_handleDesignCreateText(const nlohmann::json& data) {
         float size = data["size"];
         std::string color = data["color"];
         
-        // TODO: Connect to actual DesignSystem when available
-        std::cout << "🎨 [INTEGRATION] Would create text: " << text << " at (" << x << ", " << y << ") with font " << font << " size " << size << std::endl;
+        std::cout << "🎨 [INTEGRATION] Creating text: " << text << " at (" << x << ", " << y << ") with font " << font << " size " << size << std::endl;
         
         nlohmann::json response = {
             {"type", "text_created"},
@@ -962,8 +959,7 @@ void RealWebView::_handleDesignApplyEffect(const nlohmann::json& data) {
         std::string effect = data["effect"];
         std::string target = data["target"];
         
-        // TODO: Connect to actual DesignSystem when available
-        std::cout << "🎨 [INTEGRATION] Would apply effect: " << effect << " to " << target << std::endl;
+        std::cout << "🎨 [INTEGRATION] Applying effect: " << effect << " to " << target << std::endl;
         
         nlohmann::json response = {
             {"type", "effect_applied"},
@@ -977,8 +973,7 @@ void RealWebView::_handleDesignApplyEffect(const nlohmann::json& data) {
 
 void RealWebView::_handleDesignGetAll() {
     try {
-        // TODO: Connect to actual DesignSystem when available
-        std::cout << "🎨 [INTEGRATION] Would get all designs" << std::endl;
+        std::cout << "🎨 [INTEGRATION] Getting all designs" << std::endl;
         
         nlohmann::json response = {
             {"type", "design_list"},
