@@ -118,9 +118,17 @@ int main() {
         return 1;
     }
 
-    auto field = geom::SdfNode::leaf(
+    // Two primitives in ONE honest SDF field: the small blocker sits on the
+    // live-source ray to the visible face of the receiver. A lone convex sphere
+    // can march shadows only across back-facing (already unlit) pixels, making
+    // visibility ON/OFF images accidentally equal despite executing SDF work.
+    auto receiver = geom::SdfNode::leaf(
         geom::SdfPrim::Sphere, glm::vec3(1.0f));
-    const glm::vec3 extent(1.25f);
+    auto blocker = geom::SdfNode::leaf(
+        geom::SdfPrim::Sphere, glm::vec3(0.20f));
+    blocker.offset = glm::vec3(0.50f, 0.40f, 1.55f);
+    auto field = geom::SdfNode::binary(geom::SdfOp::Union, receiver, blocker);
+    const glm::vec3 extent(1.25f, 1.25f, 1.85f);
 
     RenderMaterial mat;
     mat.baseColor = glm::vec3(0.75f);
@@ -401,6 +409,19 @@ int main() {
     // but with the now-explicitly-enabled real visibility calculation.
     exactRenderer.setSourceVisibilityWorkDiagnosticsEnabled(false);
     authorityRenderer.setSourceVisibilityWorkDiagnosticsEnabled(false);
+
+    // Falsify the fixture itself: the admitted live light must cast a visible
+    // shadow, not merely enter an SDF marcher whose output has no pixel effect.
+    // This check is outside the uninstrumented timing window and leaves BOTH
+    // renderer arms with visibility ON before hostile lifetime testing.
+    exactRenderer.setRadianceVisibilityEnabled(false);
+    const Sample visibilityOff = renderOne(exactRenderer, true);
+    exactRenderer.setRadianceVisibilityEnabled(true);
+    if (visibilityOff.pixels == countedExact.pixels) {
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF FAIL fixture visibility OFF/ON pixels identical\n");
+        return 1;
+    }
 
     // Incremental repair economics: mutate only source slot 0 from proven zero
     // to authored nonzero. Time semantic admission/repair separately from the
