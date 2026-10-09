@@ -19,7 +19,7 @@ int main() {
         return 1;
     }
 
-    const nlohmann::json sourceJson = SaveSystem::readSaveData(source.string());
+    const nlohmann::json sourceJson = SaveSystem::readSaveData(source);
     std::size_t expectedLawCount = 0;
     if (sourceJson.contains("authoredLaws")) {
         const auto& authored = sourceJson["authoredLaws"];
