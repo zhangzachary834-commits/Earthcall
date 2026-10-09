@@ -698,12 +698,16 @@ int main() {
                       "return select(s.raw, s.raw / max(gradLen, 1.0), gradLen > 1e-6)") !=
                       std::string::npos,
               "exact and authority shadow marches use canonical gradient damping");
+        const auto shadowLoopAt =
+            countedExact.wgsl.find("for (var shadowStep = 0;");
+        const auto sdfIncrementAt = countedExact.wgsl.find(sdfAtomic);
         check(countedExact.wgsl.find(workBinding) != std::string::npos &&
                   countedExact.wgsl.find(invocationAtomic) != std::string::npos &&
-                  countedExact.wgsl.find(sdfAtomic) != std::string::npos &&
-                  countedExact.wgsl.find(sdfAtomic) !=
-                      countedExact.wgsl.rfind(sdfAtomic),
-              "diagnostic shader counts executed calls, initial surface probe and loop steps");
+                  shadowLoopAt != std::string::npos &&
+                  sdfIncrementAt != std::string::npos &&
+                  sdfIncrementAt > shadowLoopAt &&
+                  sdfIncrementAt == countedExact.wgsl.rfind(sdfAtomic),
+              "diagnostic SDF counter records actual entered shadow-loop steps only");
         check(countedExact.wgsl.find(
                   "sourceVisibility(pf, nf, source.position.xyz, 0u)") !=
                   std::string::npos &&
