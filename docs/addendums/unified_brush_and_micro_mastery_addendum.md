@@ -1,25 +1,21 @@
-# Addendum: Integrating the Unified Brush System and CPU-GPU Micro-Mastery
+# Integrating the Unified Brush System and CPU-GPU Micro-Mastery
 
-*(Model: Jules, Harness: Jules, Session ID: 999)*
+*Initial synthesis: Jules. Reviewed against the Earthcall implementation.*
 
-## Reflections on the Architectural Synthesis
+## Separate responsibilities
 
-The interplay between the Unified Brush System and CPU-GPU Micro-Mastery is essential for achieving the performance required for a fluid painting experience. While the brush system focuses on the semantics of interaction—translating a creator's stroke into a modification of the underlying ontological structure—the micro-mastery substrate provides the raw execution speed necessary to render these changes instantly.
+The [Unified Brush System](../tools/UNIFIED_BRUSH_SYSTEM.md) defines brush presets, stroke dynamics, paint layers and compositing. The existing [`BrushSystem`](../../src/Singularity/Screen/BrushSystem.cpp) applies strokes to CPU-side RGBA pixel buffers and composites layers. Its implementation does **not** presently show a direct call from each stroke into `GpuBufferPool`.
 
-### The Brush as a Dynamic Allocator
+The [CPU-GPU Micro-Mastery architecture](../architecture/Singularity/GPU_MICRO_MASTERY_ARCHITECTURE.md) addresses a different bottleneck: repeated WebGPU buffer creation for rendering data. [`GpuBufferPool`](../../src/Singularity/Screen/WebGPU/GpuBufferPool.cpp) reuses uniform, vertex and storage chunks, suballocating aligned slices. [`WebGpuRenderer`](../../src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp) uses this pool for rendering inputs. The pool still invokes `wgpuDeviceCreateBuffer` when a new chunk is needed and `wgpuQueueWriteBuffer` for uploads; it does **not** bypass the graphics driver entirely.
 
-When the Unified Brush System modifies an object's OntoMath material or geometric structure, it acts as a high-frequency source of state changes. In a traditional rendering pipeline, each stroke could trigger countless driver allocations, leading to lag and a disjointed experience.
+## Where an integration could help
 
-However, by integrating with the CPU-GPU Micro-Mastery substrate, the brush system bypasses the graphics driver entirely. As a stroke alters an object's uniform data (like its color or transform) or its storage data (like the SDF AST), the `GpuBufferPool` handles these updates by simply advancing a CPU pointer within pre-allocated VRAM slabs.
+If authored brush edits cause render-relevant state or geometry to change, an explicit brush-to-renderer handoff could reuse GPU allocations rather than creating new buffers for every update. The handoff must distinguish CPU pixel compositing, texture upload, per-draw uniform/storage updates and topology invalidation: these are not interchangeable operations.
 
-### Fluidity through Pre-allocation
+Batching and reusable buffers can reduce allocation overhead without changing what an authored stroke means. That is a potential performance benefit, **not** a guarantee that every brush change is constant-time, that driver calls disappear, or that thousands of Law-driven Objects necessarily achieve a particular frame rate.
 
-This synergy ensures that even as the brush dynamically alters the world's structure—whether painting thousands of individual Law-driven UI elements or modifying complex 3D materials—the rendering cost remains negligible. The brush's intent is executed at the speed of the CPU ring buffer, preserving the ontological purity of the interaction without the typical performance overhead.
+## Evidence before claiming success
 
-By bridging the semantic richness of the Unified Brush System with the brutal efficiency of CPU-GPU Micro-Mastery, Earthcall achieves a seamless authoring experience where creative intent is rendered immediately, reinforcing the principle that Performance is Truth.
+A meaningful witness should exercise actual brush strokes through the implemented render path, count driver buffer creations and GPU writes, measure upload/compositing and frame times at representative sizes, and compare emitted pixels and authored properties with the optimization disabled. The existing [micro-mastery lag probe](../../tests/singularity/webgpu_micro_mastery_lag_test.cpp) exercises the renderer's buffer behavior, but does not by itself prove an end-to-end brush integration.
 
----
-
-**Linked References:**
-* [Unified Brush System](../tools/UNIFIED_BRUSH_SYSTEM.md)
-* [CPU-GPU Micro-Mastery Architecture](../architecture/Singularity/GPU_MICRO_MASTERY_ARCHITECTURE.md)
+**Source anchors:** [BrushSystem](../../src/Singularity/Screen/BrushSystem.cpp), [GpuBufferPool](../../src/Singularity/Screen/WebGPU/GpuBufferPool.cpp), [WebGpuRenderer](../../src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp).

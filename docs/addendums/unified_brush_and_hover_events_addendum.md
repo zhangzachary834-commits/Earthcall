@@ -1,25 +1,21 @@
-# Addendum: Integrating the Unified Brush System and Object Hover Events
+# Integrating the Unified Brush System and Object Hover Events
 
-*(Model: Jules, Harness: Jules, Session ID: 999)*
+*Initial synthesis: Jules. Reviewed against the Earthcall implementation.*
 
-## Reflections on the Architectural Synthesis
+## Two existing paths, not one automatic integration
 
-When examining the Unified Brush System alongside the Object Hover Events System, an elegant interplay emerges. The brush is traditionally seen as a tool for applying paint to a surface, a manual act of creation. However, when we consider that objects within Earthcall can respond to semantic hover events, the brush's role transcends simple rasterization or mathematical domain modification.
+The [Unified Brush System](../tools/UNIFIED_BRUSH_SYSTEM.md) describes layered 2D/3D authoring. In code, [`BrushSystem`](../../src/Singularity/Screen/BrushSystem.cpp) owns brush presets, stroke sampling, per-layer RGBA pixel data, and CPU compositing. That is an authoring/painting pathway.
 
-### The Brush as a Semantic Cursor
+The [Object Hover Events System](../architecture/events/OBJECT_HOVER_EVENTS_SYSTEM.md) describes spatial observation. [`InteractionChannel::observe`](../../src/Singularity/Input/Interaction/InteractionChannel.cpp) resolves the currently hovered Object, updates its hover state and events, and exposes the read-only `@world.pointerOver` reading for Laws. It does **not** currently feed hovered-object metadata into `BrushSystem` or automatically change brush settings.
 
-In Earthcall, hovering is not merely a UI state change; it is a relational query, a moment where the system acknowledges the interaction between a First Mover's intent and an object's affordances. The Unified Brush System, when integrated with this framework, becomes a semantic cursor.
+## A possible Law-mediated bridge
 
-When a brush hovers over a surface, the hover event can pre-calculate the topological or structural implications of the stroke before it is even applied. The Object Hover Events System acts as a spatial radar, providing the brush with the context it needs to adapt its properties—such as dynamically adjusting flow or material composition based on the semantic properties of the target object.
+The two systems could be composed deliberately: a Law or tool contract could read the pointer-over observation, validate that the selected target permits painting, then choose a brush preset or preview before a stroke is committed. This would require an explicit input-to-authoring bridge, clear target selection and permission rules, and evidence that the same hit/coordinates are used by the preview and stroke.
 
-### Fluidity in Creation
+This is a **proposed interaction**, not an assertion of implemented pressure adaptation, automatic OntoMath material rewriting, or hover-driven stroke prediction. The hover path tells the engine *which Object* is being indicated; the brush path determines *how a stroke is applied*. Keeping that boundary visible supports the No Black Box principle.
 
-This interrelation ensures a fluid conversation between the creator and the canvas. The canvas is no longer a passive recipient of paint, but an active participant that communicates its state back to the brush via hover events. A stroke applied to a structurally dense object might automatically increase its pressure or alter its OntoMath material, all guided by the real-time feedback loop established by the hover system.
+## Verification needed for integration
 
-By unifying these concepts, Earthcall moves closer to a truly responsive authoring environment where intent is continuously negotiated between the artist's tools and the world's ontological structure.
+An end-to-end witness should move the pointer across two distinct Objects, verify enter/exit and `@world.pointerOver` observations, confirm that a brush preview changes only when the relevant Law authorizes it, and verify that a committed stroke affects only the selected target. Neither the current hover documentation nor the existing brush code alone proves that bridge.
 
----
-
-**Linked References:**
-* [Unified Brush System](../tools/UNIFIED_BRUSH_SYSTEM.md)
-* [Object Hover Events System](../architecture/events/OBJECT_HOVER_EVENTS_SYSTEM.md)
+**Source anchors:** [BrushSystem implementation](../../src/Singularity/Screen/BrushSystem.cpp), [InteractionChannel implementation](../../src/Singularity/Input/Interaction/InteractionChannel.cpp), [hover event design](../architecture/events/OBJECT_HOVER_EVENTS_SYSTEM.md).

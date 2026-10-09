@@ -2573,6 +2573,44 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
             // expression's type. Refuse range proof until a matrix interval
             // domain exists; callers already treat nullopt as "cannot prove".
             return std::nullopt;
+        case Op::Clamp: {
+            // WGSL clamp(e, lo, hi) is min(max(e, lo), hi); both are monotone,
+            // so the enclosure is that composition applied to the endpoints.
+            // When lo <= hi is not guaranteed, std::clamp (the CPU evaluator)
+            // is undefined, so this answers "unbounded" rather than a theorem.
+            // Without this case every clamped envelope bounded to [-inf, inf],
+            // and no zero-set proof could see through one.
+            if (children.size() != 3) return std::nullopt;
+            auto v = children[0]->evalRange(vars);
+            auto l = children[1]->evalRange(vars);
+            auto h = children[2]->evalRange(vars);
+            if (!v || !l || !h) return std::nullopt;
+            auto component = [](const RangeValue& r, int axis) {
+                return r.kind == ValueKind::Vector ? r.vec[axis] : r.scalar;
+            };
+            auto clampInterval = [](Interval x, Interval lo, Interval hi) {
+                if (std::isnan(x.lo) || std::isnan(x.hi) || std::isnan(lo.lo) ||
+                    std::isnan(lo.hi) || std::isnan(hi.lo) || std::isnan(hi.hi) ||
+                    !(lo.hi <= hi.lo)) {
+                    return Interval::infinite();
+                }
+                return Interval(std::min(std::max(x.lo, lo.lo), hi.lo),
+                                std::min(std::max(x.hi, lo.hi), hi.hi));
+            };
+            if (v->kind == ValueKind::Scalar) {
+                if (l->kind != ValueKind::Scalar || h->kind != ValueKind::Scalar) {
+                    return retInf();
+                }
+                return RangeValue::makeScalar(clampInterval(v->scalar, l->scalar, h->scalar));
+            }
+            if (v->kind == ValueKind::Vector) {
+                return RangeValue::makeVector(
+                    clampInterval(v->vec[0], component(*l, 0), component(*h, 0)),
+                    clampInterval(v->vec[1], component(*l, 1), component(*h, 1)),
+                    clampInterval(v->vec[2], component(*l, 2), component(*h, 2)));
+            }
+            return std::nullopt;
+        }
         case Op::Noise: {
             // This bound is LOAD-BEARING, not decorative: geom::evalRange feeds it
             // to tessellation culling and the conservative zero-set hierarchy.

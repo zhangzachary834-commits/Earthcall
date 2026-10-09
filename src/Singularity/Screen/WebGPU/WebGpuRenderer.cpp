@@ -2435,8 +2435,35 @@ void WebGpuRenderer::flushSdfDraws() {
     _activeSdfPipelines.clear();
 }
 
+void WebGpuRenderer::attachVolumeZeroProof(const Rendering::VolumeDensityBinding& medium,
+                                           const glm::vec3& halfExtent,
+                                           std::vector<float>& params,
+                                           VolumeInstanceData& instance) {
+    instance.zeroProofPresent = 0u;
+    if (!volumeZeroProofEnabled() || !medium.densityExpr || medium.densityRevision == 0) return;
+
+    auto& memo = _volumeZeroProofs[medium.densityExpr];
+    if (memo.densityRevision != medium.densityRevision || memo.halfExtent != halfExtent) {
+        memo.densityRevision = medium.densityRevision;
+        memo.halfExtent = halfExtent;
+        memo.proof = Rendering::buildVolumeZeroProof(*medium.densityExpr, halfExtent);
+        ++mutableFrameStats().volumeZeroProofBuilds;
+    }
+    memo.lastUsedFrame = _volumeZeroProofFrame;
+    mutableFrameStats().volumeZeroProofCellsTotal += memo.proof.totalCells;
+    if (!memo.proof.any()) return;
+
+    mutableFrameStats().volumeZeroProofCellsProven += memo.proof.provenCells;
+    instance.zeroProofOffset = static_cast<uint32_t>(params.size());
+    instance.zeroProofDims = memo.proof.dims.x | (memo.proof.dims.y << 10u) |
+                             (memo.proof.dims.z << 20u);
+    instance.zeroProofPresent = 1u;
+    params.insert(params.end(), memo.proof.words.begin(), memo.proof.words.end());
+}
+
 void WebGpuRenderer::flushVolumeComposite() {
     if (!_encoder || !_frameColorView || !_depthView || !_inverseViewProjValid) return;
+    ++_volumeZeroProofFrame;
 
     // V3 does not invent incident direction. A wi-reading Phi can consume one
     // and only one enabled admitted direct source. Position/enablement are
@@ -2722,11 +2749,15 @@ void WebGpuRenderer::flushVolumeComposite() {
             header.time = glm::vec4(0.0f);
             header.paramOffset = 0u;
 
+            params.insert(
+                params.end(), setMemo.prog.params.begin(), setMemo.prog.params.end());
+            for (std::size_t i = 0; i < activeMedia.size(); ++i) {
+                attachVolumeZeroProof(*activeMedia[i], glm::abs(activeMedia[i]->scale),
+                                      params, mediumInstances[i]);
+            }
             instances.push_back(header);
             instances.insert(
                 instances.end(), mediumInstances.begin(), mediumInstances.end());
-            params.insert(
-                params.end(), setMemo.prog.params.begin(), setMemo.prog.params.end());
             _volumeDrawInstanceCounts[setMemo.pipeline] = 1u;
         }
     }
@@ -2880,9 +2911,15 @@ void WebGpuRenderer::flushVolumeComposite() {
                                   static_cast<float>(medium.temporalDelta), 0.0f, 0.0f);
         instance.paramOffset = static_cast<uint32_t>(params.size());
 
-        instances.push_back(instance);
         params.insert(params.end(), memo.prog.params.begin(), memo.prog.params.end());
+        attachVolumeZeroProof(medium, halfExtent, params, instance);
+        instances.push_back(instance);
     }
+    }
+
+    for (auto it = _volumeZeroProofs.begin(); it != _volumeZeroProofs.end();) {
+        if (it->second.lastUsedFrame != _volumeZeroProofFrame) it = _volumeZeroProofs.erase(it);
+        else ++it;
     }
 
     if (_activeVolumePipelines.empty()) return;
