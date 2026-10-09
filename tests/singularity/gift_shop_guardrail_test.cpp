@@ -35,6 +35,8 @@ constexpr SemanticCall kTargetCalls[] = {
     {"glm::scale(", "scale"},
     {"glm::lookAt(", "lookAt"},
     {"glm::perspective", "perspective*"},
+    {"glm::frustum", "frustum*"},
+    {"glm::ortho", "ortho*"},
 };
 
 struct AllowedFile {
