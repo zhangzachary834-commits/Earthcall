@@ -290,6 +290,17 @@ public:
     void setVolumeZeroProofEnabled(bool on) { _volumeZeroProofEnabled = on; }
     bool volumeZeroProofEnabled() const { return _volumeZeroProofEnabled; }
 
+    // Volume quadrature resolution: samples a medium receives across its own
+    // chord along a ray (overlapping media share the finest present; see the
+    // unified quadrature in SdfWgsl's compileVolumeSet). Formerly a literal 96
+    // in the shader. It reaches the GPU as a uniform, so changing it never
+    // recompiles. Clamped to [1, 8192]: a 12288 reference render produced
+    // saturated nonsense on Metal on 2026-10-09, not yet explained.
+    void setVolumeSamplesPerChord(int samples) {
+        _volumeSamplesPerChord = samples < 1 ? 1 : (samples > 8192 ? 8192 : samples);
+    }
+    int volumeSamplesPerChord() const { return _volumeSamplesPerChord; }
+
     // The object-to-world transform, as a stack. setModel replaces it outright;
     // pushModel/popModel compose a child transform onto its parent for the nested
     // draws — a Body's parts, a Formation's members — exactly as glPushMatrix +
@@ -499,6 +510,7 @@ private:
     uint64_t _radianceSourcesRevision = 0;
     bool _radianceVisibilityEnabled = false;
     bool _volumeZeroProofEnabled = true;
+    int _volumeSamplesPerChord = 96;
     std::vector<Rendering::VolumeDensityBinding> _volumeDensitySources;
     uint64_t _volumeDensitySourcesRevision = 0;
     Rendering::RenderedFieldSemanticObserver _renderedFieldObserver;

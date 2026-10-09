@@ -185,6 +185,20 @@ int main() {
         }
         screen.volumeZeroProofEnabled = true;
 
+        PropertyValue samples;
+        const PropertyPath samplesPath = PropertyPath::parse("volumeSamplesPerChord");
+        if (samplesPath.getValue(screen, samples) != PropertyPath::PathResult::Ok ||
+            !std::holds_alternative<int>(samples) || std::get<int>(samples) != 96) {
+            fail("volumeSamplesPerChord", "Channel — Screen",
+                 "must resolve as an authorable int defaulting to the historical 96");
+        }
+        if (samplesPath.setValue(screen, PropertyValue(192)) != PropertyPath::PathResult::Ok ||
+            screen.volumeSamplesPerChord != 192) {
+            fail("volumeSamplesPerChord", "Channel — Screen",
+                 "must write through the registered ScreenChannel property");
+        }
+        screen.volumeSamplesPerChord = 96;
+
         screen.updateVolumeZeroProofMetrics(31920, 33120);
         for (const auto& [name, expected] : {std::pair<const char*, int>{"volumeZeroProofCellsProven", 31920},
                                              std::pair<const char*, int>{"volumeZeroProofCellsTotal", 33120}}) {

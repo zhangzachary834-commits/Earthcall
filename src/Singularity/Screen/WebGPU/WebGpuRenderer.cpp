@@ -2971,12 +2971,12 @@ void WebGpuRenderer::flushVolumeComposite() {
             static_cast<float>(incidentSource->temporalCoordinate),
             static_cast<float>(incidentSource->temporalDelta), 0.0f, 0.0f);
         // V3 compatibility remains isotropic unless Phi is explicitly authored.
-        globals.volumeControl = glm::vec4(24.0f, 1.0f, 0.0f, 0.0f);
+        globals.volumeControl = glm::vec4(24.0f, 1.0f, 0.0f, static_cast<float>(volumeSamplesPerChord()));
     } else {
         globals.incidentSource = glm::vec4(0.0f);
         globals.incidentColor = glm::vec4(1.0f);
         globals.sourceTime = glm::vec4(0.0f);
-        globals.volumeControl = glm::vec4(0.0f);
+        globals.volumeControl = glm::vec4(0.0f, 0.0f, 0.0f, static_cast<float>(volumeSamplesPerChord()));
     }
     auto globalAlloc = bufferPool().suballocateUniform(&globals, sizeof(globals));
 

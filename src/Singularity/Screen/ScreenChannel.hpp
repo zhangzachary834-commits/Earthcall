@@ -108,6 +108,12 @@ public:
     // framebuffer and the real Northern Veil save ran ~3x faster. A Person/Law
     // can switch it off here to compare.
     bool      volumeZeroProofEnabled = true;
+    // Volume quadrature resolution: samples a participating medium receives
+    // across its own chord along a ray. 96 reproduces the historical shader
+    // constant; overlapping media share the finest present resolution instead
+    // of multiplying it (unified quadrature, Zach 2026-10-09). A runtime
+    // uniform: changing it never recompiles. The renderer clamps to [1, 8192].
+    int       volumeSamplesPerChord = 96;
     // Derived: cells proven empty / cells tiled, over the media drawn last frame.
     int       volumeZeroProofCellsProven = 0;
     int       volumeZeroProofCellsTotal = 0;

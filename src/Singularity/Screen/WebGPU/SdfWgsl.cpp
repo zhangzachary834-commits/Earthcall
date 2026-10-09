@@ -783,6 +783,72 @@ void emitPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::string& pt
     }
 }
 
+bool astContainsNoise(const OntoMath::MathNode& node);   // defined below
+
+namespace {
+// Left-to-right flattening of a scalar product tree. Each non-product leaf is
+// emitted in the same order emitMathNode would visit it (so parameters register
+// in the same order collectVolumeParams sees), and the returned string rebuilds
+// the product with the original grouping over the leaf names.
+std::string flattenScalarProduct(const OntoMath::MathNode& node, Emit& e, const std::string& pt,
+                                 std::vector<std::pair<std::string, bool>>& leaves) {
+    if (node.op == OntoMath::MathNode::Op::Scale && node.children.size() == 2 &&
+        node.children[0] && node.children[1]) {
+        const std::string left = flattenScalarProduct(*node.children[0], e, pt, leaves);
+        const std::string right = flattenScalarProduct(*node.children[1], e, pt, leaves);
+        return "(" + left + " * " + right + ")";
+    }
+    const std::string name = "densityFactor" + std::to_string(leaves.size());
+    leaves.push_back({emitMathNode(node, e, pt), astContainsNoise(node)});
+    return name;
+}
+} // namespace
+
+// Medium density D(p). Identical to emitPiecewise, except when the answering
+// piece is a product whose factors include Perlin noise: then every noise-free
+// factor is evaluated first and an exact zero returns 0 before any noise runs.
+// A density that is 0 (or the +-0/NaN a 0 * finite product yields) contributes
+// nothing either way: callers clamp with max(D, 0) and act only on D > 0. The
+// product itself is rebuilt with its original grouping, so whenever it is
+// computed it is computed exactly as before. OntoMath knows which subtrees hold
+// noise; an opaque shader would not. Claude Opus 5.5, 2026-10-09.
+void emitDensityPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::string& pt,
+                          std::string& outBody) {
+    const OntoMath::Piecewise::Piece* answering = nullptr;
+    for (const auto& piece : pw.pieces) {
+        if (!piece.mathNode) continue;
+        answering = &piece;
+        break;
+    }
+    if (!answering || answering->hasLo || answering->hasHi ||
+        answering->mathNode->op != OntoMath::MathNode::Op::Scale ||
+        !astContainsNoise(*answering->mathNode)) {
+        emitPiecewise(pw, e, pt, "f32", outBody);
+        return;
+    }
+    // Mirror emitPiecewise's own visit order: the input variable first.
+    (void)pointComponent(pw.inputVariable, e, pt);
+    std::vector<std::pair<std::string, bool>> leaves;
+    const std::string product = flattenScalarProduct(*answering->mathNode, e, pt, leaves);
+    bool anyCheap = false;
+    for (const auto& leaf : leaves) anyCheap = anyCheap || !leaf.second;
+    if (!anyCheap) {
+        outBody += "    return " + product + ";\n";
+        return;
+    }
+    for (std::size_t i = 0; i < leaves.size(); ++i) {
+        if (leaves[i].second) continue;
+        const std::string name = "densityFactor" + std::to_string(i);
+        outBody += "    let " + name + " = " + leaves[i].first + ";\n";
+        outBody += "    if (" + name + " == 0.0) { return 0.0; }\n";
+    }
+    for (std::size_t i = 0; i < leaves.size(); ++i) {
+        if (!leaves[i].second) continue;
+        outBody += "    let densityFactor" + std::to_string(i) + " = " + leaves[i].first + ";\n";
+    }
+    outBody += "    return " + product + ";\n";
+}
+
 enum class JetKind { Scalar, Vector };
 struct JetExpr {
     JetKind kind = JetKind::Scalar;
@@ -3275,7 +3341,7 @@ ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
 
     std::string throwaway;
     if (densityExpr && !densityExpr->pieces.empty()) {
-        emitPiecewise(*densityExpr, e, "p", "f32", throwaway);
+        emitDensityPiecewise(*densityExpr, e, "p", throwaway);
     }
     if (extinctionExpr && !extinctionExpr->pieces.empty()) {
         emitPiecewise(*extinctionExpr, e, "p", "f32", throwaway);
@@ -3510,7 +3576,12 @@ struct VolumeGlobals {
     // xy = the admitted source's own relative Timeline coordinate/delta.
     // Source t must never borrow a participating medium's instance time.
     sourceTime: vec4<f32>,
-    // x = max shadow steps, y = local volumetric visibility enabled, z/w reserved.
+    // x = max shadow steps, y = local volumetric visibility enabled,
+    // z deliberately unused: it once carried a hardcoded HG phase g (removed in
+    // b1d16c41; sdf_wgsl_parameter_refresh_test forbids reading it),
+    // w = samples per medium chord (ScreenChannel volumeSamplesPerChord: the
+    // quadrature resolution a medium gets along a ray; a runtime value, so
+    // changing it never recompiles).
     volumeControl: vec4<f32>,
 };
 
@@ -3615,7 +3686,7 @@ fn volumeZeroCellExit(inst: VolumeInstanceData, p: vec3<f32>,
 
     std::string densityBody;
     if (densityExpr && !densityExpr->pieces.empty()) {
-        emitPiecewise(*densityExpr, e, "p", "f32", densityBody);
+        emitDensityPiecewise(*densityExpr, e, "p", densityBody);
     } else {
         densityBody = "    return 0.0;\n";
     }
@@ -3834,14 +3905,15 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     if (t1 <= t0) { discard; }
 
     let span = t1 - t0;
-    let stepLength = span / 96.0;
+    let samplesPerChord = max(i32(u.volumeControl.w), 1);
+    let stepLength = span / f32(samplesPerChord);
     if (stepLength <= 0.0) { discard; }
 
     var transmittance = 1.0;
     var volumetricScatter = vec3<f32>(0.0);
     var volumetricEmission = vec3<f32>(0.0);
 
-    for (var i = 0; i < 96; i = i + 1) {
+    for (var i = 0; i < samplesPerChord; i = i + 1) {
         let sampleT = t0 + (f32(i) + 0.5) * stepLength;
         let worldP = ro + rd * sampleT;
         let p = worldP - inst.origin.xyz;
@@ -3862,12 +3934,13 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             let oldT = transmittance;
             transmittance *= exp(-extinction * stepLength);
 
-            let scattering = max(volumeScatteringEval(p, density), 0.0);
-            let mediumChroma = volumeChromaEval(p);
-
+            // SourceRho-zero (Prism: rho_source != V_transport != D_medium).
+            // Incident light is formed first; a source whose authored rho is
+            // exactly 0 needs no chroma, angular factor or visibility, and a
+            // zero incident light makes the in-scatter increment +-0, so
+            // scattering, medium chroma and phase are not evaluated and the
+            // accumulator is left bit-identical (finite values).
             var incidentLi = vec3<f32>(1.0);
-            var phase = 1.0;
-
             if (u.incidentSource.w > 0.5) {
                 let sourceDelta = worldP - u.incidentSource.xyz;
                 let sourceDist = length(sourceDelta);
@@ -3878,46 +3951,57 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
                     radialRad = max(lightRadianceEval(sourceDelta), 0.0);
                 }
 
-                var chroma = vec3<f32>(1.0);
-                if (HAS_AUTHORED_LIGHT_CHROMA) {
-                    chroma = max(lightChromaEval(sourceDelta), vec3<f32>(0.0));
-                }
-
-                var angular = 1.0;
-                if (HAS_AUTHORED_LIGHT_ANGULAR) {
-                    angular = max(lightAngularEval(sourceDelta, lightDir), 0.0);
-                }
-
-                let vis = volumeSourceVisibility(worldP, u.incidentSource.xyz);
-                incidentLi = chroma * (radialRad * angular * vis);
-
-                if (HAS_AUTHORED_VOLUME_PHASE) {
-                    let wiDelta = worldP - u.incidentSource.xyz;
-                    let woDelta = ro - worldP;
-                    let wiLen = length(wiDelta);
-                    let woLen = length(woDelta);
-                    let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, 1e-8), wiLen > 1e-8);
-                    let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8), woLen > 1e-8);
-                    phase = 0.0;
-                    if ((!VOLUME_PHASE_READS_WI || wiLen > 1e-8) && woLen > 1e-8) {
-                        phase = max(volumePhaseEval(p, wi, wo), 0.0);
+                if (radialRad == 0.0) {
+                    incidentLi = vec3<f32>(0.0);
+                } else {
+                    var chroma = vec3<f32>(1.0);
+                    if (HAS_AUTHORED_LIGHT_CHROMA) {
+                        chroma = max(lightChromaEval(sourceDelta), vec3<f32>(0.0));
                     }
-                }
-            } else {
-                if (HAS_AUTHORED_VOLUME_PHASE) {
-                    let woDelta = ro - worldP;
-                    let woLen = length(woDelta);
-                    let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8), woLen > 1e-8);
-                    phase = 0.0;
-                    if (!VOLUME_PHASE_READS_WI && woLen > 1e-8) {
-                        phase = max(volumePhaseEval(p, vec3<f32>(0.0), wo), 0.0);
+
+                    var angular = 1.0;
+                    if (HAS_AUTHORED_LIGHT_ANGULAR) {
+                        angular = max(lightAngularEval(sourceDelta, lightDir), 0.0);
                     }
+
+                    let vis = volumeSourceVisibility(worldP, u.incidentSource.xyz);
+                    incidentLi = chroma * (radialRad * angular * vis);
                 }
             }
 
-            volumetricScatter +=
-                mediumChroma * incidentLi * (scattering / extinction) * phase *
-                (oldT - transmittance);
+            if (any(incidentLi != vec3<f32>(0.0))) {
+                let scattering = max(volumeScatteringEval(p, density), 0.0);
+                let mediumChroma = volumeChromaEval(p);
+                var phase = 1.0;
+                if (u.incidentSource.w > 0.5) {
+                    if (HAS_AUTHORED_VOLUME_PHASE) {
+                        let wiDelta = worldP - u.incidentSource.xyz;
+                        let woDelta = ro - worldP;
+                        let wiLen = length(wiDelta);
+                        let woLen = length(woDelta);
+                        let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, 1e-8), wiLen > 1e-8);
+                        let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8), woLen > 1e-8);
+                        phase = 0.0;
+                        if ((!VOLUME_PHASE_READS_WI || wiLen > 1e-8) && woLen > 1e-8) {
+                            phase = max(volumePhaseEval(p, wi, wo), 0.0);
+                        }
+                    }
+                } else {
+                    if (HAS_AUTHORED_VOLUME_PHASE) {
+                        let woDelta = ro - worldP;
+                        let woLen = length(woDelta);
+                        let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8), woLen > 1e-8);
+                        phase = 0.0;
+                        if (!VOLUME_PHASE_READS_WI && woLen > 1e-8) {
+                            phase = max(volumePhaseEval(p, vec3<f32>(0.0), wo), 0.0);
+                        }
+                    }
+                }
+
+                volumetricScatter +=
+                    mediumChroma * incidentLi * (scattering / extinction) * phase *
+                    (oldT - transmittance);
+            }
 
             if (HAS_AUTHORED_VOLUME_EMISSION) {
                 let emissionDelta = ro - worldP;
@@ -4111,6 +4195,11 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     const std::size_t eventCount = media.size() * 2u;
     out.wgsl += "    var mediumEvents: array<f32, " +
                 std::to_string(eventCount) + ">;\n";
+    // Unified quadrature: each medium's chord along this ray. Its standalone
+    // resolution is chord / samplesPerChord -- the spacing it gets alone.
+    out.wgsl += "    let samplesPerChord = max(i32(u.volumeControl.w), 1);\n";
+    out.wgsl += "    var mediumChord: array<f32, " +
+                std::to_string(media.size()) + ">;\n";
 
     for (std::size_t i = 0; i < media.size(); ++i) {
         const std::string n = std::to_string(i);
@@ -4130,6 +4219,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             "            eventEnter" + n + " = t1;\n"
             "            eventExit" + n + " = t1;\n"
             "        }\n"
+            "        mediumChord[" + n + "] = eventExit" + n + " - eventEnter" + n + ";\n"
             "        mediumEvents[" + entryIndex + "] = eventEnter" + n + ";\n"
             "        mediumEvents[" + exitIndex + "] = eventExit" + n + ";\n"
             "    }\n";
@@ -4157,7 +4247,8 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
         "        if (segmentEnd <= segmentStart + 1e-6) { continue; }\n"
         "        let segmentMidT = 0.5 * (segmentStart + segmentEnd);\n"
         "        let segmentMidP = ro + rd * segmentMidT;\n"
-        "        var segmentOccupied = false;\n";
+        "        var segmentOccupied = false;\n"
+        "        var segmentSpacing = 3.0e38;\n";
 
     for (std::size_t i = 0; i < media.size(); ++i) {
         const std::string n = std::to_string(i);
@@ -4172,6 +4263,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             "            if (all(segmentMidP >= segmentMin" + n + ") && "
                 "all(segmentMidP <= segmentMax" + n + ")) {\n"
             "                segmentOccupied = true;\n"
+            "                segmentSpacing = min(segmentSpacing, mediumChord[" + n + "] / f32(samplesPerChord));\n"
             "            }\n"
             "        }\n";
     }
@@ -4179,15 +4271,21 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     out.wgsl += R"WGSL(
         if (!segmentOccupied) { continue; }
 
-        // Preserve the established one-medium local resolution inside each
-        // occupied topological interval. Segment boundaries come only from
-        // medium entry/exit events; the physical state remains one continuous
-        // transmittance/radiance integral across all occupied segments.
+        // Unified quadrature (Zach, 2026-10-09: "a mathematical unification of
+        // the drawing functions wherever it overlaps"). The media form one
+        // field with one transmittance/radiance integral; box entry/exit are
+        // its genuine discontinuities, so segments still break there. Each
+        // segment is sampled at the finest standalone resolution of the media
+        // present in it (chord / samplesPerChord), so no medium is ever sampled
+        // more coarsely than it would be alone -- but an overlap no longer
+        // multiplies the count, and a sliver no longer receives a full chord's
+        // worth of samples. Witness: webgpu_volume_unified_quadrature_test.
         let segmentSpan = segmentEnd - segmentStart;
-        let stepLength = segmentSpan / 96.0;
+        let segmentSamples = clamp(i32(ceil(segmentSpan / segmentSpacing)), 1, samplesPerChord);
+        let stepLength = segmentSpan / f32(segmentSamples);
         if (stepLength <= 0.0) { continue; }
 
-        for (var step = 0; step < 96; step = step + 1) {
+        for (var step = 0; step < segmentSamples; step = step + 1) {
             let sampleT = segmentStart + (f32(step) + 0.5) * stepLength;
             let worldP = ro + rd * sampleT;
 
@@ -4263,11 +4361,13 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
                 " = max(volumeExtinctionEval_" + n + "(p" + n + ", density" + n +
                 "), 1e-6);\n"
             "                    totalExtinction += extinction" + n + ";\n"
-            "                    let scattering" + n +
-                " = max(volumeScatteringEval_" + n + "(p" + n + ", density" + n +
-                "), 0.0);\n"
-            "                    let mediumChroma" + n + " = volumeChromaEval_" + n +
-                "(p" + n + ");\n"
+            // SourceRho-zero (Prism: rho_source != V_transport != D_medium).
+            // Incident light is formed first. When the source's authored rho is
+            // exactly 0, its chroma, angular factor and visibility cannot
+            // matter, and when incident light is exactly 0 the whole in-scatter
+            // term mediumChroma * Li * sigma_s * Phi is +-0, so scattering,
+            // medium chroma and phase are not evaluated. +-0 + E_v == E_v, so
+            // the sum is bit-identical for finite values.
             "                    var incidentLi" + n + " = vec3<f32>(1.0);\n"
             "                    if (u.incidentSource.w > 0.5) {\n"
             "                        let sourceDelta = worldP - u.incidentSource.xyz;\n"
@@ -4277,24 +4377,19 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             "                        if (HAS_AUTHORED_LIGHT_RADIANCE_" + n + ") {\n"
             "                            radialRad = max(lightRadianceEval_" + n + "(sourceDelta), 0.0);\n"
             "                        }\n"
-            "                        var chroma = vec3<f32>(1.0);\n"
-            "                        if (HAS_AUTHORED_LIGHT_CHROMA_" + n + ") {\n"
-            "                            chroma = max(lightChromaEval_" + n + "(sourceDelta), vec3<f32>(0.0));\n"
-            "                        }\n"
-            "                        var angular = 1.0;\n"
-            "                        if (HAS_AUTHORED_LIGHT_ANGULAR_" + n + ") {\n"
-            "                            angular = max(lightAngularEval_" + n + "(sourceDelta, lightDir), 0.0);\n"
-            "                        }\n"
-            "                        let vis = volumeSourceVisibility_" + n + "(worldP, u.incidentSource.xyz);\n"
-            "                        incidentLi" + n + " = chroma * (radialRad * angular * vis);\n"
-            "                    }\n"
-            "                    var phase" + n + " = 1.0;\n"
-            "                    if (HAS_AUTHORED_VOLUME_PHASE_" + n + ") {\n"
-            "                        phase" + n + " = 0.0;\n"
-            "                        if ((!VOLUME_PHASE_READS_WI_" + n +
-                " || (u.incidentSource.w > 0.5 && wiLen > 1e-8)) && woLen > 1e-8) {\n"
-            "                            phase" + n + " = max(volumePhaseEval_" + n +
-                "(p" + n + ", wi, wo), 0.0);\n"
+            "                        if (radialRad == 0.0) {\n"
+            "                            incidentLi" + n + " = vec3<f32>(0.0);\n"
+            "                        } else {\n"
+            "                            var chroma = vec3<f32>(1.0);\n"
+            "                            if (HAS_AUTHORED_LIGHT_CHROMA_" + n + ") {\n"
+            "                                chroma = max(lightChromaEval_" + n + "(sourceDelta), vec3<f32>(0.0));\n"
+            "                            }\n"
+            "                            var angular = 1.0;\n"
+            "                            if (HAS_AUTHORED_LIGHT_ANGULAR_" + n + ") {\n"
+            "                                angular = max(lightAngularEval_" + n + "(sourceDelta, lightDir), 0.0);\n"
+            "                            }\n"
+            "                            let vis = volumeSourceVisibility_" + n + "(worldP, u.incidentSource.xyz);\n"
+            "                            incidentLi" + n + " = chroma * (radialRad * angular * vis);\n"
             "                        }\n"
             "                    }\n"
             "                    var emitted" + n + " = vec3<f32>(0.0);\n"
@@ -4305,8 +4400,26 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
                 "(p" + n + ", wo), vec3<f32>(0.0));\n"
             "                        }\n"
             "                    }\n"
-            "                    totalSource += mediumChroma" + n + " * incidentLi" + n + " * scattering" + n +
+            "                    if (any(incidentLi" + n + " != vec3<f32>(0.0))) {\n"
+            "                        let scattering" + n +
+                " = max(volumeScatteringEval_" + n + "(p" + n + ", density" + n +
+                "), 0.0);\n"
+            "                        let mediumChroma" + n + " = volumeChromaEval_" + n +
+                "(p" + n + ");\n"
+            "                        var phase" + n + " = 1.0;\n"
+            "                        if (HAS_AUTHORED_VOLUME_PHASE_" + n + ") {\n"
+            "                            phase" + n + " = 0.0;\n"
+            "                            if ((!VOLUME_PHASE_READS_WI_" + n +
+                " || (u.incidentSource.w > 0.5 && wiLen > 1e-8)) && woLen > 1e-8) {\n"
+            "                                phase" + n + " = max(volumePhaseEval_" + n +
+                "(p" + n + ", wi, wo), 0.0);\n"
+            "                            }\n"
+            "                        }\n"
+            "                        totalSource += mediumChroma" + n + " * incidentLi" + n + " * scattering" + n +
                 " * phase" + n + " + emitted" + n + ";\n"
+            "                    } else {\n"
+            "                        totalSource += emitted" + n + ";\n"
+            "                    }\n"
             "                }\n"
             "            }\n"
             "        }\n";
