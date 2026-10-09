@@ -3066,15 +3066,21 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
     // from the provider on every call — every object, law, relation, and zone
     // in the world — and this used to happen three times per session per tick
     // (subject, event subject, event object).
+    // Bolt Optimization: Pre-populate a map from identifier to Singular* to turn O(N)
+    // linear scans with virtual getIdentifier() heap allocations into O(1) map lookups.
     const std::vector<Singular*> beings = Universe::instance().beings();
+    std::unordered_map<std::string, Singular*> beingMap;
+    beingMap.reserve(beings.size());
+    for (Singular* being : beings) {
+        if (being) beingMap.emplace(being->getIdentifier(), being);
+    }
 
     for (auto it = _driveSessions.begin(); it != _driveSessions.end();) {
         Law* law = find(it->lawId);
         const auto findBeing = [&](const std::string& id) -> Singular* {
             if (id.empty()) return nullptr;
-            for (Singular* being : beings) {
-                if (being && being->getIdentifier() == id) return being;
-            }
+            auto bit = beingMap.find(id);
+            if (bit != beingMap.end()) return bit->second;
             if (law) {
                 for (Singular* target : law->targets().getMembers()) {
                     if (!target || Universe::instance().isUnmade(target)) continue;
