@@ -29,7 +29,6 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
-#include <iterator>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -190,23 +189,7 @@ int main() {
     player.position() = glm::vec3(100.0f, 0.0f, 100.0f);
     camera.pos = glm::vec3(0.0f, 0.0f, 0.0f);
     worldTime = 0.0;
-    // Per-Zone serialization pathway proof 6 (Claude Sonnet 5.5, 2026-10-07):
-    // legacy session files stay readable and are NEVER rewritten merely by
-    // being loaded. Snapshot the bytes of the session trio, load, compare.
-    const auto slurpBytes = [](const std::filesystem::path& path) {
-        std::ifstream in(path, std::ios::binary);
-        return std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-    };
-    const std::string ecformBefore = slurpBytes(ecformPath);
-    const std::string matterBefore = slurpBytes(ecmatterPath);
-    const std::string legacyBefore = slurpBytes(legacyEcformPath);
     mgr.loadState(ecformPath.string(), ctx);
-    check(!ecformBefore.empty() && slurpBytes(ecformPath) == ecformBefore,
-          "loading a session leaves its .ecform byte-identical");
-    check(!matterBefore.empty() && slurpBytes(ecmatterPath) == matterBefore,
-          "loading a session leaves its .ecmatter byte-identical");
-    check(!legacyBefore.empty() && slurpBytes(legacyEcformPath) == legacyBefore,
-          "loading a session leaves other legacy world files untouched");
 
     check(countId(mgr, "first-spawned") == 1, "load restores the first spawned being");
     check(countId(mgr, "second-spawned") == 1, "load restores the second spawned being");

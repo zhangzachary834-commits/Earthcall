@@ -17,7 +17,6 @@
 #include <unordered_map>
 #include <atomic>
 #include "Singularity/Screen/HighlightSystem.hpp"
-#include "Singularity/OntoMath/LinearAlgebra.hpp"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -77,17 +76,9 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
     // InteractionChannel handles them with a pixel AABB test instead.
     if (is2D()) return false;
 
-    // World -> local is OntoMath-authored affine mathematics. GLM remains
-    // only the Object storage boundary; a singular/malformed transform refuses
-    // the raycast rather than silently inventing an inverse.
-    const auto inverse = OntoMath::inverseAffine(
-        OntoMath::MatrixValue::fromGlmMat4(getRaycastTransform()));
-    if (!inverse) return false;
-    const auto localOrigin = OntoMath::transformPoint(*inverse, rayOriginWorld);
-    const auto localDirection = OntoMath::transformDirection(*inverse, rayDirWorld);
-    if (!localOrigin || !localDirection) return false;
-    const glm::vec3 oL = *localOrigin;
-    glm::vec3 localDir = *localDirection;
+    glm::mat4 inv = glm::inverse(getRaycastTransform());
+    glm::vec3 oL = glm::vec3(inv * glm::vec4(rayOriginWorld, 1.0f));
+    glm::vec3 localDir = glm::vec3(inv * glm::vec4(rayDirWorld, 0.0f));
     float dirLen = glm::length(localDir);
     if (dirLen < 1e-8f) return false;
     glm::vec3 dL = localDir / dirLen;

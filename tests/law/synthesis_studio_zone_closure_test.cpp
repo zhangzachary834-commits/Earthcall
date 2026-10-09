@@ -94,27 +94,6 @@ int main() {
           "all Living Studio Law roots copied into isolated Zone-native boot sandbox");
     if (copiedRoots != zoneJson["lawRefs"].size()) return 1;
 
-    // The Zone's Material closure (Per-Zone serialization pathway; Claude
-    // Sonnet 5.5, 2026-10-07): materialRefs name shared roots under
-    // saves/materials/, which a Zone-only sandbox must carry like its Law roots.
-    std::size_t copiedMaterials = 0;
-    if (zoneJson.contains("materialRefs") && zoneJson["materialRefs"].is_array()) {
-        for (const auto& refJson : zoneJson["materialRefs"]) {
-            if (!refJson.is_string()) continue;
-            const std::string ref = refJson.get<std::string>();
-            const std::string stem = ref.rfind("material.", 0) == 0 ? ref.substr(9) : ref;
-            const auto sourceRoot = saves / "materials" / stem / "material.json";
-            check(std::filesystem::exists(sourceRoot), "shared Material root exists: " + ref);
-            if (!std::filesystem::exists(sourceRoot)) continue;
-            const auto targetDir = scratch.path / "materials" / stem;
-            std::filesystem::create_directories(targetDir);
-            std::filesystem::copy_file(sourceRoot, targetDir / "material.json");
-            ++copiedMaterials;
-        }
-        check(copiedMaterials == zoneJson["materialRefs"].size(),
-              "all Living Studio shared Material roots copied into the sandbox");
-    }
-
     SaveSystem::setSaveRoot(scratch.path.string());
     TestSupport::BootedEngineHarness harness("Zach");
 

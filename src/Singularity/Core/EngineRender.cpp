@@ -3,7 +3,6 @@
 #include "../Screen/Renderer.hpp"
 #include "../Screen/ShadingSystem.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"
-#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "Singularity/Screen/VolumeDensity.hpp"
 #include "../../ZonesOfEarth/ZoneManager.hpp"
 #include "../../ZonesOfEarth/Zone/Zone.hpp"
@@ -60,16 +59,9 @@ namespace Core {
         float right  = top * aspect;
         float left   = -right;
 
-        const auto authoredProjection = OntoMath::cameraPerspective(
-            glm::radians(static_cast<double>(fov)),
-            static_cast<double>(aspect),
-            static_cast<double>(nearZ),
-            static_cast<double>(farZ),
-            currentRenderer().zeroToOneDepth());
-        if (!authoredProjection) return;
-        const auto projectionGlm = authoredProjection->toGlmMat4();
-        if (!projectionGlm) return;
-        const glm::mat4 proj = *projectionGlm;
+        glm::mat4 proj = currentRenderer().zeroToOneDepth()
+            ? glm::frustumZO(left, right, bottom, top, nearZ, farZ)
+            : glm::frustumNO(left, right, bottom, top, nearZ, farZ);
 
         /* -------------------- */
 
@@ -85,11 +77,7 @@ namespace Core {
         }
 
         glm::vec3 lookTarget = _camera->pos + lookDir;
-        const auto authoredView = OntoMath::cameraLookAt(eyePos, lookTarget, _camera->up);
-        if (!authoredView) return;
-        const auto viewGlm = authoredView->toGlmMat4();
-        if (!viewGlm) return;
-        const glm::mat4 view = *viewGlm;
+        glm::mat4 view = glm::lookAt(eyePos, lookTarget, _camera->up);
 
         currentRenderer().setCamera(view, proj, eyePos);
 
@@ -396,7 +384,6 @@ namespace Core {
 
         if (_lawManager) {
             if (auto* sc = Singularity::Screen::ScreenChannel::find(*_lawManager)) {
-                sc->senseOutput(currentRenderer(),static_cast<uint32_t>(fbW),static_cast<uint32_t>(fbH));
                 const auto& stats = currentRenderer().frameStats();
                 sc->updateMetrics(static_cast<int>(stats.drawCalls),
                                   static_cast<int>(stats.trianglesDrawn),

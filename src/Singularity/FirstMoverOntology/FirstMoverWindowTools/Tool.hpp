@@ -2,7 +2,6 @@
 #include <string>
 #include <vector>
 #include <ctime>
-#include <optional>
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/Formation/Formation.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
@@ -29,11 +28,6 @@ struct SurfaceHit {
 
 bool buildMouseRay(GLFWwindow* window, Core::Engine* engine, glm::vec3& rayOrigin, glm::vec3& rayDir);
 bool pickSurface(const std::vector<Object*>& targets, const glm::vec3& rayOrigin, const glm::vec3& rayDir, SurfaceHit& out);
-
-// Rung 6: First Mover parent/world conversion asks OntoMath for the inverse
-// composition instead of originating matrix algebra in tool code.
-std::optional<glm::mat4> firstMoverWorldToLocal(const glm::mat4& parentWorld,
-                                                 const glm::mat4& worldTransform);
 
 class Tool {
 public:

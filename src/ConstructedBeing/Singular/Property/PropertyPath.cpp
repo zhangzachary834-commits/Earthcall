@@ -2,8 +2,6 @@
 
 #include "ConstructedBeing/Singular/Property/Property.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
-#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
-#include "Singularity/OntoMath/Field.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/Relation.hpp"
@@ -113,9 +111,8 @@ std::string PropertyPath::toString() const {
 // HOT PATH: Registered flat lookups allocate no traversal storage
 //
 // Uses pre-calculated _joinedIds for pure integer lookups. No string
-// allocations. Nested containers pin shared storage for this access. Typed
-// mathematical constituents use an operation-local codec view; a checked
-// write replaces the canonical value through its original storage/setter.
+// allocations. Nested containers additionally pin their shared storage for
+// the duration of this access; no value graph is deep-copied.
 // ============================================================================
 PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t startIndex) const {
     ResolvedSlot slot;
@@ -176,24 +173,6 @@ PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t sta
         // Materialize only the typed view, never a deep copy. Container pins
         // keep elements from a temporary getter alive until this access ends.
         PropertyValue value = currentRegistered ? currentRegistered->value() : *currentDynamic;
-        if (std::holds_alternative<std::shared_ptr<OntoMath::ScalarField>>(value) ||
-            std::holds_alternative<std::shared_ptr<OntoMath::VectorField>>(value)) {
-            // Typed field constituents are the existing serialized vocabulary.
-            // The detached operation-local view never silently edits a shared
-            // tree or bypasses a registered setter. See Direct_Screen_Forms.
-            try {
-                const auto encoded=propertyValueToJson(value);
-                if (!encoded.contains("v") || encoded.at("v").is_null()) return {};
-                slot.structuredProperty=currentRegistered;
-                slot.structuredSource=currentDynamic;
-                slot.structuredOriginal=value;
-                slot.structuredView=propertyStructureFromJson(encoded.at("v"));
-            } catch (const std::exception&) { return {}; }
-            value=slot.structuredView;
-            slot.containerPins.push_back(value);
-            currentRegistered=nullptr;
-            currentDynamic=nullptr;
-        }
         if (!currentOwner) {
             if (auto next = std::get_if<Singular*>(&value)) currentOwner = *next;
             else if (auto next = std::get_if<Object*>(&value)) currentOwner = static_cast<Singular*>(*next);
@@ -282,7 +261,6 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
     // A read-only wrapper refuses even when the proposed value is identical.
     // Equality is a value comparison, not authority to attempt a write.
     if (slot.prop && !slot.prop->isStructurallyWritable()) return PathResult::ReadOnly;
-    if (slot.structuredProperty && !slot.structuredProperty->isStructurallyWritable()) return PathResult::ReadOnly;
     if (slot.containerProperty) {
         if (!slot.containerProperty->isStructurallyWritable()) return PathResult::ReadOnly;
         if (!slot.containerProperty->exposesMutableContainer()) return PathResult::Unsupported;
@@ -295,57 +273,7 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
         return result;
     };
 
-    if (slot.structuredProperty || slot.structuredSource) {
-        if (!slot.dynamicSlot) return PathResult::NoSuchProperty;
-        double number=0;
-        if (propertyValueToNumber(v,number) && !std::isfinite(number)) return PathResult::TypeMismatch;
-        // Authored mathematics retains exact coefficients: the ordinary
-        // approximate numeric Map guard must not erase a small field edit.
-        if (propertyValueUnchanged(*slot.dynamicSlot,v)) return PathResult::Unchanged;
-        *slot.dynamicSlot=v; // detached view only; refuse before canonical commit
-        try {
-            auto original=propertyValueToJson(slot.structuredOriginal);
-            auto payload=propertyStructureToJson(slot.structuredView);
-            // These existing substrate coefficients are stored as float.
-            // Canonicalize only their named codec slots, never integer ops or
-            // the double precision authored mathematics beneath astDefinition.
-            for (const char* key : {"baseDensity", "baseFlowX", "baseFlowY", "baseFlowZ", "frequency", "amplitude"}) {
-                if (!payload.contains(key)) continue;
-                if (!payload[key].is_number()) return PathResult::TypeMismatch;
-                const float number=payload[key].get<float>();
-                if (!std::isfinite(number)) return PathResult::TypeMismatch;
-                payload[key]=number;
-            }
-            auto candidate=propertyValueFromJson({{"t",original.at("t")},{"v",payload}});
-            if (propertyValueToJson(candidate).at("v")!=payload) return PathResult::TypeMismatch;
-            const OntoMath::Piecewise* form=nullptr;
-            auto expected=OntoMath::ValueKind::Unknown;
-            if (auto field=std::get_if<std::shared_ptr<OntoMath::VectorField>>(&candidate); field && *field) {
-                form=&(*field)->astDefinition;expected=OntoMath::ValueKind::Vector;
-            } else if (auto field=std::get_if<std::shared_ptr<OntoMath::ScalarField>>(&candidate); field && *field) {
-                form=&(*field)->astDefinition;expected=OntoMath::ValueKind::Scalar;
-            } else return PathResult::TypeMismatch;
-            for (const auto& piece:form->pieces) {
-                if (piece.mathNode) {
-                    auto type=piece.mathNode->typeOf({},"root",true);
-                    if (!type || (*type!=OntoMath::ValueKind::Unknown && *type!=expected)) return PathResult::TypeMismatch;
-                }
-                if (piece.whereLEZero) {
-                    auto type=piece.whereLEZero->typeOf({},"selector",true);
-                    if (!type || (*type!=OntoMath::ValueKind::Unknown && *type!=OntoMath::ValueKind::Scalar)) return PathResult::TypeMismatch;
-                }
-            }
-            if (slot.structuredProperty)
-                return slot.structuredProperty->setValue(candidate)
-                    ? announce(PathResult::Ok,slot.structuredProperty,slot.owner) : PathResult::ReadOnly;
-            if (slot.structuredSource==slot.owner->getDynamicPropertyPtr(Earthcall::StringInterner::intern(slot.dynamicKey)))
-                return slot.owner->setDynamicProperty(slot.dynamicKey,candidate) ? PathResult::Ok : PathResult::ReadOnly;
-            *slot.structuredSource=std::move(candidate);
-            return announce(PathResult::Ok,slot.containerProperty,slot.owner,slot.dynamicKey);
-        } catch (const std::exception&) { return PathResult::TypeMismatch; }
-    }
-
-    if (!slot.prop && !slot.dynamicSlot) {
+        if (!slot.prop && !slot.dynamicSlot) {
         if (segments.size() - startIndex == 1) {
             PropertyValue cur;
             if (root.getDynamicProperty(segments[startIndex], cur) && propertyValuesEquivalent(cur, v)) {
