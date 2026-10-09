@@ -101,6 +101,19 @@ public:
     }
     void setSdfRangeProxyEnabled(bool on) override { _sdfRangeProxyEnabled = on; }
 
+    // Native-witness-only GPU execution counters. Disabled by default:
+    // no diagnostic pipeline binding, shader atomics, or allocated GPU memory.
+    // Handles returned here are borrowed; only the witness copies their bytes.
+    void setSourceVisibilityWorkDiagnosticsEnabled(bool on) {
+        _sourceVisibilityWorkDiagnosticsEnabled = on;
+    }
+    WGPUBuffer sourceVisibilityWorkDiagnosticsBuffer() const {
+        return _visibilityWorkBuffer;
+    }
+    uint32_t sourceVisibilityWorkDiagnosticsSlotCount() const {
+        return _visibilityWorkSlotCount;
+    }
+
     // Vector-field visualization (Milestone 6b): drawImplicit renders a SCALAR
     // field's surface; this renders a VECTOR field's flow as points. Positions are
     // procedural — hashed from the particle index into the field's origin/scale
@@ -220,6 +233,8 @@ private:
         WGPURenderPipeline pipe = nullptr;
         WGPUBindGroupLayout bgl = nullptr;
         bool usesRadianceSources = false;
+        bool visibilityWorkDiagnostics = false;
+        WGPUBindGroupLayout visibilityWorkBgl = nullptr;
     };
 
     // GPU proof representation for conservative SDF range traversal.
@@ -229,6 +244,10 @@ private:
     // "no skip proof here, exact authored marching owns this cell."
 
     std::map<std::string, SdfPipeline> _sdfPipes;
+    bool _sourceVisibilityWorkDiagnosticsEnabled = false;
+    WGPUBuffer _visibilityWorkBuffer = nullptr;
+    uint64_t _visibilityWorkCapacityBytes = 0;
+    uint32_t _visibilityWorkSlotCount = 0;
     struct MemoizedProgram {
         uint32_t revision = 0xffffffff;
         uint32_t parameterRevision = 0xffffffff;
@@ -264,6 +283,7 @@ private:
         std::string emissionStructure;
         bool emissionReadsOmega = false;
         bool multiSource = false;
+        bool visibilityWorkDiagnostics = false;
         uint64_t sourceSetRevision = 0xffffffffffffffffULL;
         uint64_t sourceSetStructureRevision = 0xffffffffffffffffULL;
         const OntoMath::Piecewise* colorExprPtr = nullptr;
