@@ -7,6 +7,8 @@
 #include "Singularity/OntoMath/Field.hpp"
 #include <glm/glm.hpp>
 #include "json.hpp"
+#include <array>
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -23,8 +25,10 @@ namespace geom {
 template <typename FieldT>
 class AstBridge : public Property {
 public:
-    explicit AstBridge(std::string name, FieldT* field)
-        : _name(std::move(name)), _nameId(Earthcall::StringInterner::intern(_name)), _field(field) {}
+    explicit AstBridge(std::string name, FieldT* field,
+                       std::function<void()> onWritten = {})
+        : _name(std::move(name)), _nameId(Earthcall::StringInterner::intern(_name)),
+          _field(field), _onWritten(std::move(onWritten)) {}
 
     std::string name() const override { return _name; }
     Earthcall::StringId nameId() const override { return _nameId; }
@@ -41,8 +45,13 @@ public:
         nlohmann::json parsed = nlohmann::json::parse(*src, nullptr, false);
         if (parsed.is_discarded()) return false;   // malformed: refuse, keep the old AST and mode
 
+        // An identical rewrite (a Law re-asserting the same tree each frame)
+        // is not a change; bumping for it would make Screen re-inspect forever.
+        if (_field->mode == FieldT::EvaluationMode::AST &&
+            parsed == _field->astDefinition.toJson()) return true;
         _field->astDefinition = OntoMath::Piecewise::fromJson(parsed);
         _field->mode = FieldT::EvaluationMode::AST;
+        if (_onWritten) _onWritten();
         return true;
     }
 
@@ -50,6 +59,7 @@ private:
     std::string _name;
     Earthcall::StringId _nameId;
     FieldT* _field;
+    std::function<void()> _onWritten;
 };
 
 // An authored Piecewise that is semantically its own channel rather than a
@@ -58,8 +68,10 @@ private:
 // pretending RGB is the existing flow/force VectorField merely because both are vec3.
 class PiecewiseAstBridge : public Property {
 public:
-    PiecewiseAstBridge(std::string name, OntoMath::Piecewise* expr)
-        : _name(std::move(name)), _nameId(Earthcall::StringInterner::intern(_name)), _expr(expr) {}
+    PiecewiseAstBridge(std::string name, OntoMath::Piecewise* expr,
+                       std::function<void()> onWritten = {})
+        : _name(std::move(name)), _nameId(Earthcall::StringInterner::intern(_name)),
+          _expr(expr), _onWritten(std::move(onWritten)) {}
 
     std::string name() const override { return _name; }
     Earthcall::StringId nameId() const override { return _nameId; }
@@ -75,7 +87,9 @@ public:
         if (!src) return false;
         nlohmann::json parsed = nlohmann::json::parse(*src, nullptr, false);
         if (parsed.is_discarded()) return false;
+        if (parsed == _expr->toJson()) return true;   // identical rewrite: no change
         *_expr = OntoMath::Piecewise::fromJson(parsed);
+        if (_onWritten) _onWritten();
         return true;
     }
 
@@ -83,12 +97,15 @@ private:
     std::string _name;
     Earthcall::StringId _nameId;
     OntoMath::Piecewise* _expr;
+    std::function<void()> _onWritten;
 };
 
 class SdfNodeBridge : public Property {
 public:
-    SdfNodeBridge(std::string name, geom::SdfNode* node)
-        : _name(std::move(name)), _nameId(Earthcall::StringInterner::intern(_name)), _node(node) {}
+    SdfNodeBridge(std::string name, geom::SdfNode* node,
+                  std::function<void()> onWritten = {})
+        : _name(std::move(name)), _nameId(Earthcall::StringInterner::intern(_name)),
+          _node(node), _onWritten(std::move(onWritten)) {}
 
     std::string name() const override { return _name; }
     Earthcall::StringId nameId() const override { return _nameId; }
@@ -104,7 +121,9 @@ public:
         if (!src) return false;
         nlohmann::json parsed = nlohmann::json::parse(*src, nullptr, false);
         if (parsed.is_discarded() || !parsed.is_object()) return false;
+        if (geom::isSdfActive(_node) && parsed == geom::sdfToJson(*_node)) return true;
         *_node = geom::sdfFromJson(parsed);
+        if (_onWritten) _onWritten();
         return true;
     }
 
@@ -112,6 +131,7 @@ private:
     std::string _name;
     Earthcall::StringId _nameId;
     geom::SdfNode* _node;
+    std::function<void()> _onWritten;
 };
 
 // A FieldNode represents the spatial placement of an OntoMath Field within the scene.
@@ -136,6 +156,7 @@ public:
           lightChroma(std::make_shared<OntoMath::Piecewise>()),
           lightAngular(std::make_shared<OntoMath::Piecewise>()) {
         volumeOccluder->dims = glm::vec3(0.0f);
+        noteAuthoredMathWritten();
     }
 
     std::string getIdentifier() const override { return _id; }
@@ -199,6 +220,40 @@ public:
     void applyJson(const nlohmann::json& j);
     static std::shared_ptr<FieldNode> fromJson(const nlohmann::json& j);
 
+    // Authored-math revision: how Screen tells that any of this node's authored
+    // expressions (field.ast, the seven volume channels, light chroma/angular)
+    // changed, without serializing them. Every rendered frame used to dump all
+    // of them to JSON and hash the text -- 24 dumps, ~7 ms/frame in Northern
+    // Veil -- to answer a question whose answer is almost always "no".
+    //
+    // The value comes from one process-wide sequence that never repeats, so a
+    // node rebuilt at a recycled address can never present a revision some
+    // renderer cache has already seen (the SourceRho producer-rebinding hazard).
+    //
+    // Writers: the property bridges and applyJson() call
+    // noteAuthoredMathWritten() themselves. Anything that assigns a channel in
+    // place (the MCP author_volume path does) must call it too. If one is ever
+    // missed, verifiedAuthoredMathRevision() still catches it: each call
+    // re-hashes ONE channel's content round-robin and, on an unrevisioned
+    // change, bumps the revision and says so on stderr. A missed writer is a
+    // bug that heals within a few frames; it can never stay stale silently.
+    // Claude Opus 5.5, 2026-10-09 -- Zach asked for the serialization gone.
+    uint64_t authoredMathRevision() const { return _authoredMathRevision; }
+    uint64_t verifiedAuthoredMathRevision() const;
+    void noteAuthoredMathWritten();
+
+private:
+    // BENEATH THE KERNEL: change-detection bookkeeping for the Screen channel's
+    // caches. Not the being's state -- the machine's way of noticing that state
+    // moved. A Person can mean nothing by a sequence number; the authored
+    // mathematics it tracks is registered above as field.ast / volume.*.ast /
+    // volume.occluder.sdf / light.*.ast.
+    static constexpr std::size_t kAuthoredMathChannels = 10;
+    mutable uint64_t _authoredMathRevision = 0;   // mutable: the verifier may heal it
+    mutable std::size_t _verifyCursor = 0;
+    mutable std::array<uint64_t, kAuthoredMathChannels> _verifiedContentHash{};
+    mutable std::array<uint64_t, kAuthoredMathChannels> _verifiedAtRevision{};
+
 protected:
     void buildProperties() override {
         // Expose spatial transform
@@ -223,7 +278,8 @@ protected:
             // already round-trips through. Readable in full; writable, with a
             // malformed document REFUSED rather than half-applied.
             registerProperty(std::make_unique<AstBridge<OntoMath::ScalarField>>(
-                "field.ast", field.get()));
+                "field.ast", field.get(),
+                [this] { noteAuthoredMathWritten(); }));
         }
 
         if (vectorField) {
@@ -233,45 +289,55 @@ protected:
             registerProperty(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.frequency", vectorField.get(), &OntoMath::VectorField::frequency));
             registerProperty(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.amplitude", vectorField.get(), &OntoMath::VectorField::amplitude));
             registerProperty(std::make_unique<AstBridge<OntoMath::VectorField>>(
-                "vectorField.ast", vectorField.get()));
+                "vectorField.ast", vectorField.get(),
+                [this] { noteAuthoredMathWritten(); }));
         }
 
         if (volumeDensity) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
-                "volume.density.ast", volumeDensity.get()));
+                "volume.density.ast", volumeDensity.get(),
+                [this] { noteAuthoredMathWritten(); }));
         }
         if (volumeExtinction) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
-                "volume.extinction.ast", volumeExtinction.get()));
+                "volume.extinction.ast", volumeExtinction.get(),
+                [this] { noteAuthoredMathWritten(); }));
         }
         if (volumeScattering) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
-                "volume.scattering.ast", volumeScattering.get()));
+                "volume.scattering.ast", volumeScattering.get(),
+                [this] { noteAuthoredMathWritten(); }));
         }
         if (volumeChroma) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
-                "volume.chroma.ast", volumeChroma.get()));
+                "volume.chroma.ast", volumeChroma.get(),
+                [this] { noteAuthoredMathWritten(); }));
         }
         if (volumePhase) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
-                "volume.phase.ast", volumePhase.get()));
+                "volume.phase.ast", volumePhase.get(),
+                [this] { noteAuthoredMathWritten(); }));
         }
         if (volumeEmission) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
-                "volume.emission.ast", volumeEmission.get()));
+                "volume.emission.ast", volumeEmission.get(),
+                [this] { noteAuthoredMathWritten(); }));
         }
         if (volumeOccluder) {
             registerProperty(std::make_unique<SdfNodeBridge>(
-                "volume.occluder.sdf", volumeOccluder.get()));
+                "volume.occluder.sdf", volumeOccluder.get(),
+                [this] { noteAuthoredMathWritten(); }));
         }
 
         if (lightChroma) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
-                "light.chroma.ast", lightChroma.get()));
+                "light.chroma.ast", lightChroma.get(),
+                [this] { noteAuthoredMathWritten(); }));
         }
         if (lightAngular) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
-                "light.angular.ast", lightAngular.get()));
+                "light.angular.ast", lightAngular.get(),
+                [this] { noteAuthoredMathWritten(); }));
         }
     }
 };

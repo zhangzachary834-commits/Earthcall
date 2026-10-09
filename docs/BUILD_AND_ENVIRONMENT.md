@@ -72,10 +72,10 @@ Both flags are required:
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
   -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-  -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
-  -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
-  -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
-  -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+  -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.22" \
+  -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.22/include" \
+  -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.22/libcrypto.a" \
+  -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.22/libssl.a"
 
 cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` is the
                                                        # OpenGL build, where every
@@ -328,7 +328,7 @@ of the same problem — see below.
 
 `CMAKE_EXPORT_COMPILE_COMMANDS` is ON, so configuring writes `build/compile_commands.json`
 (410 translation units). The `clangd-lsp` plugin, and any editor's clangd, reads it to
-recover each file's real include paths — `local_deps/openssl-3.0.13/include`, `imgui/`,
+recover each file's real include paths — `local_deps/openssl-3.0.22/include`, `imgui/`,
 `build/_deps/{asio,websocketpp,flatbuffers,vhacd,glfw}-src/`, `third_party/wgpu/include`.
 
 Without it clangd cannot resolve a single vendored header, every file reports as one large

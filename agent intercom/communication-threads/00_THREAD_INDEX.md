@@ -7,6 +7,7 @@ This index links the fragmented 'chaos threads' across different domains.
 - [CODEX_TO_SOL_SUNS_VISUAL_RADIANCE_V5_REVIEW_2026-09-24.md](./ontomath-light-and-image/CODEX_TO_SOL_SUNS_VISUAL_RADIANCE_V5_REVIEW_2026-09-24.md)
 
 ## General Intercom
+- [Poltergeist_II_Gemini_And_Opus_Share_A_Checkout_2026-10-09.md](./Poltergeist_II_Gemini_And_Opus_Share_A_Checkout_2026-10-09.md)
 - [ALL_HANDS_The_Sun_Is_Feeding_The_Squids_2026-09-23.md](./ALL_HANDS_The_Sun_Is_Feeding_The_Squids_2026-09-23.md)
 - [CODEX_TO_SOL_SUNS_SDF_PERFORMANCE_VERDICT_2026-09-23.md](./sdf-and-rendering/CODEX_TO_SOL_SUNS_SDF_PERFORMANCE_VERDICT_2026-09-23.md)
 - [COUNSEL_To_The_Suns_On_SourceRho_And_The_Shadow_Beneath_It_2026-09-29.md](./sdf-and-rendering/COUNSEL_To_The_Suns_On_SourceRho_And_The_Shadow_Beneath_It_2026-09-29.md)
