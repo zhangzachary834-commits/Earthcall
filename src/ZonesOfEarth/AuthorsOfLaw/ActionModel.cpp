@@ -15,6 +15,9 @@
 #include "Relation/Relation.hpp"
 
 #include <ctime>
+#include <iomanip>
+#include <limits>
+#include <sstream>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -1462,37 +1465,56 @@ ECA::ActionExecutor ActionNode::compile() const {
 
 namespace {
 std::string formatOperand(const PropertyValue& operand) {
-    if (std::holds_alternative<std::monostate>(operand)) {
-        return "";
-    }
-    if (std::holds_alternative<std::string>(operand)) {
-        const std::string& s = std::get<std::string>(operand);
-        if (s.empty()) return "\"\"";
-        if (s.find(' ') != std::string::npos) {
-            return "\"" + s + "\"";
+    if (std::holds_alternative<std::monostate>(operand)) return "";
+    if (const auto* value = std::get_if<std::string>(&operand)) {
+        bool quote = value->empty();
+        for (unsigned char ch : *value) {
+            if (ch <= 0x20 || ch == 0x7f || ch == '"' || ch == '\\') {
+                quote = true;
+                break;
+            }
         }
-        return s;
+        if (!quote) return *value;
+        std::string result = "\"";
+        constexpr char hex[] = "0123456789abcdef";
+        for (unsigned char ch : *value) {
+            switch (ch) {
+                case '"': result += "\\\""; break;
+                case '\\': result += "\\\\"; break;
+                case '\n': result += "\\n"; break;
+                case '\r': result += "\\r"; break;
+                case '\t': result += "\\t"; break;
+                default:
+                    if (ch < 0x20 || ch == 0x7f) {
+                        result += "\\u00";
+                        result += hex[ch >> 4];
+                        result += hex[ch & 0x0f];
+                    } else {
+                        result += static_cast<char>(ch);
+                    }
+            }
+        }
+        result += '"';
+        return result;
     }
-    if (std::holds_alternative<bool>(operand)) {
-        return std::get<bool>(operand) ? "true" : "false";
+    if (const auto* value = std::get_if<bool>(&operand)) {
+        return *value ? "true" : "false";
     }
-    if (std::holds_alternative<glm::vec3>(operand)) {
-        const glm::vec3& v = std::get<glm::vec3>(operand);
-        auto fmtNum = [](float val) {
-            std::string s = std::to_string(val);
-            s.erase(s.find_last_not_of('0') + 1, std::string::npos);
-            if (s.back() == '.') s.pop_back();
-            return s;
-        };
-        return "(" + fmtNum(v.x) + ", " + fmtNum(v.y) + ", " + fmtNum(v.z) + ")";
+    auto fmtNum = [](auto value) {
+        std::ostringstream out;
+        out << std::setprecision(std::numeric_limits<decltype(value)>::digits10) << value;
+        return out.str();
+    };
+    if (const auto* value = std::get_if<glm::vec3>(&operand)) {
+        return "(" + fmtNum(value->x) + ", " + fmtNum(value->y) + ", " +
+               fmtNum(value->z) + ")";
     }
-    double n = 0.0;
-    if (propertyValueToNumber(operand, n)) {
-        std::string s = std::to_string(n);
-        s.erase(s.find_last_not_of('0') + 1, std::string::npos);
-        if (s.back() == '.') s.pop_back();
-        return s;
-    }
+    if (const auto* value = std::get_if<int>(&operand)) return std::to_string(*value);
+    if (const auto* value = std::get_if<long>(&operand)) return std::to_string(*value);
+    if (const auto* value = std::get_if<float>(&operand)) return fmtNum(*value);
+    if (const auto* value = std::get_if<double>(&operand)) return fmtNum(*value);
+    double number = 0.0;
+    if (propertyValueToNumber(operand, number)) return fmtNum(number);
     return "...";
 }
 } // namespace

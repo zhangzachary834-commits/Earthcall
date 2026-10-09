@@ -1340,3 +1340,11 @@ Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-0
 - [ ] **Save Zone isolation**: Move to FarLands, change something, Save Zone, restart. Then check `git status saves/` — only FarLands' files (and `saves/materials/` if you repainted a shared Material) should change; no new `saves/worlds/` file.
 - [ ] **Shared Material**: repaint `cathedral_basalt` from Borealis Sanctuary, Save Zone, then enter Sanctuary of Sunlit Mist — it should show the same change (one root, `saves/materials/cathedral_basalt/`).
 - [ ] **A thrown stone across a save** (Mythos, 2026-10-08, audit `2026-10-08_mythos_undeclared_survivor_audit.md`): in any Zone with a physical Object, author a Law that sets its `velocity` (e.g. a Law Line sentence setting `@<object>.velocity`), confirm it moves, **Save Zone**, restart, re-enter. Expected today: it is at rest and `velocity` reads zero — no save path writes `Object::velocity`. If it is still moving, the audit's layer one is wrong for your build and I want to know. Also open the Zone's `.json` (or export via the `export-world-json` law) and confirm `velocity` is absent while `tags`/`attributes` are present.
+
+## Northern Veil after the authored-math revision (added 2026-10-09)
+
+*Claude Code · Claude Opus 5.5 · session `session_01NJy6VrPVNcHAnggwFyTsmF` · 2026-10-09. [Full task](../Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md).*
+
+- [ ] Rebuild `earthcall_webgpu`, enter **Northern Veil**, and confirm the four curtains look exactly as before (same colours, shimmer, overlap). Expect **no** felt speedup yet: the CPU cost fell from ~7 to ~0.8 ms/frame, but the frame is GPU-bound at ~100 ms.
+- [ ] Through MCP `earthcall_author_volume` (or a Law writing `volume.emission.ast`), change one curtain's emission; it should change on screen at once. If it takes about a second instead, or the terminal prints `[FieldNode] … changed without noteAuthoredMathWritten()`, a writer was missed — report the line.
+- [ ] Decide what to do with `saves/worlds/chess_app.ecform`: the 2026-10-09 test run rewrote its matter snapshot pointer (`7431ca37…` → `556fa746…`). `git restore` returns it to the committed version.

@@ -72,6 +72,16 @@ int main() {
         assert(titleNode.describe() == "set title \"Hello World\"");
 
         assert(ActionNode::set("label", std::string{}).describe() == R"(set label "")");
+        assert(ActionNode::set("epsilon", 1e-9).describe() != "set epsilon 0");
+        assert(ActionNode::set("tinyVector", glm::vec3(1e-7f, 0.0f, 0.0f))
+                   .describe() != "set tinyVector (0, 0, 0)");
+        assert(ActionNode::set("quote", std::string("A \"quoted\" word"))
+                   .describe() == R"(set quote "A \"quoted\" word")");
+        assert(ActionNode::set("filepath", std::string("a\\b"))
+                   .describe() == R"(set filepath "a\\b")");
+        assert(ActionNode::set("note", std::string("a\nb\tc"))
+                   .describe() == R"(set note "a\nb\tc")");
+
         ActionNode boolNode = ActionNode::set("enabled", true);
         assert(boolNode.describe() == "set enabled true");
 

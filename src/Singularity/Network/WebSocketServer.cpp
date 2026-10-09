@@ -953,6 +953,9 @@ struct WebSocketServer::Impl {
                     else if (created && j.contains("extent")) vec3Of(j["extent"], node->scale);
                     for (auto& [ch, pw] : compiled) *((*node).*(ch->member)) = std::move(pw);
                     if (occluder) *node->volumeOccluder = std::move(*occluder);
+                    // These assignments bypass the property bridges, so the
+                    // node's authored-math revision is bumped here by hand.
+                    if (!compiled.empty() || occluder) node->noteAuthoredMathWritten();
                     node->addStakeholder("volume", mover->toString(), "mcp", std::time(nullptr));
                     if (created) zone.addSpatialField(node);
                 }
