@@ -37,7 +37,7 @@ int main() {
     }
     const std::string content((std::istreambuf_iterator<char>(toolFile)),
                               std::istreambuf_iterator<char>());
-    for (const std::string& fossil : {"eraseLegacyStrokeSegments", "deleteLegacyStrokesAt",
+    for (const char* fossil : {"eraseLegacyStrokeSegments", "deleteLegacyStrokesAt",
                                      "configureStrokeTool", "raycastCollisionAABB"}) {
         if (content.find(fossil) != std::string::npos) {
             std::cerr << "FAIL: Legacy stroke/raycast fossil stub exists: " << fossil << "\n";
