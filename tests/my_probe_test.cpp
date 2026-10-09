@@ -19,6 +19,15 @@ int main() {
         return 1;
     }
 
+    const nlohmann::json sourceJson = SaveSystem::readSaveData(source.string());
+    std::size_t expectedLawCount = 0;
+    if (sourceJson.contains("authoredLaws")) {
+        const auto& authored = sourceJson["authoredLaws"];
+        if (authored.is_array()) expectedLawCount = authored.size();
+        else if (authored.is_object() && authored.contains("laws") && authored["laws"].is_array())
+            expectedLawCount = authored["laws"].size();
+    }
+
     Scratch scratch{std::filesystem::temp_directory_path() /
         ("earthcall-probe-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))};
     std::filesystem::create_directories(scratch.path / "worlds");
@@ -28,7 +37,19 @@ int main() {
     SaveSystem::setSaveRoot(scratch.path.string());
     TestSupport::BootedEngineHarness harness;
     harness.loadWorld(world.string());
-    
+
+    const auto scratchLog = scratch.path / "earthcall-io.log";
+    if (!std::filesystem::exists(scratchLog)) {
+        std::cerr << "my_probe_test: ZoneManager I/O log escaped configured save root\n";
+        return 1;
+    }
+    if (expectedLawCount == 0 || harness.lawManager.getAll().size() != expectedLawCount) {
+        std::cerr << "my_probe_test: isolated fixture did not preserve authored Law payload"
+                  << " (expected " << expectedLawCount
+                  << ", loaded " << harness.lawManager.getAll().size() << ")\n";
+        return 1;
+    }
+
     // warm up
     for (int i=0; i<5; ++i) harness.lawManager.tick();
 
