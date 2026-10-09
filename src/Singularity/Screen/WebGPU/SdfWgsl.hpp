@@ -173,7 +173,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* phaseExpr = nullptr,
                 const OntoMath::Piecewise* emissionExpr = nullptr,
                 const OntoMath::Piecewise* responseExpr = nullptr,
-                const std::vector<uint8_t>* radianceZeroAuthority = nullptr);
+                const std::vector<uint8_t>* radianceZeroAuthority = nullptr,
+                bool witnessVisibilityWorkCounters = false);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
