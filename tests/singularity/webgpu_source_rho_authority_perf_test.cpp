@@ -314,7 +314,7 @@ int main() {
     // Separate GPU-executed atomic-count draws, AFTER all 12 uninstrumented
     // pairs. Storage, shaders, readback, and their costs are excluded from
     // the timing experiment. Two words per source: invocations and actual
-    // signed-distance probes (surface probe plus each entered shadow iteration).
+    // actual entered shadow-loop SDF steps (not preliminary surface bias probes).
     auto readVisibilityWork = [&](WebGpuRenderer& renderer)
             -> std::vector<uint32_t> {
         const uint32_t sourceCount =
@@ -385,7 +385,8 @@ int main() {
         authorityWork[3] != exactWork[3]) {
         std::printf(
             "SOURCE_RHO_AUTH_PERF FAIL executed visibility work "
-            "exact=(%u,%u;%u,%u) authority=(%u,%u;%u,%u)\n",
+            "exact=(%u calls,%u shadow_steps;%u calls,%u shadow_steps) "
+            "authority=(%u calls,%u shadow_steps;%u calls,%u shadow_steps)\n",
             exactWork.size() == 4 ? exactWork[0] : 0,
             exactWork.size() == 4 ? exactWork[1] : 0,
             exactWork.size() == 4 ? exactWork[2] : 0,
@@ -398,10 +399,10 @@ int main() {
     }
     std::printf(
         "SOURCE_RHO_AUTH_PERF GPU_EXECUTED visibility "
-        "exact_zero=(%u calls,%u sdf_probes) "
-        "authority_zero=(%u calls,%u sdf_probes) "
-        "exact_live=(%u calls,%u sdf_probes) "
-        "authority_live=(%u calls,%u sdf_probes)\n",
+        "exact_zero=(%u calls,%u shadow_steps) "
+        "authority_zero=(%u calls,%u shadow_steps) "
+        "exact_live=(%u calls,%u shadow_steps) "
+        "authority_live=(%u calls,%u shadow_steps)\n",
         exactWork[0], exactWork[1], authorityWork[0], authorityWork[1],
         exactWork[2], exactWork[3], authorityWork[2], authorityWork[3]);
 
