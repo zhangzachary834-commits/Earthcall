@@ -89,6 +89,9 @@ int main() {
         return 1;
     }
 
+    exactRenderer.setRadianceVisibilityEnabled(true);
+    authorityRenderer.setRadianceVisibilityEnabled(true);
+
     WGPUTextureDescriptor td = {};
     td.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_CopySrc;
     td.dimension = WGPUTextureDimension_2D;
