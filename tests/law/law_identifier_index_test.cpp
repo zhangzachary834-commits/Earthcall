@@ -92,6 +92,28 @@ int main() {
     {
         check(lm.find("Gravity") == nullptr, "lm.find('Gravity') by display name returns nullptr");
         check(lm.find("Authored Law") == nullptr, "lm.find('Authored Law') by display name returns nullptr");
+
+        // Verify that target resolution across Law instances sharing identical display names
+        // requires unique identifiers and does not conflate distinct Laws.
+        const std::string target = "Gravity";
+        Law* targetBeing = nullptr;
+        for (const auto& l : lm.getAll()) {
+            if (l && (l->getIdentifier() == target)) {
+                targetBeing = l.get();
+                break;
+            }
+        }
+        check(targetBeing == nullptr, "Target lookup by display name 'Gravity' resolves no Law without unique ID");
+
+        Law* resolvedCustom = nullptr;
+        for (const auto& l : lm.getAll()) {
+            if (l && (l->getIdentifier() == "law-gravity-custom")) {
+                resolvedCustom = l.get();
+                break;
+            }
+        }
+        check(resolvedCustom != nullptr && resolvedCustom->getIdentifier() == "law-gravity-custom",
+              "Target lookup by exact identifier 'law-gravity-custom' uniquely resolves lawA");
     }
 
     std::cout << "\nSUCCESS — " << g_checks << " checks passed.\n";
