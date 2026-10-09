@@ -49,6 +49,8 @@ The display is a direct field; the program adds no Object/Material/FaceTexture c
 
 ## Evidence and remaining acceptance
 
+**Person confirmation — 2026-10-08 01:40 PDT:** Zach reported, “I TRIED IT” and “IT WORRKRKRKSSSSSS.” This is live overall acceptance of the editor; individual controls, resizing, export and inhabited persistence were not separately described. Recorded by Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18`.
+
 [Verification audit](../../../../../audits/LAW_LINE_PIXEL_ART_EDITOR_2026-10-07.md) records the executed focused and native paths. Final Law Line regression: **246/246 checks**; the complete large program also passes chunked/delayed bracketed-paste and explicit-Enter checks. Seven independently decoded native 2560×1440 states each check **1,736,178 canvas pixels with maximum byte error 0**. Source/type codec round-trip, palette/eraser, sampled dragging, capture veto, one-step undo/redo, undoable clear, close retention and real PNG export are exercised. Native input uses production `observePending` with a sensed fixture; physical OS clicking and human presence/key unlock remain Person checks.
 
 [Person acceptance](../../../For%20Zach/Person%20Verification%20List.md) covers actual paste, cursor unlock, swatch feel, fast dragging, resize/Retina matching, export location, close/reopen and inhabited persistence. Open extensions: canvas-only export, artwork import, brush sizes, interpolated freehand strokes, larger canvases/layers, more retained edit values, active-ink indicator, and general direct-field input ownership. They are not claimed by this complete small pixel-art editor.

@@ -64,7 +64,10 @@
   "world": {
     "objects": [
       {
-        "objectID": "panning-sound-orb",
+        "objectID": "panning-sound-orb-root",
+        "conceptIdentifier": "",
+        "shapeKind": "sphere",
+        "materialId": "default",
         "transform": [
           1.0,
           0.0,
@@ -80,103 +83,166 @@
           0.0,
           0.0,
           0.0,
-          -10.0,
+          -3.0,
           1.0
         ],
-        "shapeKind": 1,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          100.0,
-          100.0
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0,
         "authoredProperties": {
           "acoustic.isSoundEmitter": {
             "t": "string",
             "v": "true"
+          },
+          "acoustic.voice": {
+            "t": "string",
+            "v": "root"
           },
           "acoustic.waveType": {
             "t": "string",
             "v": "sine"
           },
           "acoustic.frequency": {
-            "t": "double",
-            "v": 140.0
+            "t": "float",
+            "v": 110.0
           },
           "acoustic.amplitude": {
-            "t": "double",
-            "v": 0.6
-          },
-          "acoustic.lowpassCutoff": {
-            "t": "double",
-            "v": 300.0
+            "t": "float",
+            "v": 0.08
           }
-        },
-        "authoritativeAxis": [
+        }
+      },
+      {
+        "objectID": "panning-sound-orb-fifth",
+        "conceptIdentifier": "",
+        "shapeKind": "sphere",
+        "materialId": "default",
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
           0.0,
           1.0,
-          0.0
-        ],
-        "center": [
           0.0,
           0.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            0.8,
-            0.8,
-            0.9
-          ],
-          [
-            0.8,
-            0.8,
-            0.9
-          ],
-          [
-            0.8,
-            0.8,
-            0.9
-          ],
-          [
-            0.8,
-            0.8,
-            0.9
-          ],
-          [
-            0.8,
-            0.8,
-            0.9
-          ],
-          [
-            0.8,
-            0.8,
-            0.9
-          ]
-        ],
-        "geometryType": 1,
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "materialId": "material.default",
-        "targetRotation": [
           0.0,
           0.0,
-          0.0
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          -3.0,
+          1.0
         ],
         "x2D": 100.0,
         "y2D": 100.0,
-        "zOrder2D": 0
+        "zOrder2D": 0,
+        "authoredProperties": {
+          "acoustic.isSoundEmitter": {
+            "t": "string",
+            "v": "true"
+          },
+          "acoustic.voice": {
+            "t": "string",
+            "v": "fifth"
+          },
+          "acoustic.waveType": {
+            "t": "string",
+            "v": "sine"
+          },
+          "acoustic.frequency": {
+            "t": "float",
+            "v": 164.81
+          },
+          "acoustic.amplitude": {
+            "t": "float",
+            "v": 0.06
+          }
+        }
+      },
+      {
+        "objectID": "panning-sound-orb-ninth",
+        "conceptIdentifier": "",
+        "shapeKind": "sphere",
+        "materialId": "default",
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          -3.0,
+          1.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0,
+        "authoredProperties": {
+          "acoustic.isSoundEmitter": {
+            "t": "string",
+            "v": "true"
+          },
+          "acoustic.voice": {
+            "t": "string",
+            "v": "ninth"
+          },
+          "acoustic.waveType": {
+            "t": "string",
+            "v": "sine"
+          },
+          "acoustic.frequency": {
+            "t": "float",
+            "v": 246.94
+          },
+          "acoustic.amplitude": {
+            "t": "float",
+            "v": 0.04
+          }
+        }
+      },
+      {
+        "objectID": "ambient.creator",
+        "conceptIdentifier": "",
+        "shapeKind": "box",
+        "materialId": "default",
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 0.0,
+        "y2D": 0.0,
+        "zOrder2D": 0,
+        "authoredProperties": {}
       }
     ]
   },
   "lawRefs": [
-    "law-ambient-pan"
+    "law-ambient-pan-root",
+    "law-ambient-pan-fifth",
+    "law-ambient-pan-ninth"
   ]
 }

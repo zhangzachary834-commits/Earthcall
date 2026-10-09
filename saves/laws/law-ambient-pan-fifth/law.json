@@ -1,25 +1,22 @@
 {
-    "authors": ["Zach"],
-    "identifier": "law-ambient-pan",
-    "injected_by": "Antigravity, authorized by Zach",
+    "identifier": "law-ambient-pan-fifth",
+    "authors": [
+        "ambient.creator"
+    ],
     "law": {
-        "id": "law-ambient-pan",
-        "name": "Ambient Sound Panning",
-        "enabled": true,
         "authority": 0,
-        "activation": 1,
-        "scope": 1,
-        "drives": false,
-        "retrigger": 0,
+        "authors": [
+            "ambient.creator"
+        ],
         "conditionMode": "all",
-        "authors": ["Zach"],
-        "conditionSubjects": [],
-        "targets": [],
         "conditionModel": {
             "kind": 0,
-            "path": "acoustic.isSoundEmitter",
+            "path": "acoustic.voice",
             "op": 0,
-            "operand": {"t": "string", "v": "true"}
+            "operand": {
+                "t": "string",
+                "v": "fifth"
+            }
         },
         "actionModel": {
             "kind": 8,
@@ -33,13 +30,13 @@
                         "expr": {
                             "terms": [
                                 {
-                                    "c": 5.0,
+                                    "c": -5.0,
                                     "factors": {},
                                     "trans": [
                                         {
                                             "kind": 0,
                                             "var": "t",
-                                            "scale": 0.5,
+                                            "scale": 0.35,
                                             "shift": 0.0
                                         }
                                     ]
@@ -50,7 +47,6 @@
                 ]
             }
         },
-        "provenance": []
-    },
-    "triggers": []
+        "id": "law-ambient-pan-fifth"
+    }
 }

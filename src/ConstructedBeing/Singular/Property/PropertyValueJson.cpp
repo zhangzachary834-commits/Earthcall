@@ -106,6 +106,13 @@ nlohmann::json propertyValueToJson(const PropertyValue& v) {
                 }
             }
             return nlohmann::json{{"t", "mat4"}, {"m", m}};
+        } else if constexpr (std::is_same_v<X, OntoMath::MatrixValue>) {
+            return nlohmann::json{
+                {"t", "matrix"},
+                {"rows", x.rows()},
+                {"cols", x.cols()},
+                {"elements", x.elements()}
+            };
         } else if constexpr (std::is_same_v<X, std::shared_ptr<PropertyList>>) {
             nlohmann::json arr = nlohmann::json::array();
             if (x) {
@@ -205,6 +212,23 @@ PropertyValue propertyValueFromJson(const nlohmann::json& j) {
             }
         }
         return PropertyValue(m);
+    }
+    if (t == "matrix") {
+        if (!j.contains("rows") || !j.contains("cols") ||
+            !j.contains("elements") || !j["elements"].is_array()) {
+            return PropertyValue{};
+        }
+        const std::size_t rows = j["rows"].get<std::size_t>();
+        const std::size_t cols = j["cols"].get<std::size_t>();
+        std::vector<double> elements;
+        elements.reserve(j["elements"].size());
+        for (const auto& el : j["elements"]) {
+            if (!el.is_number()) return PropertyValue{};
+            elements.push_back(el.get<double>());
+        }
+        auto matrix = OntoMath::MatrixValue::create(rows, cols, std::move(elements));
+        if (!matrix) return PropertyValue{};
+        return PropertyValue(std::move(*matrix));
     }
     if (t == "list") {
         auto list = std::make_shared<PropertyList>();

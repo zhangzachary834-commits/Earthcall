@@ -4,6 +4,7 @@
 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18`; Zach requested a whole 2D art editor through Law sentences.*
 
+- [x] Zach tried the editor and reported that it works (2026-10-08 01:40 PDT). This confirms overall live success; the individual control, resize, export and persistence checks below remain available for separate acceptance.
 - [ ] Rebuild/restart WebGPU, unlock, `enter LawLine`, close pointer-capturing panels, stop earlier conflicting display/click programs and release the cursor with Escape; paste the entire [editor line](../../../../examples/law_line_pixel_art_editor.txt) once, press Enter, and wait for 276 Laws to be acknowledged.
 - [ ] Choose left swatches and draw on the 16×16 grid; confirm ink selection, eraser and held-pointer cell entry feel correct, including fast movement between sensed frames.
 - [ ] Test the right-hand undo/redo arrows, red clear cross and undo-after-clear; confirm the one-step retained-value semantics match your expectation.
@@ -1338,3 +1339,4 @@ Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-0
 - [ ] **Prism Cathedral**: its 13 Materials had a name/id mix-up (loader fix). It may now look **more coloured / different from before** (basalt, limestone, gold…). Please judge whether that is what you authored.
 - [ ] **Save Zone isolation**: Move to FarLands, change something, Save Zone, restart. Then check `git status saves/` — only FarLands' files (and `saves/materials/` if you repainted a shared Material) should change; no new `saves/worlds/` file.
 - [ ] **Shared Material**: repaint `cathedral_basalt` from Borealis Sanctuary, Save Zone, then enter Sanctuary of Sunlit Mist — it should show the same change (one root, `saves/materials/cathedral_basalt/`).
+- [ ] **A thrown stone across a save** (Mythos, 2026-10-08, audit `2026-10-08_mythos_undeclared_survivor_audit.md`): in any Zone with a physical Object, author a Law that sets its `velocity` (e.g. a Law Line sentence setting `@<object>.velocity`), confirm it moves, **Save Zone**, restart, re-enter. Expected today: it is at rest and `velocity` reads zero — no save path writes `Object::velocity`. If it is still moving, the audit's layer one is wrong for your build and I want to know. Also open the Zone's `.json` (or export via the `export-world-json` law) and confirm `velocity` is absent while `tags`/`attributes` are present.

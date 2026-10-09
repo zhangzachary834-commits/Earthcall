@@ -3,6 +3,7 @@
 #include "../Screen/Renderer.hpp"
 #include "../Screen/ShadingSystem.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "Singularity/Screen/VolumeDensity.hpp"
 #include "../../ZonesOfEarth/ZoneManager.hpp"
 #include "../../ZonesOfEarth/Zone/Zone.hpp"
@@ -59,9 +60,16 @@ namespace Core {
         float right  = top * aspect;
         float left   = -right;
 
-        glm::mat4 proj = currentRenderer().zeroToOneDepth()
-            ? glm::frustumZO(left, right, bottom, top, nearZ, farZ)
-            : glm::frustumNO(left, right, bottom, top, nearZ, farZ);
+        const auto authoredProjection = OntoMath::cameraPerspective(
+            glm::radians(static_cast<double>(fov)),
+            static_cast<double>(aspect),
+            static_cast<double>(nearZ),
+            static_cast<double>(farZ),
+            currentRenderer().zeroToOneDepth());
+        if (!authoredProjection) return;
+        const auto projectionGlm = authoredProjection->toGlmMat4();
+        if (!projectionGlm) return;
+        const glm::mat4 proj = *projectionGlm;
 
         /* -------------------- */
 
@@ -77,7 +85,11 @@ namespace Core {
         }
 
         glm::vec3 lookTarget = _camera->pos + lookDir;
-        glm::mat4 view = glm::lookAt(eyePos, lookTarget, _camera->up);
+        const auto authoredView = OntoMath::cameraLookAt(eyePos, lookTarget, _camera->up);
+        if (!authoredView) return;
+        const auto viewGlm = authoredView->toGlmMat4();
+        if (!viewGlm) return;
+        const glm::mat4 view = *viewGlm;
 
         currentRenderer().setCamera(view, proj, eyePos);
 
