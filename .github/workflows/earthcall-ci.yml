@@ -90,6 +90,9 @@ jobs:
         async_state_logger_test
         save_system_error_test
         dump_test_save_isolation_test
+        foreign_web_dom_bridge_test
+        foreign_web_dom_projection_test
+        foreign_web_dom_protocol_test
 
     steps:
       - name: Check out tested commit
@@ -131,6 +134,15 @@ jobs:
           set -euxo pipefail
           # shellcheck disable=SC2086  # FOCUSED_TESTS is split into target names on purpose
           cmake --build build --parallel 4 --target earthcall_terminal $FOCUSED_TESTS
+
+      - name: Run foreign DOM fixture witnesses from nested build directories
+        shell: bash
+        run: |
+          set -euxo pipefail
+          for test in foreign_web_dom_bridge_test foreign_web_dom_projection_test foreign_web_dom_protocol_test; do
+            (cd build && "./$test")
+            (cd build/tests && "../$test")
+          done
 
       - name: Run Terminal exact-reference smoke
         shell: bash
