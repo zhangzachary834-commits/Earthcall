@@ -26,5 +26,8 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating SDF Spatial Prophetic Artifact and Performance as Truth](sdf_prophetic_and_performance_as_truth_addendum.md)
 *   [Integrating Spatial Relations and Property Predication](spatial_relations_and_property_predication_addendum.md)
 *   [Integrating Split-Substrate Serialization, Matter Generation, and Atomic Save Swaps](split_substrate_matter_generation_addendum.md)
+*   [Integrating Substrate Ordering, Property Storage, and CPU-GPU Micro-Mastery](substrate_ordering_and_micro_mastery_addendum.md)
 *   [Integrating Systemic Propagation and Temporal Events](systemic_propagation_and_temporal_events_addendum.md)
+*   [Integrating Unified Brush System and Object Hover Events](unified_brush_and_hover_events_addendum.md)
+*   [Integrating Unified Brush System and CPU-GPU Micro-Mastery](unified_brush_and_micro_mastery_addendum.md)
 *   [Integrating the Event Bus, Discrete Moments, and Continuous Time](event_bus_and_time_moment_addendum.md)

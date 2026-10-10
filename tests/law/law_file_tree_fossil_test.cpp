@@ -45,18 +45,21 @@ int main() {
         }
     }
 
-    const fs::path loggerHeaderRelative = "src/Singularity/Core/Logger.hpp";
-    std::ifstream loggerHeaderFile(root / loggerHeaderRelative);
-    if (!loggerHeaderFile) {
-        std::cerr << "FAIL: Could not open Logger.hpp at " << root / loggerHeaderRelative << "\n";
-        return 1;
-    }
-    const std::string loggerContent((std::istreambuf_iterator<char>(loggerHeaderFile)),
-                                    std::istreambuf_iterator<char>());
-    for (const char* fossil : {"_legacyLawLogFile", "_legacyLawJsonlFile"}) {
-        if (loggerContent.find(fossil) != std::string::npos) {
-            std::cerr << "FAIL: Legacy law audit mirror fossil exists in Logger.hpp: " << fossil << "\n";
+    // Both logger source files must remain free of retired mirror sinks.
+    for (const fs::path& source : {
+             fs::path("src/Singularity/Core/Logger.hpp"),
+             fs::path("src/Singularity/Core/Logger.cpp")}) {
+        std::ifstream in(root / source);
+        if (!in) {
+            std::cerr << "FAIL: Could not read " << root / source << "\n";
             return 1;
+        }
+        const std::string content((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        for (const char* name : {"_legacyLawLogFile", "_legacyLawJsonlFile", "logs/law_audit.log", "logs/law_audit.jsonl"}) {
+            if (content.find(name) != std::string::npos) {
+                std::cerr << "FAIL: Legacy audit mirror fossil exists in " << source << ": " << name << "\n";
+                return 1;
+            }
         }
     }
 
