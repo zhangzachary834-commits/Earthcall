@@ -342,7 +342,8 @@ bool Engine::initLogic() {
         }
     }
 
-    // Inject authored rotational physics laws (angular kinematics, damping, tilt, rolling coupling)
+    // Authored rotational physics participates in the real LawManager tick.
+    // Every authored Law must have a Person author before registration.
     for (const auto& law : Physics::createAuthoredRotationalLaws()) {
         if (_person) law->addAuthor(*_person);
         _lawManager->add(law);
