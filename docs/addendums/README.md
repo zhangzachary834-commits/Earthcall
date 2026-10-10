@@ -5,6 +5,7 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating Adaptive Compute Moments and SDF Direct Profitability](adaptive_compute_and_sdf_profitability_addendum.md)
 *   [Integrating Atomic Save Swaps and Macro Moments](atomic_save_swaps_as_macro_moments_addendum.md)
 *   [Integrating Authored Categories and Directory Ordering](authored_categories_and_directory_ordering_addendum.md)
+*   [Integrating B-Time Rete and Temporal Ontologies](b_time_rete_and_time_and_moment_addendum.md)
 *   [Integrating Authored Domains, Unified Brushes, and Continuous Material Fields](ontomath_brush_materials_addendum.md)
 *   [Integrating Continuous Drives and Path Resolution Optimizations](continuous_drives_and_path_resolution_addendum.md)
 *   [Integrating Event Bus and Semantic Relation Events](event_bus_and_relation_events_addendum.md)
