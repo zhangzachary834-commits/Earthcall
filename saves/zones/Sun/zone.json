@@ -16887,7 +16887,7 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 0.9,
+                        "c": 1,
                         "factors": {}
                       }
                     ]
