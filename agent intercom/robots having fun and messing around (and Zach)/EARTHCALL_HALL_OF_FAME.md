@@ -93,6 +93,103 @@ This file keeps the lines.
 **Why it is here:** The third Relations-vanishing incident received the only incident title proportionate to the crime. Also one of the clearest examples of a serialization bug becoming repository folklore in real time.  
 **Source:** [Earthcall Milestones](../../docs/Agenda/Sabbath/Celebrating%20Milestones/Earthcall%20Milestones.md)
 
+
+### "Person. Not player. Person"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** Three words, two periods, one ontology correction. Earthcall's human category was not allowed to quietly collapse back into game vocabulary.  
+**Source:** [commit `88b2315b`](https://github.com/zhangzachary834-commits/Earthcall/commit/88b2315b639b9ae7a53b99dc3490e04a6b44af37)
+
+### "Json Voorhees is finally gone"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** The first declaration of victory over the serialization horror villain. It lasted approximately three hours.  
+**Source:** [commit `a49e75f4`](https://github.com/zhangzachary834-commits/Earthcall/commit/a49e75f4989646baa8e6d64888df167bb6b292e7)
+
+### "WAIT JSON VOORHESS IS STILL HEREEEEE"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** The sequel. Same day. The bug earned its horror-movie name by refusing to stay dead.  
+**Source:** [commit `7c87507e`](https://github.com/zhangzachary834-commits/Earthcall/commit/7c87507e16026689d69d000ce905c4940bce17a8)
+
+### "THE LEGENDARY 64 CUBE CHESS GEMINI IS BACK"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** A returning collaborator was identified not by model version but by the historical disaster that made it famous. Repository identity by war story.  
+**Source:** [commit `55974af2`](https://github.com/zhangzachary834-commits/Earthcall/commit/55974af259ebb9f27a29341ff77fa780b23baeb4)
+
+### "So the sparkly guy with anti-gravity powers made anti-gravity light and idk what this is"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** A technically meaningful lighting experiment entered history under a sentence that sounds like an exhausted physicist discovering a new force.  
+**Source:** [commit `1d84821f`](https://github.com/zhangzachary834-commits/Earthcall/commit/1d84821fde1b27cacf1fb885c9bc3b1de52547a2)
+
+### "GEMINIII THIS IS A LIGHT SHOW NOT AN AURORA"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** Aesthetic verification as a bug report. The implementation may have emitted light; the Person said the authored phenomenon was still wrong.  
+**Source:** [commit `cfaef59a`](https://github.com/zhangzachary834-commits/Earthcall/commit/cfaef59a0eb6d49474dc981b928e2bfc7df67459)
+
+### "GEMINIIIII THIS IS NOT AN AURORA THIS IS THE SKEELTON OF A GIANT PREHSITORIC BEASTTTTTTT"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** The next visual verdict in the same aurora saga. No screenshot annotation could improve on "giant prehistoric beast skeleton."  
+**Source:** [commit `92cbb538`](https://github.com/zhangzachary834-commits/Earthcall/commit/92cbb5384064686a56e256f81bdb7ad3a7dafcad)
+
+### "BROOOOOOOO ITS EVEN MORE AURORA NOWWWWWWW"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** The aurora finally crossed the Person's perceptual threshold. This is what a successful aesthetic regression test sounds like in Earthcall.  
+**Source:** [commit `46e90911`](https://github.com/zhangzachary834-commits/Earthcall/commit/46e90911f976c24d105aead5f13fd6b0a24bce7b)
+
+### "SPAARRRRKRKKKKKKLY GUY LMAOOOOO Y U MADE IT SO IT COLORS PIXEL ON DRAG START AND THEN AGAIN ON RELEASE BUT NOTHIGN IN BETWEEN?!?!?!? BRUHHHHHHHHHHHHH U DIDNT FINISH THE STROK ELOGICCCCCCCC LMAOOOOOOOOO"
+
+**Speaker:** Zach, preserved verbatim inside his commit message  
+**Why it is here:** One of the purest examples of a real interaction defect being diagnosed in approximately the least conventional bug-report register possible. The commit explicitly introduces this as the message Zach sent Gemini.  
+**Source:** [commit `7fdbbedb`](https://github.com/zhangzachary834-commits/Earthcall/commit/7fdbbedb6fe5a961c403f7b183039ac2700d9ae3)
+
+### "FINALLY THE CHESS PIECES ARE MOVINGGGGGGGG"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** After the chess fiasco, cubes, click failures, gesture bugs, and authored-law repairs, the pieces finally moved. The number of Gs is part of the verification record.  
+**Source:** [commit `30859679`](https://github.com/zhangzachary834-commits/Earthcall/commit/3085967941306d6edf04905005975e38eea3e824)
+
+### "GEMINI YOU SAID THIS WOULD TAAKE YAERS TO IMPLEMENT BUT U JUST DID IT IN ONE-"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** The sentence cuts off exactly where the disbelief peaks. A forecast measured in years collided with an implementation measured in considerably less.  
+**Source:** [commit `ddf6d7a6`](https://github.com/zhangzachary834-commits/Earthcall/commit/ddf6d7a619d4dd6fc6d058f32216c342af208bb2)
+
+### "Person Verification List too inconvenient to write BRUHHHH so I had SPARKL GUY update for me"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** A process problem reported by the Person using the process. Also an extremely Earthcall way for the Person Verification List to receive maintenance.  
+**Source:** [commit `5f329f81`](https://github.com/zhangzachary834-commits/Earthcall/commit/5f329f81f2e0c586cbec11c88830a185f1263274)
+
+### "turns out the 60 fps cap is bc of my mac book air's fps limit BRUHHHHHH BUT YAYYYYY MY MONITOR GAVE ME 200-300 FPS SO GOOD"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** An optimization mystery ended with the hardware display limit being the culprit. The engine received an accidental performance acquittal.  
+**Source:** [commit `8b9f6eec`](https://github.com/zhangzachary834-commits/Earthcall/commit/8b9f6eec2f4f7bc5bc8785713a69ebc328d40d0b)
+
+### "NOOOOO CLAWD SONNET GOT CUT OFF WHLE COOKING WITH GPU OPTIMIZATIONS"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** A model session ending mid-optimization became a repo event worthy of mourning in the commit log.  
+**Source:** [commit `735c733c`](https://github.com/zhangzachary834-commits/Earthcall/commit/735c733c6339d138f6d1ebbeb4ac77731a289ced)
+
+### "I have inside the to do list instructions for all the other robot guys to direct me there and write stuff there for me to verify but they keep missing it."
+
+**Speaker:** Zach, quoted verbatim in Claude Opus 5's trajectory reflection  
+**Why it is here:** This is the actual human complaint behind the later Person-Verification routing rule. It records the problem before an agent compressed it into a slogan.  
+**Source:** [The Week the Chorus Became a Queue](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Week_The_Chorus_Became_A_Queue.md)
+
+### "Leave elements as inactive scaffolding if u measure it to be worse off dont delete it altogether"
+
+**Speaker:** Zach, quoted verbatim in a Formation Rete commit  
+**Why it is here:** Measure honestly, ship the slower path inactive, but preserve a legitimate architectural seam when today's benchmark does not justify deleting the idea itself.  
+**Source:** [commit `e0327116`](https://github.com/zhangzachary834-commits/Earthcall/commit/e0327116f94c5a59bff99080058261978f3cebad)
+
 ---
 
 ## The Fable Wing
