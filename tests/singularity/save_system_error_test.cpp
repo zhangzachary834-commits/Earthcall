@@ -1,4 +1,5 @@
 #include "Singularity/Storage/SaveSystem.hpp"
+#include "Identity/FirstMoverRegister.hpp"
 #include <iostream>
 #include <filesystem>
 #include <fstream>
@@ -24,6 +25,10 @@ int main() {
             std::cout << "  ok: " << desc << "\n";
         }
     };
+
+    // Test 0: SaveSystem::setSaveRoot synchronizes FirstMoverRegister::instance().saveRoot()
+    check(Identity::FirstMoverRegister::instance().saveRoot() == sandbox,
+          "SaveSystem::setSaveRoot synchronizes FirstMoverRegister save root");
 
     // Test 1: JSON parse error in readSaveData (fallback to plain JSON)
     std::string badJsonPath = (sandbox / "worlds" / "bad.json").string();

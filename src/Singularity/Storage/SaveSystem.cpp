@@ -32,6 +32,8 @@ static void syncIdb();
 
 void setSaveRoot(const std::string& absoluteSavesDir) {
     g_saveRoot = absoluteSavesDir;
+    Identity::FirstMoverRegister::instance().setSaveRoot(
+        absoluteSavesDir.empty() ? std::filesystem::path("saves") : std::filesystem::path(absoluteSavesDir));
 }
 
 std::string saveRoot() {
