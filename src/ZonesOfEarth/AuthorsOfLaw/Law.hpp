@@ -568,6 +568,7 @@ public:
     void retractFirst(std::size_t count);
     void clearFacts();
     const std::vector<FactPtr>& facts() const { return _facts; }
+    std::size_t transientFactCount() const { return _transientFactCount; }
 
     // Is a live relation-state fact already keyed on this being and type?
     //
@@ -767,6 +768,7 @@ private:
     static ReteToken joinedToken(const ReteToken& left, const FactPtr& right);
 
     std::vector<FactPtr> _facts;
+    std::size_t _transientFactCount{0};
     // Every being that has ever been a fact's subject or object, so
     // retractFactsAbout can answer "this one has no facts" in O(1) instead of
     // scanning the table. It fires on EVERY Singular destructor — including
