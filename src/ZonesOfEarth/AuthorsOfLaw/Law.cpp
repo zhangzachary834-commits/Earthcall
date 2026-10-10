@@ -830,9 +830,8 @@ void ReteNetwork::refillBetaMemory(BetaNode& beta) {
     if (!right) return;
     
     if (beta.leftIsBeta) {
-        auto it = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == beta.leftId; });
-        if (it == _betaNodes.end()) return;
-        const BetaNode* left = &(*it);
+        const BetaNode* left = findBeta(beta.leftId);
+        if (!left) return;
         
         for (const auto& leftToken : left->memory) {
             for (const auto& rightFact : right->memory) {
@@ -925,9 +924,8 @@ void ReteNetwork::propagateFact(const FactPtr& f) {
         bool betaActivated = false;
 
         if (beta.leftIsBeta) {
-            auto it = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == beta.leftId; });
-            if (it == _betaNodes.end()) continue;
-            const BetaNode* left = &(*it);
+            const BetaNode* left = findBeta(beta.leftId);
+            if (!left) continue;
             
             if (inLeftBeta) {
                 for (const auto& leftToken : newBetaTokens[beta.leftId]) {
@@ -1562,7 +1560,12 @@ std::size_t ReteNetwork::addBetaNode(const std::string& description,
     node.leftId = leftId;
     node.rightAlphaId = rightAlphaId;
     node.join = std::move(join);
+    const std::size_t id = node.id;
     _betaNodes.push_back(std::move(node));
+    if (id >= _betaIndexById.size()) {
+        _betaIndexById.resize(id + 1, static_cast<std::size_t>(-1));
+    }
+    _betaIndexById[id] = _betaNodes.size() - 1;
     BetaNode& added = _betaNodes.back();
 
     // Creating the beta is what makes its two alphas read. Until now they may
@@ -1614,12 +1617,11 @@ void ReteNetwork::bindLawToBeta(const std::string& lawId, std::size_t betaNodeId
     // Beta memory is kept current from creation onward (addBetaNode refills
     // it), so the backlog is simply whatever the join already holds.
     const std::time_t now = std::time(nullptr);
-    for (const auto& beta : _betaNodes) {
-        if (beta.id != betaNodeId) continue;
-        for (const auto& token : beta.memory) {
+    const BetaNode* beta = findBeta(betaNodeId);
+    if (beta) {
+        for (const auto& token : beta->memory) {
             _agenda.push_back(ReteActivation{lawId, token, now});
         }
-        break;
     }
 }
 
@@ -1855,6 +1857,24 @@ ReteNetwork::AlphaNode* ReteNetwork::findAlpha(std::size_t id) {
     return &_alphaNodes[index];
 }
 
+const ReteNetwork::BetaNode* ReteNetwork::findBeta(std::size_t id) const {
+    if (id >= _betaIndexById.size()) return nullptr;
+    const std::size_t index = _betaIndexById[id];
+    if (index == static_cast<std::size_t>(-1) || index >= _betaNodes.size()) {
+        return nullptr;
+    }
+    return &_betaNodes[index];
+}
+
+ReteNetwork::BetaNode* ReteNetwork::findBeta(std::size_t id) {
+    if (id >= _betaIndexById.size()) return nullptr;
+    const std::size_t index = _betaIndexById[id];
+    if (index == static_cast<std::size_t>(-1) || index >= _betaNodes.size()) {
+        return nullptr;
+    }
+    return &_betaNodes[index];
+}
+
 std::vector<Singular*> ReteNetwork::collectTerminalSubjects(
     const std::vector<std::size_t>& terminalIds) const {
     // Collect unique subjects from terminal node memories.
@@ -1873,10 +1893,10 @@ std::vector<Singular*> ReteNetwork::collectTerminalSubjects(
             }
             continue;
         }
-        // Check beta nodes.
-        for (const auto& beta : _betaNodes) {
-            if (beta.id != termId) continue;
-            for (const auto& token : beta.memory) {
+        // Check beta nodes using O(1) index lookup.
+        const BetaNode* beta = findBeta(termId);
+        if (beta) {
+            for (const auto& token : beta->memory) {
                 Singular* subj = nullptr;
                 for (const auto& fact : token.facts) {
                     if (fact->subject) { subj = fact->subject; break; }
@@ -1885,7 +1905,6 @@ std::vector<Singular*> ReteNetwork::collectTerminalSubjects(
                     result.push_back(subj);
                 }
             }
-            break;
         }
     }
     return result;

@@ -735,6 +735,8 @@ public:
 private:
     const AlphaNode* findAlpha(std::size_t id) const;
     AlphaNode* findAlpha(std::size_t id);
+    const BetaNode* findBeta(std::size_t id) const;
+    BetaNode* findBeta(std::size_t id);
     void propagateFact(const FactPtr& fact);
     void detachFactConsequences(const FactPtr& fact);
     void refreshStateFact(const FactPtr& fact, nlohmann::json newValue);
@@ -815,6 +817,7 @@ private:
     // alpha ids) contain size_t(-1). Cost therefore follows historical max id,
     // not only the number of currently live alpha nodes.
     std::vector<std::size_t> _alphaIndexById;
+    std::vector<std::size_t> _betaIndexById;
     // ONE counter for both tables. Alpha and beta ids are handed to callers as
     // bare `std::size_t` and are told apart afterwards by isAlphaNode(), which
     // answers by looking the id up in the alpha table — so two independent
