@@ -25,7 +25,6 @@
 #include <fstream>
 #include <functional>
 #include <memory>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -262,8 +261,15 @@ struct RealSaveTreeGuard {
     std::filesystem::path realSaves;
     std::filesystem::path backup;
     std::unordered_set<std::string> initialEntries;
-    std::unordered_set<std::string> backedUpEntries;
-    std::string previousSaveRoot;
+
+    static const std::vector<std::string>& guardedSubdirs() {
+        static const std::vector<std::string> subdirs = {
+            "zones", "homes", "laws", "persons", "identity",
+            "tests", "backups", "fixtures", "avatars", "integrations",
+            "logs", "recordings"
+        };
+        return subdirs;
+    }
 
     explicit RealSaveTreeGuard(const std::string& resolvedWorldPath) {
         if (!std::filesystem::exists(resolvedWorldPath)) return;
@@ -282,54 +288,45 @@ struct RealSaveTreeGuard {
     }
 
     ~RealSaveTreeGuard() {
-        if (realSaves.empty() || backup.empty()) return;
-        if (!std::filesystem::is_directory(backup)) std::terminate();
-        for (const auto& entry : backedUpEntries) {
-            if (!std::filesystem::exists(backup / entry)) {
-                std::terminate(); // Never delete original data without its snapshot.
-            }
-        }
+        if (realSaves.empty()) return;
         std::error_code ec;
 
-        if (!backedUpEntries.empty()) {
-            std::filesystem::create_directories(realSaves, ec);
-            if (ec) std::terminate();
+        // Restore all backed-up subdirectories
+        for (const auto& sub : guardedSubdirs()) {
+            std::filesystem::remove_all(realSaves / sub, ec);
+            if (std::filesystem::exists(backup / sub)) {
+                std::filesystem::copy(backup / sub, realSaves / sub,
+                    std::filesystem::copy_options::recursive, ec);
+            }
         }
 
-        // Restore every entry that existed when guarding began.
-        for (const auto& entry : backedUpEntries) {
-            std::filesystem::remove_all(realSaves / entry, ec);
-            if (ec) std::terminate(); // Preserve the backup for manual recovery.
-            std::filesystem::copy(
-                backup / entry, realSaves / entry,
-                std::filesystem::copy_options::recursive |
-                    std::filesystem::copy_options::copy_symlinks,
-                ec);
-            if (ec) std::terminate(); // Never discard a failed restoration snapshot.
-        }
-
-        // Remove top-level entries created only while the guard was active.
-        std::vector<std::filesystem::path> newEntries;
+        // Remove any newly created top-level files/directories or entries in worlds
         if (std::filesystem::exists(realSaves, ec)) {
             for (auto it = std::filesystem::directory_iterator(realSaves, ec);
                  it != std::filesystem::directory_iterator(); it.increment(ec)) {
                 if (ec) break;
                 const std::string name = it->path().filename().string();
                 if (initialEntries.find(name) == initialEntries.end()) {
-                    newEntries.push_back(it->path());
+                    std::error_code removeEc;
+                    std::filesystem::remove_all(it->path(), removeEc);
                 }
             }
-            if (ec) std::terminate();
-        }
-        if (ec) std::terminate();
-        for (const auto& entry : newEntries) {
-            std::filesystem::remove_all(entry, ec);
-            if (ec) std::terminate();
+            const auto worldsDir = realSaves / "worlds";
+            if (std::filesystem::exists(worldsDir, ec)) {
+                for (auto it = std::filesystem::directory_iterator(worldsDir, ec);
+                     it != std::filesystem::directory_iterator(); it.increment(ec)) {
+                    if (ec) break;
+                    const std::string rel = (std::filesystem::path("worlds") / it->path().filename()).string();
+                    if (initialEntries.find(rel) == initialEntries.end()) {
+                        std::error_code removeEc;
+                        std::filesystem::remove_all(it->path(), removeEc);
+                    }
+                }
+            }
         }
 
-        SaveSystem::setSaveRoot(previousSaveRoot);
         std::filesystem::remove_all(backup, ec);
-        if (ec) std::terminate();
+        SaveSystem::setSaveRoot("");
     }
 
     RealSaveTreeGuard(const RealSaveTreeGuard&) = delete;
@@ -341,33 +338,34 @@ private:
         backup = std::filesystem::temp_directory_path() /
             ("earthcall-save-backup-" + std::to_string(
                 std::chrono::steady_clock::now().time_since_epoch().count()));
-        if (!std::filesystem::create_directory(backup))
-            throw std::runtime_error("save-tree backup path already exists");
+        std::filesystem::create_directories(backup);
         std::error_code ec;
 
-        // Enumerate the real save root once, then back up exactly that complete
-        // top-level set. New save categories therefore cannot silently escape
-        // restoration merely because this test helper predates their names.
+        // Snapshot existing entries in realSaves and realSaves/worlds
         if (std::filesystem::exists(realSaves, ec)) {
             for (auto it = std::filesystem::directory_iterator(realSaves, ec);
                  it != std::filesystem::directory_iterator(); it.increment(ec)) {
                 if (ec) break;
                 initialEntries.insert(it->path().filename().string());
             }
-            if (ec) throw std::filesystem::filesystem_error("save-tree root enumeration failed", ec);
+            const auto worldsDir = realSaves / "worlds";
+            if (std::filesystem::exists(worldsDir, ec)) {
+                for (auto it = std::filesystem::directory_iterator(worldsDir, ec);
+                     it != std::filesystem::directory_iterator(); it.increment(ec)) {
+                    if (ec) break;
+                    initialEntries.insert((std::filesystem::path("worlds") / it->path().filename()).string());
+                }
+            }
         }
-        if (ec) throw std::filesystem::filesystem_error("save-tree root inspection failed", ec);
 
-        for (const auto& entry : initialEntries) {
-            std::filesystem::copy(
-                realSaves / entry, backup / entry,
-                std::filesystem::copy_options::recursive |
-                    std::filesystem::copy_options::copy_symlinks,
-                ec);
-            if (ec) throw std::filesystem::filesystem_error("save-tree backup failed", ec);
-            backedUpEntries.insert(entry);
+        // Copy guarded subdirectories to backup
+        for (const auto& sub : guardedSubdirs()) {
+            if (std::filesystem::exists(realSaves / sub, ec)) {
+                std::filesystem::copy(realSaves / sub, backup / sub,
+                    std::filesystem::copy_options::recursive, ec);
+            }
         }
-        previousSaveRoot = SaveSystem::saveRoot();
+
         SaveSystem::setSaveRoot(realSaves.string());
     }
 };

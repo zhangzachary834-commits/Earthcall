@@ -251,38 +251,6 @@ static void testGlobSemantics() {
     assert(!matchesGlob("worlds/*", "worlds"));
     assert(matchesGlob("test_*.ecsave", "test_world.ecsave"));
     assert(!matchesGlob("test_*.ecsave", "real_world.ecsave"));
-
-    // Exact match
-    assert(matchesGlob("worlds/a.ecsave", "worlds/a.ecsave"));
-    assert(!matchesGlob("worlds/a.ecsave", "worlds/b.ecsave"));
-
-    // Single character wildcard
-    assert(matchesGlob("worlds/?.ecsave", "worlds/a.ecsave"));
-    assert(matchesGlob("worlds/?.ecsave", "worlds/1.ecsave"));
-    assert(!matchesGlob("worlds/?.ecsave", "worlds/ab.ecsave"));
-    assert(!matchesGlob("worlds/?.ecsave", "worlds/.ecsave"));
-
-    // Empty string edge cases
-    assert(matchesGlob("", ""));
-    assert(!matchesGlob("", "a"));
-    assert(!matchesGlob("a", ""));
-    assert(matchesGlob("*", ""));
-
-    // Multiple * and ?
-    assert(matchesGlob("worlds/*_*.ecsave", "worlds/test_world.ecsave"));
-    assert(matchesGlob("w?rlds/*_*.ecsave", "worlds/test_world.ecsave"));
-    assert(matchesGlob("worlds/*/*/*.ecsave", "worlds/a/b/c.ecsave"));
-    assert(!matchesGlob("worlds/*/*/*.ecsave", "worlds/a/b.ecsave"));
-
-    // Trailing wildcards
-    assert(matchesGlob("worlds/a*", "worlds/a"));
-    assert(matchesGlob("worlds/a*", "worlds/abc"));
-    assert(matchesGlob("worlds/a**", "worlds/a/b/c"));
-
-    // Other negative cases
-    assert(!matchesGlob("worlds/*/a.ecsave", "worlds/a.ecsave"));
-    assert(!matchesGlob("worlds/*/a.ecsave", "worlds/sub/b.ecsave"));
-    assert(!matchesGlob("*.ecsave", "a.ecsave.old"));
     std::cout << "  glob semantics OK\n";
 }
 

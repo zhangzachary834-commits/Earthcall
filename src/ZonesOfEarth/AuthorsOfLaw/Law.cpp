@@ -1912,18 +1912,6 @@ void LawManager::add(const std::shared_ptr<Law>& law) {
 static LawManager* s_singularHookOwner = nullptr;
 
 LawManager::~LawManager() {
-    // connectToEventBus() creates two callbacks that capture this. Revoke only
-    // this manager's registrations before its storage disappears; other
-    // subsystems' listeners remain untouched.
-    if (_ecaEventSubscription || _customEventSubscription) {
-        auto& eventBus = Core::EventBus::instance();
-        eventBus.unsubscribe(_ecaEventSubscription);
-        eventBus.unsubscribe(_customEventSubscription);
-        _ecaEventSubscription = {};
-        _customEventSubscription = {};
-    }
-    _connected = false;
-
     if (s_singularHookOwner == this) {
         Singular::setPropertyChangeCallback(nullptr);
         Singular::setBeingReleasedCallback(nullptr);
@@ -1945,7 +1933,8 @@ void LawManager::connectToEventBus() {
     // rather than the trigger table, because laws can be bound to alpha
     // nodes directly (the graph editor does, and so do tests); a trigger-only
     // answer would call those laws deaf and silently stop feeding them.
-    // Captured by `this`; the owning static hook is cleared by the destructor.
+    // Captured by `this`: the LawManager is an engine-lifetime object, the
+    // same contract as the bus subscriptions below.
     Universe::instance().setEventInterest([this](const std::string& type) {
         return _rete.hearsType(type) || _rete.hasForeignBoundAlpha();
     });
@@ -2033,7 +2022,7 @@ void LawManager::connectToEventBus() {
         _dirty = true;
     });
 
-    _ecaEventSubscription = Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
+    Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
         std::string subjectId = e.subject ? e.subject->getIdentifier() : "null";
         std::string objectId = e.object ? e.object->getIdentifier() : "null";
 
@@ -2104,7 +2093,7 @@ void LawManager::connectToEventBus() {
         }
     });
 
-    _customEventSubscription = Core::EventBus::instance().subscribe<Core::Event::Custom>([this](const Core::Event::Custom& e) {
+    Core::EventBus::instance().subscribe<Core::Event::Custom>([this](const Core::Event::Custom& e) {
         if (!e.relation) return;
         
         std::string evType = e.relation->type;
@@ -2900,8 +2889,8 @@ void LawManager::reapUnmade() {
     // Release from OUR laws directly rather than waiting for the
     // "object-destroyed" announcement to come back around. The subscription
     // still exists — it is what catches beings the delete tool unmakes — but
-    // a LawManager's own bookkeeping must not depend on whether it is
-    // currently connected to the bus.
+    // a LawManager's own bookkeeping must not depend on having been connected
+    // to a global bus that cannot be unsubscribed from.
     // Laws among the victims are retired by THIS manager: they are ours to
     // free, not a Zone's objects. Collected before anything is released.
     std::vector<std::string> retiredLaws;
@@ -3705,24 +3694,17 @@ nlohmann::json LawManager::toJson() const {
 
 #include "MathBinding.hpp"
 void resolveSemanticTokenSlowPath(Singular* root, PropertyValue& out) {
-    if (!root || !std::holds_alternative<std::shared_ptr<PropertyDict>>(out)) return;
-
-    const auto& dict = std::get<std::shared_ptr<PropertyDict>>(out);
-    if (!dict) return;
-
-    auto itType = dict->elements.find("_type");
-    if (itType == dict->elements.end() ||
-        !std::holds_alternative<std::string>(itType->second) ||
-        std::get<std::string>(itType->second) != "projection") {
-        return;
+    if (out.index() == 15) {
+        const auto& dict = std::get<15>(out);
+        if (dict) {
+            auto itType = dict->elements.find("_type");
+            if (itType != dict->elements.end() && itType->second.index() == 7 && std::get<7>(itType->second) == "projection") {
+                auto itTarget = dict->elements.find("target");
+                if (itTarget != dict->elements.end() && itTarget->second.index() == 7) {
+                    root->readAuthoredPropertyProjectionColors(
+                        Earthcall::StringInterner::intern(std::get<7>(itTarget->second)), out);
+                }
+            }
+        }
     }
-
-    auto itTarget = dict->elements.find("target");
-    if (itTarget == dict->elements.end() ||
-        !std::holds_alternative<std::string>(itTarget->second)) {
-        return;
-    }
-
-    root->readAuthoredPropertyProjectionColors(
-        Earthcall::StringInterner::intern(std::get<std::string>(itTarget->second)), out);
 }

@@ -102,10 +102,10 @@ third_party/ local_deps/ imgui/                     the foreign
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
   -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-  -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.22" \
-  -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.22/include" \
-  -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.22/libcrypto.a" \
-  -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.22/libssl.a"
+  -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+  -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+  -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+  -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
 
 cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` is the
                                                        # OpenGL build, where every

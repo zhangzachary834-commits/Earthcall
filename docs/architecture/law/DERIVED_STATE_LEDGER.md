@@ -49,21 +49,6 @@ red the moment the map stops noticing the world's shape move.
 
 ## 1. The ledger
 
-### Direct Screen region observations (2026-10-07)
-
-Zach requested named displayed regions, granular Property paths and Metalaw authoring. This is a sensing snapshot/source-editing rung, not a membership cache or an inverse compositor.
-
-| Structure | Derived from | Invalidated / renewed by | Guarded by |
-|---|---|---|---|
-| `PropertyPath::ResolvedSlot::structuredView` | Current typed field's complete codec representation | Rebuilt on every operation; discarded afterward; successful edit validates and replaces canonical storage and notifies its bearer root | `property_memory_access_test`, `law_line_zone_test` nested field watcher |
-| Screen request membership | Current qualified region selector, physical rectangle, framebuffer dimensions, explicit time | Recomputed for every new request token; no retained membership cache | Native Law Line Screen probe: independently counted selected centres and neighbours |
-| `ScreenChannel::_sampleResult` | Actual completed-viewport RGBA8 readback and that request's selector/frame/dimensions | Replaced by each explicit new token, including an empty refused observation on failure; unchanged token retains an explicitly historical snapshot | Native region probe: fresh colours, frame retention, no partial budget result |
-| Sensor observation read/copy | `_sampleResult` | A detached typed snapshot is returned on every read; canonical storage cannot escape through Map/ValueLeaf aliases | Native region probe: editing Person-carried memory cannot mutate the channel witness |
-
-Field edits do not reinterpret past observations; recapture needs a new token. Carried observation memory remains ordinarily editable on its bearer, with the read-only channel snapshot as the sensing witness. The existing Object texture `_regionCache` is not repaired or certified by this work. See [contract and remaining work](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md#named-regions-and-completed-viewport-observations--2026-10-07).
-
-*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-07 19:08 PDT.*
-
 ### On `ReteNetwork` (`src/ZonesOfEarth/AuthorsOfLaw/Law.hpp`)
 
 | Structure | Derived from | Invalidated by | Guarded by |
@@ -227,34 +212,3 @@ readback, structural/numeric edits and refusal/withdrawal).
 
 Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
 2026-10-04 21:10 PDT; Zach requested the direct medium under Refusals 1, 3 and 7.
-
-## FieldNode authored-math revision and the volume zero-density proof cache (2026-10-09)
-
-**`geom::FieldNode` authored-math revision** replaces per-frame JSON hashing of every authored
-channel (`field.ast`, `volume.*.ast`, `volume.occluder.sdf`, `light.*.ast`) as Screen's change
-signal. Signal: one process-wide sequence that never repeats, bumped by the property bridges
-(not on an identical rewrite), by `applyJson`, and by the MCP `author_volume` in-place path.
-Silent-failure guard: `verifiedAuthoredMathRevision()` re-hashes one channel per call
-round-robin and bumps, loudly, on an unrevisioned change. A missed writer heals within ten
-reads instead of staying stale. Witness: `tests/singularity/field_node_authored_revision_test.cpp`,
-case 4, asserts the silent case: an in-place write with no bump is detected and the revision moves.
-
-**`WebGpuRenderer::_volumeZeroProofs`** caches `Rendering::VolumeZeroProof` per density
-expression. Key: expression pointer; invalidated when `densityRevision` or the box half-extent
-changes (the grid tiles the box). A binding with revision 0 never gets a proof, because a cache
-that cannot be invalidated would be a stale theorem. Entries unused in a frame are dropped, and
-the switch `setVolumeZeroProofEnabled(false)` restores the exact path. The proof only ever
-*removes* density evaluations where OntoMath interval arithmetic shows D <= 0; it never adds
-light.
-
-Witnesses:
-- `tests/singularity/volume_zero_proof_test.cpp`: the generic contract, plus a soundness sweep
-  of 16,000 points in proven cells of the real Northern Veil media.
-- `tests/singularity/webgpu_volume_zero_proof_test.cpp`: a byte-identical framebuffer with the
-  proof on and off, through both the fused-set and single-medium pipelines, at two times.
-
-What it does not guard is f32 vs real arithmetic inside the shader. The 1% cell enlargement
-covers sample-position rounding, and the byte-identical witness is the arbiter for the rest.
-
-Claude Code · Claude Opus 5.5 · session `session_01NJy6VrPVNcHAnggwFyTsmF` · 2026-10-09;
-Zach asked why Screen serialized JSON every frame, and for the proof to be fully general.

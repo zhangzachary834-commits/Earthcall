@@ -55,11 +55,6 @@ public:
     // All are ordinary AddProperty/Set vocabulary, not new action opcodes.
     bool manifestOutput(Renderer& renderer, uint32_t width, uint32_t height);
 
-    // Irreducible Sense boundary: one explicit request token captures selected
-    // pixels from this completed viewport frame. Meaning/selection, source
-    // fields, names and subsequent derivations remain authored data/Laws.
-    void senseOutput(Renderer& renderer, uint32_t width, uint32_t height);
-
     // Update live metrics from the active Renderer at the end of each frame.
     void updateMetrics(int drawCalls, int trianglesDrawn, double vramBytes,
                        double uniformBytes, int suballocations, int pipelineSwitches,
@@ -100,21 +95,6 @@ public:
     // corpus validates the activation rung; a Person/Law can explicitly enable
     // it for measurement through this same authored ScreenChannel property.
     bool      sdfRangeProxyEnabled = false;
-    // Zero-density proof for participating media (Rendering::VolumeZeroProof):
-    // skips evaluating a medium's density only where OntoMath interval
-    // arithmetic proved it can never be positive. Unlike the range proxy it is
-    // ON by default -- Zach's call, 2026-10-09 -- because its native witness
-    // (webgpu_volume_zero_proof_test) already shows a byte-identical
-    // framebuffer and the real Northern Veil save ran ~3x faster. A Person/Law
-    // can switch it off here to compare.
-    bool      volumeZeroProofEnabled = true;
-    // Derived: cells proven empty / cells tiled, over the media drawn last frame.
-    int       volumeZeroProofCellsProven = 0;
-    int       volumeZeroProofCellsTotal = 0;
-    void updateVolumeZeroProofMetrics(int cellsProven, int cellsTotal) {
-        volumeZeroProofCellsProven = cellsProven;
-        volumeZeroProofCellsTotal = cellsTotal;
-    }
     bool      recording = false;
     bool      snapshotTrigger = false;
     glm::vec3 backgroundColor{0.1f, 0.1f, 0.15f};
@@ -160,15 +140,6 @@ private:
     int getOutputHeight() const { return _outputHeight; }
     bool getOutputDrawn() const { return _outputDrawn; }
     std::string getOutputLastRefusal() const { return _outputLastRefusal; }
-    long _sampleFrame = 0;
-    std::string _sampleLastToken;
-    std::shared_ptr<PropertyDict> _sampleResult = std::make_shared<PropertyDict>();
-    long getSampleFrame() const { return _sampleFrame; }
-    std::string getSampleLastToken() const { return _sampleLastToken; }
-    std::shared_ptr<PropertyDict> getSampleResult() const;
-    int getSampleScanCeiling() const { return 1048576; }
-    int getSampleCountCeiling() const { return 65536; }
-    long getSampleReadbackByteCeiling() const { return 268435456L; }
 
     // Getters for the derived metrics below: NO_BLACK_BOX.md §3 says a Law may
     // read anything, but "writable unless genuinely derived" — these are
@@ -201,8 +172,6 @@ private:
     int    getSdfRangeProxyCulledDraws() const { return sdfRangeProxyCulledDraws; }
     int    getSdfRangeTraversalDraws() const { return sdfRangeTraversalDraws; }
     double getSdfRangeNodeBytesUploaded() const { return sdfRangeNodeBytesUploaded; }
-    int    getVolumeZeroProofCellsProven() const { return volumeZeroProofCellsProven; }
-    int    getVolumeZeroProofCellsTotal() const { return volumeZeroProofCellsTotal; }
 
     std::string _name{"screen-channel"};
 };

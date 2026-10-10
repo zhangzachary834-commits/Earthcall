@@ -71,12 +71,6 @@ public:
         uint32_t volumeProgramRefusals = 0;
         std::string volumeLastProgramRefusal;
         size_t volumeWgslBytesGenerated = 0;
-        // Zero-density proofs (Rendering::VolumeZeroProof): builds this frame
-        // (each is cached by density revision), and the proven/total cells of
-        // the media drawn this frame.
-        uint32_t volumeZeroProofBuilds = 0;
-        uint32_t volumeZeroProofCellsProven = 0;
-        uint32_t volumeZeroProofCellsTotal = 0;
         // Conservative SDF range-proxy observability. A build is revision-bound;
         // an applied draw used a strictly smaller proved-may-contain-zero proxy;
         // a culled draw was proved to contain no zero set at all.
@@ -282,13 +276,6 @@ public:
     // merely the SDF geometry owned by the currently executing pipeline.
     void setRadianceVisibilityEnabled(bool on) { _radianceVisibilityEnabled = on; }
     bool radianceVisibilityEnabled() const { return _radianceVisibilityEnabled; }
-
-    // Zero-density proof: skip evaluating a medium's density in cells where
-    // OntoMath interval arithmetic proved it can never be positive. Such a
-    // sample contributes nothing, so the image is unchanged; the switch exists
-    // so witnesses can A/B the exact path against the proven one.
-    void setVolumeZeroProofEnabled(bool on) { _volumeZeroProofEnabled = on; }
-    bool volumeZeroProofEnabled() const { return _volumeZeroProofEnabled; }
 
     // The object-to-world transform, as a stack. setModel replaces it outright;
     // pushModel/popModel compose a child transform onto its parent for the nested
@@ -498,7 +485,6 @@ private:
     std::vector<Rendering::RadianceSourceBinding> _radianceSources;
     uint64_t _radianceSourcesRevision = 0;
     bool _radianceVisibilityEnabled = false;
-    bool _volumeZeroProofEnabled = true;
     std::vector<Rendering::VolumeDensityBinding> _volumeDensitySources;
     uint64_t _volumeDensitySourcesRevision = 0;
     Rendering::RenderedFieldSemanticObserver _renderedFieldObserver;

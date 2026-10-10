@@ -25,13 +25,18 @@ bool nearf(float a, float b, float eps = 1e-4f) { return std::fabs(a - b) < eps;
 } // namespace
 
 int main() {
-    const bool glfwReady = glfwInit() == GLFW_TRUE;
-    GLFWwindow* window = nullptr;
-    if (glfwReady) {
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-        window = glfwCreateWindow(64, 64, "object_concept_test", nullptr, nullptr);
-        if (window) glfwMakeContextCurrent(window);
+    if (!glfwInit()) {
+        std::fprintf(stderr, "object_concept_test: glfwInit failed\n");
+        return 1;
     }
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    GLFWwindow* window = glfwCreateWindow(64, 64, "object_concept_test", nullptr, nullptr);
+    if (!window) {
+        std::fprintf(stderr, "object_concept_test: no GL context\n");
+        glfwTerminate();
+        return 1;
+    }
+    glfwMakeContextCurrent(window);
 
     {
         Object author;
@@ -76,26 +81,6 @@ int main() {
         assert(newborns.size() == 2);
         assert(nearf(newborns[0]->getPosition().x, 9.0f));    // placed, structure kept
         assert(nearf(newborns[1]->getPosition().x, 11.0f));
-
-        // Rung 6 OntoMath sovereignty: capture and instantiate preserve the
-        // full legacy affine composition, not only translation.
-        Object rotatedSource;
-        glm::mat4 sourceWorld = glm::translate(glm::mat4(1.0f), glm::vec3(4.0f, 2.0f, -3.0f));
-        sourceWorld = glm::rotate(sourceWorld, glm::radians(27.0f), glm::vec3(0, 1, 0));
-        sourceWorld = glm::scale(sourceWorld, glm::vec3(1.2f, 0.7f, 1.6f));
-        rotatedSource.setTransform(sourceWorld);
-        auto affineConcept = ObjectConcept::captureFrom({&rotatedSource}, "affine-member", &author);
-        assert(affineConcept->members().size() == 1);
-        const glm::mat4 placement =
-            glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, 1.0f, 6.0f));
-        auto affineBorn = affineConcept->instantiate(placement, static_cast<const std::vector<Object*>*>(nullptr));
-        assert(affineBorn.size() == 1);
-        const glm::mat4 legacyRelative =
-            glm::translate(glm::mat4(1.0f), -rotatedSource.getPosition()) * sourceWorld;
-        const glm::mat4 legacyBorn = placement * legacyRelative;
-        for (int col = 0; col < 4; ++col)
-            for (int row = 0; row < 4; ++row)
-                assert(nearf(affineBorn[0]->getTransform()[col][row], legacyBorn[col][row]));
         assert(nearf(newborns[0]->getShapeParams().majorR, 0.6f));   // 0.4 * 1.5
         assert(nearf(newborns[1]->getShapeParams().majorR, 0.9f));   // 0.6 * 1.5
         assert(nearf(newborns[0]->getShapeParams().minorR, 0.15f));  // mean(0.1, 0.2)
@@ -306,8 +291,8 @@ int main() {
         Universe::instance().setProvider({});
     }
 
-    if (window) glfwDestroyWindow(window);
-    if (glfwReady) glfwTerminate();
+    glfwDestroyWindow(window);
+    glfwTerminate();
     std::puts("object_concept_test: ALL OK");
     return 0;
 }

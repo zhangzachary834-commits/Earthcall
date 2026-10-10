@@ -281,7 +281,7 @@ Two build-environment facts are **not** consequences of the move, but you will m
 them on a fresh configure because the old `CMakeCache.txt` (which carried them) lived
 in `sight-cpp/build/` and went with it:
 
-- **OpenSSL** is vendored and prebuilt at `local_deps/openssl-3.0.22/` (`libssl.a`,
+- **OpenSSL** is vendored and prebuilt at `local_deps/openssl-3.0.13/` (`libssl.a`,
   `libcrypto.a`). There is no system or Homebrew OpenSSL on this machine, and
   `find_package(OpenSSL REQUIRED)` at `CMakeLists.txt:16` carries no hint, so it must
   be pointed at the vendored copy.
@@ -294,10 +294,10 @@ The working invocation:
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
   -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-  -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.22" \
-  -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.22/include" \
-  -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.22/libcrypto.a" \
-  -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.22/libssl.a"
+  -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+  -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+  -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+  -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
 cmake --build build --target earthcall -j8
 ```
 

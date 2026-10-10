@@ -74,11 +74,7 @@ bool ZoneManager::holdZoneClosure(const std::string& holder, size_t index) {
     if (holder.empty() || index >= _zones.size() || !_zones[index]) return false;
     std::vector<PreparedZoneLaw> prepared;
     std::unordered_set<std::string> requested;
-    nlohmann::json heldIdentity;
-    if (!prepareZoneLawClosure(index, prepared, requested, &heldIdentity)) return false;
-    std::vector<std::shared_ptr<Material>> sharedMaterials;
-    if (!prepareZoneMaterialClosure(index, heldIdentity, sharedMaterials)) return false;
-    for (const auto& material : sharedMaterials) materials.add(material);
+    if (!prepareZoneLawClosure(index, prepared, requested)) return false;
 
     if (_lawManager) {
         for (auto& incoming : prepared) {
@@ -358,102 +354,6 @@ bool ZoneManager::prepareZoneLawClosure(size_t index,
     return true;
 }
 
-bool ZoneManager::prepareZoneMaterialClosure(size_t index, const nlohmann::json& identity,
-                                             std::vector<std::shared_ptr<Material>>& sharedRoots) {
-    if (index >= _zones.size() || !_zones[index]) return false;
-    const std::string zoneId = _zones[index]->getIdentifier();
-    if (!identity.is_object()) return true;   // no stored identity: nothing to close over
-
-    const auto stemOf = [](const std::string& id) {
-        static const std::string prefix = "material.";
-        return id.rfind(prefix, 0) == 0 ? id.substr(prefix.size()) : id;
-    };
-
-    try {
-        std::unordered_set<std::string> resolvable{"default"};
-        std::unordered_set<std::string> namedRefs;
-
-        if (identity.contains("materials")) {
-            if (!identity["materials"].is_array()) {
-                throw std::runtime_error("materials is not an array");
-            }
-            for (const auto& entry : identity["materials"]) {
-                if (entry.is_object()) resolvable.insert(Material::fromJson(entry).name());
-            }
-        }
-
-        if (identity.contains("materialRefs")) {
-            if (!identity["materialRefs"].is_array()) {
-                throw std::runtime_error("materialRefs is not an array");
-            }
-            for (const auto& refJson : identity["materialRefs"]) {
-                if (!refJson.is_string() || refJson.get<std::string>().empty()) {
-                    throw std::runtime_error("materialRef is not a non-empty string");
-                }
-                const std::string ref = refJson.get<std::string>();
-                const std::string stem = stemOf(ref);
-                // An embedded copy of the same Material beside its shared ref is
-                // legal residue (the root wins; the next Save Zone drops the
-                // copy). Naming the same ref twice is not.
-                if (!namedRefs.insert(stem).second) {
-                    throw std::runtime_error("duplicate materialRef '" + ref + "'");
-                }
-                resolvable.insert(stem);
-                const nlohmann::json root = SaveSystem::readMaterialIdentity(ref);
-                if (!root.is_object()) {
-                    throw std::runtime_error("missing Material root '" + ref + "'");
-                }
-                if (stemOf(root.value("identifier", std::string{})) != stem ||
-                    !root.contains("material") || !root["material"].is_object()) {
-                    throw std::runtime_error("Material root identity mismatch for '" + ref + "'");
-                }
-                auto material = std::make_shared<Material>(Material::fromJson(root["material"]));
-                if (material->name() != stem) {
-                    throw std::runtime_error("serialized Material id mismatch for '" + ref + "'");
-                }
-                sharedRoots.push_back(std::move(material));
-            }
-        }
-
-        const nlohmann::json* objects = nullptr;
-        if (identity.contains("world") && identity["world"].is_object() &&
-            identity["world"].contains("objects") && identity["world"]["objects"].is_array()) {
-            objects = &identity["world"]["objects"];
-        } else if (identity.contains("objects") && identity["objects"].is_array()) {
-            objects = &identity["objects"];
-        }
-        if (objects) {
-            std::vector<std::string> unresolved;
-            std::unordered_set<std::string> seen;
-            for (const auto& object : *objects) {
-                if (!object.is_object()) continue;
-                const std::string mid = object.value("materialId", std::string{});
-                if (mid.empty()) continue;
-                const std::string stem = stemOf(mid);
-                if (resolvable.count(stem) == 0 && seen.insert(stem).second) {
-                    unresolved.push_back(mid);
-                }
-            }
-            if (!unresolved.empty()) {
-                std::string list;
-                for (size_t i = 0; i < unresolved.size() && i < 5; ++i) {
-                    list += (i ? ", '" : "'") + unresolved[i] + "'";
-                }
-                throw std::runtime_error(std::to_string(unresolved.size()) +
-                                         " Material(s) are named by Objects but defined nowhere in "
-                                         "the Zone's closure (" + list +
-                                         (unresolved.size() > 5 ? ", ..." : "") + ")");
-            }
-        }
-    } catch (const std::exception& e) {
-        sharedRoots.clear();
-        std::cerr << "[zones] REFUSED activation of '" << zoneId << "': " << e.what()
-                  << ". Current Zone and Laws remain active.\n";
-        return false;
-    }
-    return true;
-}
-
 bool ZoneManager::switchTo(size_t index)
 {
     if (index < _zones.size()) {
@@ -464,9 +364,6 @@ bool ZoneManager::switchTo(size_t index)
         std::unordered_set<std::string> requestedLawIds;
         nlohmann::json identity;
         if (!prepareZoneLawClosure(index, prepared, requestedLawIds, &identity)) return false;
-        std::vector<std::shared_ptr<Material>> sharedMaterials;
-        if (!prepareZoneMaterialClosure(index, identity, sharedMaterials)) return false;
-        for (const auto& material : sharedMaterials) materials.add(material);
         const auto& targetZone = _zones[index];
 
         if (!_zones.empty() && _currentIndex < _zones.size() && _currentIndex != index) {
@@ -963,14 +860,7 @@ std::string ZoneManager::getSaveDirectory() const {
 // ------------------------------------------------------------------
 namespace {
 void logIo(const std::string& line) {
-    const std::string configuredRoot = SaveSystem::saveRoot();
-    const std::filesystem::path saveRoot =
-        configuredRoot.empty() ? std::filesystem::path("saves")
-                               : std::filesystem::path(configuredRoot);
-    std::error_code ec;
-    std::filesystem::create_directories(saveRoot, ec);
-    if (ec) return;
-    std::ofstream log(saveRoot / "earthcall-io.log", std::ios::app);
+    std::ofstream log("saves/earthcall-io.log", std::ios::app);
     if (!log) return;
     std::time_t now = std::time(nullptr);
     char stamp[32];

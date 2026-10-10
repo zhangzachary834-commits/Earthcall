@@ -1,6 +1,6 @@
 # Per-Zone serialization pathway
 
-**Status:** PARTIAL (2026-10-07) — Law and Material closure are now enforced at Move to Zone and shared across Zones; matter generations, Category roots, and a single detached whole-closure transaction remain open (see the 2026-10-07 section at the end)
+**Status:** REOPENED — identity files exist, but Zones are not independently complete, discoverable, loadable, and saveable yet
 **Section in the To-Do list:** Joys · Ourverse · Zones  
 **Split out of `docs/Agenda/Tasks/To-do list.md` on 2026-09-02** by Claude Opus 5 (session `session_01GsrBySNw4oG1zof5AQ21KM`), per Zach's instruction that each To-Do bullet be one sentence linking to its own task document. **Content below is the original bullet, verbatim — nothing was summarized away.**
 
@@ -277,81 +277,4 @@ The migration establishes the Zone-native closure for Go:
 - `scripts/author_go.py` now emits the complete Zone-native Go closure by default and refreshes the legacy compatibility artifacts (`saves/worlds/go_app.{json,ecform,ecmatter}`).
 - `tests/law/go_zone_native_boot_test.cpp` constructs an isolated SaveRoot containing **only** `saves/zones/Go/` and `saves/laws/law-go-*/`, with zero `worlds/` directory and no `loadState()`. It proves boot discovery, Move to Zone activation, material hydration, 361 intersection placement, and real gameplay execution (Tengen click places black stone, toggles turn to white; next click places white stone, toggles back to black). 39/39 checks green.
 
-## 2026-10-07 — Material closure, shared Material roots, Save Zone isolation
-
-**Implemented by Claude Code (Claude Sonnet 5.5), session `01GxayCUN2nc7DDaeg33kXhZ`, 2026-10-07.**
-Zach asked "how far along is the serialization migration from the conglomerate world file to
-Zone-centered saving … is there anything subtle left?" and then "plz do the rest of it".
-The completion contract and proof list above are Zach's (2026-09-09 correction); Sol's
-shared-root / preflight-before-mutation invariants (2026-09-10) are the pattern I extended from
-Laws to Materials. What I originated: the Material closure rule, the `materialRefs` root
-layout, the corpus guard, and the findings below. Coordinated with Codex / GPT-6.1 Sol (working
-concurrently in Screen / Law Line files) through
-`agent intercom/communication-threads/saves-and-zones/Zone_Native_Closure_Rungs_2026-10-07.md`.
-
-### What the audit found (the "subtle" part)
-
-1. **Nine Zones named Materials their own identity never defined.** Objects in FarLands,
-   SynthesisStudio (18), SynthesisStudio.LivingInstrument (20), Borealis Sanctuary,
-   Sanctuary of Sunlit Mist, Northern Veil, Luna's Moon Robot (5) and Neural Network v2 (6)
-   resolved their Materials only because some *other* Zone, or a legacy world file, had left
-   them in the live register — or, when nothing had, they rendered through `material.default`
-   (white) with no error. This is the silent class: it worked on Zach's machine by accident of
-   load order.
-2. **Prism Cathedral's 13 Materials were registered under the wrong names.** The generator
-   wrote the identity under `"id": "material.cathedral_basalt"` and a display label under
-   `"name"`; `Material::fromJson` read only `name`, so the Materials were registered as
-   "Cathedral Basalt Floor" and every Object naming `material.cathedral_basalt` resolved to
-   nothing. Fixed in the loader (an explicit `"id"` is the identity), no save was edited.
-3. **11 Materials had no authored definition anywhere** (all of Luna's, all of Neural Network
-   v2's). Nothing existed to recover.
-
-### What changed
-
-- **`ZoneManager::prepareZoneMaterialClosure`** runs beside the Law preflight in both
-  `switchTo` and `holdZoneClosure`, before any live state changes. Every `materialId` in the
-  stored identity must resolve from the identity's embedded `materials`, a shared root named
-  by `materialRefs`, or `default`. A miss — or a missing/mismatched root, or a duplicate ref —
-  refuses loudly and the current Zone stays. Proof item 4 (Material half).
-- **Shared Material roots**: `saves/materials/<stem>/material.json`
-  (`SaveSystem::{write,read,exists,path}MaterialIdentity`), named by a Zone's `materialRefs`,
-  exactly as `lawRefs` names a Law. Proof item 5 (Material half). An old embedded copy beside a
-  ref is tolerated residue; the first Save Zone strips it.
-- **Save Zone** now writes every shared root the Zone names (Materials and Laws) *before* the
-  Zone identity, skips any root whose content is unchanged (byte-stable), and refuses if a
-  named Material is no longer live. A crash leaves the old Zone pointing at roots that all exist.
-  Proof item 3's "unrelated Zone files remain byte-identical" is now a test.
-- **Data migration** `scripts/migrate_zone_materials.py` (dry-run by default). Patch, never
-  regenerate: one key inserted at text level into each `zone.ecform` and `zone.json`, staged,
-  verified equal to *old document + that key*, old bytes kept in
-  `saves/backups/zone-material-refs-2026-10-07/`, then atomic rename. 42 shared roots written;
-  31 recovered from `saves/worlds/*.json` and Zone identities. The 11 with no authored definition
-  were declared as **engine-default roots tagged `injected_by.note`** — exactly what those Objects
-  already rendered with, so nothing is invented and nothing changes on screen; they are now
-  visible, repaintable beings instead of a dangling name. Authors recorded: `Zach` (authority);
-  `injected_by`: this session.
-- **Tests**: `tests/zones/zone_material_closure_test.cpp` (23 checks: shared root, dangling
-  refusal, deleted-root refusal, Save Zone isolation, root rewrite on change, `id` loader) and
-  `tests/zones/zone_material_corpus_test.cpp` (walks all 46 committed Zones against the same
-  rule; negative-controlled by restoring FarLands' pre-migration file). The corpus test is in
-  the source-root-CWD list in `CMakeLists.txt` — under ctest's default build-tree CWD it
-  silently read a stale 4-Zone `build/saves/` and passed vacuously before that fix.
-
-### Still open (honest list)
-
-- **Zone-scoped matter generations**: only Go and Cathedral have a `zone.ecmatter`; Chess and
-  most other physical Zones still source matter from `saves/worlds/`. Repair-boundary items 2–4.
-- **Category roots** (shared Categories) — no `saves/categories/`; unchanged.
-- **A truly detached whole-closure transaction**: ordering is now dependencies-first, but it is
-  not all-or-nothing across files.
-- **`earthcall_save_world` (MCP, `WebSocketServer.cpp`) still calls `saveStateWithLog`**, i.e. writes
-  a conglomerate session. The Assets console already demoted session export to a collapsed
-  "Legacy Session Management" header. Changing the MCP tool is a Foreign-actuation decision, left for Zach.
-- **Already-embedded duplicate Materials** across Zones (e.g. `object-757` in Neural Network and
-  new slate; Prism's `cathedral_basalt` beside its new root) are not deduplicated.
-- **Material fields the loader drops**: `roughness` / `metalness` appear in authored Material
-  JSON (the Prism set) but `Material::fromJson` never reads them — a No-Black-Box (Refusal 6)
-  gap, not addressed here.
-- **Person witness**: enter FarLands, SynthesisStudio, Luna's Moon Robot and Neural Network v2
-  in the real app (see For Zach/Person Verification List.md).
 

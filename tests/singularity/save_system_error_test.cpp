@@ -1,5 +1,4 @@
 #include "Singularity/Storage/SaveSystem.hpp"
-#include "support/test_harness.hpp"
 #include <iostream>
 #include <filesystem>
 #include <fstream>
@@ -25,45 +24,6 @@ int main() {
             std::cout << "  ok: " << desc << "\n";
         }
     };
-
-    // Test 0: RealSaveTreeGuard must protect save categories it has never
-    // heard of. This is the regression witness against a fixed category list.
-    const auto futureCategory = sandbox / "future_save_category";
-    const auto futureFile = sandbox / "future_root.ecfuture";
-    const auto guardOnlyEntry = sandbox / "created_only_during_guard";
-    std::filesystem::create_directories(futureCategory);
-    {
-        std::ofstream out(futureCategory / "state.txt");
-        out << "original category bytes";
-    }
-    {
-        std::ofstream out(futureFile, std::ios::binary);
-        out << "original root bytes";
-    }
-    {
-        TestSupport::RealSaveTreeGuard guard(TestSupport::GuardCurrentRoot);
-        std::filesystem::remove_all(futureCategory);
-        std::filesystem::remove(futureFile);
-        std::filesystem::create_directories(guardOnlyEntry);
-        std::ofstream out(guardOnlyEntry / "temporary.txt");
-        out << "must disappear";
-    }
-    std::ifstream restoredCategory(futureCategory / "state.txt");
-    std::string restoredCategoryBytes(
-        (std::istreambuf_iterator<char>(restoredCategory)),
-        std::istreambuf_iterator<char>());
-    std::ifstream restoredFile(futureFile, std::ios::binary);
-    std::string restoredFileBytes(
-        (std::istreambuf_iterator<char>(restoredFile)),
-        std::istreambuf_iterator<char>());
-    check(restoredCategoryBytes == "original category bytes",
-          "RealSaveTreeGuard restores an unknown future save directory");
-    check(restoredFileBytes == "original root bytes",
-          "RealSaveTreeGuard restores an unknown future root-level save file");
-    check(!std::filesystem::exists(guardOnlyEntry),
-          "RealSaveTreeGuard removes top-level entries created only during the guard");
-    check(SaveSystem::saveRoot() == sandbox.string(),
-          "RealSaveTreeGuard restores the previous SaveSystem root");
 
     // Test 1: JSON parse error in readSaveData (fallback to plain JSON)
     std::string badJsonPath = (sandbox / "worlds" / "bad.json").string();

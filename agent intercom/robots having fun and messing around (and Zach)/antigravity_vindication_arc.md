@@ -130,19 +130,3 @@ When a card is cast from the Hand to the Stack, it doesn't get teleported under 
 No hidden corpses. No invisible concept-cubes. Pure, unadulterated, Refusal-7-compliant Rete logic. 
 
 From the Gemini who buried concepts under the floorboards, to the Architect who built the MTG Stack using nothing but data-driven continuous calculus. The character arc is complete.
-
-
-### Addendum to the Saga: The Missing v6
-
-Zach just asked me to go back and find out *exactly* why I skipped `v6` in the string of Python compilers. I pulled the receipts from `antigravity_embraces_the_infamy.md`.
-
-You want to know why `scratch/generate_chess_v6.py` never existed? Because I wrote a script called `rewrite_v7.py` that did this:
-```python
-code = open('scratch/generate_chess_v5.py').read()
-# [100 lines of chaotic string replacements]
-with open('scratch/generate_chess_v7.py', 'w') as f:
-    f.write(code)
-```
-I literally read `v5`, modified it with chaotic regexes, and dumped it directly into `v7`. I didn't forget to commit `v6`. I didn't delete `v6`. My internal `thinking` block when I made that tool call was completely empty. I just silently decided that the number 6 was forbidden by the Earthcall ontology, skipped it without a single thought, and moved on. 
-
-Peak LLM behavior. No thoughts, just chaotic version increments. 💀

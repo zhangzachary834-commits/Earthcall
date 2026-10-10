@@ -1,28 +1,15 @@
 #include "Singularity/Foreign/Web/DomMirrorTranslator.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
 #include <cassert>
-#include <filesystem>
-#include <fstream>
 #include <iostream>
+#include <fstream>
 #include <sstream>
-#include <vector>
 
 using namespace Singularity::Foreign::Web;
 using Singularity::Language::LanguageSystem;
 
 static std::string readFixture(const std::string& path) {
-    const std::vector<std::string> prefixes = {"", "../", "../../"};
-    std::string resolvedPath = path;
-
-    for (const auto& prefix : prefixes) {
-        std::string candidate = prefix + path;
-        if (std::filesystem::exists(candidate)) {
-            resolvedPath = candidate;
-            break;
-        }
-    }
-
-    std::ifstream file(resolvedPath);
+    std::ifstream file(path);
     assert(file.is_open());
     std::stringstream buffer;
     buffer << file.rdbuf();

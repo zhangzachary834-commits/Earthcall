@@ -115,10 +115,6 @@ std::vector<Key> KeyDecoder::feed(const std::string& bytes, double now) {
 }
 
 std::vector<Key> KeyDecoder::flush(double now) {
-    // Paste ends only at its bracket marker. A slow/chunked transfer can
-    // pause with a partial marker in _pending; timing it out would turn that
-    // marker into text and leave both decoder/editor in paste indefinitely.
-    if (_pasting) return {};
     if (_pending.empty() || now - _pendingSince < escapeDelay) return {};
     return drain(true);
 }
