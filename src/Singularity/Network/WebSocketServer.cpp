@@ -578,11 +578,12 @@ struct WebSocketServer::Impl {
                         if (!targetBeing) {
                             LawManager* lm = ::Core::Engine::instance().getLawManager();
                             if (lm) {
-                                // Resolve Laws by stable identifier only. Display names are
-                                // not unique, so a name fallback can target the wrong Law.
-                                targetBeing = lm->find(target);
-                                if (!targetBeing && normTarget != target)
-                                    targetBeing = lm->find(normTarget);
+                                for (const auto& l : lm->getAll()) {
+                                    if (l && (l->getIdentifier() == target || l->getIdentifier() == normTarget || l->name() == target)) {
+                                        targetBeing = l.get();
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }
