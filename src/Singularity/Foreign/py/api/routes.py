@@ -19,7 +19,7 @@ def _portfolio_allowed_origins():
     }
 
 def _portfolio_origin_allowed(origin):
-    return not origin or origin in _portfolio_allowed_origins()
+    return origin in _portfolio_allowed_origins()
 
 def _portfolio_json(payload, status=200):
     response = make_response(jsonify(payload), status)
