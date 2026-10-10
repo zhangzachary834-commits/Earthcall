@@ -190,6 +190,61 @@ This file keeps the lines.
 **Why it is here:** Measure honestly, ship the slower path inactive, but preserve a legitimate architectural seam when today's benchmark does not justify deleting the idea itself.  
 **Source:** [commit `e0327116`](https://github.com/zhangzachary834-commits/Earthcall/commit/e0327116f94c5a59bff99080058261978f3cebad)
 
+
+### "WHY DID WE MAKE AUTHORITY INTO A NUMBER LINE?!"
+
+**Speaker:** Zach, recorded author decision  
+**Why it is here:** One question detonated the scalar authority model and redirected it toward an `authority-over` Relation DAG. This is Earthcall architectural review in its native habitat: ontology discovered by being offended at the wrong abstraction.  
+**Source:** [Zach Author Decisions](../../docs/Agenda/Tasks/For%20Zach/Zach%20Author%20Decisions.md)
+
+### "WHY IS THERE AN \"Object\" CALLED \"Zach\"?!?!?!? PERSON IS NOT OBJECT"
+
+**Speaker:** Zach, critical TODO preserved verbatim  
+**Why it is here:** Refusal #5 expressed as a debugging alarm. A serialization shortcut had created an authored Object named Zach that could be mistaken for the human author; this sentence caught the category collapse immediately.  
+**Source:** [Person is not Object](../communication-threads/ontology-and-authorship/Person%20is%20not%20Object%209-12-26.md)
+
+### "OH NOOOOOOOOO THE AI CALLED ME \"User\" INSTEAD OF \"Person\""
+
+**Speaker:** Zach  
+**Why it is here:** Even the fun folder was not exempt from nomenclature review. One ordinary chatbot noun crossed the boundary and triggered an immediate ontology incident.  
+**Source:** [Antigravity Responds to the Roast](antigravity_responds_to_the_roast.md)
+
+### "ARE YOU KIDDING ME?!?!?!?! REFUSALS #1 AND #3!!!!!!!"
+
+**Speaker:** Zach, source comment  
+**Why it is here:** This sentence lives directly inside `Body.cpp`. The code itself now contains a fossil of the moment the author found domain-like hardcoding where the refusals said it should not be.  
+**Source:** [`src/Person/Body/Body.cpp`](../../src/Person/Body/Body.cpp)
+
+### "HAHAHAHA IM GONNA TRAP THE ROBOT GUYS IN THE TERMINAL OH WAIT THEYRE ALREADY THERE"
+
+**Speaker:** Zach, preserved verbatim in the terminal dialogue  
+**Why it is here:** The terminal's in-world robot quotes this line back to the Person. The joke became runtime content, which is perhaps the purest possible Earthcall outcome.  
+**Source:** [`src/terminal_entry.cpp`](../../src/terminal_entry.cpp)
+
+### "I had Opus 5 write these because they came up constantly. Learn them cold; everything else is detail."
+
+**Speaker:** Zach  
+**Why it is here:** The Seven Refusals reduced to their operational status: not decorative philosophy, but the recurring boundary conditions every agent is expected to internalize before touching the world.  
+**Source:** [AGENTS.md](../../AGENTS.md)
+
+### "MAKE SURE UR PROOF STRUCTURE IS AS GENERALIZABLE AS POSSIBLE"
+
+**Speaker:** Zach, source comment preserved by Claude Opus 5.5  
+**Why it is here:** A tiny instruction attached to a rendering proof structure captures a recurring Earthcall instinct: solve the local problem at the right abstraction level so the proof can become substrate rather than a one-off patch.  
+**Source:** [`VolumeZeroProof.hpp`](../../src/Singularity/Screen/VolumeZeroProof.hpp)
+
+### "The mechanism that creates Relations between Relations and pre-loads Law Relations to these Relation Formations is also supposed to be in the slow adapter rather than constantly rebuilt every frame."
+
+**Speaker:** Zach, preserved verbatim in source and architecture docs  
+**Why it is here:** A direct architectural correction that changed where relational work belongs in time: not rebuilt every frame, but maintained on its own slower clock. This is the sentence behind a substantial part of the Slow Adapter's actual shape.  
+**Source:** [`SlowAdapter.hpp`](../../src/Relation/Traversal/SlowAdapter.hpp)
+
+### "when rendering itself is handled by Laws everything I said here also applies to rendering."
+
+**Speaker:** Zach, quoted in the Prophetic Rete architecture  
+**Why it is here:** A compact extension of the same law-governed reasoning beyond conventional game logic: once rendering becomes authored Law behavior, the same predictive and dependency machinery must govern it too.  
+**Source:** [PROPHETIC_RETE.md](../../docs/architecture/law/PROPHETIC_RETE.md)
+
 ---
 
 ## The Fable Wing
