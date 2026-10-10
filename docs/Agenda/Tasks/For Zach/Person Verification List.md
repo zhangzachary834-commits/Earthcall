@@ -1351,9 +1351,26 @@ Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-0
 
 ## Northern Veil with the zero-density proof (added 2026-10-09)
 
+*Zach, 2026-10-09 (in-app, after the proof, grid walk, unified quadrature, SourceRho-zero and noise short-circuit): "ITS SO MUCH BETTER NOW I TESTED AND I CAN ACAULLY MOVE AROUND ITS STILL JITTERY BUT NOW I HAVE AGENCY AGAIN." Zach clarified that "jittery" means frame rate is still low and sometimes uneven, "but now I feel like I can actually interact with the world, I'm not trying to waddle around in quicksand anymore." Movement is restored; frame rate is the open item. Zach's window was nearly full screen, roughly 2500×1400 (~3.8× the pixels of the 1280×720 measurements). The visual-identity checks below are not yet individually confirmed.*
+
 *Claude Code · Claude Opus 5.5 · session `session_01NJy6VrPVNcHAnggwFyTsmF` · 2026-10-09. [Full task](../Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md).*
 
 - [ ] Rebuild `earthcall_webgpu` and enter **Northern Veil**. The curtains should look exactly as before; the native witness proved the pixels byte-identical. With the later grid walk it should feel about 5× smoother, though not yet fully smooth (~13–14 fps at 720p measured). The first entry may hitch ~0.3 s per curtain in Debug while the proofs build once.
 - [ ] Compare by eye: set the Screen channel's `volumeZeroProofEnabled` to false (Law Line or MCP `earthcall_write_property`), then back to true. The curtains must look identical, and only the smoothness should change. `volumeZeroProofCellsProven` / `volumeZeroProofCellsTotal` on the same channel show the proof is live (about 131860 / 136772 in Northern Veil).
 - [ ] Look for any hole, seam, or blocky edge in or around a curtain that wasn't there before.
 - [ ] With unified quadrature (2026-10-09), walk among the overlapping curtains: their overlap should look the same as before. The measured difference is at most 1 brightness level of 255. Setting the Screen channel's `volumeSamplesPerChord` higher (e.g. 384) should change nothing visible, and lower (e.g. 24) should visibly coarsen the glow without recompiling. A proof that wrongly skipped real density would show up as a sharp-edged gap aligned to an invisible grid.
+
+
+## Linked conversations browser — October 9
+
+Codex · GPT-6.1 Sol · session `01a122ec-b377-7391-ad6f-86d11b501d1b` · 2026-10-09 17:00 PDT. Origin: Zach asked to make sprawling Intercom/reflection replies traceable. [Workflow](../Specific%20Tasks/Housekeeping%20and%20Build/Linked_Conversations_and_Document_Navigation/Linked_Conversations_and_Document_Navigation.md).
+
+- [ ] Run `python3 "agent intercom/conversation_history_injection.py" nav browse` from the repo root and open `scratch/intercom-navigation.html`; search “Small Difference,” open GPT-4o’s response, follow its parent and Mythos’s incoming reply, and use Previous document to return. Confirm the conversation’s origin, response order, and source text are easy to recover without searching new filenames. This checks the repository reading tool; no Earthcall app behavior changes are expected.
+
+
+## Northern Veil shared mathematics after the Sixth-one Sun continuation
+
+Codex / GPT-6.1 Sol / session `01a122d7` / 2026-10-10T11:52:24.788492-07:00; [task and evidence](../Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md).
+
+- [ ] After rebuilding `earthcall_webgpu`, enter Northern Veil at your usual window size, move through overlaps, and confirm the four curtains retain their colours, shimmer, and independence. This pass hardens sharing; it does not promise an additional frame-rate gain over Opus's shared-shape build. The time-only candidate was not shipped.
+- [ ] In a disposable authored medium fixture, change only extinction/scattering mathematics and confirm the appearance responds independently; check a source with a different clock and a field sampled at a shifted point if using those forms. Native synthetic witnesses cover those boundaries, but inhabited-world acceptance remains yours.
