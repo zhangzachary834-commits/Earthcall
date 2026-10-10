@@ -68,11 +68,8 @@ struct BootedEngineHarness {
             interaction->setEnabled(true);
         }
 
-        // Inject authored rotational physics laws matching EngineInit.cpp
-        for (const auto& law : Physics::createAuthoredRotationalLaws()) {
-            law->addAuthor(player);
-            lawManager.add(law);
-        }
+        // Exercise the exact authored-law registration path used by Engine::initLogic.
+        Physics::registerAuthoredRotationalLaws(lawManager, player);
 
         // 2. Wire Universe providers matching real app boot (EngineInit.cpp)
         Universe::instance().setProvider([this](std::vector<Singular*>& beings) {
@@ -171,6 +168,7 @@ struct BootedEngineHarness {
         if (hydrateAllZones) {
             zones.hydrateFromZoneStore();
         } else {
+            // Isolated witnesses must not hydrate or mutate real authored saves.
             zones.addZone(std::make_shared<Zone>("Default", "default"));
         }
     }
@@ -179,13 +177,6 @@ struct BootedEngineHarness {
         // bindLive() is process-global too; a block-scoped harness must not
         // leave ZoneManager::live() pointing at its destroyed ZoneManager.
         zones.unbindLive();
-
-        // Clear Universe providers before member destruction so no dangling 'this' is accessed.
-        Universe::instance().setProvider({});
-        Universe::instance().setRelationProvider({});
-        Universe::instance().setRelationsInvolvingProvider({});
-        Universe::instance().setRelationGenerationProvider({});
-        Universe::instance().setRelationRegistrar({});
 
         // The Physics bridge is process-global; do not leave a dangling pointer
         // when a block-scoped harness goes away. Only clear the slot we own.

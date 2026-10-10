@@ -342,11 +342,8 @@ bool Engine::initLogic() {
         }
     }
 
-    // Inject authored rotational physics laws (angular kinematics, damping, tilt, rolling coupling)
-    for (const auto& law : Physics::createAuthoredRotationalLaws()) {
-        if (_person) law->addAuthor(*_person);
-        _lawManager->add(law);
-    }
+    // Shared production/test boot contract: author before registering Laws.
+    if (_person) Physics::registerAuthoredRotationalLaws(*_lawManager, *_person);
 
     // Shape Generator 3D plus the rest of the Creator Console tools, as
     // first movers. The console remains the chrome; these are the named
