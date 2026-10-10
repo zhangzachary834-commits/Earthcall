@@ -411,7 +411,7 @@ public:
     
     // Rendering
     void render() const;
-    void renderUI() const;
+    void renderUI();
     
     // Undo/Redo
     void undo();
