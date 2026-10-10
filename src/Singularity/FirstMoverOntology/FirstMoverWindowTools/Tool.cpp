@@ -48,14 +48,6 @@ float distanceSqToSegment(const glm::vec2& point, const glm::vec2& a, const glm:
 
 float activeEraserRadius(Zone& zone) { return 16.0f; }
 
-// void flushKeptStroke removed
-
-void eraseLegacyStrokeSegments(Zone& zone, const glm::vec2& cursor, float radius) {}
-
-void deleteLegacyStrokesAt(Zone& zone, const glm::vec2& cursor, float radius, bool matchColor = false) {}
-
-void configureStrokeTool(Zone& zone, Tool::Type type) {}
-
 std::optional<glm::mat4> localFromWorld(const glm::mat4& parentWorld,
                                         const glm::mat4& worldTransform) {
     const auto parent = OntoMath::MatrixValue::fromGlmMat4(parentWorld);
@@ -199,43 +191,6 @@ Object* pickNearestObject(const std::vector<Object*>& targets,
     }
     return hitObj;
 }
-
-// Commented out - no longer needed since BodyParts now have proper faceTextures
-// and can use raycastFace() like regular Objects.
-// bool raycastCollisionAABB(const Object* obj, const glm::vec3& rayOrigin, const glm::vec3& rayDir, float& outT) {
-//     if (!obj) return false;
-//     glm::vec3 minCorner = obj->collisionZone.corners[0];
-//     glm::vec3 maxCorner = obj->collisionZone.corners[0];
-//     for (int i = 1; i < 8; ++i) {
-//         minCorner = glm::min(minCorner, obj->collisionZone.corners[i]);
-//         maxCorner = glm::max(maxCorner, obj->collisionZone.corners[i]);
-//     }
-//
-//     float tMin = 0.0f;
-//     float tMax = 1e9f;
-//     for (int axis = 0; axis < 3; ++axis) {
-//         float origin = rayOrigin[axis];
-//         float dir = rayDir[axis];
-//         if (fabs(dir) < 1e-6f) {
-//             if (origin < minCorner[axis] || origin > maxCorner[axis]) {
-//                 return false;
-//             }
-//         } else {
-//             float invD = 1.0f / dir;
-//             float t1 = (minCorner[axis] - origin) * invD;
-//             float t2 = (maxCorner[axis] - origin) * invD;
-//             if (t1 > t2) std::swap(t1, t2);
-//             tMin = std::max(tMin, t1);
-//             tMax = std::min(tMax, t2);
-//             if (tMin > tMax) {
-//                 return false;
-//             }
-//         }
-//     }
-//
-//     outT = tMin;
-//     return outT >= 0.0f;
-// }
 
 // Tool class methods are already implemented inline in the header file
 // This file can be used for additional tool functionality in the future

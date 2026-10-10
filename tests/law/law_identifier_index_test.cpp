@@ -92,6 +92,24 @@ int main() {
     {
         check(lm.find("Gravity") == nullptr, "lm.find('Gravity') by display name returns nullptr");
         check(lm.find("Authored Law") == nullptr, "lm.find('Authored Law') by display name returns nullptr");
+
+        // WebSocket property writes use LawManager::find for both the literal
+        // identifier and the optional '@'-stripped identifier. Display names
+        // must not resolve even when two Laws share the same visible name.
+        const auto resolveSocketLaw = [&](const std::string& target) -> Law* {
+            const std::string normalized = (!target.empty() && target[0] == '@')
+                ? target.substr(1) : target;
+            if (Law* law = lm.find(target)) return law;
+            return lm.find(normalized);
+        };
+        check(resolveSocketLaw("Gravity") == nullptr,
+              "WebSocket-style Law lookup refuses a shared display name");
+        check(resolveSocketLaw("@Gravity") == nullptr,
+              "WebSocket-style Law lookup refuses prefixed display names");
+        check(resolveSocketLaw("law-gravity-custom") == lm.find("law-gravity-custom"),
+              "WebSocket-style Law lookup resolves an exact unique identifier");
+        check(resolveSocketLaw("@law-gravity-preset") == lm.find("law-gravity-preset"),
+              "WebSocket-style Law lookup resolves an @-prefixed unique identifier");
     }
 
     std::cout << "\nSUCCESS — " << g_checks << " checks passed.\n";
