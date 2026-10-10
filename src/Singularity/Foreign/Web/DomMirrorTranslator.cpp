@@ -345,18 +345,60 @@ bool DomMirrorTranslator::applyDelta(const DomDelta& delta, std::string* outErro
 
             case DomDeltaKind::AttributeRemove: {
                 auto nodeForm = findNodeFormation(rec.targetNodeToken);
-                if (nodeForm) {
-                    // Search for attribute member matching attributeName
-                    Singular* memberToRemove = nullptr;
-                    for (Singular* mem : nodeForm->getMembers()) {
-                        auto* lex = dynamic_cast<Singularity::Language::Lexeme*>(mem);
-                        if (lex && lex->getSymbol() == rec.attributeName) {
-                            memberToRemove = lex;
-                            break;
+                auto nodeLexeme = findNodeLexeme(rec.targetNodeToken);
+                if (nodeForm && nodeLexeme) {
+                    std::vector<std::shared_ptr<Relation>> relsToRemove;
+                    std::vector<Singular*> lexemesToRelease;
+                    std::vector<std::string> lexemeIdsToRemove;
+
+                    auto& rels = _nodeRelations[rec.targetNodeToken];
+                    for (const auto& rel : rels) {
+                        if (rel && rel->type == DomRelationType::kHasAttribute && rel->a() == nodeLexeme.get()) {
+                            auto* attrLex = dynamic_cast<Singularity::Language::Lexeme*>(rel->b());
+                            if (attrLex && attrLex->getSymbol() == rec.attributeName) {
+                                relsToRemove.push_back(rel);
+                                lexemesToRelease.push_back(attrLex);
+                                lexemeIdsToRemove.push_back(attrLex->getIdentifier());
+
+                                for (const auto& valRel : rels) {
+                                    if (valRel && valRel->type == DomRelationType::kHasValue && valRel->a() == attrLex) {
+                                        relsToRemove.push_back(valRel);
+                                        auto* valLex = dynamic_cast<Singularity::Language::Lexeme*>(valRel->b());
+                                        if (valLex) {
+                                            lexemesToRelease.push_back(valLex);
+                                            lexemeIdsToRemove.push_back(valLex->getIdentifier());
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                    if (memberToRemove) {
-                        nodeForm->releaseMember(memberToRemove);
+
+                    for (const auto& rel : relsToRemove) {
+                        nodeForm->removeRelation(rel);
+                        auto it1 = std::find(_nodeRelations[rec.targetNodeToken].begin(), _nodeRelations[rec.targetNodeToken].end(), rel);
+                        if (it1 != _nodeRelations[rec.targetNodeToken].end()) {
+                            _nodeRelations[rec.targetNodeToken].erase(it1);
+                        }
+                        auto it2 = std::find(_allSessionRelations.begin(), _allSessionRelations.end(), rel);
+                        if (it2 != _allSessionRelations.end()) {
+                            _allSessionRelations.erase(it2);
+                        }
+                    }
+
+                    for (auto* mem : lexemesToRelease) {
+                        nodeForm->releaseMember(mem);
+                    }
+
+                    for (const auto& lexId : lexemeIdsToRemove) {
+                        auto lexIt = std::find_if(_allSessionLexemes.begin(), _allSessionLexemes.end(),
+                            [&lexId](const std::shared_ptr<Singularity::Language::Lexeme>& l) {
+                                return l && l->getIdentifier() == lexId;
+                            });
+                        if (lexIt != _allSessionLexemes.end()) {
+                            _allSessionLexemes.erase(lexIt);
+                        }
+                        language.remove("@" + lexId);
                     }
                 }
                 break;
