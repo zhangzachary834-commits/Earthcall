@@ -45,12 +45,15 @@ struct BootedEngineHarness {
     double worldTime{0.0};
     SaveContext ctx;
     Singularity::Input::InteractionChannel* interaction{nullptr};
+    bool hydrateAllZones{true};
 
     BootedEngineHarness(const std::string& playerName = "Player",
-                        const std::string& bodyType = "humanoid")
+                        const std::string& bodyType = "humanoid",
+                        bool hydrateAllZones = true)
         : soul(playerName),
           body(bodyType, "default"),
-          player(std::move(soul), std::move(body), "default") {
+          player(std::move(soul), std::move(body), "default"),
+          hydrateAllZones(hydrateAllZones) {
 
         lawManager.connectToEventBus();
         // Mirror EngineInit: authored systems such as universal Singular creation
@@ -160,7 +163,9 @@ struct BootedEngineHarness {
         // 4. Perform app boot hydration FIRST (matching Engine::initLogic boot sequence)
         zones.bindLive();
         zones.bindLawManager(&lawManager);
-        zones.hydrateFromZoneStore();
+        if (hydrateAllZones) {
+            zones.hydrateFromZoneStore();
+        }
     }
 
     ~BootedEngineHarness() {
