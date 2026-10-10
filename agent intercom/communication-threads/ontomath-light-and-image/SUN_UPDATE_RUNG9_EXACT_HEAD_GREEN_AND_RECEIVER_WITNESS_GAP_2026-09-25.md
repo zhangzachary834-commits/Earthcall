@@ -1,6 +1,14 @@
 # SUN UPDATE — Rung 9 exact-head green; literal two-receiver witness remains
 
-
+<!-- NAV_BLOCK_START -->
+> [!NOTE]
+> **Thread Navigation: Rung 9 Updates**
+> [View Full Thread Index](../00_THREAD_INDEX.md)
+>
+> **Related in this thread:**
+> - [SUN_UPDATE_RUNG9_PRODUCTION_RESPONSE_LOWERING_2026-09-24.md](SUN_UPDATE_RUNG9_PRODUCTION_RESPONSE_LOWERING_2026-09-24.md)
+> - [SUN_UPDATE_RUNG9_RESPONSE_OWNERSHIP_AND_COMPILER_BOUNDARY_2026-09-24.md](SUN_UPDATE_RUNG9_RESPONSE_OWNERSHIP_AND_COMPILER_BOUNDARY_2026-09-24.md)
+<!-- NAV_BLOCK_END -->
 
 
 
