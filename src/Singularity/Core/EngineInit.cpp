@@ -66,6 +66,7 @@
 #include <glm/glm.hpp>
 #include <cstdlib>
 #include <iostream>
+#include <optional>
 #include "CreationChannel.hpp"
 #include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
@@ -80,6 +81,20 @@ extern CategoryManager categories;
 
 #ifndef __EMSCRIPTEN__
 namespace {
+
+static std::optional<size_t> getCharacterZoneIndex(const std::vector<std::shared_ptr<Zone>>& zones) {
+    static std::optional<size_t> cachedIndex = std::nullopt;
+    if (cachedIndex.has_value()) {
+        return cachedIndex;
+    }
+    for (size_t i = 0; i < zones.size(); ++i) {
+        if (zones[i]->name().find("Character") != std::string::npos) {
+            cachedIndex = i;
+            return cachedIndex;
+        }
+    }
+    return std::nullopt;
+}
 
 // ---------------------------------------------------------------------------
 // The present Person proves possession of their key.
@@ -641,12 +656,8 @@ bool Engine::initLogic() {
     _mainMenu.addOption("Character Architect Forge", GLFW_KEY_C, [this]() {
         _creatorConsoleOpen = true;
         Rendering::getCreatorConsoleState().currentSection = Rendering::CreatorSection::Character;
-        const auto& zones = mgr.zones();
-        for (size_t i = 0; i < zones.size(); ++i) {
-            if (zones[i]->name().find("Character") != std::string::npos) {
-                mgr.switchTo(i);
-                break;
-            }
+        if (auto idx = getCharacterZoneIndex(mgr.zones()); idx.has_value()) {
+            mgr.switchTo(idx.value());
         }
         _mainMenu.close();
         _keyboardHandler->setMenuOpen(false);
@@ -751,12 +762,8 @@ bool Engine::initLogic() {
         Physics::toggleFlying();
     });
     _keyboardHandler->bindKey(GLFW_KEY_C, "switch_to_character_zone", [this]() {
-        const auto& zones = mgr.zones();
-        for (size_t i = 0; i < zones.size(); ++i) {
-            if (zones[i]->name().find("Character") != std::string::npos) {
-                mgr.switchTo(i);
-                break;
-            }
+        if (auto idx = getCharacterZoneIndex(mgr.zones()); idx.has_value()) {
+            mgr.switchTo(idx.value());
         }
     });
 
