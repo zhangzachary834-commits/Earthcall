@@ -1,17 +1,6 @@
 # SUN HANDOFF — OntoMath Radiance Rung 5: authored source chroma chi(p,t)
 
-<!-- NAV_BLOCK_START -->
-> [!NOTE]
-> **Thread Navigation: OntoMath Radiance Rungs**
-> [View Full Thread Index](../00_THREAD_INDEX.md)
->
-> **Related in this thread:**
-> - [SUN_HANDOFF_OntoMath_Radiance_Field_Phase_2_2026-09-19.md](SUN_HANDOFF_OntoMath_Radiance_Field_Phase_2_2026-09-19.md)
-> - [SUN_HANDOFF_OntoMath_Radiance_Later_Rungs_After_Rung_4_2026-09-21.md](SUN_HANDOFF_OntoMath_Radiance_Later_Rungs_After_Rung_4_2026-09-21.md)
-> - [SUN_HANDOFF_OntoMath_Radiance_Rung_4_Time_2026-09-20.md](SUN_HANDOFF_OntoMath_Radiance_Rung_4_Time_2026-09-20.md)
-> - [SUN_HANDOFF_OntoMath_Radiance_Rung_6_Angular_2026-09-21.md](SUN_HANDOFF_OntoMath_Radiance_Rung_6_Angular_2026-09-21.md)
-> - [SUN_HANDOFF_OntoMath_Radiance_Rung_7_Merged_Rung_8_Visibility_And_Volumetric_Parallel_2026-09-21.md](SUN_HANDOFF_OntoMath_Radiance_Rung_7_Merged_Rung_8_Visibility_And_Volumetric_Parallel_2026-09-21.md)
-<!-- NAV_BLOCK_END -->
+
 
 
 
