@@ -14,6 +14,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
+#include "ZonesOfEarth/Physics/AuthoredPhysicsLaws.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
@@ -47,7 +48,8 @@ struct BootedEngineHarness {
     Singularity::Input::InteractionChannel* interaction{nullptr};
 
     BootedEngineHarness(const std::string& playerName = "Player",
-                        const std::string& bodyType = "humanoid")
+                        const std::string& bodyType = "humanoid",
+                        bool hydrateAllZones = true)
         : soul(playerName),
           body(bodyType, "default"),
           player(std::move(soul), std::move(body), "default") {
@@ -65,6 +67,9 @@ struct BootedEngineHarness {
         if (interaction) {
             interaction->setEnabled(true);
         }
+
+        // Exercise the exact authored-law registration path used by Engine::initLogic.
+        Physics::registerAuthoredRotationalLaws(lawManager, player);
 
         // 2. Wire Universe providers matching real app boot (EngineInit.cpp)
         Universe::instance().setProvider([this](std::vector<Singular*>& beings) {
@@ -160,7 +165,12 @@ struct BootedEngineHarness {
         // 4. Perform app boot hydration FIRST (matching Engine::initLogic boot sequence)
         zones.bindLive();
         zones.bindLawManager(&lawManager);
-        zones.hydrateFromZoneStore();
+        if (hydrateAllZones) {
+            zones.hydrateFromZoneStore();
+        } else {
+            // Isolated witnesses must not hydrate or mutate real authored saves.
+            zones.addZone(std::make_shared<Zone>("Default", "default"));
+        }
     }
 
     ~BootedEngineHarness() {
