@@ -342,6 +342,13 @@ bool Engine::initLogic() {
         }
     }
 
+    // Authored rotational physics participates in the real LawManager tick.
+    // Every authored Law must have a Person author before registration.
+    for (const auto& law : Physics::createAuthoredRotationalLaws()) {
+        if (_person) law->addAuthor(*_person);
+        _lawManager->add(law);
+    }
+
     // Shape Generator 3D plus the rest of the Creator Console tools, as
     // first movers. The console remains the chrome; these are the named
     // beings it arms. See CreationChannel::syncRegisterCreatorTools.
