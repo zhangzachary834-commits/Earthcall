@@ -1089,6 +1089,7 @@ private:
     // Deliberately a sentinel no real revision can equal, so the first tick
     // always builds rather than trusting an empty index.
     mutable uint64_t _vocabularyBuiltAt = std::numeric_limits<uint64_t>::max();
+    mutable uint64_t _lastSeededStructuralRevision = std::numeric_limits<uint64_t>::max();
     // The Law::textRevision() `_indexedNames` was read off the register at.
     // Collecting that name set is what every sweep used to pay for: a fresh
     // unordered_set<std::string> built from EVERY law's requiredProperties(),
