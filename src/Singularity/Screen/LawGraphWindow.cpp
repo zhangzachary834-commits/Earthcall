@@ -2763,18 +2763,25 @@ bool editActionNode(ActionNode& node, const Law* currentLaw = nullptr) {
             }
 
             // Recent Execution Activity
-            int writeCount = 0;
-            std::string lastTarget;
-            for (const auto& entry : g.actionNodeFeed) {
-                if (entry.actionName == "WritePixel") {
-                    writeCount += entry.count;
-                    if (lastTarget.empty()) lastTarget = entry.targetId;
+            std::time_t recentThreshold = std::time(nullptr) - 2;
+            bool foundActivity = false;
+            if (currentLaw) {
+                const auto& log = currentLaw->applicationLog();
+                for (auto it = log.rbegin(); it != log.rend(); ++it) {
+                    if (it->timestamp < recentThreshold) break;
+                    for (const auto& out : it->trace.nodes) {
+                        if (out.actionName == "WritePixel") {
+                            if (out.wrote) {
+                                ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f), "🟢 Last Write: Success");
+                            } else {
+                                ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.3f, 1.0f), "🔴 Last Write: Failed (\"%s\")", out.note.c_str());
+                            }
+                            foundActivity = true;
+                            break;
+                        }
+                    }
+                    if (foundActivity) break;
                 }
-            }
-            if (writeCount > 0) {
-                ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f),
-                                   "Recent Activity: %d write(s) on target '%s'",
-                                   writeCount, lastTarget.c_str());
             }
 
             ImGui::TextDisabled("On write: publishes past-tense 'surface-pixel-written' event.");
