@@ -1,7 +1,8 @@
 #include "support/test_harness.hpp"
 #include <iostream>
 #include <chrono>
-#include <filesystem>\n#include <unordered_map>
+#include <filesystem>
+#include <unordered_map>
 
 struct Scratch {
     std::filesystem::path path;
@@ -33,20 +34,20 @@ int main() {
             for (const auto& entry : *entries) {
                 if (!entry.is_object() || !entry.contains("id") || !entry["id"].is_string() ||
                     !entry.contains("name") || !entry["name"].is_string()) {
-                    std::cerr << "my_probe_test: authored Law fixture lacks an id/name\\n";
+                    std::cerr << "my_probe_test: authored Law fixture lacks an id/name\n";
                     return 1;
                 }
                 const std::string id = entry["id"].get<std::string>();
                 const std::string name = entry["name"].get<std::string>();
                 if (!expectedAuthoredLaws.emplace(id, name).second) {
-                    std::cerr << "my_probe_test: duplicate authored Law id: " << id << "\\n";
+                    std::cerr << "my_probe_test: duplicate authored Law id: " << id << "\n";
                     return 1;
                 }
             }
         }
     }
     if (expectedAuthoredLaws.empty()) {
-        std::cerr << "my_probe_test: fixture contains no authored Laws\\n";
+        std::cerr << "my_probe_test: fixture contains no authored Laws\n";
         return 1;
     }
 
@@ -71,14 +72,14 @@ int main() {
         if (found == expectedAuthoredLaws.end()) continue;
         if (law->name() != found->second) {
             std::cerr << "my_probe_test: authored Law name mismatch for "
-                      << law->getIdentifier() << "\\n";
+                      << law->getIdentifier() << "\n";
             return 1;
         }
         expectedAuthoredLaws.erase(found);
     }
     if (!expectedAuthoredLaws.empty()) {
         std::cerr << "my_probe_test: missing authored Law "
-                  << expectedAuthoredLaws.begin()->first << "\\n";
+                  << expectedAuthoredLaws.begin()->first << "\n";
         return 1;
     }
 
