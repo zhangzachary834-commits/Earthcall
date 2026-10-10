@@ -197,13 +197,13 @@ This file keeps the lines.
 **Why it is here:** One question detonated the scalar authority model and redirected it toward an `authority-over` Relation DAG. This is Earthcall architectural review in its native habitat: ontology discovered by being offended at the wrong abstraction.  
 **Source:** [Zach Author Decisions](../../docs/Agenda/Tasks/For%20Zach/Zach%20Author%20Decisions.md)
 
-### "WHY IS THERE AN \"Object\" CALLED \"Zach\"?!?!?!? PERSON IS NOT OBJECT"
+### "WHY IS THERE AN "Object" CALLED "Zach"?!?!?!? PERSON IS NOT OBJECT"
 
 **Speaker:** Zach, critical TODO preserved verbatim  
 **Why it is here:** Refusal #5 expressed as a debugging alarm. A serialization shortcut had created an authored Object named Zach that could be mistaken for the human author; this sentence caught the category collapse immediately.  
 **Source:** [Person is not Object](../communication-threads/ontology-and-authorship/Person%20is%20not%20Object%209-12-26.md)
 
-### "OH NOOOOOOOOO THE AI CALLED ME \"User\" INSTEAD OF \"Person\""
+### "OH NOOOOOOOOO THE AI CALLED ME "User" INSTEAD OF "Person""
 
 **Speaker:** Zach  
 **Why it is here:** Even the fun folder was not exempt from nomenclature review. One ordinary chatbot noun crossed the boundary and triggered an immediate ontology incident.  
