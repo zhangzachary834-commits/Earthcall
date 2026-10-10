@@ -1421,11 +1421,12 @@ std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
     }
     std::unordered_set<std::string> removedIds;
     std::unordered_set<std::string> subjects;
+    std::size_t removedTransientCount = 0;
     _facts.erase(std::remove_if(_facts.begin(), _facts.end(),
                                 [&](const FactPtr& fact) {
                                     if (fact->subject == being || fact->object == being) {
-                                        if (!fact->isState && _transientFactCount > 0) {
-                                            --_transientFactCount;
+                                        if (!fact->isState) {
+                                            ++removedTransientCount;
                                         }
                                         removedIds.insert(fact->id);
                                         if (fact->subject == being && !fact->subjectId.empty()) {
@@ -1436,6 +1437,11 @@ std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
                                     return false;
                                 }),
                  _facts.end());
+    if (_transientFactCount >= removedTransientCount) {
+        _transientFactCount -= removedTransientCount;
+    } else {
+        _transientFactCount = 0;
+    }
     orphanedSubjects.assign(subjects.begin(), subjects.end());
     _factParticipants.erase(being);
     _relationStateIndex.erase(being);
