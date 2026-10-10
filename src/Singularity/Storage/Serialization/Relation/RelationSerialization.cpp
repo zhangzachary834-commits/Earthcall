@@ -139,10 +139,7 @@ Relation relationFromJson(const nlohmann::json& json,
         Singular* b = savedB.empty() ? nullptr : resolve(savedB);
         relation.bind(a, b);
         if ((!savedA.empty() && !relation.a()) || (!savedB.empty() && !relation.b())) {
-            std::fprintf(stderr,
-                "Relation load: unbound endpoint(s) type='%s' a='%s' b='%s'. "
-                "Identifier properties are kept for a later bind.\n",
-                relation.typeLabel().c_str(), savedA.c_str(), savedB.c_str());
+            // Unbound endpoints are preserved in savedA/savedB for deferred binding (e.g. during Zone hydration)
         }
     }
     return relation;
