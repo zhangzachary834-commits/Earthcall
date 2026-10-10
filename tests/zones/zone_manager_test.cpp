@@ -5,6 +5,11 @@
 #include <filesystem>
 #include <memory>
 #include <cassert>
+#include <fstream>
+#include <sstream>
+
+// Forward declaration for atomicWriteFile which is implemented in ZoneManager.cpp
+bool atomicWriteFile(const std::filesystem::path& finalPath, const std::string& text);
 
 namespace {
 int g_checks = 0;
@@ -19,6 +24,41 @@ void check(bool condition, const std::string& description) {
     }
     std::cout << "  ok: " << description << std::endl;
 }
+void test_atomicWriteFile(const std::filesystem::path& sandbox) {
+    std::cout << "\n[*] Testing atomicWriteFile overload...\n";
+    std::filesystem::path testFile = sandbox / "test_atomic.txt";
+
+    // Test initial write
+    std::string text1 = "hello world";
+    bool result1 = atomicWriteFile(testFile, text1);
+    check(result1, "atomicWriteFile returned true for initial write");
+    check(std::filesystem::exists(testFile), "File was created");
+
+    if (std::filesystem::exists(testFile)) {
+        std::ifstream in(testFile);
+        std::stringstream buffer;
+        buffer << in.rdbuf();
+        check(buffer.str() == text1, "File contains initial text");
+    }
+
+    // Test overwrite
+    std::string text2 = "new content";
+    bool result2 = atomicWriteFile(testFile, text2);
+    check(result2, "atomicWriteFile returned true for overwrite");
+
+    if (std::filesystem::exists(testFile)) {
+        std::ifstream in(testFile);
+        std::stringstream buffer;
+        buffer << in.rdbuf();
+        check(buffer.str() == text2, "File contains overwritten text");
+    }
+
+    // Test error condition - write to invalid path (e.g. non-existent directory)
+    std::filesystem::path invalidPath = sandbox / "non_existent_dir" / "file.txt";
+    bool resultError = atomicWriteFile(invalidPath, "should fail");
+    check(!resultError, "atomicWriteFile returns false for invalid directory path");
+    check(!std::filesystem::exists(invalidPath), "File was not created at invalid path");
+}
 } // namespace
 
 int main() {
@@ -30,6 +70,8 @@ int main() {
     std::filesystem::path sandbox = std::filesystem::temp_directory_path() / "zone_manager_test_sandbox";
     std::filesystem::create_directories(sandbox);
     SaveSystem::setSaveRoot(sandbox.string());
+
+    test_atomicWriteFile(sandbox);
 
     {
         std::cout << "\n[1] Testing basic addZone and state tracking...\n";

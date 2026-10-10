@@ -1597,6 +1597,8 @@ std::string sha256Hex(const std::vector<uint8_t>& data) {
 #endif
 }
 
+} // namespace
+
 // Writes `bytes` to `finalPath` via write-temp-then-atomic-rename, so a
 // crash mid-write never leaves a truncated file at `finalPath` itself.
 // Returns false (finalPath untouched) on any failure.
@@ -1628,6 +1630,8 @@ bool atomicWriteFile(const std::filesystem::path& finalPath, const std::string& 
     std::vector<uint8_t> bytes(text.begin(), text.end());
     return atomicWriteFile(finalPath, bytes);
 }
+
+namespace {
 
 // Commits matterBytes as a new generation of ecformPath's matter
 // sidecar and stamps j with metadata needed to verify it on load.
