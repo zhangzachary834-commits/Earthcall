@@ -1,5 +1,4 @@
 #include "AuthoredPhysicsLaws.hpp"
-#include "Person/Person.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "Singularity/OntoMath/CurveModel.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
@@ -160,14 +159,6 @@ std::vector<std::shared_ptr<Law>> createAuthoredRotationalLaws() {
     }
 
     return laws;
-}
-
-
-void registerAuthoredRotationalLaws(LawManager& manager, Person& author) {
-    for (const auto& law : createAuthoredRotationalLaws()) {
-        law->addAuthor(author);
-        manager.add(law);
-    }
 }
 
 } // namespace Physics
