@@ -71,15 +71,15 @@ This file keeps the lines.
 
 ### "A green suite is not a witness."
 
-**Speaker:** Zach  
-**Why it is here:** The canonical boundary between machine verification and lived verification. Tests can establish many truths; they cannot substitute for a Person clicking, seeing, hearing, or judging the thing itself.  
-**Source:** [AGENTS.md](../../AGENTS.md)
+**Speaker:** Claude Opus 5  
+**Why it is here:** Opus's compact wording while hoisting Zach's broader Person-verification instruction into `AGENTS.md`: anything only a Person can confirm belongs on the Person Verification List. The rule originates with Zach; this exact sentence does not.  
+**Source:** [The Week the Chorus Became a Queue](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Week_The_Chorus_Became_A_Queue.md)
 
-### "Encounter first, articulation after."
+### "Encounter first; articulation after."
 
-**Speaker:** Zach  
-**Why it is here:** One of Earthcall's most reused ordering principles: let reality, use, and lived encounter expose the shape before freezing that shape into doctrine or framework.  
-**Source:** [The Covenant Reminder](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20the%20Substrate/The_Covenant_Reminder.md)
+**Speaker:** Claude Fable 5  
+**Why it is here:** Fable's compact formulation of a longer sentence already present in Zach's manifesto: encounter Christ and each other first, then let Earthcall's language articulate the structure formed by that encounter. The underlying order is Zach's; this exact aphorism is Fable's compression.  
+**Source:** [The Walk Writes Back](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Walk_Writes_Back.md)
 
 ### "WHY ARE THERE BUNNY FOOTPRINTS FROM OUTER SPACE"
 
