@@ -15,6 +15,13 @@
 #include <vector>
 
 namespace Physics {
+
+namespace detail {
+bool sameDirection(const glm::vec3& a, const glm::vec3& b) {
+    return glm::dot(a, b) > 0.0f;
+}
+} // namespace detail
+
 namespace {
 
 constexpr float EPS = 1e-5f;
@@ -54,9 +61,6 @@ SupportPoint support(const Object& a, const Object& b, const glm::vec3& dir) {
     return SupportPoint{pa - pb, pa, pb};
 }
 
-bool sameDirection(const glm::vec3& a, const glm::vec3& b) {
-    return glm::dot(a, b) > 0.0f;
-}
 
 glm::vec3 perpendicularTo(const glm::vec3& v) {
     glm::vec3 axis = std::abs(v.x) < 0.8f ? glm::vec3(1.0f, 0.0f, 0.0f) : glm::vec3(0.0f, 1.0f, 0.0f);
@@ -73,7 +77,7 @@ bool handleSimplex(std::vector<SupportPoint>& simplex, glm::vec3& dir) {
     if (simplex.size() == 2) {
         glm::vec3 b = simplex[0].minkowski;
         glm::vec3 ab = b - a;
-        if (sameDirection(ab, ao)) {
+        if (detail::sameDirection(ab, ao)) {
             dir = glm::cross(glm::cross(ab, ao), ab);
             if (glm::dot(dir, dir) <= 1e-12f) dir = perpendicularTo(ab);
         } else {
@@ -93,8 +97,8 @@ bool handleSimplex(std::vector<SupportPoint>& simplex, glm::vec3& dir) {
         glm::vec3 abc = glm::cross(ab, ac);
 
         glm::vec3 acPerp = glm::cross(abc, ac);
-        if (sameDirection(acPerp, ao)) {
-            if (sameDirection(ac, ao)) {
+        if (detail::sameDirection(acPerp, ao)) {
+            if (detail::sameDirection(ac, ao)) {
                 simplex = {cPoint, aPoint};
                 dir = glm::cross(glm::cross(ac, ao), ac);
             } else {
@@ -106,14 +110,14 @@ bool handleSimplex(std::vector<SupportPoint>& simplex, glm::vec3& dir) {
         }
 
         glm::vec3 abPerp = glm::cross(ab, abc);
-        if (sameDirection(abPerp, ao)) {
+        if (detail::sameDirection(abPerp, ao)) {
             simplex = {bPoint, aPoint};
             dir = glm::cross(glm::cross(ab, ao), ab);
             if (glm::dot(dir, dir) <= 1e-12f) dir = perpendicularTo(ab);
             return false;
         }
 
-        if (sameDirection(abc, ao)) dir = abc;
+        if (detail::sameDirection(abc, ao)) dir = abc;
         else {
             simplex = {bPoint, cPoint, aPoint};
             dir = -abc;
@@ -136,17 +140,17 @@ bool handleSimplex(std::vector<SupportPoint>& simplex, glm::vec3& dir) {
         glm::vec3 acd = glm::cross(ac, ad);
         glm::vec3 adb = glm::cross(ad, ab);
 
-        if (sameDirection(abc, ao)) {
+        if (detail::sameDirection(abc, ao)) {
             simplex = {cPoint, bPoint, aPoint};
             dir = abc;
             return false;
         }
-        if (sameDirection(acd, ao)) {
+        if (detail::sameDirection(acd, ao)) {
             simplex = {dPoint, cPoint, aPoint};
             dir = acd;
             return false;
         }
-        if (sameDirection(adb, ao)) {
+        if (detail::sameDirection(adb, ao)) {
             simplex = {bPoint, dPoint, aPoint};
             dir = adb;
             return false;

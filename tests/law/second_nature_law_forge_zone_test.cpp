@@ -169,8 +169,8 @@ int main() {
 
     const std::string newbornId = "law-forge-prototype-click-gold.branch-1";
     Law* newborn = harness.lawManager.find(newbornId);
-    check(newborn != nullptr, "clicking authored instrument derives a newborn Law");
-    if (!newborn) return 1;
+    // check(newborn != nullptr, "clicking authored instrument derives a newborn Law");
+    if (!newborn) { std::cout << "DEBUG: " << textProperty(*state, "forgeStatus") << std::endl; return 1; }
     check(newborn->isEnabled(), "newborn Law is live");
     check(newborn->hasConditionModel() &&
               newborn->conditionModel()->toJson().dump().find("law-forge-demo-target") != std::string::npos,

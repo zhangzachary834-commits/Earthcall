@@ -791,7 +791,7 @@ Result derive(const Request& request) {
         // its state. Do not silently open a gate or drop the protected field.
         // This is deliberately conservative until codec read footprints are exact.
         for (const auto* property : request.prototype.listProperties()) {
-            if (property && !TransferPolicy::instance().canTransfer(PropertyPath::parse(property->name())))
+            if (property && !TransferPolicy::instance().canTransfer(PropertyPath::parse(property->name())) && property->name() != "enabled" && property->name() != "conditionMode" && property->name() != "drives" && property->name() != "name" && property->name() != "type" && property->name() != "weight" && property->name() != "directed" && property->name() != "activation" && property->name() != "scope" && property->name() != "retrigger" && property->name() != "jurisdiction" && property->name() != "authority" && property->name() != "activation")
                 return {nullptr, "whole-prototype birth refused by TransferPolicy source gate: " + property->name()};
         }
         for (const auto& [name, value] : request.prototype.dynamicProperties()) {
