@@ -23,7 +23,9 @@ int main() {
 
     for (const fs::path& fossil : {
              fs::path("src/ZonesOfEarth/AuthorsOfLaw/Law.cpp.new"),
-             fs::path("src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.cpp")}) {
+             fs::path("src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.cpp"),
+             fs::path("src/Singularity/FirstMoverOntology/Legacy/DesignSystem.cpp"),
+             fs::path("src/Singularity/FirstMoverOntology/Legacy/DesignSystem.hpp")}) {
         if (fs::exists(root / fossil)) {
             std::cerr << "FAIL: Legacy fossil file exists: " << root / fossil << "\n";
             return 1;
