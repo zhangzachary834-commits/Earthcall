@@ -45,6 +45,24 @@ int main() {
         }
     }
 
+    // Both logger source files must remain free of retired mirror sinks.
+    for (const fs::path& source : {
+             fs::path("src/Singularity/Core/Logger.hpp"),
+             fs::path("src/Singularity/Core/Logger.cpp")}) {
+        std::ifstream in(root / source);
+        if (!in) {
+            std::cerr << "FAIL: Could not read " << root / source << "\n";
+            return 1;
+        }
+        const std::string content((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        for (const char* name : {"_legacyLawLogFile", "_legacyLawJsonlFile", "logs/law_audit.log", "logs/law_audit.jsonl"}) {
+            if (content.find(name) != std::string::npos) {
+                std::cerr << "FAIL: Legacy audit mirror fossil exists in " << source << ": " << name << "\n";
+                return 1;
+            }
+        }
+    }
+
     std::cout << "PASS: Legacy fossil files and stubs are absent.\n";
     return 0;
 }

@@ -71,12 +71,6 @@ Logger::Logger() {
 
     std::filesystem::create_directories("logs");
 
-    // Mirror for backwards compatibility with legacy law audit logs
-    std::string legacyLog = "logs/law_audit.log";
-    std::string legacyJsonl = "logs/law_audit.jsonl";
-    _legacyLawLogFile.open(legacyLog, openModeFor(legacyLog));
-    _legacyLawJsonlFile.open(legacyJsonl, openModeFor(legacyJsonl));
-
     // Initialize all standard category subdirectories and streams
     ensureCategoryStreams(LogCategory::Laws);
     ensureCategoryStreams(LogCategory::System);
@@ -176,9 +170,6 @@ void Logger::log(LogCategory cat, const std::string& type, const std::string& me
             cs.logFile << "[" << entry.timestamp << "] [" << entry.type << "] " << entry.message << "\n";
         }
     }
-    if (cat == LogCategory::Laws && _legacyLawLogFile.is_open()) {
-        _legacyLawLogFile << "[" << entry.timestamp << "] [" << entry.type << "] " << entry.message << "\n";
-    }
 #else
     {
         std::lock_guard<std::mutex> lock(_mutex);
@@ -212,8 +203,6 @@ void Logger::backgroundWorker() {
                 if (cs.logFile.is_open()) cs.logFile.flush();
                 if (cs.jsonlFile.is_open()) cs.jsonlFile.flush();
             }
-            if (_legacyLawLogFile.is_open()) _legacyLawLogFile.flush();
-            if (_legacyLawJsonlFile.is_open()) _legacyLawJsonlFile.flush();
             break;
         }
 
@@ -254,22 +243,6 @@ void Logger::backgroundWorker() {
                 j["details"] = entry.details;
                 cs.jsonlFile << j.dump() << "\n";
             }
-
-            // Also mirror Laws category to legacy law_audit logs
-            if (entry.category == LogCategory::Laws) {
-                if (_legacyLawLogFile.is_open()) {
-                    _legacyLawLogFile << "[" << entry.timestamp << "] [" << entry.type << "] " << entry.message << "\n";
-                }
-                if (_legacyLawJsonlFile.is_open()) {
-                    nlohmann::json j;
-                    j["timestamp"] = entry.timestamp;
-                    j["type"] = entry.type;
-                    j["message"] = entry.message;
-                    j["world"] = _activeWorld;
-                    j["details"] = entry.details;
-                    _legacyLawJsonlFile << j.dump() << "\n";
-                }
-            }
         }
 
         for (auto& cs : _streams) {
@@ -279,8 +252,6 @@ void Logger::backgroundWorker() {
                 cs.linesSinceFlush = 0;
             }
         }
-        if (_legacyLawLogFile.is_open()) _legacyLawLogFile.flush();
-        if (_legacyLawJsonlFile.is_open()) _legacyLawJsonlFile.flush();
     }
 }
 
