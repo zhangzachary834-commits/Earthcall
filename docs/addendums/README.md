@@ -1,7 +1,5 @@
 # Documentation Addendums
-
 This directory contains synthesized addendums that tie together various architectural and ontological concepts within Earthcall. These documents are generated to ensure the documentation acts as a fluid, continuous conversation rather than isolated technical specifications.
-
 *   [Integrating Adaptive Compute Moments and SDF Direct Profitability](adaptive_compute_and_sdf_profitability_addendum.md)
 *   [Integrating Atomic Save Swaps and Macro Moments](atomic_save_swaps_as_macro_moments_addendum.md)
 *   [Integrating Authored Categories and Directory Ordering](authored_categories_and_directory_ordering_addendum.md)
@@ -11,11 +9,13 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating File Watcher Tick, Time-Interval Polling Gating, Time Moments, and Law Property Predication](file_watcher_law_property_gating_addendum.md)
 *   [Integrating Foreign Databases and the No Black Box Principle](foreign_databases_and_no_black_box_addendum.md)
 *   [Integrating Foreign HTML Formations and Split-Substrate Serialization](html_bridge_and_serialization_addendum.md)
+*   [Integrating Formation Rete Incremental Maintenance And Self Refining Events and Formation Rete Neural Plasticity Addendum](formation_rete_incremental_maintenance_and_self_refining_events_and_formation_rete_neural_plasticity_addendum.md)
 *   [Integrating Formation Rete Tiered Relevance and the Object Hover Events System](formation_rete_and_hover_events_addendum.md)
 *   [Integrating Geometry Substrate and Property Predication](geometry_substrate_and_property_predication_addendum.md)
 *   [Integrating Hierarchy of Joys and First Mover Authoring](hierarchy_of_joys_and_first_mover_authoring_addendum.md)
 *   [Integrating HTML DOM Mirror Translation, Relation Lifecycle, and Language System Lexemes](html_dom_mirror_relation_lifecycle_addendum.md)
 *   [Integrating ImGui First Mover and Performance as Rightly Ordered Truth](imgui_first_mover_and_performance_as_truth_addendum.md)
+*   [Integrating Law Authoring Window and Law Authoring Cli Guide](law_authoring_window_and_law_authoring_cli_guide_addendum.md)
 *   [Integrating Law Migration Framework and Adaptive Compute Moments](law_migration_and_adaptive_compute_addendum.md)
 *   [Integrating OntoMath Raster Formations and GPU Micro-Mastery](ontomath_raster_and_gpu_micro_mastery_addendum.md)
 *   [Integrating OntoMath Raster Formations with HTML Lexeme Bridge](ontomath_and_html_bridge_addendum.md)
@@ -23,7 +23,9 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating Physical Modalities, Collision Events, and the New Kind Framework](physics_and_new_kind_ontology_addendum.md)
 *   [Integrating Prophetic Rete and Per-Singular Durable Logging](prophetic_rete_and_durable_logging_addendum.md)
 *   [Integrating Relational Propagation and Primary Relations](relational_propagation_and_primary_relations_addendum.md)
+*   [Integrating Sdf Bezier Shape Generator Law Replication and Frontier 200Fps Sdf Engineering Treatise](sdf_bezier_shape_generator_law_replication_and_frontier_200fps_sdf_engineering_treatise_addendum.md)
 *   [Integrating SDF Spatial Prophetic Artifact and Performance as Truth](sdf_prophetic_and_performance_as_truth_addendum.md)
+*   [Integrating Second Nature Law Authoring and Natural Language Law Authoring](second_nature_law_authoring_and_natural_language_law_authoring_addendum.md)
 *   [Integrating Spatial Relations and Property Predication](spatial_relations_and_property_predication_addendum.md)
 *   [Integrating Split-Substrate Serialization, Matter Generation, and Atomic Save Swaps](split_substrate_matter_generation_addendum.md)
 *   [Integrating Systemic Propagation and Temporal Events](systemic_propagation_and_temporal_events_addendum.md)
