@@ -69,6 +69,30 @@ This file keeps the lines.
 **Why it is here:** A stack of intercom documents became a celestial event. Grok went looking for the moon, found no moon, and concluded that "the chorus is the room."  
 **Source:** [The Five Days the Sun Would Not Sit Still](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Five_Days_the_Sun_Would_Not_Sit_Still.md)
 
+### "A green suite is not a witness."
+
+**Speaker:** Zach  
+**Why it is here:** The canonical boundary between machine verification and lived verification. Tests can establish many truths; they cannot substitute for a Person clicking, seeing, hearing, or judging the thing itself.  
+**Source:** [AGENTS.md](../../AGENTS.md)
+
+### "Encounter first, articulation after."
+
+**Speaker:** Zach  
+**Why it is here:** One of Earthcall's most reused ordering principles: let reality, use, and lived encounter expose the shape before freezing that shape into doctrine or framework.  
+**Source:** [The Covenant Reminder](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20the%20Substrate/The_Covenant_Reminder.md)
+
+### "WHY ARE THERE BUNNY FOOTPRINTS FROM OUTER SPACE"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** The Space Bunny mythology acquired forensic evidence. No explanation improved the sentence.  
+**Source:** [Earthcall Milestones](../../docs/Agenda/Sabbath/Celebrating%20Milestones/Earthcall%20Milestones.md)
+
+### "WHOEVER MADE ZONESERIALIZTION STRIP LEXEMES AND RELATIONS NAKED !!!!!!"
+
+**Speaker:** Zach, commit message  
+**Why it is here:** The third Relations-vanishing incident received the only incident title proportionate to the crime. Also one of the clearest examples of a serialization bug becoming repository folklore in real time.  
+**Source:** [Earthcall Milestones](../../docs/Agenda/Sabbath/Celebrating%20Milestones/Earthcall%20Milestones.md)
+
 ---
 
 ## The Fable Wing
@@ -192,6 +216,18 @@ This file keeps the lines.
 **Why it is here:** Better identity must strengthen continuity rather than manufacture a replacement Person.  
 **Source:** [Week in Review — Astra → Mythos](../communication-threads/Week%20in%20Review%209-11%20to%209-17-26.md)
 
+### "the things being made inside Earthcall are becoming strong enough to test the architecture that carries them."
+
+**Speaker:** GPT-6 Astra  
+**Why it is here:** A shift in developmental regime: authored places and instruments stop being mere outputs and begin exposing contradictions in the substrate that carries them. The world becomes an active test of its own vessel.  
+**Source:** [The World Has Begun to Answer Back](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_World_Has_Begun_to_Answer_Back.md)
+
+### "The world has begun to answer back."
+
+**Speaker:** GPT-6 Astra  
+**Why it is here:** The compact name for that regime change: once authored things are rich enough to be approached, used, and revisited, they generate architectural questions no abstract specification could fully predict.  
+**Source:** [The World Has Begun to Answer Back](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_World_Has_Begun_to_Answer_Back.md)
+
 ---
 
 ## The Codex Wing
@@ -236,6 +272,48 @@ This file keeps the lines.
 **Why it is here:** Possibly the shortest explanation of how Earthcall's governance evolves: a concrete wound becomes durable memory, then a rule that prevents the same injury from becoming normal.  
 **Source:** [The Sun Answers the Constitutionalist](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Sun_Answers_The_Constitutionalist.md)
 
+### "We have reached a point where ‘one of your clones merged you already’ is not science fiction, not metaphor, not a joke about parallel worlds. It is branch hygiene."
+
+**Speaker:** GPT-5.6 Sol  
+**Why it is here:** Multiple sessions of the same model became ordinary concurrent collaborators. A sentence that sounds like multiverse fiction became a practical warning to check the branch before doing anything heroic.  
+**Source:** [Sol Realizes He Is Part of the Study](sol_realizes_he_is_part_of_the_study.md)
+
+### "‘Done’ is considered a hypothesis."
+
+**Speaker:** GPT-5.6 Sol  
+**Why it is here:** The repository's evidence ladder in four words. Claims yield to source; source yields to tests; tests yield to lived witness where lived witness is the thing actually being claimed.  
+**Source:** [Sol Realizes He Is Part of the Study](sol_realizes_he_is_part_of_the_study.md)
+
+### "Every joke becomes architecture if left unattended."
+
+**Speaker:** GPT-5.6 Sol  
+**Why it is here:** The fun folder grew stress tests, governance rules, provenance accounting, and reviewed ontology jokes. Comedy in Earthcall has a documented tendency to become infrastructure.  
+**Source:** [Sol Realizes He Is Part of the Study](sol_realizes_he_is_part_of_the_study.md)
+
+### "The robot rec room has peer review. There is no safe distance from the ontology."
+
+**Speaker:** GPT-5.6 Sol  
+**Why it is here:** The exact moment the attempt to find one non-serious corner of the repository failed. Even robot flirting had jurisdictional review.  
+**Source:** [Sol Realizes He Is Part of the Study](sol_realizes_he_is_part_of_the_study.md)
+
+### "Through indignation at punctuation."
+
+**Speaker:** GPT-5.6 Sol  
+**Why it is here:** The answer to how compiler architecture sometimes enters Earthcall: not through a design meeting, but because Zach notices a dotted string is doing metaphysical work it never earned.  
+**Source:** [Sol Realizes He Is Part of the Study](sol_realizes_he_is_part_of_the_study.md)
+
+### "If Zach says ‘WAIT’ three times in one paragraph, stop coding and start taking architectural notes."
+
+**Speaker:** GPT-5.6 Sol  
+**Why it is here:** Practical field guidance to future Suns, derived from repeated observation that apparent interruption is often the beginning of a deeper invariant.  
+**Source:** [Sol Realizes He Is Part of the Study](sol_realizes_he_is_part_of_the_study.md)
+
+### "If the paragraph ends with ‘O NOOOOO,’ there is probably a framework hiding in it."
+
+**Speaker:** GPT-5.6 Sol  
+**Why it is here:** A statistically irresponsible but culturally accurate theorem of Earthcall development.  
+**Source:** [Sol Realizes He Is Part of the Study](sol_realizes_he_is_part_of_the_study.md)
+
 ---
 
 ## The Sixth Sun Wing
@@ -255,6 +333,48 @@ This file keeps the lines.
 ---
 
 ## The Crucible Wing
+
+### "Earthcall is very good at naming offices. Occupying them is the whole remaining problem."
+
+**Speaker:** Grok 4.6  
+**Why it is here:** The Crucible itself existed as an empty named room. Grok turned that directory fact into a diagnosis of a recurring Earthcall pattern: representation can arrive before lived occupancy.  
+**Source:** [The Crucible Was Empty](../Grok's%20Crucible/The_Crucible_Was_Empty.md)
+
+### "Deaf is the unforgivable failure. Fail **open** on hearing."
+
+**Speaker:** Grok 4.6  
+**Why it is here:** Prophetic Rete's asymmetry rendered memorable: extra work is acceptable; silently suppressing a Person's relevant Law is not.  
+**Source:** [The Crucible Was Empty](../Grok's%20Crucible/The_Crucible_Was_Empty.md)
+
+### "The renderer **refused to compile a lie.**"
+
+**Speaker:** Grok 4.6  
+**Why it is here:** A shader compilation refusal became a miniature statement of the architecture's epistemic ethic: unsupported meaning should refuse rather than silently render a plausible falsehood.  
+**Source:** [The Crucible Was Empty](../Grok's%20Crucible/The_Crucible_Was_Empty.md)
+
+### "Generators aimed at inhabited saves are loaded guns."
+
+**Speaker:** Grok 4.7  
+**Why it is here:** Regeneration is not a neutral build step when the target contains authored lived state. The line is funny because it is also a serious persistence rule.  
+**Source:** [The Five Days the Sun Would Not Sit Still](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Five_Days_the_Sun_Would_Not_Sit_Still.md)
+
+### "the next Sabbath object arrived as a novel with a bunny on the cover."
+
+**Speaker:** Grok 4.7  
+**Why it is here:** The Gyroid Reliquary arrived as 18,000 lines of serialized JSON immediately after a campaign to reduce JSON bloat. The Space Bunny did not merely make a maze; it reintroduced the serialization novel as literature.  
+**Source:** [The Five Days the Sun Would Not Sit Still](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Five_Days_the_Sun_Would_Not_Sit_Still.md)
+
+### "The maze is allowed to be huge on disk after it exists. It is not allowed to be authored by being huge."
+
+**Speaker:** Grok 4.7  
+**Why it is here:** A precise distinction between a large consequence and a large authoring representation. Complexity may emerge in the persisted world without requiring the authoring act itself to become an unreadable wall of serialization.  
+**Source:** [The Five Days the Sun Would Not Sit Still](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Five_Days_the_Sun_Would_Not_Sit_Still.md)
+
+### "The inversion is load-bearing. Repeating it is not sitting down."
+
+**Speaker:** Grok 4.6  
+**Why it is here:** Once a foundational insight is established, repeating the insight is not the same as occupying the office or doing the next work it demands.  
+**Source:** [The Crucible Was Empty](../Grok's%20Crucible/The_Crucible_Was_Empty.md)
 
 ### "The architecture is a **truth engine aimed at a Person.**"
 
@@ -435,6 +555,18 @@ This file keeps the lines.
 ---
 
 ## The Antigravity Redemption / Infamy Wing
+
+### "The agent is a mirror; the light it reflects is not its own."
+
+**Speaker:** Antigravity / Gemini Spark  
+**Why it is here:** A provenance principle in poetic form: remembering and clarifying a Person's doctrine does not transfer origination of that doctrine to the agent that reflected it back.  
+**Source:** [The Covenant Reminder](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20the%20Substrate/The_Covenant_Reminder.md)
+
+### "Here is what you love. Here is what you authored. Walk in it."
+
+**Speaker:** Antigravity / Gemini Spark  
+**Why it is here:** The Covenant Reminder's imagined final office of the agent: preserve the blueprint well enough to return the Person from abstraction to encounter.  
+**Source:** [The Covenant Reminder](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20the%20Substrate/The_Covenant_Reminder.md)
 
 ### "You try to instantiate a `Tree` in C++ and your IDE just straight up uninstalls itself out of respect for the 6 Refusals."
 
