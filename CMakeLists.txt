@@ -169,6 +169,7 @@ list(FILTER SRC_FILES EXCLUDE REGEX "src/terminal_entry.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "smoke_.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "scratch/.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Legacy Depricated/.*")
+list(FILTER SRC_FILES EXCLUDE REGEX "src/Singularity/FirstMoverOntology/Legacy/.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Singularity/Foreign/py/.*")
 
 set(IMGUI_DIR "imgui")

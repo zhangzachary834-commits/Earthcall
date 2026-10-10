@@ -117,7 +117,6 @@ Earthcall/
         FirstMoverWindowTools/
           CreatorConsole/
           Menu/
-        Legacy/
         TalkingRobotGuyAPI/
       Foreign/             the Foreign software modality (ForeignChannel at the root)
         Adapters/          MacOSAccessibilityAdapter
