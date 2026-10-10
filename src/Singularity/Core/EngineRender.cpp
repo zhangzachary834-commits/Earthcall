@@ -3,6 +3,7 @@
 #include "../Screen/Renderer.hpp"
 #include "../Screen/ShadingSystem.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "Singularity/Screen/VolumeDensity.hpp"
 #include "../../ZonesOfEarth/ZoneManager.hpp"
 #include "../../ZonesOfEarth/Zone/Zone.hpp"
@@ -59,9 +60,16 @@ namespace Core {
         float right  = top * aspect;
         float left   = -right;
 
-        glm::mat4 proj = currentRenderer().zeroToOneDepth()
-            ? glm::frustumZO(left, right, bottom, top, nearZ, farZ)
-            : glm::frustumNO(left, right, bottom, top, nearZ, farZ);
+        const auto authoredProjection = OntoMath::cameraPerspective(
+            glm::radians(static_cast<double>(fov)),
+            static_cast<double>(aspect),
+            static_cast<double>(nearZ),
+            static_cast<double>(farZ),
+            currentRenderer().zeroToOneDepth());
+        if (!authoredProjection) return;
+        const auto projectionGlm = authoredProjection->toGlmMat4();
+        if (!projectionGlm) return;
+        const glm::mat4 proj = *projectionGlm;
 
         /* -------------------- */
 
@@ -77,7 +85,11 @@ namespace Core {
         }
 
         glm::vec3 lookTarget = _camera->pos + lookDir;
-        glm::mat4 view = glm::lookAt(eyePos, lookTarget, _camera->up);
+        const auto authoredView = OntoMath::cameraLookAt(eyePos, lookTarget, _camera->up);
+        if (!authoredView) return;
+        const auto viewGlm = authoredView->toGlmMat4();
+        if (!viewGlm) return;
+        const glm::mat4 view = *viewGlm;
 
         currentRenderer().setCamera(view, proj, eyePos);
 
@@ -160,25 +172,20 @@ namespace Core {
             source.temporalDelta = sourceDelta;
             source.enabled = light.enabled;
 
+            const uint64_t mathRevision = field->verifiedAuthoredMathRevision();
             if (field->field &&
                 field->field->mode == OntoMath::ScalarField::EvaluationMode::AST &&
                 !field->field->astDefinition.pieces.empty()) {
-                const std::string json = field->field->astDefinition.toJson().dump();
                 source.radianceExpr = &field->field->astDefinition;
-                source.radianceRevision =
-                    static_cast<uint64_t>(std::hash<std::string>{}(json));
+                source.radianceRevision = Rendering::authoredChannelRevision(mathRevision, 0);
             }
             if (field->lightChroma && !field->lightChroma->pieces.empty()) {
-                const std::string json = field->lightChroma->toJson().dump();
                 source.chromaExpr = field->lightChroma.get();
-                source.chromaRevision =
-                    static_cast<uint64_t>(std::hash<std::string>{}(json));
+                source.chromaRevision = Rendering::authoredChannelRevision(mathRevision, 8);
             }
             if (field->lightAngular && !field->lightAngular->pieces.empty()) {
-                const std::string json = field->lightAngular->toJson().dump();
                 source.angularExpr = field->lightAngular.get();
-                source.angularRevision =
-                    static_cast<uint64_t>(std::hash<std::string>{}(json));
+                source.angularRevision = Rendering::authoredChannelRevision(mathRevision, 9);
             }
 
             // Rung 7 structural/value invalidation is intentionally bounded.
@@ -291,6 +298,8 @@ namespace Core {
                 currentRenderer().setHeightGridDdaEnabled(screenChannel->heightGridDdaEnabled);
                 currentRenderer().setSpaceDistortion(float(screenChannel->spaceDistortion));
                 currentRenderer().setSdfRangeProxyEnabled(screenChannel->sdfRangeProxyEnabled);
+                currentRenderer().setVolumeZeroProofEnabled(screenChannel->volumeZeroProofEnabled);
+                currentRenderer().setVolumeSamplesPerChord(screenChannel->volumeSamplesPerChord);
             }
             auto tB0 = std::chrono::steady_clock::now();
             currentRenderer().beginFrame(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH), clearColor);
@@ -384,6 +393,7 @@ namespace Core {
 
         if (_lawManager) {
             if (auto* sc = Singularity::Screen::ScreenChannel::find(*_lawManager)) {
+                sc->senseOutput(currentRenderer(),static_cast<uint32_t>(fbW),static_cast<uint32_t>(fbH));
                 const auto& stats = currentRenderer().frameStats();
                 sc->updateMetrics(static_cast<int>(stats.drawCalls),
                                   static_cast<int>(stats.trianglesDrawn),
@@ -404,6 +414,9 @@ namespace Core {
                                   static_cast<int>(stats.sdfRangeProxyCulledDraws),
                                   static_cast<int>(stats.sdfRangeTraversalDraws),
                                   static_cast<double>(stats.sdfRangeNodeBytesUploaded));
+                sc->updateVolumeZeroProofMetrics(
+                    static_cast<int>(stats.volumeZeroProofCellsProven),
+                    static_cast<int>(stats.volumeZeroProofCellsTotal));
             }
             if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
                 recorder->checkPendingSnapshot(fbW, fbH);

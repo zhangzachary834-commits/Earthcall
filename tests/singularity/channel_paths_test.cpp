@@ -64,6 +64,8 @@ bool typeMatches(const char* declared, const PropertyValue& v) {
     if (t == "transform") return std::holds_alternative<glm::mat4>(v);
     if (t == "text")      return std::holds_alternative<std::string>(v);
     if (t == "toggle")    return std::holds_alternative<bool>(v);
+    if (t == "list")      return std::holds_alternative<std::shared_ptr<PropertyList>>(v);
+    if (t == "dictionary") return std::holds_alternative<std::shared_ptr<PropertyDict>>(v);
     if (t == "number") {
         double n = 0.0;
         return propertyValueToNumber(v, n);
@@ -161,6 +163,54 @@ int main() {
             fail(option.path, option.group,
                  "is offered under a group this test does not know how to own — "
                  "add the being here, or the path is homeless");
+        }
+    }
+
+    // Volume zero-density proof governance: the same authored ScreenChannel
+    // contract as the range proxy, but ON by default (Zach, 2026-10-09) because
+    // its native witness already proves a byte-identical framebuffer.
+    {
+        PropertyValue v;
+        const PropertyPath enabled = PropertyPath::parse("volumeZeroProofEnabled");
+        auto getRes = enabled.getValue(screen, v);
+        if (getRes != PropertyPath::PathResult::Ok ||
+            !std::holds_alternative<bool>(v) || !std::get<bool>(v)) {
+            fail("volumeZeroProofEnabled", "Channel — Screen",
+                 "must resolve as a default-true authorable toggle");
+        }
+        auto setRes = enabled.setValue(screen, PropertyValue(false));
+        if (setRes != PropertyPath::PathResult::Ok || screen.volumeZeroProofEnabled) {
+            fail("volumeZeroProofEnabled", "Channel — Screen",
+                 "must write through the registered ScreenChannel property");
+        }
+        screen.volumeZeroProofEnabled = true;
+
+        PropertyValue samples;
+        const PropertyPath samplesPath = PropertyPath::parse("volumeSamplesPerChord");
+        if (samplesPath.getValue(screen, samples) != PropertyPath::PathResult::Ok ||
+            !std::holds_alternative<int>(samples) || std::get<int>(samples) != 96) {
+            fail("volumeSamplesPerChord", "Channel — Screen",
+                 "must resolve as an authorable int defaulting to the historical 96");
+        }
+        if (samplesPath.setValue(screen, PropertyValue(192)) != PropertyPath::PathResult::Ok ||
+            screen.volumeSamplesPerChord != 192) {
+            fail("volumeSamplesPerChord", "Channel — Screen",
+                 "must write through the registered ScreenChannel property");
+        }
+        screen.volumeSamplesPerChord = 96;
+
+        screen.updateVolumeZeroProofMetrics(31920, 33120);
+        for (const auto& [name, expected] : {std::pair<const char*, int>{"volumeZeroProofCellsProven", 31920},
+                                             std::pair<const char*, int>{"volumeZeroProofCellsTotal", 33120}}) {
+            PropertyValue metric;
+            const auto res = PropertyPath::parse(name).getValue(screen, metric);
+            if (res != PropertyPath::PathResult::Ok || !std::holds_alternative<int>(metric) ||
+                std::get<int>(metric) != expected) {
+                fail(name, "Channel — Screen", "must expose the renderer's proof counter read-only");
+            }
+            if (PropertyPath::parse(name).setValue(screen, PropertyValue(0)) == PropertyPath::PathResult::Ok) {
+                fail(name, "Channel — Screen", "is derived and must refuse writes");
+            }
         }
     }
 

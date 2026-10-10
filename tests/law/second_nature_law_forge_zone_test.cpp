@@ -77,16 +77,12 @@ int main() {
     SecondNatureLawAuthoring::install();
 
     std::filesystem::path saves = "saves";
-    if (!std::filesystem::exists(saves / "zones/SecondNatureLawForge/zone.ecform") &&
-        !std::filesystem::exists(saves / "zones/SecondNatureLawForge/zone.json")) {
+    if (!std::filesystem::exists(saves / "zones/SecondNatureLawForge/zone.json")) {
         saves = std::filesystem::path("..") / "saves";
     }
     saves = std::filesystem::absolute(saves);
 
-    std::filesystem::path sourceZone = saves / "zones/SecondNatureLawForge/zone.ecform";
-    if (!std::filesystem::exists(sourceZone)) {
-        sourceZone = saves / "zones/SecondNatureLawForge/zone.json";
-    }
+    const auto sourceZone = saves / "zones/SecondNatureLawForge/zone.json";
     check(std::filesystem::exists(sourceZone), "Second-Nature Law Forge Zone identity exists");
     if (!std::filesystem::exists(sourceZone)) return 1;
 
@@ -101,7 +97,7 @@ int main() {
             std::chrono::steady_clock::now().time_since_epoch().count()))};
     const auto targetZoneDir = scratch.path / "zones/SecondNatureLawForge";
     std::filesystem::create_directories(targetZoneDir);
-    std::filesystem::copy_file(sourceZone, targetZoneDir / sourceZone.filename());
+    std::filesystem::copy_file(sourceZone, targetZoneDir / "zone.json");
 
     std::size_t copiedRoots = 0;
     for (const auto& refJson : zoneJson["lawRefs"]) {

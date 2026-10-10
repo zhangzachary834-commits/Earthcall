@@ -19,10 +19,10 @@ JOBS="${EARTHCALL_JOBS:-8}"
 configure() {
   cmake -S "$ROOT" -B "$BUILD" -DCMAKE_BUILD_TYPE="${EARTHCALL_BUILD_TYPE:-Debug}" \
     -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-    -DOPENSSL_ROOT_DIR="$ROOT/local_deps/openssl-3.0.13" \
-    -DOPENSSL_INCLUDE_DIR="$ROOT/local_deps/openssl-3.0.13/include" \
-    -DOPENSSL_CRYPTO_LIBRARY="$ROOT/local_deps/openssl-3.0.13/libcrypto.a" \
-    -DOPENSSL_SSL_LIBRARY="$ROOT/local_deps/openssl-3.0.13/libssl.a"
+    -DOPENSSL_ROOT_DIR="$ROOT/local_deps/openssl-3.0.22" \
+    -DOPENSSL_INCLUDE_DIR="$ROOT/local_deps/openssl-3.0.22/include" \
+    -DOPENSSL_CRYPTO_LIBRARY="$ROOT/local_deps/openssl-3.0.22/libcrypto.a" \
+    -DOPENSSL_SSL_LIBRARY="$ROOT/local_deps/openssl-3.0.22/libssl.a"
 }
 
 build() {

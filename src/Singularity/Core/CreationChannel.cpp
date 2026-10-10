@@ -5,6 +5,8 @@
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
+#include <stdexcept>
 #include <cmath>
 #include <string>
 
@@ -111,19 +113,23 @@ void CreationChannel::buildProperties() {
 float CreationChannel::spawnSurfaceOffset(const glm::vec3& normal) const {
     const glm::vec3 n = glm::length(normal) > 1e-6f ? glm::normalize(normal)
                                                     : glm::vec3(0.0f, 1.0f, 0.0f);
-    glm::mat4 rotation(1.0f);
-    rotation = glm::rotate(rotation, glm::radians(cursorSpawnRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
-    rotation = glm::rotate(rotation, glm::radians(cursorSpawnRot.y), glm::vec3(0.0f, 1.0f, 0.0f));
-    rotation = glm::rotate(rotation, glm::radians(cursorSpawnRot.z), glm::vec3(0.0f, 0.0f, 1.0f));
+    const auto rotation = OntoMath::affineEulerXYZDegrees(cursorSpawnRot);
+    if (!rotation) {
+        throw std::runtime_error(
+            "CreationChannel::spawnSurfaceOffset: OntoMath refused authored spawn rotation.");
+    }
+    const auto axisX = OntoMath::transformDirection(*rotation, glm::vec3(1.0f, 0.0f, 0.0f));
+    const auto axisY = OntoMath::transformDirection(*rotation, glm::vec3(0.0f, 1.0f, 0.0f));
+    const auto axisZ = OntoMath::transformDirection(*rotation, glm::vec3(0.0f, 0.0f, 1.0f));
+    if (!axisX || !axisY || !axisZ) {
+        throw std::runtime_error(
+            "CreationChannel::spawnSurfaceOffset: OntoMath refused rotated support axes.");
+    }
 
     const glm::vec3 half = cursorSpawnScale * 0.5f;
-    const glm::vec3 axisX = glm::normalize(glm::vec3(rotation * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
-    const glm::vec3 axisY = glm::normalize(glm::vec3(rotation * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f)));
-    const glm::vec3 axisZ = glm::normalize(glm::vec3(rotation * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f)));
-
-    return std::abs(glm::dot(n, axisX)) * half.x +
-           std::abs(glm::dot(n, axisY)) * half.y +
-           std::abs(glm::dot(n, axisZ)) * half.z;
+    return std::abs(glm::dot(n, glm::normalize(*axisX))) * half.x +
+           std::abs(glm::dot(n, glm::normalize(*axisY))) * half.y +
+           std::abs(glm::dot(n, glm::normalize(*axisZ))) * half.z;
 }
 
 glm::vec3 CreationChannel::computeSpawnPosition(const glm::vec3& cameraPos, const glm::vec3& cameraForward) const {
@@ -153,12 +159,13 @@ void CreationChannel::updatePlacement(const glm::vec3& cameraPos, const glm::vec
 }
 
 glm::mat4 CreationChannel::getCursorSpawnTransform() const {
-    glm::mat4 t = glm::translate(glm::mat4(1.0f), cursorSpawnPos);
-    t = glm::rotate(t, glm::radians(cursorSpawnRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
-    t = glm::rotate(t, glm::radians(cursorSpawnRot.y), glm::vec3(0.0f, 1.0f, 0.0f));
-    t = glm::rotate(t, glm::radians(cursorSpawnRot.z), glm::vec3(0.0f, 0.0f, 1.0f));
-    t = glm::scale(t, cursorSpawnScale);
-    return t;
+    const auto authored = OntoMath::affineTRS(cursorSpawnPos, cursorSpawnRot, cursorSpawnScale);
+    const auto lowered = authored ? authored->toGlmMat4() : std::nullopt;
+    if (!lowered) {
+        throw std::runtime_error(
+            "CreationChannel::getCursorSpawnTransform: OntoMath refused authored spawn transform.");
+    }
+    return *lowered;
 }
 
 std::shared_ptr<Law> createShapeGenerator3DLaw(Singular& author) {

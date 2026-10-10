@@ -92,13 +92,19 @@ every session, on top of the refusals in `AGENTS.md` and the workshop rules in
   an outside `git add -A` will otherwise commit it, and the stale CMake target breaks the
   next full build.
 
-- **Don't claim a doc is verified because you read the source.** Every framework doc in this
-  corpus has a probe in `scratch/probes/` that executes its central claims. Two of those probes
-  caught claims that were plainly wrong on inspection. Run things.
+- **Don't claim a doc is verified because you read the source.** Find the relevant probe in `scratch/probes/` or focused test and execute the central runtime claim before certifying it. Two framework probes
+  caught claims that were plainly wrong on inspection. For documentation-only routing work,
+  check paths, links, and inventories and label the result structural; runtime claims retain
+  their original witness scope. Run things when making a runtime claim.
 
-- **Bounds are doctrine, not limits.** `kMaxChainRounds` (now authorable via LawManager), `kMaxCallDepth = 32`, one pass
-  per fold. If your design needs one raised, the design is in the wrong shape — see
-  `docs/architecture/law/ALGORITHMS_AS_LAW.md` §3.
+- **Explicit bounds are doctrine; policy values may be authored.** `LawManager::maxChainRounds()`
+  defaults to 5 and is authorable/serialized; `kMaxCallDepth = 32` remains the current
+  expression-recursion ceiling; a fold is one pass. Zach clarified that the necessity of
+  bounds does not make every numeric value immutable C++. Expose policy through the
+  existing Law-facing mechanism, respect the configured budget, and do not silently
+  enlarge it to disguise an algorithm’s failure — see
+  `docs/architecture/law/ALGORITHMS_AS_LAW.md` §3 and
+  [Zach’s bounds clarification](Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20the%20Substrate/When_Bounds_Are_Doctrine_And_When_They_Are_Not.md).
 
 ---
 
@@ -113,3 +119,19 @@ Zone. — Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
 ## Architectural Synthesis
 
 For a high-level view on how Earthcall's distinct architectural pillars (like serialization, rendering, and networking) synthesize into a single, cohesive doctrine of Legibility and Agency, see [Unified Architectural Synthesis](architecture/interrelations/UNIFIED_ARCHITECTURAL_SYNTHESIS.md).
+
+## Source edits and completed viewport observations — 2026-10-07
+
+A named direct Screen region binds authored mathematics explicitly; sensing its displayed pixels does not establish an inverse from composited colour to a writable source. Preserve that distinction in callers and guides. A new sample token requests a new dated observation; source edits cannot silently reinterpret old snapshots. Read-only sensor records must also remain protected when a Law copies them into editable memory: getter isolation is necessary because container pointers otherwise alias. Verify both the field's readback and a dependent Law waking after a granular edit. Repeated removal of an authored slot must leave it absent even after its accessor has been materialized.
+
+Native evidence compares observed RGBA bytes with an independently decoded capture from the same completed frame, then compares displayed colours with independent mathematics. CPU selectors and GPU float32 masks may disagree at exactly-zero boundaries; actual sampled bytes remain the witness. See [the region audit](audits/LAW_LINE_SCREEN_REGIONS_2026-10-07.md).
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-07 19:16 PDT; implements Zach's named-region direction.*
+
+## Pointer coordinates meet direct Screen fields
+
+GLFW cursor values are window points while direct Screen samples physical framebuffer pixels. A Law must compare them through a shared coordinate domain, not assume scale one. Interaction's normalized `pointerU`/`pointerV` projections derive from sensed window extent, announce changes and register read-only; authored fields bind `u`/`v` in the viewport. Keep control regions and tool meaning in Laws. Test foreign-panel capture, held-pointer entry and resize as well as colour readback. Newly adopted Laws require an application tick before inspecting their initialized state. [Authored atelier evidence](audits/LAW_LINE_PIXEL_ART_EDITOR_2026-10-07.md).
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18`; Zach's editor direction; native final execution `2026-10-08T07:19:33Z`.*
+
+*Guidance refresh: Codex · GPT-6.1 Sol · session `01a122ec-b377-7391-ad6f-86d11b501d1b` · 2026-10-09 16:10 PDT; reconciles the bounds wording with Zach’s clarification and separates structural checks from runtime witnesses; see [agent compass](AGENT_COMPASS.md#evidence-and-handoff).*

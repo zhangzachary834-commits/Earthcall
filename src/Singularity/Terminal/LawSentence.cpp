@@ -413,11 +413,21 @@ private:
         return readAtomRaw();
     }
 
+    std::string expandPathRoot(const std::string& path,std::size_t offset) {
+        const std::pair<const std::string,std::string>* best=nullptr;
+        for (const auto& entry:_vocab.pathRoots) {
+            if (startsWith(path,entry.first+".") && (!best || entry.first.size()>best->first.size())) best=&entry;
+        }
+        if (!best) return path;
+        if (best->second.empty()) refuse("the authored path root is ambiguous",offset);
+        return best->second+path.substr(best->first.size());
+    }
+
     std::string requirePath() {
         const Atom a = requireAtom("a property path", &Expectation::path);
         mark(a.offset, _pos, "path");
         if (a.quoted || !looksLikePath(a.text)) refuse("'" + a.text + "' is not a property path", a.offset);
-        return a.text;
+        return expandPathRoot(a.text,a.offset);
     }
 
     std::string requireBeing(const std::string& what) {
@@ -932,19 +942,9 @@ private:
     }
 
     PropertyValue structuralValue(const nlohmann::json& value, unsigned depth = 0) {
-        if (depth >= 64) refuse("compiled value exceeds 64 structural levels", _pos);
-        if (value.is_object()) {
-            auto dict = std::make_shared<PropertyDict>();
-            for (auto it = value.begin(); it != value.end(); ++it)
-                dict->elements[it.key()] = structuralValue(it.value(), depth + 1);
-            return dict;
-        }
-        if (value.is_array()) {
-            auto list = std::make_shared<PropertyList>();
-            for (const auto& item : value) list->elements.push_back(structuralValue(item, depth + 1));
-            return list;
-        }
-        return propertyValueFromJson(value);
+        try { return propertyStructureFromJson(value,depth); }
+        catch (const std::exception& e) { refuse(e.what(),_pos); }
+        return {};
     }
 
     Expression expressionAtom() {
@@ -1040,10 +1040,7 @@ private:
             return {PropertyValue(d), nullptr, {}};
         }
         auto a = requireAtom("a literal or property expression", &Expectation::value);
-        std::string path = a.text;
-        for (const auto& [alias, root] : _vocab.pathRoots) {
-            if (startsWith(path, alias + ".")) { path = root + path.substr(alias.size()); break; }
-        }
+        std::string path = expandPathRoot(a.text,a.offset);
         const bool subjectPath = _subjectPaths && !a.quoted && !path.empty() && path.front() != '@' && looksLikePath(path);
         if (!subjectPath && (path.empty() || path.front() != '@' || path.find('.') == std::string::npos))
             refuse("unknown value '" + a.text + "'; use a value Lexeme, quoted string, or qualified property path", a.offset);

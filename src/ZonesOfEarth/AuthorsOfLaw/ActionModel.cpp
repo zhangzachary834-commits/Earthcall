@@ -4,6 +4,7 @@
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Singularity/Core/EventBus.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
@@ -14,6 +15,9 @@
 #include "Relation/Relation.hpp"
 
 #include <ctime>
+#include <iomanip>
+#include <limits>
+#include <sstream>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -613,8 +617,12 @@ ECA::ActionExecutor ActionNode::compile() const {
                                 placement = std::get<glm::mat4>(pv);
                                 placementSet = true;
                             } else if (std::holds_alternative<glm::vec3>(pv)) {
-                                placement = glm::translate(glm::mat4(1.0f), std::get<glm::vec3>(pv));
-                                placementSet = true;
+                                const auto authored = OntoMath::affineTranslation(std::get<glm::vec3>(pv));
+                                const auto lowered = authored ? authored->toGlmMat4() : std::nullopt;
+                                if (lowered) {
+                                    placement = *lowered;
+                                    placementSet = true;
+                                }
                             }
                         }
                         // An authored placement that fails to read must ABORT
@@ -627,12 +635,24 @@ ECA::ActionExecutor ActionNode::compile() const {
                             return;
                         }
                     } else if (auto* subjectObj = dynamic_cast<Object*>(event.subject)) {
-                        placement = glm::translate(glm::mat4(1.0f), subjectObj->getPosition());
+                        const auto authored = OntoMath::affineTranslation(subjectObj->getPosition());
+                        const auto lowered = authored ? authored->toGlmMat4() : std::nullopt;
+                        if (!lowered) {
+                            emitEffect("Spawn", false, "OntoMath refused subject placement");
+                            return;
+                        }
+                        placement = *lowered;
                     } else {
                         PropertyValue posVal;
                         if (lawGetValue(*event.subject, PropertyPath::parse("position"), posVal) &&
                             std::holds_alternative<glm::vec3>(posVal)) {
-                            placement = glm::translate(glm::mat4(1.0f), std::get<glm::vec3>(posVal));
+                            const auto authored = OntoMath::affineTranslation(std::get<glm::vec3>(posVal));
+                            const auto lowered = authored ? authored->toGlmMat4() : std::nullopt;
+                            if (!lowered) {
+                                emitEffect("Spawn", false, "OntoMath refused position placement");
+                                return;
+                            }
+                            placement = *lowered;
                         }
                     }
                 }
@@ -1211,7 +1231,14 @@ ECA::ActionExecutor ActionNode::compile() const {
                 } else if (auto* asObject = dynamic_cast<Object*>(&target)) {
                     position = asObject->getPosition();
                 }
-                newborn->setTransform(glm::translate(glm::mat4(1.0f), position));
+                const auto authoredPlacement = OntoMath::affineTranslation(position);
+                const auto loweredPlacement =
+                    authoredPlacement ? authoredPlacement->toGlmMat4() : std::nullopt;
+                if (!loweredPlacement) {
+                    emitEffect("Create", false, "OntoMath refused placement");
+                    return;
+                }
+                newborn->setTransform(*loweredPlacement);
                 newborn->updateCollisionZone(newborn->getTransform());
 
                 // The newborn is the SUBJECT of this node's children, so the
@@ -1303,6 +1330,13 @@ ECA::ActionExecutor ActionNode::compile() const {
                 // law and law may take it back.
                 if (being->removeDynamicProperty(name)) {
                     emitEffect("RemoveProperty", true);
+                    return;
+                }
+                // A materialized authored accessor may outlive its storage.
+                // Clearing that bridge would grant the deleted slot again as
+                // monostate; repeated removal must leave it absent.
+                if (being->hasAuthoredPropertyAccessor(name)) {
+                    emitEffect("RemoveProperty", false, "no such authored property: " + name);
                     return;
                 }
                 // A first-mover property is a C++ member: the slot cannot be
@@ -1429,12 +1463,80 @@ ECA::ActionExecutor ActionNode::compile() const {
     return [](const ECA::Event&, Singular&) {};
 }
 
+namespace {
+std::string formatOperand(const PropertyValue& operand) {
+    if (std::holds_alternative<std::monostate>(operand)) return "";
+    if (const auto* value = std::get_if<std::string>(&operand)) {
+        bool quote = value->empty();
+        for (unsigned char ch : *value) {
+            if (ch <= 0x20 || ch == 0x7f || ch == '"' || ch == '\\') {
+                quote = true;
+                break;
+            }
+        }
+        if (!quote) return *value;
+        std::string result = "\"";
+        constexpr char hex[] = "0123456789abcdef";
+        for (unsigned char ch : *value) {
+            switch (ch) {
+                case '"': result += "\\\""; break;
+                case '\\': result += "\\\\"; break;
+                case '\n': result += "\\n"; break;
+                case '\r': result += "\\r"; break;
+                case '\t': result += "\\t"; break;
+                default:
+                    if (ch < 0x20 || ch == 0x7f) {
+                        result += "\\u00";
+                        result += hex[ch >> 4];
+                        result += hex[ch & 0x0f];
+                    } else {
+                        result += static_cast<char>(ch);
+                    }
+            }
+        }
+        result += '"';
+        return result;
+    }
+    if (const auto* value = std::get_if<bool>(&operand)) {
+        return *value ? "true" : "false";
+    }
+    auto fmtNum = [](auto value) {
+        std::ostringstream out;
+        out << std::setprecision(std::numeric_limits<decltype(value)>::digits10) << value;
+        return out.str();
+    };
+    if (const auto* value = std::get_if<glm::vec3>(&operand)) {
+        return "(" + fmtNum(value->x) + ", " + fmtNum(value->y) + ", " +
+               fmtNum(value->z) + ")";
+    }
+    if (const auto* value = std::get_if<int>(&operand)) return std::to_string(*value);
+    if (const auto* value = std::get_if<long>(&operand)) return std::to_string(*value);
+    if (const auto* value = std::get_if<float>(&operand)) return fmtNum(*value);
+    if (const auto* value = std::get_if<double>(&operand)) return fmtNum(*value);
+    double number = 0.0;
+    if (propertyValueToNumber(operand, number)) return fmtNum(number);
+    return "...";
+}
+} // namespace
+
 std::string ActionNode::describe() const {
     switch (kind) {
-        case Kind::Set: return "set " + path.toString();
-        case Kind::Add: return "add to " + path.toString();
-        case Kind::Scale: return "scale " + path.toString();
-        case Kind::Lerp: return "lerp " + path.toString();
+        case Kind::Set: {
+            std::string valStr = formatOperand(operand);
+            return "set " + path.toString() + (valStr.empty() ? "" : " " + valStr);
+        }
+        case Kind::Add: {
+            std::string valStr = formatOperand(operand);
+            return "add " + (valStr.empty() ? "" : valStr + " ") + "to " + path.toString();
+        }
+        case Kind::Scale: {
+            std::string valStr = formatOperand(operand);
+            return "scale " + path.toString() + (valStr.empty() ? "" : " by " + valStr);
+        }
+        case Kind::Lerp: {
+            std::string valStr = formatOperand(operand);
+            return "lerp " + path.toString() + (valStr.empty() ? "" : " toward " + valStr);
+        }
         case Kind::Drive:
             return "drive " + path.toString() +
                    (input.empty() ? " from event-time" : " from " + input.toString());
@@ -1448,7 +1550,10 @@ std::string ActionNode::describe() const {
             if (!path.empty()) return "create from " + path.toString();
             return "create object" + (createType.empty() ? std::string()
                                                          : " '" + createType + "'");
-        case Kind::AddProperty: return "grant property '" + propertyName + "'";
+        case Kind::AddProperty: {
+            std::string valStr = formatOperand(operand);
+            return "grant property '" + propertyName + "'" + (valStr.empty() ? "" : " = " + valStr);
+        }
         case Kind::RemoveProperty: return "remove property '" + propertyName + "'";
         case Kind::AddElement:
             return "add " + (elementToken.empty() ? std::string("subject") : elementToken) +

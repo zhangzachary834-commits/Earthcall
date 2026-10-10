@@ -578,12 +578,11 @@ struct WebSocketServer::Impl {
                         if (!targetBeing) {
                             LawManager* lm = ::Core::Engine::instance().getLawManager();
                             if (lm) {
-                                for (const auto& l : lm->getAll()) {
-                                    if (l && (l->getIdentifier() == target || l->getIdentifier() == normTarget || l->name() == target)) {
-                                        targetBeing = l.get();
-                                        break;
-                                    }
-                                }
+                                // Resolve Laws by stable identifier only. Display names are
+                                // not unique, so a name fallback can target the wrong Law.
+                                targetBeing = lm->find(target);
+                                if (!targetBeing && normTarget != target)
+                                    targetBeing = lm->find(normTarget);
                             }
                         }
                     }
@@ -953,6 +952,9 @@ struct WebSocketServer::Impl {
                     else if (created && j.contains("extent")) vec3Of(j["extent"], node->scale);
                     for (auto& [ch, pw] : compiled) *((*node).*(ch->member)) = std::move(pw);
                     if (occluder) *node->volumeOccluder = std::move(*occluder);
+                    // These assignments bypass the property bridges, so the
+                    // node's authored-math revision is bumped here by hand.
+                    if (!compiled.empty() || occluder) node->noteAuthoredMathWritten();
                     node->addStakeholder("volume", mover->toString(), "mcp", std::time(nullptr));
                     if (created) zone.addSpatialField(node);
                 }

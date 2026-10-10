@@ -3,6 +3,7 @@
 #include "Tool.hpp"
 #include "Singularity/Core/Engine.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "GLFW/glfw3.h"
@@ -47,13 +48,16 @@ float distanceSqToSegment(const glm::vec2& point, const glm::vec2& a, const glm:
 
 float activeEraserRadius(Zone& zone) { return 16.0f; }
 
-// void flushKeptStroke removed
-
-void eraseLegacyStrokeSegments(Zone& zone, const glm::vec2& cursor, float radius) {}
-
-void deleteLegacyStrokesAt(Zone& zone, const glm::vec2& cursor, float radius, bool matchColor = false) {}
-
-void configureStrokeTool(Zone& zone, Tool::Type type) {}
+std::optional<glm::mat4> localFromWorld(const glm::mat4& parentWorld,
+                                        const glm::mat4& worldTransform) {
+    const auto parent = OntoMath::MatrixValue::fromGlmMat4(parentWorld);
+    const auto world = OntoMath::MatrixValue::fromGlmMat4(worldTransform);
+    const auto inverseParent = OntoMath::inverseAffine(parent);
+    if (!inverseParent) return std::nullopt;
+    const auto local = OntoMath::affineCompose(*inverseParent, world);
+    if (!local) return std::nullopt;
+    return local->toGlmMat4();
+}
 
 void applyToolTransform(Object* obj, const glm::mat4& worldTransform, const glm::mat4* avatarRoot) {
     if (!obj) return;
@@ -65,8 +69,9 @@ void applyToolTransform(Object* obj, const glm::mat4& worldTransform, const glm:
     if (consoleState.selectedCharacterPart) {
         if (consoleState.selectedCharacterPart->getPrimaryObject() == obj) {
             if (avatarRoot) {
-                glm::mat4 local = glm::inverse(*avatarRoot) * worldTransform;
-                consoleState.selectedCharacterPart->setLocalTransform(local);
+                const auto local = localFromWorld(*avatarRoot, worldTransform);
+                if (!local) return;
+                consoleState.selectedCharacterPart->setLocalTransform(*local);
             } else {
                 consoleState.selectedCharacterPart->setTransform(worldTransform);
             }
@@ -74,8 +79,10 @@ void applyToolTransform(Object* obj, const glm::mat4& worldTransform, const glm:
         }
         for (size_t i = 0; i < consoleState.selectedCharacterPart->getSubObjectCount(); ++i) {
             if (consoleState.selectedCharacterPart->getSubObject(i) == obj) {
-                glm::mat4 localOffset = glm::inverse(consoleState.selectedCharacterPart->getTransform()) * worldTransform;
-                consoleState.selectedCharacterPart->setSubObjectLocalOffset(i, localOffset);
+                const auto localOffset = localFromWorld(
+                    consoleState.selectedCharacterPart->getTransform(), worldTransform);
+                if (!localOffset) return;
+                consoleState.selectedCharacterPart->setSubObjectLocalOffset(i, *localOffset);
                 return;
             }
         }
@@ -184,43 +191,6 @@ Object* pickNearestObject(const std::vector<Object*>& targets,
     }
     return hitObj;
 }
-
-// Commented out - no longer needed since BodyParts now have proper faceTextures
-// and can use raycastFace() like regular Objects.
-// bool raycastCollisionAABB(const Object* obj, const glm::vec3& rayOrigin, const glm::vec3& rayDir, float& outT) {
-//     if (!obj) return false;
-//     glm::vec3 minCorner = obj->collisionZone.corners[0];
-//     glm::vec3 maxCorner = obj->collisionZone.corners[0];
-//     for (int i = 1; i < 8; ++i) {
-//         minCorner = glm::min(minCorner, obj->collisionZone.corners[i]);
-//         maxCorner = glm::max(maxCorner, obj->collisionZone.corners[i]);
-//     }
-//
-//     float tMin = 0.0f;
-//     float tMax = 1e9f;
-//     for (int axis = 0; axis < 3; ++axis) {
-//         float origin = rayOrigin[axis];
-//         float dir = rayDir[axis];
-//         if (fabs(dir) < 1e-6f) {
-//             if (origin < minCorner[axis] || origin > maxCorner[axis]) {
-//                 return false;
-//             }
-//         } else {
-//             float invD = 1.0f / dir;
-//             float t1 = (minCorner[axis] - origin) * invD;
-//             float t2 = (maxCorner[axis] - origin) * invD;
-//             if (t1 > t2) std::swap(t1, t2);
-//             tMin = std::max(tMin, t1);
-//             tMax = std::min(tMax, t2);
-//             if (tMin > tMax) {
-//                 return false;
-//             }
-//         }
-//     }
-//
-//     outT = tMin;
-//     return outT >= 0.0f;
-// }
 
 // Tool class methods are already implemented inline in the header file
 // This file can be used for additional tool functionality in the future
@@ -500,9 +470,12 @@ void Tool::Pottery3D(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
                 scaleZ = std::max(0.05f, scaleZ + delta);
             }
 
-            glm::mat4 newT = glm::translate(glm::mat4(1.0f), translation);
-            newT = glm::scale(newT, glm::vec3(scaleX, scaleY, scaleZ));
-            applyToolTransform(hitObj, newT, avatarRoot);
+            const auto authoredTransform = OntoMath::affineTRS(
+                translation, glm::vec3(0.0f), glm::vec3(scaleX, scaleY, scaleZ));
+            if (authoredTransform) {
+                const auto newT = authoredTransform->toGlmMat4();
+                if (newT) applyToolTransform(hitObj, *newT, avatarRoot);
+            }
             // hitObj->updateCollisionZone(newT); // handled by setTransform/setLocalTransform
         }
     }

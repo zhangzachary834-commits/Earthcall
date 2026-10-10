@@ -8,13 +8,13 @@
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/RenderMaterial.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Menu/stb_easy_font.h"   // draw2DObject's labels
 #include <string>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/quaternion.hpp>
-#include <glm/gtc/matrix_transform.hpp> // glm::translate / glm::rotate for cap placement
 #include <vector>
 #include <algorithm>
 #include <cstring>
@@ -66,12 +66,14 @@ void appendQuadStrip(geom::TessMesh& m, const std::vector<geom::TessVertex>& s) 
 // Bake a transform into a copy of a mesh (positions by xf, normals by its inverse-
 // transpose). Lets the cylinder/cone caps be positioned once instead of via the GL
 // matrix stack at draw time.
-geom::TessMesh transformedMesh(const geom::TessMesh& src, const glm::mat4& xf) {
-    glm::mat3 nrm = glm::mat3(glm::transpose(glm::inverse(xf)));
+geom::TessMesh transformedMesh(const geom::TessMesh& src, const OntoMath::MatrixValue& authoredTransform) {
     geom::TessMesh m = src;
     for (auto& v : m.tris) {
-        v.pos    = glm::vec3(xf * glm::vec4(v.pos, 1.0f));
-        v.normal = glm::normalize(nrm * v.normal);
+        const auto position = OntoMath::transformPoint(authoredTransform, v.pos);
+        const auto normal = OntoMath::transformNormal(authoredTransform, v.normal);
+        if (!position || !normal) return src;
+        v.pos = *position;
+        v.normal = glm::normalize(*normal);
     }
     return m;
 }
@@ -181,12 +183,44 @@ const geom::TessMesh& mergedCubeMesh() {
     return m;
 }
 const geom::TessMesh& sphereUnitMesh()         { static geom::TessMesh m = buildSphereMesh(0.5f, 16, 16); return m; }
-const geom::TessMesh& cylinderSideMesh()       { static geom::TessMesh m = transformedMesh(buildCylinderSideMesh(0.5f, 0.5f, 1.0f, 16, 4), glm::translate(glm::mat4(1.0f), {0,0,-0.5f})); return m; }
-const geom::TessMesh& coneSideMesh()           { static geom::TessMesh m = transformedMesh(buildCylinderSideMesh(0.5f, 0.0f, 1.0f, 16, 4), glm::translate(glm::mat4(1.0f), {0,0,-0.5f})); return m; }
+const geom::TessMesh& cylinderSideMesh() {
+    static geom::TessMesh m = [] {
+        const auto placement = OntoMath::affineTranslation({0, 0, -0.5f});
+        return placement ? transformedMesh(buildCylinderSideMesh(0.5f, 0.5f, 1.0f, 16, 4), *placement)
+                         : buildCylinderSideMesh(0.5f, 0.5f, 1.0f, 16, 4);
+    }();
+    return m;
+}
+const geom::TessMesh& coneSideMesh() {
+    static geom::TessMesh m = [] {
+        const auto placement = OntoMath::affineTranslation({0, 0, -0.5f});
+        return placement ? transformedMesh(buildCylinderSideMesh(0.5f, 0.0f, 1.0f, 16, 4), *placement)
+                         : buildCylinderSideMesh(0.5f, 0.0f, 1.0f, 16, 4);
+    }();
+    return m;
+}
 // Bottom/base cap: at local z=-0.5, flipped to face -Z (as the old glRotatef 180 did).
-const geom::TessMesh& capBottomMesh()          { static geom::TessMesh m = transformedMesh(buildDiskMesh(0.0f, 0.5f, 32, 1), glm::translate(glm::mat4(1.0f), {0,0,-0.5f}) * glm::rotate(glm::mat4(1.0f), float(M_PI), {1,0,0})); return m; }
+const geom::TessMesh& capBottomMesh() {
+    static geom::TessMesh m = [] {
+        const auto translation = OntoMath::affineTranslation({0, 0, -0.5f});
+        const auto rotation = OntoMath::affineAxisAngle({1, 0, 0}, M_PI);
+        const auto placement = translation && rotation
+            ? OntoMath::affineCompose(*translation, *rotation)
+            : std::nullopt;
+        return placement ? transformedMesh(buildDiskMesh(0.0f, 0.5f, 32, 1), *placement)
+                         : buildDiskMesh(0.0f, 0.5f, 32, 1);
+    }();
+    return m;
+}
 // Top cap: at local z=+0.5, facing +Z.
-const geom::TessMesh& capTopMesh()             { static geom::TessMesh m = transformedMesh(buildDiskMesh(0.0f, 0.5f, 32, 1), glm::translate(glm::mat4(1.0f), {0,0,0.5f})); return m; }
+const geom::TessMesh& capTopMesh() {
+    static geom::TessMesh m = [] {
+        const auto placement = OntoMath::affineTranslation({0, 0, 0.5f});
+        return placement ? transformedMesh(buildDiskMesh(0.0f, 0.5f, 32, 1), *placement)
+                         : buildDiskMesh(0.0f, 0.5f, 32, 1);
+    }();
+    return m;
+}
 
 } // namespace
 

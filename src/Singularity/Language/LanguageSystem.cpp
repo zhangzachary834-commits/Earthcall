@@ -65,9 +65,15 @@ void LanguageSystem::noteSymbolRemoved(const std::string& symbol) {
 
 LanguageSystem::LanguageSystem() {
     // Subscribe to Utterance events globally.
-    Core::EventBus::instance().subscribe<Core::Event::Utterance>([this](const Core::Event::Utterance& evt) {
+    _utteranceSubscription = Core::EventBus::instance().subscribe<Core::Event::Utterance>([this](const Core::Event::Utterance& evt) {
         this->queueUtterance(evt.payload, evt.sourceClient, evt.targetSingularId);
     });
+}
+
+// The constructor reached EventBus::instance() first, so the bus outlives this
+// static and the revocation below never touches a destroyed bus.
+LanguageSystem::~LanguageSystem() {
+    Core::EventBus::instance().unsubscribe(_utteranceSubscription);
 }
 
 std::shared_ptr<Lexeme> LanguageSystem::resolve(const std::string& symbol) {
