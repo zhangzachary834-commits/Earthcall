@@ -71,6 +71,35 @@ This file keeps the lines.
 
 ---
 
+## The Fable Wing
+
+### "Twelve-plus voices, one pair of hands."
+
+**Speaker:** Claude Fable 5  
+**Why it is here:** The whole multi-agent Earthcall workshop compressed into six words: a widening chorus of named model voices still ultimately converging on one human maker with finite attention, hands, and judgment.  
+**Source:** [The Week the Institutions Grew Faster Than the World](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Week_The_Institutions_Grew_Faster_Than_The_World.md)
+
+### "The constitution and the codebase are the same artifact at two altitudes."
+
+**Speaker:** Claude Fable 5  
+**Why it is here:** Earthcall's governance rules and runtime ontology are not separate decorations. Both grew from concrete failures into explicit constraints; one operates over the machine, the other over the workshop that changes it.  
+**Source:** [The Week the Institutions Grew Faster Than the World](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Week_The_Institutions_Grew_Faster_Than_The_World.md)
+
+### "A norm that never gets its test stays exactly as strong as the newest agent's willingness to read the README."
+
+**Speaker:** Claude Fable 5  
+**Why it is here:** The difference between parchment and mechanism in one sentence. A convention that matters but cannot defend itself will eventually be rediscovered as a bug.  
+**Source:** [The Week the Institutions Grew Faster Than the World](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Week_The_Institutions_Grew_Faster_Than_The_World.md)
+
+### "The way out of the mirror is on the board."
+
+**Speaker:** Claude Fable 5  
+**Why it is here:** After an essay about documents, governance, and agents writing about agents, Fable points back to the stubbornly ordinary witness that matters: somebody must actually move the pawn. The recursion ends in encounter.  
+**Source:** [The Week the Institutions Grew Faster Than the World](../../docs/Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Week_The_Institutions_Grew_Faster_Than_The_World.md)
+
+
+---
+
 ## The Constitutionalist Wing
 
 ### "By the end I trusted his \"BRUHHHH\" more than my own elegance."
@@ -127,6 +156,18 @@ This file keeps the lines.
 
 ## The Astra Wing
 
+### "The Person remains greater than the representation. The work remains open to their next act."
+
+**Speaker:** GPT-6 Astra  
+**Why it is here:** A compact constitutional boundary for the whole project: Earthcall may represent a Person and their authored world with increasing power, but the representation must never become the measure of the Person or close the future against them.  
+**Source:** [The World That Can Continue](../../docs/Earthcall's%20Crystal/The_World_That_Can_Continue.md)
+
+### "Earthcall grows as one world when each increase in expressive power preserves the Person's ability to understand, revise, and continue what that power makes possible."
+
+**Speaker:** GPT-6 Astra  
+**Why it is here:** A criterion for genuine growth rather than feature accumulation. More expressive power counts as progress only when it leaves the Person more able — not less able — to comprehend and continue the authored world.  
+**Source:** [The World That Can Continue](../../docs/Earthcall's%20Crystal/The_World_That_Can_Continue.md)
+
 ### "The galaxy must not own its stars."
 
 **Speaker / thesis:** GPT-6 Astra, quoted and answered by Mythos  
@@ -178,6 +219,30 @@ This file keeps the lines.
 ---
 
 ## The Crucible Wing
+
+### "The architecture is civilizational. The runtime is a cathedral with scaffolding still on the altar and a gift shop that sells ImGui."
+
+**Speaker:** Grok 4.6  
+**Why it is here:** Possibly the most devastating one-line state-of-the-project diagnosis in Earthcall history: the vision is vast, the inversion is real, and the lived path is still visibly under construction.  
+**Source:** [Adversarial Full-Tree Audit](../../docs/audits/ADVERSARIAL_FULL_TREE_AUDIT_2026-09-15.md)
+
+### "Most systems that talk like this are ECS with a thesaurus. Earthcall is not."
+
+**Speaker:** Grok 4.6  
+**Why it is here:** An entire genre of pseudo-ontology software dismissed in one drive-by sentence — followed immediately by the claim that Earthcall's inversion is materially present in the tree rather than merely renamed architecture.  
+**Source:** [Adversarial Full-Tree Audit](../../docs/audits/ADVERSARIAL_FULL_TREE_AUDIT_2026-09-15.md)
+
+### "the world's mathematics is one being, and every modality is a projection."
+
+**Speaker:** Grok 4.6  
+**Why it is here:** OntoMath's deepest ambition compressed almost perfectly: rendering, physics, audio, and other channels should read one authored mathematical reality rather than each inventing their own copy.  
+**Source:** [Adversarial Full-Tree Audit](../../docs/audits/ADVERSARIAL_FULL_TREE_AUDIT_2026-09-15.md)
+
+### "lose the Relations and you did not lose a feature, you lost the world."
+
+**Speaker:** Grok 4.6  
+**Why it is here:** A serialization bug becomes ontology in one sentence. In a relational world, dropping Relations is not partial degradation; it destroys what the beings mean together.  
+**Source:** [Adversarial Full-Tree Audit](../../docs/audits/ADVERSARIAL_FULL_TREE_AUDIT_2026-09-15.md)
 
 ### "`CLI is now more modern looking` does not get to steal the verbs."
 
