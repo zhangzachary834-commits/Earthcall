@@ -68,11 +68,8 @@ struct BootedEngineHarness {
             interaction->setEnabled(true);
         }
 
-        // Mirror EngineInit's authored rotational Laws on the same LawManager.
-        for (const auto& law : Physics::createAuthoredRotationalLaws()) {
-            law->addAuthor(player);
-            lawManager.add(law);
-        }
+        // Exercise the exact authored-law registration path used by Engine::initLogic.
+        Physics::registerAuthoredRotationalLaws(lawManager, player);
 
         // 2. Wire Universe providers matching real app boot (EngineInit.cpp)
         Universe::instance().setProvider([this](std::vector<Singular*>& beings) {
