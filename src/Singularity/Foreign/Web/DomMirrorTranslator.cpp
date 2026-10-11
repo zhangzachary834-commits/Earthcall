@@ -345,18 +345,86 @@ bool DomMirrorTranslator::applyDelta(const DomDelta& delta, std::string* outErro
 
             case DomDeltaKind::AttributeRemove: {
                 auto nodeForm = findNodeFormation(rec.targetNodeToken);
-                if (nodeForm) {
-                    // Search for attribute member matching attributeName
-                    Singular* memberToRemove = nullptr;
-                    for (Singular* mem : nodeForm->getMembers()) {
-                        auto* lex = dynamic_cast<Singularity::Language::Lexeme*>(mem);
-                        if (lex && lex->getSymbol() == rec.attributeName) {
-                            memberToRemove = lex;
-                            break;
+                auto nodeLexeme = findNodeLexeme(rec.targetNodeToken);
+                if (nodeForm && nodeLexeme) {
+                    std::shared_ptr<Relation> hasAttrRel;
+                    std::shared_ptr<Relation> hasValRel;
+                    std::shared_ptr<Singularity::Language::Lexeme> attrLexeme;
+                    std::shared_ptr<Singularity::Language::Lexeme> valLexeme;
+
+                    auto& rels = _nodeRelations[rec.targetNodeToken];
+                    for (const auto& rel : rels) {
+                        if (rel && rel->typeLabel() == DomRelationType::kHasAttribute && rel->a() == nodeLexeme.get()) {
+                            auto candidateAttr = dynamic_cast<Singularity::Language::Lexeme*>(rel->b());
+                            if (candidateAttr && candidateAttr->getSymbol() == rec.attributeName) {
+                                hasAttrRel = rel;
+                                for (const auto& lex : _allSessionLexemes) {
+                                    if (lex.get() == candidateAttr) {
+                                        attrLexeme = lex;
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
                         }
                     }
-                    if (memberToRemove) {
-                        nodeForm->releaseMember(memberToRemove);
+
+                    if (hasAttrRel && attrLexeme) {
+                        for (const auto& rel : rels) {
+                            if (rel && rel->typeLabel() == DomRelationType::kHasValue && rel->a() == attrLexeme.get()) {
+                                hasValRel = rel;
+                                auto candidateVal = dynamic_cast<Singularity::Language::Lexeme*>(rel->b());
+                                if (candidateVal) {
+                                    for (const auto& lex : _allSessionLexemes) {
+                                        if (lex.get() == candidateVal) {
+                                            valLexeme = lex;
+                                            break;
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+                        }
+
+                        // Remove relation graph edges from nodeForm
+                        nodeForm->removeRelation(hasAttrRel);
+                        if (hasValRel) nodeForm->removeRelation(hasValRel);
+
+                        // Release member lexemes from nodeForm
+                        nodeForm->releaseMember(attrLexeme.get());
+                        if (valLexeme) nodeForm->releaseMember(valLexeme.get());
+
+                        // Remove relations from _nodeRelations
+                        rels.erase(std::remove(rels.begin(), rels.end(), hasAttrRel), rels.end());
+                        if (hasValRel) {
+                            rels.erase(std::remove(rels.begin(), rels.end(), hasValRel), rels.end());
+                        }
+
+                        // Remove relations from _allSessionRelations
+                        _allSessionRelations.erase(
+                            std::remove(_allSessionRelations.begin(), _allSessionRelations.end(), hasAttrRel),
+                            _allSessionRelations.end());
+                        if (hasValRel) {
+                            _allSessionRelations.erase(
+                                std::remove(_allSessionRelations.begin(), _allSessionRelations.end(), hasValRel),
+                                _allSessionRelations.end());
+                        }
+
+                        // Remove lexemes from _allSessionLexemes
+                        _allSessionLexemes.erase(
+                            std::remove(_allSessionLexemes.begin(), _allSessionLexemes.end(), attrLexeme),
+                            _allSessionLexemes.end());
+                        if (valLexeme) {
+                            _allSessionLexemes.erase(
+                                std::remove(_allSessionLexemes.begin(), _allSessionLexemes.end(), valLexeme),
+                                _allSessionLexemes.end());
+                        }
+
+                        // Remove lexemes from LanguageSystem
+                        language.remove("@" + attrLexeme->getIdentifier());
+                        if (valLexeme) {
+                            language.remove("@" + valLexeme->getIdentifier());
+                        }
                     }
                 }
                 break;
