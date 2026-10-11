@@ -101,8 +101,19 @@ void renderPerformanceMetricsContent(Core::Engine* engine) {
         } else if (stats.gpuMainPassTimingSupported) {
             ImGui::TextDisabled("GPU main render pass: waiting for first timestamp sample");
         } else {
-            ImGui::TextDisabled("GPU main render pass: timestamps unsupported by this adapter");
+            ImGui::TextDisabled("GPU main render pass: timestamps unavailable on this device");
         }
+
+        if (stats.gpuVolumePassTimingValid)
+            ImGui::Text("GPU volume pass (delayed): %.2f ms", stats.gpuVolumePassMs);
+        else
+            ImGui::TextDisabled("GPU volume pass: no execution sample");
+        ImGui::Text("Volume CPU preparation: %.2f ms", stats.volumeCpuPrepareMs);
+        ImGui::Text("Volume lowerings / repaired nodes / shader compiles: %u / %u / %u",
+                    stats.volumeLowerings, stats.volumeRepairedNodes, stats.volumeProgramCompiles);
+        ImGui::Text("Volume proof builds: %u", stats.volumeZeroProofBuilds);
+        ImGui::Text("Volume parameter / proof uploads: %zu / %zu bytes",
+                    stats.volumeParameterBytesUploaded, stats.volumeProofBytesUploaded);
 
         // The raymarcher's cost is very close to linear in PIXELS and nothing
         // else — measured 2026-08-31 on the Perlin floor at one fixed horizon

@@ -1374,3 +1374,60 @@ Codex / GPT-6.1 Sol / session `01a122d7` / 2026-10-10T11:52:24.788492-07:00; [ta
 
 - [ ] After rebuilding `earthcall_webgpu`, enter Northern Veil at your usual window size, move through overlaps, and confirm the four curtains retain their colours, shimmer, and independence. This pass hardens sharing; it does not promise an additional frame-rate gain over Opus's shared-shape build. The time-only candidate was not shipped.
 - [ ] In a disposable authored medium fixture, change only extinction/scattering mathematics and confirm the appearance responds independently; check a source with a different clock and a field sampled at a shifted point if using those forms. Native synthetic witnesses cover those boundaries, but inhabited-world acceptance remains yours.
+
+## Northern Veil proof-derived ray support — October 10
+
+Codex / GPT-6.1 Sol / session `01a122d7` / 2026-10-10T19:57:54Z; [task and evidence](../Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md). Continues Zach's approval to remove unnecessary mathematics while preserving the image.
+
+- [ ] After rebuilding/restarting `earthcall_webgpu`, explicitly select Northern Veil and confirm the Zone actually switched (latest scratch full-app attempts stayed in Sanctum of Beginnings, despite an unchanged Northern Veil save). Keep the window visible: Metal deliberately skips fully covered windows. Then walk from the spawn dais into the curtains and look back from the far side at your usual window size. Confirm shimmer, colour, overlap and thin edges retain their appearance, with no new disappearing region or seam as the view turns. Support skipping uses the existing `volumeZeroProofEnabled` switch; native resolution and sample spacing remain unchanged. Outside/inside views select two cached kernels; check first admission separately (the minimum-work continuation now prepares both camera lanes there) and later crossings (native cache witnesses show zero lowering/recompiles). Judge motion and responsiveness as well as appearance; the deep inside view remains expensive. Native finite-view comparisons establish pixel parity, not smoothness everywhere or Person acceptance.
+
+
+## Northern Veil Zone-list recovery — October 10
+
+Codex / GPT-6.1 Sol / session `01a122d7` / 2026-10-11T00:27:10.143532+00:00; [repair and evidence](../Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md#northern-veil-missing-from-the-zone-list-format-discovery-repair), following Zach’s report that the saved Zone vanished from the console.
+
+- [ ] Close the old Earthcall process and reopen the rebuilt WebGPU app. In Creator Console → Zones, clear the list filter, confirm Northern Veil is present, select it, and confirm the active Zone changes to Northern Veil and its curtains appear. Saves were not rewritten. Loading recovery does not establish the remaining performance/appearance checks above.
+
+**Person report:** Zach subsequently loaded the Zone and reported ~12–13 FPS (2026-10-10 PDT). This confirms access recovery; smoothness and the detailed visual/boundary checks remain open. Recorded by Codex / GPT-6.1 Sol / `01a122d7` / 2026-10-11T00:33:19.514668+00:00.
+
+
+## Northern Veil minimum-work candidate and temporal coherence — October 10
+
+Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-10T22:32:41.495077-07:00. [Task](../Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md#minimum-work-continuation-reusable-compilation-and-resident-data).
+
+**Person failure:** Zach saw severe jaggedness and auroras flickering in/out during the timestamp-enabled frozen-baseline diagnostic. That run is rejected. The temporary opt-in was removed; ordinary rendering and current pixel witnesses request no timestamps. Diagnostic warmup also jumped camera views; attribution is not exclusively proved. **Subsequent report:** Zach sees about 15 FPS, sometimes 20 FPS, with comparison attribution uncertain. This is no 30 FPS acceptance and does not individually confirm absence of flicker.
+
+- [ ] Reopen the rebuilt ordinary WebGPU app, enter Northern Veil and walk/turn through all curtains. Confirm stable appearance with no new vanishing region, jagged seam or temporal flicker. Native byte parity at four fixed views/two times does not substitute for this movement check.
+- [ ] Check the FPS window's volume CPU preparation and parameter/proof upload counters after entry settles: unchanged and time-only frames should upload zero parameter/proof bytes. First admission now prepares both camera shader lanes; subsequent inside/outside crossings should not compile equations. GPU volume timing is unavailable on the ordinary timestamp-disabled path, not zero cost.
+- [ ] At your usual framebuffer size, judge sustained movement responsiveness and beauty; the 30 FPS milestone also requires measured moving-route p95 ≤33.3 ms. Report the framebuffer dimensions and view with FPS when convenient. The 2560×1440 stress route is separate evidence.
+
+**Measured limit:** the completed 2560×1440 candidate route has p95 197–298 ms and does not meet the 30 FPS milestone. Window timings vary in both baseline and candidate; no causal FPS gain is established. Fixed native captures match exactly; the live coherence/ordinary-size checks above are still yours. Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-10T23:24:19.962220-07:00
+
+
+## Northern Veil full-lattice opt-in — cutoff decision
+
+Zach selected “remove the cutoff” for the bounded reference. The rebuilt default remains unchanged. Set registered `@screen-channel.volumeOutputErrorBudget` to a positive number (e.g. `0.00392156862745098`) through the existing property/Law tools to enable full-lattice transport; zero restores compatibility. Native synthetic tests prove late emission/background transport and default pixel parity; they do not prove your moving-world acceptance.
+
+- [ ] In Northern Veil, compare zero and positive output budget at the same view/time. Positive mode should retain light behind dense curtains that the old opacity stop could omit; it may look brighter and cost more. Check continuous movement for coherence, jaggedness and flicker at your ordinary framebuffer size.
+- [ ] Return budget to zero and confirm the familiar image returns. Sample-count and exact zero-proof controls should retain their separate meanings. Certified tail shortcuts are still unfinished, so positive mode currently takes all accepted samples.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-10T23:49:10-07:00
+
+
+## Northern Veil GPU time-only preparation — October 11
+
+Zach asked for the highest likely value independent step. Rebuild/restart the WebGPU app: eligible time-only expressions now prepare automatically on the GPU once per participating medium/frame. The authored animation, sampling lattice and default image should remain unchanged. Eight full-resolution captures and native clock/edit/device witnesses pass. Inside offscreen benchmark cost falls 5.58% on pooled repeats; this is not a live FPS guarantee.
+
+- [ ] Move continuously through Northern Veil, especially through curtain boundaries, and verify its animation remains coherent without flicker, vanishing curtains or new jaggedness. Ordinary native timestamp features remain disabled.
+- [ ] Compare FPS at your usual framebuffer/view and report the dimensions with it. Expect a modest improvement from this stage; 30 FPS still requires measured movement p95 ≤33.3 ms plus your acceptance.
+- [ ] After admission settles, volume shader compilation and parameter/proof upload bytes should remain zero during clock advancement. Initial admission can now include one shared preparation module alongside the two camera shader variants. `volumeOutputErrorBudget` and exact zero-proof/sample-count controls retain their separate meanings.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T00:15:29-07:00
+
+
+### Northern Veil exact support traversal — October 11
+
+- [ ] Relaunch rebuilt `earthcall_webgpu`, load Northern Veil, and walk from spawn through the Emerald/Violet and Emerald/Crimson overlaps, reverse and side views. Confirm unchanged detail/colors/opacity and continuous curtains with no flicker or disappearance; compare first and warmed box-boundary crossings for hitches.
+- [ ] At your usual framebuffer size, record dimensions plus movement frame times/FPS from the ordinary metrics window. Final fixed-view offscreen ABBA improves all views with byte-identical captures, but does not establish live movement p95 ≤33.3 ms or 30 FPS acceptance. Note acquisition wait/recording separately if they fluctuate.
+
+[Implementation, exact captures and final paired timings](../../../audits/NORTHERN_VEIL_SUPPORT_TRAVERSAL_2026-10-11.md). No save or authoring changes. **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T02:25:43-07:00

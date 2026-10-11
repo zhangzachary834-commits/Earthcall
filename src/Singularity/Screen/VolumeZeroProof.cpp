@@ -116,6 +116,28 @@ VolumeZeroProof buildVolumeZeroProof(const OntoMath::Piecewise& density,
     Builder builder{density, glm::abs(halfExtent), cellSize,
                     cellSize * marginFraction, proof};
     builder.prove(glm::uvec3(0u), proof.dims);
+
+    // Zach's minimum-work direction: use the same sound cell proofs to bound
+    // where any contribution could remain, once per revision, rather than
+    // walking empty ray prefixes/tails every frame. Unknown cells remain in
+    // the envelope. No new mathematical approximation or denser grid.
+    glm::uvec3 first = proof.dims, last(0u);
+    bool occupied = false;
+    for (uint32_t z = 0; z < proof.dims.z; ++z)
+        for (uint32_t y = 0; y < proof.dims.y; ++y)
+            for (uint32_t x = 0; x < proof.dims.x; ++x) {
+                if (proof.proven(x, y, z)) continue;
+                occupied = true;
+                first = glm::min(first, glm::uvec3(x, y, z));
+                last = glm::max(last, glm::uvec3(x + 1u, y + 1u, z + 1u));
+            }
+    proof.supportMin = glm::vec3(1.0f);
+    proof.supportMax = glm::vec3(-1.0f);
+    if (occupied) {
+        const glm::vec3 margin = cellSize * marginFraction;
+        proof.supportMin = -glm::abs(halfExtent) + glm::vec3(first) * cellSize - margin;
+        proof.supportMax = -glm::abs(halfExtent) + glm::vec3(last) * cellSize + margin;
+    }
     return proof;
 }
 

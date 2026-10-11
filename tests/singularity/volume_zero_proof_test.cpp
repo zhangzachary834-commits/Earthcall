@@ -6,6 +6,7 @@
 // contract. Part 2 loads every medium in the real saves/zones Northern Veil
 // save read-only and checks thousands of points inside proven cells against
 // the exact CPU evaluator. Claude Opus 5.5 · Claude Code · 2026-10-09.
+// Support-envelope extension: Codex / GPT-6.1 Sol / 01a122d7 / 2026-10-10.
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/Screen/VolumeZeroProof.hpp"
 #include "support/test_harness.hpp"
@@ -97,6 +98,12 @@ int main() {
             }
         check(!centreProven, "no cell on the slab's centre plane x=0 is proven");
         check(edgeProven, "cells at x=-10 (density 0) are proven");
+        check(proof.supportMin.x <= -2.0f && proof.supportMax.x >= 2.0f &&
+              proof.supportMin.x > -half.x && proof.supportMax.x < half.x,
+              "slab support encloses every positive x while removing empty prefixes/tails");
+        check(proof.supportMin.y <= -half.y && proof.supportMax.y >= half.y &&
+              proof.supportMin.z <= -half.z && proof.supportMax.z >= half.z,
+              "support retains the full unconstrained y/z extent");
         sweep(slab, proof, half, "slab", 2000);
         check(proof.rangeEvaluations < proof.totalCells,
               "coarse-to-fine proves empty regions in fewer evaluations than cells (" +
@@ -107,11 +114,17 @@ int main() {
         const auto proof = Rendering::buildVolumeZeroProof(zero, glm::vec3(5.0f), 512u);
         check(proof.provenCells == proof.totalCells && proof.rangeEvaluations == 1,
               "identically-zero density is proven everywhere in one evaluation");
+        check(glm::any(glm::greaterThan(proof.supportMin, proof.supportMax)),
+              "all-empty density has an explicitly empty support envelope");
     }
     {
         const auto positive = piecewise(R"({"input":"x","pieces":[{"mathNode":{"op":0,"scalarForm":{"terms":[{"c":0.25,"factors":{}}]}}}]})");
-        check(!Rendering::buildVolumeZeroProof(positive, glm::vec3(5.0f), 512u).any(),
+        const auto proof = Rendering::buildVolumeZeroProof(positive, glm::vec3(5.0f), 512u);
+        check(!proof.any(),
               "a positive constant proves nothing");
+        check(glm::all(glm::lessThanEqual(proof.supportMin, glm::vec3(-5.0f))) &&
+              glm::all(glm::greaterThanEqual(proof.supportMax, glm::vec3(5.0f))),
+              "unproven positive density retains its entire support");
     }
     {
         // D = t: time is never bound by the proof, so nothing may be proven.

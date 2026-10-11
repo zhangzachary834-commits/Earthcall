@@ -120,9 +120,16 @@ struct EmissionExpressionLayout {
     std::string error;
 };
 
+// Kernel-derived time-only evaluation recipe; slots live in the compiled
+// parameter layout, never in authored or serialized mathematics.
+struct KernelVolumeTimeSlot { size_t slot; std::string expression; };
+
 struct Program {
     std::string        wgsl;    // full shader source; identical for same-shaped trees
     std::vector<float> params;  // the numbers this instance needs, in emitted order
+    std::vector<KernelVolumeTimeSlot> kernelVolumeTimeSlots;
+    std::string kernelVolumePreparationWgsl;
+    uint32_t kernelVolumePreparationInstanceBase = 0;
 
     // True when the tree contains an implicit f(x,y,z)=0 leaf. Such a field is an
     // ISO-SURFACE VALUE, not a distance: it can be arbitrarily larger than the
@@ -273,6 +280,8 @@ ScalarExpressionLayout inspectOccluderLayout(const geom::SdfNode* root);
 // depth-aware volume-composite shader. This is intentionally separate from
 // drawImplicit: a participating medium is not a hard surface and must not own
 // frag_depth merely because both paths use OntoMath.
+// trimProofSupport selects a Kernel loop specialization with identical channel
+// evaluators/parameter slots; WebGpuRenderer caches it alongside the old loop.
 Program compileVolume(const OntoMath::Piecewise* densityExpr,
                       const OntoMath::Piecewise* extinctionExpr = nullptr,
                       const OntoMath::Piecewise* scatteringExpr = nullptr,
@@ -282,7 +291,8 @@ Program compileVolume(const OntoMath::Piecewise* densityExpr,
                       const geom::SdfNode* occluderSdf = nullptr,
                       const OntoMath::Piecewise* lightRadianceExpr = nullptr,
                       const OntoMath::Piecewise* lightChromaExpr = nullptr,
-                      const OntoMath::Piecewise* lightAngularExpr = nullptr);
+                      const OntoMath::Piecewise* lightAngularExpr = nullptr,
+                      bool trimProofSupport = true);
 
 // V5 world-medium program input. This is compiler transport data only; it does
 // not create a Medium ontology. Each entry preserves the independent authored
@@ -300,11 +310,37 @@ struct VolumeProgramInput {
     const OntoMath::Piecewise* lightAngularExpr = nullptr;
 };
 
-// V5 exact overlap baseline. Reuses compileVolume() for every member's evaluator
+// Kernel-derived evaluator fragment, independent of camera and proxy/marcher.
+// Numeric slots retain the production emitter's order; clocks remain bindings.
+struct KernelVolumeCompilerDag;
+struct KernelVolumeEvaluator {
+    Program program;
+    bool hasSharing = false;
+    bool densityUsesSharing = false;
+    // Kernel-only retained lowering; no authored IDs or serialized fields.
+    std::shared_ptr<KernelVolumeCompilerDag> kernel;
+    uint32_t repairedNodes = 0;
+};
+KernelVolumeEvaluator lowerVolumeEvaluator(const VolumeProgramInput& input);
+// parametersOnly requires the caller to have verified unchanged parameter layout,
+// evaluation domains and sharing partition. Numeric equality can split/join a
+// sharing group; those edits must use structural repair instead.
+KernelVolumeEvaluator repairVolumeEvaluator(const VolumeProgramInput& input,
+                                            const KernelVolumeEvaluator& previous,
+                                            bool parametersOnly);
+Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trimProofSupport = true);
+Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
+                         const std::vector<KernelVolumeEvaluator>& evaluators,
+                         bool trimProofSupport = true);
+
+// V5 exact overlap baseline. Reuses direct lowerVolumeEvaluator() output for every member's evaluator
 // semantics, then composes those evaluators into one shared ray integral. The
 // caller supplies one VolumeInstanceData record per medium after a union-bounds
 // header record; each medium's paramOffset points at its own parameter segment.
-Program compileVolumeSet(const std::vector<VolumeProgramInput>& media);
+// Kernel specialization only: false keeps the original sampling loop.
+// Renderer caches both lanes and selects from the camera/authored boxes.
+Program compileVolumeSet(const std::vector<VolumeProgramInput>& media,
+                         bool trimProofSupport = true);
 
 // Value-only companion to compileVolume(). Recollects numeric parameter slots
 // without regenerating shader source when structure is unchanged.

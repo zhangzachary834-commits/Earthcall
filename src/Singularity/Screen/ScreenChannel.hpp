@@ -114,6 +114,10 @@ public:
     // of multiplying it (unified quadrature, Zach 2026-10-09). A runtime
     // uniform: changing it never recompiles. The renderer clamps to [1, 8192].
     int       volumeSamplesPerChord = 96;
+    // Zero preserves legacy integration. Positive opts into full-lattice
+    // transport unless a remaining-contribution proof certifies termination.
+    // Renderer caps the final-output budget at one 8-bit level per channel.
+    double    volumeOutputErrorBudget = 0.0;
     // Derived: cells proven empty / cells tiled, over the media drawn last frame.
     int       volumeZeroProofCellsProven = 0;
     int       volumeZeroProofCellsTotal = 0;

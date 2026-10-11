@@ -199,6 +199,20 @@ int main() {
         }
         screen.volumeSamplesPerChord = 96;
 
+        PropertyValue budget;
+        const PropertyPath budgetPath = PropertyPath::parse("volumeOutputErrorBudget");
+        if (budgetPath.getValue(screen, budget) != PropertyPath::PathResult::Ok ||
+            !std::holds_alternative<double>(budget) || std::get<double>(budget) != 0.0) {
+            fail("volumeOutputErrorBudget", "Channel — Screen",
+                 "must resolve as an authorable numeric property defaulting to zero");
+        }
+        if (budgetPath.setValue(screen, PropertyValue(1.0 / 255.0)) != PropertyPath::PathResult::Ok ||
+            screen.volumeOutputErrorBudget != 1.0 / 255.0) {
+            fail("volumeOutputErrorBudget", "Channel — Screen",
+                 "must write through the registered ScreenChannel property");
+        }
+        screen.volumeOutputErrorBudget = 0.0;
+
         screen.updateVolumeZeroProofMetrics(31920, 33120);
         for (const auto& [name, expected] : {std::pair<const char*, int>{"volumeZeroProofCellsProven", 31920},
                                              std::pair<const char*, int>{"volumeZeroProofCellsTotal", 33120}}) {
