@@ -16,6 +16,7 @@
 #include "ConstructedBeing/Singular/Object/Geometry/Patch.hpp"
 #include "Singularity/Screen/HighlightSystem.hpp"
 #include "Singularity/Screen/Camera.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 #include <string>
@@ -108,7 +109,9 @@ namespace Rendering {
             if (engine && engine->getCamera()) {
                 pos = engine->getCamera()->getPos() + engine->getCamera()->getFront() * 3.0f;
             }
-            return glm::translate(glm::mat4(1.0f), pos);
+            const auto authored = OntoMath::affineTranslation(pos);
+            if (!authored) return glm::mat4(1.0f);
+            return authored->toGlmMat4().value_or(glm::mat4(1.0f));
         }
 
         Object* spawnAuthoredObject(ZoneManager& zoneMgr,
@@ -147,8 +150,15 @@ namespace Rendering {
                 dup->setShape(sel->getShapeKind(), sel->getShapeParams());
                 if (sel->hasPatch()) dup->setBezierPatch(sel->getPatchData());
                 if (sel->hasField()) dup->setFieldShape(sel->getFieldData(), glm::vec3(1.1f));
-                glm::mat4 t = sel->getTransform();
-                t = glm::translate(t, glm::vec3(1.0f, 0.0f, 0.0f));
+                const auto original =
+                    OntoMath::MatrixValue::fromGlmMat4(sel->getTransform());
+                const auto offset =
+                    OntoMath::affineTranslation(glm::vec3(1.0f, 0.0f, 0.0f));
+                const auto translated =
+                    offset ? OntoMath::affineCompose(original, *offset) : std::nullopt;
+                const glm::mat4 t = translated
+                    ? translated->toGlmMat4().value_or(sel->getTransform())
+                    : sel->getTransform();
                 dup->setTransform(t);
                 dup->updateCollisionZone(dup->getTransform());
                 if (auto srcMat = sel->ownMaterial()) {

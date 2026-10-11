@@ -1,4 +1,5 @@
 #include "PersonPerspective.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
@@ -209,11 +210,21 @@ void PersonPerspective::reset() {
 }
 
 glm::mat4 PersonPerspective::getViewMatrix() const {
-    return glm::lookAt(_viewState.position, _viewState.target, _viewState.up);
+    const auto authored =
+        OntoMath::cameraLookAt(_viewState.position, _viewState.target, _viewState.up);
+    if (!authored) return glm::mat4(1.0f);
+    const auto lowered = authored->toGlmMat4();
+    return lowered.value_or(glm::mat4(1.0f));
 }
 
 glm::mat4 PersonPerspective::getProjectionMatrix(float aspectRatio) const {
-    return glm::perspective(glm::radians(_settings.fov), aspectRatio, _settings.nearPlane, _settings.farPlane);
+    const auto authored = OntoMath::cameraPerspective(
+        glm::radians(_settings.fov), aspectRatio,
+        _settings.nearPlane, _settings.farPlane,
+        false); // PersonPerspective's standalone legacy contract is OpenGL [-1,1] depth.
+    if (!authored) return glm::mat4(1.0f);
+    const auto lowered = authored->toGlmMat4();
+    return lowered.value_or(glm::mat4(1.0f));
 }
 
 // Private helper methods
