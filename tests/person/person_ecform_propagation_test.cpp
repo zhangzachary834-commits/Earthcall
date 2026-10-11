@@ -58,7 +58,7 @@ int main() {
         {"owner", "OldName"},
         {"zones", nlohmann::json::array({{{"identifier", "Zone1"}, {"owner", "OldName"}}})}
     };
-    std::string ecformPath = (env.tempDir / "worlds" / "world1.ecsave").string();
+    std::string ecformPath = (env.tempDir / "worlds" / "world1.ecform").string();
     SaveSystem::writeSaveData(worldData, "world1", SaveSystem::SaveType::WORLD);
 
     assert(std::filesystem::exists(ecformPath));

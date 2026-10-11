@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     std::string world = argv[1];
     bool adapter = true;
     bool direct = true;
-    int frames = 240;
+    int frames = 10;
     for (int i = 2; i < argc; ++i) {
         const std::string arg = argv[i];
         if (arg == "--adapter=on") adapter = true;
