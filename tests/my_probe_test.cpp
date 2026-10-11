@@ -44,7 +44,7 @@ int main() {
     const fs::path source = fs::absolute(
         TestSupport::resolveRealWorldPath("saves/worlds/synthesis_studio_living.json"));
     if (!fs::is_regular_file(source)) {
-        std::cerr << "my_probe_test: required authored fixture missing: " << source << '\\n';
+        std::cerr << "my_probe_test: required authored fixture missing: " << source << '\n';
         return 1;
     }
 
@@ -78,7 +78,7 @@ int main() {
     
     }
     if (TestSupport::hashDirectoryTree(realRoot) != before) {
-        std::cerr << "my_probe_test: authored saves changed during probe!\\n";
+        std::cerr << "my_probe_test: authored saves changed during probe!\n";
         return 1;
     }
     return 0;
