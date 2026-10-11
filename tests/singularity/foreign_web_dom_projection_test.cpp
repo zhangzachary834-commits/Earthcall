@@ -136,6 +136,59 @@ int main() {
         assert(language.findById("page-session.a91f4b2c.node.10") == nullptr);
     }
 
+    // 5b. Attribute Removal via Relation Graph Edge Traversal Invariant
+    {
+        // Add attribute 'title="Search Box"' to node.6 via AttributeSet delta
+        DomDelta setDelta;
+        setDelta.pageSessionId = "page-session.a91f4b2c";
+        setDelta.sequence = 2;
+        setDelta.originOperationId = "op.act.002";
+        DomDeltaRecord setRecord;
+        setRecord.kind = DomDeltaKind::AttributeSet;
+        setRecord.targetNodeToken = "node.6";
+        setRecord.attributeName = "title";
+        setRecord.attributeValue = "Search Box";
+        setDelta.records.push_back(setRecord);
+
+        std::string err;
+        bool setOk = translator.applyDelta(setDelta, &err);
+        assert(setOk);
+        assert(err.empty());
+
+        auto node6Form = translator.findNodeFormation("node.6");
+        assert(node6Form != nullptr);
+
+        // Add a non-attribute member lexeme with the same symbol ("title") to node.6's formation
+        // to prove that AttributeRemove operates on formal relation graph edges, not symbol spelling.
+        auto sameSpelledLexeme = language.intern("title", "page-session.a91f4b2c.manual.title.content");
+        node6Form->addMember(sameSpelledLexeme.get());
+        assert(node6Form->hasMember(sameSpelledLexeme.get()));
+
+        // Apply AttributeRemove delta for attribute "title"
+        DomDelta removeDelta;
+        removeDelta.pageSessionId = "page-session.a91f4b2c";
+        removeDelta.sequence = 3;
+        removeDelta.originOperationId = "op.act.003";
+        DomDeltaRecord removeRecord;
+        removeRecord.kind = DomDeltaKind::AttributeRemove;
+        removeRecord.targetNodeToken = "node.6";
+        removeRecord.attributeName = "title";
+        removeDelta.records.push_back(removeRecord);
+
+        bool removeOk = translator.applyDelta(removeDelta, &err);
+        assert(removeOk);
+        assert(err.empty());
+
+        // Prove the attribute and value lexemes were released, while sameSpelledLexeme remains in node.6's formation
+        assert(node6Form->hasMember(sameSpelledLexeme.get()));
+        assert(language.findById("page-session.a91f4b2c.attr.node.6.3") == nullptr);
+        assert(language.findById("page-session.a91f4b2c.attrval.node.6.3") == nullptr);
+
+        // Clean up the manual content lexeme
+        node6Form->releaseMember(sameSpelledLexeme.get());
+        language.remove("@page-session.a91f4b2c.manual.title.content");
+    }
+
     // 6. Navigation / Retirement Lifecycle
     {
         // Prove retire completely clears live mirror

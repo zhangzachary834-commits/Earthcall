@@ -422,20 +422,27 @@ void from_json(const nlohmann::json& j, Object& obj){
         const auto& pj = j["polyhedron"];
         std::vector<glm::vec3> verts;
         std::vector<std::vector<int>> faces;
-        if (pj.contains("vertices")) {
+        if (pj.contains("vertices") && pj["vertices"].is_array()) {
             const auto& vs = pj["vertices"];
             verts.reserve(vs.size());
             for (const auto& vj : vs) {
-                if (vj.size() >= 3) verts.emplace_back(vj[0].get<float>(), vj[1].get<float>(), vj[2].get<float>());
+                if (vj.is_array() && vj.size() >= 3) {
+                    verts.emplace_back(vj[0].get<float>(), vj[1].get<float>(), vj[2].get<float>());
+                } else if (vj.is_object() && vj.contains("x") && vj.contains("y") && vj.contains("z")) {
+                    verts.emplace_back(vj["x"].get<float>(), vj["y"].get<float>(), vj["z"].get<float>());
+                }
             }
         }
-        if (pj.contains("faces")) {
+        if (pj.contains("faces") && pj["faces"].is_array()) {
             const auto& fs = pj["faces"];
             faces.reserve(fs.size());
             for (const auto& fj : fs) {
+                if (!fj.is_array()) continue;
                 std::vector<int> face;
                 face.reserve(fj.size());
-                for (const auto& idx : fj) face.push_back(idx.get<int>());
+                for (const auto& idx : fj) {
+                    if (idx.is_number()) face.push_back(idx.get<int>());
+                }
                 faces.push_back(std::move(face));
             }
         }
@@ -452,16 +459,18 @@ void from_json(const nlohmann::json& j, Object& obj){
     
      
 
-    if (j.contains("faceColors")) {
+    if (j.contains("faceColors") && j["faceColors"].is_array()) {
         const auto& faceCols = j["faceColors"];
         for (size_t f = 0; f < faceCols.size() && f < 6; ++f) {
-            obj.faceColors[f][0] = faceCols[f][0].get<float>();
-            obj.faceColors[f][1] = faceCols[f][1].get<float>();
-            obj.faceColors[f][2] = faceCols[f][2].get<float>();
-            if (ownsItsSurface && !texturesAlreadyHere) {
-                obj.setFaceColor(static_cast<int>(f),
-                                 obj.faceColors[f][0], obj.faceColors[f][1],
-                                 obj.faceColors[f][2]);
+            if (faceCols[f].is_array() && faceCols[f].size() >= 3) {
+                obj.faceColors[f][0] = faceCols[f][0].get<float>();
+                obj.faceColors[f][1] = faceCols[f][1].get<float>();
+                obj.faceColors[f][2] = faceCols[f][2].get<float>();
+                if (ownsItsSurface && !texturesAlreadyHere) {
+                    obj.setFaceColor(static_cast<int>(f),
+                                     obj.faceColors[f][0], obj.faceColors[f][1],
+                                     obj.faceColors[f][2]);
+                }
             }
         }
     }
