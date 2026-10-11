@@ -102,6 +102,15 @@ class TestPortfolioLiveRoute(unittest.TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertNotIn("Access-Control-Allow-Origin", response.headers)
 
+    def test_empty_origin_is_refused(self):
+        response = self.client.get("/api/portfolio/live", headers={"Origin": ""})
+        self.assertEqual(response.status_code, 403)
+        self.assertNotIn("Access-Control-Allow-Origin", response.headers)
+
+        response_missing = self.client.get("/api/portfolio/live")
+        self.assertEqual(response_missing.status_code, 403)
+        self.assertNotIn("Access-Control-Allow-Origin", response_missing.headers)
+
     def test_private_network_preflight_is_explicitly_allowed_for_portfolio(self):
         origin = "https://zhangzachary834-commits.github.io"
         response = self.client.options(
