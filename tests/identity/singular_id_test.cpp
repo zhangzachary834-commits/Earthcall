@@ -75,6 +75,16 @@ void testBase32() {
     // "my" canonically encodes the byte 'f'. If unused tail bits are ignored,
     // "mz" decodes to the same complete byte and creates an alias spelling.
     CHECK(!base32Decode("mz", out));
+
+    // Error paths should return false and leave `out` unmodified.
+    out = {1, 2, 3};
+    CHECK(!base32Decode("my=", out)); // '=' padding character is strictly prohibited.
+    CHECK(out.size() == 3);
+    CHECK(out[0] == 1 && out[1] == 2 && out[2] == 3);
+
+    CHECK(!base32Decode("my8", out)); // '8' is outside the alphabet.
+    CHECK(out.size() == 3);
+    CHECK(out[0] == 1 && out[1] == 2 && out[2] == 3);
 }
 
 void testMintOpaque() {
