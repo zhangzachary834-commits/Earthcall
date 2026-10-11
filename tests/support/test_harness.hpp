@@ -295,8 +295,10 @@ struct RealSaveTreeGuard {
         if (realSaves.empty() || backup.empty()) return;
         if (!std::filesystem::is_directory(backup)) std::terminate();
         for (const auto& entry : backedUpEntries) {
-            if (!std::filesystem::exists(backup / entry)) {
-                std::terminate(); // Never delete original data without its snapshot.
+            std::error_code snapshotEc;
+            const auto snapshotStatus = std::filesystem::symlink_status(backup / entry, snapshotEc);
+            if (snapshotEc || snapshotStatus.type() == std::filesystem::file_type::not_found) {
+                std::terminate(); // Never delete original data without its snapshot, including symlinks.
             }
         }
         std::error_code ec;
