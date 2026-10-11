@@ -92,6 +92,14 @@ int main() {
     check(SaveSystem::resolveHomeIdentityPath(homeId) == legacyHomeJson.string(),
           "resolveHomeIdentityPath resolves legacy home.json when home.ecform does not exist");
 
+    // Verify readZoneIdentity and readHomeIdentity correctly load legacy .json prior to .ecform creation
+    nlohmann::json legacyZoneRead = SaveSystem::readZoneIdentity(zoneId);
+    nlohmann::json legacyHomeRead = SaveSystem::readHomeIdentity(homeId);
+    check(legacyZoneRead.value("name", "") == "Legacy Zone",
+          "readZoneIdentity reads legacy zone.json before zone.ecform exists");
+    check(legacyHomeRead.value("name", "") == "Legacy Home",
+          "readHomeIdentity reads legacy home.json before home.ecform exists");
+
     // Write primary .ecform identities via writeZoneIdentity and writeHomeIdentity
     nlohmann::json zoneDoc{
         {"identifier", zoneId},

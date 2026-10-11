@@ -1384,10 +1384,8 @@ bool writeZoneIdentity(const std::string& identifier, const nlohmann::json& j) {
 
 nlohmann::json readZoneIdentity(const std::string& identifier) {
     if (!zoneIdentityExists(identifier)) return nlohmann::json();
-    std::string folder = ensureSaveTypeFolder(SaveType::ZONE);
-    if (folder.empty()) return nlohmann::json();
-    const std::string safe = sanitizeLabel(identifier);
-    const auto path = (std::filesystem::path(folder) / safe / "zone.ecform").string();
+    const std::string path = resolveZoneIdentityPath(identifier);
+    if (path.empty()) return nlohmann::json();
     return readSaveData(path);
 }
 
@@ -1607,10 +1605,8 @@ bool writeHomeIdentity(const std::string& identifier, const nlohmann::json& j) {
 
 nlohmann::json readHomeIdentity(const std::string& identifier) {
     if (!homeIdentityExists(identifier)) return nlohmann::json();
-    std::string folder = ensureSaveTypeFolder(SaveType::HOME);
-    if (folder.empty()) return nlohmann::json();
-    const std::string safe = sanitizeLabel(identifier);
-    const auto path = (std::filesystem::path(folder) / safe / "home.ecform").string();
+    const std::string path = resolveHomeIdentityPath(identifier);
+    if (path.empty()) return nlohmann::json();
     return readSaveData(path);
 }
 
