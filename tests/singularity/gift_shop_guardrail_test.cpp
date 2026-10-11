@@ -11,9 +11,11 @@
 //
 // Run from the repository root; CMake pins that working directory below.
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <regex>
 #include <string>
 #include <vector>
 
@@ -21,23 +23,12 @@ namespace fs = std::filesystem;
 
 namespace {
 
-struct SemanticCall {
-    const char* token;
-    const char* name;
-};
-
-constexpr SemanticCall kTargetCalls[] = {
-    {"glm::inverse(", "inverse"},
-    {"glm::transpose(", "transpose"},
-    {"glm::determinant(", "determinant"},
-    {"glm::translate(", "translate"},
-    {"glm::rotate(", "rotate"},
-    {"glm::scale(", "scale"},
-    {"glm::lookAt(", "lookAt"},
-    {"glm::perspective", "perspective*"},
-    {"glm::frustum", "frustum*"},
-    {"glm::ortho", "ortho*"},
-};
+// Match C++ call syntax rather than literal substrings: spaces, newlines,
+// stripped comments, and optional explicit template arguments must not reopen
+// the GLM gift shop. A prefix-family match still requires an actual call.
+const std::regex kSemanticCallPattern(
+    R"(\bglm\s*::\s*(inverse|transpose|determinant|translate|rotate|scale|lookAt|perspective[A-Za-z0-9_]*|frustum[A-Za-z0-9_]*|ortho[A-Za-z0-9_]*)\s*(?:<[^();]*>)?\s*\()"
+);
 
 struct AllowedFile {
     const char* path;
@@ -148,6 +139,36 @@ std::string codeOnly(const std::string& line, bool& inBlockComment) {
 } // namespace
 
 int main() {
+    // Guard the guard: whitespace and template spelling must not evade it,
+    // while longer unrelated identifiers must not be mistaken for calls.
+    for (const char* sample : {
+             "glm::inverse (M)", "glm :: transpose\n (M)",
+             "glm::inverse<glm::mat4>(M)", "glm::perspectiveFov (fov)",
+             "glm::frustumRH_ZO (bounds)", "glm::orthoZO (bounds)"}) {
+        if (!std::regex_search(sample, kSemanticCallPattern)) {
+            std::cerr << "gift_shop_guardrail_test: matcher missed: "
+                      << sample << "\n";
+            return 2;
+        }
+    }
+    for (const char* sample : {
+             "glm::inverseness(M)", "xglm::inverse(M)",
+             "glm::normalize(M)"}) {
+        if (std::regex_search(sample, kSemanticCallPattern)) {
+            std::cerr << "gift_shop_guardrail_test: false match: "
+                      << sample << "\n";
+            return 2;
+        }
+    }
+    bool probeBlockComment = false;
+    if (!std::regex_search(codeOnly("glm::inverse /* gap */ (M)",
+                                    probeBlockComment), kSemanticCallPattern) ||
+        std::regex_search(codeOnly("\"glm::inverse (M)\"",
+                                        probeBlockComment), kSemanticCallPattern)) {
+        std::cerr << "gift_shop_guardrail_test: lexical stripping regression\n";
+        return 2;
+    }
+
     const fs::path root = fs::current_path();
     const fs::path src = root / "src";
 
@@ -178,26 +199,28 @@ int main() {
 
         bool inBlockComment = false;
         std::string line;
-        std::size_t lineNumber = 0;
+        std::string code;
+        std::vector<std::string> originalLines;
         while (std::getline(input, line)) {
-            ++lineNumber;
-            const std::string code = codeOnly(line, inBlockComment);
+            originalLines.push_back(line);
+            code += codeOnly(line, inBlockComment);
+            code += '\n';
+        }
 
-            for (const auto& call : kTargetCalls) {
-                std::size_t pos = 0;
-                while ((pos = code.find(call.token, pos)) != std::string::npos) {
-                    if (allowedReason) {
-                        ++allowedHits;
-                    } else {
-                        ++violations;
-                        std::cout
-                            << "GIFT_SHOP_VIOLATION " << relative << ":"
-                            << lineNumber << " " << call.name << "\n"
-                            << "  " << line << "\n";
-                    }
-                    pos += std::string(call.token).size();
-                }
+        for (std::sregex_iterator hit(code.begin(), code.end(),
+                                      kSemanticCallPattern), end;
+             hit != end; ++hit) {
+            if (allowedReason) {
+                ++allowedHits;
+                continue;
             }
+
+            ++violations;
+            const std::size_t lineNumber = 1 + std::count(
+                code.cbegin(), code.cbegin() + hit->position(), '\n');
+            std::cout << "GIFT_SHOP_VIOLATION " << relative << ":"
+                      << lineNumber << " " << (*hit)[1].str() << "\n"
+                      << "  " << originalLines.at(lineNumber - 1) << "\n";
         }
     }
 
