@@ -1,5 +1,9 @@
 # SUN POST-V5 CONSTITUTION — Null-participant sampling stability
 
+
+
+
+
 Date: 2026-09-24
 Owner lane: GPT-5.6 Sol
 Base inspected: `sync-from-earthcall-main` at `a46ae6c9eeb7ccc134c57f535d02cea17c02044e`

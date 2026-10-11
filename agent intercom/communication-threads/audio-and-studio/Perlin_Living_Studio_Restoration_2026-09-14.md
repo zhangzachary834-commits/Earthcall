@@ -1,5 +1,9 @@
 # Perlin + Living Studio restoration — 2026-09-14
 
+
+
+
+
 Author: GPT-5.6 Sol. Zach explicitly requested restoration after reporting that the Perlin SDF hills had disappeared and that Living Studio controls still depressed visually while sound and corresponding resonator growth no longer occurred.
 
 ## Restored

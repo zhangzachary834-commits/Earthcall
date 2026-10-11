@@ -7,6 +7,8 @@
 #include "Singularity/Terminal/LineEditor.hpp"
 
 #include <cassert>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -263,6 +265,20 @@ void rendering() {
 
 } // namespace
 
+// Multi-line blocks: an empty Enter is submitted only while a block is open.
+void blocks() {
+    LineEditor e;
+    assert(e.press(Key{Key::Kind::Enter, {}}) == LineEditor::Outcome::None);   // ignored normally
+    e.submitEmpty = true;
+    assert(e.press(Key{Key::Kind::Enter, {}}) == LineEditor::Outcome::Submitted);
+    assert(e.takeSubmitted().empty());
+    assert(e.history().empty());                                               // never into history
+    e.prefill("    ");
+    assert(e.buffer() == "    ");
+    type(e, "hp > 2");
+    assert(e.buffer() == "    hp > 2");
+}
+
 void rungThree() {
     using K = Key::Kind;
     // The mouse: SGR reports; wheel 64/65; a left press is a click; a cursor
@@ -353,6 +369,28 @@ int main() {
     editing();
     rendering();
     rungThree();
+    blocks();
+    // The actual large authored editor must survive bracketed paste split
+    // across TerminalChannel's 64 KiB reads, including the end marker split.
+    // A paste newline is text spacing; only the later Enter submits it.
+    {
+        auto path=std::filesystem::path("examples/law_line_pixel_art_editor.txt");
+        if(!std::filesystem::exists(path))path=std::filesystem::path("..")/path;
+        std::ifstream in(path);std::string program;std::getline(in,program);
+        assert(program.size()>65536);
+        KeyDecoder decoder;LineEditor line;
+        const std::string bytes="\x1b[200~"+program+"\n\x1b[20";
+        for(std::size_t at=0;at<bytes.size();at+=65536)
+            for(const auto& key:decoder.feed(bytes.substr(at,65536),double(at)/65536))
+                assert(line.press(key)!=LineEditor::Outcome::Submitted);
+        // Bracketed paste is explicitly delimited, not an Escape-key timeout.
+        assert(decoder.flush(100).empty());
+        for(const auto& key:decoder.feed("1~",101))
+            assert(line.press(key)!=LineEditor::Outcome::Submitted);
+        assert(line.buffer()==program+" ");
+        assert(line.press(Key{Key::Kind::Enter,{}})==LineEditor::Outcome::Submitted);
+        assert(line.takeSubmitted()==program+" ");
+    }
     std::cout << "line_editor_test: OK\n";
     return 0;
 }

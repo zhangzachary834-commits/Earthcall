@@ -64,12 +64,11 @@ double hits(Object& o) {
 
 
 int main() {
-    // ONE LawManager, toggled between phases — not two managers run back to
-    // back. The EventBus has no unsubscribe (Law.hpp says so: "a connected
-    // LawManager must outlive all publishing"), so a second connected manager in
-    // one process is heard by the first one's still-live handler. Measured while
-    // writing this test: whichever arm ran second counted everything twice, with
-    // the adapter playing no part in it.
+    // ONE LawManager, toggled between phases, so the only variable between
+    // arms is the adapter flag. Historically this was also a workaround for
+    // EventBus listeners surviving a destroyed manager: a second connected
+    // manager made the second arm count everything twice. That lifecycle bug is
+    // now guarded independently by law_manager_eventbus_lifetime_test.
     Object author;
     Object target;   target.setObjectID("category.target");
     Object member1;  member1.setObjectID("member.one");

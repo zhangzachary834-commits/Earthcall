@@ -71,6 +71,12 @@ public:
         uint32_t volumeProgramRefusals = 0;
         std::string volumeLastProgramRefusal;
         size_t volumeWgslBytesGenerated = 0;
+        // Zero-density proofs (Rendering::VolumeZeroProof): builds this frame
+        // (each is cached by density revision), and the proven/total cells of
+        // the media drawn this frame.
+        uint32_t volumeZeroProofBuilds = 0;
+        uint32_t volumeZeroProofCellsProven = 0;
+        uint32_t volumeZeroProofCellsTotal = 0;
         // Conservative SDF range-proxy observability. A build is revision-bound;
         // an applied draw used a strictly smaller proved-may-contain-zero proxy;
         // a culled draw was proved to contain no zero set at all.
@@ -277,6 +283,24 @@ public:
     void setRadianceVisibilityEnabled(bool on) { _radianceVisibilityEnabled = on; }
     bool radianceVisibilityEnabled() const { return _radianceVisibilityEnabled; }
 
+    // Zero-density proof: skip evaluating a medium's density in cells where
+    // OntoMath interval arithmetic proved it can never be positive. Such a
+    // sample contributes nothing, so the image is unchanged; the switch exists
+    // so witnesses can A/B the exact path against the proven one.
+    void setVolumeZeroProofEnabled(bool on) { _volumeZeroProofEnabled = on; }
+    bool volumeZeroProofEnabled() const { return _volumeZeroProofEnabled; }
+
+    // Volume quadrature resolution: samples a medium receives across its own
+    // chord along a ray (overlapping media share the finest present; see the
+    // unified quadrature in SdfWgsl's compileVolumeSet). Formerly a literal 96
+    // in the shader. It reaches the GPU as a uniform, so changing it never
+    // recompiles. Clamped to [1, 8192]: a 12288 reference render produced
+    // saturated nonsense on Metal on 2026-10-09, not yet explained.
+    void setVolumeSamplesPerChord(int samples) {
+        _volumeSamplesPerChord = samples < 1 ? 1 : (samples > 8192 ? 8192 : samples);
+    }
+    int volumeSamplesPerChord() const { return _volumeSamplesPerChord; }
+
     // The object-to-world transform, as a stack. setModel replaces it outright;
     // pushModel/popModel compose a child transform onto its parent for the nested
     // draws — a Body's parts, a Formation's members — exactly as glPushMatrix +
@@ -412,6 +436,15 @@ public:
     virtual void drawImage2D(const uint8_t* rgba, uint32_t width, uint32_t height,
                              const glm::vec4& rect, const glm::vec4& tint) = 0;
 
+    // Irreducible Screen act: sample an authored field at physical framebuffer
+    // centres. Backends must realize it or refuse, never substitute a Shape,
+    // texture or CPU image. A null temporal coordinate leaves t unbound.
+    virtual bool drawScreenForm(const OntoMath::Piecewise&, const OntoMath::Piecewise*,
+                                uint32_t, uint32_t, const double*, std::string& reason) {
+        reason = "direct Screen fields require the WebGPU backend";
+        return false;
+    }
+
     // -----------------------------------------------------------------------
     // Persistent textures — the per-face albedo the Face Brush paints. Unlike
     // drawImage2D's transient blit, these live across frames and are re-uploaded
@@ -476,6 +509,8 @@ private:
     std::vector<Rendering::RadianceSourceBinding> _radianceSources;
     uint64_t _radianceSourcesRevision = 0;
     bool _radianceVisibilityEnabled = false;
+    bool _volumeZeroProofEnabled = true;
+    int _volumeSamplesPerChord = 96;
     std::vector<Rendering::VolumeDensityBinding> _volumeDensitySources;
     uint64_t _volumeDensitySourcesRevision = 0;
     Rendering::RenderedFieldSemanticObserver _renderedFieldObserver;

@@ -15,6 +15,7 @@
 #include "Singularity/Screen/WebGPU/GpuBufferPool.hpp"
 #include "Singularity/Screen/WebGPU/GpuMeshCache.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
+#include "Singularity/Screen/VolumeZeroProof.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 
 #include <webgpu/webgpu.h>
@@ -71,9 +72,7 @@ public:
     // Camera (view*proj + world eye position) is set once per frame; model is set
     // per object before its draws — together they replace the GL matrix stack. The
     // eye position drives the specular view vector.
-    void setCamera(const glm::mat4& viewProj, const glm::vec3& eyePos) {
-        _viewProj = viewProj; _eyePos = eyePos;
-    }
+    void setCamera(const glm::mat4& viewProj, const glm::vec3& eyePos);
     // Declaring the 2-arg overload above would otherwise HIDE the boundary's
     // 3-arg setCamera(view, proj, eye) for anyone holding a WebGpuRenderer by its
     // concrete type — a silent "too many arguments" at the call site.
@@ -109,6 +108,9 @@ public:
     // every frame. WebGPU-specific for now, same as the frame-lifecycle methods
     // above; not on the Renderer interface because nothing else implements it yet.
     void drawParticles(const geom::FieldNode& field, int count);
+    bool drawScreenForm(const OntoMath::Piecewise& color, const OntoMath::Piecewise* opacity,
+                        uint32_t width, uint32_t height, const double* time,
+                        std::string& reason) override;
 
     void drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>>& segments,
                    const glm::vec4& color, float width, Blend blend) override;
@@ -152,15 +154,20 @@ protected:
     void applyBeginFrame(uint32_t width, uint32_t height,
                          const glm::vec4& clearColor) override;
 
-    // Interface camera: view and proj stay separate for OpenGL's sake, so collapse
-    // them here to the single view*proj uniform this backend actually wants.
+    // Interface camera/model hooks derive and cache renderer-facing matrices
+    // through OntoMath; hot draw loops consume only the lowered cached values.
     void applyCamera(const glm::mat4& view, const glm::mat4& proj,
-                     const glm::vec3& eyePos) override {
-        setCamera(proj * view, eyePos);
-    }
-    void applyModel(const glm::mat4& model) override { _model = model; }
+                     const glm::vec3& eyePos) override;
+    void applyModel(const glm::mat4& model) override;
 
 private:
+    // Kernel-only driver resources, keyed by emitted structure. Numeric field
+    // edits share pipelines; no authored meaning is stored in this cache.
+    struct ScreenPipeline {
+        WGPURenderPipeline pipe = nullptr;
+        WGPUBindGroupLayout bgl = nullptr;
+    };
+    std::map<std::string, ScreenPipeline> _screenPipes;
     WGPUDevice _device = nullptr;
     WGPUQueue  _queue  = nullptr;
     WGPUTextureFormat _colorFormat = WGPUTextureFormat_RGBA8Unorm;
@@ -406,10 +413,28 @@ private:
         glm::vec4 halfExtent;
         glm::vec4 time;
         uint32_t paramOffset = 0;
-        uint32_t pad0 = 0;
-        uint32_t pad1 = 0;
-        uint32_t pad2 = 0;
+        // Zero-density proof location in the params batch (see
+        // volumeZeroProven in SdfWgsl's volume prefix); 0 present = none.
+        uint32_t zeroProofOffset = 0;
+        uint32_t zeroProofDims = 0;
+        uint32_t zeroProofPresent = 0;
     };
+    // Proofs keyed by density expression and invalidated by its revision and
+    // the box size (the grid tiles the box). Revision 0 means an unrevisioned
+    // binding, which never gets a proof: a cache it could not invalidate would
+    // be a stale theorem. Entries unused for a frame are dropped.
+    struct VolumeZeroProofMemo {
+        uint64_t densityRevision = 0;
+        glm::vec3 halfExtent{0.0f};
+        Rendering::VolumeZeroProof proof;
+        uint64_t lastUsedFrame = 0;
+    };
+    std::unordered_map<const OntoMath::Piecewise*, VolumeZeroProofMemo> _volumeZeroProofs;
+    uint64_t _volumeZeroProofFrame = 0;
+    void attachVolumeZeroProof(const Rendering::VolumeDensityBinding& medium,
+                               const glm::vec3& halfExtent,
+                               std::vector<float>& params,
+                               VolumeInstanceData& instance);
     std::map<const VolumePipeline*, std::vector<VolumeInstanceData>> _volumeBatches;
     std::map<const VolumePipeline*, std::vector<float>> _volumeParamBatches;
     // Ordinary V0-V4 pipelines draw one proxy instance per medium. A V5 fused
@@ -504,8 +529,12 @@ private:
     WGPUCommandEncoder   _encoder = nullptr;
     WGPURenderPassEncoder _pass   = nullptr;
     glm::mat4 _viewProj{1.0f};
+    glm::mat4 _invViewProj{1.0f};
     glm::mat4 _model{1.0f};
+    glm::mat4 _modelViewProj{1.0f};
     glm::vec3 _eyePos{0.0f};
+    bool _inverseViewProjValid = true;
+    bool _modelViewProjValid = true;
 
     // Optional execution timing. Query writes bracket the main command encoder's
     // render pass; each result is copied into a small readback ring and consumed
@@ -592,6 +621,7 @@ private:
     struct SdfInstanceData {
         glm::mat4 model;
         glm::mat4 invModel;
+        glm::mat4 normalMat;
         glm::vec4 baseColor;
         glm::vec4 shading;
         glm::vec4 extents;

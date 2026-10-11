@@ -48,6 +48,7 @@ void Person::buildProperties() {
 
 Person::Person(Soul soul, Body body, const std::string& foundationSymbol) : _soul(std::move(soul)) {
     bodies.push_back(std::move(body));
+    voices.push_back(Voice::createBasicVoice());
     // Soul("Zach") is a display-name hint, not an identity. Identity is
     // this Person's (personId / called Lexeme). Binding clears the hint so
     // Soul cannot keep a second name.
@@ -102,6 +103,7 @@ void Person::deserialize(const nlohmann::json& j) {
 void Person::express() const {
     std::cout << "\n✨ Person: " << getDisplayName() << std::endl;
     getBody().describe();
+    getVoice().describe();
 }
 
 

@@ -19,6 +19,91 @@ jobs:
     name: Focused CPU tests (macOS)
     runs-on: macos-14
     timeout-minutes: 45
+    # The focused witnesses: ONE test per line, read by both the build step and
+    # the ctest step. Add a test by adding one line here; never a second list.
+    # (One line per test keeps concurrent PRs from conflicting on a single
+    # 4000-character regex, which happened twice on 2026-10-07.)
+    env:
+      FOCUSED_TESTS: |
+        contour_test
+        line_editor_test
+        law_line_test
+        law_sentence_test
+        law_line_zone_test
+        destroy_law_test
+        language_identity_reference_test
+        creation_tools_test
+        action_spawn_test
+        object_concept_test
+        ontomath_transform_convention_test
+        ontomath_matrix_refusal_test
+        ontomath_matrix_value_test
+        ontomath_linear_algebra_test
+        ontomath_authoring_reachability_test
+        ontomath_affine_sovereignty_test
+        geometry_ontomath_test
+        interaction_channel_test
+        creator_console_fixture_law_test
+        keyboard_shell_shortcuts_test
+        no_black_box_test
+        channel_paths_test
+        dynamic_property_reachability_test
+        property_path_precalc_test
+        law_identifier_index_test
+        relation_retry_lexeme_test
+        relation_manager_test
+        logos_modality_test
+        person_not_object_test
+        zone_manager_test
+        stale_sidecar_cleanup_test
+        zone_native_save_isolation_test
+        zone_spatial_field_roundtrip_test
+        perlin_zone_field_restore_test
+        object_roundtrip_test
+        object_serialization_test
+        matter_semantic_precedence_test
+        shape_hydration_integrity_test
+        synthesis_studio_zone_closure_test
+        synthesis_studio_living_test
+        chess_zone_native_boot_test
+        synthesis_studio_full_store_boot_test
+        second_nature_law_authoring_test
+        second_nature_law_forge_zone_test
+        prophetic_rete_test
+        home_identity_continuity_test
+        person_migration_test
+        person_home_migration_boot_test
+        body_part_test
+        person_database_test
+        person_serialization_test
+        person_ecform_propagation_test
+        person_display_name_identity_test
+        community_test
+        authorable_light_contract_test
+        authored_physics_laws_test
+        timeline_test
+        time_moment_test
+        category_manager_test
+        identity_ledger_test
+        file_channel_test
+        file_watcher_test
+        first_mover_test
+        law_file_tree_fossil_test
+        earthcall_api_test
+        rete_state_ptr_index_test
+        relation_type_lexeme_lifetime_test
+        event_bus_test
+        law_manager_eventbus_lifetime_test
+        locomotion_eventbus_lifetime_test
+        jit_llvm_test
+        advanced_face_paint_test
+        action_model_test
+        async_state_logger_test
+        save_system_error_test
+        dump_test_save_isolation_test
+        foreign_web_dom_bridge_test
+        foreign_web_dom_projection_test
+        foreign_web_dom_protocol_test
 
     steps:
       - name: Check out tested commit
@@ -34,8 +119,8 @@ jobs:
           uname -m
           cmake --version
           file local_deps/glfw_install/lib/libglfw3.a || true
-          file local_deps/openssl-3.0.13/libcrypto.a || true
-          file local_deps/openssl-3.0.13/libssl.a || true
+          file local_deps/openssl-3.0.22/libcrypto.a || true
+          file local_deps/openssl-3.0.22/libssl.a || true
 
       - name: Validate shell helpers
         shell: bash
@@ -49,65 +134,27 @@ jobs:
           set -euxo pipefail
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
-            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
-            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
-            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.22" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.22/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.22/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.22/libssl.a"
 
       - name: Build focused regression witnesses
         shell: bash
         run: |
           set -euxo pipefail
-          cmake --build build --parallel 4 --target \
-            earthcall_terminal \
-            language_identity_reference_test \
-            creation_tools_test \
-            interaction_channel_test \
-            advanced_face_paint_test \
-            action_model_test \
-            async_state_logger_test \
-            keyboard_shell_shortcuts_test \
-            creator_console_fixture_law_test \
-            no_black_box_test \
-            channel_paths_test \
-            dynamic_property_reachability_test \
-            property_path_precalc_test \
-            law_identifier_index_test \
-            relation_retry_lexeme_test \
-            logos_modality_test \
-            person_not_object_test \
-            zone_native_save_isolation_test \
-            zone_spatial_field_roundtrip_test \
-            perlin_zone_field_restore_test \
-            object_roundtrip_test \
-            object_serialization_test \
-            matter_semantic_precedence_test \
-            shape_hydration_integrity_test \
-            synthesis_studio_zone_closure_test \
-            synthesis_studio_living_test \
-            chess_zone_native_boot_test \
-            synthesis_studio_full_store_boot_test \
-            second_nature_law_authoring_test \
-            second_nature_law_forge_zone_test \
-            prophetic_rete_test \
-            home_identity_continuity_test \
-            person_migration_test \
-            person_home_migration_boot_test \
-            person_database_test \
-            body_part_test \
-            person_serialization_test \
-            person_display_name_identity_test \
-            community_test \
-            authorable_light_contract_test \
-            timeline_test \
-            law_file_tree_fossil_test \
-            rete_state_ptr_index_test \
-            relation_type_lexeme_lifetime_test \
-            jit_llvm_test \
-            advanced_face_paint_test \
-            action_model_test \
-            async_state_logger_test \
-            save_system_error_test
+          # shellcheck disable=SC2086  # FOCUSED_TESTS is split into target names on purpose
+          cmake --build build --parallel 4 --target earthcall_terminal $FOCUSED_TESTS
+
+      - name: Run foreign DOM fixture witnesses from nested build directories
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p build/tests
+          for test in foreign_web_dom_bridge_test foreign_web_dom_projection_test foreign_web_dom_protocol_test; do
+            (cd build && "./$test")
+            (cd build/tests && "../$test")
+          done
 
       - name: Run Terminal exact-reference smoke
         shell: bash
@@ -126,8 +173,9 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          ctest --test-dir build --output-on-failure \
-            -R '^(language_identity_reference_test|creation_tools_test|interaction_channel_test|creator_console_fixture_law_test|keyboard_shell_shortcuts_test|no_black_box_test|channel_paths_test|dynamic_property_reachability_test|property_path_precalc_test|law_identifier_index_test|relation_retry_lexeme_test|logos_modality_test|person_not_object_test|zone_native_save_isolation_test|zone_spatial_field_roundtrip_test|perlin_zone_field_restore_test|object_roundtrip_test|object_serialization_test|matter_semantic_precedence_test|shape_hydration_integrity_test|synthesis_studio_zone_closure_test|synthesis_studio_living_test|chess_zone_native_boot_test|synthesis_studio_full_store_boot_test|second_nature_law_authoring_test|second_nature_law_forge_zone_test|prophetic_rete_test|home_identity_continuity_test|person_migration_test|person_home_migration_boot_test|body_part_test|person_database_test|person_serialization_test|person_display_name_identity_test|community_test|authorable_light_contract_test|timeline_test|law_file_tree_fossil_test|rete_state_ptr_index_test|relation_type_lexeme_lifetime_test|jit_llvm_test|advanced_face_paint_test|action_model_test|async_state_logger_test|save_system_error_test)$'
+          # shellcheck disable=SC2086
+          regex="^($(echo $FOCUSED_TESTS | tr ' ' '|'))$"
+          ctest --test-dir build --output-on-failure --no-tests=error -R "$regex"
 
   sdf-range-proxy-verification:
     name: SDF range-proxy verification (macOS)
@@ -146,10 +194,10 @@ jobs:
           set -euxo pipefail
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
-            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
-            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
-            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.22" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.22/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.22/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.22/libssl.a"
 
       - name: Build SDF proof and GPU parity witnesses
         shell: bash
@@ -164,12 +212,15 @@ jobs:
             scene_spatial_synthesis_dag_test \
             scene_spatial_ontomath_synthesis_test \
             rendered_field_piecewise_synthesis_test \
+            rendered_field_direct_dispatch_test \
             channel_paths_test \
             webgpu_sdf_parity_test \
             webgpu_sdf_distance_test \
             webgpu_sdf_color_expr_test \
             webgpu_perlin_exact_gradient_test \
             webgpu_object_test \
+            webgpu_particle_test \
+            webgpu_ontomath_native_resolution_parity_test \
             webgpu_v5_overlap_physics_test \
             webgpu_volumetric_mist_test \
             sanctuary_of_sunlit_mist_test
@@ -185,9 +236,20 @@ jobs:
           ./build/heightfield_predicate_test
           ./build/scene_spatial_synthesis_dag_test
           ./build/scene_spatial_ontomath_synthesis_test
-          ./build/rendered_field_piecewise_synthesis_test
+          ./build/rendered_field_piecewise_synthesis_test 2>&1 | tee aligned-authority-ab.log
+          grep -F 'ALIGNED_AUTHORITY_AB ' aligned-authority-ab.log > aligned-authority-ab-result.txt
+          ./build/rendered_field_direct_dispatch_test
           ./build/channel_paths_test
           ./build/sanctuary_of_sunlit_mist_test
+
+      - name: Upload aligned execution-key authority A/B
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aligned-authority-ab
+          path: aligned-authority-ab-result.txt
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Verify generic WebGPU SDF parity
         shell: bash
@@ -206,6 +268,14 @@ jobs:
         run: |
           set -o pipefail
           ./build/webgpu_object_test 2>&1 | tee webgpu-object-parity.log
+
+      - name: Verify WebGPU particle MVP path
+        shell: bash
+        run: ./build/webgpu_particle_test
+
+      - name: Verify OntoMath native-resolution image parity
+        shell: bash
+        run: ./build/webgpu_ontomath_native_resolution_parity_test
 
       - name: Verify V5 fused overlap physics
         shell: bash
@@ -261,10 +331,10 @@ jobs:
           set -euo pipefail
           if ! cmake -S . -B build-perf -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
-            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
-            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
-            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a" \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.22" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.22/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.22/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.22/libssl.a" \
             >/tmp/sdf-range-perf-configure.log 2>&1; then
             tail -80 /tmp/sdf-range-perf-configure.log
             exit 1
@@ -312,10 +382,10 @@ jobs:
           set -euo pipefail
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
-            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
-            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
-            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.22" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.22/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.22/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.22/libssl.a"
 
       - name: Build Slow Adapter witnesses
         shell: bash

@@ -3,7 +3,12 @@
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 
+#include <algorithm>
 #include <cstdio>
+#include <cstring>
+#include <functional>
+#include <map>
+#include <cmath>
 #include <set>
 #include <string>
 #include <vector>
@@ -21,10 +26,11 @@ namespace {
 // WGSL note: select(falseValue, trueValue, condition) — the operand order is the
 // reverse of a C ternary, which is an easy way to invert a sign by accident.
 // ---------------------------------------------------------------------------
-const char* kPrimitives = R"WGSL(
+const char* kSdfBindings = R"WGSL(
 struct SdfInstanceData {
     model: mat4x4<f32>,
     invModel: mat4x4<f32>,
+    normalMat: mat4x4<f32>,
     baseColor: vec4<f32>,
     shading: vec4<f32>,
     extents: vec4<f32>,
@@ -51,7 +57,10 @@ struct SdfInstanceData {
 // Positive-outside proof bitmap, packed 32 regular depth-N cells per u32.
 @group(1) @binding(2) var<storage, read> rangeProofWords: array<u32>;
 var<private> g_instIdx: u32;
+)WGSL";
 
+// Pure mathematical library shared by surface and direct Screen compilation.
+const char* kPrimitives = R"WGSL(
 fn dot2(v: vec2<f32>) -> f32 { return dot(v, v); }
 
 fn sdSphere(p: vec3<f32>, r: f32) -> f32 { return length(p) - r; }
@@ -314,6 +323,8 @@ struct Emit {
     int                next = 0; // next `let dN` temporary
     bool               sawExpr = false; // an implicit leaf appeared -> not a distance
     bool               bindTime = false; // expression-context capability, not authored state
+    bool               bindScreen = false; // physical framebuffer coordinate context
+    std::string        parameterOffset = "instances[g_instIdx].paramOffset";
     bool               bindOmega = false; // Rung-6 source angular radiance context
     bool               readOmega = false; // structural witness for source singularity handling
     bool               bindEmissionOmega = false; // V4 E_v owns a distinct omega context
@@ -327,6 +338,9 @@ struct Emit {
     // Rungs 3-6 use the historical global uniform; Rung 7 temporarily points
     // this at one source record while lowering that source's rho/chi/alpha.
     std::string        timeExpression = "u.radianceTime.x";
+    // Cross-channel shared subexpressions (volume media): canonical OntoMath
+    // JSON of a subtree -> the private variable already holding its value.
+    const std::map<std::string, std::string>* shared = nullptr;
 
     // The refusal (see Program::ok). Once set it is never overwritten: the
     // FIRST thing the compiler could not honour is the one worth reporting;
@@ -341,7 +355,7 @@ struct Emit {
     // Record a number and return the WGSL expression that reads it.
     std::string param(float v) {
         char buf[128];
-        std::snprintf(buf, sizeof(buf), "P.v[instances[g_instIdx].paramOffset + %zu]", params.size());
+        std::snprintf(buf, sizeof(buf), "P.v[%s + %zu]", parameterOffset.c_str(), params.size());
         params.push_back(v);
         return buf;
     }
@@ -394,6 +408,14 @@ std::string emitRpn(const std::vector<geom::SdfToken>& rpn, Emit& e,
 // name but this compiler cannot bind is a REFUSAL, not "0.0": substituting zero
 // silently reinterprets f(t) as f(0), which is a different field.
 std::string pointComponent(const std::string& var, Emit& e, const std::string& pt) {
+    if (e.bindScreen) {
+        // SDF/Gradient rebind only p/x/y/z on the CPU. Other admitted scalars
+        // retain their original bindings, including normalized coordinates.
+        if (var == "u") return "(screenPoint.x / screen.size.x)";
+        if (var == "v") return "(screenPoint.y / screen.size.y)";
+        if (var == "width") return "screen.size.x";
+        if (var == "height") return "screen.size.y";
+    }
     if (var == "x" || var == "y" || var == "z") return "(" + pt + ")." + var;
     if (var == OntoMath::kTimeVar) {
         if (e.bindTime) return e.timeExpression;
@@ -493,6 +515,12 @@ std::string emitScalarForm(const OntoMath::ScalarForm& sf, Emit& e, const std::s
 // the whole pipeline is declined with a reason. The string it returns after a
 // refusal exists only to keep the recursion well-formed; it is never used.
 std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::string& pt) {
+    // The table holds values at this medium's original sample p. SDF and
+    // Gradient rebind their field to another point and must evaluate it there.
+    if (pt == "p" && e.shared && !e.shared->empty()) {
+        const auto it = e.shared->find(node.toJson().dump());
+        if (it != e.shared->end()) return it->second;
+    }
     using Op = OntoMath::MathNode::Op;
 
     // Arity is checked by the type pass before we get here, but a malformed
@@ -634,6 +662,83 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
                    ") / (2.0 * " + eps + "))";
         }
 
+        // --- Rung 4 matrix lowering -----------------------------------------
+        // WGSL stores matrices as columns (matCxR); MatrixConstruct authors
+        // logical rows. Reorder only at this backend boundary.
+        case Op::MatrixConstruct: {
+            if (node.matrixRows < 2 || node.matrixRows > 4 ||
+                node.matrixCols < 2 || node.matrixCols > 4) {
+                e.refuse("MatrixConstruct WGSL lowering supports dimensions 2..4");
+                return "0.0";
+            }
+            std::string out = "mat" + std::to_string(node.matrixCols) + "x" +
+                              std::to_string(node.matrixRows) + "<f32>(";
+            for (std::size_t c = 0; c < node.matrixCols; ++c) {
+                if (c) out += ", ";
+                out += "vec" + std::to_string(node.matrixRows) + "<f32>(";
+                for (std::size_t r = 0; r < node.matrixRows; ++r) {
+                    if (r) out += ", ";
+                    out += arg(r * node.matrixCols + c);
+                }
+                out += ")";
+            }
+            return out + ")";
+        }
+        case Op::MatrixIdentity: {
+            if (node.matrixRows < 2 || node.matrixRows > 4 ||
+                node.matrixRows != node.matrixCols) {
+                e.refuse("MatrixIdentity WGSL lowering supports square dimensions 2..4");
+                return "0.0";
+            }
+            const std::size_t n = node.matrixRows;
+            std::string out = "mat" + std::to_string(n) + "x" + std::to_string(n) + "<f32>(";
+            for (std::size_t c = 0; c < n; ++c) {
+                if (c) out += ", ";
+                out += "vec" + std::to_string(n) + "<f32>(";
+                for (std::size_t r = 0; r < n; ++r) {
+                    if (r) out += ", ";
+                    out += (r == c ? "1.0" : "0.0");
+                }
+                out += ")";
+            }
+            return out + ")";
+        }
+        case Op::MatrixAdd: return "(" + arg(0) + " + " + arg(1) + ")";
+        case Op::MatrixSub: return "(" + arg(0) + " - " + arg(1) + ")";
+        case Op::MatrixScale: return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::MatrixMultiply: return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::MatrixVectorMultiply: return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::MatrixTranspose: return "transpose(" + arg(0) + ")";
+        case Op::MatrixDeterminant: return "determinant(" + arg(0) + ")";
+        case Op::MatrixInverse: {
+            // WGSL has no inverse() primitive. Keep OntoMath as the sole
+            // inverse algorithm: binding-independent inverses become derived
+            // numeric parameters; a dynamic inverse refuses.
+            static const std::map<std::string, PropertyValue> kNoBindings;
+            auto value = node.evaluate(kNoBindings, nullptr);
+            if (!value || !std::holds_alternative<OntoMath::MatrixValue>(*value)) {
+                e.refuse("MatrixInverse WGSL lowering requires a binding-independent invertible matrix");
+                return "0.0";
+            }
+            const auto& inv = std::get<OntoMath::MatrixValue>(*value);
+            if (inv.rows() < 2 || inv.rows() > 4 || inv.rows() != inv.cols()) {
+                e.refuse("MatrixInverse WGSL lowering supports square dimensions 2..4");
+                return "0.0";
+            }
+            const std::size_t n = inv.rows();
+            std::string out = "mat" + std::to_string(n) + "x" + std::to_string(n) + "<f32>(";
+            for (std::size_t c = 0; c < n; ++c) {
+                if (c) out += ", ";
+                out += "vec" + std::to_string(n) + "<f32>(";
+                for (std::size_t r = 0; r < n; ++r) {
+                    if (r) out += ", ";
+                    out += e.param(static_cast<float>(inv.at(r, c)));
+                }
+                out += ")";
+            }
+            return out + ")";
+        }
+
         // --- Declared, not implemented, on EITHER path ----------------------
         case Op::Raycast:
             e.refuse("Raycast has no implementation on either path: it needs a "
@@ -690,6 +795,231 @@ void emitPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::string& pt
         outBody += "    return 0.0;\n";
     }
 }
+
+bool astContainsNoise(const OntoMath::MathNode& node);   // defined below
+
+namespace {
+// Left-to-right flattening of a scalar product tree. Each non-product leaf is
+// emitted in the same order emitMathNode would visit it (so parameters register
+// in the same order collectVolumeParams sees), and the returned string rebuilds
+// the product with the original grouping over the leaf names.
+std::string flattenScalarProduct(const OntoMath::MathNode& node, Emit& e, const std::string& pt,
+                                 std::vector<std::pair<std::string, bool>>& leaves) {
+    if (pt == "p" && e.shared && !e.shared->empty()) {
+        const auto it = e.shared->find(node.toJson().dump());
+        if (it != e.shared->end()) {
+            // Already computed once this sample: a free, noise-free factor.
+            const std::string name = "densityFactor" + std::to_string(leaves.size());
+            leaves.push_back({it->second, false});
+            return name;
+        }
+    }
+    if (node.op == OntoMath::MathNode::Op::Scale && node.children.size() == 2 &&
+        node.children[0] && node.children[1]) {
+        const std::string left = flattenScalarProduct(*node.children[0], e, pt, leaves);
+        const std::string right = flattenScalarProduct(*node.children[1], e, pt, leaves);
+        return "(" + left + " * " + right + ")";
+    }
+    const std::string name = "densityFactor" + std::to_string(leaves.size());
+    leaves.push_back({emitMathNode(node, e, pt), astContainsNoise(node)});
+    return name;
+}
+} // namespace
+
+// Medium density D(p). Identical to emitPiecewise, except when the answering
+// piece is a product whose factors include Perlin noise: then every noise-free
+// factor is evaluated first and an exact zero returns 0 before any noise runs.
+// A density that is 0 (or the +-0/NaN a 0 * finite product yields) contributes
+// nothing either way: callers clamp with max(D, 0) and act only on D > 0. The
+// product itself is rebuilt with its original grouping, so whenever it is
+// computed it is computed exactly as before. OntoMath knows which subtrees hold
+// noise; an opaque shader would not. Claude Opus 5.5, 2026-10-09.
+void emitProductWithZeroExits(const OntoMath::MathNode& node, Emit& e, const std::string& pt,
+                              std::string& outBody);
+
+void emitDensityPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::string& pt,
+                          std::string& outBody) {
+    const OntoMath::Piecewise::Piece* answering = nullptr;
+    for (const auto& piece : pw.pieces) {
+        if (!piece.mathNode) continue;
+        answering = &piece;
+        break;
+    }
+    if (!answering || answering != &pw.pieces.front() || answering->hasLo || answering->hasHi ||
+        answering->guard || answering->whereLEZero || answering->call || answering->fold ||
+        answering->mathNode->op != OntoMath::MathNode::Op::Scale ||
+        !astContainsNoise(*answering->mathNode)) {
+        emitPiecewise(pw, e, pt, "f32", outBody);
+        return;
+    }
+    // Mirror emitPiecewise's own visit order: the input variable first.
+    (void)pointComponent(pw.inputVariable, e, pt);
+    emitProductWithZeroExits(*answering->mathNode, e, pt, outBody);
+}
+
+// Body of a scalar function returning `node`: a product's noise-free factors
+// are evaluated first and an exact zero returns 0 before any noise runs; the
+// product is rebuilt with its original grouping (see emitDensityPiecewise).
+void emitProductWithZeroExits(const OntoMath::MathNode& node, Emit& e, const std::string& pt,
+                              std::string& outBody) {
+    std::vector<std::pair<std::string, bool>> leaves;
+    const std::string product = flattenScalarProduct(node, e, pt, leaves);
+    bool anyCheap = false;
+    for (const auto& leaf : leaves) anyCheap = anyCheap || !leaf.second;
+    if (!anyCheap) {
+        // Even an all-noise expression needs the locals named by `product`.
+        for (std::size_t i = 0; i < leaves.size(); ++i)
+            outBody += "    let densityFactor" + std::to_string(i) + " = " + leaves[i].first + ";\n";
+        outBody += "    return " + product + ";\n";
+        return;
+    }
+    for (std::size_t i = 0; i < leaves.size(); ++i) {
+        if (leaves[i].second) continue;
+        const std::string name = "densityFactor" + std::to_string(i);
+        outBody += "    let " + name + " = " + leaves[i].first + ";\n";
+        outBody += "    if (" + name + " == 0.0) { return 0.0; }\n";
+    }
+    for (std::size_t i = 0; i < leaves.size(); ++i) {
+        if (!leaves[i].second) continue;
+        outBody += "    let densityFactor" + std::to_string(i) + " = " + leaves[i].first + ";\n";
+    }
+    outBody += "    return " + product + ";\n";
+}
+
+namespace {
+// ---- Cross-channel shared subexpressions for one participating medium ------
+// Zach (2026-10-09) asked for the media's equations to be unified rather than
+// re-evaluated. Northern Veil authors each curtain's shape into four channels
+// (D = 0.75*shape, sigma_t = 0.10*shape, sigma_s = 0.04*shape, E_v = shape*...),
+// so the same Perlin-noise subtree ran up to four times per sample. Here
+// OntoMath's own structure finds subtrees that are identical (operators AND
+// constants) across a medium's channels; each is computed once per sample into
+// a private variable that every channel reads. Only scalar subtrees containing
+// Noise over p/x/y/z/t are shared: those variables mean the same thing in every
+// medium channel, while wi/wo/omega do not.
+struct SharedSite { int channel; std::string path; };
+struct SharedGroup {
+    std::string key;
+    const OntoMath::MathNode* node = nullptr;
+    std::size_t size = 0;
+    std::vector<SharedSite> sites;
+};
+struct VolumeSharingPlan {
+    std::vector<SharedGroup> groups;   // emission order: smaller subtrees first
+    std::string signature;             // which positions share; never constants
+    bool densityUses = false;
+};
+
+std::size_t mathNodeSize(const OntoMath::MathNode& n) {
+    std::size_t total = 1;
+    for (const auto& c : n.children) if (c) total += mathNodeSize(*c);
+    return total;
+}
+
+VolumeSharingPlan planVolumeSharing(const OntoMath::Piecewise* const channels[6]) {
+    static const std::set<std::string> kSpatial = {
+        OntoMath::kAmbientPointVar, "x", "y", "z", OntoMath::kTimeVar};
+    const OntoMath::TypeEnv env{
+        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
+        {"x", OntoMath::ValueKind::Scalar}, {"y", OntoMath::ValueKind::Scalar},
+        {"z", OntoMath::ValueKind::Scalar}, {OntoMath::kTimeVar, OntoMath::ValueKind::Scalar}};
+
+    std::map<std::string, SharedGroup> byKey;
+    std::function<void(const OntoMath::MathNode&, int, const std::string&)> visit =
+        [&](const OntoMath::MathNode& node, int channel, const std::string& path) {
+            if (astContainsNoise(node)) {
+                std::set<std::string> deps;
+                node.collectDependencies(deps);
+                bool spatial = true;
+                for (const auto& d : deps) spatial = spatial && kSpatial.count(d) > 0;
+                if (spatial) {
+                    const auto type = node.typeOf(env, "root", false);
+                    if (type.success && type.kind == OntoMath::ValueKind::Scalar) {
+                        auto& g = byKey[node.toJson().dump()];
+                        if (!g.node) { g.node = &node; g.size = mathNodeSize(node); }
+                        g.sites.push_back({channel, path});
+                    }
+                }
+            }
+            for (std::size_t i = 0; i < node.children.size(); ++i) {
+                // These operators bind child 0 to another point. Its text
+                // cannot establish equality with a value at the sample p.
+                if (i == 0 && (node.op == OntoMath::MathNode::Op::SDF ||
+                               node.op == OntoMath::MathNode::Op::Gradient)) continue;
+                if (node.children[i]) visit(*node.children[i], channel, path + "/" + std::to_string(i));
+            }
+        };
+    for (int c = 0; c < 6; ++c) {
+        if (!channels[c]) continue;
+        for (std::size_t k = 0; k < channels[c]->pieces.size(); ++k) {
+            const auto& piece = channels[c]->pieces[k];
+            if (piece.mathNode) visit(*piece.mathNode, c, std::to_string(k));
+        }
+    }
+
+    std::vector<SharedGroup> candidates;
+    for (auto& [key, g] : byKey) {
+        if (g.sites.size() >= 2) { g.key = key; candidates.push_back(g); }
+    }
+    std::sort(candidates.begin(), candidates.end(), [](const SharedGroup& a, const SharedGroup& b) {
+        if (a.size != b.size) return a.size > b.size;
+        // Constants decide equality, not emission order. Numeric edits that
+        // retain sharing should not reorder parameter slots and recompile.
+        const auto& x = a.sites.front();
+        const auto& y = b.sites.front();
+        return x.channel != y.channel ? x.channel < y.channel : x.path < y.path;
+    });
+    std::vector<SharedSite> taken;
+    auto inside = [&](const SharedSite& s) {
+        for (const auto& t : taken)
+            if (t.channel == s.channel && s.path.rfind(t.path + "/", 0) == 0) return true;
+        return false;
+    };
+    VolumeSharingPlan plan;
+    for (auto& g : candidates) {
+        std::vector<SharedSite> live;
+        for (const auto& site : g.sites) if (!inside(site)) live.push_back(site);
+        if (live.size() < 2) continue;
+        g.sites = live;
+        for (const auto& site : live) taken.push_back(site);
+        plan.groups.push_back(g);
+    }
+    std::reverse(plan.groups.begin(), plan.groups.end());   // inner (smaller) first
+    for (std::size_t i = 0; i < plan.groups.size(); ++i) {
+        plan.signature += "g" + std::to_string(i) + ":";
+        for (const auto& site : plan.groups[i].sites) {
+            plan.signature += "c" + std::to_string(site.channel) + "@" + site.path + ",";
+            plan.densityUses = plan.densityUses || site.channel == 0;
+        }
+        plan.signature += "\n";
+    }
+    return plan;
+}
+
+// Emits each shared group's evaluator (registering its parameters first, in
+// plan order) and installs the substitution table on `e`. Returns the WGSL to
+// place after volumeDensityEval: private slots, one function per group, and
+// volumeSharedEval(p), which fills every slot once per sample.
+std::string emitVolumeSharedPrelude(const VolumeSharingPlan& plan, Emit& e, const std::string& pt,
+                                    std::map<std::string, std::string>& names) {
+    names.clear();
+    e.shared = &names;
+    if (plan.groups.empty()) return "";
+    std::string decls, fns, call = "\nfn volumeSharedEval(p: vec3<f32>) {\n";
+    for (std::size_t i = 0; i < plan.groups.size(); ++i) {
+        const auto& g = plan.groups[i];
+        const std::string slot = "g_volumeSharedG" + std::to_string(i);
+        std::string body;
+        emitProductWithZeroExits(*g.node, e, pt, body);   // earlier groups substitute
+        decls += "var<private> " + slot + ": f32;\n";
+        fns += "\nfn volumeSharedG" + std::to_string(i) + "(p: vec3<f32>) -> f32 {\n" + body + "}\n";
+        call += "    " + slot + " = volumeSharedG" + std::to_string(i) + "(p);\n";
+        names[g.key] = slot;
+    }
+    return "\n" + decls + fns + call + "}\n";
+}
+} // namespace
+
 
 enum class JetKind { Scalar, Vector };
 struct JetExpr {
@@ -1531,7 +1861,7 @@ fn sourceTransportSignedStep(p: vec3<f32>, damping: f32) -> f32 {
                 sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
             gradLen = length(g);
         }
-        return select(s.raw, s.raw / gradLen, gradLen > 1e-6);
+        return select(s.raw, s.raw / max(gradLen, 1.0), gradLen > 1e-6);
     }
     return sdfEval(p);
 }
@@ -1760,7 +2090,7 @@ fn fs(in: VSOut) -> FSOut {
                     sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
                 gl = length(g);
             }
-            d = select(raw, raw / gl, gl > 1e-6);
+            d = select(raw, raw / max(gl, 1.0), gl > 1e-6);
 
             if (d <= 0.0 || abs(d) < current_eps) {
                 hit = true;
@@ -1781,6 +2111,13 @@ fn fs(in: VSOut) -> FSOut {
             raw = sdfEval(p);
             d = raw;
 
+            if (omega > 1.0 && (d < 0.0 || d + prev_d < candidate_step)) {
+                t = t - candidate_step + prev_d;
+                omega = 1.0;
+                candidate_step = 0.0;
+                continue;
+            }
+
             if (d <= 0.0 || abs(d) < current_eps) {
                 hit = true;
                 if (d < 0.0 && prev_d > 0.0 && candidate_step > 0.0) {
@@ -1790,13 +2127,9 @@ fn fs(in: VSOut) -> FSOut {
                 break;
             }
 
-            if (omega > 1.0 && d + prev_d < candidate_step) {
-                t = t - candidate_step + prev_d;
-                omega = 1.0;
-                candidate_step = 0.0;
-                continue;
+            if (omega == 1.0 && damping > 0.5 && d > prev_d) {
+                omega = 1.4;
             }
-
             prev_d = d;
             candidate_step = max(omega * d, current_eps);
             // Same rule for distance-field marching: cell boundaries are not
@@ -1897,9 +2230,9 @@ fn fs(in: VSOut) -> FSOut {
     let pf = ro + rd * t;                                // field-space hit
     let pw = (inst.model * vec4<f32>(pf, 1.0)).xyz;         // world-space hit
     let nf = sdfNormal(pf);
-    // Normals transform by the inverse-transpose; invModel transposed gives it
-    // without shipping another matrix.
-    let nw = normalize((transpose(inst.invModel) * vec4<f32>(nf, 0.0)).xyz);
+    // OntoMath authors the inverse-transpose on CPU. The shader consumes the
+    // lowered normal matrix; it does not independently originate that meaning.
+    let nw = normalize((inst.normalMat * vec4<f32>(nf, 0.0)).xyz);
 
     let L = normalize(u.lightPos.xyz - pw);
     let V = normalize(u.eyePos.xyz - pw);
@@ -2024,6 +2357,103 @@ fn fs(in: VSOut) -> FSOut {
 )WGSL";
 
 } // namespace
+
+Program compileScreenForm(const OntoMath::Piecewise& color,
+                          const OntoMath::Piecewise* opacity, bool bindTime) {
+    Program prog;
+    Emit e;
+    e.bindScreen = true;
+    e.bindTime = bindTime;
+    e.timeExpression = "screen.time.x";
+    e.parameterOffset = "0u";
+    OntoMath::TypeEnv env{{"p", OntoMath::ValueKind::Vector}};
+    for (const char* name : {"x", "y", "z", "u", "v", "width", "height"})
+        env[name] = OntoMath::ValueKind::Scalar;
+    if (bindTime) env["t"] = OntoMath::ValueKind::Scalar;
+
+    // Reuse the mathematical emitter, but preserve definedness separately from
+    // value: a hole means no Screen act, not an invented black sample. Pure
+    // whereLEZero admits arbitrary regions; world guards/calls/folds must be
+    // resolved by Law before crossing this parallel fragment boundary.
+    auto lower = [&](const OntoMath::Piecewise& form, bool vector) {
+        std::string body;
+        const auto kind = vector ? OntoMath::ValueKind::Vector : OntoMath::ValueKind::Scalar;
+        if (form.pieces.empty()) e.refuse("direct Screen expression has no pieces");
+        for (const auto& piece : form.pieces) {
+            if (piece.guard || piece.call || piece.fold) {
+                e.refuse("direct Screen refuses unresolved world guards, calls and folds");
+                break;
+            }
+            std::string why;
+            OntoMath::ValueKind actual = OntoMath::ValueKind::Unknown;
+            if (!piece.mathNode || !piece.mathNode->checkTypes(env, why, &actual, false) || actual != kind) {
+                e.refuse("direct Screen value must be " + std::string(OntoMath::valueKindName(kind)) + ": " + why);
+                break;
+            }
+            std::string condition = "true";
+            if (piece.hasLo || piece.hasHi) {
+                const auto it = env.find(form.inputVariable);
+                if (it == env.end() || it->second.kind != OntoMath::ValueKind::Scalar) {
+                    e.refuse("direct Screen interval coordinate is unbound: " + form.inputVariable);
+                    break;
+                }
+                const std::string coordinate = pointComponent(form.inputVariable, e, "p");
+                if (piece.hasLo) condition += " && " + coordinate + (piece.includeLo ? " >= " : " > ") + e.param(piece.lo);
+                if (piece.hasHi) condition += " && " + coordinate + (piece.includeHi ? " <= " : " < ") + e.param(piece.hi);
+            }
+            if (piece.whereLEZero) {
+                if (!piece.whereLEZero->checkTypes(env, why, &actual, false) || actual != OntoMath::ValueKind::Scalar) {
+                    e.refuse("direct Screen region selector must be Scalar: " + why);
+                    break;
+                }
+                condition += " && (" + emitMathNode(*piece.whereLEZero, e, "p") + ") <= 0.0";
+            }
+            const std::string value = emitMathNode(*piece.mathNode, e, "p");
+            body += "    if (" + condition + ") { return " +
+                (vector ? "vec4<f32>(" + value + ", 1.0)" : value) + "; }\n";
+        }
+        body += vector ? "    return vec4<f32>(0.0);\n" : "    return 0.0;\n";
+        return body;
+    };
+    const std::string colorBody = lower(color, true);
+    const std::string opacityBody = opacity ? lower(*opacity, false) : "    return 1.0;\n";
+    for (float number : e.params)
+        if (!std::isfinite(number)) e.refuse("direct Screen parameter is not finite float32");
+    prog.ok = !e.refused;
+    prog.error = e.refusal;
+    prog.params = std::move(e.params);
+    if (!prog.ok) return prog;
+    // The fullscreen triangle merely launches one invocation per framebuffer
+    // sample. It is Kernel machinery, never an authored Shape or rectangle.
+    prog.wgsl = R"WGSL(
+struct ScreenCoordinates { size: vec4<f32>, time: vec4<f32> };
+struct Parameters { v: array<f32> };
+@group(0) @binding(0) var<uniform> screen: ScreenCoordinates;
+@group(0) @binding(1) var<storage, read> P: Parameters;
+var<private> screenPoint: vec3<f32>;
+)WGSL";
+    prog.wgsl += kPrimitives;
+    prog.wgsl += "fn screenColor(p: vec3<f32>) -> vec4<f32> {\n" + colorBody + "}\n";
+    prog.wgsl += "fn screenOpacity(p: vec3<f32>) -> f32 {\n" + opacityBody + "}\n";
+    prog.wgsl += R"WGSL(
+@vertex fn vs(@builtin(vertex_index) vertex: u32) -> @builtin(position) vec4<f32> {
+    var positions = array<vec2<f32>, 3>(vec2<f32>(-1.0,-1.0), vec2<f32>(3.0,-1.0), vec2<f32>(-1.0,3.0));
+    return vec4<f32>(positions[vertex], 0.0, 1.0);
+}
+@fragment fn fs(@builtin(position) pixel: vec4<f32>) -> @location(0) vec4<f32> {
+    let p = vec3<f32>(pixel.xy, 0.0);
+    screenPoint = p;
+    let color = screenColor(p);
+    let opacity = screenOpacity(p);
+    // Undefined, NaN and infinite samples produce no act. The destination's
+    // representable color range is the hardware UNORM conversion boundary.
+    if (color.a == 0.0 || !(opacity > 0.0) || !(opacity <= 3.402823e38) ||
+        !all(abs(color.rgb) <= vec3<f32>(3.402823e38))) { discard; }
+    return vec4<f32>(color.rgb, clamp(opacity, 0.0, 1.0));
+}
+)WGSL";
+    return prog;
+}
 
 ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
                                                bool bindTime) {
@@ -2557,7 +2987,7 @@ Program compile(const geom::SdfNode& root,
     }
 
     Program prog;
-    prog.wgsl = kPrimitives;
+    prog.wgsl = std::string(kSdfBindings) + kPrimitives;
 
     if (hasAnalyticGrad) {
         prog.wgsl += evalGradFunc;
@@ -3082,8 +3512,12 @@ ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
     e.timeExpression = "instances[g_instIdx].time.x";
 
     std::string throwaway;
+    const OntoMath::Piecewise* sharingChannels[6] = {densityExpr, extinctionExpr, scatteringExpr,
+                                                     volumeChromaExpr, phaseExpr, emissionExpr};
+    std::map<std::string, std::string> sharedNames;
+    (void)emitVolumeSharedPrelude(planVolumeSharing(sharingChannels), e, "p", sharedNames);
     if (densityExpr && !densityExpr->pieces.empty()) {
-        emitPiecewise(*densityExpr, e, "p", "f32", throwaway);
+        emitDensityPiecewise(*densityExpr, e, "p", throwaway);
     }
     if (extinctionExpr && !extinctionExpr->pieces.empty()) {
         emitPiecewise(*extinctionExpr, e, "p", "f32", throwaway);
@@ -3122,10 +3556,8 @@ ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
         }
     }
 
-    if (geom::isSdfActive(occluderSdf)) {
-        (void)emitNode(*occluderSdf, e);
-    }
-
+    // Source clocks/coordinates and shadow-ray points are separate domains.
+    e.shared = nullptr;
     const std::string mediumTimeExpression = e.timeExpression;
     e.timeExpression = "u.sourceTime.x";
     if (lightRadianceExpr && !lightRadianceExpr->pieces.empty()) {
@@ -3145,6 +3577,11 @@ ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
         e.bindOmega = false;
     }
     e.timeExpression = mediumTimeExpression;
+
+    // Match compileVolume's order: medium, source, then occluder parameters.
+    if (geom::isSdfActive(occluderSdf)) {
+        (void)emitNode(*occluderSdf, e);
+    }
 
     ParameterBlock block;
     block.ok = !e.refused;
@@ -3288,6 +3725,17 @@ fn sminK(a: f32, b: f32, k: f32) -> f32 {
 )WGSL";
 } // namespace
 
+std::string inspectVolumeSharing(const OntoMath::Piecewise* densityExpr,
+                                 const OntoMath::Piecewise* extinctionExpr,
+                                 const OntoMath::Piecewise* scatteringExpr,
+                                 const OntoMath::Piecewise* volumeChromaExpr,
+                                 const OntoMath::Piecewise* phaseExpr,
+                                 const OntoMath::Piecewise* emissionExpr) {
+    const OntoMath::Piecewise* channels[6] = {densityExpr, extinctionExpr, scatteringExpr,
+                                              volumeChromaExpr, phaseExpr, emissionExpr};
+    return planVolumeSharing(channels).signature;
+}
+
 Program compileVolume(const OntoMath::Piecewise* densityExpr,
                       const OntoMath::Piecewise* extinctionExpr,
                       const OntoMath::Piecewise* scatteringExpr,
@@ -3318,7 +3766,12 @@ struct VolumeGlobals {
     // xy = the admitted source's own relative Timeline coordinate/delta.
     // Source t must never borrow a participating medium's instance time.
     sourceTime: vec4<f32>,
-    // x = max shadow steps, y = local volumetric visibility enabled, z/w reserved.
+    // x = max shadow steps, y = local volumetric visibility enabled,
+    // z deliberately unused: it once carried a hardcoded HG phase g (removed in
+    // b1d16c41; sdf_wgsl_parameter_refresh_test forbids reading it),
+    // w = samples per medium chord (ScreenChannel volumeSamplesPerChord: the
+    // quadrature resolution a medium gets along a ray; a runtime value, so
+    // changing it never recompiles).
     volumeControl: vec4<f32>,
 };
 
@@ -3327,9 +3780,11 @@ struct VolumeInstanceData {
     halfExtent: vec4<f32>,
     time: vec4<f32>,
     paramOffset: u32,
-    _pad0: u32,
-    _pad1: u32,
-    _pad2: u32,
+    // Zero-density proof (Rendering::VolumeZeroProof): absolute offset of its
+    // bit words in P, its cell dims packed 10 bits per axis, and 1 if present.
+    zeroProofOffset: u32,
+    zeroProofDims: u32,
+    zeroProofPresent: u32,
 };
 
 struct Params { v: array<f32> };
@@ -3380,16 +3835,62 @@ fn worldAtDepth(pixel: vec2<f32>, depth: f32) -> vec3<f32> {
     let h = u.invViewProj * ndc;
     return h.xyz / h.w;
 }
+
+// True only where the CPU proved this medium's authored density <= 0 for the
+// whole cell holding local point p, so evaluating D there cannot add anything.
+// Absent proof, a point outside the box, or a clear bit: evaluate exactly.
+// xyz = the proof cell holding local point p; w = 1 iff that cell is proven.
+fn volumeZeroProofCell(inst: VolumeInstanceData, p: vec3<f32>) -> vec4<u32> {
+    if (inst.zeroProofPresent == 0u) { return vec4<u32>(0u); }
+    let dims = vec3<u32>(inst.zeroProofDims & 1023u,
+                         (inst.zeroProofDims >> 10u) & 1023u,
+                         (inst.zeroProofDims >> 20u) & 1023u);
+    let local = (p + inst.halfExtent.xyz) / (2.0 * inst.halfExtent.xyz);
+    if (any(local < vec3<f32>(0.0)) || any(local >= vec3<f32>(1.0))) { return vec4<u32>(0u); }
+    let cell = min(vec3<u32>(local * vec3<f32>(dims)), dims - vec3<u32>(1u));
+    let index = cell.x + dims.x * (cell.y + dims.y * cell.z);
+    let word = u32(P.v[inst.zeroProofOffset + index / 24u]);
+    return vec4<u32>(cell, (word >> (index % 24u)) & 1u);
+}
+
+fn volumeZeroProven(inst: VolumeInstanceData, p: vec3<f32>) -> bool {
+    return volumeZeroProofCell(inst, p).w == 1u;
+}
+
+// Grid walk: for a sample in a proven-empty cell, the ray parameter where the
+// ray leaves that cell (every sample before it lies in the same cell, so it
+// contributes exactly nothing); -1 when the cell is not proven. The proof was
+// made over each cell enlarged by 1%, which absorbs f32 rounding at the exit.
+fn volumeZeroCellExit(inst: VolumeInstanceData, p: vec3<f32>,
+                      ro: vec3<f32>, rd: vec3<f32>) -> f32 {
+    let cell = volumeZeroProofCell(inst, p);
+    if (cell.w != 1u) { return -1.0; }
+    let dims = vec3<u32>(inst.zeroProofDims & 1023u,
+                         (inst.zeroProofDims >> 10u) & 1023u,
+                         (inst.zeroProofDims >> 20u) & 1023u);
+    let cellSize = 2.0 * inst.halfExtent.xyz / vec3<f32>(dims);
+    let cellMin = inst.origin.xyz - inst.halfExtent.xyz + vec3<f32>(cell.xyz) * cellSize;
+    return rayAabbWorld(ro, rd, cellMin, cellMin + cellSize).y;
+}
 )WGSL";
+
+    // Shared subexpressions first: their parameters register before any
+    // channel's, exactly as collectVolumeParams replays.
+    const OntoMath::Piecewise* sharingChannels[6] = {densityExpr, extinctionExpr, scatteringExpr,
+                                                     volumeChromaExpr, phaseExpr, emissionExpr};
+    const VolumeSharingPlan sharing = planVolumeSharing(sharingChannels);
+    std::map<std::string, std::string> sharedNames;
+    const std::string sharedWgsl = emitVolumeSharedPrelude(sharing, e, "p", sharedNames);
 
     std::string densityBody;
     if (densityExpr && !densityExpr->pieces.empty()) {
-        emitPiecewise(*densityExpr, e, "p", "f32", densityBody);
+        emitDensityPiecewise(*densityExpr, e, "p", densityBody);
     } else {
         densityBody = "    return 0.0;\n";
     }
     prog.wgsl += "\nfn volumeDensityEval(p: vec3<f32>) -> f32 {\n" +
                  densityBody + "}\n";
+    prog.wgsl += sharedWgsl;
 
     std::string extinctionBody;
     if (extinctionExpr && !extinctionExpr->pieces.empty()) {
@@ -3482,6 +3983,7 @@ fn worldAtDepth(pixel: vec2<f32>, depth: f32) -> vec3<f32> {
     // Source rho/chi/alpha retain the admitted source's own Timeline even while
     // they are consumed by participating-medium transport. The surrounding
     // medium evaluators continue to use instances[g_instIdx].time.x.
+    e.shared = nullptr; // source and occluder have their own evaluation domains
     const std::string mediumTimeExpression = e.timeExpression;
     e.timeExpression = "u.sourceTime.x";
 
@@ -3603,32 +4105,44 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     if (t1 <= t0) { discard; }
 
     let span = t1 - t0;
-    let stepLength = span / 96.0;
+    let samplesPerChord = max(i32(u.volumeControl.w), 1);
+    let stepLength = span / f32(samplesPerChord);
     if (stepLength <= 0.0) { discard; }
 
     var transmittance = 1.0;
     var volumetricScatter = vec3<f32>(0.0);
     var volumetricEmission = vec3<f32>(0.0);
 
-    for (var i = 0; i < 96; i = i + 1) {
+    for (var i = 0; i < samplesPerChord; i = i + 1) {
         let sampleT = t0 + (f32(i) + 0.5) * stepLength;
         let worldP = ro + rd * sampleT;
         let p = worldP - inst.origin.xyz;
+        // Grid walk: this sample and every later one before the ray leaves its
+        // proven-empty cell contribute exactly nothing. Jump past them (the
+        // loop's own increment then lands on the first sample beyond the exit).
+        let zeroExit = volumeZeroCellExit(inst, p, ro, rd);
+        if (zeroExit >= 0.0) {
+            i = max(i, i32(ceil((zeroExit - t0) / stepLength - 0.5)) - 1);
+            continue;
+        }
+        /*VOLUME_SHARED_BEFORE_DENSITY*/
         let density = max(volumeDensityEval(p), 0.0);
 
         if (density > 0.0) {
+            /*VOLUME_SHARED_AFTER_DENSITY*/
             // V1: authored sigma_t(p,t) is independent from D. If absent,
             // the evaluator preserves the exact pre-V1 compatibility law.
             let extinction = max(volumeExtinctionEval(p, density), 1e-6);
             let oldT = transmittance;
             transmittance *= exp(-extinction * stepLength);
 
-            let scattering = max(volumeScatteringEval(p, density), 0.0);
-            let mediumChroma = volumeChromaEval(p);
-
+            // SourceRho-zero (Prism: rho_source != V_transport != D_medium).
+            // Incident light is formed first; a source whose authored rho is
+            // exactly 0 needs no chroma, angular factor or visibility, and a
+            // zero incident light makes the in-scatter increment +-0, so
+            // scattering, medium chroma and phase are not evaluated and the
+            // accumulator is left bit-identical (finite values).
             var incidentLi = vec3<f32>(1.0);
-            var phase = 1.0;
-
             if (u.incidentSource.w > 0.5) {
                 let sourceDelta = worldP - u.incidentSource.xyz;
                 let sourceDist = length(sourceDelta);
@@ -3639,46 +4153,57 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
                     radialRad = max(lightRadianceEval(sourceDelta), 0.0);
                 }
 
-                var chroma = vec3<f32>(1.0);
-                if (HAS_AUTHORED_LIGHT_CHROMA) {
-                    chroma = max(lightChromaEval(sourceDelta), vec3<f32>(0.0));
-                }
-
-                var angular = 1.0;
-                if (HAS_AUTHORED_LIGHT_ANGULAR) {
-                    angular = max(lightAngularEval(sourceDelta, lightDir), 0.0);
-                }
-
-                let vis = volumeSourceVisibility(worldP, u.incidentSource.xyz);
-                incidentLi = chroma * (radialRad * angular * vis);
-
-                if (HAS_AUTHORED_VOLUME_PHASE) {
-                    let wiDelta = worldP - u.incidentSource.xyz;
-                    let woDelta = ro - worldP;
-                    let wiLen = length(wiDelta);
-                    let woLen = length(woDelta);
-                    let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, 1e-8), wiLen > 1e-8);
-                    let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8), woLen > 1e-8);
-                    phase = 0.0;
-                    if ((!VOLUME_PHASE_READS_WI || wiLen > 1e-8) && woLen > 1e-8) {
-                        phase = max(volumePhaseEval(p, wi, wo), 0.0);
+                if (radialRad == 0.0) {
+                    incidentLi = vec3<f32>(0.0);
+                } else {
+                    var chroma = vec3<f32>(1.0);
+                    if (HAS_AUTHORED_LIGHT_CHROMA) {
+                        chroma = max(lightChromaEval(sourceDelta), vec3<f32>(0.0));
                     }
-                }
-            } else {
-                if (HAS_AUTHORED_VOLUME_PHASE) {
-                    let woDelta = ro - worldP;
-                    let woLen = length(woDelta);
-                    let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8), woLen > 1e-8);
-                    phase = 0.0;
-                    if (!VOLUME_PHASE_READS_WI && woLen > 1e-8) {
-                        phase = max(volumePhaseEval(p, vec3<f32>(0.0), wo), 0.0);
+
+                    var angular = 1.0;
+                    if (HAS_AUTHORED_LIGHT_ANGULAR) {
+                        angular = max(lightAngularEval(sourceDelta, lightDir), 0.0);
                     }
+
+                    let vis = volumeSourceVisibility(worldP, u.incidentSource.xyz);
+                    incidentLi = chroma * (radialRad * angular * vis);
                 }
             }
 
-            volumetricScatter +=
-                mediumChroma * incidentLi * (scattering / extinction) * phase *
-                (oldT - transmittance);
+            if (any(incidentLi != vec3<f32>(0.0))) {
+                let scattering = max(volumeScatteringEval(p, density), 0.0);
+                let mediumChroma = volumeChromaEval(p);
+                var phase = 1.0;
+                if (u.incidentSource.w > 0.5) {
+                    if (HAS_AUTHORED_VOLUME_PHASE) {
+                        let wiDelta = worldP - u.incidentSource.xyz;
+                        let woDelta = ro - worldP;
+                        let wiLen = length(wiDelta);
+                        let woLen = length(woDelta);
+                        let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, 1e-8), wiLen > 1e-8);
+                        let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8), woLen > 1e-8);
+                        phase = 0.0;
+                        if ((!VOLUME_PHASE_READS_WI || wiLen > 1e-8) && woLen > 1e-8) {
+                            phase = max(volumePhaseEval(p, wi, wo), 0.0);
+                        }
+                    }
+                } else {
+                    if (HAS_AUTHORED_VOLUME_PHASE) {
+                        let woDelta = ro - worldP;
+                        let woLen = length(woDelta);
+                        let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8), woLen > 1e-8);
+                        phase = 0.0;
+                        if (!VOLUME_PHASE_READS_WI && woLen > 1e-8) {
+                            phase = max(volumePhaseEval(p, vec3<f32>(0.0), wo), 0.0);
+                        }
+                    }
+                }
+
+                volumetricScatter +=
+                    mediumChroma * incidentLi * (scattering / extinction) * phase *
+                    (oldT - transmittance);
+            }
 
             if (HAS_AUTHORED_VOLUME_EMISSION) {
                 let emissionDelta = ro - worldP;
@@ -3713,6 +4238,21 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
 
     prog.params = std::move(e.params);
     prog.needsGradientStep = false;
+
+    // Shared subexpressions are filled once per sample: before density when
+    // density reads one, otherwise only once density has proved positive.
+    {
+        const std::string fill = sharing.groups.empty() ? "" : "volumeSharedEval(p);";
+        const std::string before = sharing.densityUses ? fill : "";
+        const std::string after = sharing.densityUses ? "" : fill;
+        const std::pair<const char*, const std::string*> marks[] = {
+            {"/*VOLUME_SHARED_BEFORE_DENSITY*/", &before},
+            {"/*VOLUME_SHARED_AFTER_DENSITY*/", &after}};
+        for (const auto& [mark, text] : marks) {
+            const std::size_t at = prog.wgsl.find(mark);
+            if (at != std::string::npos) prog.wgsl.replace(at, std::strlen(mark), *text);
+        }
+    }
 
     if (e.refused) {
         prog.ok = false;
@@ -3792,6 +4332,9 @@ Program compileVolumeSet(const std::vector<VolumeProgramInput>& media) {
         // Rename only the per-medium evaluator/feature symbols. Shared structs,
         // bindings, ray helpers and noise live once in the prefix from member 0.
         replaceAll(evalBlock, "volumeDensityEval", "volumeDensityEval" + suffix);
+        // volumeSharedEval / volumeSharedG<k> / g_volumeSharedG<k> in one pass;
+        // the member index sits before the group index so names never collide.
+        replaceAll(evalBlock, "volumeShared", "volumeShared_" + std::to_string(i) + "_");
         replaceAll(evalBlock, "volumeExtinctionEval", "volumeExtinctionEval" + suffix);
         replaceAll(evalBlock, "volumeScatteringEval", "volumeScatteringEval" + suffix);
         replaceAll(evalBlock, "volumeChromaEval", "volumeChromaEval" + suffix);
@@ -3817,6 +4360,12 @@ Program compileVolumeSet(const std::vector<VolumeProgramInput>& media) {
 
         out.wgsl += evalBlock;
         members.push_back(std::move(member));
+    }
+    std::vector<VolumeSharingPlan> memberSharing;
+    for (const auto& m : media) {
+        const OntoMath::Piecewise* channels[6] = {m.densityExpr, m.extinctionExpr, m.scatteringExpr,
+                                                  m.volumeChromaExpr, m.phaseExpr, m.emissionExpr};
+        memberSharing.push_back(planVolumeSharing(channels));
     }
 
     out.wgsl += R"WGSL(
@@ -3872,6 +4421,11 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     const std::size_t eventCount = media.size() * 2u;
     out.wgsl += "    var mediumEvents: array<f32, " +
                 std::to_string(eventCount) + ">;\n";
+    // Unified quadrature: each medium's chord along this ray. Its standalone
+    // resolution is chord / samplesPerChord -- the spacing it gets alone.
+    out.wgsl += "    let samplesPerChord = max(i32(u.volumeControl.w), 1);\n";
+    out.wgsl += "    var mediumChord: array<f32, " +
+                std::to_string(media.size()) + ">;\n";
 
     for (std::size_t i = 0; i < media.size(); ++i) {
         const std::string n = std::to_string(i);
@@ -3891,6 +4445,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             "            eventEnter" + n + " = t1;\n"
             "            eventExit" + n + " = t1;\n"
             "        }\n"
+            "        mediumChord[" + n + "] = eventExit" + n + " - eventEnter" + n + ";\n"
             "        mediumEvents[" + entryIndex + "] = eventEnter" + n + ";\n"
             "        mediumEvents[" + exitIndex + "] = eventExit" + n + ";\n"
             "    }\n";
@@ -3918,7 +4473,8 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
         "        if (segmentEnd <= segmentStart + 1e-6) { continue; }\n"
         "        let segmentMidT = 0.5 * (segmentStart + segmentEnd);\n"
         "        let segmentMidP = ro + rd * segmentMidT;\n"
-        "        var segmentOccupied = false;\n";
+        "        var segmentOccupied = false;\n"
+        "        var segmentSpacing = 3.0e38;\n";
 
     for (std::size_t i = 0; i < media.size(); ++i) {
         const std::string n = std::to_string(i);
@@ -3933,6 +4489,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             "            if (all(segmentMidP >= segmentMin" + n + ") && "
                 "all(segmentMidP <= segmentMax" + n + ")) {\n"
             "                segmentOccupied = true;\n"
+            "                segmentSpacing = min(segmentSpacing, mediumChord[" + n + "] / f32(samplesPerChord));\n"
             "            }\n"
             "        }\n";
     }
@@ -3940,17 +4497,55 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     out.wgsl += R"WGSL(
         if (!segmentOccupied) { continue; }
 
-        // Preserve the established one-medium local resolution inside each
-        // occupied topological interval. Segment boundaries come only from
-        // medium entry/exit events; the physical state remains one continuous
-        // transmittance/radiance integral across all occupied segments.
+        // Unified quadrature (Zach, 2026-10-09: "a mathematical unification of
+        // the drawing functions wherever it overlaps"). The media form one
+        // field with one transmittance/radiance integral; box entry/exit are
+        // its genuine discontinuities, so segments still break there. Each
+        // segment is sampled at the finest standalone resolution of the media
+        // present in it (chord / samplesPerChord), so no medium is ever sampled
+        // more coarsely than it would be alone -- but an overlap no longer
+        // multiplies the count, and a sliver no longer receives a full chord's
+        // worth of samples. Witness: webgpu_volume_unified_quadrature_test.
         let segmentSpan = segmentEnd - segmentStart;
-        let stepLength = segmentSpan / 96.0;
+        let segmentSamples = clamp(i32(ceil(segmentSpan / segmentSpacing)), 1, samplesPerChord);
+        let stepLength = segmentSpan / f32(segmentSamples);
         if (stepLength <= 0.0) { continue; }
 
-        for (var step = 0; step < 96; step = step + 1) {
+        for (var step = 0; step < segmentSamples; step = step + 1) {
             let sampleT = segmentStart + (f32(step) + 0.5) * stepLength;
             let worldP = ro + rd * sampleT;
+
+            // Grid walk (VolumeZeroProof): if every medium holding this sample
+            // has it in a proven-empty cell, nothing here or before the ray's
+            // nearest exit from those cells can contribute. Jump past them.
+            // A sample no medium holds (only possible by rounding at a segment
+            // edge) skips just itself.
+            var walkAllProven = true;
+            var walkHeld = false;
+            var walkExit = segmentEnd;
+)WGSL";
+    for (std::size_t i = 0; i < media.size(); ++i) {
+        const std::string n = std::to_string(i);
+        const std::string inst = std::to_string(i + 1) + "u";
+        out.wgsl +=
+            "            {\n"
+            "                let walkInst" + n + " = instances[" + inst + "];\n"
+            "                if (all(worldP >= walkInst" + n + ".origin.xyz - walkInst" + n + ".halfExtent.xyz) && "
+                "all(worldP <= walkInst" + n + ".origin.xyz + walkInst" + n + ".halfExtent.xyz)) {\n"
+            "                    walkHeld = true;\n"
+            "                    let cellExit" + n + " = volumeZeroCellExit(walkInst" + n +
+                ", worldP - walkInst" + n + ".origin.xyz, ro, rd);\n"
+            "                    if (cellExit" + n + " < 0.0) { walkAllProven = false; }\n"
+            "                    else { walkExit = min(walkExit, cellExit" + n + "); }\n"
+            "                }\n"
+            "            }\n";
+    }
+    out.wgsl += R"WGSL(
+            if (!walkHeld) { walkExit = sampleT; }
+            if (walkAllProven) {
+                step = max(step, i32(ceil((walkExit - segmentStart) / stepLength - 0.5)) - 1);
+                continue;
+            }
 
             // Transport directions are properties of this world-space sample,
             // not of medium ordering. Per-medium Phi/E_v evaluators consume
@@ -3982,18 +4577,25 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
                 "all(worldP <= mediumMax" + n + ")) {\n"
             "                g_instIdx = " + inst + ";\n"
             "                let p" + n + " = worldP - mediumInst" + n + ".origin.xyz;\n"
-            "                let density" + n + " = max(volumeDensityEval_" + n +
+            "                var density" + n + " = 0.0;\n"
+            "                if (!volumeZeroProven(mediumInst" + n + ", p" + n + ")) {\n"
+            + std::string(memberSharing[i].densityUses ? "                    volumeShared_" + n + "_Eval(p" + n + ");\n" : "") +
+            "                    density" + n + " = max(volumeDensityEval_" + n +
                 "(p" + n + "), 0.0);\n"
+            "                }\n"
             "                if (density" + n + " > 0.0) {\n"
+            + std::string(!memberSharing[i].groups.empty() && !memberSharing[i].densityUses ? "                    volumeShared_" + n + "_Eval(p" + n + ");\n" : "") +
             "                    let extinction" + n +
                 " = max(volumeExtinctionEval_" + n + "(p" + n + ", density" + n +
                 "), 1e-6);\n"
             "                    totalExtinction += extinction" + n + ";\n"
-            "                    let scattering" + n +
-                " = max(volumeScatteringEval_" + n + "(p" + n + ", density" + n +
-                "), 0.0);\n"
-            "                    let mediumChroma" + n + " = volumeChromaEval_" + n +
-                "(p" + n + ");\n"
+            // SourceRho-zero (Prism: rho_source != V_transport != D_medium).
+            // Incident light is formed first. When the source's authored rho is
+            // exactly 0, its chroma, angular factor and visibility cannot
+            // matter, and when incident light is exactly 0 the whole in-scatter
+            // term mediumChroma * Li * sigma_s * Phi is +-0, so scattering,
+            // medium chroma and phase are not evaluated. +-0 + E_v == E_v, so
+            // the sum is bit-identical for finite values.
             "                    var incidentLi" + n + " = vec3<f32>(1.0);\n"
             "                    if (u.incidentSource.w > 0.5) {\n"
             "                        let sourceDelta = worldP - u.incidentSource.xyz;\n"
@@ -4003,24 +4605,19 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             "                        if (HAS_AUTHORED_LIGHT_RADIANCE_" + n + ") {\n"
             "                            radialRad = max(lightRadianceEval_" + n + "(sourceDelta), 0.0);\n"
             "                        }\n"
-            "                        var chroma = vec3<f32>(1.0);\n"
-            "                        if (HAS_AUTHORED_LIGHT_CHROMA_" + n + ") {\n"
-            "                            chroma = max(lightChromaEval_" + n + "(sourceDelta), vec3<f32>(0.0));\n"
-            "                        }\n"
-            "                        var angular = 1.0;\n"
-            "                        if (HAS_AUTHORED_LIGHT_ANGULAR_" + n + ") {\n"
-            "                            angular = max(lightAngularEval_" + n + "(sourceDelta, lightDir), 0.0);\n"
-            "                        }\n"
-            "                        let vis = volumeSourceVisibility_" + n + "(worldP, u.incidentSource.xyz);\n"
-            "                        incidentLi" + n + " = chroma * (radialRad * angular * vis);\n"
-            "                    }\n"
-            "                    var phase" + n + " = 1.0;\n"
-            "                    if (HAS_AUTHORED_VOLUME_PHASE_" + n + ") {\n"
-            "                        phase" + n + " = 0.0;\n"
-            "                        if ((!VOLUME_PHASE_READS_WI_" + n +
-                " || (u.incidentSource.w > 0.5 && wiLen > 1e-8)) && woLen > 1e-8) {\n"
-            "                            phase" + n + " = max(volumePhaseEval_" + n +
-                "(p" + n + ", wi, wo), 0.0);\n"
+            "                        if (radialRad == 0.0) {\n"
+            "                            incidentLi" + n + " = vec3<f32>(0.0);\n"
+            "                        } else {\n"
+            "                            var chroma = vec3<f32>(1.0);\n"
+            "                            if (HAS_AUTHORED_LIGHT_CHROMA_" + n + ") {\n"
+            "                                chroma = max(lightChromaEval_" + n + "(sourceDelta), vec3<f32>(0.0));\n"
+            "                            }\n"
+            "                            var angular = 1.0;\n"
+            "                            if (HAS_AUTHORED_LIGHT_ANGULAR_" + n + ") {\n"
+            "                                angular = max(lightAngularEval_" + n + "(sourceDelta, lightDir), 0.0);\n"
+            "                            }\n"
+            "                            let vis = volumeSourceVisibility_" + n + "(worldP, u.incidentSource.xyz);\n"
+            "                            incidentLi" + n + " = chroma * (radialRad * angular * vis);\n"
             "                        }\n"
             "                    }\n"
             "                    var emitted" + n + " = vec3<f32>(0.0);\n"
@@ -4031,8 +4628,26 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
                 "(p" + n + ", wo), vec3<f32>(0.0));\n"
             "                        }\n"
             "                    }\n"
-            "                    totalSource += mediumChroma" + n + " * incidentLi" + n + " * scattering" + n +
+            "                    if (any(incidentLi" + n + " != vec3<f32>(0.0))) {\n"
+            "                        let scattering" + n +
+                " = max(volumeScatteringEval_" + n + "(p" + n + ", density" + n +
+                "), 0.0);\n"
+            "                        let mediumChroma" + n + " = volumeChromaEval_" + n +
+                "(p" + n + ");\n"
+            "                        var phase" + n + " = 1.0;\n"
+            "                        if (HAS_AUTHORED_VOLUME_PHASE_" + n + ") {\n"
+            "                            phase" + n + " = 0.0;\n"
+            "                            if ((!VOLUME_PHASE_READS_WI_" + n +
+                " || (u.incidentSource.w > 0.5 && wiLen > 1e-8)) && woLen > 1e-8) {\n"
+            "                                phase" + n + " = max(volumePhaseEval_" + n +
+                "(p" + n + ", wi, wo), 0.0);\n"
+            "                            }\n"
+            "                        }\n"
+            "                        totalSource += mediumChroma" + n + " * incidentLi" + n + " * scattering" + n +
                 " * phase" + n + " + emitted" + n + ";\n"
+            "                    } else {\n"
+            "                        totalSource += emitted" + n + ";\n"
+            "                    }\n"
             "                }\n"
             "            }\n"
             "        }\n";

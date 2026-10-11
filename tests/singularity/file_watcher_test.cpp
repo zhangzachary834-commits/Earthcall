@@ -148,32 +148,37 @@ int main() {
     lawGetValue(*watcher, PropertyPath::parse("watcher.filesTracked"), val);
     check(std::get<double>(val) == 1.0, "With .wgsl filter, only 1 file is tracked");
 
-    // -----------------------------------------------------------------------
-    // Case 5: Live Hot Reloading (Shader & Rule Invalidation)
-    // -----------------------------------------------------------------------
+    // Case 5: exercise the runtime tick path and the authored checkNow trigger.
+    receivedType.clear();
+    receivedPath.clear();
     lawSetValue(*watcher, PropertyPath::parse("watcher.filterExtension"), PropertyValue(std::string("")));
     watcher->rescanBaseline();
+    lawSetValue(*watcher, PropertyPath::parse("watcher.pollIntervalMs"), PropertyValue(100.0));
 
-    // Sleep a tiny bit to ensure mtime ticks forward
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    // Establish a fresh poll timestamp before creating the file so this gate
+    // assertion does not depend on time spent in earlier test cases.
+    watcher->tick();
+    receivedType.clear();
+    receivedPath.clear();
 
-    // Modify the WGSL shader
+    fs::path fileD = watchDir / "tick_test.txt";
     {
-        std::ofstream a(fileA, std::ios::app);
-        a << "// live hot reload pass 2\n";
+        std::ofstream d(fileD);
+        d << "runtime tick test\\n";
     }
-    watcher->checkNow();
 
-    lawGetValue(*watcher, PropertyPath::parse("watcher.lastReloadTarget"), val);
-    check(std::get<std::string>(val) == "shader", "watcher.lastReloadTarget identified 'shader'");
+    watcher->tick();
+    check(receivedType.empty(), "tick() is gated before pollIntervalMs elapses");
+    std::this_thread::sleep_for(std::chrono::milliseconds(110));
+    watcher->tick();
+    check(receivedType == "file-created", "tick() detected file creation after poll interval");
+    check(receivedPath == fileD.lexically_normal().string(), "tick() reported accurate file path");
 
-    lawGetValue(*watcher, PropertyPath::parse("watcher.reloadCount"), val);
-    check(std::get<double>(val) >= 1.0, "watcher.reloadCount tracked automatic shader reload");
-
-    // Manual reload trigger
-    lawSetValue(*watcher, PropertyPath::parse("watcher.reloadShaders"), PropertyValue(true));
-    lawGetValue(*watcher, PropertyPath::parse("watcher.reloadCount"), val);
-    check(std::get<double>(val) >= 2.0, "Manual watcher.reloadShaders trigger incremented reloadCount");
+    receivedType.clear();
+    receivedPath.clear();
+    fs::remove(fileD, ec);
+    lawSetValue(*watcher, PropertyPath::parse("watcher.checkNow"), PropertyValue(true));
+    check(receivedType == "file-deleted", "watcher.checkNow property triggers immediate scan");
 
     // Clean up
     fs::remove_all(watchDir, ec);

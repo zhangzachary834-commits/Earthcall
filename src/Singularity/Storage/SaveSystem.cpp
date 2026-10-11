@@ -1368,10 +1368,18 @@ bool writeZoneIdentity(const std::string& identifier, const nlohmann::json& j) {
     wrapper["MigrationRoot"] = j.dump(-1);
     std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
     
-    return atomicWriteFile(path, [&](std::ostream& out) {
+    const bool wrote = atomicWriteFile(path, [&](std::ostream& out) {
         out.write(reinterpret_cast<const char*>(outBytes.data()), outBytes.size());
         return static_cast<bool>(out);
     });
+    if (wrote) {
+        const std::string safe = sanitizeLabel(identifier);
+        if (!safe.empty()) {
+            std::error_code ec;
+            std::filesystem::remove(std::filesystem::path(path).parent_path() / "zone.json", ec);
+        }
+    }
+    return wrote;
 }
 
 nlohmann::json readZoneIdentity(const std::string& identifier) {
@@ -1463,16 +1471,71 @@ nlohmann::json readLawIdentity(const std::string& identifier) {
     return readSaveData((sharedIdentityRoot("laws") / safe / "law.json").string());
 }
 
+namespace {
+std::string materialStem(const std::string& identifier) {
+    static const std::string prefix = "material.";
+    return identifier.rfind(prefix, 0) == 0 ? identifier.substr(prefix.size()) : identifier;
+}
+} // namespace
+
+// Pure path computation: a refused or absent root must not leave an empty
+// directory behind, so only the writer creates the folder.
+std::string materialIdentityPath(const std::string& identifier) {
+    const std::string safe = sanitizeLabel(materialStem(identifier));
+    if (safe.empty()) return "";
+    return (sharedIdentityRoot("materials") / safe / "material.json").string();
+}
+
+bool materialIdentityExists(const std::string& identifier) {
+    const std::string path = materialIdentityPath(identifier);
+    if (path.empty()) return false;
+    std::error_code ec;
+    return std::filesystem::is_regular_file(path, ec) && std::filesystem::file_size(path, ec) > 0;
+}
+
+bool writeMaterialIdentity(const std::string& identifier, const nlohmann::json& j) {
+    const std::string path = materialIdentityPath(identifier);
+    if (path.empty()) return false;
+    std::error_code ec;
+    std::filesystem::create_directories(std::filesystem::path(path).parent_path(), ec);
+    if (ec && ec.value() != 17) {
+        std::cerr << "[SaveSystem] Failed to create Material directory for "
+                  << identifier << ": " << ec.message() << "\n";
+        return false;
+    }
+    return atomicWriteFile(path, [&](std::ostream& out) {
+        out << j.dump(-1);
+        return static_cast<bool>(out);
+    });
+}
+
+nlohmann::json readMaterialIdentity(const std::string& identifier) {
+    if (!materialIdentityExists(identifier)) return nlohmann::json();
+    return readSaveData(materialIdentityPath(identifier));
+}
+
 std::string resolveZoneIdentityPath(const std::string& identifier) {
     const std::string safe = sanitizeLabel(identifier);
     if (safe.empty()) return "";
-    return (sharedIdentityRoot("zones") / safe / "zone.json").string();
+    const std::filesystem::path dir = sharedIdentityRoot("zones") / safe;
+    std::error_code ec;
+    const auto ecformPath = dir / "zone.ecform";
+    if (std::filesystem::exists(ecformPath, ec) && std::filesystem::file_size(ecformPath, ec) > 0) return ecformPath.string();
+    const auto jsonPath = dir / "zone.json";
+    if (std::filesystem::exists(jsonPath, ec) && std::filesystem::file_size(jsonPath, ec) > 0) return jsonPath.string();
+    return ecformPath.string();
 }
 
 std::string resolveHomeIdentityPath(const std::string& identifier) {
     const std::string safe = sanitizeLabel(identifier);
     if (safe.empty()) return "";
-    return (sharedIdentityRoot("homes") / safe / "home.json").string();
+    const std::filesystem::path dir = sharedIdentityRoot("homes") / safe;
+    std::error_code ec;
+    const auto ecformPath = dir / "home.ecform";
+    if (std::filesystem::exists(ecformPath, ec) && std::filesystem::file_size(ecformPath, ec) > 0) return ecformPath.string();
+    const auto jsonPath = dir / "home.json";
+    if (std::filesystem::exists(jsonPath, ec) && std::filesystem::file_size(jsonPath, ec) > 0) return jsonPath.string();
+    return ecformPath.string();
 }
 
 std::string resolveLawIdentityPath(const std::string& identifier) {
@@ -1528,10 +1591,18 @@ bool writeHomeIdentity(const std::string& identifier, const nlohmann::json& j) {
     wrapper["MigrationRoot"] = j.dump(-1);
     std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
     
-    return atomicWriteFile(path, [&](std::ostream& out) {
+    const bool wrote = atomicWriteFile(path, [&](std::ostream& out) {
         out.write(reinterpret_cast<const char*>(outBytes.data()), outBytes.size());
         return static_cast<bool>(out);
     });
+    if (wrote) {
+        const std::string safe = sanitizeLabel(identifier);
+        if (!safe.empty()) {
+            std::error_code ec;
+            std::filesystem::remove(std::filesystem::path(path).parent_path() / "home.json", ec);
+        }
+    }
+    return wrote;
 }
 
 nlohmann::json readHomeIdentity(const std::string& identifier) {

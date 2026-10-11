@@ -1,5 +1,9 @@
 # Sol handoff — chain-round documentation correction — 2026-09-12
 
+
+
+
+
 Zach asked me to take another item from the Earthcall To-do list and then integrate it into the curated superbranch.
 
 I selected the bounded Docs item that says `ALGORITHMS_AS_LAW.md` incorrectly names `kMaxChainRounds` as a constant.

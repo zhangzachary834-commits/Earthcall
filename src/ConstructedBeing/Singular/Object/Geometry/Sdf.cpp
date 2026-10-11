@@ -1,5 +1,6 @@
 #include <unordered_map>
 #include "Sdf.hpp"
+#include <functional>
 
 #include <algorithm>
 #include <cmath>
@@ -313,6 +314,157 @@ SdfNode makeImplicit(const std::string& src) {
     n.rpn = compileExpr(src);
     n.mathNode = rpnToMathNode(n.rpn);
     return n;
+}
+
+namespace {
+
+struct ShorthandParser {
+    const std::string& s;
+    size_t i = 0;
+    std::string error;
+
+    explicit ShorthandParser(const std::string& src) : s(src) {}
+
+    void ws() { while (i < s.size() && std::isspace((unsigned char)s[i])) ++i; }
+    bool eat(char c) { ws(); if (i < s.size() && s[i] == c) { ++i; return true; } return false; }
+    bool fail(const std::string& why) { if (error.empty()) error = why; return false; }
+
+    bool number(float& out) {
+        ws();
+        size_t j = i;
+        if (j < s.size() && (s[j] == '-' || s[j] == '+')) ++j;
+        bool digits = false;
+        while (j < s.size() && (std::isdigit((unsigned char)s[j]) || s[j] == '.')) { ++j; digits = true; }
+        if (!digits) return false;
+        out = std::strtof(s.substr(i, j - i).c_str(), nullptr);
+        i = j;
+        return true;
+    }
+
+    std::string name() {
+        ws();
+        size_t j = i;
+        while (j < s.size() && std::isalpha((unsigned char)s[j])) ++j;
+        std::string id = s.substr(i, j - i);
+        i = j;
+        std::string lower;
+        for (char c : id) lower.push_back((char)std::tolower((unsigned char)c));
+        return lower;
+    }
+
+    static void offsetLeaves(SdfNode& n, const glm::vec3& d) {
+        if (n.op == SdfOp::Leaf) { n.offset += d; return; }
+        for (auto& c : n.children) if (c) offsetLeaves(*c, d);
+    }
+
+    bool numbers(std::vector<float>& out) {
+        do {
+            float v;
+            if (!number(v)) return fail("expected a number");
+            out.push_back(v);
+        } while (eat(','));
+        return true;
+    }
+
+    bool shape(SdfNode& out) {
+        const size_t start = i;
+        const std::string fn = name();
+        if (fn.empty()) return fail("expected a shape name at offset " + std::to_string(start));
+        if (!eat('(')) return fail("expected '(' after " + fn);
+
+        const auto prim = [&](SdfPrim p, size_t minArgs, size_t maxArgs,
+                              const std::function<void(const std::vector<float>&)>& build) {
+            std::vector<float> a;
+            if (!numbers(a)) return false;
+            if (!eat(')')) return fail("expected ')' to close " + fn);
+            if (a.size() < minArgs || a.size() > maxArgs)
+                return fail(fn + " takes " + std::to_string(minArgs) +
+                            (minArgs == maxArgs ? "" : "-" + std::to_string(maxArgs)) + " numbers");
+            for (float v : a) if (!(v == v)) return fail(fn + ": NaN");
+            (void)p;
+            build(a);
+            return true;
+        };
+
+        if (fn == "sphere")
+            return prim(SdfPrim::Sphere, 1, 1, [&](auto& a) { out = SdfNode::leaf(SdfPrim::Sphere, glm::vec3(a[0])); });
+        if (fn == "box")
+            return prim(SdfPrim::Box, 1, 3, [&](auto& a) {
+                out = SdfNode::leaf(SdfPrim::Box, a.size() == 1 ? glm::vec3(a[0]) : glm::vec3(a[0], a[1], a[2])); });
+        if (fn == "roundbox")
+            return prim(SdfPrim::RoundBox, 4, 4, [&](auto& a) {
+                out = SdfNode::leaf(SdfPrim::RoundBox, glm::vec3(a[0], a[1], a[2]), a[3]); });
+        if (fn == "ellipsoid")
+            return prim(SdfPrim::Ellipsoid, 3, 3, [&](auto& a) {
+                out = SdfNode::leaf(SdfPrim::Ellipsoid, glm::vec3(a[0], a[1], a[2])); });
+        if (fn == "cylinder")
+            return prim(SdfPrim::Cylinder, 2, 2, [&](auto& a) {
+                out = SdfNode::leaf(SdfPrim::Cylinder, glm::vec3(a[0], a[1], 0.0f)); });
+        if (fn == "cone")
+            return prim(SdfPrim::Cone, 2, 2, [&](auto& a) {
+                out = SdfNode::leaf(SdfPrim::Cone, glm::vec3(a[0], a[1], 0.0f)); });
+        if (fn == "torus")
+            return prim(SdfPrim::Torus, 2, 2, [&](auto& a) {
+                out = SdfNode::leaf(SdfPrim::Torus, glm::vec3(a[0], a[1], 0.0f)); });
+
+        if (fn == "union" || fn == "intersect" || fn == "intersection" || fn == "subtract" ||
+            fn == "difference") {
+            const SdfOp op = (fn == "union") ? SdfOp::Union
+                           : (fn == "subtract" || fn == "difference") ? SdfOp::Subtract
+                           : SdfOp::Intersect;
+            SdfNode acc;
+            if (!shape(acc)) return false;
+            int count = 1;
+            while (eat(',')) {
+                SdfNode next;
+                if (!shape(next)) return false;
+                acc = SdfNode::binary(op, acc, next);
+                ++count;
+            }
+            if (!eat(')')) return fail("expected ')' to close " + fn);
+            if (count < 2) return fail(fn + " needs at least two shapes");
+            if (op == SdfOp::Subtract && count != 2) return fail("subtract takes exactly two shapes");
+            out = std::move(acc);
+            return true;
+        }
+        if (fn == "smoothunion" || fn == "morph") {
+            SdfNode a, b;
+            float t = 0.0f;
+            if (!shape(a)) return false;
+            if (!eat(',')) return fail(fn + ": expected ','");
+            if (!shape(b)) return false;
+            if (!eat(',')) return fail(fn + ": expected ',' before the blend");
+            if (!number(t)) return fail(fn + ": expected a blend number");
+            if (!eat(')')) return fail("expected ')' to close " + fn);
+            out = SdfNode::binary(fn == "morph" ? SdfOp::Morph : SdfOp::SmoothUnion, a, b, t);
+            return true;
+        }
+        if (fn == "move" || fn == "translate" || fn == "at") {
+            SdfNode inner;
+            if (!shape(inner)) return false;
+            std::vector<float> d;
+            if (!eat(',') || !numbers(d) || d.size() != 3) return fail(fn + " takes a shape and x,y,z");
+            if (!eat(')')) return fail("expected ')' to close " + fn);
+            offsetLeaves(inner, glm::vec3(d[0], d[1], d[2]));
+            out = std::move(inner);
+            return true;
+        }
+        return fail("'" + fn + "' is not an SDF shape or operation");
+    }
+};
+
+} // namespace
+
+bool parseSdfShorthand(const std::string& src, SdfNode& out, std::string* error) {
+    ShorthandParser p(src);
+    SdfNode result;
+    const bool ok = p.shape(result) && (p.ws(), p.i == src.size());
+    if (!ok) {
+        if (error) *error = p.error.empty() ? "unexpected text after the shape" : p.error;
+        return false;
+    }
+    out = std::move(result);
+    return true;
 }
 
 SdfNode makeImplicit(std::shared_ptr<OntoMath::MathNode> node) {

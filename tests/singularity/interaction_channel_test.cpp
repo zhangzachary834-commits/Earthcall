@@ -40,9 +40,9 @@ void check(bool ok, const std::string& what) {
     std::printf("  ok: %s\n", what.c_str());
 }
 
-// Every ECA::Event this test provokes, by type and subject. The bus has no
-// unsubscribe, so one subscription for the whole run and a clear() between
-// cases.
+// Every ECA::Event this test provokes, by type and subject. One stable
+// recorder subscription spans the whole run; Recorder::clear() resets only the
+// observed events between cases.
 struct Recorder {
     std::vector<std::pair<std::string, std::string>> events;
 
@@ -510,6 +510,26 @@ int main() {
               "Rapid release-and-repress MUST publish the click");
         check(g_recorder.count("object-pressed", "control-a") >= 1,
               "Rapid release-and-repress MUST publish the new press");
+    }
+
+    // Same normalized viewport address under window resize and independent
+    // framebuffer scale; read-only projections must also wake dependent Laws.
+    {
+        InteractionChannel channel;
+        InteractionChannel::Sense sense;
+        sense.windowWidth=1000; sense.windowHeight=500;
+        sense.pointerX=250; sense.pointerY=125;
+        channel.observePending(sense,{});
+        check(channel.propPointerU()==.25f && channel.propPointerV()==.25f,"normalized cursor uses window points");
+        sense.windowWidth=2000; sense.windowHeight=1000;
+        channel.observePending(sense,{});
+        check(channel.propPointerU()==.125f && channel.propPointerV()==.125f,"resize changes normalized address without cursor movement");
+        PropertyValue value;
+        check(PropertyPath::parse("pointerU").getValue(channel,value)==PropertyPath::PathResult::Ok &&
+              PropertyPath::parse("pointerU").setValue(channel,.5)==PropertyPath::PathResult::ReadOnly,
+              "normalized pointer is registered and cannot be forged by a Law");
+        sense.windowWidth=0;sense.windowHeight=0;channel.observePending(sense,{});
+        check(std::isfinite(channel.propPointerU()) && std::isfinite(channel.propPointerV()),"zero-size/minimized window cannot divide by zero");
     }
 
     Universe::instance().setProvider(nullptr);

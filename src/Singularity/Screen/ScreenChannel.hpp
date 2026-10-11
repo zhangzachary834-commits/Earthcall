@@ -4,8 +4,11 @@
 #include <glm/glm.hpp>
 #include <string>
 
+class Renderer;
+
 namespace Singularity {
 namespace Screen {
+
 
 // First-mover modality channel for Screen / GPU graphics rendering.
 //
@@ -45,6 +48,17 @@ public:
 
     static void syncRegister(LawManager& laws);
     static ScreenChannel* find(LawManager& laws);
+
+    // Explicit authored binding: output.colorPath names a typed VectorField on
+    // ANY Singular, not an Object kind. opacityPath/timePath are optional typed
+    // ScalarField/numeric bindings. Local output.color/opacity/time also work.
+    // All are ordinary AddProperty/Set vocabulary, not new action opcodes.
+    bool manifestOutput(Renderer& renderer, uint32_t width, uint32_t height);
+
+    // Irreducible Sense boundary: one explicit request token captures selected
+    // pixels from this completed viewport frame. Meaning/selection, source
+    // fields, names and subsequent derivations remain authored data/Laws.
+    void senseOutput(Renderer& renderer, uint32_t width, uint32_t height);
 
     // Update live metrics from the active Renderer at the end of each frame.
     void updateMetrics(int drawCalls, int trianglesDrawn, double vramBytes,
@@ -86,6 +100,27 @@ public:
     // corpus validates the activation rung; a Person/Law can explicitly enable
     // it for measurement through this same authored ScreenChannel property.
     bool      sdfRangeProxyEnabled = false;
+    // Zero-density proof for participating media (Rendering::VolumeZeroProof):
+    // skips evaluating a medium's density only where OntoMath interval
+    // arithmetic proved it can never be positive. Unlike the range proxy it is
+    // ON by default -- Zach's call, 2026-10-09 -- because its native witness
+    // (webgpu_volume_zero_proof_test) already shows a byte-identical
+    // framebuffer and the real Northern Veil save ran ~3x faster. A Person/Law
+    // can switch it off here to compare.
+    bool      volumeZeroProofEnabled = true;
+    // Volume quadrature resolution: samples a participating medium receives
+    // across its own chord along a ray. 96 reproduces the historical shader
+    // constant; overlapping media share the finest present resolution instead
+    // of multiplying it (unified quadrature, Zach 2026-10-09). A runtime
+    // uniform: changing it never recompiles. The renderer clamps to [1, 8192].
+    int       volumeSamplesPerChord = 96;
+    // Derived: cells proven empty / cells tiled, over the media drawn last frame.
+    int       volumeZeroProofCellsProven = 0;
+    int       volumeZeroProofCellsTotal = 0;
+    void updateVolumeZeroProofMetrics(int cellsProven, int cellsTotal) {
+        volumeZeroProofCellsProven = cellsProven;
+        volumeZeroProofCellsTotal = cellsTotal;
+    }
     bool      recording = false;
     bool      snapshotTrigger = false;
     glm::vec3 backgroundColor{0.1f, 0.1f, 0.15f};
@@ -122,6 +157,24 @@ public:
 
 private:
     void buildProperties() override;
+    // Derived Screen observations, registered read-only below. These report
+    // the actual channel act; they never hold authored expression state.
+    int _outputWidth = 0, _outputHeight = 0;
+    bool _outputDrawn = false;
+    std::string _outputLastRefusal;
+    int getOutputWidth() const { return _outputWidth; }
+    int getOutputHeight() const { return _outputHeight; }
+    bool getOutputDrawn() const { return _outputDrawn; }
+    std::string getOutputLastRefusal() const { return _outputLastRefusal; }
+    long _sampleFrame = 0;
+    std::string _sampleLastToken;
+    std::shared_ptr<PropertyDict> _sampleResult = std::make_shared<PropertyDict>();
+    long getSampleFrame() const { return _sampleFrame; }
+    std::string getSampleLastToken() const { return _sampleLastToken; }
+    std::shared_ptr<PropertyDict> getSampleResult() const;
+    int getSampleScanCeiling() const { return 1048576; }
+    int getSampleCountCeiling() const { return 65536; }
+    long getSampleReadbackByteCeiling() const { return 268435456L; }
 
     // Getters for the derived metrics below: NO_BLACK_BOX.md §3 says a Law may
     // read anything, but "writable unless genuinely derived" — these are
@@ -154,6 +207,8 @@ private:
     int    getSdfRangeProxyCulledDraws() const { return sdfRangeProxyCulledDraws; }
     int    getSdfRangeTraversalDraws() const { return sdfRangeTraversalDraws; }
     double getSdfRangeNodeBytesUploaded() const { return sdfRangeNodeBytesUploaded; }
+    int    getVolumeZeroProofCellsProven() const { return volumeZeroProofCellsProven; }
+    int    getVolumeZeroProofCellsTotal() const { return volumeZeroProofCellsTotal; }
 
     std::string _name{"screen-channel"};
 };

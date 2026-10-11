@@ -16,6 +16,8 @@ namespace Rendering {
 // FieldNode remains the authored Singular; this value is the Screen channel's
 // bounded view of the truths needed by volumetric transport.
 struct VolumeDensityBinding {
+    // Stable authored producer identity carried to the already-known execution slot.
+    std::string producerId;
     // FieldNode placement. The established particle/FieldNode convention uses
     // local coordinates in [-1,+1], so scale is the origin-centred box
     // half-span: authored world bounds are origin ± abs(scale). V0 must not
@@ -113,57 +115,58 @@ inline void appendVolumeSetIdentity(std::string& identity,
     identity += "\\n";
 }
 
+// Per-channel cache revision from a FieldNode's authored-math revision. The
+// node revision comes from a process-wide sequence that never repeats, so
+// (revision << 4) | channel is unique per (write, channel) and never 0 -- 0
+// still means "channel absent" to every consumer.
+inline uint64_t authoredChannelRevision(uint64_t nodeRevision, unsigned channel) {
+    return (nodeRevision << 4) | static_cast<uint64_t>(channel + 1u);
+}
+
 // Resolve authored density from one FieldNode into the renderer-facing bounded
 // projection. Sourcehood is intentionally irrelevant: fog need not illuminate,
 // and a radiant source need not be participating medium.
+//
+// Channel revisions come from the node's authored-math revision, not from
+// serializing each expression every frame (that cost ~7 ms/frame in Northern
+// Veil). See geom::FieldNode::verifiedAuthoredMathRevision for how a writer
+// that forgets to bump it is still caught.
 inline bool readVolumeDensity(const geom::FieldNode& field,
                               double temporalCoordinate,
                               double temporalDelta,
                               VolumeDensityBinding& out) {
     if (!field.volumeDensity || field.volumeDensity->pieces.empty()) return false;
 
+    const uint64_t revision = field.verifiedAuthoredMathRevision();
     VolumeDensityBinding next;
+    next.producerId = field.getIdentifier();
     next.origin = field.origin;
     next.scale = field.scale;
     next.densityExpr = field.volumeDensity.get();
-    const std::string json = field.volumeDensity->toJson().dump();
-    next.densityRevision =
-        static_cast<uint64_t>(std::hash<std::string>{}(json));
+    next.densityRevision = authoredChannelRevision(revision, 1);
     if (field.volumeExtinction && !field.volumeExtinction->pieces.empty()) {
         next.extinctionExpr = field.volumeExtinction.get();
-        const std::string extinctionJson = field.volumeExtinction->toJson().dump();
-        next.extinctionRevision =
-            static_cast<uint64_t>(std::hash<std::string>{}(extinctionJson));
+        next.extinctionRevision = authoredChannelRevision(revision, 2);
     }
     if (field.volumeScattering && !field.volumeScattering->pieces.empty()) {
         next.scatteringExpr = field.volumeScattering.get();
-        const std::string scatteringJson = field.volumeScattering->toJson().dump();
-        next.scatteringRevision =
-            static_cast<uint64_t>(std::hash<std::string>{}(scatteringJson));
+        next.scatteringRevision = authoredChannelRevision(revision, 3);
     }
     if (field.volumeChroma && !field.volumeChroma->pieces.empty()) {
         next.volumeChromaExpr = field.volumeChroma.get();
-        const std::string chromaJson = field.volumeChroma->toJson().dump();
-        next.volumeChromaRevision =
-            static_cast<uint64_t>(std::hash<std::string>{}(chromaJson));
+        next.volumeChromaRevision = authoredChannelRevision(revision, 4);
     }
     if (field.volumePhase && !field.volumePhase->pieces.empty()) {
         next.phaseExpr = field.volumePhase.get();
-        const std::string phaseJson = field.volumePhase->toJson().dump();
-        next.phaseRevision =
-            static_cast<uint64_t>(std::hash<std::string>{}(phaseJson));
+        next.phaseRevision = authoredChannelRevision(revision, 5);
     }
     if (field.volumeEmission && !field.volumeEmission->pieces.empty()) {
         next.emissionExpr = field.volumeEmission.get();
-        const std::string emissionJson = field.volumeEmission->toJson().dump();
-        next.emissionRevision =
-            static_cast<uint64_t>(std::hash<std::string>{}(emissionJson));
+        next.emissionRevision = authoredChannelRevision(revision, 6);
     }
     if (geom::isSdfActive(field.volumeOccluder.get())) {
         next.occluderSdf = field.volumeOccluder.get();
-        const std::string occluderJson = geom::sdfToJson(*field.volumeOccluder).dump();
-        next.occluderRevision =
-            static_cast<uint64_t>(std::hash<std::string>{}(occluderJson));
+        next.occluderRevision = authoredChannelRevision(revision, 7);
     }
     next.temporalCoordinate = temporalCoordinate;
     next.temporalDelta = temporalDelta;

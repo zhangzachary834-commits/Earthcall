@@ -3,6 +3,7 @@
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/SdfRangeProof.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
@@ -12,12 +13,64 @@
 #include <cstdio>
 #include <cstring>
 #include <limits>
+#include <optional>
 #include <functional>
 #include <set>
 #include <string>
 #include <utility>
 
 namespace {
+
+struct AuthoredModelTransforms {
+    glm::mat4 inverse;
+    glm::mat4 normal;
+};
+
+// OntoMath owns the mathematical meaning of model inversion and normal
+// inverse-transpose. GLM matrices here are only lowered GPU representation.
+std::optional<AuthoredModelTransforms> deriveModelTransforms(const glm::mat4& model) {
+    const auto authoredModel = OntoMath::MatrixValue::fromGlmMat4(model);
+    const auto inverse = OntoMath::inverseAffine(authoredModel);
+    if (!inverse) return std::nullopt;
+
+    const auto normal = OntoMath::matrixTranspose(*inverse);
+    if (!normal) return std::nullopt;
+
+    const auto loweredInverse = inverse->toGlmMat4();
+    const auto loweredNormal = normal->toGlmMat4();
+    if (!loweredInverse || !loweredNormal) return std::nullopt;
+
+    return AuthoredModelTransforms{*loweredInverse, *loweredNormal};
+}
+
+std::optional<glm::mat4> authoredProduct(const glm::mat4& left,
+                                         const glm::mat4& right) {
+    const auto product = OntoMath::matrixMultiply(
+        OntoMath::MatrixValue::fromGlmMat4(left),
+        OntoMath::MatrixValue::fromGlmMat4(right));
+    if (!product) return std::nullopt;
+    return product->toGlmMat4();
+}
+
+std::optional<glm::mat4> authoredInverse(const glm::mat4& matrix) {
+    const auto inverse =
+        OntoMath::matrixInverse(OntoMath::MatrixValue::fromGlmMat4(matrix));
+    if (!inverse) return std::nullopt;
+    return inverse->toGlmMat4();
+}
+
+std::optional<glm::mat4> authoredScaledProduct(const glm::mat4& viewProj,
+                                               const glm::mat4& model,
+                                               float uniformScale) {
+    const auto vpModel = OntoMath::matrixMultiply(
+        OntoMath::MatrixValue::fromGlmMat4(viewProj),
+        OntoMath::MatrixValue::fromGlmMat4(model));
+    const auto scale = OntoMath::affineScale(glm::vec3(uniformScale));
+    if (!vpModel || !scale) return std::nullopt;
+    const auto result = OntoMath::matrixMultiply(*vpModel, *scale);
+    if (!result) return std::nullopt;
+    return result->toGlmMat4();
+}
 
 // Vertex layout mirrors geom::TessVertex exactly: {pos(3), normal(3), uv(2)}.
 // A world-space Lambert term (ambient + diffuse*N·L) tints baseColor; front_facing
@@ -624,6 +677,11 @@ void WebGpuRenderer::shutdown() {
     _textures.clear();
     for (auto& kv : _flatPipes) wgpuRenderPipelineRelease(kv.second);
     _flatPipes.clear();
+    for (auto& kv : _screenPipes) {
+        wgpuRenderPipelineRelease(kv.second.pipe);
+        wgpuBindGroupLayoutRelease(kv.second.bgl);
+    }
+    _screenPipes.clear();
     if (_flatLayout)  { wgpuPipelineLayoutRelease(_flatLayout); _flatLayout = nullptr; }
     if (_flatShader)  { wgpuShaderModuleRelease(_flatShader); _flatShader = nullptr; }
     if (_flatBgl)     { wgpuBindGroupLayoutRelease(_flatBgl); _flatBgl = nullptr; }
@@ -833,6 +891,37 @@ void WebGpuRenderer::present() {
     _surfaceTex = nullptr; // owned by the surface; not ours to release
 }
 
+void WebGpuRenderer::setCamera(const glm::mat4& viewProj, const glm::vec3& eyePos) {
+    _viewProj = viewProj;
+    _eyePos = eyePos;
+
+    const auto inverse = authoredInverse(_viewProj);
+    _inverseViewProjValid = inverse.has_value();
+    if (inverse) _invViewProj = *inverse;
+
+    const auto modelViewProj = authoredProduct(_viewProj, _model);
+    _modelViewProjValid = modelViewProj.has_value();
+    if (modelViewProj) _modelViewProj = *modelViewProj;
+}
+
+void WebGpuRenderer::applyCamera(const glm::mat4& view, const glm::mat4& proj,
+                                 const glm::vec3& eyePos) {
+    const auto authoredViewProj = authoredProduct(proj, view);
+    if (!authoredViewProj) {
+        _inverseViewProjValid = false;
+        _modelViewProjValid = false;
+        return;
+    }
+    setCamera(*authoredViewProj, eyePos);
+}
+
+void WebGpuRenderer::applyModel(const glm::mat4& model) {
+    _model = model;
+    const auto modelViewProj = authoredProduct(_viewProj, _model);
+    _modelViewProjValid = modelViewProj.has_value();
+    if (modelViewProj) _modelViewProj = *modelViewProj;
+}
+
 void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width, uint32_t height,
                                          const glm::vec4& clear) {
     mutableFrameStats() = FrameStats{};
@@ -891,8 +980,9 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
             edges.push_back(b); edges.push_back(c);
             edges.push_back(c); edges.push_back(a);
         }
+        if (!_modelViewProjValid) return;
         drawFlat(flatPipeline(WGPUPrimitiveTopology_LineList, Blend::Alpha, DepthMode::TestOnly),
-                 edges, _viewProj * _model,
+                 edges, _modelViewProj,
                  glm::vec4(mat.baseColor, mat.opacity));
         return;
     }
@@ -933,9 +1023,12 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
     key.albedoView = albedoView;
     key.shading    = glm::vec4(mat.ambient, mat.diffuse, mat.specular, mat.shininess);
 
+    const auto authoredTransforms = deriveModelTransforms(_model);
+    if (!authoredTransforms) return;
+
     InstanceData inst;
     inst.model     = _model;
-    inst.normalMat = glm::transpose(glm::inverse(_model));
+    inst.normalMat = authoredTransforms->normal;
     inst.baseColor = glm::vec4(mat.baseColor, mat.opacity);
     _meshBatches[key].push_back(inst);
 
@@ -1756,9 +1849,13 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     ensureSdfCubeVerts();
     if (!_sdfCubeVerts) return;
 
+    const auto authoredTransforms = deriveModelTransforms(_model);
+    if (!authoredTransforms) return;
+
     SdfInstanceData inst;
     inst.model = _model;
-    inst.invModel = glm::inverse(_model);
+    inst.invModel = authoredTransforms->inverse;
+    inst.normalMat = authoredTransforms->normal;
     
     glm::vec3 albedo(1.0f);
     if (mat.albedoPixels && mat.albedoWidth > 0 && mat.albedoHeight > 0) {
@@ -1953,8 +2050,10 @@ void WebGpuRenderer::drawParticles(const geom::FieldNode& field, int count) {
 
     bindPipeline(_particlePipe);
 
+    if (!_modelViewProjValid) return;
+
     ParticleUniforms pu;
-    pu.mvp = _viewProj * _model;
+    pu.mvp = _modelViewProj;
     pu.color = glm::vec4(0.6f, 0.8f, 1.0f, 0.9f);
     pu.originAndTravel = glm::vec4(field.origin, travel);
     pu.flowDir = glm::vec4(flowDir, 0.0f);
@@ -2013,8 +2112,9 @@ void WebGpuRenderer::drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>
     std::vector<glm::vec3> verts;
     verts.reserve(segments.size() * 2);
     for (const auto& s : segments) { verts.push_back(s.first); verts.push_back(s.second); }
+    if (!_modelViewProjValid) return;
     drawFlat(flatPipeline(WGPUPrimitiveTopology_LineList, blend, DepthMode::TestOnly),
-             verts, _viewProj * _model, color);
+             verts, _modelViewProj, color);
 }
 
 void WebGpuRenderer::drawOverlay(const geom::TessMesh& mesh, const glm::vec4& color,
@@ -2022,14 +2122,16 @@ void WebGpuRenderer::drawOverlay(const geom::TessMesh& mesh, const glm::vec4& co
     std::vector<glm::vec3> verts;
     verts.reserve(mesh.tris.size());
     for (const auto& v : mesh.tris) verts.push_back(v.pos);
-    glm::mat4 mvp = _viewProj * _model * glm::scale(glm::mat4(1.0f), glm::vec3(scale));
+    const auto mvp = authoredScaledProduct(_viewProj, _model, scale);
+    if (!mvp) return;
     drawFlat(flatPipeline(WGPUPrimitiveTopology_TriangleList,
                           additive ? Blend::Additive : Blend::Alpha, DepthMode::TestOnly),
-             verts, mvp, color);
+             verts, *mvp, color);
 }
 
 void WebGpuRenderer::flushSdfDraws() {
     if (_activeSdfPipelines.empty()) return;
+    if (!_inverseViewProjValid) return;
     if (!_pass) {
         for (const SdfPipeline* sp : _activeSdfPipelines) {
             _sdfBatches[sp].clear();
@@ -2111,7 +2213,7 @@ void WebGpuRenderer::flushSdfDraws() {
     // Global uniforms for SDFs
     SdfGlobalUniforms u;
     u.viewProj = _viewProj;
-    u.invViewProj = glm::inverse(_viewProj);
+    u.invViewProj = _invViewProj;
     u.lightPos = glm::vec4(lightPos(), 1.0f);
     u.eyePos = glm::vec4(_eyePos, 1.0f);
     u.lightAmbient = glm::vec4(lightAmbient(), 1.0f);
@@ -2131,10 +2233,14 @@ void WebGpuRenderer::flushSdfDraws() {
     // WebGPU uses; view space looks down -z.
     float farDist = 1e6f;
     {
-        const glm::vec4 farPt = glm::inverse(proj()) * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-        if (std::fabs(farPt.w) > 1e-9f) {
-            const float d = -(farPt.z / farPt.w);
-            if (std::isfinite(d) && d > 0.0f) farDist = d;
+        const auto inverseProjection = authoredInverse(proj());
+        if (inverseProjection) {
+            const glm::vec4 farPt =
+                *inverseProjection * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+            if (std::fabs(farPt.w) > 1e-9f) {
+                const float d = -(farPt.z / farPt.w);
+                if (std::isfinite(d) && d > 0.0f) farDist = d;
+            }
         }
     }
     u.limits = glm::vec4(farDist, float(_depthW), float(_depthH), _spaceDistortion);
@@ -2329,8 +2435,35 @@ void WebGpuRenderer::flushSdfDraws() {
     _activeSdfPipelines.clear();
 }
 
+void WebGpuRenderer::attachVolumeZeroProof(const Rendering::VolumeDensityBinding& medium,
+                                           const glm::vec3& halfExtent,
+                                           std::vector<float>& params,
+                                           VolumeInstanceData& instance) {
+    instance.zeroProofPresent = 0u;
+    if (!volumeZeroProofEnabled() || !medium.densityExpr || medium.densityRevision == 0) return;
+
+    auto& memo = _volumeZeroProofs[medium.densityExpr];
+    if (memo.densityRevision != medium.densityRevision || memo.halfExtent != halfExtent) {
+        memo.densityRevision = medium.densityRevision;
+        memo.halfExtent = halfExtent;
+        memo.proof = Rendering::buildVolumeZeroProof(*medium.densityExpr, halfExtent);
+        ++mutableFrameStats().volumeZeroProofBuilds;
+    }
+    memo.lastUsedFrame = _volumeZeroProofFrame;
+    mutableFrameStats().volumeZeroProofCellsTotal += memo.proof.totalCells;
+    if (!memo.proof.any()) return;
+
+    mutableFrameStats().volumeZeroProofCellsProven += memo.proof.provenCells;
+    instance.zeroProofOffset = static_cast<uint32_t>(params.size());
+    instance.zeroProofDims = memo.proof.dims.x | (memo.proof.dims.y << 10u) |
+                             (memo.proof.dims.z << 20u);
+    instance.zeroProofPresent = 1u;
+    params.insert(params.end(), memo.proof.words.begin(), memo.proof.words.end());
+}
+
 void WebGpuRenderer::flushVolumeComposite() {
-    if (!_encoder || !_frameColorView || !_depthView) return;
+    if (!_encoder || !_frameColorView || !_depthView || !_inverseViewProjValid) return;
+    ++_volumeZeroProofFrame;
 
     // V3 does not invent incident direction. A wi-reading Phi can consume one
     // and only one enabled admitted direct source. Position/enablement are
@@ -2492,6 +2625,9 @@ void WebGpuRenderer::flushVolumeComposite() {
                     "\nvolume-emission:\n" + emissionLayout.structure +
                     (emissionLayout.readsOmega ? ":reads-omega" : ":no-omega") +
                     "\noccluder:\n" + occluderLayout.structure +
+                    "\nsharing:\n" + sdfwgsl::inspectVolumeSharing(
+                        medium.densityExpr, medium.extinctionExpr, medium.scatteringExpr,
+                        medium.volumeChromaExpr, medium.phaseExpr, medium.emissionExpr) +
                     "\n";
             }
 
@@ -2616,11 +2752,15 @@ void WebGpuRenderer::flushVolumeComposite() {
             header.time = glm::vec4(0.0f);
             header.paramOffset = 0u;
 
+            params.insert(
+                params.end(), setMemo.prog.params.begin(), setMemo.prog.params.end());
+            for (std::size_t i = 0; i < activeMedia.size(); ++i) {
+                attachVolumeZeroProof(*activeMedia[i], glm::abs(activeMedia[i]->scale),
+                                      params, mediumInstances[i]);
+            }
             instances.push_back(header);
             instances.insert(
                 instances.end(), mediumInstances.begin(), mediumInstances.end());
-            params.insert(
-                params.end(), setMemo.prog.params.begin(), setMemo.prog.params.end());
             _volumeDrawInstanceCounts[setMemo.pipeline] = 1u;
         }
     }
@@ -2708,6 +2848,9 @@ void WebGpuRenderer::flushVolumeComposite() {
                 "\nvolume-emission:\n" + emissionLayout.structure +
                 (emissionLayout.readsOmega ? ":reads-omega" : ":no-omega") +
                 "\noccluder:\n" + occluderLayout.structure +
+                "\nsharing:\n" + sdfwgsl::inspectVolumeSharing(
+                    medium.densityExpr, medium.extinctionExpr, medium.scatteringExpr,
+                    medium.volumeChromaExpr, medium.phaseExpr, medium.emissionExpr) +
                 incidentSourceStructure;
             if (!memo.ok || memo.structure != structure || !memo.pipeline) {
                 memo.prog =
@@ -2774,9 +2917,15 @@ void WebGpuRenderer::flushVolumeComposite() {
                                   static_cast<float>(medium.temporalDelta), 0.0f, 0.0f);
         instance.paramOffset = static_cast<uint32_t>(params.size());
 
-        instances.push_back(instance);
         params.insert(params.end(), memo.prog.params.begin(), memo.prog.params.end());
+        attachVolumeZeroProof(medium, halfExtent, params, instance);
+        instances.push_back(instance);
     }
+    }
+
+    for (auto it = _volumeZeroProofs.begin(); it != _volumeZeroProofs.end();) {
+        if (it->second.lastUsedFrame != _volumeZeroProofFrame) it = _volumeZeroProofs.erase(it);
+        else ++it;
     }
 
     if (_activeVolumePipelines.empty()) return;
@@ -2817,7 +2966,7 @@ void WebGpuRenderer::flushVolumeComposite() {
 
     VolumeGlobalUniforms globals;
     globals.viewProj = _viewProj;
-    globals.invViewProj = glm::inverse(_viewProj);
+    globals.invViewProj = _invViewProj;
     globals.eyePos = glm::vec4(_eyePos, 1.0f);
     globals.viewport = glm::vec4(static_cast<float>(_depthW),
                                  static_cast<float>(_depthH), 0.0f, 0.0f);
@@ -2828,12 +2977,12 @@ void WebGpuRenderer::flushVolumeComposite() {
             static_cast<float>(incidentSource->temporalCoordinate),
             static_cast<float>(incidentSource->temporalDelta), 0.0f, 0.0f);
         // V3 compatibility remains isotropic unless Phi is explicitly authored.
-        globals.volumeControl = glm::vec4(24.0f, 1.0f, 0.0f, 0.0f);
+        globals.volumeControl = glm::vec4(24.0f, 1.0f, 0.0f, static_cast<float>(volumeSamplesPerChord()));
     } else {
         globals.incidentSource = glm::vec4(0.0f);
         globals.incidentColor = glm::vec4(1.0f);
         globals.sourceTime = glm::vec4(0.0f);
-        globals.volumeControl = glm::vec4(0.0f);
+        globals.volumeControl = glm::vec4(0.0f, 0.0f, 0.0f, static_cast<float>(volumeSamplesPerChord()));
     }
     auto globalAlloc = bufferPool().suballocateUniform(&globals, sizeof(globals));
 
@@ -3001,12 +3150,123 @@ void WebGpuRenderer::releaseFrameResources() {
 // Flat-colour primitives.
 // ---------------------------------------------------------------------------
 
+bool WebGpuRenderer::drawScreenForm(const OntoMath::Piecewise& color,
+                                    const OntoMath::Piecewise* opacity,
+                                    uint32_t width, uint32_t height,
+                                    const double* time, std::string& reason) {
+    reason.clear();
+    if (!_pass || width == 0 || height == 0 || width != _depthW || height != _depthH) {
+        reason = "direct Screen needs an active pass with matching framebuffer dimensions (requested " +
+                 std::to_string(width) + "x" + std::to_string(height) + ", target " +
+                 std::to_string(_depthW) + "x" + std::to_string(_depthH) + ", active=" + (_pass ? "true" : "false") + ")";
+        return false;
+    }
+    if (time && (!std::isfinite(*time) || !std::isfinite(static_cast<float>(*time)))) {
+        reason = "direct Screen temporal coordinate is not finite float32";
+        return false;
+    }
+    const auto program = sdfwgsl::compileScreenForm(color, opacity, time != nullptr);
+    if (!program.ok) { reason = program.error; return false; }
+    auto found = _screenPipes.find(program.wgsl);
+    if (found == _screenPipes.end()) {
+        WGPUShaderSourceWGSL src = {};
+        src.chain.sType = WGPUSType_ShaderSourceWGSL;
+        src.code = wgpu::Device::str(program.wgsl.c_str());
+        WGPUShaderModuleDescriptor shaderDesc = {};
+        shaderDesc.nextInChain = &src.chain;
+        WGPUShaderModule shader = wgpuDeviceCreateShaderModule(_device, &shaderDesc);
+        WGPUBindGroupLayoutEntry entries[2] = {};
+        entries[0].binding = 0;
+        entries[0].visibility = WGPUShaderStage_Fragment;
+        entries[0].buffer.type = WGPUBufferBindingType_Uniform;
+        entries[0].buffer.minBindingSize = 32;
+        entries[1].binding = 1;
+        entries[1].visibility = WGPUShaderStage_Fragment;
+        entries[1].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+        entries[1].buffer.minBindingSize = 4;
+        WGPUBindGroupLayoutDescriptor bglDesc = {};
+        bglDesc.entryCount = 2; bglDesc.entries = entries;
+        WGPUBindGroupLayout bgl = wgpuDeviceCreateBindGroupLayout(_device, &bglDesc);
+        WGPUPipelineLayoutDescriptor layoutDesc = {};
+        layoutDesc.bindGroupLayoutCount = 1; layoutDesc.bindGroupLayouts = &bgl;
+        WGPUPipelineLayout layout = wgpuDeviceCreatePipelineLayout(_device, &layoutDesc);
+        WGPUBlendState blend = {};
+        blend.color.operation = WGPUBlendOperation_Add;
+        blend.color.srcFactor = WGPUBlendFactor_SrcAlpha;
+        blend.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+        blend.alpha.operation = WGPUBlendOperation_Add;
+        blend.alpha.srcFactor = WGPUBlendFactor_One;
+        blend.alpha.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+        WGPUColorTargetState target = {};
+        target.format = _colorFormat; target.writeMask = WGPUColorWriteMask_All;
+        target.blend = &blend;
+        WGPUFragmentState fragment = {};
+        fragment.module = shader; fragment.entryPoint = wgpu::Device::str("fs");
+        fragment.targetCount = 1; fragment.targets = &target;
+        WGPUDepthStencilState depth = {};
+        depth.format = WGPUTextureFormat_Depth24Plus;
+        depth.depthWriteEnabled = WGPUOptionalBool_False;
+        depth.depthCompare = WGPUCompareFunction_Always;
+        WGPURenderPipelineDescriptor desc = {};
+        desc.layout = layout;
+        desc.vertex.module = shader; desc.vertex.entryPoint = wgpu::Device::str("vs");
+        desc.fragment = &fragment;
+        desc.primitive.topology = WGPUPrimitiveTopology_TriangleList;
+        desc.primitive.frontFace = WGPUFrontFace_CCW;
+        desc.primitive.cullMode = WGPUCullMode_None;
+        desc.depthStencil = &depth;
+        desc.multisample.count = 1; desc.multisample.mask = ~0u;
+        WGPURenderPipeline pipe = wgpuDeviceCreateRenderPipeline(_device, &desc);
+        wgpuPipelineLayoutRelease(layout);
+        wgpuShaderModuleRelease(shader);
+        if (!pipe) {
+            wgpuBindGroupLayoutRelease(bgl);
+            reason = "WebGPU refused direct Screen pipeline";
+            return false;
+        }
+        found = _screenPipes.emplace(program.wgsl, ScreenPipeline{pipe, bgl}).first;
+    }
+    // Flush deferred world draws before the direct Screen act so they cannot
+    // unexpectedly repaint it at endFrame. No depth is sampled or modified.
+    flushMeshDraws();
+    flushSdfDraws();
+    struct Coordinates { glm::vec4 size; glm::vec4 time; };
+    const Coordinates coordinates{glm::vec4(width, height, 0, 0),
+                                  glm::vec4(time ? static_cast<float>(*time) : 0.0f, 0, 0, 0)};
+    const auto uniform = bufferPool().suballocateUniform(&coordinates, sizeof(coordinates));
+    const float zero = 0;
+    const size_t paramBytes = std::max(size_t(4), program.params.size() * sizeof(float));
+    const auto params = bufferPool().suballocateStorage(
+        program.params.empty() ? &zero : program.params.data(), paramBytes);
+    if (!uniform.valid || !params.valid) {
+        reason = "direct Screen GPU buffer allocation refused";
+        return false;
+    }
+    WGPUBindGroupEntry entries[2] = {};
+    entries[0].binding = 0; entries[0].buffer = uniform.buffer;
+    entries[0].offset = uniform.offset; entries[0].size = sizeof(coordinates);
+    entries[1].binding = 1; entries[1].buffer = params.buffer;
+    entries[1].offset = params.offset; entries[1].size = paramBytes;
+    WGPUBindGroupDescriptor groupDesc = {};
+    groupDesc.layout = found->second.bgl;
+    groupDesc.entryCount = 2; groupDesc.entries = entries;
+    WGPUBindGroup group = wgpuDeviceCreateBindGroup(_device, &groupDesc);
+    _frameBindGroups.push_back(group);
+    bindPipeline(found->second.pipe);
+    wgpuRenderPassEncoderSetBindGroup(_pass, 0, group, 0, nullptr);
+    wgpuRenderPassEncoderDraw(_pass, 3, 1, 0, 0);
+    ++mutableFrameStats().drawCalls;
+    ++mutableFrameStats().trianglesDrawn;
+    return true;
+}
+
 void WebGpuRenderer::drawSolid(const std::vector<glm::vec3>& tris, const glm::vec4& color,
                                Blend blend, bool depthWrite) {
     if (!_pass || tris.empty()) return;
     // In 2D scope the model transform is meaningless; otherwise these are world-space
-    // triangles under the current model, exactly like drawMesh.
-    const glm::mat4 mvp = _in2D ? _ortho2D : _viewProj * _model;
+    // triangles under the current OntoMath-authored view-projection/model cache.
+    if (!_in2D && !_modelViewProjValid) return;
+    const glm::mat4& mvp = _in2D ? _ortho2D : _modelViewProj;
     drawFlat(flatPipeline(WGPUPrimitiveTopology_TriangleList, blend,
                           depthWrite ? DepthMode::TestWrite : DepthMode::TestOnly),
              tris, mvp, color);
@@ -3014,11 +3274,25 @@ void WebGpuRenderer::drawSolid(const std::vector<glm::vec3>& tris, const glm::ve
 
 void WebGpuRenderer::begin2D(uint32_t width, uint32_t height) {
     // (0,0) at the TOP-LEFT, matching the boundary contract and glOrtho(0,w,h,0,-1,1).
-    // Built with the [0,1] clip depth WebGPU requires; depth is ignored anyway since
-    // the 2D pipelines compare Always.
+    // OntoMath owns the orthographic projection formula and WebGPU depth convention;
+    // this renderer only lowers the authored matrix into its API-facing cache.
+    const auto projection = OntoMath::cameraOrthographic(
+        0.0, static_cast<double>(width),
+        static_cast<double>(height), 0.0,
+        -1.0, 1.0, true);
+    if (!projection) {
+        _in2D = false;
+        _ortho2D = glm::mat4(1.0f);
+        return;
+    }
+    const auto lowered = projection->toGlmMat4();
+    if (!lowered) {
+        _in2D = false;
+        _ortho2D = glm::mat4(1.0f);
+        return;
+    }
     _in2D = true;
-    _ortho2D = glm::orthoZO(0.0f, static_cast<float>(width),
-                            static_cast<float>(height), 0.0f, -1.0f, 1.0f);
+    _ortho2D = *lowered;
 }
 
 void WebGpuRenderer::end2D() {
@@ -3189,6 +3463,8 @@ void WebGpuRenderer::releaseTexture(TextureHandle handle) {
 bool WebGpuRenderer::readPixels(uint8_t* outRgba, uint32_t width, uint32_t height) {
     if (!outRgba || width == 0 || height == 0) return false;
     if (!_device || !_queue || !_surfaceTex) return false;
+    if (_pass || width > wgpuTextureGetWidth(_surfaceTex) ||
+        height > wgpuTextureGetHeight(_surfaceTex)) return false;
 
     // WebGPU requires bytesPerRow to be 256-byte aligned
     const uint32_t bytesPerRow = (width * 4 + 255) & ~255;
@@ -3262,7 +3538,8 @@ bool WebGpuRenderer::readPixels(uint8_t* outRgba, uint32_t width, uint32_t heigh
         return false;
     }
 
-    const bool isBgra = (_colorFormat == WGPUTextureFormat_BGRA8Unorm);
+    const bool isBgra = (_colorFormat == WGPUTextureFormat_BGRA8Unorm ||
+                         _colorFormat == WGPUTextureFormat_BGRA8UnormSrgb);
     for (uint32_t y = 0; y < height; ++y) {
         const uint8_t* srcRow = mapped + y * bytesPerRow;
         uint8_t* dstRow = outRgba + y * (width * 4);
@@ -3281,4 +3558,3 @@ bool WebGpuRenderer::readPixels(uint8_t* outRgba, uint32_t width, uint32_t heigh
     wgpuBufferUnmap(_readbackBuffer);
     return true;
 }
-
