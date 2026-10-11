@@ -3062,19 +3062,23 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
     if (_driveSessions.empty() || !Universe::instance().hasClock()) return;
     const double now = Universe::instance().now();
 
-    // ONE snapshot for the whole pass. Universe::beings() rebuilds the vector
-    // from the provider on every call — every object, law, relation, and zone
-    // in the world — and this used to happen three times per session per tick
-    // (subject, event subject, event object).
+    // Bolt: Pre-populate beingMap once per pass to turn linear searches
+    // with repeated virtual getIdentifier() calls into O(1) constant map lookups.
     const std::vector<Singular*> beings = Universe::instance().beings();
+    std::unordered_map<std::string, Singular*> beingMap;
+    beingMap.reserve(beings.size());
+    for (Singular* being : beings) {
+        if (being) {
+            beingMap.emplace(being->getIdentifier(), being);
+        }
+    }
 
     for (auto it = _driveSessions.begin(); it != _driveSessions.end();) {
         Law* law = find(it->lawId);
         const auto findBeing = [&](const std::string& id) -> Singular* {
             if (id.empty()) return nullptr;
-            for (Singular* being : beings) {
-                if (being && being->getIdentifier() == id) return being;
-            }
+            auto bit = beingMap.find(id);
+            if (bit != beingMap.end()) return bit->second;
             if (law) {
                 for (Singular* target : law->targets().getMembers()) {
                     if (!target || Universe::instance().isUnmade(target)) continue;
