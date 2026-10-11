@@ -399,7 +399,7 @@ static void testSaveSystemEnforcesTheRegister() {
     assert(reg.trustAuthenticatedPerson(zach));
     assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
                          FirstMover::Kind::Model, "claude-fable-5",
-                         {"worlds/test_*.ecform"}, 1000));
+                         {"worlds/test_*.ecsave"}, 1000));
 
     {
         Identity::FirstMoverSession session(reg, model.id());
