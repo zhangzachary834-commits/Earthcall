@@ -76,3 +76,12 @@ The canonical and experimental branches are substantially diverged. The prior co
 5. **Rejected:** artificially altering source semantics or widening the experiment until a favorable headline appears.
 
 **Disposition:** stop this successor as a *bounded negative economic result with native semantic/work validation*, leave PR #482 draft/unmerged, publish Agent Intercom final verdict, and disable the existing Visibility Elision Sun automation. No final canonical reconciliation is warranted for an optimization that has not earned landing. Further performance exploration would require a **new explicit human commission**, not a silent successor rung.
+
+## Archived raw native witness output
+
+Artifact #11641566316 expires under CI retention. These are the **two original lines verbatim** from `webgpu-source-rho-authority-perf.log`, not reconstructed measurements:
+
+```text
+SOURCE_RHO_AUTH_PERF GPU_EXECUTED visibility exact_zero=(290151 calls,5624857 shadow_steps) authority_zero=(0 calls,0 shadow_steps) exact_live=(290151 calls,6778135 shadow_steps) authority_live=(290151 calls,6778135 shadow_steps)
+SOURCE_RHO_AUTH_PERF samples=12 exact_wall_median_ms=9.718958 authority_wall_median_ms=9.682459 ratio_exact_over_authority=1.003770 exact_gpu_median_ms=0.000000 authority_gpu_median_ms=0.000000 gpu_ratio_exact_over_authority=0.000000 exact_gpu_samples=0 authority_gpu_samples=0 exact_cold_wall_ms=312.054542 authority_cold_wall_ms=249.499500 exact_cold_wgsl_bytes=46957 authority_cold_wgsl_bytes=46875 exact_cold_param_upload_bytes=40 authority_cold_param_upload_bytes=36 exact_recurring_compiles=0 authority_recurring_compiles=0 exact_cache_hits=12 authority_cache_hits=12 exact_param_upload_bytes=0 authority_param_upload_bytes=0 authority_artifact_bytes=152 authority_mask_bytes=2 authority_setup_ns=12291 authority_repair_ns=9000 authority_repair_draw_ms=13.893792 authority_repair_wgsl_bytes=46957 vessel_observations=20 semantic_builds=3 semantic_cache_hits=17 slot_builds=2 slot_repairs=14 handle_publications=22 handle_validations=22 proof_reads=22 metadata_tests=104 proof_fallbacks=16 authority_applications=7
+```
