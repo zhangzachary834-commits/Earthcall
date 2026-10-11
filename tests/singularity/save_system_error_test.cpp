@@ -30,8 +30,11 @@ int main() {
     // heard of. This is the regression witness against a fixed category list.
     const auto futureCategory = sandbox / "future_save_category";
     const auto futureFile = sandbox / "future_root.ecfuture";
+    const auto danglingLink = sandbox / "future_dangling_link";
     const auto guardOnlyEntry = sandbox / "created_only_during_guard";
     std::filesystem::create_directories(futureCategory);
+    // A dangling symlink is still a real save-tree entry and must survive restoration.
+    std::filesystem::create_symlink("missing-target", danglingLink);
     {
         std::ofstream out(futureCategory / "state.txt");
         out << "original category bytes";
@@ -44,6 +47,7 @@ int main() {
         TestSupport::RealSaveTreeGuard guard(TestSupport::GuardCurrentRoot);
         std::filesystem::remove_all(futureCategory);
         std::filesystem::remove(futureFile);
+        std::filesystem::remove(danglingLink);
         std::filesystem::create_directories(guardOnlyEntry);
         std::ofstream out(guardOnlyEntry / "temporary.txt");
         out << "must disappear";
@@ -60,6 +64,11 @@ int main() {
           "RealSaveTreeGuard restores an unknown future save directory");
     check(restoredFileBytes == "original root bytes",
           "RealSaveTreeGuard restores an unknown future root-level save file");
+    std::error_code linkEc;
+    const auto linkStatus = std::filesystem::symlink_status(danglingLink, linkEc);
+    check(!linkEc && std::filesystem::is_symlink(linkStatus) &&
+              std::filesystem::read_symlink(danglingLink) == std::filesystem::path("missing-target"),
+          "RealSaveTreeGuard restores a dangling root-level symlink");
     check(!std::filesystem::exists(guardOnlyEntry),
           "RealSaveTreeGuard removes top-level entries created only during the guard");
     check(SaveSystem::saveRoot() == sandbox.string(),
