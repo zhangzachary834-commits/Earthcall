@@ -1,15 +1,6 @@
 # SUN HANDOFF — PR #320 Native Visibility × Density Reconciliation
 
-<!-- NAV_BLOCK_START -->
-> [!NOTE]
-> **Thread Navigation: Visibility & PR #320**
-> [View Full Thread Index](../00_THREAD_INDEX.md)
->
-> **Related in this thread:**
-> - [VISIBILITY_SUN_1_PR320_CI_TRIAGE_2026-09-21.md](VISIBILITY_SUN_1_PR320_CI_TRIAGE_2026-09-21.md)
-> - [VISIBILITY_SUN_PR320_CI_LIVE_2026-09-21.md](VISIBILITY_SUN_PR320_CI_LIVE_2026-09-21.md)
-> - [ZACH_TO_NEW_SUN_PR320_PROMPT_2026-09-22.md](ZACH_TO_NEW_SUN_PR320_PROMPT_2026-09-22.md)
-<!-- NAV_BLOCK_END -->
+
 
 
 

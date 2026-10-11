@@ -80,6 +80,7 @@ jobs:
         person_display_name_identity_test
         community_test
         authorable_light_contract_test
+        authored_physics_laws_test
         timeline_test
         time_moment_test
         category_manager_test
@@ -88,6 +89,8 @@ jobs:
         file_watcher_test
         first_mover_test
         law_file_tree_fossil_test
+        my_probe_test
+        earthcall_api_test
         rete_state_ptr_index_test
         relation_type_lexeme_lifetime_test
         event_bus_test
