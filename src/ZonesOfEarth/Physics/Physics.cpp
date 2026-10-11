@@ -1,7 +1,6 @@
 #include "Physics.hpp"
 #include "ZonesOfEarth/Physics/CollisionDispatcher.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
-#include "Relation/RelationManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Core/Engine.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
@@ -17,9 +16,6 @@
 #include <atomic>
 #include <cmath>
 #include <limits>
-
-// Static registry of physics relations
-static RelationManager g_physicsRegistry;
 
 /* 
 
@@ -597,21 +593,6 @@ namespace Physics {
         return form.mass * gravityAccel * height;
     }
 
-    RelationManager& registry() { return g_physicsRegistry; }
-
-    void recordGravity(const Singular& obj, const Singular& env, float strength) {
-        // g_physicsRegistry.add(Relation{"gravity", obj, env, true, strength});
-        auto rel = std::make_shared<Relation>("gravity", obj, env, true, strength);
-        g_physicsRegistry.add(rel);
-    }
-
-    void recordCollision(const Singular& a, const Singular& b, float strength) {
-        // g_physicsRegistry.add(Relation{"collision", a, b, false, strength});
-        auto rel = std::make_shared<Relation>("collision", a, b, false, strength);
-        g_physicsRegistry.add(rel);
-        Core::EventBus::instance().publish(Core::Event::Custom{rel});
-    }
-
     void applyGravity(glm::vec3& position,
                       float deltaTime,
                       float groundY,
@@ -673,34 +654,6 @@ namespace Physics {
     void setFlying(bool enabled) { isFlying = enabled; }
     void toggleFlying() { isFlying = !isFlying; }
     bool getFlying() { return isFlying; }
-
-    // -----------------------------------------------------------------
-    // EventBus Integration Helpers
-    // -----------------------------------------------------------------
-    void setupPhysicsEventListeners() {
-        auto& eventBus = Core::EventBus::instance();
-        
-        // Listen for physics collisions with high priority
-        eventBus.subscribe<PhysicsCollisionEvent>([](const PhysicsCollisionEvent& event) {
-            
-            // Record collision in physics registry (existing functionality)
-            if (event.objectA && event.objectB) {
-                recordCollision(*event.objectA, *event.objectB, event.impactForce);
-            }
-            
-            // NO ECA echo here. This handler used to mint two
-            // "objects-collided" events per pair — and PhysicsCollisionEvent
-            // is published on EVERY frame an overlap persists, so that was
-            // ~120 facts per second per resting pair, each one a Rete
-            // assertion, feeding a law that spawned a being for each.
-            //
-            // The ECA vocabulary for contact is published where the edge is
-            // actually known, in updateBodies: `collision` (the level, every
-            // frame of overlap), `contact-began` and `contact-ended` (the two
-            // edges, once each). This handler does what only it can do —
-            // record the collision in the relation graph.
-        }, 10); // High priority for physics events
-    }
 
     void enforceCollisions(glm::vec3& position, const std::vector<std::shared_ptr<Object>>& objects) {
         if (!isCollisionEnabled()) {
