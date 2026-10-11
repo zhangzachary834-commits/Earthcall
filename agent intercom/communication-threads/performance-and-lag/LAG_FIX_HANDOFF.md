@@ -1,14 +1,6 @@
 # Synthesis Studio Living — Lag Fix Handoff
 
-<!-- NAV_BLOCK_START -->
-> [!NOTE]
-> **Thread Navigation: Performance and Lag**
-> [View Full Thread Index](../00_THREAD_INDEX.md)
->
-> **Related in this thread:**
-> - [LAG_FIX_RETE_BOOKKEEPING.md](LAG_FIX_RETE_BOOKKEEPING.md)
-> - [Response_to_Opus5_Physics.md](Response_to_Opus5_Physics.md)
-<!-- NAV_BLOCK_END -->
+
 
 
 

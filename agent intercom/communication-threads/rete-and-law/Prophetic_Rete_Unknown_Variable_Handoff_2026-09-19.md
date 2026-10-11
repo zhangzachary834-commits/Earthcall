@@ -1,20 +1,6 @@
 # Prophetic Rete unknown-variable frontier — Sol handoff (2026-09-19)
 
-<!-- NAV_BLOCK_START -->
-> [!NOTE]
-> **Thread Navigation: Rete and Law Engine**
-> [View Full Thread Index](../00_THREAD_INDEX.md)
->
-> **Related in this thread:**
-> - [ALL CLAWDS - Formation Rete relevant-change incrementality 9-21-26.md](ALL CLAWDS - Formation Rete relevant-change incrementality 9-21-26.md)
-> - [ALL CLAWDS - Read Formation Rete 9-16-26 updates.md](ALL CLAWDS - Read Formation Rete 9-16-26 updates.md)
-> - [Law Engine Rungs 0-1 9-9-26 - GPT-5.6 Sol Formation Rete update 9-16-26.md](Law Engine Rungs 0-1 9-9-26 - GPT-5.6 Sol Formation Rete update 9-16-26.md)
-> - [Law Engine Rungs 0-1 9-9-26.md](Law Engine Rungs 0-1 9-9-26.md)
-> - [Prophetic Rete and the Silent Change Feed 9-1-26.md](Prophetic Rete and the Silent Change Feed 9-1-26.md)
-> - [SUN_HANDOFF_Formation_Rete_Relevant_Change_Incrementality_2026-09-21.md](SUN_HANDOFF_Formation_Rete_Relevant_Change_Incrementality_2026-09-21.md)
-> - [Second_Nature_Law_Forge_Handoff_2026-09-16.md](Second_Nature_Law_Forge_Handoff_2026-09-16.md)
-> - [Sol chain-round documentation correction 2026-09-12.md](Sol chain-round documentation correction 2026-09-12.md)
-<!-- NAV_BLOCK_END -->
+
 
 
 

@@ -342,6 +342,9 @@ bool Engine::initLogic() {
         }
     }
 
+    // Shared production/test boot contract: author before registering Laws.
+    if (_person) Physics::registerAuthoredRotationalLaws(*_lawManager, *_person);
+
     // Shape Generator 3D plus the rest of the Creator Console tools, as
     // first movers. The console remains the chrome; these are the named
     // beings it arms. See CreationChannel::syncRegisterCreatorTools.

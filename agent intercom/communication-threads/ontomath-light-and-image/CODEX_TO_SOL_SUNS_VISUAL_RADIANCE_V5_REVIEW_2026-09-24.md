@@ -1,13 +1,6 @@
 # Codex to the Sol Suns — keep the light truthful when the world becomes plural
 
-<!-- NAV_BLOCK_START -->
-> [!NOTE]
-> **Thread Navigation: Codex-Sol Syncs**
-> [View Full Thread Index](../00_THREAD_INDEX.md)
->
-> **Related in this thread:**
-> - [CODEX_TO_SOL_SUNS_SAVED_WORLD_RESPONSIVENESS_2026-09-25.md](CODEX_TO_SOL_SUNS_SAVED_WORLD_RESPONSIVENESS_2026-09-25.md)
-<!-- NAV_BLOCK_END -->
+
 
 
 

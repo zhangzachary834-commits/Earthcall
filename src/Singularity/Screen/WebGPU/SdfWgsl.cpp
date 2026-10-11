@@ -3,7 +3,11 @@
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 
+#include <algorithm>
 #include <cstdio>
+#include <cstring>
+#include <functional>
+#include <map>
 #include <cmath>
 #include <set>
 #include <string>
@@ -334,6 +338,9 @@ struct Emit {
     // Rungs 3-6 use the historical global uniform; Rung 7 temporarily points
     // this at one source record while lowering that source's rho/chi/alpha.
     std::string        timeExpression = "u.radianceTime.x";
+    // Cross-channel shared subexpressions (volume media): canonical OntoMath
+    // JSON of a subtree -> the private variable already holding its value.
+    const std::map<std::string, std::string>* shared = nullptr;
 
     // The refusal (see Program::ok). Once set it is never overwritten: the
     // FIRST thing the compiler could not honour is the one worth reporting;
@@ -508,6 +515,12 @@ std::string emitScalarForm(const OntoMath::ScalarForm& sf, Emit& e, const std::s
 // the whole pipeline is declined with a reason. The string it returns after a
 // refusal exists only to keep the recursion well-formed; it is never used.
 std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::string& pt) {
+    // The table holds values at this medium's original sample p. SDF and
+    // Gradient rebind their field to another point and must evaluate it there.
+    if (pt == "p" && e.shared && !e.shared->empty()) {
+        const auto it = e.shared->find(node.toJson().dump());
+        if (it != e.shared->end()) return it->second;
+    }
     using Op = OntoMath::MathNode::Op;
 
     // Arity is checked by the type pass before we get here, but a malformed
@@ -792,6 +805,15 @@ namespace {
 // the product with the original grouping over the leaf names.
 std::string flattenScalarProduct(const OntoMath::MathNode& node, Emit& e, const std::string& pt,
                                  std::vector<std::pair<std::string, bool>>& leaves) {
+    if (pt == "p" && e.shared && !e.shared->empty()) {
+        const auto it = e.shared->find(node.toJson().dump());
+        if (it != e.shared->end()) {
+            // Already computed once this sample: a free, noise-free factor.
+            const std::string name = "densityFactor" + std::to_string(leaves.size());
+            leaves.push_back({it->second, false});
+            return name;
+        }
+    }
     if (node.op == OntoMath::MathNode::Op::Scale && node.children.size() == 2 &&
         node.children[0] && node.children[1]) {
         const std::string left = flattenScalarProduct(*node.children[0], e, pt, leaves);
@@ -812,6 +834,9 @@ std::string flattenScalarProduct(const OntoMath::MathNode& node, Emit& e, const 
 // product itself is rebuilt with its original grouping, so whenever it is
 // computed it is computed exactly as before. OntoMath knows which subtrees hold
 // noise; an opaque shader would not. Claude Opus 5.5, 2026-10-09.
+void emitProductWithZeroExits(const OntoMath::MathNode& node, Emit& e, const std::string& pt,
+                              std::string& outBody);
+
 void emitDensityPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::string& pt,
                           std::string& outBody) {
     const OntoMath::Piecewise::Piece* answering = nullptr;
@@ -820,7 +845,8 @@ void emitDensityPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::str
         answering = &piece;
         break;
     }
-    if (!answering || answering->hasLo || answering->hasHi ||
+    if (!answering || answering != &pw.pieces.front() || answering->hasLo || answering->hasHi ||
+        answering->guard || answering->whereLEZero || answering->call || answering->fold ||
         answering->mathNode->op != OntoMath::MathNode::Op::Scale ||
         !astContainsNoise(*answering->mathNode)) {
         emitPiecewise(pw, e, pt, "f32", outBody);
@@ -828,11 +854,22 @@ void emitDensityPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::str
     }
     // Mirror emitPiecewise's own visit order: the input variable first.
     (void)pointComponent(pw.inputVariable, e, pt);
+    emitProductWithZeroExits(*answering->mathNode, e, pt, outBody);
+}
+
+// Body of a scalar function returning `node`: a product's noise-free factors
+// are evaluated first and an exact zero returns 0 before any noise runs; the
+// product is rebuilt with its original grouping (see emitDensityPiecewise).
+void emitProductWithZeroExits(const OntoMath::MathNode& node, Emit& e, const std::string& pt,
+                              std::string& outBody) {
     std::vector<std::pair<std::string, bool>> leaves;
-    const std::string product = flattenScalarProduct(*answering->mathNode, e, pt, leaves);
+    const std::string product = flattenScalarProduct(node, e, pt, leaves);
     bool anyCheap = false;
     for (const auto& leaf : leaves) anyCheap = anyCheap || !leaf.second;
     if (!anyCheap) {
+        // Even an all-noise expression needs the locals named by `product`.
+        for (std::size_t i = 0; i < leaves.size(); ++i)
+            outBody += "    let densityFactor" + std::to_string(i) + " = " + leaves[i].first + ";\n";
         outBody += "    return " + product + ";\n";
         return;
     }
@@ -848,6 +885,141 @@ void emitDensityPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::str
     }
     outBody += "    return " + product + ";\n";
 }
+
+namespace {
+// ---- Cross-channel shared subexpressions for one participating medium ------
+// Zach (2026-10-09) asked for the media's equations to be unified rather than
+// re-evaluated. Northern Veil authors each curtain's shape into four channels
+// (D = 0.75*shape, sigma_t = 0.10*shape, sigma_s = 0.04*shape, E_v = shape*...),
+// so the same Perlin-noise subtree ran up to four times per sample. Here
+// OntoMath's own structure finds subtrees that are identical (operators AND
+// constants) across a medium's channels; each is computed once per sample into
+// a private variable that every channel reads. Only scalar subtrees containing
+// Noise over p/x/y/z/t are shared: those variables mean the same thing in every
+// medium channel, while wi/wo/omega do not.
+struct SharedSite { int channel; std::string path; };
+struct SharedGroup {
+    std::string key;
+    const OntoMath::MathNode* node = nullptr;
+    std::size_t size = 0;
+    std::vector<SharedSite> sites;
+};
+struct VolumeSharingPlan {
+    std::vector<SharedGroup> groups;   // emission order: smaller subtrees first
+    std::string signature;             // which positions share; never constants
+    bool densityUses = false;
+};
+
+std::size_t mathNodeSize(const OntoMath::MathNode& n) {
+    std::size_t total = 1;
+    for (const auto& c : n.children) if (c) total += mathNodeSize(*c);
+    return total;
+}
+
+VolumeSharingPlan planVolumeSharing(const OntoMath::Piecewise* const channels[6]) {
+    static const std::set<std::string> kSpatial = {
+        OntoMath::kAmbientPointVar, "x", "y", "z", OntoMath::kTimeVar};
+    const OntoMath::TypeEnv env{
+        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
+        {"x", OntoMath::ValueKind::Scalar}, {"y", OntoMath::ValueKind::Scalar},
+        {"z", OntoMath::ValueKind::Scalar}, {OntoMath::kTimeVar, OntoMath::ValueKind::Scalar}};
+
+    std::map<std::string, SharedGroup> byKey;
+    std::function<void(const OntoMath::MathNode&, int, const std::string&)> visit =
+        [&](const OntoMath::MathNode& node, int channel, const std::string& path) {
+            if (astContainsNoise(node)) {
+                std::set<std::string> deps;
+                node.collectDependencies(deps);
+                bool spatial = true;
+                for (const auto& d : deps) spatial = spatial && kSpatial.count(d) > 0;
+                if (spatial) {
+                    const auto type = node.typeOf(env, "root", false);
+                    if (type.success && type.kind == OntoMath::ValueKind::Scalar) {
+                        auto& g = byKey[node.toJson().dump()];
+                        if (!g.node) { g.node = &node; g.size = mathNodeSize(node); }
+                        g.sites.push_back({channel, path});
+                    }
+                }
+            }
+            for (std::size_t i = 0; i < node.children.size(); ++i) {
+                // These operators bind child 0 to another point. Its text
+                // cannot establish equality with a value at the sample p.
+                if (i == 0 && (node.op == OntoMath::MathNode::Op::SDF ||
+                               node.op == OntoMath::MathNode::Op::Gradient)) continue;
+                if (node.children[i]) visit(*node.children[i], channel, path + "/" + std::to_string(i));
+            }
+        };
+    for (int c = 0; c < 6; ++c) {
+        if (!channels[c]) continue;
+        for (std::size_t k = 0; k < channels[c]->pieces.size(); ++k) {
+            const auto& piece = channels[c]->pieces[k];
+            if (piece.mathNode) visit(*piece.mathNode, c, std::to_string(k));
+        }
+    }
+
+    std::vector<SharedGroup> candidates;
+    for (auto& [key, g] : byKey) {
+        if (g.sites.size() >= 2) { g.key = key; candidates.push_back(g); }
+    }
+    std::sort(candidates.begin(), candidates.end(), [](const SharedGroup& a, const SharedGroup& b) {
+        if (a.size != b.size) return a.size > b.size;
+        // Constants decide equality, not emission order. Numeric edits that
+        // retain sharing should not reorder parameter slots and recompile.
+        const auto& x = a.sites.front();
+        const auto& y = b.sites.front();
+        return x.channel != y.channel ? x.channel < y.channel : x.path < y.path;
+    });
+    std::vector<SharedSite> taken;
+    auto inside = [&](const SharedSite& s) {
+        for (const auto& t : taken)
+            if (t.channel == s.channel && s.path.rfind(t.path + "/", 0) == 0) return true;
+        return false;
+    };
+    VolumeSharingPlan plan;
+    for (auto& g : candidates) {
+        std::vector<SharedSite> live;
+        for (const auto& site : g.sites) if (!inside(site)) live.push_back(site);
+        if (live.size() < 2) continue;
+        g.sites = live;
+        for (const auto& site : live) taken.push_back(site);
+        plan.groups.push_back(g);
+    }
+    std::reverse(plan.groups.begin(), plan.groups.end());   // inner (smaller) first
+    for (std::size_t i = 0; i < plan.groups.size(); ++i) {
+        plan.signature += "g" + std::to_string(i) + ":";
+        for (const auto& site : plan.groups[i].sites) {
+            plan.signature += "c" + std::to_string(site.channel) + "@" + site.path + ",";
+            plan.densityUses = plan.densityUses || site.channel == 0;
+        }
+        plan.signature += "\n";
+    }
+    return plan;
+}
+
+// Emits each shared group's evaluator (registering its parameters first, in
+// plan order) and installs the substitution table on `e`. Returns the WGSL to
+// place after volumeDensityEval: private slots, one function per group, and
+// volumeSharedEval(p), which fills every slot once per sample.
+std::string emitVolumeSharedPrelude(const VolumeSharingPlan& plan, Emit& e, const std::string& pt,
+                                    std::map<std::string, std::string>& names) {
+    names.clear();
+    e.shared = &names;
+    if (plan.groups.empty()) return "";
+    std::string decls, fns, call = "\nfn volumeSharedEval(p: vec3<f32>) {\n";
+    for (std::size_t i = 0; i < plan.groups.size(); ++i) {
+        const auto& g = plan.groups[i];
+        const std::string slot = "g_volumeSharedG" + std::to_string(i);
+        std::string body;
+        emitProductWithZeroExits(*g.node, e, pt, body);   // earlier groups substitute
+        decls += "var<private> " + slot + ": f32;\n";
+        fns += "\nfn volumeSharedG" + std::to_string(i) + "(p: vec3<f32>) -> f32 {\n" + body + "}\n";
+        call += "    " + slot + " = volumeSharedG" + std::to_string(i) + "(p);\n";
+        names[g.key] = slot;
+    }
+    return "\n" + decls + fns + call + "}\n";
+}
+} // namespace
+
 
 enum class JetKind { Scalar, Vector };
 struct JetExpr {
@@ -3340,6 +3512,10 @@ ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
     e.timeExpression = "instances[g_instIdx].time.x";
 
     std::string throwaway;
+    const OntoMath::Piecewise* sharingChannels[6] = {densityExpr, extinctionExpr, scatteringExpr,
+                                                     volumeChromaExpr, phaseExpr, emissionExpr};
+    std::map<std::string, std::string> sharedNames;
+    (void)emitVolumeSharedPrelude(planVolumeSharing(sharingChannels), e, "p", sharedNames);
     if (densityExpr && !densityExpr->pieces.empty()) {
         emitDensityPiecewise(*densityExpr, e, "p", throwaway);
     }
@@ -3380,10 +3556,8 @@ ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
         }
     }
 
-    if (geom::isSdfActive(occluderSdf)) {
-        (void)emitNode(*occluderSdf, e);
-    }
-
+    // Source clocks/coordinates and shadow-ray points are separate domains.
+    e.shared = nullptr;
     const std::string mediumTimeExpression = e.timeExpression;
     e.timeExpression = "u.sourceTime.x";
     if (lightRadianceExpr && !lightRadianceExpr->pieces.empty()) {
@@ -3403,6 +3577,11 @@ ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
         e.bindOmega = false;
     }
     e.timeExpression = mediumTimeExpression;
+
+    // Match compileVolume's order: medium, source, then occluder parameters.
+    if (geom::isSdfActive(occluderSdf)) {
+        (void)emitNode(*occluderSdf, e);
+    }
 
     ParameterBlock block;
     block.ok = !e.refused;
@@ -3546,6 +3725,17 @@ fn sminK(a: f32, b: f32, k: f32) -> f32 {
 )WGSL";
 } // namespace
 
+std::string inspectVolumeSharing(const OntoMath::Piecewise* densityExpr,
+                                 const OntoMath::Piecewise* extinctionExpr,
+                                 const OntoMath::Piecewise* scatteringExpr,
+                                 const OntoMath::Piecewise* volumeChromaExpr,
+                                 const OntoMath::Piecewise* phaseExpr,
+                                 const OntoMath::Piecewise* emissionExpr) {
+    const OntoMath::Piecewise* channels[6] = {densityExpr, extinctionExpr, scatteringExpr,
+                                              volumeChromaExpr, phaseExpr, emissionExpr};
+    return planVolumeSharing(channels).signature;
+}
+
 Program compileVolume(const OntoMath::Piecewise* densityExpr,
                       const OntoMath::Piecewise* extinctionExpr,
                       const OntoMath::Piecewise* scatteringExpr,
@@ -3684,6 +3874,14 @@ fn volumeZeroCellExit(inst: VolumeInstanceData, p: vec3<f32>,
 }
 )WGSL";
 
+    // Shared subexpressions first: their parameters register before any
+    // channel's, exactly as collectVolumeParams replays.
+    const OntoMath::Piecewise* sharingChannels[6] = {densityExpr, extinctionExpr, scatteringExpr,
+                                                     volumeChromaExpr, phaseExpr, emissionExpr};
+    const VolumeSharingPlan sharing = planVolumeSharing(sharingChannels);
+    std::map<std::string, std::string> sharedNames;
+    const std::string sharedWgsl = emitVolumeSharedPrelude(sharing, e, "p", sharedNames);
+
     std::string densityBody;
     if (densityExpr && !densityExpr->pieces.empty()) {
         emitDensityPiecewise(*densityExpr, e, "p", densityBody);
@@ -3692,6 +3890,7 @@ fn volumeZeroCellExit(inst: VolumeInstanceData, p: vec3<f32>,
     }
     prog.wgsl += "\nfn volumeDensityEval(p: vec3<f32>) -> f32 {\n" +
                  densityBody + "}\n";
+    prog.wgsl += sharedWgsl;
 
     std::string extinctionBody;
     if (extinctionExpr && !extinctionExpr->pieces.empty()) {
@@ -3784,6 +3983,7 @@ fn volumeZeroCellExit(inst: VolumeInstanceData, p: vec3<f32>,
     // Source rho/chi/alpha retain the admitted source's own Timeline even while
     // they are consumed by participating-medium transport. The surrounding
     // medium evaluators continue to use instances[g_instIdx].time.x.
+    e.shared = nullptr; // source and occluder have their own evaluation domains
     const std::string mediumTimeExpression = e.timeExpression;
     e.timeExpression = "u.sourceTime.x";
 
@@ -3925,9 +4125,11 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             i = max(i, i32(ceil((zeroExit - t0) / stepLength - 0.5)) - 1);
             continue;
         }
+        /*VOLUME_SHARED_BEFORE_DENSITY*/
         let density = max(volumeDensityEval(p), 0.0);
 
         if (density > 0.0) {
+            /*VOLUME_SHARED_AFTER_DENSITY*/
             // V1: authored sigma_t(p,t) is independent from D. If absent,
             // the evaluator preserves the exact pre-V1 compatibility law.
             let extinction = max(volumeExtinctionEval(p, density), 1e-6);
@@ -4037,6 +4239,21 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     prog.params = std::move(e.params);
     prog.needsGradientStep = false;
 
+    // Shared subexpressions are filled once per sample: before density when
+    // density reads one, otherwise only once density has proved positive.
+    {
+        const std::string fill = sharing.groups.empty() ? "" : "volumeSharedEval(p);";
+        const std::string before = sharing.densityUses ? fill : "";
+        const std::string after = sharing.densityUses ? "" : fill;
+        const std::pair<const char*, const std::string*> marks[] = {
+            {"/*VOLUME_SHARED_BEFORE_DENSITY*/", &before},
+            {"/*VOLUME_SHARED_AFTER_DENSITY*/", &after}};
+        for (const auto& [mark, text] : marks) {
+            const std::size_t at = prog.wgsl.find(mark);
+            if (at != std::string::npos) prog.wgsl.replace(at, std::strlen(mark), *text);
+        }
+    }
+
     if (e.refused) {
         prog.ok = false;
         prog.error = e.refusal;
@@ -4115,6 +4332,9 @@ Program compileVolumeSet(const std::vector<VolumeProgramInput>& media) {
         // Rename only the per-medium evaluator/feature symbols. Shared structs,
         // bindings, ray helpers and noise live once in the prefix from member 0.
         replaceAll(evalBlock, "volumeDensityEval", "volumeDensityEval" + suffix);
+        // volumeSharedEval / volumeSharedG<k> / g_volumeSharedG<k> in one pass;
+        // the member index sits before the group index so names never collide.
+        replaceAll(evalBlock, "volumeShared", "volumeShared_" + std::to_string(i) + "_");
         replaceAll(evalBlock, "volumeExtinctionEval", "volumeExtinctionEval" + suffix);
         replaceAll(evalBlock, "volumeScatteringEval", "volumeScatteringEval" + suffix);
         replaceAll(evalBlock, "volumeChromaEval", "volumeChromaEval" + suffix);
@@ -4140,6 +4360,12 @@ Program compileVolumeSet(const std::vector<VolumeProgramInput>& media) {
 
         out.wgsl += evalBlock;
         members.push_back(std::move(member));
+    }
+    std::vector<VolumeSharingPlan> memberSharing;
+    for (const auto& m : media) {
+        const OntoMath::Piecewise* channels[6] = {m.densityExpr, m.extinctionExpr, m.scatteringExpr,
+                                                  m.volumeChromaExpr, m.phaseExpr, m.emissionExpr};
+        memberSharing.push_back(planVolumeSharing(channels));
     }
 
     out.wgsl += R"WGSL(
@@ -4353,10 +4579,12 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             "                let p" + n + " = worldP - mediumInst" + n + ".origin.xyz;\n"
             "                var density" + n + " = 0.0;\n"
             "                if (!volumeZeroProven(mediumInst" + n + ", p" + n + ")) {\n"
+            + std::string(memberSharing[i].densityUses ? "                    volumeShared_" + n + "_Eval(p" + n + ");\n" : "") +
             "                    density" + n + " = max(volumeDensityEval_" + n +
                 "(p" + n + "), 0.0);\n"
             "                }\n"
             "                if (density" + n + " > 0.0) {\n"
+            + std::string(!memberSharing[i].groups.empty() && !memberSharing[i].densityUses ? "                    volumeShared_" + n + "_Eval(p" + n + ");\n" : "") +
             "                    let extinction" + n +
                 " = max(volumeExtinctionEval_" + n + "(p" + n + ", density" + n +
                 "), 1e-6);\n"

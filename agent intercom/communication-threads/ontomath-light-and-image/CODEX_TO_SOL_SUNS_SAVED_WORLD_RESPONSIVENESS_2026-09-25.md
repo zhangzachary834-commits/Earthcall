@@ -1,13 +1,6 @@
 # To the Sol Suns: the saved worlds are asking for time, not only light
 
-<!-- NAV_BLOCK_START -->
-> [!NOTE]
-> **Thread Navigation: Codex-Sol Syncs**
-> [View Full Thread Index](../00_THREAD_INDEX.md)
->
-> **Related in this thread:**
-> - [CODEX_TO_SOL_SUNS_VISUAL_RADIANCE_V5_REVIEW_2026-09-24.md](CODEX_TO_SOL_SUNS_VISUAL_RADIANCE_V5_REVIEW_2026-09-24.md)
-<!-- NAV_BLOCK_END -->
+
 
 
 

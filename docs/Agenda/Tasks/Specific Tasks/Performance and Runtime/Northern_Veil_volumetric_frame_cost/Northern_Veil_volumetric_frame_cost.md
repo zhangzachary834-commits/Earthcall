@@ -53,7 +53,16 @@ Candidate fixes, in order:
    - **Zero-factor density short-circuit:** `emitDensityPiecewise` flattens a density product, places noise-free factors first, and returns 0 on an exact zero before any `Noise` runs. Parameter registration order is unchanged (`collectVolumeParams` uses the same emitter), and the product's grouping is preserved. **Gain 7–11%** (640×360: A 11.4 → 10.6, B 14.2 → 12.8, C 23.5 → 21.8 ms).
    - **Noise ceiling (scratch diagnostic, noise replaced by a constant):** A 10.5 → 7.1 ms, C 21.2 → 12.8 ms, so noise is 32–40% of what remains.
    - **Why the short-circuit recovers so little of it:** each curtain's `shape` (envelopes × folds × noise) is authored into **four channels**: D = 0.75·shape, σ_t = 0.10·shape, σ_s = 0.04·shape, E_v = shape·color·g(t). At every glowing sample the same noise runs three to four times.
-5. **Next exact step — cross-channel common subexpressions:** compute a subtree shared by a medium's channels once per sample. This is Zach's symbolic unification, applied across a medium's channels rather than across media; OntoMath can find identical subtrees, and an opaque shader could not. Still not built: finer proof cells near the sheets, and hoisting the time-only emission pulse.
+5. ✅ **Cross-channel shared subexpressions — built and approved by Zach on the numbers, 2026-10-09 (uncommitted).**
+   - **Mechanism:** `planVolumeSharing` finds noise-bearing scalar subtrees over p/x/y/z/t that are identical in operators *and* constants across a medium's channels. Each is computed once per sample (`volumeSharedEval` → private slots); every channel reads the slot, and the noise short-circuit runs inside it.
+   - **Northern Veil:** one group per curtain (D, σ_t, σ_s, E_v), and **one `cnoise3` call instead of four**.
+   - **Stale-value guard:** the sharing *positions* (never constants) are part of the recompile signature (`inspectVolumeSharing`). A numeric edit that makes two channels stop matching changes the signature and forces the recompile; `collectVolumeParams` replays the same plan, so parameter offsets agree.
+   - **Results:** A–B interleaved at 640×360: A 11.1 → 6.3, B 13.4 → 7.4, C 24.6 → 11.9 ms. Not byte-identical: one pixel per frame differs by one 8-bit level in two of three views (GPU float contraction of the reorganized arithmetic). Zach approved under the ≤1-level-from-truth bar, which the truth test still holds (max 1, 0 px > 1).
+   - **Witness:** `volume_shared_subexpression_test` (CPU, 41 checks on the real save, including both stale-value cases).
+   - **Real-app measurement (Zach asked "did u test it to be faster in the northern veils zones"):** `earthcall_webgpu` was built in two scratch worktrees (A = commit `f0194f3f`, B = A + this change). Both carried an identical, never-shipped diagnostic patch (`EC_DIAG_ZONE` / `EC_DIAG_CAM` / `EC_DIAG_FRAME_LOG` / `EC_DIAG_EXIT_AFTER` in `Engine.cpp`), with isolated saves and `EARTHCALL_HOME`. Setup: the default window (1280×720 points = 2560×1440 Retina pixels), Northern Veil, camera on the spawn dais looking up at the curtains. Runs interleaved A–B–A–B, 45 s each, steady state after 15 s.
+     - Results: A 173.1 / 173.7 ms (5.8 fps), B 116.8 / 116.7 ms (**8.6 fps**); p90 190 → 133–140 ms.
+     - In the app this is ~1.48×, versus ~2× in the volume-only probe, because the rest of the frame is unchanged. The frame is GPU-bound (median `wait_surface` 161 → 111 ms).
+   - **Earlier note on this idea, kept for history:** compute a subtree shared by a medium's channels once per sample. This is Zach's symbolic unification, applied across a medium's channels rather than across media; OntoMath can find identical subtrees, and an opaque shader could not. Still not built: finer proof cells near the sheets, and hoisting the time-only emission pulse.
 6. **Zach's compile notes (2026-10-09):** "it should only compile the different equations once into the unified equation… adjust incrementally rather than recompiling the whole equation".
    - **Already true:** one fused program, compiled per structure, pipeline-cached by WGSL text, with numeric coefficients in a buffer (no recompile).
    - **Gaps:** params and proof bits are re-uploaded every frame (should be GPU-resident with slice updates), and a structural edit to one medium recompiles the whole fused program. Proposed: per-medium codegen caching, async pipeline creation, and a correct GPU AST-interpreter tier meanwhile (the 2026-08-28 "GPU AST Interpreter and WGSL Tiering" design, never built).
@@ -87,3 +96,37 @@ Not converted: `WebGpuRenderer::drawImplicit` (~line 1453) still JSON-hashes Obj
 - **Not proven:** the rest touch code this change does not, but no baseline build was run. Another worker committed OntoMath/ProbabilityForm changes into this checkout (01:02–01:12 PDT) during the run.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `session_01NJy6VrPVNcHAnggwFyTsmF` (local `9e6def41-f1a4-4d08-afe4-f04085c5da75`) · 2026-10-09 01:17 PDT
+
+
+## Sixth-one Sun continuation: share a value only in its evaluation domain
+
+This continues [Opus’s Poltergeist III handoff](../../../../../../agent%20intercom/communication-threads/Poltergeist_II_Gemini_And_Opus_Share_A_Checkout_2026-10-09.md#poltergeist-iii--the-sun-was-in-the-checkout-2026-10-09-1700-pdt), preserving its uncommitted ownership and historical evidence.
+
+Zach asked Codex / GPT-6.1 Sol to continue the Cyber Constitutionalist after shutdown: “our goal is to make the computational cost as close as possible to the bare minimum necessary mathematical evaluation for a perfectly or near-perfectly accurate image.” The cross-channel implementation was already present, uncommitted, on `sync-from-earthcall-main`, HEAD `f0194f3f`; Opus's prior full-app timings above remain his evidence. This continuation preserves that work and keeps save inputs read-only.
+
+Three added CPU assertions failed on the inherited candidate: a matching source expression reused a medium slot, SDF noise at `2*p` reused noise at `p`, and a matching occluder reused the medium sample instead of its shadow-ray point. Fixed by confining substitution to the original medium point and clearing it at source/occluder boundaries; Gradient retains its six distinct points. Also fixed undeclared locals in all-noise shared evaluators, matched the collector to the compiler's medium/source/occluder constant order, and made sharing-group order depend on occurrence positions rather than numeric keys. A matched numeric edit therefore keeps WGSL and slots stable. No new rendering switch or sample-count/resolution change.
+
+### Time-only hoisting experiment — not shipped
+
+A generic candidate found scalar subtrees depending only on `t`, filled private values once per ray/medium before sampling, and reused them inside spatial evaluators. Northern Veil acquired three time-only colour groups per curtain. The candidate was byte-identical to the inherited renderer across a full 2560×1440 RGBA capture at the spawn view, t=7.25; its 320×180, three-view comparison against 6144 samples also had max error 1 and no pixels above 1. These are finite reference comparisons, not proof of an exact integral.
+
+Sequential A–B–B–A, fixed spawn camera and t=7.25, all four curtains, 2560×1440, 40 GPU-synchronized frames per run: A=124.03/131.68 ms; B=166.82/119.47 ms. The spread does not establish a reliable win, so the temporal candidate was removed from production. An earlier B run overlapped a GPU correctness test and is excluded from these numbers. Fewer algebraic evaluations alone cannot certify lower frame cost; register lifetime, memory, scheduling and driver lowering must be measured too.
+
+Scratch evidence (not repo/save state): `/private/tmp/earthcall-sixth-one-sun-01a122d7/`, including pre-edit and candidate compiler snapshots, identical-source probe binaries, and native RGBA captures. The existing `nv_ref.cpp` probe source was compiled unchanged against current headers; it reads a decoded scratch snapshot and writes only explicit scratch captures. No `bash -c`, deletion, save authoring, or full save-mutating suite.
+
+### Remaining route toward the minimum
+
+- One sample now shares the curtain shape across its authored channels, but channels remain independent truths and differently placed curtains do not automatically share a coordinate domain.
+- Revision gates avoid rediscovery on unchanged frames. Numeric edits refresh parameter values; changes that alter which expressions share a value can still rebuild the fused shader. Per-medium lowering reuse, incremental graph repair, resident parameter/proof buffers and dirty uploads remain open.
+- Time-only work may need a different placement than per-ray private storage; this experiment supplies no shipped speedup. Nested common subexpressions need demand-aware scheduling so extracting noise never defeats the existing cheap zero-factor exits.
+- A dense reference is an image comparison, not a universal minimum-work theorem. Error-bounded local quadrature and integration-tail bounds remain future work; preserve the accepted sample lattice/fidelity unless a separately witnessed rule improves it.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-10T11:52:24.788492-07:00
+
+### Final verification of retained guards
+
+2026-10-10T12:02:06.309310-07:00; five focused CTest targets passed with native Metal access and no device skips: parameter refresh, shared-subexpression codegen (51/51), native sharing, unified quadrature (15/15), and zero-proof parity (12/12). The native sharing test was then strengthened to prove the source clock visibly changes its radiance and passed 14/14; all four independent-inline comparisons had max RGBA error 0. Unified quadrature at 320×180 had max error 1 and no pixels >1 at each of its three views against 6144 samples. These checks cover sampled cases, not a universal fidelity theorem.
+
+`earthcall_webgpu` rebuilt successfully in Debug. The final guarded volume-only renderer matched the inherited build byte-for-byte across 14,745,600 RGBA bytes at 2560×1440, fixed spawn camera and t=7.25. The scratch input was compared with the live decoded Zone and was equal. Northern Veil's save SHA-256 remained `6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496`. No full-app runtime/FPS claim is made by this pass; Person acceptance is listed separately. Changes remain uncommitted, preserving Zach's existing working-tree work.
+
+Backend/hardware: native WebGPU/Metal, Apple M5 with 8 GPU cores, verified with `system_profiler SPDisplaysDataType`. Compiler/source fixture helpers were initially corrected for const channel pointers and unique child ownership before the final passing build; those test-construction errors are not runtime verdicts.
