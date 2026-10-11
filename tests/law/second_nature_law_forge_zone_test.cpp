@@ -10,6 +10,7 @@
 #include "support/test_harness.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Core/EventBus.hpp"
+#include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/SecondNatureLawAuthoring.hpp"
@@ -116,6 +117,12 @@ int main() {
     if (copiedRoots != zoneJson["lawRefs"].size()) return 1;
 
     SaveSystem::setSaveRoot(scratch.path.string());
+
+    auto& policy = TransferPolicy::instance();
+    for (const auto& [name, tier] : policy.gates()) {
+        if (tier != TransferPolicy::Tier::Kernel) policy.setOpen(name, true);
+    }
+
     TestSupport::BootedEngineHarness harness("Zach");
     harness.zones.bindLive();
 
