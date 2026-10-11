@@ -5,6 +5,11 @@
 
 namespace Physics {
 
+namespace detail {
+    // Exposed for testing
+    bool sameDirection(const glm::vec3& a, const glm::vec3& b);
+}
+
 enum class CollisionMethod {
     None,
     PolyhedronSAT,
