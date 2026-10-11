@@ -19,6 +19,16 @@
 //     the Person (typed twice), later it unlocks them; the secret never reaches
 //     a property, the output, or the published line.
 // Written by Claude Opus 5.5 (session 08b0f730-6e49-4c49-b27f-3a89c810ca4b).
+//
+// WITNESS DOCUMENTATION:
+// What the old test could prove:
+//   That after step() executed, terminal->zone() transitioned to "Quiet".
+// What the old test COULD NOT prove:
+//   That writing the property path `@terminal-channel.zone` via PropertyPath::setValue
+//   actually succeeded and returned PathResult::Ok, because the assertion was short-circuited
+//   with `!= PathResult::Ok || true` (`assert(... || true)`), rendering it a tautology that
+//   agreed with itself regardless of whether setValue returned Ok, ReadOnly, or an error.
+
 #include "Singularity/Terminal/TerminalChannel.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "Identity/FirstMoverRegister.hpp"
@@ -237,8 +247,10 @@ int main() {
     std::cout << "  unknown or unloadable Zones refuse and the line stays; `enter` lists OK\n";
 
     // 6. A Law can move the line: the same move, through the registered property.
-    assert(PropertyPath::parse("zone").setValue(*terminal, PropertyValue(std::string("Quiet"))) !=
-           PropertyPath::PathResult::Ok || true);
+    // Fixed false-green assertion: assert now strictly verifies that PropertyPath::setValue
+    // returns PathResult::Ok on the real property path, eliminating the short-circuit `|| true`.
+    assert(PropertyPath::parse("zone").setValue(*terminal, PropertyValue(std::string("Quiet"))) ==
+           PropertyPath::PathResult::Ok);
     step();
     assert(terminal->zone() == "Quiet");
     std::cout << "  writing @terminal-channel.zone moves the line OK\n";
