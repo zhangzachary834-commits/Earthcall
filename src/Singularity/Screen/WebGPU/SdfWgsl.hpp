@@ -216,16 +216,6 @@ ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
 // production emitter, but with its OWN temporal coordinate (u.volumeTime.x).
 // Absence is a real structural state and means no explicit V0 density channel.
 ScalarExpressionLayout inspectDensityExpression(const OntoMath::Piecewise* expr);
-// Which positions of a medium's channels share an identical noise-bearing
-// subexpression (computed once per sample). Part of the program structure:
-// constants are excluded, but a numeric edit that makes two channels stop
-// matching changes this signature and so forces the needed recompile.
-std::string inspectVolumeSharing(const OntoMath::Piecewise* densityExpr,
-                                 const OntoMath::Piecewise* extinctionExpr,
-                                 const OntoMath::Piecewise* scatteringExpr,
-                                 const OntoMath::Piecewise* volumeChromaExpr,
-                                 const OntoMath::Piecewise* phaseExpr,
-                                 const OntoMath::Piecewise* emissionExpr);
 
 // V1 authored participating-medium extinction sigma_t(p,t). Absence is a
 // compatibility state, not a refusal: sigma_t falls back to 0.5 * D.

@@ -79,9 +79,3 @@ saves/identity/*.staged
 
 # Law Line atomic patch backups preserve Person-authored save bytes.
 scratch/backups/law-line/
-
-# Intercom navigation keeps source originals outside the live archive.
-scratch/backups/intercom-navigation/
-scratch/intercom-navigation*.html
-scratch/intercom-navigation*.jpg
-**/.intercom-write.lock

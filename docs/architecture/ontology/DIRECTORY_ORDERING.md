@@ -59,7 +59,7 @@ TOP LEVEL = the ontology + the modality layer.
     (b) a mode of the machine  — Singularity (and its modalities beneath)
 
   The Person-facing authorship surface is not a top-level region. Tools, chat,
-  and controls live in Singularity/FirstMoverOntology/FirstMoverWindowTools/. Ourverse the being
+  and controls live in Singularity/FirstMoverWindowTools/. Ourverse the being
   lives in ZonesOfEarth/Ourverse/. There is no src/OurVerse/.
 
   Everything else is either
@@ -241,7 +241,7 @@ into their proper ontological homes:
 | `Integration/` | `Singularity/Foreign/` | **Done.** The Singularity-level modality holding hardwired connectors to external applications (`ForeignChannel`, `EarthcallAPI`, `SecurityManager`). |
 | `Perspective/` | split | **Done.** `KeyboardHandler`, `MouseHandler` → `Singularity/Input/`; `PersonPerspective`, `AvatarHandler` → `Person/Perspective/`. |
 | `Util/` | `Singularity/Storage/` | **Done.** Persistence and serialization moved to the Storage channel (`SaveSystem`, `CloudStorage`, `FileChannel`, `StreamChannel`, `VirtualFileSystem`). |
-| `Form/` | `ConstructedBeing/` | **Done.** Renamed to clarify domain of constructed entities. `Object`, `Lexeme`, and `Property` nest under `Singular/`; `ObjectConcept` is `Singular/Object/Creation`; Formation lives under `Relation/Formation/` with direct includes; `Material` stays beside Singular. |
+| `Form/` | `ConstructedBeing/` | **Done.** Renamed to clarify domain of constructed entities. `Object`, `Lexeme`, and `Property` nest under `Singular/`; `ObjectConcept` is `Singular/Object/Creation`; Formation lives under `Relation/` (symlinked from Object); `Material` stays beside Singular. |
 
 | Subsystem | Action | Why |
 |---|---|---|
@@ -350,5 +350,3 @@ tree said.
 
 The tree is the first document anyone reads and the only one nobody skips. Make it say
 the true thing.
-
-*Routing correction: Codex · GPT-6.1 Sol · session `01a122ec-b377-7391-ad6f-86d11b501d1b` · 2026-10-09 16:10 PDT; Zach’s agent-guidance refresh reconciles the prose tool path and Formation placement with the existing tree diagram and source.*
