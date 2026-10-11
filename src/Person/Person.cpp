@@ -17,6 +17,7 @@
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Core/Logger.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -159,7 +160,10 @@ void Person::drawNametag() const {
 
 // -----------------------------------------------------------------------------
 void Person::updatePose() {
-    glm::mat4 base = glm::translate(glm::mat4(1.0f), _position);
+    const auto baseMath = OntoMath::affineTranslation(_position);
+    if (!baseMath) return;
+    const glm::mat4 base =
+        baseMath->toGlmMat4().value_or(glm::mat4(1.0f));
 
     std::unordered_map<std::string, BodyPart*> partsByName;
     partsByName.reserve(getBody().parts.size());
@@ -209,17 +213,35 @@ void Person::updatePose() {
             ? part->getPrimaryObject()->sampleAutomations(restLocal)
             : restLocal;
 
-        glm::mat4 worldT = base * animatedLocal;
+        const auto animatedMath =
+            OntoMath::MatrixValue::fromGlmMat4(animatedLocal);
+        auto worldMath = OntoMath::affineCompose(*baseMath, animatedMath);
+
         if (const char* parentName = parentNameFor(part->getName())) {
             auto parentIt = partsByName.find(parentName);
             if (parentIt != partsByName.end() && parentIt->second && parentIt->second != part) {
                 BodyPart* parent = parentIt->second;
                 const glm::mat4 parentWorld = resolvePart(parent);
-                const glm::mat4 childFromParentRest = glm::inverse(parent->localTransform()) * animatedLocal;
-                worldT = parentWorld * childFromParentRest;
+                const auto inverseParentRest = OntoMath::inverseAffine(
+                    OntoMath::MatrixValue::fromGlmMat4(parent->localTransform()));
+                const auto childFromParentRest = inverseParentRest
+                    ? OntoMath::affineCompose(*inverseParentRest, animatedMath)
+                    : std::nullopt;
+                const auto parentedWorld = childFromParentRest
+                    ? OntoMath::affineCompose(
+                          OntoMath::MatrixValue::fromGlmMat4(parentWorld),
+                          *childFromParentRest)
+                    : std::nullopt;
+                // A singular parent-rest transform has no lawful inverse.
+                // Refuse that parent-relative correction rather than accepting
+                // GLM NaN/Inf; the already-defined base/local pose remains.
+                if (parentedWorld) worldMath = parentedWorld;
             }
         }
 
+        const glm::mat4 worldT = worldMath
+            ? worldMath->toGlmMat4().value_or(base)
+            : base;
         resolvedWorld[part] = worldT;
         return worldT;
     };
