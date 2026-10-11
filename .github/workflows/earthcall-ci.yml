@@ -99,6 +99,7 @@ jobs:
         advanced_face_paint_test
         action_model_test
         async_state_logger_test
+        my_probe_test
         save_system_error_test
         dump_test_save_isolation_test
         foreign_web_dom_bridge_test

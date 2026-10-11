@@ -963,7 +963,14 @@ std::string ZoneManager::getSaveDirectory() const {
 // ------------------------------------------------------------------
 namespace {
 void logIo(const std::string& line) {
-    std::ofstream log("saves/earthcall-io.log", std::ios::app);
+    const std::string configuredRoot = SaveSystem::saveRoot();
+    const std::filesystem::path saveRoot =
+        configuredRoot.empty() ? std::filesystem::path("saves")
+                               : std::filesystem::path(configuredRoot);
+    std::error_code ec;
+    std::filesystem::create_directories(saveRoot, ec);
+    if (ec) return;
+    std::ofstream log(saveRoot / "earthcall-io.log", std::ios::app);
     if (!log) return;
     std::time_t now = std::time(nullptr);
     char stamp[32];
