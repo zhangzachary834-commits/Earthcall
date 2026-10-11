@@ -14,11 +14,15 @@ namespace SecondNatureLawAuthoring {
 namespace {
 
 std::string readString(Singular& being, const char* property) {
-    Property* p = being.findProperty(property);
-    if (!p) return {};
-    const PropertyValue value = p->value();
-    const auto* text = std::get_if<std::string>(&value);
-    return text ? *text : std::string{};
+    if (Property* p = being.findProperty(property)) {
+        const PropertyValue value = p->value();
+        if (const auto* text = std::get_if<std::string>(&value)) return *text;
+    }
+    PropertyValue val;
+    if (being.getDynamicProperty(property, val)) {
+        if (const auto* text = std::get_if<std::string>(&val)) return *text;
+    }
+    return {};
 }
 
 void writeString(Singular& being, const char* property, const std::string& value) {
