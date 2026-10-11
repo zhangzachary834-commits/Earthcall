@@ -2,7 +2,7 @@
 
 Split out of `AGENTS.md` so that file stays short enough to be read in full. This is the
 workshop half: how to build, what the test suite means, and what tooling is allowed to walk
-the tree. `AGENTS.md` holds the ontology and the refusals, and links here. [The agent compass](AGENT_COMPASS.md) supplies the current authoring routes and implementation boundaries.
+the tree. `AGENTS.md` holds the ontology and the refusals, and links here.
 
 *(Note: unlike the framework corpus, this file lives at `docs/`, not `docs/architecture/` —
 it describes the workshop, not the ontology.)*
@@ -86,8 +86,7 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # desktop GPU/display required for GPU/GL tests; frame_lag_test is load-sensitive
-ctest --test-dir build -N                            # inventory this local configuration; reconfigure after source changes
+ctest --test-dir build --output-on-failure -j4        # 262 registered (2026-10-02); WebGPU/GL tests require a desktop GPU/display session; frame_lag_test is machine-load-sensitive
 cmake --build build --target lag                       # just the frame-cost probe, with its report
 ```
 
@@ -105,14 +104,12 @@ The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 
 ## The test suite
 
-**Inventory is local and dated.** Use `ctest --test-dir build -N` after configuration; compare its registered names with the current test sources when auditing drift. Old counts/results below preserve their original witness dates. Registration, executable availability, environment acquisition, and passing assertions are separate facts. This documentation refresh enumerated 284 local registrations on 2026-10-09 without executing the suite; see [the refresh audit](audits/AGENT_GUIDANCE_REFRESH_2026-10-09.md).
-
 **2026-10-02 creation addition:** `universal_singular_creation_test` exercises
 the real authored prototype Create action, concrete-kind preservation,
 authorship and transfer refusals, canonical typed references on Zone reload,
 and preservation of enduring Relation history. Configure after adding its
-source, then build the named target before selecting it with CTest. The
-2026-10-02 configuration registered 262 tests; this dated inventory is not a suite verdict or a current count.
+source, then build the named target before selecting it with CTest. Current
+registration count is 262; this is not a claim that every suite test was run.
 *Codex / GPT-6.1 Sol / session `01a0e64f-5853-7d30-8196-995b4fd16b89` /
 2026-10-02 17:02 PDT; Zach's universal Singular creation request.*
 
@@ -206,7 +203,7 @@ honest rather than convenient:
 
 | Test | Guards against |
 |---|---|
-| `synthesis_studio_app_test` | the actual Studio save's controls losing their actions: repeated input, press/release, voice selection, selected ink reaching new strokes, note-reactive geometry, bounded musical play, and real Object/Law round-trips; click targets follow authored rectangles. Live visual/audio acceptance remains in `docs/Agenda/Tasks/For Zach/Person Verification List.md`. Updated by Codex, session `synthesis-studio-20260904`, 2026-09-04 22:53 PDT. |
+| `synthesis_studio_app_test` | the actual Studio save's controls losing their actions: repeated input, press/release, voice selection, selected ink reaching new strokes, note-reactive geometry, bounded musical play, and real Object/Law round-trips; click targets follow authored rectangles. Live visual/audio acceptance remains in `docs/Agenda/Tasks/Person Verification List.md`. Updated by Codex, session `synthesis-studio-20260904`, 2026-09-04 22:53 PDT. |
 | `paint_test` | paint written through a *shared* material (repaints the world), and a `color` property that does not read back what was written — `propSetColor` was an empty function for a month |
 | `object_roundtrip_test` | a field `to_json` writes and `from_json` drops. `faceColors` was write-only for a month with the write side making it look covered; `serialization_compat_test` covers the msgpack/Frontier *plumbing* and cannot see this |
 | `channel_paths_test` | the law-authoring picker offering a property path no registry answers. `CreationChannel::activeShapeKind` was advertised and unregistered, so every law reading it silently fell back |
@@ -221,7 +218,7 @@ honest rather than convenient:
 | `zone_identity_test` | Home was copied into every "world" file, so loading another session showed an empty Home. Zones now have `saves/zones/<id>/zone.json`; sessions reference them; fork/diff are first-class |
 | `prophetic_rete_test` | **Section F is the point.** It guards the direction the Prophetic Rete analysis is allowed to be wrong in: a possibility-space filter that answers too NARROWLY makes a law go deaf — still registered, still enabled, still compiled, alpha memory simply empty — and nothing reports it. F fires real laws through a real `LawManager` and asserts they still hear, then checks all three fail-open paths (stale index, incomplete index, foreign alpha node). It also guards the change-feed fix: before 2026-09-01, `PropertyRef::set` was the ONLY caller of `notifyPropertyChanged` in the engine, so every `ComputedProperty`, every hand-written `Property` bridge, and every authored property was invisible to the Rete's dirty tracking. See `docs/architecture/law/PROPHETIC_RETE.md` §4 |
 | `frame_lag_test` | the frame quietly getting dearer. Guards three things nothing else could see: that per-frame cost stays sub-quadratic in the population, that an *idle* world fires no laws and grows no objects (CLAUDE.md's edge-not-level rule, measured rather than asserted), and that no being registers a property path twice (the `buildProperties()`-in-a-constructor bug, which doubles the cost of every law evaluation and shows up nowhere else) |
-| `zone_home_ontology_test` | manifesto Home/Zone: primary Home kernel-locked per Person (not "any owned Zone"); owner is Person/Relationship/Community; community-home / community-zone authored kinds; AuthorZone mints extras; the primary dwelling is a constitutive `Home` with dwelling state, not merely a Zone kind label |
+| `zone_home_ontology_test` | manifesto Home/Zone: primary Home kernel-locked per Person (not "any owned Zone"); owner is Person/Relationship/Community; community-home / community-zone authored kinds; AuthorZone mints extras; unused `class Home` retired |
 
 *Property-memory test entry and configured count: Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 12:29 PDT. The count comes from `ctest -N`; it is not a full-suite verdict.*
 
@@ -367,11 +364,9 @@ external software. So there is no `src/Integration/` (that would be refusal #2) 
 this has been attempted. See `docs/architecture/Integration/INTEGRATION_FRAMEWORK.md` §0.
 
 **`ConstructedBeing/`** was named `Form/` until 2a11f94; the docs corpus still says Form in
-places. `Object`, `Lexeme`, and the non-Singular Property bridge live under `ConstructedBeing/Singular/`;
-`ObjectConcept` is the Object-facing set-to-set mechanism (`Singular/Object/Creation`);
-`Singular/Creation/SingularSetToSetCreation` supplies the common prototype algebra across
-admitted concrete Singular kinds. Keep these existing seams coherent rather than adding
-a second creation system. See §7 of `LAW_AND_CREATION_SYSTEM.md`; a `Concept`/`SynthesisSystem` pair
+places. `Object`, `Lexeme`, and `Property` live under `ConstructedBeing/Singular/`;
+`ObjectConcept` is the ONE set-to-set machine (`Singular/Object/Creation`) — do not add
+a second one. See §7 of `LAW_AND_CREATION_SYSTEM.md`; a `Concept`/`SynthesisSystem` pair
 lived beside it until 2026-08-11 and was deleted. Formation is `Relation/Formation`
 (all includes point directly to `Relation/Formation/Formation.hpp`). Lexeme is a Singular, not a Language-channel type.
 
@@ -388,10 +383,3 @@ Build `earthcall_webgpu` before running `python3 scratch/probes/law_line_screen_
 `examples/law_line_pixel_art_editor.txt` is one physical line containing 276 authored Laws for a 16×16 direct Screen editor. Rebuild/restart, unlock, `enter LawLine`, close pointer-capturing panels and release the cursor with Escape before pasting once and pressing Enter. The line is substantial; wait for compilation acknowledgement. Run `python3 scratch/probes/law_line_screen_probe.py --art-editor` with desktop GPU access for the real Engine/Terminal/Metalaw/viewport witness. It retains a separate art report, preserving the earlier region proof. [Controls and scope](Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Law_Line_Pixel_Art_Editor/Law_Line_Pixel_Art_Editor.md), [verification](audits/LAW_LINE_PIXEL_ART_EDITOR_2026-10-07.md).
 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18`; Zach requested the whole editor; native final execution `2026-10-08T07:19:33Z`.*
-
-*Guidance refresh: Codex · GPT-6.1 Sol · session `01a122ec-b377-7391-ad6f-86d11b501d1b` · 2026-10-09 16:10 PDT; Zach commissioned the repository routing review; historical witnesses above retain their original scope.*
-
-
-## Intercom navigation checks
-
-Repository conversation tooling uses Python 3.10+ and the standard library. Run `python3 "agent intercom/conversation_history_injection.py" self-test` and `python3 -m unittest discover -s "agent intercom" -p "test_conversation_navigation.py" -v` from the repo root when changing it. Search, trace, register replies, and export a local browser through its `nav` subcommand; [workflow and preservation record](Agenda/Tasks/Specific%20Tasks/Housekeeping%20and%20Build/Linked_Conversations_and_Document_Navigation/Linked_Conversations_and_Document_Navigation.md). The engine suite does not exercise this developer tool.

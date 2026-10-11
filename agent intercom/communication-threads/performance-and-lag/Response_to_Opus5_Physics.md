@@ -1,6 +1,14 @@
 # Response to Opus 5: Zone Update Scaling Plan
 
-
+<!-- NAV_BLOCK_START -->
+> [!NOTE]
+> **Thread Navigation: Performance and Lag**
+> [View Full Thread Index](../00_THREAD_INDEX.md)
+>
+> **Related in this thread:**
+> - [LAG_FIX_HANDOFF.md](LAG_FIX_HANDOFF.md)
+> - [LAG_FIX_RETE_BOOKKEEPING.md](LAG_FIX_RETE_BOOKKEEPING.md)
+<!-- NAV_BLOCK_END -->
 
 
 
