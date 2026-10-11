@@ -332,3 +332,28 @@ Eight final native captures match every RGBA byte; six focused targets pass, inc
 These are means of four run means each, including the documented first-spawn CPU preparation outlier; no minima/floor comparison. Costs include offscreen preparation/recording/submission/completion, with no reliable GPU timestamps. They are not live FPS or movement p95. App rebuilt; usual-size 30 FPS and temporal/movement acceptance remain open. [Full protocol, cache boundaries and artifacts](../../../../../audits/NORTHERN_VEIL_SUPPORT_TRAVERSAL_2026-10-11.md).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T02:25:43-07:00
+
+
+### Perlin reuse implemented, measured and rejected — October 11
+
+Zach commissioned the next minimum-work step after support traversal. Three exact ray caches (normalized corners, full-cell hashes and XY-only hash) matched all eight native captures, but repeated paired timings regressed; three GPU lookup variants passed compute bit checks but changed the inside image by one level. None was retained. All candidate code/resources/dependent test edits were removed, and the ordinary app rebuilt with retained support traversal. Seven focused checks pass using the existing Perlin ABC selector; eight fresh restored images match baseline bytes. The default terrain-upload assertion also fails in the unmodified baseline and remains open. Warm performance runs continue to show zero lowering/compiles/parameter/proof uploads. No new FPS claim or save edits. [Experiment details, paired means, baseline failure and handoff](../../../../../audits/NORTHERN_VEIL_PERLIN_REUSE_EXPERIMENTS_2026-10-11.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T10:29:00-07:00
+
+
+### Selective folded-support index retained — October 11
+
+Zach asked to implement the highest-value item grounded in the mapped aurora equations. The generic index follows unproven support through slices of the existing grid, with outside cost eligibility evaluated once per ray and an obligatory empty-leaf guard. Inside code stays original; existing residency/revision/extents/membership/device gates govern index lifetime. Eight full-resolution images match; six focused targets pass, including native proof 65/65 and a new 2560×1440 regression check.
+
+Final paired offscreen means: spawn **61.35→55.36 ms (−9.77%)**, reverse −2.47%, side −0.27%; inside all sixteen runs **124.81→127.67 ms (+2.29%)**. Initial inside +7.76%/+1.02% prompted two additional predeclared series +0.57%/−0.13%; no runs removed, no repeatable >3% regression, no inside gain claimed. Warm lowerings, compiles and parameter/proof uploads remain zero. Direct-everywhere, interval caches and per-leaf cost selection fail exactness/cost/gain gates and are absent from the final path. [Proof/index contract, all runs and handoff](../../../../../audits/NORTHERN_VEIL_FOLDED_SUPPORT_2026-10-11.md).
+
+App rebuilt, saves untouched, no commits/pushes. Person movement/fidelity and usual-size 30 FPS remain open; tighter proof contraction, demanded mathematics and certified tails are subsequent work. Fixed-view means establish none of those remaining milestones.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T13:27:06-07:00
+
+
+### Whole-system counsel and CPU work screening — October 11
+
+Zach asked to derive rendering, caching, compilation and evaluation together before another implementation round. [The signed counsel](../../../../../../agent%20intercom/communication-threads/sdf-and-rendering/NORTHERN_VEIL_COUNSEL_REQUEST_TO_GPT_6_ASTRA_2026-10-11.md#astra-counsel--derive-the-work-before-choosing-its-storage) ranks a backend-certified sample-local support guard ahead of further ray caches, conditional on production-kernel costs and sound numerical enclosures. [Fresh CPU screening](../../../../../audits/NORTHERN_VEIL_COUNSEL_WORK_MODEL_2026-10-11.md) found only 8.68% fewer modeled inside loop visits from a larger empty-block index, while a real-arithmetic 8 KiB support table could avoid 42.21% of modeled fold evaluations; neither is a GPU speedup or an admitted f32 certificate. The current host interval widening does not alone establish every GPU intrinsic error bound. Production code, authored saves and existing Person acceptance status are unchanged. Next: bounded kernel/certificate investigation, then one candidate with the existing exact-pixel and repeated-cost gates; follow the counsel for fallback, invalidation and alternatives.
+
+**Signed:** Codex / GPT-6 / session `01a12cb8-ac95-7b13-827d-2c7f289aa560` / 2026-10-11T15:03:05-07:00.

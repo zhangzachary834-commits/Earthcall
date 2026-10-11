@@ -190,3 +190,8 @@ you read the source—run things**, and **after finishing, ask whether anything 
 
 
 *Support traversal retained: fused per-ray proof intervals skip voids inside boxes and reuse leaf proofs; native pixels and repeated offscreen cost gates pass. Both resident lanes carry support bounds; live movement remains unverified. [Record](docs/audits/NORTHERN_VEIL_SUPPORT_TRAVERSAL_2026-10-11.md). Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T02:25:43-07:00.*
+
+*Perlin reuse experiments are rejected; production retains the previous support traversal. [Measured failures and restored verification](docs/audits/NORTHERN_VEIL_PERLIN_REUSE_EXPERIMENTS_2026-10-11.md). Codex / GPT-6.1 Sol / `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T10:29:00-07:00*.
+
+
+*Selective folded support retained: column bounds reuse existing proofs; outside eligibility is computed once per ray, inside traversal stays original. Spawn offscreen cost falls 9.77%; inside has no gain claim and Person movement remains open. [Measured contract](docs/audits/NORTHERN_VEIL_FOLDED_SUPPORT_2026-10-11.md). Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T13:27:06-07:00.*

@@ -100,3 +100,21 @@ Zach selected implementation before phase-by-phase diagnosis. Retained fused tra
 Final protocol is two sequential readback-free ABBA series per view at 2560×1440, 24 timed frames/run. Means include all runs; ordinary GPU timestamps remain disabled. The candidate exceeds retention gates in all views. [Full evidence, proof dependencies, artifacts and outlier disclosure](../audits/NORTHERN_VEIL_SUPPORT_TRAVERSAL_2026-10-11.md). App rebuilt; no saves/commits/pushes. Live temporal coherence, usual-size movement p95 and 30 FPS remain Person/unverified work; exact noise-cell reuse, direct parameter recipes, demand-first sharing and certified tails remain open.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T02:25:43-07:00
+
+
+## Perlin reuse retention decision — October 11
+
+Six generic candidates were implemented under Zach's next-step commission. All three exact ray caches were slower in repeated paired measurements; all three immutable GPU lookup variants changed the inside image despite exact native compute comparisons. No candidate is retained. The previously retained compiler/residency/time/support implementation is rebuilt, seven focused checks pass in Perlin ABC mode and eight restored captures match. The original full Perlin terrain-upload gate has a reproduced baseline failure and is not included in that green selector result. [Complete evidence and future-agent cautions](../audits/NORTHERN_VEIL_PERLIN_REUSE_EXPERIMENTS_2026-10-11.md). Exact demand-aware sharing, direct parameter recipes, certified tails and live movement acceptance remain open; these rejected forms of Perlin reuse are no longer an untested presumed win.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T10:29:00-07:00
+
+
+## Selective folded-support index retained — October 11
+
+Zach commissioned the next structure-specific step. Generic column envelopes reuse every unknown leaf of the existing density proof; outside ray eligibility is computed once, then reached empty leaves can jump farther through certified void. Original inside traversal, contributing samples, equations and lattice remain unchanged. Proof/index residency uses existing revision/extents/camera/membership/device lifetime gates; no warm upload or equation compilation.
+
+Eight full-resolution captures match; all six focused targets pass, including native proof 65/65. Final two ABBA/view plus two predeclared inside follow-ups retain the stage: spawn 61.35→55.36 ms (−9.77%), reverse −2.47%, side −0.27%; inside **124.81→127.67 ms (+2.29%)**, with series +7.76/+1.02/+0.57/−0.13%, no repeatable >3% regression and no inside speedup claim. All initial runs remain included. Direct-everywhere and interval-cache variants are rejected; per-leaf cost selection remains below retention. [Full implementation/evidence](../audits/NORTHERN_VEIL_FOLDED_SUPPORT_2026-10-11.md).
+
+Ordinary app rebuilt; no save/codec/domain/authority changes, commits or pushes. Live movement, usual framebuffer 30 FPS acceptance, tighter mathematical support contraction, demand-aware sharing, direct parameter recipes and certified tails remain open. This index improves traversal of existing proofs; it does not prove new unknown cells empty.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T13:27:06-07:00

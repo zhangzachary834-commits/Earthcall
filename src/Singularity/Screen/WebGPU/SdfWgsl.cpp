@@ -3960,7 +3960,7 @@ std::string inspectVolumeSharing(const OntoMath::Piecewise* densityExpr,
 // Kernel lowering output: evaluator mathematics is emitted directly, independently
 // of the standalone marcher's entrypoint. Combined modules consume this boundary
 // rather than search/extract functions from a complete shader.
-static std::string kernelVolumePrefix(bool /*trimProofSupport*/) {
+static std::string kernelVolumePrefix(bool trimProofSupport) {
     std::string wgsl;
     wgsl = kVolumePerlinNoise;
     wgsl += kSdfPrimitivesMath;
@@ -3996,8 +3996,9 @@ struct VolumeInstanceData {
     time: vec4<f32>,
     paramOffset: u32,
     // Zero-density proof (Rendering::VolumeZeroProof): absolute offset of its
-    // bit words in P (followed by six local support bounds), its cell dims
-    // packed 10 bits per axis, and 1 if present. Kernel-derived proof data.
+    // bit words in P (then six support bounds, then four bounds per column),
+    // cell dims packed 10 bits per axis, and presence/column-axis bits.
+    // All are Kernel-derived proof data, never authored parameter slots.
     zeroProofOffset: u32,
     zeroProofDims: u32,
     zeroProofPresent: u32,
@@ -4097,13 +4098,29 @@ fn volumeSupportInterval(inst: VolumeInstanceData, ro: vec3<f32>, rd: vec3<f32>)
 }
 
 )WGSL";
+    if (trimProofSupport) wgsl += R"WGSL(
+// Kernel cost eligibility is constant along this ray, so decide once. It
+// cannot certify emptiness; the reached leaf and column bounds do that.
+fn volumeColumnsWorthWalking(inst: VolumeInstanceData, rd: vec3<f32>) -> bool {
+    let axisCode = inst.zeroProofPresent >> 1u;
+    if (axisCode == 0u || any(abs(rd) < vec3<f32>(1e-8))) { return false; }
+    let dims = vec3<u32>(inst.zeroProofDims & 1023u,
+                         (inst.zeroProofDims >> 10u) & 1023u,
+                         (inst.zeroProofDims >> 20u) & 1023u);
+    let rate = abs(rd) / (2.0 * inst.halfExtent.xyz / vec3<f32>(dims));
+    let axis = axisCode - 1u;
+    return rate[axis] <= 0.5 * max(rate[(axis + 1u) % 3u], rate[(axis + 2u) % 3u]);
+}
+)WGSL";
     wgsl += R"WGSL(
 // Grid walk: for a sample in a proven-empty cell, the ray parameter where the
 // ray leaves that cell (every sample before it lies in the same cell, so it
 // contributes exactly nothing); -1 when the cell is not proven. The proof was
 // made over each cell enlarged by 1%, which absorbs f32 rounding at the exit.
 fn volumeZeroCellExit(inst: VolumeInstanceData, p: vec3<f32>,
-                      ro: vec3<f32>, rd: vec3<f32>) -> f32 {
+                      ro: vec3<f32>, rd: vec3<f32>)WGSL";
+    if (trimProofSupport) wgsl += ", sampleT: f32, useColumns: bool";
+    wgsl += R"WGSL() -> f32 {
     let cell = volumeZeroProofCell(inst, p);
     if (cell.w != 1u) { return -1.0; }
     let dims = vec3<u32>(inst.zeroProofDims & 1023u,
@@ -4111,6 +4128,41 @@ fn volumeZeroCellExit(inst: VolumeInstanceData, p: vec3<f32>,
                          (inst.zeroProofDims >> 20u) & 1023u);
     let cellSize = 2.0 * inst.halfExtent.xyz / vec3<f32>(dims);
     let cellMin = inst.origin.xyz - inst.halfExtent.xyz + vec3<f32>(cell.xyz) * cellSize;
+)WGSL";
+    // Use the existing camera specialization: measured inside work regresses.
+    // Outside, consult bands only when the ray crosses at least two leaf cells
+    // on another axis before leaving this column. This ranks cost, never truth.
+    if (trimProofSupport) wgsl += R"WGSL(
+    // Consult only the reached column, and only after the existing leaf proof
+    // says this sample is empty. Unknown cells are inside its envelope. Keep
+    // near-parallel rays on the established cell walk (safeRd is no proof).
+    let axisCode = inst.zeroProofPresent >> 1u;
+    if (useColumns) {
+        let axis = axisCode - 1u;
+        let a = (axis + 1u) % 3u;
+        let b = (axis + 2u) % 3u;
+        let at = inst.zeroProofOffset + (dims.x * dims.y * dims.z + 23u) / 24u +
+                 6u + 4u * cell[axis];
+        let band = vec4<f32>(P.v[at], P.v[at + 1u], P.v[at + 2u], P.v[at + 3u]);
+        let pad = (abs(inst.origin.xyz) + abs(ro) + inst.halfExtent.xyz) * 1e-6;
+        let end = select(cellMin[axis], cellMin[axis] + cellSize[axis], rd[axis] > 0.0);
+        // Never jump into the adjacent column under this column's certificate.
+        let slabExit = (end - ro[axis]) / rd[axis] - pad[axis] / abs(rd[axis]);
+        if (slabExit > sampleT) {
+            if (any(band.xy > band.zw)) { return slabExit; }
+            var lo = cellMin;
+            var hi = cellMin + cellSize;
+            lo[a] = inst.origin[a] + band.x - pad[a];
+            lo[b] = inst.origin[b] + band.y - pad[b];
+            hi[a] = inst.origin[a] + band.z + pad[a];
+            hi[b] = inst.origin[b] + band.w + pad[b];
+            let support = rayAabbWorld(ro, rd, lo, hi);
+            if (support.y < support.x || sampleT > support.y) { return slabExit; }
+            if (sampleT < support.x) { return min(slabExit, support.x); }
+        }
+    }
+)WGSL";
+    wgsl += R"WGSL(
     return rayAabbWorld(ro, rd, cellMin, cellMin + cellSize).y;
 }
 )WGSL";
@@ -4179,6 +4231,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     var volumetricEmission = vec3<f32>(0.0);
 
 )WGSL";
+    if (trimProofSupport) wgsl += "    let useColumns = volumeColumnsWorthWalking(inst, rd);\n";
     if (trimProofSupport) wgsl += R"WGSL(
     // Keep one extra prefix sample; positions still use the original chord.
     let firstSample = i32(clamp(ceil((supportStart - t0) / stepLength - 0.5) - 1.0,
@@ -4197,7 +4250,9 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
         // Grid walk: this sample and every later one before the ray leaves its
         // proven-empty cell contribute exactly nothing. Jump past them (the
         // loop's own increment then lands on the first sample beyond the exit).
-        let zeroExit = volumeZeroCellExit(inst, p, ro, rd);
+        let zeroExit = volumeZeroCellExit(inst, p, ro, rd)WGSL";
+    if (trimProofSupport) wgsl += ", sampleT, useColumns";
+    wgsl += R"WGSL();
         if (zeroExit >= 0.0) {
             i = max(i, i32(ceil((zeroExit - t0) / stepLength - 0.5)) - 1);
             continue;
@@ -4782,6 +4837,8 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
         out.wgsl += "    let raySupport" + std::to_string(i) +
             " = select(vec2<f32>(-3.0e38, 3.0e38), volumeSupportInterval(" + inst +
             ", ro, rd), " + inst + ".zeroProofPresent != 0u && all(abs(rd) >= vec3<f32>(1e-8)));\n";
+        if (trimProofSupport) out.wgsl += "    let useColumns" + std::to_string(i) +
+            " = volumeColumnsWorthWalking(" + inst + ", rd);\n";
     }
 
     if (trimProofSupport) {
@@ -4941,7 +4998,8 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             "                        walkExit = min(walkExit, raySupport" + n + ".x);\n"
             "                    } else {\n"
             "                        let cellExit" + n + " = volumeZeroCellExit(walkInst" + n +
-                ", worldP - walkInst" + n + ".origin.xyz, ro, rd);\n"
+                ", worldP - walkInst" + n + ".origin.xyz, ro, rd" +
+                (trimProofSupport ? ", sampleT, useColumns" + n : std::string{}) + ");\n"
             "                        sampleUnproven" + n + " = cellExit" + n + " < 0.0;\n"
             "                        if (sampleUnproven" + n + ") { walkAllProven = false; }\n"
             "                        else { walkExit = min(walkExit, cellExit" + n + "); }\n"

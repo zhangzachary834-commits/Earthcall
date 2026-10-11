@@ -2529,7 +2529,7 @@ void WebGpuRenderer::attachVolumeZeroProof(const Rendering::VolumeDensityBinding
                                            const glm::vec3& halfExtent,
                                            std::vector<float>& params,
                                            VolumeInstanceData& instance,
-                                           bool /*trimProofSupport*/, bool appendPayload) {
+                                           bool trimProofSupport, bool appendPayload) {
     instance.zeroProofPresent = 0u;
     if (!volumeZeroProofEnabled() || !medium.densityExpr || medium.densityRevision == 0) return;
 
@@ -2548,7 +2548,8 @@ void WebGpuRenderer::attachVolumeZeroProof(const Rendering::VolumeDensityBinding
     if (appendPayload) instance.zeroProofOffset = static_cast<uint32_t>(params.size());
     instance.zeroProofDims = memo.proof.dims.x | (memo.proof.dims.y << 10u) |
                              (memo.proof.dims.z << 20u);
-    instance.zeroProofPresent = 1u;
+    // Bit 0 = present; bits 1..2 = column axis + 1 (zero means legacy payload).
+    instance.zeroProofPresent = trimProofSupport ? 1u | ((memo.proof.supportAxis + 1u) << 1u) : 1u;
     if (!appendPayload) return;
     params.insert(params.end(), memo.proof.words.begin(), memo.proof.words.end());
     // Kernel-derived support bounds follow every proof payload. Both camera
@@ -2557,6 +2558,9 @@ void WebGpuRenderer::attachVolumeZeroProof(const Rendering::VolumeDensityBinding
     const auto& lo = memo.proof.supportMin;
     const auto& hi = memo.proof.supportMax;
     params.insert(params.end(), {lo.x, lo.y, lo.z, hi.x, hi.y, hi.z});
+    if (trimProofSupport)
+        for (const auto& band : memo.proof.supportBands)
+            params.insert(params.end(), {band.x, band.y, band.z, band.w});
 }
 
 void WebGpuRenderer::flushVolumeComposite() {
@@ -3280,7 +3284,9 @@ void WebGpuRenderer::flushVolumeComposite() {
                 const uint32_t dy = (instance.zeroProofDims >> 10u) & 1023u;
                 const uint32_t dz = (instance.zeroProofDims >> 20u) & 1023u;
                 const size_t lo = instance.zeroProofOffset;
-                const size_t hi = lo + (dx * dy * dz + 23u) / 24u + 6u;
+                const uint32_t bandAxis = instance.zeroProofPresent >> 1u;
+                const uint32_t bandCount = bandAxis ? glm::uvec3(dx, dy, dz)[bandAxis - 1u] : 0u;
+                const size_t hi = lo + (dx * dy * dz + 23u) / 24u + 6u + 4u * bandCount;
                 if (std::max(begin, lo) < std::min(end, hi))
                     proofFloats += std::min(end, hi) - std::max(begin, lo);
             }

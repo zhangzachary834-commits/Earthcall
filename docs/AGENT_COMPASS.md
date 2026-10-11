@@ -88,3 +88,12 @@ Meaningful history needs attributable durable records. [Per-Singular logging](ar
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T00:15:29-07:00
 
 **2026-10-11 support traversal:** generic per-ray intervals and proof reuse retain exact pixels and pass repeated offscreen cost gates in all four views; native proof 54/54. Unknown/parallel exclusions fail open; authored box events remain authoritative. [Final contract and limits](audits/NORTHERN_VEIL_SUPPORT_TRAVERSAL_2026-10-11.md). **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T02:25:43-07:00
+
+
+**2026-10-11 Perlin experiments:** three exact ray caches regress cost, and three immutable GPU lookup variants fail exact inside pixels despite compute bit parity. None is retained; the app is rebuilt with prior support traversal. Read [rejection evidence and baseline terrain-test caveat](audits/NORTHERN_VEIL_PERLIN_REUSE_EXPERIMENTS_2026-10-11.md) before retrying noise reuse. **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T10:29:00-07:00
+
+
+**Selective folded support, October 11:** generic columns index existing unknown cells; outside rays consult them only after a leaf proof and once-per-ray cost eligibility. Inside code stays original; resident index lifetime follows density revision/extents, camera lane/membership and device teardown. Eight images exact, six focused targets green (native proof 65/65); spawn offscreen −9.77%, no inside speedup claim. Rejected interval caches stay absent. [Evidence and all-run limits](audits/NORTHERN_VEIL_FOLDED_SUPPORT_2026-10-11.md). **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T13:27:06-07:00
+
+
+**2026-10-11 whole-system rendering counsel:** before another Northern Veil cache/proof experiment, read [the counsel and fresh CPU work screen](audits/NORTHERN_VEIL_COUNSEL_WORK_MODEL_2026-10-11.md). It separates mathematical equality, backend numerical enclosure, demand lifetime and hardware cost; projected support guards remain proposed, and CPU work-count reductions are not GPU gains. No production change or new Person acceptance is claimed. Codex / GPT-6 / `01a12cb8-ac95-7b13-827d-2c7f289aa560` / 2026-10-11T15:03:05-07:00.

@@ -43,6 +43,13 @@ struct VolumeZeroProof {
     // these bounds must never replace the authored box or its quadrature.
     glm::vec3 supportMin{0.0f};
     glm::vec3 supportMax{0.0f};
+    // Kernel-derived column index over the SAME cell proof. In each slab on
+    // supportAxis, xy/zw enclose every unproven cell on the other two axes
+    // (cyclic order); reversed bounds denote an empty slab. Chosen by minimum
+    // enclosed volume, never by a medium's identity. No additional theorems,
+    // denser grid, authored fields or changing sample positions.
+    uint32_t supportAxis = 0u;
+    std::vector<glm::vec4> supportBands;
 
     static constexpr uint32_t kBitsPerWord = 24u;
     static constexpr uint32_t kMaxAxisCells = 1023u;

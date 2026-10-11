@@ -89,7 +89,7 @@ int main() {
     setCurrentRenderer(&renderer);
 
     // Odd dimensions include a centre ray exactly parallel to two grid axes.
-    const uint32_t width = 321, height = 181;
+    uint32_t width = 321, height = 181;
     WGPUTextureDescriptor td = {};
     td.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_CopySrc;
     td.dimension = WGPUTextureDimension_2D;
@@ -99,7 +99,7 @@ int main() {
     td.sampleCount = 1;
     WGPUTexture target = wgpuDeviceCreateTexture(gpu.device, &td);
     WGPUTextureView view = wgpuTextureCreateView(target, nullptr);
-    const uint32_t stride = (width * 4 + 255) & ~255u;
+    uint32_t stride = (width * 4 + 255) & ~255u;
     WGPUBufferDescriptor bd = {};
     bd.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead;
     bd.size = static_cast<uint64_t>(stride) * height;
@@ -229,6 +229,8 @@ int main() {
         {"reverse", {0, 60, 160}, {0, 55, 75}},
         {"axis-parallel", {0, 50, 0}, {0, 50, 100}},
         {"side", {90, 55, 90}, {-30, 55, 90}},
+        {"fold crossing forward", {-72.5f, 50, 70}, {65, 60, 95}},
+        {"fold crossing backward", {72.5f, 50, 95}, {-65, 60, 70}},
     };
     for (const auto& v : views) {
         renderer.setCamera(glm::lookAt(v.eye, v.target, glm::vec3(0, 1, 0)),
@@ -279,6 +281,18 @@ int main() {
     check(refreshed.lit > 0 && refreshed.rgba == exactEdited.rgba,
           "a density revision cannot retain the former empty support envelope");
 
+    // Rebuild column/word offsets on extent changes, before any proof-off
+    // frame can evict the memo and conceal stale geometry.
+    *edited->volumeDensity = *media.front()->volumeDensity;
+    edited->noteAuthoredMathWritten();
+    render({edited}, true, 7.25, 1);
+    edited->scale *= glm::vec3(1.25f, .85f, .75f);
+    edited->noteAuthoredMathWritten();
+    const Frame resized = render({edited}, true, 7.25, 1);
+    const Frame resizedExact = render({edited}, false, 7.25, 1);
+    check(resized.proven > 0 && resized.rgba == resizedExact.rgba,
+          "changed half-extents cannot reuse stale column bounds or payload offsets");
+
 
     // Unknown temporal support must fail open, including the inside camera.
     *edited->volumeDensity = OntoMath::Piecewise::fromJson(nlohmann::json::parse(
@@ -311,6 +325,49 @@ int main() {
           "certified-zero traversal preserves the positive-budget full lattice");
     renderer.setVolumeOutputErrorBudget(0.0);
 
+    // The support index is device-bound through the resident proof payload;
+    // recreate an actual device and rebuild all views/buffers, not just WGSL.
+    const auto restoreScene = [&] {
+        renderer.setRadianceSources({source}, 1);
+        renderer.setLight(source.position, source.ambientRadiance, source.diffuseRadiance, source.specularRadiance);
+        renderer.setLightingEnabled(light.enabled);
+        renderer.setCamera(glm::lookAt(glm::vec3(0, 50, 75), glm::vec3(40, 62, 110), glm::vec3(0, 1, 0)),
+                           glm::perspectiveZO(glm::radians(60.0f), float(width) / height, 0.1f, 1000.0f), {0, 50, 75});
+    };
+    restoreScene();
+    const Frame beforeDevice = render(media, true, 7.25, 1);
+    renderer.shutdown();
+    wgpuBufferRelease(readback); wgpuTextureViewRelease(view); wgpuTextureRelease(target);
+    wgpu::Device replacement;
+    if (!replacement.init()) { std::printf("FAIL: replacement device\n"); return 1; }
+    wgpuQueueRelease(gpu.queue); wgpuDeviceRelease(gpu.device);
+    wgpuAdapterRelease(gpu.adapter); wgpuInstanceRelease(gpu.instance);
+    gpu = replacement;
+    if (!renderer.init(gpu)) { std::printf("FAIL: replacement renderer\n"); return 1; }
+    target = wgpuDeviceCreateTexture(gpu.device, &td);
+    view = wgpuTextureCreateView(target, nullptr);
+    readback = wgpuDeviceCreateBuffer(gpu.device, &bd);
+    restoreScene();
+    const Frame afterDevice = render(media, true, 7.25, 1);
+    check(afterDevice.proven > 0 && afterDevice.rgba == beforeDevice.rgba && afterDevice.warmProofUploads == 0,
+          "replacement device rebuilds column payloads and retains no stale handles or pixels");
+
+    // A cached support shortcut previously passed every small capture but
+    // changed one spawn pixel at native stress size. Keep that size in the
+    // existing witness: finite small images cannot certify all ray boundaries.
+    wgpuBufferRelease(readback); wgpuTextureViewRelease(view); wgpuTextureRelease(target);
+    width = 2560; height = 1440; stride = (width * 4 + 255) & ~255u;
+    td.size = {width, height, 1}; bd.size = uint64_t(stride) * height;
+    target = wgpuDeviceCreateTexture(gpu.device, &td);
+    view = wgpuTextureCreateView(target, nullptr);
+    readback = wgpuDeviceCreateBuffer(gpu.device, &bd);
+    lastRgba.resize(size_t(width) * height * 4);
+    renderer.setCamera(glm::lookAt(eye, glm::vec3(0, 60, 90), glm::vec3(0, 1, 0)),
+                       glm::perspectiveZO(glm::radians(60.0f), float(width) / height, 0.1f, 1000.0f), eye);
+    const Frame stressProof = render(media, true, 0.0, 1);
+    const Frame stressExact = render(media, false, 0.0, 1);
+    check(stressProof.proven > 0 && stressProof.rgba == stressExact.rgba,
+          "full 2560x1440 spawn preserves every RGBA byte across proof boundaries");
 
     wgpuBufferRelease(readback); wgpuTextureViewRelease(view); wgpuTextureRelease(target);
     setCurrentRenderer(nullptr);

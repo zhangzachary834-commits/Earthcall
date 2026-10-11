@@ -163,3 +163,25 @@ Eight full-resolution images match bytes; six focused targets pass, native proof
 These are paired offscreen batch means, not live FPS; ordinary timestamps stay off. Retained, app rebuilt, saves untouched, no commits/pushes, concurrent Storage edits preserved. Person movement/flicker acceptance and usual-size 30 FPS remain open. [Full final evidence](../../docs/audits/NORTHERN_VEIL_SUPPORT_TRAVERSAL_2026-10-11.md). Next candidates must preserve generic mathematics; source-chroma legacy fallback is a separate semantic discrepancy, not a license to discard scattering.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T02:25:43-07:00
+
+
+## Sixth-one Sun: Perlin reuse measured and rejected
+
+Zach asked for the next highest-value step, implementing before measuring and reserving morning Person acceptance. I built six generic Perlin reuse variants. Three ray caches matched all eight native images but were slower; the smallest XY cache regressed inside 4.82%, reverse 7.51% and side 4.74%, with those regressions recurring in both series. Three device lookup variants passed 33,536 compute bit comparisons but changed the inside image by one level, so none qualifies for exact mode or an unproved bounded shortcut. These are rejected experiments, not landed Sun victories. Private-state/branch costs are hypotheses, not measured occupancy.
+
+All experimental production/dependent test changes are removed and the ordinary app rebuilt with the prior retained support traversal. Seven focused targets pass in existing Perlin ABC mode; eight restored full-resolution captures match baseline bytes. Full default Perlin's terrain upload assertion reproduces with original compiler/test sources and remains a separate baseline failure. Save/probe bytes untouched; warm parameters/proofs/compilation remain zero; no new live FPS claim, commits or pushes. [Full evidence and handoff](../../docs/audits/NORTHERN_VEIL_PERLIN_REUSE_EXPERIMENTS_2026-10-11.md). Keep Person acceptance open and avoid repeating these cache/table forms without a mechanism addressing their measured failure.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T10:29:00-07:00
+
+
+## Sixth-one Sun: selective folded support retained
+
+Zach commissioned the next optimization grounded in the actual folded aurora equations, implementing before measurement. I built a generic column index from every unknown leaf of the existing interval grid, then tested direct/cached/selected versions. Direct-everywhere matched pixels but regressed other views; an unguarded interval cache changed one full-size pixel by two levels; the guarded cache restored pixels but regressed inside 56%; per-leaf geometric selection gained only 3.35% at spawn. Those versions are rejected, not Sun victories.
+
+The retained version compiles the column path only into the existing outside lane, computes cost eligibility once per ray, and consults reached bounds only after the established leaf proof. Inside retains its original signature/traversal. No new grid, interpretation, authored rule, switch, save field or interval cache. Resident payload/accounting extends existing density revision/extents/membership/camera/device lifetimes.
+
+Eight final 2560×1440 images match every byte; six focused targets pass (CPU proof 32/32, native proof 65/65 with full-size, extent and replacement-device checks). Spawn paired offscreen cost falls **9.77%** (11.71% / 7.86%). Reverse −2.47%, side −0.27%. Inside's initial inconsistent timings required two predeclared extra ABBA series; including all sixteen runs its mean is **+2.29%**, series +7.76/+1.02/+0.57/−0.13%, no repeatable >3% regression and **no inside gain claim**. All 960 timed frames have zero warm lowering/compiles/parameter/proof uploads. [Full implementation, rejected candidates and raw-artifact map](../../docs/audits/NORTHERN_VEIL_FOLDED_SUPPORT_2026-10-11.md).
+
+Ordinary app rebuilt; original save/probe read-only, concurrent changes preserved, no commits/pushes. Live fidelity/movement and 30 FPS remain Person work. This accelerates existing proof traversal; deeper support contraction/demanded math/certified tails remain open. Hardware occupancy and the unguarded cache's exact numerical cause were not measured.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T13:27:06-07:00

@@ -1431,3 +1431,16 @@ Zach asked for the highest likely value independent step. Rebuild/restart the We
 - [ ] At your usual framebuffer size, record dimensions plus movement frame times/FPS from the ordinary metrics window. Final fixed-view offscreen ABBA improves all views with byte-identical captures, but does not establish live movement p95 ≤33.3 ms or 30 FPS acceptance. Note acquisition wait/recording separately if they fluctuate.
 
 [Implementation, exact captures and final paired timings](../../../audits/NORTHERN_VEIL_SUPPORT_TRAVERSAL_2026-10-11.md). No save or authoring changes. **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T02:25:43-07:00
+
+
+**Perlin continuation status:** six new reuse candidates were tested and rejected for slower cost or changed exact pixels. The rebuilt app contains the prior retained support traversal; use the two checks above to assess it, with no additional Perlin speedup expected. Seven restored focused checks and eight fixed-view pixel comparisons pass; these do not establish movement acceptance. [Details](../../../audits/NORTHERN_VEIL_PERLIN_REUSE_EXPERIMENTS_2026-10-11.md). **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T10:29:00-07:00
+
+
+### Northern Veil selective folded support — October 11
+
+Rebuild/relaunch the WebGPU app. The retained index automatically uses existing zero-proof acceleration for eligible outside rays; inside traversal stays original. Spawn fixed-view offscreen cost falls 9.77%, with byte-identical images; **no inside FPS improvement is claimed** (inside pooled cost +2.29%, not repeatably >3%). Six focused targets pass, including a full-size spawn regression witness. [Measured limits](../../../audits/NORTHERN_VEIL_FOLDED_SUPPORT_2026-10-11.md).
+
+- [ ] At your usual framebuffer size, look up from spawn toward the curtains, then move continuously through the folds/overlaps and reverse/side views. Confirm unchanged color, thin edges, opacity and animation, with no flicker/disappearance or new boundary hitches. Ordinary timestamps remain disabled.
+- [ ] Record framebuffer dimensions and warmed movement frame times/FPS; note surface acquisition/command recording separately. The 30 FPS milestone still requires movement p95 ≤33.3 ms and your acceptance. Existing proof switch, samples and output-budget controls should retain their meanings; no authored/save changes to inspect.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T13:27:06-07:00

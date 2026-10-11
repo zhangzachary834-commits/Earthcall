@@ -1,7 +1,9 @@
 #include "Singularity/Screen/VolumeZeroProof.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <limits>
 #include <map>
 #include <string>
 
@@ -122,6 +124,12 @@ VolumeZeroProof buildVolumeZeroProof(const OntoMath::Piecewise& density,
     // walking empty ray prefixes/tails every frame. Unknown cells remain in
     // the envelope. No new mathematical approximation or denser grid.
     glm::uvec3 first = proof.dims, last(0u);
+    std::array<std::vector<glm::uvec2>, 3> bandFirst, bandLast;
+    for (uint32_t axis = 0; axis < 3; ++axis) {
+        bandFirst[axis].assign(proof.dims[axis],
+                              glm::uvec2(proof.dims[(axis + 1) % 3], proof.dims[(axis + 2) % 3]));
+        bandLast[axis].assign(proof.dims[axis], glm::uvec2(0u));
+    }
     bool occupied = false;
     for (uint32_t z = 0; z < proof.dims.z; ++z)
         for (uint32_t y = 0; y < proof.dims.y; ++y)
@@ -130,6 +138,14 @@ VolumeZeroProof buildVolumeZeroProof(const OntoMath::Piecewise& density,
                 occupied = true;
                 first = glm::min(first, glm::uvec3(x, y, z));
                 last = glm::max(last, glm::uvec3(x + 1u, y + 1u, z + 1u));
+                const glm::uvec3 c(x, y, z);
+                for (uint32_t axis = 0; axis < 3; ++axis) {
+                    const glm::uvec2 cross(c[(axis + 1) % 3], c[(axis + 2) % 3]);
+                    auto& lo = bandFirst[axis][c[axis]];
+                    auto& hi = bandLast[axis][c[axis]];
+                    lo = glm::min(lo, cross);
+                    hi = glm::max(hi, cross + glm::uvec2(1u));
+                }
             }
     proof.supportMin = glm::vec3(1.0f);
     proof.supportMax = glm::vec3(-1.0f);
@@ -137,6 +153,39 @@ VolumeZeroProof buildVolumeZeroProof(const OntoMath::Piecewise& density,
         const glm::vec3 margin = cellSize * marginFraction;
         proof.supportMin = -glm::abs(halfExtent) + glm::vec3(first) * cellSize - margin;
         proof.supportMax = -glm::abs(halfExtent) + glm::vec3(last) * cellSize + margin;
+    }
+    // The bounds follow whatever authored support the interval proofs admit.
+    // Unknown cells MUST be included. Ranking affects only traversal cost.
+    double best = INFINITY;
+    for (uint32_t axis = 0; axis < 3; ++axis) {
+        double volume = 0.0;
+        for (uint32_t i = 0; i < proof.dims[axis]; ++i) {
+            const auto lo = bandFirst[axis][i], hi = bandLast[axis][i];
+            if (glm::any(glm::greaterThan(lo, hi))) continue;
+            volume += double(hi.x - lo.x) * double(hi.y - lo.y);
+        }
+        volume /= proof.totalCells;
+        if (volume < best) { best = volume; proof.supportAxis = axis; }
+    }
+    const uint32_t axis = proof.supportAxis, a = (axis + 1) % 3, b = (axis + 2) % 3;
+    proof.supportBands.assign(proof.dims[axis], glm::vec4(1.0f, 1.0f, -1.0f, -1.0f));
+    for (uint32_t i = 0; i < proof.dims[axis]; ++i) {
+        const auto lo = bandFirst[axis][i], hi = bandLast[axis][i];
+        if (glm::any(glm::greaterThan(lo, hi))) continue;
+        // Use the existing proof margin; explicitly round the index envelope
+        // outward as well. The GPU adds world/local arithmetic padding.
+        const auto lower = [&](uint32_t k, uint32_t n) {
+            const double roundoff = 8.0 * std::numeric_limits<float>::epsilon() * extent[k];
+            return std::nextafter(float(-double(std::abs(halfExtent[k])) + double(n) * cellSize[k] -
+                                       builder.margin[k] - roundoff), -INFINITY);
+        };
+        const auto upper = [&](uint32_t k, uint32_t n) {
+            const double roundoff = 8.0 * std::numeric_limits<float>::epsilon() * extent[k];
+            return std::nextafter(float(-double(std::abs(halfExtent[k])) + double(n) * cellSize[k] +
+                                       builder.margin[k] + roundoff), INFINITY);
+        };
+        proof.supportBands[i] = {lower(a, lo.x), lower(b, lo.y),
+                                upper(a, hi.x), upper(b, hi.y)};
     }
     return proof;
 }

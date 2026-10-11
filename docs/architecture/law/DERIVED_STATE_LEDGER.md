@@ -333,3 +333,23 @@ Fused WGSL computes one padded support interval per medium/ray, retains it throu
 Global outside prefix/tail trimming remains separately selected; inside single-medium marching is unchanged. No arithmetic reassociation, contribution-tail bound, new fidelity switch or authority mechanism. Native proof 54/54 and all six focused targets pass; eight complete captures match retained bytes. Final repeated offscreen economics pass the 5%/3% gates in all views. [Final evidence and Person limitations](../../audits/NORTHERN_VEIL_SUPPORT_TRAVERSAL_2026-10-11.md).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T02:25:43-07:00
+
+
+### Perlin reuse experiment boundary — October 11
+
+The ray-local cell/XY caches and once-per-device intrinsic GPU tables tested after support traversal are **not retained derived state**. Three ray caches preserve tested pixels but regress cost; three table variants fail exact rendered pixels despite compute bit parity. Their compiler helpers, device resources and dependent tests were removed. Existing compiler/proof/resident/time/support lifetimes remain unchanged. Seven restored focused targets pass in Perlin ABC mode and eight restored images match. [Measured rejection, fallback domains and baseline terrain-test caveat](../../audits/NORTHERN_VEIL_PERLIN_REUSE_EXPERIMENTS_2026-10-11.md). Future agents must not document the scratch noise caches as production ownership or infer final-output bounds from finite compute/image tests.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T10:29:00-07:00
+
+
+### Kernel selective column support — October 11
+
+Extends the retained per-ray proof traversal. `VolumeZeroProof::supportAxis/supportBands` are Kernel CPU index state in the existing density-pointer/revision/half-extent memo. Every unknown padded leaf belongs to its band; the chosen axis minimizes enclosed cell volume. No new interval evaluations or authored fields. Unknown/unrevisioned inputs keep the established fallback, and time alone rebuilds nothing.
+
+Both resident camera lanes retain six global bounds; only outside payloads append four f32 bounds per slab. `zeroProofPresent` bit 0 means present, bits 1..2 encode axis+1 (zero = original payload). Dirty upload accounting covers the extra range; camera lane/membership/revisions/extents already key payload identity. Existing cache eviction, reload and device teardown own lifetime and rebuild offsets. No separate permission or resource office.
+
+Outside WGSL computes geometric eligibility once per medium/ray, then the reached leaf MUST prove zero before a padded column intersection may extend its jump. Jumps stop before that column's exit and retain original box events/lattice. Inside emits the original helper signature/body. There is **no ray-local interval cache**: both cache experiments are rejected for exactness/cost. Near-parallel/absent proof uses the established cell path.
+
+Six focused targets pass, including CPU 32/32/native proof 65/65 with exhaustive unknown-cell enclosure, changed extents, replacement device and full-size spawn checks. Eight 2560×1440 images match. All 960 timed final frames report zero warm lowering/compiles/parameter/proof uploads. Spawn −9.77%; inside all-run mean +2.29% with no repeatable >3% regression after predeclared follow-up, no inside gain claim. [All runs, rejected variants and Person limitations](../../audits/NORTHERN_VEIL_FOLDED_SUPPORT_2026-10-11.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T13:27:06-07:00
