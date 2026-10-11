@@ -1,8 +1,8 @@
 #include "Singularity/Foreign/API/EarthcallAPI.hpp"
 #include "Singularity/Foreign/API/SecurityManager.hpp"
+#include "Singularity/FirstMoverOntology/Legacy/DesignSystem.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include <cassert>
-#include <algorithm>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -32,7 +32,7 @@ int main() {
     );
     assert(api.hasPermission("design_system") && "Permission for design_system should now be granted");
 
-    // 2. Test creation with API-owned design-element records
+    // 2. Test creation without attached DesignSystem (data tracking mode)
     bool createdWithPerm = api.createDesignElement(elem1);
     assert(createdWithPerm && "Creation should succeed when permission is granted");
 
@@ -50,7 +50,9 @@ int main() {
     elements = api.getDesignElements();
     assert(elements[0].position.x == 50.0f);
 
-    // 4. Test API-owned shape/text/effect records after retiring legacy DesignSystem
+    // 4. Test creation with attached DesignSystem
+    DesignSystem ds;
+    api.setDesignSystem(&ds);
 
     Integration::EarthcallAPI::DesignElement shapeElem;
     shapeElem.name = "star_1";
@@ -61,7 +63,8 @@ int main() {
     shapeElem.properties["color"] = "#00ff00";
 
     bool createdShape = api.createDesignElement(shapeElem);
-    assert(createdShape && "Shape creation in EarthcallAPI should succeed");
+    assert(createdShape && "Shape creation with DesignSystem attached should succeed");
+    assert(ds.getShapeSystem()->getShapeElements().size() == 1 && "ShapeSystem should contain 1 shape");
 
     Integration::EarthcallAPI::DesignElement textElem;
     textElem.name = "label_1";
@@ -71,7 +74,8 @@ int main() {
     textElem.properties["color"] = "#ffffff";
 
     bool createdText = api.createDesignElement(textElem);
-    assert(createdText && "Text creation in EarthcallAPI should succeed");
+    assert(createdText && "Text creation with DesignSystem attached should succeed");
+    assert(ds.getTextSystem()->getTextElements().size() == 1 && "TextSystem should contain 1 text element");
 
     Integration::EarthcallAPI::DesignElement effectElem;
     effectElem.name = "glow_1";
@@ -80,21 +84,8 @@ int main() {
     effectElem.properties["intensity"] = "0.8";
 
     bool createdEffect = api.createDesignElement(effectElem);
-    assert(createdEffect && "Effect creation in EarthcallAPI should succeed");
-
-    // Each kind remains queryable without legacy graphics subsystem delegation.
-    const auto designRecords = api.getDesignElements();
-    const auto findDesign = [&](const std::string& name) {
-        return std::find_if(designRecords.begin(), designRecords.end(),
-                            [&](const auto& record) { return record.name == name; });
-    };
-    const auto shapeRecord = findDesign("star_1");
-    const auto textRecord = findDesign("label_1");
-    const auto effectRecord = findDesign("glow_1");
-    assert(shapeRecord != designRecords.end() && shapeRecord->type == "star");
-    assert(shapeRecord->rotation.z == 45.0f);
-    assert(textRecord != designRecords.end() && textRecord->properties.at("text") == "Hello World");
-    assert(effectRecord != designRecords.end() && effectRecord->properties.at("intensity") == "0.8");
+    assert(createdEffect && "Effect creation with DesignSystem attached should succeed");
+    assert(ds.getEffectsSystem()->getEffects().size() == 1 && "EffectsSystem should contain 1 effect");
 
     // 5. Test template application
     bool templateApplied = api.applyDesignTemplate("card");

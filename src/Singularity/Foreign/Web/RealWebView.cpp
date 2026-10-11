@@ -5,6 +5,7 @@
 #include <map>
 #include "json.hpp"
 #include "Singularity/Screen/BrushSystem.hpp"
+#include "Singularity/FirstMoverOntology/Legacy/DesignSystem.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "Singularity/Core/Engine.hpp"
@@ -921,7 +922,7 @@ void RealWebView::_handleDesignCreateShape(const nlohmann::json& data) {
         
         (void)width; (void)height;
         
-        // TODO: These design bridge handlers currently log requests only; wire to the live design API.
+        // TODO: Connect to actual DesignSystem when available
         std::cout << "🎨 [INTEGRATION] Would create shape: " << type << " at (" << x << ", " << y << ") with color " << color << std::endl;
         
         nlohmann::json response = {
@@ -943,7 +944,7 @@ void RealWebView::_handleDesignCreateText(const nlohmann::json& data) {
         float size = data["size"];
         std::string color = data["color"];
         
-        // TODO: These design bridge handlers currently log requests only; wire to the live design API.
+        // TODO: Connect to actual DesignSystem when available
         std::cout << "🎨 [INTEGRATION] Would create text: " << text << " at (" << x << ", " << y << ") with font " << font << " size " << size << std::endl;
         
         nlohmann::json response = {
@@ -961,7 +962,7 @@ void RealWebView::_handleDesignApplyEffect(const nlohmann::json& data) {
         std::string effect = data["effect"];
         std::string target = data["target"];
         
-        // TODO: These design bridge handlers currently log requests only; wire to the live design API.
+        // TODO: Connect to actual DesignSystem when available
         std::cout << "🎨 [INTEGRATION] Would apply effect: " << effect << " to " << target << std::endl;
         
         nlohmann::json response = {
@@ -976,7 +977,7 @@ void RealWebView::_handleDesignApplyEffect(const nlohmann::json& data) {
 
 void RealWebView::_handleDesignGetAll() {
     try {
-        // TODO: These design bridge handlers currently log requests only; wire to the live design API.
+        // TODO: Connect to actual DesignSystem when available
         std::cout << "🎨 [INTEGRATION] Would get all designs" << std::endl;
         
         nlohmann::json response = {

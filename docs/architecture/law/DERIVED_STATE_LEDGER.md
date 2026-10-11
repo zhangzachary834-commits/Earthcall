@@ -253,19 +253,8 @@ Witnesses:
 - `tests/singularity/webgpu_volume_zero_proof_test.cpp`: a byte-identical framebuffer with the
   proof on and off, through both the fused-set and single-medium pipelines, at two times.
 
-**Volume sharing plan (2026-10-09)** is derived state inside the compiled volume program: which channel positions share one per-sample value. Constants are uploaded separately and never recompile, so a numeric edit could make two "shared" subtrees differ while the program kept sharing them. The guard is that sharing positions join the program's structure key (`sdfwgsl::inspectVolumeSharing`, in both the single-medium and set memos). Divergence changes the key, so the program recompiles. Witness: `volume_shared_subexpression_test` (an edit outside the shared subtree keeps sharing; an edit inside it ends it).
-
 What it does not guard is f32 vs real arithmetic inside the shader. The 1% cell enlargement
 covers sample-position rounding, and the byte-identical witness is the arbiter for the rest.
 
 Claude Code · Claude Opus 5.5 · session `session_01NJy6VrPVNcHAnggwFyTsmF` · 2026-10-09;
 Zach asked why Screen serialized JSON every frame, and for the proof to be fully general.
-
-
-### Volume sharing evaluation domains — Sixth-one Sun continuation
-
-The per-sample private slots belong to one medium, its current local point, and its temporal coordinate. `emitMathNode` and `flattenScalarProduct` substitute them only at the original `p`; `planVolumeSharing` does not treat the rebound field inside SDF/Gradient as an occurrence at that point. Source rho/chi/alpha and occluder lowering clear the substitution table: the source owns its clock/coordinates, and the occluder is evaluated along shadow-ray points. The constant collector now follows the compiler's medium → source → occluder order. Equal-size sharing groups are ordered by authored positions rather than numeric JSON keys, so edits that preserve equality also preserve slot order. These guards do not add a persistent cache; slots are filled anew per spatial sample and revisions still govern program/value refresh.
-
-Witnesses: `volume_shared_subexpression_test` now covers source isolation, SDF rebinding, six Gradient points, source/occluder constant order, all-noise locals, and stable slot order. `webgpu_volume_shared_subexpression_test` compares actual RGBA against independently inlined equivalent mathematics at two distinct source clocks, through single and fused pipelines; it uses synthetic memory only. Run it with native GPU access and distinguish device skips from assertion passes. Task: [Northern Veil](../../Agenda/Tasks/Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md).
-
-Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-10T11:52:24.788492-07:00; continues Zach's mathematical unification and Opus 5.5's implementation.

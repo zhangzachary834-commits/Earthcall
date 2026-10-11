@@ -2625,9 +2625,6 @@ void WebGpuRenderer::flushVolumeComposite() {
                     "\nvolume-emission:\n" + emissionLayout.structure +
                     (emissionLayout.readsOmega ? ":reads-omega" : ":no-omega") +
                     "\noccluder:\n" + occluderLayout.structure +
-                    "\nsharing:\n" + sdfwgsl::inspectVolumeSharing(
-                        medium.densityExpr, medium.extinctionExpr, medium.scatteringExpr,
-                        medium.volumeChromaExpr, medium.phaseExpr, medium.emissionExpr) +
                     "\n";
             }
 
@@ -2848,9 +2845,6 @@ void WebGpuRenderer::flushVolumeComposite() {
                 "\nvolume-emission:\n" + emissionLayout.structure +
                 (emissionLayout.readsOmega ? ":reads-omega" : ":no-omega") +
                 "\noccluder:\n" + occluderLayout.structure +
-                "\nsharing:\n" + sdfwgsl::inspectVolumeSharing(
-                    medium.densityExpr, medium.extinctionExpr, medium.scatteringExpr,
-                    medium.volumeChromaExpr, medium.phaseExpr, medium.emissionExpr) +
                 incidentSourceStructure;
             if (!memo.ok || memo.structure != structure || !memo.pipeline) {
                 memo.prog =
