@@ -291,7 +291,7 @@ void testLongestPrefixSelection() {
     // 1. Resolve "shape.color": MUST select the longer key "shape.color" over "shape"
     auto slot1 = pathShapeColor.resolve(obj);
     assert(slot1.dynamicSlot != nullptr);
-    assert(slot1.dynamicKey == "shape.color");
+    assert(slot1.dynamicKey() == "shape.color");
     PropertyValue val1;
     assert(pathShapeColor.getValue(obj, val1) == PropertyPath::PathResult::Ok);
     assert(std::get<std::string>(val1) == "red");
@@ -318,7 +318,7 @@ void testLongestPrefixSelection() {
     PropertyPath pathPosCustom = PropertyPath::parse("position.x.custom");
     auto slot2 = pathPosCustom.resolve(obj);
     assert(slot2.dynamicSlot != nullptr);
-    assert(slot2.dynamicKey == "position.x.custom");
+    assert(slot2.dynamicKey() == "position.x.custom");
     PropertyValue val4;
     assert(pathPosCustom.getValue(obj, val4) == PropertyPath::PathResult::Ok);
     assert(std::get<int>(val4) == 999);

@@ -150,8 +150,7 @@ PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t sta
             }
             if (!foundReg && !foundDyn) return {};
             slot.owner = currentOwner;
-            slot.dynamicKey = foundDyn
-                ? Earthcall::StringInterner::resolve(idsFromHere[consumed - 1]) : std::string();
+            slot.dynamicKeyId = foundDyn ? idsFromHere[consumed - 1] : Earthcall::StringId();
             slot.containerProperty = nullptr;
             currentRegistered = foundReg;
             currentDynamic = foundDyn;
@@ -338,10 +337,10 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
             if (slot.structuredProperty)
                 return slot.structuredProperty->setValue(candidate)
                     ? announce(PathResult::Ok,slot.structuredProperty,slot.owner) : PathResult::ReadOnly;
-            if (slot.structuredSource==slot.owner->getDynamicPropertyPtr(Earthcall::StringInterner::intern(slot.dynamicKey)))
-                return slot.owner->setDynamicProperty(slot.dynamicKey,candidate) ? PathResult::Ok : PathResult::ReadOnly;
+            if (slot.structuredSource==slot.owner->getDynamicPropertyPtr(slot.dynamicKeyId))
+                return slot.owner->setDynamicProperty(slot.dynamicKeyId,candidate) ? PathResult::Ok : PathResult::ReadOnly;
             *slot.structuredSource=std::move(candidate);
-            return announce(PathResult::Ok,slot.containerProperty,slot.owner,slot.dynamicKey);
+            return announce(PathResult::Ok,slot.containerProperty,slot.owner,slot.dynamicKey());
         } catch (const std::exception&) { return PathResult::TypeMismatch; }
     }
 
@@ -381,13 +380,13 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
 
             if (propertyValuesEquivalent(*slot.dynamicSlot, valToWrite)) return PathResult::Unchanged;
 
-            if (slot.dynamicSlot == slot.owner->getDynamicPropertyPtr(Earthcall::StringInterner::intern(slot.dynamicKey))) {
-                if (slot.owner->setDynamicProperty(Earthcall::StringInterner::intern(slot.dynamicKey), valToWrite)) {
+            if (slot.dynamicSlot == slot.owner->getDynamicPropertyPtr(slot.dynamicKeyId)) {
+                if (slot.owner->setDynamicProperty(slot.dynamicKeyId, valToWrite)) {
                     return PathResult::Ok;
                 }
             } else {
                 *slot.dynamicSlot = valToWrite;
-                announce(PathResult::Ok, slot.containerProperty, slot.owner, slot.dynamicKey);
+                announce(PathResult::Ok, slot.containerProperty, slot.owner, slot.dynamicKey());
                 return PathResult::Ok;
             }
             return PathResult::ReadOnly;
@@ -412,13 +411,13 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
         if (slot.prop->setValue(PropertyValue(*vec))) return announce(PathResult::Ok, slot.prop, slot.owner);
         return PathResult::ReadOnly;
             } else if (slot.dynamicSlot) {
-        if (slot.dynamicSlot == slot.owner->getDynamicPropertyPtr(Earthcall::StringInterner::intern(slot.dynamicKey))) {
-            if (slot.owner->setDynamicProperty(Earthcall::StringInterner::intern(slot.dynamicKey), PropertyValue(*vec))) {
+        if (slot.dynamicSlot == slot.owner->getDynamicPropertyPtr(slot.dynamicKeyId)) {
+            if (slot.owner->setDynamicProperty(slot.dynamicKeyId, PropertyValue(*vec))) {
                 return PathResult::Ok;
             }
         } else {
             *slot.dynamicSlot = PropertyValue(*vec);
-            announce(PathResult::Ok, slot.containerProperty, slot.owner, slot.dynamicKey);
+            announce(PathResult::Ok, slot.containerProperty, slot.owner, slot.dynamicKey());
             return PathResult::Ok;
         }
         return PathResult::ReadOnly;
