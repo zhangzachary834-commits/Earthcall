@@ -48,10 +48,6 @@ int main() {
         assert(found);
     }
 
-    // Verify backward compatibility file logs/law_audit.log
-    assert(std::filesystem::exists("logs/law_audit.log"));
-    assert(std::filesystem::exists("logs/law_audit.jsonl"));
-
     std::cout << "Logger unit tests passed successfully!" << std::endl;
     return 0;
 }

@@ -93,8 +93,6 @@ private:
     std::atomic<int> _categoryLevels[static_cast<size_t>(LogCategory::Count)];
 
     std::array<CategoryStreams, static_cast<std::size_t>(LogCategory::Count)> _streams;
-    std::ofstream _legacyLawLogFile;    // Mirror for logs/law_audit.log compatibility
-    std::ofstream _legacyLawJsonlFile;  // Mirror for logs/law_audit.jsonl compatibility
 
     std::queue<LogEntry> _queue;
     mutable std::mutex _mutex;
