@@ -991,32 +991,20 @@ ECA::ActionExecutor ActionNode::compile() const {
             const std::string type = eventType;
             const std::string subjectToken = publishSubject;
             const std::string objectToken = publishObject;
-            const auto resolveToken = [](const std::string& token) -> Singular* {
-                if (token == "@event.subject" || token == "@event.object") {
-                    if (!Universe::instance().hasApplicationEvent()) return nullptr;
-                    return token == "@event.subject"
-                               ? Universe::instance().applicationEventSubject()
-                               : Universe::instance().applicationEventObject();
-                }
-                for (Singular* being : Universe::instance().beings()) {
-                    if (being && being->getIdentifier() == token) return being;
-                }
-                return nullptr;
-            };
-            return [type, subjectToken, objectToken, resolveToken](
+            return [type, subjectToken, objectToken](
                        const ECA::Event&, Singular& lawSubject) {
                 if (type.empty()) {
                     emitEffect("Publish", false, "no event type authored");
                     return;
                 }
                 Singular* eventSubject =
-                    subjectToken.empty() ? &lawSubject : resolveToken(subjectToken);
+                    subjectToken.empty() ? &lawSubject : resolveBeingToken(subjectToken, lawSubject);
                 if (!eventSubject) {   // unproven: no testimony
                     emitEffect("Publish", false, "unproven subject: " + subjectToken);
                     return;
                 }
                 Singular* eventObject =
-                    objectToken.empty() ? nullptr : resolveToken(objectToken);
+                    objectToken.empty() ? nullptr : resolveBeingToken(objectToken, lawSubject);
                 Core::EventBus::instance().publish(
                     ECA::Event{type, eventSubject, eventObject, std::time(nullptr)});
                 emitEffect("Publish", true);
