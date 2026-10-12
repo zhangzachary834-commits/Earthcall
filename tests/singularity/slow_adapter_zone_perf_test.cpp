@@ -93,7 +93,8 @@ int main(int argc, char** argv) {
 
     // Warm foreground state without measuring it. The adapter's own timeline
     // advances too when ON, just as it would in a live 60 Hz session.
-    for (int i = 0; i < 30; ++i) {
+    const int warmupFrames = (adapter && !direct) ? 10 : 30;
+    for (int i = 0; i < warmupFrames; ++i) {
         zone->update(dt);
         zone->applyFormationRelations();
         h.worldTime += dt;
@@ -103,9 +104,10 @@ int main(int argc, char** argv) {
         h.lawManager.serviceSlowAdapterClock(schedulerWall);
     }
 
+    const int measureFrames = (adapter && !direct) ? std::min(frames, 24) : frames;
     std::vector<Frame> samples;
-    samples.reserve(frames);
-    for (int i = 0; i < frames; ++i) {
+    samples.reserve(measureFrames);
+    for (int i = 0; i < measureFrames; ++i) {
         const auto t0 = Clock::now();
         zone->update(dt);
         zone->applyFormationRelations();
@@ -159,7 +161,7 @@ int main(int argc, char** argv) {
         world.c_str(), zone->getIdentifier().c_str(), adapter ? "on" : "off",
         direct ? "on" : "off",
         zone->getOwnedObjects().size(), h.lawManager.getAll().size(),
-        zone->formation().relations().getAll().size(), frames,
+        zone->formation().relations().getAll().size(), measureFrames,
         median, p95, eqFps, lawMedian, maintenanceMedian, maintenanceP95,
         static_cast<unsigned long long>(h.lawManager.slowAdapterMaintenanceRuns()),
         h.lawManager.slowAdapter().roadsKnown(), h.lawManager.slowAdapter().roadsPending(),
