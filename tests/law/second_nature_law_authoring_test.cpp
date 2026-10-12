@@ -167,12 +167,14 @@ int main() {
     auto makePerson = [](const std::string& name) {
         Soul soul(name);
         Body body("Humanoid", "Voxel");
-        return Person(soul, std::move(body), "");
+        Person person(soul, std::move(body), "");
+        person.setDisplayName(name);
+        return person;
     };
 
     Person personA = makePerson("Zach");
 
-    // Single Person named "Zach": resolves via personAnswersTo.
+    // Single Person named "Zach": resolves unambiguously.
     request.setDynamicProperty(SecondNatureLawAuthoring::kTargetProperty,
                                PropertyValue(std::string("Zach")));
     Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
