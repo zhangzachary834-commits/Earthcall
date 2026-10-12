@@ -2262,11 +2262,16 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                                         ? nullptr
                                         : activation.token.facts.front()->object;
 
+            // Bolt Optimization: Cache lawId once per activation to avoid redundant
+            // virtual calls and temporary string heap allocations across triggersOf,
+            // hasDriveSession, and restartDriveSession.
+            const std::string lawId = law->getIdentifier();
+
             // Keep the Event Singular itself available while these nodes
             // evaluate. Rete owns the copy because the EventBus publisher may
             // already have returned; participant aliases remain compatible.
             const Event* occurrence = nullptr;
-            const auto& triggers = triggersOf(law->getIdentifier());
+            const auto& triggers = triggersOf(lawId);
             for (const auto& fact : activation.token.facts) {
                 if (fact && fact->occurrence &&
                     (triggers.empty() ||
@@ -2287,7 +2292,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                     bool usedDirect = false;
                     if (!candidateConditionsSatisfied(*law, *being, &usedDirect)) continue;
                     if (law->drives() &&
-                        hasDriveSession(law->getIdentifier(), being->getIdentifier())) {
+                        hasDriveSession(lawId, being->getIdentifier())) {
                         if (law->retrigger() == Law::Retrigger::Absorb) continue;
                         restartDriveSession(*law, being->getIdentifier());
                     }
@@ -2298,7 +2303,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
 
             if (!subject || Universe::instance().isUnmade(subject)) continue;
             if (law->drives() &&
-                hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
+                hasDriveSession(lawId, subject->getIdentifier())) {
                 if (law->retrigger() == Law::Retrigger::Absorb) {
                     continue;
                 }
@@ -2809,7 +2814,8 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
     }
 
     refreshCandidateRoute(law);
-    auto routeIt = _candidateRoutes.find(law.getIdentifier());
+    const std::string lawId = law.getIdentifier();
+    auto routeIt = _candidateRoutes.find(lawId);
     if (routeIt == _candidateRoutes.end()) {
         // Defensive widening. A missing cache entry may cost a sweep; it must
         // never cost a Law its subjects.
@@ -2831,7 +2837,7 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
 
     if (route.tier == CandidateTier::AdapterRoad) {
         const std::vector<Singular*>* travelled = nullptr;
-        if (_adapter.candidateViewFor(law.getIdentifier(), travelled) && travelled) {
+        if (_adapter.candidateViewFor(lawId, travelled) && travelled) {
             std::vector<Singular*> chosen;
             chosen.reserve(travelled->size());
             for (Singular* being : *travelled) {
@@ -2843,9 +2849,9 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
 
         // The road went stale between selection and consumption. Refuse it,
         // invalidate the decision and immediately descend one rung.
-        invalidateCandidateRoute(law.getIdentifier());
+        invalidateCandidateRoute(lawId);
         refreshCandidateRoute(law);
-        routeIt = _candidateRoutes.find(law.getIdentifier());
+        routeIt = _candidateRoutes.find(lawId);
         if (routeIt == _candidateRoutes.end()) return Universe::instance().beings();
     }
 
@@ -2999,8 +3005,9 @@ void LawManager::restartDriveSession(Law& law, const std::string& subjectId) {
     // keeps its identity but its clock and event participants begin again.
     if (!Universe::instance().hasClock()) return;
     const double now = Universe::instance().now();
+    const std::string lawId = law.getIdentifier();
     for (auto& session : _driveSessions) {
-        if (session.lawId != law.getIdentifier() || session.subjectId != subjectId) {
+        if (session.lawId != lawId || session.subjectId != subjectId) {
             continue;
         }
         session.onset = now;
