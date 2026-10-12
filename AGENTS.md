@@ -181,19 +181,3 @@ you read the source—run things**, and **after finishing, ask whether anything 
 - Give directions for future agents in your comments and links to relevant To-do list items. Especially for Jules you will want to specifically direct and instruct in a structured, "everything-you-need-to-know"/"here are the pitfalls to avoid" way.
 
 *Routing refresh: Codex · GPT-6.1 Sol · session `01a122ec-b377-7391-ad6f-86d11b501d1b` · 2026-10-09 16:10 PDT; commissioned by Zach to look through Earthcall and update agent guidance; [source inspection and structural checks](docs/audits/AGENT_GUIDANCE_REFRESH_2026-10-09.md).*
-
-*Rendering continuation: Codex / GPT-6.1 Sol / `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-10T23:15:58.738143-07:00; [Northern Veil's retained compiler/residency stage and limits](docs/plans/NORTHERN_VEIL_MINIMUM_WORK_IMPLEMENTATION_2026-10-10.md). Ordinary native timestamps remain disabled after Person-reported flicker; exact pixels and CPU/upload retention do not establish the 30 FPS movement milestone.*
-
-*Cutoff decision: positive `volumeOutputErrorBudget` now uses the full accepted lattice; zero preserves compatibility. Certified tails remain unfinished. [Contract](docs/plans/NORTHERN_VEIL_MINIMUM_WORK_IMPLEMENTATION_2026-10-10.md#cutoff-reference-decision-implemented). Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-10T23:49:10-07:00.*
-
-*GPU clock preparation retained: original-arithmetic time-only leaves prepare once per medium/frame; independent clocks, native pixels and edit/device witnesses pass. Pooled inside offscreen cost falls 5.58%; live 30 FPS remains unverified. [Record](docs/plans/NORTHERN_VEIL_MINIMUM_WORK_IMPLEMENTATION_2026-10-10.md#independent-high-value-step-retained-gpu-time-only-preparation). Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T00:15:29-07:00.*
-
-
-*Support traversal retained: fused per-ray proof intervals skip voids inside boxes and reuse leaf proofs; native pixels and repeated offscreen cost gates pass. Both resident lanes carry support bounds; live movement remains unverified. [Record](docs/audits/NORTHERN_VEIL_SUPPORT_TRAVERSAL_2026-10-11.md). Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T02:25:43-07:00.*
-
-*Perlin reuse experiments are rejected; production retains the previous support traversal. [Measured failures and restored verification](docs/audits/NORTHERN_VEIL_PERLIN_REUSE_EXPERIMENTS_2026-10-11.md). Codex / GPT-6.1 Sol / `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T10:29:00-07:00*.
-
-
-*Selective folded support retained: column bounds reuse existing proofs; outside eligibility is computed once per ray, inside traversal stays original. Spawn offscreen cost falls 9.77%; inside has no gain claim and Person movement remains open. [Measured contract](docs/audits/NORTHERN_VEIL_FOLDED_SUPPORT_2026-10-11.md). Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T13:27:06-07:00.*
-
-*Sample-local Astra continuation retained: fused proof/contribution scheduling preserves exact captures; inside offscreen −9.77%, other views improve in both series. New support certificates and live 30 FPS remain open. [Evidence](docs/audits/NORTHERN_VEIL_SAMPLE_LOCAL_SCHEDULING_2026-10-11.md). Codex / GPT-6.1 Sol / `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T17:22:37-07:00.*

@@ -6,6 +6,8 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
+#include "Identity/PersonPresence.hpp"
+#include "Person/Person.hpp"
 
 #include <ctime>
 #include <string>
@@ -35,7 +37,11 @@ void writeString(Singular& being, const char* property, const std::string& value
 Singular* findBeing(const std::string& id) {
     if (id.empty()) return nullptr;
     for (Singular* being : Universe::instance().beings()) {
-        if (being && being->getIdentifier() == id) return being;
+        if (!being) continue;
+        if (being->getIdentifier() == id) return being;
+        if (auto* person = dynamic_cast<Person*>(being)) {
+            if (Identity::personAnswersTo(*person, id)) return person;
+        }
     }
     return nullptr;
 }

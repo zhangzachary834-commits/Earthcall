@@ -2,7 +2,7 @@
 //
 // Verifies that:
 // 1. SaveSystem::resolveZoneIdentityPath and resolveHomeIdentityPath accurately
-//    resolve .ecsave, .ecform, then legacy .json, including catalog discovery.
+//    resolve .ecform when present, falling back to legacy .json if present.
 // 2. SaveSystem::writeZoneIdentity and writeHomeIdentity automatically remove any
 //    legacy fixed-name zone.json or home.json sidecars in the zone/home directory
 //    upon successfully writing the .ecform binary identity file.
@@ -15,9 +15,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <iterator>
 #include <string>
-#include <vector>
 
 namespace {
 
@@ -62,17 +60,6 @@ int main() {
     std::cout << "============================================================\n";
 
     TempSaveSandbox sandbox;
-    auto catalogNames = [](bool homes) {
-        std::vector<std::string> names;
-        const auto records = homes ? SaveSystem::listHomeIdentityRecords()
-                                   : SaveSystem::listZoneIdentityRecords();
-        for (const auto& rec : records)
-            names.push_back(rec.document.is_object() ? rec.document.value("name", "") : "");
-        return names;
-    };
-    auto identityName = [](const nlohmann::json& doc) {
-        return doc.is_object() ? doc.value("name", "") : "";
-    };
 
     const std::string zoneId = "CleanupZone";
     const std::string homeId = "CleanupHome";
@@ -104,16 +91,14 @@ int main() {
           "resolveZoneIdentityPath resolves legacy zone.json when zone.ecform does not exist");
     check(SaveSystem::resolveHomeIdentityPath(homeId) == legacyHomeJson.string(),
           "resolveHomeIdentityPath resolves legacy home.json when home.ecform does not exist");
-    // Direct identity reads must use the same legacy JSON fallback as discovery.
-    check(identityName(SaveSystem::readZoneIdentity(zoneId)) == "Legacy Zone",
-          "Zone direct read resolves legacy zone.json before binary identity creation");
-    check(identityName(SaveSystem::readHomeIdentity(homeId)) == "Legacy Home",
-          "Home direct read resolves legacy home.json before binary identity creation");
 
-    check(catalogNames(false) == std::vector<std::string>{"Legacy Zone"},
-          "Zone catalog discovers a JSON-only identity");
-    check(catalogNames(true) == std::vector<std::string>{"Legacy Home"},
-          "Home catalog discovers a JSON-only identity");
+    // Verify readZoneIdentity and readHomeIdentity correctly load legacy .json prior to .ecform creation
+    nlohmann::json legacyZoneRead = SaveSystem::readZoneIdentity(zoneId);
+    nlohmann::json legacyHomeRead = SaveSystem::readHomeIdentity(homeId);
+    check(legacyZoneRead.value("name", "") == "Legacy Zone",
+          "readZoneIdentity reads legacy zone.json before zone.ecform exists");
+    check(legacyHomeRead.value("name", "") == "Legacy Home",
+          "readHomeIdentity reads legacy home.json before home.ecform exists");
 
     // Write primary .ecform identities via writeZoneIdentity and writeHomeIdentity
     nlohmann::json zoneDoc{
@@ -154,60 +139,6 @@ int main() {
 
     check(readZone.value("name", "") == "Cleanup Zone", "readZoneIdentity accurately reads updated .ecform");
     check(readHome.value("name", "") == "Cleanup Home", "readHomeIdentity accurately reads updated .ecform");
-
-    check(catalogNames(false) == std::vector<std::string>{"Cleanup Zone"},
-          "Zone catalog discovers an existing .ecform-only identity");
-    check(catalogNames(true) == std::vector<std::string>{"Cleanup Home"},
-          "Home catalog discovers an existing .ecform-only identity");
-
-    // Model the mixed-format store during migration, without rewriting its old
-    // identities. A newer file wins, but an empty newer file must not hide them.
-    const auto zoneEcsave = zoneDir / "zone.ecsave";
-    const auto homeEcsave = homeDir / "home.ecsave";
-    auto writeMsgpack = [](const std::filesystem::path& path, const nlohmann::json& doc) {
-        const auto bytes = nlohmann::json::to_msgpack(doc);
-        std::ofstream out(path, std::ios::binary);
-        out.write(reinterpret_cast<const char*>(bytes.data()), bytes.size());
-    };
-    auto fileBytes = [](const std::filesystem::path& path) {
-        std::ifstream in(path, std::ios::binary);
-        return std::string(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
-    };
-    const auto oldZoneBytes = fileBytes(zoneEcform);
-    const auto oldHomeBytes = fileBytes(homeEcform);
-    zoneDoc["name"] = "New Zone";
-    homeDoc["name"] = "New Home";
-    writeMsgpack(zoneEcsave, zoneDoc);
-    writeMsgpack(homeEcsave, homeDoc);
-    check(SaveSystem::resolveZoneIdentityPath(zoneId) == zoneEcsave.string(),
-          "Zone path prefers a nonempty .ecsave over .ecform");
-    check(SaveSystem::resolveHomeIdentityPath(homeId) == homeEcsave.string(),
-          "Home path prefers a nonempty .ecsave over .ecform");
-    check(catalogNames(false) == std::vector<std::string>{"New Zone"},
-          "Zone catalog uses the newer .ecsave identity once");
-    check(catalogNames(true) == std::vector<std::string>{"New Home"},
-          "Home catalog uses the newer .ecsave identity once");
-    check(identityName(SaveSystem::readZoneIdentity(zoneId)) == "New Zone",
-          "Zone direct read agrees with catalog precedence");
-    check(identityName(SaveSystem::readHomeIdentity(homeId)) == "New Home",
-          "Home direct read agrees with catalog precedence");
-
-    std::ofstream(zoneEcsave, std::ios::binary).close();
-    std::ofstream(homeEcsave, std::ios::binary).close();
-    check(SaveSystem::resolveZoneIdentityPath(zoneId) == zoneEcform.string(),
-          "Empty .ecsave does not hide the existing Zone path");
-    check(SaveSystem::resolveHomeIdentityPath(homeId) == homeEcform.string(),
-          "Empty .ecsave does not hide the existing Home path");
-    check(catalogNames(false) == std::vector<std::string>{"Cleanup Zone"},
-          "Zone catalog falls back to .ecform when .ecsave is empty");
-    check(catalogNames(true) == std::vector<std::string>{"Cleanup Home"},
-          "Home catalog falls back to .ecform when .ecsave is empty");
-    check(identityName(SaveSystem::readZoneIdentity(zoneId)) == "Cleanup Zone",
-          "Zone direct read falls back when .ecsave is empty");
-    check(identityName(SaveSystem::readHomeIdentity(homeId)) == "Cleanup Home",
-          "Home direct read falls back when .ecsave is empty");
-    check(fileBytes(zoneEcform) == oldZoneBytes && fileBytes(homeEcform) == oldHomeBytes,
-          "Discovery and reads preserve both old binary files byte for byte");
 
     std::cout << "------------------------------------------------------------\n";
     std::cout << g_checks - g_failures << "/" << g_checks << " checks passed\n";

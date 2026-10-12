@@ -10,7 +10,6 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
 #include "Singularity/Core/SdfBuild.hpp"
 #include "Singularity/Screen/GL/GluCompat.hpp"
-#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "../../Person/Person.hpp"
 #include "../../ZonesOfEarth/ZoneManager.hpp"
 #include "../../ZonesOfEarth/Physics/Physics.hpp"
@@ -31,15 +30,7 @@ namespace Core {
         const glm::mat4 Tb = B->getTransform();
         geom::SdfNode an = objectToSdfNode(*A);
         geom::SdfNode bn = objectToSdfNode(*B);
-        const auto inverseA =
-            OntoMath::inverseAffine(OntoMath::MatrixValue::fromGlmMat4(Ta));
-        const auto worldB =
-            OntoMath::affineExtractTranslation(OntoMath::MatrixValue::fromGlmMat4(Tb));
-        const auto localB = (inverseA && worldB)
-            ? OntoMath::transformPoint(*inverseA, *worldB)
-            : std::nullopt;
-        if (!localB) return;
-        bn.offset = *localB;
+        bn.offset = glm::vec3(glm::inverse(Ta) * glm::vec4(glm::vec3(Tb[3]), 1.0f));
         const geom::SdfOp ops[] = { geom::SdfOp::Union, geom::SdfOp::Intersect,
                                     geom::SdfOp::Subtract, geom::SdfOp::SmoothUnion,
                                     geom::SdfOp::Morph };
@@ -119,14 +110,8 @@ namespace Core {
         if (mouseDown && state.fieldHandleDragging && bProj) {
             GLdouble nx, ny, nz;
             if (ecgl::unProject(winX, winY, bz, mv, pr, vp, &nx, &ny, &nz)) {
-                const auto inverseXf =
-                    OntoMath::inverseAffine(OntoMath::MatrixValue::fromGlmMat4(xf));
-                const auto local = inverseXf
-                    ? OntoMath::transformPoint(
-                          *inverseXf,
-                          glm::vec3((float)nx, (float)ny, (float)nz))
-                    : std::nullopt;
-                if (local) o->setFieldOperandBOffset(*local);
+                const glm::vec3 local = glm::vec3(glm::inverse(xf) * glm::vec4((float)nx, (float)ny, (float)nz, 1.0f));
+                o->setFieldOperandBOffset(local);
             }
             return true;
         }

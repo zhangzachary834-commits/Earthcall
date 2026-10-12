@@ -4,7 +4,6 @@
 #include "ConstructedBeing/Singular/Object/Geometry/SmoothSurface.hpp" // geom::TessMesh
 
 #include <cstdint>
-#include <cmath>
 #include <string>
 #include <utility>
 #include <vector>
@@ -68,13 +67,6 @@ public:
         // instance data, so advancing only t must hit the memo and never
         // regenerate the authored density shader.
         uint32_t volumeProgramCompiles = 0;
-        // Kernel diagnostics: compiler repairs, resident data transfers and
-        // CPU preparation are distinct from delayed GPU execution samples.
-        uint32_t volumeLowerings = 0;
-        uint32_t volumeRepairedNodes = 0;
-        size_t volumeParameterBytesUploaded = 0;
-        size_t volumeProofBytesUploaded = 0;
-        float volumeCpuPrepareMs = 0.0f;
         uint32_t volumeProgramCacheHits = 0;
         uint32_t volumeProgramRefusals = 0;
         std::string volumeLastProgramRefusal;
@@ -103,9 +95,6 @@ public:
         bool     gpuMainPassTimingSupported = false;
         bool     gpuMainPassTimingValid = false;
         float    gpuMainPassMs = 0.0f;
-        bool     gpuVolumePassTimingValid = false;
-        float    gpuVolumePassMs = 0.0f;
-        uint64_t gpuTimingSampleFrame = 0;
     };
 
     const FrameStats& frameStats() const { return _frameStats; }
@@ -311,16 +300,6 @@ public:
         _volumeSamplesPerChord = samples < 1 ? 1 : (samples > 8192 ? 8192 : samples);
     }
     int volumeSamplesPerChord() const { return _volumeSamplesPerChord; }
-
-    // Authored ScreenChannel input mirrored beneath the Kernel boundary.
-    // A positive budget removes the uncertified opacity cutoff. Until a tail
-    // proof is available, every accepted sample is evaluated. Unknown proofs
-    // must never restore that cutoff. Zero preserves the compatibility image.
-    void setVolumeOutputErrorBudget(double budget) {
-        _volumeOutputErrorBudget = std::isfinite(budget) && budget > 0.0
-            ? (budget < 1.0 / 255.0 ? budget : 1.0 / 255.0) : 0.0;
-    }
-    double volumeOutputErrorBudget() const { return _volumeOutputErrorBudget; }
 
     // The object-to-world transform, as a stack. setModel replaces it outright;
     // pushModel/popModel compose a child transform onto its parent for the nested
@@ -532,7 +511,6 @@ private:
     bool _radianceVisibilityEnabled = false;
     bool _volumeZeroProofEnabled = true;
     int _volumeSamplesPerChord = 96;
-    double _volumeOutputErrorBudget = 0.0;
     std::vector<Rendering::VolumeDensityBinding> _volumeDensitySources;
     uint64_t _volumeDensitySourcesRevision = 0;
     Rendering::RenderedFieldSemanticObserver _renderedFieldObserver;

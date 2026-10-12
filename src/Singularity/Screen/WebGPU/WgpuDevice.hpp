@@ -41,11 +41,7 @@ struct Device {
     // reporting an execution duration.
     bool timestampQueries = false;
 
-    // Ordinary pixel witnesses use the same timestamp-free native device as
-    // the visible app. Zach re-observed aurora disappearance/flickering during
-    // an instrumented windowed baseline on 2026-10-10; optional profiling must
-    // never silently alter the device used to establish visual correctness.
-    bool init(bool requestTimestamps = false) {
+    bool init() {
         instance = wgpuCreateInstance(nullptr);
         if (!instance) return false;
 
@@ -69,7 +65,7 @@ struct Device {
             WGPUFeatureName_TimestampQuery,
             static_cast<WGPUFeatureName>(WGPUNativeFeature_TimestampQueryInsideEncoders),
         };
-        const bool canTimestamp = requestTimestamps &&
+        const bool canTimestamp =
             wgpuAdapterHasFeature(adapter, WGPUFeatureName_TimestampQuery) &&
             wgpuAdapterHasFeature(
                 adapter,
