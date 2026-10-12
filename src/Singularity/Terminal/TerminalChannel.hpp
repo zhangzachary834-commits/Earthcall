@@ -79,7 +79,7 @@ public:
     static TerminalChannel* find(LawManager& laws);
 
     // Once per frame BEFORE LawManager::tick(): read the keyboard, publish at
-    // most one line (so the laws answer each line before the next arrives).
+    // most one line or chord (so each is decided before later input arrives).
     void sense(LawManager& laws);
     // Once per frame AFTER LawManager::tick(): speak if the laws asked.
     void act(LawManager& laws);
@@ -141,6 +141,8 @@ public:
 
     // Test seams: a line as if typed and entered; where output goes.
     void inject(const std::string& line) { _pending.push_back(line); }
+    void injectKeys(const std::string& bytes) { _injectedBytes += bytes; }
+    const LineEditor& editorForTests() const { return _editor; }
     void setSink(Sink sink) { _sink = std::move(sink); }
     bool attached() const { return _attached; }
 
@@ -188,6 +190,12 @@ private:
     LawSentence::Resolution resolveByMetalaw(LawManager& laws, const LawSentence::Ambiguity& a);
     LawSentence::Compilation compileByMetalaw(LawManager& laws, const nlohmann::json& input, bool readOnly, nlohmann::json* document = nullptr);
     std::string propCompilationResult() const;
+    void configureEditor();
+    std::vector<LawSentence::Suggestion> completionSuggestions(const std::string& before);
+    std::string propDraft() const { return _editor.secret ? "" : _editor.buffer(); }
+    double propCursor() const { return _editor.secret ? 0 : static_cast<double>(_editor.cursor()); }
+    bool propCompletionVisible() const { return _completionActive && !_editor.secret && _editor.menuVisible(); }
+    double propCompletionMatches() const { return _completionActive && !_editor.secret ? static_cast<double>(_editor.suggestions().size()) : 0; }
     void attach(LawManager& laws);
     void detach();
 
@@ -200,6 +208,16 @@ private:
 
     // Law-legible state (NO_BLACK_BOX: every field is a registered path).
     std::string _lastLine;
+    std::string _lastChord;
+    double _keyPresses = 0;
+    std::shared_ptr<PropertyList> _completionItems = std::make_shared<PropertyList>();
+    double _completionRequests = 0, _completionHandled = 0;
+    bool _completionActive = false;
+    // Beneath Kernel: device input awaiting the next sense/decide/act boundary.
+    // Stop after each chord/submission so the corresponding Law sees that draft.
+    std::deque<Key> _keyQueue;
+    std::string _injectedBytes; // C++ test transport only, no foreign mutation route
+
     // Multi-line block (Python-style) being typed: its lines so far. Folded
     // into one sentence by LawSentence::unfoldBlock when an empty line ends it.
     // Registered read-only as `block` (lines joined by newlines).

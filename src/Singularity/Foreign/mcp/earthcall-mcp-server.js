@@ -45,10 +45,33 @@ const { execFile } = require("child_process");
 // Configuration
 const DEFAULT_WS_URL = process.env.EARTHCALL_WS_URL || "ws://localhost:8080";
 const PROJECT_ROOT = path.resolve(__dirname, "../../../../");
-const SAVES_DIR = path.join(PROJECT_ROOT, "saves");
+// The save root the engine itself chooses (SaveSystem::chooseDataRoot — keep
+// in step): the Person's data home once it carries data-home.json, else the
+// checkout's saves/ until scripts/migrate_saves_to_data_home.py has run.
+function platformDataHome() {
+  const env = process.env;
+  if (env.EARTHCALL_DATA) return env.EARTHCALL_DATA;
+  if (process.platform === "win32") return env.APPDATA ? path.join(env.APPDATA, "Earthcall") : "";
+  if (!env.HOME) return "";
+  if (process.platform === "darwin") return path.join(env.HOME, "Library", "Application Support", "Earthcall");
+  return env.XDG_DATA_HOME ? path.join(env.XDG_DATA_HOME, "earthcall")
+                           : path.join(env.HOME, ".local", "share", "earthcall");
+}
+function chooseDataRoot() {
+  const home = platformDataHome();
+  if (home && fs.existsSync(path.join(home, "data-home.json"))) return home;
+  return path.join(PROJECT_ROOT, "saves");
+}
+const SAVES_DIR = chooseDataRoot();
 const MOVER_ID = process.env.EARTHCALL_FIRST_MOVER_ID || "";
+// Shipped in Earthcall.app as Contents/Resources/mcp/<this file>: the signer
+// helper then sits in Contents/MacOS. From a checkout it is the build output.
+const BUNDLE_CONTENTS = path.resolve(__dirname, "../..");
+const IN_APP_BUNDLE = path.basename(BUNDLE_CONTENTS) === "Contents" &&
+  path.extname(path.dirname(BUNDLE_CONTENTS)) === ".app";
 const SIGNER = process.env.EARTHCALL_FIRST_MOVER_SIGNER ||
-  path.join(PROJECT_ROOT, "build", "earthcall_first_mover");
+  (IN_APP_BUNDLE ? path.join(BUNDLE_CONTENTS, "MacOS", "earthcall_first_mover")
+                 : path.join(PROJECT_ROOT, "build", "earthcall_first_mover"));
 
 function execFileText(cmd, args, env) {
   return new Promise((resolve, reject) => {
@@ -660,7 +683,7 @@ const TOOLS = [
   },
   {
     name: "earthcall_save_world",
-    description: "Triggers a world state save to disk under saves/worlds/.",
+    description: "Triggers a world state save to disk under the data home's worlds/.",
     inputSchema: {
       type: "object",
       properties: {
@@ -698,7 +721,7 @@ const TOOLS = [
   },
   {
     name: "earthcall_list_saves",
-    description: "Lists all saved worlds, zones, and homes in the saves/ directory on disk.",
+    description: "Lists all saved worlds, zones, and homes in Earthcall's data home on disk.",
     inputSchema: {
       type: "object",
       properties: {

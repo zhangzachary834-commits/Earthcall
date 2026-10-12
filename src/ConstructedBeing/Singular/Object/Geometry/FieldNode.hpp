@@ -238,8 +238,38 @@ public:
     // change, bumps the revision and says so on stderr. A missed writer is a
     // bug that heals within a few frames; it can never stay stale silently.
     // Claude Opus 5.5, 2026-10-09 -- Zach asked for the serialization gone.
-    uint64_t authoredMathRevision() const { return _authoredMathRevision; }
+    //
+    // Per-channel since 2026-10-12 (Formation Rete Incremental Maintenance §2:
+    // "semantic deltas, not global revision panic"). Each authored channel has
+    // its own revision, so editing a curtain's emission no longer invalidates
+    // its density proof, support envelope or sharing plan. Channel indices are
+    // machine mechanism (never serialized, not kinds of anything).
+    static constexpr std::size_t kMathFieldAst = 0;
+    static constexpr std::size_t kMathVolumeDensity = 1;
+    static constexpr std::size_t kMathVolumeExtinction = 2;
+    static constexpr std::size_t kMathVolumeScattering = 3;
+    static constexpr std::size_t kMathVolumeChroma = 4;
+    static constexpr std::size_t kMathVolumePhase = 5;
+    static constexpr std::size_t kMathVolumeEmission = 6;
+    static constexpr std::size_t kMathVolumeOccluder = 7;
+    static constexpr std::size_t kMathLightChroma = 8;
+    static constexpr std::size_t kMathLightAngular = 9;
+    static constexpr std::size_t kAuthoredMathChannels = 10;
+
+    // One channel's current revision (no verification).
+    uint64_t authoredMathRevision(std::size_t channel) const {
+        return channel < kAuthoredMathChannels ? _channelRevision[channel] : 0;
+    }
+    // The newest revision across every channel: changes whenever any does.
+    uint64_t authoredMathRevision() const;
+    // Re-hash ONE channel round-robin and heal it if it changed unrevisioned.
+    // Readers call this once per node per frame, then read channel revisions.
+    void verifyAuthoredMath() const;
+    // verifyAuthoredMath(), then authoredMathRevision(): the pre-split API.
     uint64_t verifiedAuthoredMathRevision() const;
+    // A writer that changed exactly one channel.
+    void noteAuthoredChannelWritten(std::size_t channel);
+    // A writer that cannot say which channel it changed: every channel moves.
     void noteAuthoredMathWritten();
 
 private:
@@ -248,11 +278,13 @@ private:
     // moved. A Person can mean nothing by a sequence number; the authored
     // mathematics it tracks is registered above as field.ast / volume.*.ast /
     // volume.occluder.sdf / light.*.ast.
-    static constexpr std::size_t kAuthoredMathChannels = 10;
-    mutable uint64_t _authoredMathRevision = 0;   // mutable: the verifier may heal it
+    mutable std::array<uint64_t, kAuthoredMathChannels> _channelRevision{};   // mutable: the verifier may heal one
     mutable std::size_t _verifyCursor = 0;
     mutable std::array<uint64_t, kAuthoredMathChannels> _verifiedContentHash{};
     mutable std::array<uint64_t, kAuthoredMathChannels> _verifiedAtRevision{};
+    // Canonical text of one authored channel (shared by the verifier and
+    // applyJson's per-channel delta, so they can never disagree).
+    std::string channelContent(std::size_t channel) const;
 
 protected:
     void buildProperties() override {
@@ -279,7 +311,7 @@ protected:
             // malformed document REFUSED rather than half-applied.
             registerProperty(std::make_unique<AstBridge<OntoMath::ScalarField>>(
                 "field.ast", field.get(),
-                [this] { noteAuthoredMathWritten(); }));
+                [this] { noteAuthoredChannelWritten(kMathFieldAst); }));
         }
 
         if (vectorField) {
@@ -296,48 +328,48 @@ protected:
         if (volumeDensity) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
                 "volume.density.ast", volumeDensity.get(),
-                [this] { noteAuthoredMathWritten(); }));
+                [this] { noteAuthoredChannelWritten(kMathVolumeDensity); }));
         }
         if (volumeExtinction) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
                 "volume.extinction.ast", volumeExtinction.get(),
-                [this] { noteAuthoredMathWritten(); }));
+                [this] { noteAuthoredChannelWritten(kMathVolumeExtinction); }));
         }
         if (volumeScattering) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
                 "volume.scattering.ast", volumeScattering.get(),
-                [this] { noteAuthoredMathWritten(); }));
+                [this] { noteAuthoredChannelWritten(kMathVolumeScattering); }));
         }
         if (volumeChroma) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
                 "volume.chroma.ast", volumeChroma.get(),
-                [this] { noteAuthoredMathWritten(); }));
+                [this] { noteAuthoredChannelWritten(kMathVolumeChroma); }));
         }
         if (volumePhase) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
                 "volume.phase.ast", volumePhase.get(),
-                [this] { noteAuthoredMathWritten(); }));
+                [this] { noteAuthoredChannelWritten(kMathVolumePhase); }));
         }
         if (volumeEmission) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
                 "volume.emission.ast", volumeEmission.get(),
-                [this] { noteAuthoredMathWritten(); }));
+                [this] { noteAuthoredChannelWritten(kMathVolumeEmission); }));
         }
         if (volumeOccluder) {
             registerProperty(std::make_unique<SdfNodeBridge>(
                 "volume.occluder.sdf", volumeOccluder.get(),
-                [this] { noteAuthoredMathWritten(); }));
+                [this] { noteAuthoredChannelWritten(kMathVolumeOccluder); }));
         }
 
         if (lightChroma) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
                 "light.chroma.ast", lightChroma.get(),
-                [this] { noteAuthoredMathWritten(); }));
+                [this] { noteAuthoredChannelWritten(kMathLightChroma); }));
         }
         if (lightAngular) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
                 "light.angular.ast", lightAngular.get(),
-                [this] { noteAuthoredMathWritten(); }));
+                [this] { noteAuthoredChannelWritten(kMathLightAngular); }));
         }
     }
 };

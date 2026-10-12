@@ -7,7 +7,7 @@ Patch, never regenerate (FIRST_MOVER_AUTHORING.md §7 rule 8). A Law file is
 only ever CREATED when missing; one that exists is left exactly as it is. The
 Zone file is PATCHED: the Lexemes, Relations and lawRefs it lacks are added,
 nothing is removed or rewritten, every original entry is verified still
-present, the old file is copied to saves/backups/, and the new one is staged
+present, the old file is copied outside live discovery to scratch/backups/law-line/, and the new one is staged
 and renamed into place atomically. Run it again and it changes nothing.
 
 2026-09-25, second pass (Zach: "make it more intuitive to use with more laws
@@ -26,12 +26,15 @@ import copy
 import json
 import struct
 import os
-import shutil
 import sys
 import time
+from earthcall_data_home import data_root
+from pathlib import Path
 
 # EARTHCALL_SEED_ROOT lets a dry run patch a scratch copy instead of the world.
 ROOT = os.environ.get("EARTHCALL_SEED_ROOT") or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Legacy scratch root means <root>/saves; ordinary installs follow the app.
+SAVES_ROOT = Path(ROOT) / "saves" if os.environ.get("EARTHCALL_SEED_ROOT") else data_root()
 AUTHOR = "Zach"
 INJECTED_BY = "Claude Opus 5.5 (Claude Code), Law Line seed, 2026-09-25"
 ZONE_ID = "LawLine"
@@ -275,6 +278,10 @@ def value_arg(name, default=None, optional=False):
 
 ZERO_MATH = {"op": 0, "scalarForm": {"terms": [{"c": 0, "factors": {}}]}}
 VALUE_CONSTRUCTORS = [
+    # A generic structural literal: list/dictionary values reach the existing
+    # Property currency through an authored identity compiler, never a parser
+    # special case for template lists.
+    ("Literal", '<value: ‹literal value›>', {"literal": value_arg("value")}),
     # Zach: named displayed regions are predicates of their bearer, with
     # explicit source mathematics. No ScreenRegion C++ class or kind tag.
     # Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-07.
@@ -384,6 +391,66 @@ WIRING = [
 ]
 
 
+# Zach, 2026-10-12: stored Law-Lexeme templates, selected by authored keybinds.
+# Template text is state of the denoted disabled Law, using its existing codec.
+# The Terminal is given ordinary completion records by readable PropertyPath;
+# it never discovers shelves or chooses a shortcut/template policy in C++.
+TEMPLATE_INJECTED_BY = "Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-12"
+
+
+def typed(value):
+    if isinstance(value, str): return {"t": "string", "v": value}
+    if isinstance(value, list): return {"t": "list", "v": [typed(v) for v in value]}
+    if isinstance(value, dict): return {"t": "dict", "v": {k: typed(v) for k, v in value.items()}}
+    raise TypeError(type(value))
+
+
+def template_seed():
+    docs, words, relations = [], [], []
+    entries = [
+        ("always", "Always template", "always if ‹condition› then ‹action›", 1, 1, []),
+        ("click", "Click template", "when clicked if ‹condition› then ‹action›", 0, 0, ["object-clicked"]),
+        ("hover", "Hover template", "when hovered if ‹condition› then ‹action›", 0, 0, ["object-hover-entered"]),
+        ("cube", "Cube below me template", 'called "Cube Beneath Me" when clicked then Create <Object, properties: {shape.kind: Cube, position: my.position + (0, -3, 0), color: gold}>', 0, 0, ["object-clicked"]),
+    ]
+    refs = []
+    for suffix, name, text, activation, scope, triggers in entries:
+        identifier = "law-line-template-" + suffix
+        doc = law(identifier, name, enabled=False, activation=activation, scope=scope,
+                  triggers=triggers, action={"kind": 0, "path": "", "operand": none()})
+        doc["injected_by"] = TEMPLATE_INJECTED_BY
+        doc["law"]["authoredProperties"] = {"completion": typed({"text": text, "description": name})}
+        docs.append(doc)
+        lex_id = "lexeme.law-line.template." + suffix
+        words.append({"id": lex_id, "symbol": name})
+        relations.append(relation(lex_id, identifier))
+        refs.append("@" + identifier + ".completion")
+    shelf = law("law-line-template-shelf", "My Law Line templates", enabled=False)
+    shelf["injected_by"] = TEMPLATE_INJECTED_BY
+    shelf["law"]["authoredProperties"] = {"items": typed(refs)}
+    docs.append(shelf)
+    words.append({"id": "lexeme.law-line.template.shelf", "symbol": "My Law Line templates"})
+    relations.append(relation("lexeme.law-line.template.shelf", shelf["identifier"]))
+    for suffix, chord in [("cmd-t", "cmd+t"), ("ctrl-t", "ctrl+t")]:
+        identifier = "law-line-shortcut-" + suffix
+        doc = law(identifier, "Law Line · " + chord + " opens my templates", enabled=True,
+            triggers=["terminal-key-pressed"],
+            condition={"kind": 3, "children": [
+                {"kind": 8, "otherId": "terminal-channel"},
+                {"kind": 0, "path": "zone", "op": 0, "operand": "LawLine"},
+                {"kind": 0, "path": "key.chord", "op": 0,
+                 "operandPath": "@" + identifier + ".binding.chord"}]},
+            action={"kind": 5, "children": [
+                {"kind": 8, "path": "completion.items",
+                 "function": {"pieces": [{"mathNode": {"op": 1, "var": "source"}}]},
+                 "bindings": {"source": "@law-line-template-shelf.items"}},
+                {"kind": 1, "path": "completion.openRequests", "operand": 1.0}]})
+        doc["injected_by"] = TEMPLATE_INJECTED_BY
+        doc["law"]["authoredProperties"] = {"binding.chord": typed(chord)}
+        docs.append(doc)
+    return docs, words, relations
+
+
 def slug(symbol):
     out = "".join(c if c.isalnum() else "-" for c in symbol.lower()).strip("-")
     while "--" in out:
@@ -444,7 +511,7 @@ def build():
             lexeme_for(symbol, doc["identifier"])
     # Disabled value Laws denote constructors; Metalaws alone supply lowering.
     for name, signature, template in VALUE_CONSTRUCTORS:
-        attribution = REGION_INJECTED_BY if name in ("ScreenRegion", "ScreenSample", "ScreenSampleAtTime") else SCREEN_INJECTED_BY
+        attribution = TEMPLATE_INJECTED_BY if name == "Literal" else REGION_INJECTED_BY if name in ("ScreenRegion", "ScreenSample", "ScreenSampleAtTime") else SCREEN_INJECTED_BY
         identifier = "law-line-value-constructor-" + name.lower()
         doc = law(identifier, "means: " + name + " with authored arguments", enabled=False,
                   action={"kind": 0, "path": "", "operand": 0})
@@ -500,6 +567,10 @@ def build():
     batch["injected_by"] = COMPILER_INJECTED_BY
     laws.append(batch)
     laws.extend(WIRING)
+    template_laws, template_words, template_relations = template_seed()
+    laws.extend(template_laws)
+    lexemes.extend(template_words)
+    relations.extend(template_relations)
 
     cube = {
         "authoritativeAxis": [0.0, 1.0, 0.0], "center": [0.0, 0.0, 0.0],
@@ -555,6 +626,8 @@ def write_staged(dest, doc, expected_bytes=None):
     if expected_bytes is not None:
         with open(dest, "rb") as f:
             assert f.read() == expected_bytes, "save changed while staging; refusing: " + dest
+    if expected_bytes is None:
+        assert not os.path.exists(dest), "save appeared while staging; refusing: " + dest
     os.replace(staged, dest)
 
 
@@ -643,7 +716,7 @@ def ecform_wrap(text):
 def patch_zone(dest, seed):
     """Add what the Zone lacks; never remove or rewrite anything it has.
     `dest` may be zone.json or the native zone.ecform an in-app save writes."""
-    native = dest.endswith(".ecform")
+    native = dest.endswith((".ecform", ".ecsave"))
     with open(dest, "rb") as f:
         file_bytes = f.read()
     old_bytes = ecform_text(file_bytes) if native else file_bytes
@@ -677,9 +750,12 @@ def patch_zone(dest, seed):
 
     backups = os.path.join(ROOT, "scratch", "backups", "law-line")
     os.makedirs(backups, exist_ok=True)
-    stamp = time.strftime("%Y%m%d-%H%M%S")
-    ext = ".ecform" if native else ".json"
-    shutil.copy2(dest, os.path.join(backups, "%s-zone-before-law-line-patch-%s%s" % (ZONE_ID, stamp, ext)))
+    stamp = time.strftime("%Y%m%d-%H%M%S") + "-" + str(time.time_ns())
+    ext = Path(dest).suffix
+    backup = Path(backups) / ("%s-zone-before-law-line-patch-%s%s" % (ZONE_ID, stamp, ext))
+    with backup.open("xb") as kept:
+        kept.write(file_bytes)
+    assert backup.read_bytes() == file_bytes, "backup differs from the original save"
     if native:
         contents = ecform_wrap(append_zone_bytes(old_bytes, old, new))
         assert json.loads(ecform_text(contents)) == new
@@ -696,25 +772,44 @@ def patch_zone(dest, seed):
     return added
 
 
+def identity_path(directory, stem):
+    # Same identity precedence as SaveSystem; never create a shadow JSON root.
+    for ext in (".ecsave", ".ecform", ".json"):
+        path = directory / (stem + ext)
+        if path.is_file() and path.stat().st_size > 0: return path
+    return directory / (stem + ".json")
+
+
 def main():
+    print("Law Line save root: " + str(SAVES_ROOT))
     files = build()
     zone_rel = os.path.join("saves", "zones", ZONE_ID, "zone.json")
     zone_seed = files.pop(zone_rel)
     changed = False
+    zone_dest = str(identity_path(SAVES_ROOT / "zones" / ZONE_ID, "zone"))
+    # Refuse an unsupported native envelope before creating any Law roots.
+    if Path(zone_dest).exists():
+        raw = Path(zone_dest).read_bytes()
+        json.loads(ecform_text(raw) if zone_dest.endswith((".ecform", ".ecsave")) else raw)
 
     # Once the author keyed (Zach, 2026-09-30), his in-app saves record the
     # seed Laws' author as his DID. A Law created now records the same present
     # identity, read from the world's own hearing Law, never guessed.
     present_authors = None
-    hear = os.path.join(ROOT, "saves", "laws", "law-line-hear", "law.json")
+    hear = identity_path(SAVES_ROOT / "laws" / "law-line-hear", "law")
     if os.path.exists(hear):
-        with open(hear) as f:
-            recorded = json.load(f).get("authors") or []
+        raw = Path(hear).read_bytes()
+        source = ecform_text(raw) if str(hear).endswith((".ecform", ".ecsave")) else raw
+        recorded = json.loads(source).get("authors") or []
         if recorded and all(a.startswith("did:earthcall:") for a in recorded):
             present_authors = recorded
 
     for rel, doc in files.items():
-        dest = os.path.join(ROOT, rel)
+        dest = str(SAVES_ROOT / Path(rel).relative_to("saves"))
+        existing = identity_path(Path(dest).parent, "law")
+        if existing != Path(dest) and existing.exists():
+            print("kept native Law identity: " + str(existing))
+            continue
         if os.path.exists(dest):
             with open(dest) as f:
                 if json.load(f) != doc:
@@ -725,17 +820,15 @@ def main():
             doc["authors"] = list(present_authors)
             if isinstance(doc.get("law"), dict) and doc["law"].get("authors") == [AUTHOR]:
                 doc["law"]["authors"] = list(present_authors)
+                for edge in doc["law"].get("provenance", []):
+                    if edge.get("type") == "authored-by" and edge.get("entityB") == AUTHOR:
+                        edge["entityB"] = present_authors[0]
         write_staged(dest, doc)
         print("created " + rel)
         changed = True
 
-    zone_dest = os.path.join(ROOT, zone_rel)
-    native = os.path.join(os.path.dirname(zone_dest), "zone.ecform")
-    if os.path.exists(native) and os.path.getsize(native) > 0:
-        # An in-app Save Zone wrote the native form (Zach, e4d7a72d), and the
-        # loader prefers it over zone.json. Patch THAT; a zone.json seeded
-        # beside it would be a shadow the world never reads.
-        zone_dest, zone_rel = native, os.path.relpath(native, ROOT)
+    zone_dest = str(identity_path(SAVES_ROOT / "zones" / ZONE_ID, "zone"))
+    zone_rel = str(Path(zone_dest).relative_to(SAVES_ROOT))
     if not os.path.exists(zone_dest):
         write_staged(zone_dest, zone_seed)
         print("created " + zone_rel)
@@ -755,6 +848,7 @@ def main():
         print("Assignment and condition compilers injected_by: " + ASSIGNMENT_INJECTED_BY)
         print("Direct field vocabulary injected_by: " + SCREEN_INJECTED_BY)
         print("Named region vocabulary injected_by: " + REGION_INJECTED_BY)
+        print("Template shelf and shortcut additions injected_by: " + TEMPLATE_INJECTED_BY)
         print("Recorded new-Law authors: " + ", ".join(present_authors or [AUTHOR]))
     return 0
 

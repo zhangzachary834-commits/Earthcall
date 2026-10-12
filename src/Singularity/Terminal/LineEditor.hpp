@@ -39,10 +39,10 @@ struct Key {
         Redraw, HistorySearch, PasteBegin, PasteEnd,
         // Rung 3: the mouse (only reported while a menu or help is open),
         // paging, help, and the terminal's answer to "where is the cursor?".
-        WheelUp, WheelDown, Click, PageUp, PageDown, Help, CursorReport
+        WheelUp, WheelDown, Click, PageUp, PageDown, Help, CursorReport, Chord
     };
     Kind kind = Kind::Text;
-    std::string text;   // Kind::Text: one UTF-8 character
+    std::string text;   // Text: one UTF-8 character; Chord: canonical modifier+key
     int x = 0;          // Click / CursorReport: column (Click: region-relative once mapped)
     int y = 0;          // Click / CursorReport: row
 };
@@ -97,6 +97,8 @@ public:
     int overlayScroll() const { return _overlayScroll; }
     // Mouse reporting is wanted only while there is something to point at.
     bool wantsMouse() const { return menuVisible() || overlayVisible(); }
+    void openMenu() { edited(false); _menuSuppressed = false; _menuForced = !_suggestions.empty(); _navigated = true; }
+    std::function<void()> accepted; // generic completion act acknowledgement
     void refresh() { edited(false); }   // the world changed: recompute menu and status
 
     void setHistory(std::vector<std::string> history) { _history = std::move(history); }

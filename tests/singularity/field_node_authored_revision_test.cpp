@@ -85,11 +85,18 @@ int main() {
         check(densityRevisionOf(*node) == afterWrite, "a refused write keeps the revision");
     }
 
-    // 3. Load (applyJson) moves it.
+    // 3. Load (applyJson) moves a channel exactly when its content changes
+    //    (2026-10-12: per-channel deltas; identical reloads keep every cache).
     {
         const uint64_t before = settle(*node);
         node->applyJson(node->toJson());
-        check(densityRevisionOf(*node) != before, "applyJson is a write and changes the revision");
+        check(densityRevisionOf(*node) == before, "re-applying identical JSON keeps the revision");
+        auto j = node->toJson();
+        j["volumeDensity"] = nlohmann::json::parse(kDensityA);
+        node->applyJson(j);
+        check(densityRevisionOf(*node) != before, "applyJson with changed density changes its revision");
+        j["volumeDensity"] = nlohmann::json::parse(kDensityB);
+        node->applyJson(j);   // back to the content case 4 expects
     }
 
     // 4. A writer that assigns in place and forgets noteAuthoredMathWritten()
@@ -132,6 +139,59 @@ int main() {
         Property* ast = source->findProperty("field.ast");
         check(ast && ast->setValue(PropertyValue(std::string(kDensityA))), "field.ast accepts a radiance tree");
         check(source->verifiedAuthoredMathRevision() != before, "a radiance write changes the source revision");
+    }
+
+    // 8. Per-channel independence (Formation Rete Incremental Maintenance §2:
+    //    "semantic deltas, not global revision panic"). Editing one channel
+    //    must not invalidate caches that read another.
+    {
+        auto medium = mist("mist.revision.channels");
+        Rendering::VolumeDensityBinding b0, b1, b2, b3, b4;
+        settle(*medium);
+        Rendering::readVolumeDensity(*medium, 0.0, 0.0, b0);
+
+        Property* emission = medium->findProperty("volume.emission.ast");
+        check(emission && emission->setValue(PropertyValue(std::string(kDensityB))),
+              "emission bridge accepts a new tree");
+        Rendering::readVolumeDensity(*medium, 0.0, 0.0, b1);
+        check(b1.emissionRevision != b0.emissionRevision, "an emission edit moves the emission revision");
+        check(b1.densityRevision == b0.densityRevision,
+              "an emission edit leaves the density revision (and its proof) alone");
+
+        Property* density = medium->findProperty("volume.density.ast");
+        check(density && density->setValue(PropertyValue(std::string(kDensityB))),
+              "density bridge accepts a new tree");
+        Rendering::readVolumeDensity(*medium, 0.0, 0.0, b2);
+        check(b2.densityRevision != b1.densityRevision, "a density edit moves the density revision");
+        check(b2.emissionRevision == b1.emissionRevision, "a density edit leaves the emission revision alone");
+
+        // An unrevisioned in-place emission write heals only emission.
+        settle(*medium);
+        Rendering::readVolumeDensity(*medium, 0.0, 0.0, b3);
+        *medium->volumeEmission = OntoMath::Piecewise::fromJson(nlohmann::json::parse(kDensityA));
+        Rendering::VolumeDensityBinding healed = b3;
+        for (int i = 0; i < 32 && healed.emissionRevision == b3.emissionRevision; ++i)
+            Rendering::readVolumeDensity(*medium, 0.0, 0.0, healed);
+        check(healed.emissionRevision != b3.emissionRevision, "the verifier heals the unrevisioned emission write");
+        check(healed.densityRevision == b3.densityRevision, "healing emission leaves density alone");
+
+        // A reload that changes only emission moves only emission.
+        settle(*medium);
+        Rendering::readVolumeDensity(*medium, 0.0, 0.0, b4);
+        auto j = medium->toJson();
+        j["volumeEmission"] = nlohmann::json::parse(kDensityB);
+        medium->applyJson(j);
+        Rendering::VolumeDensityBinding b5;
+        Rendering::readVolumeDensity(*medium, 0.0, 0.0, b5);
+        check(b5.emissionRevision != b4.emissionRevision && b5.densityRevision == b4.densityRevision,
+              "applyJson changing only emission moves only emission");
+
+        // A writer that cannot name its channel still moves every channel.
+        medium->noteAuthoredMathWritten();
+        Rendering::VolumeDensityBinding b6;
+        Rendering::readVolumeDensity(*medium, 0.0, 0.0, b6);
+        check(b6.densityRevision != b5.densityRevision && b6.emissionRevision != b5.emissionRevision,
+              "noteAuthoredMathWritten still moves every channel (conservative)");
     }
 
     std::cout << "field_node_authored_revision_test: " << (g_checks - g_failures) << "/" << g_checks

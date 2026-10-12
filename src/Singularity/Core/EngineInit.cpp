@@ -125,8 +125,7 @@ void seedTrustedPersonRoot(Person& person) {
 
 void loadFirstMoverRegister() {
     auto& reg = Identity::FirstMoverRegister::instance();
-    const std::string root = SaveSystem::saveRoot();
-    reg.setSaveRoot(root.empty() ? std::filesystem::path("saves") : std::filesystem::path(root));
+    reg.setSaveRoot(SaveSystem::rootPath());
 
     const std::string path = SaveSystem::firstMoverRegisterPath();
     std::error_code ec;

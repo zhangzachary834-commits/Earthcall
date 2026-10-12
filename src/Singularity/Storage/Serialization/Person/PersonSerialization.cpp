@@ -104,8 +104,7 @@ void updatePriorPersonSerializations(const Person& person, const std::string& ol
     }
 
     // 3. Scan and update all prior save files in SaveSystem::saveRoot()
-    std::string root = SaveSystem::saveRoot();
-    if (root.empty()) root = "saves";
+    const std::string root = SaveSystem::rootPath().string();
     std::error_code dirEc;
     if (std::filesystem::exists(root, dirEc)) {
         for (const auto& entry : std::filesystem::recursive_directory_iterator(root, dirEc)) {

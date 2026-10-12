@@ -1508,3 +1508,51 @@ This CPU research pass changes no visible rendering; it reports zero production-
 [Conditional numerical model, passing refusals and production gap](../../../audits/VOLUME_SUPPORT_NUMERICAL_CONTRACT_2026-10-12.md).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T00:43:07-07:00 (PDT).
+
+
+### Northern Veil — native compiler contract follow-up
+
+No new visible renderer behavior ships in this pass. The native compiler observation preserves options and matches eight 320×180 paired images; this is not your live view, full-resolution guard validation or a new FPS gain. Existing movement, flicker/appearance and 30 FPS checks above remain open. The [native-profile audit](../../../audits/VOLUME_SUPPORT_NATIVE_PROFILE_2026-10-12.md) records Fast arithmetic/functions, 24 passing CPU witness groups and zero production-admitted skips. AD-30–36 remain your open semantic/structural review; none is resolved by these observations.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T11:27:35-07:00 (PDT).
+
+### Data home outside the checkout
+
+Your data is now copied into `~/Library/Application Support/Earthcall` (686 files, 1.11 GB, byte-verified; `backups/` stayed in the checkout). The checkout's `saves/` was not touched. Its own git repo has one commit, `71a8503`.
+
+- [ ] Launch `Run Earthcall.command`. The terminal should print `[Engine] data home: /Users/zacharyzhang/Library/Application Support/Earthcall`. A `⚠️ data home not migrated` line means the fallback fired.
+- [ ] Your Home, Zones (Chess, Synthesis Studio, Northern Veil, …), Laws, Persons and Relations all appear as they did before.
+- [ ] Save a Zone, then run `git -C ~/Library/Application\ Support/Earthcall status`: the change shows there. `git status saves` in the repo stays clean.
+- [ ] In Finder (⌘⇧G, then `~/Library/Application Support/Earthcall`), the folder holds what you'd expect.
+
+→ [task](../Specific%20Tasks/Serialization%20and%20Storage/Data_Home_Outside_Checkout/Data_Home_Outside_Checkout.md)
+
+**Signed:** Claude Code / Claude Opus 5.5 / session `16d04786-8407-4a70-a57c-fa5c11094c91` / 2026-10-12T12:34-07:00 (PDT).
+
+### Earthcall.app — the installed macOS app
+
+`/Applications/Earthcall.app` is installed now, signed ad-hoc. Your data is unchanged; the app reads the same data home.
+
+- [ ] Optional, once: run `scripts/macos/make_local_signing_identity.sh` in Terminal (macOS asks for your password), then double-click `Install Earthcall App.command`. Afterwards, microphone and Accessibility permissions should survive rebuilds.
+- [ ] Open Earthcall from Spotlight (⌘Space, "Earthcall"). No Terminal window appears, the Dock shows "Earthcall" with the placeholder blue-sphere-and-gold-ring icon, and your Home and Zones load as they do from `Run Earthcall.command`.
+- [ ] Window layout matches the checkout's: it was copied once to `~/Library/Application Support/Earthcall/ui/imgui.ini`.
+- [ ] `~/Library/Logs/Earthcall/earthcall.log` begins `[Engine] installed app root: …` and `[Engine] data home: …`.
+- [ ] Start a microphone recording. The prompt says "Earthcall listens only when you start a recording or speak to a Law that hears sound."
+- [ ] Quit with ⌘Q or Dock → Quit; it exits cleanly.
+- [ ] MCP (when you want it): point Claude Desktop at `/Applications/Earthcall.app/Contents/Resources/mcp/earthcall-mcp-server.js` and check `earthcall_list_saves`.
+
+→ [task](../Specific%20Tasks/Housekeeping%20and%20Build/macOS_App_Bundle/macOS_App_Bundle.md)
+
+**Signed:** Claude Code / Claude Opus 5.5 / session `16d04786-8407-4a70-a57c-fa5c11094c91` / 2026-10-12T13:10-07:00 (PDT).
+
+
+## Law Line stored-template shortcuts
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-12T13:08:43-07:00 — Zach requested custom template keybinds through Metalaws.*
+
+- [ ] Restart the rebuilt app, unlock your identity, `enter LawLine`, type `when ` and press Ctrl+T; see only click/hover templates, select with arrows, insert with Tab/Enter, then fill the first highlighted blank.
+- [ ] Try an empty draft and an unrelated prefix; confirm all stored templates versus a clear no-match notice, then Escape returns to ordinary completion.
+- [ ] If using Cmd+T, configure your terminal to send `ESC[116;9u`; verify the physical shortcut reaches the shelf instead of the terminal's own UI.
+- [ ] Author the [custom binding](../../../../examples/law_line_template_keybind.txt) and adapt its chord to your terminal; author the [stored shelf example](../../../../examples/law_line_store_templates.txt) only if you want those two drafts; press Ctrl+G to store them, then Ctrl+T to verify prefix selection.
+- [ ] Edit a disabled template holder's `completion.text` through the existing Property editor, including a literal `‹blank›` if desired; reopen the shelf and verify insertion and blank selection.
+- [ ] Save Zone in LawLine, restart from the app data home, and confirm your edited shelf and custom binding survive; judge whether the menu and blank navigation feel right.

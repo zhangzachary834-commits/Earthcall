@@ -58,7 +58,8 @@ bool contains(const std::vector<std::string>& v, const std::string& s) {
 } // namespace
 
 int main() {
-    std::filesystem::path saves = "saves";
+    std::filesystem::path saves = std::getenv("EARTHCALL_LAW_LINE_TEST_SAVES")
+        ? std::getenv("EARTHCALL_LAW_LINE_TEST_SAVES") : "saves";
     if (!std::filesystem::exists(saves / "zones/LawLine")) saves = std::filesystem::path("..") / "saves";
     saves = std::filesystem::absolute(saves);
     // An in-app Save Zone writes the native zone.ecform (Zach's LawLine save,
@@ -165,6 +166,130 @@ int main() {
         for (int i = 0; i < 3; ++i) harness.lawManager.tick();
         terminal->act(harness.lawManager);
     };
+
+    // Exercise the actual decoder -> sensed edge -> persisted Metalaw -> menu
+    // path. The app data home stays outside this isolated fixture.
+    if (auto* binding = harness.lawManager.find("law-line-shortcut-ctrl-t")) {
+        const auto read = [&](const char* path) {
+            PropertyValue value;
+            lawGetValue(*terminal, PropertyPath::parse(path), value);
+            return value;
+        };
+        terminal->injectKeys("when \x14"); frame();
+        check(terminal->editorForTests().buffer() == "when " &&
+              terminal->editorForTests().menuVisible() && terminal->editorForTests().suggestions().size() == 2,
+              "Ctrl+T Metalaw shows only stored click/hover templates matching the draft");
+        check(std::get<std::string>(read("draft")) == "when " &&
+              std::get<std::string>(read("key.chord")) == "ctrl+t" &&
+              std::get<double>(read("cursor")) == 5,
+              "the draft, cursor and chord are registered readable channel properties");
+        terminal->injectKeys("\t"); frame();
+        check(terminal->editorForTests().buffer() == "when clicked if ‹condition› then ‹action›" &&
+              terminal->editorForTests().onPlaceholder() && !std::get<bool>(read("completion.active")),
+              "selection inserts the stored template, selects its first blank and restores ordinary completion");
+        terminal->injectKeys("\x03"); frame();
+        terminal->injectKeys("unmatched \x1b[116;9u"); frame();
+        check(terminal->editorForTests().suggestions().empty() &&
+              mentions(terminal->editorForTests().render(120).text, "No stored completions match"),
+              "Cmd+T with an unmatched prefix offers no unrelated vocabulary and reports the empty match");
+        terminal->injectKeys("\x03"); frame();
+        terminal->injectKeys("\x14"); frame();
+        check(terminal->editorForTests().suggestions().size() == 4, "an empty draft offers the complete stored shelf");
+        terminal->injectKeys("\x1b"); frame();
+        // Injection uses the same ambiguous ESC decoder: resolve with an
+        // explicit subsequent control rather than a wall-clock sleep.
+        terminal->injectKeys("\x03"); frame();
+        binding->setDynamicProperty("binding.chord", std::string("ctrl+g"));
+        terminal->injectKeys("always \x14"); frame();
+        check(!std::get<bool>(read("completion.active")), "changing the authored chord makes the old shortcut inactive");
+        terminal->injectKeys("\x07"); frame();
+        check(terminal->editorForTests().suggestions().size() == 1 &&
+              mentions(terminal->editorForTests().suggestions()[0].text, "always"),
+              "the new authored chord opens the same prefix-filtered shelf without C++ changes");
+        binding->setDynamicProperty("binding.chord", std::string("ctrl+t"));
+        terminal->injectKeys("\x03"); frame();
+        // Two shortcuts in one transport read retain both drafts and order.
+        const double requests = std::get<double>(read("completion.openRequests"));
+        terminal->injectKeys("when \x14" "clicked \x14"); frame();
+        check(terminal->editorForTests().buffer() == "when " &&
+              std::get<double>(read("completion.openRequests")) == requests + 1,
+              "the first queued chord is decided before subsequent draft edits");
+        frame();
+        check(terminal->editorForTests().buffer() == "when clicked " &&
+              terminal->editorForTests().suggestions().size() == 1 &&
+              std::get<double>(read("completion.openRequests")) == requests + 2,
+              "the second queued chord sees the later draft exactly once");
+        terminal->injectKeys("\x03"); frame();
+        terminal->setPresenceCheckForTests([&](const Person& p) { return &p == &harness.player; });
+        const double requestsBeforeCompilation = std::get<double>(read("completion.openRequests"));
+        terminal->inject(R"(called "Completion Isolation" on "compile-isolation" then Sequence <children: [Set glow to 1]>)"); frame();
+        check(std::get<double>(read("completion.openRequests")) == requestsBeforeCompilation &&
+              !std::get<bool>(read("completion.active")),
+              "compilation cannot reapply a shortcut merely because the last sensed chord still matches");
+        terminal->inject(R"(called "My Alt J Templates" on "terminal-key-pressed" if @terminal-channel.zone is "LawLine" and @terminal-channel.key.chord is "alt+j" then Sequence <children: [Set @terminal-channel.completion.items to @law-line-template-shelf.items, Add @terminal-channel.completion.openRequests by 1]>)"); frame();
+        check(mentions(printed.back(), "authored"), "a Person can author a new template shortcut as one Law sentence");
+        terminal->injectKeys("when \x1b[106;3u"); frame();
+        check(terminal->editorForTests().suggestions().size() == 2 &&
+              std::get<std::string>(read("key.chord")) == "alt+j",
+              "the sentence-authored Alt+J binding supplies the stored shelf to the generic channel");
+        terminal->injectKeys("\x03"); frame();
+        PropertyValue originalShelf;
+        auto* shelf = harness.lawManager.find("law-line-template-shelf");
+        if (shelf) shelf->getDynamicProperty("items", originalShelf);
+        const std::string storageProgram = R"(called "Store My Templates" on "terminal-key-pressed" if Identity @terminal-channel and key.chord is "ctrl+g" then Set @law-line-template-shelf.items to Literal <value: [{text: "when clicked then Set color to gold", description: "My golden touch"}, {text: "always if hp is greater than 0 then Set color to blue", description: "My repeating Law"}]>)";
+        terminal->injectKeys("\x1b[200~" + storageProgram + "\x1b[201~\r"); frame();
+        terminal->injectKeys("\x07"); frame();
+        PropertyValue storedShelf;
+        check(shelf && shelf->getDynamicProperty("items", storedShelf) &&
+              std::holds_alternative<std::shared_ptr<PropertyList>>(storedShelf) &&
+              std::get<std::shared_ptr<PropertyList>>(storedShelf)->elements.size() == 2,
+              "one Law sentence stores new template records through Literal Metalaws: " + printed.back());
+        terminal->injectKeys("when \x14"); frame();
+        check(terminal->editorForTests().suggestions().size() == 1 &&
+              terminal->editorForTests().suggestions()[0].text == "when clicked then Set color to gold",
+              "the same shortcut immediately reads the newly authored matching template");
+        terminal->injectKeys("\x03"); frame();
+        if (shelf) {
+            auto restoredShelf = Law::fromJson(shelf->toJson());
+            PropertyValue roundTrip;
+            check(restoredShelf && restoredShelf->getDynamicProperty("items", roundTrip) &&
+                  propertyValueToJson(roundTrip) == propertyValueToJson(storedShelf),
+                  "newly authored template records survive the shelf Law codec");
+            shelf->setDynamicProperty("items", originalShelf);
+        }
+        terminal->setPresenceCheckForTests({});
+        auto* templateLaw = harness.lawManager.find("law-line-template-click");
+        check(templateLaw && templateLaw->toJson().contains("authoredProperties") &&
+              templateLaw->toJson()["authoredProperties"].contains("completion"),
+              "the loaded template round-trips through the real Law codec");
+        if (templateLaw) {
+            auto restored = Law::fromJson(templateLaw->toJson());
+            PropertyValue completion;
+            check(restored && restored->getDynamicProperty("completion", completion) &&
+                  propertyValueToJson(completion) == templateLaw->toJson()["authoredProperties"]["completion"],
+                  "the complete editable candidate dictionary survives Law encode/decode");
+        }
+        const auto keysBeforeSecret = std::get<double>(read("key.presses"));
+        terminal->setPresencePerson(&harness.player);
+        PropertyPath::parse("unlockRequests").setValue(*terminal, 1.0); terminal->act(harness.lawManager);
+        check(terminal->awaitingSecret(), "the real Identity operation enters secret input");
+        terminal->injectKeys("hidden-test-input\x14"); frame();
+        PropertyPath::parse("completion.openRequests").setValue(*terminal,
+            std::get<double>(read("completion.openRequests")) + 1); terminal->act(harness.lawManager);
+        check(std::get<std::string>(read("draft")).empty() && std::get<double>(read("cursor")) == 0 &&
+              std::get<double>(read("key.presses")) == keysBeforeSecret &&
+              !std::get<bool>(read("completion.visible")),
+              "secret input exposes neither draft/cursor nor shortcut edges and refuses completion display");
+        terminal->injectKeys("\x03\x03"); frame(); // discard input, then cancel; never submit it
+        check(!terminal->awaitingSecret(), "secret test cancels without keying or unlocking the Person");
+
+    }
+
+    if (std::getenv("EARTHCALL_TEMPLATE_TEST_ONLY")) {
+        check(harness.lawManager.find("law-line-shortcut-ctrl-t") != nullptr, "the shortcut seed was actually loaded");
+        std::cout << "template witness: " << checks - failures << "/" << checks << " checks passed\n";
+        return failures ? 1 : 0;
+    }
 
     // Stdin trust (Zach, 2026-10-05: "Require presence"). This harness holds
     // no private key for the seed's keyed author, so it cannot be seated in

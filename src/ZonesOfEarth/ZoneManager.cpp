@@ -963,10 +963,7 @@ std::string ZoneManager::getSaveDirectory() const {
 // ------------------------------------------------------------------
 namespace {
 void logIo(const std::string& line) {
-    const std::string configuredRoot = SaveSystem::saveRoot();
-    const std::filesystem::path saveRoot =
-        configuredRoot.empty() ? std::filesystem::path("saves")
-                               : std::filesystem::path(configuredRoot);
+    const std::filesystem::path saveRoot = SaveSystem::rootPath();
     std::error_code ec;
     std::filesystem::create_directories(saveRoot, ec);
     if (ec) return;

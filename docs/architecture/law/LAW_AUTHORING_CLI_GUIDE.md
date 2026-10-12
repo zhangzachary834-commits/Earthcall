@@ -54,6 +54,38 @@ called "Preview Gold" when clicked then Set color to gold ?
 
 The preview does not register a Law or execute compiler Metalaws. Parameterized actions report that compilation is deferred. Previewing an event-relative condition also lacks the future click's participants; it cannot prove the Law will fire or render.
 
+### Stored templates and authored shortcuts
+
+Zach requested special keybinds for stored Law-Lexeme templates, with the menu restricted to what the draft already matches, and C++ confined to missing modality operations. After rebuilding/restarting the app, `enter LawLine`, type `when `, then press **Ctrl+T**. Only the stored click and hover templates appear. An empty draft shows the whole shelf; an unmatched draft reports no stored matches. Arrows choose; Tab or Enter inserts the selected draft and selects its first `‹blank›`. Escape closes the shelf and restores ordinary sentence completion. Insertion does not register a Law: fill the blanks, preview if desired, then Enter authors it.
+
+**Cmd+T is also an authored binding.** Its terminal transport must send `ESC [ 116 ; 9 u` (hex `1b 5b 31 31 36 3b 39 75`) to Earthcall. A terminal that consumes Cmd+T for its own UI cannot deliver it to the channel; configure a supported terminal key mapping, or use Ctrl+T. This decoder accepts modified ASCII press reports from the [CSI-u keyboard protocol](https://sw.kovidgoyal.net/kitty/keyboard-protocol/); repeat/release reports do not create another shortcut edge. Existing legacy editor controls retain their meanings. No global OS shortcut interception is installed.
+
+To author your own binding, paste the [Alt+J example](../../../examples/law_line_template_keybind.txt), changing the chord string to the one your terminal sends:
+
+```text
+called "My Alt J Templates" on "terminal-key-pressed" if @terminal-channel.zone is "LawLine" and @terminal-channel.key.chord is "alt+j" then Sequence <children: [Set @terminal-channel.completion.items to @law-line-template-shelf.items, Add @terminal-channel.completion.openRequests by 1]>
+```
+
+The default bindings are `@law-line-shortcut-cmd-t.binding.chord` and `@law-line-shortcut-ctrl-t.binding.chord`; their editable string is compared by the Metalaw. Canonical modifier order is `cmd+ctrl+alt+shift+hyper+meta+key`, with absent modifiers omitted. CSI-u supports combinations; legacy bytes expose otherwise unused Ctrl-letter controls, including Ctrl+T and Ctrl+G. A different shelf can be supplied by changing the binding Law's Set/Map source. Keep shortcuts event-triggered and leave their explicit `targets` empty: the key event supplies the Terminal subject, while the compilation seam probes explicit Terminal targets.
+
+Five template Lexemes denote four disabled template Laws and a disabled shelf Law; one further `Literal` Lexeme and its compiler provide ordinary structural literal values through authored Metalaws. The template Laws carry editable `completion` dictionaries with `text` and `description`; `@law-line-template-shelf.items` is an authored list of their readable PropertyPaths. The text is a stored draft, compiled through the existing sentence Metalaws when submitted. Selecting it does not execute the disabled holder's model. The Terminal reads generic completion values; it knows no template category or shelf identifier.
+
+You can also store direct draft records in that list. The [store example](../../../examples/law_line_store_templates.txt) authors a Ctrl+G storage Law; press Ctrl+G to replace the shelf with your chosen two drafts, then Ctrl+T to browse:
+
+```text
+called "Store My Templates" on "terminal-key-pressed" if Identity @terminal-channel and key.chord is "ctrl+g" then Set @law-line-template-shelf.items to Literal <value: [{text: "when clicked then Set color to gold", description: "My golden touch"}, {text: "always if hp is greater than 0 then Set color to blue", description: "My repeating Law"}]>
+```
+
+The storage example uses complete sentences so it also passes the actual editor Enter gate. To store a draft containing literal `‹blanks›`, edit its holder's `completion.text` in the existing Property editor: the Terminal's earlier blank gate still treats these glyphs as unfilled, including inside quoted data.
+
+The currently supported match is a case-insensitive **literal prefix before the cursor**, preserving shelf order. It does not infer semantic equivalence or treat already-filled blanks as wildcards. A record may provide `text`, optional `snippet`, and optional `description`, or be a plain string. PropertyPath entries are read afresh while completing, so editing a stored candidate does not require reseeding.
+
+Use **Save Zone** in LawLine to retain edited template/shelf Laws and newly authored bindings. The installer and app now use `earthcall_data_home.data_root()` / `SaveSystem::rootPath()`; on Zach's Mac that is `~/Library/Application Support/Earthcall`, with its own git history. Checkout `saves/` remains a frozen fixture. `EARTHCALL_SEED_ROOT` remains available for isolated fixtures. Current native MigrationRoot envelopes are patched without altering existing text; unsupported envelopes refuse before seeding. Passphrase drafts/cursors and secret shortcut presses are never exposed through these properties.
+
+See [implementation and verification](../../audits/LAW_LINE_TEMPLATE_SHORTCUTS_2026-10-12.md) and the [Person checks](../../Agenda/Tasks/For%20Zach/Person%20Verification%20List.md#law-line-stored-template-shortcuts).
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-12T13:08:43-07:00 — Zach originated the authored shortcut/template request; Codex supplied the generic Terminal completion/chord seam and its seed.*
+
 ## 2. Read a sentence as four decisions
 
 The common shape is `called "Name" when clicked if condition then action`.

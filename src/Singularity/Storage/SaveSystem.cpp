@@ -10,6 +10,14 @@
 #include <iomanip>
 #include <map>
 #include <cstdio>
+#include <cstdlib>
+#if !defined(__EMSCRIPTEN__) && !defined(_WIN32)
+#include <fcntl.h>
+#include <spawn.h>
+#include <sys/wait.h>
+#include <unistd.h>
+extern char** environ;
+#endif
 #include <unordered_map>
 #include <unordered_set>
 #include "Singularity/Storage/CloudStorage.hpp"
@@ -51,6 +59,109 @@ void setSaveRoot(const std::string& absoluteSavesDir) {
 
 std::string saveRoot() {
     return g_saveRoot;
+}
+
+std::filesystem::path rootPath() {
+    return g_saveRoot.empty() ? std::filesystem::path("saves")
+                              : std::filesystem::path(g_saveRoot);
+}
+
+std::filesystem::path platformDataHome() {
+    namespace fs = std::filesystem;
+    auto envPath = [](const char* name) -> fs::path {
+        const char* v = std::getenv(name);
+        return (v && *v) ? fs::path(v) : fs::path{};
+    };
+    if (auto p = envPath("EARTHCALL_DATA"); !p.empty()) return p;
+#if defined(__EMSCRIPTEN__)
+    return {}; // IDBFS owns persistence in the browser
+#elif defined(_WIN32)
+    if (auto p = envPath("APPDATA"); !p.empty()) return p / "Earthcall";
+    return {};
+#elif defined(__APPLE__)
+    if (auto p = envPath("HOME"); !p.empty())
+        return p / "Library" / "Application Support" / "Earthcall";
+    return {};
+#else
+    if (auto p = envPath("XDG_DATA_HOME"); !p.empty()) return p / "earthcall";
+    if (auto p = envPath("HOME"); !p.empty()) return p / ".local" / "share" / "earthcall";
+    return {};
+#endif
+}
+
+namespace {
+// argv only, never a shell: the home path comes from $HOME/$EARTHCALL_DATA.
+bool runQuietly(const std::vector<std::string>& args) {
+#if defined(__EMSCRIPTEN__) || defined(_WIN32)
+    (void)args;
+    return false;
+#else
+    std::vector<char*> argv;
+    for (const auto& a : args) argv.push_back(const_cast<char*>(a.c_str()));
+    argv.push_back(nullptr);
+    posix_spawn_file_actions_t actions;
+    posix_spawn_file_actions_init(&actions);
+    posix_spawn_file_actions_addopen(&actions, STDOUT_FILENO, "/dev/null", O_WRONLY, 0);
+    posix_spawn_file_actions_addopen(&actions, STDERR_FILENO, "/dev/null", O_WRONLY, 0);
+    pid_t pid = 0;
+    const int rc = posix_spawnp(&pid, argv[0], &actions, nullptr, argv.data(), environ);
+    posix_spawn_file_actions_destroy(&actions);
+    if (rc != 0) return false;
+    int status = 0;
+    if (waitpid(pid, &status, 0) < 0) return false;
+    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+#endif
+}
+} // namespace
+
+std::filesystem::path chooseDataRoot(const std::filesystem::path& checkoutSaves,
+                                     std::string& note,
+                                     const std::filesystem::path& foundation) {
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    const fs::path home = platformDataHome();
+    if (!home.empty() && fs::is_regular_file(home / kDataHomeMarker, ec)) {
+        note = "data home: " + home.string();
+        return home;
+    }
+    if (!checkoutSaves.empty() && fs::is_directory(checkoutSaves, ec)) {
+        note = "⚠️  data home not migrated (" +
+               (home.empty() ? std::string("no home directory known") : home.string()) +
+               "); saving into the checkout's " + checkoutSaves.string() +
+               ". Run scripts/migrate_saves_to_data_home.py to move it.";
+        return checkoutSaves;
+    }
+    if (home.empty()) {
+        note = "⚠️  no data home and no checkout saves/; saving under ./saves";
+        return fs::path("saves");
+    }
+    fs::create_directories(home, ec);
+    bool seeded = false;
+    if (!foundation.empty() && fs::is_directory(foundation, ec)) {
+        fs::copy(foundation, home,
+                 fs::copy_options::recursive | fs::copy_options::skip_existing, ec);
+        seeded = !ec;
+    }
+    if (!fs::exists(home / kDataHomeMarker, ec)) {
+        std::ofstream marker(home / kDataHomeMarker);
+        marker << nlohmann::json{{"earthcallDataHome", 1},
+                                 {"created", timestamp()},
+                                 {"migratedFrom", nullptr},
+                                 {"foundation", seeded ? nlohmann::json(foundation.string())
+                                                       : nlohmann::json(nullptr)}}.dump(2) << "\n";
+    }
+    note = "data home created: " + home.string();
+    if (!foundation.empty() && !fs::exists(home / ".git", ec)) {
+        const std::string h = home.string();
+        const bool versioned =
+            runQuietly({"git", "-C", h, "init", "-q"}) &&
+            runQuietly({"git", "-C", h, "add", "-A"}) &&
+            runQuietly({"git", "-C", h, "-c", "user.name=Earthcall", "-c",
+                        "user.email=earthcall@localhost", "commit", "-q", "-m",
+                        "Earthcall data home: first run"});
+        note += versioned ? " (git repository initialised)" : " (git unavailable; not versioned)";
+    }
+    return home;
 }
 
 // Helper to compress a byte vector using zlib
@@ -118,8 +229,7 @@ std::string getSaveTypeFolderName(SaveType type) {
 
 
 std::string ensureSaveFolder() {
-    std::filesystem::path p = g_saveRoot.empty() ? std::filesystem::path("saves")
-                                                 : std::filesystem::path(g_saveRoot);
+    const std::filesystem::path p = rootPath();
     std::error_code ec;
     if (!std::filesystem::exists(p, ec)) {
         if (!std::filesystem::create_directories(p, ec) && !std::filesystem::exists(p, ec)) {
@@ -1448,10 +1558,7 @@ std::vector<std::string> listZoneIdentities() {
 
 namespace {
 std::filesystem::path sharedIdentityRoot(const char* leaf) {
-    const std::filesystem::path root = g_saveRoot.empty()
-        ? std::filesystem::path("saves")
-        : std::filesystem::path(g_saveRoot);
-    return root / leaf;
+    return rootPath() / leaf;
 }
 } // namespace
 

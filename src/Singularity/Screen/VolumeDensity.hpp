@@ -115,14 +115,6 @@ inline void appendVolumeSetIdentity(std::string& identity,
     identity += "\\n";
 }
 
-// Per-channel cache revision from a FieldNode's authored-math revision. The
-// node revision comes from a process-wide sequence that never repeats, so
-// (revision << 4) | channel is unique per (write, channel) and never 0 -- 0
-// still means "channel absent" to every consumer.
-inline uint64_t authoredChannelRevision(uint64_t nodeRevision, unsigned channel) {
-    return (nodeRevision << 4) | static_cast<uint64_t>(channel + 1u);
-}
-
 // Resolve authored density from one FieldNode into the renderer-facing bounded
 // projection. Sourcehood is intentionally irrelevant: fog need not illuminate,
 // and a radiant source need not be participating medium.
@@ -137,36 +129,40 @@ inline bool readVolumeDensity(const geom::FieldNode& field,
                               VolumeDensityBinding& out) {
     if (!field.volumeDensity || field.volumeDensity->pieces.empty()) return false;
 
-    const uint64_t revision = field.verifiedAuthoredMathRevision();
+    // Each channel carries its own never-repeating, nonzero revision (0 still
+    // means "absent" to every consumer), so an edit to one channel invalidates
+    // only the caches that read that channel.
+    field.verifyAuthoredMath();
+    using F = geom::FieldNode;
     VolumeDensityBinding next;
     next.producerId = field.getIdentifier();
     next.origin = field.origin;
     next.scale = field.scale;
     next.densityExpr = field.volumeDensity.get();
-    next.densityRevision = authoredChannelRevision(revision, 1);
+    next.densityRevision = field.authoredMathRevision(F::kMathVolumeDensity);
     if (field.volumeExtinction && !field.volumeExtinction->pieces.empty()) {
         next.extinctionExpr = field.volumeExtinction.get();
-        next.extinctionRevision = authoredChannelRevision(revision, 2);
+        next.extinctionRevision = field.authoredMathRevision(F::kMathVolumeExtinction);
     }
     if (field.volumeScattering && !field.volumeScattering->pieces.empty()) {
         next.scatteringExpr = field.volumeScattering.get();
-        next.scatteringRevision = authoredChannelRevision(revision, 3);
+        next.scatteringRevision = field.authoredMathRevision(F::kMathVolumeScattering);
     }
     if (field.volumeChroma && !field.volumeChroma->pieces.empty()) {
         next.volumeChromaExpr = field.volumeChroma.get();
-        next.volumeChromaRevision = authoredChannelRevision(revision, 4);
+        next.volumeChromaRevision = field.authoredMathRevision(F::kMathVolumeChroma);
     }
     if (field.volumePhase && !field.volumePhase->pieces.empty()) {
         next.phaseExpr = field.volumePhase.get();
-        next.phaseRevision = authoredChannelRevision(revision, 5);
+        next.phaseRevision = field.authoredMathRevision(F::kMathVolumePhase);
     }
     if (field.volumeEmission && !field.volumeEmission->pieces.empty()) {
         next.emissionExpr = field.volumeEmission.get();
-        next.emissionRevision = authoredChannelRevision(revision, 6);
+        next.emissionRevision = field.authoredMathRevision(F::kMathVolumeEmission);
     }
     if (geom::isSdfActive(field.volumeOccluder.get())) {
         next.occluderSdf = field.volumeOccluder.get();
-        next.occluderRevision = authoredChannelRevision(revision, 7);
+        next.occluderRevision = field.authoredMathRevision(F::kMathVolumeOccluder);
     }
     next.temporalCoordinate = temporalCoordinate;
     next.temporalDelta = temporalDelta;

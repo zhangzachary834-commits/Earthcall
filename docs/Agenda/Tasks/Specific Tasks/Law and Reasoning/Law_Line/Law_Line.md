@@ -463,3 +463,14 @@ Verification: the guide's 13 executable lesson lines adopted the expected 17 Law
 Beginner readability and a first exercise followed by Save Zone/restart are tracked in [Person Verification](../../../For%20Zach/Person%20Verification%20List.md). Future agents: update the guide alongside changed authored signatures or parser semantics, verify its executable snippets through the real Terminal/Metalaw path, and retain the distinction between placeholder signatures and proven runtime programs.
 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 13:16 PDT — Zach requested the guide; Codex organized the lessons and reference from current source and the preceding authored programs.*
+
+
+## Stored template shortcuts — 2026-10-12
+
+Zach requested stored Law-Lexeme templates selected by custom shortcuts, with C++ admitted only for modality gaps, and reminded us to follow the constitutionalist's app data-home migration. The implementation adds generic Terminal chord sensing and completion output; the seeded Cmd+T/Ctrl+T bindings and stored shelf are authored Laws/Lexemes/denotes Relations. Literal-prefix matches preserve shelf order, selection edits the draft without authoring, and passphrase input stays beneath the Kernel. The [CLI guide](../../../../../architecture/law/LAW_AUTHORING_CLI_GUIDE.md#stored-templates-and-authored-shortcuts) contains pasteable storage/binding sentences and transport/persistence limits. [Verification](../../../../../audits/LAW_LINE_TEMPLATE_SHORTCUTS_2026-10-12.md) distinguishes isolated tests, installed data, and pending Person interaction. [Person checks](../../../For%20Zach/Person%20Verification%20List.md#law-line-stored-template-shortcuts) include physical Cmd transport and restart continuity.
+
+For Jules and future agents: retain the generic completion surface; do not scan a special template category in C++. Do not explicitly target the Terminal from event shortcut Laws, because the compiler probes that target set. Keep modifier decoding separate from authored binding choice, preserve draft/chord order across ticks, and never let a secret draft reach providers or registered readings. Run the isolated seeded `law_line_zone_test` through CTest and the Python seed-preservation tests. Install with `scripts/seed_law_line.py` into `data_root()`, patch by stable identifier, and commit only your save additions in the data-home repository.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-12T13:08:43-07:00*
+
+Follow-up boundary: generic `Literal <value: …>` is compiled by authored Metalaws for storage, and the storage example passes actual bracketed-paste/Enter dispatch. Literal blank glyphs in quoted source still encounter the existing editor blank gate; semantic matching through filled template slots and literal-versus-active snippet distinction remain open generic editor work. No template-specific parser fallback was introduced.

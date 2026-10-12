@@ -202,6 +202,35 @@ std::vector<Key> KeyDecoder::drain(bool final) {
                     i = j + 1;
                     continue;
                 }
+                // CSI-u modifier chords (kitty/fixterms). This is device decoding,
+                // not a binding: Laws decide what canonical chord strings mean.
+                if (fin == 'u') {
+                    const auto semi = params.find(';');
+                    const std::string code = params.substr(0, semi);
+                    const std::string mods = semi == std::string::npos ? "1" : params.substr(semi + 1);
+                    const auto colon = mods.find(':');
+                    const std::string bits = mods.substr(0, colon);
+                    const std::string edge = colon == std::string::npos ? "1" : mods.substr(colon + 1);
+                    const auto decimal = [](const std::string& v) {
+                        return !v.empty() && v.size() <= 6 && v.find_first_not_of("0123456789") == std::string::npos;
+                    };
+                    if (decimal(code) && decimal(bits) && edge == "1") {
+                        const int cp = std::stoi(code), mask = std::stoi(bits) - 1;
+                        if (cp >= 32 && cp <= 126 && mask > 0 && mask < 64) {
+                            std::string chord;
+                            if (mask & 8) chord += "cmd+";
+                            if (mask & 4) chord += "ctrl+";
+                            if (mask & 2) chord += "alt+";
+                            if (mask & 1) chord += "shift+";
+                            if (mask & 16) chord += "hyper+";
+                            if (mask & 32) chord += "meta+";
+                            chord += static_cast<char>(std::tolower(static_cast<unsigned char>(cp)));
+                            push(K::Chord, chord);
+                        }
+                    }
+                    i = j + 1;
+                    continue;
+                }
                 const bool word = params.find(";5") != std::string::npos || params.find(";3") != std::string::npos;
                 switch (fin) {
                     case 'A': push(K::Up); break;
@@ -294,7 +323,8 @@ std::vector<Key> KeyDecoder::drain(bool final) {
                     i += n;
                     continue;
                 }
-                break;   // other controls mean nothing here
+                if (c >= 1 && c <= 26) push(K::Chord, "ctrl+" + std::string(1, static_cast<char>('a' + c - 1)));
+                break;   // existing editor controls keep their device meanings
         }
         ++i;
     }
@@ -404,6 +434,16 @@ void LineEditor::accept(const LawSentence::Suggestion& s) {
     const std::string text = startsWithCi(s.text, typed) ? typed + s.text.substr(typed.size()) : s.text;
     _buffer.replace(from, _cursor - from, text);
     _cursor = from + text.size();
+    if (accepted) accepted();
+    // Whole-text completions may carry their own blanks, not just a suffix.
+    const std::size_t embedded = _buffer.find(kOpen, from);
+    if (embedded < _cursor) {
+        _cursor = embedded;
+        _menuForced = false;
+        edited(true);
+        _menuForced = !_suggestions.empty();
+        return;
+    }
     // The word's own blanks follow it ("set" -> "set ‹path› to ‹value›"),
     // and the first one is selected — unless blanks already follow.
     if (!s.snippet.empty()) {

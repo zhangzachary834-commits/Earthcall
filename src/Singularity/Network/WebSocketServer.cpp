@@ -883,14 +883,18 @@ struct WebSocketServer::Impl {
                     return std::nullopt;
                 };
 
-                struct Channel { const char* key; const std::shared_ptr<OntoMath::Piecewise> geom::FieldNode::* member; };
+                struct Channel {
+                    const char* key;
+                    const std::shared_ptr<OntoMath::Piecewise> geom::FieldNode::* member;
+                    std::size_t revisionChannel;   // FieldNode::kMath* index
+                };
                 const Channel channels[] = {
-                    {"density", &geom::FieldNode::volumeDensity},
-                    {"extinction", &geom::FieldNode::volumeExtinction},
-                    {"scattering", &geom::FieldNode::volumeScattering},
-                    {"chroma", &geom::FieldNode::volumeChroma},
-                    {"phase", &geom::FieldNode::volumePhase},
-                    {"emission", &geom::FieldNode::volumeEmission},
+                    {"density", &geom::FieldNode::volumeDensity, geom::FieldNode::kMathVolumeDensity},
+                    {"extinction", &geom::FieldNode::volumeExtinction, geom::FieldNode::kMathVolumeExtinction},
+                    {"scattering", &geom::FieldNode::volumeScattering, geom::FieldNode::kMathVolumeScattering},
+                    {"chroma", &geom::FieldNode::volumeChroma, geom::FieldNode::kMathVolumeChroma},
+                    {"phase", &geom::FieldNode::volumePhase, geom::FieldNode::kMathVolumePhase},
+                    {"emission", &geom::FieldNode::volumeEmission, geom::FieldNode::kMathVolumeEmission},
                 };
                 std::vector<std::pair<const Channel*, OntoMath::Piecewise>> compiled;
                 for (const auto& ch : channels) {
@@ -953,8 +957,10 @@ struct WebSocketServer::Impl {
                     for (auto& [ch, pw] : compiled) *((*node).*(ch->member)) = std::move(pw);
                     if (occluder) *node->volumeOccluder = std::move(*occluder);
                     // These assignments bypass the property bridges, so the
-                    // node's authored-math revision is bumped here by hand.
-                    if (!compiled.empty() || occluder) node->noteAuthoredMathWritten();
+                    // revisions of exactly the channels written are bumped here by hand.
+                    for (const auto& written : compiled)
+                        node->noteAuthoredChannelWritten(written.first->revisionChannel);
+                    if (occluder) node->noteAuthoredChannelWritten(geom::FieldNode::kMathVolumeOccluder);
                     node->addStakeholder("volume", mover->toString(), "mcp", std::time(nullptr));
                     if (created) zone.addSpatialField(node);
                 }

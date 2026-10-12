@@ -28,6 +28,8 @@ so ctest and IDE launches leave it quiet; set `NO_COLOR` to drop colour. No depe
 tried and removed (its Tab cannot offer a selectable menu). →
 `docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Law_Line/Law_Line.md`.
 For pasteable lessons and the action reference, read [the Law authoring CLI guide for humans and agents](architecture/law/LAW_AUTHORING_CLI_GUIDE.md).
+Stored-template shortcuts are covered by the [new CLI lesson](architecture/law/LAW_AUTHORING_CLI_GUIDE.md#stored-templates-and-authored-shortcuts). `law_line_zone_test` now layers the current authored seed into an isolated frozen-fixture copy through a Python runner; CTest never seeds the live app home. Seed-preservation checks run with `python3 tests/singularity/test_seed_law_line.py`. Terminal history/log files now live under `SaveSystem::rootPath()/logs`, following the app data-home migration.
+
 
 **2026-10-06 direct Screen CLI:** rebuild/restart `earthcall_webgpu`, unlock in Identity, then `enter LawLine`. The seeded VectorField/ScalarField/Piece and mathematical Lexemes compile through authored value Metalaws; paste `examples/law_line_screen_lens.txt` for the pulsing lens, and stop Lens Time then use `examples/law_line_screen_clear.txt` to restore the scene. [Contract and verification](Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md#cli-field-and-selector-authoring--2026-10-06). — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-06 18:22 PDT.
 
@@ -48,6 +50,10 @@ For pasteable lessons and the action reference, read [the Law authoring CLI guid
 **2026-10-05 confirmed Create routing fix:** `resolveZone` no longer lets an inactive Zone named World override the active/rendered Zone. The shared boot harness now exposes inactive Zones as the Engine does. Build/restart `earthcall_webgpu`; the original authored lines still apply. `python3 scratch/probes/law_line_visibility_probe.py --engine` exercises actual Engine/Terminal/Metalaw ticks and captures the visible gold cube at native resolution in an isolated fixture. See `docs/audits/LAW_CREATE_ACTIVE_ZONE_ROUTING_FIX_2026-10-05.md`. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 11:55 PDT.
 
 **Verification limit from that pass:** seven focused creation/Terminal/native-Zone checks passed; the broader run was stopped after a legacy chess capture assertion and expensive unrelated full-store pre-load serialization. The capture assertion also fails with pre-fix routing/harness code; the native Zone boot chess test passes. Historical green results below are dated evidence, not a current whole-suite claim. See [legacy test follow-up](Agenda/Tasks/Specific%20Tasks/Law%20and%20Reasoning/Legacy_Test_Store_Isolation/Legacy_Test_Store_Isolation.md).
+
+### Installing Earthcall.app (macOS, 2026-10-12)
+
+Double-click `Install Earthcall App.command` (or run `scripts/macos/install_app.sh`). It builds Release into `build_release/`, assembles and signs `Earthcall.app` (CMake target `earthcall_app`, `scripts/macos/package_app.sh`), and installs it to `/Applications`, keeping one `Earthcall.previous.app`. The installed app has no checkout. It reads resources from `Contents/Resources` (`resource://`), saves to the data home, writes logs to `~/Library/Logs/Earthcall/earthcall.log`, and keeps window layout in `<data home>/ui/imgui.ini`. Run `scripts/macos/make_local_signing_identity.sh` once so macOS keeps microphone, Screen Recording and Accessibility grants across rebuilds; without it the app is signed ad-hoc. Apple Developer ID and notarization are a later, optional release step and no part of Earthcall's identity model. The dev target `earthcall_webgpu` and `Run Earthcall.command` are unchanged. → [task](Agenda/Tasks/Specific%20Tasks/Housekeeping%20and%20Build/macOS_App_Bundle/macOS_App_Bundle.md)
 
 ### One-click WASM launch (macOS)
 
@@ -352,6 +358,10 @@ Untracking does not affect clangd — the index regenerates locally regardless.
 
 ---
 
+## Where data lives — the data home (2026-10-12)
+
+The Person's saves live outside the checkout, in `~/Library/Application Support/Earthcall` on macOS (Linux `$XDG_DATA_HOME/earthcall`, Windows `%APPDATA%\Earthcall`; `$EARTHCALL_DATA` overrides). That directory is **its own git repository**: commit save changes there, not in this repo. The engine trusts a home only when it carries `data-home.json`. Otherwise it falls back to the checkout's `saves/` and prints `⚠️ data home not migrated`. Tests keep an empty root (`./saves` under cwd). The checkout's `saves/` is now a frozen snapshot plus fixtures. Authored `"saves/..."` strings resolve under the data home through `VirtualFileSystem::resolve`. Scripts use `scripts/earthcall_data_home.py`'s `data_root()`. Signing keys stay in `~/.earthcall/identity`. → [task](Agenda/Tasks/Specific%20Tasks/Serialization%20and%20Storage/Data_Home_Outside_Checkout/Data_Home_Outside_Checkout.md)
+
 ## The tree, in detail
 
 **Language is a leaf, never a branch.** Python lives in `py/` subfolders *inside* the
@@ -418,3 +428,8 @@ Repository conversation tooling uses Python 3.10+ and the standard library. Run 
 **Volume support numerical research (2026-10-12):** `scripts/volume_support_certificate_research.py --fixture <existing-decoded-json> --output <new-report.json>` runs CPU-only, reads its fixture and refuses report overwrites; no build or GPU session is needed. Eighteen named witness groups pass, but production skips stay zero because the complete backend/coordinate contract is unresolved. Conditional table coverage is not native performance or production proof. [Model, reproduction and refusal boundaries](audits/VOLUME_SUPPORT_NUMERICAL_CONTRACT_2026-10-12.md).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T00:43:07-07:00 (PDT).
+
+
+**Native volume compiler observer (2026-10-12):** after building `earthcall_webgpu`, run `python3 scripts/volume_backend_contract_probe.py --output /private/tmp/<new-directory>`. It links app objects with a scratch-only Metal compilation observer; options/source are forwarded unchanged and no hooks enter the app. Requires desktop GPU, defaults to 320×180 diagnostic images, uses no timestamps, and writes a fresh external directory. Eight paired images match; 104 native libraries compile, with 16 volume-containing module records at Fast arithmetic/Fast functions. The rational support tool now passes 24 witness groups but admits zero production skips; the former 18-group report is dated evidence. [Scope and reproduction](audits/VOLUME_SUPPORT_NATIVE_PROFILE_2026-10-12.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T11:27:35-07:00 (PDT).

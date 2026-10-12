@@ -251,11 +251,37 @@ def possible_bin(x,edges):
     return hits[0]
 
 
+def model_local_coordinate(ro, rd, sample_t, origin):
+    """Conditional producer ro + rd*sample_t - origin, not all WGSL rewrites.
+
+    Inputs are already materialized finite f32s. Covers product contraction
+    and every additive grouping of these three atoms. Upstream normalization,
+    lattice production and distributions through consumers are NOT enclosed.
+    """
+    return all_sum_trees((uploaded(ro), uploaded(rd)*uploaded(sample_t), uploaded(origin).neg()))
+
+
+def profile_obligations(profile):
+    """Observed native options add refusal reasons; never grant admission.
+
+    A Safe/Precise observation alone is insufficient. Proof still needs actual
+    translated-module transformations, input producer, and binding identity.
+    """
+    reasons=[]
+    if not profile or not profile.get('optionsPresent'):
+        reasons.append('native compile options unavailable')
+    else:
+        if profile.get('mathMode')!=0:reasons.append('native arithmetic mode not Safe')
+        if profile.get('mathFloatingPointFunctions')!=1:reasons.append('native math functions not Precise')
+    reasons.append('complete transformation/coordinate enclosure unresolved')
+    return reasons
+
+
 def production_zero(*args,**kwargs):
     # No verified closed arithmetic/coordinate evaluation profile is available
     # for the retained WGSL module. It permits broader reassociation than the
     # executable MODEL above; no flag in this research tool can assert otherwise.
-    raise Unknown('production execution/coordinate profile unresolved')
+    raise Unknown('; '.join(profile_obligations(kwargs.get('profile'))))
 
 
 def witnesses():
@@ -293,7 +319,24 @@ def witnesses():
         refuse(field,lambda domain=domain:require_same_binding(
             key(f,('medium0','point0','clock0')),key(f,('medium0','point0',domain))))
     refuse('unknown production profile refuses even model-certified zero',lambda:production_zero(f,Range.point(0.),Range.point(10.)))
-    # Independent high-precision libm samples supplement the rational derivation;
+    # An exact-real input of one is not the complete f32 coordinate domain:
+    # roundNearest((2^25 + 1)) - 2^25 = 0, whereas (2^25 - 2^25) + 1 = 1.
+    coord=model_local_coordinate(2**25,1,1,2**25)
+    ordinary=uploaded(float(uploaded(2**25+1).lo)-2**25).lo
+    regrouped=uploaded(float(uploaded(2**25-2**25).lo)+1).lo
+    assert ordinary==0 and regrouped==1 and coord.lo<=0 and coord.hi>=1
+    cases['coordinate producer encloses cancellation and regrouping']=True
+    refuse('coordinate uncertainty refuses apparent single-bin membership',lambda:possible_bin(
+        coord,[Q(-1),Q(1,2),Q(3,2),Q(9,2)]))
+    refuse('coordinate producer overflow',lambda:model_local_coordinate(float(MAX_F32),2, float(MAX_F32),0))
+    fast={'optionsPresent':True,'mathMode':2,'mathFloatingPointFunctions':0}
+    assert len(profile_obligations(fast))==3
+    refuse('observed Fast arithmetic and functions refuse production',lambda:production_zero(profile=fast))
+    safe={'optionsPresent':True,'mathMode':0,'mathFloatingPointFunctions':1}
+    assert len(profile_obligations(safe))==1
+    refuse('Safe Precise options alone do not grant admission',lambda:production_zero(profile=safe))
+    refuse('missing native compile options',lambda:production_zero(profile={'optionsPresent':False}))
+    # Independent host libm samples supplement the rational derivation;
     # they do not prove intrinsic error or backend profile closure.
     for kind in (0,1):
         for i in range(-24,25):

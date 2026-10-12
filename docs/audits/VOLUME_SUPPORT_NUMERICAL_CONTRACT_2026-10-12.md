@@ -90,3 +90,10 @@ Authoritative result: `/private/tmp/earthcall-sixth-one-sun-01a122d7/proof-pass/
 Provenance records HEAD `7df0702273bb50ee08bf976d0bf4cdb4ae3523fd`, tool SHA256 `738b1041985a8d992fd9045d13118b2332e15923a336afa23b783f9c8b3e53f6`, decoded fixture SHA256 `30115723790b9e64f34b3830c7f8f8bb4acdde1bdf3952890a3092274ca7edf3`, and Northern Veil save SHA256 `6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496`. Production volume sources remain the retained baseline. No native run, subagents, commits, pushes, save mutations or original `nv_probe` edits in this pass. Concurrent unrelated changes are preserved. Global whitespace checking still reports another agent's pre-existing Crucible trailing whitespace; focused checks apply to this pass's files.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T00:40:00-07:00 (PDT).
+
+
+## Later native-profile follow-up
+
+[Native observation and coordinate refusals](VOLUME_SUPPORT_NATIVE_PROFILE_2026-10-12.md) records the retained binary's actual Metal Fast/Fast option profile, eight paired 320×180 images and six additional witness groups (24 total in the evolved tool). The complete production execution enclosure still refuses admission. The 18-group report/hash and local-grid counts above remain the original dated result; the current script has subsequent additions and a new hash. No historical conditional coverage is promoted into production skips.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T11:27:35-07:00 (PDT).

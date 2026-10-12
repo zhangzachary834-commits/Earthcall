@@ -18,6 +18,7 @@
 #include "Identity/FirstMoverRegister.hpp"
 #include "Identity/PersonPresence.hpp"
 #include "Singularity/Core/Engine.hpp"
+#include "Singularity/Storage/SaveSystem.hpp"
 
 #include <algorithm>
 #include <cerrno>
@@ -58,9 +59,13 @@ constexpr const char* kLineEntered = "terminal-line-entered";
 // tests must never write into — or clear — the Person's own history).
 std::string historyFile() {
     const char* override = std::getenv("EARTHCALL_TERMINAL_HISTORY");
-    return override && *override ? override : "saves/logs/terminal-history.txt";
+    return override && *override
+        ? std::string(override)
+        : (SaveSystem::rootPath() / "logs" / "terminal-history.txt").string();
 }
-constexpr const char* kLogFile = "saves/logs/earthcall-terminal.log";
+std::string logFile() {
+    return (SaveSystem::rootPath() / "logs" / "earthcall-terminal.log").string();
+}
 
 // The event vocabulary, as it actually occurs: every event type the world has
 // published this session, and how often. No central list of event names.
@@ -296,7 +301,7 @@ struct LogRelay {
 LogRelay* g_relay = nullptr;
 
 void relayLoop(LogRelay* relay, int fd) {
-    std::ofstream log(kLogFile, std::ios::trunc);
+    std::ofstream log(logFile(), std::ios::trunc);
     std::string partial;
     char buf[4096];
     while (true) {
@@ -369,67 +374,38 @@ TerminalChannel* TerminalChannel::find(LawManager& laws) {
     return dynamic_cast<TerminalChannel*>(laws.find("terminal-channel"));
 }
 
-void TerminalChannel::attach(LawManager& laws) {
-    _attachTried = true;
-    _laws = &laws;
-#ifdef EARTHCALL_TERMINAL_POSIX
-    // Only a real terminal: under ctest, an IDE, or Finder there is no
-    // keyboard on stdin, and the channel stays quiet — and says why, once.
-    if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO) || g_attached) {
-        std::fprintf(stderr, "[terminal-channel] the Law Line is not listening: %s\n",
-                     g_attached ? "another Terminal channel already holds this terminal"
-                                : "stdin/stdout is not an interactive terminal");
-        return;
-    }
-    // Keep the Person's own settings before anything changes them: every exit
-    // path — quit, Ctrl-D, Ctrl-C, a crash — puts them back.
-    if (tcgetattr(STDIN_FILENO, &g_savedTermios) != 0) return;
-    g_haveSavedTermios = true;
-    g_attached = this;
-    g_tty = ::dup(STDOUT_FILENO);
-
-    // Character mode: every key arrives as it is pressed. ISIG is off so
-    // Ctrl-C clears the line instead of killing the world (twice quits).
-    termios raw = g_savedTermios;
-    raw.c_lflag &= ~static_cast<tcflag_t>(ICANON | ECHO | ISIG | IEXTEN);
-    raw.c_iflag &= ~static_cast<tcflag_t>(ICRNL | IXON);
-    raw.c_cc[VMIN] = 1;
-    raw.c_cc[VTIME] = 0;
-    tcsetattr(STDIN_FILENO, TCSANOW, &raw);
-    for (int sig : {SIGTERM, SIGHUP, SIGQUIT, SIGABRT, SIGSEGV, SIGBUS, SIGINT}) {
-        std::signal(sig, restoreOnSignal);
-    }
-    std::atexit(restoreTerminal);
-
-    std::error_code ec;
-    std::filesystem::create_directories("saves/logs", ec);
-    if (_relayLogs) {
-        int fds[2];
-        if (::pipe(fds) == 0) {
-            std::fflush(stdout);
-            std::fflush(stderr);
-            g_savedOut = ::dup(STDOUT_FILENO);
-            g_savedErr = ::dup(STDERR_FILENO);
-            ::dup2(fds[1], STDOUT_FILENO);
-            ::dup2(fds[1], STDERR_FILENO);
-            ::close(fds[1]);
-            std::setvbuf(stdout, nullptr, _IOLBF, 0);
-            if (!g_relay) g_relay = new LogRelay;
-            std::thread(relayLoop, g_relay, fds[0]).detach();
+std::vector<LawSentence::Suggestion> TerminalChannel::completionSuggestions(const std::string& before) {
+    std::vector<LawSentence::Suggestion> out;
+    if (!_completionItems || _editor.secret) return out;
+    for (const auto& stored : _completionItems->elements) {
+        PropertyValue candidate = stored;
+        // An authored menu may carry values directly or readable PropertyPaths.
+        // No Lexeme/Law/template schema is scanned or inferred here.
+        if (const auto* path = std::get_if<std::string>(&stored); path && !path->empty() && path->front() == '@') {
+            if (!lawGetValue(*this, PropertyPath::parse(*path), candidate)) continue;
         }
+        std::string text, description, snippet;
+        if (const auto* value = std::get_if<std::string>(&candidate)) text = *value;
+        else if (const auto* dict = std::get_if<std::shared_ptr<PropertyDict>>(&candidate); dict && *dict) {
+            const auto read = [&](const char* name) {
+                auto it = (*dict)->elements.find(name);
+                if (it == (*dict)->elements.end()) return std::string{};
+                const auto* v = std::get_if<std::string>(&it->second);
+                return v ? *v : std::string{};
+            };
+            text = read("text"); description = read("description"); snippet = read("snippet");
+        }
+        const std::string full = snippet.empty() ? text : text + " " + snippet;
+        if (full.empty() || lowerCopy(full).rfind(lowerCopy(before), 0) != 0) continue;
+        out.push_back({0, full, description, "value", 1, description, {}});
     }
+    return out;
+}
 
-    // History survives the session.
-    std::vector<std::string> history;
-    std::ifstream in(historyFile());
-    for (std::string line; std::getline(in, line);) {
-        if (!line.empty()) history.push_back(line);
-    }
-    if (history.size() > 1000) history.erase(history.begin(), history.end() - 1000);
-    _editor.setHistory(std::move(history));
-
+void TerminalChannel::configureEditor() {
     _editor.setProviders(
         [this](const std::string& before) {
+            if (_completionActive && !awaitingAnswer()) return completionSuggestions(before);
             if (!awaitingAnswer() && isEnterLine(before)) {
                 // `enter <zone>`: the menu offers the Zones the line can enter.
                 std::vector<LawSentence::Suggestion> out;
@@ -500,6 +476,11 @@ void TerminalChannel::attach(LawManager& laws) {
             return mapped;
         },
         [this](const std::string& text) {
+            if (_completionActive) return std::vector<LineEditor::Status>{{
+                completionSuggestions(_editor.buffer().substr(0, _editor.cursor())).empty()
+                    ? "No stored completions match this prefix · Esc returns to the sentence menu"
+                    : "Stored completions · arrows choose · Tab/Enter insert · Esc closes",
+                "note", std::string::npos}};
             long shift = 0;
             const std::string context = blockContext(text, shift);
             auto status = statusOf(context);
@@ -517,6 +498,70 @@ void TerminalChannel::attach(LawManager& laws) {
     // Enter on a sentence that cannot be authored yet keeps the line and says
     // what is missing, instead of filling the scrollback with refusals.
     _editor.submitGate = [this](const std::string& text) { return submitRefusal(text); };
+
+    _editor.accepted = [this] { _completionActive = false; };
+}
+
+void TerminalChannel::attach(LawManager& laws) {
+    _attachTried = true;
+    _laws = &laws;
+    configureEditor();
+#ifdef EARTHCALL_TERMINAL_POSIX
+    // Only a real terminal: under ctest, an IDE, or Finder there is no
+    // keyboard on stdin, and the channel stays quiet — and says why, once.
+    if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO) || g_attached) {
+        std::fprintf(stderr, "[terminal-channel] the Law Line is not listening: %s\n",
+                     g_attached ? "another Terminal channel already holds this terminal"
+                                : "stdin/stdout is not an interactive terminal");
+        return;
+    }
+    // Keep the Person's own settings before anything changes them: every exit
+    // path — quit, Ctrl-D, Ctrl-C, a crash — puts them back.
+    if (tcgetattr(STDIN_FILENO, &g_savedTermios) != 0) return;
+    g_haveSavedTermios = true;
+    g_attached = this;
+    g_tty = ::dup(STDOUT_FILENO);
+
+    // Character mode: every key arrives as it is pressed. ISIG is off so
+    // Ctrl-C clears the line instead of killing the world (twice quits).
+    termios raw = g_savedTermios;
+    raw.c_lflag &= ~static_cast<tcflag_t>(ICANON | ECHO | ISIG | IEXTEN);
+    raw.c_iflag &= ~static_cast<tcflag_t>(ICRNL | IXON);
+    raw.c_cc[VMIN] = 1;
+    raw.c_cc[VTIME] = 0;
+    tcsetattr(STDIN_FILENO, TCSANOW, &raw);
+    for (int sig : {SIGTERM, SIGHUP, SIGQUIT, SIGABRT, SIGSEGV, SIGBUS, SIGINT}) {
+        std::signal(sig, restoreOnSignal);
+    }
+    std::atexit(restoreTerminal);
+
+    std::error_code ec;
+    std::filesystem::create_directories(SaveSystem::rootPath() / "logs", ec);
+    if (_relayLogs) {
+        int fds[2];
+        if (::pipe(fds) == 0) {
+            std::fflush(stdout);
+            std::fflush(stderr);
+            g_savedOut = ::dup(STDOUT_FILENO);
+            g_savedErr = ::dup(STDERR_FILENO);
+            ::dup2(fds[1], STDOUT_FILENO);
+            ::dup2(fds[1], STDERR_FILENO);
+            ::close(fds[1]);
+            std::setvbuf(stdout, nullptr, _IOLBF, 0);
+            if (!g_relay) g_relay = new LogRelay;
+            std::thread(relayLoop, g_relay, fds[0]).detach();
+        }
+    }
+
+    // History survives the session.
+    std::vector<std::string> history;
+    std::ifstream in(historyFile());
+    for (std::string line; std::getline(in, line);) {
+        if (!line.empty()) history.push_back(line);
+    }
+    if (history.size() > 1000) history.erase(history.begin(), history.end() - 1000);
+    _editor.setHistory(std::move(history));
+
 
     writeTty("\x1b[?2004h");   // bracketed paste: a pasted sentence arrives as one
     _attached = true;
@@ -639,6 +684,23 @@ void TerminalChannel::printAbove(const std::string& text) {
 
 void TerminalChannel::handleKeys(const std::vector<Key>& keys, double now) {
     for (Key key : keys) {
+        if (key.kind == Key::Kind::Chord) {
+            if (_editor.secret || awaitingAnswer()) continue;
+            if (_lastChord != key.text) {
+                _lastChord = key.text;
+                Singular::notifyPropertyChanged(this, "key.chord");
+            }
+            _keyPresses += 1;
+            Singular::notifyPropertyChanged(this, "key.presses");
+            Singular::notifyPropertyChanged(this, "draft");
+            Singular::notifyPropertyChanged(this, "cursor");
+            Core::EventBus::instance().publish(ECA::Event{"terminal-key-pressed", this, nullptr, std::time(nullptr), key.text});
+            continue;
+        }
+        if (key.kind == Key::Kind::Escape || key.kind == Key::Kind::Interrupt) {
+            _completionActive = false;
+            _editor.refresh();
+        }
         if (key.kind == Key::Kind::CursorReport) {
             _reportScreenRow = key.y;   // 1-based screen row of the cursor, drawn at _reportRegionRow
             continue;
@@ -728,6 +790,7 @@ void TerminalChannel::sense(LawManager& laws) {
     ++_frame;
     if (!isEnabled()) return;
     if (!_attachTried) attach(laws);
+    placeLine();
 
 #ifdef EARTHCALL_TERMINAL_POSIX
     if (_attached && g_attached == this) {
@@ -749,7 +812,7 @@ void TerminalChannel::sense(LawManager& laws) {
         if (!bytes.empty()) keys = _decoder.feed(bytes, now);
         for (auto& k : _decoder.flush(now)) keys.push_back(std::move(k));
         bool dirty = !keys.empty();
-        if (!keys.empty()) handleKeys(keys, now);
+        for (auto& key : keys) _keyQueue.push_back(std::move(key));
 
         // The app's own output, above the line, dimmed.
         if (g_relay && _attached) {
@@ -782,6 +845,23 @@ void TerminalChannel::sense(LawManager& laws) {
     }
 #endif
 
+    if (!_injectedBytes.empty()) {
+        for (auto& key : _decoder.feed(_injectedBytes, secondsNow())) _keyQueue.push_back(std::move(key));
+        _injectedBytes.clear();
+    }
+    const bool hadKeys = !_keyQueue.empty();
+    // Compare once per read, not once per byte of a large bracketed paste.
+    const std::string oldDraft = hadKeys ? propDraft() : std::string{};
+    const double oldCursor = propCursor();
+    while (!_keyQueue.empty()) {
+        Key key = std::move(_keyQueue.front()); _keyQueue.pop_front();
+        const auto pendingBefore = _pending.size();
+        handleKeys({key}, secondsNow());
+        if ((key.kind == Key::Kind::Chord && !_editor.secret) || _pending.size() != pendingBefore) break;
+    }
+    if (hadKeys && oldDraft != propDraft()) Singular::notifyPropertyChanged(this, "draft");
+    if (hadKeys && oldCursor != propCursor()) Singular::notifyPropertyChanged(this, "cursor");
+    if (_attached && hadKeys) draw();
     if (_pending.empty()) return;
     placeLine();   // a line typed in the very first frame still has a location
     std::string line = _pending.front();
@@ -874,6 +954,13 @@ void TerminalChannel::act(LawManager& laws) {
             _editor.refresh();
             draw();
         }
+    }
+    if (_completionRequests != _completionHandled) {
+        _completionHandled = _completionRequests;
+        // An output request cannot reveal or change a secret or confirmation.
+        _completionActive = !_editor.secret && !awaitingAnswer();
+        if (_completionActive) _editor.openMenu();
+        if (_attached) draw();
     }
     if (_speakRequests == _spoken) return;
     _spoken = _speakRequests;
@@ -1920,6 +2007,7 @@ void TerminalChannel::beginSecret() {
             "Person (you will type it twice). There is no recovery if it is lost. Ctrl-C cancels.");
     }
     _awaitingSecretFlag = true;
+    _completionActive = false;
     _editor.secret = true;
     _editor.refresh();
 }
@@ -2384,6 +2472,20 @@ void TerminalChannel::buildProperties() {
         registerProperty(std::make_unique<Level<T>>(name, member, false));
     };
     level("lastLine", &_lastLine);
+    level("key.chord", &_lastChord);
+    level("key.presses", &_keyPresses);
+    registerProperty(std::make_unique<ComputedProperty<TerminalChannel, std::string>>(
+        "draft", this, &TerminalChannel::propDraft));
+    registerProperty(std::make_unique<ComputedProperty<TerminalChannel, double>>(
+        "cursor", this, &TerminalChannel::propCursor));
+    writable("completion.items", &_completionItems);
+    writable("completion.openRequests", &_completionRequests);
+    level("completion.handledRequests", &_completionHandled);
+    writable("completion.active", &_completionActive);
+    registerProperty(std::make_unique<ComputedProperty<TerminalChannel, bool>>(
+        "completion.visible", this, &TerminalChannel::propCompletionVisible));
+    registerProperty(std::make_unique<ComputedProperty<TerminalChannel, double>>(
+        "completion.matchCount", this, &TerminalChannel::propCompletionMatches));
     registerProperty(std::make_unique<ComputedProperty<TerminalChannel, std::string>>(
         "block", this, &TerminalChannel::propBlock));
     writable("prompt", &_prompt);

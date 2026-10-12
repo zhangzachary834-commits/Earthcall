@@ -230,6 +230,8 @@ Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
 
 ## FieldNode authored-math revision and the volume zero-density proof cache (2026-10-09)
 
+**Per-channel since 2026-10-12.** Each authored channel (`field.ast`, the seven `volume.*` channels, `light.chroma/angular`) now carries its own never-repeating revision. Bridges note only their channel, `applyJson` notes only channels whose content changed, and the verifier heals only the channel it caught. `noteAuthoredMathWritten()` still moves every channel, for writers that cannot name one. Invalidation is now a per-channel dependency frontier (Formation Rete Incremental Maintenance §2): an emission edit no longer rebuilds the density proof or its support envelope. Witnesses: `field_node_authored_revision_test` case 8 and the frontier case in `webgpu_volume_zero_proof_test` (emission edit: 0 proof builds; density edit: exactly 1, byte-identical to exact).
+
 **`geom::FieldNode` authored-math revision** replaces per-frame JSON hashing of every authored
 channel (`field.ast`, `volume.*.ast`, `volume.occluder.sdf`, `light.*.ast`) as Screen's change
 signal. Signal: one process-wide sequence that never repeats, bumped by the property bridges
@@ -374,3 +376,10 @@ The read-only diagnostic adds no production derived state. Its process-local GPU
 No production cache or GPU resource is added. Process-local rational intervals and memoized sum trees live within the CPU research run; the report goes to a fresh scratch file. Proposed certificate dependencies are the recognized AST, finite converted parameter bits, coordinate/clock/source binding, local extents, bin edges and the verified execution profile. The prototype tests mismatched keys/refusal; it does not install production invalidation. Current production profile remains Unknown, hence admitted skips are zero. All 18 research witness groups pass. OntoMath intervals and retained device/cache lifetime rules are unchanged. [Conditional contract and evidence limits](../../audits/VOLUME_SUPPORT_NUMERICAL_CONTRACT_2026-10-12.md).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T00:43:07-07:00 (PDT).
+
+
+### Scratch native compilation observations — October 12
+
+The compiler observer adds no production derived state. Its concrete-device method replacement, original implementation pointer, mutex, record counter and retained output path live only in the linked scratch process and end at process teardown. It forwards source/options unchanged and records each compilation in a new external output directory. Observations depend on the exact vendored library, translated module, native device/driver and compile options; provenance preserves binaries/source hashes. No observed profile grants proof reuse: the tool still declines every production certificate until complete transformation/coordinate/binding enclosure is established. Twenty-four CPU witnesses pass; eight paired low-resolution native images match. Existing program/proof residency and device invalidation remain unchanged. [Contract](../../audits/VOLUME_SUPPORT_NATIVE_PROFILE_2026-10-12.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T11:27:35-07:00 (PDT).

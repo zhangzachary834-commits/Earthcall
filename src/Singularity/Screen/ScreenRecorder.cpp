@@ -1,5 +1,6 @@
 #include "Singularity/Screen/ScreenRecorder.hpp"
 #include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/Storage/VirtualFileSystem.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 
 #include <zlib.h>
@@ -308,7 +309,7 @@ std::string ScreenRecorder::ensureSessionDirectory() {
     char buf[64];
     std::strftime(buf, sizeof(buf), "rec_%Y%m%d_%H%M%S", &gm_tm);
 
-    fs::path baseDir = _outputPath.empty() ? "saves/recordings" : _outputPath;
+    fs::path baseDir = Singularity::Storage::VirtualFileSystem::resolve(_outputPath.empty() ? "saves/recordings" : _outputPath);
     std::error_code ec;
     fs::create_directories(baseDir, ec);
     if (ec) {
@@ -684,7 +685,7 @@ bool ScreenRecorder::captureSnapshot(const std::string& customPath, int viewport
 #endif
         char buf[64];
         std::strftime(buf, sizeof(buf), "snapshot_%Y%m%d_%H%M%S.png", &gm_tm);
-        fs::path baseDir = _outputPath.empty() ? "saves/recordings" : _outputPath;
+        fs::path baseDir = Singularity::Storage::VirtualFileSystem::resolve(_outputPath.empty() ? "saves/recordings" : _outputPath);
         std::error_code ec;
         fs::create_directories(baseDir, ec);
         fs::path candidate = baseDir / buf;

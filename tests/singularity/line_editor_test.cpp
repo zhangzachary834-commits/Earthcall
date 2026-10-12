@@ -68,6 +68,15 @@ void decoding() {
                               K::BackTab, K::Enter, K::Backspace, K::Interrupt, K::EndOfInput,
                               K::HistorySearch};
     assert(kinds == want);
+    keys = d.feed("\x14\x1b[116;9u\x1b[116;9:2u\x1b[116;9:3u", 0.0);
+    assert(keys.size() == 2 && keys[0].kind == K::Chord && keys[0].text == "ctrl+t" &&
+           keys[1].kind == K::Chord && keys[1].text == "cmd+t");
+    assert(d.feed("\x1b[999999999;9u\x1b[116;999999999u", 0.0).empty());
+    assert(d.feed("\x1b[116;", 0.0).empty());
+    keys = d.feed("9:1u", 0.0);
+    assert(keys.size() == 1 && keys[0].text == "cmd+t");
+    keys = d.feed("\x1b[200~a\x14" "b\x1b[201~", 0.0);
+    assert(std::none_of(keys.begin(), keys.end(), [](const Key& key) { return key.kind == K::Chord; }));
     // Word jumps from Option/Ctrl-arrows, Home/End, Delete.
     keys = d.feed("\x1b[1;3D\x1b[1;5C\x1b[H\x1b[F\x1b[3~\x1b" "b\x1b" "f", 0.0);
     assert(keys.size() == 7 && keys[0].kind == K::WordLeft && keys[1].kind == K::WordRight &&

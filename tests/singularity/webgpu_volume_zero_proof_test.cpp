@@ -52,6 +52,7 @@ struct Frame {
     double ms = 0.0;
     uint32_t proven = 0;
     uint32_t firstCompiles = 0;
+    uint32_t firstProofBuilds = 0;   // zero-density proofs built by the first frame after a change
     uint32_t warmCompiles = 0;
     size_t warmParameterUploads = 0, warmProofUploads = 0;
     std::vector<unsigned char> rgba;
@@ -172,6 +173,7 @@ int main() {
         Frame frame;
         drawOnce();
         frame.firstCompiles = renderer.frameStats().volumeProgramCompiles;
+        frame.firstProofBuilds = renderer.frameStats().volumeZeroProofBuilds;
         sync();   // warm: compile, build proofs
         const auto t0 = std::chrono::steady_clock::now();
         for (int i = 0; i < timedFrames; ++i) {
@@ -293,6 +295,30 @@ int main() {
     check(resized.proven > 0 && resized.rgba == resizedExact.rgba,
           "changed half-extents cannot reuse stale column bounds or payload offsets");
 
+
+    // Per-channel dependency frontier (Opus, 2026-10-12; Formation Rete
+    // Incremental Maintenance §2). Through the real renderer: editing a
+    // medium's emission must not rebuild its zero-density proof, and editing
+    // its density must rebuild exactly one, still matching the exact path.
+    {
+        *edited->volumeDensity = *media.front()->volumeDensity;
+        edited->noteAuthoredMathWritten();
+        render({edited}, true, 7.25, 1);   // the proof for this density now exists
+        Property* emission = edited->findProperty("volume.emission.ast");
+        Property* density = edited->findProperty("volume.density.ast");
+        const auto& other = media.size() > 1 ? media[1] : media.front();
+        check(emission && emission->setValue(PropertyValue(other->volumeEmission->toJson().dump())),
+              "emission accepts another medium's emission tree");
+        const Frame afterEmission = render({edited}, true, 7.25, 1);
+        check(afterEmission.firstProofBuilds == 0,
+              "an emission edit rebuilds no zero-density proof (per-channel revision)");
+        check(density && density->setValue(PropertyValue(other->volumeDensity->toJson().dump())),
+              "density accepts another medium's density tree");
+        const Frame afterDensity = render({edited}, true, 7.25, 1);
+        const Frame afterDensityExact = render({edited}, false, 7.25, 1);
+        check(afterDensity.firstProofBuilds == 1 && afterDensity.rgba == afterDensityExact.rgba,
+              "a density edit rebuilds exactly one proof and stays byte-identical to exact");
+    }
 
     // Unknown temporal support must fail open, including the inside camera.
     *edited->volumeDensity = OntoMath::Piecewise::fromJson(nlohmann::json::parse(

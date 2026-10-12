@@ -92,7 +92,7 @@ src/
                   FirstMoverOntology/ (FirstMoverWindowTools · Legacy · TalkingRobotGuyAPI)
   Identity/       First Mover register, identity ledger, keys
   Time/           Timeline · Moment · Event (distinguished Moment) — temporal ownership is relational; Universe may borrow a Timeline
-docs/ tests/ examples/ scripts/ saves/ scratch/     the workshop
+docs/ tests/ examples/ scripts/ saves/ scratch/     the workshop (saves/ = frozen snapshot + fixtures; live data is the data home)
 third_party/ local_deps/ imgui/                     the foreign
 ```
 
@@ -104,7 +104,7 @@ third_party/ local_deps/ imgui/                     the foreign
 
 **Read `docs/BUILD_AND_ENVIRONMENT.md` before building, adding tests, or searching the tree.** Its recipe owns the CMake policy/OpenSSL paths; avoid duplicating dependency versions here.
 
-- App: `cmake --build build --target earthcall_webgpu -j8`; `earthcall` is the OpenGL fallback.
+- App: `cmake --build build --target earthcall_webgpu -j8`; `earthcall` is the OpenGL fallback. Installed `/Applications/Earthcall.app`: `scripts/macos/install_app.sh` (BUILD_AND_ENVIRONMENT § Installing Earthcall.app).
 - Tests: build the named targets for a focused pass; the default build builds the active suite; `ctest --test-dir build --output-on-failure -j4` runs it.
 - Inventory: `ctest --test-dir build -N` lists the local configuration, which can be stale; reconfigure after adding/removing `.cpp` files.
 - GPU/GL tests need a desktop GPU/display session; a device-acquisition refusal is an environment result. `Not Run` is not an assertion failure.
@@ -141,7 +141,7 @@ third_party/ local_deps/ imgui/                     the foreign
 - **Mention the things human developers told you that you're drawing from.** Don't just write a document; address what the Person said so authorial intent and progress toward the human telos remain traceable.
   You may write in a register as if the idea is your own—it is good to internalize and fulfill ideas—but make origination clear: what came from real people, what you originated, and where you extended the Person's idea.
   Leave room for independently re-derived work, which may originate with you while remaining within the human thread.
-- **Save files are sacred.** They are Earthcall's flesh and blood, the reason for refusals #1 and #3; preserve their profound human meaning and relationships across architectural shifts, and modify them only with authorization from their owner/stakeholder Persons. **Patch, never regenerate:** every save generator and injection makes targeted edits to the file as it exists on disk. It stages a new file holding the old contents plus your edits, keeps the old file, verifies nothing in either was erased, then renames atomically. Scratch builds are allowed only for a first seed. → `law/FIRST_MOVER_AUTHORING.md` §7 rule 8.
+- **Save files are sacred.** They are Earthcall's flesh and blood, the reason for refusals #1 and #3; preserve their profound human meaning and relationships across architectural shifts, and modify them only with authorization from their owner/stakeholder Persons. **Patch, never regenerate:** every save generator and injection makes targeted edits to the file as it exists on disk. It stages a new file holding the old contents plus your edits, keeps the old file, verifies nothing in either was erased, then renames atomically. Scratch builds are allowed only for a first seed. → `law/FIRST_MOVER_AUTHORING.md` §7 rule 8. Live saves are in the git-versioned data home `~/Library/Application Support/Earthcall` (`SaveSystem::rootPath()`, `scripts/earthcall_data_home.py`), not the checkout's `saves/`; commit them there → `docs/BUILD_AND_ENVIRONMENT.md` § Where data lives.
 
 ---
 
@@ -194,3 +194,5 @@ you read the source—run things**, and **after finishing, ask whether anything 
 *MTG 3D Zone completed: 14 authored laws, 11 rich materials, spatial floor compliance (y >= 0.52), OntoMath Piecewise Map phase cycle, and full automated integration test with 113/113 checks passed. [Verification](docs/Agenda/Tasks/For%20Zach/Person%20Verification%20List.md#3d-magic-the-gathering-mtg-zone). Antigravity / Gemini / session `e1346ea7-7d86-4945-8831-01e3e33dd09a` / 2026-10-11.*
 
 *Support certificate research: 18 CPU witness groups pass, but the production profile is unresolved and admitted skips remain zero; retained rendering unchanged. [Boundary](docs/audits/VOLUME_SUPPORT_NUMERICAL_CONTRACT_2026-10-12.md). Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T00:43:07-07:00 (PDT).*
+
+*Native certificate follow-up: actual Metal Fast/Fast options observed; 24 CPU witness groups and eight paired 320x180 images pass, complete execution enclosure unfinished and production skips zero. [Evidence](docs/audits/VOLUME_SUPPORT_NATIVE_PROFILE_2026-10-12.md). Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T11:27:35-07:00 (PDT).*

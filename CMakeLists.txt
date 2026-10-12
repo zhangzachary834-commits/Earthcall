@@ -322,6 +322,18 @@ if(NOT EMSCRIPTEN)
     add_executable(earthcall_fmt src/Singularity/Storage/EarthcallFmtTool.cpp)
     target_link_libraries(earthcall_fmt PRIVATE earthcall_core)
 
+    # Earthcall.app — the installed macOS app (scripts/macos/package_app.sh).
+    # Not in ALL: building it signs and assembles a bundle, which a test or dev
+    # build should never pay for. scripts/macos/install_app.sh builds it.
+    if(APPLE AND TARGET earthcall_webgpu)
+        add_custom_target(earthcall_app
+            COMMAND ${CMAKE_SOURCE_DIR}/scripts/macos/package_app.sh ${CMAKE_BINARY_DIR}
+            DEPENDS earthcall_webgpu earthcall_first_mover
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Assembling and signing Earthcall.app"
+            VERBATIM)
+    endif()
+
     # --- Tests ---
     enable_testing()
     file(GLOB_RECURSE TEST_FILES "tests/*.cpp")
@@ -430,7 +442,15 @@ if(NOT EMSCRIPTEN)
         else()
             list(APPEND ALL_ACTIVE_TEST_TARGETS ${TEST_NAME})
         endif()
-        add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+        if (${TEST_NAME} STREQUAL "law_line_zone_test")
+            # The app home is live; saves/ is frozen. Layer the current authored
+            # seed into an isolated fixture so new Metalaws are actually tested.
+            find_program(EARTHCALL_LAW_LINE_PYTHON NAMES python3 python REQUIRED)
+            add_test(NAME ${TEST_NAME} COMMAND ${EARTHCALL_LAW_LINE_PYTHON}
+                ${CMAKE_SOURCE_DIR}/tests/singularity/run_law_line_zone_test.py $<TARGET_FILE:${TEST_NAME}>)
+        else()
+            add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+        endif()
 
         # ctest's default WORKING_DIRECTORY for an add_test() target is the
         # build tree, not the source tree. synthesis_studio_app_test opens an

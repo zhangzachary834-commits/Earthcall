@@ -139,3 +139,10 @@ Implemented a reproducible read-only GPU fragment census, with paired pixels and
 The rational scalar-support model and two-endpoint band pass 18 named witness groups. Only 157/1,024 fixture bins meet the model's intrinsic-domain restriction; its conditional grid coverage is not demanded-ray coverage. Complete production transformations/coordinate arithmetic are not enclosed, so production-admitted opportunity is zero and no runtime guard is built or timed. AD-30–32 remain OPEN; this is scalar research, not certified tail termination or new whole-contribution skipping. [Derivation, refusals, artifacts and next boundary](../audits/VOLUME_SUPPORT_NUMERICAL_CONTRACT_2026-10-12.md). Retained scheduling remains the baseline.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T00:43:07-07:00 (PDT).
+
+
+## Actual Metal profile observed — October 12 follow-up
+
+The native option profile is now known: retained volume MSL uses Fast arithmetic and Fast functions. Complete execution enclosure under that profile remains unresolved. Implemented a scratch-only source/options observer and conditional local-coordinate/refusal witnesses; 24 groups pass and eight observed/plain 320×180 images match. These do not admit the guard or establish native-size correctness/performance. No new production behavior or FPS gain. [Reproduction, assumptions and next boundary](../audits/VOLUME_SUPPORT_NATIVE_PROFILE_2026-10-12.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T11:27:35-07:00 (PDT).

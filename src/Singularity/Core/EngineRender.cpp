@@ -172,20 +172,20 @@ namespace Core {
             source.temporalDelta = sourceDelta;
             source.enabled = light.enabled;
 
-            const uint64_t mathRevision = field->verifiedAuthoredMathRevision();
+            field->verifyAuthoredMath();
             if (field->field &&
                 field->field->mode == OntoMath::ScalarField::EvaluationMode::AST &&
                 !field->field->astDefinition.pieces.empty()) {
                 source.radianceExpr = &field->field->astDefinition;
-                source.radianceRevision = Rendering::authoredChannelRevision(mathRevision, 0);
+                source.radianceRevision = field->authoredMathRevision(geom::FieldNode::kMathFieldAst);
             }
             if (field->lightChroma && !field->lightChroma->pieces.empty()) {
                 source.chromaExpr = field->lightChroma.get();
-                source.chromaRevision = Rendering::authoredChannelRevision(mathRevision, 8);
+                source.chromaRevision = field->authoredMathRevision(geom::FieldNode::kMathLightChroma);
             }
             if (field->lightAngular && !field->lightAngular->pieces.empty()) {
                 source.angularExpr = field->lightAngular.get();
-                source.angularRevision = Rendering::authoredChannelRevision(mathRevision, 9);
+                source.angularRevision = field->authoredMathRevision(geom::FieldNode::kMathLightAngular);
             }
 
             // Rung 7 structural/value invalidation is intentionally bounded.

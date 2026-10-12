@@ -390,3 +390,22 @@ Implemented a reproducible read-only GPU fragment census, with paired pixels and
 Implemented a generic AST-recognized scalar-support research tool with rational rounding/intrinsic enclosures, a conditional two-endpoint band and 18 passing witness groups. The complete production transformation/coordinate contract is unresolved, so **zero production skips are admitted** and the runtime candidate stops here. Conditional grid zeros are not remaining GPU demand or a performance result. AD-30–32 remain OPEN; retained rendering and saves are untouched. [Derivation, refusals, all coverage and next dependency](../../../../../audits/VOLUME_SUPPORT_NUMERICAL_CONTRACT_2026-10-12.md). Zach's default-window/most-auroras clarification remains qualitative live context; warmed movement and 30 FPS acceptance are still open.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T00:43:07-07:00 (PDT).
+
+
+## Native numerical profile follow-up — October 12
+
+The retained wgpu-native v29.0.1.1 volume modules are now observed compiling with Metal Fast arithmetic and Fast functions on Apple M5. A scratch-only compiler observer preserves all arguments/options; eight paired 320×180 images match every byte. The rational tool passes 24 witness groups, including cancellation and uncertain coordinate-bin refusal. Complete Fast-mode transformation/producer enclosure remains unresolved, so no guard or new performance candidate is installed. Earlier local-grid figures remain conditional, with zero admitted production skips. [Native options, evidence limits and next dependency](../../../../../audits/VOLUME_SUPPORT_NATIVE_PROFILE_2026-10-12.md). AD-30–36 remain open author review, not a blanket hold on independent engineering; existing movement/appearance acceptance remains open.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T11:27:35-07:00 (PDT).
+
+
+## Per-channel authored-math revisions (2026-10-12)
+
+Zach asked which Prophetic / Formation Rete precedents map onto the renderer; he chose the third, Formation Rete Incremental Maintenance §2: "semantic deltas, not global revision panic."
+- **Change:** `geom::FieldNode`'s single revision is now one revision per authored channel. Editing a curtain's emission (or chroma, phase…) no longer moves `densityRevision`, so the density zero-proof, its derived support envelope and the sharing plan for unchanged channels survive the edit. Identical reloads move nothing. The MCP `author_volume` path notes exactly the channels it wrote.
+- **Witnesses:** `field_node_authored_revision_test` 30/30 and `webgpu_volume_zero_proof_test` 69/69. Through the real renderer, an emission edit builds 0 proofs and a density edit exactly 1, byte-identical to the exact path. Also passing: the volume, channel and save suite, including the Sun's `webgpu_volume_shared_subexpression_test` (65/65).
+- **Not a frame-rate change:** this makes edits cheaper; steady frames are unaffected.
+- **Uncommitted files:** `FieldNode.hpp/.cpp`, `VolumeDensity.hpp`, `EngineRender.cpp`, `WebSocketServer.cpp`, the two tests, and the ledger entry.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `session_01NJy6VrPVNcHAnggwFyTsmF` · 2026-10-12
+

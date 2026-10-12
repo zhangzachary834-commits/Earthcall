@@ -35,7 +35,7 @@
 //       will sign nothing else) and prints the hex signature. Needs
 //       EARTHCALL_MOVER_PASSPHRASE. The private key never leaves this process.
 //
-// Every command accepts --saves <dir> (default: ./saves).
+// Every command accepts --saves <dir> (default: the data home, else ./saves).
 //
 // Built 2026-09-24 by Claude Opus 5.5 at Zach's request, implementing phases
 // 5.3 and 7 of Sol's docs/plans/MCP_FIRST_MOVER_GOVERNANCE_IMPLEMENTATION_PLAN_
@@ -76,7 +76,7 @@ int usage() {
         "  earthcall_first_mover list\n"
         "  earthcall_first_mover check-person | check-mover --mover <id>   (exit 0 = passphrase opens the key)\n"
         "  earthcall_first_mover sign-challenge --mover <id> --challenge-id <c> --nonce <n> --connection <k>\n"
-        "  (all accept --saves <dir>, default ./saves)\n\n"
+        "  (all accept --saves <dir>, default the data home, else ./saves)\n\n"
         "  EARTHCALL_KEY_PASSPHRASE    unlocks the granting Person's key (grant, revoke)\n"
         "  EARTHCALL_MOVER_PASSPHRASE  seals / unlocks the mover's key (mint, sign-challenge)\n";
     return 2;
@@ -106,11 +106,20 @@ const char* env(const char* name) {
     return (v && *v) ? v : nullptr;
 }
 
+// Without --saves, the same choice the engine makes at boot, so a grant lands
+// in the register the running app reads rather than a stale checkout copy.
 fs::path savesDir(const Args& a) {
     const std::string s = get(a, "saves");
     std::error_code ec;
-    fs::path p = fs::absolute(s.empty() ? "saves" : s, ec);
-    return p;
+    if (!s.empty()) return fs::absolute(s, ec);
+    static const fs::path chosen = [] {
+        std::error_code e;
+        std::string note;
+        fs::path p = SaveSystem::chooseDataRoot(fs::absolute("saves", e), note);
+        std::cerr << "[first-mover] " << note << "\n";
+        return p;
+    }();
+    return chosen;
 }
 
 // The Person whose key must unlock: explicit, or the single keyed profile.

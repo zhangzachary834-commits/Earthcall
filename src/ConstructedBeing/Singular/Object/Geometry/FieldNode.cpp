@@ -2,6 +2,8 @@
 #include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 
+#include <algorithm>
+#include <array>
 #include <atomic>
 #include <cstdio>
 
@@ -19,49 +21,69 @@ const char* const kAuthoredMathChannelNames[] = {
     "light.angular.ast"};
 }
 
-void FieldNode::noteAuthoredMathWritten() {
-    _authoredMathRevision = gAuthoredMathSequence.fetch_add(1) + 1;
+std::string FieldNode::channelContent(std::size_t channel) const {
+    const OntoMath::Piecewise* expr = nullptr;
+    switch (channel) {
+    case kMathFieldAst:
+        // Mode joins the content: switching to AST evaluation changes what
+        // Screen reads even when the tree is unchanged.
+        return field ? std::to_string(static_cast<int>(field->mode)) + ":" +
+                           field->astDefinition.toJson().dump()
+                     : std::string();
+    case kMathVolumeDensity: expr = volumeDensity.get(); break;
+    case kMathVolumeExtinction: expr = volumeExtinction.get(); break;
+    case kMathVolumeScattering: expr = volumeScattering.get(); break;
+    case kMathVolumeChroma: expr = volumeChroma.get(); break;
+    case kMathVolumePhase: expr = volumePhase.get(); break;
+    case kMathVolumeEmission: expr = volumeEmission.get(); break;
+    case kMathVolumeOccluder:
+        return geom::isSdfActive(volumeOccluder.get()) ? geom::sdfToJson(*volumeOccluder).dump()
+                                                       : std::string();
+    case kMathLightChroma: expr = lightChroma.get(); break;
+    case kMathLightAngular: expr = lightAngular.get(); break;
+    default: break;
+    }
+    return expr ? expr->toJson().dump() : std::string();
 }
 
-uint64_t FieldNode::verifiedAuthoredMathRevision() const {
+void FieldNode::noteAuthoredChannelWritten(std::size_t channel) {
+    if (channel < kAuthoredMathChannels)
+        _channelRevision[channel] = gAuthoredMathSequence.fetch_add(1) + 1;
+}
+
+void FieldNode::noteAuthoredMathWritten() {
+    for (std::size_t c = 0; c < kAuthoredMathChannels; ++c) noteAuthoredChannelWritten(c);
+}
+
+uint64_t FieldNode::authoredMathRevision() const {
+    uint64_t newest = 0;
+    for (const uint64_t r : _channelRevision) newest = std::max(newest, r);
+    return newest;
+}
+
+void FieldNode::verifyAuthoredMath() const {
     static_assert(sizeof(kAuthoredMathChannelNames) / sizeof(kAuthoredMathChannelNames[0]) ==
                   kAuthoredMathChannels, "one name per verified channel");
     const std::size_t channel = _verifyCursor;
     _verifyCursor = (_verifyCursor + 1) % kAuthoredMathChannels;
+    const uint64_t hash = static_cast<uint64_t>(std::hash<std::string>{}(channelContent(channel)));
 
-    const OntoMath::Piecewise* expr = nullptr;
-    switch (channel) {
-    case 0: expr = field ? &field->astDefinition : nullptr; break;
-    case 1: expr = volumeDensity.get(); break;
-    case 2: expr = volumeExtinction.get(); break;
-    case 3: expr = volumeScattering.get(); break;
-    case 4: expr = volumeChroma.get(); break;
-    case 5: expr = volumePhase.get(); break;
-    case 6: expr = volumeEmission.get(); break;
-    case 8: expr = lightChroma.get(); break;
-    case 9: expr = lightAngular.get(); break;
-    default: break;
-    }
-    std::string content;
-    if (channel == 7) {
-        if (geom::isSdfActive(volumeOccluder.get())) content = geom::sdfToJson(*volumeOccluder).dump();
-    } else if (expr) {
-        content = expr->toJson().dump();
-    }
-    const uint64_t hash = static_cast<uint64_t>(std::hash<std::string>{}(content));
-
-    if (_verifiedAtRevision[channel] == _authoredMathRevision &&
+    if (_verifiedAtRevision[channel] == _channelRevision[channel] &&
         _verifiedContentHash[channel] != hash) {
         std::fprintf(stderr,
-                     "[FieldNode] %s.%s changed without noteAuthoredMathWritten(); "
-                     "revision bumped so Screen re-reads it. Find the writer and "
-                     "make it call noteAuthoredMathWritten().\n",
+                     "[FieldNode] %s.%s changed without noteAuthoredChannelWritten(); "
+                     "that channel's revision was bumped so Screen re-reads it. Find the "
+                     "writer and make it note the channel it changed.\n",
                      _id.c_str(), kAuthoredMathChannelNames[channel]);
-        _authoredMathRevision = gAuthoredMathSequence.fetch_add(1) + 1;
+        _channelRevision[channel] = gAuthoredMathSequence.fetch_add(1) + 1;
     }
     _verifiedContentHash[channel] = hash;
-    _verifiedAtRevision[channel] = _authoredMathRevision;
-    return _authoredMathRevision;
+    _verifiedAtRevision[channel] = _channelRevision[channel];
+}
+
+uint64_t FieldNode::verifiedAuthoredMathRevision() const {
+    verifyAuthoredMath();
+    return authoredMathRevision();
 }
 
 nlohmann::json FieldNode::toJson() const {
@@ -116,6 +138,9 @@ nlohmann::json FieldNode::toJson() const {
 }
 
 void FieldNode::applyJson(const nlohmann::json& j) {
+    // Per-channel delta: only channels whose content actually changes move.
+    std::array<std::string, kAuthoredMathChannels> before;
+    for (std::size_t c = 0; c < kAuthoredMathChannels; ++c) before[c] = channelContent(c);
     if (j.contains("origin") && j["origin"].is_array() && j["origin"].size() == 3) {
         origin = glm::vec3(j["origin"][0], j["origin"][1], j["origin"][2]);
     }
@@ -218,7 +243,9 @@ void FieldNode::applyJson(const nlohmann::json& j) {
             *lightAngular = OntoMath::Piecewise{};
         }
     }
-    noteAuthoredMathWritten();
+    for (std::size_t c = 0; c < kAuthoredMathChannels; ++c) {
+        if (channelContent(c) != before[c]) noteAuthoredChannelWritten(c);
+    }
 
     if (j.contains("authoredProperties") && j["authoredProperties"].is_object()) {
         for (auto it = j["authoredProperties"].begin();
