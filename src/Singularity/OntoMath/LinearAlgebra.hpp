@@ -124,6 +124,12 @@ std::optional<glm::vec3> transformPoint(const MatrixValue& affine,
                                         const glm::vec3& point);
 std::optional<glm::vec3> transformDirection(const MatrixValue& affine,
                                             const glm::vec3& direction);
+// Pull a world-space linear functional back through the affine linear part.
+// For support mappings this is A^T d: argmax_x d·(A x + t) = argmax_x (A^T d)·x.
+// Unlike transformNormal, this requires no inverse and remains defined for
+// singular affine maps.
+std::optional<glm::vec3> pullbackCovector(const MatrixValue& affine,
+                                          const glm::vec3& worldCovector);
 std::optional<glm::vec3> transformNormal(const MatrixValue& affine,
                                          const glm::vec3& normal);
 std::optional<MatrixValue> inverseAffine(const MatrixValue& affine);

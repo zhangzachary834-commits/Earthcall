@@ -42,6 +42,7 @@ jobs:
         ontomath_authoring_reachability_test
         ontomath_affine_sovereignty_test
         geometry_ontomath_test
+        gift_shop_guardrail_test
         interaction_channel_test
         creator_console_fixture_law_test
         keyboard_shell_shortcuts_test
@@ -99,6 +100,7 @@ jobs:
         advanced_face_paint_test
         action_model_test
         async_state_logger_test
+        my_probe_test
         save_system_error_test
         dump_test_save_isolation_test
         foreign_web_dom_bridge_test

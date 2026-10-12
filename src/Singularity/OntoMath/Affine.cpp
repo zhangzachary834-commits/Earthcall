@@ -76,6 +76,17 @@ std::optional<glm::vec3> transformPoint(const MatrixValue& m,const glm::vec3& p)
 std::optional<glm::vec3> transformDirection(const MatrixValue& m,const glm::vec3& d) {
     return applyHomogeneous(m,d,0.0);
 }
+std::optional<glm::vec3> pullbackCovector(const MatrixValue& m,const glm::vec3& d) {
+    if (!m.valid()||m.rows()!=4||m.cols()!=4||!finiteVec3(d)) return std::nullopt;
+    std::vector<double> e(9);
+    for(std::size_t r=0;r<3;++r)
+        for(std::size_t c=0;c<3;++c)
+            e[r*3+c]=m.at(r,c);
+    auto linear=MatrixValue::create(3,3,std::move(e));
+    if(!linear) return std::nullopt;
+    auto transposed=matrixTranspose(*linear);
+    return transposed?matrixMultiplyVec3(*transposed,d):std::nullopt;
+}
 std::optional<glm::vec3> affineExtractTranslation(const MatrixValue& m) {
     if (!m.valid() || m.rows() != 4 || m.cols() != 4) return std::nullopt;
     glm::vec3 t(static_cast<float>(m.at(0, 3)),
