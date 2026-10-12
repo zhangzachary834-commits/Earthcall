@@ -170,7 +170,6 @@ struct BootedEngineHarness {
             zones.hydrateFromZoneStore();
         } else {
             // Isolated witnesses must not hydrate or mutate real authored saves.
-            zones.addZone(std::make_shared<Zone>("Default", "default"));
         }
     }
 
