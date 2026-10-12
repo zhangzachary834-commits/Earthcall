@@ -113,7 +113,7 @@ void updatePriorPersonSerializations(const Person& person, const std::string& ol
             if (!entry.is_regular_file()) continue;
 
             std::string ext = entry.path().extension().string();
-            if (ext != ".json" && ext != ".ecform") continue;
+            if (ext != ".json" && ext != ".ecform" && ext != ".ecsave") continue;
 
             std::string stem = entry.path().stem().string();
             if (entry.path().parent_path().filename() == "persons" && stem == SaveSystem::sanitizeLabel(newName)) {
