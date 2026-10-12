@@ -2255,6 +2255,9 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             Law* law = find(activation.lawId);
             if (!law) continue;
             if (law->activation() != Law::Activation::OnEvent) continue;
+            // Cache law identifier once per activation to avoid multiple virtual getIdentifier()
+            // string materialization calls during agenda draining.
+            const std::string lawId = law->getIdentifier();
             Singular* subject = activation.token.facts.empty()
                                     ? nullptr
                                     : activation.token.facts.front()->subject;
@@ -2266,7 +2269,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             // evaluate. Rete owns the copy because the EventBus publisher may
             // already have returned; participant aliases remain compatible.
             const Event* occurrence = nullptr;
-            const auto& triggers = triggersOf(law->getIdentifier());
+            const auto& triggers = triggersOf(lawId);
             for (const auto& fact : activation.token.facts) {
                 if (fact && fact->occurrence &&
                     (triggers.empty() ||
@@ -2287,7 +2290,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                     bool usedDirect = false;
                     if (!candidateConditionsSatisfied(*law, *being, &usedDirect)) continue;
                     if (law->drives() &&
-                        hasDriveSession(law->getIdentifier(), being->getIdentifier())) {
+                        hasDriveSession(lawId, being->getIdentifier())) {
                         if (law->retrigger() == Law::Retrigger::Absorb) continue;
                         restartDriveSession(*law, being->getIdentifier());
                     }
@@ -2298,7 +2301,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
 
             if (!subject || Universe::instance().isUnmade(subject)) continue;
             if (law->drives() &&
-                hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
+                hasDriveSession(lawId, subject->getIdentifier())) {
                 if (law->retrigger() == Law::Retrigger::Absorb) {
                     continue;
                 }
