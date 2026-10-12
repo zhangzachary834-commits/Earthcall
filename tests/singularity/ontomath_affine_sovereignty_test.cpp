@@ -120,6 +120,16 @@ int main() {
     glm::vec3 refn=glm::transpose(glm::inverse(glm::mat3(ref)))*n;
     assert(near3(*wn,refn));
 
+    // Rung-10 support-map witness: a world support direction is a covector.
+    // Pulling it into local space is A^T d, not inverse-transpose normal math.
+    const glm::vec3 supportWorld =
+        glm::normalize(glm::vec3(-0.31f, 0.77f, 0.55f));
+    const auto supportLocal = OntoMath::pullbackCovector(*m, supportWorld);
+    assert(supportLocal);
+    const glm::vec3 supportOracle =
+        glm::transpose(glm::mat3(ref)) * supportWorld;
+    assert(near3(*supportLocal, supportOracle));
+
     // Rung-7 collision-normal witness: non-uniform scale must preserve the
     // frozen inverse-transpose oracle, while singular transforms must refuse.
     const glm::vec3 collisionLocalNormal =
@@ -301,6 +311,8 @@ int main() {
     auto singular=OntoMath::affineScale(glm::vec3(1,0,2)); assert(singular);
     assert(!OntoMath::inverseAffine(*singular));
     assert(!OntoMath::transformNormal(*singular,n));
+    // Pullback needs no inverse, so singular linear maps remain meaningful.
+    assert(OntoMath::pullbackCovector(*singular,n));
     auto nonAffine=OntoMath::affineIdentity(); assert(nonAffine);
     nonAffine->at(3,2)=0.25;
     assert(!OntoMath::inverseAffine(*nonAffine));

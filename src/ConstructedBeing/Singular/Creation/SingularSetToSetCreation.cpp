@@ -786,9 +786,6 @@ Result derive(const Request& request) {
             typeid(request.prototype) != typeid(Singularity::Language::Lexeme))
             return {nullptr, "this Singular kind has no newborn-name surface; author a child property action instead"};
 
-        // Exact concrete storage kinds: a base codec must never slice a subclass.
-        if (dynamic_cast<Law*>(&request.prototype)) return deriveLaw(request);
-
         // Whole-prototype copying has no authored selective-replacement contract
         // yet. A closed source gate therefore prevents this operation from taking
         // its state. Do not silently open a gate or drop the protected field.
@@ -802,6 +799,9 @@ Result derive(const Request& request) {
             if (!TransferPolicy::instance().canTransfer(PropertyPath::parse(path)))
                 return {nullptr, "whole-prototype birth refused by TransferPolicy source gate: " + path};
         }
+
+        // Exact concrete storage kinds: a base codec must never slice a subclass.
+        if (dynamic_cast<Law*>(&request.prototype)) return deriveLaw(request);
         if (dynamic_cast<Zone*>(&request.prototype)) {
             return {nullptr,
                     "Zone set-to-set codec is not wired yet; Zone birth must preserve owner/jurisdiction rather than degrade to Object"};

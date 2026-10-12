@@ -300,6 +300,7 @@ namespace Core {
                 currentRenderer().setSdfRangeProxyEnabled(screenChannel->sdfRangeProxyEnabled);
                 currentRenderer().setVolumeZeroProofEnabled(screenChannel->volumeZeroProofEnabled);
                 currentRenderer().setVolumeSamplesPerChord(screenChannel->volumeSamplesPerChord);
+                currentRenderer().setVolumeOutputErrorBudget(screenChannel->volumeOutputErrorBudget);
             }
             auto tB0 = std::chrono::steady_clock::now();
             currentRenderer().beginFrame(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH), clearColor);

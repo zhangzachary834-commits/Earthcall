@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
 
     // Protect the real Zone identity store exactly like frame_lag_test.
     TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h("Player", "humanoid", false);
+    TestSupport::BootedEngineHarness h;
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);

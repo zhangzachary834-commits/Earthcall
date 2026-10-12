@@ -26,6 +26,7 @@
 namespace Rendering {
 
 struct VolumeZeroProof {
+    // Kernel-only derived acceleration data, not authored medium state.
     // Cells along local x, y, z, tiling [-halfExtent, +halfExtent]. Each axis
     // is at most kMaxAxisCells so the shader can unpack it from 10 bits.
     glm::uvec3 dims{0u};
@@ -36,6 +37,19 @@ struct VolumeZeroProof {
     uint32_t provenCells = 0;
     uint32_t totalCells = 0;
     uint32_t rangeEvaluations = 0;
+    // Conservative local envelope of all unproven cells, enlarged like the
+    // cell proof. Reversed bounds mean every cell is proven empty. The GPU
+    // uses this only to skip null samples on the original chord lattice;
+    // these bounds must never replace the authored box or its quadrature.
+    glm::vec3 supportMin{0.0f};
+    glm::vec3 supportMax{0.0f};
+    // Kernel-derived column index over the SAME cell proof. In each slab on
+    // supportAxis, xy/zw enclose every unproven cell on the other two axes
+    // (cyclic order); reversed bounds denote an empty slab. Chosen by minimum
+    // enclosed volume, never by a medium's identity. No additional theorems,
+    // denser grid, authored fields or changing sample positions.
+    uint32_t supportAxis = 0u;
+    std::vector<glm::vec4> supportBands;
 
     static constexpr uint32_t kBitsPerWord = 24u;
     static constexpr uint32_t kMaxAxisCells = 1023u;
