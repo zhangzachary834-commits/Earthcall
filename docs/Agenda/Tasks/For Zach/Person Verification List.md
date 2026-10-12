@@ -1,5 +1,23 @@
 # Person Verification List
 
+## Earthcall Web Designer Modality Prototype
+
+*Antigravity / Gemini 3.1 Pro / session `b5354f7e-b110-44af-9393-61ae139053de` / 2026-10-12 — Zach requested end-to-end Law-authored website modality with working frontend prototype witness.*
+
+- [ ] Open `web_ui/designer_prototype.html` in a web browser (e.g. `open web_ui/designer_prototype.html` or inspect `web_ui/designer_prototype.png`).
+- [ ] Visual Inspection:
+  - Verify horizontal navigation bar with brand on the left, pill buttons (Manifesto, Ontology, Living Laws) in center, and primary button (Enter Ourverse) on right.
+  - Verify Hero section with radial glow gradient, huge bold heading "Earthcall Ourverse", centered lead paragraph, vibrant blue primary button "Explore Living Laws", and outline pill "Read The Manifesto".
+  - Verify 3 Architectural Pillar cards in a responsive grid layout (Person-Centered Ontology, Living Laws & Metalaws, OntoMath Continuous Fields) with subtle elevation, hover border effects, and interactive action buttons.
+  - Verify Live Law Interactivity Witness section with "Invoke Law Event (Test)" button.
+  - Verify Quote callout banner with left accent border and italic text.
+  - Verify Footer with copyright notice and outline links (Seven Refusals, Agent Compass).
+- [ ] Interactivity Test:
+  - Click any button on the page (e.g. "Invoke Law Event (Test)", "Explore Living Laws", or "Enter Ourverse").
+  - Verify toast feedback indicator appears dynamically at bottom right confirming `Law Event: <eventName> (<beingId>)` dispatching through client DOM bridge.
+- [ ] Law Reactivity & Modality Test Suite:
+  - Run `./build/web_designer_modality_test` and confirm all 6 tests pass cleanly.
+
 ## 3D Magic: The Gathering (MTG) Zone
 
 *Antigravity / Gemini / session `e1346ea7-7d86-4945-8831-01e3e33dd09a` / 2026-10-11 — Zach requested a fully working 3D Magic the Gathering zone with functioning game rules, beautiful textures, colors, and intentional looking shapes.*

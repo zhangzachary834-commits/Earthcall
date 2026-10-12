@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Earthcall Ourverse — Law-Authored Web Designer Prototype</title>
+  <meta name="description" content="A genuine frontend prototype authored entirely by Earthcall Laws and Lexemes." />
+  <style>
+
+:root {
+  --web-bg: #0b0f19;
+  --web-bg-surface: #131c2e;
+  --web-bg-card: #182338;
+  --web-bg-subtle: #0f172a;
+  --web-text: #f8fafc;
+  --web-text-muted: #94a3b8;
+  --web-primary: #38bdf8;
+  --web-primary-hover: #0284c7;
+  --web-primary-text: #0b0f19;
+  --web-secondary: #334155;
+  --web-secondary-hover: #475569;
+  --web-secondary-text: #f8fafc;
+  --web-accent: #818cf8;
+  --web-border: rgba(255, 255, 255, 0.08);
+  --web-border-card: rgba(56, 189, 248, 0.15);
+  --web-radius: 0.75rem;
+  --web-radius-pill: 9999px;
+  --web-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --web-shadow-subtle: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+  --web-shadow-raised: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+  --web-shadow-floating: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--web-font-sans);
+  background-color: var(--web-bg);
+  color: var(--web-text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+.web-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.web-section {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+.web-nav {
+  width: 100%;
+  border-bottom: 1px solid var(--web-border);
+  background-color: rgba(11, 15, 25, 0.85);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding: 1rem 2rem;
+}
+
+/* Layout Flow */
+.web-flow--vertical {
+  display: flex;
+  flex-direction: column;
+}
+
+.web-flow--horizontal {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.web-flow--horizontal.web-align--center {
+  justify-content: center;
+}
+
+.web-flow--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  width: 100%;
+}
+
+.web-navigation {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--web-border);
+  margin-bottom: 1.5rem;
+}
+
+.web-navigation.web-flow--horizontal {
+  flex-wrap: nowrap;
+}
+
+.web-navigation .web-container {
+  width: auto;
+}
+
+/* Alignment & Justification */
+.web-align--center {
+  align-items: center;
+  text-align: center;
+}
+.web-align--start {
+  align-items: flex-start;
+  text-align: left;
+}
+.web-align--end {
+  align-items: flex-end;
+  text-align: right;
+}
+.web-align--stretch {
+  align-items: stretch;
+}
+
+.web-justify--start { justify-content: flex-start; }
+.web-justify--center { justify-content: center; }
+.web-justify--end { justify-content: flex-end; }
+.web-justify--between { justify-content: space-between; }
+.web-justify--around { justify-content: space-around; }
+
+/* Spacing Scales */
+.web-spacing--none { gap: 0; }
+.web-spacing--tight { gap: 0.5rem; }
+.web-spacing--normal { gap: 1rem; }
+.web-spacing--relaxed { gap: 1.5rem; }
+.web-spacing--generous { gap: 2.5rem; }
+
+/* Typography & Scale */
+.web-heading {
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  color: var(--web-text);
+}
+.web-scale--small { font-size: 0.875rem; }
+.web-scale--normal { font-size: 1rem; }
+.web-scale--large { font-size: 2.25rem; }
+.web-scale--huge { font-size: 3.5rem; font-weight: 800; letter-spacing: -0.04em; }
+
+.web-scale--large.web-action,
+.web-scale--large.web-btn {
+  padding: 0.9rem 2rem;
+  font-size: 1.05rem;
+}
+
+.web-weight--bold { font-weight: 700; }
+.web-weight--medium { font-weight: 500; }
+.web-weight--light { font-weight: 300; }
+
+.web-tone--muted { color: var(--web-text-muted); }
+.web-tone--prominent { color: var(--web-text); font-size: 1.25rem; line-height: 1.7; }
+.web-tone--accent { color: var(--web-primary); }
+
+.web-paragraph {
+  max-width: 65ch;
+  color: var(--web-text-muted);
+}
+
+/* Containers & Cards */
+.web-container {
+  width: 100%;
+}
+.web-flow--horizontal > .web-container {
+  width: auto;
+}
+
+.web-surface--card {
+  background-color: var(--web-bg-card);
+  border: 1px solid var(--web-border-card);
+  padding: 2rem;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.web-surface--card:hover {
+  border-color: var(--web-primary);
+  transform: translateY(-2px);
+}
+
+.web-surface--subtle {
+  background-color: var(--web-bg-subtle);
+  border: 1px solid var(--web-border);
+  padding: 2rem;
+}
+
+.web-surface--hero {
+  background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
+  padding: 5rem 1.5rem;
+}
+
+/* Shapes */
+.web-shape--sharp { border-radius: 0; }
+.web-shape--rounded { border-radius: var(--web-radius); }
+.web-shape--pill { border-radius: var(--web-radius-pill); }
+.web-shape--circle { border-radius: 50%; }
+
+/* Elevations */
+.web-elevation--subtle { box-shadow: var(--web-shadow-subtle); }
+.web-elevation--raised { box-shadow: var(--web-shadow-raised); }
+.web-elevation--floating { box-shadow: var(--web-shadow-floating); }
+
+/* Buttons & Interactive Actions */
+.web-action,
+.web-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  line-height: 1.2;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.web-action:focus-visible,
+.web-btn:focus-visible {
+  outline: 2px solid var(--web-primary);
+  outline-offset: 2px;
+}
+
+.web-surface--primary.web-action,
+.web-surface--primary.web-btn {
+  background-color: var(--web-primary);
+  color: var(--web-primary-text);
+  border-color: transparent;
+}
+.web-surface--primary.web-action:hover,
+.web-surface--primary.web-btn:hover {
+  background-color: var(--web-primary-hover);
+  transform: translateY(-1px);
+}
+
+.web-surface--secondary.web-action,
+.web-surface--secondary.web-btn {
+  background-color: var(--web-secondary);
+  color: var(--web-secondary-text);
+  border-color: transparent;
+}
+.web-surface--secondary.web-action:hover,
+.web-surface--secondary.web-btn:hover {
+  background-color: var(--web-secondary-hover);
+}
+
+.web-surface--outline.web-action,
+.web-surface--outline.web-btn {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--web-border);
+  color: var(--web-text);
+}
+.web-surface--outline.web-action:hover,
+.web-surface--outline.web-btn:hover {
+  border-color: var(--web-primary);
+  color: var(--web-primary);
+  background-color: rgba(56, 189, 248, 0.1);
+}
+
+.web-surface--default.web-action,
+.web-surface--default.web-btn {
+  background-color: transparent;
+  color: var(--web-text);
+}
+
+/* Lists */
+.web-list {
+  list-style: none;
+  width: 100%;
+}
+.web-item {
+  width: 100%;
+}
+
+/* Quote */
+.web-quote {
+  border-left: 4px solid var(--web-primary);
+  padding: 1.5rem 2rem;
+  font-style: italic;
+  background-color: var(--web-bg-subtle);
+  border-radius: 0 var(--web-radius) var(--web-radius) 0;
+}
+
+/* Divider */
+.web-divider {
+  border: 0;
+  height: 1px;
+  background-color: var(--web-border);
+  margin: 2rem 0;
+  width: 100%;
+}
+
+/* Interactive Feedback Bar */
+#earthcall-feedback {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background-color: #1e293b;
+  border: 1px solid var(--web-primary);
+  color: var(--web-primary);
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--web-radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: var(--web-shadow-raised);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  z-index: 1000;
+}
+#earthcall-feedback.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+  </style>
+</head>
+<body>
+  <div id="earthcall-site" class="web-page web-flow--vertical web-align--start web-justify--start web-spacing--generous web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat">
+    <nav id="main-navigation" class="web-navigation web-flow--horizontal web-align--center web-justify--between web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" role="navigation">
+      <h2 id="nav-brand" class="web-heading web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat">Earthcall Ourverse</h2>
+      <div id="nav-links" class="web-container web-flow--horizontal web-align--center web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat">
+        <a href="#manifesto" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="nav-link-manifesto">Manifesto</a>
+        <a href="#ontology" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="nav-link-ontology">Ontology</a>
+        <a href="#laws" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="nav-link-laws">Living Laws</a>
+      </div>
+      <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--primary web-shape--rounded web-elevation--flat" data-being-id="nav-cta" data-action-event="enter-ourverse">Enter Ourverse</button>
+    </nav>
+    <section id="hero-section" class="web-section web-flow--vertical web-align--center web-justify--start web-spacing--generous web-scale--normal web-weight--normal web-tone--default web-surface--hero web-shape--rounded web-elevation--flat">
+      <h2 id="hero-title" class="web-heading web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--huge web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat">Earthcall Ourverse</h2>
+      <p id="hero-lead" class="web-paragraph web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--large web-weight--normal web-tone--prominent web-surface--default web-shape--rounded web-elevation--flat">A Person-centered ontology that orders the engine attached to it. A vessel of shared human life that glorifies God and holds encounters with Christ and each other.</p>
+      <div id="hero-actions" class="web-container web-flow--horizontal web-align--center web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat">
+        <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--large web-weight--normal web-tone--default web-surface--primary web-shape--rounded web-elevation--flat" data-being-id="hero-cta-primary" data-action-event="explore-laws-clicked">Explore Living Laws</button>
+        <a href="#manifesto" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--large web-weight--normal web-tone--default web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="hero-cta-secondary">Read The Manifesto</a>
+      </div>
+    </section>
+    <section id="features-section" class="web-section web-flow--vertical web-align--start web-justify--start web-spacing--generous web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat">
+      <h2 id="features-title" class="web-heading web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--large web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat">Architectural Pillars</h2>
+      <p id="features-subtitle" class="web-paragraph web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat">The minimum viable invariants enabling maximum generative, logical, and teleological expressibility.</p>
+      <div id="features-grid" class="web-container web-flow--grid web-align--start web-justify--start web-spacing--generous web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat">
+        <div id="card-person" class="web-container web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--card web-shape--rounded web-elevation--subtle">
+          <h2 id="card-person-title" class="web-heading web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat">Person-Centered Ontology</h2>
+          <p id="card-person-text" class="web-paragraph web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat">No C++ class for a domain noun. A Person means an actual human being. Machines and models sense and act; Persons author what things ARE.</p>
+          <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="card-person-btn">Learn more →</button>
+        </div>
+        <div id="card-laws" class="web-container web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--card web-shape--rounded web-elevation--subtle">
+          <h2 id="card-laws-title" class="web-heading web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat">Living Laws &amp; Metalaws</h2>
+          <p id="card-laws-text" class="web-paragraph web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat">Behavior emerges from Person-authored Laws, not hardcoded algorithms. Metalaws govern and compile authored sentences without a black box.</p>
+          <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="card-laws-btn">View law engine →</button>
+        </div>
+        <div id="card-ontomath" class="web-container web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--card web-shape--rounded web-elevation--subtle">
+          <h2 id="card-ontomath-title" class="web-heading web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat">OntoMath Continuous Fields</h2>
+          <p id="card-ontomath-text" class="web-paragraph web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat">Mathematical meaning owned in closed form: continuous procedural manifolds, signed distance fields, and exact analytic rendering.</p>
+          <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="card-ontomath-btn">Explore geometry →</button>
+        </div>
+      </div>
+    </section>
+    <section id="demo-section" class="web-section web-flow--vertical web-align--center web-justify--start web-spacing--generous web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat">
+      <h2 id="demo-title" class="web-heading web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--large web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat">Live Law Interactivity Witness</h2>
+      <div id="demo-card" class="web-container web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--card web-shape--rounded web-elevation--subtle">
+        <p id="demo-text" class="web-paragraph web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat">Every element on this page was authored by Earthcall Laws and Lexemes. Click below to verify live EventBus event firing:</p>
+        <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--primary web-shape--rounded web-elevation--flat" data-being-id="demo-btn" data-action-event="interactive-witness-clicked">Invoke Law Event (Test)</button>
+      </div>
+    </section>
+    <section id="quote-section" class="web-section web-flow--vertical web-align--center web-justify--start web-spacing--relaxed web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat">
+      <blockquote id="manifesto-quote" class="web-quote web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--prominent web-surface--default web-shape--rounded web-elevation--flat">
+        <p>&quot;Earthcall is a Person-centered ontology that orders the engine attached to it. The engine here is not the order of truth in Earthcall—the ontology is, and the engine serves as the vessel for that.&quot; — Zachary Zhang</p>
+      </blockquote>
+    </section>
+    <section id="footer-section" class="web-section web-flow--horizontal web-align--center web-justify--between web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat">
+      <p id="footer-text" class="web-paragraph web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--small web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat">© 2026 Earthcall Ourverse. Authored natively by Earthcall Laws, Lexemes, and Metalaws.</p>
+      <div id="footer-links" class="web-container web-flow--horizontal web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat">
+        <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--small web-weight--normal web-tone--muted web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="footer-link-1">Seven Refusals</button>
+        <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--small web-weight--normal web-tone--muted web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="footer-link-2">Agent Compass</button>
+      </div>
+    </section>
+  </div>
+  <script>
+
+(function() {
+  function showFeedback(msg) {
+    let bar = document.getElementById('earthcall-feedback');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'earthcall-feedback';
+      document.body.appendChild(bar);
+    }
+    bar.textContent = msg;
+    bar.classList.add('active');
+    setTimeout(() => bar.classList.remove('active'), 2500);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-action-event]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        const eventName = el.getAttribute('data-action-event');
+        const beingId = el.getAttribute('data-being-id') || 'unknown';
+        console.log('[Earthcall Web Designer] Action triggered:', eventName, 'from being:', beingId);
+        showFeedback('Law Event: ' + eventName + ' (' + beingId + ')');
+
+        // Bridge to WebKit if inside RealWebView
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.earthcall) {
+          window.webkit.messageHandlers.earthcall.postMessage({
+            type: 'web-action',
+            event: eventName,
+            beingId: beingId,
+            timestamp: Date.now()
+          });
+        }
+      });
+    });
+  });
+})();
+  </script>
+</body>
+</html>
