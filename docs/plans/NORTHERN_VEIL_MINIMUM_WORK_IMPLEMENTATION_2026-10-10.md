@@ -118,3 +118,10 @@ Eight full-resolution captures match; all six focused targets pass, including na
 Ordinary app rebuilt; no save/codec/domain/authority changes, commits or pushes. Live movement, usual framebuffer 30 FPS acceptance, tighter mathematical support contraction, demand-aware sharing, direct parameter recipes and certified tails remain open. This index improves traversal of existing proofs; it does not prove new unknown cells empty.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T13:27:06-07:00
+
+
+## Astra continuation: sample-local scheduling retained — October 11
+
+Zach commissioned counsel, implementation and a report back. The first-ranked projected support guard remains deferred pending a complete backend numerical enclosure; restricting Astra’s diagnostic model to principal trig domains lowers its opportunity to 21.86% of folds, still no GPU certificate. The second-ranked fused schedule is implemented: one medium proof/contribution sweep, original direction arithmetic after positive density, no cross-sample cache. All six focused targets and eight exact 2560×1440 images pass. Two ABBA series/view retain inside −9.77%, spawn −11.53%, reverse −6.44%, side −8.03%; zero warm uploads/lowering/compiles. [Complete mechanism, all run means and unsupported claims](../audits/NORTHERN_VEIL_SAMPLE_LOCAL_SCHEDULING_2026-10-11.md). Live usual-framebuffer movement and 30 FPS remain unverified. No saves, commits or pushes.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T17:22:37-07:00 (PDT).

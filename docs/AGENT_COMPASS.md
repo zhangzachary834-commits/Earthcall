@@ -97,3 +97,6 @@ Meaningful history needs attributable durable records. [Per-Singular logging](ar
 
 
 **2026-10-11 whole-system rendering counsel:** before another Northern Veil cache/proof experiment, read [the counsel and fresh CPU work screen](audits/NORTHERN_VEIL_COUNSEL_WORK_MODEL_2026-10-11.md). It separates mathematical equality, backend numerical enclosure, demand lifetime and hardware cost; projected support guards remain proposed, and CPU work-count reductions are not GPU gains. No production change or new Person acceptance is claimed. Codex / GPT-6 / `01a12cb8-ac95-7b13-827d-2c7f289aa560` / 2026-10-11T15:03:05-07:00.
+
+
+**Astra implementation continuation, October 11:** retained fused sample-local proof/contribution scheduling, with original direction arithmetic after positive density; no new cache/resources or lattice change. Six focused targets and eight exact full-size images pass; two ABBA/view reduce inside cost 9.77% and all other views 6.44–11.53%. New projected support guards remain deferred for backend numerical admission, not enabled with a diagnostic epsilon. [Evidence and live-movement limits](audits/NORTHERN_VEIL_SAMPLE_LOCAL_SCHEDULING_2026-10-11.md). **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T17:22:37-07:00 (PDT).

@@ -353,3 +353,10 @@ Outside WGSL computes geometric eligibility once per medium/ray, then the reache
 Six focused targets pass, including CPU 32/32/native proof 65/65 with exhaustive unknown-cell enclosure, changed extents, replacement device and full-size spawn checks. Eight 2560×1440 images match. All 960 timed final frames report zero warm lowering/compiles/parameter/proof uploads. Spawn −9.77%; inside all-run mean +2.29% with no repeatable >3% regression after predeclared follow-up, no inside gain claim. [All runs, rejected variants and Person limitations](../../audits/NORTHERN_VEIL_FOLDED_SUPPORT_2026-10-11.md).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T13:27:06-07:00
+
+
+### Kernel sample-local fused contribution schedule — October 11
+
+`composeVolumeSet` now consumes each medium’s proof/density/contribution in order, eliminating long-lived per-medium proof flags and the second membership sweep. Source/receiver directions use the original expressions only after positive density, with sample/medium lifetime; no ray cache, authored state, buffer or proof layout is added. Existing member fragments, composed program caches, revision/layout/membership gates and reload/device teardown own lifetime. Unknown proof cells veto jumps; original lattice/order/source-domain/cutoff contracts remain unchanged. Warm uploads/lowering/compiles stay zero. Six focused witnesses and eight byte-identical full-size images pass; repeated offscreen inside −9.77%, other views −6.44% to −11.53%. Backend-aware new support certificates remain deferred. [Evidence and exact boundaries](../../audits/NORTHERN_VEIL_SAMPLE_LOCAL_SCHEDULING_2026-10-11.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T17:22:37-07:00 (PDT).

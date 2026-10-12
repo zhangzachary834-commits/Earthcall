@@ -195,3 +195,5 @@ you read the source—run things**, and **after finishing, ask whether anything 
 
 
 *Selective folded support retained: column bounds reuse existing proofs; outside eligibility is computed once per ray, inside traversal stays original. Spawn offscreen cost falls 9.77%; inside has no gain claim and Person movement remains open. [Measured contract](docs/audits/NORTHERN_VEIL_FOLDED_SUPPORT_2026-10-11.md). Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T13:27:06-07:00.*
+
+*Sample-local Astra continuation retained: fused proof/contribution scheduling preserves exact captures; inside offscreen −9.77%, other views improve in both series. New support certificates and live 30 FPS remain open. [Evidence](docs/audits/NORTHERN_VEIL_SAMPLE_LOCAL_SCHEDULING_2026-10-11.md). Codex / GPT-6.1 Sol / `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T17:22:37-07:00.*

@@ -4969,40 +4969,116 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     out.wgsl += R"WGSL(
             let worldP = ro + rd * sampleT;
 
-            // Grid walk (VolumeZeroProof): if every medium holding this sample
-            // has it in a proven-empty cell, nothing here or before the ray's
-            // nearest exit from those cells can contribute. Jump past them.
-            // A sample no medium holds (only possible by rounding at a segment
-            // edge) skips just itself.
+            // Consume each medium's proof and contribution together. Unknown
+            // leaves cannot justify a collective jump; known leaves contribute
+            // only their exit. Original medium order, sample coordinates and
+            // transport arithmetic are unchanged (Astra counsel, 2026-10-11).
             var walkAllProven = true;
             var walkHeld = false;
             var walkExit = segmentEnd;
+            var totalExtinction = 0.0;
+            var totalSource = vec3<f32>(0.0);
 )WGSL";
-    for (std::size_t i = 0; i < media.size(); ++i) {
-        // The same proof result controls both traversal and density demand.
-        // Rechecking the packed grid during evaluation adds no information.
-        out.wgsl += "            var sampleUnproven" + std::to_string(i) + " = false;\n";
-    }
     for (std::size_t i = 0; i < media.size(); ++i) {
         const std::string n = std::to_string(i);
         const std::string inst = std::to_string(i + 1) + "u";
         out.wgsl +=
             "            {\n"
-            "                let walkInst" + n + " = instances[" + inst + "];\n"
-            "                if (all(worldP >= walkInst" + n + ".origin.xyz - walkInst" + n + ".halfExtent.xyz) && "
-                "all(worldP <= walkInst" + n + ".origin.xyz + walkInst" + n + ".halfExtent.xyz)) {\n"
+            "                let mediumInst" + n + " = instances[" + inst + "];\n"
+            "                if (all(worldP >= mediumInst" + n + ".origin.xyz - mediumInst" + n + ".halfExtent.xyz) && "
+                "all(worldP <= mediumInst" + n + ".origin.xyz + mediumInst" + n + ".halfExtent.xyz)) {\n"
             "                    walkHeld = true;\n"
             "                    if (raySupport" + n + ".y < raySupport" + n + ".x || sampleT > raySupport" + n + ".y) {\n"
             "                        // No future support in this authored segment.\n"
             "                    } else if (sampleT < raySupport" + n + ".x) {\n"
             "                        walkExit = min(walkExit, raySupport" + n + ".x);\n"
             "                    } else {\n"
-            "                        let cellExit" + n + " = volumeZeroCellExit(walkInst" + n +
-                ", worldP - walkInst" + n + ".origin.xyz, ro, rd" +
+            "                        let cellExit" + n + " = volumeZeroCellExit(mediumInst" + n +
+                ", worldP - mediumInst" + n + ".origin.xyz, ro, rd" +
                 (trimProofSupport ? ", sampleT, useColumns" + n : std::string{}) + ");\n"
-            "                        sampleUnproven" + n + " = cellExit" + n + " < 0.0;\n"
-            "                        if (sampleUnproven" + n + ") { walkAllProven = false; }\n"
-            "                        else { walkExit = min(walkExit, cellExit" + n + "); }\n"
+            "                        if (cellExit" + n + " < 0.0) {\n"
+            "                            walkAllProven = false;\n"
+            "                            g_instIdx = " + inst + ";\n"
+            "                            let p" + n + " = worldP - mediumInst" + n + ".origin.xyz;\n"
+            "                            var density" + n + " = 0.0;\n"
+            + std::string(memberSharing[i].densityUsesSharing ? "                            volumeShared_" + n + "_Eval(p" + n + ");\n" : "") +
+            "                            density" + n + " = max(volumeDensityEval_" + n +
+                "(p" + n + "), 0.0);\n"
+            "                            if (density" + n + " > 0.0) {\n"
+            + std::string(memberSharing[i].hasSharing && !memberSharing[i].densityUsesSharing ? "                                volumeShared_" + n + "_Eval(p" + n + ");\n" : "") +
+            "                                let extinction" + n +
+                " = max(volumeExtinctionEval_" + n + "(p" + n + ", density" + n +
+                "), 1e-6);\n"
+            "                                totalExtinction += extinction" + n + ";\n"
+            "                                let wiDelta = worldP - u.incidentSource.xyz;\n"
+            "                                let woDelta = ro - worldP;\n"
+            "                                let wiLen = length(wiDelta);\n"
+            "                                let woLen = length(woDelta);\n"
+            "                                let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, 1e-8),\n"
+            "                                                u.incidentSource.w > 0.5 && wiLen > 1e-8);\n"
+            "                                let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8),\n"
+            "                                                woLen > 1e-8);\n"
+            // SourceRho-zero (Prism: rho_source != V_transport != D_medium).
+            // Incident light is formed first. When the source's authored rho is
+            // exactly 0, its chroma, angular factor and visibility cannot
+            // matter, and when incident light is exactly 0 the whole in-scatter
+            // term mediumChroma * Li * sigma_s * Phi is +-0, so scattering,
+            // medium chroma and phase are not evaluated. +-0 + E_v == E_v, so
+            // the sum is bit-identical for finite values.
+            "                                var incidentLi" + n + " = vec3<f32>(1.0);\n"
+            "                                if (u.incidentSource.w > 0.5) {\n"
+            "                                    let sourceDelta = worldP - u.incidentSource.xyz;\n"
+            "                                    let sourceDist = length(sourceDelta);\n"
+            "                                    let lightDir = select(vec3<f32>(0.0, 1.0, 0.0), -sourceDelta / max(sourceDist, 1e-8), sourceDist > 1e-8);\n"
+            "                                    var radialRad = 1.0;\n"
+            "                                    if (HAS_AUTHORED_LIGHT_RADIANCE_" + n + ") {\n"
+            "                                        radialRad = max(lightRadianceEval_" + n + "(sourceDelta), 0.0);\n"
+            "                                    }\n"
+            "                                    if (radialRad == 0.0) {\n"
+            "                                        incidentLi" + n + " = vec3<f32>(0.0);\n"
+            "                                    } else {\n"
+            "                                        var chroma = vec3<f32>(1.0);\n"
+            "                                        if (HAS_AUTHORED_LIGHT_CHROMA_" + n + ") {\n"
+            "                                            chroma = max(lightChromaEval_" + n + "(sourceDelta), vec3<f32>(0.0));\n"
+            "                                        }\n"
+            "                                        var angular = 1.0;\n"
+            "                                        if (HAS_AUTHORED_LIGHT_ANGULAR_" + n + ") {\n"
+            "                                            angular = max(lightAngularEval_" + n + "(sourceDelta, lightDir), 0.0);\n"
+            "                                        }\n"
+            "                                        let vis = volumeSourceVisibility_" + n + "(worldP, u.incidentSource.xyz);\n"
+            "                                        incidentLi" + n + " = chroma * (radialRad * angular * vis);\n"
+            "                                    }\n"
+            "                                }\n"
+            "                                var emitted" + n + " = vec3<f32>(0.0);\n"
+            "                                if (HAS_AUTHORED_VOLUME_EMISSION_" + n + ") {\n"
+            "                                    if (!VOLUME_EMISSION_READS_OMEGA_" + n +
+                " || woLen > 1e-8) {\n"
+            "                                        emitted" + n + " = max(volumeEmissionEval_" + n +
+                "(p" + n + ", wo), vec3<f32>(0.0));\n"
+            "                                    }\n"
+            "                                }\n"
+            "                                if (any(incidentLi" + n + " != vec3<f32>(0.0))) {\n"
+            "                                    let scattering" + n +
+                " = max(volumeScatteringEval_" + n + "(p" + n + ", density" + n +
+                "), 0.0);\n"
+            "                                    let mediumChroma" + n + " = volumeChromaEval_" + n +
+                "(p" + n + ");\n"
+            "                                    var phase" + n + " = 1.0;\n"
+            "                                    if (HAS_AUTHORED_VOLUME_PHASE_" + n + ") {\n"
+            "                                        phase" + n + " = 0.0;\n"
+            "                                        if ((!VOLUME_PHASE_READS_WI_" + n +
+                " || (u.incidentSource.w > 0.5 && wiLen > 1e-8)) && woLen > 1e-8) {\n"
+            "                                            phase" + n + " = max(volumePhaseEval_" + n +
+                "(p" + n + ", wi, wo), 0.0);\n"
+            "                                        }\n"
+            "                                    }\n"
+            "                                    totalSource += mediumChroma" + n + " * incidentLi" + n + " * scattering" + n +
+                " * phase" + n + " + emitted" + n + ";\n"
+            "                                } else {\n"
+            "                                    totalSource += emitted" + n + ";\n"
+            "                                }\n"
+            "                            }\n"
+            "                        } else { walkExit = min(walkExit, cellExit" + n + "); }\n"
             "                    }\n"
             "                }\n"
             "            }\n";
@@ -5013,112 +5089,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
                 step = max(step, i32(ceil((walkExit - segmentStart) / stepLength - 0.5)) - 1);
                 continue;
             }
-
-            // Transport directions are properties of this world-space sample,
-            // not of medium ordering. Per-medium Phi/E_v evaluators consume
-            // them below only when authored structure actually reads them.
-            let wiDelta = worldP - u.incidentSource.xyz;
-            let woDelta = ro - worldP;
-            let wiLen = length(wiDelta);
-            let woLen = length(woDelta);
-            let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, 1e-8),
-                            u.incidentSource.w > 0.5 && wiLen > 1e-8);
-            let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8),
-                            woLen > 1e-8);
-
-            var totalExtinction = 0.0;
-            var totalSource = vec3<f32>(0.0);
 )WGSL";
-
-    for (std::size_t i = 0; i < media.size(); ++i) {
-        const std::string n = std::to_string(i);
-        const std::string inst = std::to_string(i + 1) + "u";
-        out.wgsl +=
-            "        {\n"
-            "            let mediumInst" + n + " = instances[" + inst + "];\n"
-            "            let mediumMin" + n + " = mediumInst" + n +
-                ".origin.xyz - mediumInst" + n + ".halfExtent.xyz;\n"
-            "            let mediumMax" + n + " = mediumInst" + n +
-                ".origin.xyz + mediumInst" + n + ".halfExtent.xyz;\n"
-            "            if (all(worldP >= mediumMin" + n + ") && "
-                "all(worldP <= mediumMax" + n + ")) {\n"
-            "                g_instIdx = " + inst + ";\n"
-            "                let p" + n + " = worldP - mediumInst" + n + ".origin.xyz;\n"
-            "                var density" + n + " = 0.0;\n"
-            "                if (sampleUnproven" + n + ") {\n"
-            + std::string(memberSharing[i].densityUsesSharing ? "                    volumeShared_" + n + "_Eval(p" + n + ");\n" : "") +
-            "                    density" + n + " = max(volumeDensityEval_" + n +
-                "(p" + n + "), 0.0);\n"
-            "                }\n"
-            "                if (density" + n + " > 0.0) {\n"
-            + std::string(memberSharing[i].hasSharing && !memberSharing[i].densityUsesSharing ? "                    volumeShared_" + n + "_Eval(p" + n + ");\n" : "") +
-            "                    let extinction" + n +
-                " = max(volumeExtinctionEval_" + n + "(p" + n + ", density" + n +
-                "), 1e-6);\n"
-            "                    totalExtinction += extinction" + n + ";\n"
-            // SourceRho-zero (Prism: rho_source != V_transport != D_medium).
-            // Incident light is formed first. When the source's authored rho is
-            // exactly 0, its chroma, angular factor and visibility cannot
-            // matter, and when incident light is exactly 0 the whole in-scatter
-            // term mediumChroma * Li * sigma_s * Phi is +-0, so scattering,
-            // medium chroma and phase are not evaluated. +-0 + E_v == E_v, so
-            // the sum is bit-identical for finite values.
-            "                    var incidentLi" + n + " = vec3<f32>(1.0);\n"
-            "                    if (u.incidentSource.w > 0.5) {\n"
-            "                        let sourceDelta = worldP - u.incidentSource.xyz;\n"
-            "                        let sourceDist = length(sourceDelta);\n"
-            "                        let lightDir = select(vec3<f32>(0.0, 1.0, 0.0), -sourceDelta / max(sourceDist, 1e-8), sourceDist > 1e-8);\n"
-            "                        var radialRad = 1.0;\n"
-            "                        if (HAS_AUTHORED_LIGHT_RADIANCE_" + n + ") {\n"
-            "                            radialRad = max(lightRadianceEval_" + n + "(sourceDelta), 0.0);\n"
-            "                        }\n"
-            "                        if (radialRad == 0.0) {\n"
-            "                            incidentLi" + n + " = vec3<f32>(0.0);\n"
-            "                        } else {\n"
-            "                            var chroma = vec3<f32>(1.0);\n"
-            "                            if (HAS_AUTHORED_LIGHT_CHROMA_" + n + ") {\n"
-            "                                chroma = max(lightChromaEval_" + n + "(sourceDelta), vec3<f32>(0.0));\n"
-            "                            }\n"
-            "                            var angular = 1.0;\n"
-            "                            if (HAS_AUTHORED_LIGHT_ANGULAR_" + n + ") {\n"
-            "                                angular = max(lightAngularEval_" + n + "(sourceDelta, lightDir), 0.0);\n"
-            "                            }\n"
-            "                            let vis = volumeSourceVisibility_" + n + "(worldP, u.incidentSource.xyz);\n"
-            "                            incidentLi" + n + " = chroma * (radialRad * angular * vis);\n"
-            "                        }\n"
-            "                    }\n"
-            "                    var emitted" + n + " = vec3<f32>(0.0);\n"
-            "                    if (HAS_AUTHORED_VOLUME_EMISSION_" + n + ") {\n"
-            "                        if (!VOLUME_EMISSION_READS_OMEGA_" + n +
-                " || woLen > 1e-8) {\n"
-            "                            emitted" + n + " = max(volumeEmissionEval_" + n +
-                "(p" + n + ", wo), vec3<f32>(0.0));\n"
-            "                        }\n"
-            "                    }\n"
-            "                    if (any(incidentLi" + n + " != vec3<f32>(0.0))) {\n"
-            "                        let scattering" + n +
-                " = max(volumeScatteringEval_" + n + "(p" + n + ", density" + n +
-                "), 0.0);\n"
-            "                        let mediumChroma" + n + " = volumeChromaEval_" + n +
-                "(p" + n + ");\n"
-            "                        var phase" + n + " = 1.0;\n"
-            "                        if (HAS_AUTHORED_VOLUME_PHASE_" + n + ") {\n"
-            "                            phase" + n + " = 0.0;\n"
-            "                            if ((!VOLUME_PHASE_READS_WI_" + n +
-                " || (u.incidentSource.w > 0.5 && wiLen > 1e-8)) && woLen > 1e-8) {\n"
-            "                                phase" + n + " = max(volumePhaseEval_" + n +
-                "(p" + n + ", wi, wo), 0.0);\n"
-            "                            }\n"
-            "                        }\n"
-            "                        totalSource += mediumChroma" + n + " * incidentLi" + n + " * scattering" + n +
-                " * phase" + n + " + emitted" + n + ";\n"
-            "                    } else {\n"
-            "                        totalSource += emitted" + n + ";\n"
-            "                    }\n"
-            "                }\n"
-            "            }\n"
-            "        }\n";
-    }
 
     out.wgsl += R"WGSL(
         let oldT = transmittance;

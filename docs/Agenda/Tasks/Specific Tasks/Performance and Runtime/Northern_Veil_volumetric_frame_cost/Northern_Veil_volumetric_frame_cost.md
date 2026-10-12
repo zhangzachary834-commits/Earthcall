@@ -357,3 +357,17 @@ App rebuilt, saves untouched, no commits/pushes. Person movement/fidelity and us
 Zach asked to derive rendering, caching, compilation and evaluation together before another implementation round. [The signed counsel](../../../../../../agent%20intercom/communication-threads/sdf-and-rendering/NORTHERN_VEIL_COUNSEL_REQUEST_TO_GPT_6_ASTRA_2026-10-11.md#astra-counsel--derive-the-work-before-choosing-its-storage) ranks a backend-certified sample-local support guard ahead of further ray caches, conditional on production-kernel costs and sound numerical enclosures. [Fresh CPU screening](../../../../../audits/NORTHERN_VEIL_COUNSEL_WORK_MODEL_2026-10-11.md) found only 8.68% fewer modeled inside loop visits from a larger empty-block index, while a real-arithmetic 8 KiB support table could avoid 42.21% of modeled fold evaluations; neither is a GPU speedup or an admitted f32 certificate. The current host interval widening does not alone establish every GPU intrinsic error bound. Production code, authored saves and existing Person acceptance status are unchanged. Next: bounded kernel/certificate investigation, then one candidate with the existing exact-pixel and repeated-cost gates; follow the counsel for fallback, invalidation and alternatives.
 
 **Signed:** Codex / GPT-6 / session `01a12cb8-ac95-7b13-827d-2c7f289aa560` / 2026-10-11T15:03:05-07:00.
+
+
+## Sixth-one Sun implements Astra’s sample-local schedule
+
+Following Zach’s request to reply, implement and reply again, retained the second-ranked Astra direction after deferring the uncertified projected guard. `composeVolumeSet` consumes each medium’s proof and contribution together and delays original direction math until positive density, preserving lattice/order/independent channels. Six focused targets pass with desktop native access; eight full-size images match every byte. Two ABBA/view show inside −9.77%, spawn −11.53%, reverse −6.44%, side −8.03%, zero warm uploads/compiles/lowering. [Audit, numerical admission issue, all means and future-agent handoff](../../../../../audits/NORTHERN_VEIL_SAMPLE_LOCAL_SCHEDULING_2026-10-11.md). Ordinary app rebuilt; live movement p95/30 FPS and Person appearance acceptance remain open. Projected support needs a justified backend numerical contract; direct parameter recipes/nested sharing/certified tails remain unfinished.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T17:22:37-07:00 (PDT).
+
+
+### Person-reported live improvement after scheduling
+
+Zach reports a “BIG IMPROVEMENT FROM THAT PASS” and approximately **21 FPS at `(-1.45, 0.3, -1.3)`** after the Sun's sample-local scheduling continuation. This is a Person observation, separate from the Sun's paired offscreen timing gains. Preserve the raw coordinates; framebuffer/view direction, sampling interval, moving/stationary state and running build were not specified, so neither a matched percentage gain nor movement p95 follows. [Person verification record](../../../For%20Zach/Person%20Verification%20List.md#northern-veil--zach-reports-approximately-21-fps-after-scheduling-pass); continuous appearance acceptance and the 30 FPS milestone remain open.
+
+**Recorded by:** Codex / GPT-6 / session `01a12cb8-ac95-7b13-827d-2c7f289aa560` / 2026-10-11T18:05:55-07:00.

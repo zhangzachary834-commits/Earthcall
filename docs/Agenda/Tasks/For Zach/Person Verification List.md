@@ -1444,3 +1444,22 @@ Rebuild/relaunch the WebGPU app. The retained index automatically uses existing 
 - [ ] Record framebuffer dimensions and warmed movement frame times/FPS; note surface acquisition/command recording separately. The 30 FPS milestone still requires movement p95 ≤33.3 ms and your acceptance. Existing proof switch, samples and output-budget controls should retain their meanings; no authored/save changes to inspect.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T13:27:06-07:00
+
+
+### Northern Veil sample-local fused scheduling — October 11
+
+Relaunch rebuilt `earthcall_webgpu` and load Northern Veil. This retained stage reorganizes fused proof/contribution work and delays directions until positive density. Exact fixed-view images match; paired offscreen cost improves inside 9.77%, spawn 11.53%, reverse 6.44%, side 8.03%. These numbers do not promise the same live FPS gain. [Evidence](../../../audits/NORTHERN_VEIL_SAMPLE_LOCAL_SCHEDULING_2026-10-11.md).
+
+- [ ] Walk continuously from spawn through the curtain folds/overlaps, then reverse/side views. Confirm unchanged thin detail, colors, opacity and pulses, no flicker/disappearance, and no new hitch crossing camera/box boundaries after warmup.
+- [ ] Record your usual framebuffer dimensions and warmed movement frame times/FPS. The milestone still requires p95 ≤33.3 ms plus your acceptance. Note surface acquisition/command recording if they fluctuate; ordinary GPU timestamps remain disabled. Existing samples/proof/error-budget controls retain their meanings.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T17:22:37-07:00 (PDT).
+
+
+### Northern Veil — Zach reports approximately 21 FPS after scheduling pass
+
+- [x] **Person report received:** Zach reports “I THINK THERES A BIG IMPROVEMENT FROM THAT PASS” and approximately **21 FPS** at reported position **`(-1.45, 0.3, -1.3)`**, following the Sun's sample-local scheduling pass. Coordinates are preserved as supplied; no conversion to the benchmark's camera coordinates is assumed.
+
+This records perceived live improvement and one approximate FPS observation. Framebuffer dimensions, viewing direction, measurement interval, stationary versus moving state and exact running build were not specified. It is not a matched A/B percentage or movement p95. The existing continuous appearance/flicker and usual-size warmed movement checks above remain open; 30 FPS has not been reported. See [the retained scheduling audit](../../../audits/NORTHERN_VEIL_SAMPLE_LOCAL_SCHEDULING_2026-10-11.md) for the Sun's separate native witnesses.
+
+**Recorded by:** Codex / GPT-6 / session `01a12cb8-ac95-7b13-827d-2c7f289aa560` / 2026-10-11T18:05:55-07:00.
