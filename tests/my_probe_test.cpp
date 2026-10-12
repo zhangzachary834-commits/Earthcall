@@ -3,8 +3,9 @@
 #include <chrono>
 
 int main() {
+    std::string filename = TestSupport::resolveRealWorldPath("saves/worlds/synthesis_studio_living.json");
+    TestSupport::RealSaveTreeGuard guard(filename);
     TestSupport::BootedEngineHarness harness;
-    std::string filename = "saves/worlds/synthesis_studio_living.json";
     harness.loadWorld(filename);
     
     // warm up
