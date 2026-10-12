@@ -72,12 +72,21 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
+    // Point SaveSystem to an isolated scratch directory containing only the target world file,
+    // preventing hydrateFromZoneStore() from scanning and loading all 50+ store zones on disk.
+    const std::filesystem::path scratchDir = std::filesystem::temp_directory_path() /
+        ("slow_adapter_scratch_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    std::filesystem::create_directories(scratchDir / "worlds");
+    const std::filesystem::path targetWorld = scratchDir / "worlds" / std::filesystem::path(world).filename();
+    std::filesystem::copy_file(world, targetWorld);
+
+    const std::string prevSaveRoot = SaveSystem::saveRoot();
+    SaveSystem::setSaveRoot(scratchDir.string());
+
     TestSupport::BootedEngineHarness h("Player", "humanoid", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld(targetWorld.string());
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
@@ -164,6 +173,10 @@ int main(int argc, char** argv) {
         static_cast<unsigned long long>(h.lawManager.slowAdapterMaintenanceRuns()),
         h.lawManager.slowAdapter().roadsKnown(), h.lawManager.slowAdapter().roadsPending(),
         tierDirect, tierAdapter, tierVocabulary, tierSweep);
+
+    SaveSystem::setSaveRoot(prevSaveRoot);
+    std::error_code ec;
+    std::filesystem::remove_all(scratchDir, ec);
 
     return 0;
 }
