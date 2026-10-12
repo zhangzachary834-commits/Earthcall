@@ -410,3 +410,11 @@ Repository conversation tooling uses Python 3.10+ and the standard library. Run 
 
 
 **2026-10-11 support traversal:** rebuild the app and native volume consumers together after changing proof payload layout. Both camera lanes now store six support-bound floats after each packed zero proof. Final six focused targets pass (native proof 54/54), eight full-resolution captures match bytes, and two sequential ABBA series per view pass retention. GPU correctness/readback and performance runs are separate; ordinary timestamps stay disabled. [Final benchmark and runtime limits](audits/NORTHERN_VEIL_SUPPORT_TRAVERSAL_2026-10-11.md). **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T02:25:43-07:00
+
+
+**Northern Veil fragment census (2026-10-11):** `scripts/northern_veil_fragment_demand.py --output /private/tmp/<new-directory>` links configured app objects into read-only fixture binaries, requires a desktop GPU, and writes only outside the repository. Build `earthcall_webgpu` first. It is diagnostic, not a timing probe: native pixel comparisons expose a one-level instrumentation observer effect. [Contract and rejected transport experiment](audits/NORTHERN_VEIL_FRAGMENT_DEMAND_2026-10-11.md). Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T20:53:25-07:00 (PDT).
+
+
+**Volume support numerical research (2026-10-12):** `scripts/volume_support_certificate_research.py --fixture <existing-decoded-json> --output <new-report.json>` runs CPU-only, reads its fixture and refuses report overwrites; no build or GPU session is needed. Eighteen named witness groups pass, but production skips stay zero because the complete backend/coordinate contract is unresolved. Conditional table coverage is not native performance or production proof. [Model, reproduction and refusal boundaries](audits/VOLUME_SUPPORT_NUMERICAL_CONTRACT_2026-10-12.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T00:43:07-07:00 (PDT).

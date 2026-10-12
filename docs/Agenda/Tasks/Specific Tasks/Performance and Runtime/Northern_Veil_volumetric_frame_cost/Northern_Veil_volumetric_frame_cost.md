@@ -371,3 +371,22 @@ Following Zach’s request to reply, implement and reply again, retained the sec
 Zach reports a “BIG IMPROVEMENT FROM THAT PASS” and approximately **21 FPS at `(-1.45, 0.3, -1.3)`** after the Sun's sample-local scheduling continuation. This is a Person observation, separate from the Sun's paired offscreen timing gains. Preserve the raw coordinates; framebuffer/view direction, sampling interval, moving/stationary state and running build were not specified, so neither a matched percentage gain nor movement p95 follows. [Person verification record](../../../For%20Zach/Person%20Verification%20List.md#northern-veil--zach-reports-approximately-21-fps-after-scheduling-pass); continuous appearance acceptance and the 30 FPS milestone remain open.
 
 **Recorded by:** Codex / GPT-6 / session `01a12cb8-ac95-7b13-827d-2c7f289aa560` / 2026-10-11T18:05:55-07:00.
+
+
+## Fragment demand testing pass — no production candidate retained
+
+Implemented a reproducible read-only GPU fragment census, with paired pixels and counter-accounting checks. Its counters repeat, but instrumentation changes RGBA by at most one level; treat them as diagnostic rather than exact original-fragment evidence. Tested an independent sample-local empty-transport skip: eight exact full-size captures pass, but inside ABBA series are +8.02%/+1.04% slower, so it is rejected and production scheduling stays unchanged. No new support guard, cutoff, cache or save edit. [Full evidence and reproducible tool](../../../../../audits/NORTHERN_VEIL_FRAGMENT_DEMAND_2026-10-11.md). Actual live-view context, sound numerical support certificates and the movement milestone remain open.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T20:53:25-07:00 (PDT).
+
+
+**Person clarification — default-size live view:** Zach clarified that the approximately 21 FPS observation used the **default window size**, with **most auroras in view**; he did not track the exact viewing angle. This supplies qualitative window/view context. Physical framebuffer dimensions (including display scaling), native camera eye/look, motion interval and exact running build remain unmeasured; current running status was not answered. Do not substitute 2560×1440 or infer an exact camera orientation from this report.
+
+**Recorded by:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T21:19:44-07:00 (PDT).
+
+
+## Bounded certificate research — production admission remains zero
+
+Implemented a generic AST-recognized scalar-support research tool with rational rounding/intrinsic enclosures, a conditional two-endpoint band and 18 passing witness groups. The complete production transformation/coordinate contract is unresolved, so **zero production skips are admitted** and the runtime candidate stops here. Conditional grid zeros are not remaining GPU demand or a performance result. AD-30–32 remain OPEN; retained rendering and saves are untouched. [Derivation, refusals, all coverage and next dependency](../../../../../audits/VOLUME_SUPPORT_NUMERICAL_CONTRACT_2026-10-12.md). Zach's default-window/most-auroras clarification remains qualitative live context; warmed movement and 30 FPS acceptance are still open.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T00:43:07-07:00 (PDT).

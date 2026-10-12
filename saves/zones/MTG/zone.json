@@ -1,1524 +1,842 @@
 {
-  "objects": [
-    {
-      "objectID": "card.grizzly_bears_1",
-      "shapeKind": 0,
-      "geometryType": 0,
-      "shapeParams": [
-        0.3,
-        0.01,
-        0.4,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "transform": [
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        -2,
-        0,
-        0,
-        1
-      ],
-      "authors": [
-        "Gemini"
-      ],
-      "authoredProperties": {
-        "mtg.name": {
-          "t": "string",
-          "v": "Grizzly Bears"
-        },
-        "mtg.power": {
-          "t": "int",
-          "v": 2
-        },
-        "mtg.toughness": {
-          "t": "int",
-          "v": 2
-        },
-        "mtg.damage": {
-          "t": "int",
-          "v": 0
-        },
-        "mtg.type": {
-          "t": "string",
-          "v": "Creature"
-        },
-        "mtg.zone": {
-          "t": "string",
-          "v": "hand.1"
-        },
-        "mtg.handOrder": {
-          "t": "number",
-          "v": 0.0
-        }
-      },
-      "materialId": "material.mtg.card.green"
-    },
-    {
-      "objectID": "card.lightning_bolt_1",
-      "shapeKind": 0,
-      "geometryType": 0,
-      "shapeParams": [
-        0.3,
-        0.01,
-        0.4,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "transform": [
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        2,
-        0,
-        0,
-        1
-      ],
-      "authors": [
-        "Gemini"
-      ],
-      "authoredProperties": {
-        "mtg.name": {
-          "t": "string",
-          "v": "Lightning Bolt"
-        },
-        "mtg.type": {
-          "t": "string",
-          "v": "Instant"
-        },
-        "mtg.zone": {
-          "t": "string",
-          "v": "hand.1"
-        },
-        "mtg.handOrder": {
-          "t": "number",
-          "v": 1.0
-        }
-      },
-      "materialId": "material.mtg.card.red"
-    },
-    {
-      "objectID": "button.mtg.pass",
-      "shapeKind": 0,
-      "geometryType": 0,
-      "shapeParams": [
-        0.5,
-        0.1,
-        0.2,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "transform": [
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        -1,
-        -5,
-        1
-      ],
-      "authoredProperties": {
-        "displayName": {
-          "t": "string",
-          "v": "Pass Priority"
-        }
-      },
-      "materialId": "material.mtg.button"
-    },
-    {
-      "objectID": "button.mtg.resolve",
-      "shapeKind": 0,
-      "geometryType": 0,
-      "shapeParams": [
-        0.5,
-        0.1,
-        0.5,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "position": [
-        2.0,
-        0.0,
-        -1.0
-      ],
-      "authoredProperties": {
-        "label": {
-          "t": "string",
-          "v": "Resolve"
-        }
-      },
-      "materialId": "material.mtg.button.resolve"
-    },
-    {
-      "objectID": "object.mtg.table",
-      "shapeKind": 0,
-      "geometryType": 0,
-      "shapeParams": [
-        15.0,
-        0.2,
-        10.0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "position": [
-        0.0,
-        0.0,
-        0.0
-      ],
-      "materialId": "material.mtg.table"
-    }
-  ],
-  "formationRelations": [
-    {
-      "type": "instance-of",
-      "entityA": "card.grizzly_bears_1",
-      "entityB": "category.mtg.card",
-      "directed": true,
-      "authors": [
-        "Gemini"
-      ]
-    },
-    {
-      "type": "member-of",
-      "entityA": "card.grizzly_bears_1",
-      "entityB": "mtg.formation.battlefield",
-      "directed": true,
-      "authors": [
-        "Gemini"
-      ],
-      "authoredProperties": {
-        "mtg.layoutIndex": {
-          "t": "int",
-          "v": 0
-        }
-      }
-    },
-    {
-      "type": "instance-of",
-      "entityA": "card.lightning_bolt_1",
-      "entityB": "category.mtg.card",
-      "directed": true,
-      "authors": [
-        "Gemini"
-      ]
-    },
-    {
-      "type": "member-of",
-      "entityA": "card.lightning_bolt_1",
-      "entityB": "mtg.formation.hand.1",
-      "directed": true,
-      "authors": [
-        "Gemini"
-      ],
-      "authoredProperties": {
-        "mtg.layoutIndex": {
-          "t": "int",
-          "v": 0
-        }
-      }
-    },
-    {
-      "type": "tracks-state",
-      "entityA": "MTG",
-      "entityB": "state.mtg",
-      "directed": true,
-      "authors": [
-        "Gemini"
-      ]
-    }
-  ],
-  "laws": [],
   "identifier": "MTG",
   "name": "Magic: The Gathering",
-  "lexemes": [
-    {
-      "id": "mtg.formation.battlefield",
-      "symbol": "mtg.formation.battlefield"
-    },
-    {
-      "id": "mtg.formation.stack",
-      "symbol": "mtg.formation.stack"
-    },
-    {
-      "id": "mtg.formation.graveyard.1",
-      "symbol": "mtg.formation.graveyard.1"
-    },
-    {
-      "id": "mtg.formation.graveyard.2",
-      "symbol": "mtg.formation.graveyard.2"
-    },
-    {
-      "id": "mtg.formation.hand.1",
-      "symbol": "mtg.formation.hand.1"
-    },
-    {
-      "id": "mtg.formation.hand.2",
-      "symbol": "mtg.formation.hand.2"
-    },
-    {
-      "id": "mtg.formation.library.1",
-      "symbol": "mtg.formation.library.1"
-    },
-    {
-      "id": "mtg.formation.library.2",
-      "symbol": "mtg.formation.library.2"
-    },
-    {
-      "id": "category.mtg.card",
-      "symbol": "category.mtg.card"
-    },
-    {
-      "id": "state.mtg",
-      "symbol": "state.mtg",
-      "authoredProperties": {
-        "turnPhase": {
-          "t": "string",
-          "v": "main1"
-        },
-        "priorityPlayer": {
-          "t": "int",
-          "v": 1
-        },
-        "stackCounter": {
-          "t": "int",
-          "v": 0
-        }
-      }
-    }
+  "scope": "Local",
+  "lawRefs": [
+    "law-mtg-turn-cycle",
+    "law-mtg-pass-phase",
+    "law-mtg-tap-forest",
+    "law-mtg-play-forest",
+    "law-mtg-tap-mountain",
+    "law-mtg-play-mountain",
+    "law-mtg-cast-grizzly-bears",
+    "law-mtg-cast-lightning-bolt",
+    "law-mtg-trigger-resolve",
+    "law-mtg-resolve-lightning-bolt",
+    "law-mtg-resolve-grizzly-bears",
+    "law-mtg-attack-grizzly-bears",
+    "law-mtg-sba-lethal-damage",
+    "law-mtg-sba-player-loss"
   ],
-  "authoredLaws": {
-    "mtg-pass-priority-untap": {
-      "name": "mtg-pass-priority-untap",
-      "authors": [
-        "Gemini"
-      ],
-      "enabled": true,
-      "eventFilter": {
-        "event": "pointer-click",
-        "bindings": {
-          "self": "subject"
-        }
-      },
-      "conditionModel": {
-        "kind": 3,
-        "children": [
-          {
-            "kind": 8,
-            "path": "@self",
-            "otherId": "button.mtg.pass"
-          },
-          {
-            "kind": 0,
-            "path": "@state.mtg.turnPhase",
-            "op": 0,
-            "operand": {
-              "t": "string",
-              "v": "untap"
-            }
-          }
-        ]
-      },
-      "actionModel": {
-        "kind": 0,
-        "path": "@state.mtg.turnPhase",
-        "op": 0,
-        "operand": {
-          "t": "string",
-          "v": "upkeep"
-        }
-      }
-    },
-    "mtg-pass-priority-upkeep": {
-      "name": "mtg-pass-priority-upkeep",
-      "authors": [
-        "Gemini"
-      ],
-      "enabled": true,
-      "eventFilter": {
-        "event": "pointer-click",
-        "bindings": {
-          "self": "subject"
-        }
-      },
-      "conditionModel": {
-        "kind": 3,
-        "children": [
-          {
-            "kind": 8,
-            "path": "@self",
-            "otherId": "button.mtg.pass"
-          },
-          {
-            "kind": 0,
-            "path": "@state.mtg.turnPhase",
-            "op": 0,
-            "operand": {
-              "t": "string",
-              "v": "upkeep"
-            }
-          }
-        ]
-      },
-      "actionModel": {
-        "kind": 0,
-        "path": "@state.mtg.turnPhase",
-        "op": 0,
-        "operand": {
-          "t": "string",
-          "v": "draw"
-        }
-      }
-    },
-    "mtg-pass-priority-draw": {
-      "name": "mtg-pass-priority-draw",
-      "authors": [
-        "Gemini"
-      ],
-      "enabled": true,
-      "eventFilter": {
-        "event": "pointer-click",
-        "bindings": {
-          "self": "subject"
-        }
-      },
-      "conditionModel": {
-        "kind": 3,
-        "children": [
-          {
-            "kind": 8,
-            "path": "@self",
-            "otherId": "button.mtg.pass"
-          },
-          {
-            "kind": 0,
-            "path": "@state.mtg.turnPhase",
-            "op": 0,
-            "operand": {
-              "t": "string",
-              "v": "draw"
-            }
-          }
-        ]
-      },
-      "actionModel": {
-        "kind": 0,
-        "path": "@state.mtg.turnPhase",
-        "op": 0,
-        "operand": {
-          "t": "string",
-          "v": "main1"
-        }
-      }
-    },
-    "mtg-pass-priority-main1": {
-      "name": "mtg-pass-priority-main1",
-      "authors": [
-        "Gemini"
-      ],
-      "enabled": true,
-      "eventFilter": {
-        "event": "pointer-click",
-        "bindings": {
-          "self": "subject"
-        }
-      },
-      "conditionModel": {
-        "kind": 3,
-        "children": [
-          {
-            "kind": 8,
-            "path": "@self",
-            "otherId": "button.mtg.pass"
-          },
-          {
-            "kind": 0,
-            "path": "@state.mtg.turnPhase",
-            "op": 0,
-            "operand": {
-              "t": "string",
-              "v": "main1"
-            }
-          }
-        ]
-      },
-      "actionModel": {
-        "kind": 0,
-        "path": "@state.mtg.turnPhase",
-        "op": 0,
-        "operand": {
-          "t": "string",
-          "v": "combat"
-        }
-      }
-    },
-    "mtg-pass-priority-combat": {
-      "name": "mtg-pass-priority-combat",
-      "authors": [
-        "Gemini"
-      ],
-      "enabled": true,
-      "eventFilter": {
-        "event": "pointer-click",
-        "bindings": {
-          "self": "subject"
-        }
-      },
-      "conditionModel": {
-        "kind": 3,
-        "children": [
-          {
-            "kind": 8,
-            "path": "@self",
-            "otherId": "button.mtg.pass"
-          },
-          {
-            "kind": 0,
-            "path": "@state.mtg.turnPhase",
-            "op": 0,
-            "operand": {
-              "t": "string",
-              "v": "combat"
-            }
-          }
-        ]
-      },
-      "actionModel": {
-        "kind": 0,
-        "path": "@state.mtg.turnPhase",
-        "op": 0,
-        "operand": {
-          "t": "string",
-          "v": "main2"
-        }
-      }
-    },
-    "mtg-pass-priority-main2": {
-      "name": "mtg-pass-priority-main2",
-      "authors": [
-        "Gemini"
-      ],
-      "enabled": true,
-      "eventFilter": {
-        "event": "pointer-click",
-        "bindings": {
-          "self": "subject"
-        }
-      },
-      "conditionModel": {
-        "kind": 3,
-        "children": [
-          {
-            "kind": 8,
-            "path": "@self",
-            "otherId": "button.mtg.pass"
-          },
-          {
-            "kind": 0,
-            "path": "@state.mtg.turnPhase",
-            "op": 0,
-            "operand": {
-              "t": "string",
-              "v": "main2"
-            }
-          }
-        ]
-      },
-      "actionModel": {
-        "kind": 0,
-        "path": "@state.mtg.turnPhase",
-        "op": 0,
-        "operand": {
-          "t": "string",
-          "v": "end"
-        }
-      }
-    },
-    "mtg-pass-priority-end": {
-      "name": "mtg-pass-priority-end",
-      "authors": [
-        "Gemini"
-      ],
-      "enabled": true,
-      "eventFilter": {
-        "event": "pointer-click",
-        "bindings": {
-          "self": "subject"
-        }
-      },
-      "conditionModel": {
-        "kind": 3,
-        "children": [
-          {
-            "kind": 8,
-            "path": "@self",
-            "otherId": "button.mtg.pass"
-          },
-          {
-            "kind": 0,
-            "path": "@state.mtg.turnPhase",
-            "op": 0,
-            "operand": {
-              "t": "string",
-              "v": "end"
-            }
-          }
-        ]
-      },
-      "actionModel": {
-        "kind": 0,
-        "path": "@state.mtg.turnPhase",
-        "op": 0,
-        "operand": {
-          "t": "string",
-          "v": "untap"
-        }
-      }
-    },
-    "mtg-cast-card": {
-      "name": "mtg-cast-card",
-      "authors": [
-        "Gemini"
-      ],
-      "enabled": true,
-      "eventFilter": {
-        "event": "pointer-click",
-        "bindings": {
-          "self": "subject"
-        }
-      },
-      "conditionModel": {
-        "kind": 3,
-        "children": [
-          {
-            "kind": 0,
-            "path": "@self.mtg.zone",
-            "op": 0,
-            "operand": {
-              "t": "string",
-              "v": "hand.1"
-            }
-          },
-          {
-            "kind": 0,
-            "path": "@state.mtg.turnPhase",
-            "op": 0,
-            "operand": {
-              "t": "string",
-              "v": "main1"
-            }
-          }
-        ]
-      },
-      "actionModel": {
-        "kind": 17,
-        "children": [
-          {
-            "kind": 0,
-            "path": "@self.mtg.zone",
-            "operand": {
-              "t": "string",
-              "v": "stack"
-            }
-          },
-          {
-            "kind": 8,
-            "path": "@self.mtg.stackOrder",
-            "function": {
-              "input": "x",
-              "pieces": [
-                {
-                  "mathNode": {
-                    "op": 1,
-                    "var": "c"
-                  }
-                }
-              ]
-            },
-            "bindings": {
-              "c": "@state.mtg.stackCounter"
-            }
-          },
-          {
-            "kind": 8,
-            "path": "@state.mtg.topStackOrder",
-            "function": {
-              "input": "x",
-              "pieces": [
-                {
-                  "mathNode": {
-                    "op": 1,
-                    "var": "c"
-                  }
-                }
-              ]
-            },
-            "bindings": {
-              "c": "@state.mtg.stackCounter"
-            }
-          },
-          {
-            "kind": 1,
-            "path": "@state.mtg.stackCounter",
-            "operand": {
-              "t": "number",
-              "v": 1.0
-            }
-          }
-        ]
-      }
-    },
-    "mtg-layout-stack": {
-      "name": "mtg-layout-stack",
-      "authors": [
-        "Gemini"
-      ],
-      "enabled": true,
-      "eventFilter": {
-        "event": "WhileTrue",
-        "bindings": {
-          "self": "subject"
-        }
-      },
-      "conditionModel": {
-        "kind": 0,
-        "path": "@self.mtg.zone",
-        "op": 0,
-        "operand": {
-          "t": "string",
-          "v": "stack"
-        }
-      },
-      "actionModel": {
-        "kind": 8,
-        "path": "@self.position",
-        "function": {
-          "input": "x",
-          "pieces": [
-            {
-              "mathNode": {
-                "op": 2,
-                "children": [
-                  {
-                    "op": 0,
-                    "scalarForm": {
-                      "terms": [
-                        {
-                          "c": 1.5,
-                          "factors": {
-                            "order": 1.0
-                          }
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "op": 0,
-                    "scalarForm": {
-                      "terms": [
-                        {
-                          "c": 0.5
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "op": 0,
-                    "scalarForm": {
-                      "terms": [
-                        {
-                          "c": -2.0
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        "bindings": {
-          "order": "@self.mtg.stackOrder"
-        }
-      }
-    },
-    "mtg-layout-hand": {
-      "name": "mtg-layout-hand",
-      "authors": [
-        "Gemini"
-      ],
-      "enabled": true,
-      "eventFilter": {
-        "event": "WhileTrue",
-        "bindings": {
-          "self": "subject"
-        }
-      },
-      "conditionModel": {
-        "kind": 0,
-        "path": "@self.mtg.zone",
-        "op": 0,
-        "operand": {
-          "t": "string",
-          "v": "hand.1"
-        }
-      },
-      "actionModel": {
-        "kind": 8,
-        "path": "@self.position",
-        "function": {
-          "input": "x",
-          "pieces": [
-            {
-              "mathNode": {
-                "op": 2,
-                "children": [
-                  {
-                    "op": 0,
-                    "scalarForm": {
-                      "terms": [
-                        {
-                          "c": 1.5,
-                          "factors": {
-                            "order": 1.0
-                          }
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "op": 0,
-                    "scalarForm": {
-                      "terms": [
-                        {
-                          "c": 0.5
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "op": 0,
-                    "scalarForm": {
-                      "terms": [
-                        {
-                          "c": 2.0
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        "bindings": {
-          "order": "@self.mtg.handOrder"
-        }
-      }
-    },
-    "mtg-trigger-resolve": {
-      "name": "mtg-trigger-resolve",
-      "authors": [
-        "Gemini"
-      ],
-      "enabled": true,
-      "eventFilter": {
-        "event": "pointer-click",
-        "bindings": {
-          "self": "subject"
-        }
-      },
-      "conditionModel": {
-        "kind": 0,
-        "path": "@self.objectID",
-        "op": 0,
-        "operand": {
-          "t": "string",
-          "v": "button.mtg.resolve"
-        }
-      },
-      "actionModel": {
-        "kind": 9,
-        "eventType": "resolve-stack"
-      }
-    },
-    "mtg-execute-resolve": {
-      "name": "mtg-execute-resolve",
-      "authors": [
-        "Gemini"
-      ],
-      "enabled": true,
-      "eventFilter": {
-        "event": "resolve-stack",
-        "bindings": {
-          "self": "subject"
-        }
-      },
-      "conditionModel": {
-        "kind": 3,
-        "children": [
-          {
-            "kind": 0,
-            "path": "@self.mtg.zone",
-            "op": 0,
-            "operand": {
-              "t": "string",
-              "v": "stack"
-            }
-          },
-          {
-            "kind": 0,
-            "path": "@self.mtg.stackOrder",
-            "op": 0,
-            "operandPath": "@state.mtg.topStackOrder"
-          }
-        ]
-      },
-      "actionModel": {
-        "kind": 17,
-        "children": [
-          {
-            "kind": 0,
-            "path": "@self.mtg.zone",
-            "operand": {
-              "t": "string",
-              "v": "battlefield"
-            }
-          },
-          {
-            "kind": 1,
-            "path": "@state.mtg.stackCounter",
-            "operand": {
-              "t": "number",
-              "v": -1.0
-            }
-          },
-          {
-            "kind": 1,
-            "path": "@state.mtg.topStackOrder",
-            "operand": {
-              "t": "number",
-              "v": -1.0
-            }
-          },
-          {
-            "kind": 8,
-            "path": "@self.mtg.layoutIndex",
-            "function": {
-              "input": "x",
-              "pieces": [
-                {
-                  "mathNode": {
-                    "op": 1,
-                    "var": "c"
-                  }
-                }
-              ]
-            },
-            "bindings": {
-              "c": "@state.mtg.battlefieldCounter"
-            }
-          },
-          {
-            "kind": 1,
-            "path": "@state.mtg.battlefieldCounter",
-            "operand": {
-              "t": "number",
-              "v": 1.0
-            }
-          }
-        ]
-      }
-    },
-    "mtg-layout-battlefield": {
-      "name": "mtg-layout-battlefield",
-      "authors": [
-        "Gemini"
-      ],
-      "enabled": true,
-      "eventFilter": {
-        "event": "WhileTrue",
-        "bindings": {
-          "self": "subject"
-        }
-      },
-      "conditionModel": {
-        "kind": 0,
-        "path": "@self.mtg.zone",
-        "op": 0,
-        "operand": {
-          "t": "string",
-          "v": "battlefield"
-        }
-      },
-      "actionModel": {
-        "kind": 17,
-        "children": [
-          {
-            "kind": 8,
-            "path": "@self.position.x",
-            "function": {
-              "input": "x",
-              "pieces": [
-                {
-                  "mathNode": {
-                    "op": 0,
-                    "scalarForm": {
-                      "terms": [
-                        {
-                          "c": 1.5,
-                          "factors": {
-                            "i": 1.0
-                          }
-                        }
-                      ]
-                    }
-                  }
-                }
-              ]
-            },
-            "bindings": {
-              "i": "@self.mtg.layoutIndex"
-            }
-          },
-          {
-            "kind": 0,
-            "path": "@self.position.y",
-            "operand": {
-              "t": "number",
-              "v": 0.5
-            }
-          },
-          {
-            "kind": 0,
-            "path": "@self.position.z",
-            "operand": {
-              "t": "number",
-              "v": 0.0
-            }
-          }
-        ]
-      }
-    },
-    "mtg-sba-lethal-damage": {
-      "name": "mtg-sba-lethal-damage",
-      "authors": [
-        "Gemini"
-      ],
-      "enabled": true,
-      "eventFilter": {
-        "event": "WhileTrue",
-        "bindings": {
-          "self": "subject"
-        }
-      },
-      "conditionModel": {
-        "kind": 3,
-        "children": [
-          {
-            "kind": 0,
-            "path": "@self.mtg.zone",
-            "op": 0,
-            "operand": {
-              "t": "string",
-              "v": "battlefield"
-            }
-          },
-          {
-            "kind": 0,
-            "path": "@self.mtg.damage",
-            "op": 3,
-            "operandPath": "@self.mtg.toughness"
-          }
-        ]
-      },
-      "actionModel": {
-        "kind": 17,
-        "children": [
-          {
-            "kind": 0,
-            "path": "@self.mtg.zone",
-            "operand": {
-              "t": "string",
-              "v": "graveyard"
-            }
-          },
-          {
-            "kind": 8,
-            "path": "@self.mtg.graveyardOrder",
-            "function": {
-              "input": "x",
-              "pieces": [
-                {
-                  "mathNode": {
-                    "op": 1,
-                    "var": "c"
-                  }
-                }
-              ]
-            },
-            "bindings": {
-              "c": "@state.mtg.graveyardCounter"
-            }
-          },
-          {
-            "kind": 1,
-            "path": "@state.mtg.graveyardCounter",
-            "operand": {
-              "t": "number",
-              "v": 1.0
-            }
-          }
-        ]
-      }
-    },
-    "mtg-layout-graveyard": {
-      "name": "mtg-layout-graveyard",
-      "authors": [
-        "Gemini"
-      ],
-      "enabled": true,
-      "eventFilter": {
-        "event": "WhileTrue",
-        "bindings": {
-          "self": "subject"
-        }
-      },
-      "conditionModel": {
-        "kind": 0,
-        "path": "@self.mtg.zone",
-        "op": 0,
-        "operand": {
-          "t": "string",
-          "v": "graveyard"
-        }
-      },
-      "actionModel": {
-        "kind": 17,
-        "children": [
-          {
-            "kind": 8,
-            "path": "@self.position.x",
-            "function": {
-              "input": "x",
-              "pieces": [
-                {
-                  "mathNode": {
-                    "op": 0,
-                    "scalarForm": {
-                      "terms": [
-                        {
-                          "c": -2.0,
-                          "factors": {
-                            "i": 1.0
-                          }
-                        }
-                      ]
-                    }
-                  }
-                }
-              ]
-            },
-            "bindings": {
-              "i": "@self.mtg.graveyardOrder"
-            }
-          },
-          {
-            "kind": 0,
-            "path": "@self.position.y",
-            "operand": {
-              "t": "number",
-              "v": 0.5
-            }
-          },
-          {
-            "kind": 0,
-            "path": "@self.position.z",
-            "operand": {
-              "t": "number",
-              "v": 4.0
-            }
-          }
-        ]
-      }
-    }
-  },
   "materials": [
     {
-      "id": "material.mtg.card",
-      "colorExpr": {
-        "input": "x",
-        "pieces": [
-          {
-            "mathNode": {
-              "op": 2,
-              "children": [
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.95
-                      }
-                    ]
-                  }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.95
-                      }
-                    ]
-                  }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.9
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "id": "material.mtg.button",
-      "colorExpr": {
-        "input": "x",
-        "pieces": [
-          {
-            "mathNode": {
-              "op": 2,
-              "children": [
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.2
-                      }
-                    ]
-                  }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.8
-                      }
-                    ]
-                  }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.4
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
+      "name": "mtg.table",
       "id": "material.mtg.table",
-      "colorExpr": {
-        "input": "x",
-        "pieces": [
-          {
-            "mathNode": {
-              "op": 2,
-              "children": [
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.3
-                      }
-                    ]
-                  }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.15
-                      }
-                    ]
-                  }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.05
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0.4,
+      "shininess": 24.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.22,
+        0.12,
+        0.07
+      ]
     },
     {
+      "name": "mtg.playmat",
+      "id": "material.mtg.playmat",
+      "ambient": 0.3,
+      "diffuse": 0.9,
+      "specular": 0.2,
+      "shininess": 16.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.08,
+        0.1,
+        0.14
+      ]
+    },
+    {
+      "name": "mtg.stack",
+      "id": "material.mtg.stack",
+      "ambient": 0.4,
+      "diffuse": 0.8,
+      "specular": 0.8,
+      "shininess": 64.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.35,
+        0.18,
+        0.55
+      ]
+    },
+    {
+      "name": "mtg.button.pass",
+      "id": "material.mtg.button.pass",
+      "ambient": 0.35,
+      "diffuse": 0.9,
+      "specular": 1.0,
+      "shininess": 80.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.85,
+        0.65,
+        0.15
+      ]
+    },
+    {
+      "name": "mtg.button.resolve",
       "id": "material.mtg.button.resolve",
-      "colorExpr": {
-        "input": "x",
-        "pieces": [
-          {
-            "mathNode": {
-              "op": 2,
-              "children": [
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.9
-                      }
-                    ]
-                  }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.4
-                      }
-                    ]
-                  }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.1
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
+      "ambient": 0.4,
+      "diffuse": 0.9,
+      "specular": 1.0,
+      "shininess": 90.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.15,
+        0.65,
+        0.85
+      ]
     },
     {
-      "id": "material.mtg.skybox",
-      "colorExpr": {
-        "input": "x",
-        "pieces": [
-          {
-            "mathNode": {
-              "op": 2,
-              "children": [
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.05
-                      }
-                    ]
-                  }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.05
-                      }
-                    ]
-                  }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.1
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
+      "name": "mtg.card.forest",
+      "id": "material.mtg.card.forest",
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0.5,
+      "shininess": 32.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.18,
+        0.45,
+        0.22
+      ]
     },
     {
-      "id": "material.mtg.card.green",
-      "colorExpr": {
-        "input": "x",
-        "pieces": [
-          {
-            "mathNode": {
-              "op": 2,
-              "children": [
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.2
-                      }
-                    ]
-                  }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.8
-                      }
-                    ]
-                  }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.2
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
+      "name": "mtg.card.mountain",
+      "id": "material.mtg.card.mountain",
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0.5,
+      "shininess": 32.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.65,
+        0.25,
+        0.15
+      ]
     },
     {
-      "id": "material.mtg.card.red",
-      "colorExpr": {
-        "input": "x",
-        "pieces": [
-          {
-            "mathNode": {
-              "op": 2,
-              "children": [
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.9
-                      }
-                    ]
-                  }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.2
-                      }
-                    ]
-                  }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.2
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
+      "name": "mtg.card.bears",
+      "id": "material.mtg.card.bears",
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0.5,
+      "shininess": 32.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.45,
+        0.32,
+        0.18
+      ]
+    },
+    {
+      "name": "mtg.card.bolt",
+      "id": "material.mtg.card.bolt",
+      "ambient": 0.3,
+      "diffuse": 0.9,
+      "specular": 0.7,
+      "shininess": 48.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.85,
+        0.35,
+        0.1
+      ]
+    },
+    {
+      "name": "mtg.crystal.p1",
+      "id": "material.mtg.crystal.p1",
+      "ambient": 0.35,
+      "diffuse": 0.85,
+      "specular": 0.9,
+      "shininess": 70.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.2,
+        0.8,
+        0.3
+      ]
+    },
+    {
+      "name": "mtg.crystal.p2",
+      "id": "material.mtg.crystal.p2",
+      "ambient": 0.35,
+      "diffuse": 0.85,
+      "specular": 0.9,
+      "shininess": 70.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.85,
+        0.2,
+        0.2
+      ]
     }
-  ]
+  ],
+  "world": {
+    "objects": [
+      {
+        "objectID": "object.mtg.table",
+        "shapeKind": 9,
+        "materialId": "material.mtg.table",
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.05
+        ],
+        "transform": [
+          10.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          8.0,
+          0.0,
+          0.0,
+          0.25,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.25,
+          0.0
+        ]
+      },
+      {
+        "objectID": "object.mtg.playmat",
+        "shapeKind": 9,
+        "materialId": "material.mtg.playmat",
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02
+        ],
+        "transform": [
+          8.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          6.0,
+          0.0,
+          0.0,
+          0.51,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.51,
+          0.0
+        ]
+      },
+      {
+        "objectID": "object.mtg.stack_zone",
+        "shapeKind": 3,
+        "materialId": "material.mtg.stack",
+        "shapeParams": [
+          1.2,
+          0.015,
+          1.2,
+          0.015,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.01,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.5,
+          0.0,
+          0.0,
+          0.522,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.522,
+          0.0
+        ]
+      },
+      {
+        "objectID": "button.mtg.pass_phase",
+        "shapeKind": 9,
+        "materialId": "material.mtg.button.pass",
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.04,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.6,
+          0.0,
+          3.0,
+          0.535,
+          1.5,
+          1.0
+        ],
+        "center": [
+          3.0,
+          0.535,
+          1.5
+        ],
+        "authoredProperties": {
+          "isButton": {
+            "t": "bool",
+            "v": true
+          }
+        }
+      },
+      {
+        "objectID": "button.mtg.resolve",
+        "shapeKind": 9,
+        "materialId": "material.mtg.button.resolve",
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02
+        ],
+        "transform": [
+          0.9,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.04,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          0.0,
+          0.535,
+          1.2,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.535,
+          1.2
+        ],
+        "authoredProperties": {
+          "isButton": {
+            "t": "bool",
+            "v": true
+          }
+        }
+      },
+      {
+        "objectID": "counter.mtg.life1",
+        "shapeKind": 2,
+        "materialId": "material.mtg.crystal.p1",
+        "shapeParams": [
+          0.2,
+          0.2,
+          0.2,
+          0.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.3,
+          0.0,
+          -3.2,
+          0.55,
+          2.2,
+          1.0
+        ],
+        "center": [
+          -3.2,
+          0.55,
+          2.2
+        ]
+      },
+      {
+        "objectID": "counter.mtg.life2",
+        "shapeKind": 2,
+        "materialId": "material.mtg.crystal.p2",
+        "shapeParams": [
+          0.2,
+          0.2,
+          0.2,
+          0.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.3,
+          0.0,
+          -3.2,
+          0.55,
+          -2.2,
+          1.0
+        ],
+        "center": [
+          -3.2,
+          0.55,
+          -2.2
+        ]
+      },
+      {
+        "objectID": "card.forest_1",
+        "shapeKind": 9,
+        "materialId": "material.mtg.card.forest",
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.01
+        ],
+        "transform": [
+          0.7,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -2.0,
+          0.53,
+          2.4,
+          1.0
+        ],
+        "center": [
+          -2.0,
+          0.53,
+          2.4
+        ],
+        "authoredProperties": {
+          "cardName": {
+            "t": "string",
+            "v": "Forest"
+          },
+          "cardType": {
+            "t": "string",
+            "v": "land"
+          },
+          "zone": {
+            "t": "string",
+            "v": "hand"
+          },
+          "isTapped": {
+            "t": "int",
+            "v": 0
+          }
+        }
+      },
+      {
+        "objectID": "card.mountain_1",
+        "shapeKind": 9,
+        "materialId": "material.mtg.card.mountain",
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.01
+        ],
+        "transform": [
+          0.7,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -0.8,
+          0.53,
+          2.4,
+          1.0
+        ],
+        "center": [
+          -0.8,
+          0.53,
+          2.4
+        ],
+        "authoredProperties": {
+          "cardName": {
+            "t": "string",
+            "v": "Mountain"
+          },
+          "cardType": {
+            "t": "string",
+            "v": "land"
+          },
+          "zone": {
+            "t": "string",
+            "v": "hand"
+          },
+          "isTapped": {
+            "t": "int",
+            "v": 0
+          }
+        }
+      },
+      {
+        "objectID": "card.grizzly_bears_1",
+        "shapeKind": 9,
+        "materialId": "material.mtg.card.bears",
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.01
+        ],
+        "transform": [
+          0.7,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.8,
+          0.53,
+          2.4,
+          1.0
+        ],
+        "center": [
+          0.8,
+          0.53,
+          2.4
+        ],
+        "authoredProperties": {
+          "cardName": {
+            "t": "string",
+            "v": "Grizzly Bears"
+          },
+          "cardType": {
+            "t": "string",
+            "v": "creature"
+          },
+          "manaCost": {
+            "t": "int",
+            "v": 1
+          },
+          "power": {
+            "t": "int",
+            "v": 2
+          },
+          "toughness": {
+            "t": "int",
+            "v": 2
+          },
+          "damage": {
+            "t": "int",
+            "v": 0
+          },
+          "zone": {
+            "t": "string",
+            "v": "hand"
+          },
+          "isTapped": {
+            "t": "int",
+            "v": 0
+          },
+          "isAttacking": {
+            "t": "int",
+            "v": 0
+          },
+          "stackOrder": {
+            "t": "int",
+            "v": 0
+          }
+        }
+      },
+      {
+        "objectID": "card.lightning_bolt_1",
+        "shapeKind": 9,
+        "materialId": "material.mtg.card.bolt",
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.01
+        ],
+        "transform": [
+          0.7,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          2.0,
+          0.53,
+          2.4,
+          1.0
+        ],
+        "center": [
+          2.0,
+          0.53,
+          2.4
+        ],
+        "authoredProperties": {
+          "cardName": {
+            "t": "string",
+            "v": "Lightning Bolt"
+          },
+          "cardType": {
+            "t": "string",
+            "v": "instant"
+          },
+          "manaCost": {
+            "t": "int",
+            "v": 1
+          },
+          "zone": {
+            "t": "string",
+            "v": "hand"
+          },
+          "stackOrder": {
+            "t": "int",
+            "v": 0
+          }
+        }
+      },
+      {
+        "objectID": "author.antigravity",
+        "shapeKind": 12,
+        "materialId": "",
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          80.0,
+          80.0,
+          80.0,
+          1.0
+        ],
+        "center": [
+          80.0,
+          80.0,
+          80.0
+        ]
+      },
+      {
+        "objectID": "state.mtg",
+        "shapeKind": 12,
+        "materialId": "",
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          80.0,
+          80.0,
+          80.0,
+          1.0
+        ],
+        "center": [
+          80.0,
+          80.0,
+          80.0
+        ],
+        "authoredProperties": {
+          "phase": {
+            "t": "int",
+            "v": 0
+          },
+          "turnNumber": {
+            "t": "int",
+            "v": 1
+          },
+          "activePlayer": {
+            "t": "int",
+            "v": 1
+          },
+          "landPlayedThisTurn": {
+            "t": "int",
+            "v": 0
+          },
+          "manaGreen": {
+            "t": "int",
+            "v": 0
+          },
+          "manaRed": {
+            "t": "int",
+            "v": 0
+          },
+          "player1Life": {
+            "t": "int",
+            "v": 20
+          },
+          "player2Life": {
+            "t": "int",
+            "v": 20
+          },
+          "stackCount": {
+            "t": "int",
+            "v": 0
+          },
+          "gameOver": {
+            "t": "bool",
+            "v": false
+          }
+        }
+      }
+    ]
+  }
 }

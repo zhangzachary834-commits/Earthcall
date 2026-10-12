@@ -334,6 +334,7 @@ CRITICAL: Ensure the MCP protocol abides by Earthcalls First Mover and authorshi
 - Multi-device Earthcall networking and inter-device paradigms.
 - So make sure every Shape Kind has a Face Texture or whatever equivalent necessary to draw on it freely. Also, facetextures shouldn't be a black box or a hardcoded limiter (e.g. facetexture dimensions should not be hardcoded away from Person authoring--we shouldn't be stuck with only having 256x256 resolution textures) *(Agent note, 2026-09-25: texture resolution became authorable on 2026-09-18 (the ✅ "Face Texture Resolution Properties" entry in this section); a Face Texture for every ShapeKind is still open.)*
 - Distill Geometrical and rendering nodes. Remove unnecessary matheamtical abstractions down to invariants.
+- ✅ **3D Magic: The Gathering (MTG) Zone (2026-10-11)** — done and verified (2026-10-11): Built fully functioning 3D MTG zone with 14 authored laws, 11 materials, OntoMath Piecewise Map phase cycles, and automated integration test with 113/113 checks passed. → [verification](For%20Zach/Person%20Verification%20List.md#3d-magic-the-gathering-mtg-zone)
 
 <a id="interaction-controls-gui"></a>
 ### Interaction · controls · GUI

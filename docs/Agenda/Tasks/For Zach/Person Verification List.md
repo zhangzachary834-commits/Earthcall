@@ -1,5 +1,24 @@
 # Person Verification List
 
+## 3D Magic: The Gathering (MTG) Zone
+
+*Antigravity / Gemini / session `e1346ea7-7d86-4945-8831-01e3e33dd09a` / 2026-10-11 — Zach requested a fully working 3D Magic the Gathering zone with functioning game rules, beautiful textures, colors, and intentional looking shapes.*
+
+- [ ] Boot Earthcall (`./build/earthcall_webgpu` or `./build/earthcall`), switch to the `Magic: The Gathering` (MTG) zone.
+- [ ] Visual Inspection:
+  - Verify the wooden table (`y=0.25`, top surface at `0.50`), dark slate playmat (`y=0.51`), and central glowing arcane stack cylinder (`y=0.522`).
+  - Verify life crystals (emerald green for Player 1, ruby red for Player 2) flanking the playmat.
+  - Verify card meshes (Forest, Mountain, Grizzly Bears, Lightning Bolt) and buttons (golden Pass Phase button, glowing cyan Resolve button) all rest properly above the playmat ($y \ge 0.52$).
+- [ ] Game Rules Interaction:
+  - Click `button.mtg.pass_phase`: verify turn phase progression advances through Untap $\to$ Upkeep $\to$ Draw $\to$ Main 1 $\to$ Combat $\to$ Main 2 $\to$ End $\to$ Untap (cycling turn and incrementing turn number).
+  - Click `card.forest_1` in hand during Main 1: verify it enters the battlefield row and respects the 1 land drop per turn limit.
+  - Click `card.forest_1` on battlefield: verify it rotates $90^\circ$ around the Y-axis and adds green mana to the pool.
+  - Click `card.grizzly_bears_1` in hand: verify green mana is deducted, and the card moves to the glowing 3D stack circle at $y=0.60$.
+  - Click `button.mtg.resolve`: verify Grizzly Bears resolves from the stack onto the battlefield.
+  - Advance to Combat phase and click `card.grizzly_bears_1`: verify it taps ($90^\circ$ rotation), steps forward across the centerline into combat, and deals 2 damage to opponent life (reducing life from 20 to 18).
+  - Play Mountain, tap for red mana, cast Lightning Bolt to the stack, and click Resolve: verify Bolt deals 3 damage to opponent (life down to 15) and goes to graveyard.
+  - Verify automated state-based actions: lethal damage sends creatures to graveyard, and reducing opponent life to 0 triggers game over.
+
 ## One-paste Law Line pixel-art editor
 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18`; Zach requested a whole 2D art editor through Law sentences.*
@@ -1463,3 +1482,29 @@ Relaunch rebuilt `earthcall_webgpu` and load Northern Veil. This retained stage 
 This records perceived live improvement and one approximate FPS observation. Framebuffer dimensions, viewing direction, measurement interval, stationary versus moving state and exact running build were not specified. It is not a matched A/B percentage or movement p95. The existing continuous appearance/flicker and usual-size warmed movement checks above remain open; 30 FPS has not been reported. See [the retained scheduling audit](../../../audits/NORTHERN_VEIL_SAMPLE_LOCAL_SCHEDULING_2026-10-11.md) for the Sun's separate native witnesses.
 
 **Recorded by:** Codex / GPT-6 / session `01a12cb8-ac95-7b13-827d-2c7f289aa560` / 2026-10-11T18:05:55-07:00.
+
+
+### Northern Veil — match the next census to the live view
+
+- [ ] Record native camera eye/look direction, physical framebuffer dimensions, running build, active Zone and a movement interval for the approximately 21 FPS view reported at `(-1.45, 0.3, -1.3)`. The supplied position alone is insufficient to reproduce it.
+- [ ] Continue the existing movement/appearance check: no jaggedness, flicker or disappearing curtains, and measure warmed movement p95 against 33.3 ms. This pass ships only a diagnostic tool; it retains no new renderer behavior and claims no additional FPS gain.
+
+[Diagnostic observer effect and rejected exact candidate](../../../audits/NORTHERN_VEIL_FRAGMENT_DEMAND_2026-10-11.md); four fixed-view tests are not live Person acceptance.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T20:53:25-07:00 (PDT).
+
+
+**Person clarification — default-size live view:** Zach clarified that the approximately 21 FPS observation used the **default window size**, with **most auroras in view**; he did not track the exact viewing angle. This supplies qualitative window/view context. Physical framebuffer dimensions (including display scaling), native camera eye/look, motion interval and exact running build remain unmeasured; current running status was not answered. Do not substitute 2560×1440 or infer an exact camera orientation from this report.
+
+**Recorded by:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T21:19:44-07:00 (PDT).
+
+
+### Northern Veil — support research and pending authored semantics
+
+This CPU research pass changes no visible rendering; it reports zero production-admitted skips and no FPS gain. Existing movement/appearance checks remain open. Zach's default-window/most-auroras clarification is preserved above without reconstructing an unrecorded angle.
+
+- [ ] Review [AD-30–32](Zach%20Author%20Decisions.md#northern-veil-authored-channel-semantics--2026-10-12) when ready: density support, authored zero extinction and missing source chroma. They remain OPEN; this research chooses none of them.
+
+[Conditional numerical model, passing refusals and production gap](../../../audits/VOLUME_SUPPORT_NUMERICAL_CONTRACT_2026-10-12.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T00:43:07-07:00 (PDT).

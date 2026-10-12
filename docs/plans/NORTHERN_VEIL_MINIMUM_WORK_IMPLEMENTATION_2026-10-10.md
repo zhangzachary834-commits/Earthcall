@@ -125,3 +125,17 @@ Ordinary app rebuilt; no save/codec/domain/authority changes, commits or pushes.
 Zach commissioned counsel, implementation and a report back. The first-ranked projected support guard remains deferred pending a complete backend numerical enclosure; restricting Astra’s diagnostic model to principal trig domains lowers its opportunity to 21.86% of folds, still no GPU certificate. The second-ranked fused schedule is implemented: one medium proof/contribution sweep, original direction arithmetic after positive density, no cross-sample cache. All six focused targets and eight exact 2560×1440 images pass. Two ABBA series/view retain inside −9.77%, spawn −11.53%, reverse −6.44%, side −8.03%; zero warm uploads/lowering/compiles. [Complete mechanism, all run means and unsupported claims](../audits/NORTHERN_VEIL_SAMPLE_LOCAL_SCHEDULING_2026-10-11.md). Live usual-framebuffer movement and 30 FPS remain unverified. No saves, commits or pushes.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T17:22:37-07:00 (PDT).
+
+
+## Next testing pass — diagnostic retained, transport candidate rejected
+
+Implemented a reproducible read-only GPU fragment census, with paired pixels and counter-accounting checks. Its counters repeat, but instrumentation changes RGBA by at most one level; treat them as diagnostic rather than exact original-fragment evidence. Tested an independent sample-local empty-transport skip: eight exact full-size captures pass, but inside ABBA series are +8.02%/+1.04% slower, so it is rejected and production scheduling stays unchanged. No new support guard, cutoff, cache or save edit. [Full evidence and reproducible tool](../audits/NORTHERN_VEIL_FRAGMENT_DEMAND_2026-10-11.md). Actual live-view context, sound numerical support certificates and the movement milestone remain open.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T20:53:25-07:00 (PDT).
+
+
+## Backend certificate research — October 12, runtime candidate deferred
+
+The rational scalar-support model and two-endpoint band pass 18 named witness groups. Only 157/1,024 fixture bins meet the model's intrinsic-domain restriction; its conditional grid coverage is not demanded-ray coverage. Complete production transformations/coordinate arithmetic are not enclosed, so production-admitted opportunity is zero and no runtime guard is built or timed. AD-30–32 remain OPEN; this is scalar research, not certified tail termination or new whole-contribution skipping. [Derivation, refusals, artifacts and next boundary](../audits/VOLUME_SUPPORT_NUMERICAL_CONTRACT_2026-10-12.md). Retained scheduling remains the baseline.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T00:43:07-07:00 (PDT).

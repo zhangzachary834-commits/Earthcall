@@ -360,3 +360,17 @@ Six focused targets pass, including CPU 32/32/native proof 65/65 with exhaustive
 `composeVolumeSet` now consumes each medium’s proof/density/contribution in order, eliminating long-lived per-medium proof flags and the second membership sweep. Source/receiver directions use the original expressions only after positive density, with sample/medium lifetime; no ray cache, authored state, buffer or proof layout is added. Existing member fragments, composed program caches, revision/layout/membership gates and reload/device teardown own lifetime. Unknown proof cells veto jumps; original lattice/order/source-domain/cutoff contracts remain unchanged. Warm uploads/lowering/compiles stay zero. Six focused witnesses and eight byte-identical full-size images pass; repeated offscreen inside −9.77%, other views −6.44% to −11.53%. Backend-aware new support certificates remain deferred. [Evidence and exact boundaries](../../audits/NORTHERN_VEIL_SAMPLE_LOCAL_SCHEDULING_2026-10-11.md).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T17:22:37-07:00 (PDT).
+
+
+### Scratch fragment demand observations — October 11
+
+The read-only diagnostic adds no production derived state. Its process-local GPU record buffer resets before each fixture draw; private counters reset per fragment, selected records are read after completion, and GPU buffers release after dump. Inputs are the current fixture, compiled module/driver, native camera, physical dimensions and clocks; each rerun replaces the observation in a new scratch output directory. Repeated counter/accounting checks pass, but paired pixels differ by one level, so counts remain explicitly instrumented-program observations. The empty-transport production candidate is rejected for cost; existing schedule/cache invalidation stays unchanged. [Tool, evidence and limitations](../../audits/NORTHERN_VEIL_FRAGMENT_DEMAND_2026-10-11.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T20:53:25-07:00 (PDT).
+
+
+### Research-only scalar-support tables — October 12
+
+No production cache or GPU resource is added. Process-local rational intervals and memoized sum trees live within the CPU research run; the report goes to a fresh scratch file. Proposed certificate dependencies are the recognized AST, finite converted parameter bits, coordinate/clock/source binding, local extents, bin edges and the verified execution profile. The prototype tests mismatched keys/refusal; it does not install production invalidation. Current production profile remains Unknown, hence admitted skips are zero. All 18 research witness groups pass. OntoMath intervals and retained device/cache lifetime rules are unchanged. [Conditional contract and evidence limits](../../audits/VOLUME_SUPPORT_NUMERICAL_CONTRACT_2026-10-12.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T00:43:07-07:00 (PDT).
