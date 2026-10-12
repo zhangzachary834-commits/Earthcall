@@ -2678,7 +2678,10 @@ void LawManager::refreshVocabularyIndex() const {
 // narrower than the lower vocabulary/sweep candidate set. Equal-width higher
 // tiers are refused: a higher label that buys no narrowing is pure overhead.
 void LawManager::refreshCandidateRoute(const Law& law) const {
-    const std::string lawId = law.getIdentifier();
+    refreshCandidateRoute(law, law.getIdentifier());
+}
+
+void LawManager::refreshCandidateRoute(const Law& law, const std::string& lawId) const {
     const std::uint64_t textRevision = Law::textRevision();
     const std::uint64_t structural = Universe::instance().structuralRevision();
     const bool hasGraph = Universe::instance().hasRelationGeneration();
@@ -2791,8 +2794,9 @@ void LawManager::refreshCandidateRoute(const Law& law) const {
 }
 
 std::string LawManager::candidateTierFor(const Law& law) const {
-    refreshCandidateRoute(law);
-    auto it = _candidateRoutes.find(law.getIdentifier());
+    const std::string lawId = law.getIdentifier();
+    refreshCandidateRoute(law, lawId);
+    auto it = _candidateRoutes.find(lawId);
     if (it == _candidateRoutes.end()) return "sweep";
     switch (it->second.tier) {
         case CandidateTier::LawDirect:   return "law-direct";
@@ -2817,8 +2821,9 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
         return chosen;
     }
 
-    refreshCandidateRoute(law);
-    auto routeIt = _candidateRoutes.find(law.getIdentifier());
+    const std::string lawId = law.getIdentifier();
+    refreshCandidateRoute(law, lawId);
+    auto routeIt = _candidateRoutes.find(lawId);
     if (routeIt == _candidateRoutes.end()) {
         // Defensive widening. A missing cache entry may cost a sweep; it must
         // never cost a Law its subjects.
@@ -2840,7 +2845,7 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
 
     if (route.tier == CandidateTier::AdapterRoad) {
         const std::vector<Singular*>* travelled = nullptr;
-        if (_adapter.candidateViewFor(law.getIdentifier(), travelled) && travelled) {
+        if (_adapter.candidateViewFor(lawId, travelled) && travelled) {
             std::vector<Singular*> chosen;
             chosen.reserve(travelled->size());
             for (Singular* being : *travelled) {
@@ -2852,9 +2857,9 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
 
         // The road went stale between selection and consumption. Refuse it,
         // invalidate the decision and immediately descend one rung.
-        invalidateCandidateRoute(law.getIdentifier());
-        refreshCandidateRoute(law);
-        routeIt = _candidateRoutes.find(law.getIdentifier());
+        invalidateCandidateRoute(lawId);
+        refreshCandidateRoute(law, lawId);
+        routeIt = _candidateRoutes.find(lawId);
         if (routeIt == _candidateRoutes.end()) return Universe::instance().beings();
     }
 
@@ -2888,7 +2893,8 @@ bool LawManager::candidateConditionsSatisfied(
     // sweepSubjects() selected/refreshed the route immediately before the
     // candidate loop. Consume that one decision; do not re-run route selection
     // once per candidate and turn O(1)-per-Law planning into O(matches).
-    auto it = _candidateRoutes.find(law.getIdentifier());
+    const std::string lawId = law.getIdentifier();
+    auto it = _candidateRoutes.find(lawId);
     if (it == _candidateRoutes.end() ||
         it->second.tier != CandidateTier::LawDirect ||
         !it->second.directResidual) {
