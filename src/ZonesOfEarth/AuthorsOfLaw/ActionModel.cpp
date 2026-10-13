@@ -784,11 +784,68 @@ ECA::ActionExecutor ActionNode::compile() const {
             const PropertyPath contentPath = input;
             return [targetPathPath, contentPath](const ECA::Event&, Singular& subject) {
                 PropertyValue pvFile, pvContent;
-                if (lawGetValue(subject, targetPathPath, pvFile) && lawGetValue(subject, contentPath, pvContent)) {
-                    lawSetValue(subject, PropertyPath::parse("@file-channel.file.path"), pvFile);
-                    lawSetValue(subject, PropertyPath::parse("@file-channel.file.content"), pvContent);
-                    lawSetValue(subject, PropertyPath::parse("@file-channel.file.write"), PropertyValue(true));
+                if (!lawGetValue(subject, targetPathPath, pvFile)) {
+                    emitEffect("FileWrite", false, "file path source does not read: " + targetPathPath.toString());
+                    return;
                 }
+                if (!lawGetValue(subject, contentPath, pvContent)) {
+                    emitEffect("FileWrite", false, "file content source does not read: " + contentPath.toString());
+                    return;
+                }
+
+                const auto accepted = [](PropertyPath::PathResult result) {
+                    return result == PropertyPath::PathResult::Ok ||
+                           result == PropertyPath::PathResult::Unchanged;
+                };
+
+                const PropertyPath channelPath = PropertyPath::parse("@file-channel.file.path");
+                const auto pathResult = lawSetValue(subject, channelPath, pvFile);
+                if (!accepted(pathResult)) {
+                    emitEffect("FileWrite", false,
+                               "file path transfer refused: " +
+                               std::string(ActionNode::reasonName(pathResult)));
+                    return;
+                }
+
+                const PropertyPath channelContent = PropertyPath::parse("@file-channel.file.content");
+                const auto contentResult = lawSetValue(subject, channelContent, pvContent);
+                if (!accepted(contentResult)) {
+                    emitEffect("FileWrite", false,
+                               "file content serialization refused: " +
+                               std::string(ActionNode::reasonName(contentResult)));
+                    return;
+                }
+
+                const auto triggerResult = lawSetValue(
+                    subject, PropertyPath::parse("@file-channel.file.write"), PropertyValue(true));
+                if (!accepted(triggerResult)) {
+                    emitEffect("FileWrite", false,
+                               "file write trigger refused: " +
+                               std::string(ActionNode::reasonName(triggerResult)));
+                    return;
+                }
+
+                PropertyValue succeeded;
+                if (!lawGetValue(subject,
+                                 PropertyPath::parse("@file-channel.file.lastOperationSuccess"),
+                                 succeeded) ||
+                    !std::holds_alternative<bool>(succeeded) ||
+                    !std::get<bool>(succeeded)) {
+                    PropertyValue lastError;
+                    std::string note = "file channel reported write failure";
+                    if (lawGetValue(subject,
+                                    PropertyPath::parse("@file-channel.file.lastError"),
+                                    lastError)) {
+                        if (const auto* message = std::get_if<std::string>(&lastError);
+                            message && !message->empty()) {
+                            note += ": " + *message;
+                        }
+                    }
+                    emitEffect("FileWrite", false, note);
+                    return;
+                }
+
+                emitEffect("FileWrite", true);
             };
         }
         case Kind::CodecTransform: {
