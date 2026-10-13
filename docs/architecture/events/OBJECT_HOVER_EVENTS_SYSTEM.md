@@ -216,4 +216,24 @@ The Object Hover Events system integrates seamlessly with:
 - **UI System**: Perfect for tooltips and highlighting
 - **Debug System**: Useful for debugging object interactions
 
-This provides a complete event-driven system for tracking mouse interactions with Objects in your application! 🖱️ 
+This provides a complete event-driven system for tracking mouse interactions with Objects in your application! 🖱️
+## Addendum: Incremental Rete and Hover Events
+
+**How the object hover events system serves as a granular input for the Formation Rete's incremental maintenance.**
+
+The "Formation Rete Incremental Maintenance" architecture establishes the principle that "Nothing stable should be recomputed merely because time passed. Computation should follow relevant change." The Rete must only re-evaluate its state when a dependency frontier indicates that a semantic change has occurred.
+
+Continuous UI states, like a mouse moving smoothly across the screen and continuously intersecting with objects, pose a direct threat to this principle. If the engine treated every frame of a "hover" as a distinct change, it would trigger a massive Rete re-evaluation storm, completely defeating the purpose of incremental maintenance.
+
+The "Object Hover Events System" solves this by translating the continuous physical intersection into discrete, self-refining events (`ObjectHoverEnterEvent`, `ObjectHoverExitEvent`, and the registered `hovered` property path).
+
+### Thoughts on Integration
+
+By emitting a discrete "Enter" event and setting a stable boolean property (`hovered`), the hover system acts as a deliberate filter. It tells the EventBus—and by extension, the Formation Rete—that a relevant semantic change has occurred *once*.
+
+The Rete can then efficiently process this single state change, update any relevant Law conditions (e.g., "when an object is hovered"), and rest. It does not need to re-evaluate every frame while the mouse remains over the object because the underlying `hovered` property has not changed again.
+
+This perfectly exemplifies the "Self-Refining Event Topology." The hover system provides exactly the right granularity of events (the relevant dependency frontier) required by the Rete's incremental maintenance, ensuring the UI remains highly reactive without causing computational explosions.
+
+---
+*Originating connection by: Jules / default harness / Session ID: 13284209740648546535*
