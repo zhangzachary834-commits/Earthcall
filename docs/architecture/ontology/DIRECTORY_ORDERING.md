@@ -105,6 +105,8 @@ Earthcall/
       Relationship/
         Community/
       Soul/
+      Voice/
+        VoicePart/
     Relation/              Relation · RelationManager
       Formation/
       py/
@@ -117,12 +119,12 @@ Earthcall/
         FirstMoverWindowTools/
           CreatorConsole/
           Menu/
-        Legacy/
         TalkingRobotGuyAPI/
       Foreign/             the Foreign software modality (ForeignChannel at the root)
         Adapters/          MacOSAccessibilityAdapter
         API/               EarthcallAPI, SecurityManager
         mcp/               earthcall-mcp-server.js
+        Shell/
         py/                app.py
           agent/
           api/
@@ -145,6 +147,8 @@ Earthcall/
         Mouse/             MouseHandler
       Language/            the Symbolic modality (LanguageSystem, parser; Lexeme is a Singular)
       Network/             WebSocketClient.cpp · WebSocketServer.cpp
+        Http/
+        Osc/
         py/                engine_server.py · events.py
       OntoMath/            authored mathematics (Field, Function, CurveModel, Operations)
       Physical/            the Physical hardware modality (PhysicalChannel)
