@@ -2291,10 +2291,12 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                     if (!being || Universe::instance().isUnmade(being)) continue;
                     bool usedDirect = false;
                     if (!candidateConditionsSatisfied(*law, *being, &usedDirect)) continue;
-                    if (law->drives() &&
-                        hasDriveSession(lawId, being->getIdentifier())) {
-                        if (law->retrigger() == Law::Retrigger::Absorb) continue;
-                        restartDriveSession(*law, being->getIdentifier());
+                    if (law->drives()) {
+                        const std::string beingId = being->getIdentifier();
+                        if (hasDriveSession(lawId, beingId)) {
+                            if (law->retrigger() == Law::Retrigger::Absorb) continue;
+                            restartDriveSession(*law, beingId);
+                        }
                     }
                     applyAndMaybeDrive(*law, *being, records, usedDirect);
                 }
@@ -2302,12 +2304,14 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             }
 
             if (!subject || Universe::instance().isUnmade(subject)) continue;
-            if (law->drives() &&
-                hasDriveSession(lawId, subject->getIdentifier())) {
-                if (law->retrigger() == Law::Retrigger::Absorb) {
-                    continue;
+            if (law->drives()) {
+                const std::string subjectId = subject->getIdentifier();
+                if (hasDriveSession(lawId, subjectId)) {
+                    if (law->retrigger() == Law::Retrigger::Absorb) {
+                        continue;
+                    }
+                    restartDriveSession(*law, subjectId);
                 }
-                restartDriveSession(*law, subject->getIdentifier());
             }
             applyAndMaybeDrive(*law, *subject, records);
         }
@@ -2475,12 +2479,14 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                                   ? holds
                                   : (holds && !wasHolding);
             if (!fire) continue;
-            if (law->drives() &&
-                hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
-                if (law->retrigger() == Law::Retrigger::Absorb) {
-                    continue;
+            if (law->drives()) {
+                const std::string subjectId = subject->getIdentifier();
+                if (hasDriveSession(lawId, subjectId)) {
+                    if (law->retrigger() == Law::Retrigger::Absorb) {
+                        continue;
+                    }
+                    restartDriveSession(*law, subjectId);
                 }
-                restartDriveSession(*law, subject->getIdentifier());
             }
             applyAndMaybeDrive(*law, *subject, records, usedDirect);
         }
