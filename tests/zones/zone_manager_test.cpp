@@ -30,6 +30,7 @@ Person createDummyPerson(const std::string& name) {
     Body body("Humanoid", "Voxel");
     Person person(soul, std::move(body), "");
     person.setDisplayName(name);
+    person.soul().bindPerson(&person);
     return person;
 }
 } // namespace
@@ -126,7 +127,6 @@ int main() {
         std::cout << "\n[6] Testing legacyOwnerNamesPerson...\n";
 
         Zone zone("test_zone", "strict");
-
         Person person = createDummyPerson("test_person");
 
         zone.setOwner("Alice");
