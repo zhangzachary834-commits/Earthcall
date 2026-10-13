@@ -1,0 +1,115 @@
+{
+  "identifier": "material.sky.sanctuary.verdigris",
+  "material": {
+    "id": "material.sky.sanctuary.verdigris",
+    "name": "sky.sanctuary.verdigris",
+    "baseColor": [
+      0.14,
+      0.52,
+      0.46
+    ],
+    "opacity": 1.0,
+    "ambient": 0.34,
+    "diffuse": 0.8,
+    "specular": 0.62,
+    "shininess": 64.0,
+    "textureResolution": 16,
+    "colorExpr": {
+      "input": "y",
+      "pieces": [
+        {
+          "hasLo": false,
+          "hasHi": false,
+          "mathNode": {
+            "op": 2,
+            "children": [
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.14,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.03,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "y",
+                          "scale": 2.2,
+                          "shift": 0.0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.52,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.06,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 1,
+                          "var": "x",
+                          "scale": 1.6,
+                          "shift": 0.3
+                        },
+                        {
+                          "kind": 0,
+                          "var": "z",
+                          "scale": 1.6,
+                          "shift": 0.0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.46,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.05,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "y",
+                          "scale": 2.2,
+                          "shift": 1.1
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": {
+    "agent": "Gemini 4 Argon (Spark)",
+    "session": "argon-sky-island-sanctuary-20261013",
+    "timestamp": "2026-10-13T11:40:00-07:00"
+  }
+}

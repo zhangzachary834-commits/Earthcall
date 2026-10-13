@@ -1,5 +1,25 @@
 # Person Verification List
 
+## 3D Sky-Island Sanctuary (`Sky-Island Sanctuary`)
+
+*Gemini 4 Argon (Spark) · session `argon-sky-island-sanctuary-20261013` · 2026-10-13 — Commissioned from the Sun's prompt: "Create a beautiful 3D sky-island sanctuary inside Earthcall. Make it feel wondrous, peaceful, and architecturally intentional. I want it to feel like a real place a person would want to enter and linger in. That's it."*
+
+- [ ] Launch Earthcall WebGPU (`./build/earthcall_webgpu` or **Run Earthcall as Me.command**) and switch to the **`Sky-Island Sanctuary`** Zone (or load world `sky_island_sanctuary`).
+- [ ] **Arrival & South Threshold Island (`[0.0, 2.8, 22.5]` looking `-Z`):**
+  - Confirm you stand on the South Threshold Island flanked by twin CSG-carved **Dawn Lantern Pagodas** with warm glowing amber cores, a stone contemplation bench, and the **Threshold Inscription Stele**.
+  - Look across the **Arched Stone Bridge** (with carved cylindrical vault under-arch, stone balustrades, and 6 bridge posts) toward the Main Sanctuary Island and the **Sea of Sunlit Cumulus Clouds** billowing below (`y = -6.2m`).
+- [ ] **Main Cloister Island & Pavilion of the Eight Winds (`[0.0, 0.0, 0.0]`):**
+  - Walk across the bridge onto the 3 concentric cloister terraces, past the **16-ray Gilded & Verdigris Compass Rose** and the **Lapis Mirror Pool of Still Waters** (CSG-hollowed basin with rippling water shader).
+  - Look up at the **Pavilion of the Eight Winds**: 8 fluted travertine columns (with plinths, torus bases, and scrolled capitals), 8 CSG-pierced lancet sky-arches, double entablature rings, and the open **Oculus Solar Crown** with 8 suspended pearl drops and **Sunlit Halo Mist** casting clerestory sunbeams.
+- [ ] **Interactive Awakening (`law-sky-sanctuary-*`):**
+  - Click the **Pearl Touchstone of Dawn** (`sky.sanctuary.touchstone` at `[0.0, 1.38, 7.6]`):
+    - Verify `awakened` toggles to `1.0` and `resonance` smoothly flows from `0.0` to `1.0` via exponential decay (`law-sky-sanctuary-resonance-flow`).
+    - Watch all **12 CSG Concave Lotus Petals** (`sky.sanctuary.petal.00` .. `11`) smoothly unfurl outward from radius `1.95m` to `3.70m` (`law-sky-sanctuary-lotus-bloom`).
+    - Watch the faceted octahedral **Heart of the Dawn** (`sky.sanctuary.heart_crystal`) ascend into the pavilion dome (`law-sky-sanctuary-heart-ascend`) while the **8 Dodecahedral Aether Lantern Orbs** drift in harmonic sky currents (`law-sky-sanctuary-lantern-drift`).
+  - Click the **Pearl Touchstone of Dawn** a second time and verify the 12 Lotus Petals and Heart Crystal smoothly gather back to stillness.
+- [ ] **Satellite Sky-Islands & 360° Horizon Vista:**
+  - Follow the ascending **Cloud Stepping Stones** to the **East Observatory Island** (`[19.5, 1.4, -2.0]`, bronze & pearl **Equatorial Armillary Sundial**), the **West Arbor Island** (`[-19.5, 1.0, -2.0]`, **Ancient Sky-Cedar Tree of Life** with 5-lobe emerald canopy), and the **North Zenith Sanctum** (`[0.0, 2.8, -21.5]`, **Triple-Arch Bell Campanile** and **Great Verdigris Sky-Bell**), framed by 6 distant horizon spire islands and sculpted basalt crag underbellies.
+
 ## 3D Magic: The Gathering (MTG) Zone
 
 *Antigravity / Gemini / session `e1346ea7-7d86-4945-8831-01e3e33dd09a` / 2026-10-11 — Zach requested a fully working 3D Magic the Gathering zone with functioning game rules, beautiful textures, colors, and intentional looking shapes.*
