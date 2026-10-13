@@ -64,9 +64,6 @@ private:
     std::string propPath() const { return _path; }
     void propSetPath(const std::string& v) { _path = v; }
 
-    std::string propContent() const { return _content; }
-    void propSetContent(const std::string& v) { _content = v; }
-
     // Triggers
     bool propReadTrigger() const { return _readTrigger; }
     void propSetReadTrigger(const bool& v);
@@ -153,6 +150,9 @@ private:
     bool _enabled = true;
     bool _sandboxMode = true;
     std::string _path;
+    // Raw bytes ready for FileChannel I/O. file.content accepts strings
+    // unchanged and serializes every other PropertyValue through the canonical
+    // typed PropertyValue codec before storing those bytes here.
     std::string _content;
     bool _readTrigger = false;
     bool _writeTrigger = false;
