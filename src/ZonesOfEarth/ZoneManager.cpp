@@ -603,7 +603,9 @@ ZoneManager* ZoneManager::live() { return g_liveZones; }
 
 namespace {
 constexpr const char* kOwnedByRelation = "owned-by";
+}
 
+namespace detail {
 bool legacyOwnerNamesPerson(const Zone& zone, const Person& person) {
     if (!zone.propOwnerKind().empty() && zone.propOwnerKind() != Zone::kOwnerKindPerson) {
         return false;
@@ -620,7 +622,9 @@ bool legacyOwnerNamesPerson(const Zone& zone, const Person& person) {
     const auto migrated = ledger.find(zone.owner());
     return migrated.has_value() && *migrated == person.personId();
 }
+}
 
+namespace {
 bool zoneNamesPersonOwner(const Zone& zone, const Person& person) {
     const std::string personId = person.getIdentifier();
     bool hasOwnedBy = false;
@@ -638,7 +642,7 @@ bool zoneNamesPersonOwner(const Zone& zone, const Person& person) {
     // string is never allowed to overrule it. The cache is consulted only for
     // legacy Homes that have no owned-by Relation yet.
     if (hasOwnedBy) return false;
-    return legacyOwnerNamesPerson(zone, person);
+    return detail::legacyOwnerNamesPerson(zone, person);
 }
 
 std::vector<const Zone*> primaryHomesForPerson(const ZoneManager& manager,
