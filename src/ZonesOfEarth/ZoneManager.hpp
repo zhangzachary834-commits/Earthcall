@@ -20,7 +20,7 @@ bool isObservationZone(const Zone& zone);
 
 namespace detail {
     // Exposed for testing
-    bool legacyOwnerNamesPerson(const Zone& zone, const Person& person);
+    bool legacyOwnerNamesPerson(const Zone& zone, const Person& person, std::optional<std::filesystem::path> ledgerPathOverride = std::nullopt);
 }
 
 // Persistence and UI state for save/load operations
