@@ -1,13 +1,20 @@
 #include "Singularity/Storage/FileChannel.hpp"
 #include "Singularity/Core/CodecChannel.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <filesystem>
 #include <fstream>
 #include <cstdio>
 #include <cassert>
+#include <ctime>
+#include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -80,7 +87,131 @@ int main() {
     check(std::get<double>(val) == static_cast<double>(sampleText.size()), "bytesRead matches sample text size");
 
     // -----------------------------------------------------------------------
-    // Case 2: Parent Directory Auto-Creation
+    // Case 2: Any serializable PropertyValue can cross the file boundary.
+    // Strings remain raw bytes; non-strings use the canonical typed
+    // PropertyValue JSON codec so their exact alternatives survive.
+    // -----------------------------------------------------------------------
+    auto listValue = std::make_shared<PropertyList>();
+    listValue->elements = {
+        PropertyValue(7),
+        PropertyValue(std::string("seven")),
+        PropertyValue(glm::vec3(1.0f, 2.0f, 3.0f))
+    };
+    auto dictValue = std::make_shared<PropertyDict>();
+    dictValue->elements["enabled"] = PropertyValue(true);
+    dictValue->elements["count"] = PropertyValue(12L);
+    dictValue->elements["items"] = PropertyValue(listValue);
+
+    glm::mat4 authoredMatrix(1.0f);
+    authoredMatrix[3][0] = 4.0f;
+    authoredMatrix[3][1] = -2.0f;
+
+    const std::vector<std::pair<std::string, PropertyValue>> typedValues = {
+        {"int", PropertyValue(42)},
+        {"double", PropertyValue(3.141592653589793)},
+        {"bool", PropertyValue(true)},
+        {"char", PropertyValue('E')},
+        {"long", PropertyValue(123456789L)},
+        {"vec3", PropertyValue(glm::vec3(0.25f, -3.5f, 9.0f))},
+        {"mat4", PropertyValue(authoredMatrix)},
+        {"list", PropertyValue(listValue)},
+        {"dict", PropertyValue(dictValue)}
+    };
+
+    for (const auto& [label, typed] : typedValues) {
+        const fs::path typedFile = testDir / ("typed_" + label + ".json");
+        const std::string expected = propertyValueToJson(typed).dump();
+
+        check(lawSetValue(*channel, PropertyPath::parse("file.path"),
+                          PropertyValue(typedFile.string())) == PropertyPath::PathResult::Ok,
+              "typed " + label + " path accepted");
+        check(lawSetValue(*channel, PropertyPath::parse("file.content"), typed) ==
+                  PropertyPath::PathResult::Ok,
+              "typed " + label + " content accepted without caller stringification");
+        lawSetValue(*channel, PropertyPath::parse("file.write"), PropertyValue(true));
+        lawGetValue(*channel, PropertyPath::parse("file.lastOperationSuccess"), val);
+        check(std::get<bool>(val), "typed " + label + " write succeeded");
+
+        std::ifstream in(typedFile, std::ios::binary);
+        std::ostringstream bytes;
+        bytes << in.rdbuf();
+        check(bytes.str() == expected,
+              "typed " + label + " persisted as canonical PropertyValue JSON");
+        check(propertyValueToJson(propertyValueFromJson(nlohmann::json::parse(bytes.str()))) ==
+                  propertyValueToJson(propertyValueFromJson(nlohmann::json::parse(expected))),
+              "typed " + label + " serialized representation round-trips");
+    }
+
+    // A world reference is serializable as identity, never reconstructed as
+    // a pointer by the value codec.
+    Object referenced;
+    referenced.setObjectID("file-channel-reference-witness");
+    const PropertyValue referenceValue(static_cast<Object*>(&referenced));
+    const fs::path referenceFile = testDir / "typed_reference.json";
+    lawSetValue(*channel, PropertyPath::parse("file.path"), PropertyValue(referenceFile.string()));
+    check(lawSetValue(*channel, PropertyPath::parse("file.content"), referenceValue) ==
+              PropertyPath::PathResult::Ok,
+          "Singular reference content accepted");
+    lawSetValue(*channel, PropertyPath::parse("file.write"), PropertyValue(true));
+    {
+        std::ifstream in(referenceFile, std::ios::binary);
+        std::ostringstream bytes;
+        bytes << in.rdbuf();
+        const auto encoded = nlohmann::json::parse(bytes.str());
+        check(encoded.value("t", "") == "ref" &&
+                  encoded.value("id", "") == referenced.getIdentifier(),
+              "world reference persists as identifier, not pointer bytes");
+    }
+
+    // FileWrite must forward a PropertyPath value dynamically, not require a
+    // hardcoded source name or prior caller conversion to string.
+    Object writeSubject;
+    writeSubject.setObjectID("file-write-typed-subject");
+    const fs::path actionFile = testDir / "action_vec3.json";
+    const PropertyValue actionPayload(glm::vec3(8.0f, 5.0f, 3.0f));
+    writeSubject.setDynamicProperty("targetPath", PropertyValue(actionFile.string()));
+    writeSubject.setDynamicProperty("payload", actionPayload);
+    Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+        out.push_back(channel);
+        out.push_back(&writeSubject);
+    });
+
+    ActionNode fileWrite;
+    fileWrite.kind = ActionNode::Kind::FileWrite;
+    fileWrite.path = PropertyPath::parse("targetPath");
+    fileWrite.input = PropertyPath::parse("payload");
+    auto runFileWrite = fileWrite.compile();
+    runFileWrite(ECA::Event{"typed-file-write", &writeSubject, nullptr, std::time(nullptr)},
+                 writeSubject);
+    {
+        std::ifstream in(actionFile, std::ios::binary);
+        std::ostringstream bytes;
+        bytes << in.rdbuf();
+        check(bytes.str() == propertyValueToJson(actionPayload).dump(),
+              "ActionNode::FileWrite writes arbitrary serializable PropertyPath data");
+    }
+
+    // A refused transfer must not fire the channel with stale path/content.
+    const fs::path staleFile = testDir / "stale-must-not-write.txt";
+    fs::remove(staleFile, ec);
+    lawSetValue(*channel, PropertyPath::parse("file.path"), PropertyValue(staleFile.string()));
+    lawSetValue(*channel, PropertyPath::parse("file.content"), PropertyValue(std::string("STALE")));
+    Object badWriteSubject;
+    badWriteSubject.setObjectID("file-write-bad-path-subject");
+    badWriteSubject.setDynamicProperty("targetPath", PropertyValue(99.0));
+    badWriteSubject.setDynamicProperty("payload", PropertyValue(std::string("NEW")));
+    Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+        out.push_back(channel);
+        out.push_back(&badWriteSubject);
+    });
+    runFileWrite(ECA::Event{"typed-file-write-refusal", &badWriteSubject, nullptr, std::time(nullptr)},
+                 badWriteSubject);
+    check(!fs::exists(staleFile),
+          "FileWrite refuses a bad path transfer instead of writing stale channel state");
+    Universe::instance().setProvider({});
+
+    // -----------------------------------------------------------------------
+    // Case 3: Parent Directory Auto-Creation
     // -----------------------------------------------------------------------
     fs::path nestedFile = testDir / "deep" / "nested" / "dir" / "data.txt";
     std::string nestedPath = nestedFile.string();
@@ -502,6 +633,6 @@ int main() {
         return 1;
     }
 
-    std::printf("file_channel_test: ALL OK (all 15 cases passed)\n");
+    std::printf("file_channel_test: ALL OK (typed serialization + legacy cases passed)\n");
     return 0;
 }

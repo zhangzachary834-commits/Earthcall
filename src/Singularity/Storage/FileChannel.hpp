@@ -6,6 +6,8 @@
 namespace Singularity {
 namespace Storage {
 
+class FileContentProperty;
+
 // FileChannel implements sense and act for native computer file system I/O.
 // It is a first mover Law under Singularity/Storage whose properties are
 // governed by ordinary K4 Laws (@file-channel.path, @file-channel.read, ...).
@@ -49,6 +51,7 @@ public:
     static std::string categorizeFileType(const std::string& mimeType, const std::string& path);
 
 private:
+    friend class FileContentProperty;
     void buildProperties() override;
 
     // Property getters/setters - Core state
@@ -60,9 +63,6 @@ private:
 
     std::string propPath() const { return _path; }
     void propSetPath(const std::string& v) { _path = v; }
-
-    std::string propContent() const { return _content; }
-    void propSetContent(const std::string& v) { _content = v; }
 
     // Triggers
     bool propReadTrigger() const { return _readTrigger; }
@@ -150,6 +150,9 @@ private:
     bool _enabled = true;
     bool _sandboxMode = true;
     std::string _path;
+    // Raw bytes ready for FileChannel I/O. file.content accepts strings
+    // unchanged and serializes every other PropertyValue through the canonical
+    // typed PropertyValue codec before storing those bytes here.
     std::string _content;
     bool _readTrigger = false;
     bool _writeTrigger = false;
