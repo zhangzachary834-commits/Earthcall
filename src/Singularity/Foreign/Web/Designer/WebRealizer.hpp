@@ -52,8 +52,8 @@ public:
                                       const std::vector<std::shared_ptr<Relation>>& relations,
                                       int indentLevel = 0);
 
-    // Generate the complete responsive CSS stylesheet
-    static std::string generateStyleSheet();
+    // Generate the complete responsive CSS stylesheet with authored design tokens
+    static std::string generateStyleSheet(const Singular* root = nullptr);
 
     // Generate the interactive DOM client script that hooks clicks into Earthcall
     static std::string generateClientScript();

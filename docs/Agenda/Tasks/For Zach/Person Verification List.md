@@ -1,8 +1,8 @@
 # Person Verification List
 
-## Earthcall Web Designer Modality Prototype
+## Earthcall Web Designer Modality Prototype & Invariant Verification
 
-*Antigravity / Gemini 3.1 Pro / session `b5354f7e-b110-44af-9393-61ae139053de` / 2026-10-12 — Zach requested end-to-end Law-authored website modality with working frontend prototype witness.*
+*Antigravity / Gemini 3.1 Pro / session `b5354f7e-b110-44af-9393-61ae139053de` / 2026-10-12 — Zach requested end-to-end Law-authored website modality with all architectural gift shops removed (canonical Lexeme denotes Law architecture, relational ordering, thin realizer, VFS/FileChannel storage, and zero C++ enum modification).*
 
 - [ ] Open `web_ui/designer_prototype.html` in a web browser (e.g. `open web_ui/designer_prototype.html` or inspect `web_ui/designer_prototype.png`).
 - [ ] Visual Inspection:
@@ -10,13 +10,23 @@
   - Verify Hero section with radial glow gradient, huge bold heading "Earthcall Ourverse", centered lead paragraph, vibrant blue primary button "Explore Living Laws", and outline pill "Read The Manifesto".
   - Verify 3 Architectural Pillar cards in a responsive grid layout (Person-Centered Ontology, Living Laws & Metalaws, OntoMath Continuous Fields) with subtle elevation, hover border effects, and interactive action buttons.
   - Verify Live Law Interactivity Witness section with "Invoke Law Event (Test)" button.
+  - Verify Subordinate note block rendered with distinct muted/de-emphasized styling (`data-subordinate="true"`).
   - Verify Quote callout banner with left accent border and italic text.
   - Verify Footer with copyright notice and outline links (Seven Refusals, Agent Compass).
 - [ ] Interactivity Test:
+  - Open browser DevTools Console.
   - Click any button on the page (e.g. "Invoke Law Event (Test)", "Explore Living Laws", or "Enter Ourverse").
-  - Verify toast feedback indicator appears dynamically at bottom right confirming `Law Event: <eventName> (<beingId>)` dispatching through client DOM bridge.
+  - Verify clean DOM event dispatching to Earthcall EventBus logged in console (no invasive toast notifications injected into page).
 - [ ] Law Reactivity & Modality Test Suite:
-  - Run `./build/web_designer_modality_test` and confirm all 6 tests pass cleanly.
+  - Run `ctest --test-dir build -R web_designer_modality_test` and confirm all 8 tests pass cleanly:
+    1. Lexeme & Relation In-World Resolution (`"denotes"` edges).
+    2. Law & Lexeme Universal Composition.
+    3. Relational Ordering & Provenance DAG (`precedes` topological sorting and `authored-by` relations).
+    4. Thin WebRealizer & Authored Theme Tokens (CSS `:root` emission and zero toast UI).
+    5. Extensibility Exit Test: Zero C++ Enum Modification (authored `"sanctuary"` role and `"ethereal"` variant purely in data).
+    6. Orthogonal Storage via VFS & FileChannel (`memory://` and physical paths).
+    7. Law-Driven Event Reactivity (`theme-toggled` mutating `surface.variant`).
+    8. End-to-End Frontend Website Prototype Generation (full 8-section site export).
 
 ## 3D Magic: The Gathering (MTG) Zone
 

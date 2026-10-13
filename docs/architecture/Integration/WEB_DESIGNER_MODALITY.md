@@ -2,137 +2,152 @@
 
 ## 1. Architectural Telos & Ontology
 
-The Earthcall Web Designer Modality establishes website authoring as a genuine **Earthcall Law-authoring domain**, preserving Earthcall's Person-centered ontology and the Seven Refusals:
+> **"C++ May Know How A Browser Works. C++ Must Not Decide What The Person Means."**
 
-1. **Refusal 1 (No new C++ classes for domain nouns)**: There is no `class WebPage`, `class Button`, `class Heading`, or `class NavigationBar`. In-world beings are standard `Singular` (`Object`, `Formation`, `Relation`) entities carrying authored dynamic properties (`web.*`).
+The Earthcall Web Designer Modality establishes website authoring as a genuine **Earthcall Law-authoring domain**, preserving Earthcall's Person-centered ontology, the Seven Refusals, and the minimum-maximum principle:
+
+1. **Refusal 1 (No new C++ classes for domain nouns)**: There is no `class WebPage`, `class Button`, `class Heading`, `class Card`, or `class NavigationBar`. In-world beings are standard `Singular` (`Object`, `Formation`, `Relation`) entities living in the canonical world (`Universe::instance()`) and carrying authored properties.
 2. **Refusal 2 (Subsystems placed in Singularity)**: The web modality channel lives under `Singularity/Foreign/Web/Designer/` as a channel to foreign software/DOM environments.
-3. **Refusal 3 & Enums**: Semantic facets (`SemanticRole`, `LayoutFlow`, `LayoutAlign`, `LayoutJustify`, `SpacingScale`, `ContentScale`, `TypographyWeight`, `TypographyTone`, `SurfaceVariant`, `SurfaceShape`, `SurfaceElevation`) are strictly append-only enums serialized as integers and mapped to stable string identifiers.
-4. **Refusal 6 (No Black Box)**: Every property is accessible and governable via standard Earthcall `PropertyPath` (`web.role`, `web.layout.flow`, `web.surface.variant`, etc.).
-5. **Refusal 7 (No hardcoded behavior in C++ methods)**: Web behavior, presentation, and composition emerge entirely from Person-authored Laws and Metalaws reacting to EventBus events.
+3. **Refusal 3 & Open Semantic Facets (Retiring WebConcept as source of truth)**: C++ enums do not define the universe of meanings a Person may author. `WebConcept` is demoted to an ephemeral compiled adapter view. Open strings (`roleName`, `variantName`, `flowName`, `alignName`, `justifyName`, `spacingName`, `scaleName`, `weightName`, `toneName`, `shapeName`, `elevationName`) allow Persons to introduce completely new semantic concepts (e.g. `sanctuary`, `ethereal`) entirely through authored data without modifying any C++ enum or table.
+4. **Refusal 5 (Person means Human)**: Persons author elements; elements carry first-class `Relation("authored-by", *being, *person, true, 1.0f)` provenance edges. Modality default seeds are authored by a designated First Mover authority (`s_seededAuthor`).
+5. **Refusal 6 (No Black Box)**: Every property is accessible and governable via standard Earthcall `PropertyPath`. State is universalized above `web.*` (`role`, `level`, `layout.flow`, `surface.variant`, `prominence`, `subordinate`), with `web.*` strictly reserved for medium-specific browser parameters.
+6. **Refusal 7 (No hardcoded behavior in C++ methods)**: Behavior, presentation, and composition emerge entirely from Person-authored Laws and Metalaws reacting to events and mutating in-world state.
+7. **Storage & Channel Invariants**: Realization and storage are strictly orthogonal. Direct raw filesystem I/O (`std::ofstream`, `create_directories`) is prohibited; all persistence routes through `VirtualFileSystem` (`memory://`) and `FileChannel` (`file.path`, `file.content`, `file.atomicWrite`).
 
-HTML, CSS, and DOM are not Earthcall's ontology—they are concrete realization targets of an in-world semantic model.
+HTML, CSS, and DOM are not Earthcall's ontology—they are foreign realization targets of an in-world semantic model.
 
 ---
 
-## 2. The End-to-End Pipeline
+## 2. Canonical Earthcall Language Precedent
 
-The web designer modality operates across five layered stages:
+The Web Designer Modality uses the canonical Earthcall language precedent rather than a private tokenizer switch or static opcode dictionary:
 
 ```
-Natural Language / Author Input
+Characters / Authored Input
        │  "a large centered heading", "a rounded primary button"
        ▼
-Lexemes & Definitions (WebLexemeDef)
-       │  Resolves into stable opcodes: web.concept.scale.large, web.concept.role.action
+Canonical Lexemes (Singularity::Language::Lexeme)
+       │  First-class lexical tokens carrying spelling and semantic identity
        ▼
-Metalaws (Law instances with ConditionNode & ActionNode)
-       │  Evaluates condition on compilation slot and executes action:
-       │  ActionNode::set("compilation.output.web.scale.size", "large")
+First-Class "denotes" Relations (Relation)
+       │  Relation("denotes", *lexeme, *law, true, 1.0f)
        ▼
-In-World Singular State & Relations
-       │  Dynamic properties on Objects:
-       │    web.role = "heading"
-       │    web.scale.size = "large"
-       │    web.layout.align = "center"
-       │  Hierarchical Containment Relations:
-       │    Relation(kContains, parent, child)
+Person-Authored Laws & Metalaws (Law)
+       │  ConditionNode & ActionNode defining semantic transformations:
+       │  ActionNode::set("role", PropertyValue("heading"))
+       │  ActionNode::set("scale", PropertyValue("large"))
+       │  ActionNode::set("layout.align", PropertyValue("center"))
        ▼
-Web Realization (WebRealizer)
+In-World Singular State & Relational Topology
+       │  Objects in Universe::instance() with universal dynamic properties
+       │  Topological DAG:
+       │    Relation("authored-by", *being, *author)
+       │    Relation("web-contains", *parent, *child)
+       │    Relation("precedes", *childA, *childB)
+       ▼
+Thin Web Realization (WebRealizer)
        │  Translates semantic in-world state into:
-       │    - HTML5 semantic landmarks (<nav>, <section>, <h1>, <button>)
-       │    - CSS custom property design tokens & utility classes
-       │    - Interactive DOM client scripts bridging to Earthcall EventBus
+       │    - HTML5 semantic landmarks (<nav>, <section>, <h1>, <button>, custom components)
+       │    - CSS custom property design tokens derived from authored root theme properties
+       │    - Clean DOM client action dispatchers (zero intrusive toast widgets)
        ▼
 Browser / WebView Realization Target
 ```
 
 ---
 
-## 3. The Semantic Model (`WebConcept`)
+## 3. Universal Properties vs Medium-Specific State
 
-`WebConcept` defines the semantic facets of authored elements without presupposing HTML tags:
+To ensure authored semantic meaning survives realization into desktop UI, mobile UI, 2D/3D scenes, or print without being locked to the browser, properties are generalized above `web.*`:
 
-| Facet | In-World Path | Semantic Options | HTML/CSS Realization |
-|---|---|---|---|
-| **SemanticRole** | `web.role` | `Page`, `Section`, `Navigation`, `Heading`, `Paragraph`, `Action`, `Container`, `List`, `Item`, `Media`, `Quote`, `Divider` | `<div>`, `<section>`, `<nav>`, `<h1>`-`<h6>`, `<p>`, `<button>`/`<a>`, `<ul>`, `<li>`, `<img>`, `<blockquote>`, `<hr>` |
-| **LayoutFlow** | `web.layout.flow` | `Vertical`, `Horizontal`, `Grid` | `flex-direction: column`, `flex-direction: row; flex-wrap: wrap`, CSS Grid |
-| **LayoutAlign** | `web.layout.align` | `Start`, `Center`, `End`, `Stretch` | `align-items`, `text-align`, `justify-content` |
-| **LayoutJustify** | `web.layout.justify` | `Start`, `Center`, `End`, `SpaceBetween`, `SpaceAround` | `justify-content` |
-| **SpacingScale** | `web.layout.spacing` | `None`, `Tight`, `Normal`, `Relaxed`, `Generous` | CSS `gap: 0`, `0.5rem`, `1rem`, `1.5rem`, `2.5rem` |
-| **ContentScale** | `web.scale.size` | `Small`, `Normal`, `Large`, `Huge` | `font-size: 0.875rem`, `1rem`, `2.25rem`, `3.5rem` |
-| **TypographyWeight** | `web.typography.weight`| `Light`, `Normal`, `Medium`, `Bold` | `font-weight: 300`, `400`, `500`, `700` |
-| **TypographyTone** | `web.typography.tone` | `Default`, `Muted`, `Prominent`, `Accent` | Color tokens (`--web-text-muted`, `--web-primary`, etc.) |
-| **SurfaceVariant** | `web.surface.variant` | `Default`, `Primary`, `Secondary`, `Surface`, `Card`, `Hero`, `Subtle`, `Outline`, `Ghost` | Background/border styles, elevation gradients |
-| **SurfaceShape** | `web.surface.shape` | `Sharp`, `Rounded`, `Pill`, `Circle` | `border-radius: 0`, `var(--web-radius)`, `9999px`, `50%` |
-| **SurfaceElevation** | `web.surface.elevation`| `Flat`, `Subtle`, `Raised`, `Floating` | `box-shadow` depth tokens |
+### Universal Semantic Properties
+| Property Path | Purpose | Canonical Values / Open Extensibility |
+|---|---|---|
+| `role` | Semantic role of the element | `page`, `section`, `navigation`, `heading`, `paragraph`, `action`, `container`, `list`, `item`, `media`, `quote`, `divider`, plus **arbitrary open roles** (e.g. `sanctuary`) |
+| `text` | Display text / content | Plain string |
+| `level` | Hierarchy depth (e.g. heading level) | Integer (1 to 6) |
+| `layout.flow` | Arrangement flow | `vertical`, `horizontal`, `grid` |
+| `layout.align` | Cross-axis alignment / text align | `start`, `center`, `end`, `stretch` |
+| `layout.justify` | Main-axis distribution | `start`, `center`, `end`, `space-between`, `space-around` |
+| `layout.spacing` | Spacing / gap scale | `none`, `tight`, `normal`, `relaxed`, `generous` |
+| `scale` | Content / typographic scale | `small`, `normal`, `large`, `huge` |
+| `typography.weight` | Font weight | `light`, `normal`, `medium`, `bold` |
+| `typography.tone` | Semantic color tone | `default`, `muted`, `prominent`, `accent` |
+| `surface.variant` | Surface styling / material intent | `default`, `primary`, `secondary`, `surface`, `card`, `hero`, `subtle`, `outline`, `ghost`, plus **arbitrary open variants** (e.g. `ethereal`) |
+| `surface.shape` | Shape / corner treatment | `sharp`, `rounded`, `pill`, `circle` |
+| `surface.elevation` | Visual elevation / depth | `flat`, `subtle`, `raised`, `floating` |
+| `subordinate` | De-emphasized or supplementary role | Boolean (`true`/`false`) |
+| `prominence` | Visual dominance level | Integer (0 to 10) |
 
----
-
-## 4. Metalaw Compilation & Extensibility
-
-Metalaws are registered in `WebDesignerMetalaws::syncRegister`. Each Metalaw listens for compilation opcodes on a channel target or element and updates the output slots.
-
-### Adding New Semantic Concepts
-To add a new semantic concept (e.g. `web.concept.role.badge` or `web.concept.surface.frosted`):
-1. **Extend Enum / Facet in `WebConcept.hpp`**: Append the new enum value (maintaining append-only invariant).
-2. **Add Lexeme Definition in `WebDesignerMetalaws.cpp`**:
-   ```cpp
-   {"badge", "web.concept.role.badge", "metalaw.web.role.badge"},
-   ```
-3. **Register Metalaw in `WebDesignerMetalaws::syncRegister`**:
-   ```cpp
-   addMetalaw(laws, "metalaw.web.role.badge", "web.concept.role.badge",
-              ActionNode::sequence({
-                  ActionNode::set("compilation.output.web.role", PropertyValue(std::string("container"))),
-                  ActionNode::set("compilation.output.web.surface.shape", PropertyValue(std::string("pill"))),
-                  ActionNode::set("compilation.output.web.scale.size", PropertyValue(std::string("small")))
-              }), author);
-   ```
-4. **Realization Mapping in `WebRealizer.cpp`**: If the concept needs specialized CSS or DOM tag mapping, add the corresponding token or tag rule.
+### Medium-Specific Browser Properties (`web.*`)
+Only properties genuinely unique to the web runtime carry the `web.*` prefix:
+- `web.href`: Target hyperlink URI.
+- `web.action.event`: Custom EventBus event name dispatched when clicked.
+- `web.media.src`: Media resource URL (image/video).
+- `web.media.alt`: Alternative text for accessibility.
+- `web.element.tag`: Explicit HTML tag override (when exact tag selection is required).
 
 ---
 
-## 5. Composition & Hierarchy via Relations
+## 4. Hierarchy, Precedence & Provenance via Relational Topology
 
-Instead of monolithic templates or giant raw HTML strings, websites are formed through **universal set-to-set relations**:
-- Elements are created as `Singular` objects authored by a Person.
-- Parent-child hierarchy is established with first-class `Relation` beings using `WebRelationType::kContains` (`web-contains`).
-- Ordering is represented by `web.order` properties on child beings.
-- When realized, `WebRealizer` traverses the directed acyclic graph of containment relations, generating valid, indented, semantic HTML5.
-
----
-
-## 6. Dynamic Reactivity: Web Actions to Earthcall Laws
-
-User interactions (clicks, toggles) are not handled by black-box JavaScript callbacks:
-1. Interactive elements carry `data-action-event` and `data-being-id` attributes.
-2. When triggered in the browser, the client script dispatches an event (`web-action` and custom event name).
-3. `WebDesignerChannel::handleWebAction` receives the event and publishes it to the Earthcall `Core::EventBus`.
-4. Any Person-authored reactive `Law` listening to the event fires and mutates the in-world `Singular` properties via `ActionNode::set`.
-5. Upon re-realization, the DOM reflects the mutated state.
+Websites in Earthcall do not rely on flattened synthetic arrays or arbitrary `web.order` floating-point numbers:
+1. **Containment**: Parent-child relationship is established by `Relation("web-contains", *parent, *child, true, 1.0f)`.
+2. **Sibling Precedence DAG**: Sibling ordering is established by `Relation("precedes", *first, *second, true, 1.0f)`. When realizing children of a parent, `WebRealizer::findChildren` constructs an in-memory DAG and executes **Kahn's topological sort**, guaranteeing that the DOM sequence faithfully realizes the authored relational topology.
+3. **Authorship Provenance**: Elements carry `Relation("authored-by", *being, *author, true, 1.0f)` connecting every element to the Person or First Mover who authored it.
 
 ---
 
-## 7. What Remains Intentionally Unsupported
+## 5. Thin Web Realizer & Authored Theme Tokens
 
-- **Arbitrary Unsanitized Raw HTML Injection**: Websites are authored via semantic concepts and Laws. Escapes exist via explicit style/href properties, but raw unverified HTML strings are not admitted as domain nouns.
-- **Client-side Framework Runtimes (React/Vue/Angular)**: Earthcall is the runtime; DOM is the realization target. Injecting foreign reactive frameworks would create a duplicate state machine violating Refusal 6.
-- **Bespoke Hardcoded Layout Engines**: Layout is driven by CSS Grid and Flexbox via semantic facets.
-- **Client-Side Storage as Ground Truth**: The Earthcall world and save system are the single order of truth.
+`WebRealizer` does not dictate design choices or color palettes:
+- **Authored Theme Tokens**: The root/page element can carry authored theme properties (`theme.primaryColor`, `theme.backgroundColor`, `theme.textColor`, `theme.radius`, `theme.fontFamily`). `WebRealizer::generateStyleSheet` reads these properties from the root `Singular` and emits them into `:root` CSS custom properties (`--web-primary`, `--web-bg`, etc.).
+- **Minimal Browser Fallbacks**: If no theme properties are authored, clean neutral default tokens provide fallbacks.
+- **Substrate Cleanliness**: Substrate-level UI injections (such as hardcoded toast notifications) are strictly prohibited. Interactivity is signaled cleanly via semantic DOM event listeners that dispatch back to Earthcall's `EventBus`.
 
 ---
 
-## 8. Verification & Prototype Witness
+## 6. Governed Storage: VirtualFileSystem & FileChannel
 
-The implementation is verified end-to-end by:
-- `tests/singularity/web_designer_modality_test.cpp`:
-  - **Test 1**: Lexeme Resolution (stable opcodes).
-  - **Test 2**: Metalaw Composition (orthogonal composition and conflict detection).
-  - **Test 3**: Law-Authored Hierarchy & Relations (containment DAG and in-world dynamic properties).
-  - **Test 4**: HTML / CSS / DOM Realization (HTML5 landmarks and CSS design tokens).
-  - **Test 5**: Law-Driven Dynamic Behavior (user action -> EventBus -> reactive Law -> state mutation -> re-realization).
-  - **Test 6**: End-to-end multi-section frontend prototype export.
-- Prototype artifacts:
-  - `web_ui/designer_prototype.html` (21.7 KB)
-  - `saves/web_designer/prototype.html` (21.7 KB)
-  - `web_ui/designer_prototype.png` (Screenshot showing visual rendering of the complete prototype).
+Direct filesystem calls (`std::ofstream`, `std::filesystem::create_directories`) are completely absent from the Web Designer implementation.
+
+Persistence is handled uniformly through Earthcall's storage abstractions:
+- **In-Memory Storage**: Writing to `memory://...` URIs routes through `VirtualFileSystem::instance().writeMemoryFile()`.
+- **Physical Filesystem Storage**: Writing to physical disk paths resolves via `VirtualFileSystem::resolve()` and executes through `Singularity::Storage::FileChannel`:
+  ```cpp
+  Singularity::Storage::FileChannel channel;
+  channel.setProperty("file.path", resolvedPath);
+  channel.setProperty("file.content", html);
+  channel.setProperty("file.atomicWrite", true);
+  ```
+  This ensures sandboxing, atomic temp staging, and telemetry logging are uniformly respected across all exports.
+
+---
+
+## 7. Dynamic Reactivity: DOM Actions to Earthcall Laws
+
+User interactions in the browser cross into Earthcall without black-box JavaScript:
+1. Interactive elements carry `data-action-event="<eventName>"` and `data-being-id="<beingId>"`.
+2. The lightweight browser bridge listens for DOM clicks and forwards them to `WebDesignerChannel::handleWebAction`.
+3. `handleWebAction` publishes the event to `Core::EventBus`.
+4. Any Person-authored reactive `Law` listening for the event fires and mutates the in-world `Singular` properties.
+5. Upon re-realization, the mutated properties update the HTML/DOM output.
+
+---
+
+## 8. Verification & Extensibility Exit Test
+
+The modality is validated by 8 comprehensive automated tests in `tests/singularity/web_designer_modality_test.cpp`:
+1. **Lexeme & Relation In-World Resolution**: Validates that natural language tokens resolve through first-class `Singularity::Language::Lexeme` instances connected to `Law` objects via `"denotes"` `Relation` edges.
+2. **Law & Lexeme Universal Composition**: Validates that orthogonal semantic properties (`role`, `scale`, `layout.align`, `surface.variant`, `prominence`) compose cleanly onto a target `Singular`.
+3. **Relational Ordering & Provenance DAG**: Validates that sibling ordering is derived from `precedes` relations via topological sort and that `authored-by` provenance relations are preserved.
+4. **Thin WebRealizer & Authored Theme Tokens**: Validates that root theme properties (`theme.primaryColor`, etc.) are emitted into CSS `:root` variables and verifies the absence of hardcoded toast UI.
+5. **Extensibility Exit Test (Zero C++ Enum Modification)**: Validates that a Person can author a brand-new semantic concept (`role = "sanctuary"`, `surface.variant = "ethereal"`) purely through data, and `WebRealizer` realizes it into `<div class="web-sanctuary ... web-surface--ethereal ...">` without changing any C++ enum or table.
+6. **Orthogonal Storage via VFS & FileChannel**: Validates atomic writes via `FileChannel` and memory storage via `VirtualFileSystem` (`memory://`).
+7. **Law-Driven Event Reactivity**: Validates end-to-end DOM event dispatching to `EventBus`, reactive `Law` execution, property mutation (`surface.variant`), and re-realization.
+8. **End-to-End Frontend Website Prototype Generation**: Authors an 8-section living website prototype and exports it through `FileChannel`.
+
+### Artifacts & Visual Witness
+- **Frontend Prototype**: `web_ui/designer_prototype.html` (22 KB) and `saves/web_designer/prototype.html`.
+- **Governed VFS File**: `saves/web_designer/test_governed_vfs.html`.
+- **Visual Witness**: `web_ui/designer_prototype.png` (291 KB, 1280x2400 rendered screenshot captured via headless Google Chrome).

@@ -2,6 +2,7 @@
 
 #include "Singularity/Foreign/Web/Designer/WebConcept.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
+#include "Relation/Relation.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include <string>
 #include <vector>
@@ -13,54 +14,57 @@ namespace Foreign {
 namespace Web {
 
 // ---------------------------------------------------------------------------
-// Web Designer Metalaws & Lexeme Architecture
+// Web Designer Lexeme & Metalaw Architecture
 //
-// In accordance with Zach's LawLine + Metalaw precedent:
-//   "Design the Metalaws so multiple natural-language constructions can
-//    converge onto stable generalized web concepts, and those concepts can
-//    then be realized as HTML/CSS/DOM behavior.
-//    Prefer:
-//    Natural language -> Lexemes -> Metalaw-derived semantic web concepts
-//    -> website representation -> HTML/CSS/DOM realization"
+// In accordance with Earthcall precedent:
+//   "Characters / authored input -> LawLine / Lexemes -> Lexeme denotes / relates
+//    to Law or Metalaw -> semantic authored consequence."
+//
+// Meaning belongs in Lexeme <---denotes---> Law / Metalaw relations, NOT in
+// a static C++ dictionary or tokenizer switch statement.
 // ---------------------------------------------------------------------------
 
 struct WebLexemeDef {
     std::string symbol;      // Natural language spelling ("heading", "large", "centered")
-    std::string opcode;      // Opcode tag ("web.concept.role.heading", "web.concept.size.large")
+    std::string opcode;      // Opcode tag ("concept.role.heading", "concept.size.large")
     std::string stableId;    // Lexeme ID ("lexeme.web.heading")
-    std::string metalawId;   // Denoted Metalaw ID ("metalaw.web.heading")
+    std::string metalawId;   // Denoted Law ID ("law.concept.heading")
     std::string description; // Semantic gloss
 };
 
 class WebDesignerMetalaws {
 public:
-    // Sync-registers all standard Web Designer Lexemes and Metalaws into LawManager
+    // Seeds standard authoring Lexemes, Laws, and "denotes" Relations into LawManager & world
     static void syncRegister(LawManager& laws, Singular* author = nullptr);
 
-    // Look up known vocabulary definition by word/phrase (case-insensitive)
-    static const WebLexemeDef* findDefinition(const std::string& symbol);
+    // Access live seeded Lexemes and denotation Relations
+    static const std::vector<std::shared_ptr<Singularity::Language::Lexeme>>& seededLexemes();
+    static const std::vector<std::shared_ptr<Relation>>& seededRelations();
 
-    // List all registered vocabulary definitions
+    // Look up vocabulary definition for inspection/completion
+    static const WebLexemeDef* findDefinition(const std::string& symbol);
     static const std::vector<WebLexemeDef>& allDefinitions();
 
-    // Compile a list of natural language tokens or lexemes into a composed WebConcept
-    // using the registered Metalaws applied against channelTarget.
+    // Compile tokens into a target Singular using in-world Lexemes and their "denotes" Relations
     static WebConcept compileTokens(const std::vector<std::string>& tokens,
                                     LawManager& laws,
                                     Singular& channelTarget,
-                                    std::string* outError = nullptr);
+                                    std::string* outError = nullptr,
+                                    const std::vector<Relation*>& extraRelations = {});
 
-    // Parse and compile a natural language phrase (e.g. "a large centered heading")
+    // Parse and compile an authored natural language phrase into a target Singular
     static WebConcept compilePhrase(const std::string& phrase,
                                     LawManager& laws,
                                     Singular& channelTarget,
-                                    std::string* outError = nullptr);
+                                    std::string* outError = nullptr,
+                                    const std::vector<Relation*>& extraRelations = {});
 
-    // Create an authored newborn Singular (Object) in the world with the compiled WebConcept
+    // Create an authored newborn Singular (Object) in the world with real authorship relation
     static std::shared_ptr<Singular> createAuthoredElement(
         const std::string& identifier,
         const WebConcept& concept,
-        Singular* author = nullptr);
+        Singular* author = nullptr,
+        std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 };
 
 } // namespace Web

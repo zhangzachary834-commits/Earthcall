@@ -12,17 +12,21 @@ namespace Foreign {
 namespace Web {
 
 // ---------------------------------------------------------------------------
-// Semantic Web Concept Model (Earthcall Web Designer Modality)
+// Semantic Concept Model (Ephemeral View / Adapter for Realization)
 //
-// In accordance with Earthcall Refusal 1:
+// In accordance with Earthcall Refusal 1 and "C++ must not decide what the Person means":
 //   "No new C++ class for a domain noun. Domain things and their state are
 //    authored in-world as data, never carved into the type system."
 //
-// WebConcept is NOT a domain being class. The beings in-world are ordinary
-// Earthcall Singulars (Objects, Formations, Relations). WebConcept is an
-// ephemeral semantic codec and descriptor that reads and writes dynamic
-// properties and relations on those beings, translating between authored
-// vocabulary/Metalaws and web realization targets (HTML/CSS/DOM).
+// WebConcept is NOT the authority of what meanings may exist. The authority
+// is the in-world Singular properties, Formations, and Relations authored
+// by Persons. WebConcept is an ephemeral compiled/adapter view used by the
+// thin web realizer for structured translation into HTML/CSS/DOM.
+//
+// Enums below exist purely as convenience caches for standard browser
+// landmarks/mechanics. Custom and newly-authored roles, variants, flows,
+// and modifiers are fully preserved as open string values and arbitrary
+// dynamic properties without requiring C++ enum expansion.
 // ---------------------------------------------------------------------------
 
 enum class SemanticRole {
@@ -118,37 +122,68 @@ enum class SurfaceElevation {
 };
 
 struct WebConcept {
-    SemanticRole role = SemanticRole::Unknown;
+    // Open semantic role: preserves arbitrary authored roles (e.g. "sanctuary", "article", "badge")
+    std::string roleName = "unknown";
+    SemanticRole role = SemanticRole::Unknown; // Fast-path cache for known roles
+
     std::string text;
     int headingLevel = 2; // Default for Heading role
 
     // Layout facets
+    std::string flowName = "vertical";
     LayoutFlow flow = LayoutFlow::Vertical;
+
+    std::string alignName = "start";
     LayoutAlign align = LayoutAlign::Start;
+
+    std::string justifyName = "start";
     LayoutJustify justify = LayoutJustify::Start;
+
     bool wrap = false;
+
+    std::string spacingName = "normal";
     SpacingScale spacing = SpacingScale::Normal;
+
     int gridColumns = 1;
 
     // Typography & scale facets
+    std::string scaleName = "normal";
     ContentScale scale = ContentScale::Normal;
+
+    std::string weightName = "normal";
     TypographyWeight weight = TypographyWeight::Normal;
+
+    std::string toneName = "default";
     TypographyTone tone = TypographyTone::Default;
 
     // Surface & presentation facets
+    std::string variantName = "default";
     SurfaceVariant variant = SurfaceVariant::Default;
+
+    std::string shapeName = "rounded";
     SurfaceShape shape = SurfaceShape::Rounded;
+
+    std::string elevationName = "flat";
     SurfaceElevation elevation = SurfaceElevation::Flat;
+
     std::string background; // Hex, rgba, or CSS color
     std::string color;      // Text color override
 
-    // Interactive & media facets
+    // Universal relational modifiers
+    std::string prominence;  // "primary", "subordinate", "prominent", "quiet"
+    bool subordinate = false; // Authored subordination hint
+
+    // Interactive & media facets (genuinely medium-specific or action bindings)
     std::string actionHref;   // URL or anchor link
     std::string actionEvent;  // Earthcall ECA event name emitted on activation
     std::string mediaSrc;     // Image/media source path or URL
     std::string mediaAlt;     // Accessible alternative text
+    std::string elementTag;   // Explicit lower-level HTML tag escape hatch if authored
 
-    // Ordering / hierarchy hint
+    // Preservation of unconstrained authored properties
+    std::unordered_map<std::string, PropertyValue> authoredProperties;
+
+    // Derived realization ordering (derived from Relation topology, not an authoring source of truth)
     int order = 0;
 
     // Converters to/from string tokens
@@ -186,18 +221,23 @@ struct WebConcept {
     static SurfaceElevation stringToElevation(const std::string& s);
 
     // Apply this semantic concept onto an Earthcall Singular as authored properties
+    // Writes universal properties (role, layout.flow, etc.) and web-specific properties where relevant
     void applyToSingular(Singular& being) const;
 
     // Read an authored semantic concept from an Earthcall Singular's properties
+    // Prioritizes universal properties and gracefully falls back to web.* legacy keys
     static WebConcept readFromSingular(const Singular& being);
 };
 
 // Relation types used in Web Designer ontology (authored strings)
 namespace WebRelationType {
-    constexpr const char* kContains    = "contains";
-    constexpr const char* kPrecedes    = "precedes";
-    constexpr const char* kAnnotatedBy = "annotated-by";
-    constexpr const char* kGovernedBy  = "governed-by";
+    constexpr const char* kContains      = "contains";
+    constexpr const char* kPrecedes      = "precedes";
+    constexpr const char* kAuthoredBy    = "authored-by";
+    constexpr const char* kEchoes        = "echoes";
+    constexpr const char* kSubordinateTo = "subordinate-to";
+    constexpr const char* kAnnotatedBy   = "annotated-by";
+    constexpr const char* kGovernedBy    = "governed-by";
 }
 
 } // namespace Web

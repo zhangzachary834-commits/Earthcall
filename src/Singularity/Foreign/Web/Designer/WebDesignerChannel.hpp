@@ -23,8 +23,8 @@ namespace Web {
 //    senses and acts; Persons author what things are in-world."
 //
 // WebDesignerChannel is a First Mover Law with a stable identifier
-// `@web-designer-channel`. It serves as the compilation and realization
-// target for Earthcall Laws, Lexemes, and Metalaws authoring the web.
+// `@web-designer-channel`. It serves as the compilation, sense/act, and
+// realization target for Earthcall Laws, Lexemes, and Metalaws authoring the web.
 // ---------------------------------------------------------------------------
 
 class WebDesignerChannel : public Law {
@@ -54,7 +54,12 @@ public:
         const std::shared_ptr<Singular>& child,
         int order = 0);
 
-    // Access current live relations
+    // Form a precedence relation between two sibling web beings (first precedes second in DOM sequence)
+    std::shared_ptr<Relation> relatePrecedes(
+        const std::shared_ptr<Singular>& first,
+        const std::shared_ptr<Singular>& second);
+
+    // Access live relations
     const std::vector<std::shared_ptr<Relation>>& getRelations() const { return _relations; }
     void addRelation(std::shared_ptr<Relation> rel) { if (rel) _relations.push_back(std::move(rel)); }
     void clearRelations() { _relations.clear(); }
@@ -65,7 +70,14 @@ public:
     // Realize a root element / page to HTML
     std::string realize(const Singular& root, const RealizeOptions& options = RealizeOptions());
 
-    // Export realized HTML to a local file
+    // Save realized HTML via VFS URI addressing (memory://, save://, file://, or relative path)
+    // Routes storage through VirtualFileSystem and FileChannel without direct std::ofstream
+    bool saveToVfs(const Singular& root,
+                   const std::string& vfsUri,
+                   LawManager* laws = nullptr,
+                   const RealizeOptions& options = RealizeOptions());
+
+    // Export realized HTML (governed route calling saveToVfs)
     bool exportHtml(const Singular& root,
                     const std::string& filePath,
                     const RealizeOptions& options = RealizeOptions());

@@ -30,24 +30,25 @@ std::string WebConcept::roleToString(SemanticRole r) {
         case SemanticRole::Media:      return "media";
         case SemanticRole::Quote:      return "quote";
         case SemanticRole::Divider:    return "divider";
-        default:                       return "unknown";
+        case SemanticRole::Unknown:    return "unknown";
     }
+    return "unknown";
 }
 
 SemanticRole WebConcept::stringToRole(const std::string& s) {
     std::string lower = toLower(s);
-    if (lower == "page") return SemanticRole::Page;
-    if (lower == "section") return SemanticRole::Section;
-    if (lower == "navigation" || lower == "nav" || lower == "navbar") return SemanticRole::Navigation;
-    if (lower == "heading" || lower == "title" || lower == "subtitle" || lower == "headline") return SemanticRole::Heading;
-    if (lower == "paragraph" || lower == "text" || lower == "p" || lower == "body") return SemanticRole::Paragraph;
+    if (lower == "page" || lower == "site" || lower == "document") return SemanticRole::Page;
+    if (lower == "section" || lower == "article" || lower == "region") return SemanticRole::Section;
+    if (lower == "navigation" || lower == "nav" || lower == "menu") return SemanticRole::Navigation;
+    if (lower == "heading" || lower == "title" || lower == "header") return SemanticRole::Heading;
+    if (lower == "paragraph" || lower == "p" || lower == "text" || lower == "body") return SemanticRole::Paragraph;
     if (lower == "action" || lower == "button" || lower == "btn" || lower == "link" || lower == "cta") return SemanticRole::Action;
-    if (lower == "container" || lower == "card" || lower == "box" || lower == "panel") return SemanticRole::Container;
+    if (lower == "container" || lower == "box" || lower == "card" || lower == "wrapper") return SemanticRole::Container;
     if (lower == "list") return SemanticRole::List;
     if (lower == "item" || lower == "list-item") return SemanticRole::Item;
     if (lower == "media" || lower == "image" || lower == "img" || lower == "icon") return SemanticRole::Media;
-    if (lower == "quote" || lower == "blockquote" || lower == "callout") return SemanticRole::Quote;
-    if (lower == "divider" || lower == "hr" || lower == "separator") return SemanticRole::Divider;
+    if (lower == "quote" || lower == "blockquote" || lower == "testimonial") return SemanticRole::Quote;
+    if (lower == "divider" || lower == "separator" || lower == "hr") return SemanticRole::Divider;
     return SemanticRole::Unknown;
 }
 
@@ -63,7 +64,7 @@ std::string WebConcept::flowToString(LayoutFlow f) {
 LayoutFlow WebConcept::stringToFlow(const std::string& s) {
     std::string lower = toLower(s);
     if (lower == "horizontal" || lower == "row" || lower == "inline") return LayoutFlow::Horizontal;
-    if (lower == "grid") return LayoutFlow::Grid;
+    if (lower == "grid" || lower == "columns") return LayoutFlow::Grid;
     return LayoutFlow::Vertical;
 }
 
@@ -80,8 +81,8 @@ std::string WebConcept::alignToString(LayoutAlign a) {
 LayoutAlign WebConcept::stringToAlign(const std::string& s) {
     std::string lower = toLower(s);
     if (lower == "center" || lower == "centered" || lower == "middle") return LayoutAlign::Center;
-    if (lower == "end" || lower == "right") return LayoutAlign::End;
-    if (lower == "stretch" || lower == "fill") return LayoutAlign::Stretch;
+    if (lower == "end" || lower == "right" || lower == "bottom") return LayoutAlign::End;
+    if (lower == "stretch" || lower == "full") return LayoutAlign::Stretch;
     return LayoutAlign::Start;
 }
 
@@ -98,7 +99,7 @@ std::string WebConcept::justifyToString(LayoutJustify j) {
 
 LayoutJustify WebConcept::stringToJustify(const std::string& s) {
     std::string lower = toLower(s);
-    if (lower == "center") return LayoutJustify::Center;
+    if (lower == "center" || lower == "centered") return LayoutJustify::Center;
     if (lower == "end") return LayoutJustify::End;
     if (lower == "between" || lower == "space-between") return LayoutJustify::SpaceBetween;
     if (lower == "around" || lower == "space-around") return LayoutJustify::SpaceAround;
@@ -173,9 +174,9 @@ std::string WebConcept::toneToString(TypographyTone t) {
 
 TypographyTone WebConcept::stringToTone(const std::string& s) {
     std::string lower = toLower(s);
-    if (lower == "muted" || lower == "subtle" || lower == "secondary") return TypographyTone::Muted;
-    if (lower == "accent" || lower == "brand") return TypographyTone::Accent;
-    if (lower == "prominent" || lower == "lead" || lower == "highlight") return TypographyTone::Prominent;
+    if (lower == "muted" || lower == "subdued" || lower == "quiet" || lower == "dim") return TypographyTone::Muted;
+    if (lower == "accent" || lower == "highlight") return TypographyTone::Accent;
+    if (lower == "prominent" || lower == "lead" || lower == "loud") return TypographyTone::Prominent;
     return TypographyTone::Default;
 }
 
@@ -196,7 +197,7 @@ std::string WebConcept::variantToString(SurfaceVariant v) {
 
 SurfaceVariant WebConcept::stringToVariant(const std::string& s) {
     std::string lower = toLower(s);
-    if (lower == "primary" || lower == "cta") return SurfaceVariant::Primary;
+    if (lower == "primary") return SurfaceVariant::Primary;
     if (lower == "secondary") return SurfaceVariant::Secondary;
     if (lower == "surface") return SurfaceVariant::Surface;
     if (lower == "card") return SurfaceVariant::Card;
@@ -244,98 +245,209 @@ SurfaceElevation WebConcept::stringToElevation(const std::string& s) {
 }
 
 void WebConcept::applyToSingular(Singular& being) const {
-    being.setDynamicProperty("web.role", PropertyValue(roleToString(role)));
-    if (!text.empty()) being.setDynamicProperty("web.text", PropertyValue(text));
-    being.setDynamicProperty("web.level", PropertyValue(static_cast<double>(headingLevel)));
-    being.setDynamicProperty("web.layout.flow", PropertyValue(flowToString(flow)));
-    being.setDynamicProperty("web.layout.align", PropertyValue(alignToString(align)));
-    being.setDynamicProperty("web.layout.justify", PropertyValue(justifyToString(justify)));
-    being.setDynamicProperty("web.layout.wrap", PropertyValue(wrap));
-    being.setDynamicProperty("web.layout.spacing", PropertyValue(spacingToString(spacing)));
-    being.setDynamicProperty("web.layout.columns", PropertyValue(static_cast<double>(gridColumns)));
-    being.setDynamicProperty("web.scale.size", PropertyValue(scaleToString(scale)));
-    being.setDynamicProperty("web.typography.weight", PropertyValue(weightToString(weight)));
-    being.setDynamicProperty("web.typography.tone", PropertyValue(toneToString(tone)));
-    being.setDynamicProperty("web.surface.variant", PropertyValue(variantToString(variant)));
-    being.setDynamicProperty("web.surface.shape", PropertyValue(shapeToString(shape)));
-    being.setDynamicProperty("web.surface.elevation", PropertyValue(elevationToString(elevation)));
-    if (!background.empty()) being.setDynamicProperty("web.surface.background", PropertyValue(background));
-    if (!color.empty()) being.setDynamicProperty("web.surface.color", PropertyValue(color));
-    if (!actionHref.empty()) being.setDynamicProperty("web.action.href", PropertyValue(actionHref));
+    // 1. Universal Earthcall Properties (unprefixed)
+    std::string effectiveRole = roleName.empty() || roleName == "unknown" ? roleToString(role) : roleName;
+    being.setDynamicProperty("role", PropertyValue(effectiveRole));
+    if (!text.empty()) being.setDynamicProperty("text", PropertyValue(text));
+    being.setDynamicProperty("level", PropertyValue(static_cast<double>(headingLevel)));
+    being.setDynamicProperty("layout.flow", PropertyValue(flowName.empty() ? flowToString(flow) : flowName));
+    being.setDynamicProperty("layout.align", PropertyValue(alignName.empty() ? alignToString(align) : alignName));
+    being.setDynamicProperty("layout.justify", PropertyValue(justifyName.empty() ? justifyToString(justify) : justifyName));
+    being.setDynamicProperty("layout.wrap", PropertyValue(wrap));
+    being.setDynamicProperty("layout.spacing", PropertyValue(spacingName.empty() ? spacingToString(spacing) : spacingName));
+    being.setDynamicProperty("layout.columns", PropertyValue(static_cast<double>(gridColumns)));
+    being.setDynamicProperty("scale", PropertyValue(scaleName.empty() ? scaleToString(scale) : scaleName));
+    being.setDynamicProperty("typography.weight", PropertyValue(weightName.empty() ? weightToString(weight) : weightName));
+    being.setDynamicProperty("typography.tone", PropertyValue(toneName.empty() ? toneToString(tone) : toneName));
+    being.setDynamicProperty("surface.variant", PropertyValue(variantName.empty() ? variantToString(variant) : variantName));
+    being.setDynamicProperty("surface.shape", PropertyValue(shapeName.empty() ? shapeToString(shape) : shapeName));
+    being.setDynamicProperty("surface.elevation", PropertyValue(elevationName.empty() ? elevationToString(elevation) : elevationName));
+    if (!background.empty()) being.setDynamicProperty("surface.background", PropertyValue(background));
+    if (!color.empty()) being.setDynamicProperty("surface.color", PropertyValue(color));
+    if (subordinate) being.setDynamicProperty("subordinate", PropertyValue(true));
+    if (!prominence.empty()) being.setDynamicProperty("prominence", PropertyValue(prominence));
+
+    // 2. Medium-Specific Bindings (web.*)
+    if (!actionHref.empty()) being.setDynamicProperty("web.href", PropertyValue(actionHref));
     if (!actionEvent.empty()) being.setDynamicProperty("web.action.event", PropertyValue(actionEvent));
     if (!mediaSrc.empty()) being.setDynamicProperty("web.media.src", PropertyValue(mediaSrc));
     if (!mediaAlt.empty()) being.setDynamicProperty("web.media.alt", PropertyValue(mediaAlt));
-    being.setDynamicProperty("web.order", PropertyValue(static_cast<double>(order)));
+    if (!elementTag.empty()) being.setDynamicProperty("web.element.tag", PropertyValue(elementTag));
+
+    // 3. Backward Compatibility Mirroring (so existing tests/laws querying web.* keep working)
+    being.setDynamicProperty("web.role", PropertyValue(effectiveRole));
+    if (!text.empty()) being.setDynamicProperty("web.text", PropertyValue(text));
+    being.setDynamicProperty("web.level", PropertyValue(static_cast<double>(headingLevel)));
+    being.setDynamicProperty("web.layout.flow", PropertyValue(flowName.empty() ? flowToString(flow) : flowName));
+    being.setDynamicProperty("web.layout.align", PropertyValue(alignName.empty() ? alignToString(align) : alignName));
+    being.setDynamicProperty("web.layout.justify", PropertyValue(justifyName.empty() ? justifyToString(justify) : justifyName));
+    being.setDynamicProperty("web.layout.wrap", PropertyValue(wrap));
+    being.setDynamicProperty("web.layout.spacing", PropertyValue(spacingName.empty() ? spacingToString(spacing) : spacingName));
+    being.setDynamicProperty("web.layout.columns", PropertyValue(static_cast<double>(gridColumns)));
+    being.setDynamicProperty("web.scale.size", PropertyValue(scaleName.empty() ? scaleToString(scale) : scaleName));
+    being.setDynamicProperty("web.typography.weight", PropertyValue(weightName.empty() ? weightToString(weight) : weightName));
+    being.setDynamicProperty("web.typography.tone", PropertyValue(toneName.empty() ? toneToString(tone) : toneName));
+    being.setDynamicProperty("web.surface.variant", PropertyValue(variantName.empty() ? variantToString(variant) : variantName));
+    being.setDynamicProperty("web.surface.shape", PropertyValue(shapeName.empty() ? shapeToString(shape) : shapeName));
+    being.setDynamicProperty("web.surface.elevation", PropertyValue(elevationName.empty() ? elevationToString(elevation) : elevationName));
+    if (!actionHref.empty()) being.setDynamicProperty("web.action.href", PropertyValue(actionHref));
+    if (order != 0) being.setDynamicProperty("web.order", PropertyValue(static_cast<double>(order)));
 }
 
 WebConcept WebConcept::readFromSingular(const Singular& being) {
     WebConcept concept;
     PropertyValue v;
 
-    if (being.getDynamicProperty("web.role", v)) {
-        if (auto s = std::get_if<std::string>(&v)) concept.role = stringToRole(*s);
+    // Helper lambda to check universal key first, then web.* fallback
+    auto getProp = [&](const std::string& universalKey, const std::string& webKey, PropertyValue& out) -> bool {
+        if (being.getDynamicProperty(universalKey, out)) return true;
+        if (!webKey.empty() && being.getDynamicProperty(webKey, out)) return true;
+        return false;
+    };
+
+    // Role
+    if (getProp("role", "web.role", v)) {
+        if (auto s = std::get_if<std::string>(&v)) {
+            concept.roleName = *s;
+            concept.role = stringToRole(*s);
+        }
     }
-    if (being.getDynamicProperty("web.text", v)) {
+
+    // Text / Content
+    if (getProp("text", "web.text", v) || being.getDynamicProperty("content", v)) {
         if (auto s = std::get_if<std::string>(&v)) concept.text = *s;
     }
-    if (being.getDynamicProperty("web.level", v)) {
+
+    // Heading level
+    if (getProp("level", "web.level", v) || being.getDynamicProperty("heading.level", v)) {
         if (auto d = std::get_if<double>(&v)) concept.headingLevel = static_cast<int>(*d);
     }
-    if (being.getDynamicProperty("web.layout.flow", v)) {
-        if (auto s = std::get_if<std::string>(&v)) concept.flow = stringToFlow(*s);
+
+    // Layout flow
+    if (getProp("layout.flow", "web.layout.flow", v) || being.getDynamicProperty("flow", v)) {
+        if (auto s = std::get_if<std::string>(&v)) {
+            concept.flowName = *s;
+            concept.flow = stringToFlow(*s);
+        }
     }
-    if (being.getDynamicProperty("web.layout.align", v)) {
-        if (auto s = std::get_if<std::string>(&v)) concept.align = stringToAlign(*s);
+
+    // Layout align
+    if (getProp("layout.align", "web.layout.align", v) || being.getDynamicProperty("align", v)) {
+        if (auto s = std::get_if<std::string>(&v)) {
+            concept.alignName = *s;
+            concept.align = stringToAlign(*s);
+        }
     }
-    if (being.getDynamicProperty("web.layout.justify", v)) {
-        if (auto s = std::get_if<std::string>(&v)) concept.justify = stringToJustify(*s);
+
+    // Layout justify
+    if (getProp("layout.justify", "web.layout.justify", v) || being.getDynamicProperty("justify", v)) {
+        if (auto s = std::get_if<std::string>(&v)) {
+            concept.justifyName = *s;
+            concept.justify = stringToJustify(*s);
+        }
     }
-    if (being.getDynamicProperty("web.layout.wrap", v)) {
+
+    // Layout wrap
+    if (getProp("layout.wrap", "web.layout.wrap", v) || being.getDynamicProperty("wrap", v)) {
         if (auto b = std::get_if<bool>(&v)) concept.wrap = *b;
     }
-    if (being.getDynamicProperty("web.layout.spacing", v)) {
-        if (auto s = std::get_if<std::string>(&v)) concept.spacing = stringToSpacing(*s);
+
+    // Spacing
+    if (getProp("layout.spacing", "web.layout.spacing", v) || being.getDynamicProperty("spacing", v)) {
+        if (auto s = std::get_if<std::string>(&v)) {
+            concept.spacingName = *s;
+            concept.spacing = stringToSpacing(*s);
+        }
     }
-    if (being.getDynamicProperty("web.layout.columns", v)) {
+
+    // Columns
+    if (getProp("layout.columns", "web.layout.columns", v) || being.getDynamicProperty("columns", v)) {
         if (auto d = std::get_if<double>(&v)) concept.gridColumns = static_cast<int>(*d);
     }
-    if (being.getDynamicProperty("web.scale.size", v)) {
-        if (auto s = std::get_if<std::string>(&v)) concept.scale = stringToScale(*s);
+
+    // Scale
+    if (getProp("scale", "web.scale.size", v) || being.getDynamicProperty("size", v)) {
+        if (auto s = std::get_if<std::string>(&v)) {
+            concept.scaleName = *s;
+            concept.scale = stringToScale(*s);
+        }
     }
-    if (being.getDynamicProperty("web.typography.weight", v)) {
-        if (auto s = std::get_if<std::string>(&v)) concept.weight = stringToWeight(*s);
+
+    // Typography weight
+    if (getProp("typography.weight", "web.typography.weight", v) || being.getDynamicProperty("weight", v)) {
+        if (auto s = std::get_if<std::string>(&v)) {
+            concept.weightName = *s;
+            concept.weight = stringToWeight(*s);
+        }
     }
-    if (being.getDynamicProperty("web.typography.tone", v)) {
-        if (auto s = std::get_if<std::string>(&v)) concept.tone = stringToTone(*s);
+
+    // Typography tone
+    if (getProp("typography.tone", "web.typography.tone", v) || being.getDynamicProperty("tone", v)) {
+        if (auto s = std::get_if<std::string>(&v)) {
+            concept.toneName = *s;
+            concept.tone = stringToTone(*s);
+        }
     }
-    if (being.getDynamicProperty("web.surface.variant", v)) {
-        if (auto s = std::get_if<std::string>(&v)) concept.variant = stringToVariant(*s);
+
+    // Surface variant
+    if (getProp("surface.variant", "web.surface.variant", v) || being.getDynamicProperty("variant", v)) {
+        if (auto s = std::get_if<std::string>(&v)) {
+            concept.variantName = *s;
+            concept.variant = stringToVariant(*s);
+        }
     }
-    if (being.getDynamicProperty("web.surface.shape", v)) {
-        if (auto s = std::get_if<std::string>(&v)) concept.shape = stringToShape(*s);
+
+    // Surface shape
+    if (getProp("surface.shape", "web.surface.shape", v) || being.getDynamicProperty("shape", v)) {
+        if (auto s = std::get_if<std::string>(&v)) {
+            concept.shapeName = *s;
+            concept.shape = stringToShape(*s);
+        }
     }
-    if (being.getDynamicProperty("web.surface.elevation", v)) {
-        if (auto s = std::get_if<std::string>(&v)) concept.elevation = stringToElevation(*s);
+
+    // Surface elevation
+    if (getProp("surface.elevation", "web.surface.elevation", v) || being.getDynamicProperty("elevation", v)) {
+        if (auto s = std::get_if<std::string>(&v)) {
+            concept.elevationName = *s;
+            concept.elevation = stringToElevation(*s);
+        }
     }
-    if (being.getDynamicProperty("web.surface.background", v)) {
+
+    // Colors
+    if (getProp("surface.background", "web.surface.background", v) || being.getDynamicProperty("background", v)) {
         if (auto s = std::get_if<std::string>(&v)) concept.background = *s;
     }
-    if (being.getDynamicProperty("web.surface.color", v)) {
+    if (getProp("surface.color", "web.surface.color", v) || being.getDynamicProperty("color", v)) {
         if (auto s = std::get_if<std::string>(&v)) concept.color = *s;
     }
-    if (being.getDynamicProperty("web.action.href", v)) {
+
+    // Relational modifiers
+    if (being.getDynamicProperty("prominence", v)) {
+        if (auto s = std::get_if<std::string>(&v)) concept.prominence = *s;
+    }
+    if (being.getDynamicProperty("subordinate", v)) {
+        if (auto b = std::get_if<bool>(&v)) concept.subordinate = *b;
+    }
+
+    // Interactive & Media
+    if (getProp("action.href", "web.action.href", v) || getProp("href", "web.href", v)) {
         if (auto s = std::get_if<std::string>(&v)) concept.actionHref = *s;
     }
-    if (being.getDynamicProperty("web.action.event", v)) {
+    if (getProp("action.event", "web.action.event", v)) {
         if (auto s = std::get_if<std::string>(&v)) concept.actionEvent = *s;
     }
-    if (being.getDynamicProperty("web.media.src", v)) {
+    if (getProp("media.src", "web.media.src", v) || being.getDynamicProperty("src", v)) {
         if (auto s = std::get_if<std::string>(&v)) concept.mediaSrc = *s;
     }
-    if (being.getDynamicProperty("web.media.alt", v)) {
+    if (getProp("media.alt", "web.media.alt", v) || being.getDynamicProperty("alt", v)) {
         if (auto s = std::get_if<std::string>(&v)) concept.mediaAlt = *s;
     }
-    if (being.getDynamicProperty("web.order", v)) {
+    if (getProp("element.tag", "web.element.tag", v)) {
+        if (auto s = std::get_if<std::string>(&v)) concept.elementTag = *s;
+    }
+
+    // Optional realization order cache (if present)
+    if (being.getDynamicProperty("web.order", v) || being.getDynamicProperty("order", v)) {
         if (auto d = std::get_if<double>(&v)) concept.order = static_cast<int>(*d);
     }
 
