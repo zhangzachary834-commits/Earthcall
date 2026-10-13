@@ -348,7 +348,6 @@ void ScreenChannel::buildProperties() {
     floating("spaceDistortion", &ScreenChannel::spaceDistortion);
     boolean("sdfRangeProxyEnabled", &ScreenChannel::sdfRangeProxyEnabled);
     boolean("volumeZeroProofEnabled", &ScreenChannel::volumeZeroProofEnabled);
-    floating("volumeOutputErrorBudget", &ScreenChannel::volumeOutputErrorBudget);
     registerProperty(std::make_unique<PropertyRef<ScreenChannel, int>>(
         "volumeSamplesPerChord", this, &ScreenChannel::volumeSamplesPerChord));
     readOnlyInt("volumeZeroProofCellsProven", &ScreenChannel::getVolumeZeroProofCellsProven);

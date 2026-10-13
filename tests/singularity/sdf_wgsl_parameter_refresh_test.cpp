@@ -1225,9 +1225,6 @@ int main() {
                   before.wgsl.find("hgPhase") == std::string::npos &&
                   before.wgsl.find("volumeControl.z") == std::string::npos,
               "absent authored Phi stays exact isotropic identity even under incident light");
-        check(before.wgsl.find("volumeOutputError: vec4<f32>") != std::string::npos &&
-                  before.wgsl.find("u.volumeOutputError.y == 0.0 && transmittance < 0.01") != std::string::npos,
-              "full-lattice opt-in uses its own GPU field and guards the legacy cutoff");
 
         sourceRoot->children[1]->scalarForm.terms[0].coefficient = 0.5;
         const auto refreshed = sdfwgsl::collectVolumeParams(

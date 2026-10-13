@@ -526,18 +526,11 @@ glm::vec3 Object::getLocalSupportPoint(const glm::vec3& localDirection) const {
 }
 
 glm::vec3 Object::getSupportPointWorld(const glm::vec3& worldDirection) const {
-    const auto authored =
-        OntoMath::MatrixValue::fromGlmMat4(getRaycastTransform());
-    const auto localDirection =
-        OntoMath::pullbackCovector(authored, worldDirection);
-    if (!localDirection) {
-        return OntoMath::affineExtractTranslation(authored).value_or(glm::vec3(0.0f));
-    }
-    const glm::vec3 localSupport = getLocalSupportPoint(*localDirection);
-    const auto worldSupport = OntoMath::transformPoint(authored, localSupport);
-    return worldSupport
-        ? *worldSupport
-        : OntoMath::affineExtractTranslation(authored).value_or(glm::vec3(0.0f));
+    glm::mat4 transform = getRaycastTransform();
+    glm::mat3 linear(transform);
+    glm::vec3 localDirection = glm::transpose(linear) * worldDirection;
+    glm::vec3 localSupport = getLocalSupportPoint(localDirection);
+    return glm::vec3(transform * glm::vec4(localSupport, 1.0f));
 }
 
 bool Object::isCollisionShapeConvex() const {

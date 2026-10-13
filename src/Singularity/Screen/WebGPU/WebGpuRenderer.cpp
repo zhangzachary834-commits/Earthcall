@@ -603,25 +603,14 @@ void WebGpuRenderer::reloadShaders() {
     _sdfPipes.clear();
     _programCache.clear();
 
-    for (auto& kv : _kernelVolumePayloads) {
-        if (kv.second.buffer) wgpuBufferRelease(kv.second.buffer);
-    }
-    _kernelVolumePayloads.clear();
-    for (auto& kv : _kernelVolumeTimePipes) {
-        if (kv.second.pipe) wgpuComputePipelineRelease(kv.second.pipe);
-        if (kv.second.globalBgl) wgpuBindGroupLayoutRelease(kv.second.globalBgl);
-    }
-    _kernelVolumeTimePipes.clear();
     for (auto& kv : _volumePipes) {
         if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
         if (kv.second.globalBgl) wgpuBindGroupLayoutRelease(kv.second.globalBgl);
         if (kv.second.instanceBgl) wgpuBindGroupLayoutRelease(kv.second.instanceBgl);
     }
     _volumePipes.clear();
-    _kernelVolumeSourceLayouts.ready = false;
     _volumeProgramCache.clear();
     _volumeSetProgramCache.clear();
-    _kernelVolumeEvaluators.clear();
     _volumeBatches.clear();
     _volumeParamBatches.clear();
     _volumeDrawInstanceCounts.clear();
@@ -668,25 +657,14 @@ void WebGpuRenderer::shutdown() {
         if (kv.second.bgl)  wgpuBindGroupLayoutRelease(kv.second.bgl);
     }
     _sdfPipes.clear();
-    for (auto& kv : _kernelVolumePayloads) {
-        if (kv.second.buffer) wgpuBufferRelease(kv.second.buffer);
-    }
-    _kernelVolumePayloads.clear();
-    for (auto& kv : _kernelVolumeTimePipes) {
-        if (kv.second.pipe) wgpuComputePipelineRelease(kv.second.pipe);
-        if (kv.second.globalBgl) wgpuBindGroupLayoutRelease(kv.second.globalBgl);
-    }
-    _kernelVolumeTimePipes.clear();
     for (auto& kv : _volumePipes) {
         if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
         if (kv.second.globalBgl) wgpuBindGroupLayoutRelease(kv.second.globalBgl);
         if (kv.second.instanceBgl) wgpuBindGroupLayoutRelease(kv.second.instanceBgl);
     }
     _volumePipes.clear();
-    _kernelVolumeSourceLayouts.ready = false;
     _volumeProgramCache.clear();
     _volumeSetProgramCache.clear();
-    _kernelVolumeEvaluators.clear();
     _volumeBatches.clear();
     _volumeParamBatches.clear();
     _volumeDrawInstanceCounts.clear();
@@ -727,18 +705,18 @@ bool WebGpuRenderer::initGpuTimestampQueries(bool deviceCapability) {
 
     WGPUQuerySetDescriptor qd = {};
     qd.type = WGPUQueryType_Timestamp;
-    qd.count = 4;
+    qd.count = 2;
     _gpuTimestampQuerySet = wgpuDeviceCreateQuerySet(_device, &qd);
     if (!_gpuTimestampQuerySet) return false;
 
     for (auto& slot : _gpuTimestampSlots) {
         WGPUBufferDescriptor resolveDesc = {};
-        resolveDesc.size = 4 * sizeof(uint64_t);
+        resolveDesc.size = 2 * sizeof(uint64_t);
         resolveDesc.usage = WGPUBufferUsage_QueryResolve | WGPUBufferUsage_CopySrc;
         slot.resolve = wgpuDeviceCreateBuffer(_device, &resolveDesc);
 
         WGPUBufferDescriptor readbackDesc = {};
-        readbackDesc.size = 4 * sizeof(uint64_t);
+        readbackDesc.size = 2 * sizeof(uint64_t);
         readbackDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead;
         slot.readback = wgpuDeviceCreateBuffer(_device, &readbackDesc);
         if (!slot.resolve || !slot.readback) {
@@ -776,8 +754,6 @@ void WebGpuRenderer::releaseGpuTimestampQueries() {
     _gpuTimestampQueriesEnabled = false;
     _timestampSlotForFrame = -1;
     _hasGpuMainPassTiming = false;
-    _hasGpuVolumePassTiming = false;
-    _latestGpuTimingFrame = 0;
 }
 
 void WebGpuRenderer::onGpuTimestampMap(WGPUMapAsyncStatus status, WGPUStringView,
@@ -799,27 +775,17 @@ void WebGpuRenderer::collectGpuTimestampResults() {
         slot.mapPending = false;
         if (slot.mapStatus != WGPUMapAsyncStatus_Success || !slot.readback) continue;
 
-        const void* mapped = wgpuBufferGetMappedRange(slot.readback, 0, 4 * sizeof(uint64_t));
+        const void* mapped = wgpuBufferGetMappedRange(slot.readback, 0, 2 * sizeof(uint64_t));
         if (mapped) {
-            uint64_t timestamps[4] = {};
+            uint64_t timestamps[2] = {};
             std::memcpy(timestamps, mapped, sizeof(timestamps));
-            if (slot.frame > _latestGpuTimingFrame && timestamps[1] > timestamps[0]) {
+            if (timestamps[1] >= timestamps[0]) {
                 const double ns = static_cast<double>(timestamps[1] - timestamps[0]) *
                                   static_cast<double>(_gpuTimestampPeriodNs);
                 const double ms = ns / 1.0e6;
                 if (std::isfinite(ms) && ms >= 0.0 && ms <= 60000.0) {
                     _latestGpuMainPassMs = static_cast<float>(ms);
                     _hasGpuMainPassTiming = true;
-                    _latestGpuTimingFrame = slot.frame;
-                    _hasGpuVolumePassTiming = false;
-                    if (slot.volumeEncoded && timestamps[3] >= timestamps[2]) {
-                        const double volumeMs = static_cast<double>(timestamps[3] - timestamps[2]) *
-                            static_cast<double>(_gpuTimestampPeriodNs) * 1.0e-6;
-                        if (std::isfinite(volumeMs) && volumeMs >= 0.0 && volumeMs <= ms) {
-                            _latestGpuVolumePassMs = static_cast<float>(volumeMs);
-                            _hasGpuVolumePassTiming = true;
-                        }
-                    }
                 }
             }
         }
@@ -833,8 +799,6 @@ void WebGpuRenderer::beginGpuTimestampFrame() {
     for (size_t offset = 0; offset < _gpuTimestampSlots.size(); ++offset) {
         const size_t candidate = (_nextTimestampSlot + offset) % _gpuTimestampSlots.size();
         if (_gpuTimestampSlots[candidate].mapPending || _gpuTimestampSlots[candidate].mapReady) continue;
-        _gpuTimestampSlots[candidate].volumeEncoded = false;
-        _gpuTimestampSlots[candidate].frame = _frameCount;
         _timestampSlotForFrame = static_cast<int>(candidate);
         _nextTimestampSlot = (candidate + 1) % _gpuTimestampSlots.size();
         wgpuCommandEncoderWriteTimestamp(_encoder, _gpuTimestampQuerySet, 0);
@@ -846,9 +810,9 @@ void WebGpuRenderer::endGpuTimestampFrame() {
     if (_timestampSlotForFrame < 0 || !_encoder || !_gpuTimestampQuerySet) return;
     auto& slot = _gpuTimestampSlots[static_cast<size_t>(_timestampSlotForFrame)];
     wgpuCommandEncoderWriteTimestamp(_encoder, _gpuTimestampQuerySet, 1);
-    wgpuCommandEncoderResolveQuerySet(_encoder, _gpuTimestampQuerySet, 0, 4, slot.resolve, 0);
+    wgpuCommandEncoderResolveQuerySet(_encoder, _gpuTimestampQuerySet, 0, 2, slot.resolve, 0);
     wgpuCommandEncoderCopyBufferToBuffer(
-        _encoder, slot.resolve, 0, slot.readback, 0, 4 * sizeof(uint64_t));
+        _encoder, slot.resolve, 0, slot.readback, 0, 2 * sizeof(uint64_t));
 }
 
 void WebGpuRenderer::ensureDepth(uint32_t w, uint32_t h) {
@@ -965,9 +929,6 @@ void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width,
     mutableFrameStats().gpuMainPassTimingSupported = _gpuTimestampQueriesEnabled;
     mutableFrameStats().gpuMainPassTimingValid = _hasGpuMainPassTiming;
     mutableFrameStats().gpuMainPassMs = _latestGpuMainPassMs;
-    mutableFrameStats().gpuVolumePassTimingValid = _hasGpuVolumePassTiming;
-    mutableFrameStats().gpuVolumePassMs = _latestGpuVolumePassMs;
-    mutableFrameStats().gpuTimingSampleFrame = _latestGpuTimingFrame;
     _frameCount++;
     _meshCache.beginFrame(_frameCount);
     ensureDepth(width, height);
@@ -1173,7 +1134,6 @@ struct VolumeGlobalUniforms {
     glm::vec4 incidentColor;
     glm::vec4 sourceTime;
     glm::vec4 volumeControl;
-    glm::vec4 volumeOutputError;
 };
 } // namespace
 
@@ -1296,10 +1256,8 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
 }
 
 const WebGpuRenderer::VolumePipeline*
-WebGpuRenderer::volumePipeline(const sdfwgsl::Program& program) {
-    const auto& wgsl = program.wgsl;
-    const auto key = wgsl + program.kernelVolumePreparationWgsl;
-    auto it = _volumePipes.find(key);
+WebGpuRenderer::volumePipeline(const std::string& wgsl) {
+    auto it = _volumePipes.find(wgsl);
     if (it != _volumePipes.end()) return &it->second;
 
     WGPUShaderSourceWGSL src = {};
@@ -1336,7 +1294,6 @@ WebGpuRenderer::volumePipeline(const sdfwgsl::Program& program) {
     WGPUBindGroupLayoutEntry instanceEntry = {};
     instanceEntry.binding = 0;
     instanceEntry.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
-    instanceEntry.visibility |= WGPUShaderStage_Compute;
     instanceEntry.buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
     instanceEntry.buffer.minBindingSize = sizeof(VolumeInstanceData);
     WGPUBindGroupLayoutDescriptor instanceDesc = {};
@@ -1412,60 +1369,13 @@ WebGpuRenderer::volumePipeline(const sdfwgsl::Program& program) {
     wgpuPipelineLayoutRelease(layout);
     wgpuShaderModuleRelease(shader);
 
-    if (!program.kernelVolumePreparationWgsl.empty()) {
-        out.preparation = volumeTimePipeline(program.kernelVolumePreparationWgsl, out.instanceBgl);
-        out.preparationInstanceBase = program.kernelVolumePreparationInstanceBase;
-        // A fragment reading unprepared slots would change authored mathematics.
-        // Refuse the pipeline rather than silently substituting zero.
-        if (!out.preparation && out.pipe) {
-            wgpuRenderPipelineRelease(out.pipe);
-            out.pipe = nullptr;
-        }
-    }
-
     if (!out.pipe) {
         wgpuBindGroupLayoutRelease(out.globalBgl);
         wgpuBindGroupLayoutRelease(out.instanceBgl);
         return nullptr;
     }
 
-    return &(_volumePipes[key] = out);
-}
-
-const WebGpuRenderer::KernelVolumeTimePipeline*
-WebGpuRenderer::volumeTimePipeline(const std::string& wgsl, WGPUBindGroupLayout instances) {
-    if (const auto found = _kernelVolumeTimePipes.find(wgsl); found != _kernelVolumeTimePipes.end())
-        return &found->second;
-    WGPUShaderSourceWGSL source = {};
-    source.chain.sType = WGPUSType_ShaderSourceWGSL;
-    source.code = wgpu::Device::str(wgsl.c_str());
-    WGPUShaderModuleDescriptor shaderDesc = {};
-    shaderDesc.nextInChain = &source.chain;
-    auto shader = wgpuDeviceCreateShaderModule(_device, &shaderDesc);
-    WGPUBindGroupLayoutEntry entries[2] = {};
-    entries[0].binding = 0; entries[0].visibility = WGPUShaderStage_Compute;
-    entries[0].buffer.type = WGPUBufferBindingType_Uniform;
-    entries[0].buffer.minBindingSize = sizeof(VolumeGlobalUniforms);
-    entries[1].binding = 1; entries[1].visibility = WGPUShaderStage_Compute;
-    entries[1].buffer.type = WGPUBufferBindingType_Storage;
-    WGPUBindGroupLayoutDescriptor groupDesc = {};
-    groupDesc.entryCount = 2; groupDesc.entries = entries;
-    KernelVolumeTimePipeline out;
-    out.globalBgl = wgpuDeviceCreateBindGroupLayout(_device, &groupDesc);
-    WGPUBindGroupLayout groups[2] = {out.globalBgl, instances};
-    WGPUPipelineLayoutDescriptor layoutDesc = {};
-    layoutDesc.bindGroupLayoutCount = 2; layoutDesc.bindGroupLayouts = groups;
-    auto layout = wgpuDeviceCreatePipelineLayout(_device, &layoutDesc);
-    WGPUComputePipelineDescriptor desc = {};
-    desc.label = wgpu::Device::str("Kernel volume time-only preparation");
-    desc.layout = layout; desc.compute.module = shader;
-    desc.compute.entryPoint = wgpu::Device::str("volumeTimePrepare");
-    out.pipe = wgpuDeviceCreateComputePipeline(_device, &desc);
-    wgpuPipelineLayoutRelease(layout); wgpuShaderModuleRelease(shader);
-    if (!out.pipe) { wgpuBindGroupLayoutRelease(out.globalBgl); return nullptr; }
-    ++mutableFrameStats().volumeProgramCompiles;
-    mutableFrameStats().volumeWgslBytesGenerated += wgsl.size();
-    return &(_kernelVolumeTimePipes.emplace(wgsl, out).first->second);
+    return &(_volumePipes[wgsl] = out);
 }
 
 void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& extent,
@@ -2528,8 +2438,7 @@ void WebGpuRenderer::flushSdfDraws() {
 void WebGpuRenderer::attachVolumeZeroProof(const Rendering::VolumeDensityBinding& medium,
                                            const glm::vec3& halfExtent,
                                            std::vector<float>& params,
-                                           VolumeInstanceData& instance,
-                                           bool trimProofSupport, bool appendPayload) {
+                                           VolumeInstanceData& instance) {
     instance.zeroProofPresent = 0u;
     if (!volumeZeroProofEnabled() || !medium.densityExpr || medium.densityRevision == 0) return;
 
@@ -2545,52 +2454,16 @@ void WebGpuRenderer::attachVolumeZeroProof(const Rendering::VolumeDensityBinding
     if (!memo.proof.any()) return;
 
     mutableFrameStats().volumeZeroProofCellsProven += memo.proof.provenCells;
-    if (appendPayload) instance.zeroProofOffset = static_cast<uint32_t>(params.size());
+    instance.zeroProofOffset = static_cast<uint32_t>(params.size());
     instance.zeroProofDims = memo.proof.dims.x | (memo.proof.dims.y << 10u) |
                              (memo.proof.dims.z << 20u);
-    // Bit 0 = present; bits 1..2 = column axis + 1 (zero means legacy payload).
-    instance.zeroProofPresent = trimProofSupport ? 1u | ((memo.proof.supportAxis + 1u) << 1u) : 1u;
-    if (!appendPayload) return;
+    instance.zeroProofPresent = 1u;
     params.insert(params.end(), memo.proof.words.begin(), memo.proof.words.end());
-    // Kernel-derived support bounds follow every proof payload. Both camera
-    // lanes use them for per-medium traversal; authored parameter order stays
-    // fixed, and absolute proof offsets are rebuilt with resident membership.
-    const auto& lo = memo.proof.supportMin;
-    const auto& hi = memo.proof.supportMax;
-    params.insert(params.end(), {lo.x, lo.y, lo.z, hi.x, hi.y, hi.z});
-    if (trimProofSupport)
-        for (const auto& band : memo.proof.supportBands)
-            params.insert(params.end(), {band.x, band.y, band.z, band.w});
 }
 
 void WebGpuRenderer::flushVolumeComposite() {
     if (!_encoder || !_frameColorView || !_depthView || !_inverseViewProjValid) return;
-    const auto prepareStart = std::chrono::steady_clock::now();
     ++_volumeZeroProofFrame;
-
-    // Positional payload identity includes each declared revision, membership,
-    // extent and proof lane. Unknown revisions deliberately rebuild every frame.
-    auto payloadIdentity = [&](const std::vector<const Rendering::VolumeDensityBinding*>& media,
-                               uint64_t revision, bool trim) {
-        std::string key;
-        auto add = [&](const auto& value) {
-            key.append(reinterpret_cast<const char*>(&value), sizeof(value));
-        };
-        add(revision); add(trim); const bool proof = volumeZeroProofEnabled(); add(proof);
-        for (const auto* medium : media) {
-            add(medium->densityExpr); add(medium->densityRevision);
-            add(medium->extinctionExpr); add(medium->extinctionRevision);
-            add(medium->scatteringExpr); add(medium->scatteringRevision);
-            add(medium->volumeChromaExpr); add(medium->volumeChromaRevision);
-            add(medium->phaseExpr); add(medium->phaseRevision);
-            add(medium->emissionExpr); add(medium->emissionRevision);
-            add(medium->occluderSdf); add(medium->occluderRevision);
-            const glm::vec3 extent = glm::abs(medium->scale);
-            add(extent.x); add(extent.y); add(extent.z);
-            if (medium->densityRevision == 0) add(_volumeZeroProofFrame);
-        }
-        return key;
-    };
 
     // V3 does not invent incident direction. A wi-reading Phi can consume one
     // and only one enabled admitted direct source. Position/enablement are
@@ -2626,31 +2499,12 @@ void WebGpuRenderer::flushVolumeComposite() {
         combineRevision(incidentSourceContentRevision, incidentSource->angularRevision);
     }
 
-    const auto sourceKey = std::make_tuple(
-        incidentSource ? incidentSource->radianceExpr : nullptr,
-        incidentSource ? incidentSource->chromaExpr : nullptr,
-        incidentSource ? incidentSource->angularExpr : nullptr,
-        incidentSource ? incidentSource->radianceRevision : 0u,
-        incidentSource ? incidentSource->chromaRevision : 0u,
-        incidentSource ? incidentSource->angularRevision : 0u);
-    const bool unrevisionedSource = incidentSource &&
-        ((incidentSource->radianceExpr && !incidentSource->radianceRevision) ||
-         (incidentSource->chromaExpr && !incidentSource->chromaRevision) ||
-         (incidentSource->angularExpr && !incidentSource->angularRevision));
-    if (!_kernelVolumeSourceLayouts.ready || _kernelVolumeSourceLayouts.key != sourceKey ||
-        unrevisionedSource) {
-        _kernelVolumeSourceLayouts.key = sourceKey;
-        _kernelVolumeSourceLayouts.ready = true;
-        _kernelVolumeSourceLayouts.radiance = sdfwgsl::inspectScalarExpression(
-            incidentSource ? incidentSource->radianceExpr : nullptr, true);
-        _kernelVolumeSourceLayouts.chroma = sdfwgsl::inspectVectorExpression(
-            incidentSource ? incidentSource->chromaExpr : nullptr, true);
-        _kernelVolumeSourceLayouts.angular = sdfwgsl::inspectAngularExpression(
-            incidentSource ? incidentSource->angularExpr : nullptr);
-    }
-    const auto& incidentRadianceLayout = _kernelVolumeSourceLayouts.radiance;
-    const auto& incidentChromaLayout = _kernelVolumeSourceLayouts.chroma;
-    const auto& incidentAngularLayout = _kernelVolumeSourceLayouts.angular;
+    const auto incidentRadianceLayout = sdfwgsl::inspectScalarExpression(
+        incidentSource ? incidentSource->radianceExpr : nullptr, true);
+    const auto incidentChromaLayout = sdfwgsl::inspectVectorExpression(
+        incidentSource ? incidentSource->chromaExpr : nullptr, true);
+    const auto incidentAngularLayout = sdfwgsl::inspectAngularExpression(
+        incidentSource ? incidentSource->angularExpr : nullptr);
     const bool incidentSourceLayoutsOk =
         incidentRadianceLayout.ok && incidentChromaLayout.ok && incidentAngularLayout.ok;
     const std::string incidentSourceLayoutError =
@@ -2680,30 +2534,6 @@ void WebGpuRenderer::flushVolumeComposite() {
         activeMedia.push_back(&medium);
     }
 
-    const auto unrevisionedMedium = [](const Rendering::VolumeDensityBinding& m) {
-        return (m.densityExpr && !m.densityRevision) || (m.extinctionExpr && !m.extinctionRevision) ||
-            (m.scatteringExpr && !m.scatteringRevision) || (m.volumeChromaExpr && !m.volumeChromaRevision) ||
-            (m.phaseExpr && !m.phaseRevision) || (m.emissionExpr && !m.emissionRevision) ||
-            (m.occluderSdf && !m.occluderRevision);
-    };
-
-    // Kernel specialization, not authored behavior: the empty-support prepass
-    // wins outside the media but increased native inside-view cost by ~25%.
-    // Keep global prefix/tail trimming off inside an authored medium box.
-    // Both lanes now share per-medium support jumps and one proof lookup per
-    // medium/sample; the old always-on prototype lacked that traversal reuse.
-    // The bool is a structural cache lane (VolumeProgramKey in the header):
-    // crossing a boundary compiles each lane at most once per structure, then
-    // reuses it. A camera change never changes the equations/parameter layout.
-    bool trimProofSupport = volumeZeroProofEnabled();
-    for (const auto* medium : activeMedia) {
-        const glm::vec3 halfExtent = glm::abs(medium->scale);
-        if (glm::all(glm::lessThanEqual(glm::abs(_eyePos - medium->origin), halfExtent))) {
-            trimProofSupport = false;
-            break;
-        }
-    }
-
     if (activeMedia.size() > 1) {
         VolumeSetProgramKey setKey;
         setKey.reserve(activeMedia.size());
@@ -2717,7 +2547,7 @@ void WebGpuRenderer::flushVolumeComposite() {
                 medium->occluderSdf,
                 incidentSource ? incidentSource->radianceExpr : nullptr,
                 incidentSource ? incidentSource->chromaExpr : nullptr,
-                incidentSource ? incidentSource->angularExpr : nullptr, trimProofSupport);
+                incidentSource ? incidentSource->angularExpr : nullptr);
             compilerInputs.push_back({
                 medium->densityExpr, medium->extinctionExpr,
                 medium->scatteringExpr, medium->volumeChromaExpr,
@@ -2731,9 +2561,6 @@ void WebGpuRenderer::flushVolumeComposite() {
         auto& setMemo = _volumeSetProgramCache[setKey];
         uint64_t setContentRevision = volumeDensitySourcesRevision();
         combineRevision(setContentRevision, incidentSourceContentRevision);
-        if (unrevisionedSource || std::any_of(activeMedia.begin(), activeMedia.end(),
-            [&](const auto* m) { return unrevisionedMedium(*m); }))
-            combineRevision(setContentRevision, _volumeZeroProofFrame);
         if (setMemo.contentRevision != setContentRevision) {
             setMemo.contentRevision = setContentRevision;
             setMemo.phaseReadsWi = false;
@@ -2744,93 +2571,64 @@ void WebGpuRenderer::flushVolumeComposite() {
                 "medium-count:" + std::to_string(activeMedia.size()) + "\n" +
                 incidentSourceStructure + "\n";
 
-            std::vector<sdfwgsl::KernelVolumeEvaluator> retainedEvaluators;
-            retainedEvaluators.reserve(activeMedia.size());
             for (std::size_t i = 0; layoutsOk && i < activeMedia.size(); ++i) {
                 const auto& medium = *activeMedia[i];
-                auto memberKey = setKey[i];
-                std::get<10>(memberKey) = false; // equations have no camera lane
-                auto& member = _kernelVolumeEvaluators[memberKey];
-                uint64_t revision = Rendering::volumeContentRevision(medium);
-                combineRevision(revision, incidentSourceContentRevision);
-                if (unrevisionedSource || unrevisionedMedium(medium)) combineRevision(revision, _volumeZeroProofFrame);
-                if (!member.ready || member.revision != revision) {
-                    const auto densityLayout =
-                        sdfwgsl::inspectDensityExpression(medium.densityExpr);
-                    const auto extinctionLayout =
-                        sdfwgsl::inspectExtinctionExpression(medium.extinctionExpr);
-                    const auto scatteringLayout =
-                        sdfwgsl::inspectScatteringExpression(medium.scatteringExpr);
-                    const auto chromaLayout =
-                        sdfwgsl::inspectVolumeChromaExpression(medium.volumeChromaExpr);
-                    const auto phaseLayout =
-                        sdfwgsl::inspectPhaseExpression(medium.phaseExpr);
-                    const auto emissionLayout =
-                        sdfwgsl::inspectEmissionExpression(medium.emissionExpr);
-                    const auto occluderLayout =
-                        sdfwgsl::inspectOccluderLayout(medium.occluderSdf);
+                const auto densityLayout =
+                    sdfwgsl::inspectDensityExpression(medium.densityExpr);
+                const auto extinctionLayout =
+                    sdfwgsl::inspectExtinctionExpression(medium.extinctionExpr);
+                const auto scatteringLayout =
+                    sdfwgsl::inspectScatteringExpression(medium.scatteringExpr);
+                const auto chromaLayout =
+                    sdfwgsl::inspectVolumeChromaExpression(medium.volumeChromaExpr);
+                const auto phaseLayout =
+                    sdfwgsl::inspectPhaseExpression(medium.phaseExpr);
+                const auto emissionLayout =
+                    sdfwgsl::inspectEmissionExpression(medium.emissionExpr);
+                const auto occluderLayout =
+                    sdfwgsl::inspectOccluderLayout(medium.occluderSdf);
 
-                    const bool previousOk = member.evaluator.program.ok;
-                    member.evaluator.program.ok = true;
-                    if (!densityLayout.ok || !extinctionLayout.ok ||
-                        !scatteringLayout.ok || !chromaLayout.ok ||
-                        !phaseLayout.ok || !emissionLayout.ok || !occluderLayout.ok) {
-                        member.evaluator.program.ok = false;
-                        member.evaluator.program.error =
-                            "volume set member " + std::to_string(i) + ": " +
-                            (!densityLayout.ok
-                                 ? "density: " + densityLayout.error
-                                 : !extinctionLayout.ok
-                                       ? "extinction: " + extinctionLayout.error
-                                       : !scatteringLayout.ok
-                                             ? "scattering: " + scatteringLayout.error
-                                             : !chromaLayout.ok
-                                                   ? "volume chroma: " + chromaLayout.error
-                                                   : !phaseLayout.ok
-                                                         ? "volume phase: " + phaseLayout.error
-                                                         : !emissionLayout.ok
-                                                               ? "volume emission: " +
-                                                                     emissionLayout.error
-                                                               : "volume occluder: " +
-                                                                     occluderLayout.error);
-
-                    }
-
-                    if (member.evaluator.program.ok) {
-                    const std::string memberStructure =
-                        "density:\n" + densityLayout.structure +
-                        "\nextinction:\n" + extinctionLayout.structure +
-                        "\nscattering:\n" + scatteringLayout.structure +
-                        "\nvolume-chroma:\n" + chromaLayout.structure +
-                        "\nvolume-phase:\n" + phaseLayout.structure +
-                        (phaseLayout.readsWi ? ":reads-wi" : ":no-wi") +
-                        (phaseLayout.readsWo ? ":reads-wo" : ":no-wo") +
-                        "\nvolume-emission:\n" + emissionLayout.structure +
-                        (emissionLayout.readsOmega ? ":reads-omega" : ":no-omega") +
-                        "\noccluder:\n" + occluderLayout.structure +
-                        "\nsharing:\n" + sdfwgsl::inspectVolumeSharing(
-                            medium.densityExpr, medium.extinctionExpr, medium.scatteringExpr,
-                            medium.volumeChromaExpr, medium.phaseExpr, medium.emissionExpr) +
-                        incidentSourceStructure;
-
-                        if (!member.ready || !previousOk || member.structure != memberStructure) {
-                            member.evaluator = sdfwgsl::repairVolumeEvaluator(compilerInputs[i], member.evaluator, false);
-                            ++mutableFrameStats().volumeLowerings;
-                        } else {
-                            member.evaluator = sdfwgsl::repairVolumeEvaluator(compilerInputs[i], member.evaluator, true);
-                        }
-                        mutableFrameStats().volumeRepairedNodes += member.evaluator.repairedNodes;
-                        member.structure = memberStructure;
-                    }
-                    member.phaseReadsWi = phaseLayout.readsWi;
-                member.revision = revision;
-                member.ready = true;
+                setMemo.phaseReadsWi = setMemo.phaseReadsWi || phaseLayout.readsWi;
+                if (!densityLayout.ok || !extinctionLayout.ok ||
+                    !scatteringLayout.ok || !chromaLayout.ok ||
+                    !phaseLayout.ok || !emissionLayout.ok || !occluderLayout.ok) {
+                    layoutsOk = false;
+                    layoutError =
+                        "volume set member " + std::to_string(i) + ": " +
+                        (!densityLayout.ok
+                             ? "density: " + densityLayout.error
+                             : !extinctionLayout.ok
+                                   ? "extinction: " + extinctionLayout.error
+                                   : !scatteringLayout.ok
+                                         ? "scattering: " + scatteringLayout.error
+                                         : !chromaLayout.ok
+                                               ? "volume chroma: " + chromaLayout.error
+                                               : !phaseLayout.ok
+                                                     ? "volume phase: " + phaseLayout.error
+                                                     : !emissionLayout.ok
+                                                           ? "volume emission: " +
+                                                                 emissionLayout.error
+                                                           : "volume occluder: " +
+                                                                 occluderLayout.error);
+                    break;
                 }
-                layoutsOk = member.evaluator.program.ok;
-                if (!layoutsOk) { layoutError = member.evaluator.program.error; break; }
-                setMemo.phaseReadsWi = setMemo.phaseReadsWi || member.phaseReadsWi;
-                structure += "member:" + std::to_string(i) + "\n" + member.structure;
-                retainedEvaluators.push_back(member.evaluator);
+
+                structure +=
+                    "member:" + std::to_string(i) +
+                    "\ndensity:\n" + densityLayout.structure +
+                    "\nextinction:\n" + extinctionLayout.structure +
+                    "\nscattering:\n" + scatteringLayout.structure +
+                    "\nvolume-chroma:\n" + chromaLayout.structure +
+                    "\nvolume-phase:\n" + phaseLayout.structure +
+                    (phaseLayout.readsWi ? ":reads-wi" : ":no-wi") +
+                    (phaseLayout.readsWo ? ":reads-wo" : ":no-wo") +
+                    "\nvolume-emission:\n" + emissionLayout.structure +
+                    (emissionLayout.readsOmega ? ":reads-omega" : ":no-omega") +
+                    "\noccluder:\n" + occluderLayout.structure +
+                    "\nsharing:\n" + sdfwgsl::inspectVolumeSharing(
+                        medium.densityExpr, medium.extinctionExpr, medium.scatteringExpr,
+                        medium.volumeChromaExpr, medium.phaseExpr, medium.emissionExpr) +
+                    "\n";
             }
 
             if (!layoutsOk) {
@@ -2842,7 +2640,7 @@ void WebGpuRenderer::flushVolumeComposite() {
                     !setMemo.ok || setMemo.structure != structure ||
                     !setMemo.pipeline;
                 if (needsCompile) {
-                    setMemo.prog = sdfwgsl::composeVolumeSet(compilerInputs, retainedEvaluators, trimProofSupport);
+                    setMemo.prog = sdfwgsl::compileVolumeSet(compilerInputs);
                     ++mutableFrameStats().volumeProgramCompiles;
                     mutableFrameStats().volumeWgslBytesGenerated +=
                         setMemo.prog.wgsl.size();
@@ -2850,21 +2648,30 @@ void WebGpuRenderer::flushVolumeComposite() {
                     setMemo.ok = setMemo.prog.ok;
                     setMemo.error = setMemo.prog.error;
                     setMemo.pipeline =
-                        setMemo.ok ? volumePipeline(setMemo.prog) : nullptr;
+                        setMemo.ok ? volumePipeline(setMemo.prog.wgsl) : nullptr;
                     if (!setMemo.pipeline) setMemo.ok = false;
                 }
 
-                // Compose the retained members' parameter segments. A changed
-                // member refreshed its values during repair; unrelated members
-                // need no traversal through the collector.
+                // Whether structure compiled or only values changed, rebuild the
+                // concatenated parameter block through the existing V4 collector.
+                // Each projected medium points at its own segment; no second
+                // OntoMath value walker is introduced for V5.
                 if (setMemo.ok && setMemo.pipeline) {
                     std::vector<float> setParams;
                     std::vector<uint32_t> paramOffsets;
                     paramOffsets.reserve(activeMedia.size());
                     for (std::size_t i = 0; i < activeMedia.size(); ++i) {
+                        const auto& medium = *activeMedia[i];
                         paramOffsets.push_back(
                             static_cast<uint32_t>(setParams.size()));
-                        const auto& params = retainedEvaluators[i].program;
+                        const auto params = sdfwgsl::collectVolumeParams(
+                            medium.densityExpr, medium.extinctionExpr,
+                            medium.scatteringExpr, medium.volumeChromaExpr,
+                            medium.phaseExpr, medium.emissionExpr,
+                            medium.occluderSdf,
+                            incidentSource ? incidentSource->radianceExpr : nullptr,
+                            incidentSource ? incidentSource->chromaExpr : nullptr,
+                            incidentSource ? incidentSource->angularExpr : nullptr);
                         if (!params.ok) {
                             setMemo.ok = false;
                             setMemo.error =
@@ -2873,29 +2680,12 @@ void WebGpuRenderer::flushVolumeComposite() {
                             break;
                         }
                         setParams.insert(
-                            setParams.end(), params.params.begin(), params.params.end());
+                            setParams.end(), params.values.begin(), params.values.end());
                     }
                     if (setMemo.ok) {
                         if (setParams.empty()) setParams.push_back(0.0f);
                         setMemo.prog.params = std::move(setParams);
                         setMemo.paramOffsets = std::move(paramOffsets);
-                        auto otherKey = setKey;
-                        for (auto& key : otherKey) std::get<10>(key) = !trimProofSupport;
-                        auto& other = _volumeSetProgramCache[otherKey];
-                        if (!other.ok || other.structure != structure || !other.pipeline) {
-                            other.prog = sdfwgsl::composeVolumeSet(compilerInputs, retainedEvaluators, !trimProofSupport);
-                            ++mutableFrameStats().volumeProgramCompiles;
-                            mutableFrameStats().volumeWgslBytesGenerated += other.prog.wgsl.size();
-                            other.ok = other.prog.ok;
-                            other.error = other.prog.error;
-                            other.pipeline = other.ok ? volumePipeline(other.prog) : nullptr;
-                            if (!other.pipeline) other.ok = false;
-                        }
-                        other.contentRevision = setContentRevision;
-                        other.structure = structure;
-                        other.phaseReadsWi = setMemo.phaseReadsWi;
-                        other.prog.params = setMemo.prog.params;
-                        other.paramOffsets = setMemo.paramOffsets;
                     }
                 }
             }
@@ -2962,24 +2752,12 @@ void WebGpuRenderer::flushVolumeComposite() {
             header.time = glm::vec4(0.0f);
             header.paramOffset = 0u;
 
-            auto& payload = _kernelVolumePayloads[setMemo.pipeline];
-            auto identity = payloadIdentity(activeMedia, setMemo.contentRevision, trimProofSupport);
-            const auto* authoredMemo = &setMemo;
-            identity.append(reinterpret_cast<const char*>(&authoredMemo), sizeof(authoredMemo));
-            const bool rebuildPayload = payload.layoutIdentity != identity;
-            if (rebuildPayload) {
-                params = setMemo.prog.params;
-                payload.proofMetadata.resize(activeMedia.size());
-            }
+            params.insert(
+                params.end(), setMemo.prog.params.begin(), setMemo.prog.params.end());
             for (std::size_t i = 0; i < activeMedia.size(); ++i) {
-                if (!rebuildPayload) {
-                    mediumInstances[i].zeroProofOffset = payload.proofMetadata[i].zeroProofOffset;
-                }
                 attachVolumeZeroProof(*activeMedia[i], glm::abs(activeMedia[i]->scale),
-                                      params, mediumInstances[i], trimProofSupport, rebuildPayload);
-                payload.proofMetadata[i] = mediumInstances[i];
+                                      params, mediumInstances[i]);
             }
-            payload.layoutIdentity = identity;
             instances.push_back(header);
             instances.insert(
                 instances.end(), mediumInstances.begin(), mediumInstances.end());
@@ -3009,11 +2787,10 @@ void WebGpuRenderer::flushVolumeComposite() {
             medium.occluderSdf,
             incidentSource ? incidentSource->radianceExpr : nullptr,
             incidentSource ? incidentSource->chromaExpr : nullptr,
-            incidentSource ? incidentSource->angularExpr : nullptr, trimProofSupport};
+            incidentSource ? incidentSource->angularExpr : nullptr};
         auto& memo = _volumeProgramCache[programKey];
         uint64_t mediumContentRevision = Rendering::volumeContentRevision(medium);
         combineRevision(mediumContentRevision, incidentSourceContentRevision);
-        if (unrevisionedSource || unrevisionedMedium(medium)) combineRevision(mediumContentRevision, _volumeZeroProofFrame);
         if (memo.contentRevision != mediumContentRevision) {
             const auto densityLayout =
                 sdfwgsl::inspectDensityExpression(medium.densityExpr);
@@ -3075,56 +2852,37 @@ void WebGpuRenderer::flushVolumeComposite() {
                     medium.densityExpr, medium.extinctionExpr, medium.scatteringExpr,
                     medium.volumeChromaExpr, medium.phaseExpr, medium.emissionExpr) +
                 incidentSourceStructure;
-            auto memberKey = programKey;
-            std::get<10>(memberKey) = false;
-            auto& member = _kernelVolumeEvaluators[memberKey];
-            const sdfwgsl::VolumeProgramInput input{
-                medium.densityExpr, medium.extinctionExpr, medium.scatteringExpr,
-                medium.volumeChromaExpr, medium.phaseExpr, medium.emissionExpr,
-                medium.occluderSdf, incidentSource ? incidentSource->radianceExpr : nullptr,
-                incidentSource ? incidentSource->chromaExpr : nullptr,
-                incidentSource ? incidentSource->angularExpr : nullptr};
-            if (!member.ready || member.revision != mediumContentRevision) {
-                const bool parametersOnly = member.ready && member.evaluator.program.ok && member.structure == structure;
-                member.evaluator = sdfwgsl::repairVolumeEvaluator(input, member.evaluator, parametersOnly);
-                if (!parametersOnly) ++mutableFrameStats().volumeLowerings;
-                mutableFrameStats().volumeRepairedNodes += member.evaluator.repairedNodes;
-                member.structure = structure; member.revision = mediumContentRevision;
-                member.phaseReadsWi = memo.phaseReadsWi; member.ready = true;
-            }
             if (!memo.ok || memo.structure != structure || !memo.pipeline) {
-                memo.prog = sdfwgsl::composeVolumeEvaluator(member.evaluator, trimProofSupport);
+                memo.prog =
+                    sdfwgsl::compileVolume(
+                        medium.densityExpr, medium.extinctionExpr,
+                        medium.scatteringExpr, medium.volumeChromaExpr,
+                        medium.phaseExpr, medium.emissionExpr,
+                        medium.occluderSdf,
+                        incidentSource ? incidentSource->radianceExpr : nullptr,
+                        incidentSource ? incidentSource->chromaExpr : nullptr,
+                        incidentSource ? incidentSource->angularExpr : nullptr);
                 ++mutableFrameStats().volumeProgramCompiles;
                 mutableFrameStats().volumeWgslBytesGenerated += memo.prog.wgsl.size();
                 memo.structure = structure;
                 memo.ok = memo.prog.ok;
                 memo.error = memo.prog.error;
-                memo.pipeline = memo.ok ? volumePipeline(memo.prog) : nullptr;
+                memo.pipeline = memo.ok ? volumePipeline(memo.prog.wgsl) : nullptr;
                 if (!memo.pipeline) memo.ok = false;
             } else {
-                memo.ok = member.evaluator.program.ok;
-                memo.error = member.evaluator.program.error;
-                if (memo.ok) memo.prog.params = member.evaluator.program.params;
+                const auto params =
+                    sdfwgsl::collectVolumeParams(
+                        medium.densityExpr, medium.extinctionExpr,
+                        medium.scatteringExpr, medium.volumeChromaExpr,
+                        medium.phaseExpr, medium.emissionExpr,
+                        medium.occluderSdf,
+                        incidentSource ? incidentSource->radianceExpr : nullptr,
+                        incidentSource ? incidentSource->chromaExpr : nullptr,
+                        incidentSource ? incidentSource->angularExpr : nullptr);
+                memo.ok = params.ok;
+                memo.error = params.error;
+                if (params.ok) memo.prog.params = params.values;
             }
-            // Admission warms both existing camera variants from ONE lowering.
-            if (memo.ok && memo.pipeline) {
-                auto otherKey = programKey;
-                std::get<10>(otherKey) = !trimProofSupport;
-                auto& other = _volumeProgramCache[otherKey];
-                if (!other.ok || other.structure != structure || !other.pipeline) {
-                    other.prog = sdfwgsl::composeVolumeEvaluator(member.evaluator, !trimProofSupport);
-                    ++mutableFrameStats().volumeProgramCompiles;
-                    mutableFrameStats().volumeWgslBytesGenerated += other.prog.wgsl.size();
-                    other.ok = other.prog.ok; other.error = other.prog.error;
-                    other.pipeline = other.ok ? volumePipeline(other.prog) : nullptr;
-                    if (!other.pipeline) other.ok = false;
-                }
-                other.contentRevision = mediumContentRevision; other.structure = structure;
-                other.phaseReadsWi = memo.phaseReadsWi; other.phaseReadsWo = memo.phaseReadsWo;
-                other.emissionReadsOmega = memo.emissionReadsOmega;
-                other.prog.params = memo.prog.params;
-            }
-
         } else {
             ++mutableFrameStats().volumeProgramCacheHits;
         }
@@ -3157,21 +2915,10 @@ void WebGpuRenderer::flushVolumeComposite() {
         instance.halfExtent = glm::vec4(halfExtent, 0.0f);
         instance.time = glm::vec4(static_cast<float>(medium.temporalCoordinate),
                                   static_cast<float>(medium.temporalDelta), 0.0f, 0.0f);
-        instance.paramOffset = 0u;
-        auto& payload = _kernelVolumePayloads[memo.pipeline];
-        auto identity = payloadIdentity({&medium}, memo.contentRevision, trimProofSupport);
-        const auto* authoredMemo = &memo;
-        identity.append(reinterpret_cast<const char*>(&authoredMemo), sizeof(authoredMemo));
-        const bool rebuildPayload = payload.layoutIdentity != identity;
-        if (rebuildPayload) {
-            params = memo.prog.params;
-            payload.proofMetadata.resize(1);
-        } else {
-            instance.zeroProofOffset = payload.proofMetadata[0].zeroProofOffset;
-        }
-        attachVolumeZeroProof(medium, halfExtent, params, instance, trimProofSupport, rebuildPayload);
-        payload.proofMetadata[0] = instance;
-        payload.layoutIdentity = identity;
+        instance.paramOffset = static_cast<uint32_t>(params.size());
+
+        params.insert(params.end(), memo.prog.params.begin(), memo.prog.params.end());
+        attachVolumeZeroProof(medium, halfExtent, params, instance);
         instances.push_back(instance);
     }
     }
@@ -3188,15 +2935,11 @@ void WebGpuRenderer::flushVolumeComposite() {
         for (const VolumePipeline* pipeline : _activeVolumePipelines) {
             _volumeBatches[pipeline].clear();
             _volumeParamBatches[pipeline].clear();
-            _kernelVolumePayloads[pipeline].layoutIdentity.clear();
             _volumeDrawInstanceCounts.erase(pipeline);
         }
         _activeVolumePipelines.clear();
         return;
     }
-
-    mutableFrameStats().volumeCpuPrepareMs += std::chrono::duration<float, std::milli>(
-        std::chrono::steady_clock::now() - prepareStart).count();
 
     // Opaque meshes/SDFs were deferred; make their depth authoritative before
     // any medium samples it.
@@ -3218,24 +2961,15 @@ void WebGpuRenderer::flushVolumeComposite() {
     volumePassDesc.colorAttachmentCount = 1;
     volumePassDesc.colorAttachments = &color;
     // No depth attachment: finished depth is read as a texture instead.
-    if (_timestampSlotForFrame >= 0) {
-        // GPU volume time excludes opaque draws and CPU command preparation.
-        wgpuCommandEncoderWriteTimestamp(_encoder, _gpuTimestampQuerySet, 2);
-        _gpuTimestampSlots[static_cast<size_t>(_timestampSlotForFrame)].volumeEncoded = true;
-    }
+    _pass = wgpuCommandEncoderBeginRenderPass(_encoder, &volumePassDesc);
+    _boundPipeline = nullptr;
+
     VolumeGlobalUniforms globals;
     globals.viewProj = _viewProj;
     globals.invViewProj = _invViewProj;
     globals.eyePos = glm::vec4(_eyePos, 1.0f);
     globals.viewport = glm::vec4(static_cast<float>(_depthW),
                                  static_cast<float>(_depthH), 0.0f, 0.0f);
-    const double outputBudget = volumeOutputErrorBudget();
-    float gpuBudget = static_cast<float>(outputBudget);
-    if (static_cast<double>(gpuBudget) > outputBudget)
-        gpuBudget = std::nextafter(gpuBudget, 0.0f);
-    // y records opt-in separately: tiny positive budgets may round to zero.
-    // z/w are reserved for Kernel-derived certified bounds, not volumeControl.z.
-    globals.volumeOutputError = glm::vec4(gpuBudget, outputBudget > 0.0 ? 1.0f : 0.0f, 0.0f, 0.0f);
     if (incidentSource) {
         globals.incidentSource = glm::vec4(incidentSource->position, 1.0f);
         globals.incidentColor = glm::vec4(incidentSource->diffuseRadiance, incidentSource->coefficients.x);
@@ -3257,70 +2991,8 @@ void WebGpuRenderer::flushVolumeComposite() {
         const auto& params = _volumeParamBatches[pipeline];
         if (!pipeline || !pipeline->pipe || instances.empty() || params.empty()) continue;
 
-        // Resident bytes use bitwise equality (including NaNs and signed zero).
-        // Coalesce adjacent dirty float slots; untouched proofs stay on the GPU.
-        auto& payload = _kernelVolumePayloads[pipeline];
-        const uint64_t bytes = params.size() * sizeof(float);
-        if (!payload.buffer || payload.capacityBytes < bytes) {
-            uint64_t capacity = 256;
-            while (capacity < bytes) capacity *= 2;
-            WGPUBufferDescriptor desc = {};
-            desc.label = wgpu::Device::str("Kernel volume parameters and zero proofs");
-            desc.size = capacity;
-            desc.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
-            auto grown = wgpuDeviceCreateBuffer(_device, &desc);
-            if (grown) {
-                if (payload.buffer) wgpuBufferRelease(payload.buffer);
-                payload.buffer = grown;
-                payload.capacityBytes = capacity;
-                payload.mirror.clear();
-            }
-        }
-        auto countUpload = [&](size_t begin, size_t end) {
-            size_t proofFloats = 0;
-            for (const auto& instance : instances) {
-                if (!instance.zeroProofPresent) continue;
-                const uint32_t dx = instance.zeroProofDims & 1023u;
-                const uint32_t dy = (instance.zeroProofDims >> 10u) & 1023u;
-                const uint32_t dz = (instance.zeroProofDims >> 20u) & 1023u;
-                const size_t lo = instance.zeroProofOffset;
-                const uint32_t bandAxis = instance.zeroProofPresent >> 1u;
-                const uint32_t bandCount = bandAxis ? glm::uvec3(dx, dy, dz)[bandAxis - 1u] : 0u;
-                const size_t hi = lo + (dx * dy * dz + 23u) / 24u + 6u + 4u * bandCount;
-                if (std::max(begin, lo) < std::min(end, hi))
-                    proofFloats += std::min(end, hi) - std::max(begin, lo);
-            }
-            mutableFrameStats().volumeProofBytesUploaded += proofFloats * sizeof(float);
-            mutableFrameStats().volumeParameterBytesUploaded += (end - begin - proofFloats) * sizeof(float);
-        };
-        WGPUBuffer paramBuffer = payload.buffer;
-        uint64_t paramOffset = 0;
-        if (paramBuffer && payload.capacityBytes >= bytes && payload.lastEncodedFrame != _frameCount) {
-            auto changed = [&](size_t i) {
-                return i >= payload.mirror.size() ||
-                    std::memcmp(&params[i], &payload.mirror[i], sizeof(float)) != 0;
-            };
-            if (payload.uploadedLayoutIdentity != payload.layoutIdentity || payload.mirror.size() != params.size()) {
-                for (size_t i = 0; i < params.size();) {
-                    if (!changed(i)) { ++i; continue; }
-                    const size_t begin = i++;
-                    while (i < params.size() && changed(i)) ++i;
-                    wgpuQueueWriteBuffer(_queue, paramBuffer, begin * sizeof(float),
-                                         params.data() + begin, (i - begin) * sizeof(float));
-                    countUpload(begin, i);
-                }
-                if (payload.mirror.size() != params.size() ||
-                    std::memcmp(payload.mirror.data(), params.data(), bytes) != 0)
-                    payload.mirror = params;
-                payload.uploadedLayoutIdentity = payload.layoutIdentity;
-            }
-        } else {
-            // Allocation failure uses the existing correct frame stream.
-            const auto alloc = bufferPool().suballocateStorage(params.data(), bytes);
-            paramBuffer = alloc.buffer; paramOffset = alloc.offset;
-            countUpload(0, params.size());
-        }
-        payload.lastEncodedFrame = _frameCount;
+        auto paramAlloc =
+            bufferPool().suballocateStorage(params.data(), params.size() * sizeof(float));
         auto instanceAlloc =
             bufferPool().suballocateStorage(instances.data(),
                                             instances.size() * sizeof(VolumeInstanceData));
@@ -3331,9 +3003,9 @@ void WebGpuRenderer::flushVolumeComposite() {
         globalEntries[0].offset = globalAlloc.offset;
         globalEntries[0].size = globalAlloc.size;
         globalEntries[1].binding = 1;
-        globalEntries[1].buffer = paramBuffer;
-        globalEntries[1].offset = paramOffset;
-        globalEntries[1].size = bytes;
+        globalEntries[1].buffer = paramAlloc.buffer;
+        globalEntries[1].offset = paramAlloc.offset;
+        globalEntries[1].size = paramAlloc.size;
         globalEntries[2].binding = 2;
         globalEntries[2].textureView = _depthView;
 
@@ -3356,33 +3028,6 @@ void WebGpuRenderer::flushVolumeComposite() {
         WGPUBindGroup instanceBg = wgpuDeviceCreateBindGroup(_device, &instanceBgDesc);
         _frameBindGroups.push_back(instanceBg);
 
-        if (pipeline->preparation) {
-            if (_pass) {
-                wgpuRenderPassEncoderEnd(_pass);
-                wgpuRenderPassEncoderRelease(_pass);
-                _pass = nullptr; _boundPipeline = nullptr;
-            }
-            // GPU writes only reserved derived slots; authored parameters and
-            // proof words remain resident. Ordering is within this encoder,
-            // so ordinary frames never wait for preparation on the CPU.
-            auto prepDesc = globalBgDesc;
-            prepDesc.layout = pipeline->preparation->globalBgl;
-            prepDesc.entryCount = 2;
-            auto prepBg = wgpuDeviceCreateBindGroup(_device, &prepDesc);
-            _frameBindGroups.push_back(prepBg);
-            auto compute = wgpuCommandEncoderBeginComputePass(_encoder, nullptr);
-            wgpuComputePassEncoderSetPipeline(compute, pipeline->preparation->pipe);
-            wgpuComputePassEncoderSetBindGroup(compute, 0, prepBg, 0, nullptr);
-            wgpuComputePassEncoderSetBindGroup(compute, 1, instanceBg, 0, nullptr);
-            wgpuComputePassEncoderDispatchWorkgroups(compute,
-                static_cast<uint32_t>(instances.size()) - pipeline->preparationInstanceBase, 1, 1);
-            wgpuComputePassEncoderEnd(compute); wgpuComputePassEncoderRelease(compute);
-        }
-        if (!_pass) {
-            _pass = wgpuCommandEncoderBeginRenderPass(_encoder, &volumePassDesc);
-            _boundPipeline = nullptr;
-        }
-
         bindPipeline(pipeline->pipe);
         wgpuRenderPassEncoderSetBindGroup(_pass, 0, globalBg, 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(_pass, 1, instanceBg, 0, nullptr);
@@ -3401,22 +3046,17 @@ void WebGpuRenderer::flushVolumeComposite() {
             static_cast<uint32_t>(12 * drawInstanceCount);
     }
 
-    if (_pass) {
-        wgpuRenderPassEncoderEnd(_pass);
-        wgpuRenderPassEncoderRelease(_pass);
-    }
+    wgpuRenderPassEncoderEnd(_pass);
+    wgpuRenderPassEncoderRelease(_pass);
     _pass = nullptr;
     _boundPipeline = nullptr;
 
     for (const VolumePipeline* pipeline : _activeVolumePipelines) {
         _volumeBatches[pipeline].clear();
-
+        _volumeParamBatches[pipeline].clear();
         _volumeDrawInstanceCounts.erase(pipeline);
     }
     _activeVolumePipelines.clear();
-
-    if (_timestampSlotForFrame >= 0)
-        wgpuCommandEncoderWriteTimestamp(_encoder, _gpuTimestampQuerySet, 3);
 
     // Reopen the ordinary pass for nametags, menus and 2D authored overlays.
     // Load both attachments exactly; volume color is now part of the world, while
@@ -3469,7 +3109,7 @@ void WebGpuRenderer::endFrame() {
         mapCallback.callback = onGpuTimestampMap;
         mapCallback.userdata1 = &slot;
         wgpuBufferMapAsync(slot.readback, WGPUMapMode_Read, 0,
-                           4 * sizeof(uint64_t), mapCallback);
+                           2 * sizeof(uint64_t), mapCallback);
     }
     _timestampSlotForFrame = -1;
     wgpuCommandBufferRelease(cmd);
@@ -3478,11 +3118,9 @@ void WebGpuRenderer::endFrame() {
     _frameColorView = nullptr;
 
     auto& fs = mutableFrameStats();
-    size_t kernelVolumeVram = 0;
-    for (const auto& entry : _kernelVolumePayloads) kernelVolumeVram += entry.second.capacityBytes;
     fs.vramAllocatedBytes = bufferPool().totalVramBytes() + _meshCache.totalCachedBytes() +
                             _persistentSdfParamVramBytes + _persistentSdfRangeNodeVramBytes +
-                            _persistentRadianceSourceVramBytes + kernelVolumeVram;
+                            _persistentRadianceSourceVramBytes;
     fs.uniformBytesWritten = bufferPool().bytesWrittenThisFrame();
     fs.bufferSuballocations = bufferPool().suballocationsThisFrame();
     fs.cachedMeshesCount = static_cast<uint32_t>(_meshCache.cachedMeshCount());

@@ -176,31 +176,6 @@ void scopeWitnesses() {
     check(before.ok && after.ok && before.wgsl == after.wgsl && before.params != after.params &&
               beforeSig == sdfwgsl::inspectVolumeSharing(&sum, &product, nullptr, nullptr, nullptr, nullptr),
           "matched numeric edits retain slot order even when constants reverse their sort order");
-    const sdfwgsl::VolumeProgramInput input{&sum, &product};
-    const auto retained = sdfwgsl::lowerVolumeEvaluator(input);
-    const auto unchanged = sdfwgsl::repairVolumeEvaluator(input, retained, true);
-    check(unchanged.repairedNodes == 0 && unchanged.program.wgsl == retained.program.wgsl &&
-          unchanged.program.params == retained.program.params,
-          "unchanged positional compiler DAG requires no node repair");
-    sum = pair(OntoMath::MathNode::Op::Add, 3.0);
-    product = pair(OntoMath::MathNode::Op::Scale, 3.0);
-    const auto numeric = sdfwgsl::repairVolumeEvaluator(input, retained, true);
-    const auto numericFresh = sdfwgsl::lowerVolumeEvaluator(input);
-    check(numeric.repairedNodes > 0 && numeric.program.wgsl == retained.program.wgsl &&
-          numeric.program.wgsl == numericFresh.program.wgsl && numeric.program.params == numericFresh.program.params,
-          "numeric repair preserves evaluator WGSL and exactly refreshes its parameter slots");
-    product = pair(OntoMath::MathNode::Op::Add, 0.5);
-    const auto structural = sdfwgsl::repairVolumeEvaluator(input, numeric, false);
-    const auto structuralFresh = sdfwgsl::lowerVolumeEvaluator(input);
-    check(structural.repairedNodes > 0 && structural.program.ok &&
-          structural.program.wgsl == structuralFresh.program.wgsl &&
-          structural.program.params == structuralFresh.program.params,
-          "structural and sharing repair matches a fresh lowering byte for byte");
-    const auto single = sdfwgsl::composeVolumeEvaluator(structural, false);
-    const auto fused = sdfwgsl::composeVolumeSet({input, input}, {structural, structural}, false);
-    check(single.ok && fused.ok && single.params == structural.program.params &&
-          fused.params.size() == 2 * structural.program.params.size(),
-          "single and combined modules consume the retained evaluator layout directly");
 
 }
 

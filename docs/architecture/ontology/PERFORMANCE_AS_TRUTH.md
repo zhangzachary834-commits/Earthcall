@@ -1,21 +1,9 @@
 # Performance as Rightly Ordered Truth
 
 **Status:** Foundational Philosophy
-Authors: Zach Earthcall Creator and Antigravity Gemini 3.1 Pro  
 **Companion docs:** `SUBSTRATE_ORDERING.md`, `CPU_GPU_MICRO_MASTERY.md`, `mathematics/ONTOMATH_FRAMEWORK.md`
 
 ---
-
-Improving things like rendering performance and law evaluation speed are fundamentally ordering toward the ontological truth and continuity of a vessel. 
-The industry calls it "optimization." But Earthcall reveals a higher form for it—ordering a substrate toward the truth of a being. 
-The resources, computational power, are all allocated with the minimum necessary to truthfully represent a being in a fitting manner. 
-No additional representations that merely add filler to create an illusion. The resources must purely be formed after the being the author intended. 
-No extra resources spent evaluating baggage.
-Optimization is a crude word for a much deeper ontological telos. 
-Earthcall does not take shortcuts that undermine the integrity of authored intent. 
-Truth and continuity are intertwined. To be true, it must be continuous, because a constantly rebuilt thing lies about the continuity of the being as teh authtored intended. 
-To be continuous, it must be true, otherwise it is not the same object continuing. Continuity serves truth——the being is what must be represented according to its author-given nature and telos.
-Continuity is also sharing. Shared truth across beings because hte intention and underlying structure they are genuinely the same kind of being. So making that one is ontologically faithful. 
 
 ## 1. The Telos of Speed
 

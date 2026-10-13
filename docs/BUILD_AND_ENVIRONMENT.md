@@ -105,8 +105,6 @@ The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 
 ## The test suite
 
-**2026-10-10 native volume verification:** ordinary offscreen `wgpu::Device::init()` now requests no timestamps, matching the visible native device. Explicit timestamp diagnostics remain optional, but enabling them on the Northern Veil window produced Person-reported flicker and invalid all-zero timing results; ordinary measurements keep them disabled. Unavailable execution samples are not zero GPU cost. The volume compiler/residency pass passed seven focused CPU/native targets and full-resolution pixel comparisons; see [the current plan and retention evidence](plans/NORTHERN_VEIL_MINIMUM_WORK_IMPLEMENTATION_2026-10-10.md). Readback-free performance batches remain separate from pixel/GPU correctness witnesses. Codex / GPT-6.1 Sol / `01a122d7` / 2026-10-10T23:15:58.738143-07:00.
-
 **Inventory is local and dated.** Use `ctest --test-dir build -N` after configuration; compare its registered names with the current test sources when auditing drift. Old counts/results below preserve their original witness dates. Registration, executable availability, environment acquisition, and passing assertions are separate facts. This documentation refresh enumerated 284 local registrations on 2026-10-09 without executing the suite; see [the refresh audit](audits/AGENT_GUIDANCE_REFRESH_2026-10-09.md).
 
 **2026-10-02 creation addition:** `universal_singular_creation_test` exercises
@@ -397,16 +395,3 @@ Build `earthcall_webgpu` before running `python3 scratch/probes/law_line_screen_
 ## Intercom navigation checks
 
 Repository conversation tooling uses Python 3.10+ and the standard library. Run `python3 "agent intercom/conversation_history_injection.py" self-test` and `python3 -m unittest discover -s "agent intercom" -p "test_conversation_navigation.py" -v` from the repo root when changing it. Search, trace, register replies, and export a local browser through its `nav` subcommand; [workflow and preservation record](Agenda/Tasks/Specific%20Tasks/Housekeeping%20and%20Build/Linked_Conversations_and_Document_Navigation/Linked_Conversations_and_Document_Navigation.md). The engine suite does not exercise this developer tool.
-
-
-**2026-10-10 cutoff continuation:** `earthcall_webgpu` and eight focused targets rebuild/pass for the added volume uniform: `channel_paths_test`, `sdf_wgsl_parameter_refresh_test`, `volume_shared_subexpression_test`, `volume_zero_proof_test`, `webgpu_volume_shared_subexpression_test`, `webgpu_volume_zero_proof_test`, `webgpu_volume_unified_quadrature_test`, `webgpu_object_test`. Property paths also need desktop access because that witness creates a hidden GLFW window. Positive `volumeOutputErrorBudget` now bypasses the opacity stop and uses the accepted full lattice; no certified tail exit exists yet. Eight default native captures remain byte-identical. See [reference contract and evidence](plans/NORTHERN_VEIL_MINIMUM_WORK_IMPLEMENTATION_2026-10-10.md#cutoff-reference-decision-implemented). Rebuild all renderer consumers after layout changes; never relink old probe constructor objects against the new Renderer layout.
-
-**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-10T23:49:10-07:00
-
-
-**2026-10-11 GPU clock preparation:** rebuild `earthcall_webgpu` and the named native volume consumers together after changing the compiler Program/renderer layouts. CPU sharing and parameter-refresh tests pass; final native sharing 65/65, proof 42/42, quadrature 15/15 and object consumer pass. Preparation pipelines count as shader compilation at admission; warm frames remain zero. Its GPU commands execute before volume rendering without ordinary-frame CPU waits; native timestamps stay disabled. Eight default captures match exactly. [Dated protocol, retention and limits](plans/NORTHERN_VEIL_MINIMUM_WORK_IMPLEMENTATION_2026-10-10.md#independent-high-value-step-retained-gpu-time-only-preparation).
-
-**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T00:15:29-07:00
-
-
-**2026-10-11 support traversal:** rebuild the app and native volume consumers together after changing proof payload layout. Both camera lanes now store six support-bound floats after each packed zero proof. Final six focused targets pass (native proof 54/54), eight full-resolution captures match bytes, and two sequential ABBA series per view pass retention. GPU correctness/readback and performance runs are separate; ordinary timestamps stay disabled. [Final benchmark and runtime limits](audits/NORTHERN_VEIL_SUPPORT_TRAVERSAL_2026-10-11.md). **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T02:25:43-07:00

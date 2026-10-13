@@ -11,7 +11,6 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
 #include "Singularity/Screen/Camera.hpp"
-#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <cstring>
 #include <filesystem>
@@ -244,10 +243,7 @@ namespace Rendering {
                         if (engine && engine->getCamera()) {
                             spawnPos = engine->getCamera()->getPos() + engine->getCamera()->getFront() * 3.0f;
                         }
-                        const auto authoredPlacement = OntoMath::affineTranslation(spawnPos);
-                        const glm::mat4 placement = authoredPlacement
-                            ? authoredPlacement->toGlmMat4().value_or(glm::mat4(1.0f))
-                            : glm::mat4(1.0f);
+                        glm::mat4 placement = glm::translate(glm::mat4(1.0f), spawnPos);
                         auto newborns = c->instantiate(placement);
                         for (auto& newborn : newborns) {
                             mgr.active().addObject(std::move(newborn));

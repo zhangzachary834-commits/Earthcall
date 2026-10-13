@@ -51,8 +51,8 @@ int main() {
     for (const auto& entry : std::filesystem::directory_iterator(saves / "zones")) {
         if (!entry.is_directory()) continue;
         const std::string id = entry.path().filename().string();
-        // Use the same nonempty-file precedence as boot discovery and direct
-        // identity reads: .ecsave, legacy .ecform, then .json.
+        // resolveZoneIdentityPath is what the boot catalog reads: zone.ecform when
+        // present, else zone.json. readZoneIdentity alone only sees .ecform.
         const std::string identityPath = SaveSystem::resolveZoneIdentityPath(id);
         std::error_code ec;
         if (identityPath.empty() || !std::filesystem::exists(identityPath, ec)) continue;
