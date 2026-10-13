@@ -2,6 +2,7 @@
 #include "Singularity/Storage/VirtualFileSystem.hpp"
 
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "json.hpp"
 
 #ifndef __EMSCRIPTEN__
@@ -28,6 +29,48 @@ namespace Singularity {
 namespace Storage {
 
 namespace fs = std::filesystem;
+
+// file.content is the byte/text boundary of the storage modality. Strings are
+// already byte payloads and therefore pass through unchanged. Every other
+// legible PropertyValue uses Earthcall's existing typed PropertyValue JSON
+// codec so type identity (float vs double, vec3 vs matrix, lists/dicts,
+// OntoMath fields, world references) is not guessed or flattened here.
+class FileContentProperty final : public Property {
+public:
+    explicit FileContentProperty(FileChannel* owner)
+        : _name("file.content"),
+          _nameId(Earthcall::StringInterner::intern(_name)),
+          _owner(owner) {}
+
+    Earthcall::StringId nameId() const override { return _nameId; }
+    std::string name() const override { return _name; }
+    std::string typeName() const override { return "PropertyValue -> bytes"; }
+
+    PropertyValue value() const override {
+        return _owner ? PropertyValue(_owner->_content) : PropertyValue{};
+    }
+
+    bool setValue(const PropertyValue& value) override {
+        if (!_owner) return false;
+        if (const auto* text = std::get_if<std::string>(&value)) {
+            _owner->_content = *text;
+            return true;
+        }
+        try {
+            _owner->_content = propertyValueToJson(value).dump();
+            return true;
+        } catch (...) {
+            return false;
+        }
+    }
+
+    bool isStructurallyWritable() const override { return _owner != nullptr; }
+
+private:
+    std::string _name;
+    Earthcall::StringId _nameId;
+    FileChannel* _owner = nullptr;
+};
 
 // Kernel-level atomic write counter for generating unique temporary files
 static std::atomic<uint64_t> s_atomicTempCounter{1};
@@ -1136,8 +1179,7 @@ void FileChannel::buildProperties() {
         "file.sandboxMode", this, &FileChannel::propSandboxMode, &FileChannel::propSetSandboxMode));
     registerProperty(std::make_unique<ComputedProperty<FileChannel, std::string>>(
         "file.path", this, &FileChannel::propPath, &FileChannel::propSetPath));
-    registerProperty(std::make_unique<ComputedProperty<FileChannel, std::string>>(
-        "file.content", this, &FileChannel::propContent, &FileChannel::propSetContent));
+    registerProperty(std::make_unique<FileContentProperty>(this));
     registerProperty(std::make_unique<ComputedProperty<FileChannel, bool>>(
         "file.read", this, &FileChannel::propReadTrigger, &FileChannel::propSetReadTrigger));
     registerProperty(std::make_unique<ComputedProperty<FileChannel, bool>>(
