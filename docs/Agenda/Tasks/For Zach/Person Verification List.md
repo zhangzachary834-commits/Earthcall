@@ -1556,3 +1556,10 @@ Your data is now copied into `~/Library/Application Support/Earthcall` (686 file
 - [ ] Author the [custom binding](../../../../examples/law_line_template_keybind.txt) and adapt its chord to your terminal; author the [stored shelf example](../../../../examples/law_line_store_templates.txt) only if you want those two drafts; press Ctrl+G to store them, then Ctrl+T to verify prefix selection.
 - [ ] Edit a disabled template holder's `completion.text` through the existing Property editor, including a literal `‹blank›` if desired; reopen the shelf and verify insertion and blank selection.
 - [ ] Save Zone in LawLine, restart from the app data home, and confirm your edited shelf and custom binding survive; judge whether the menu and blank navigation feel right.
+
+
+### Northern Veil — arithmetic-profile candidates rejected
+
+This pass ships no visible change: two scratch Safe-arithmetic variants exceeded the one-level image limit, including at 2560×1440 with the full accepted lattice. Existing aurora appearance/flicker, movement and usual-framebuffer 30 FPS checks remain open; there is no new candidate for you to accept or new FPS claim. The frozen offscreen fixture is distinct from your live data home and installed Release app. [Exact rejection evidence](../../../audits/VOLUME_ARITHMETIC_PROFILE_FIDELITY_2026-10-12.md). AD-30–36 remain open; no extra human question is introduced.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T17:13:57.815427-07:00 (PDT).
