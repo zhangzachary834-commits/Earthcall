@@ -337,6 +337,7 @@ if(NOT EMSCRIPTEN)
     # --- Tests ---
     enable_testing()
     file(GLOB_RECURSE TEST_FILES "tests/*.cpp")
+    list(REMOVE_ITEM TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/tests/support/test_harness.cpp")
 
     # Tests written against an API that does not exist yet. They are KEPT as the
     # specification of a feature still to be built, and are still configured as
