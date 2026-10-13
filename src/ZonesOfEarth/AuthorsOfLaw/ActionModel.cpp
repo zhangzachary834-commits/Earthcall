@@ -1567,8 +1567,13 @@ std::string ActionNode::describe() const {
             return "destroy " + (elementToken.empty() ? std::string("subject") : elementToken);
         case Kind::Synthesize:
             return "synthesize(" + std::to_string(children.size()) + " composed actions)";
-        case Kind::PlayAudio:
-            return kindName(kind);
+        case Kind::PlayAudio: {
+            std::string desc = "play audio";
+            if (!path.empty()) desc += " " + path.toString();
+            if (!input.empty()) desc += " " + input.toString();
+            if (!propertyName.empty()) desc += " " + propertyName;
+            return desc;
+        }
         case Kind::FileRead:
             return "read file at " + input.toString() + " into " + path.toString();
         case Kind::FileWrite:
