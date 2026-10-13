@@ -49,8 +49,9 @@ int main() {
     // Verify registry is clear before physics step
     check(Physics::registry().getAll().empty(), "physics relation registry is initially empty");
 
-    // Enable physics collision processing
+    // Enable physics collision processing and register event listeners as EngineInit.cpp does
     Physics::setLegacyEngineEnabled(true);
+    Physics::setupPhysicsEventListeners();
 
     // Perform physics tick (Physics::updateBodies)
     float deltaTime = 0.016f;
