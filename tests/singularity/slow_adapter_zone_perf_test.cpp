@@ -26,6 +26,7 @@
 
 namespace {
 using Clock = std::chrono::steady_clock;
+namespace fs = std::filesystem;
 
 double ms(Clock::time_point a, Clock::time_point b) {
     return std::chrono::duration<double, std::milli>(b - a).count();
@@ -43,6 +44,64 @@ struct Frame {
     double total = 0.0;
     double law = 0.0;
     double maintenance = 0.0;
+};
+
+struct ScratchSaveRoot {
+    fs::path path;
+    std::string previousRoot;
+    explicit ScratchSaveRoot(const std::string& worldPath) {
+        previousRoot = SaveSystem::saveRoot();
+        path = fs::temp_directory_path() /
+            ("earthcall-perf-scratch-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+        fs::create_directories(path);
+
+        fs::path savesDir = fs::path(worldPath).parent_path().parent_path();
+        std::error_code ec;
+
+        if (fs::exists(savesDir / "materials", ec)) {
+            fs::create_directories(path / "materials", ec);
+            fs::copy(savesDir / "materials", path / "materials", fs::copy_options::recursive, ec);
+        }
+        if (fs::exists(savesDir / "laws", ec)) {
+            fs::create_directories(path / "laws", ec);
+            fs::copy(savesDir / "laws", path / "laws", fs::copy_options::recursive, ec);
+        }
+
+        if (fs::exists(worldPath, ec)) {
+            try {
+                std::ifstream f(worldPath);
+                nlohmann::json data = nlohmann::json::parse(f);
+                if (data.contains("zones") && data["zones"].is_array()) {
+                    for (const auto& z : data["zones"]) {
+                        std::string zid = z.value("identifier", z.value("name", ""));
+                        if (zid.empty()) continue;
+
+                        fs::path zoneSrc = savesDir / "zones" / zid;
+                        if (!fs::exists(zoneSrc, ec) && fs::exists(savesDir / "zones", ec)) {
+                            for (const auto& entry : fs::directory_iterator(savesDir / "zones", ec)) {
+                                if (entry.is_directory(ec) && entry.path().filename().string() == zid) {
+                                    zoneSrc = entry.path();
+                                    break;
+                                }
+                            }
+                        }
+                        if (fs::exists(zoneSrc, ec)) {
+                            fs::create_directories(path / "zones" / zoneSrc.filename(), ec);
+                            fs::copy(zoneSrc, path / "zones" / zoneSrc.filename(), fs::copy_options::recursive | fs::copy_options::overwrite_existing, ec);
+                        }
+                    }
+                }
+            } catch (...) {}
+        }
+
+        SaveSystem::setSaveRoot(path.string());
+    }
+
+    ~ScratchSaveRoot() {
+        SaveSystem::setSaveRoot(previousRoot);
+        std::error_code ec;
+        fs::remove_all(path, ec);
+    }
 };
 }
 
@@ -72,9 +131,9 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    // Isolate saveRoot into temporary scratch directory without copying full 1.6GB save tree
+    ScratchSaveRoot scratch(world);
+    TestSupport::BootedEngineHarness h("Player", "humanoid", /*hydrateAllZones=*/false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);
