@@ -14,6 +14,8 @@
 
 #include "support/test_harness.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.hpp"
+#include "Singularity/Storage/Serialization/Relation/FormationSerialization.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -55,18 +57,22 @@ struct ScratchSaveRoot {
             ("earthcall-perf-scratch-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
         fs::create_directories(path);
 
-        fs::path savesDir = fs::path(worldPath).parent_path().parent_path();
+        fs::path realSaves = TestSupport::resolveRealWorldPath("saves");
+        if (!fs::exists(realSaves)) realSaves = "../saves";
+        realSaves = fs::absolute(realSaves);
+
         std::error_code ec;
-
-        if (fs::exists(savesDir / "materials", ec)) {
-            fs::create_directories(path / "materials", ec);
-            fs::copy(savesDir / "materials", path / "materials", fs::copy_options::recursive, ec);
+        if (fs::exists(realSaves / "materials", ec)) {
+            fs::create_directory_symlink(realSaves / "materials", path / "materials", ec);
         }
-        if (fs::exists(savesDir / "laws", ec)) {
-            fs::create_directories(path / "laws", ec);
-            fs::copy(savesDir / "laws", path / "laws", fs::copy_options::recursive, ec);
+        if (fs::exists(realSaves / "laws", ec)) {
+            fs::create_directory_symlink(realSaves / "laws", path / "laws", ec);
+        }
+        if (fs::exists(realSaves / "worlds", ec)) {
+            fs::create_directory_symlink(realSaves / "worlds", path / "worlds", ec);
         }
 
+        fs::create_directories(path / "zones", ec);
         if (fs::exists(worldPath, ec)) {
             try {
                 std::ifstream f(worldPath);
@@ -76,9 +82,9 @@ struct ScratchSaveRoot {
                         std::string zid = z.value("identifier", z.value("name", ""));
                         if (zid.empty()) continue;
 
-                        fs::path zoneSrc = savesDir / "zones" / zid;
-                        if (!fs::exists(zoneSrc, ec) && fs::exists(savesDir / "zones", ec)) {
-                            for (const auto& entry : fs::directory_iterator(savesDir / "zones", ec)) {
+                        fs::path zoneSrc = realSaves / "zones" / zid;
+                        if (!fs::exists(zoneSrc, ec) && fs::exists(realSaves / "zones", ec)) {
+                            for (const auto& entry : fs::directory_iterator(realSaves / "zones", ec)) {
                                 if (entry.is_directory(ec) && entry.path().filename().string() == zid) {
                                     zoneSrc = entry.path();
                                     break;
@@ -86,8 +92,7 @@ struct ScratchSaveRoot {
                             }
                         }
                         if (fs::exists(zoneSrc, ec)) {
-                            fs::create_directories(path / "zones" / zoneSrc.filename(), ec);
-                            fs::copy(zoneSrc, path / "zones" / zoneSrc.filename(), fs::copy_options::recursive | fs::copy_options::overwrite_existing, ec);
+                            fs::create_directory_symlink(zoneSrc, path / "zones" / zoneSrc.filename(), ec);
                         }
                     }
                 }
@@ -145,6 +150,23 @@ int main(int argc, char** argv) {
     auto zone = h.zones.zones()[h.zones.currentIndex()];
     if (!zone) return 3;
 
+    // Retry binding pending relations now that laws and categories are loaded from world and zone
+    std::ifstream f(world);
+    if (f.is_open()) {
+        try {
+            nlohmann::json j = nlohmann::json::parse(f);
+            applyFormationRelations(*zone, j);
+            if (j.contains("zones") && j["zones"].is_array()) {
+                for (const auto& zj : j["zones"]) {
+                    if (zj.value("identifier", zj.value("name", "")) == zone->getIdentifier()) {
+                        applyFormationRelations(*zone, zj);
+                    }
+                }
+            }
+        } catch (...) {}
+    }
+    applyFormationRelations(*zone, SaveSystem::readZoneIdentity(zone->getIdentifier()));
+
     constexpr double hz = 60.0;
     constexpr float dt = 1.0f / 60.0f;
     double schedulerWall = 0.0;
@@ -152,7 +174,7 @@ int main(int argc, char** argv) {
 
     // Warm foreground state without measuring it. The adapter's own timeline
     // advances too when ON, just as it would in a live 60 Hz session.
-    for (int i = 0; i < 30; ++i) {
+    for (int i = 0; i < 90; ++i) {
         zone->update(dt);
         zone->applyFormationRelations();
         h.worldTime += dt;
