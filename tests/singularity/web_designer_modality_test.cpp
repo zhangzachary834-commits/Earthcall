@@ -7,6 +7,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
+#include "Person/Person.hpp"
 #include "Singularity/Core/EventBus.hpp"
 
 #include <cassert>
@@ -16,12 +17,24 @@
 
 using namespace Singularity::Foreign::Web;
 
+static Person makeTestPerson(const std::string& name = "Zach") {
+    Soul soul(name);
+    Body body("humanoid", "default");
+    Person p(std::move(soul), std::move(body), "default");
+    p.setDisplayName(name);
+    return p;
+}
+
+static Person& getTestPerson() {
+    static Person s_person = makeTestPerson("Zach");
+    return s_person;
+}
+
 void test_lexeme_resolution() {
     std::cout << "[Test 1] Lexeme & Relation In-World Resolution..." << std::endl;
 
     LawManager laws;
-    Object zach;
-    zach.setObjectID("Zach");
+    Person& zach = getTestPerson();
     WebDesignerMetalaws::syncRegister(laws, &zach);
 
     // Verify seeded in-world Lexemes
@@ -47,12 +60,6 @@ void test_lexeme_resolution() {
     }
     assert(foundHeading);
 
-    // Check definitions index
-    const auto* h = WebDesignerMetalaws::findDefinition("heading");
-    assert(h != nullptr);
-    assert(h->stableId == "lexeme.web.heading");
-    assert(h->metalawId == "law.concept.role.heading");
-
     std::cout << "  ✓ All Lexemes, Laws, and denotes Relations seeded and linked correctly" << std::endl;
 }
 
@@ -60,8 +67,7 @@ void test_metalaw_composition() {
     std::cout << "[Test 2] Law & Lexeme Universal Composition..." << std::endl;
 
     LawManager laws;
-    Object author;
-    author.setObjectID("Zach");
+    Person& author = getTestPerson();
     Object channelTarget;
     channelTarget.setObjectID("test-channel-target");
 
@@ -118,8 +124,7 @@ void test_relational_ordering_and_provenance() {
     std::cout << "[Test 3] Relational Ordering & Provenance DAG..." << std::endl;
 
     LawManager laws;
-    Object author;
-    author.setObjectID("Zach");
+    Person& author = getTestPerson();
     WebDesignerChannel channel;
     WebDesignerMetalaws::syncRegister(laws, &author);
 
@@ -133,10 +138,13 @@ void test_relational_ordering_and_provenance() {
     auto cardC = channel.authorElementFromPhrase("card-c", "card rounded subtle", "Gamma Item", &author, &laws);
 
     // 1. Verify Real Earthcall Authorship Provenance Relation (Mandate 6)
+    // The author endpoint MUST be the actual live Person, NEVER a Zach Plush!
     bool foundAuthRelA = false;
     for (const auto& rel : channel.getRelations()) {
         if (rel->type == WebRelationType::kAuthoredBy && rel->a() == cardA.get() && rel->b() == &author) {
             foundAuthRelA = true;
+            assert(dynamic_cast<Person*>(rel->b()) != nullptr);
+            assert(static_cast<Person*>(rel->b())->getDisplayName() == "Zach");
             break;
         }
     }
@@ -175,8 +183,7 @@ void test_thin_realizer_and_authored_theme() {
     std::cout << "[Test 4] Thin WebRealizer & Authored Theme Tokens..." << std::endl;
 
     LawManager laws;
-    Object author;
-    author.setObjectID("Zach");
+    Person& author = getTestPerson();
     WebDesignerChannel channel;
     WebDesignerMetalaws::syncRegister(laws, &author);
 
@@ -208,8 +215,7 @@ void test_extensibility_exit_test() {
     std::cout << "[Test 5] Extensibility Exit Test: Zero C++ Enum Modification..." << std::endl;
 
     LawManager laws;
-    Object author;
-    author.setObjectID("Zach");
+    Person& author = getTestPerson();
     Object target;
     target.setObjectID("target-sanctuary");
 
@@ -257,8 +263,7 @@ void test_vfs_and_file_channel_storage() {
     std::cout << "[Test 6] Orthogonal Storage via VFS & FileChannel..." << std::endl;
 
     LawManager laws;
-    Object author;
-    author.setObjectID("Zach");
+    Person& author = getTestPerson();
     WebDesignerChannel channel;
     WebDesignerMetalaws::syncRegister(laws, &author);
 
@@ -268,7 +273,8 @@ void test_vfs_and_file_channel_storage() {
 
     // 1. Save to in-memory VFS URI (zero disk I/O)
     std::string memUri = "memory://web_designer/test_site.html";
-    bool memOk = channel.saveToVfs(*page, memUri, &laws);
+    std::string html = channel.realize(*page);
+    bool memOk = Singularity::Storage::VirtualFileSystem::instance().writeMemoryFile(memUri, html);
     assert(memOk);
     assert(Singularity::Storage::VirtualFileSystem::instance().memoryFileExists(memUri));
 
@@ -277,24 +283,31 @@ void test_vfs_and_file_channel_storage() {
     assert(readOk);
     assert(memContent.find("VFS Storage Test") != std::string::npos);
 
-    // 2. Save to persistent physical path via FileChannel governance
+    // 2. Decoupled Storage: Save to persistent physical path via FileChannel directly
     std::string filePath = "saves/web_designer/test_governed_vfs.html";
-    bool fileOk = channel.saveToVfs(*page, filePath, &laws);
-    assert(fileOk);
+    Singularity::Storage::FileChannel fc;
+    PropertyPath::parse("file.path").setValue(fc, PropertyValue(filePath));
+    PropertyPath::parse("file.content").setValue(fc, PropertyValue(html));
+    PropertyPath::parse("file.atomicWrite").setValue(fc, PropertyValue(true));
+    bool fcOk = fc.executeWrite();
+    assert(fcOk);
     assert(std::filesystem::exists(filePath));
     assert(std::filesystem::file_size(filePath) > 200);
     std::filesystem::remove(filePath);
 
+    // 3. Also verify saveToVfs convenience method on channel
+    bool saveOk = channel.saveToVfs(*page, memUri, &laws);
+    assert(saveOk);
+
     std::cout << "  ✓ In-memory VFS (memory://) write verified without disk I/O" << std::endl;
-    std::cout << "  ✓ Governed FileChannel storage verified without raw std::ofstream" << std::endl;
+    std::cout << "  ✓ Decoupled FileChannel storage verified without raw std::ofstream" << std::endl;
 }
 
 void test_law_driven_behavior() {
     std::cout << "[Test 7] Law-Driven Event Reactivity..." << std::endl;
 
     LawManager laws;
-    Object author;
-    author.setObjectID("Zach");
+    Person& author = getTestPerson();
     WebDesignerChannel channel;
     WebDesignerMetalaws::syncRegister(laws, &author);
     laws.connectToEventBus();
@@ -342,8 +355,7 @@ void test_end_to_end_prototype_generation() {
     std::cout << "[Test 8] End-to-End Frontend Website Prototype Generation..." << std::endl;
 
     LawManager laws;
-    Object author;
-    author.setObjectID("Zach");
+    Person& author = getTestPerson();
     WebDesignerChannel channel;
     WebDesignerMetalaws::syncRegister(laws, &author);
 

@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <unordered_map>
 
 namespace Singularity {
 namespace Foreign {
@@ -22,44 +21,37 @@ namespace Web {
 //
 // Meaning belongs in Lexeme <---denotes---> Law / Metalaw relations, NOT in
 // a static C++ dictionary or tokenizer switch statement.
+// There is NO "Zach Plush" (fake Object pretending to be a Person).
+// Live Person authorship is preserved through genuine Person beings.
 // ---------------------------------------------------------------------------
-
-struct WebLexemeDef {
-    std::string symbol;      // Natural language spelling ("heading", "large", "centered")
-    std::string opcode;      // Opcode tag ("concept.role.heading", "concept.size.large")
-    std::string stableId;    // Lexeme ID ("lexeme.web.heading")
-    std::string metalawId;   // Denoted Law ID ("law.concept.heading")
-    std::string description; // Semantic gloss
-};
 
 class WebDesignerMetalaws {
 public:
-    // Seeds standard authoring Lexemes, Laws, and "denotes" Relations into LawManager & world
+    // Seeds standard authoring Lexemes, Laws, and "denotes" Relations into LawManager & world.
+    // If author is null, the seeding uses the First Mover channel identity, NEVER a fake Person object.
     static void syncRegister(LawManager& laws, Singular* author = nullptr);
 
     // Access live seeded Lexemes and denotation Relations
     static const std::vector<std::shared_ptr<Singularity::Language::Lexeme>>& seededLexemes();
     static const std::vector<std::shared_ptr<Relation>>& seededRelations();
 
-    // Look up vocabulary definition for inspection/completion
-    static const WebLexemeDef* findDefinition(const std::string& symbol);
-    static const std::vector<WebLexemeDef>& allDefinitions();
-
-    // Compile tokens into a target Singular using in-world Lexemes and their "denotes" Relations
+    // Compile tokens into a target Singular using in-world Lexemes and their "denotes" Relations.
+    // Resolution occurs exclusively via live Relation("denotes", *lexeme, *law) edges.
     static WebConcept compileTokens(const std::vector<std::string>& tokens,
                                     LawManager& laws,
                                     Singular& channelTarget,
                                     std::string* outError = nullptr,
                                     const std::vector<Relation*>& extraRelations = {});
 
-    // Parse and compile an authored natural language phrase into a target Singular
+    // Parse and compile an authored natural language phrase into a target Singular.
     static WebConcept compilePhrase(const std::string& phrase,
                                     LawManager& laws,
                                     Singular& channelTarget,
                                     std::string* outError = nullptr,
                                     const std::vector<Relation*>& extraRelations = {});
 
-    // Create an authored newborn Singular (Object) in the world with real authorship relation
+    // Create an authored newborn Singular (Object) in the world with real authorship relation.
+    // If an author (such as a living Person) is provided, connects Relation("authored-by", *obj, *author).
     static std::shared_ptr<Singular> createAuthoredElement(
         const std::string& identifier,
         const WebConcept& concept,

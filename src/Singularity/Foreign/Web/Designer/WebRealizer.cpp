@@ -1,4 +1,5 @@
 #include "Singularity/Foreign/Web/Designer/WebRealizer.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include <algorithm>
 #include <sstream>
 #include <queue>
@@ -25,22 +26,26 @@ int getBeingOrder(const Singular* s) {
 }
 
 // Find all children connected to `parent` via "contains" relations,
+// querying both caller-supplied relations and Universe relations,
 // and order them topologically using "precedes" relations.
 std::vector<const Singular*> findChildren(const Singular& parent,
                                          const std::vector<std::shared_ptr<Relation>>& relations) {
     std::vector<const Singular*> rawChildren;
     std::unordered_set<const Singular*> childSet;
 
-    // 1. Collect all children connected via "contains"
-    for (const auto& rel : relations) {
-        if (!rel) continue;
+    auto checkContains = [&](const Relation* rel) {
+        if (!rel) return;
         if (rel->type == WebRelationType::kContains && rel->a() == &parent) {
             const Singular* child = rel->b();
             if (child && childSet.insert(child).second) {
                 rawChildren.push_back(child);
             }
         }
-    }
+    };
+
+    // 1. Collect all children connected via "contains"
+    for (const auto& rel : relations) checkContains(rel.get());
+    for (const auto* rel : Universe::instance().relations()) checkContains(rel);
 
     if (rawChildren.empty()) return {};
 
@@ -54,8 +59,8 @@ std::vector<const Singular*> findChildren(const Singular& parent,
     std::vector<int> inDegree(n, 0);
     std::vector<std::vector<size_t>> adj(n);
 
-    for (const auto& rel : relations) {
-        if (!rel) continue;
+    auto checkPrecedes = [&](const Relation* rel) {
+        if (!rel) return;
         if (rel->type == WebRelationType::kPrecedes) {
             const Singular* a = rel->a();
             const Singular* b = rel->b();
@@ -68,10 +73,12 @@ std::vector<const Singular*> findChildren(const Singular& parent,
                 inDegree[v]++;
             }
         }
-    }
+    };
+
+    for (const auto& rel : relations) checkPrecedes(rel.get());
+    for (const auto* rel : Universe::instance().relations()) checkPrecedes(rel);
 
     // 3. Topological sort using Kahn's algorithm
-    // Comparator for deterministic queue: prefer lower getBeingOrder, then discovery index
     auto cmp = [&](size_t i, size_t j) {
         int ordI = getBeingOrder(rawChildren[i]);
         int ordJ = getBeingOrder(rawChildren[j]);
@@ -168,6 +175,19 @@ std::string WebRealizer::generateStyleSheet(const Singular* root) {
     std::string radius = getThemeString(root, "theme.radius", "0.75rem");
     std::string fontSans = getThemeString(root, "theme.fontFamily", "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif");
 
+    // Presentation tokens driven by theme custom properties
+    std::string heroBg = getThemeString(root, "theme.heroBackground", "radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 70%)");
+    std::string heroPadding = getThemeString(root, "theme.heroPadding", "4rem 1.5rem");
+    std::string cardBg = getThemeString(root, "theme.cardBackground", card);
+    std::string cardBorder = getThemeString(root, "theme.cardBorder", "rgba(56, 189, 248, 0.15)");
+    std::string cardPadding = getThemeString(root, "theme.cardPadding", "1.75rem");
+    std::string cardHoverBorder = getThemeString(root, "theme.cardHoverBorder", primary);
+    std::string quoteBorder = getThemeString(root, "theme.quoteBorder", primary);
+    std::string quoteBg = getThemeString(root, "theme.quoteBackground", subtle);
+    std::string quotePadding = getThemeString(root, "theme.quotePadding", "1.5rem 2rem");
+    std::string actionPadding = getThemeString(root, "theme.actionPadding", "0.75rem 1.75rem");
+    std::string actionFontSize = getThemeString(root, "theme.actionFontSize", "0.95rem");
+
     std::ostringstream css;
     css << ":root {\n"
         << "  --web-bg: " << bg << ";\n"
@@ -184,13 +204,24 @@ std::string WebRealizer::generateStyleSheet(const Singular* root) {
         << "  --web-secondary-text: #f8fafc;\n"
         << "  --web-accent: " << accent << ";\n"
         << "  --web-border: rgba(255, 255, 255, 0.08);\n"
-        << "  --web-border-card: rgba(56, 189, 248, 0.15);\n"
+        << "  --web-border-card: " << cardBorder << ";\n"
         << "  --web-radius: " << radius << ";\n"
         << "  --web-radius-pill: 9999px;\n"
         << "  --web-font-sans: " << fontSans << ";\n"
         << "  --web-shadow-subtle: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.2);\n"
         << "  --web-shadow-raised: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);\n"
         << "  --web-shadow-floating: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);\n"
+        << "  --web-hero-bg: " << heroBg << ";\n"
+        << "  --web-hero-padding: " << heroPadding << ";\n"
+        << "  --web-card-bg: " << cardBg << ";\n"
+        << "  --web-card-border: " << cardBorder << ";\n"
+        << "  --web-card-padding: " << cardPadding << ";\n"
+        << "  --web-card-hover-border: " << cardHoverBorder << ";\n"
+        << "  --web-quote-border: " << quoteBorder << ";\n"
+        << "  --web-quote-bg: " << quoteBg << ";\n"
+        << "  --web-quote-padding: " << quotePadding << ";\n"
+        << "  --web-action-padding: " << actionPadding << ";\n"
+        << "  --web-action-font-size: " << actionFontSize << ";\n"
         << "}\n\n"
         << R"CSS(* {
   box-sizing: border-box;
@@ -309,15 +340,15 @@ h4.web-heading { font-size: 1.25rem; }
 h5.web-heading { font-size: 1.1rem; }
 h6.web-heading { font-size: 1rem; }
 
-/* Surface Variants */
+/* Surface Variants driven by CSS variables */
 .web-surface--card {
-  background-color: var(--web-bg-card);
-  border: 1px solid var(--web-border-card);
-  padding: 1.75rem;
+  background: var(--web-card-bg);
+  border: 1px solid var(--web-card-border);
+  padding: var(--web-card-padding);
   transition: border-color 0.2s ease;
 }
 .web-surface--card:hover {
-  border-color: var(--web-primary);
+  border-color: var(--web-card-hover-border);
 }
 
 .web-surface--subtle {
@@ -327,8 +358,8 @@ h6.web-heading { font-size: 1rem; }
 }
 
 .web-surface--hero {
-  background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 70%);
-  padding: 5rem 1.5rem;
+  background: var(--web-hero-bg);
+  padding: var(--web-hero-padding);
 }
 
 /* Shapes */
@@ -348,8 +379,8 @@ h6.web-heading { font-size: 1rem; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem 1.75rem;
-  font-size: 0.95rem;
+  padding: var(--web-action-padding);
+  font-size: var(--web-action-font-size);
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
@@ -418,10 +449,10 @@ h6.web-heading { font-size: 1rem; }
 
 /* Quote */
 .web-quote {
-  border-left: 4px solid var(--web-primary);
-  padding: 1.5rem 2rem;
+  border-left: 4px solid var(--web-quote-border);
+  background: var(--web-quote-bg);
+  padding: var(--web-quote-padding);
   font-style: italic;
-  background-color: var(--web-bg-subtle);
   border-radius: 0 var(--web-radius) var(--web-radius) 0;
 }
 
@@ -515,13 +546,22 @@ std::string WebRealizer::realizeElement(const Singular& element,
     }
     classAttr += "\"";
 
-    // Dynamic style attribute for custom colors
+    // Dynamic style attribute for authored presentation styles
     std::string styleAttr;
-    if (!concept.background.empty() || !concept.color.empty()) {
-        styleAttr = " style=\"";
-        if (!concept.background.empty()) styleAttr += "background-color: " + escapeAttr(concept.background) + "; ";
-        if (!concept.color.empty()) styleAttr += "color: " + escapeAttr(concept.color) + "; ";
-        styleAttr += "\"";
+    std::string inlineStyles;
+    if (!concept.background.empty()) inlineStyles += "background-color: " + escapeAttr(concept.background) + "; ";
+    if (!concept.color.empty()) inlineStyles += "color: " + escapeAttr(concept.color) + "; ";
+
+    // Read any authored element-level presentation overrides
+    PropertyValue sp;
+    if (element.getDynamicProperty("surface.padding", sp) || element.getDynamicProperty("padding", sp)) {
+        if (auto s = std::get_if<std::string>(&sp)) inlineStyles += "padding: " + escapeAttr(*s) + "; ";
+    }
+    if (element.getDynamicProperty("surface.border", sp) || element.getDynamicProperty("border", sp)) {
+        if (auto s = std::get_if<std::string>(&sp)) inlineStyles += "border: " + escapeAttr(*s) + "; ";
+    }
+    if (!inlineStyles.empty()) {
+        styleAttr = " style=\"" + inlineStyles + "\"";
     }
 
     std::string beingAttr = "data-being-id=\"" + escapeAttr(element.getIdentifier()) + "\"";
@@ -532,7 +572,7 @@ std::string WebRealizer::realizeElement(const Singular& element,
     // Children ordered topologically by "precedes" relations
     auto children = findChildren(element, relations);
 
-    // Escape hatch for explicit tag
+    // Escape hatch for explicit tag override
     if (!concept.elementTag.empty()) {
         std::string tag = escapeAttr(concept.elementTag);
         out << indent << "<" << tag << " id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
@@ -546,155 +586,124 @@ std::string WebRealizer::realizeElement(const Singular& element,
         return out.str();
     }
 
-    switch (concept.role) {
-        case SemanticRole::Page: {
-            out << indent << "<main id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
-            for (const auto* child : children) {
-                out << realizeElement(*child, relations, indentLevel + 1);
-            }
-            out << indent << "</main>\n";
-            break;
+    // Open Semantic Role Mapping to HTML Landmarks
+    if (effectiveRole == "page") {
+        out << indent << "<main id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
+        for (const auto* child : children) {
+            out << realizeElement(*child, relations, indentLevel + 1);
         }
-
-        case SemanticRole::Section: {
-            out << indent << "<section id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
-            for (const auto* child : children) {
-                out << realizeElement(*child, relations, indentLevel + 1);
-            }
-            out << indent << "</section>\n";
-            break;
+        out << indent << "</main>\n";
+    } else if (effectiveRole == "section") {
+        out << indent << "<section id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
+        for (const auto* child : children) {
+            out << realizeElement(*child, relations, indentLevel + 1);
         }
-
-        case SemanticRole::Navigation: {
-            out << indent << "<nav id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
-            for (const auto* child : children) {
-                out << realizeElement(*child, relations, indentLevel + 1);
-            }
-            out << indent << "</nav>\n";
-            break;
+        out << indent << "</section>\n";
+    } else if (effectiveRole == "navigation" || effectiveRole == "nav") {
+        out << indent << "<nav id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
+        for (const auto* child : children) {
+            out << realizeElement(*child, relations, indentLevel + 1);
         }
-
-        case SemanticRole::Heading: {
-            std::string tag = "h" + std::to_string(std::clamp(concept.headingLevel, 1, 6));
-            out << indent << "<" << tag << " id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">"
-                << escapeHtml(concept.text) << "</" << tag << ">\n";
-            break;
+        out << indent << "</nav>\n";
+    } else if (effectiveRole == "heading" || effectiveRole == "title" || effectiveRole == "subtitle") {
+        std::string tag = "h" + std::to_string(std::clamp(concept.headingLevel, 1, 6));
+        out << indent << "<" << tag << " id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">"
+            << escapeHtml(concept.text) << "</" << tag << ">\n";
+    } else if (effectiveRole == "paragraph" || effectiveRole == "text") {
+        out << indent << "<p id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">"
+            << escapeHtml(concept.text) << "</p>\n";
+    } else if (effectiveRole == "action" || effectiveRole == "button" || effectiveRole == "link") {
+        std::string eventAttr = concept.actionEvent.empty() ? "" : " data-action-event=\"" + escapeAttr(concept.actionEvent) + "\"";
+        if (!concept.actionHref.empty()) {
+            out << indent << "<a href=\"" << escapeAttr(concept.actionHref) << "\" " << classAttr << " " << beingAttr << eventAttr << styleAttr << ">"
+                << escapeHtml(concept.text) << "</a>\n";
+        } else {
+            out << indent << "<button type=\"button\" " << classAttr << " " << beingAttr << eventAttr << styleAttr << ">"
+                << escapeHtml(concept.text) << "</button>\n";
         }
-
-        case SemanticRole::Paragraph: {
-            out << indent << "<p id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">"
-                << escapeHtml(concept.text) << "</p>\n";
-            break;
+    } else if (effectiveRole == "list") {
+        out << indent << "<ul id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
+        for (const auto* child : children) {
+            out << realizeElement(*child, relations, indentLevel + 1);
         }
-
-        case SemanticRole::Action: {
-            std::string eventAttr = concept.actionEvent.empty() ? "" : " data-action-event=\"" + escapeAttr(concept.actionEvent) + "\"";
-
-            if (!concept.actionHref.empty()) {
-                out << indent << "<a href=\"" << escapeAttr(concept.actionHref) << "\" " << classAttr << " " << beingAttr << eventAttr << styleAttr << ">"
-                    << escapeHtml(concept.text) << "</a>\n";
-            } else {
-                out << indent << "<button type=\"button\" " << classAttr << " " << beingAttr << eventAttr << styleAttr << ">"
-                    << escapeHtml(concept.text) << "</button>\n";
-            }
-            break;
+        out << indent << "</ul>\n";
+    } else if (effectiveRole == "item") {
+        out << indent << "<li id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
+        if (!concept.text.empty()) {
+            out << indent << "  " << escapeHtml(concept.text) << "\n";
         }
-
-        case SemanticRole::Container: {
-            out << indent << "<div id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
-            if (!concept.text.empty()) {
-                out << indent << "  <p class=\"web-paragraph\">" << escapeHtml(concept.text) << "</p>\n";
-            }
-            for (const auto* child : children) {
-                out << realizeElement(*child, relations, indentLevel + 1);
-            }
-            out << indent << "</div>\n";
-            break;
+        for (const auto* child : children) {
+            out << realizeElement(*child, relations, indentLevel + 1);
         }
-
-        case SemanticRole::List: {
-            out << indent << "<ul id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
-            for (const auto* child : children) {
-                out << realizeElement(*child, relations, indentLevel + 1);
-            }
-            out << indent << "</ul>\n";
-            break;
+        out << indent << "</li>\n";
+    } else if (effectiveRole == "media" || effectiveRole == "image") {
+        out << indent << "<img id=\"" << escapeAttr(element.getIdentifier()) << "\" src=\"" << escapeAttr(concept.mediaSrc) << "\" alt=\""
+            << escapeAttr(concept.mediaAlt) << "\" " << classAttr << styleAttr << " " << beingAttr << " />\n";
+    } else if (effectiveRole == "quote") {
+        out << indent << "<blockquote id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
+        if (!concept.text.empty()) {
+            out << indent << "  " << escapeHtml(concept.text) << "\n";
         }
-
-        case SemanticRole::Item: {
-            out << indent << "<li id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
-            if (!concept.text.empty()) {
-                out << indent << "  " << escapeHtml(concept.text) << "\n";
-            }
-            for (const auto* child : children) {
-                out << realizeElement(*child, relations, indentLevel + 1);
-            }
-            out << indent << "</li>\n";
-            break;
+        for (const auto* child : children) {
+            out << realizeElement(*child, relations, indentLevel + 1);
         }
-
-        case SemanticRole::Media: {
-            out << indent << "<img id=\"" << escapeAttr(element.getIdentifier()) << "\" src=\"" << escapeAttr(concept.mediaSrc) << "\" alt=\""
-                << escapeAttr(concept.mediaAlt) << "\" " << classAttr << styleAttr << " " << beingAttr << " />\n";
-            break;
+        out << indent << "</blockquote>\n";
+    } else if (effectiveRole == "divider") {
+        out << indent << "<hr id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << " />\n";
+    } else {
+        // Any custom authored role (e.g. "sanctuary", "hero", "card", "container", etc.) defaults to container <div>
+        out << indent << "<div id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
+        if (!concept.text.empty()) {
+            out << indent << "  <p class=\"web-paragraph\">" << escapeHtml(concept.text) << "</p>\n";
         }
-
-        case SemanticRole::Quote: {
-            out << indent << "<blockquote id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
-            out << indent << "  <p>" << escapeHtml(concept.text) << "</p>\n";
-            out << indent << "</blockquote>\n";
-            break;
+        for (const auto* child : children) {
+            out << realizeElement(*child, relations, indentLevel + 1);
         }
-
-        case SemanticRole::Divider: {
-            out << indent << "<hr id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << " " << beingAttr << " />\n";
-            break;
-        }
-
-        default: {
-            // Open semantic role / generic fallback (e.g. "sanctuary", "article", etc.)
-            out << indent << "<div id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
-            if (!concept.text.empty()) {
-                out << indent << "  " << escapeHtml(concept.text) << "\n";
-            }
-            for (const auto* child : children) {
-                out << realizeElement(*child, relations, indentLevel + 1);
-            }
-            out << indent << "</div>\n";
-            break;
-        }
+        out << indent << "</div>\n";
     }
 
     return out.str();
 }
 
 std::string WebRealizer::realizeFullDocument(const Singular& root,
-                                            const std::vector<std::shared_ptr<Relation>>& relations,
-                                            const RealizeOptions& options) {
+                                             const std::vector<std::shared_ptr<Relation>>& relations,
+                                             const RealizeOptions& options) {
     std::ostringstream doc;
-    doc << "<!DOCTYPE html>\n";
-    doc << "<html lang=\"en\">\n";
-    doc << "<head>\n";
-    doc << "  <meta charset=\"UTF-8\" />\n";
-    doc << "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n";
-    doc << "  <title>" << escapeHtml(options.title) << "</title>\n";
-    doc << "  <meta name=\"description\" content=\"" << escapeAttr(options.metaDescription) << "\" />\n";
-    doc << "  <style>\n" << generateStyleSheet(&root);
-    if (!options.extraCss.empty()) {
-        doc << "\n" << options.extraCss << "\n";
+    doc << "<!DOCTYPE html>\n"
+        << "<html lang=\"en\">\n"
+        << "<head>\n"
+        << "  <meta charset=\"UTF-8\" />\n"
+        << "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n"
+        << "  <title>" << escapeHtml(options.title) << "</title>\n";
+
+    if (!options.metaDescription.empty()) {
+        doc << "  <meta name=\"description\" content=\"" << escapeAttr(options.metaDescription) << "\" />\n";
     }
-    doc << "  </style>\n";
-    doc << "</head>\n";
-    doc << "<body>\n";
+
+    doc << "  <style>\n"
+        << generateStyleSheet(&root)
+        << "  </style>\n";
+
+    if (!options.extraCss.empty()) {
+        doc << "  <style>\n"
+            << options.extraCss << "\n"
+            << "  </style>\n";
+    }
+
+    doc << "</head>\n"
+        << "<body>\n";
 
     doc << realizeElement(root, relations, 1);
 
     if (options.includeInteractiveScript) {
-        doc << "  <script>\n" << generateClientScript() << "  </script>\n";
+        doc << "  <script>\n"
+            << generateClientScript()
+            << "  </script>\n";
     }
 
-    doc << "</body>\n";
-    doc << "</html>\n";
+    doc << "</body>\n"
+        << "</html>\n";
+
     return doc.str();
 }
 

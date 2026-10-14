@@ -2,7 +2,7 @@
 
 ## Earthcall Web Designer Modality Prototype & Invariant Verification
 
-*Antigravity / Gemini 3.1 Pro / session `b5354f7e-b110-44af-9393-61ae139053de` / 2026-10-12 — Zach requested end-to-end Law-authored website modality with all architectural gift shops removed (canonical Lexeme denotes Law architecture, relational ordering, thin realizer, VFS/FileChannel storage, and zero C++ enum modification).*
+*Antigravity / Gemini 3.8 Flash / session `b5354f7e-b110-44af-9393-61ae139053de` / 2026-10-13 — Zach requested end-to-end Law-authored website modality with all architectural gift shops removed: canonical Lexeme denotes Law architecture, relational ordering, thin realizer, VFS/FileChannel storage, zero C++ enum modification, CSS custom property theming, and total elimination of the "Zach Plush" (living Person authorship strictly enforced via dynamic_cast<Person*>).*
 
 - [ ] Open `web_ui/designer_prototype.html` in a web browser (e.g. `open web_ui/designer_prototype.html` or inspect `web_ui/designer_prototype.png`).
 - [ ] Visual Inspection:

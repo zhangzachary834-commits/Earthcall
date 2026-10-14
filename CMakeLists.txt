@@ -478,6 +478,7 @@ if(NOT EMSCRIPTEN)
             ${TEST_NAME} STREQUAL "sky_island_sanctuary_test" OR
             ${TEST_NAME} STREQUAL "zone_material_corpus_test" OR
             ${TEST_NAME} STREQUAL "gift_shop_guardrail_test" OR
+            ${TEST_NAME} STREQUAL "web_designer_modality_test" OR
             ${TEST_NAME} MATCHES "^foreign_web_dom_")
             set_tests_properties(${TEST_NAME} PROPERTIES
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

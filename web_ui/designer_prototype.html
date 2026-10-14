@@ -28,6 +28,17 @@
   --web-shadow-subtle: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
   --web-shadow-raised: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
   --web-shadow-floating: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  --web-hero-bg: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 70%);
+  --web-hero-padding: 4rem 1.5rem;
+  --web-card-bg: #182338;
+  --web-card-border: rgba(56, 189, 248, 0.15);
+  --web-card-padding: 1.75rem;
+  --web-card-hover-border: #38bdf8;
+  --web-quote-border: #38bdf8;
+  --web-quote-bg: #0f172a;
+  --web-quote-padding: 1.5rem 2rem;
+  --web-action-padding: 0.75rem 1.75rem;
+  --web-action-font-size: 0.95rem;
 }
 
 * {
@@ -147,15 +158,15 @@ h4.web-heading { font-size: 1.25rem; }
 h5.web-heading { font-size: 1.1rem; }
 h6.web-heading { font-size: 1rem; }
 
-/* Surface Variants */
+/* Surface Variants driven by CSS variables */
 .web-surface--card {
-  background-color: var(--web-bg-card);
-  border: 1px solid var(--web-border-card);
-  padding: 1.75rem;
+  background: var(--web-card-bg);
+  border: 1px solid var(--web-card-border);
+  padding: var(--web-card-padding);
   transition: border-color 0.2s ease;
 }
 .web-surface--card:hover {
-  border-color: var(--web-primary);
+  border-color: var(--web-card-hover-border);
 }
 
 .web-surface--subtle {
@@ -165,8 +176,8 @@ h6.web-heading { font-size: 1rem; }
 }
 
 .web-surface--hero {
-  background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 70%);
-  padding: 5rem 1.5rem;
+  background: var(--web-hero-bg);
+  padding: var(--web-hero-padding);
 }
 
 /* Shapes */
@@ -186,8 +197,8 @@ h6.web-heading { font-size: 1rem; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem 1.75rem;
-  font-size: 0.95rem;
+  padding: var(--web-action-padding);
+  font-size: var(--web-action-font-size);
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
@@ -256,10 +267,10 @@ h6.web-heading { font-size: 1rem; }
 
 /* Quote */
 .web-quote {
-  border-left: 4px solid var(--web-primary);
-  padding: 1.5rem 2rem;
+  border-left: 4px solid var(--web-quote-border);
+  background: var(--web-quote-bg);
+  padding: var(--web-quote-padding);
   font-style: italic;
-  background-color: var(--web-bg-subtle);
   border-radius: 0 var(--web-radius) var(--web-radius) 0;
 }
 
@@ -275,12 +286,12 @@ h6.web-heading { font-size: 1rem; }
 </head>
 <body>
   <main id="earthcall-prototype" class="web-page web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="earthcall-prototype">
-    <nav id="navbar" class="web-navigation web-flow--horizontal web-align--center web-justify--between web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="navbar">
+    <nav id="navbar" class="web-navigation web-flow--horizontal web-align--center web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="navbar">
       <h2 id="nav-brand" class="web-heading web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="nav-brand">Earthcall Ourverse</h2>
       <div id="nav-links" class="web-container web-flow--horizontal web-align--center web-justify--start web-spacing--relaxed web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="nav-links">
-        <a href="#manifesto" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="nav-link-manifesto">Manifesto</a>
-        <a href="#ontology" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="nav-link-ontology">Ontology</a>
-        <a href="#laws" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="nav-link-laws">Living Laws</a>
+        <a href="#manifesto" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="nav-link-manifesto">Manifesto</a>
+        <a href="#ontology" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="nav-link-ontology">Ontology</a>
+        <a href="#laws" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="nav-link-laws">Living Laws</a>
       </div>
       <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--primary web-shape--rounded web-elevation--flat" data-being-id="nav-cta" data-action-event="enter-ourverse">Enter Ourverse</button>
     </nav>
@@ -299,17 +310,17 @@ h6.web-heading { font-size: 1rem; }
         <div id="card-person" class="web-container web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--card web-shape--rounded web-elevation--subtle" data-being-id="card-person">
           <h2 id="card-person-title" class="web-heading web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-person-title">Person-Centered Ontology</h2>
           <p id="card-person-text" class="web-paragraph web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-person-text">No C++ class for a domain noun. A Person means an actual human being. Machines and models sense and act; Persons author what things ARE.</p>
-          <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="card-person-btn">Learn more →</button>
+          <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-person-btn">Learn more →</button>
         </div>
         <div id="card-laws" class="web-container web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--card web-shape--rounded web-elevation--subtle" data-being-id="card-laws">
           <h2 id="card-laws-title" class="web-heading web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-laws-title">Living Laws &amp; Metalaws</h2>
           <p id="card-laws-text" class="web-paragraph web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-laws-text">Behavior emerges from Person-authored Laws, not hardcoded algorithms. Metalaws govern and compile authored sentences without a black box.</p>
-          <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="card-laws-btn">View law engine →</button>
+          <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-laws-btn">View law engine →</button>
         </div>
         <div id="card-ontomath" class="web-container web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--card web-shape--rounded web-elevation--subtle" data-being-id="card-ontomath">
           <h2 id="card-ontomath-title" class="web-heading web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-ontomath-title">OntoMath Continuous Fields</h2>
           <p id="card-ontomath-text" class="web-paragraph web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-ontomath-text">Mathematical meaning owned in closed form: continuous procedural manifolds, signed distance fields, and exact analytic rendering.</p>
-          <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="card-ontomath-btn">Explore geometry →</button>
+          <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-ontomath-btn">Explore geometry →</button>
         </div>
       </div>
     </section>
@@ -321,18 +332,18 @@ h6.web-heading { font-size: 1rem; }
       </div>
     </section>
     <section id="notes-section" class="web-section web-flow--vertical web-align--center web-justify--start web-spacing--relaxed web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="notes-section">
-      <p id="subordinate-note" class="web-paragraph web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--small web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat web-subordinate web-prominence--subordinate" data-being-id="subordinate-note" data-subordinate="true">Note: This website is rendered as an ephemeral realization target of living Earthcall world state.</p>
+      <p id="subordinate-note" class="web-paragraph web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--small web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat web-subordinate web-prominence--quiet" data-being-id="subordinate-note" data-subordinate="true">Note: This website is rendered as an ephemeral realization target of living Earthcall world state.</p>
     </section>
     <section id="quote-section" class="web-section web-flow--vertical web-align--center web-justify--start web-spacing--relaxed web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="quote-section">
-      <blockquote id="manifesto-quote" class="web-quote web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--prominent web-surface--default web-shape--rounded web-elevation--flat web-prominence--prominent" data-being-id="manifesto-quote">
-        <p>&quot;Earthcall is a Person-centered ontology that orders the engine attached to it. The engine here is not the order of truth in Earthcall—the ontology is, and the engine serves as the vessel for that.&quot; — Zachary Zhang</p>
+      <blockquote id="manifesto-quote" class="web-quote web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat web-prominence--prominent" data-being-id="manifesto-quote">
+        &quot;Earthcall is a Person-centered ontology that orders the engine attached to it. The engine here is not the order of truth in Earthcall—the ontology is, and the engine serves as the vessel for that.&quot; — Zachary Zhang
       </blockquote>
     </section>
-    <section id="footer-section" class="web-section web-flow--horizontal web-align--center web-justify--between web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="footer-section">
+    <section id="footer-section" class="web-section web-flow--horizontal web-align--center web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="footer-section">
       <p id="footer-text" class="web-paragraph web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--small web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat" data-being-id="footer-text">© 2026 Earthcall Ourverse. Authored natively by Earthcall Laws, Lexemes, and Metalaws.</p>
       <div id="footer-links" class="web-container web-flow--horizontal web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="footer-links">
-        <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--small web-weight--normal web-tone--muted web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="footer-link-1">Seven Refusals</button>
-        <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--small web-weight--normal web-tone--muted web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="footer-link-2">Agent Compass</button>
+        <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--small web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat" data-being-id="footer-link-1">Seven Refusals</button>
+        <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--small web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat" data-being-id="footer-link-2">Agent Compass</button>
       </div>
     </section>
   </main>
