@@ -104,6 +104,12 @@ int main() {
           "resolveZoneIdentityPath resolves legacy zone.json when zone.ecform does not exist");
     check(SaveSystem::resolveHomeIdentityPath(homeId) == legacyHomeJson.string(),
           "resolveHomeIdentityPath resolves legacy home.json when home.ecform does not exist");
+    // Direct identity reads must use the same legacy JSON fallback as discovery.
+    check(identityName(SaveSystem::readZoneIdentity(zoneId)) == "Legacy Zone",
+          "Zone direct read resolves legacy zone.json before binary identity creation");
+    check(identityName(SaveSystem::readHomeIdentity(homeId)) == "Legacy Home",
+          "Home direct read resolves legacy home.json before binary identity creation");
+
     check(catalogNames(false) == std::vector<std::string>{"Legacy Zone"},
           "Zone catalog discovers a JSON-only identity");
     check(catalogNames(true) == std::vector<std::string>{"Legacy Home"},

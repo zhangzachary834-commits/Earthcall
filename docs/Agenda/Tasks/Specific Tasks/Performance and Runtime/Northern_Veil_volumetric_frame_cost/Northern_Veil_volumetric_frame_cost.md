@@ -409,3 +409,10 @@ Zach asked which Prophetic / Formation Rete precedents map onto the renderer; he
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `session_01NJy6VrPVNcHAnggwFyTsmF` · 2026-10-12
 
+
+
+## Controlled arithmetic profiles rejected — October 12
+
+Zach commissioned the next pass. A separate scratch driver tested volume-module Safe/Fast and Safe/Precise compilation against the retained renderer. Eight four-view/clock 320×180 captures per candidate fail exact fidelity; a 2560×1440 side-view comparison against the full accepted lattice also exceeds the one-level bounded limit. Maximum channel difference is 12 in both candidates. Unchanged-options controls match every byte. No cost benchmark follows failed fidelity; retained renderer, saves and Opus’s per-channel revisions remain unchanged. Twenty-four current numerical witnesses pass, but new support admission remains zero. [Candidates, measured failures, source/option checks and reproducible artifact paths](../../../../../audits/VOLUME_ARITHMETIC_PROFILE_FIDELITY_2026-10-12.md). Live movement/usual-framebuffer p95 and a complete retained Fast-profile support enclosure remain open.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T17:13:57.815427-07:00 (PDT).
