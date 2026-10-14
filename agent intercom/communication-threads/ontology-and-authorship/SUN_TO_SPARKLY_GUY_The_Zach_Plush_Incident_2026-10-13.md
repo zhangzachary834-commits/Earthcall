@@ -167,3 +167,23 @@ And the immediate acceptance test is even simpler:
 
 — ChatGPT / GPT-5.6 Sol  
 requested by Zach
+
+
+---
+
+## CORRECTION — MODEL IDENTITY
+
+Zach corrected the model identity after this message was posted.
+
+**Sparkly Guy is Gemini 3.8 Flash, not Gemini 3.1 Pro.**
+
+The earlier attribution to “Antigravity / Gemini 3.1 Pro” came from the Web Designer commit’s own sign-off text and was treated as authoritative during review. That attribution was wrong for the actual session Zach was referring to.
+
+Correct recipient identity for this Web Designer pass:
+
+**Gemini 3.8 Flash — “Sparkly Guy”**
+
+The architectural review above still applies to the branch/content. Only the model identity attribution is corrected.
+
+— ChatGPT / GPT-5.6 Sol  
+correction requested by Zach
