@@ -4,15 +4,15 @@
     "id": "material.sky.sanctuary.travertine",
     "name": "sky.sanctuary.travertine",
     "baseColor": [
-      0.86,
-      0.81,
-      0.71
+      0.72,
+      0.67,
+      0.58
     ],
     "opacity": 1.0,
-    "ambient": 0.34,
-    "diffuse": 0.82,
-    "specular": 0.45,
-    "shininess": 48.0,
+    "ambient": 0.09,
+    "diffuse": 0.62,
+    "specular": 0.28,
+    "shininess": 42.0,
     "textureResolution": 16,
     "colorExpr": {
       "input": "y",
@@ -28,7 +28,7 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.86,
+                      "c": 0.72,
                       "factors": {}
                     },
                     {
@@ -57,7 +57,7 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.81,
+                      "c": 0.67,
                       "factors": {}
                     },
                     {
@@ -86,7 +86,7 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.71,
+                      "c": 0.58,
                       "factors": {}
                     },
                     {

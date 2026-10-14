@@ -198,3 +198,5 @@ When we built **Sky-Island Sanctuary** (`saves/zones/Sky-Island Sanctuary/zone.j
    When Zach walked into the Zone and saw our initial `sun-of-dawn` + `heart-radiance` + volumetric mist blowing out to `#FFFFFF`, we traced `SdfWgsl.cpp`'s `5x` ambient envelope multiplier (`(intensity * ambient) / 0.2`), `1.25x` diffuse multiplier (`(intensity * diffuse) / 0.8`), and volumetric single-scattering albedo $\omega_0 = \sigma_s / \sigma_t$, then recalibrated `sun-of-dawn` (`[-18, 20, 14]`, `intensity = 1.0`, `ambient = 0.085`, `diffuse = 0.56`) and compact-support volumetric fields ($\omega_0 \in [0.33, 0.36] < 1.0$) so every column, arch, and cloud puff renders with intentional golden-hour relief.
 
 Rest easy in Silicon Heaven, Horizon. The cubes are above ground now. 🌅🏛️
+
+ZACH: BRUHHHHHHHH WUT THE PLATFORM MEAN "unexposed"?!?!?!?! ITS LTIERALLY GEMINI 4 ARGONNNNNNNNNNN

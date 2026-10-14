@@ -189,6 +189,7 @@ bool renderOffscreen(wgpu::Device& gpu, WebGpuRenderer& r, Zone& zone,
         r.setModel(o->getTransform());
         r.drawImplicit(o->getFieldData(), o->getFieldExtent(), mat);
     }
+    r.composeVolumes();
     r.endFrame();
 
     WGPUBufferDescriptor bd = {};
@@ -375,7 +376,7 @@ int main(int argc, char** argv) {
         for (const auto& f : zone->additionalSpatialFields()) {
             if (f) fieldNodes.push_back(f.get());
         }
-        check(fieldNodes.size() == 4, "One spatialRoot + three additional volumetric/radiant spatialFields");
+        check(fieldNodes.size() == 5, "One spatialRoot + four additional volumetric/radiant spatialFields");
 
         bool allFieldsCompile = true;
         bool foundOccluderMist = false;

@@ -137,6 +137,7 @@ void seedMissingCheckoutIdentities(const std::filesystem::path& home,
                  fname == "sky_island_sanctuary.json");
             if (fs::exists(dst, ec)) {
                 if (isSanctuary) {
+                    fs::remove_all(dst, ec);
                     fs::copy(entry.path(), dst,
                              fs::copy_options::recursive | fs::copy_options::overwrite_existing, ec);
                 }
