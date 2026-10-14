@@ -36,7 +36,7 @@ int main() {
     const std::size_t baseline = EventBusTestFriend::listenerCount<DummyEvent>();
 
     int callCount = 0;
-    EventHandler::instance().registerHandler<DummyEvent>("test1", [&](const DummyEvent& e){
+    EventHandler::instance().registerHandler<DummyEvent>("test1", [&](const DummyEvent&){
         callCount++;
     });
 
@@ -48,8 +48,8 @@ int main() {
     check(EventBusTestFriend::listenerCount<DummyEvent>() == baseline,
           "removeHandler removes the listener");
 
-    EventHandler::instance().registerHandler<DummyEvent>("test2", [&](const DummyEvent& e){});
-    EventHandler::instance().registerHandler<DummyEvent>("test3", [&](const DummyEvent& e){});
+    EventHandler::instance().registerHandler<DummyEvent>("test2", [&](const DummyEvent&){});
+    EventHandler::instance().registerHandler<DummyEvent>("test3", [&](const DummyEvent&){});
 
     check(EventBusTestFriend::listenerCount<DummyEvent>() == baseline + 2,
           "registerHandler installs more listeners");
