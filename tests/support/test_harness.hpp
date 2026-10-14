@@ -294,7 +294,13 @@ struct RealSaveTreeGuard {
     ~RealSaveTreeGuard() {
         if (realSaves.empty() || backup.empty()) return;
         if (!std::filesystem::is_directory(backup)) std::terminate();
+
+        static const std::unordered_set<std::string> kSkipBackup = {
+            "logs", "recordings", "backups", "fixtures", "test_recorder_sandbox", "materials"
+        };
+
         for (const auto& entry : backedUpEntries) {
+            if (kSkipBackup.find(entry) != kSkipBackup.end()) continue;
             std::error_code snapshotEc;
             const auto snapshotStatus = std::filesystem::symlink_status(backup / entry, snapshotEc);
             if (snapshotEc || snapshotStatus.type() == std::filesystem::file_type::not_found) {
@@ -310,6 +316,7 @@ struct RealSaveTreeGuard {
 
         // Restore every entry that existed when guarding began.
         for (const auto& entry : backedUpEntries) {
+            if (kSkipBackup.find(entry) != kSkipBackup.end()) continue;
             std::filesystem::remove_all(realSaves / entry, ec);
             if (ec) std::terminate(); // Preserve the backup for manual recovery.
             std::filesystem::copy(
@@ -370,13 +377,19 @@ private:
         }
         if (ec) throw std::filesystem::filesystem_error("save-tree root inspection failed", ec);
 
+        static const std::unordered_set<std::string> kSkipBackup = {
+            "logs", "recordings", "backups", "fixtures", "test_recorder_sandbox", "materials"
+        };
+
         for (const auto& entry : initialEntries) {
-            std::filesystem::copy(
-                realSaves / entry, backup / entry,
-                std::filesystem::copy_options::recursive |
-                    std::filesystem::copy_options::copy_symlinks,
-                ec);
-            if (ec) throw std::filesystem::filesystem_error("save-tree backup failed", ec);
+            if (kSkipBackup.find(entry) == kSkipBackup.end()) {
+                std::filesystem::copy(
+                    realSaves / entry, backup / entry,
+                    std::filesystem::copy_options::recursive |
+                        std::filesystem::copy_options::copy_symlinks,
+                    ec);
+                if (ec) throw std::filesystem::filesystem_error("save-tree backup failed", ec);
+            }
             backedUpEntries.insert(entry);
         }
         previousSaveRoot = SaveSystem::saveRoot();
