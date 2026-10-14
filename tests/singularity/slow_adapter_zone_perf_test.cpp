@@ -72,9 +72,16 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    // Redirect save root to an isolated scratch directory so we don't back up 1.6GB of saves.
+    namespace fs = std::filesystem;
+    fs::path scratchDir = fs::temp_directory_path() / ("scratch_adapter_perf_" + std::to_string(std::rand()));
+    fs::create_directories(scratchDir / "worlds");
+    fs::path scratchWorld = scratchDir / "worlds" / fs::path(world).filename();
+    fs::copy_file(world, scratchWorld, fs::copy_options::overwrite_existing);
+
+    SaveSystem::setSaveRoot(scratchDir.string());
+
+    TestSupport::BootedEngineHarness h("Player", "humanoid", /*hydrateAllZones=*/false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);
