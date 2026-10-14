@@ -72,12 +72,29 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    // Protect the real Zone identity store by running in an isolated temporary scratch root
+    // with hydrateAllZones=false to avoid 1.6GB disk I/O and timeouts on CI runners.
+    struct Scratch {
+        std::filesystem::path path;
+        ~Scratch() {
+            SaveSystem::setSaveRoot("");
+            std::error_code ec;
+            std::filesystem::remove_all(path, ec);
+        }
+    };
+    Scratch scratch{std::filesystem::temp_directory_path() /
+        ("earthcall_perf_scratch_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))};
+    std::filesystem::create_directories(scratch.path / "worlds");
+    const auto worldPath = std::filesystem::path(world);
+    const auto isolatedWorld = scratch.path / "worlds" / worldPath.filename();
+    std::filesystem::copy_file(worldPath, isolatedWorld);
+
+    SaveSystem::setSaveRoot(scratch.path.string());
+
+    TestSupport::BootedEngineHarness h("Player", "humanoid", /*hydrateAllZones=*/false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld(isolatedWorld.string());
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
