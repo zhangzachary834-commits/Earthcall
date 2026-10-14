@@ -10,6 +10,8 @@
 #include <memory>
 #include <functional>
 
+class Person;
+
 namespace Singularity {
 namespace Foreign {
 namespace Web {
@@ -36,16 +38,16 @@ public:
     bool isFirstMover() const override { return true; }
     std::string getIdentifier() const override { return "web-designer-channel"; }
 
-    // Registration and discovery
-    static void syncRegister(LawManager& laws, Singular* author = nullptr);
+    // Registration and discovery (built-in channel has no human author)
+    static void syncRegister(LawManager& laws);
     static WebDesignerChannel* find(LawManager& laws);
 
-    // Compilation and Authoring API
+    // Compilation and Authoring API (author must be a Person)
     std::shared_ptr<Singular> authorElementFromPhrase(
         const std::string& identifier,
         const std::string& phrase,
         const std::string& text = "",
-        Singular* author = nullptr,
+        Person* author = nullptr,
         LawManager* laws = nullptr);
 
     // Form a parent-child containment relation between two web beings

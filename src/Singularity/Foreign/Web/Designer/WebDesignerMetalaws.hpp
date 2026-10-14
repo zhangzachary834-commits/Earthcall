@@ -8,6 +8,8 @@
 #include <vector>
 #include <memory>
 
+class Person;
+
 namespace Singularity {
 namespace Foreign {
 namespace Web {
@@ -15,21 +17,23 @@ namespace Web {
 // ---------------------------------------------------------------------------
 // Web Designer Lexeme & Metalaw Architecture
 //
-// In accordance with Earthcall precedent:
-//   "Characters / authored input -> LawLine / Lexemes -> Lexeme denotes / relates
-//    to Law or Metalaw -> semantic authored consequence."
+// In accordance with Earthcall ontology:
+//   "Authorship in Earthcall means human stewardship. It is not efficient causation,
+//    runtime creation, initialization, compilation, injection, ownership, or
+//    'the thing that happened to make this object exist.'"
 //
-// Meaning belongs in Lexeme <---denotes---> Law / Metalaw relations, NOT in
-// a static C++ dictionary or tokenizer switch statement.
-// There is NO "Zach Plush" (fake Object pretending to be a Person).
-// Live Person authorship is preserved through genuine Person beings.
+// Person authorship is Person-exclusive — no arbitrary Singular, Object, or
+// First-Mover channel may masquerade as a human author.
+// Built-in substrate vocabulary is unauthored infrastructure; runtime
+// initialization does not assign a human author.
+// Meaning belongs in Lexeme <---denotes---> Law / Metalaw relations.
 // ---------------------------------------------------------------------------
 
 class WebDesignerMetalaws {
 public:
-    // Seeds standard authoring Lexemes, Laws, and "denotes" Relations into LawManager & world.
-    // If author is null, the seeding uses the First Mover channel identity, NEVER a fake Person object.
-    static void syncRegister(LawManager& laws, Singular* author = nullptr);
+    // Seeds standard substrate authoring Lexemes, Laws, and "denotes" Relations into LawManager.
+    // Built-in infrastructure has NO human author.
+    static void syncRegister(LawManager& laws);
 
     // Access live seeded Lexemes and denotation Relations
     static const std::vector<std::shared_ptr<Singularity::Language::Lexeme>>& seededLexemes();
@@ -44,18 +48,20 @@ public:
                                     const std::vector<Relation*>& extraRelations = {});
 
     // Parse and compile an authored natural language phrase into a target Singular.
+    // Scans character sequences against in-world Lexemes.
     static WebConcept compilePhrase(const std::string& phrase,
                                     LawManager& laws,
                                     Singular& channelTarget,
                                     std::string* outError = nullptr,
                                     const std::vector<Relation*>& extraRelations = {});
 
-    // Create an authored newborn Singular (Object) in the world with real authorship relation.
-    // If an author (such as a living Person) is provided, connects Relation("authored-by", *obj, *author).
+    // Create an authored newborn Singular (Object) in the world with real Person authorship relation.
+    // If an author (a living Person) is provided, connects Relation("authored-by", *obj, *author).
+    // Person authorship is Person-exclusive — no arbitrary Singular or Object may satisfy it.
     static std::shared_ptr<Singular> createAuthoredElement(
         const std::string& identifier,
         const WebConcept& concept,
-        Singular* author = nullptr,
+        Person* author = nullptr,
         std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 };
 

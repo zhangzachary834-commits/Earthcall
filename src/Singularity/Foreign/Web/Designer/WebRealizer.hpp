@@ -63,6 +63,20 @@ public:
 
     // Helper: Escapes attribute value
     static std::string escapeAttr(const std::string& attr);
+
+    // Browser Trust Boundary Sanitizers:
+    // C++ may know how a browser works; C++ must not decide what the Person means.
+    // Validates HTML tag identifier (letters, digits, dashes; blocks script/style/iframe/etc.; fallback: "div")
+    static std::string sanitizeHtmlTag(const std::string& tag);
+
+    // Normalizes CSS class-token fragment to safe characters [a-z0-9_-]
+    static std::string normalizeCssToken(const std::string& token);
+
+    // Enforces URL scheme policy on action hrefs (blocks javascript:/data:/vbscript:; permits http, https, mailto, tel, #, /)
+    static std::string sanitizeHref(const std::string& href);
+
+    // Escapes/neutralizes </style> inside CSS values to prevent <style> tag breakout
+    static std::string sanitizeCssValue(const std::string& value);
 };
 
 } // namespace Web

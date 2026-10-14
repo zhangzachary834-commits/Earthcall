@@ -238,6 +238,7 @@ namespace WebRelationType {
     constexpr const char* kSubordinateTo = "subordinate-to";
     constexpr const char* kAnnotatedBy   = "annotated-by";
     constexpr const char* kGovernedBy    = "governed-by";
+    constexpr const char* kInstantiatedBy = "instantiated-by";
 }
 
 } // namespace Web

@@ -5,6 +5,7 @@
 #include "Singularity/Storage/VirtualFileSystem.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "Person/Person.hpp"
 #include <iostream>
 
 namespace Singularity {
@@ -34,13 +35,13 @@ void WebDesignerChannel::buildProperties() {
         "lastActionEvent", this, &WebDesignerChannel::propLastActionEvent, nullptr));
 }
 
-void WebDesignerChannel::syncRegister(LawManager& laws, Singular* author) {
+void WebDesignerChannel::syncRegister(LawManager& laws) {
     if (!laws.find("web-designer-channel")) {
         auto channel = std::make_shared<WebDesignerChannel>();
         laws.add(channel);
     }
     // Also sync-register the underlying Lexemes and Laws
-    WebDesignerMetalaws::syncRegister(laws, author);
+    WebDesignerMetalaws::syncRegister(laws);
 }
 
 WebDesignerChannel* WebDesignerChannel::find(LawManager& laws) {
@@ -52,7 +53,7 @@ std::shared_ptr<Singular> WebDesignerChannel::authorElementFromPhrase(
     const std::string& identifier,
     const std::string& phrase,
     const std::string& text,
-    Singular* author,
+    Person* author,
     LawManager* laws) {
 
     WebConcept concept;
@@ -63,7 +64,7 @@ std::shared_ptr<Singular> WebDesignerChannel::authorElementFromPhrase(
     } else {
         // Fallback to phrase compilation with temporary manager
         LawManager tempManager;
-        WebDesignerMetalaws::syncRegister(tempManager, author);
+        WebDesignerMetalaws::syncRegister(tempManager);
         concept = WebDesignerMetalaws::compilePhrase(phrase, tempManager, compileSlot);
     }
 
@@ -71,21 +72,22 @@ std::shared_ptr<Singular> WebDesignerChannel::authorElementFromPhrase(
         concept.text = text;
     }
 
-    // Create authored element with real Earthcall authorship relation
+    // Create authored element with real Earthcall Person authorship relation
     auto elem = WebDesignerMetalaws::createAuthoredElement(identifier, concept, author, &_relations);
     _authoredElements[identifier] = elem;
     return elem;
 }
 
 std::shared_ptr<Singular> WebDesignerChannel::findElement(const std::string& identifier) const {
-    // 1. Search in-world beings first
+    // 1. Discover through ordinary Earthcall world ownership first
     for (Singular* b : Universe::instance().beings()) {
         if (b && b->getIdentifier() == identifier) {
             auto it = _authoredElements.find(identifier);
             if (it != _authoredElements.end()) return it->second;
+            return std::shared_ptr<Singular>(b, [](Singular*){});
         }
     }
-    // 2. Fallback to channel registry
+    // 2. Fallback to channel cache
     auto it = _authoredElements.find(identifier);
     if (it != _authoredElements.end()) return it->second;
     return nullptr;

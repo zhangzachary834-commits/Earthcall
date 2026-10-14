@@ -34,8 +34,9 @@ void test_lexeme_resolution() {
     std::cout << "[Test 1] Lexeme & Relation In-World Resolution..." << std::endl;
 
     LawManager laws;
-    Person& zach = getTestPerson();
-    WebDesignerMetalaws::syncRegister(laws, &zach);
+    // In accordance with Refusal 5 and Sun's instruction:
+    // Built-in substrate vocabulary takes NO author parameter. Runtime initializer is not human author.
+    WebDesignerMetalaws::syncRegister(laws);
 
     // Verify seeded in-world Lexemes
     const auto& lexemes = WebDesignerMetalaws::seededLexemes();
@@ -56,11 +57,17 @@ void test_lexeme_resolution() {
             foundHeading = true;
             assert(rel->b() != nullptr);
             assert(rel->b()->getIdentifier() == "law.concept.role.heading");
+            // Built-in substrate laws must NOT have human authors attached
+            const auto* law = dynamic_cast<const Law*>(rel->b());
+            assert(law != nullptr);
+            assert(!law->isAuthored());
+            assert(law->authors().getMembers().empty());
         }
     }
     assert(foundHeading);
 
     std::cout << "  ✓ All Lexemes, Laws, and denotes Relations seeded and linked correctly" << std::endl;
+    std::cout << "  ✓ Built-in substrate vocabulary is unauthored infrastructure (no fake author)" << std::endl;
 }
 
 void test_metalaw_composition() {
@@ -71,7 +78,7 @@ void test_metalaw_composition() {
     Object channelTarget;
     channelTarget.setObjectID("test-channel-target");
 
-    WebDesignerMetalaws::syncRegister(laws, &author);
+    WebDesignerMetalaws::syncRegister(laws);
 
     // 1. "a large centered heading"
     {
@@ -126,7 +133,7 @@ void test_relational_ordering_and_provenance() {
     LawManager laws;
     Person& author = getTestPerson();
     WebDesignerChannel channel;
-    WebDesignerMetalaws::syncRegister(laws, &author);
+    WebDesignerMetalaws::syncRegister(laws);
 
     // Create container
     auto grid = channel.authorElementFromPhrase("items-grid", "container grid spacing normal", "", &author, &laws);
@@ -185,7 +192,7 @@ void test_thin_realizer_and_authored_theme() {
     LawManager laws;
     Person& author = getTestPerson();
     WebDesignerChannel channel;
-    WebDesignerMetalaws::syncRegister(laws, &author);
+    WebDesignerMetalaws::syncRegister(laws);
 
     auto page = channel.authorElementFromPhrase("themed-page", "page vertical", "", &author, &laws);
 
@@ -265,7 +272,7 @@ void test_vfs_and_file_channel_storage() {
     LawManager laws;
     Person& author = getTestPerson();
     WebDesignerChannel channel;
-    WebDesignerMetalaws::syncRegister(laws, &author);
+    WebDesignerMetalaws::syncRegister(laws);
 
     auto page = channel.authorElementFromPhrase("vfs-page", "page vertical", "", &author, &laws);
     auto heading = channel.authorElementFromPhrase("vfs-title", "heading large bold centered", "VFS Storage Test", &author, &laws);
@@ -309,7 +316,7 @@ void test_law_driven_behavior() {
     LawManager laws;
     Person& author = getTestPerson();
     WebDesignerChannel channel;
-    WebDesignerMetalaws::syncRegister(laws, &author);
+    WebDesignerMetalaws::syncRegister(laws);
     laws.connectToEventBus();
 
     auto page = channel.authorElementFromPhrase("page-root", "page vertical", "", &author, &laws);
@@ -357,7 +364,7 @@ void test_end_to_end_prototype_generation() {
     LawManager laws;
     Person& author = getTestPerson();
     WebDesignerChannel channel;
-    WebDesignerMetalaws::syncRegister(laws, &author);
+    WebDesignerMetalaws::syncRegister(laws);
 
     // 1. Root Page
     auto page = channel.authorElementFromPhrase("earthcall-prototype", "page vertical", "", &author, &laws);
@@ -546,6 +553,210 @@ void test_end_to_end_prototype_generation() {
               << std::filesystem::file_size("web_ui/designer_prototype.html") << " bytes)" << std::endl;
 }
 
+void test_alice_and_bob_two_person_provenance() {
+    std::cout << "[Test 9] Multi-Person Authorship Provenance Isolation (Alice & Bob)..." << std::endl;
+
+    // 1. Two distinct live Persons
+    Person alice = makeTestPerson("Alice");
+    Person bob = makeTestPerson("Bob");
+
+    // 2. Alice initializes Web modality in her context
+    LawManager lawsAlice;
+    WebDesignerMetalaws::syncRegister(lawsAlice);
+
+    // 3. Bob initializes Web modality in his context
+    LawManager lawsBob;
+    WebDesignerMetalaws::syncRegister(lawsBob);
+
+    // ASSERT Criterion 3: Built-in substrate vocabulary does not become Alice-authored or Bob-authored
+    Law* headingLawAlice = lawsAlice.find("law.concept.role.heading");
+    assert(headingLawAlice != nullptr);
+    assert(!headingLawAlice->isAuthored());
+    assert(headingLawAlice->authors().getMembers().empty());
+
+    Law* headingLawBob = lawsBob.find("law.concept.role.heading");
+    assert(headingLawBob != nullptr);
+    assert(!headingLawBob->isAuthored());
+    assert(headingLawBob->authors().getMembers().empty());
+
+    // 4. Alice authors a distinct custom law
+    auto lawAlice = std::make_shared<Law>("law.alice.brand", std::vector<Singular*>{&alice});
+    lawAlice->setActionModel(ActionNode::set("role", PropertyValue(std::string("alice-brand"))));
+    lawsAlice.add(lawAlice);
+
+    // 5. Bob authors a distinct custom law
+    auto lawBob = std::make_shared<Law>("law.bob.brand", std::vector<Singular*>{&bob});
+    lawBob->setActionModel(ActionNode::set("role", PropertyValue(std::string("bob-brand"))));
+    lawsBob.add(lawBob);
+
+    assert(lawAlice->isAuthored());
+    assert(lawAlice->authors().getMembers().size() == 1);
+    assert(lawAlice->authors().getMembers()[0] == &alice);
+
+    assert(lawBob->isAuthored());
+    assert(lawBob->authors().getMembers().size() == 1);
+    assert(lawBob->authors().getMembers()[0] == &bob);
+
+    // 6. Alice and Bob author web elements through channels
+    WebDesignerChannel channelAlice;
+    auto elemAlice = channelAlice.authorElementFromPhrase("alice-box", "container rounded", "", &alice, &lawsAlice);
+
+    WebDesignerChannel channelBob;
+    auto elemBob = channelBob.authorElementFromPhrase("bob-box", "container rounded", "", &bob, &lawsBob);
+
+    // ASSERT Criterion 1 & 5: Authorship is strictly Person-exclusive and independent
+    bool foundAliceAuth = false;
+    for (const auto& rel : channelAlice.getRelations()) {
+        if (rel->type == WebRelationType::kAuthoredBy && rel->a() == elemAlice.get()) {
+            assert(rel->b() == &alice);
+            assert(dynamic_cast<Person*>(rel->b()) != nullptr);
+            foundAliceAuth = true;
+        }
+    }
+    assert(foundAliceAuth);
+
+    bool foundBobAuth = false;
+    for (const auto& rel : channelBob.getRelations()) {
+        if (rel->type == WebRelationType::kAuthoredBy && rel->a() == elemBob.get()) {
+            assert(rel->b() == &bob);
+            assert(dynamic_cast<Person*>(rel->b()) != nullptr);
+            assert(rel->b() != &alice); // Bob does NOT inherit Alice as author
+            foundBobAuth = true;
+        }
+    }
+    assert(foundBobAuth);
+
+    std::cout << "  ✓ Built-in substrate vocabulary remained unauthored across both initializations" << std::endl;
+    std::cout << "  ✓ Alice-authored state and Bob-authored state maintained strictly distinct Person provenance" << std::endl;
+    std::cout << "  ✓ Bob did not inherit Alice as author (no process-global leak)" << std::endl;
+}
+
+void test_person_absence_and_enduring_authorship() {
+    std::cout << "[Test 10] Person Absence & Enduring Authorship..." << std::endl;
+
+    LawManager laws;
+    WebDesignerMetalaws::syncRegister(laws);
+
+    // Person Carol authored a Law earlier
+    auto carol = std::make_shared<Person>(makeTestPerson("Carol"));
+    auto enduringLaw = std::make_shared<Law>("law.carol.accent", std::vector<Singular*>{carol.get()});
+    enduringLaw->setActionModel(ActionNode::set("surface.variant", PropertyValue(std::string("accent"))));
+    laws.add(enduringLaw);
+
+    assert(enduringLaw->isAuthored());
+    assert(enduringLaw->authors().getMembers()[0] == carol.get());
+
+    // Carol is absent now: no Person is passed to the execution environment or runtime call.
+    // In accordance with Sun's instruction:
+    // "Person authored Law earlier -> authorship persists -> Person may be absent now -> Law still exists and executes"
+    // No cube or Object proxy needed!
+    assert(enduringLaw->isAuthored());
+
+    Object testTarget;
+    testTarget.setObjectID("absence-test-target");
+    testTarget.setDynamicProperty("surface.variant", PropertyValue(std::string("default")));
+
+    // Law applies cleanly without Carol being present at runtime
+    auto result = enduringLaw->applyTo(testTarget);
+    assert(result == Law::ApplicationResult::Applied);
+
+    PropertyValue v;
+    assert(testTarget.getDynamicProperty("surface.variant", v));
+    assert(std::get<std::string>(v) == "accent");
+
+    std::cout << "  ✓ Enduring authorship persists across Person absence" << std::endl;
+    std::cout << "  ✓ Law executed truthfully without proxy objects or cubes babysitting it" << std::endl;
+}
+
+void test_browser_trust_boundary_security() {
+    std::cout << "[Test 11] Browser Trust Boundary Security..." << std::endl;
+
+    // 1. HTML Tag Sanitization
+    assert(WebRealizer::sanitizeHtmlTag("div") == "div");
+    assert(WebRealizer::sanitizeHtmlTag("section") == "section");
+    assert(WebRealizer::sanitizeHtmlTag("custom-card") == "custom-card");
+    assert(WebRealizer::sanitizeHtmlTag("script") == "div");
+    assert(WebRealizer::sanitizeHtmlTag("style") == "div");
+    assert(WebRealizer::sanitizeHtmlTag("iframe") == "div");
+    assert(WebRealizer::sanitizeHtmlTag("<script>alert(1)</script>") == "div");
+    assert(WebRealizer::sanitizeHtmlTag("123bad") == "div");
+    assert(WebRealizer::sanitizeHtmlTag("") == "div");
+
+    // 2. CSS Token Normalization
+    assert(WebRealizer::normalizeCssToken("heading") == "heading");
+    assert(WebRealizer::normalizeCssToken("luminous glow") == "luminous-glow");
+    assert(WebRealizer::normalizeCssToken("bad!class@name#") == "bad-class-name");
+    assert(WebRealizer::normalizeCssToken("___foo---bar___") == "foo-bar");
+
+    // 3. URL Scheme Policy on Hrefs
+    assert(WebRealizer::sanitizeHref("https://earthcall.org") == "https://earthcall.org");
+    assert(WebRealizer::sanitizeHref("http://example.com/demo") == "http://example.com/demo");
+    assert(WebRealizer::sanitizeHref("/docs/manifesto") == "/docs/manifesto");
+    assert(WebRealizer::sanitizeHref("#section-1") == "#section-1");
+    assert(WebRealizer::sanitizeHref("mailto:contact@earthcall.org") == "mailto:contact@earthcall.org");
+    assert(WebRealizer::sanitizeHref("tel:+1234567890") == "tel:+1234567890");
+
+    // Rejected executable schemes
+    assert(WebRealizer::sanitizeHref("javascript:alert(1)") == "#");
+    assert(WebRealizer::sanitizeHref("JAVASCRIPT:evil()") == "#");
+    assert(WebRealizer::sanitizeHref("data:text/html,<script>evil()</script>") == "#");
+    assert(WebRealizer::sanitizeHref("vbscript:msgbox") == "#");
+
+    // 4. CSS Value </style> Breakout Neutralization
+    std::string maliciousCss = "red; </style><script>alert('xss')</script><style>";
+    std::string safeCss = WebRealizer::sanitizeCssValue(maliciousCss);
+    assert(safeCss.find("</style") == std::string::npos);
+    assert(safeCss.find("<\\/style") != std::string::npos);
+
+    // Verify in generateStyleSheet with malicious authored root property
+    Object maliciousRoot;
+    maliciousRoot.setObjectID("malicious-root");
+    maliciousRoot.setDynamicProperty("theme.backgroundColor", PropertyValue(maliciousCss));
+
+    std::string sheet = WebRealizer::generateStyleSheet(&maliciousRoot);
+    assert(sheet.find("</style") == std::string::npos);
+
+    std::cout << "  ✓ HTML tag validation blocks script/iframe/malformed tags" << std::endl;
+    std::cout << "  ✓ CSS token normalization sanitizes arbitrary class tokens" << std::endl;
+    std::cout << "  ✓ Href policy blocks javascript: and data: schemes" << std::endl;
+    std::cout << "  ✓ CSS value sanitization neutralizes </style> breakout" << std::endl;
+}
+
+void test_universe_discovery_and_pure_realization() {
+    std::cout << "[Test 12] Universe Discovery & Pure Realization..." << std::endl;
+
+    Person& author = getTestPerson();
+    WebConcept cardConcept;
+    cardConcept.roleName = "card";
+    cardConcept.text = "In-World Discovered Card";
+
+    auto inWorldElement = WebDesignerMetalaws::createAuthoredElement("universe-elem-42", cardConcept, &author);
+
+    // Register with Universe
+    std::vector<Singular*> worldBeings = { inWorldElement.get() };
+    Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+        for (auto* b : worldBeings) out.push_back(b);
+    });
+
+    WebDesignerChannel channel;
+    // Discover being through Universe even though channel never saw it
+    auto found = channel.findElement("universe-elem-42");
+    assert(found != nullptr);
+    assert(found->getIdentifier() == "universe-elem-42");
+
+    // Pure realization to HTML without touching storage or filesystem
+    std::string html = WebRealizer::realizeElement(*found, {});
+    assert(!html.empty());
+    assert(html.find("In-World Discovered Card") != std::string::npos);
+    assert(html.find("data-being-id=\"universe-elem-42\"") != std::string::npos);
+
+    // Reset Universe provider
+    Universe::instance().setProvider(nullptr);
+
+    std::cout << "  ✓ Element discovered through ordinary Earthcall Universe world ownership" << std::endl;
+    std::cout << "  ✓ Pure realization returns valid HTML without requiring storage" << std::endl;
+}
+
 int main() {
     std::cout << "========================================" << std::endl;
     std::cout << "Running Web Designer Modality Test Suite" << std::endl;
@@ -559,6 +770,10 @@ int main() {
     test_vfs_and_file_channel_storage();
     test_law_driven_behavior();
     test_end_to_end_prototype_generation();
+    test_alice_and_bob_two_person_provenance();
+    test_person_absence_and_enduring_authorship();
+    test_browser_trust_boundary_security();
+    test_universe_discovery_and_pure_realization();
 
     std::cout << "========================================" << std::endl;
     std::cout << "ALL WEB DESIGNER MODALITY TESTS PASSED!" << std::endl;

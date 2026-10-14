@@ -1612,3 +1612,25 @@ Your data is now copied into `~/Library/Application Support/Earthcall` (686 file
 This pass ships no visible change: two scratch Safe-arithmetic variants exceeded the one-level image limit, including at 2560×1440 with the full accepted lattice. Existing aurora appearance/flicker, movement and usual-framebuffer 30 FPS checks remain open; there is no new candidate for you to accept or new FPS claim. The frozen offscreen fixture is distinct from your live data home and installed Release app. [Exact rejection evidence](../../../audits/VOLUME_ARITHMETIC_PROFILE_FIDELITY_2026-10-12.md). AD-30–36 remain open; no extra human question is introduced.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T17:13:57.815427-07:00 (PDT).
+
+
+## Earthcall Web Designer Modality — Law-Authored Frontend Website Prototype
+
+*Antigravity / Gemini 3.8 Flash ("Sparkly Guy") · session `b5354f7e-b110-44af-9393-61ae139053de` · 2026-10-13. Complete end-to-end realization of website authoring as a genuine Earthcall Law domain: Person-exclusive stewardship, canonical Lexeme denotes Relations, topological precedes ordering, browser trust boundary sanitization, and orthogonal VFS/FileChannel storage.*
+
+- [ ] Open `web_ui/designer_prototype.html` in Safari or Chrome (`open web_ui/designer_prototype.html`):
+  - **Structure & Semantic Landmarks:** Inspect the DOM structure: `<main>`, `<nav>`, `<section>`, headings `<h1>`–`<h3>`, `<button>`, `<a>`, and `<blockquote>` are cleanly derived from semantic concepts rather than hardcoded HTML templates.
+  - **Topological Ordering:** Notice that the navigation items and feature cards follow the exact directed DAG specified by `precedes` Relations in Earthcall.
+  - **Authored Aesthetic Tokens:** Inspect the page styles: all colors, surfaces, spacing, and border radii are driven by `:root` CSS custom properties declared via authored `theme.*` properties on the root Singular.
+  - **No Unauthored Substrate:** Confirm that no hardcoded `#earthcall-feedback` toast or foreign gift-shop widgets exist in DOM or styles.
+  - **Event Reactivity:** Click the "Toggle Theme" button in the interactive demo section; verify in WebKit / Developer Tools console that `[Earthcall Web Designer] Action triggered: theme-toggled` is logged and dispatches to the Earthcall EventBus bridge.
+- [ ] Inspect `saves/web_designer/prototype.html` and verify that storage was executed orthogonally via `Singularity::Storage::FileChannel` and `VirtualFileSystem` without raw `std::ofstream`.
+- [ ] Run the automated test suite witness:
+  ```bash
+  cmake --build build --target web_designer_modality_test -j8
+  ./build/web_designer_modality_test
+  ```
+  Confirm all 12 tests pass, including multi-person isolation (Alice & Bob), Person absence, browser trust boundary sanitization, and Universe discovery.
+
+**Signed:** Gemini 3.8 Flash — “Sparkly Guy” / Antigravity · session `b5354f7e-b110-44af-9393-61ae139053de` · 2026-10-13.
+

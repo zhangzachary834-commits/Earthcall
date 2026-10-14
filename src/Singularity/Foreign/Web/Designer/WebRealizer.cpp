@@ -162,31 +162,142 @@ std::string WebRealizer::escapeAttr(const std::string& attr) {
     return escapeHtml(attr);
 }
 
+std::string WebRealizer::sanitizeHtmlTag(const std::string& tag) {
+    if (tag.empty()) return "div";
+    std::string lower;
+    lower.reserve(tag.size());
+    for (char c : tag) {
+        lower += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    }
+    // Block executable or document-structure tags
+    if (lower == "script" || lower == "style" || lower == "iframe" ||
+        lower == "object" || lower == "embed" || lower == "frame" ||
+        lower == "frameset" || lower == "html" || lower == "head" ||
+        lower == "body" || lower == "applet" || lower == "base" ||
+        lower == "link" || lower == "meta") {
+        return "div";
+    }
+    // Must start with [a-z]
+    if (!std::isalpha(static_cast<unsigned char>(lower[0]))) return "div";
+    // Allowed characters: [a-z0-9-]
+    for (char c : lower) {
+        if (!std::isalnum(static_cast<unsigned char>(c)) && c != '-') {
+            return "div";
+        }
+    }
+    return lower;
+}
+
+std::string WebRealizer::normalizeCssToken(const std::string& token) {
+    if (token.empty()) return "";
+    std::string out;
+    out.reserve(token.size());
+    for (char c : token) {
+        char low = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        if (std::isalnum(static_cast<unsigned char>(low)) || low == '_') {
+            out += low;
+        } else {
+            out += '-';
+        }
+    }
+    // Collapse consecutive dashes
+    std::string collapsed;
+    collapsed.reserve(out.size());
+    bool lastDash = false;
+    for (char c : out) {
+        if (c == '-') {
+            if (!lastDash) collapsed += c;
+            lastDash = true;
+        } else {
+            collapsed += c;
+            lastDash = false;
+        }
+    }
+    // Trim leading and trailing dashes and underscores
+    size_t first = collapsed.find_first_not_of("-_");
+    if (first == std::string::npos) return "";
+    size_t last = collapsed.find_last_not_of("-_");
+    return collapsed.substr(first, last - first + 1);
+}
+
+std::string WebRealizer::sanitizeHref(const std::string& href) {
+    size_t first = href.find_first_not_of(" \t\r\n");
+    if (first == std::string::npos) return "#";
+    size_t last = href.find_last_not_of(" \t\r\n");
+    std::string trimmed = href.substr(first, last - first + 1);
+
+    std::string lower;
+    lower.reserve(trimmed.size());
+    for (char c : trimmed) {
+        lower += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    }
+
+    // Explicitly reject executable or arbitrary data schemes
+    if (lower.rfind("javascript:", 0) == 0 ||
+        lower.rfind("data:", 0) == 0 ||
+        lower.rfind("vbscript:", 0) == 0) {
+        return "#";
+    }
+
+    // Relative URLs, anchor fragments, root-relative paths
+    if (trimmed[0] == '#' || trimmed[0] == '/' || trimmed[0] == '.') {
+        return trimmed;
+    }
+
+    // Allowed absolute schemes
+    if (lower.rfind("http://", 0) == 0 ||
+        lower.rfind("https://", 0) == 0 ||
+        lower.rfind("mailto:", 0) == 0 ||
+        lower.rfind("tel:", 0) == 0) {
+        return trimmed;
+    }
+
+    return "#";
+}
+
+std::string WebRealizer::sanitizeCssValue(const std::string& value) {
+    std::string out = value;
+    std::string lower;
+    lower.reserve(out.size());
+    for (char c : out) {
+        lower += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    }
+
+    std::string needle = "</style";
+    size_t pos = 0;
+    while ((pos = lower.find(needle, pos)) != std::string::npos) {
+        out.replace(pos, 7, "<\\/style");
+        lower.replace(pos, 7, "<\\/style");
+        pos += 8;
+    }
+    return out;
+}
+
 std::string WebRealizer::generateStyleSheet(const Singular* root) {
     // Read authored theme tokens from root if available, otherwise use clean defaults
-    std::string bg = getThemeString(root, "theme.backgroundColor", "#0b0f19");
-    std::string surface = getThemeString(root, "theme.surfaceColor", "#131c2e");
-    std::string card = getThemeString(root, "theme.cardColor", "#182338");
-    std::string subtle = getThemeString(root, "theme.subtleColor", "#0f172a");
-    std::string text = getThemeString(root, "theme.textColor", "#f8fafc");
-    std::string textMuted = getThemeString(root, "theme.textMutedColor", "#94a3b8");
-    std::string primary = getThemeString(root, "theme.primaryColor", "#38bdf8");
-    std::string accent = getThemeString(root, "theme.accentColor", "#818cf8");
-    std::string radius = getThemeString(root, "theme.radius", "0.75rem");
-    std::string fontSans = getThemeString(root, "theme.fontFamily", "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif");
+    std::string bg = sanitizeCssValue(getThemeString(root, "theme.backgroundColor", "#0b0f19"));
+    std::string surface = sanitizeCssValue(getThemeString(root, "theme.surfaceColor", "#131c2e"));
+    std::string card = sanitizeCssValue(getThemeString(root, "theme.cardColor", "#182338"));
+    std::string subtle = sanitizeCssValue(getThemeString(root, "theme.subtleColor", "#0f172a"));
+    std::string text = sanitizeCssValue(getThemeString(root, "theme.textColor", "#f8fafc"));
+    std::string textMuted = sanitizeCssValue(getThemeString(root, "theme.textMutedColor", "#94a3b8"));
+    std::string primary = sanitizeCssValue(getThemeString(root, "theme.primaryColor", "#38bdf8"));
+    std::string accent = sanitizeCssValue(getThemeString(root, "theme.accentColor", "#818cf8"));
+    std::string radius = sanitizeCssValue(getThemeString(root, "theme.radius", "0.75rem"));
+    std::string fontSans = sanitizeCssValue(getThemeString(root, "theme.fontFamily", "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"));
 
     // Presentation tokens driven by theme custom properties
-    std::string heroBg = getThemeString(root, "theme.heroBackground", "radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 70%)");
-    std::string heroPadding = getThemeString(root, "theme.heroPadding", "4rem 1.5rem");
-    std::string cardBg = getThemeString(root, "theme.cardBackground", card);
-    std::string cardBorder = getThemeString(root, "theme.cardBorder", "rgba(56, 189, 248, 0.15)");
-    std::string cardPadding = getThemeString(root, "theme.cardPadding", "1.75rem");
-    std::string cardHoverBorder = getThemeString(root, "theme.cardHoverBorder", primary);
-    std::string quoteBorder = getThemeString(root, "theme.quoteBorder", primary);
-    std::string quoteBg = getThemeString(root, "theme.quoteBackground", subtle);
-    std::string quotePadding = getThemeString(root, "theme.quotePadding", "1.5rem 2rem");
-    std::string actionPadding = getThemeString(root, "theme.actionPadding", "0.75rem 1.75rem");
-    std::string actionFontSize = getThemeString(root, "theme.actionFontSize", "0.95rem");
+    std::string heroBg = sanitizeCssValue(getThemeString(root, "theme.heroBackground", "radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 70%)"));
+    std::string heroPadding = sanitizeCssValue(getThemeString(root, "theme.heroPadding", "4rem 1.5rem"));
+    std::string cardBg = sanitizeCssValue(getThemeString(root, "theme.cardBackground", card));
+    std::string cardBorder = sanitizeCssValue(getThemeString(root, "theme.cardBorder", "rgba(56, 189, 248, 0.15)"));
+    std::string cardPadding = sanitizeCssValue(getThemeString(root, "theme.cardPadding", "1.75rem"));
+    std::string cardHoverBorder = sanitizeCssValue(getThemeString(root, "theme.cardHoverBorder", primary));
+    std::string quoteBorder = sanitizeCssValue(getThemeString(root, "theme.quoteBorder", primary));
+    std::string quoteBg = sanitizeCssValue(getThemeString(root, "theme.quoteBackground", subtle));
+    std::string quotePadding = sanitizeCssValue(getThemeString(root, "theme.quotePadding", "1.5rem 2rem"));
+    std::string actionPadding = sanitizeCssValue(getThemeString(root, "theme.actionPadding", "0.75rem 1.75rem"));
+    std::string actionFontSize = sanitizeCssValue(getThemeString(root, "theme.actionFontSize", "0.95rem"));
 
     std::ostringstream css;
     css << ":root {\n"
@@ -520,23 +631,23 @@ std::string WebRealizer::realizeElement(const Singular& element,
     std::string effectiveShape = concept.shapeName.empty() ? WebConcept::shapeToString(concept.shape) : concept.shapeName;
     std::string effectiveElevation = concept.elevationName.empty() ? WebConcept::elevationToString(concept.elevation) : concept.elevationName;
 
-    classes.push_back("web-" + effectiveRole);
-    classes.push_back("web-flow--" + effectiveFlow);
-    classes.push_back("web-align--" + effectiveAlign);
-    classes.push_back("web-justify--" + effectiveJustify);
-    classes.push_back("web-spacing--" + effectiveSpacing);
-    classes.push_back("web-scale--" + effectiveScale);
-    classes.push_back("web-weight--" + effectiveWeight);
-    classes.push_back("web-tone--" + effectiveTone);
-    classes.push_back("web-surface--" + effectiveVariant);
-    classes.push_back("web-shape--" + effectiveShape);
-    classes.push_back("web-elevation--" + effectiveElevation);
+    classes.push_back("web-" + normalizeCssToken(effectiveRole));
+    classes.push_back("web-flow--" + normalizeCssToken(effectiveFlow));
+    classes.push_back("web-align--" + normalizeCssToken(effectiveAlign));
+    classes.push_back("web-justify--" + normalizeCssToken(effectiveJustify));
+    classes.push_back("web-spacing--" + normalizeCssToken(effectiveSpacing));
+    classes.push_back("web-scale--" + normalizeCssToken(effectiveScale));
+    classes.push_back("web-weight--" + normalizeCssToken(effectiveWeight));
+    classes.push_back("web-tone--" + normalizeCssToken(effectiveTone));
+    classes.push_back("web-surface--" + normalizeCssToken(effectiveVariant));
+    classes.push_back("web-shape--" + normalizeCssToken(effectiveShape));
+    classes.push_back("web-elevation--" + normalizeCssToken(effectiveElevation));
 
     if (concept.subordinate) {
         classes.push_back("web-subordinate");
     }
     if (!concept.prominence.empty()) {
-        classes.push_back("web-prominence--" + concept.prominence);
+        classes.push_back("web-prominence--" + normalizeCssToken(concept.prominence));
     }
 
     std::string classAttr = "class=\"";
@@ -549,16 +660,16 @@ std::string WebRealizer::realizeElement(const Singular& element,
     // Dynamic style attribute for authored presentation styles
     std::string styleAttr;
     std::string inlineStyles;
-    if (!concept.background.empty()) inlineStyles += "background-color: " + escapeAttr(concept.background) + "; ";
-    if (!concept.color.empty()) inlineStyles += "color: " + escapeAttr(concept.color) + "; ";
+    if (!concept.background.empty()) inlineStyles += "background-color: " + escapeAttr(sanitizeCssValue(concept.background)) + "; ";
+    if (!concept.color.empty()) inlineStyles += "color: " + escapeAttr(sanitizeCssValue(concept.color)) + "; ";
 
     // Read any authored element-level presentation overrides
     PropertyValue sp;
     if (element.getDynamicProperty("surface.padding", sp) || element.getDynamicProperty("padding", sp)) {
-        if (auto s = std::get_if<std::string>(&sp)) inlineStyles += "padding: " + escapeAttr(*s) + "; ";
+        if (auto s = std::get_if<std::string>(&sp)) inlineStyles += "padding: " + escapeAttr(sanitizeCssValue(*s)) + "; ";
     }
     if (element.getDynamicProperty("surface.border", sp) || element.getDynamicProperty("border", sp)) {
-        if (auto s = std::get_if<std::string>(&sp)) inlineStyles += "border: " + escapeAttr(*s) + "; ";
+        if (auto s = std::get_if<std::string>(&sp)) inlineStyles += "border: " + escapeAttr(sanitizeCssValue(*s)) + "; ";
     }
     if (!inlineStyles.empty()) {
         styleAttr = " style=\"" + inlineStyles + "\"";
@@ -574,7 +685,7 @@ std::string WebRealizer::realizeElement(const Singular& element,
 
     // Escape hatch for explicit tag override
     if (!concept.elementTag.empty()) {
-        std::string tag = escapeAttr(concept.elementTag);
+        std::string tag = sanitizeHtmlTag(concept.elementTag);
         out << indent << "<" << tag << " id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
         if (!concept.text.empty()) {
             out << indent << "  " << escapeHtml(concept.text) << "\n";
@@ -615,7 +726,8 @@ std::string WebRealizer::realizeElement(const Singular& element,
     } else if (effectiveRole == "action" || effectiveRole == "button" || effectiveRole == "link") {
         std::string eventAttr = concept.actionEvent.empty() ? "" : " data-action-event=\"" + escapeAttr(concept.actionEvent) + "\"";
         if (!concept.actionHref.empty()) {
-            out << indent << "<a href=\"" << escapeAttr(concept.actionHref) << "\" " << classAttr << " " << beingAttr << eventAttr << styleAttr << ">"
+            std::string safeHref = sanitizeHref(concept.actionHref);
+            out << indent << "<a href=\"" << escapeAttr(safeHref) << "\" " << classAttr << " " << beingAttr << eventAttr << styleAttr << ">"
                 << escapeHtml(concept.text) << "</a>\n";
         } else {
             out << indent << "<button type=\"button\" " << classAttr << " " << beingAttr << eventAttr << styleAttr << ">"
@@ -686,7 +798,7 @@ std::string WebRealizer::realizeFullDocument(const Singular& root,
 
     if (!options.extraCss.empty()) {
         doc << "  <style>\n"
-            << options.extraCss << "\n"
+            << sanitizeCssValue(options.extraCss) << "\n"
             << "  </style>\n";
     }
 
