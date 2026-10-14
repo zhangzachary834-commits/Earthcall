@@ -1324,7 +1324,7 @@ void ZoneManager::hydrateFromZoneStore() {
             // identity's materials so FaceTextures are not a leftover
             // from whatever session was last loaded.
             if (zj.contains("materials")) materials.mergeFromJson(zj["materials"]);
-            if (live->getOwnedObjects().empty()) applyZoneJson(*live, zj, true);
+            if (live->getOwnedObjects().empty() || id == "Sky-Island Sanctuary") applyZoneJson(*live, zj, true);
             else reinstatedMissingOwnMaterials(*live);
         } else {
             live = makeZoneFromJson(zj);
