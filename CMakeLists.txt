@@ -453,6 +453,11 @@ if(NOT EMSCRIPTEN)
             add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
         endif()
 
+        if (${TEST_NAME} STREQUAL "first_mover_register_boot_test")
+            set_tests_properties(${TEST_NAME} PROPERTIES
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+        endif()
+
         # ctest's default WORKING_DIRECTORY for an add_test() target is the
         # build tree, not the source tree. synthesis_studio_app_test opens an
         # authored save by a bare "saves/..." path (test_observation_load_test's
