@@ -235,6 +235,9 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
+          ./build/rendered_field_piecewise_synthesis_test 2>&1 | tee aligned-authority-ab.log
+          grep -F 'ALIGNED_AUTHORITY_AB ' aligned-authority-ab.log > aligned-authority-ab-result.txt
+          ./build/rendered_field_direct_dispatch_test
 
       - name: Run CPU SDF proof witnesses
         shell: bash
@@ -247,9 +250,6 @@ jobs:
           ./build/heightfield_predicate_test
           ./build/scene_spatial_synthesis_dag_test
           ./build/scene_spatial_ontomath_synthesis_test
-          ./build/rendered_field_piecewise_synthesis_test 2>&1 | tee aligned-authority-ab.log
-          grep -F 'ALIGNED_AUTHORITY_AB ' aligned-authority-ab.log > aligned-authority-ab-result.txt
-          ./build/rendered_field_direct_dispatch_test
           ./build/channel_paths_test
           ./build/sanctuary_of_sunlit_mist_test
 
