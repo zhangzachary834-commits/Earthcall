@@ -1,5 +1,25 @@
 # Person Verification List
 
+## 3D Sky-Island Sanctuary (`Sky-Island Sanctuary`)
+
+*Gemini 4 Argon (Spark) · session `argon-sky-island-sanctuary-20261013` · 2026-10-13 — Commissioned from the Sun's prompt: "Create a beautiful 3D sky-island sanctuary inside Earthcall. Make it feel wondrous, peaceful, and architecturally intentional. I want it to feel like a real place a person would want to enter and linger in. That's it."*
+
+- [ ] Launch Earthcall WebGPU (`./build/earthcall_webgpu` or **Run Earthcall as Me.command**) and switch to the **`Sky-Island Sanctuary`** Zone (or load world `sky_island_sanctuary`).
+- [ ] **Arrival & South Threshold Island (`[0.0, 2.8, 22.5]` looking `-Z`):**
+  - Confirm you stand on the South Threshold Island flanked by twin CSG-carved **Dawn Lantern Pagodas** with warm glowing amber cores, a stone contemplation bench, and the **Threshold Inscription Stele**.
+  - Look across the **Arched Stone Bridge** (with carved cylindrical vault under-arch, stone balustrades, and 6 bridge posts) toward the Main Sanctuary Island and the **Sea of Sunlit Cumulus Clouds** billowing below (`y = -6.2m`).
+- [ ] **Main Cloister Island & Pavilion of the Eight Winds (`[0.0, 0.0, 0.0]`):**
+  - Walk across the bridge onto the 3 concentric cloister terraces, past the **16-ray Gilded & Verdigris Compass Rose** and the **Lapis Mirror Pool of Still Waters** (CSG-hollowed basin with rippling water shader).
+  - Look up at the **Pavilion of the Eight Winds**: 8 fluted travertine columns (with plinths, torus bases, and scrolled capitals), 8 CSG-pierced lancet sky-arches, double entablature rings, and the open **Oculus Solar Crown** with 8 suspended pearl drops and **Sunlit Halo Mist** casting clerestory sunbeams.
+- [ ] **Interactive Awakening (`law-sky-sanctuary-*`):**
+  - Click the **Pearl Touchstone of Dawn** (`sky.sanctuary.touchstone` at `[0.0, 1.38, 7.6]`):
+    - Verify `awakened` toggles to `1.0` and `resonance` smoothly flows from `0.0` to `1.0` via exponential decay (`law-sky-sanctuary-resonance-flow`).
+    - Watch all **12 CSG Concave Lotus Petals** (`sky.sanctuary.petal.00` .. `11`) smoothly unfurl outward from radius `1.95m` to `3.70m` (`law-sky-sanctuary-lotus-bloom`).
+    - Watch the faceted octahedral **Heart of the Dawn** (`sky.sanctuary.heart_crystal`) ascend into the pavilion dome (`law-sky-sanctuary-heart-ascend`) while the **8 Dodecahedral Aether Lantern Orbs** drift in harmonic sky currents (`law-sky-sanctuary-lantern-drift`).
+  - Click the **Pearl Touchstone of Dawn** a second time and verify the 12 Lotus Petals and Heart Crystal smoothly gather back to stillness.
+- [ ] **Satellite Sky-Islands & 360° Horizon Vista:**
+  - Follow the ascending **Cloud Stepping Stones** to the **East Observatory Island** (`[19.5, 1.4, -2.0]`, bronze & pearl **Equatorial Armillary Sundial**), the **West Arbor Island** (`[-19.5, 1.0, -2.0]`, **Ancient Sky-Cedar Tree of Life** with 5-lobe emerald canopy), and the **North Zenith Sanctum** (`[0.0, 2.8, -21.5]`, **Triple-Arch Bell Campanile** and **Great Verdigris Sky-Bell**), framed by 6 distant horizon spire islands and sculpted basalt crag underbellies.
+
 ## 3D Magic: The Gathering (MTG) Zone
 
 *Antigravity / Gemini / session `e1346ea7-7d86-4945-8831-01e3e33dd09a` / 2026-10-11 — Zach requested a fully working 3D Magic the Gathering zone with functioning game rules, beautiful textures, colors, and intentional looking shapes.*
@@ -1556,3 +1576,21 @@ Your data is now copied into `~/Library/Application Support/Earthcall` (686 file
 - [ ] Author the [custom binding](../../../../examples/law_line_template_keybind.txt) and adapt its chord to your terminal; author the [stored shelf example](../../../../examples/law_line_store_templates.txt) only if you want those two drafts; press Ctrl+G to store them, then Ctrl+T to verify prefix selection.
 - [ ] Edit a disabled template holder's `completion.text` through the existing Property editor, including a literal `‹blank›` if desired; reopen the shelf and verify insertion and blank selection.
 - [ ] Save Zone in LawLine, restart from the app data home, and confirm your edited shelf and custom binding survive; judge whether the menu and blank navigation feel right.
+
+
+### Northern Veil — arithmetic-profile candidates rejected
+
+This pass ships no visible change: two scratch Safe-arithmetic variants exceeded the one-level image limit, including at 2560×1440 with the full accepted lattice. Existing aurora appearance/flicker, movement and usual-framebuffer 30 FPS checks remain open; there is no new candidate for you to accept or new FPS claim. The frozen offscreen fixture is distinct from your live data home and installed Release app. [Exact rejection evidence](../../../audits/VOLUME_ARITHMETIC_PROFILE_FIDELITY_2026-10-12.md). AD-30–36 remain open; no extra human question is introduced.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T17:13:57.815427-07:00 (PDT).
+
+### BodyPart constitution / gift-shop removal
+
+In the dev build (`earthcall_webgpu`), open the Creator Console → Character tab, make sure the character design is not locked, and select a body part (for example the Torso):
+
+1. **Colour picker now paints.** Change the part colour. The part should recolour **immediately**. Before this pass nothing happened until you changed the shape.
+2. **Shape and dimensions still work.** Change the shape dropdown and the dimension sliders. The part should reshape and resize as before.
+3. **Walking and idle animation are unchanged.** Walk around. Limbs should swing exactly as before, because the Automation clips now run on the primary Object directly instead of through BodyPart forwarders.
+4. **Picking (pre-existing, please judge).** Click just *outside* a visibly thin limb, inside where a 1×1×1 cube would be. If it still selects the limb, the unscaled-raycast seam is real. See [task §Still open 3](../Specific%20Tasks/Architecture%20and%20Ontology/BodyPart_Constitution_As_Explicit_Relation/BodyPart_Constitution_As_Explicit_Relation.md).
+
+**Signed:** Claude Code / Claude Opus 5.5 / session `6ba58694-54b8-4b8f-9788-9a6efec3c7df` / 2026-10-13T18:20-07:00 (PDT).

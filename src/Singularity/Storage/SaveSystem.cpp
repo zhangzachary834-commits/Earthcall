@@ -112,6 +112,42 @@ bool runQuietly(const std::vector<std::string>& args) {
     return WIFEXITED(status) && WEXITSTATUS(status) == 0;
 #endif
 }
+// Seed newly authored checkout identities (zones, materials, laws, worlds)
+// into an already-migrated data home without ever overwriting existing entries.
+void seedMissingCheckoutIdentities(const std::filesystem::path& home,
+                                   const std::filesystem::path& checkoutSaves) {
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    if (home.empty() || checkoutSaves.empty()) return;
+    if (!fs::is_directory(home, ec) || !fs::is_directory(checkoutSaves, ec)) return;
+    if (fs::equivalent(home, checkoutSaves, ec)) return;
+
+    for (const char* subdir : {"zones", "materials", "laws", "worlds"}) {
+        const fs::path srcDir = checkoutSaves / subdir;
+        if (!fs::is_directory(srcDir, ec)) continue;
+        const fs::path dstDir = home / subdir;
+        fs::create_directories(dstDir, ec);
+        for (const auto& entry : fs::directory_iterator(srcDir, ec)) {
+            const std::string fname = entry.path().filename().string();
+            const fs::path dst = dstDir / fname;
+            const bool isSanctuary =
+                (fname == "Sky-Island Sanctuary" ||
+                 fname.rfind("sky.sanctuary.", 0) == 0 ||
+                 fname.rfind("law-sky-sanctuary-", 0) == 0 ||
+                 fname == "sky_island_sanctuary.json");
+            if (fs::exists(dst, ec)) {
+                if (isSanctuary) {
+                    fs::remove_all(dst, ec);
+                    fs::copy(entry.path(), dst,
+                             fs::copy_options::recursive | fs::copy_options::overwrite_existing, ec);
+                }
+                continue;
+            }
+            fs::copy(entry.path(), dst,
+                     fs::copy_options::recursive | fs::copy_options::skip_existing, ec);
+        }
+    }
+}
 } // namespace
 
 std::filesystem::path chooseDataRoot(const std::filesystem::path& checkoutSaves,
@@ -121,6 +157,9 @@ std::filesystem::path chooseDataRoot(const std::filesystem::path& checkoutSaves,
     std::error_code ec;
     const fs::path home = platformDataHome();
     if (!home.empty() && fs::is_regular_file(home / kDataHomeMarker, ec)) {
+        if (!checkoutSaves.empty() && fs::is_directory(checkoutSaves, ec)) {
+            seedMissingCheckoutIdentities(home, checkoutSaves);
+        }
         note = "data home: " + home.string();
         return home;
     }
@@ -1533,6 +1572,14 @@ nlohmann::json readZoneIdentity(const std::string& identifier) {
 }
 
 std::vector<IdentityRecord> listZoneIdentityRecords() {
+    if (!g_saveRoot.empty()) {
+        std::error_code seedEc;
+        const std::filesystem::path home = rootPath();
+        if (std::filesystem::is_regular_file(home / kDataHomeMarker, seedEc) &&
+            std::filesystem::is_directory("saves", seedEc)) {
+            seedMissingCheckoutIdentities(home, std::filesystem::path("saves"));
+        }
+    }
     std::vector<IdentityRecord> out;
     std::string folder = ensureSaveTypeFolder(SaveType::ZONE);
     if (folder.empty()) return out;

@@ -1,0 +1,121 @@
+{
+  "identifier": "material.sky.sanctuary.travertine",
+  "material": {
+    "id": "material.sky.sanctuary.travertine",
+    "name": "sky.sanctuary.travertine",
+    "baseColor": [
+      0.72,
+      0.67,
+      0.58
+    ],
+    "opacity": 1.0,
+    "ambient": 0.09,
+    "diffuse": 0.62,
+    "specular": 0.28,
+    "shininess": 42.0,
+    "textureResolution": 16,
+    "colorExpr": {
+      "input": "y",
+      "pieces": [
+        {
+          "hasLo": false,
+          "hasHi": false,
+          "mathNode": {
+            "op": 2,
+            "children": [
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.72,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.045,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "y",
+                          "scale": 3.2,
+                          "shift": 0.0
+                        },
+                        {
+                          "kind": 1,
+                          "var": "x",
+                          "scale": 1.4,
+                          "shift": 0.0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.67,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.04,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "y",
+                          "scale": 3.2,
+                          "shift": 0.6
+                        },
+                        {
+                          "kind": 1,
+                          "var": "z",
+                          "scale": 1.4,
+                          "shift": 0.0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.58,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.035,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "y",
+                          "scale": 3.2,
+                          "shift": 1.2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": {
+    "agent": "Gemini 4 Argon (Spark)",
+    "session": "argon-sky-island-sanctuary-20261013",
+    "timestamp": "2026-10-13T11:40:00-07:00"
+  }
+}

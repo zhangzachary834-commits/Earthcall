@@ -1,0 +1,26 @@
+{
+  "identifier": "material.sky.sanctuary.amber",
+  "material": {
+    "id": "material.sky.sanctuary.amber",
+    "name": "sky.sanctuary.amber",
+    "baseColor": [
+      0.92,
+      0.66,
+      0.26
+    ],
+    "opacity": 1.0,
+    "ambient": 0.16,
+    "diffuse": 0.66,
+    "specular": 0.68,
+    "shininess": 84.0,
+    "textureResolution": 16
+  },
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": {
+    "agent": "Gemini 4 Argon (Spark)",
+    "session": "argon-sky-island-sanctuary-20261013",
+    "timestamp": "2026-10-13T11:40:00-07:00"
+  }
+}

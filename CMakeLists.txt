@@ -364,6 +364,7 @@ if(NOT EMSCRIPTEN)
         elseif (${TEST_NAME} STREQUAL "sdf_wgsl_parameter_refresh_test" OR
                  ${TEST_NAME} STREQUAL "gyroid_reliquary_test" OR
                  ${TEST_NAME} STREQUAL "veiled_hour_test" OR
+            ${TEST_NAME} STREQUAL "sky_island_sanctuary_test" OR
                  ${TEST_NAME} STREQUAL "mcp_authoring_surfaces_test" OR
                  ${TEST_NAME} STREQUAL "volume_shared_subexpression_test")
             # Pure codegen witness: it exercises SdfWgsl::compile/collectParams
@@ -388,7 +389,7 @@ if(NOT EMSCRIPTEN)
             target_link_libraries(${TEST_NAME} PRIVATE
                 earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto
                 ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
-        elseif (${TEST_NAME} MATCHES "webgpu_.*" OR ${TEST_NAME} STREQUAL "gpu_mastery_test")
+        elseif (${TEST_NAME} MATCHES "webgpu_.*" OR ${TEST_NAME} STREQUAL "gpu_mastery_test" OR ${TEST_NAME} STREQUAL "sky_island_sanctuary_test")
             set(WEBGPU_TEST_EXTRA_SRCS
                 src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
                 src/Singularity/Screen/WebGPU/SdfWgsl.cpp
@@ -437,7 +438,7 @@ if(NOT EMSCRIPTEN)
         # tests/<region>/; ctest target names stay NAME_WE of the .cpp.
         target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/tests ${CMAKE_SOURCE_DIR}/tests/support)
         target_compile_options(${TEST_NAME} PRIVATE -UNDEBUG)
-        if (${TEST_NAME} IN_LIST PENDING_FEATURE_TESTS OR (NOT APPLE AND (${TEST_NAME} MATCHES "webgpu_.*" OR ${TEST_NAME} STREQUAL "gpu_mastery_test")))
+        if (${TEST_NAME} IN_LIST PENDING_FEATURE_TESTS OR (NOT APPLE AND (${TEST_NAME} MATCHES "webgpu_.*" OR ${TEST_NAME} STREQUAL "gpu_mastery_test" OR ${TEST_NAME} STREQUAL "sky_island_sanctuary_test")))
             set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
         else()
             list(APPEND ALL_ACTIVE_TEST_TARGETS ${TEST_NAME})
@@ -474,6 +475,7 @@ if(NOT EMSCRIPTEN)
             ${TEST_NAME} STREQUAL "prism_cathedral_test" OR
             ${TEST_NAME} STREQUAL "gyroid_reliquary_test" OR
             ${TEST_NAME} STREQUAL "veiled_hour_test" OR
+            ${TEST_NAME} STREQUAL "sky_island_sanctuary_test" OR
             ${TEST_NAME} STREQUAL "zone_material_corpus_test" OR
             ${TEST_NAME} STREQUAL "gift_shop_guardrail_test" OR
             ${TEST_NAME} MATCHES "^foreign_web_dom_")

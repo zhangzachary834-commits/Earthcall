@@ -26,7 +26,7 @@ bool densityProvenNonPositive(const OntoMath::Piecewise& density,
         {"y", RV::makeScalar(iy)},
         {"z", RV::makeScalar(iz)},
         {OntoMath::kAmbientPointVar, RV::makeVector(ix, iy, iz)},
-    };
+    };  
 
     for (const auto& piece : density.pieces) {
         if (!piece.mathNode) continue;   // the emitter skips these too

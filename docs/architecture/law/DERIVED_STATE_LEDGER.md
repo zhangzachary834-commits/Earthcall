@@ -383,3 +383,10 @@ No production cache or GPU resource is added. Process-local rational intervals a
 The compiler observer adds no production derived state. Its concrete-device method replacement, original implementation pointer, mutex, record counter and retained output path live only in the linked scratch process and end at process teardown. It forwards source/options unchanged and records each compilation in a new external output directory. Observations depend on the exact vendored library, translated module, native device/driver and compile options; provenance preserves binaries/source hashes. No observed profile grants proof reuse: the tool still declines every production certificate until complete transformation/coordinate/binding enclosure is established. Twenty-four CPU witnesses pass; eight paired low-resolution native images match. Existing program/proof residency and device invalidation remain unchanged. [Contract](../../audits/VOLUME_SUPPORT_NATIVE_PROFILE_2026-10-12.md).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T11:27:35-07:00 (PDT).
+
+
+### Scratch arithmetic-profile experiments — October 12
+
+No production derived state is added. A separately generated scratch wrapper copies options only for volume-containing modules, forwards unchanged MSL once, releases the copied options after library creation, and ends all hooks/record state at process teardown. Fresh observations depend on exact fixture, binaries, native device, module hashes, effective options, framebuffer, clock and reference budget; reports are not reusable support certificates. Non-volume options and source hashes are checked. Both Safe arithmetic candidates fail pixel gates, including a full-lattice native-size counterexample; no production guard/cache/profile is installed. Original read-only observer and existing lifetime/invalidation contracts are unchanged. [Failure evidence, dependency hashes and reproduction](../../audits/VOLUME_ARITHMETIC_PROFILE_FIDELITY_2026-10-12.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T17:13:57.815427-07:00 (PDT).

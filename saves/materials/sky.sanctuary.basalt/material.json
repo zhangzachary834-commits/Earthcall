@@ -1,0 +1,109 @@
+{
+  "identifier": "material.sky.sanctuary.basalt",
+  "material": {
+    "id": "material.sky.sanctuary.basalt",
+    "name": "sky.sanctuary.basalt",
+    "baseColor": [
+      0.11,
+      0.14,
+      0.2
+    ],
+    "opacity": 1.0,
+    "ambient": 0.07,
+    "diffuse": 0.58,
+    "specular": 0.3,
+    "shininess": 36.0,
+    "textureResolution": 16,
+    "colorExpr": {
+      "input": "y",
+      "pieces": [
+        {
+          "hasLo": false,
+          "hasHi": false,
+          "mathNode": {
+            "op": 2,
+            "children": [
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.11,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.025,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 1,
+                          "var": "y",
+                          "scale": 1.8,
+                          "shift": 0.0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.14,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.028,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 1,
+                          "var": "y",
+                          "scale": 1.8,
+                          "shift": 0.4
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.2,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.032,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "x",
+                          "scale": 1.1,
+                          "shift": 0.0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": {
+    "agent": "Gemini 4 Argon (Spark)",
+    "session": "argon-sky-island-sanctuary-20261013",
+    "timestamp": "2026-10-13T11:40:00-07:00"
+  }
+}
