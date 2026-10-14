@@ -227,6 +227,15 @@ jobs:
             webgpu_volumetric_mist_test \
             sanctuary_of_sunlit_mist_test
 
+      # Execution Key Sun PR #369 is already on canonical. Exercise its
+      # already-selected-slot witness before unrelated CPU-SDF regressions
+      # so a red downstream test cannot silently erase its evidence artifact.
+      # This moves existing tests; it creates NO renderer pixel authority.
+      - name: Verify surface execution-key direct-dispatch contract
+        shell: bash
+        run: |
+          set -euxo pipefail
+
       - name: Run CPU SDF proof witnesses
         shell: bash
         run: |
