@@ -251,11 +251,15 @@ public:
         return true;
     }
 
+protected:
+    // Protected so a Formation kind (BodyPart) registers its own state ON TOP
+    // of the Formation vocabulary instead of replacing it.
+    void buildProperties() override;
+
 private:
     static std::string nextFormationId();
     std::string _formationId = nextFormationId();
 
-    void buildProperties() override;
     std::string propRoot() const;
     int propMemberCount() const;
     std::shared_ptr<PropertyList> propMembers() const;

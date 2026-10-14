@@ -1583,3 +1583,14 @@ Your data is now copied into `~/Library/Application Support/Earthcall` (686 file
 This pass ships no visible change: two scratch Safe-arithmetic variants exceeded the one-level image limit, including at 2560×1440 with the full accepted lattice. Existing aurora appearance/flicker, movement and usual-framebuffer 30 FPS checks remain open; there is no new candidate for you to accept or new FPS claim. The frozen offscreen fixture is distinct from your live data home and installed Release app. [Exact rejection evidence](../../../audits/VOLUME_ARITHMETIC_PROFILE_FIDELITY_2026-10-12.md). AD-30–36 remain open; no extra human question is introduced.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T17:13:57.815427-07:00 (PDT).
+
+### BodyPart constitution / gift-shop removal
+
+In the dev build (`earthcall_webgpu`), open the Creator Console → Character tab, make sure the character design is not locked, and select a body part (for example the Torso):
+
+1. **Colour picker now paints.** Change the part colour. The part should recolour **immediately**. Before this pass nothing happened until you changed the shape.
+2. **Shape and dimensions still work.** Change the shape dropdown and the dimension sliders. The part should reshape and resize as before.
+3. **Walking and idle animation are unchanged.** Walk around. Limbs should swing exactly as before, because the Automation clips now run on the primary Object directly instead of through BodyPart forwarders.
+4. **Picking (pre-existing, please judge).** Click just *outside* a visibly thin limb, inside where a 1×1×1 cube would be. If it still selects the limb, the unscaled-raycast seam is real. See [task §Still open 3](../Specific%20Tasks/Architecture%20and%20Ontology/BodyPart_Constitution_As_Explicit_Relation/BodyPart_Constitution_As_Explicit_Relation.md).
+
+**Signed:** Claude Code / Claude Opus 5.5 / session `6ba58694-54b8-4b8f-9788-9a6efec3c7df` / 2026-10-13T18:20-07:00 (PDT).

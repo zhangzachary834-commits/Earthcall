@@ -450,6 +450,17 @@ bool Engine::initLogic() {
             if (rel) relations.push_back(rel.get());
         }
         if (_worldTimelineOwnership) relations.push_back(_worldTimelineOwnership.get());
+        // The Person's bodily constitution (BodyPart constituted-by Object,
+        // Zach 2026-10-13): visible to Law so a manifestation can be walked
+        // back to the part it constitutes. Read-visible only — authority over
+        // the body is still the kernel guards' and TransferPolicy's.
+        if (_person) {
+            for (BodyPart* part : _person->getBody().parts) {
+                if (!part) continue;
+                for (const auto& rel : part->relations().getAll())
+                    if (rel) relations.push_back(rel.get());
+            }
+        }
     });
     // ...and its write side: newborn relations (a concept's reborn
     // inter-member structure) join the same Formation.
@@ -469,13 +480,41 @@ bool Engine::initLogic() {
                 _worldTimelineOwnership->involves(being)) {
                 out.push_back(_worldTimelineOwnership.get());
             }
+            // Same constitution edges as the provider above. relationsInvolving
+            // clears `out`, so each part's answer is gathered separately.
+            if (_person) {
+                std::vector<Relation*> partEdges;
+                for (BodyPart* part : _person->getBody().parts) {
+                    if (!part) continue;
+                    part->relations().relationsInvolving(being, partEdges);
+                    out.insert(out.end(), partEdges.begin(), partEdges.end());
+                }
+            }
         });
     // ...and how many times that graph has changed, so anything derived from it
     // can tell whether it is current (FORMATION_RETE.md §8 rungs 5-6). Reads the
     // ACTIVE Zone's manager, like the two providers above, so a Zone switch
     // shows up as a different count.
-    Universe::instance().setRelationGenerationProvider([]() {
-        return mgr.active().formation().relations().generation();
+    //
+    // The constitution edges above are part of that graph, so their changes
+    // must move this stamp too or a cached traversal goes deaf. Consumers
+    // compare for EQUALITY only (SlowAdapter, Law.cpp), so the parts are
+    // mixed hash_combine-style rather than summed: a rebuilt Body has fresh
+    // managers whose small generations could otherwise re-sum to an old value.
+    // Each manager's address is mixed in for the same reason.
+    Universe::instance().setRelationGenerationProvider([this]() {
+        std::size_t stamp = mgr.active().formation().relations().generation();
+        auto mix = [&stamp](std::size_t v) {
+            stamp ^= v + 0x9e3779b97f4a7c15ULL + (stamp << 6) + (stamp >> 2);
+        };
+        if (_person) {
+            for (BodyPart* part : _person->getBody().parts) {
+                if (!part) continue;
+                mix(reinterpret_cast<std::size_t>(&part->relations()));
+                mix(part->relations().generation());
+            }
+        }
+        return stamp;
     });
 
     // Init GL state – depth test already enabled in ShadingSystem::init()
