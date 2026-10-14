@@ -47,6 +47,9 @@ void seedLexemeAndLaw(LawManager& laws,
     // is unauthored infrastructure and must NEVER have fake Object or Person authors.
     auto law = std::make_shared<Law>(lawId, std::vector<Singular*>{});
     law->setLawIdentifier(lawId);
+    // Legacy numerical authority level. Pending AD-24 (which retires integer authority
+    // levels in favor of an authority-over Relation DAG), grantAuthority(10) serves
+    // as compatibility substrate for Kernel/Singularity level authority.
     law->grantAuthority(10);
     law->setEnabled(true);
     law->setActionModel(std::move(action));
@@ -180,12 +183,8 @@ void WebDesignerMetalaws::syncRegister(LawManager& laws) {
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("container"))),
                          ActionNode::set("surface.variant", PropertyValue(std::string("card"))),
-                         ActionNode::set("surface.shape", PropertyValue(std::string("rounded"))),
-                         ActionNode::set("surface.elevation", PropertyValue(std::string("subtle"))),
                          ActionNode::set("compilation.output.web.role", PropertyValue(std::string("container"))),
-                         ActionNode::set("compilation.output.web.surface.variant", PropertyValue(std::string("card"))),
-                         ActionNode::set("compilation.output.web.surface.shape", PropertyValue(std::string("rounded"))),
-                         ActionNode::set("compilation.output.web.surface.elevation", PropertyValue(std::string("subtle")))
+                         ActionNode::set("compilation.output.web.surface.variant", PropertyValue(std::string("card")))
                      }));
 
     seedLexemeAndLaw(laws, "list", "lexeme.web.list", "law.concept.role.list",

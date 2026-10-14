@@ -221,38 +221,50 @@ std::string WebRealizer::normalizeCssToken(const std::string& token) {
 }
 
 std::string WebRealizer::sanitizeHref(const std::string& href) {
-    size_t first = href.find_first_not_of(" \t\r\n");
-    if (first == std::string::npos) return "#";
-    size_t last = href.find_last_not_of(" \t\r\n");
+    auto isIgnored = [](char c) {
+        return std::isspace(static_cast<unsigned char>(c)) || std::iscntrl(static_cast<unsigned char>(c));
+    };
+
+    size_t first = 0;
+    while (first < href.size() && isIgnored(href[first])) {
+        first++;
+    }
+    if (first == href.size()) return "#";
+
+    size_t last = href.size() - 1;
+    while (last > first && isIgnored(href[last])) {
+        last--;
+    }
     std::string trimmed = href.substr(first, last - first + 1);
 
-    std::string lower;
-    lower.reserve(trimmed.size());
-    for (char c : trimmed) {
-        lower += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    }
+    // If a colon exists, extract the scheme and validate against an explicit allowlist
+    size_t colonPos = trimmed.find(':');
+    if (colonPos != std::string::npos) {
+        std::string scheme;
+        for (size_t i = 0; i < colonPos; ++i) {
+            char c = trimmed[i];
+            if (!isIgnored(c)) {
+                scheme += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            }
+        }
 
-    // Explicitly reject executable or arbitrary data schemes
-    if (lower.rfind("javascript:", 0) == 0 ||
-        lower.rfind("data:", 0) == 0 ||
-        lower.rfind("vbscript:", 0) == 0) {
+        // Strict scheme allowlist: only safe hyperlinks permitted
+        if (scheme == "http" || scheme == "https" || scheme == "mailto" || scheme == "tel") {
+            return trimmed;
+        }
+
+        // Explicitly block executable, script, or arbitrary data schemes
+        // (javascript:, data:, vbscript:, file:, blob:, etc.)
         return "#";
     }
 
-    // Relative URLs, anchor fragments, root-relative paths
+    // Relative URLs, anchor fragments, root-relative paths, and relative file links
     if (trimmed[0] == '#' || trimmed[0] == '/' || trimmed[0] == '.') {
         return trimmed;
     }
 
-    // Allowed absolute schemes
-    if (lower.rfind("http://", 0) == 0 ||
-        lower.rfind("https://", 0) == 0 ||
-        lower.rfind("mailto:", 0) == 0 ||
-        lower.rfind("tel:", 0) == 0) {
-        return trimmed;
-    }
-
-    return "#";
+    // Safe relative document link (e.g. "index.html", "about")
+    return trimmed;
 }
 
 std::string WebRealizer::sanitizeCssValue(const std::string& value) {
@@ -263,13 +275,44 @@ std::string WebRealizer::sanitizeCssValue(const std::string& value) {
         lower += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
     }
 
-    std::string needle = "</style";
+    // Neutralize any end tag or breakout sequence for <style
+    // Handles </style, </ style, < / style, </STYLE, etc.
     size_t pos = 0;
-    while ((pos = lower.find(needle, pos)) != std::string::npos) {
-        out.replace(pos, 7, "<\\/style");
-        lower.replace(pos, 7, "<\\/style");
-        pos += 8;
+    while (pos < lower.size()) {
+        if (lower[pos] == '<') {
+            size_t nextPos = pos + 1;
+            while (nextPos < lower.size() && std::isspace(static_cast<unsigned char>(lower[nextPos]))) {
+                nextPos++;
+            }
+            if (nextPos < lower.size() && lower[nextPos] == '/') {
+                nextPos++;
+                while (nextPos < lower.size() && std::isspace(static_cast<unsigned char>(lower[nextPos]))) {
+                    nextPos++;
+                }
+                if (nextPos + 5 <= lower.size() && lower.compare(nextPos, 5, "style") == 0) {
+                    size_t matchLen = (nextPos + 5) - pos;
+                    out.replace(pos, matchLen, "<\\/style");
+                    lower.replace(pos, matchLen, "<\\/style");
+                    pos += 8;
+                    continue;
+                }
+            }
+        }
+        pos++;
     }
+
+    // Neutralize HTML comment delimiters (<!-- and -->) into safe CSS comment delimiters
+    pos = 0;
+    while ((pos = out.find("<!--", pos)) != std::string::npos) {
+        out.replace(pos, 4, "/* --");
+        pos += 5;
+    }
+    pos = 0;
+    while ((pos = out.find("-->", pos)) != std::string::npos) {
+        out.replace(pos, 3, "-- */");
+        pos += 5;
+    }
+
     return out;
 }
 

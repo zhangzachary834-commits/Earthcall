@@ -39,8 +39,15 @@ public:
     static const std::vector<std::shared_ptr<Singularity::Language::Lexeme>>& seededLexemes();
     static const std::vector<std::shared_ptr<Relation>>& seededRelations();
 
-    // Compile tokens into a target Singular using in-world Lexemes and their "denotes" Relations.
+    // In-World Lexeme Relation Scanner:
+    // Compiles tokens into a target Singular using in-world Lexemes and their "denotes" Relations.
     // Resolution occurs exclusively via live Relation("denotes", *lexeme, *law) edges.
+    //
+    // Architectural Note: This is an in-world Lexeme scanner operating over the active
+    // denotation relation graph (Relation("denotes", *lexeme, *law)). It does not invoke
+    // the Mac Terminal's LawSentence parser (which is explicitly scoped only to the Mac
+    // Terminal command-line grammar per Zach 2026-09-25) nor SyntacticParser (which requires
+    // an active Zone context and resolves parts of speech).
     static WebConcept compileTokens(const std::vector<std::string>& tokens,
                                     LawManager& laws,
                                     Singular& channelTarget,
@@ -48,7 +55,7 @@ public:
                                     const std::vector<Relation*>& extraRelations = {});
 
     // Parse and compile an authored natural language phrase into a target Singular.
-    // Scans character sequences against in-world Lexemes.
+    // Scans character sequences against in-world Lexemes and resolves via denotes Relations.
     static WebConcept compilePhrase(const std::string& phrase,
                                     LawManager& laws,
                                     Singular& channelTarget,

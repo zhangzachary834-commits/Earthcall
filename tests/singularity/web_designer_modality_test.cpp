@@ -702,11 +702,31 @@ void test_browser_trust_boundary_security() {
     assert(WebRealizer::sanitizeHref("data:text/html,<script>evil()</script>") == "#");
     assert(WebRealizer::sanitizeHref("vbscript:msgbox") == "#");
 
+    // Adversarial: leading control characters, tabs, spaces, and bypass attempts
+    assert(WebRealizer::sanitizeHref("\x01\x02javascript:alert(1)") == "#");
+    assert(WebRealizer::sanitizeHref("\t\r\n  JAVASCRIPT:attack()") == "#");
+    assert(WebRealizer::sanitizeHref("java\tscript:alert(1)") == "#");
+    assert(WebRealizer::sanitizeHref("data:text/html,<script>evil()</script>") == "#");
+    assert(WebRealizer::sanitizeHref("DATA:image/svg+xml,...") == "#");
+    assert(WebRealizer::sanitizeHref("file:///etc/passwd") == "#");
+    assert(WebRealizer::sanitizeHref("blob:http://example.com/uuid") == "#");
+
     // 4. CSS Value </style> Breakout Neutralization
     std::string maliciousCss = "red; </style><script>alert('xss')</script><style>";
     std::string safeCss = WebRealizer::sanitizeCssValue(maliciousCss);
     assert(safeCss.find("</style") == std::string::npos);
     assert(safeCss.find("<\\/style") != std::string::npos);
+
+    // Adversarial: spaces inside tag, HTML comments
+    std::string spacedCss = "blue; < / style > <script>alert(1)</script>";
+    std::string safeSpacedCss = WebRealizer::sanitizeCssValue(spacedCss);
+    assert(safeSpacedCss.find("</style") == std::string::npos);
+    assert(safeSpacedCss.find("<\\/") != std::string::npos);
+
+    std::string commentCss = "green; <!-- </style> -->";
+    std::string safeCommentCss = WebRealizer::sanitizeCssValue(commentCss);
+    assert(safeCommentCss.find("<!--") == std::string::npos);
+    assert(safeCommentCss.find("-->") == std::string::npos);
 
     // Verify in generateStyleSheet with malicious authored root property
     Object maliciousRoot;
@@ -757,6 +777,98 @@ void test_universe_discovery_and_pure_realization() {
     std::cout << "  ✓ Pure realization returns valid HTML without requiring storage" << std::endl;
 }
 
+void test_relational_precedence_overrides_numeric_order() {
+    std::cout << "[Test 13] Relational Precedence Overrides Numeric Order..." << std::endl;
+
+    Person& author = getTestPerson();
+    WebDesignerChannel channel;
+
+    // Create container
+    auto container = channel.authorElementFromPhrase("conflict-container", "container", "", &author);
+
+    // Create two children: childFirst and childSecond
+    auto childFirst = channel.authorElementFromPhrase("elem-first", "item", "First Sibling", &author);
+    auto childSecond = channel.authorElementFromPhrase("elem-second", "item", "Second Sibling", &author);
+
+    // Relational topology: childFirst precedes childSecond
+    channel.relateContains(container, childFirst);
+    channel.relateContains(container, childSecond);
+    channel.relatePrecedes(childFirst, childSecond);
+
+    // Adversarial numeric fiat: childSecond has web.order = 1, childFirst has web.order = 100
+    // In a flat numeric system, childSecond would render first.
+    // In Earthcall, relational "precedes" DAG MUST strictly govern sequence!
+    childSecond->setDynamicProperty("web.order", PropertyValue(1.0));
+    childFirst->setDynamicProperty("web.order", PropertyValue(100.0));
+
+    std::string html = channel.realize(*container);
+
+    size_t posFirst = html.find("id=\"elem-first\"");
+    size_t posSecond = html.find("id=\"elem-second\"");
+
+    assert(posFirst != std::string::npos);
+    assert(posSecond != std::string::npos);
+    assert(posFirst < posSecond); // elem-first MUST appear before elem-second!
+
+    std::cout << "  ✓ Directed 'precedes' Relation strictly governed sibling sequence" << std::endl;
+    std::cout << "  ✓ Numeric web.order (1 vs 100) was refused as an override against relational DAG" << std::endl;
+}
+
+void test_channel_destruction_and_rediscovery_from_world() {
+    std::cout << "[Test 14] Channel Destruction & World State Independence..." << std::endl;
+
+    Person& author = getTestPerson();
+    std::shared_ptr<Singular> rootElem;
+    std::shared_ptr<Singular> childElem;
+    std::shared_ptr<Relation> containsRel;
+
+    // 1. Author site beings inside a scoped channel that will be destroyed
+    {
+        WebDesignerChannel temporaryChannel;
+        rootElem = temporaryChannel.authorElementFromPhrase("site-root-destruct", "section", "", &author);
+        childElem = temporaryChannel.authorElementFromPhrase("site-child-destruct", "paragraph", "Enduring World Content", &author);
+        containsRel = temporaryChannel.relateContains(rootElem, childElem);
+        // temporaryChannel goes out of scope and is destroyed here
+    }
+
+    // 2. Register beings and relations in ordinary Earthcall Universe / world state
+    std::vector<Singular*> beings = { rootElem.get(), childElem.get() };
+    std::vector<Relation*> rels = { containsRel.get() };
+
+    Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+        for (auto* b : beings) out.push_back(b);
+    });
+    Universe::instance().setRelationProvider([&](std::vector<Relation*>& out) {
+        for (auto* r : rels) out.push_back(r);
+    });
+
+    // 3. Create a brand new WebDesignerChannel that never saw the authoring calls
+    WebDesignerChannel freshChannel;
+
+    // Assert beings are discoverable from world state
+    auto discoveredRoot = freshChannel.findElement("site-root-destruct");
+    assert(discoveredRoot != nullptr);
+    assert(discoveredRoot->getIdentifier() == "site-root-destruct");
+
+    auto discoveredChild = freshChannel.findElement("site-child-destruct");
+    assert(discoveredChild != nullptr);
+    assert(discoveredChild->getIdentifier() == "site-child-destruct");
+
+    // Realize entire site through the fresh channel
+    std::string html = freshChannel.realize(*discoveredRoot);
+    assert(!html.empty());
+    assert(html.find("id=\"site-root-destruct\"") != std::string::npos);
+    assert(html.find("id=\"site-child-destruct\"") != std::string::npos);
+    assert(html.find("Enduring World Content") != std::string::npos);
+
+    // Clean up Universe providers
+    Universe::instance().setProvider(nullptr);
+    Universe::instance().setRelationProvider(nullptr);
+
+    std::cout << "  ✓ Authored site survived channel destruction completely" << std::endl;
+    std::cout << "  ✓ Fresh channel discovered beings and realized site directly from world state" << std::endl;
+}
+
 int main() {
     std::cout << "========================================" << std::endl;
     std::cout << "Running Web Designer Modality Test Suite" << std::endl;
@@ -774,6 +886,8 @@ int main() {
     test_person_absence_and_enduring_authorship();
     test_browser_trust_boundary_security();
     test_universe_discovery_and_pure_realization();
+    test_relational_precedence_overrides_numeric_order();
+    test_channel_destruction_and_rediscovery_from_world();
 
     std::cout << "========================================" << std::endl;
     std::cout << "ALL WEB DESIGNER MODALITY TESTS PASSED!" << std::endl;

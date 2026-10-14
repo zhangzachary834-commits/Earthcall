@@ -66,20 +66,21 @@ public:
     void addRelation(std::shared_ptr<Relation> rel) { if (rel) _relations.push_back(std::move(rel)); }
     void clearRelations() { _relations.clear(); }
 
-    // Find an authored element by its identifier
+    // Find an authored element by its identifier (discovers from Universe/world state first)
     std::shared_ptr<Singular> findElement(const std::string& identifier) const;
 
-    // Realize a root element / page to HTML
+    // Realize a root element / page to HTML (Pure Realization: the core modality interface)
     std::string realize(const Singular& root, const RealizeOptions& options = RealizeOptions());
 
     // Save realized HTML via VFS URI addressing (memory://, save://, file://, or relative path)
-    // Routes storage through VirtualFileSystem and FileChannel without direct std::ofstream
+    // Non-authoritative convenience routing storage through VirtualFileSystem and FileChannel
+    // without claiming Web Modality ownership of persistent storage.
     bool saveToVfs(const Singular& root,
                    const std::string& vfsUri,
                    LawManager* laws = nullptr,
                    const RealizeOptions& options = RealizeOptions());
 
-    // Export realized HTML (governed route calling saveToVfs)
+    // Export realized HTML (non-authoritative convenience route calling saveToVfs)
     bool exportHtml(const Singular& root,
                     const std::string& filePath,
                     const RealizeOptions& options = RealizeOptions());
@@ -106,8 +107,9 @@ private:
     std::string _lastActionBeing;
     std::string _lastActionEvent;
 
-    // Track active authored elements and relations for realization
-    std::unordered_map<std::string, std::shared_ptr<Singular>> _authoredElements;
+    // Ephemeral non-authoritative cache of authored elements. The world (Universe/Zone/Formation)
+    // owns the beings; the channel holds weak references to prevent private lifetime capture.
+    std::unordered_map<std::string, std::weak_ptr<Singular>> _elementCache;
     std::vector<std::shared_ptr<Relation>> _relations;
 
     // Property getters/setters

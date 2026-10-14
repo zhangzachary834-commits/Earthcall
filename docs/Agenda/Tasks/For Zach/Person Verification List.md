@@ -1633,9 +1633,9 @@ This pass ships no visible change: two scratch Safe-arithmetic variants exceeded
   cmake --build build --target web_designer_modality_test -j8
   ./build/web_designer_modality_test
   ```
-  Confirm all 12 tests pass, including multi-person isolation (Alice & Bob), Person absence, browser trust boundary sanitization, and Universe discovery.
+  Confirm all 14 tests pass, including multi-person isolation (Alice & Bob), Person absence, browser trust boundary sanitization, relational precedence DAG overriding numeric fiat, and channel destruction / world state re-discovery.
 
-**Signed:** Gemini 3.8 Flash — “Sparkly Guy” / Antigravity · session `b5354f7e-b110-44af-9393-61ae139053de` · 2026-10-13.
+**Signed:** Gemini 3.8 Flash — “Sparkly Guy” / Antigravity · session `b5354f7e-b110-44af-9393-61ae139053de` · 2026-10-14.
 
 
 ## 3D Magic: The Gathering (MTG) Zone

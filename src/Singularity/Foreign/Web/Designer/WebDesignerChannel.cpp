@@ -15,7 +15,10 @@ namespace Web {
 WebDesignerChannel::WebDesignerChannel()
     : Law("web-designer-channel") {
     setLawIdentifier("web-designer-channel");
-    grantAuthority(10); // Kernel/Singularity level authority for modality channel
+    // Legacy numerical authority level. Pending AD-24 (which retires integer authority
+    // levels in favor of an authority-over Relation DAG descending from First Movers),
+    // grantAuthority(10) serves as compatibility substrate for Kernel/Singularity level authority.
+    grantAuthority(10);
 }
 
 void WebDesignerChannel::buildProperties() {
@@ -74,7 +77,7 @@ std::shared_ptr<Singular> WebDesignerChannel::authorElementFromPhrase(
 
     // Create authored element with real Earthcall Person authorship relation
     auto elem = WebDesignerMetalaws::createAuthoredElement(identifier, concept, author, &_relations);
-    _authoredElements[identifier] = elem;
+    _elementCache[identifier] = elem;
     return elem;
 }
 
@@ -82,14 +85,18 @@ std::shared_ptr<Singular> WebDesignerChannel::findElement(const std::string& ide
     // 1. Discover through ordinary Earthcall world ownership first
     for (Singular* b : Universe::instance().beings()) {
         if (b && b->getIdentifier() == identifier) {
-            auto it = _authoredElements.find(identifier);
-            if (it != _authoredElements.end()) return it->second;
+            auto it = _elementCache.find(identifier);
+            if (it != _elementCache.end()) {
+                if (auto sp = it->second.lock()) return sp;
+            }
             return std::shared_ptr<Singular>(b, [](Singular*){});
         }
     }
-    // 2. Fallback to channel cache
-    auto it = _authoredElements.find(identifier);
-    if (it != _authoredElements.end()) return it->second;
+    // 2. Fallback to weak cache
+    auto it = _elementCache.find(identifier);
+    if (it != _elementCache.end()) {
+        if (auto sp = it->second.lock()) return sp;
+    }
     return nullptr;
 }
 
