@@ -28,6 +28,7 @@
 #include "Singularity/Storage/Schema/Earthcall_generated.h"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
+#include "test_save_helper.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -118,6 +119,8 @@ std::vector<uint8_t> buildLegacyRedMatterBuffer(const std::string& objectId) {
 } // namespace
 
 int main() {
+    TempSaveRoot tempSaveRoot;
+
     std::printf("=== Matter/semantic precedence: legacy .ecmatter must not overwrite authored color ===\n");
 
     ZoneManager mgr;
