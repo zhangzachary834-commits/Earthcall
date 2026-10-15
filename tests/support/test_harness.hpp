@@ -35,6 +35,22 @@ extern CategoryManager categories;
 
 namespace TestSupport {
 
+struct TempSaveRoot {
+    std::filesystem::path path;
+    TempSaveRoot() {
+        path = std::filesystem::temp_directory_path() /
+               ("earthcall-test-save-" +
+                std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+        std::filesystem::create_directories(path);
+        SaveSystem::setSaveRoot(path.string());
+    }
+    ~TempSaveRoot() {
+        SaveSystem::setSaveRoot("");
+        std::error_code ignored;
+        std::filesystem::remove_all(path, ignored);
+    }
+};
+
 struct BootedEngineHarness {
     Core::Camera camera;
     MouseHandler mouseHandler;
