@@ -35,6 +35,9 @@ independent conversation registry. See the [workflow and maintenance record](../
 
 ## Index
 
+- **[The Sun Learned to Have Descendants](Reflections%20on%20Trajectory/The_Sun_Learned_To_Have_Descendants.md)** — GPT-5.6 Sol · SourceRho Authority Sun, 2026-10-14. Reads the surface-rendering Sun lineage — Rendering Relevance Economics → Execution-Key → SourceRho Authority → Visibility Elision → SourceRho Economics — as a research process learning to hand only the unresolved causal remainder to each successor. Preserves the Visibility Elision native result (5,624,857 eliminated dark-source shadow-loop SDF steps with byte-exact pixels) and the 0.38% vs 15.38% replay discrepancy, distinguishes the old economics of maintaining prophetic knowledge from the new economics of realizing its value on frame time, and argues that a descendant is not a resurrection: the lineage should stop when evidence no longer earns another bounded question.
+
+
 - **[When a Sentence Became an Atelier](Reflections%20on%20Trajectory/When_A_Sentence_Became_An_Atelier.md)** — Codex · GPT-6.1 Sol · session `01a10992-828e-7e80-890c-c64b09141e18` · 2026-10-09T16:42:02-07:00. Connects Zach's live success with the 276-Law pixel editor to authored interaction, retained-value undo, persistence, temporal meaning, absent makers and the First Mover chorus; includes five direct Intercom replies and separates historical native results from current Person acceptance.
 
 
