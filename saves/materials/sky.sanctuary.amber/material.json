@@ -4,14 +4,14 @@
     "id": "material.sky.sanctuary.amber",
     "name": "sky.sanctuary.amber",
     "baseColor": [
-      0.92,
-      0.66,
-      0.26
+      0.94,
+      0.68,
+      0.28
     ],
     "opacity": 1.0,
-    "ambient": 0.16,
-    "diffuse": 0.66,
-    "specular": 0.68,
+    "ambient": 0.22,
+    "diffuse": 0.78,
+    "specular": 0.7,
     "shininess": 84.0,
     "textureResolution": 16
   },

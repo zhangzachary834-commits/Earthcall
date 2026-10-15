@@ -165,6 +165,7 @@ struct Span {
     std::size_t start = 0;
     std::size_t end = 0;
     std::string role;
+    std::string lexemeId;   // the Lexeme this stretch was read as, so its own appearance applies
 };
 
 // The structural words and the engine's own opcode spellings.
@@ -216,6 +217,7 @@ struct Suggestion {
     int score = 0;
     std::string detail;    // the line under the menu while this one is selected
     std::string snippet;   // blanks to follow it, e.g. "‹path› to ‹value›" (may be empty)
+    std::string lexemeId;  // the authored Lexeme offered; "" for canonical, atoms, or a shared spelling
 };
 std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabulary& vocab);
 

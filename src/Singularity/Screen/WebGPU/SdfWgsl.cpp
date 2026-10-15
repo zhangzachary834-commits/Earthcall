@@ -89,6 +89,23 @@ var<private> g_instIdx: u32;
 const char* kPrimitives = R"WGSL(
 fn dot2(v: vec2<f32>) -> f32 { return dot(v, v); }
 
+// WGSL pow(base, exp) is undefined (NaN on Metal) whenever base < 0.0, even for
+// integer exponents like x^2 or x^3 in ScalarForm/Op::Pow. Preserve CPU std::pow
+// parity for integer exponents of negative bases while keeping slot layout fixed.
+fn ontoPow(base: f32, exp: f32) -> f32 {
+    if (abs(exp) < 1e-12) { return 1.0; }
+    let ab = abs(base);
+    if (ab < 1e-12) { return 0.0; }
+    let mag = pow(ab, exp);
+    if (base >= 0.0) { return mag; }
+    let r = round(exp);
+    if (abs(exp - r) < 1e-4) {
+        let h = r * 0.5;
+        return select(-mag, mag, abs(h - round(h)) < 1e-4);
+    }
+    return 0.0;
+}
+
 fn sdSphere(p: vec3<f32>, r: f32) -> f32 { return length(p) - r; }
 
 fn sdBox(p: vec3<f32>, b: vec3<f32>) -> f32 {
@@ -425,7 +442,7 @@ std::string emitRpn(const std::vector<geom::SdfToken>& rpn, Emit& e,
             case K::Sub: { auto b = pop(); auto a = pop(); st.push_back("((" + a + ") - (" + b + "))"); break; }
             case K::Mul: { auto b = pop(); auto a = pop(); st.push_back("((" + a + ") * (" + b + "))"); break; }
             case K::Div: { auto b = pop(); auto a = pop(); st.push_back("((" + a + ") / (" + b + "))"); break; }
-            case K::Pow: { auto b = pop(); auto a = pop(); st.push_back("pow((" + a + "), (" + b + "))"); break; }
+            case K::Pow: { auto b = pop(); auto a = pop(); st.push_back("ontoPow((" + a + "), (" + b + "))"); break; }
             case K::Sin:  { auto a = pop(); st.push_back("sin("  + a + ")"); break; }
             case K::Cos:  { auto a = pop(); st.push_back("cos("  + a + ")"); break; }
             case K::Tan:  { auto a = pop(); st.push_back("tan("  + a + ")"); break; }
@@ -523,7 +540,7 @@ std::string emitScalarForm(const OntoMath::ScalarForm& sf, Emit& e, const std::s
         for (const auto& [var, exp] : term.factors) {
             std::string wgslVar = pointComponent(var, e, pt);
             if (exp == 1.0) termStr += " * " + wgslVar;
-            else termStr += " * pow(" + wgslVar + ", " + e.param(exp) + ")";
+            else termStr += " * ontoPow(" + wgslVar + ", " + e.param(exp) + ")";
         }
         for (const auto& tr : term.trans) {
             std::string wgslVar = pointComponent(tr.variable, e, pt);
@@ -711,7 +728,7 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
             const std::string b = arg(1);
             return "select(0.0, ((" + arg(0) + ") / (" + b + ")), abs(" + b + ") >= " + wgslLiteral(OntoMath::kDegenerateDivisor) + ")";
         }
-        case Op::Pow:   return "pow((" + arg(0) + "), (" + arg(1) + "))";
+        case Op::Pow:   return "ontoPow((" + arg(0) + "), (" + arg(1) + "))";
         case Op::Abs:   return "abs(" + arg(0) + ")";
         case Op::Clamp: return "clamp((" + arg(0) + "), (" + arg(1) + "), (" + arg(2) + "))";
         case Op::Sqrt:  return "sqrt(max((" + arg(0) + "), 0.0))";
@@ -3897,6 +3914,20 @@ fn cnoise3(P: vec3<f32>) -> f32 {
 
 const char* kSdfPrimitivesMath = R"WGSL(
 fn dot2(v: vec2<f32>) -> f32 { return dot(v, v); }
+
+fn ontoPow(base: f32, exp: f32) -> f32 {
+    if (abs(exp) < 1e-12) { return 1.0; }
+    let ab = abs(base);
+    if (ab < 1e-12) { return 0.0; }
+    let mag = pow(ab, exp);
+    if (base >= 0.0) { return mag; }
+    let r = round(exp);
+    if (abs(exp - r) < 1e-4) {
+        let h = r * 0.5;
+        return select(-mag, mag, abs(h - round(h)) < 1e-4);
+    }
+    return 0.0;
+}
 
 fn sdSphere(p: vec3<f32>, r: f32) -> f32 { return length(p) - r; }
 

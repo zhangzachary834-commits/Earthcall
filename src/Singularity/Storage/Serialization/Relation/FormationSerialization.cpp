@@ -2,6 +2,7 @@
 
 #include "ConstructedBeing/CategoryManager.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Relation/Relation.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -26,6 +27,14 @@ void internZoneLexemes(Zone& zone, const nlohmann::json& zj) {
         if (id.empty() || symbol.empty()) continue;
         auto lexeme = language.intern(symbol, id);
         zone.addToFormation(lexeme.get());
+        // ZoneSerialization writes a Lexeme's dynamic properties here; until
+        // 2026-10-14 nothing read them back, so an authored Lexeme property
+        // (e.g. `appearance.glyph`) survived Save Zone but vanished on load.
+        if (const auto authored = item.find("authoredProperties");
+            authored != item.end() && authored->is_object()) {
+            for (auto it = authored->begin(); it != authored->end(); ++it)
+                lexeme->setDynamicProperty(it.key(), propertyValueFromJson(it.value()));
+        }
     }
 }
 

@@ -4,14 +4,14 @@
     "id": "material.sky.sanctuary.water",
     "name": "sky.sanctuary.water",
     "baseColor": [
-      0.1,
-      0.42,
-      0.62
+      0.12,
+      0.46,
+      0.68
     ],
     "opacity": 1.0,
-    "ambient": 0.1,
-    "diffuse": 0.62,
-    "specular": 0.78,
+    "ambient": 0.17,
+    "diffuse": 0.74,
+    "specular": 0.8,
     "shininess": 104.0,
     "textureResolution": 16,
     "colorExpr": {
@@ -28,7 +28,7 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.1,
+                      "c": 0.12,
                       "factors": {}
                     },
                     {
@@ -57,7 +57,7 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.42,
+                      "c": 0.46,
                       "factors": {}
                     },
                     {
@@ -86,7 +86,7 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.62,
+                      "c": 0.68,
                       "factors": {}
                     },
                     {

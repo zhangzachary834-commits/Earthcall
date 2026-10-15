@@ -272,6 +272,81 @@ void rendering() {
     assert(visibleWidth("\x1b[32mset\x1b[0m ▸") == 5);
 }
 
+// Zach, 2026-10-14: "make the Law Line ... more beautiful using Lexeme
+// symbols or objects with symbolic properties". The editor asks `look` how a
+// word, a role or its own chrome appears; unanswered keys keep the built-in.
+void appearance() {
+    // Cells, not code points: authored glyphs must not shear the panel.
+    assert(visibleWidth("\u27E8\u03C8|") == 3);              // ⟨ψ|
+    assert(visibleWidth("\u2764") == 1);                      // ❤ text presentation
+    assert(visibleWidth("\u2764\uFE0F") == 2);               // ❤️ emoji presentation
+    assert(visibleWidth("\u6F22\u5B57") == 4);               // 漢字
+    assert(visibleWidth("e\u0301") == 1);                     // é, combining
+    assert(visibleWidth("\U0001F54A") == 1);                  // 🕊 defaults to text presentation
+    assert(visibleWidth("\U0001F54A\uFE0F") == 2);           // 🕊️
+    assert(visibleWidth("\u2728") == 2);                      // ✨ Emoji_Presentation
+    assert(visibleWidth("\x1b[1;38;2;1;2;3m\u2726\x1b[0m") == 1);
+
+    const auto v = vocabulary();
+    LineEditor e = editor(v);
+    e.look = [](const std::string& key) {
+        if (key == "lexeme.lex_red") return LineEditor::Look{"\u25C9", "38;2;255;64;64", "1", ""};   // ◉
+        if (key == "role.action") return LineEditor::Look{"", "", "1", ""};      // style only: keeps green
+        if (key == "chrome.selected") return LineEditor::Look{"\u2727", "38;5;220", "", ""};      // ✧
+        return LineEditor::Look{};
+    };
+    type(e, "on tick then set glow to r");
+    const auto f = e.render(80);
+    assert(f.text.find("\u2727") != std::string::npos);                      // authored selection mark
+    assert(f.text.find("\u25B8") == std::string::npos);                      // the built-in one is gone
+    assert(f.text.find("\x1b[1;38;2;255;64;64m\u25C9") != std::string::npos);  // the Lexeme's own glyph, in its colour
+    assert(f.text.find("\x1b[1;32mset") != std::string::npos);              // style over the role colour
+
+    // The typed word wears its Lexeme's look in the line itself.
+    LineEditor typed = editor(v);
+    typed.look = e.look;
+    type(typed, "on tick then set glow to red");
+    assert(typed.render(80).text.find("\x1b[1;38;2;255;64;64mred") != std::string::npos);
+
+    // A swatch: the glyph in the colour the word denotes, the word in its role's.
+    LineEditor swatch = editor(v);
+    swatch.look = [](const std::string& key) {
+        if (key == "lexeme.lex_red") return LineEditor::Look{"\u25CF", "", "", "38;2;255;0;0"};   // ●
+        return LineEditor::Look{};
+    };
+    type(swatch, "on tick then set glow to r");
+    const auto sw = swatch.render(80).text;
+    assert(sw.find("\x1b[38;2;255;0;0m\u25CF") != std::string::npos);
+    assert(sw.find("\x1b[38;5;215mr") != std::string::npos || sw.find("\x1b[38;5;215;1mr") != std::string::npos);
+
+    // Without colour the glyph still shows; nothing else changes.
+    LineEditor plain = editor(v);
+    plain.look = e.look;
+    plain.color = false;
+    type(plain, "on tick then set glow to r");
+    const auto p = plain.render(80);
+    assert(p.text.find("\x1b[") == std::string::npos);
+    assert(p.text.find("\u25C9 red") != std::string::npos);
+
+    // Wide glyphs never push a panel row past the terminal's width.
+    LineEditor narrow = editor(v);
+    narrow.look = [](const std::string& key) {
+        if (key == "lexeme.lex_red") return LineEditor::Look{"\u2728", "", "", ""};
+        if (key == "chrome.footer") return LineEditor::Look{"\u6F22", "", "", ""};
+        return LineEditor::Look{};
+    };
+    type(narrow, "on tick then set glow to r");
+    const auto n = narrow.render(28);
+    std::size_t at = 0;
+    while (at <= n.text.size()) {
+        const std::size_t end = n.text.find("\r\n", at);
+        const std::string row = n.text.substr(at, end == std::string::npos ? std::string::npos : end - at);
+        if (at > 0) assert(visibleWidth(row) <= 27);
+        if (end == std::string::npos) break;
+        at = end + 2;
+    }
+}
+
 } // namespace
 
 // Multi-line blocks: an empty Enter is submitted only while a block is open.
@@ -379,6 +454,7 @@ int main() {
     rendering();
     rungThree();
     blocks();
+    appearance();
     // The actual large authored editor must survive bracketed paste split
     // across TerminalChannel's 64 KiB reads, including the end marker split.
     // A paste newline is text spacing; only the later Enter submits it.

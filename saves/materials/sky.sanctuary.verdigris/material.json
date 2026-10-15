@@ -4,14 +4,14 @@
     "id": "material.sky.sanctuary.verdigris",
     "name": "sky.sanctuary.verdigris",
     "baseColor": [
-      0.13,
-      0.45,
-      0.4
+      0.15,
+      0.48,
+      0.43
     ],
     "opacity": 1.0,
-    "ambient": 0.09,
-    "diffuse": 0.6,
-    "specular": 0.46,
+    "ambient": 0.16,
+    "diffuse": 0.72,
+    "specular": 0.48,
     "shininess": 58.0,
     "textureResolution": 16,
     "colorExpr": {
@@ -28,7 +28,7 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.13,
+                      "c": 0.15,
                       "factors": {}
                     },
                     {
@@ -51,7 +51,7 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.45,
+                      "c": 0.48,
                       "factors": {}
                     },
                     {
@@ -80,7 +80,7 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.4,
+                      "c": 0.43,
                       "factors": {}
                     },
                     {

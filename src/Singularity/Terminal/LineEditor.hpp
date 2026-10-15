@@ -81,6 +81,26 @@ public:
     enum class Outcome { None, Submitted, Interrupt, EndOfInput, Redraw, Help };
 
     void setProviders(SuggestFn suggest, HighlightFn highlight, StatusFn status);
+
+    // How a reading, a word, or a piece of the line's own chrome LOOKS. Keys:
+    // "role.<role>", "lexeme.<identifier>", "chrome.<element>". The channel
+    // answers from authored data (a Lexeme's or Zone's `appearance.*`); an
+    // empty field keeps the built-in look, so an unauthored world is unchanged.
+    // `sgr` is a colour's SGR parameters ("38;2;255;200;90"); `style` is
+    // attributes laid over whichever colour wins ("1;3" = bold italic), so
+    // authoring only a style keeps the colour beneath it. `glyphSgr`, when
+    // set, colours a word's glyph apart from the word (a colour word's swatch).
+    struct Look {
+        std::string glyph;
+        std::string sgr;
+        std::string style;
+        std::string glyphSgr;
+        bool operator==(const Look& o) const {
+            return glyph == o.glyph && sgr == o.sgr && style == o.style && glyphSgr == o.glyphSgr;
+        }
+        bool operator!=(const Look& o) const { return !(*this == o); }
+    };
+    std::function<Look(const std::string& key)> look;
     // Asked before Enter submits: "" lets the line go; anything else keeps it
     // in place and shows the answer (what is still missing, with an example).
     std::function<std::string(const std::string& text)> submitGate;
@@ -164,6 +184,9 @@ private:
     void eraseSelectedPlaceholder();
     void clickAt(int row, int col);
     std::string sgr(const std::string& code, const std::string& text) const;
+    Look lookOr(const std::string& key, const std::string& glyph, const std::string& code) const;
+    std::string wordCode(const std::string& role, const std::string& lexemeId) const;
+    Look wordLook(const std::string& lexemeId) const;
 
     std::string _buffer;
     std::size_t _cursor = 0;

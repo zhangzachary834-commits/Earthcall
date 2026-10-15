@@ -314,9 +314,43 @@ earthcall[LawLine]> called "Guard" when clicked:
 
 *Claude Code · Claude Opus 5.5 · session `01WXmPy9U71FLqizbRYzMToZ` · 2026-10-05.*
 
+## Authored appearance (2026-10-14)
+
+Zach: *"make the Law Line in the terminal more beautiful using Lexeme symbols or objects with symbolic properties over the terminal channel, but first plan the appearance and set up more in the modality channel if there are substrate gaps."* → [plan and record](../../../../../plans/LAW_LINE_BEAUTIFUL_TERMINAL_APPEARANCE_2026-10-14.md)
+
+How the line looks is **authored data**: ordinary dynamic properties, with no C++ field, enum, or theme class.
+
+- **On a Lexeme:**
+  - `appearance.glyph`: a sigil beside the word in the menu;
+  - `appearance.color`: vec3 0..1 or `"#rrggbb"`, used for the word in the menu and in the typed line;
+  - `appearance.style`: `bold italic dim underline reverse strike overline`;
+  - `appearance.glyphColor`: the glyph's own colour, e.g. a swatch.
+- **On a Zone:** `appearance.<key>.<field>`, where `<key>` is `role.<role>`, `chrome.<element>`, or `lexeme.<identifier>`. The elements are listed in the plan.
+  - Read order: the Lexeme, then the body's Zone, then the line's Zone.
+  - The footer mark's colour (green hears / yellow not) is a fact and is not authorable.
+- **Author it with sentences:**
+  - `… then add property @LawLine.appearance.role.action.color to gold`
+  - `… then add property @lexeme.law-line.greater-than.op-gt.appearance.glyph to ">"`
+
+  Then Save Zone. Zone *and* Lexeme properties now survive a restart: before this pass, a Lexeme's `authoredProperties` were written but never read back.
+- **Substrate filled:**
+  - `Span` and `Suggestion` carry `lexemeId`;
+  - the one `LineEditor::look(key)` provider;
+  - truecolor or xterm-256 lowering, with the registered `colorDepth` sensed from `COLORTERM`;
+  - Unicode cell widths (East Asian Wide, emoji, VS16, combining) in the editor, panel, help and click mapping;
+  - chrome glyphs and the help box as `chrome.*`.
+- **Not done, by Zach's choice (2026-10-14: "Don't touch the save yet"):** no theme is written into the LawLine save. The proposed "Illuminated Manuscript" theme is in the plan for him to author or decline. Time-varying looks wait on the Law/Timeline ontology.
+- **Witness:**
+  - `line_editor_test` `appearance()`;
+  - `law_line_zone_test`: sentences author a Zone glyph and a Lexeme colour; exact truecolor and 256-colour lowering; Save Zone and the Lexeme reload; `sense()` at about 5.6 µs per frame with 193 Lexemes;
+  - a pty run of the real app: the unauthored look is unchanged, and the data home is byte-identical.
+
+*Claude Code · Claude Opus 5.5 · session `016Yb6bNBaKzNFWs41sMyMjx` · 2026-10-14.*
+
 ## Pitfalls for the next agent (Jules especially)
 
 - **Do not add a verb, window, or event-name constant.** Every one of those was rejected while this was designed. The terminal only senses a line; seeded Laws decide that a line is spoken (`law-line-hear`, `law-line-speak`).
+- **Do not hardcode a colour or glyph in `LineEditor`/`TerminalChannel`.** Give it a `look` key with today's look as the default (`lookOr("chrome.<element>", glyph, sgr)`), so a Zone or Lexeme can author it. Never make the footer mark's hears/not-hears colour themeable.
 - **Do not add a word to `canonicalWords()`** unless it is a structural word or an engine opcode spelling. Meaning belongs in Lexeme → `denotes` → Law data. More words means patching the seed (below), not C++.
 - **Do not add fields to `ActionNode` to make "set from path" work.** That belongs to the binding movement.
 - **Seed changes follow FIRST_MOVER_AUTHORING §7.** `scripts/seed_law_line.py` is a patcher:

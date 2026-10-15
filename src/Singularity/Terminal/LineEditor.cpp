@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
+#include <iterator>
 
 namespace Singularity {
 namespace Terminal {
@@ -44,6 +46,64 @@ std::size_t nextBoundary(const std::string& s, std::size_t i) {
 
 bool isSpace(char c) { return c == ' ' || c == '\t'; }
 
+std::uint32_t decodeAt(const std::string& s, std::size_t i, std::size_t n) {
+    const unsigned char c = static_cast<unsigned char>(s[i]);
+    if (n == 1) return c;
+    std::uint32_t cp = n == 2 ? (c & 0x1F) : n == 3 ? (c & 0x0F) : (c & 0x07);
+    for (std::size_t k = 1; k < n && i + k < s.size(); ++k)
+        cp = (cp << 6) | (static_cast<unsigned char>(s[i + k]) & 0x3F);
+    return cp;
+}
+
+// How many terminal cells one code point takes, after Unicode's East Asian
+// Width (W/F) and Emoji_Presentation tables -- what wcwidth() reports, kept
+// here because the platform's wcwidth is locale-bound and stale on macOS.
+// Authored glyphs (a Lexeme's ⟨ψ|, a Zone's 🜂) must not shear the panel.
+int codepointCells(std::uint32_t cp) {
+    struct Range { std::uint32_t lo, hi; };
+    static const Range kZero[] = {
+        {0x0300, 0x036F}, {0x0483, 0x0489}, {0x0591, 0x05BD}, {0x0610, 0x061A}, {0x064B, 0x065F},
+        {0x1AB0, 0x1AFF}, {0x1DC0, 0x1DFF}, {0x200B, 0x200F}, {0x2028, 0x202E}, {0x2060, 0x2064},
+        {0x20D0, 0x20FF}, {0xFE00, 0xFE0F}, {0xFE20, 0xFE2F}, {0xFEFF, 0xFEFF}, {0xE0100, 0xE01EF},
+    };
+    static const Range kWide[] = {
+        {0x1100, 0x115F}, {0x231A, 0x231B}, {0x2329, 0x232A}, {0x23E9, 0x23EC}, {0x23F0, 0x23F0},
+        {0x23F3, 0x23F3}, {0x25FD, 0x25FE}, {0x2614, 0x2615}, {0x2648, 0x2653}, {0x267F, 0x267F},
+        {0x2693, 0x2693}, {0x26A1, 0x26A1}, {0x26AA, 0x26AB}, {0x26BD, 0x26BE}, {0x26C4, 0x26C5},
+        {0x26CE, 0x26CE}, {0x26D4, 0x26D4}, {0x26EA, 0x26EA}, {0x26F2, 0x26F3}, {0x26F5, 0x26F5},
+        {0x26FA, 0x26FA}, {0x26FD, 0x26FD}, {0x2705, 0x2705}, {0x270A, 0x270B}, {0x2728, 0x2728},
+        {0x274C, 0x274C}, {0x274E, 0x274E}, {0x2753, 0x2755}, {0x2757, 0x2757}, {0x2795, 0x2797},
+        {0x27B0, 0x27B0}, {0x27BF, 0x27BF}, {0x2B1B, 0x2B1C}, {0x2B50, 0x2B50}, {0x2B55, 0x2B55},
+        {0x2E80, 0x303E}, {0x3041, 0x33FF}, {0x3400, 0x4DBF}, {0x4E00, 0x9FFF}, {0xA000, 0xA4CF},
+        {0xA960, 0xA97F}, {0xAC00, 0xD7A3}, {0xF900, 0xFAFF}, {0xFE10, 0xFE19}, {0xFE30, 0xFE6F},
+        {0xFF00, 0xFF60}, {0xFFE0, 0xFFE6}, {0x16FE0, 0x16FE4}, {0x17000, 0x18CFF}, {0x1B000, 0x1B2FF},
+        {0x1F004, 0x1F004}, {0x1F0CF, 0x1F0CF}, {0x1F18E, 0x1F18E}, {0x1F191, 0x1F19A}, {0x1F200, 0x1F251},
+        {0x1F300, 0x1F320}, {0x1F32D, 0x1F335}, {0x1F337, 0x1F37C}, {0x1F37E, 0x1F393}, {0x1F3A0, 0x1F3CA},
+        {0x1F3CF, 0x1F3D3}, {0x1F3E0, 0x1F3F0}, {0x1F3F4, 0x1F3F4}, {0x1F3F8, 0x1F43E}, {0x1F440, 0x1F440},
+        {0x1F442, 0x1F4FC}, {0x1F4FF, 0x1F53D}, {0x1F54B, 0x1F54E}, {0x1F550, 0x1F567}, {0x1F57A, 0x1F57A},
+        {0x1F595, 0x1F596}, {0x1F5A4, 0x1F5A4}, {0x1F5FB, 0x1F64F}, {0x1F680, 0x1F6C5}, {0x1F6CC, 0x1F6CC},
+        {0x1F6D0, 0x1F6D2}, {0x1F6D5, 0x1F6D7}, {0x1F6DC, 0x1F6DF}, {0x1F6EB, 0x1F6EC}, {0x1F6F4, 0x1F6FC},
+        {0x1F7E0, 0x1F7EB}, {0x1F7F0, 0x1F7F0}, {0x1F90C, 0x1F93A}, {0x1F93C, 0x1F945}, {0x1F947, 0x1F9FF},
+        {0x1FA70, 0x1FAFF}, {0x20000, 0x2FFFD}, {0x30000, 0x3FFFD},
+    };
+    const auto in = [cp](const auto& table) {
+        return std::any_of(std::begin(table), std::end(table),
+                           [cp](const Range& r) { return cp >= r.lo && cp <= r.hi; });
+    };
+    if (cp < 0x20 || (cp >= 0x7F && cp < 0xA0)) return 0;
+    if (cp < 0x300) return 1;
+    if (in(kZero)) return 0;
+    return in(kWide) ? 2 : 1;
+}
+
+// Cells for the character of byte length n at i. VS16 (U+FE0F) asks for
+// emoji presentation, which terminals draw two cells wide: ❤ is 1, ❤️ is 2.
+std::size_t cellsAt(const std::string& s, std::size_t i, std::size_t n) {
+    const int base = codepointCells(decodeAt(s, i, n));
+    if (base == 1 && i + n + 3 <= s.size() && s.compare(i + n, 3, "\xEF\xB8\x8F") == 0) return 2;
+    return static_cast<std::size_t>(base);
+}
+
 // Colour of each reading, so the line shows how it is being understood.
 std::string roleColor(const std::string& role) {
     if (role == "clause" || role == "logic" || role == "filler") return "35";
@@ -71,11 +131,13 @@ struct PanelLine {
         if (used >= max) return;
         std::string piece;
         std::size_t i = 0;
-        while (i < text.size() && used < max) {
+        while (i < text.size()) {
             const std::size_t n = std::min(utf8Length(static_cast<unsigned char>(text[i])), text.size() - i);
+            const std::size_t cells = cellsAt(text, i, n);
+            if (used + cells > max) break;
             piece += text.substr(i, n);
             i += n;
-            ++used;
+            used += cells;
         }
         if (i < text.size() && !piece.empty()) {
             // Mark the cut so a truncated description never reads as whole.
@@ -97,7 +159,7 @@ std::size_t visibleWidth(const std::string& text) {
             while (i < text.size() && !(text[i] >= 0x40 && text[i] <= 0x7E)) ++i;
             continue;
         }
-        if (!isContinuation(c)) ++width;
+        if (!isContinuation(c)) width += cellsAt(text, i, std::min(utf8Length(c), text.size() - i));
     }
     return width;
 }
@@ -486,8 +548,9 @@ void LineEditor::clickAt(int row, int col) {
     std::size_t at = 0;
     int seen = 0;
     while (at < _buffer.size() && seen < cell) {
-        at = nextBoundary(_buffer, at);
-        ++seen;
+        const std::size_t next = nextBoundary(_buffer, at);
+        seen += static_cast<int>(cellsAt(_buffer, at, next - at));
+        at = next;
     }
     _cursor = at;
     _menuForced = false;
@@ -853,6 +916,40 @@ std::string LineEditor::sgr(const std::string& code, const std::string& text) co
     return "\x1b[" + code + "m" + text + "\x1b[0m";
 }
 
+namespace {
+std::string joinSgr(const std::string& a, const std::string& b) {
+    if (a.empty()) return b;
+    if (b.empty()) return a;
+    return a + ";" + b;
+}
+} // namespace
+
+// The returned Look's `sgr` is complete: authored style over authored-or-built-in colour.
+LineEditor::Look LineEditor::lookOr(const std::string& key, const std::string& glyph, const std::string& code) const {
+    Look out{glyph, code, {}, {}};
+    if (!look) return out;
+    const Look authored = look(key);
+    if (!authored.glyph.empty()) out.glyph = authored.glyph;
+    if (!authored.sgr.empty()) out.sgr = authored.sgr;
+    out.sgr = joinSgr(authored.style, out.sgr);
+    return out;
+}
+
+// A word's look: its own Lexeme's authored colour and style, over its role's
+// (which a Zone may author), over the built-in role colour.
+std::string LineEditor::wordCode(const std::string& role, const std::string& lexemeId) const {
+    const std::string byRole = lookOr("role." + role, "", roleColor(role)).sgr;
+    if (!look || lexemeId.empty()) return byRole;
+    const Look own = look("lexeme." + lexemeId);
+    if (own.sgr.empty() && own.style.empty()) return byRole;
+    return joinSgr(own.style, own.sgr.empty() ? byRole : own.sgr);
+}
+
+LineEditor::Look LineEditor::wordLook(const std::string& lexemeId) const {
+    if (!look || lexemeId.empty()) return {};
+    return look("lexeme." + lexemeId);
+}
+
 std::string LineEditor::styled(const std::string& text, bool markCursor) const {
     // Blanks read as blanks: dim italic, and the selected one inverted.
     std::vector<std::pair<std::size_t, std::size_t>> blanks;
@@ -863,6 +960,13 @@ std::string LineEditor::styled(const std::string& text, bool markCursor) const {
     }
     if (!color) return text;
     const auto spans = _highlight ? _highlight(text) : std::vector<LawSentence::Span>{};
+    // One look per reading, not per byte.
+    std::vector<std::string> spanCodes;
+    spanCodes.reserve(spans.size());
+    for (const auto& sp : spans) spanCodes.push_back(wordCode(sp.role, sp.lexemeId));
+    const std::string unread = wordCode("", "");
+    const std::string blank = lookOr("chrome.blank", "", "3;38;5;245").sgr;
+    const std::string blankHere = lookOr("chrome.blank.selected", "", "7").sgr;
     std::string out;
     std::string current;
     for (std::size_t i = 0; i < text.size();) {
@@ -871,15 +975,14 @@ std::string LineEditor::styled(const std::string& text, bool markCursor) const {
         for (const auto& [a, b] : blanks) {
             if (i >= a && i < b) {
                 inBlank = true;
-                code = (markCursor && a == _cursor) ? "7" : "3;38;5;245";
+                code = (markCursor && a == _cursor) ? blankHere : blank;
             }
         }
         if (!inBlank) {
-            std::string role;
-            for (const auto& s : spans) {
-                if (i >= s.start && i < s.end) role = s.role;   // later spans (errors) win
+            code = unread;
+            for (std::size_t k = 0; k < spans.size(); ++k) {
+                if (i >= spans[k].start && i < spans[k].end) code = spanCodes[k];   // later spans (errors) win
             }
-            code = roleColor(role);
         }
         if (code != current) {
             out += "\x1b[0m";
@@ -895,7 +998,7 @@ std::string LineEditor::styled(const std::string& text, bool markCursor) const {
 }
 
 std::string LineEditor::echo(const std::string& line) const {
-    return sgr("2", prompt) + styled(line);
+    return sgr(lookOr("chrome.echo", "", "2").sgr, prompt) + styled(line);
 }
 
 namespace {
@@ -961,12 +1064,13 @@ LineEditor::Frame LineEditor::render(int width) const {
             std::string dots;
             const std::size_t shown = visibleWidth(_buffer);
             for (std::size_t k = 0; k < shown; ++k) dots += "\xE2\x80\xA2";
-            input = sgr("1;38;5;141", prompt) + dots;
+            input = sgr(lookOr("chrome.prompt", "", "1;38;5;141").sgr, prompt) + dots;
             before = visibleWidth(prompt) + visibleWidth(_buffer.substr(0, _cursor));
             total = visibleWidth(prompt) + shown;
         } else {
         const std::string g = ghost();
-        input = sgr("1;38;5;141", prompt) + styled(_buffer, true) + sgr("2", g);
+        input = sgr(lookOr("chrome.prompt", "", "1;38;5;141").sgr, prompt) + styled(_buffer, true) +
+                sgr(lookOr("chrome.ghost", "", "2").sgr, g);
         before = visibleWidth(prompt) + visibleWidth(_buffer.substr(0, _cursor));
         total = visibleWidth(prompt) + visibleWidth(_buffer) + visibleWidth(g);
         }
@@ -1005,8 +1109,9 @@ LineEditor::Frame LineEditor::render(int width) const {
                     visibleWidth(prompt) + visibleWidth(_buffer.substr(0, std::min(s.errorOffset, _buffer.size())));
                 if (col < max) {
                     PanelLine l = line();
+                    const Look caret = lookOr("chrome.caret", "^", "1;31");
                     l.add(std::string(col, ' '));
-                    l.add("^", "1;31");
+                    l.add(caret.glyph, caret.sgr);
                     push(l.out);
                 }
                 break;
@@ -1043,23 +1148,46 @@ LineEditor::Frame LineEditor::render(int width) const {
                 }
             }
             std::size_t textCol = 0;
+            std::size_t glyphCol = 0;   // a column for authored glyphs, only when one is shown
             for (int r = start; r < start + shown; ++r) {
-                if (!rows[r].header) textCol = std::max(textCol, visibleWidth(_suggestions[rows[r].item].text));
+                if (rows[r].header) continue;
+                const auto& sg = _suggestions[rows[r].item];
+                textCol = std::max(textCol, visibleWidth(sg.text));
+                glyphCol = std::max(glyphCol, visibleWidth(wordLook(sg.lexemeId).glyph));
             }
             textCol = std::min<std::size_t>(textCol, 30);
+            glyphCol = std::min<std::size_t>(glyphCol, 4);
+            const Look mark = lookOr("chrome.selected", "\u25B8", "1;36");   // ▸
+            const std::size_t markCells = visibleWidth(mark.glyph);
+            const Look header = lookOr("chrome.header", "", "1;38;5;244");
+            const std::string chosenCode = lookOr("chrome.chosen", "", "7").sgr;
+            const std::string describe = lookOr("chrome.description", "", "2").sgr;
             for (int r = start; r < start + shown; ++r) {
                 PanelLine l = line();
                 if (rows[r].header) {
-                    l.add("   " + rows[r].label, "1;38;5;244");
+                    l.add("   " + (header.glyph.empty() ? "" : header.glyph + " ") + rows[r].label, header.sgr);
                     push(l.out);
                     continue;
                 }
                 const int i = rows[r].item;
                 const auto& s = _suggestions[i];
                 const bool chosen = i == _selected;
-                l.add(chosen ? "  ▸ " : "    ", chosen ? "1;36" : "");
+                const std::string own = wordCode(s.role, s.lexemeId);
+                if (chosen) {
+                    l.add("  ");
+                    l.add(mark.glyph, mark.sgr);
+                    l.add(" ");
+                } else {
+                    l.add(std::string(3 + markCells, ' '));
+                }
+                if (glyphCol > 0) {
+                    const Look w = wordLook(s.lexemeId);
+                    const std::string& g = w.glyph;
+                    l.add(g, w.glyphSgr.empty() ? own : w.glyphSgr);
+                    l.add(std::string(glyphCol - std::min(glyphCol, visibleWidth(g)) + 1, ' '));
+                }
                 const auto hit = matchedLetters(s.text, typedTail(s));
-                const std::string base = chosen ? "7" : roleColor(s.role);
+                const std::string base = chosen ? chosenCode : own;
                 for (std::size_t k = 0; k < s.text.size();) {
                     const std::size_t len = std::min(utf8Length(static_cast<unsigned char>(s.text[k])), s.text.size() - k);
                     const std::string code = hit[k] ? (base.empty() ? "1" : base + ";1") : base;
@@ -1067,10 +1195,10 @@ LineEditor::Frame LineEditor::render(int width) const {
                     k += len;
                 }
                 const std::size_t shownWidth = visibleWidth(s.text);
-                if (shownWidth < textCol) l.add(std::string(textCol - shownWidth, ' '), chosen ? "7" : "");
+                if (shownWidth < textCol) l.add(std::string(textCol - shownWidth, ' '), chosen ? chosenCode : "");
                 if (!s.description.empty()) {
                     l.add("  ");
-                    l.add(s.description, "2");
+                    l.add(s.description, describe);
                 }
                 push(l.out, i);
             }
@@ -1081,7 +1209,7 @@ LineEditor::Frame LineEditor::render(int width) const {
             }();
             if (moreItems > 0) {
                 PanelLine l = line();
-                l.add("    " + std::to_string(moreItems) + " more · wheel, ↑↓ or PgUp PgDn · keep typing to narrow", "2");
+                l.add("    " + std::to_string(moreItems) + " more · wheel, ↑↓ or PgUp PgDn · keep typing to narrow", describe);
                 push(l.out);
             }
             // The selected entry, explained.
@@ -1089,25 +1217,23 @@ LineEditor::Frame LineEditor::render(int width) const {
             const std::string detail = sel.detail.empty() ? std::string{} : sel.detail;
             if (!detail.empty() && detail != sel.description) {
                 PanelLine l = line();
-                l.add("    ⤷ ", "38;5;141");
-                l.add(detail, "3");
+                const Look d = lookOr("chrome.detail", "\u2937", "38;5;141");   // ⤷
+                l.add("    " + d.glyph + " ", d.sgr);
+                l.add(detail, lookOr("chrome.detail.text", "", "3").sgr);
                 push(l.out);
             }
         }
 
         for (const auto& s : _status) {
             PanelLine l = line();
-            if (s.role == "error") {
-                l.add("  ✗ ", "31");
-                l.add(s.text, "31");
-            } else if (s.role == "preview") {
-                l.add("  ↳ ", "2");
-                l.add(s.text, "2");
-            } else if (s.role == "question") {
-                l.add("  ? ", "1;33");
-                l.add(s.text, "1;33");
+            if (s.role == "error" || s.role == "preview" || s.role == "question") {
+                const Look k = s.role == "error"   ? lookOr("chrome.error", "\u2717", "31")      // ✗
+                             : s.role == "preview" ? lookOr("chrome.preview", "\u21B3", "2")     // ↳
+                                                   : lookOr("chrome.question", "?", "1;33");
+                l.add("  " + k.glyph + " ", k.sgr);
+                l.add(s.text, k.sgr);
             } else if (s.role == "note") {
-                l.add("    " + s.text, "2");
+                l.add("    " + s.text, lookOr("chrome.note", "", "2").sgr);
             } else {
                 l.add("  " + s.text);
             }
@@ -1116,7 +1242,7 @@ LineEditor::Frame LineEditor::render(int width) const {
 
         if (!_notice.empty()) {
             PanelLine l = line();
-            l.add("  " + _notice, "33");
+            l.add("  " + _notice, lookOr("chrome.notice", "", "33").sgr);
             push(l.out);
         }
     }
@@ -1137,12 +1263,16 @@ LineEditor::Frame LineEditor::render(int width) const {
             h = "tab complete · → take ghost · enter author · end with ? to preview";
         }
         PanelLine l = line();
+        // The mark's colour is a fact (green: this Zone hears the line), never
+        // a theme; its glyph and the footer's text colour may be authored.
+        const Look f = lookOr("chrome.footer", "\u25C6", "2");   // ◆
+        const std::string hint = lookOr("chrome.hint", "", "2").sgr;
         if (!footer.empty()) {
-            l.add("  ◆ ", footerMark);
-            l.add(footer, "2");
-            if (hints) l.add("  │  " + h, "2");
+            l.add("  " + f.glyph + " ", footerMark);
+            l.add(footer, f.sgr);
+            if (hints) l.add("  │  " + h, hint);
         } else {
-            l.add("  " + h, "2");
+            l.add("  " + h, hint);
         }
         push(l.out);
     }

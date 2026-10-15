@@ -1338,6 +1338,18 @@ Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-0
 - [ ] While present, with your body in LawLine, speak `called "Define Click" when clicked then add property @LawLine.meaning.object-clicked to "a Person pressed and released on a being"`, then click anything once so it fires. Next, type `on object-cl` and press Tab: the menu line for `object-clicked` shows your meaning.
 - [ ] Save Zone, restart, and Tab again: the meaning is still there. (Before today, any property added to a Zone vanished at Save Zone.)
 
+## Law Line: authored appearance (2026-10-14)
+
+*Claude Code · Claude Opus 5.5 · session `016Yb6bNBaKzNFWs41sMyMjx` · 2026-10-14. [Record](../Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md#authored-appearance-2026-10-14) · [plan with the proposed theme](../../../plans/LAW_LINE_BEAUTIFUL_TERMINAL_APPEARANCE_2026-10-14.md)*
+
+Nothing is themed yet: you chose to author it yourself. Be present, with your body in LawLine.
+
+- [ ] Speak `called "Gilded Actions" when clicked then add property @LawLine.appearance.role.action.color to gold`, then click the cube. Type `when clicked then s`: the menu's `set`/`scale` and the typed `set` are now gold. In iTerm2/kitty/WezTerm/VS Code it is exact; in Apple Terminal it is the nearest 256-colour gold.
+- [ ] Speak `called "Star Mark" when clicked then add property @LawLine.appearance.chrome.selected.glyph to "❧"` and click. The menu's selection mark is `❧` instead of `▸`.
+- [ ] Speak `called "Sign Gt" when clicked then add property @lexeme.law-line.greater-than.op-gt.appearance.glyph to ">"` and click. Type `when clicked if hp gre`: the menu shows `> greater than`, with the sign in its own column and the rows still aligned.
+- [ ] Save Zone, restart, and type again: all three looks are still there. Before today a Lexeme's look was lost on restart.
+- [ ] Judge it: is it more beautiful, still legible, and coherent? Do you want the "Illuminated Manuscript" theme from the plan patched in, all or in part?
+
 ## Creator Console: Zone First Mover Workbench (2026-10-05)
 
 *Gemini · session `c02f9271-25d2-430c-99b6-2a1144eb9c68` · 2026-10-05.*
