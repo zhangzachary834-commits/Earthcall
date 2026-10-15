@@ -287,6 +287,56 @@ void appearance() {
     assert(visibleWidth("\u2728") == 2);                      // ✨ Emoji_Presentation
     assert(visibleWidth("\x1b[1;38;2;1;2;3m\u2726\x1b[0m") == 1);
 
+    const std::string heart = "\u2764\uFE0F";
+    const std::string family = "\U0001F468\u200D\U0001F469\u200D\U0001F467";
+    const std::string flag = "\U0001F1FA\U0001F1F8";
+    assert(visibleWidth(family) == 2 && visibleWidth(flag) == 2);
+    assert(visibleWidth("\u2764\x1b[31m\uFE0F\x1b[0m") == 2);
+    assert(clipToCells(heart, 1).empty());
+    assert(clipToCells(heart + "x", 2, true) == "…");
+    assert(clipToCells(family + "x", 2) == family);
+    assert(clipToCells("e\u0301x", 1) == "e\u0301");
+    for (const std::string bad : {std::string("\nextra-row"), std::string("\x1b[2J"),
+                                  std::string("\r"), std::string("\t"), std::string("\xC2\x85"), std::string("\xFF")}) {
+        assert(!isPrintableGlyph(bad));
+        LineEditor control;
+        control.hints = false;
+        control.setProviders([](const std::string&) { return std::vector<LS::Suggestion>{{0, "red", "", "value", 1, "", "", ""}}; }, {}, {});
+        control.look = [bad](const std::string& key) { return key == "chrome.selected" ? LineEditor::Look{bad, {}, {}, {}} : LineEditor::Look{}; };
+        control.prefill("r");
+        for (bool color : {false, true}) {
+            control.color = color;
+            const auto f = control.render(80);
+            assert(std::count(f.text.begin(), f.text.end(), '\n') == f.rows - 1);
+            assert(f.text.find("\u25B8") != std::string::npos); // printable default survives
+        }
+    }
+    for (const auto& cluster : {heart, family, flag, std::string("e\u0301")}) {
+        std::string word;
+        for (int i = 0; i < 40; ++i) word += cluster;
+        for (bool color : {false, true}) {
+            LineEditor menu;
+            menu.color = color; menu.hints = false;
+            menu.setProviders([word](const std::string&) { return std::vector<LS::Suggestion>{{0, word, "", "value", 1, "", "", ""}}; }, {}, {});
+            menu.prefill("x");
+            const auto f = menu.render(28);
+            std::size_t at = f.text.find("\r\n");
+            while (at != std::string::npos) {
+                at += 2;
+                const auto end = f.text.find("\r\n", at);
+                assert(visibleWidth(f.text.substr(at, end == std::string::npos ? end : end - at)) <= 27);
+                at = end;
+            }
+            assert(f.text.find(cluster) != std::string::npos); // never ANSI between base and selector
+        }
+    }
+    LineEditor edit;
+    edit.prefill(family + heart);
+    press(edit, Key::Kind::Left);
+    assert(edit.cursor() == family.size());
+    press(edit, Key::Kind::Backspace);
+    assert(edit.buffer() == heart && edit.cursor() == 0);
+
     const auto v = vocabulary();
     LineEditor e = editor(v);
     e.look = [](const std::string& key) {

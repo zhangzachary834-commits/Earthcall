@@ -1,0 +1,25 @@
+{
+  "actual_session_load": {
+    "actual": "snapshot-glyph",
+    "expected": "current-unsaved-glyph",
+    "reported_unsaved_preserved": false
+  },
+  "control_glyph": {
+    "actual_line_feeds": 2,
+    "literal_extra_row_emitted": true,
+    "reported_rows": 2
+  },
+  "plan_error_guard": {
+    "built_in_cross_present": false,
+    "green_authored_error_mark_emitted": true
+  },
+  "preserve_live_zone_merge": {
+    "actual": "saved-glyph",
+    "expected": "unsaved-live-glyph"
+  },
+  "variation_selector_menu": {
+    "maximum_panel_cells": 49,
+    "panel_budget": 27,
+    "terminal_width": 28
+  }
+}

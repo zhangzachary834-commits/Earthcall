@@ -416,3 +416,38 @@ Zach asked which Prophetic / Formation Rete precedents map onto the renderer; he
 Zach commissioned the next pass. A separate scratch driver tested volume-module Safe/Fast and Safe/Precise compilation against the retained renderer. Eight four-view/clock 320×180 captures per candidate fail exact fidelity; a 2560×1440 side-view comparison against the full accepted lattice also exceeds the one-level bounded limit. Maximum channel difference is 12 in both candidates. Unchanged-options controls match every byte. No cost benchmark follows failed fidelity; retained renderer, saves and Opus’s per-channel revisions remain unchanged. Twenty-four current numerical witnesses pass, but new support admission remains zero. [Candidates, measured failures, source/option checks and reproducible artifact paths](../../../../../audits/VOLUME_ARITHMETIC_PROFILE_FIDELITY_2026-10-12.md). Live movement/usual-framebuffer p95 and a complete retained Fast-profile support enclosure remain open.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T17:13:57.815427-07:00 (PDT).
+
+
+## Standalone evidence analysis — October 14
+
+Zach commissioned a separate tracing/complexity-analysis executable. `scripts/earthcall-analyze` now joins imported timing, diagnostic demand, emitted WGSL and explicit model views in a searchable offline report, with 20 focused checks and real packaged imports of the saved eight-view census. This is generic developer tooling, adds no app instrumentation, and implements none of AD-30–36. It does not diagnose the current live bottleneck or claim a gain; fresh CPU/GPU capture and usual-size movement samples remain needed. [Separate task and input contracts](../Standalone_Performance_Analysis/Standalone_Performance_Analysis.md); [execution evidence](../../../../../audits/STANDALONE_PERFORMANCE_ANALYSIS_2026-10-14.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-14T22:37:18.690115-07:00 (PDT).
+
+
+## Rendering/Intercom catch-up — October 15
+
+Zach requested synchronization with Astra/Firmament/Opus. Existing CPU probe reruns reproduce the Sanctuary radial counts and the exact cloud-sharing output; current source confirms early chroma-group demand. Posted Northern Veil family/ray tables are not independently reproduced: the available probe skips a missing temporary input. Their operation counts do not by themselves prove economic rejection. A separate generic `ontoPow` source-contract discrepancy is tracked for CPU/native correctness follow-up. No renderer edit, new proof consumer, GPU measurement or gain; AD-30–36 remain open. [Full checked scope and reply](../../../../../audits/RENDERING_INTERCOM_CATCHUP_2026-10-15.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T01:39:25.380709-07:00 (PDT).
+
+## Demand and support implementation plan — October 15
+
+Zach requested a plan after Firmament supplied replacement probe provenance and accepted the earlier qualifications. He permits planning across **earlier** AD-30–36, with verdicts later; this does not pre-approve later discoveries or implement unresolved choices. The [new implementation plan](../../../../../plans/VOLUME_DEMAND_AND_SUPPORT_IMPLEMENTATION_2026-10-15.md) sequences power correctness and a compatible baseline, compiled per-group demand placement, product-local arithmetic experiments, qualified Euclidean proofs and dependency-directed repair. It separates Sanctuary's verified emitted color-demand opportunity from Northern Veil's one-group workload, keeps native omission conditional on the full contract, and specifies exact/native/economic/movement gates. All implementation stages remain pending; no new FPS or runtime gain. The replacement Northern Veil simulator source is inspected/fingerprinted but not rebuilt/rerun in this planning pass. Existing appearance and movement acceptance remain open.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T03:21:44.030398-07:00 (PDT).
+
+## Commissioned implementation — power retained, optimization trials rejected
+
+The [October 15 implementation audit](../../../../../audits/VOLUME_POWER_AND_OPTIMIZATION_TRIALS_2026-10-15.md) records independent reproduction of Firmament's previously missing Northern Veil tables and three actual native trials. Demand scheduling was exact but missed the performance gate; the coarse AND index was exact but repeatably slower; product-local reuse reduced a cloud call but changed cloud bytes and was rejected before timing. All three production candidates were removed. Their measured results are not new aurora gains and the coarse trial is distinct from Firmament's finer XZ proposal.
+
+Retained work is generic power route/domain correctness, CPU/native witnesses and an external repeatable experiment harness. Existing support traversal/residency are preserved. No new AD verdict, qualified proof consumer, certified tail, live FPS or 30 FPS acceptance. The next stages remain explicit in the [plan](../../../../../plans/VOLUME_DEMAND_AND_SUPPORT_IMPLEMENTATION_2026-10-15.md#12-implementation-results--october-15).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T05:56:25.134858-07:00 (PDT).
+
+
+## Scoped Euclidean host analysis — next rung
+
+Zach commissioned the next rung. [Implementation and executed evidence](../../../../../audits/VOLUME_EUCLIDEAN_RANGE_2026-10-15.md) add generic vector Length/Distance host range rules behind an explicitly named analysis entrypoint. Intermediate rounding, square/subtraction/sum overflow, types and unbound inputs are handled conservatively. The cloud/halo coverage gain is reproduced; these four auroras gain no extra cells. Existing volume proof payloads match the pre-change implementation and native proof/image regressions pass. The renderer does not consume the new theorem. No new FPS gain, movement acceptance or author verdict; native scope/arithmetic qualification remains the next dependent rung.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T10:45:48.355899-07:00 (PDT).

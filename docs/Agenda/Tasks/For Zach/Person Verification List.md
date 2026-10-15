@@ -1350,6 +1350,13 @@ Nothing is themed yet: you chose to author it yourself. Be present, with your bo
 - [ ] Save Zone, restart, and type again: all three looks are still there. Before today a Lexeme's look was lost on restart.
 - [ ] Judge it: is it more beautiful, still legible, and coherent? Do you want the "Illuminated Manuscript" theme from the plan patched in, all or in part?
 
+Review-fix acceptance (Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-14):
+
+- [ ] In the rebuilt checkout app's terminal, narrow the window and use emoji/combining glyphs in a test Zone's appearance: menu/help rows should stay aligned, with no split emoji, stray rows or damaged redraw after closing the menu; check color and `NO_COLOR` modes in your usual terminal/font.
+- [ ] In a test Zone, save a Lexeme appearance, change or remove it without saving, then load the older ordinary session: the newer live edit/removal should remain. Explicit Restore unsaved should restore the before-load snapshot's values and absences. Restart durability remains the separate existing check above.
+
+No optional theme was installed by the correction pass. The [audit](../../../audits/LAW_LINE_APPEARANCE_REVIEW_2026-10-14.md) distinguishes rendered-frame/session tests from these native-terminal and Person checks.
+
 ## Creator Console: Zone First Mover Workbench (2026-10-05)
 
 *Gemini · session `c02f9271-25d2-430c-99b6-2a1144eb9c68` · 2026-10-05.*
@@ -1606,3 +1613,42 @@ In the dev build (`earthcall_webgpu`), open the Creator Console → Character ta
 4. **Picking (pre-existing, please judge).** Click just *outside* a visibly thin limb, inside where a 1×1×1 cube would be. If it still selects the limb, the unscaled-raycast seam is real. See [task §Still open 3](../Specific%20Tasks/Architecture%20and%20Ontology/BodyPart_Constitution_As_Explicit_Relation/BodyPart_Constitution_As_Explicit_Relation.md).
 
 **Signed:** Claude Code / Claude Opus 5.5 / session `6ba58694-54b8-4b8f-9788-9a6efec3c7df` / 2026-10-13T18:20-07:00 (PDT).
+
+
+## Separate performance-analysis executable — October 14
+
+Zach requested this outside Earthcall. No scene appearance or movement change is expected. Run `./scripts/earthcall-analyze demo --output /private/tmp/<new-directory>` and open `<new-directory>/analysis/report.html`; the input data must visibly say **SYNTHETIC DEMONSTRATION**, with timings, trace spans, complexity estimates and gaps kept separate.
+
+- [ ] Check whether the report’s search box (try `wait_surface`), context disclosure and separate evidence sections make it easy to see what is known and which measurement is missing. This is tool usefulness review; the synthetic timings are not your FPS and the historical imports are not new captures.
+
+[Usage and remaining live-capture work](../Specific%20Tasks/Performance%20and%20Runtime/Standalone_Performance_Analysis/Standalone_Performance_Analysis.md); [implementation verification](../../../audits/STANDALONE_PERFORMANCE_ANALYSIS_2026-10-14.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-14T22:37:18.690115-07:00 (PDT).
+
+
+### Planned demand/support stages — October 15
+
+The [implementation plan](../../../plans/VOLUME_DEMAND_AND_SUPPORT_IMPLEMENTATION_2026-10-15.md) changes no renderer behavior today. Earlier AD-30–36 await your verdicts; no later decision is pre-approved. After a relevant stage passes native correctness and is retained:
+
+- [ ] In Sky-Island Sanctuary, confirm the cloud sea and halo keep their intended continuous color, glow and boundaries while moving through them; the first demand candidate targets this workload and does not establish an aurora gain.
+- [ ] Repeat the existing Northern Veil usual-window movement/appearance check on the exact retained build: no new jaggedness, flicker or disappearing curtains, with recorded physical framebuffer and warmed movement p95 <=33.3 ms before claiming the 30 FPS milestone. If you approve semantic changes, compare against their explicitly selected intent/reference.
+
+These are future acceptance checks, not claims that a new candidate is ready to run. Existing checks and prior observations remain intact.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T03:21:44.030398-07:00 (PDT).
+
+### Power correction after rejected volume trials — October 15
+
+The checkout WebGPU app is rebuilt with [route-aware power lowering](../../../audits/VOLUME_POWER_AND_OPTIMIZATION_TRIALS_2026-10-15.md); none of the three failed performance candidates remains. No app installation or save edit was performed, and this pass promises no new FPS gain.
+
+- [ ] When next running the rebuilt checkout app, revisit Northern Veil and Sky-Island Sanctuary at your usual framebuffer. Confirm the auroras/clouds keep continuous appearance while moving, with no new jaggedness, flicker or disappearing regions. Existing movement/p95 acceptance stays open; fixed-view captures do not establish it.
+- [ ] If you use authored powers with tiny bases, negative exponents or negative noninteger bases, confirm the result reflects your intended existing route: MathNode negative/noninteger returns zero, while Term/RPN preserve their distinct domain behavior. CPU-double/native and subnormal equality is not promised by this repair.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T05:56:25.134858-07:00 (PDT).
+
+
+### Euclidean host analysis rung — October 15
+
+[This mathematical analysis implementation](../../../audits/VOLUME_EUCLIDEAN_RANGE_2026-10-15.md) adds no new visible app behavior and claims no FPS gain. Existing Northern Veil/Sanctuary appearance, movement and usual-framebuffer acceptance checks remain open; there is no additional control to click or new performance benefit for Zach to verify from this API alone. Native proof consumers retain their prior behavior.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T10:45:48.355899-07:00 (PDT).

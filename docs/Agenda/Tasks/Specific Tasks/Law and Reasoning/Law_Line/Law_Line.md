@@ -508,3 +508,19 @@ For Jules and future agents: retain the generic completion surface; do not scan 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-12T13:08:43-07:00*
 
 Follow-up boundary: generic `Literal <value: …>` is compiled by authored Metalaws for storage, and the storage example passes actual bracketed-paste/Enter dispatch. Literal blank glyphs in quoted source still encounter the existing editor blank gate; semantic matching through filled template slots and literal-versus-active snippet distinction remain open generic editor work. No template-specific parser fallback was introduced.
+
+
+## Authored appearance review — 2026-10-14
+
+Zach asked Codex to audit the Sonnet-started appearance plan and changes after committing them. At `07435d0ce` / merged HEAD `edccd0968`, all three focused tests pass (279/279 Law Line integration checks), but independent production-path probes reproduce an older session overwriting unsaved canonical Lexeme properties, variation-sequence menu rows exceeding their cell budget, and glyph control characters escaping row accounting. The [review and reproduction](../../../../../audits/LAW_LINE_APPEARANCE_REVIEW_2026-10-14.md) prioritize preservation first and record the plan's inaccurate immutable-error-look claim. The authored appearance direction is retained; this review made no production fixes or live save/theme edits. Fresh hydration must restore saved state while ordinary live merges preserve existing state, and rendering must measure/clip/style coherent display clusters with explicit handling of printable glyph slots.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-14T22:10:25-07:00*
+
+
+### Review correction pass
+
+Zach's “GO FIX” is implemented: newly interned Lexemes hydrate from saves, ordinary reference admission preserves live values/removals/references, and explicit Restore-unsaved can restore snapshot values and absences through both codecs. Terminal clipping/styling and help use whole Unicode clusters via vendored utf8proc; printable glyph admission prevents controls from escaping row accounting. The plan's immutable-error-look claim is corrected to its actual authoring freedom. No live save/theme was patched.
+
+Five focused tests pass (284/284 Law Line checks, 17/17 preservation checks, plus editor/parser/creation witnesses); the checkout WebGPU app builds. The [audit follow-up](../../../../../audits/LAW_LINE_APPEARANCE_REVIEW_2026-10-14.md#correction-pass--implemented-and-verified) contains exact before/after observations, codec intent and future-agent pitfalls. Native terminal/font behavior, restart and Person acceptance remain in the Person Verification List; this pass did not install or launch the app bundle.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-14T22:30:39-07:00*

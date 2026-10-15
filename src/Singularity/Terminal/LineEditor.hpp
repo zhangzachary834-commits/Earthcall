@@ -222,6 +222,12 @@ private:
     StatusFn _statusFn;
 };
 
+// Terminal device text primitives. A display cluster is indivisible for
+// clipping, styling and cursor placement; authored glyphs cannot issue controls.
+std::size_t nextDisplayCluster(const std::string& text, std::size_t at);
+bool isPrintableGlyph(const std::string& text);
+std::string clipToCells(const std::string& text, std::size_t budget, bool markCut = false);
+
 // Visible width of text that may contain ANSI SGR sequences and UTF-8.
 std::size_t visibleWidth(const std::string& text);
 

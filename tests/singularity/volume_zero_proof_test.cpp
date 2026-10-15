@@ -10,6 +10,7 @@
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/Screen/VolumeZeroProof.hpp"
 #include "support/test_harness.hpp"
+#include "support/euclidean_range_witness.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -102,6 +103,8 @@ void sweep(const OntoMath::Piecewise& pw, const Rendering::VolumeZeroProof& proo
 
 int main() {
     std::cout << "Starting volume_zero_proof_test...\n";
+
+    EuclideanRangeWitness::run(check);
 
     // ---- Part 1: the generic contract on synthetic media -------------------
     {

@@ -390,3 +390,34 @@ The compiler observer adds no production derived state. Its concrete-device meth
 No production derived state is added. A separately generated scratch wrapper copies options only for volume-containing modules, forwards unchanged MSL once, releases the copied options after library creation, and ends all hooks/record state at process teardown. Fresh observations depend on exact fixture, binaries, native device, module hashes, effective options, framebuffer, clock and reference budget; reports are not reusable support certificates. Non-volume options and source hashes are checked. Both Safe arithmetic candidates fail pixel gates, including a full-lattice native-size counterexample; no production guard/cache/profile is installed. Original read-only observer and existing lifetime/invalidation contracts are unchanged. [Failure evidence, dependency hashes and reproduction](../../audits/VOLUME_ARITHMETIC_PROFILE_FIDELITY_2026-10-12.md).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T17:13:57.815427-07:00 (PDT).
+
+
+### Standalone offline performance reports — October 14
+
+No app/being state, runtime cache or GPU resource is added. Analyzer dictionaries, trace stacks, source-frame indices and structural call graphs live only in the separate process. Every invocation reads explicit input files, fingerprints them before/after analysis and writes a new output directory; existing output is refused. Reports are immutable observations of those inputs, not reusable rendering proofs or automatically refreshed views of the live app. Reanalysis requires a new report, and a source change requires rebuilding any packaged executable. No per-frame instrumentation or device lifetime is introduced. Unknown metadata and unsupported timing retain unknown status; malformed/ambiguous data refuses attribution rather than becoming zero cost. [Contracts](../../Agenda/Tasks/Specific%20Tasks/Performance%20and%20Runtime/Standalone_Performance_Analysis/Standalone_Performance_Analysis.md) and [executed witnesses](../../audits/STANDALONE_PERFORMANCE_ANALYSIS_2026-10-14.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-14T22:37:18.690115-07:00 (PDT).
+
+
+### Planned group-demand and qualified-support work — October 15
+
+The [implementation plan](../../plans/VOLUME_DEMAND_AND_SUPPORT_IMPLEMENTATION_2026-10-15.md#9-derived-state-and-compatibility-requirements) describes proposed retained group dependencies/placement, product-local aliases, qualified proof payloads and direct parameter recipes, with owners, reuse predicates and invalidation. **No new cache, native proof eligibility or GPU resource is installed by this documentation pass.** Existing residency, camera lanes and exact fallbacks remain the current contract. Adding finite shared `evalRange` results can immediately strengthen existing proof consumers, so future mathematical coverage must inventory consumers and preserve Unknown native eligibility until the selected AD-30/36 obligations hold. Earlier ADs may be planned through for Zach's later verdicts; new decisions are not pre-approved.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T03:21:44.030398-07:00 (PDT).
+
+### Power correction and rejected derived-state trials — October 15
+
+[Executed record](../../audits/VOLUME_POWER_AND_OPTIMIZATION_TRIALS_2026-10-15.md): no new production cache, schedule metadata, proof format or GPU resource remains from these trials. Demand-group placement, local aliases and macro occupancy storage were implemented with their candidate dependency/lifetime contracts, failed retention gates, and were removed. Existing program/proof caches, parameter slots, residency, membership offsets, revision gates and device invalidation retain their prior contracts.
+
+The retained shared power helper is immutable Kernel shader-library text, embedded at module generation, with no new authored/serialized state or persistent numerical cache. Changed generated WGSL still requires affected native modules to compile; unchanged media use existing revision gates. The external experiment process owns temporary comparison/readback buffers, releases native resources at process exit and never supplies a proof to the app. Its reports are frozen observations, not refreshable runtime state. Native subnormal consistency is not a complete numerical certificate; unresolved execution/consumer contracts remain Unknown.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T05:56:25.134858-07:00 (PDT).
+
+
+### Explicit Euclidean host range context — October 15
+
+[Executed contract](../../audits/VOLUME_EUCLIDEAN_RANGE_2026-10-15.md): `MathNode::evalMathematicalRange` selects extra host Length/Distance rules through a private invocation-local context shared by recursive calls. No memo, persistent cache, authored/serialized field, GPU allocation or device-dependent object is introduced. Inputs are the current authored node tree and explicit variable intervals; every invocation reads them afresh, so there is no cross-revision reuse or stale-data path. Bounds/temporary maps expire with the call. Unsupported/type/nonfinite/overflow cases return Unknown.
+
+The old `evalRange` entrypoint explicitly selects its previous rules. VolumeZeroProof, Sdf and PropheticRete continue calling it; they receive no new Euclidean theorem. Future production promotion must explicitly qualify the native consumer/scope rather than treating this host result as a complete backend certificate. Census reports and fingerprints are immutable external observations, not live proof caches. Existing GPU residency/invalidation contracts stay unchanged.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T10:45:48.355899-07:00 (PDT).

@@ -58,8 +58,8 @@ The footer mark's **colour** is not authorable: green means this Zone hears the 
    - Authored vec3 is lowered to `38;2;r;g;b` when `COLORTERM` is `truecolor` or `24bit`. Otherwise it goes to the nearest xterm-256 cube or grey entry, so gold becomes `38;5;220`.
    - The registered, writable `colorDepth` overrides a terminal that lies. Apple Terminal does not set COLORTERM.
 5. **Display width.**
-   - `visibleWidth` and the panel counted code points. It now follows Unicode East Asian Width plus Emoji_Presentation: CJK and `✨` take 2 cells, combining marks 0, and VS16 makes `❤️` 2.
-   - The help page, menu padding and click-to-cursor use the same widths, so authored glyphs never shear the panel.
+   - `visibleWidth` and the panel originally counted code points. The corrected implementation uses utf8proc grapheme boundaries and character widths: CJK and `✨` take 2 cells, combining marks remain with their base, and VS16 makes `❤️` 2. Joined emoji, flags and clipping share this display-cluster contract.
+   - The help page, menu padding and click-to-cursor share the terminal width contract. See the review correction below for display-cluster handling and native-terminal limits.
 6. **Chrome glyphs were literals.** `▸ ⤷ ✗ ↳ ◆ ^`, the help box and its colours are now `chrome.*` looks, with the old glyphs as defaults.
 
 **Deferred** (Zach's call; it needs the Law/Timeline ontology): time-varying looks, i.e. OntoMath-valued colour sampled at a Timeline's `t`. Laws can already change looks on events, and the next frame shows the change.
@@ -94,7 +94,7 @@ Medieval scribes wrote a manuscript's structure in red ink ("rubric" is from *ru
 | paths · beings · events · names | — | parchment (0.94, 0.90, 0.80) · lapis (0.46, 0.70, 1.0) · rose madder (0.95, 0.55, 0.70) · bold |
 | chrome | `❧` selected, `§` section headers, `☙` detail, `✦` footer | gold; descriptions and hints in a muted ink (0.62, 0.58, 0.52) |
 
-Errors keep the built-in red underline and `✗`, so a theme can never make a refusal look like structure.
+Errors default to a red underline and `✗`. Both `role.error` and `chrome.error` are authorable, so an authored theme can change their color, style and glyph. Error status and refusal behavior remain unchanged by appearance; this pass provides no immutable visual refusal marker.
 
 The telos Lexemes (Christ, Logos, Lux, …) denote no Law and never appear in the menu. They get no glyphs: sacred names are not decoration.
 
@@ -120,6 +120,18 @@ Recorded as `authors: Zach` (his DID), `injected_by: Claude Opus 5.5`.
 - `law_line_zone_test` (real seed):
   - a Person authors a Zone chrome glyph and a Lexeme colour with ordinary Law Line sentences, and the menu wears them;
   - truecolor gives exact gold (255, 214, 0), and 256 colours give `38;5;220`;
-  - Save Zone writes them, and loading the Zone restores the Lexeme's look;
+  - Save Zone writes them; first hydration restores the Lexeme's look, ordinary admission preserves live edits/removals, and explicit snapshot restoration can rewind them;
   - per-frame cost is measured.
 - Person checks (beauty is Zach's judgement) are in `docs/Agenda/Tasks/For Zach/Person Verification List.md`.
+
+
+## Review corrections — 2026-10-14
+
+Zach commissioned an audit of Claude's pass and then said “GO FIX.” The [audit](../audits/LAW_LINE_APPEARANCE_REVIEW_2026-10-14.md) preserves the original counterexamples and records follow-up verification. Codex extended the implementation at its codec and terminal modality boundaries; the optional authored theme remains held by Zach's “Don't touch the save yet.”
+
+- Ordinary Zone/session admission hydrates properties only on newly interned Lexemes. Existing canonical Lexemes retain both edits and removals, including when another Zone names them. The explicit Restore-unsaved route separately admits snapshot replacement, including property absences. This distinction also reaches the stored-Singular codec. Relation endpoint retries never replay properties.
+- Terminal measurement, clipping, menu/style runs, cursor movement and help rows use utf8proc extended grapheme boundaries, rather than separately styled code points. Printable glyph slots refuse invalid UTF-8, C0/C1 controls and Unicode line/paragraph separators; the authored property remains intact and an invalid glyph falls back to the existing printable look. Other panel text visibly replaces such controls.
+- Widths use a deterministic one-cell ambiguous-character convention and two-cell emoji sequences. Font/emulator differences still require native-terminal acceptance; a test of rendered text is not a screenshot or proof about every terminal.
+- Error appearance is authorable as documented above; no new author-policy restriction was invented during review.
+
+Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-14T22:30:39-07:00.
