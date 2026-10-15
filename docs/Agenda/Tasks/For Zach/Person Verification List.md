@@ -1652,3 +1652,10 @@ The checkout WebGPU app is rebuilt with [route-aware power lowering](../../../au
 [This mathematical analysis implementation](../../../audits/VOLUME_EUCLIDEAN_RANGE_2026-10-15.md) adds no new visible app behavior and claims no FPS gain. Existing Northern Veil/Sanctuary appearance, movement and usual-framebuffer acceptance checks remain open; there is no additional control to click or new performance benefit for Zach to verify from this API alone. Native proof consumers retain their prior behavior.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T10:45:48.355899-07:00 (PDT).
+
+
+### Support-allocation pass — retained renderer restored
+
+[All three tested allocation/traversal variants](../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md) preserve the finite captures but regress in measured cost, so none remains enabled. The checkout app is rebuilt with the prior renderer; the installed app and live saves were untouched. This pass adds no new visual control or promised FPS improvement to inspect. Existing Northern Veil/Sanctuary continuous appearance, usual-framebuffer movement and 30 FPS acceptance checks remain open; the rejected variants do not create a new Person verification obligation.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).

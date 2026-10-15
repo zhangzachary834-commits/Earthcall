@@ -1,6 +1,6 @@
 # Volume demand and support: implementation after Firmament's reply
 
-**Status: implementation pass executed. Route-aware power correction retained; three optimization candidates implemented, tested and rejected. Explicit host Euclidean range analysis is implemented; native consumption remains unqualified. No new FPS improvement. See the [current implementation record](#12-implementation-results--october-15); the planning observations below remain dated provenance.**
+**Status: power correction and separate host Euclidean ranges retained; demand/reuse and allocation experiments rejected. The latest [bounded allocation pass](#14-astras-bounded-support-allocation-pass) restores the retained renderer and claims no new FPS gain. Dated planning observations remain below.**
 
 **Human direction:** Zach asked for the minimum necessary mathematical evaluation while preserving the authored image, compilation once with incremental repair, and a separate analysis executable. On October 15 he commissioned this plan after Firmament replied, explicitly allowing it to overlap the **earlier** author decisions because he will give verdicts later. His clarification does not approve decisions discovered subsequently. This document plans through AD-30–36 without selecting their answers or treating them as a reason to omit the dependent work.
 
@@ -222,3 +222,14 @@ The shared implementation reproduces cloud 0 -> 10,968 / 34,656 and halo 6,400 -
 D1's host rules and isolated consumer are implemented; D2/D3 native arithmetic/coordinate/whole-contribution qualification and economic retention remain unfinished. Unsupported Fast-profile cases cannot use this result for omission. This advances the independent mathematical portion without choosing AD-30/36 or the open repair-granularity decision.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T10:45:48.355899-07:00 (PDT).
+
+
+## 14. Astra’s bounded support-allocation pass
+
+[Actual three-increment implementation, source patches and evidence](../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md) follow Zach's authorized Astra handoff. First separate bitmap grid coordinates from padded unknown-cell support; then test support-isotropic allocation, generic full-axis re-proving, and guarded AND-parent traversal as separate increments. Current inside-column exclusion, accepted lattice, old range operators and legacy density contribution semantics were preserved. New host Euclidean ranges never supplied native skips.
+
+All **96** full-size image pairs match. Primary aurora/inside two-ABBA time changes: isotropic **+17.45%, +17.45%**; full-axis **+46.28%, +35.97%**; parent **+25.38%, +20.84%**. All fail retention; other timing views stop at the failed primary. Construction, cold admission, structural edit and payload bytes are recorded separately; dynamic native access counts remain unavailable, not replaced by incomplete CPU query counts.
+
+Every experimental runtime layout/allocation/traversal change is restored to the starting source. Final CPU proof 48/48; native proof 73/73, sharing/power 76/76, quadrature 15/15, all native no-skip. Four generic translated/parallel/support-edge tests and standalone diagnostic improvements remain. This rejects these selectors/representations under the measured workload, not all tighter-domain schemes: no tighter slab bisection/post-tightening pilot was implemented. The native numerical/coordinate/contribution contract and AD-30/36 remain open. No live movement, Person acceptance or new FPS claim.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).

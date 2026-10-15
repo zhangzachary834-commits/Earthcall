@@ -40,20 +40,28 @@ def write(p, data):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--output', type=Path, required=True, help='fresh external directory')
-    p.add_argument('--mode', choices=['build', 'codegen', 'images', 'cost'], default='images')
+    p.add_argument('--mode', choices=['build', 'codegen', 'images', 'cost', 'proof'], default='images')
     p.add_argument('--binaries', type=Path, help='reuse a previous build directory')
-    p.add_argument('--control-sources', type=Path, help='compatible frozen SdfWgsl.cpp/WebGpuRenderer.cpp directory')
+    p.add_argument('--control-sources', type=Path, help='compatible frozen SdfWgsl.cpp/WebGpuRenderer.cpp/VolumeZeroProof.cpp directory')
     p.add_argument('--correctness', type=Path, help='passing image report directory required before cost')
     p.add_argument('--width', type=int, default=2560)
     p.add_argument('--height', type=int, default=1440)
     p.add_argument('--suite', choices=['all', 'aurora', 'cloud'], default='all')
     p.add_argument('--frames', type=int, default=24)
+    p.add_argument('--proof-metadata-floats', type=int, nargs=2, metavar=('CONTROL','CANDIDATE'),
+                   help='explicit per-proof metadata counts for host proof-cost reports')
     p.add_argument('--stop-if-primary-misses-gate', action='store_true',
                    help='stop after two complete primary ABBA series if either misses 5 percent improvement')
+    p.add_argument('--stop-if-control-regresses', action='store_true',
+                   help='stop when a non-primary view regresses above 3 percent in both series')
+    p.add_argument('--stop-on-image-mismatch', action='store_true',
+                   help='retain the first exactness counterexample and stop remaining captures')
     a = p.parse_args()
     out = a.output.resolve()
     if out == ROOT or ROOT in out.parents or min(a.width,a.height) < 64 or a.frames < 1:
         p.error('fresh output must be external; dimensions >=64 and frames positive')
+    if a.mode == 'proof' and (not a.proof_metadata_floats or min(a.proof_metadata_floats) < 0):
+        p.error('proof mode requires explicit --proof-metadata-floats CONTROL CANDIDATE')
     if a.mode == 'cost' and (not a.binaries or not a.correctness):
         p.error('cost requires --binaries and a separate --correctness report')
     if not a.binaries and not a.control_sources:
@@ -81,13 +89,13 @@ def main():
                 subprocess.run(args, cwd=BUILD, check=True, stdout=log, stderr=subprocess.STDOUT)
         compile_one('/entry.cpp', ROOT/'scratch/probes/volume_demand_probe.cpp', out/'fixture.o')
         for lane in ['control', 'candidate']:
-            for name in ['SdfWgsl','WebGpuRenderer']:
-                source = ROOT/f'src/Singularity/Screen/WebGPU/{name}.cpp' if lane == 'candidate' else a.control_sources/(name+'.cpp')
+            for name in ['SdfWgsl','WebGpuRenderer','VolumeZeroProof']:
+                source = (ROOT/f'src/Singularity/Screen/{name}.cpp' if name == 'VolumeZeroProof' else ROOT/f'src/Singularity/Screen/WebGPU/{name}.cpp') if lane == 'candidate' else a.control_sources/(name+'.cpp')
                 copied = out/(lane+'-'+name+'.cpp')
                 copied.write_bytes(source.read_bytes())
                 compile_one('/'+name+'.cpp', copied, out/(lane+'-'+name+'.o'))
             args = shlex.split((BUILD/'CMakeFiles/earthcall_webgpu.dir/link.txt').read_text())
-            for suffix, obj in [('/src/entry.cpp.o','fixture.o'),('/SdfWgsl.cpp.o',lane+'-SdfWgsl.o'),('/WebGpuRenderer.cpp.o',lane+'-WebGpuRenderer.o')]:
+            for suffix, obj in [('/src/entry.cpp.o','fixture.o'),('/SdfWgsl.cpp.o',lane+'-SdfWgsl.o'),('/WebGpuRenderer.cpp.o',lane+'-WebGpuRenderer.o'),('/VolumeZeroProof.cpp.o',lane+'-VolumeZeroProof.o')]:
                 args[next(i for i,x in enumerate(args) if x.endswith(suffix))] = str(out/obj)
             args[args.index('-o')+1] = str(out/lane)
             write(out/(lane+'-link.json'), args)
@@ -97,7 +105,7 @@ def main():
                   'mode': a.mode, 'dimensions': [a.width,a.height], 'suite': a.suite,
                   'source_sha256': before, 'binaries': {x: sha(binaries/x) for x in ['control','candidate']},
                   'head': subprocess.check_output(['git','-c','core.fsmonitor=false','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
-                  'control_sources_sha256': {name:sha(out/('control-'+name+'.cpp')) for name in ['SdfWgsl','WebGpuRenderer']} if not a.binaries else json.loads((binaries/'provenance.json').read_text())['control_sources_sha256'],
+                  'control_sources_sha256': {name:sha(out/('control-'+name+'.cpp')) for name in ['SdfWgsl','WebGpuRenderer','VolumeZeroProof']} if not a.binaries else json.loads((binaries/'provenance.json').read_text())['control_sources_sha256'],
                   'timestamps': False, 'cost_scope': 'completion-fenced offscreen batch throughput; no isolated volume time or live FPS'}
     provenance['primary_context'] = ['aurora' if a.suite == 'all' else a.suite, 'inside']
     if a.binaries:
@@ -121,6 +129,15 @@ def main():
     if a.mode == 'build':
         return
     suites = ['aurora','cloud'] if a.suite == 'all' else [a.suite]
+    if a.mode == 'proof':
+        for suite in suites:
+            for lane in ['control','candidate']:
+                env = dict(os.environ, EC_PROOF_COST='1', EC_PROOF_METADATA_FLOATS=str(a.proof_metadata_floats[0 if lane == 'control' else 1]))
+                run = subprocess.run([str(binaries/lane),str(SAVES[suite]),'0123','64','64','0','unused','1'],
+                                     cwd=ROOT,env=env,check=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
+                (out/(suite+'-'+lane+'.log')).write_text(run.stdout)
+        assert before == {str(x.relative_to(ROOT)): sha(x) for x in sources}
+        return
     if a.mode == 'codegen':
         for suite in suites:
             for lane in ['control','candidate']:
@@ -162,6 +179,13 @@ def main():
                         write(out/(label+'-comparison.json'),results[-1])
                         print(label,'changed',changed,'max',max_error,'lit',lit,flush=True)
                         # Keep every correctness result, including failure; never time it automatically.
+                        if changed and a.stop_on_image_mismatch:
+                            assert before == {str(x.relative_to(ROOT)): sha(x) for x in sources}
+                            write(out/'results.json',results)
+                            write(out/'disposition.json',{'retained':False,'reason':'exact image gate failed',
+                                                        'remaining_images':'not run after rejection','counterexample':results[-1]})
+                            print('Exact image gate missed; stopping remaining captures.',flush=True)
+                            return
             else:
                 rows = []
                 env = dict(os.environ, EC_CAM=','.join(map(str,views[view])))
@@ -191,6 +215,13 @@ def main():
                     write(out/'disposition.json',{'retained':False,'reason':'primary misses repeated 5 percent gate',
                                                 'remaining_views':'not run after rejection','primary':results[-1]})
                     print('Primary retention gate missed; stopping remaining views.',flush=True)
+                    return
+                if a.stop_if_control_regresses and (suite,view) != tuple(provenance['primary_context']) and all(x > 3 for x in deltas):
+                    assert before == {str(x.relative_to(ROOT)): sha(x) for x in sources}
+                    write(out/'results.json',results)
+                    write(out/'disposition.json',{'retained':False,'reason':'non-primary view repeatably regresses above 3 percent',
+                                                'remaining_views':'not run after rejection','failed_view':results[-1]})
+                    print('Control-view regression gate missed; stopping remaining views.',flush=True)
                     return
     assert before == {str(x.relative_to(ROOT)): sha(x) for x in sources}, 'source/input changed during run'
     write(out/'results.json',results)

@@ -4,7 +4,7 @@
 
 **Zach's constraint (2026-10-09):** "WE MUST NEVER TRY TO 'fix' THINGS BY LOWERING RESOLUTION OR WINDOW SIZE." Only work that cannot change the image may be removed — Prism Sun's "Keep the aurora. Kill only the work that reality cannot observe."
 
-**Current continuation:** shared-channel guards were committed in `a5a8bdf6`; the [2026-10-10 proof-support pass](#sixth-one-sun-proof-support-with-cached-camera-paths) is verified in the working tree. Earlier sections retain dated historical measurements and do not describe every current loop or codec.
+**Current continuation (October 15):** retained compilation/residency, clock preparation and support traversal remain, with power repair and separate host Euclidean analysis. The [latest bounded allocation trials](../../../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md) pass exact captures but regress in cost; their runtime changes are restored. Live 30 FPS/movement acceptance remains open. Earlier dated sections preserve historical implementations and measurements.
 
 ## Measurement (2026-10-09, MacBook Air M5, native WebGPU/Metal, Debug build)
 
@@ -451,3 +451,12 @@ Retained work is generic power route/domain correctness, CPU/native witnesses an
 Zach commissioned the next rung. [Implementation and executed evidence](../../../../../audits/VOLUME_EUCLIDEAN_RANGE_2026-10-15.md) add generic vector Length/Distance host range rules behind an explicitly named analysis entrypoint. Intermediate rounding, square/subtraction/sum overflow, types and unbound inputs are handled conservatively. The cloud/halo coverage gain is reproduced; these four auroras gain no extra cells. Existing volume proof payloads match the pre-change implementation and native proof/image regressions pass. The renderer does not consume the new theorem. No new FPS gain, movement acceptance or author verdict; native scope/arithmetic qualification remains the next dependent rung.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T10:45:48.355899-07:00 (PDT).
+
+
+## Astra’s support-allocation brief — three experiments rejected
+
+[Executed results](../../../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md): explicit grid/support coordinate separation enabled consistent native experiments, then isotropic crop, full-axis re-proving and AND-parent traversal were independently tested. Each passes 32 native-resolution image pairs; each repeatedly loses to its retained control in aurora/inside. Two-series regressions are +17.45/+17.45%, +46.28/+35.97%, and +25.38/+20.84%, respectively. No other-view speedup or live FPS is inferred.
+
+The app is rebuilt with all experimental runtime changes removed. Native edge/lifecycle coverage is expanded; external measurements now include matching builder controls, construction/cold/edit observations and complete payload-byte accounting. Dynamic hardware query/instruction counts are unavailable; no CPU-model query reduction stands in for them. The implemented coarse-pilot layouts differ from Firmament's tighter bisection/post-tightening-pilot proposal, so this is no universal rejection of support allocation. Original saves, installed app, proof authority and author decisions are unchanged.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).

@@ -123,3 +123,8 @@ Meaningful history needs attributable durable records. [Per-Singular logging](ar
 **Scoped range rung (October 15):** [Euclidean host analysis implemented](audits/VOLUME_EUCLIDEAN_RANGE_2026-10-15.md). `evalMathematicalRange` adds outward-rounded Length/vector-vector Distance while the existing volume/geometry/Rete `evalRange` callers retain prior behavior. Cloud/halo coverage figures reproduce through this implementation, aurora counts are unchanged, and all six old proof payload fingerprints agree with the frozen old implementation. Six focused CPU/native witnesses pass. No new native eligibility or FPS claim; the next consumer must close numerical, coordinate and contribution obligations before omitting work.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T10:45:48.355899-07:00 (PDT).
+
+
+**Astra allocation brief executed (October 15):** [three exact-but-slower native trials](audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md) are rejected and runtime source is restored. Coarse-pilot isotropic crop, full-axis re-proving and parent traversal regress in both primary ABBA series; all 96 image pairs are exact. These particular selectors differ from tighter slab-bisection/post-tightening-pilot proposals. Preserve grid-domain versus support-envelope meaning, matched producer/consumer controls, real payload bytes and separate construction/steady costs. Do not infer hardware access counts or a general impossibility from the CPU model. Four new native edge regressions and external tools remain; ADs/native eligibility and Person movement remain open.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).

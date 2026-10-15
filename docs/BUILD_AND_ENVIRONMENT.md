@@ -453,3 +453,8 @@ Zach commissioned a separate executable, outside the app. `./scripts/earthcall-a
 **Scoped Euclidean range witness (October 15):** build `volume_zero_proof_test sdf_range_soundness_test ontomath_test prophetic_rete_test webgpu_volume_zero_proof_test webgpu_ontomath_native_resolution_parity_test`. The first target includes explicit host Length/Distance tests; production callers retain the legacy range entrypoint. `prophetic_rete_test` uses GLFW's timer and its macOS sandbox invocation may stall on XPC setup; a desktop rerun passed. A device skip or interrupted setup is not a pass. [Executed scope and separate read-only census](audits/VOLUME_EUCLIDEAN_RANGE_2026-10-15.md).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T10:45:48.355899-07:00 (PDT).
+
+
+**Support-allocation diagnostics (October 15):** `volume_traversal_experiment.py` now substitutes matching `VolumeZeroProof.cpp` control objects as well as compiler/renderer sources; an old shader cannot consume a candidate grid interpreted differently. `--mode proof --proof-metadata-floats CONTROL CANDIDATE` measures direct host construction without a GPU and accounts for bitmap, optional hierarchy, metadata and bands. Optional strict image/control-regression stop gates preserve counterexamples. Native proof tests add four translated/parallel/support-edge cases and structural-edit preparation/upload diagnostics; these are correctness/diagnostic observations, not live FPS. [Three rejected variants and restored witnesses](audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).

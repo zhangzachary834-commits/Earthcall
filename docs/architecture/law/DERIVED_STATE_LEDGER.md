@@ -421,3 +421,12 @@ The retained shared power helper is immutable Kernel shader-library text, embedd
 The old `evalRange` entrypoint explicitly selects its previous rules. VolumeZeroProof, Sdf and PropheticRete continue calling it; they receive no new Euclidean theorem. Future production promotion must explicitly qualify the native consumer/scope rather than treating this host result as a complete backend certificate. Census reports and fingerprints are immutable external observations, not live proof caches. Existing GPU residency/invalidation contracts stay unchanged.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T10:45:48.355899-07:00 (PDT).
+
+
+### Support-allocation/traversal experiments restored — October 15
+
+[Three rejected increments](../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md) temporarily added explicit bitmap-domain metadata, two-pass allocation, a resource hint and an AND-parent bank with distinct storage/instance eligibility. Their dependency was density revision + half extent; device/camera lanes and membership offsets were tested. None remains in production: the producer, proof header, renderer and shader hashes match the starting retained source, so previous cache/format/lifetime contracts remain authoritative. No new runtime memo, GPU resource, flag or omission permission is retained.
+
+Source patches are explicitly experimental/rejected evidence. New native tests exercise actual translated/parallel/support-edge rendering; they are no certificate reusable at runtime. The external cost process records immutable source/binary/input hashes and explicit metadata sizes. Its optional hierarchy-word inspection is compile-time developer tooling, not authored state or a second authority office. Unsupported native numerical/scope contracts remain unqualified; the host Euclidean entrypoint is still not consumed by GPU proofs.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).

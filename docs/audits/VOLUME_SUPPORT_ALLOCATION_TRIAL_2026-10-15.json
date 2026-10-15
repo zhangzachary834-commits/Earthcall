@@ -1,0 +1,3095 @@
+{
+  "signature": {
+    "harness": "Codex",
+    "model": "GPT-6.1 Sol",
+    "session": "01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca",
+    "at": "2026-10-15T12:10:53.977850-07:00"
+  },
+  "baseline": {
+    "head": "40b43c4ba114249a1d86ce7e0796c746533429f8",
+    "at": "2026-10-15T11:18:28.625389-07:00",
+    "sha256": {
+      "src/Singularity/Screen/VolumeZeroProof.cpp": "45e49256a003b2bcdf4b6e498217e6780142f781676c3714c9516fb60067d4b9",
+      "src/Singularity/Screen/VolumeZeroProof.hpp": "b730919be4110df16191441e9d77156775d091bcabe05645b37e3100f41f86ad",
+      "src/Singularity/Screen/WebGPU/SdfWgsl.cpp": "e63f9d14ce7ee648b8ffe1a8c545fa9ebcaa8ad58cee8856bc4d58806db4d1f4",
+      "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "5461e0c27416de6d1c80aa5240565b3d7710ddf33a9beb8d1772cdbd2b11b497",
+      "src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp": "7a5088637a3a1e04d7c39d6688e01fe4bc57ef515db5ff828f59b9d63fb965c1",
+      "tests/singularity/volume_zero_proof_test.cpp": "36b7fa603d7e6be7b6a895cf21aa25d1b60b2584e35289d6f65322a55e512540",
+      "tests/singularity/webgpu_volume_zero_proof_test.cpp": "18d386eaca152cd23b709ace8ef153264ad8c19a26f37713b8062e03484d8995",
+      "scripts/volume_traversal_experiment.py": "9457b79a85237164c1795eece529850cc183ece66659a9f8cb3d8164d2ea3f53",
+      "scratch/probes/volume_demand_probe.cpp": "8729f3ebf4ac1ed12b1a449c68a8df417bea34d75e1d338f0a7e4eb9add1c723",
+      "src/Singularity/OntoMath/ScalarForm.cpp": "2c9365694e4d95c0d0e9696831ea31ed8cc1c7b0628f7af83942e5d525d0e2ad",
+      "saves/zones/Northern Veil/zone.ecform": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496",
+      "saves/zones/Sky-Island Sanctuary/zone.json": "864a48ef4f8f9cdb7d8bf96059b630cd22a7f66029e3afdba588503a317430e6"
+    }
+  },
+  "artifacts": "/private/tmp/earthcall-support-allocation-20261015",
+  "retained_performance_candidates": [],
+  "scope": "Three separate allocation/traversal experiments; all rejected; restored production renderer. Exact images then primary paired throughput. No full Y invariance or native Euclidean promotion.",
+  "variants": {
+    "isotropic": {
+      "retained": false,
+      "reason": "primary misses repeated 5 percent gate",
+      "primary": {
+        "suite": "aurora",
+        "view": "inside",
+        "series_change_percent": [
+          17.452076681165686,
+          17.452546359225487
+        ],
+        "runs": [
+          {
+            "frames": 24.0,
+            "total_ms": 133.389366333,
+            "prep_ms": 0.822034667,
+            "submit_ms": 0.364345417,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "control",
+            "series": 0
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 158.924246542,
+            "prep_ms": 0.843840292,
+            "submit_ms": 0.389739625,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "candidate",
+            "series": 0
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 161.205821208,
+            "prep_ms": 0.839768958,
+            "submit_ms": 0.391140792,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "candidate",
+            "series": 0
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 139.172921875,
+            "prep_ms": 0.855456583,
+            "submit_ms": 0.40256075,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "control",
+            "series": 0
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 142.01146875,
+            "prep_ms": 0.875574667,
+            "submit_ms": 0.405067667,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "control",
+            "series": 1
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 163.722256958,
+            "prep_ms": 0.849180458,
+            "submit_ms": 0.366428917,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "candidate",
+            "series": 1
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 167.881027792,
+            "prep_ms": 0.860540042,
+            "submit_ms": 0.444532875,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "candidate",
+            "series": 1
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 140.318114583,
+            "prep_ms": 0.879769292,
+            "submit_ms": 0.425959958,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "control",
+            "series": 1
+          }
+        ]
+      },
+      "images": [
+        {
+          "label": "aurora-inside-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3665184,
+          "control_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20",
+          "candidate_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20"
+        },
+        {
+          "label": "aurora-inside-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3659303,
+          "control_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac",
+          "candidate_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac"
+        },
+        {
+          "label": "aurora-inside-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3665184,
+          "control_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20",
+          "candidate_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20"
+        },
+        {
+          "label": "aurora-inside-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3659303,
+          "control_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac",
+          "candidate_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac"
+        },
+        {
+          "label": "aurora-spawn-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1502891,
+          "control_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d",
+          "candidate_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d"
+        },
+        {
+          "label": "aurora-spawn-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1491491,
+          "control_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69",
+          "candidate_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69"
+        },
+        {
+          "label": "aurora-spawn-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1502891,
+          "control_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d",
+          "candidate_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d"
+        },
+        {
+          "label": "aurora-spawn-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1491491,
+          "control_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69",
+          "candidate_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69"
+        },
+        {
+          "label": "aurora-reverse-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126",
+          "candidate_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126"
+        },
+        {
+          "label": "aurora-reverse-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8",
+          "candidate_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8"
+        },
+        {
+          "label": "aurora-reverse-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126",
+          "candidate_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126"
+        },
+        {
+          "label": "aurora-reverse-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8",
+          "candidate_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8"
+        },
+        {
+          "label": "aurora-side-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1754865,
+          "control_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+          "candidate_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64"
+        },
+        {
+          "label": "aurora-side-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1724083,
+          "control_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d",
+          "candidate_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d"
+        },
+        {
+          "label": "aurora-side-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1754865,
+          "control_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+          "candidate_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64"
+        },
+        {
+          "label": "aurora-side-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1724083,
+          "control_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d",
+          "candidate_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d"
+        },
+        {
+          "label": "cloud-inside-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+          "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+        },
+        {
+          "label": "cloud-inside-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+          "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+        },
+        {
+          "label": "cloud-inside-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+          "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+        },
+        {
+          "label": "cloud-inside-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+          "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+        },
+        {
+          "label": "cloud-spawn-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2546454,
+          "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+          "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+        },
+        {
+          "label": "cloud-spawn-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2546454,
+          "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+          "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+        },
+        {
+          "label": "cloud-spawn-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2546454,
+          "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+          "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+        },
+        {
+          "label": "cloud-spawn-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2546454,
+          "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+          "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+        },
+        {
+          "label": "cloud-reverse-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2019987,
+          "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+          "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+        },
+        {
+          "label": "cloud-reverse-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2019987,
+          "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+          "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+        },
+        {
+          "label": "cloud-reverse-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2019987,
+          "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+          "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+        },
+        {
+          "label": "cloud-reverse-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2019987,
+          "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+          "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+        },
+        {
+          "label": "cloud-side-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 776510,
+          "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+          "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+        },
+        {
+          "label": "cloud-side-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 776510,
+          "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+          "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+        },
+        {
+          "label": "cloud-side-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 776510,
+          "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+          "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+        },
+        {
+          "label": "cloud-side-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 776510,
+          "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+          "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+        }
+      ],
+      "image_provenance": {
+        "at": "2026-10-15T11:21:56.910625-07:00",
+        "mode": "images",
+        "dimensions": [
+          2560,
+          1440
+        ],
+        "suite": "all",
+        "source_sha256": {
+          "src/Singularity/Screen/WebGPU/SdfWgsl.cpp": "6b09ea81b7aa6bd6200bb42ec8421ba8ae66f0e30e5faaf8425d3d15a693940c",
+          "src/Singularity/Screen/WebGPU/SdfWgsl.hpp": "1cc6d9b137b3b8239e3797001b8a919f075491d435793cc713357870df6b9b3a",
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "2ed0f5df86cfdd8d3934e43d76d5a8b3eb4cd6adc6b681a52c48b0bc11809965",
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp": "acefba469a33f662e15ed66dc6a336a67ee88d33e302405effc4b8a70f3fd63c",
+          "src/Singularity/Screen/VolumeZeroProof.cpp": "d4bfb42e66f38a2ca162d870a527e90cbc05f15f9799fc29118870b7726b535f",
+          "src/Singularity/Screen/VolumeZeroProof.hpp": "1759f61db44922470c62c7e952482821d01497d9292efc310c125866eef8f4b6",
+          "scratch/probes/volume_demand_probe.cpp": "e3650b48ea08535822a527990418307e27e70898d60e21e8f4eaf6a8310a3687",
+          "saves/zones/Northern Veil/zone.ecform": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496",
+          "saves/zones/Sky-Island Sanctuary/zone.json": "864a48ef4f8f9cdb7d8bf96059b630cd22a7f66029e3afdba588503a317430e6"
+        },
+        "binaries": {
+          "control": "8aeb78b2370e44478261ea3ec9b9f0db91132b7ee7ca3047c2de02adac3fd419",
+          "candidate": "d222d51cdc72f202d7c8b39459bdc1f2e754b5030536eb0d454b6cc0b88a32ac"
+        },
+        "head": "40b43c4ba114249a1d86ce7e0796c746533429f8",
+        "control_sources_sha256": {
+          "SdfWgsl": "e63f9d14ce7ee648b8ffe1a8c545fa9ebcaa8ad58cee8856bc4d58806db4d1f4",
+          "WebGpuRenderer": "5461e0c27416de6d1c80aa5240565b3d7710ddf33a9beb8d1772cdbd2b11b497",
+          "VolumeZeroProof": "45e49256a003b2bcdf4b6e498217e6780142f781676c3714c9516fb60067d4b9"
+        },
+        "timestamps": false,
+        "cost_scope": "completion-fenced offscreen batch throughput; no isolated volume time or live FPS",
+        "primary_context": [
+          "aurora",
+          "inside"
+        ]
+      },
+      "binary_provenance": {
+        "at": "2026-10-15T11:21:25.165775-07:00",
+        "mode": "build",
+        "dimensions": [
+          2560,
+          1440
+        ],
+        "suite": "all",
+        "source_sha256": {
+          "src/Singularity/Screen/WebGPU/SdfWgsl.cpp": "6b09ea81b7aa6bd6200bb42ec8421ba8ae66f0e30e5faaf8425d3d15a693940c",
+          "src/Singularity/Screen/WebGPU/SdfWgsl.hpp": "1cc6d9b137b3b8239e3797001b8a919f075491d435793cc713357870df6b9b3a",
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "2ed0f5df86cfdd8d3934e43d76d5a8b3eb4cd6adc6b681a52c48b0bc11809965",
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp": "acefba469a33f662e15ed66dc6a336a67ee88d33e302405effc4b8a70f3fd63c",
+          "src/Singularity/Screen/VolumeZeroProof.cpp": "d4bfb42e66f38a2ca162d870a527e90cbc05f15f9799fc29118870b7726b535f",
+          "src/Singularity/Screen/VolumeZeroProof.hpp": "1759f61db44922470c62c7e952482821d01497d9292efc310c125866eef8f4b6",
+          "scratch/probes/volume_demand_probe.cpp": "e3650b48ea08535822a527990418307e27e70898d60e21e8f4eaf6a8310a3687",
+          "saves/zones/Northern Veil/zone.ecform": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496",
+          "saves/zones/Sky-Island Sanctuary/zone.json": "864a48ef4f8f9cdb7d8bf96059b630cd22a7f66029e3afdba588503a317430e6"
+        },
+        "binaries": {
+          "control": "8aeb78b2370e44478261ea3ec9b9f0db91132b7ee7ca3047c2de02adac3fd419",
+          "candidate": "d222d51cdc72f202d7c8b39459bdc1f2e754b5030536eb0d454b6cc0b88a32ac"
+        },
+        "head": "40b43c4ba114249a1d86ce7e0796c746533429f8",
+        "control_sources_sha256": {
+          "SdfWgsl": "e63f9d14ce7ee648b8ffe1a8c545fa9ebcaa8ad58cee8856bc4d58806db4d1f4",
+          "WebGpuRenderer": "5461e0c27416de6d1c80aa5240565b3d7710ddf33a9beb8d1772cdbd2b11b497",
+          "VolumeZeroProof": "45e49256a003b2bcdf4b6e498217e6780142f781676c3714c9516fb60067d4b9"
+        },
+        "timestamps": false,
+        "cost_scope": "completion-fenced offscreen batch throughput; no isolated volume time or live FPS",
+        "primary_context": [
+          "aurora",
+          "inside"
+        ]
+      },
+      "cpu_test_tail": "volume_zero_proof_test: 52/52 checks passed",
+      "native_test": {
+        "exit": 0,
+        "skip": false,
+        "checks": [
+          "  ok: translated medium/parallel-or-grid-edge sample retains every byte",
+          "  ok: translated medium/parallel-or-grid-edge sample retains every byte",
+          "  ok: translated medium/parallel-or-grid-edge sample retains every byte",
+          "  ok: translated medium/parallel-or-grid-edge sample retains every byte",
+          "EDIT density cpu_ms=1510.581125000 compiles=2 proof_builds=1 parameter_bytes=408 proof_bytes=7024",
+          "webgpu_volume_zero_proof_test: 73/73 checks passed"
+        ]
+      },
+      "proof_constructions": {
+        "aurora": {
+          "control": [
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "0",
+              "ms": "239.109334000",
+              "cells": "33120",
+              "proven": "31920",
+              "ranges": "3891",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "1",
+              "ms": "239.565500000",
+              "cells": "33120",
+              "proven": "31920",
+              "ranges": "3891",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "2",
+              "ms": "247.070167000",
+              "cells": "33120",
+              "proven": "31920",
+              "ranges": "3891",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "0",
+              "ms": "264.023458000",
+              "cells": "35420",
+              "proven": "34240",
+              "ranges": "3607",
+              "inside_bytes": "5928",
+              "outside_bytes": "7160"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "1",
+              "ms": "247.558791000",
+              "cells": "35420",
+              "proven": "34240",
+              "ranges": "3607",
+              "inside_bytes": "5928",
+              "outside_bytes": "7160"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "2",
+              "ms": "249.041125000",
+              "cells": "35420",
+              "proven": "34240",
+              "ranges": "3607",
+              "inside_bytes": "5928",
+              "outside_bytes": "7160"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "0",
+              "ms": "353.353834000",
+              "cells": "33120",
+              "proven": "31830",
+              "ranges": "3847",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "1",
+              "ms": "252.822042000",
+              "cells": "33120",
+              "proven": "31830",
+              "ranges": "3847",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "2",
+              "ms": "237.447708000",
+              "cells": "33120",
+              "proven": "31830",
+              "ranges": "3847",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "0",
+              "ms": "339.071708000",
+              "cells": "35112",
+              "proven": "33870",
+              "ranges": "3955",
+              "inside_bytes": "5876",
+              "outside_bytes": "6548"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "1",
+              "ms": "341.189500000",
+              "cells": "35112",
+              "proven": "33870",
+              "ranges": "3955",
+              "inside_bytes": "5876",
+              "outside_bytes": "6548"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "2",
+              "ms": "344.284666000",
+              "cells": "35112",
+              "proven": "33870",
+              "ranges": "3955",
+              "inside_bytes": "5876",
+              "outside_bytes": "6548"
+            }
+          ],
+          "candidate": [
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "0",
+              "ms": "955.569542000",
+              "cells": "34200",
+              "proven": "28369",
+              "ranges": "19850",
+              "inside_bytes": "5748",
+              "outside_bytes": "6900"
+            },
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "1",
+              "ms": "939.957500000",
+              "cells": "34200",
+              "proven": "28369",
+              "ranges": "19850",
+              "inside_bytes": "5748",
+              "outside_bytes": "6900"
+            },
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "2",
+              "ms": "942.583250000",
+              "cells": "34200",
+              "proven": "28369",
+              "ranges": "19850",
+              "inside_bytes": "5748",
+              "outside_bytes": "6900"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "0",
+              "ms": "1046.920000000",
+              "cells": "33440",
+              "proven": "27248",
+              "ranges": "21408",
+              "inside_bytes": "5624",
+              "outside_bytes": "6840"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "1",
+              "ms": "1047.838750000",
+              "cells": "33440",
+              "proven": "27248",
+              "ranges": "21408",
+              "inside_bytes": "5624",
+              "outside_bytes": "6840"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "2",
+              "ms": "1108.900042000",
+              "cells": "33440",
+              "proven": "27248",
+              "ranges": "21408",
+              "inside_bytes": "5624",
+              "outside_bytes": "6840"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "0",
+              "ms": "1098.724041000",
+              "cells": "33440",
+              "proven": "26832",
+              "ranges": "20812",
+              "inside_bytes": "5624",
+              "outside_bytes": "6840"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "1",
+              "ms": "984.404875000",
+              "cells": "33440",
+              "proven": "26832",
+              "ranges": "20812",
+              "inside_bytes": "5624",
+              "outside_bytes": "6840"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "2",
+              "ms": "998.926584000",
+              "cells": "33440",
+              "proven": "26832",
+              "ranges": "20812",
+              "inside_bytes": "5624",
+              "outside_bytes": "6840"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "0",
+              "ms": "1532.807333000",
+              "cells": "34776",
+              "proven": "23520",
+              "ranges": "32074",
+              "inside_bytes": "5844",
+              "outside_bytes": "6580"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "1",
+              "ms": "1561.122250000",
+              "cells": "34776",
+              "proven": "23520",
+              "ranges": "32074",
+              "inside_bytes": "5844",
+              "outside_bytes": "6580"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "2",
+              "ms": "1817.786000000",
+              "cells": "34776",
+              "proven": "23520",
+              "ranges": "32074",
+              "inside_bytes": "5844",
+              "outside_bytes": "6580"
+            }
+          ]
+        },
+        "cloud": {
+          "control": [
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "0",
+              "ms": "4581.829125000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5800",
+              "outside_bytes": "7016"
+            },
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "1",
+              "ms": "4550.007458000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5800",
+              "outside_bytes": "7016"
+            },
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "2",
+              "ms": "4531.001750000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5800",
+              "outside_bytes": "7016"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "0",
+              "ms": "1067.384500000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5892",
+              "outside_bytes": "6532"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "1",
+              "ms": "1119.646958000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5892",
+              "outside_bytes": "6532"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "2",
+              "ms": "1034.177167000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5892",
+              "outside_bytes": "6532"
+            }
+          ],
+          "candidate": [
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "0",
+              "ms": "4666.715500000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5824",
+              "outside_bytes": "7040"
+            },
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "1",
+              "ms": "4660.233541000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5824",
+              "outside_bytes": "7040"
+            },
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "2",
+              "ms": "4627.870750000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5824",
+              "outside_bytes": "7040"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "0",
+              "ms": "2114.911708000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5916",
+              "outside_bytes": "6556"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "1",
+              "ms": "2129.137125000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5916",
+              "outside_bytes": "6556"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "2",
+              "ms": "2043.087292000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5916",
+              "outside_bytes": "6556"
+            }
+          ]
+        }
+      },
+      "admission_records": [
+        {
+          "run": "aurora-inside-s0-0-control.log",
+          "values": {
+            "cpu_ms": "1430.612625000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22892"
+          }
+        },
+        {
+          "run": "aurora-inside-s0-1-candidate.log",
+          "values": {
+            "cpu_ms": "4430.766042000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22840"
+          }
+        },
+        {
+          "run": "aurora-inside-s0-2-candidate.log",
+          "values": {
+            "cpu_ms": "4582.198834000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22840"
+          }
+        },
+        {
+          "run": "aurora-inside-s0-3-control.log",
+          "values": {
+            "cpu_ms": "1482.830000000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22892"
+          }
+        },
+        {
+          "run": "aurora-inside-s1-0-control.log",
+          "values": {
+            "cpu_ms": "1470.901958000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22892"
+          }
+        },
+        {
+          "run": "aurora-inside-s1-1-candidate.log",
+          "values": {
+            "cpu_ms": "4467.513458000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22840"
+          }
+        },
+        {
+          "run": "aurora-inside-s1-2-candidate.log",
+          "values": {
+            "cpu_ms": "4500.981084000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22840"
+          }
+        },
+        {
+          "run": "aurora-inside-s1-3-control.log",
+          "values": {
+            "cpu_ms": "1527.418583000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22892"
+          }
+        }
+      ]
+    },
+    "full_axis": {
+      "retained": false,
+      "reason": "primary misses repeated 5 percent gate",
+      "primary": {
+        "suite": "aurora",
+        "view": "inside",
+        "series_change_percent": [
+          46.284961925952416,
+          35.9721582033421
+        ],
+        "runs": [
+          {
+            "frames": 24.0,
+            "total_ms": 109.700302083,
+            "prep_ms": 0.816534708,
+            "submit_ms": 0.339613,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "control",
+            "series": 0
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 172.573609375,
+            "prep_ms": 0.816981042,
+            "submit_ms": 0.431341917,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "candidate",
+            "series": 0
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 181.446126708,
+            "prep_ms": 0.821553958,
+            "submit_ms": 0.385159542,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "candidate",
+            "series": 0
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 132.306621542,
+            "prep_ms": 0.828366292,
+            "submit_ms": 0.3735955,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "control",
+            "series": 0
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 134.726746542,
+            "prep_ms": 0.828639,
+            "submit_ms": 0.359166625,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "control",
+            "series": 1
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 185.744717,
+            "prep_ms": 0.840795042,
+            "submit_ms": 0.406850708,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "candidate",
+            "series": 1
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 188.030102417,
+            "prep_ms": 0.854552083,
+            "submit_ms": 0.392993167,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "candidate",
+            "series": 1
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 140.163954875,
+            "prep_ms": 0.846689167,
+            "submit_ms": 0.452157958,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "control",
+            "series": 1
+          }
+        ]
+      },
+      "images": [
+        {
+          "label": "aurora-inside-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3665184,
+          "control_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20",
+          "candidate_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20"
+        },
+        {
+          "label": "aurora-inside-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3659303,
+          "control_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac",
+          "candidate_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac"
+        },
+        {
+          "label": "aurora-inside-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3665184,
+          "control_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20",
+          "candidate_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20"
+        },
+        {
+          "label": "aurora-inside-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3659303,
+          "control_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac",
+          "candidate_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac"
+        },
+        {
+          "label": "aurora-spawn-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1502891,
+          "control_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d",
+          "candidate_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d"
+        },
+        {
+          "label": "aurora-spawn-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1491491,
+          "control_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69",
+          "candidate_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69"
+        },
+        {
+          "label": "aurora-spawn-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1502891,
+          "control_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d",
+          "candidate_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d"
+        },
+        {
+          "label": "aurora-spawn-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1491491,
+          "control_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69",
+          "candidate_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69"
+        },
+        {
+          "label": "aurora-reverse-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126",
+          "candidate_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126"
+        },
+        {
+          "label": "aurora-reverse-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8",
+          "candidate_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8"
+        },
+        {
+          "label": "aurora-reverse-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126",
+          "candidate_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126"
+        },
+        {
+          "label": "aurora-reverse-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8",
+          "candidate_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8"
+        },
+        {
+          "label": "aurora-side-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1754865,
+          "control_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+          "candidate_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64"
+        },
+        {
+          "label": "aurora-side-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1724083,
+          "control_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d",
+          "candidate_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d"
+        },
+        {
+          "label": "aurora-side-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1754865,
+          "control_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+          "candidate_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64"
+        },
+        {
+          "label": "aurora-side-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1724083,
+          "control_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d",
+          "candidate_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d"
+        },
+        {
+          "label": "cloud-inside-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+          "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+        },
+        {
+          "label": "cloud-inside-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+          "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+        },
+        {
+          "label": "cloud-inside-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+          "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+        },
+        {
+          "label": "cloud-inside-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+          "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+        },
+        {
+          "label": "cloud-spawn-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2546454,
+          "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+          "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+        },
+        {
+          "label": "cloud-spawn-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2546454,
+          "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+          "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+        },
+        {
+          "label": "cloud-spawn-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2546454,
+          "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+          "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+        },
+        {
+          "label": "cloud-spawn-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2546454,
+          "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+          "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+        },
+        {
+          "label": "cloud-reverse-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2019987,
+          "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+          "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+        },
+        {
+          "label": "cloud-reverse-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2019987,
+          "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+          "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+        },
+        {
+          "label": "cloud-reverse-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2019987,
+          "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+          "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+        },
+        {
+          "label": "cloud-reverse-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2019987,
+          "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+          "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+        },
+        {
+          "label": "cloud-side-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 776510,
+          "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+          "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+        },
+        {
+          "label": "cloud-side-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 776510,
+          "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+          "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+        },
+        {
+          "label": "cloud-side-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 776510,
+          "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+          "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+        },
+        {
+          "label": "cloud-side-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 776510,
+          "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+          "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+        }
+      ],
+      "image_provenance": {
+        "at": "2026-10-15T11:38:00.390377-07:00",
+        "mode": "images",
+        "dimensions": [
+          2560,
+          1440
+        ],
+        "suite": "all",
+        "source_sha256": {
+          "src/Singularity/Screen/WebGPU/SdfWgsl.cpp": "6b09ea81b7aa6bd6200bb42ec8421ba8ae66f0e30e5faaf8425d3d15a693940c",
+          "src/Singularity/Screen/WebGPU/SdfWgsl.hpp": "1cc6d9b137b3b8239e3797001b8a919f075491d435793cc713357870df6b9b3a",
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "2ed0f5df86cfdd8d3934e43d76d5a8b3eb4cd6adc6b681a52c48b0bc11809965",
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp": "acefba469a33f662e15ed66dc6a336a67ee88d33e302405effc4b8a70f3fd63c",
+          "src/Singularity/Screen/VolumeZeroProof.cpp": "c5e173044a19795224ada5634a0c8d915448b93a519f0b8619b99729d74ba1a3",
+          "src/Singularity/Screen/VolumeZeroProof.hpp": "1759f61db44922470c62c7e952482821d01497d9292efc310c125866eef8f4b6",
+          "scratch/probes/volume_demand_probe.cpp": "e3650b48ea08535822a527990418307e27e70898d60e21e8f4eaf6a8310a3687",
+          "saves/zones/Northern Veil/zone.ecform": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496",
+          "saves/zones/Sky-Island Sanctuary/zone.json": "864a48ef4f8f9cdb7d8bf96059b630cd22a7f66029e3afdba588503a317430e6"
+        },
+        "binaries": {
+          "control": "e0c4680b57b7503debe30d88b8b361e4c06fe71c57a442133db3ad48adf44f0c",
+          "candidate": "c3d328af55f15365fcb771beff6038564228c3baa76750e7d0abebae19fa29c8"
+        },
+        "head": "40b43c4ba114249a1d86ce7e0796c746533429f8",
+        "control_sources_sha256": {
+          "SdfWgsl": "e63f9d14ce7ee648b8ffe1a8c545fa9ebcaa8ad58cee8856bc4d58806db4d1f4",
+          "WebGpuRenderer": "5461e0c27416de6d1c80aa5240565b3d7710ddf33a9beb8d1772cdbd2b11b497",
+          "VolumeZeroProof": "45e49256a003b2bcdf4b6e498217e6780142f781676c3714c9516fb60067d4b9"
+        },
+        "timestamps": false,
+        "cost_scope": "completion-fenced offscreen batch throughput; no isolated volume time or live FPS",
+        "primary_context": [
+          "aurora",
+          "inside"
+        ]
+      },
+      "binary_provenance": {
+        "at": "2026-10-15T11:37:47.066902-07:00",
+        "mode": "build",
+        "dimensions": [
+          2560,
+          1440
+        ],
+        "suite": "all",
+        "source_sha256": {
+          "src/Singularity/Screen/WebGPU/SdfWgsl.cpp": "6b09ea81b7aa6bd6200bb42ec8421ba8ae66f0e30e5faaf8425d3d15a693940c",
+          "src/Singularity/Screen/WebGPU/SdfWgsl.hpp": "1cc6d9b137b3b8239e3797001b8a919f075491d435793cc713357870df6b9b3a",
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "2ed0f5df86cfdd8d3934e43d76d5a8b3eb4cd6adc6b681a52c48b0bc11809965",
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp": "acefba469a33f662e15ed66dc6a336a67ee88d33e302405effc4b8a70f3fd63c",
+          "src/Singularity/Screen/VolumeZeroProof.cpp": "c5e173044a19795224ada5634a0c8d915448b93a519f0b8619b99729d74ba1a3",
+          "src/Singularity/Screen/VolumeZeroProof.hpp": "1759f61db44922470c62c7e952482821d01497d9292efc310c125866eef8f4b6",
+          "scratch/probes/volume_demand_probe.cpp": "e3650b48ea08535822a527990418307e27e70898d60e21e8f4eaf6a8310a3687",
+          "saves/zones/Northern Veil/zone.ecform": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496",
+          "saves/zones/Sky-Island Sanctuary/zone.json": "864a48ef4f8f9cdb7d8bf96059b630cd22a7f66029e3afdba588503a317430e6"
+        },
+        "binaries": {
+          "control": "e0c4680b57b7503debe30d88b8b361e4c06fe71c57a442133db3ad48adf44f0c",
+          "candidate": "c3d328af55f15365fcb771beff6038564228c3baa76750e7d0abebae19fa29c8"
+        },
+        "head": "40b43c4ba114249a1d86ce7e0796c746533429f8",
+        "control_sources_sha256": {
+          "SdfWgsl": "e63f9d14ce7ee648b8ffe1a8c545fa9ebcaa8ad58cee8856bc4d58806db4d1f4",
+          "WebGpuRenderer": "5461e0c27416de6d1c80aa5240565b3d7710ddf33a9beb8d1772cdbd2b11b497",
+          "VolumeZeroProof": "45e49256a003b2bcdf4b6e498217e6780142f781676c3714c9516fb60067d4b9"
+        },
+        "timestamps": false,
+        "cost_scope": "completion-fenced offscreen batch throughput; no isolated volume time or live FPS",
+        "primary_context": [
+          "aurora",
+          "inside"
+        ]
+      },
+      "cpu_test_tail": "volume_zero_proof_test: 52/52 checks passed",
+      "native_test": {
+        "exit": 0,
+        "skip": false,
+        "checks": [
+          "  ok: translated medium/parallel-or-grid-edge sample retains every byte",
+          "  ok: translated medium/parallel-or-grid-edge sample retains every byte",
+          "  ok: translated medium/parallel-or-grid-edge sample retains every byte",
+          "  ok: translated medium/parallel-or-grid-edge sample retains every byte",
+          "EDIT density cpu_ms=1816.438125000 compiles=2 proof_builds=1 parameter_bytes=408 proof_bytes=9876",
+          "webgpu_volume_zero_proof_test: 73/73 checks passed"
+        ]
+      },
+      "proof_constructions": {
+        "aurora": {
+          "control": [
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "0",
+              "ms": "235.149791000",
+              "cells": "33120",
+              "proven": "31920",
+              "ranges": "3891",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "1",
+              "ms": "235.129458000",
+              "cells": "33120",
+              "proven": "31920",
+              "ranges": "3891",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "2",
+              "ms": "240.863417000",
+              "cells": "33120",
+              "proven": "31920",
+              "ranges": "3891",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "0",
+              "ms": "234.463125000",
+              "cells": "35420",
+              "proven": "34240",
+              "ranges": "3607",
+              "inside_bytes": "5928",
+              "outside_bytes": "7160"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "1",
+              "ms": "233.837792000",
+              "cells": "35420",
+              "proven": "34240",
+              "ranges": "3607",
+              "inside_bytes": "5928",
+              "outside_bytes": "7160"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "2",
+              "ms": "231.661666000",
+              "cells": "35420",
+              "proven": "34240",
+              "ranges": "3607",
+              "inside_bytes": "5928",
+              "outside_bytes": "7160"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "0",
+              "ms": "220.731375000",
+              "cells": "33120",
+              "proven": "31830",
+              "ranges": "3847",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "1",
+              "ms": "222.855584000",
+              "cells": "33120",
+              "proven": "31830",
+              "ranges": "3847",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "2",
+              "ms": "220.636625000",
+              "cells": "33120",
+              "proven": "31830",
+              "ranges": "3847",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "0",
+              "ms": "318.458292000",
+              "cells": "35112",
+              "proven": "33870",
+              "ranges": "3955",
+              "inside_bytes": "5876",
+              "outside_bytes": "6548"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "1",
+              "ms": "323.226417000",
+              "cells": "35112",
+              "proven": "33870",
+              "ranges": "3955",
+              "inside_bytes": "5876",
+              "outside_bytes": "6548"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "2",
+              "ms": "338.024500000",
+              "cells": "35112",
+              "proven": "33870",
+              "ranges": "3955",
+              "inside_bytes": "5876",
+              "outside_bytes": "6548"
+            }
+          ],
+          "candidate": [
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "0",
+              "ms": "854.377542000",
+              "cells": "32712",
+              "proven": "28211",
+              "ranges": "14342",
+              "inside_bytes": "5500",
+              "outside_bytes": "9212"
+            },
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "1",
+              "ms": "858.778791000",
+              "cells": "32712",
+              "proven": "28211",
+              "ranges": "14342",
+              "inside_bytes": "5500",
+              "outside_bytes": "9212"
+            },
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "2",
+              "ms": "859.077417000",
+              "cells": "32712",
+              "proven": "28211",
+              "ranges": "14342",
+              "inside_bytes": "5500",
+              "outside_bytes": "9212"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "0",
+              "ms": "907.583750000",
+              "cells": "32705",
+              "proven": "27909",
+              "ranges": "14780",
+              "inside_bytes": "5500",
+              "outside_bytes": "8876"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "1",
+              "ms": "909.504292000",
+              "cells": "32705",
+              "proven": "27909",
+              "ranges": "14780",
+              "inside_bytes": "5500",
+              "outside_bytes": "8876"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "2",
+              "ms": "910.460125000",
+              "cells": "32705",
+              "proven": "27909",
+              "ranges": "14780",
+              "inside_bytes": "5500",
+              "outside_bytes": "8876"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "0",
+              "ms": "1057.509833000",
+              "cells": "32670",
+              "proven": "26610",
+              "ranges": "17404",
+              "inside_bytes": "5496",
+              "outside_bytes": "8664"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "1",
+              "ms": "1028.492459000",
+              "cells": "32670",
+              "proven": "26610",
+              "ranges": "17404",
+              "inside_bytes": "5496",
+              "outside_bytes": "8664"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "2",
+              "ms": "1050.449333000",
+              "cells": "32670",
+              "proven": "26610",
+              "ranges": "17404",
+              "inside_bytes": "5496",
+              "outside_bytes": "8664"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "0",
+              "ms": "1854.790583000",
+              "cells": "32745",
+              "proven": "25031",
+              "ranges": "20786",
+              "inside_bytes": "5508",
+              "outside_bytes": "8340"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "1",
+              "ms": "1902.656500000",
+              "cells": "32745",
+              "proven": "25031",
+              "ranges": "20786",
+              "inside_bytes": "5508",
+              "outside_bytes": "8340"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "2",
+              "ms": "1773.900250000",
+              "cells": "32745",
+              "proven": "25031",
+              "ranges": "20786",
+              "inside_bytes": "5508",
+              "outside_bytes": "8340"
+            }
+          ]
+        },
+        "cloud": {
+          "control": [
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "0",
+              "ms": "4583.508250000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5800",
+              "outside_bytes": "7016"
+            },
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "1",
+              "ms": "4565.379833000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5800",
+              "outside_bytes": "7016"
+            },
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "2",
+              "ms": "4598.565083000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5800",
+              "outside_bytes": "7016"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "0",
+              "ms": "983.599583000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5892",
+              "outside_bytes": "6532"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "1",
+              "ms": "965.922583000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5892",
+              "outside_bytes": "6532"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "2",
+              "ms": "1048.330333000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5892",
+              "outside_bytes": "6532"
+            }
+          ],
+          "candidate": [
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "0",
+              "ms": "4678.614458000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5824",
+              "outside_bytes": "7040"
+            },
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "1",
+              "ms": "4694.155500000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5824",
+              "outside_bytes": "7040"
+            },
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "2",
+              "ms": "4680.588708000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5824",
+              "outside_bytes": "7040"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "0",
+              "ms": "1005.448291000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5916",
+              "outside_bytes": "6556"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "1",
+              "ms": "999.794500000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5916",
+              "outside_bytes": "6556"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "2",
+              "ms": "1022.881125000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5916",
+              "outside_bytes": "6556"
+            }
+          ]
+        }
+      },
+      "admission_records": [
+        {
+          "run": "aurora-inside-s0-0-control.log",
+          "values": {
+            "cpu_ms": "1523.950541000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22892"
+          }
+        },
+        {
+          "run": "aurora-inside-s0-1-candidate.log",
+          "values": {
+            "cpu_ms": "4493.561000000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22004"
+          }
+        },
+        {
+          "run": "aurora-inside-s0-2-candidate.log",
+          "values": {
+            "cpu_ms": "4497.036084000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22004"
+          }
+        },
+        {
+          "run": "aurora-inside-s0-3-control.log",
+          "values": {
+            "cpu_ms": "1442.732458000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22892"
+          }
+        },
+        {
+          "run": "aurora-inside-s1-0-control.log",
+          "values": {
+            "cpu_ms": "1440.602291000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22892"
+          }
+        },
+        {
+          "run": "aurora-inside-s1-1-candidate.log",
+          "values": {
+            "cpu_ms": "4537.402667000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22004"
+          }
+        },
+        {
+          "run": "aurora-inside-s1-2-candidate.log",
+          "values": {
+            "cpu_ms": "4722.125208000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22004"
+          }
+        },
+        {
+          "run": "aurora-inside-s1-3-control.log",
+          "values": {
+            "cpu_ms": "1483.212417000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22892"
+          }
+        }
+      ]
+    },
+    "parent": {
+      "retained": false,
+      "reason": "primary misses repeated 5 percent gate",
+      "primary": {
+        "suite": "aurora",
+        "view": "inside",
+        "series_change_percent": [
+          25.381355358787474,
+          20.844112962652318
+        ],
+        "runs": [
+          {
+            "frames": 24.0,
+            "total_ms": 101.443569458,
+            "prep_ms": 0.85054675,
+            "submit_ms": 0.379500042,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "control",
+            "series": 0
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 141.683770833,
+            "prep_ms": 0.81721525,
+            "submit_ms": 0.350449625,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "candidate",
+            "series": 0
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 152.283953125,
+            "prep_ms": 0.821609292,
+            "submit_ms": 0.372432333,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "candidate",
+            "series": 0
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 133.0153125,
+            "prep_ms": 0.825043333,
+            "submit_ms": 0.393533,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "control",
+            "series": 0
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 131.280225708,
+            "prep_ms": 0.81784025,
+            "submit_ms": 0.365187542,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "control",
+            "series": 1
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 160.337730875,
+            "prep_ms": 0.823487958,
+            "submit_ms": 0.371501625,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "candidate",
+            "series": 1
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 162.407208333,
+            "prep_ms": 0.820086875,
+            "submit_ms": 0.373209917,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "candidate",
+            "series": 1
+          },
+          {
+            "frames": 24.0,
+            "total_ms": 135.795208333,
+            "prep_ms": 0.840114583,
+            "submit_ms": 0.403355958,
+            "compiles": 0.0,
+            "lowerings": 0.0,
+            "parameters": 0.0,
+            "proofs": 0.0,
+            "lane": "control",
+            "series": 1
+          }
+        ]
+      },
+      "images": [
+        {
+          "label": "aurora-inside-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3665184,
+          "control_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20",
+          "candidate_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20"
+        },
+        {
+          "label": "aurora-inside-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3659303,
+          "control_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac",
+          "candidate_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac"
+        },
+        {
+          "label": "aurora-inside-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3665184,
+          "control_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20",
+          "candidate_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20"
+        },
+        {
+          "label": "aurora-inside-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3659303,
+          "control_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac",
+          "candidate_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac"
+        },
+        {
+          "label": "aurora-spawn-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1502891,
+          "control_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d",
+          "candidate_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d"
+        },
+        {
+          "label": "aurora-spawn-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1491491,
+          "control_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69",
+          "candidate_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69"
+        },
+        {
+          "label": "aurora-spawn-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1502891,
+          "control_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d",
+          "candidate_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d"
+        },
+        {
+          "label": "aurora-spawn-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1491491,
+          "control_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69",
+          "candidate_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69"
+        },
+        {
+          "label": "aurora-reverse-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126",
+          "candidate_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126"
+        },
+        {
+          "label": "aurora-reverse-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8",
+          "candidate_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8"
+        },
+        {
+          "label": "aurora-reverse-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126",
+          "candidate_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126"
+        },
+        {
+          "label": "aurora-reverse-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8",
+          "candidate_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8"
+        },
+        {
+          "label": "aurora-side-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1754865,
+          "control_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+          "candidate_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64"
+        },
+        {
+          "label": "aurora-side-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1724083,
+          "control_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d",
+          "candidate_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d"
+        },
+        {
+          "label": "aurora-side-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1754865,
+          "control_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+          "candidate_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64"
+        },
+        {
+          "label": "aurora-side-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 1724083,
+          "control_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d",
+          "candidate_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d"
+        },
+        {
+          "label": "cloud-inside-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+          "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+        },
+        {
+          "label": "cloud-inside-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+          "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+        },
+        {
+          "label": "cloud-inside-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+          "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+        },
+        {
+          "label": "cloud-inside-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 3686400,
+          "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+          "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+        },
+        {
+          "label": "cloud-spawn-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2546454,
+          "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+          "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+        },
+        {
+          "label": "cloud-spawn-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2546454,
+          "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+          "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+        },
+        {
+          "label": "cloud-spawn-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2546454,
+          "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+          "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+        },
+        {
+          "label": "cloud-spawn-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2546454,
+          "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+          "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+        },
+        {
+          "label": "cloud-reverse-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2019987,
+          "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+          "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+        },
+        {
+          "label": "cloud-reverse-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2019987,
+          "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+          "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+        },
+        {
+          "label": "cloud-reverse-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2019987,
+          "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+          "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+        },
+        {
+          "label": "cloud-reverse-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 2019987,
+          "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+          "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+        },
+        {
+          "label": "cloud-side-0-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 776510,
+          "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+          "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+        },
+        {
+          "label": "cloud-side-7.25-full0",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 776510,
+          "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+          "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+        },
+        {
+          "label": "cloud-side-0-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 776510,
+          "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+          "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+        },
+        {
+          "label": "cloud-side-7.25-full1",
+          "changed_bytes": 0,
+          "max_error": 0,
+          "lit_pixels": 776510,
+          "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+          "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+        }
+      ],
+      "image_provenance": {
+        "at": "2026-10-15T11:52:56.659698-07:00",
+        "mode": "images",
+        "dimensions": [
+          2560,
+          1440
+        ],
+        "suite": "all",
+        "source_sha256": {
+          "src/Singularity/Screen/WebGPU/SdfWgsl.cpp": "0760e69abc5955da696301a6455da105054e51a8cb86a57488a66d00549beea3",
+          "src/Singularity/Screen/WebGPU/SdfWgsl.hpp": "1cc6d9b137b3b8239e3797001b8a919f075491d435793cc713357870df6b9b3a",
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "ed62c7ef79363d6ba60d94778eaf34e35c5a22ae92864cd975daffbe6578de0a",
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp": "691fcd6ba34f29249b2e2bb12a6967f26033a730b5a75684769a33e2c9261758",
+          "src/Singularity/Screen/VolumeZeroProof.cpp": "13cb1990ccb30cd901fc5c9bfe48c5ef19017c66a8bb98a587bac736c68a0222",
+          "src/Singularity/Screen/VolumeZeroProof.hpp": "fb4c08e1d1843da2e2d7e83f602b54beaff826d808e6bc90d354c1b406315629",
+          "scratch/probes/volume_demand_probe.cpp": "83edb013a5c6f7d076c59b4e68034245e4d60041df62fe8dba79a31a03206359",
+          "saves/zones/Northern Veil/zone.ecform": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496",
+          "saves/zones/Sky-Island Sanctuary/zone.json": "864a48ef4f8f9cdb7d8bf96059b630cd22a7f66029e3afdba588503a317430e6"
+        },
+        "binaries": {
+          "control": "fb8d7a6541f6a2f1d2b6df5e1a25da8fa629482710e40631dcb08182a1dbba8d",
+          "candidate": "5b841610ac554899ecb6dc69c3f2c737c3652e41f40bc3dfc489dec9bd4536d3"
+        },
+        "head": "40b43c4ba114249a1d86ce7e0796c746533429f8",
+        "control_sources_sha256": {
+          "SdfWgsl": "e63f9d14ce7ee648b8ffe1a8c545fa9ebcaa8ad58cee8856bc4d58806db4d1f4",
+          "WebGpuRenderer": "5461e0c27416de6d1c80aa5240565b3d7710ddf33a9beb8d1772cdbd2b11b497",
+          "VolumeZeroProof": "45e49256a003b2bcdf4b6e498217e6780142f781676c3714c9516fb60067d4b9"
+        },
+        "timestamps": false,
+        "cost_scope": "completion-fenced offscreen batch throughput; no isolated volume time or live FPS",
+        "primary_context": [
+          "aurora",
+          "inside"
+        ]
+      },
+      "binary_provenance": {
+        "at": "2026-10-15T11:51:06.446723-07:00",
+        "mode": "build",
+        "dimensions": [
+          2560,
+          1440
+        ],
+        "suite": "all",
+        "source_sha256": {
+          "src/Singularity/Screen/WebGPU/SdfWgsl.cpp": "0760e69abc5955da696301a6455da105054e51a8cb86a57488a66d00549beea3",
+          "src/Singularity/Screen/WebGPU/SdfWgsl.hpp": "1cc6d9b137b3b8239e3797001b8a919f075491d435793cc713357870df6b9b3a",
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "ed62c7ef79363d6ba60d94778eaf34e35c5a22ae92864cd975daffbe6578de0a",
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp": "691fcd6ba34f29249b2e2bb12a6967f26033a730b5a75684769a33e2c9261758",
+          "src/Singularity/Screen/VolumeZeroProof.cpp": "13cb1990ccb30cd901fc5c9bfe48c5ef19017c66a8bb98a587bac736c68a0222",
+          "src/Singularity/Screen/VolumeZeroProof.hpp": "fb4c08e1d1843da2e2d7e83f602b54beaff826d808e6bc90d354c1b406315629",
+          "scratch/probes/volume_demand_probe.cpp": "83edb013a5c6f7d076c59b4e68034245e4d60041df62fe8dba79a31a03206359",
+          "saves/zones/Northern Veil/zone.ecform": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496",
+          "saves/zones/Sky-Island Sanctuary/zone.json": "864a48ef4f8f9cdb7d8bf96059b630cd22a7f66029e3afdba588503a317430e6"
+        },
+        "binaries": {
+          "control": "fb8d7a6541f6a2f1d2b6df5e1a25da8fa629482710e40631dcb08182a1dbba8d",
+          "candidate": "5b841610ac554899ecb6dc69c3f2c737c3652e41f40bc3dfc489dec9bd4536d3"
+        },
+        "head": "40b43c4ba114249a1d86ce7e0796c746533429f8",
+        "control_sources_sha256": {
+          "SdfWgsl": "e63f9d14ce7ee648b8ffe1a8c545fa9ebcaa8ad58cee8856bc4d58806db4d1f4",
+          "WebGpuRenderer": "5461e0c27416de6d1c80aa5240565b3d7710ddf33a9beb8d1772cdbd2b11b497",
+          "VolumeZeroProof": "45e49256a003b2bcdf4b6e498217e6780142f781676c3714c9516fb60067d4b9"
+        },
+        "timestamps": false,
+        "cost_scope": "completion-fenced offscreen batch throughput; no isolated volume time or live FPS",
+        "primary_context": [
+          "aurora",
+          "inside"
+        ]
+      },
+      "cpu_test_tail": "volume_zero_proof_test: 56/56 checks passed",
+      "native_test": {
+        "exit": 0,
+        "skip": false,
+        "checks": [
+          "  ok: translated medium/parallel-or-grid-edge sample retains every byte",
+          "  ok: translated medium/parallel-or-grid-edge sample retains every byte",
+          "  ok: translated medium/parallel-or-grid-edge sample retains every byte",
+          "  ok: translated medium/parallel-or-grid-edge sample retains every byte",
+          "EDIT density cpu_ms=1215.715709000 compiles=2 proof_builds=1 parameter_bytes=408 proof_bytes=9768",
+          "webgpu_volume_zero_proof_test: 73/73 checks passed"
+        ]
+      },
+      "proof_constructions": {
+        "aurora": {
+          "control": [
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "0",
+              "ms": "236.445792000",
+              "cells": "33120",
+              "proven": "31920",
+              "ranges": "3891",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "1",
+              "ms": "235.869042000",
+              "cells": "33120",
+              "proven": "31920",
+              "ranges": "3891",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "2",
+              "ms": "243.772542000",
+              "cells": "33120",
+              "proven": "31920",
+              "ranges": "3891",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "0",
+              "ms": "233.309875000",
+              "cells": "35420",
+              "proven": "34240",
+              "ranges": "3607",
+              "inside_bytes": "5928",
+              "outside_bytes": "7160"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "1",
+              "ms": "232.516666000",
+              "cells": "35420",
+              "proven": "34240",
+              "ranges": "3607",
+              "inside_bytes": "5928",
+              "outside_bytes": "7160"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "2",
+              "ms": "232.405125000",
+              "cells": "35420",
+              "proven": "34240",
+              "ranges": "3607",
+              "inside_bytes": "5928",
+              "outside_bytes": "7160"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "0",
+              "ms": "215.494791000",
+              "cells": "33120",
+              "proven": "31830",
+              "ranges": "3847",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "1",
+              "ms": "218.379625000",
+              "cells": "33120",
+              "proven": "31830",
+              "ranges": "3847",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "2",
+              "ms": "215.952917000",
+              "cells": "33120",
+              "proven": "31830",
+              "ranges": "3847",
+              "inside_bytes": "5544",
+              "outside_bytes": "6824"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "0",
+              "ms": "319.159250000",
+              "cells": "35112",
+              "proven": "33870",
+              "ranges": "3955",
+              "inside_bytes": "5876",
+              "outside_bytes": "6548"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "1",
+              "ms": "318.779541000",
+              "cells": "35112",
+              "proven": "33870",
+              "ranges": "3955",
+              "inside_bytes": "5876",
+              "outside_bytes": "6548"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "2",
+              "ms": "311.401875000",
+              "cells": "35112",
+              "proven": "33870",
+              "ranges": "3955",
+              "inside_bytes": "5876",
+              "outside_bytes": "6548"
+            }
+          ],
+          "candidate": [
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "0",
+              "ms": "788.259333000",
+              "cells": "31831",
+              "proven": "27462",
+              "ranges": "14120",
+              "inside_bytes": "5512",
+              "outside_bytes": "9176"
+            },
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "1",
+              "ms": "787.367458000",
+              "cells": "31831",
+              "proven": "27462",
+              "ranges": "14120",
+              "inside_bytes": "5512",
+              "outside_bytes": "9176"
+            },
+            {
+              "id": "northern_veil.aurora.primary-emerald-curtain",
+              "repeat": "2",
+              "ms": "790.214250000",
+              "cells": "31831",
+              "proven": "27462",
+              "ranges": "14120",
+              "inside_bytes": "5512",
+              "outside_bytes": "9176"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "0",
+              "ms": "824.597625000",
+              "cells": "31824",
+              "proven": "27145",
+              "ranges": "14600",
+              "inside_bytes": "5504",
+              "outside_bytes": "8832"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "1",
+              "ms": "829.244666000",
+              "cells": "31824",
+              "proven": "27145",
+              "ranges": "14600",
+              "inside_bytes": "5504",
+              "outside_bytes": "8832"
+            },
+            {
+              "id": "northern_veil.aurora.secondary-cyan-ribbon",
+              "repeat": "2",
+              "ms": "841.425291000",
+              "cells": "31824",
+              "proven": "27145",
+              "ranges": "14600",
+              "inside_bytes": "5504",
+              "outside_bytes": "8832"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "0",
+              "ms": "950.872459000",
+              "cells": "31785",
+              "proven": "25883",
+              "ranges": "17044",
+              "inside_bytes": "5504",
+              "outside_bytes": "8624"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "1",
+              "ms": "922.405667000",
+              "cells": "31785",
+              "proven": "25883",
+              "ranges": "17044",
+              "inside_bytes": "5504",
+              "outside_bytes": "8624"
+            },
+            {
+              "id": "northern_veil.aurora.accent-violet-crest",
+              "repeat": "2",
+              "ms": "957.204041000",
+              "cells": "31785",
+              "proven": "25883",
+              "ranges": "17044",
+              "inside_bytes": "5504",
+              "outside_bytes": "8624"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "0",
+              "ms": "1588.237125000",
+              "cells": "31675",
+              "proven": "24212",
+              "ranges": "20226",
+              "inside_bytes": "5484",
+              "outside_bytes": "8284"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "1",
+              "ms": "1613.272000000",
+              "cells": "31675",
+              "proven": "24212",
+              "ranges": "20226",
+              "inside_bytes": "5484",
+              "outside_bytes": "8284"
+            },
+            {
+              "id": "northern_veil.aurora.deep-crimson-fringe",
+              "repeat": "2",
+              "ms": "1616.549917000",
+              "cells": "31675",
+              "proven": "24212",
+              "ranges": "20226",
+              "inside_bytes": "5484",
+              "outside_bytes": "8284"
+            }
+          ]
+        },
+        "cloud": {
+          "control": [
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "0",
+              "ms": "4282.902459000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5800",
+              "outside_bytes": "7016"
+            },
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "1",
+              "ms": "4229.816292000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5800",
+              "outside_bytes": "7016"
+            },
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "2",
+              "ms": "4258.836667000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5800",
+              "outside_bytes": "7016"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "0",
+              "ms": "898.214834000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5892",
+              "outside_bytes": "6532"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "1",
+              "ms": "894.907584000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5892",
+              "outside_bytes": "6532"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "2",
+              "ms": "902.345875000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5892",
+              "outside_bytes": "6532"
+            }
+          ],
+          "candidate": [
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "0",
+              "ms": "4267.904834000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5824",
+              "outside_bytes": "7040"
+            },
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "1",
+              "ms": "4277.081542000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5824",
+              "outside_bytes": "7040"
+            },
+            {
+              "id": "sky.sanctuary.sea-of-clouds",
+              "repeat": "2",
+              "ms": "4273.445750000",
+              "cells": "34656",
+              "proven": "0",
+              "ranges": "69311",
+              "inside_bytes": "5824",
+              "outside_bytes": "7040"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "0",
+              "ms": "920.377458000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5916",
+              "outside_bytes": "6556"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "1",
+              "ms": "929.786500000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5916",
+              "outside_bytes": "6556"
+            },
+            {
+              "id": "sky.sanctuary.sunlit-halo-mist",
+              "repeat": "2",
+              "ms": "944.853083000",
+              "cells": "35200",
+              "proven": "6400",
+              "ranges": "58623",
+              "inside_bytes": "5916",
+              "outside_bytes": "6556"
+            }
+          ]
+        }
+      },
+      "admission_records": [
+        {
+          "run": "aurora-inside-s0-0-control.log",
+          "values": {
+            "cpu_ms": "1434.676833000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22892"
+          }
+        },
+        {
+          "run": "aurora-inside-s0-1-candidate.log",
+          "values": {
+            "cpu_ms": "4498.488083000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22004"
+          }
+        },
+        {
+          "run": "aurora-inside-s0-2-candidate.log",
+          "values": {
+            "cpu_ms": "4398.187458000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22004"
+          }
+        },
+        {
+          "run": "aurora-inside-s0-3-control.log",
+          "values": {
+            "cpu_ms": "1432.288917000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22892"
+          }
+        },
+        {
+          "run": "aurora-inside-s1-0-control.log",
+          "values": {
+            "cpu_ms": "1437.598041000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22892"
+          }
+        },
+        {
+          "run": "aurora-inside-s1-1-candidate.log",
+          "values": {
+            "cpu_ms": "4418.723917000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22004"
+          }
+        },
+        {
+          "run": "aurora-inside-s1-2-candidate.log",
+          "values": {
+            "cpu_ms": "4415.514416000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22004"
+          }
+        },
+        {
+          "run": "aurora-inside-s1-3-control.log",
+          "values": {
+            "cpu_ms": "1461.352834000",
+            "compiles": "3",
+            "lowerings": "4",
+            "proof_builds": "4",
+            "parameters": "1020",
+            "proofs": "22892"
+          }
+        }
+      ]
+    }
+  },
+  "restored_native": [
+    {
+      "test": "webgpu_volume_zero_proof_test",
+      "exit": 0,
+      "skip": false,
+      "tail": "ssion edit rebuilds no zero-density proof (per-channel revision)\n  ok: density accepts another medium's density tree\nEDIT density cpu_ms=407.521542000 compiles=2 proof_builds=1 parameter_bytes=408 proof_bytes=7568\n  ok: a density edit rebuilds exactly one proof and stays byte-identical to exact\n  ok: unknown time-dependent support retains exact inside sampling\n  ok: mixed known/unknown support preserves each member after reordering\n  ok: mixed known/unknown support preserves each member after reordering\n  ok: certified-zero traversal preserves the positive-budget full lattice\n  ok: replacement device rebuilds column payloads and retains no stale handles or pixels\n  ok: full 2560x1440 spawn preserves every RGBA byte across proof boundaries\nwebgpu_volume_zero_proof_test: 73/73 checks passed\n"
+    },
+    {
+      "test": "webgpu_volume_shared_subexpression_test",
+      "exit": 0,
+      "skip": false,
+      "tail": "pling changes reuse resident equations without compilation\n  ok: tiny positive budget still selects full lattice when its GPU budget rounds to zero\n  ok: returning to zero restores the byte-identical compatibility image\n  ok: 1 media: background attenuation also follows the full lattice\n  ok: 2 media: opt-in reaches bright emission beyond the opacity cutoff\n  ok: 2 media: full transport matches analytic ramp and 6144 reference\n  ok: budget and sampling changes reuse resident equations without compilation\n  ok: tiny positive budget still selects full lattice when its GPU budget rounds to zero\n  ok: returning to zero restores the byte-identical compatibility image\n  ok: 2 media: background attenuation also follows the full lattice\nwebgpu_volume_shared_subexpression_test: 76/76 checks passed\n"
+    },
+    {
+      "test": "webgpu_volume_unified_quadrature_test",
+      "exit": 0,
+      "skip": false,
+      "tail": "ence\n  ok: from the side: at most 0.05% of lit pixels more than 1 level off\n  ok: from the side: changing samples per chord recompiled nothing\n  ok: from the side: returning to 96 restores the identical image\n       among the media, looking along them: max error 1 levels, 0 px > 1 level, mean 0.031, lit 56443\n  ok: among the media, looking along them: the media are visible\n  ok: among the media, looking along them: no pixel more than 2 levels from the 6144 reference\n  ok: among the media, looking along them: at most 0.05% of lit pixels more than 1 level off\n  ok: among the media, looking along them: changing samples per chord recompiled nothing\n  ok: among the media, looking along them: returning to 96 restores the identical image\nwebgpu_volume_unified_quadrature_test: 15/15 checks passed\n"
+    }
+  ],
+  "restored_cpu": {
+    "checks_passed": "48/48",
+    "exit": 0,
+    "tail": "thern_veil.aurora.deep-crimson-fringe: columns enclose EVERY unknown cell\n       column axis=0 count=42\n  ok: northern_veil.aurora.deep-crimson-fringe: 4000 points in proven cells all have density <= 0\n  ok: the saved Zone has participating media to prove\nvolume_zero_proof_test: 48/48 checks passed\n"
+  },
+  "restored_main_source": {
+    "src/Singularity/Screen/VolumeZeroProof.cpp": "45e49256a003b2bcdf4b6e498217e6780142f781676c3714c9516fb60067d4b9",
+    "src/Singularity/Screen/VolumeZeroProof.hpp": "b730919be4110df16191441e9d77156775d091bcabe05645b37e3100f41f86ad",
+    "src/Singularity/Screen/WebGPU/SdfWgsl.cpp": "e63f9d14ce7ee648b8ffe1a8c545fa9ebcaa8ad58cee8856bc4d58806db4d1f4",
+    "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "5461e0c27416de6d1c80aa5240565b3d7710ddf33a9beb8d1772cdbd2b11b497",
+    "src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp": "7a5088637a3a1e04d7c39d6688e01fe4bc57ef515db5ff828f59b9d63fb965c1",
+    "tests/singularity/volume_zero_proof_test.cpp": "36b7fa603d7e6be7b6a895cf21aa25d1b60b2584e35289d6f65322a55e512540",
+    "src/Singularity/OntoMath/ScalarForm.cpp": "2c9365694e4d95c0d0e9696831ea31ed8cc1c7b0628f7af83942e5d525d0e2ad",
+    "saves/zones/Northern Veil/zone.ecform": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496",
+    "saves/zones/Sky-Island Sanctuary/zone.json": "864a48ef4f8f9cdb7d8bf96059b630cd22a7f66029e3afdba588503a317430e6"
+  },
+  "retained_changes": [
+    "four native translated/parallel/support-edge regressions",
+    "native edit/preparation and upload diagnostics",
+    "separate proof-cost mode and compatible three-object control substitution",
+    "strict optional early rejection gates",
+    "audit patches and measured negative evidence"
+  ],
+  "limitations": [
+    "96 finite image pairs do not close native proof/coordinate/numerical scope",
+    "no new author verdict or new host Euclidean ranges consumed by GPU",
+    "static source lookup accounting only; actual dynamic fine/parent/band transaction/instruction counts not measured",
+    "entire uninstrumented batch timings include all executed added shader work",
+    "no isolated volume GPU time or visible surface/live-FPS/p95",
+    "final-frame warm counters are not aggregates of every timed frame",
+    "direct constructor samples are descriptive under concurrent correctness load",
+    "isotropic trial undercounts range calls for a discarded focus attempt; wall time includes them; later variants correct that counter",
+    "remaining timing views not run after failed primary",
+    "no tighter slab bisection or post-tightening 16-cube pilot; these layouts do not reproduce every proposed resolution selector",
+    "full suite, Person movement acceptance and 30FPS remain open"
+  ],
+  "final_tool_source_sha256": {
+    "scripts/volume_traversal_experiment.py": "b135e2b34d53015ba56eda4adcda5b6ce98aa291981ea08fd0906376c7ab4c42",
+    "scratch/probes/volume_demand_probe.cpp": "4c8b70138a4264c106cb8a102f9ed2df2f7bc56ff3341ad4f923798c877c53bb",
+    "tests/singularity/webgpu_volume_zero_proof_test.cpp": "7e5112f190f501e13bca83a17123a1b27a62acdc43b4ae69643581f1c2559acc"
+  },
+  "patch_sha256": {
+    "VOLUME_SUPPORT_ALLOCATION_ISOTROPIC_2026-10-15.patch": "e0d19b51c237c471e036d79758701a66b6cc68b8393973788d0e0465aef27222",
+    "VOLUME_SUPPORT_ALLOCATION_FULL_AXIS_2026-10-15.patch": "23c5c0e1cd39d767dc555e25368c2a0d617f3937eac1b4f238bc1b11cfc2f366",
+    "VOLUME_SUPPORT_ALLOCATION_PARENT_2026-10-15.patch": "08e1fb37354595758a15fcd5ee2939d785691df53198bdc1e0c0b713d667059a"
+  },
+  "restored_tool_smoke": {
+    "control": [
+      {
+        "id": "northern_veil.aurora.primary-emerald-curtain",
+        "repeat": "0",
+        "ms": "237.175916000",
+        "cells": "33120",
+        "proven": "31920",
+        "ranges": "3891",
+        "inside_bytes": "5544",
+        "outside_bytes": "6824"
+      },
+      {
+        "id": "northern_veil.aurora.primary-emerald-curtain",
+        "repeat": "1",
+        "ms": "239.966000000",
+        "cells": "33120",
+        "proven": "31920",
+        "ranges": "3891",
+        "inside_bytes": "5544",
+        "outside_bytes": "6824"
+      },
+      {
+        "id": "northern_veil.aurora.primary-emerald-curtain",
+        "repeat": "2",
+        "ms": "234.326042000",
+        "cells": "33120",
+        "proven": "31920",
+        "ranges": "3891",
+        "inside_bytes": "5544",
+        "outside_bytes": "6824"
+      },
+      {
+        "id": "northern_veil.aurora.secondary-cyan-ribbon",
+        "repeat": "0",
+        "ms": "228.315166000",
+        "cells": "35420",
+        "proven": "34240",
+        "ranges": "3607",
+        "inside_bytes": "5928",
+        "outside_bytes": "7160"
+      },
+      {
+        "id": "northern_veil.aurora.secondary-cyan-ribbon",
+        "repeat": "1",
+        "ms": "237.280792000",
+        "cells": "35420",
+        "proven": "34240",
+        "ranges": "3607",
+        "inside_bytes": "5928",
+        "outside_bytes": "7160"
+      },
+      {
+        "id": "northern_veil.aurora.secondary-cyan-ribbon",
+        "repeat": "2",
+        "ms": "315.400375000",
+        "cells": "35420",
+        "proven": "34240",
+        "ranges": "3607",
+        "inside_bytes": "5928",
+        "outside_bytes": "7160"
+      },
+      {
+        "id": "northern_veil.aurora.accent-violet-crest",
+        "repeat": "0",
+        "ms": "310.006375000",
+        "cells": "33120",
+        "proven": "31830",
+        "ranges": "3847",
+        "inside_bytes": "5544",
+        "outside_bytes": "6824"
+      },
+      {
+        "id": "northern_veil.aurora.accent-violet-crest",
+        "repeat": "1",
+        "ms": "243.581500000",
+        "cells": "33120",
+        "proven": "31830",
+        "ranges": "3847",
+        "inside_bytes": "5544",
+        "outside_bytes": "6824"
+      },
+      {
+        "id": "northern_veil.aurora.accent-violet-crest",
+        "repeat": "2",
+        "ms": "215.819291000",
+        "cells": "33120",
+        "proven": "31830",
+        "ranges": "3847",
+        "inside_bytes": "5544",
+        "outside_bytes": "6824"
+      },
+      {
+        "id": "northern_veil.aurora.deep-crimson-fringe",
+        "repeat": "0",
+        "ms": "312.036000000",
+        "cells": "35112",
+        "proven": "33870",
+        "ranges": "3955",
+        "inside_bytes": "5876",
+        "outside_bytes": "6548"
+      },
+      {
+        "id": "northern_veil.aurora.deep-crimson-fringe",
+        "repeat": "1",
+        "ms": "326.615416000",
+        "cells": "35112",
+        "proven": "33870",
+        "ranges": "3955",
+        "inside_bytes": "5876",
+        "outside_bytes": "6548"
+      },
+      {
+        "id": "northern_veil.aurora.deep-crimson-fringe",
+        "repeat": "2",
+        "ms": "312.622833000",
+        "cells": "35112",
+        "proven": "33870",
+        "ranges": "3955",
+        "inside_bytes": "5876",
+        "outside_bytes": "6548"
+      }
+    ],
+    "candidate": [
+      {
+        "id": "northern_veil.aurora.primary-emerald-curtain",
+        "repeat": "0",
+        "ms": "234.722042000",
+        "cells": "33120",
+        "proven": "31920",
+        "ranges": "3891",
+        "inside_bytes": "5544",
+        "outside_bytes": "6824"
+      },
+      {
+        "id": "northern_veil.aurora.primary-emerald-curtain",
+        "repeat": "1",
+        "ms": "235.659334000",
+        "cells": "33120",
+        "proven": "31920",
+        "ranges": "3891",
+        "inside_bytes": "5544",
+        "outside_bytes": "6824"
+      },
+      {
+        "id": "northern_veil.aurora.primary-emerald-curtain",
+        "repeat": "2",
+        "ms": "235.288750000",
+        "cells": "33120",
+        "proven": "31920",
+        "ranges": "3891",
+        "inside_bytes": "5544",
+        "outside_bytes": "6824"
+      },
+      {
+        "id": "northern_veil.aurora.secondary-cyan-ribbon",
+        "repeat": "0",
+        "ms": "228.512333000",
+        "cells": "35420",
+        "proven": "34240",
+        "ranges": "3607",
+        "inside_bytes": "5928",
+        "outside_bytes": "7160"
+      },
+      {
+        "id": "northern_veil.aurora.secondary-cyan-ribbon",
+        "repeat": "1",
+        "ms": "228.154084000",
+        "cells": "35420",
+        "proven": "34240",
+        "ranges": "3607",
+        "inside_bytes": "5928",
+        "outside_bytes": "7160"
+      },
+      {
+        "id": "northern_veil.aurora.secondary-cyan-ribbon",
+        "repeat": "2",
+        "ms": "248.089041000",
+        "cells": "35420",
+        "proven": "34240",
+        "ranges": "3607",
+        "inside_bytes": "5928",
+        "outside_bytes": "7160"
+      },
+      {
+        "id": "northern_veil.aurora.accent-violet-crest",
+        "repeat": "0",
+        "ms": "212.434708000",
+        "cells": "33120",
+        "proven": "31830",
+        "ranges": "3847",
+        "inside_bytes": "5544",
+        "outside_bytes": "6824"
+      },
+      {
+        "id": "northern_veil.aurora.accent-violet-crest",
+        "repeat": "1",
+        "ms": "213.069584000",
+        "cells": "33120",
+        "proven": "31830",
+        "ranges": "3847",
+        "inside_bytes": "5544",
+        "outside_bytes": "6824"
+      },
+      {
+        "id": "northern_veil.aurora.accent-violet-crest",
+        "repeat": "2",
+        "ms": "211.933666000",
+        "cells": "33120",
+        "proven": "31830",
+        "ranges": "3847",
+        "inside_bytes": "5544",
+        "outside_bytes": "6824"
+      },
+      {
+        "id": "northern_veil.aurora.deep-crimson-fringe",
+        "repeat": "0",
+        "ms": "391.690916000",
+        "cells": "35112",
+        "proven": "33870",
+        "ranges": "3955",
+        "inside_bytes": "5876",
+        "outside_bytes": "6548"
+      },
+      {
+        "id": "northern_veil.aurora.deep-crimson-fringe",
+        "repeat": "1",
+        "ms": "310.167666000",
+        "cells": "35112",
+        "proven": "33870",
+        "ranges": "3955",
+        "inside_bytes": "5876",
+        "outside_bytes": "6548"
+      },
+      {
+        "id": "northern_veil.aurora.deep-crimson-fringe",
+        "repeat": "2",
+        "ms": "309.487042000",
+        "cells": "35112",
+        "proven": "33870",
+        "ranges": "3955",
+        "inside_bytes": "5876",
+        "outside_bytes": "6548"
+      }
+    ],
+    "scope": "host only; metadata 6/6; counts/footprints equal; no timing gain asserted"
+  }
+}
