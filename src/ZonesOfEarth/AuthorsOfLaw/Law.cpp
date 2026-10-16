@@ -869,6 +869,9 @@ std::string ReteNetwork::assertFact(FactPtr fact) {
     if (fact->subject && fact->isState && fact->type == "relation-state") {
         _relationStateIndex[fact->subject].insert(fact->attribute);
     }
+    if (!fact->isState) {
+        _transientFactCount++;
+    }
     _facts.push_back(fact);
     const FactPtr& f = fact;
     _factById[f->id] = f;
@@ -1031,19 +1034,29 @@ void ReteNetwork::propagateFact(const FactPtr& f) {
 }
 
 void ReteNetwork::retractFirst(std::size_t count) {
-    if (count == 0) return;
+    if (count == 0 || _transientFactCount == 0) return;
     if (count >= _facts.size()) {
         count = _facts.size();
     }
 
     std::unordered_set<std::string> removedIds;
-    std::vector<FactPtr> new_facts;
+    std::size_t writeIdx = 0;
     for (std::size_t i = 0; i < count; ++i) {
         if (!_facts[i]->isState) {
             removedIds.insert(_facts[i]->id);
+            if (_transientFactCount > 0) {
+                _transientFactCount--;
+            }
         } else {
-            new_facts.push_back(_facts[i]);
+            if (writeIdx != i) {
+                _facts[writeIdx] = std::move(_facts[i]);
+            }
+            writeIdx++;
         }
+    }
+
+    if (removedIds.empty()) {
+        return;
     }
 
     std::unordered_set<std::size_t> affectedAlphas;
@@ -1098,9 +1111,12 @@ void ReteNetwork::retractFirst(std::size_t count) {
                       _dirtyFacts.end());
 
     for (std::size_t i = count; i < _facts.size(); ++i) {
-        new_facts.push_back(_facts[i]);
+        if (writeIdx != i) {
+            _facts[writeIdx] = std::move(_facts[i]);
+        }
+        writeIdx++;
     }
-    _facts = std::move(new_facts);
+    _facts.resize(writeIdx);
 }
 
 void ReteNetwork::detachFactConsequences(const FactPtr& fact) {
@@ -1181,7 +1197,12 @@ bool ReteNetwork::retractFact(const std::string& factId) {
     }
 
     auto it = std::find_if(_facts.begin(), _facts.end(), [&](const FactPtr& f) { return f->id == factId; });
-    if (it != _facts.end()) _facts.erase(it);
+    if (it != _facts.end()) {
+        if (!(*it)->isState && _transientFactCount > 0) {
+            _transientFactCount--;
+        }
+        _facts.erase(it);
+    }
 
     detachFactConsequences(fact);
 
@@ -1398,6 +1419,9 @@ std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
     _facts.erase(std::remove_if(_facts.begin(), _facts.end(),
                                 [&](const FactPtr& fact) {
                                     if (fact->subject == being || fact->object == being) {
+                                        if (!fact->isState && _transientFactCount > 0) {
+                                            _transientFactCount--;
+                                        }
                                         removedIds.insert(fact->id);
                                         if (fact->subject == being && !fact->subjectId.empty()) {
                                             subjects.insert(fact->subjectId);
@@ -1484,6 +1508,7 @@ std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
 
 void ReteNetwork::clearFacts() {
     _facts.clear();
+    _transientFactCount = 0;
     _factParticipants.clear();
     _relationStateIndex.clear();
     _stateFactsBySubjectAttr.clear();
