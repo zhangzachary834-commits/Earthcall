@@ -140,6 +140,11 @@ public:
     bool submitEmpty = false;
     // Put text on the line (auto-indent for the next line of a block).
     void prefill(const std::string& text) { _buffer = text; _cursor = _buffer.size(); edited(true); }
+    // General cross-surface insertion. Compare-and-insert protects a draft
+    // attended to elsewhere from stale UI requests; never submits a sentence.
+    // Refuses secrets, control bytes and offsets inside display clusters.
+    bool insertAtCursor(const std::string& expectedDraft, std::size_t expectedCursor,
+                        const std::string& text);
     int overlayRows = 18;
     // The status footer (plain text; the editor styles it) and the colour of
     // its leading mark — green when this Zone hears the line, yellow if not.

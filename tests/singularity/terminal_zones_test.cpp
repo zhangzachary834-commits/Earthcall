@@ -181,6 +181,41 @@ int main() {
     step();
     assert(terminal->zone() == "LawLine");
     assert(laws.find("t-hear"));
+    // The actual channel act boundary consumes a Law's insertion request.
+    // This is injected transport, not physical keyboard evidence.
+    {
+        const auto put = [&](const std::string& path, const PropertyValue& value) {
+            const auto result = PropertyPath::parse(path).setValue(*terminal, value);
+            assert(result == PropertyPath::PathResult::Ok || result == PropertyPath::PathResult::Unchanged);
+        };
+        terminal->injectKeys("then Set color to gold\x1b[H");
+        step();
+        const auto draft = terminal->editorForTests().buffer();
+        const auto count = spoken();
+        put("edit.insert.text", std::string("when clicked "));
+        put("edit.insert.expectedDraft", draft);
+        put("edit.insert.expectedCursor", 0.0);
+        put("edit.insert.expectedZone", std::string("LawLine"));
+        put("edit.insert.requests", 1.0);
+        step();
+        assert(terminal->editorForTests().buffer() == "when clicked then Set color to gold");
+        assert(terminal->editorForTests().cursor() == 13);
+        assert(spoken() == count);
+        step();
+        assert(terminal->editorForTests().cursor() == 13); // no repeated insertion
+        put("edit.insert.requests", 2.0); // stale expected draft/cursor
+        step();
+        assert(terminal->editorForTests().buffer() == "when clicked then Set color to gold");
+        put("edit.insert.expectedDraft", terminal->editorForTests().buffer());
+        put("edit.insert.expectedCursor", 13.0);
+        put("edit.insert.expectedZone", std::string("Quiet"));
+        put("edit.insert.requests", 3.0);
+        step();
+        assert(terminal->editorForTests().cursor() == 13);
+        terminal->injectKeys("\x03"); // explicit ordinary cancellation
+        step();
+        assert(terminal->editorForTests().buffer().empty());
+    }
     double before = spoken();
     type("on tick then set glow 1");
     assert(spoken() == before + 1);

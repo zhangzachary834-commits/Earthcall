@@ -170,6 +170,27 @@ int main() {
         terminal->act(harness.lawManager);
     };
 
+    // Real authored sentence -> compiler Metalaws -> key Law -> editor act.
+    // This fixture route proves no physical hit testing or native rendering.
+    {
+        auto path = std::filesystem::path("examples/law_line_cursor_insert.txt");
+        std::ifstream source(path);
+        std::string program; std::getline(source, program);
+        check(!program.empty(), "cursor insertion example exists");
+        terminal->setPresenceCheckForTests([&](const Person& p) { return &p == &harness.player; });
+        const auto count = harness.lawManager.getAll().size();
+        terminal->inject(program); frame();
+        check(harness.lawManager.getAll().size() == count + 1,
+              "insertion binding compiles through authored Metalaws: " + printed.back());
+        terminal->injectKeys("when clicked if Identity "); frame();
+        terminal->injectKeys("\x1b[105;7u"); frame();
+        check(terminal->editorForTests().buffer() == "when clicked if Identity @law-line-cube",
+              "authored shortcut inserts explicit address into the actual draft");
+        check(harness.lawManager.getAll().size() == count + 1,
+              "inserting an address does not commit the draft");
+        terminal->injectKeys("\x03"); frame();
+    }
+
     // Exercise the actual decoder -> sensed edge -> persisted Metalaw -> menu
     // path. The app data home stays outside this isolated fixture.
     if (auto* binding = harness.lawManager.find("law-line-shortcut-ctrl-t")) {
@@ -283,6 +304,12 @@ int main() {
               std::get<double>(read("key.presses")) == keysBeforeSecret &&
               !std::get<bool>(read("completion.visible")),
               "secret input exposes neither draft/cursor nor shortcut edges and refuses completion display");
+        const auto insertRequests = std::get<double>(read("edit.insert.requests"));
+        PropertyPath::parse("edit.insert.requests").setValue(*terminal, insertRequests + 1);
+        terminal->act(harness.lawManager);
+        check(mentions(std::get<std::string>(read("edit.insert.status")), "protected input") &&
+              std::get<std::string>(read("draft")).empty(),
+              "a Law's insertion request refuses secret input and exposes no secret");
         terminal->injectKeys("\x03\x03"); frame(); // discard input, then cancel; never submit it
         check(!terminal->awaitingSecret(), "secret test cancels without keying or unlocking the Person");
 

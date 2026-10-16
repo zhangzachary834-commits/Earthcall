@@ -497,6 +497,39 @@ void rungThree() {
 }
 
 int main() {
+    {
+        LineEditor line;
+        line.prefill("then Set color to gold");
+        line.press(Key{Key::Kind::Home, {}});
+        const auto original = line.buffer();
+        assert(!line.insertAtCursor("stale", 0, "wrong"));
+        assert(!line.insertAtCursor(original, 1, "wrong"));
+        assert(!line.insertAtCursor(original, 0, "\n"));
+        assert(!line.insertAtCursor(original, 0, "\x1b[31m"));
+        assert(!line.insertAtCursor(original, 0, std::string("\xc3", 1)));
+        assert(line.buffer() == original && line.cursor() == 0);
+        assert(line.insertAtCursor(original, 0, "when clicked "));
+        assert(line.buffer() == "when clicked then Set color to gold");
+        assert(line.cursor() == 13);
+        assert(line.takeSubmitted().empty());
+        line.secret = true;
+        assert(!line.insertAtCursor(line.buffer(), line.cursor(), "secret"));
+        line.secret = false;
+        line.prefill("A👩‍💻B");
+        line.press(Key{Key::Kind::Left, {}});
+        assert(line.insertAtCursor(line.buffer(), line.cursor(), "é"));
+        assert(line.buffer() == "A👩‍💻éB");
+        line.prefill("👩💻");
+        line.press(Key{Key::Kind::Left, {}});
+        assert(line.insertAtCursor(line.buffer(), line.cursor(), "‍"));
+        assert(line.buffer() == "👩‍💻" && line.cursor() == line.buffer().size());
+        line.press(Key{Key::Kind::HistorySearch, {}});
+        assert(!line.insertAtCursor(line.buffer(), line.cursor(), "wrong"));
+        line.press(Key{Key::Kind::Escape, {}});
+        line.press(Key{Key::Kind::PasteBegin, {}});
+        assert(!line.insertAtCursor(line.buffer(), line.cursor(), "wrong"));
+        line.press(Key{Key::Kind::PasteEnd, {}});
+    }
     decoding();
     menu();
     noGluing();

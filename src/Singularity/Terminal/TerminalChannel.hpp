@@ -213,6 +213,13 @@ private:
     double _keyPresses = 0;
     std::shared_ptr<PropertyList> _completionItems = std::make_shared<PropertyList>();
     double _completionRequests = 0, _completionHandled = 0;
+    // Writers: ordinary authored Laws stage all fields, then advance requests.
+    // Reader: act(), after LawManager's decision boundary. No submit/commit.
+    // Expected state makes delayed pointer/key requests fail instead of
+    // silently inserting into a newer draft or another line Zone.
+    std::string _insertText, _insertExpectedDraft, _insertExpectedZone;
+    double _insertExpectedCursor = 0, _insertRequests = 0, _insertHandled = 0;
+    std::string _insertStatus;
     bool _completionActive = false;
     // Beneath Kernel: device input awaiting the next sense/decide/act boundary.
     // Stop after each chord/submission so the corresponding Law sees that draft.

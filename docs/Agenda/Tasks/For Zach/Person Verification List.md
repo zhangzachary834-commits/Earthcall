@@ -1659,3 +1659,13 @@ The checkout WebGPU app is rebuilt with [route-aware power lowering](../../../au
 [All three tested allocation/traversal variants](../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md) preserve the finite captures but regress in measured cost, so none remains enabled. The checkout app is rebuilt with the prior renderer; the installed app and live saves were untouched. This pass adds no new visual control or promised FPS improvement to inspect. Existing Northern Veil/Sanctuary continuous appearance, usual-framebuffer movement and 30 FPS acceptance checks remain open; the rejected variants do not create a new Person verification obligation.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).
+
+## Law Line cursor insertion prerequisite — spatial companion still incomplete
+
+*Codex / model unexposed / session `92b79f696f1c` / 2026-10-16 UTC. This checks one general channel operation, not the commissioned graph interface.*
+
+- [ ] Rebuild/restart Earthcall, use an isolated fixture/data home, unlock your own Person, and enter LawLine. Paste `examples/law_line_cursor_insert.txt` once. Confirm it registers one ordinary binding Law, authored by the submitting Person.
+- [ ] In a terminal delivering CSI-u Ctrl+Alt+I (`ESC [ 105 ; 7 u`), type `when clicked if Identity ` and invoke the binding. Confirm the exact explicit example address appears at the cursor and no Law is registered from that draft. Move the cursor into a draft with a suffix and verify both sides survive insertion.
+- [ ] Confirm Identity secret entry, deletion questions, multiline blocks, active history search and bracketed paste cannot be changed by this insertion request. Inspect `edit.insert.status` for refusal.
+- [ ] Delete the exact example binding through the existing confirmation route. The example is not an idempotent installer.
+- [ ] The full graph’s orientation, keyboard navigation, selection-to-draft authoring, live updates, restart/continuity, scale, beauty and roughly-one-minute onboarding remain unimplemented acceptance work; there is currently no graph to launch or judge.

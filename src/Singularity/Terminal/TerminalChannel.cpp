@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <chrono>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -971,6 +972,30 @@ void TerminalChannel::act(LawManager& laws) {
         // An output request cannot reveal or change a secret or confirmation.
         _completionActive = !_editor.secret && !awaitingAnswer();
         if (_completionActive) _editor.openMenu();
+        if (_attached) draw();
+    }
+    // General editor actuation requested by Laws, not an application command.
+    // See the field register in TerminalChannel.hpp for every writer/reader.
+    if (_insertRequests != _insertHandled) {
+        _insertHandled = _insertRequests;
+        if (_secretStage != 0 || _editor.secret || awaitingAnswer() || !_block.empty()) {
+            _insertStatus = "refused: protected input or multiline block";
+        } else if (_insertExpectedZone != _zone) {
+            _insertStatus = "refused: line Zone changed";
+        } else if (!std::isfinite(_insertExpectedCursor) || _insertExpectedCursor < 0 ||
+                   _insertExpectedCursor > static_cast<double>(_editor.buffer().size()) ||
+                   std::floor(_insertExpectedCursor) != _insertExpectedCursor) {
+            _insertStatus = "refused: invalid expected cursor";
+        } else if (!_editor.insertAtCursor(_insertExpectedDraft,
+                       static_cast<std::size_t>(_insertExpectedCursor), _insertText)) {
+            _insertStatus = "refused: stale draft/cursor, active search/paste, or non-printable text";
+        } else {
+            _insertStatus = "inserted into draft; nothing committed";
+            Singular::notifyPropertyChanged(this, "draft");
+            Singular::notifyPropertyChanged(this, "cursor");
+        }
+        Singular::notifyPropertyChanged(this, "edit.insert.status");
+        Singular::notifyPropertyChanged(this, "edit.insert.handledRequests");
         if (_attached) draw();
     }
     if (_speakRequests == _spoken) return;
@@ -2635,6 +2660,13 @@ void TerminalChannel::buildProperties() {
         "cursor", this, &TerminalChannel::propCursor));
     writable("completion.items", &_completionItems);
     writable("completion.openRequests", &_completionRequests);
+    writable("edit.insert.text", &_insertText);
+    writable("edit.insert.expectedDraft", &_insertExpectedDraft);
+    writable("edit.insert.expectedCursor", &_insertExpectedCursor);
+    writable("edit.insert.expectedZone", &_insertExpectedZone);
+    writable("edit.insert.requests", &_insertRequests);
+    level("edit.insert.handledRequests", &_insertHandled);
+    level("edit.insert.status", &_insertStatus);
     level("completion.handledRequests", &_completionHandled);
     writable("completion.active", &_completionActive);
     registerProperty(std::make_unique<ComputedProperty<TerminalChannel, bool>>(

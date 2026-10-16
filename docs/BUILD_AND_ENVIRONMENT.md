@@ -458,3 +458,11 @@ Zach commissioned a separate executable, outside the app. `./scripts/earthcall-a
 **Support-allocation diagnostics (October 15):** `volume_traversal_experiment.py` now substitutes matching `VolumeZeroProof.cpp` control objects as well as compiler/renderer sources; an old shader cannot consume a candidate grid interpreted differently. `--mode proof --proof-metadata-floats CONTROL CANDIDATE` measures direct host construction without a GPU and accounts for bitmap, optional hierarchy, metadata and bands. Optional strict image/control-regression stop gates preserve counterexamples. Native proof tests add four translated/parallel/support-edge cases and structural-edit preparation/upload diagnostics; these are correctness/diagnostic observations, not live FPS. [Three rejected variants and restored witnesses](audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).
+
+### Cloud checkout path and cursor-insertion witness — 2026-10-16
+
+CMake currently filters full source paths with `scratch/.*`; a checkout beneath `/workspace/scratch` therefore omits core sources and links tests with undefined engine symbols. Move an isolated cloud checkout outside that ancestor before configuring. On the Linux cloud host, vendored GLFW 3.4's null backend and system Linux OpenSSL/libuuid admit CPU tests; the checked-in Mac libraries are unsuitable. Missing device/window evidence remains unavailable. [Exact cloud recipe and limits](plans/LAW_LINE_SPATIAL_COMPANION_CLOUD_2026-10-16.md).
+
+The cursor-insertion prerequisite is exercised by `line_editor_test`, `terminal_zones_test`, and the seeded runner for `law_line_zone_test`. It does not deliver the spatial companion. Terminal's transient `edit.insert.*` request is consumed after Law decisions and never submits a sentence. Person/native verification remains separate.
+
+*Codex / model unexposed / session `92b79f696f1c` / 2026-10-16 UTC.*

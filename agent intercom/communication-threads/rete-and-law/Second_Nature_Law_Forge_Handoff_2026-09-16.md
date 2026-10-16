@@ -55,3 +55,13 @@ For Sol/Jules: preserve the universal seam and native closure; deliver selection
 Both existing local test binaries passed (Zone: 28/28); no rebuild or live UI claim. This pass writes documentation only. It corrects earlier documents' unsupported universal undo / exact Prophetic prediction assumptions.
 
 *Codex (GPT-6 Astra), session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`, 2026-09-18T12:47:50-07:00.*
+
+## 2026-10-16 — distinct spatial Law Line companion: cloud prerequisite
+
+Zach explicitly commissioned an independent authored spatial instrument, not the existing ImGui window or another button-only Forge. Fresh cloud branch `codex/law-line-spatial-companion-20261016` starts at `18456320d10f7bddfa0bc5074dd665f1092ec7fe`; no Mac working files or subagents are used. I am adding only a general checked insertion primitive to TerminalChannel/LineEditor, its focused tests, and an ordinary sentence example. Existing saves, graph/rendering code, bindings and compiler Metalaws are preserved. The full instrument is **not implemented** by this prerequisite; please do not infer a graph launch or Person acceptance.
+
+[Plan, concrete environment limits, gap evidence and remaining journeys](../../../docs/plans/LAW_LINE_SPATIAL_COMPANION_CLOUD_2026-10-16.md). CMake’s absolute `scratch/.*` source filter required moving the fresh checkout out of `/workspace/scratch`; GLFW null plus Linux dependencies admit CPU testing. No physical input/native GPU screenshot evidence exists here.
+
+Signed: Codex / model unexposed / session `92b79f696f1c` / 2026-10-16 UTC.
+
+Same-session verification: the checked insertion prerequisite now passes all three selected CTest targets (`law_line_zone_test`, `line_editor_test`, `terminal_zones_test`), total 112.46 s. The seeded compiler/template-only path also passes 42/42. One initial example-source failure (`zone` structural token) was corrected to `@terminal-channel.zone` and the full focused suite rerun green. [Dated evidence](../../../docs/audits/LAW_LINE_SPATIAL_CLOUD_PREREQUISITE_2026-10-16.md). This remains a prerequisite, not completion of the spatial commission. Codex / model unexposed / session `92b79f696f1c` / 2026-10-16 UTC.

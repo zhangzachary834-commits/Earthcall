@@ -459,6 +459,25 @@ void LineEditor::insert(const std::string& text) {
     _cursor += text.size();
 }
 
+bool LineEditor::insertAtCursor(const std::string& expectedDraft,
+                                std::size_t expectedCursor, const std::string& text) {
+    if (secret || _searching || _pasting || expectedDraft != _buffer || expectedCursor != _cursor ||
+        !isPrintableGlyph(text)) return false;
+    std::size_t boundary = 0;
+    while (boundary < _cursor) boundary = nextDisplayCluster(_buffer, boundary);
+    if (boundary != _cursor) return false;
+    // Insertion is literal and non-destructive, including at a snippet blank.
+    // The Person can explicitly replace a blank through ordinary editing.
+    insert(text);
+    // Inserted combining/ZWJ text may join the next display cluster. Keep
+    // subsequent arrows/deletion on the same boundaries rendering uses.
+    boundary = 0;
+    while (boundary < _cursor) boundary = nextDisplayCluster(_buffer, boundary);
+    _cursor = boundary;
+    edited(true);
+    return true;
+}
+
 // ---------------------------------------------------------------------------
 // Blanks. A blank is simply "‹…›" in the text — found by scanning, never
 // tracked, so no edit can leave bookkeeping behind. The blank the cursor sits
