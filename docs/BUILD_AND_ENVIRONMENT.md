@@ -458,3 +458,15 @@ Zach commissioned a separate executable, outside the app. `./scripts/earthcall-a
 **Support-allocation diagnostics (October 15):** `volume_traversal_experiment.py` now substitutes matching `VolumeZeroProof.cpp` control objects as well as compiler/renderer sources; an old shader cannot consume a candidate grid interpreted differently. `--mode proof --proof-metadata-floats CONTROL CANDIDATE` measures direct host construction without a GPU and accounts for bitmap, optional hierarchy, metadata and bands. Optional strict image/control-regression stop gates preserve counterexamples. Native proof tests add four translated/parallel/support-edge cases and structural-edit preparation/upload diagnostics; these are correctness/diagnostic observations, not live FPS. [Three rejected variants and restored witnesses](audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).
+
+
+## Headless Linux CPU witnesses (2026-10-16)
+
+A Linux cloud container without X11 headers can configure and build CPU-only targets by switching the fetched GLFW 3.3.8 to its OSMesa (headless) platform:
+
+```sh
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DGLFW_USE_OSMESA=ON
+ninja -C build ontomath_line_restriction_test volume_ray_segment_transport_test
+```
+
+System OpenSSL/zlib/libuuid were found without the macOS `local_deps` flags. `webgpu_*` targets remain Apple-only (`EXCLUDE_FROM_ALL`), so a Linux run is never native GPU evidence. Codegen-only witnesses that link `SdfWgsl.cpp` (the named list in `CMakeLists.txt`) do build and run here. Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-16.

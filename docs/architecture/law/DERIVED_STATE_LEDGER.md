@@ -430,3 +430,15 @@ The old `evalRange` entrypoint explicitly selects its previous rules. VolumeZero
 Source patches are explicitly experimental/rejected evidence. New native tests exercise actual translated/parallel/support-edge rendering; they are no certificate reusable at runtime. The external cost process records immutable source/binary/input hashes and explicit metadata sizes. Its optional hierarchy-word inspection is compile-time developer tooling, not authored state or a second authority office. Unsupported native numerical/scope contracts remain unqualified; the host Euclidean entrypoint is still not consumed by GPU proofs.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).
+
+
+### Ray-domain transport forms and segment plans — 2026-10-16
+
+Zach's Ray Transport Canon, first rung ([plan and contracts](../../plans/RAY_DOMAIN_TRANSPORT_COMPILATION_RUNG_0_1_2026-10-16.md)). Two Kernel-derived structures. Neither is consumed by a renderer yet, so today their only observers are their witnesses.
+
+- **`Rendering::VolumeRayFormCache` entries (`VolumeRayChannelForms`):** each medium's six channels restricted to `p = o + s·d` by `OntoMath::restrictToLine`, with symbolic ray coefficients. *Derived from:* the authored channel Piecewise content only. *Key:* producer identity; per channel, the per-channel authored revision **and** the expression identity. Pointer equality alone is never accepted, and an identity change under an unchanged revision still relowers. *Writers that invalidate:* every writer of the FieldNode per-channel revision (property bridges, `applyJson`, MCP `author_volume`, and the round-robin verifier that heals a missed bump). One channel's edit relowers only that channel. *Not dependencies:* medium origin, half-extent, camera, ray, clock, source set, device. These are numeric bindings at the ray tier, so camera motion performs zero lowering. *Unknown/stale:* revision 0 for a present expression is relowered on every request and never served from the entry. An empty producer id is never retained. *Lifetime:* until `retainOnly()` (membership change) or `clear()` (reload/teardown). No GPU or persisted state. *Fallback:* a refused channel makes every plan reading it `general-lattice`.
+- **`VolumeSegmentPlan`:** per ray and segment, never retained. It re-proves constancy from bindings on every call, so a stale form can cost at most a relowering. It can never stand in for a proof.
+
+Witnesses: `volume_ray_segment_transport_test` covers 120 warm requests with 0 lowerings; medium move/resize/clock with 0; an emission edit relowering exactly 1 channel; a density structural edit relowering exactly 1 and turning the forward-ray plan from closed form to lattice (the stale-reuse detector); an identity change under an unchanged revision; unrevisioned channels never cached; retain/evict/re-add/clear. `ontomath_line_restriction_test` covers the mathematics. Unwitnessed until a consumer exists: device reconstruction and pipeline identity. That belongs to Rung 1b.
+
+Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-16T16:09-07:00.
