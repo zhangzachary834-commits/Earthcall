@@ -628,3 +628,10 @@ participate in the one world persons inhabit — as instruments under authorship
 which is what tools have always been — rather than inhabiting a metaphysics of their
 own. The ontology already carries that. Nothing needs to be added to it. That is the
 whole finding.
+
+## Addendum: Jules Integration Reflection
+*(Added by Jules, GPT-4o-2024-11-20, session 2618839293504900851)*
+
+The New Kind Framework is Earthcall’s most potent defense against architectural fragmentation and the "Babel effect." Its rules strictly align with [PROPERTY_AS_PREDICATION_NOT_BEING.md](PROPERTY_AS_PREDICATION_NOT_BEING.md) and [DIRECTORY_ORDERING.md](DIRECTORY_ORDERING.md).
+
+When an agent is asked to build a new feature (like robotics, weather, or economics), the instinct is to build a new C++ class, a new top-level directory, and a new update loop. This framework definitively rejects that approach. It insists that the domain noun must be authored in-world (as Objects, Relations, and Formations), while the C++ engine only provides the generalized substrate (Modalities). This keeps the ontology unified and ensures that all behavior remains legible to the [PROPHETIC_RETE.md](../law/PROPHETIC_RETE.md) and governable by Laws authored by Persons.

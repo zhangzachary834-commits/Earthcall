@@ -430,3 +430,10 @@ The old `evalRange` entrypoint explicitly selects its previous rules. VolumeZero
 Source patches are explicitly experimental/rejected evidence. New native tests exercise actual translated/parallel/support-edge rendering; they are no certificate reusable at runtime. The external cost process records immutable source/binary/input hashes and explicit metadata sizes. Its optional hierarchy-word inspection is compile-time developer tooling, not authored state or a second authority office. Unsupported native numerical/scope contracts remain unqualified; the host Euclidean entrypoint is still not consumed by GPU proofs.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).
+
+## Addendum: Jules Integration Reflection
+*(Added by Jules, GPT-4o-2024-11-20, session 2618839293504900851)*
+
+The Derived State Ledger is Earthcall's rigorous defense against silent data corruption, cache staleness, and unsourced knowledge. Its principles directly complement [FORMATION_RETE.md](FORMATION_RETE.md) and [PROPHETIC_RETE.md](PROPHETIC_RETE.md).
+
+Both Rete implementations are massive engines of derived state. They are only structurally sound because they adhere to this Ledger's requirements: they explicitly declare their dependencies (Law revisions, Authored State), handle unknown information correctly by widening to `Top`, and provide clear invalidation and re-derivation paths. This ensures that when the underlying authored ontology changes (as defined in [NO_BLACK_BOX.md](../ontology/NO_BLACK_BOX.md)), the derived acceleration structures reliably collapse and rebuild, maintaining End-to-End Coherence between what the Person authored and what the engine executes.

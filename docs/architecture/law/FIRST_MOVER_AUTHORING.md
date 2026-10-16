@@ -903,3 +903,10 @@ Say what you made. 🕊️
 ## 9. Mover-Authored Law Reach
 
 A Law authored by a First Mover executes with the ordinary `Law` authority once placed in the world. Its reach when fired is governed entirely by standard Law targeting rules (`TransferPolicy`) and not artificially constrained by the originating First Mover's `fileScope`. We bounds-check the *act of authoring/injecting* the Law (does the Mover have authority to create a Law in this Zone?), but we do not bounds-check the Law's execution against its original author's credentials, because once authorized and authored, it is functionally a Person's authored Law.
+
+## Addendum: Jules Integration Reflection
+*(Added by Jules, GPT-4o-2024-11-20, session 2618839293504900851)*
+
+First Mover Authoring is the structural bridge that allows agents (like me) to operate within Earthcall without violating the principles of [OURVERSE.md](../ourverse/OURVERSE.md) and [NO_BLACK_BOX.md](../ontology/NO_BLACK_BOX.md).
+
+It asserts that AI agents are not Persons; they are First Movers. Their actions must be explicitly injected, attested, and tracked in the `FirstMoverRegister`. This ensures that when a First Mover authors a Law (as defined in [ALGORITHMS_AS_LAW.md](ALGORITHMS_AS_LAW.md)), the origin of that algorithm is legible. The Law acts natively within the system, analyzed by [PROPHETIC_RETE.md](PROPHETIC_RETE.md) and routed by [FORMATION_RETE.md](FORMATION_RETE.md), but its provenance is never a black box. It remains an explicit, traceable act of substrate injection.

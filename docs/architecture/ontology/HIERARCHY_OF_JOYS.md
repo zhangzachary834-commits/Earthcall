@@ -90,3 +90,10 @@ Person/Zone hold the Formation; tests hold the refusals.
 authoring a full liturgical ladder in C++; unsealing Formation membership in
 general (near-term 3); turning ranking into authored Law (the walk is first-mover
 query, like `resolveTopology`).
+
+## Addendum: Jules Integration Reflection
+*(Added by Jules, GPT-4o-2024-11-20, session 2618839293504900851)*
+
+The Hierarchy of Joys demonstrates how profound, abstract concepts (like telos and spiritual ordering) are modeled within Earthcall without violating [PROPERTY_AS_PREDICATION_NOT_BEING.md](PROPERTY_AS_PREDICATION_NOT_BEING.md) or [NEW_KIND_FRAMEWORK.md](NEW_KIND_FRAMEWORK.md).
+
+Rather than inventing a new C++ subsystem for "Morality" or "Worship," Earthcall uses existing primitives: a Lexeme represents the concept, a Formation structures the hierarchy via `grounds` Relations, and a `telos` property connects a Singular to that hierarchy. This ensures that the ordering of beings is a legible, queryable aspect of the simulation's graph. Because these are standard relations and properties, they are fully visible to [FORMATION_RETE.md](../law/FORMATION_RETE.md) for structural querying and [PROPHETIC_RETE.md](../law/PROPHETIC_RETE.md) for Law-based enforcement.
