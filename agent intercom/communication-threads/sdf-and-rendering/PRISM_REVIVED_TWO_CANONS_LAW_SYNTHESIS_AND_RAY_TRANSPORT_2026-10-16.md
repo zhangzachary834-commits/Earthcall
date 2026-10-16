@@ -28,6 +28,50 @@ Zach's current concern is not merely "make the Northern Veil shader faster." His
 
 That yields two canons.
 
+### Historical correction after modern-repository archaeology
+
+These canons are **not both inventions born ex nihilo on 2026-10-16**.
+
+After Zach asked the revived Prism Sun to inspect modern Earthcall, the repository showed that **Canon I is a maturation and generalization of an architecture Zach had already set in motion in September**, while **Canon II advances beyond a set of strong existing transport mechanisms into a still-unbuilt symbolic/ray-domain layer**.
+
+The closest direct ancestor is:
+
+- `docs/plans/RENDERED_FIELD_SEMANTIC_SYNTHESIS_IMPLEMENTATION_PLAN_2026-09-22.md`
+- architectural direction explicitly recorded there as **Zach**
+- PR #329 / Scene-Spatial Synthesis and Rendered Field Semantic Synthesis
+
+That plan already named the intended descent:
+
+```text
+authored OntoMath / world semantics
+            ↓
+canonical mathematical execution DAG
+            ↓
+dependency provenance + incremental repair
+            ↓
+channel-scoped conservative proofs
+            ↓
+small direct execution artifacts / crystallized roads
+            ↓
+exact renderer truth with fall-open fallback
+```
+
+PR #329 established real canonical `MathNode` sharing, local dependency-frontier repair, shared mathematical execution beneath semantically distinct channels, Piecewise bridging, channel-scoped theorem authority, and exact fail-open behavior.
+
+Modern volumetric compilation has since added more concrete descendants: retained expression layouts, per-channel authored revisions, cross-channel shared subexpression evaluation, time-only preparation, resident parameter/proof payloads, support intervals, grid-walk zero skips, and combined program membership/layout caches.
+
+Therefore Canon I should be read as:
+
+> **Zach's September semantic-synthesis architecture grown into a general Law/OntoMath mathematical optimizer, rather than a competing architecture invented later.**
+
+Canon II has a different status. V5 and the Northern Veil work already own a unified multi-medium **sampling schedule** with box entry/exit segmentation, shared quadrature, support trimming, proof traversal, and retained combined programs. But the current Northern Veil task states the boundary explicitly: this is **"a unified sampling schedule, not a symbolic merge of the media's equations,"** and symbolic unification into one combined expression remains an **unbuilt idea**. Current plans likewise record analytic integration as unfinished.
+
+Therefore Canon II should be read as:
+
+> **the next rung after V5's unified sampling schedule: compile surviving world mathematics into a synthesized ray-domain transport program rather than merely running a smarter general sample loop.**
+
+This distinction matters. Existing mechanisms are ancestors and evidence. They are not grounds to pretend the completed architecture already exists.
+
 ---
 
 # Canon I — Author Richly; Synthesize the Mathematics Before the Renderer
@@ -46,6 +90,27 @@ This directly follows Earthcall's existing ordering:
 - backend buffers, acceleration structures, grids, proof structures, and code are derived artifacts;
 - OntoMath owns mathematical meaning;
 - a renderer may optimize execution, but it may not become a second source of mathematical meaning.
+
+### What Earthcall already has
+
+This canon begins from existing substrate rather than replacing it.
+
+Current Earthcall already has:
+
+- `ScalarForm::normalized()`, which combines like terms, drops zero terms, and imposes a canonical ordering;
+- PR #329's canonical mathematical execution DAG and common-subexpression sharing across real OntoMath trees;
+- semantic-role separation where identical mathematics may share execution while `SourceRho`, `MediumDensity`, geometry, and other theorem authorities remain distinct;
+- Piecewise-to-semantic compilation witnesses with exact fallback;
+- current volumetric sharing that can evaluate matching expensive subexpressions such as Perlin once per sample and distribute the shared value to multiple channels;
+- retained compiler layouts and parameter refresh paths that separate structure changes from numeric-value changes;
+- per-channel authored revisions, so an emission edit need not rebuild density-derived state;
+- range/proof machinery that can expose zero/support facts and other conservative mathematical knowledge.
+
+Those are substantial pieces of Canon I.
+
+What Earthcall **does not yet have as one general production architecture** is a full symbolic synthesis pass over arbitrary Law/OntoMath mathematics that performs broad exact simplification, factoring, proof-directed rewriting, reusable invariant extraction, and cost-aware equivalent-form selection before modality lowering.
+
+The goal is therefore not to restart PR #329. It is to **finish the architectural trajectory PR #329 exposed**.
 
 ### The synthesis pipeline
 
@@ -192,6 +257,59 @@ radiance + transmittance
 
 The renderer should minimize asymptotic and multiplicative complexity as far as the mathematics permits and **cache as much as possible**.
 
+### What Earthcall already has — and the exact missing rung
+
+Canon II must not erase the substantial V5/Northern Veil architecture already present.
+
+Current Earthcall already:
+
+- projects each medium into one fused world-medium program;
+- computes ray/AABB entry and exit events and sorts them into occupied segments;
+- uses one shared multi-medium transport integral rather than independent framebuffer blending;
+- chooses shared quadrature spacing for an occupied segment;
+- carries `volumeSupportInterval` to tighten admitted traversal from proof-derived support;
+- uses `volumeZeroCellExit` / grid walking to jump across certified empty runs;
+- retains combined program membership/layout keys and specialized camera/proof lanes;
+- retains evaluator layouts and resident parameter/proof payloads across warm frames;
+- prepares time-only medium expressions outside the per-sample path where supported;
+- performs cross-channel shared-subexpression evaluation inside the current sample program.
+
+This is already an important reduction from "render every medium independently."
+
+But the current architecture stops at a crucial boundary.
+
+The Northern Veil task records the existing V5 result as:
+
+> **a unified sampling schedule, not a symbolic merge of the media's equations**
+
+and states that:
+
+> **symbolic unification — one combined expression with OntoMath deduplicating sub-formulas shared across media — remains a separate, unbuilt idea**
+
+The current plans also state that **analytic integration remains unfinished**.
+
+No first-class `ray-domain` / `RayProgram` architecture was found in canonical, and no general symbolic lowering currently substitutes `p = o + s d` into surviving authored transport mathematics and then chooses an execution strategy for the resulting one-dimensional expression.
+
+That is the missing rung Canon II names.
+
+It is not:
+
+> "invent segmentation."
+
+Segmentation already exists.
+
+It is not:
+
+> "fuse the media."
+
+Transport scheduling is already fused.
+
+It is:
+
+> **turn the already-segmented, semantically admitted transport question into the smallest synthesized one-dimensional executable that can answer that segment.**
+
+The current general sample loop should become the fallback strategy of this architecture, not necessarily its universal final form.
+
 The current family of costs can resemble:
 
 [
@@ -269,6 +387,8 @@ If the ray can be partitioned into:
 
 then the runtime should walk those segments, not repeatedly re-derive the same active set, AABB membership, proof-cell exit, or support fact at every sample.
 
+Existing V5 already supplies part of this by sorting box entry/exit events into segments. Canon II extends the same principle **inside those segments**: do not make every sample rediscover mathematical or proof facts that were valid for the whole segment or a larger subinterval.
+
 For an overlap segment `A+B+C`, the compiler may derive one combined transport program while preserving the authored identity of each contributing medium. For example, the execution-side extinction may be lowered as the admitted sum of each medium's extinction contribution; likewise for the source term according to the transport law.
 
 Again:
@@ -304,6 +424,8 @@ If a contribution bound proves the remaining integral cannot affect the admitted
 This canon can be stated as one rule:
 
 > **No fact may be re-proved inside the hot loop if its truth survives longer than that iteration.**
+
+The present Northern Veil code offers a direct motivating example. Firmament's analysis found that when one overlapping curtain is unproved while another remains in the same proven-empty cell, the latter's `cellExit` can be discarded and recomputed on following samples. A ray-local `nextActiveT_i`-style fact is the local version of this canon: retain the empty-until boundary until the ray actually reaches it.
 
 Examples:
 
@@ -393,6 +515,25 @@ They are distinct offices.
 
 Their differences are exactly what make aggressive compilation safe.
 
+The historical continuity is now explicit:
+
+```text
+Original Prism separation
+        ↓
+Zach's Rendered Field Semantic Synthesis / PR #329
+        ↓
+canonical execution DAG + channel-scoped proofs
+        ↓
+V5 fused medium transport + modern retained/proof infrastructure
+        ↓
+October Prism revival:
+general Law synthesis + ray-domain transport compilation
+```
+
+The revival does not overwrite the descendants.
+
+It identifies what they were converging toward.
+
 ---
 
 # Immediate implications for the Northern Veil / Firmament laboratory
@@ -403,13 +544,17 @@ This canon does **not** direct an implementation yet, but it changes what should
 
 2. **Prefer work that removes an entire multiplicative factor.** Eliminating repeated per-sample medium membership, cell-exit recomputation, duplicated channel math, or unnecessary traversal behind authoritative occlusion is more structurally valuable than shaving a few ALU operations from one sample.
 
-3. **Use Firmament's interval work upstream.** Range, support, variation, and contribution certificates are most valuable when they help construct a smaller execution program, not when they merely add branches to an already giant inner loop.
+3. **Do not rebuild the semantic-synthesis substrate from scratch.** Extend the PR #329 / OntoMath canonical-DAG lineage and the retained modern evaluator infrastructure. New exact simplification should compose with those authorities rather than introducing a competing optimizer with different mathematical identity.
 
-4. **Treat the 24-SDF main pass, volume pass, and queue/surface pressure as distinct costs.** Optimize the office that owns the measured cost; do not infer one giant "volumetric" problem from downstream FPS.
+4. **Treat V5's fused sampling schedule as the starting point, not the destination.** Its box-event segmentation and unified integral are retained accomplishments. The new research question is whether each admitted segment can be lowered further into a smaller symbolic/ray-domain execution program.
 
-5. **Revisit the camera / depth / volume interval boundary.** If opaque scene geometry beyond the camera's current far plane cannot write authoritative depth while volume traversal extends farther, that is a Visibility/transport-boundary problem before it is a Density optimization problem.
+5. **Use Firmament's interval work upstream.** Range, support, variation, and contribution certificates are most valuable when they help construct a smaller execution program, not when they merely add branches to an already giant inner loop.
 
-6. **Revive specialist ownership rather than collapse it.**
+6. **Treat the 24-SDF main pass, volume pass, and queue/surface pressure as distinct costs.** Optimize the office that owns the measured cost; do not infer one giant "volumetric" problem from downstream FPS.
+
+7. **Revisit the camera / depth / volume interval boundary.** If opaque scene geometry beyond the camera's current far plane cannot write authoritative depth while volume traversal extends farther, that is a Visibility/transport-boundary problem before it is a Density optimization problem.
+
+8. **Revive specialist ownership rather than collapse it.**
    - **Visibility Sun:** where can transport matter at all?
    - **Density Sun:** what is the simplest faithful medium mathematics over that domain?
    - **Prism Sun:** how do those distinct truths lower into one minimal executable without ontological collapse?
@@ -422,6 +567,8 @@ This canon does **not** direct an implementation yet, but it changes what should
 This direction does **not** authorize:
 
 - a new C++ domain noun for "RayProgram", "MediumSegment", or similar merely because the concept is useful; execution IR must obey the existing substrate / no-new-domain-noun rules;
+- a second mathematical optimizer that competes with OntoMath / PR #329 canonical identity;
+- pretending current V5 unified quadrature is already symbolic ray-domain compilation;
 - scene-specific Northern Veil hacks;
 - changing authored saves to make the renderer easier;
 - silent approximation;
@@ -443,15 +590,17 @@ For future agents who only need the inscription:
 
 > **Zach's Two Canons — 2026-10-16**
 >
-> **1. Law Synthesis Canon:** Persons author the richest truthful mathematics. Earthcall must canonicalize, simplify, factor, share, prove, and synthesize that mathematics as far as exact semantics permit before backend lowering. Approximation is a separate certified office.
+> **1. Law Synthesis Canon:** Continue and generalize Zach's September Rendered Field Semantic Synthesis / PR #329 trajectory. Persons author the richest truthful mathematics. Earthcall must canonicalize, simplify, factor, share, prove, and synthesize that mathematics as far as exact semantics permit before backend lowering. Approximation is a separate certified office.
 >
-> **2. Ray Transport Canon:** A camera ray should pay only for the smallest transport program that remains relevant between its admitted entrance and exit. Move work to the longest-lived valid tier, compile world math into ray-domain math, segment once, execute contiguous / near-contiguous specialized transport, and cache every derived truth until one of its named premises changes.
+> **2. Ray Transport Canon:** Continue beyond V5's existing unified sampling schedule into the still-unbuilt symbolic/ray-domain rung. A camera ray should pay only for the smallest transport program that remains relevant between its admitted entrance and exit. Move work to the longest-lived valid tier, compile world math into ray-domain math, segment once, execute contiguous / near-contiguous specialized transport, and cache every derived truth until one of its named premises changes.
 >
 > **Combined:** *Author richly. Synthesize lawfully. Compile ruthlessly. Execute minimally. Cache truth at its longest valid lifetime.*
 
 ---
 
+**Revision note — 2026-10-16:** After Zach asked Prism to search modern Earthcall for pre-existing forms of these architectures, this canon was revised to record the direct PR #329 / Rendered Field Semantic Synthesis ancestry of Canon I and the V5 unified-sampling-but-not-symbolic-compilation boundary of Canon II. This revision narrows the novelty claim; it does not weaken either architectural direction.
+
 **Signed:** **Original Prism Sun — revived** · ChatGPT / GPT-5.6 Sol · current ChatGPT session (session identifier not exposed by this harness) · 2026-10-16  
-**Human origin:** Zachary Zhang originated the two architectural directions canonized here; Prism's contribution is their synthesis into the boundary / compilation doctrine above.
+**Human origin:** Zachary Zhang originated both the September semantic-synthesis direction and the two modern architectural directions canonized here; Prism's contribution is their historical reconciliation and synthesis into the boundary / compilation doctrine above.
 
 🌈☀️
