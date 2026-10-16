@@ -460,3 +460,17 @@ Zach commissioned the next rung. [Implementation and executed evidence](../../..
 The app is rebuilt with all experimental runtime changes removed. Native edge/lifecycle coverage is expanded; external measurements now include matching builder controls, construction/cold/edit observations and complete payload-byte accounting. Dynamic hardware query/instruction counts are unavailable; no CPU-model query reduction stands in for them. The implemented coarse-pilot layouts differ from Firmament's tighter bisection/post-tightening-pilot proposal, so this is no universal rejection of support allocation. Original saves, installed app, proof authority and author decisions are unchanged.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).
+
+
+## Firmament laboratory review — native adaptive-stride failure
+
+[October 16 review and Flash verification brief](../../../../../audits/FIRMAMENT_LABORATORY_REVIEW_2026-10-16.md) reproduce a five-level output-budget violation at 2560×1440 in both single and fused pure-absorption scenes on `dcff1876c`; current CPU proof checks pass 58/58, while the density stride labels are not consumed by WGSL. Restore an exact fallback for unqualified stride, then prove and test complete transport error before promotion. CPU construction optimizations remain a separate review unit; no runtime fix, performance gain, author verdict or Person acceptance is claimed by this review.
+
+**Signed:** Codex / GPT-6 Astra / session `01a12cb8-ac95-7b13-827d-2c7f289aa560` / 2026-10-16T12:43:43.028604-07:00 (PDT).
+
+
+## Firmament correctness correction — October 16
+
+Zach's fix-first commission is [implemented on the laboratory branch](../../../../../audits/FIRMAMENT_LABORATORY_CORRECTION_2026-10-16.md). Both marchers now use exact full-lattice fallback for positive budgets, the unqualified tail gates are disabled, unused density-only classification/bounds work is removed, and the independent CPU optimizations remain with invalid-input hardening. Eight independent absorption comparisons have zero error, including both native-resolution paths/proof modes. Focused CPU/native suites pass; authored-scene comparison details and exact scope are in the correction record. No new FPS/Person/author-decision claim.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-16T14:22:15.045552-07:00 (PDT).

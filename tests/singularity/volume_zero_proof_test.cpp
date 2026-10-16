@@ -99,12 +99,68 @@ void sweep(const OntoMath::Piecewise& pw, const Rendering::VolumeZeroProof& proo
           label + ": " + std::to_string(tested) + " points in proven cells all have density <= 0");
 }
 
+// Preserve the independent host optimizations while refusing invalid inputs.
+// These are range/type witnesses, never permission for a new native skip.
+void rangeOptimizationWitness() {
+    using N = OntoMath::MathNode;
+    using I = OntoMath::Interval;
+    using RV = N::RangeValue;
+    auto number = [](double v) { auto n = std::make_unique<N>();
+        n->op = N::Op::ScalarLeaf; n->scalarForm.terms.push_back(OntoMath::Term(v)); return n; };
+    auto variable = [](const char* v) { auto n = std::make_unique<N>();
+        n->op = N::Op::ValueLeaf; n->variableName = v; return n; };
+    auto noise = [&](const char* v) { auto n = std::make_unique<N>();
+        n->op = N::Op::Noise; n->children.push_back(variable(v)); return n; };
+    auto scale = [](std::unique_ptr<N> a, std::unique_ptr<N> b) {
+        auto n = std::make_unique<N>(); n->op = N::Op::Scale;
+        n->children.push_back(std::move(a)); n->children.push_back(std::move(b)); return n; };
+    const std::map<std::string, RV> vars{{"p", RV::makeVector(I(-.25f,.25f),I(0),I(0))},
+                                          {"s", RV::makeScalar(I(3))}};
+    for (bool reverse : {false, true}) {
+        auto expr = reverse ? scale(noise("p"), number(0)) : scale(number(0), noise("p"));
+        auto r = expr->evalRange(vars);
+        check(r && r->kind == OntoMath::ValueKind::Scalar && r->scalar.exactZero(),
+              "zero annihilates valid noise in either Scale operand order");
+        expr = reverse ? scale(variable("p"), number(0)) : scale(number(0), variable("p"));
+        r = expr->evalRange(vars);
+        check(r && r->kind == OntoMath::ValueKind::Vector && r->vec[0].exactZero() &&
+              r->vec[1].exactZero() && r->vec[2].exactZero(),
+              "zero scaling retains vector type and all three zero components");
+        expr = reverse ? scale(noise("s"), number(0)) : scale(number(0), noise("s"));
+        check(!expr->evalRange(vars), "zero scaling still refuses a scalar Noise argument");
+        auto malformed = noise("p"); malformed->children.clear();
+        expr = reverse ? scale(std::move(malformed), number(0)) : scale(number(0), std::move(malformed));
+        check(!expr->evalRange(vars), "zero scaling still refuses malformed Noise arity");
+        expr = reverse ? scale(nullptr, number(0)) : scale(number(0), nullptr);
+        check(!expr->evalRange(vars), "zero scaling refuses null operands without dereferencing them");
+    }
+    auto expr = scale(number(2), noise("p"));
+    const auto r = expr->evalRange(vars);
+    bool enclosed = r && r->kind == OntoMath::ValueKind::Scalar;
+    for (float x : {-.25f, -.125f, 0.0f, .125f, .25f}) {
+        const auto v = expr->evaluate({{"p", glm::vec3(x,0,0)}});
+        enclosed &= v && r && r->scalar.lo <= std::get<double>(*v) && std::get<double>(*v) <= r->scalar.hi;
+    }
+    check(enclosed, "nonzero Scale keeps its ordinary noise range and encloses host values");
+    auto scalar = number(1); scalar->scalarForm.terms.front().factors["s"] = 1;
+    const auto a = scalar->evalRange(vars);
+    auto changed = vars; changed["s"] = RV::makeScalar(I(7));
+    const auto b = scalar->evalRange(changed);
+    check(a && b && a->scalar.lo <= 3 && a->scalar.hi >= 3 && b->scalar.lo <= 7 && b->scalar.hi >= 7 &&
+          a->scalar.hi < b->scalar.lo, "per-query scalar-map reuse respects fresh variable bindings");
+    const auto positive = piecewise(R"({"pieces":[{"mathNode":{"op":0,"scalarForm":{"terms":[{"c":1}]}}}]})");
+    uint32_t ranges = 0;
+    check(!Rendering::densityProvenNonPositive(positive, glm::vec3(-1), glm::vec3(1), &ranges) && ranges == 0,
+          "positive midpoint only rejects a proof and bypasses interval construction");
+}
+
 } // namespace
 
 int main() {
     std::cout << "Starting volume_zero_proof_test...\n";
 
     EuclideanRangeWitness::run(check);
+    rangeOptimizationWitness();
 
     // ---- Part 1: the generic contract on synthetic media -------------------
     {
@@ -192,40 +248,13 @@ int main() {
             const auto proof = Rendering::buildVolumeZeroProof(*node->volumeDensity, half);
             std::cout << "       " << node->getIdentifier() << ": " << proof.provenCells << "/"
                       << proof.totalCells << " cells proven empty, " << proof.rangeEvaluations
-                      << " range evaluations, certified2x=" << proof.certified2xCells
-                      << ", certified4x=" << proof.certified4xCells
-                      << ", maxDensityBound=" << proof.maxDensityBound << "\n";
+                      << " range evaluations\n";
             check(proof.any(), node->getIdentifier() + " has provably empty cells");
             check(bandsContainUnknown(proof, half), node->getIdentifier() + ": columns enclose EVERY unknown cell");
-            check(proof.certified2xCells + proof.certified4xCells > 0 &&
-                  proof.provenCells + proof.certified2xCells + proof.certified4xCells <= proof.totalCells,
-                  node->getIdentifier() + ": Lipschitz leaf certificates classify smooth cells into 2x/4x adaptive strides");
-            const auto certifiedBounds = Rendering::computeVolumeCertifiedBounds(
-                proof, node->volumeDensity.get(), node->volumeExtinction.get(),
-                node->volumeScattering.get(), node->volumeChroma.get(),
-                node->volumePhase.get(), node->volumeEmission.get(), 0.0, 1.0f);
-            check(certifiedBounds.certified && certifiedBounds.maxSourceRate > 0.0f &&
-                  std::isfinite(certifiedBounds.maxSourceRate),
-                  node->getIdentifier() + ": computeVolumeCertifiedBounds produces finite certified maxSourceRate");
-            std::cout << "       column axis=" << proof.supportAxis << " count=" << proof.supportBands.size()
-                      << " certifiedMaxSourceRate=" << certifiedBounds.maxSourceRate << '\n';
+            std::cout << "       column axis=" << proof.supportAxis << " count=" << proof.supportBands.size() << '\n';
             sweep(*node->volumeDensity, proof, half, node->getIdentifier(), 4000);
         }
         check(media > 0, "the saved Zone has participating media to prove");
-    }
-
-    // ---- Part 3: Interval-Certified Adaptive Quadrature & Certified Tail Bounds ----
-    {
-        const auto flatPositive = piecewise(
-            R"({"input":"x","pieces":[{"mathNode":{"op":0,"scalarForm":{"terms":[{"c":0.25,"factors":{}}]}}}]})");
-        const auto proof = Rendering::buildVolumeZeroProof(flatPositive, glm::vec3(4.0f), 512u);
-        check(proof.provenCells == 0 && proof.certified4xCells == proof.totalCells &&
-              proof.adaptiveStride(0, 0, 0) == 4u,
-              "constant positive medium certifies all cells for 4x coarse adaptive quadrature stride");
-        const auto bounds = Rendering::computeVolumeCertifiedBounds(
-            proof, &flatPositive, nullptr, nullptr, nullptr, nullptr, nullptr, 0.0, 1.0f);
-        check(bounds.certified && bounds.maxDensity >= 0.25f && bounds.maxSourceRate >= 0.25f,
-              "constant positive medium produces certified finite source-rate bound");
     }
 
     std::cout << "volume_zero_proof_test: " << (g_checks - g_failures) << "/" << g_checks

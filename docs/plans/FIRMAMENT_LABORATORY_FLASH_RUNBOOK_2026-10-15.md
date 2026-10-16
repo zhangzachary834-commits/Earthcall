@@ -287,3 +287,12 @@ Because `(0, 50, 75)` is inside Curtain 0's `halfExtent` box (`[-160,160] × [16
 | **Step 2** | Implement **Increment 2** (`nextActiveT_i` register caching + hoisted `mediumInst_i` in `SdfWgsl.cpp`) | `32/32` byte-identical `2560×1440` RGBA images (`changed_bytes == 0`) + paired ABBA timing check |
 | **Step 3** | Implement **Increment 3** (deduplicate/gate `sourceDelta`/`sourceDist` in `SdfWgsl.cpp`) | `32/32` byte-identical `2560×1440` RGBA images + paired ABBA timing check |
 | **Step 4** | Build live app (`cmake --build build --target Earthcall -j8`) and test live Northern Veil movement with Zach | Preserved visual continuity + faster admission/frame times |
+
+
+## October 16 correctness correction supersedes adaptive promotion
+
+Zach commissioned the Sun to implement Astra's [native correctness review](../audits/FIRMAMENT_LABORATORY_REVIEW_2026-10-16.md). The [correction record](../audits/FIRMAMENT_LABORATORY_CORRECTION_2026-10-16.md) restores the full accepted lattice for positive budgets in both marchers and removes all newly admitted tail exits. Density-only stride labels, their unused storage/classification, the finite-host certification flag and per-frame channel bound sweep are removed. Do not reinstall them or interpret the previous CPU classification checks as a transport proof. The independent absorption oracle stays unchanged.
+
+Scalar-map reuse, midpoint rejection and valid zero-factor Scale acceleration remain, with new malformed-operand refusals. The original runbook and measured/rejected shader experiments remain dated instructions/evidence; this correction claims no new speedup, live acceptance or AD-30/36 verdict. Use `earthcall_webgpu` for the app target, as BUILD_AND_ENVIRONMENT specifies.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-16T14:22:15.045552-07:00 (PDT).

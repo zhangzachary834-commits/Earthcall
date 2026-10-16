@@ -442,6 +442,59 @@ int main() {
               std::to_string(count) + " media: background attenuation also follows the full lattice");
         renderer.setVolumeOutputErrorBudget(0.0);
     }
+    // Astra's independently reproduced absorption counterexample (2026-10-16).
+    // Reference stays the accepted lattice via a positive double that rounds
+    // to GPU zero. Do not replace it with a second adaptive/bounded capture.
+    source.enabled = false;
+    for (bool proofOn : {false, true}) {
+        renderer.setVolumeZeroProofEnabled(proofOn);
+        for (int count : {1, 2}) {
+            media.clear();
+            for (int i = 0; i < count; ++i) {
+                auto f = std::make_shared<geom::FieldNode>("test.absorption-" + std::to_string(i));
+                f->scale = glm::vec3(2.0f);
+                *f->volumeDensity = piece(number(1));
+                auto ext = number(1.0 / count);
+                OntoMath::Term ripple(0.9 / count);
+                OntoMath::TransFactor cosine;
+                cosine.kind = OntoMath::TransFactor::Kind::Cos;
+                cosine.variable = "z"; cosine.scale = 12.0 * 3.14159265358979323846;
+                ripple.trans.push_back(cosine); ext->scalarForm.terms.push_back(ripple);
+                *f->volumeExtinction = piece(std::move(ext));
+                *f->volumeScattering = piece(number(0));
+                f->volumeEmission->pieces.clear();
+                f->noteAuthoredMathWritten(); media.push_back(f);
+            }
+            const glm::vec3 absorberEye(0, 0, -5), absorberLook(0);
+            for (int edit = 0; edit < 2; ++edit) {
+                // Second capture exercises a changing density/clock and a
+                // nonwhite background; extinction remains independently authored.
+                if (edit) {
+                    *media.front()->volumeDensity = piece(op(OntoMath::MathNode::Op::Add,
+                        number(0.8), timeCos(0.1, 0.7)));
+                    media.front()->noteAuthoredMathWritten();
+                }
+                const glm::vec4 background = edit ? glm::vec4(0.3f, 0.6f, 0.9f, 1) : glm::vec4(1);
+                const double t = edit ? 7.25 : 0;
+                renderer.setVolumeOutputErrorBudget(std::numeric_limits<double>::denorm_min());
+                const auto reference = render(absorberEye, absorberLook, t, 96, background);
+                renderer.setVolumeOutputErrorBudget(1.0 / 255.0);
+                const auto candidate = render(absorberEye, absorberLook, t, 96, background);
+                const auto label = std::to_string(count) + " media, proof=" + std::to_string(proofOn) +
+                    ", edit=" + std::to_string(edit);
+                check(candidate.rgb == reference.rgb,
+                      label + ": unqualified absorption uses byte-identical full-lattice fallback");
+                check(candidate.compiles == 0 && candidate.lowerings == 0 &&
+                      candidate.parameterUploads == 0 && candidate.proofUploads == 0,
+                      label + ": changing only the budget rebuilds and uploads nothing");
+                if (!edit) {
+                    const size_t center = (size_t(height / 2) * width + width / 2) * 4;
+                    check(reference.rgb[center] == 5,
+                          label + ": independent 96-sample absorption counterexample stays visible");
+                }
+            }
+        }
+    }
     wgpuBufferRelease(readback); wgpuTextureViewRelease(view); wgpuTextureRelease(target);
     setCurrentRenderer(nullptr);
     std::printf("webgpu_volume_shared_subexpression_test: %d/%d checks passed\n", g_checks - g_failures, g_checks);

@@ -430,3 +430,12 @@ The old `evalRange` entrypoint explicitly selects its previous rules. VolumeZero
 Source patches are explicitly experimental/rejected evidence. New native tests exercise actual translated/parallel/support-edge rendering; they are no certificate reusable at runtime. The external cost process records immutable source/binary/input hashes and explicit metadata sizes. Its optional hierarchy-word inspection is compile-time developer tooling, not authored state or a second authority office. Unsupported native numerical/scope contracts remain unqualified; the host Euclidean entrypoint is still not consumed by GPU proofs.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).
+
+
+## Laboratory omission authority removed — October 16
+
+[Correction and witnesses](../../audits/FIRMAMENT_LABORATORY_CORRECTION_2026-10-16.md) remove the laboratory `adaptiveWords`, density variation classifier and `VolumeCertifiedBounds` producer/consumer. No stride/tail certificate cache survives. Positive-budget frames no longer sweep channel intervals or publish a finite-host omission flag; reserved `volumeOutputError.z/w` are zero and unread by WGSL. `y` retains the separate opt-in flag so tiny positive double budgets cannot re-enable the compatibility cutoff when `x` rounds to zero.
+
+Existing density-pointer/revision/half-extent zero proofs, support bounds/bands, resident offsets/dirty writes and device invalidation remain under their prior contracts. Scalar-map reuse is invocation-local; midpoint evaluation can only refuse a proof. The cheap zero-factor noise lane now refuses malformed arity/types and null Scale operands. Experimental `evalFastRange` has no production caller and grants no native permission. No new authored field, GPU payload layout or cache lifetime is introduced. Re-enabling coarsening/termination requires the unresolved complete transport/numerical contract; AD-30/36 are unchanged.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-16T14:22:15.045552-07:00 (PDT).

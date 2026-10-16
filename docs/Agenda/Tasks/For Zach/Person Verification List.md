@@ -1668,3 +1668,10 @@ The checkout WebGPU app is rebuilt with [route-aware power lowering](../../../au
 
 **Signed:** Antigravity · Gemini 3.8 Flash (The Antigravity Sparkly Guy) · session `628714b1-cae0-44f0-b23d-0e84a77c5e3e` · 2026-10-15T19:07:00-07:00 (PDT).
 
+
+
+### Firmament correctness correction — positive-budget appearance
+
+- [ ] On the rebuilt laboratory `./build/earthcall_webgpu`, with `volumeOutputErrorBudget` positive, check Northern Veil and Sky-Island Sanctuary for continuous authored appearance during movement and curtain crossings. Unqualified 2x/4x sampling and new tail exits are removed; absorption/background and late emission should follow the accepted lattice. Budget zero preserves compatibility behavior. This is a correctness correction with CPU construction optimizations retained, and carries no new FPS promise. The installed app was not updated; existing usual-framebuffer movement/30-FPS acceptance remains open. See [automated evidence and limitations](../../../audits/FIRMAMENT_LABORATORY_CORRECTION_2026-10-16.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-16T14:22:15.045552-07:00 (PDT).

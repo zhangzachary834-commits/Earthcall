@@ -586,12 +586,10 @@ struct MathNode {
     };
     std::optional<RangeValue> evalRange(const std::map<std::string, RangeValue>& vars) const;
 
-    // Fast O(1)-noise interval evaluation: identical to evalRange except 3D
-    // Perlin noise uses only the O(1) global Lipschitz ball around the box
-    // centre intersected with [-kClassicPerlin3ValueBound, +kClassicPerlin3ValueBound],
-    // skipping the multi-cube classicPerlin3LatticeRange sweep. Used to bound
-    // local leaf-cell variation and medium channel envelopes for Interval-Certified
-    // Adaptive Quadrature without per-cell lattice sweep overhead.
+    // Experimental host-only noise-range analysis using a local Lipschitz
+    // ball instead of the lattice sweep. No production caller currently uses
+    // it. This is not a transport-error or native arithmetic certificate and
+    // must not authorize adaptive volume strides or tail termination.
     std::optional<RangeValue> evalFastRange(const std::map<std::string, RangeValue>& vars) const;
 
     // Explicit host analysis with additional Euclidean Length/Distance rules.

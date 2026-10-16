@@ -2506,7 +2506,7 @@ static std::optional<MathNode::RangeValue> evalMathRange(
             return std::nullopt;
         }
         case Op::Scale: {
-            if (children.size() != 2) return std::nullopt;
+            if (children.size() != 2 || !children[0] || !children[1]) return std::nullopt;
             std::optional<RangeValue> a;
             std::optional<RangeValue> b;
             // Zero-annihilation short-circuit: when one factor of Scale is a
@@ -2713,10 +2713,14 @@ static std::optional<MathNode::RangeValue> evalMathRange(
             const Interval global(-kClassicPerlin3ValueBound,
                                    kClassicPerlin3ValueBound);
             if (children.size() != 1 || !children[0]) {
+                // Zero annihilation must validate the other operand; a global
+                // noise bound cannot validate malformed syntax or input types.
+                if (skipExpensiveNoise) return std::nullopt;
                 return RangeValue::makeScalar(global);
             }
             auto arg = evalMathRange(*children[0], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
             if (!arg || arg->kind != ValueKind::Vector) {
+                if (skipExpensiveNoise) return std::nullopt;
                 return RangeValue::makeScalar(global);
             }
             if (skipExpensiveNoise) {

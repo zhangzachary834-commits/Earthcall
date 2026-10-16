@@ -4317,17 +4317,8 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             i = max(i, i32(ceil((zeroExit - t0) / stepLength - 0.5)) - 1);
             continue;
         }
-        var stepStride = 1;
-        if (u.volumeOutputError.x > 0.0 && u.volumeOutputError.w > 0.0) {
-            let stepBound = transmittance * u.volumeOutputError.z * stepLength;
-            let fineBudget = (0.125 * u.volumeOutputError.x) / f32(samplesPerChord);
-            if (stepBound * 4.0 <= fineBudget && i + 4 <= samplesPerChord) {
-                stepStride = 4;
-            } else if (stepBound * 2.0 <= fineBudget && i + 2 <= samplesPerChord) {
-                stepStride = 2;
-            }
-        }
-        let effectiveStep = f32(stepStride) * stepLength;
+        // Positive budgets retain every accepted sample until a complete
+        // transport/backend error proof qualifies coarsening or termination.
         /*VOLUME_SHARED_BEFORE_DENSITY*/
         let density = max(volumeDensityEval(p), 0.0);
 
@@ -4337,7 +4328,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             // the evaluator preserves the exact pre-V1 compatibility law.
             let extinction = max(volumeExtinctionEval(p, density), 1e-6);
             let oldT = transmittance;
-            transmittance *= exp(-extinction * effectiveStep);
+            transmittance *= exp(-extinction * stepLength);
 
             // SourceRho-zero (Prism: rho_source != V_transport != D_medium).
             // Incident light is formed first; a source whose authored rho is
@@ -4422,14 +4413,8 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
                 volumetricEmission += emitted * ((oldT - transmittance) / extinction);
             }
         }
-        i = i + stepStride - 1;
 
         if (u.volumeOutputError.y == 0.0 && transmittance < 0.01) { break; }
-        if (u.volumeOutputError.x > 0.0 && u.volumeOutputError.w > 0.0 &&
-            transmittance <= 0.25 * u.volumeOutputError.x &&
-            transmittance * u.volumeOutputError.z * max(t1 - sampleT, 0.0) <= 0.25 * u.volumeOutputError.x) {
-            break;
-        }
     }
 
     let alpha = 1.0 - transmittance;
@@ -5166,23 +5151,14 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
                 step = max(step, i32(ceil((walkExit - segmentStart) / stepLength - 0.5)) - 1);
                 continue;
             }
-            var stepStride = 1;
-            if (u.volumeOutputError.x > 0.0 && u.volumeOutputError.w > 0.0) {
-                let stepBound = transmittance * u.volumeOutputError.z * stepLength;
-                let fineBudget = (0.125 * u.volumeOutputError.x) / f32(samplesPerChord);
-                if (stepBound * 4.0 <= fineBudget && step + 4 <= segmentSamples) {
-                    stepStride = 4;
-                } else if (stepBound * 2.0 <= fineBudget && step + 2 <= segmentSamples) {
-                    stepStride = 2;
-                }
-            }
-            let effectiveStep = f32(stepStride) * stepLength;
+            // Same full-lattice fallback as the standalone path. A bound on
+            // source rate alone cannot bound varying absorption/background.
 )WGSL";
 
     out.wgsl += R"WGSL(
         let oldT = transmittance;
         if (totalExtinction > 0.0) {
-            transmittance *= exp(-totalExtinction * effectiveStep);
+            transmittance *= exp(-totalExtinction * stepLength);
             // Shared participating-medium integral. For one active medium this
             // algebra reduces to the V4 scatter + E_v attenuation formulas.
             let intervalGain = (oldT - transmittance) / totalExtinction;
@@ -5191,23 +5167,12 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             // Continuous sigma_t -> 0 limit. Usually unreachable under the
             // current 1e-6 per-active-medium clamp, but it states the transport
             // law rather than relying on division by an implementation epsilon.
-            integratedRadiance += oldT * totalSource * effectiveStep;
+            integratedRadiance += oldT * totalSource * stepLength;
         }
-        step = step + stepStride - 1;
 
             if (u.volumeOutputError.y == 0.0 && transmittance < 0.01) { break; }
-            if (u.volumeOutputError.x > 0.0 && u.volumeOutputError.w > 0.0 &&
-                transmittance <= 0.25 * u.volumeOutputError.x &&
-                transmittance * u.volumeOutputError.z * max(t1 - sampleT, 0.0) <= 0.25 * u.volumeOutputError.x) {
-                break;
-            }
         }
         if (u.volumeOutputError.y == 0.0 && transmittance < 0.01) { break; }
-        if (u.volumeOutputError.x > 0.0 && u.volumeOutputError.w > 0.0 &&
-            transmittance <= 0.25 * u.volumeOutputError.x &&
-            transmittance * u.volumeOutputError.z * max(t1 - segmentEnd, 0.0) <= 0.25 * u.volumeOutputError.x) {
-            break;
-        }
     }
 
     let alpha = 1.0 - transmittance;
