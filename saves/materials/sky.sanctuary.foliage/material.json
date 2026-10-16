@@ -4,15 +4,15 @@
     "id": "material.sky.sanctuary.foliage",
     "name": "sky.sanctuary.foliage",
     "baseColor": [
-      0.18,
-      0.56,
-      0.34
+      0.16,
+      0.48,
+      0.28
     ],
     "opacity": 1.0,
-    "ambient": 0.36,
-    "diffuse": 0.84,
-    "specular": 0.32,
-    "shininess": 28.0,
+    "ambient": 0.15,
+    "diffuse": 0.72,
+    "specular": 0.22,
+    "shininess": 26.0,
     "textureResolution": 16,
     "colorExpr": {
       "input": "y",
@@ -28,11 +28,11 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.18,
+                      "c": 0.16,
                       "factors": {}
                     },
                     {
-                      "c": 0.05,
+                      "c": 0.04,
                       "factors": {},
                       "trans": [
                         {
@@ -51,11 +51,11 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.56,
+                      "c": 0.48,
                       "factors": {}
                     },
                     {
-                      "c": 0.08,
+                      "c": 0.07,
                       "factors": {},
                       "trans": [
                         {
@@ -80,7 +80,7 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.34,
+                      "c": 0.28,
                       "factors": {}
                     },
                     {

@@ -6,12 +6,12 @@
     "baseColor": [
       0.14,
       0.17,
-      0.22
+      0.24
     ],
     "opacity": 1.0,
-    "ambient": 0.28,
-    "diffuse": 0.78,
-    "specular": 0.38,
+    "ambient": 0.14,
+    "diffuse": 0.7,
+    "specular": 0.32,
     "shininess": 36.0,
     "textureResolution": 16,
     "colorExpr": {
@@ -74,7 +74,7 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.22,
+                      "c": 0.24,
                       "factors": {}
                     },
                     {

@@ -586,6 +586,15 @@ struct MathNode {
     };
     std::optional<RangeValue> evalRange(const std::map<std::string, RangeValue>& vars) const;
 
+    // Explicit host analysis with additional Euclidean Length/Distance rules.
+    // This is mathematical/host range knowledge, NOT a native execution or
+    // whole-contribution certificate. Existing VolumeZeroProof, Sdf and Rete
+    // consumers deliberately retain evalRange until their contracts admit the
+    // extension. No authored state, serialized flag or GPU resource is added.
+    // Unknown/type/nonfinite/overflow inputs cannot yield a finite norm bound.
+    std::optional<RangeValue> evalMathematicalRange(
+        const std::map<std::string, RangeValue>& vars) const;
+
     // Human-legible rendering of the tree — what a Person authoring the law
     // actually sees ("t" is not enough; "sin(2*t) * 0.5 + 0.5" is). Every
     // Op below must render honestly, including the not-yet-implemented and

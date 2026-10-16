@@ -309,7 +309,7 @@ private:
         const std::string written = _text.substr(bestAt, bestLen);
         _pos = bestAt + bestLen;
         Word chosen = distinct.size() == 1 ? distinct.front() : resolve(written, slot, distinct, bestAt);
-        mark(bestAt, bestAt + bestLen, roleOf(chosen.opcode));
+        mark(bestAt, bestAt + bestLen, roleOf(chosen.opcode), chosen.lexemeId);
         return chosen;
     }
 
@@ -1383,8 +1383,8 @@ private:
     std::vector<std::string> _suffixes;
     std::vector<Span> _spans;
 
-    void mark(std::size_t start, std::size_t end, const std::string& role) {
-        if (end > start) _spans.push_back({start, end, role});
+    void mark(std::size_t start, std::size_t end, const std::string& role, const std::string& lexemeId = {}) {
+        if (end > start) _spans.push_back({start, end, role, lexemeId});
     }
 
     Parse _out;
@@ -1818,7 +1818,7 @@ Parse parse(const std::string& raw, const Vocabulary& vocab) {
         out.candidates = r.candidates;
     }
     out.previewOnly = previewOnly;
-    for (const auto& span : parser.spans()) out.spans.push_back({span.start + lead, span.end + lead, span.role});
+    for (const auto& span : parser.spans()) out.spans.push_back({span.start + lead, span.end + lead, span.role, span.lexemeId});
     if (!out.error.empty() && out.errorOffset < text.size()) {
         std::size_t end = out.errorOffset;
         while (end < text.size() && !isSpace(text[end])) ++end;
@@ -1991,7 +1991,7 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
     const auto offer = [&](std::size_t from, const std::string& tail, const std::string& text,
                            const std::string& description, const std::string& role,
                            const std::string& detail = {}, const std::string& snippet = {},
-                           const std::string& meaning = {}) {
+                           const std::string& meaning = {}, const std::string& lexemeId = {}) {
         // A word that could only be refused ("author it in the Law Graph")
         // is never offered: the menu only holds words that can work here.
         if (description.find("Law Graph only") != std::string::npos) return;
@@ -2000,7 +2000,7 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
         const std::string key = lower(text);
         auto it = best.find(key);
         if (it == best.end() || it->second.score < score) {
-            best[key] = Suggestion{from, text, description, role, score, detail, snippet};
+            best[key] = Suggestion{from, text, description, role, score, detail, snippet, lexemeId};
             meaningsByText[key].clear();
             if (!meaning.empty()) meaningsByText[key].insert(meaning);
             return;
@@ -2016,6 +2016,7 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
         }
         it->second.detail = "shared spelling · Metalaw decides · " + joined;
         it->second.snippet.clear();
+        it->second.lexemeId.clear();   // no one Lexeme's appearance speaks for a shared spelling
     };
 
     for (std::size_t split : splits) {
@@ -2049,7 +2050,8 @@ std::vector<Suggestion> suggest(const std::string& beforeCursor, const Vocabular
                     w.opcode == "preset" ? "Law " + w.lawId : w.opcode + " (" + w.individual() + ")";
                 offer(split, tail, w.symbol, w.description, roleOf(w.opcode),
                       w.detail.empty() ? w.description : w.detail,
-                      !w.arguments.empty() ? w.arguments : completeAction ? std::string{} : argumentTemplate(w.opcode), meaning);
+                      !w.arguments.empty() ? w.arguments : completeAction ? std::string{} : argumentTemplate(w.opcode), meaning,
+                      w.lexemeId);
             }
         }
         if (tail.find_first_of(" \t") != std::string::npos) continue;   // atoms are single words

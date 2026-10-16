@@ -24,8 +24,7 @@ holds it in raw mode and draws its own line editor (`LineEditor`: live menu, gho
 transient preview panel, history in `saves/logs/terminal-history.txt`) — the Law Line, where sentences
 become Laws. While it is attached, the app's stdout/stderr are relayed above the prompt and kept in
 `saves/logs/earthcall-terminal.log` (both gitignored). It attaches only when stdin and stdout are TTYs,
-so ctest and IDE launches leave it quiet; set `NO_COLOR` to drop colour. No dependency: libedit was
-tried and removed (its Tab cannot offer a selectable menu). →
+so ctest and IDE launches leave it quiet; set `NO_COLOR` to drop colour. Vendored [utf8proc](../third_party/utf8proc/README.earthcall.md) supplies locale-independent Unicode decoding, grapheme boundaries and character widths; libedit was tried and removed (its Tab cannot offer a selectable menu). →
 `docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Law_Line/Law_Line.md`.
 For pasteable lessons and the action reference, read [the Law authoring CLI guide for humans and agents](architecture/law/LAW_AUTHORING_CLI_GUIDE.md).
 Stored-template shortcuts are covered by the [new CLI lesson](architecture/law/LAW_AUTHORING_CLI_GUIDE.md#stored-templates-and-authored-shortcuts). `law_line_zone_test` now layers the current authored seed into an isolated frozen-fixture copy through a Python runner; CTest never seeds the live app home. Seed-preservation checks run with `python3 tests/singularity/test_seed_law_line.py`. Terminal history/log files now live under `SaveSystem::rootPath()/logs`, following the app data-home migration.
@@ -438,3 +437,24 @@ Repository conversation tooling uses Python 3.10+ and the standard library. Run 
 **Scratch volume arithmetic-profile experiment (2026-10-12):** `python3 -B scripts/volume_arithmetic_profile_experiment.py --output /private/tmp/<new-directory>` builds separate process-local volume option overrides after the app build. The original compiler observer remains read-only. `--full-lattice --width 2560 --height 1440 --camera side --time 0` sets the copied fixture’s positive budget for the stress-reference check. Safe/Fast and Safe/Precise are rejected for pixel differences up to 12 levels; no option-changing hook is installed in the app or timed for performance. Frozen checkout fixture, not current live data; desktop GPU and a fresh external output directory required. [Failure gates and provenance](audits/VOLUME_ARITHMETIC_PROFILE_FIDELITY_2026-10-12.md).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T17:13:57.815427-07:00 (PDT).
+
+
+## Standalone performance analysis — October 14
+
+Zach commissioned a separate executable, outside the app. `./scripts/earthcall-analyze doctor` checks capture-tool availability; `demo --output /private/tmp/<new-directory>` creates labeled synthetic inputs and a searchable offline report. `package --output /private/tmp/earthcall-analyze.pyz` creates a portable executable requiring Python 3.9+ only. Import existing frame samples, standard trace JSON, demand census, emitted WGSL and explicit models with `analyze`; no app rebuild, CMake dependency, live exporter or GPU hook is added. Run the focused checks with `python3 -B tests/singularity/test_performance_analysis.py` (20 pass). Trace spans, counts, models and historical image artifacts retain distinct evidence labels. Raw native trace bundles/protobufs need external tools/export; no fresh frame/GPU timing or FPS claim. [Contracts and commands](Agenda/Tasks/Specific%20Tasks/Performance%20and%20Runtime/Standalone_Performance_Analysis/Standalone_Performance_Analysis.md); [execution evidence](audits/STANDALONE_PERFORMANCE_ANALYSIS_2026-10-14.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-14T22:37:18.690115-07:00 (PDT).
+
+**October 15 volume experiments:** `python3 -B scripts/volume_traversal_experiment.py --help` describes a separate frozen-fixture build/image/cost harness using configured app objects and explicit compatible control sources. It requires a new external output directory, separates native correctness readback from sequential completion-fenced ABBA batches and refuses cost without matching passing images. Build `earthcall_webgpu` first; run native witnesses in a desktop GPU session. No ordinary timestamp feature or app hook is added. The [retained power correction and three rejected candidates](audits/VOLUME_POWER_AND_OPTIMIZATION_TRIALS_2026-10-15.md) give focused test results and the native subnormal limit; no live FPS gain is inferred.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T05:56:25.134858-07:00 (PDT).
+
+
+**Scoped Euclidean range witness (October 15):** build `volume_zero_proof_test sdf_range_soundness_test ontomath_test prophetic_rete_test webgpu_volume_zero_proof_test webgpu_ontomath_native_resolution_parity_test`. The first target includes explicit host Length/Distance tests; production callers retain the legacy range entrypoint. `prophetic_rete_test` uses GLFW's timer and its macOS sandbox invocation may stall on XPC setup; a desktop rerun passed. A device skip or interrupted setup is not a pass. [Executed scope and separate read-only census](audits/VOLUME_EUCLIDEAN_RANGE_2026-10-15.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T10:45:48.355899-07:00 (PDT).
+
+
+**Support-allocation diagnostics (October 15):** `volume_traversal_experiment.py` now substitutes matching `VolumeZeroProof.cpp` control objects as well as compiler/renderer sources; an old shader cannot consume a candidate grid interpreted differently. `--mode proof --proof-metadata-floats CONTROL CANDIDATE` measures direct host construction without a GPU and accounts for bitmap, optional hierarchy, metadata and bands. Optional strict image/control-regression stop gates preserve counterexamples. Native proof tests add four translated/parallel/support-edge cases and structural-edit preparation/upload diagnostics; these are correctness/diagnostic observations, not live FPS. [Three rejected variants and restored witnesses](audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).

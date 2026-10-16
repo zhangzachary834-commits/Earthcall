@@ -189,6 +189,7 @@ bool renderOffscreen(wgpu::Device& gpu, WebGpuRenderer& r, Zone& zone,
         r.setModel(o->getTransform());
         r.drawImplicit(o->getFieldData(), o->getFieldExtent(), mat);
     }
+    r.composeVolumes();
     r.endFrame();
 
     WGPUBufferDescriptor bd = {};
@@ -375,7 +376,7 @@ int main(int argc, char** argv) {
         for (const auto& f : zone->additionalSpatialFields()) {
             if (f) fieldNodes.push_back(f.get());
         }
-        check(fieldNodes.size() == 4, "One spatialRoot + three additional volumetric/radiant spatialFields");
+        check(fieldNodes.size() == 5, "One spatialRoot + four additional volumetric/radiant spatialFields");
 
         bool allFieldsCompile = true;
         bool foundOccluderMist = false;
@@ -448,6 +449,57 @@ int main(int argc, char** argv) {
         }
         check(allFieldsCompile, "All spatialRoot and spatialField expressions compile cleanly to WGSL");
         check(foundOccluderMist, "Sunlit Halo Mist carries an active CSG volumeOccluder");
+
+        // Verify numerical light-field and cloud-sea values across all 8 octants:
+        // 1. Sun of Dawn has bright intentional pools on all 5 islands and a softer shade valley between them
+        auto evalScalarAt = [](const OntoMath::Piecewise& pw, const glm::vec3& p) -> double {
+            std::map<std::string, PropertyValue> vars;
+            vars["x"] = double(p.x);
+            vars["y"] = double(p.y);
+            vars["z"] = double(p.z);
+            vars["t"] = 0.0;
+            vars["p"] = p;
+            const auto v = pw.evaluate(vars);
+            if (!v) return 0.0;
+            if (std::holds_alternative<double>(*v)) return std::get<double>(*v);
+            if (std::holds_alternative<float>(*v)) return std::get<float>(*v);
+            return 0.0;
+        };
+        const glm::vec3 sunPos = root->origin;
+        const double sunPavilion = evalScalarAt(root->field->astDefinition, glm::vec3(0.0f, 2.5f, 0.0f) - sunPos);
+        const double sunSouth    = evalScalarAt(root->field->astDefinition, glm::vec3(0.0f, 0.8f, 21.0f) - sunPos);
+        const double sunEast     = evalScalarAt(root->field->astDefinition, glm::vec3(19.5f, 2.0f, -2.0f) - sunPos);
+        const double sunWest     = evalScalarAt(root->field->astDefinition, glm::vec3(-19.5f, 2.5f, -2.0f) - sunPos);
+        const double sunNorth    = evalScalarAt(root->field->astDefinition, glm::vec3(0.0f, 4.2f, -21.5f) - sunPos);
+        const double sunBridge   = evalScalarAt(root->field->astDefinition, glm::vec3(10.0f, 1.0f, 10.0f) - sunPos);
+        check(sunPavilion > 0.80 && sunSouth > 0.65 && sunEast > 0.65 && sunWest > 0.60 && sunNorth > 0.65,
+              "Sun of Dawn illuminates all 5 islands with intentional golden light pools");
+        check(sunBridge > 0.18 && sunBridge < sunPavilion * 0.55,
+              "Sun of Dawn preserves a softer morning shade valley between island light pools");
+
+        // 2. Sea of Clouds is restored at y = -5.5m with fluffy non-zero cumulus billows in all 4 quadrants
+        //    and exact 0 outside its compact support
+        const geom::FieldNode* cloudField = nullptr;
+        const geom::FieldNode* heartField = nullptr;
+        for (const auto* n : fieldNodes) {
+            if (n->getIdentifier() == "sky.sanctuary.sea-of-clouds") cloudField = n;
+            if (n->getIdentifier() == "sky.sanctuary.heart-radiance") heartField = n;
+        }
+        check(cloudField != nullptr && std::abs(cloudField->origin.y - (-5.5f)) < 0.2f,
+              "Sea of Clouds medium is positioned right beneath the islands (y = -5.5m)");
+        if (cloudField && cloudField->volumeDensity && cloudField->volumeEmission) {
+            const double cPP = evalScalarAt(*cloudField->volumeDensity, glm::vec3(6.0f, 0.0f, 6.0f));
+            const double cNN = evalScalarAt(*cloudField->volumeDensity, glm::vec3(-6.0f, 0.0f, -6.0f));
+            const double cOut = evalScalarAt(*cloudField->volumeDensity, glm::vec3(35.0f, 0.0f, 0.0f));
+            check(cPP > 0.15 && cNN > 0.15 && std::abs(cOut) < 1e-6,
+                  "Sea of Clouds has active cumulus density across both positive and negative octants and compact zero boundary");
+        }
+        if (heartField && heartField->field) {
+            const double hPos = evalScalarAt(heartField->field->astDefinition, glm::vec3(1.5f, -1.4f, 1.5f));
+            const double hNeg = evalScalarAt(heartField->field->astDefinition, glm::vec3(-1.5f, -1.4f, -1.5f));
+            check(hPos > 0.25 && std::abs(hPos - hNeg) < 1e-5,
+                  "Lotus Heart radiance is symmetric across all octants (+x/+z and -x/-z)");
+        }
 
         bool allObjectsCompile = true;
         for (Object* o : allObjects) {
