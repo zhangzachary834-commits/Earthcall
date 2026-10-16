@@ -192,13 +192,40 @@ int main() {
             const auto proof = Rendering::buildVolumeZeroProof(*node->volumeDensity, half);
             std::cout << "       " << node->getIdentifier() << ": " << proof.provenCells << "/"
                       << proof.totalCells << " cells proven empty, " << proof.rangeEvaluations
-                      << " range evaluations\n";
+                      << " range evaluations, certified2x=" << proof.certified2xCells
+                      << ", certified4x=" << proof.certified4xCells
+                      << ", maxDensityBound=" << proof.maxDensityBound << "\n";
             check(proof.any(), node->getIdentifier() + " has provably empty cells");
             check(bandsContainUnknown(proof, half), node->getIdentifier() + ": columns enclose EVERY unknown cell");
-            std::cout << "       column axis=" << proof.supportAxis << " count=" << proof.supportBands.size() << '\n';
+            check(proof.certified2xCells + proof.certified4xCells > 0 &&
+                  proof.provenCells + proof.certified2xCells + proof.certified4xCells <= proof.totalCells,
+                  node->getIdentifier() + ": Lipschitz leaf certificates classify smooth cells into 2x/4x adaptive strides");
+            const auto certifiedBounds = Rendering::computeVolumeCertifiedBounds(
+                proof, node->volumeDensity.get(), node->volumeExtinction.get(),
+                node->volumeScattering.get(), node->volumeChroma.get(),
+                node->volumePhase.get(), node->volumeEmission.get(), 0.0, 1.0f);
+            check(certifiedBounds.certified && certifiedBounds.maxSourceRate > 0.0f &&
+                  std::isfinite(certifiedBounds.maxSourceRate),
+                  node->getIdentifier() + ": computeVolumeCertifiedBounds produces finite certified maxSourceRate");
+            std::cout << "       column axis=" << proof.supportAxis << " count=" << proof.supportBands.size()
+                      << " certifiedMaxSourceRate=" << certifiedBounds.maxSourceRate << '\n';
             sweep(*node->volumeDensity, proof, half, node->getIdentifier(), 4000);
         }
         check(media > 0, "the saved Zone has participating media to prove");
+    }
+
+    // ---- Part 3: Interval-Certified Adaptive Quadrature & Certified Tail Bounds ----
+    {
+        const auto flatPositive = piecewise(
+            R"({"input":"x","pieces":[{"mathNode":{"op":0,"scalarForm":{"terms":[{"c":0.25,"factors":{}}]}}}]})");
+        const auto proof = Rendering::buildVolumeZeroProof(flatPositive, glm::vec3(4.0f), 512u);
+        check(proof.provenCells == 0 && proof.certified4xCells == proof.totalCells &&
+              proof.adaptiveStride(0, 0, 0) == 4u,
+              "constant positive medium certifies all cells for 4x coarse adaptive quadrature stride");
+        const auto bounds = Rendering::computeVolumeCertifiedBounds(
+            proof, &flatPositive, nullptr, nullptr, nullptr, nullptr, nullptr, 0.0, 1.0f);
+        check(bounds.certified && bounds.maxDensity >= 0.25f && bounds.maxSourceRate >= 0.25f,
+              "constant positive medium produces certified finite source-rate bound");
     }
 
     std::cout << "volume_zero_proof_test: " << (g_checks - g_failures) << "/" << g_checks

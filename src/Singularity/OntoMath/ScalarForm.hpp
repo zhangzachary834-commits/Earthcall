@@ -586,6 +586,14 @@ struct MathNode {
     };
     std::optional<RangeValue> evalRange(const std::map<std::string, RangeValue>& vars) const;
 
+    // Fast O(1)-noise interval evaluation: identical to evalRange except 3D
+    // Perlin noise uses only the O(1) global Lipschitz ball around the box
+    // centre intersected with [-kClassicPerlin3ValueBound, +kClassicPerlin3ValueBound],
+    // skipping the multi-cube classicPerlin3LatticeRange sweep. Used to bound
+    // local leaf-cell variation and medium channel envelopes for Interval-Certified
+    // Adaptive Quadrature without per-cell lattice sweep overhead.
+    std::optional<RangeValue> evalFastRange(const std::map<std::string, RangeValue>& vars) const;
+
     // Explicit host analysis with additional Euclidean Length/Distance rules.
     // This is mathematical/host range knowledge, NOT a native execution or
     // whole-contribution certificate. Existing VolumeZeroProof, Sdf and Rete

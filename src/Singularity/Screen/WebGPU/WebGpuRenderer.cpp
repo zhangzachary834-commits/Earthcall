@@ -3233,9 +3233,50 @@ void WebGpuRenderer::flushVolumeComposite() {
     float gpuBudget = static_cast<float>(outputBudget);
     if (static_cast<double>(gpuBudget) > outputBudget)
         gpuBudget = std::nextafter(gpuBudget, 0.0f);
+    float certifiedSourceRate = 0.0f;
+    float certifiedBoundsValid = 0.0f;
+    if (outputBudget > 0.0 && !activeMedia.empty()) {
+        const bool customIncidentMath =
+            incidentSource &&
+            ((incidentSource->radianceExpr && !incidentSource->radianceExpr->pieces.empty()) ||
+             (incidentSource->chromaExpr && !incidentSource->chromaExpr->pieces.empty()) ||
+             (incidentSource->angularExpr && !incidentSource->angularExpr->pieces.empty()));
+        if (!customIncidentMath) {
+            bool allCertified = true;
+            OntoMath::Interval sumSourceRate(0.0f);
+            for (const auto* medium : activeMedia) {
+                const Rendering::VolumeZeroProof* proofPtr = nullptr;
+                Rendering::VolumeZeroProof fallbackProof;
+                auto it = _volumeZeroProofs.find(medium->densityExpr);
+                if (it != _volumeZeroProofs.end() && it->second.proof.totalCells > 0u) {
+                    proofPtr = &it->second.proof;
+                } else {
+                    const glm::vec3 he = glm::abs(medium->scale);
+                    fallbackProof.supportMin = -he;
+                    fallbackProof.supportMax = he;
+                    proofPtr = &fallbackProof;
+                }
+                const auto certified = Rendering::computeVolumeCertifiedBounds(
+                    *proofPtr, medium->densityExpr, medium->extinctionExpr,
+                    medium->scatteringExpr, medium->volumeChromaExpr,
+                    medium->phaseExpr, medium->emissionExpr,
+                    medium->temporalCoordinate, 1.0f);
+                if (!certified.certified) {
+                    allCertified = false;
+                    break;
+                }
+                sumSourceRate = sumSourceRate + OntoMath::Interval(0.0f, certified.maxSourceRate);
+            }
+            if (allCertified && sumSourceRate.bounded() && !std::isnan(sumSourceRate.hi)) {
+                certifiedSourceRate = OntoMath::Interval::roundUp(std::max(0.0f, sumSourceRate.hi));
+                certifiedBoundsValid = std::isfinite(certifiedSourceRate) ? 1.0f : 0.0f;
+            }
+        }
+    }
     // y records opt-in separately: tiny positive budgets may round to zero.
     // z/w are reserved for Kernel-derived certified bounds, not volumeControl.z.
-    globals.volumeOutputError = glm::vec4(gpuBudget, outputBudget > 0.0 ? 1.0f : 0.0f, 0.0f, 0.0f);
+    globals.volumeOutputError = glm::vec4(
+        gpuBudget, outputBudget > 0.0 ? 1.0f : 0.0f, certifiedSourceRate, certifiedBoundsValid);
     if (incidentSource) {
         globals.incidentSource = glm::vec4(incidentSource->position, 1.0f);
         globals.incidentColor = glm::vec4(incidentSource->diffuseRadiance, incidentSource->coefficients.x);

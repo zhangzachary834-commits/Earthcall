@@ -51,11 +51,49 @@ struct VolumeZeroProof {
     uint32_t supportAxis = 0u;
     std::vector<glm::vec4> supportBands;
 
+    // Interval-Certified Adaptive Volumetric Quadrature (Aetherion, 2026-10-16):
+    // 2-bit per-cell stride certificate packed 12 cells per 24-bit f32 integer
+    // word (0 = 1x fine, 1 = 2x medium, 2 = 4x coarse, 3 = proven empty), derived
+    // from OntoMath's outward-rounded interval enclosure and Lipschitz derivative
+    // ball at each leaf cell during proof construction.
+    std::vector<float> adaptiveWords;
+    uint32_t certified2xCells = 0;
+    uint32_t certified4xCells = 0;
+    float maxDensityBound = 0.0f;
+    float maxVariationBound = 0.0f;
+
     static constexpr uint32_t kBitsPerWord = 24u;
+    static constexpr uint32_t kAdaptiveCellsPerWord = 12u;
     static constexpr uint32_t kMaxAxisCells = 1023u;
     bool any() const { return provenCells > 0; }
     bool proven(uint32_t x, uint32_t y, uint32_t z) const;
+    uint32_t adaptiveStrideCode(uint32_t x, uint32_t y, uint32_t z) const;
+    uint32_t adaptiveStride(uint32_t x, uint32_t y, uint32_t z) const;
 };
+
+struct VolumeCertifiedBounds {
+    bool certified = false;
+    float maxDensity = 0.0f;
+    float maxExtinction = 0.0f;
+    float maxSourceRate = 0.0f;
+    float maxVariationRate = 0.0f;
+};
+
+// Computes Kernel-certified upper bounds on density, extinction, source
+// radiance per unit length, and variation rate over the medium's certified
+// support envelope using OntoMath interval arithmetic. Any unbounded or
+// unprovable channel leaves certified = false so the shader refuses early
+// tail termination and adaptive coarsening.
+VolumeCertifiedBounds computeVolumeCertifiedBounds(
+    const VolumeZeroProof& proof,
+    const OntoMath::Piecewise* densityExpr,
+    const OntoMath::Piecewise* extinctionExpr,
+    const OntoMath::Piecewise* scatteringExpr,
+    const OntoMath::Piecewise* volumeChromaExpr,
+    const OntoMath::Piecewise* phaseExpr,
+    const OntoMath::Piecewise* emissionExpr,
+    double mediumTime = 0.0,
+    float incidentRadianceBound = 1.0f);
 
 // True only if every value the Piecewise can produce over the local box
 // [lo, hi] is <= 0, mirroring the WGSL emitter: first matching piece wins,

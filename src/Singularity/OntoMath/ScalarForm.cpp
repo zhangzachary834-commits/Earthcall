@@ -2413,10 +2413,20 @@ std::optional<Interval> classicPerlin3LatticeRange(
 // Kernel analysis context is invocation-local and never persisted. Keep the
 // legacy consumer entrypoint separate: adding a host theorem must not silently
 // grant the renderer permission to omit work. See VOLUME_EUCLIDEAN_RANGE_2026-10-15.
+static bool mathNodeContainsNoise(const MathNode& node) {
+    if (node.op == MathNode::Op::Noise) return true;
+    for (const auto& child : node.children) {
+        if (child && mathNodeContainsNoise(*child)) return true;
+    }
+    return false;
+}
+
 static std::optional<MathNode::RangeValue> evalMathRange(
     const MathNode& node, const std::map<std::string, MathNode::RangeValue>& vars,
     bool euclidean,
-    const std::map<std::string, Interval>* prebuiltScalars = nullptr) {
+    const std::map<std::string, Interval>* prebuiltScalars = nullptr,
+    bool skipExpensiveNoise = false,
+    bool fastLipschitzNoise = false) {
     using RangeValue = MathNode::RangeValue;
     using Op = MathNode::Op;
     const auto op = node.op;
@@ -2452,9 +2462,9 @@ static std::optional<MathNode::RangeValue> evalMathRange(
         }
         case Op::VectorConstruct: {
             if (children.size() != 3) return std::nullopt;
-            auto x = evalMathRange(*children[0], vars, euclidean, prebuiltScalars);
-            auto y = evalMathRange(*children[1], vars, euclidean, prebuiltScalars);
-            auto z = evalMathRange(*children[2], vars, euclidean, prebuiltScalars);
+            auto x = evalMathRange(*children[0], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
+            auto y = evalMathRange(*children[1], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
+            auto z = evalMathRange(*children[2], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
             if (!x || !y || !z) return std::nullopt;
             // Runtime VectorConstruct coerces three SCALARS. Reading the
             // default scalar slot of a vector RangeValue would fabricate a
@@ -2470,7 +2480,7 @@ static std::optional<MathNode::RangeValue> evalMathRange(
         }
         case Op::Component: {
             if (children.size() != 1) return std::nullopt;
-            auto a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars);
+            auto a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
             if (!a || a->kind != ValueKind::Vector) return std::nullopt;
             if (stringArg == "x") return RangeValue::makeScalar(a->vec[0]);
             if (stringArg == "y") return RangeValue::makeScalar(a->vec[1]);
@@ -2479,8 +2489,8 @@ static std::optional<MathNode::RangeValue> evalMathRange(
         }
         case Op::Add: {
             if (children.size() != 2) return std::nullopt;
-            auto a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars);
-            auto b = evalMathRange(*children[1], vars, euclidean, prebuiltScalars);
+            auto a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
+            auto b = evalMathRange(*children[1], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
             if (!a || !b) return std::nullopt;
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) return RangeValue::makeScalar(a->scalar + b->scalar);
             if (a->kind == ValueKind::Vector && b->kind == ValueKind::Vector) return RangeValue::makeVector(a->vec[0] + b->vec[0], a->vec[1] + b->vec[1], a->vec[2] + b->vec[2]);
@@ -2488,8 +2498,8 @@ static std::optional<MathNode::RangeValue> evalMathRange(
         }
         case Op::Sub: {
             if (children.size() != 2) return std::nullopt;
-            auto a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars);
-            auto b = evalMathRange(*children[1], vars, euclidean, prebuiltScalars);
+            auto a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
+            auto b = evalMathRange(*children[1], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
             if (!a || !b) return std::nullopt;
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) return RangeValue::makeScalar(a->scalar - b->scalar);
             if (a->kind == ValueKind::Vector && b->kind == ValueKind::Vector) return RangeValue::makeVector(a->vec[0] - b->vec[0], a->vec[1] - b->vec[1], a->vec[2] - b->vec[2]);
@@ -2497,9 +2507,32 @@ static std::optional<MathNode::RangeValue> evalMathRange(
         }
         case Op::Scale: {
             if (children.size() != 2) return std::nullopt;
-            auto a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars);
-            auto b = evalMathRange(*children[1], vars, euclidean, prebuiltScalars);
-            if (!a || !b) return std::nullopt;
+            std::optional<RangeValue> a;
+            std::optional<RangeValue> b;
+            // Zero-annihilation short-circuit: when one factor of Scale is a
+            // noise-free envelope (e.g. clamp(...) == [0, 0] outside a medium's
+            // support) and the other factor contains 3D Perlin noise, evaluate
+            // the noise-free factor first. If it is exactZero(), the noisy
+            // factor only needs type/arity validation with its O(1) global
+            // bound [-kClassicPerlin3ValueBound, +kClassicPerlin3ValueBound],
+            // because [0, 0] * global == [0, 0].
+            if (!skipExpensiveNoise && !fastLipschitzNoise &&
+                children[0] && children[1] &&
+                mathNodeContainsNoise(*children[0]) && !mathNodeContainsNoise(*children[1])) {
+                b = evalMathRange(*children[1], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
+                if (!b) return std::nullopt;
+                const bool bIsZero = (b->kind == ValueKind::Scalar && b->scalar.exactZero());
+                a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars,
+                                  skipExpensiveNoise || bIsZero, fastLipschitzNoise);
+                if (!a) return std::nullopt;
+            } else {
+                a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
+                if (!a) return std::nullopt;
+                const bool aIsZero = (a->kind == ValueKind::Scalar && a->scalar.exactZero());
+                b = evalMathRange(*children[1], vars, euclidean, prebuiltScalars,
+                                  skipExpensiveNoise || aIsZero, fastLipschitzNoise);
+                if (!b) return std::nullopt;
+            }
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) return RangeValue::makeScalar(a->scalar * b->scalar);
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Vector) return RangeValue::makeVector(a->scalar * b->vec[0], a->scalar * b->vec[1], a->scalar * b->vec[2]);
             if (a->kind == ValueKind::Vector && b->kind == ValueKind::Scalar) return RangeValue::makeVector(a->vec[0] * b->scalar, a->vec[1] * b->scalar, a->vec[2] * b->scalar);
@@ -2507,8 +2540,8 @@ static std::optional<MathNode::RangeValue> evalMathRange(
         }
         case Op::Div: {
             if (children.size() != 2) return std::nullopt;
-            auto a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars);
-            auto b = evalMathRange(*children[1], vars, euclidean, prebuiltScalars);
+            auto a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
+            auto b = evalMathRange(*children[1], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
             if (!a || !b) return std::nullopt;
             if (b->kind != ValueKind::Scalar) return std::nullopt;
 
@@ -2540,12 +2573,12 @@ static std::optional<MathNode::RangeValue> evalMathRange(
             if (!euclidean) return retInf();
             const size_t arity = op == Op::Length ? 1 : 2;
             if (children.size() != arity) return std::nullopt;
-            auto a = evalMathRange(*children[0], vars, true, prebuiltScalars);
+            auto a = evalMathRange(*children[0], vars, true, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
             if (!a || a->kind != ValueKind::Vector) return std::nullopt;
             auto valid = [](Interval i) { return i.bounded() && !i.empty(); };
             Interval components[3] = {a->vec[0], a->vec[1], a->vec[2]};
             if (op == Op::Distance) {
-                auto b = evalMathRange(*children[1], vars, true, prebuiltScalars);
+                auto b = evalMathRange(*children[1], vars, true, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
                 if (!b || b->kind != ValueKind::Vector) return std::nullopt;
                 for (int i = 0; i < 3; ++i) {
                     if (!valid(components[i]) || !valid(b->vec[i])) return std::nullopt;
@@ -2579,7 +2612,7 @@ static std::optional<MathNode::RangeValue> evalMathRange(
         }
         case Op::Abs: {
             if (children.size() != 1) return std::nullopt;
-            auto a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars);
+            auto a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
             if (!a) return std::nullopt;
             auto absInt = [](Interval i) {
                 float minAbs = (i.lo <= 0.0f && i.hi >= 0.0f) ? 0.0f : std::min(std::abs(i.lo), std::abs(i.hi));
@@ -2592,8 +2625,8 @@ static std::optional<MathNode::RangeValue> evalMathRange(
         }
         case Op::Union: {
             if (children.size() != 2) return std::nullopt;
-            auto a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars);
-            auto b = evalMathRange(*children[1], vars, euclidean, prebuiltScalars);
+            auto a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
+            auto b = evalMathRange(*children[1], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
             if (!a || !b) return std::nullopt;
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) {
                 return RangeValue::makeScalar(Interval(std::min(a->scalar.lo, b->scalar.lo), std::min(a->scalar.hi, b->scalar.hi)));
@@ -2602,8 +2635,8 @@ static std::optional<MathNode::RangeValue> evalMathRange(
         }
         case Op::Intersection: {
             if (children.size() != 2) return std::nullopt;
-            auto a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars);
-            auto b = evalMathRange(*children[1], vars, euclidean, prebuiltScalars);
+            auto a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
+            auto b = evalMathRange(*children[1], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
             if (!a || !b) return std::nullopt;
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) {
                 return RangeValue::makeScalar(Interval(std::max(a->scalar.lo, b->scalar.lo), std::max(a->scalar.hi, b->scalar.hi)));
@@ -2612,8 +2645,8 @@ static std::optional<MathNode::RangeValue> evalMathRange(
         }
         case Op::Difference: {
             if (children.size() != 2) return std::nullopt;
-            auto a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars);
-            auto b = evalMathRange(*children[1], vars, euclidean, prebuiltScalars);
+            auto a = evalMathRange(*children[0], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
+            auto b = evalMathRange(*children[1], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
             if (!a || !b) return std::nullopt;
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) {
                 return RangeValue::makeScalar(Interval(std::max(a->scalar.lo, -b->scalar.hi), std::max(a->scalar.hi, -b->scalar.lo)));
@@ -2643,9 +2676,9 @@ static std::optional<MathNode::RangeValue> evalMathRange(
             // Without this case every clamped envelope bounded to [-inf, inf],
             // and no zero-set proof could see through one.
             if (children.size() != 3) return std::nullopt;
-            auto v = evalMathRange(*children[0], vars, euclidean, prebuiltScalars);
-            auto l = evalMathRange(*children[1], vars, euclidean, prebuiltScalars);
-            auto h = evalMathRange(*children[2], vars, euclidean, prebuiltScalars);
+            auto v = evalMathRange(*children[0], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
+            auto l = evalMathRange(*children[1], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
+            auto h = evalMathRange(*children[2], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
             if (!v || !l || !h) return std::nullopt;
             auto component = [](const RangeValue& r, int axis) {
                 return r.kind == ValueKind::Vector ? r.vec[axis] : r.scalar;
@@ -2682,8 +2715,11 @@ static std::optional<MathNode::RangeValue> evalMathRange(
             if (children.size() != 1 || !children[0]) {
                 return RangeValue::makeScalar(global);
             }
-            auto arg = evalMathRange(*children[0], vars, euclidean, prebuiltScalars);
+            auto arg = evalMathRange(*children[0], vars, euclidean, prebuiltScalars, skipExpensiveNoise, fastLipschitzNoise);
             if (!arg || arg->kind != ValueKind::Vector) {
+                return RangeValue::makeScalar(global);
+            }
+            if (skipExpensiveNoise) {
                 return RangeValue::makeScalar(global);
             }
             for (int axis = 0; axis < 3; ++axis) {
@@ -2697,12 +2733,14 @@ static std::optional<MathNode::RangeValue> evalMathRange(
             // and the ACTUAL hashed gradients, so a half-lattice-cell query can
             // become far tighter than a global derivative ball.
             Interval best = global;
-            const std::array<Interval, 3> argBox = {
-                arg->vec[0], arg->vec[1], arg->vec[2]
-            };
-            if (auto lattice = classicPerlin3LatticeRange(argBox)) {
-                const Interval met = best.met(*lattice);
-                if (!met.empty()) best = met;
+            if (!fastLipschitzNoise) {
+                const std::array<Interval, 3> argBox = {
+                    arg->vec[0], arg->vec[1], arg->vec[2]
+                };
+                if (auto lattice = classicPerlin3LatticeRange(argBox)) {
+                    const Interval met = best.met(*lattice);
+                    if (!met.empty()) best = met;
+                }
             }
 
             // Independent theorem: global Lipschitz ball about the box centre.
@@ -2741,7 +2779,16 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(
     for (const auto& [name, rv] : vars) {
         if (rv.kind == ValueKind::Scalar) scalars.emplace(name, rv.scalar);
     }
-    return evalMathRange(*this, vars, false, &scalars);
+    return evalMathRange(*this, vars, false, &scalars, false, false);
+}
+
+std::optional<MathNode::RangeValue> MathNode::evalFastRange(
+    const std::map<std::string, RangeValue>& vars) const {
+    std::map<std::string, Interval> scalars;
+    for (const auto& [name, rv] : vars) {
+        if (rv.kind == ValueKind::Scalar) scalars.emplace(name, rv.scalar);
+    }
+    return evalMathRange(*this, vars, false, &scalars, false, true);
 }
 
 std::optional<MathNode::RangeValue> MathNode::evalMathematicalRange(
@@ -2750,7 +2797,7 @@ std::optional<MathNode::RangeValue> MathNode::evalMathematicalRange(
     for (const auto& [name, rv] : vars) {
         if (rv.kind == ValueKind::Scalar) scalars.emplace(name, rv.scalar);
     }
-    return evalMathRange(*this, vars, true, &scalars);
+    return evalMathRange(*this, vars, true, &scalars, false, false);
 }
 
 nlohmann::json MathNode::toJson() const {
