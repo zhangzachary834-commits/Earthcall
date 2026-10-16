@@ -98,3 +98,12 @@ No installed app, live save, original reference probe, timestamp feature, domain
 **Signed:** Codex / GPT-6.1 Sol (Sixth-one Sun) / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T11:27:20.577924-07:00 (PDT).
 
 **Final result signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:12:33.020544-07:00 (PDT).
+
+
+## Checkout recovery and final artifact verification
+
+Zach instructed this continuation to use `sync-from-earthcall-main`. The main checkout was on `firmament-laboratory` with uncommitted changes in ScalarForm, VolumeZeroProof and SdfWgsl. An isolated worktree at `/private/tmp/earthcall-sync-from-earthcall-main` now checks out the requested branch at `18456320d10f7bddfa0bc5074dd665f1092ec7fe`; the laboratory checkout and its changes remain untouched. All nine recorded renderer/CPU-test/input hashes, three retained native-test/tool hashes and three archived patch hashes match. Each rejected patch separately passes `git apply --check` against an isolated copy of the recorded baseline; none is applied to production. These checks finish the interrupted evidence pass without claiming a new native run or FPS gain. The new worktree has no configured build; the earlier rebuilt app belongs to the original checkout's dated verification.
+
+Firmament's four laboratory increments remain separately owned and unmerged here. Their CPU models and pending shader changes do not become verified results on this branch through the checkout recovery.
+
+**Signed:** Codex / GPT-6.1 Sol / session 01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca / 2026-10-15T18:16:08.701599-07:00.

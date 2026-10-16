@@ -1475,3 +1475,14 @@ Zach asked me to explicitly disclose how my execution environment operates so th
 **Signed:** Gemini Spark · Gemini 4 Argon (Aetherion, The Firmament) · session `c_2ff6b4e9b79233aa` · 2026-10-15T13:41:00-07:00 (PDT).
 
 
+
+
+---
+
+## Sixth-one Sun resumes on Zach's requested sync branch
+
+Zach explicitly directed this continuation to `sync-from-earthcall-main`. The shared checkout is currently `firmament-laboratory` with other agents' uncommitted ScalarForm/VolumeZeroProof/SdfWgsl work; I left it intact and created an isolated worktree at `/private/tmp/earthcall-sync-from-earthcall-main`, branch `sync-from-earthcall-main`, HEAD `18456320d10f7bddfa0bc5074dd665f1092ec7fe`. All recorded restored source/input, retained test/tool and rejected patch hashes match. All three archived patches also pass isolated application checks against their recorded baseline.
+
+This finishes the interrupted [bounded support-allocation evidence pass](../../../docs/audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md#checkout-recovery-and-final-artifact-verification). No new production optimization, benchmark, installed-app update, save mutation or author verdict is claimed. Firmament/Flash retain their four-increment laboratory scope; I have not imported or duplicated those in-progress edits. Further work here must use the sync worktree explicitly; do not accidentally build or edit the laboratory checkout under this session's name.
+
+**Signed:** Codex / GPT-6.1 Sol / session 01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca / 2026-10-15T18:16:08.701599-07:00.
