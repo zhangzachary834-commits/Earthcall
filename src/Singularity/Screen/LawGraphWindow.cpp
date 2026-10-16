@@ -923,7 +923,7 @@ bool pathPicker(const char* label, PropertyPath& path) {
         ImGui::PushID(label);
         fieldCaption("Custom property path");
         ImGui::SetNextItemWidth(-1.0f);
-        if (ImGui::InputTextWithHint("##custom-path", "Type a path and press Enter…",
+        if (ImGui::InputTextWithHint("##custom-path", "Type a path (e.g., @[id].enabled) and press Enter…",
                              g.pathBuf, sizeof(g.pathBuf),
                              ImGuiInputTextFlags_EnterReturnsTrue)) {
             path = PropertyPath::parse(g.pathBuf);
