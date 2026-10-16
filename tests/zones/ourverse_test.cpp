@@ -13,6 +13,7 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
+#include "support/test_harness.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -86,6 +87,44 @@ int main() {
     assert(laws.find("ourverse-gathering-unowned"));
     assert(laws.find("ourverse-filaments-mutual"));
     assert(laws.find("ourverse-gathering-unowned")->isFirstMover());
+
+    // Witness gap documentation & real production boot path traversal:
+    //
+    // WHAT THE OLD TEST COULD PROVE:
+    // - That Ourverse methods (ensureGatheringZone, registerMetalaws, weave, etc.)
+    //   work correctly when directly called on manually instantiated, standalone objects.
+    //
+    // WHAT THE OLD TEST COULD NOT PROVE:
+    // - That the real engine boot sequence (EngineInit.cpp / BootedEngineHarness)
+    //   actually invokes Ourverse::ensureGatheringZone and Ourverse::registerMetalaws,
+    //   making the Gathering zone and metalaws live during real application startup.
+    //
+    // Below we traverse the real runtime boot path using BootedEngineHarness:
+    {
+        TestSupport::BootedEngineHarness harness("Player", "humanoid", false);
+
+        // Verify Gathering zone is present in harness.zones
+        bool foundGathering = false;
+        for (const auto& z : harness.zones.zones()) {
+            if (z && z->isOurverseGathering()) {
+                foundGathering = true;
+                assert(z->owner().empty());
+                break;
+            }
+        }
+        assert(foundGathering);
+
+        // Verify metalaws are registered in harness.lawManager
+        Law* m1 = harness.lawManager.find("ourverse-gathering-unowned");
+        Law* m2 = harness.lawManager.find("ourverse-filaments-mutual");
+        assert(m1 != nullptr);
+        assert(m2 != nullptr);
+        assert(m1->isFirstMover());
+        assert(m2->isFirstMover());
+        // By default, registerMetalaws sets law->setEnabled(false)
+        assert(!m1->isEnabled());
+        assert(!m2->isEnabled());
+    }
 
     Singularity::Language::LanguageSystem::instance().clear();
     glfwDestroyWindow(window);
