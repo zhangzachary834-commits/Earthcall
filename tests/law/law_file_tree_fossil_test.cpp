@@ -47,6 +47,21 @@ int main() {
         }
     }
 
+    const fs::path singularRelative = "src/ConstructedBeing/Singular/Singular.hpp";
+    std::ifstream singularFile(root / singularRelative);
+    if (!singularFile) {
+        std::cerr << "FAIL: Could not open Singular.hpp at " << root / singularRelative << "\n";
+        return 1;
+    }
+    const std::string singularContent((std::istreambuf_iterator<char>(singularFile)),
+                                       std::istreambuf_iterator<char>());
+    for (const char* fossil : {"parentFormationInstances", "childFormationInstances", "satisfiesKernelBounds"}) {
+        if (singularContent.find(fossil) != std::string::npos) {
+            std::cerr << "FAIL: Legacy Singular fossil member/method exists: " << fossil << "\n";
+            return 1;
+        }
+    }
+
     std::cout << "PASS: Legacy fossil files and stubs are absent.\n";
     return 0;
 }
