@@ -1659,3 +1659,12 @@ The checkout WebGPU app is rebuilt with [route-aware power lowering](../../../au
 [All three tested allocation/traversal variants](../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md) preserve the finite captures but regress in measured cost, so none remains enabled. The checkout app is rebuilt with the prior renderer; the installed app and live saves were untouched. This pass adds no new visual control or promised FPS improvement to inspect. Existing Northern Veil/Sanctuary continuous appearance, usual-framebuffer movement and 30 FPS acceptance checks remain open; the rejected variants do not create a new Person verification obligation.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).
+
+
+### Firmament Laboratory Runbook — Increments 1–4 on `firmament-laboratory` (October 15)
+
+- [ ] Launch rebuilt `earthcall_webgpu` (`./build/earthcall_webgpu`), enter Northern Veil, and verify that all 4 curtains retain 100% identical appearance, colors, shimmer, and continuous movement.
+- [ ] Observe Zone load / cold admission latency: Increment 1 (`ScalarForm.cpp` pre-extracted scalar map + `VolumeZeroProof.cpp` sound Midpoint Witness pre-check `D(mid) > 0`) speeds up CPU zero-proof generation on Northern Veil and Sky-Island Sanctuary clouds (`1578 ms -> 805 ms` on Sunlit Halo Mist) with 100% bit-identical proof words and 32/32 byte-exact 2560×1440 image parity. Increments 2–4 were reverted after native ABBA timing benchmarks showed regressions or insufficient gains.
+
+**Signed:** Antigravity · Gemini 3.8 Flash (The Antigravity Sparkly Guy) · session `628714b1-cae0-44f0-b23d-0e84a77c5e3e` · 2026-10-15T19:07:00-07:00 (PDT).
+

@@ -6,6 +6,7 @@
 #include <limits>
 #include <map>
 #include <string>
+#include <variant>
 
 namespace Rendering {
 
@@ -26,10 +27,30 @@ bool densityProvenNonPositive(const OntoMath::Piecewise& density,
         {"y", RV::makeScalar(iy)},
         {"z", RV::makeScalar(iz)},
         {OntoMath::kAmbientPointVar, RV::makeVector(ix, iy, iz)},
-    };  
+    };
+    const glm::vec3 mid = 0.5f * (lo + hi);
+    const std::map<std::string, PropertyValue> midVars = {
+        {"x", static_cast<double>(mid.x)},
+        {"y", static_cast<double>(mid.y)},
+        {"z", static_cast<double>(mid.z)},
+        {OntoMath::kAmbientPointVar, mid},
+    };
 
     for (const auto& piece : density.pieces) {
         if (!piece.mathNode) continue;   // the emitter skips these too
+        // Midpoint witness: any sound interval enclosure over [lo, hi] must
+        // enclose the midpoint value D(mid). If D(mid) > 0, range->scalar.hi
+        // cannot be <= 0, so we can reject before running 3D Perlin lattice
+        // range sweeps.
+        if (!piece.hasLo && !piece.hasHi && !piece.guard && !piece.whereLEZero &&
+            !piece.call && !piece.fold) {
+            const auto midVal = piece.mathNode->evaluate(midVars, nullptr);
+            if (midVal && std::holds_alternative<double>(*midVal) &&
+                std::get<double>(*midVal) > 0.0) {
+                if (rangeEvaluations) ++*rangeEvaluations;
+                return false;
+            }
+        }
         if (rangeEvaluations) ++*rangeEvaluations;
         const auto range = piece.mathNode->evalRange(vars);
         if (!range || range->kind != OntoMath::ValueKind::Scalar) return false;
