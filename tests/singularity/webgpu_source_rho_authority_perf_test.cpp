@@ -302,6 +302,38 @@ int main() {
         }
     }
 
+    // Measurement-only diagnostics: emit AFTER the uninstrumented 12-pair loop.
+    // Preserve individual paired differences; separate arm medians alone erase
+    // pairing and cannot characterize order effects or timing dispersion.
+    std::vector<double> pairedDeltaMs;
+    std::vector<double> exactFirstDeltaMs;
+    std::vector<double> authorityFirstDeltaMs;
+    pairedDeltaMs.reserve(kSamplePairs);
+    for (int i = 0; i < kSamplePairs; ++i) {
+        const double delta = exact.wallMs[i] - authority.wallMs[i];
+        pairedDeltaMs.push_back(delta);
+        ((i & 1) == 0 ? exactFirstDeltaMs : authorityFirstDeltaMs)
+            .push_back(delta);
+        std::printf(
+            "SOURCE_RHO_AUTH_PERF PAIR index=%d first=%s "
+            "exact_wall_ms=%.9f authority_wall_ms=%.9f delta_ms=%.9f\n",
+            i, (i & 1) == 0 ? "exact" : "authority",
+            exact.wallMs[i], authority.wallMs[i], delta);
+    }
+    const double pairedMedianMs = median(pairedDeltaMs);
+    std::vector<double> absoluteDeviations;
+    absoluteDeviations.reserve(pairedDeltaMs.size());
+    for (double delta : pairedDeltaMs)
+        absoluteDeviations.push_back(std::abs(delta - pairedMedianMs));
+    std::printf(
+        "SOURCE_RHO_AUTH_PERF PAIRED_SUMMARY median_delta_ms=%.9f "
+        "mad_delta_ms=%.9f exact_first_median_delta_ms=%.9f "
+        "authority_first_median_delta_ms=%.9f "
+        "valid_exact_gpu_samples=%zu valid_authority_gpu_samples=%zu\n",
+        pairedMedianMs, median(absoluteDeviations),
+        median(exactFirstDeltaMs), median(authorityFirstDeltaMs),
+        exact.gpuMs.size(), authority.gpuMs.size());
+
     const double exactWall = median(exact.wallMs);
     const double authorityWall = median(authority.wallMs);
     const double wallRatio =
