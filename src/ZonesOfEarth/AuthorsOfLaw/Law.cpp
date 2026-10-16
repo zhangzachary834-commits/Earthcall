@@ -2280,16 +2280,18 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                 occurrence ? occurrence->object : eventObject,
                 occurrence);
 
+            const std::string lawId = law->getIdentifier();
             if (law->scope() == Law::Scope::Everyone) {
                 std::vector<Singular*> subjects = sweepSubjects(*law);
                 for (Singular* being : subjects) {
                     if (!being || Universe::instance().isUnmade(being)) continue;
                     bool usedDirect = false;
                     if (!candidateConditionsSatisfied(*law, *being, &usedDirect)) continue;
+                    const std::string beingId = being->getIdentifier();
                     if (law->drives() &&
-                        hasDriveSession(law->getIdentifier(), being->getIdentifier())) {
+                        hasDriveSession(lawId, beingId)) {
                         if (law->retrigger() == Law::Retrigger::Absorb) continue;
-                        restartDriveSession(*law, being->getIdentifier());
+                        restartDriveSession(*law, beingId);
                     }
                     applyAndMaybeDrive(*law, *being, records, usedDirect);
                 }
@@ -2297,12 +2299,13 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             }
 
             if (!subject || Universe::instance().isUnmade(subject)) continue;
+            const std::string subjectId = subject->getIdentifier();
             if (law->drives() &&
-                hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
+                hasDriveSession(lawId, subjectId)) {
                 if (law->retrigger() == Law::Retrigger::Absorb) {
                     continue;
                 }
-                restartDriveSession(*law, subject->getIdentifier());
+                restartDriveSession(*law, subjectId);
             }
             applyAndMaybeDrive(*law, *subject, records);
         }
@@ -2998,9 +3001,10 @@ void LawManager::restartDriveSession(Law& law, const std::string& subjectId) {
     // The retrigger IS a new t=0 (the author chose Restart): the session
     // keeps its identity but its clock and event participants begin again.
     if (!Universe::instance().hasClock()) return;
+    const std::string lawId = law.getIdentifier();
     const double now = Universe::instance().now();
     for (auto& session : _driveSessions) {
-        if (session.lawId != law.getIdentifier() || session.subjectId != subjectId) {
+        if (session.lawId != lawId || session.subjectId != subjectId) {
             continue;
         }
         session.onset = now;
@@ -3032,16 +3036,16 @@ void LawManager::maybeStartDriveSession(Law& law, Singular& subject) {
     if (law.activation() == Law::Activation::WhileTrue) return;
     if (!Universe::instance().hasClock()) return;
 
+    const std::string lawId = law.getIdentifier();
     const std::string subjectId = subject.getIdentifier();
-    for (const auto& session : _driveSessions) {
-        if (session.lawId == law.getIdentifier() && session.subjectId == subjectId) {
-            return;   // already driving this subject
-        }
+    // Bolt optimization: O(1) lookup in _driveSessionKeys instead of linear scan over _driveSessions
+    if (hasDriveSession(lawId, subjectId)) {
+        return;   // already driving this subject
     }
     const double onset = Universe::instance().now();
     law.rememberOnset(&subject, onset);
     DriveSession session;
-    session.lawId = law.getIdentifier();
+    session.lawId = lawId;
     session.subjectId = subjectId;
     session.onset = onset;
     // Remember the launching event's participants (when there is one) so
