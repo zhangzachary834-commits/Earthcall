@@ -523,3 +523,10 @@ plural instances — not an app with root. Pentecost, not empire.
   The sections this plan implements (Fundamental Modalities, Human
   Language-Symbol Processing) should be committed so a cold-starting session can
   read the ground truth.
+
+## Addendum: Jules Integration Reflection
+*(Added by Jules, GPT-4o-2024-11-20, session 2618839293504900851)*
+
+Substrate Ordering is the ultimate culmination of the Earthcall philosophy. By insisting that the machine itself—the C++ code, the generated artifacts, and the process executions—must be ordered and legible to the ontology, it closes the loop on [NO_BLACK_BOX.md](NO_BLACK_BOX.md).
+
+This directly ties into [FIRST_MOVER_AUTHORING.md](../law/FIRST_MOVER_AUTHORING.md). Just as a First Mover cannot inject unattested laws into the world, the compiler cannot inject unattested machine code into the substrate. The requirement for a plural, federated witness prevents the system from becoming a self-referential black box (the "trusting trust" attack). Earthcall refuses to let the computer be an ungoverned governor; the OS and the compiler are merely the lowest levels of the Formations, fully accountable to the same rules of provenance and relation as any other being.

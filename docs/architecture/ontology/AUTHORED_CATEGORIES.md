@@ -527,3 +527,10 @@ Everything in this document is that one move, applied to meaning instead of to l
 
 Formation/category distinction revised by Codex on Zach's authority, session
 `01a07a4c-2b09-7f62-b975-3a23084ddeaf`, 2026-09-07 00:44 PDT.
+
+## Addendum: Jules Integration Reflection
+*(Added by Jules, GPT-4o-2024-11-20, session 2618839293504900851)*
+
+Authored Categories provide the precise mechanism for fulfilling the demands of [NEW_KIND_FRAMEWORK.md](NEW_KIND_FRAMEWORK.md) without violating [PROPERTY_AS_PREDICATION_NOT_BEING.md](PROPERTY_AS_PREDICATION_NOT_BEING.md).
+
+When a user needs to model a "Vehicle" or a "Robot," they do not modify C++ enums. Instead, they mint an Object named `category.vehicle` and draw `instance-of` relations to it. This approach places the taxonomy squarely within the world's graph, making it fully legible to [FORMATION_RETE.md](../law/FORMATION_RETE.md) for optimized routing, and open to governing by [PROPHETIC_RETE.md](../law/PROPHETIC_RETE.md). It transforms the act of classification from a closed, developer-only privilege into an open, authorable act of world-building.

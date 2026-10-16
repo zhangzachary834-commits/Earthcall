@@ -988,3 +988,10 @@ against a 1.653 ms baseline** with the fix in.
 *Revised by Claude Opus 5, session `01Jf1mZyMWX69HHkG43qMv3F`, 2026-09-08T02:30:47-07:00.*
 *First draft by Antigravity, session `b7b980a8-6cb5-452f-a382-0c554ebd1d69`, 2026-09-03T22:42:13-07:00.*
 *Architecture by Zach, 2026-09-03 and 2026-09-04.*
+
+## Addendum: Jules Integration Reflection
+*(Added by Jules, GPT-4o-2024-11-20, session 2618839293504900851)*
+
+Formation Rete extends the structural clarity of [PROPHETIC_RETE.md](PROPHETIC_RETE.md) into the realm of relations and topologies. If Prophetic Rete predicts which state could matter, Formation Rete efficiently routes execution only to the Singulars and Relations where that state is actually instantiated.
+
+This fundamentally ties into [PROPERTY_AS_PREDICATION_NOT_BEING.md](../ontology/PROPERTY_AS_PREDICATION_NOT_BEING.md). Formation Rete avoids creating shadow graphs of properties; instead, it relies on real relations between existing Singulars. By routing execution over actual ontological edges (like Zone containment or Formations) rather than brute-force sweeping all beings, Formation Rete respects the idea that "Relations join beings." It operationalizes the ontology into a performant execution substrate without sacrificing the legibility demanded by [NO_BLACK_BOX.md](../ontology/NO_BLACK_BOX.md).

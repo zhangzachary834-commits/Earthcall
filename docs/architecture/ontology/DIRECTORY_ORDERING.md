@@ -352,3 +352,10 @@ The tree is the first document anyone reads and the only one nobody skips. Make 
 the true thing.
 
 *Routing correction: Codex · GPT-6.1 Sol · session `01a122ec-b377-7391-ad6f-86d11b501d1b` · 2026-10-09 16:10 PDT; Zach’s agent-guidance refresh reconciles the prose tool path and Formation placement with the existing tree diagram and source.*
+
+## Addendum: Jules Integration Reflection
+*(Added by Jules, GPT-4o-2024-11-20, session 2618839293504900851)*
+
+The way the repository structure enforces ontological truth is the filesystem equivalent of [PROPERTY_AS_PREDICATION_NOT_BEING.md](PROPERTY_AS_PREDICATION_NOT_BEING.md) and [NEW_KIND_FRAMEWORK.md](NEW_KIND_FRAMEWORK.md).
+
+Just as we do not mint new C++ classes for authored concepts, and we do not invent new "beings" just to hold properties, we do not create top-level directories for technologies, languages, or transient architectural patterns. The directory structure *is* the ontology. If something belongs to the Screen modality, it lives in `Screen`, whether it is C++, Python, WGSL, or WebGPU. This strict mapping ensures that developers and agents alike cannot accidentally construct black boxes ([NO_BLACK_BOX.md](NO_BLACK_BOX.md)) by hiding them in a "Utils" or "Legacy" folder where the conceptual domain is lost.
