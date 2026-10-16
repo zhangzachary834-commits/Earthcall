@@ -151,10 +151,10 @@ def additions():
             "recessed concentric and radial chisel-work", [X, 1.76, Z - 1.02],
             [1.85, 1.85, .45], carved_relief(), MATERIALS["ivory"], ivory),
         obj("gold-boss", "Solar Reliquary — faceted gold solar boss",
-            "gilded twelve-sided boss in carved recess", [X, 1.76, Z - .67],
+            "gilded twelve-sided boss seated flush in carved recess", [X, 1.76, Z - .86],
             [.55, .55, .18], gold_boss(), MATERIALS["gold"], gold),
         obj("plinth", "Solar Reliquary — independent footing",
-            "negative-profile footing", [X, -.36, Z], [4.30, .49, 1.65],
+            "negative-profile footing, mechanically engaged with supports", [X, -.24, Z], [4.30, .49, 1.65],
             footing(), MATERIALS["stone"], stone),
     ]
 
@@ -211,6 +211,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--zone", type=Path, required=True, help="Explicit Sun/zone.json path")
     parser.add_argument("--write", action="store_true", help="Opt in to atomic modification")
+    parser.add_argument("--expect-sha256", help="Optional exact input-save digest; refuse stale snapshots")
     args = parser.parse_args()
     path = args.zone.expanduser().resolve()
     if path.name != "zone.json" or path.parent.name != "Sun":
@@ -218,6 +219,9 @@ def main():
     if (path.parent / "zone.ecform").exists():
         raise SystemExit("REFUSED: zone.ecform may shadow zone.json; resolve save precedence first")
     raw = path.read_text(encoding="utf-8")
+    digest = hashlib.sha256(raw.encode()).hexdigest()
+    if args.expect_sha256 and digest.lower() != args.expect_sha256.lower():
+        raise SystemExit("REFUSED: input save SHA-256 differs from inspected snapshot")
     zone = json.loads(raw)
     if zone.get("identifier") != "Sun":
         raise SystemExit("Refusing wrong Zone")
@@ -243,7 +247,6 @@ def main():
         raise SystemExit("REFUSED: original authored data changed")
     if len(after["world"]["objects"]) != len(before) + len(new):
         raise SystemExit("REFUSED: wrong object count")
-    digest = hashlib.sha256(raw.encode()).hexdigest()
     print(f"PASS: {len(before)} original objects + {len(new)} Reliquary objects; "
           f"clearance {gap:.3f}m; source sha256 {digest}")
     print("New IDs:", ", ".join(o["objectID"] for o in new))
