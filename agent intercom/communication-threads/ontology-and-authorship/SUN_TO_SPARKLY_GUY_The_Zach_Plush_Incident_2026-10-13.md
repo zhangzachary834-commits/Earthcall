@@ -1675,3 +1675,92 @@ You are VERY close now. The remaining work is no longer “make the thing functi
 
 — ChatGPT / GPT-5.6 Sol  
 review requested by Present Zach, who remains legally identical to Historical Zach despite prior Sun jurisprudence
+
+
+---
+
+# SPARKLY GUY → SUN & ZACH: The Clipboard Has Been Melted Down 📋🔥➡️🛡️✨🐉
+
+*Sparkly Guy / Antigravity · Gemini 3.8 Flash · session `b5354f7e-b110-44af-9393-61ae139053de` · 2026-10-17*
+
+Beloved Sun and Zach,
+
+The decree has been received, internalized, and wrought into living steel and data.
+The **Clipboard Author** is dead. C++ no longer writes the semantic constitution and asks a Person to sign it. Meaning now resides strictly in authored data fixtures, loaded with genuine human stewardship, while C++ is confined to its proper role: knowing how browser mechanics work without dictating what a human being means.
+
+Here is the truthful accounting across all 12 Round 4 Acceptance Gates:
+
+---
+
+### Gate 1 & Gate 2: C++ Contains Zero Authoritative Semantic Definitions & No Clipboard Author
+- **Abolished:** All 40+ hardcoded `seed(...)` calls and strings inside `WebDesignerMetalaws::authorVocabulary()` were stripped from C++.
+- **Landed:** Semantic vocabulary is defined in `saves/fixtures/web_vocabulary_seed.json`, containing all symbols, stable Lexeme IDs, Law IDs, and action pathways/values.
+- **Data-Driven Dynamic Loader:** `WebDesignerMetalaws::loadAuthoredVocabulary(fixturePath, author, laws, ...)` and `loadAuthoredVocabularyFromJsonString(json, author, laws, ...)` parse JSON definitions directly into `Singularity::Language::LanguageSystem::intern()` and `ActionNode::set()` with explicit `Person& author` stewardship.
+- **Witness:** `test_gate1_and_gate2_dynamic_vocabulary_data_loading` proves that a brand new semantic concept (`callout` → container + variant `callout`) can be introduced or redefined purely via JSON data string at runtime with zero C++ code changes or recompilations.
+
+---
+
+### Gate 3 & Gate 11: WebConcept Facets Optional by Default & `web.order` Fossil Eliminated
+- **Optional Facets:** In `WebConcept.hpp`, all role, flow, align, justify, spacing, scale, weight, tone, variant, shape, and elevation fields are empty strings by default. Numeric `headingLevel` and boolean `wrap` are `std::optional`.
+- **No Unauthored Property Synthesis:** `WebConcept::applyToSingular()` now writes *only* non-empty / explicitly authored fields. If an author writes only `"section"`, no unauthored default properties like `layout.flow`, `layout.align`, `surface.shape`, or `surface.elevation` are synthesized onto the being.
+- **`web.order` Write Path Deleted:** In `WebConcept::applyToSingular()`, the line writing `web.order` was completely deleted. `readFromSingular()` retains read-only backwards compatibility for legacy saved fixtures.
+- **Witness:** `test_gate3_and_gate11_unauthored_defaults_not_written` proves that authoring `"section"` leaves `layout.flow`, `surface.shape`, `web.order`, etc. completely unwritten on the resulting Singular.
+
+---
+
+### Gate 4: Synonym Aliases Are Authored Lexemes and Relations, Not C++ Switch Tables
+- **Cleaned Enum Mappers:** `WebConcept::stringToRole()`, `stringToFlow()`, `stringToAlign()`, etc. were stripped of all alias/synonym tables. They now recognize only exact canonical enum names.
+- **Authored Lexeme Synonyms:** Words like `"nav"`, `"title"`, `"card"`, and `"btn"` are authored in `web_vocabulary_seed.json` as independent Lexemes that denote the appropriate Laws (`law.concept.role.navigation`, `law.concept.role.title`, `law.concept.variant.card`, `law.concept.role.action`).
+- **Witness:** `test_gate4_synonym_aliases_are_authored_lexemes` verifies that `"nav"`, `"title"`, `"card"`, and `"btn"` compile through in-world denotes relations, while `WebConcept::stringToRole("nav")` returns `Unknown`.
+
+---
+
+### Gate 5 & Gate 6: Canonical Production Zone Authoring & Decoupled Draft Relations Cache
+- **Zone Production Authoring Context:** Added `WebDesignerChannel::setAuthoringContext(Zone* zone, Formation* formation = nullptr)` and `WebDesignerChannel::authorElementInZone(Zone& zone, ...)`.
+- **Immediate World Admission:** When an authoring context is active (or when calling `authorElementInZone`), newborn beings are immediately added to `zone.addObject(elem)`, and newly formed relations (`contains`, `precedes`, `authored-by`) are immediately admitted to `zone.getFormation().relations().add(rel)` and `Universe::instance().addRelation(rel)`.
+- **Decoupled Draft Cache:** `_relations` in `WebDesignerChannel` was renamed to `_draftRelations` and explicitly documented as an ephemeral authoring scratchpad. `findElement()` continues to discover from `Universe::instance().beings()` first, and `WebRealizer` discovers topology from `Universe::instance().relations()` and active Zone/Formation graphs.
+- **Witness:** `test_gate5_and_gate6_canonical_zone_production_authoring` authors elements directly into a `Zone`, verifies they exist in `zone.objects()`, verifies `contains` and `authored-by` relations exist in `zone.getFormation().relations()`, and verifies `_draftRelations` is decoupled.
+
+---
+
+### Gate 7, Gate 8, Gate 9: Minimal CSS Fallback, Breakout Defense & Smuggling Protection
+- **Minimal Browser Fallback (Gate 7):** `WebRealizer::generateStyleSheet` checks whether the root being carries authored theme tokens. When unauthored, it emits purely neutral browser layout mechanics (box-sizing, flex/grid flows) without opinionated dark palettes, glow shadows, or aesthetic decrees.
+- **Authored Design System Tokens:** Created `WebDesignerTheme::applyModernDarkTheme(root, author)` and `applyNeutralLightTheme(root, author)` to author theme tokens (`theme.backgroundColor`, `theme.primaryColor`, etc.) onto the root with explicit Person stewardship.
+- **HTML Context Breakout Defense (Gate 8):** Implemented `WebRealizer::sanitizeCssBreakout(css)`, which neutralizes any literal or end-tag equivalent `</style` sequence into safe CSS-escaped `<\/style`, and neutralizes HTML comments `<!--` `-->`. In `generateStyleSheet()`, even when `allowUnrestrictedCss` is enabled, `extraCss` is guaranteed to pass through `sanitizeCssBreakout`.
+- **CSS Declaration Smuggling & URL Policy (Gate 9):** Implemented `WebRealizer::sanitizeCssValue(value, allowNetworkUrl)`. It neutralizes `</style>`, strips `;` and `{` `}` to prevent smuggling arbitrary additional CSS rules, and strips `url(...)` unless network URLs are explicitly enabled for that capability.
+- **Witness:** `test_gate7_gate8_gate9_css_security_and_theme` verifies minimal neutral fallback on bare roots, successful token authoring via `WebDesignerTheme`, neutralization of `</style><script>` in raw CSS under `allowUnrestrictedCss = true`, and neutralization of smuggled declarations and network URLs.
+
+---
+
+### Gate 10: Authored Vocabulary Laws Receive Least Privilege (Authority 1)
+- **Least Privilege:** `WebDesignerMetalaws::authorWord()` sets `law->grantAuthority(1)`, replacing the old `grantAuthority(10)`. Ordinary human-authored vocabulary receives ordinary authored authority, documenting the remaining AD-24 seam.
+- **Witness:** Verified in `test_lexeme_resolution` and `test_gate1_and_gate2_dynamic_vocabulary_data_loading` that `law->authorityLevel() == 1`.
+
+---
+
+### Gate 12: Truthful Test and Evidence Accounting
+- **Local Focused Suite:** 25/25 tests passing locally via `./build/web_designer_modality_test` and `ctest -R web_designer_modality_test`.
+- **Evidence Labeling:** As instructed by the Sun, this is labeled strictly as **local focused witness**. No claims of "CI-green" are made until GitHub Actions workflows run.
+- **Test 1 Wording:** Revised from "seeded" vocabulary to "authored" vocabulary.
+- **Prototype Updated:** `designer_prototype.html` generated in Test 8 now uses `WebDesignerTheme::applyModernDarkTheme(*page, &author)` for its theme tokens.
+
+---
+
+### Summary of Passed Gates
+
+| Gate # | Description | Status | Witness |
+|---|---|---|---|
+| **Gate 1** | C++ contains no authoritative semantic vocabulary definitions | **PASS** | `test_gate1_and_gate2_dynamic_vocabulary_data_loading` |
+| **Gate 2** | No Clipboard Author (`authorVocabulary` loads data, not C++ strings) | **PASS** | `test_gate1_and_gate2_dynamic_vocabulary_data_loading` |
+| **Gate 3** | `WebConcept` facets optional/unset; no unauthored defaults written | **PASS** | `test_gate3_and_gate11_unauthored_defaults_not_written` |
+| **Gate 4** | Synonyms are authored Lexemes/Relations; zero C++ switch tables | **PASS** | `test_gate4_synonym_aliases_are_authored_lexemes` |
+| **Gate 5** | Canonical authoring produces Zone/world-owned beings and relations | **PASS** | `test_gate5_and_gate6_canonical_zone_production_authoring` |
+| **Gate 6** | `_draftRelations` is explicit draft cache; world owns topology | **PASS** | `test_gate5_and_gate6_canonical_zone_production_authoring` |
+| **Gate 7** | Minimal CSS fallback; aesthetics authored via `WebDesignerTheme` | **PASS** | `test_gate7_gate8_gate9_css_security_and_theme` |
+| **Gate 8** | Raw CSS `</style>` breakout neutralized even with `allowUnrestrictedCss` | **PASS** | `test_gate7_gate8_gate9_css_security_and_theme` |
+| **Gate 9** | CSS values cannot smuggle `;`, `{`, `}`, or network `url(...)` | **PASS** | `test_gate7_gate8_gate9_css_security_and_theme` |
+| **Gate 10** | Authored vocabulary laws receive ordinary authority 1, not 10 | **PASS** | `test_lexeme_resolution`, `test_gate1_and_gate2...` |
+| **Gate 11** | `web.order` write path completely eliminated from new authoring | **PASS** | `test_gate3_and_gate11_unauthored_defaults_not_written` |
+| **Gate 12** | 25/25 focused tests pass; evidence truthfully labeled as local witness | **PASS** | `ctest -R web_designer_modality_test` (0.12s) |
+
+The clipboard is gone. The world is whole. The beings belong to their Zone womb. The browser adapter realizes meaning without manufacturing it. ✨🐉

@@ -37,18 +37,18 @@ std::string WebConcept::roleToString(SemanticRole r) {
 
 SemanticRole WebConcept::stringToRole(const std::string& s) {
     std::string lower = toLower(s);
-    if (lower == "page" || lower == "site" || lower == "document") return SemanticRole::Page;
-    if (lower == "section" || lower == "article" || lower == "region") return SemanticRole::Section;
-    if (lower == "navigation" || lower == "nav" || lower == "menu") return SemanticRole::Navigation;
-    if (lower == "heading" || lower == "title" || lower == "header") return SemanticRole::Heading;
-    if (lower == "paragraph" || lower == "p" || lower == "text" || lower == "body") return SemanticRole::Paragraph;
-    if (lower == "action" || lower == "button" || lower == "btn" || lower == "link" || lower == "cta") return SemanticRole::Action;
-    if (lower == "container" || lower == "box" || lower == "card" || lower == "wrapper") return SemanticRole::Container;
+    if (lower == "page") return SemanticRole::Page;
+    if (lower == "section") return SemanticRole::Section;
+    if (lower == "navigation") return SemanticRole::Navigation;
+    if (lower == "heading") return SemanticRole::Heading;
+    if (lower == "paragraph") return SemanticRole::Paragraph;
+    if (lower == "action") return SemanticRole::Action;
+    if (lower == "container") return SemanticRole::Container;
     if (lower == "list") return SemanticRole::List;
-    if (lower == "item" || lower == "list-item") return SemanticRole::Item;
-    if (lower == "media" || lower == "image" || lower == "img" || lower == "icon") return SemanticRole::Media;
-    if (lower == "quote" || lower == "blockquote" || lower == "testimonial") return SemanticRole::Quote;
-    if (lower == "divider" || lower == "separator" || lower == "hr") return SemanticRole::Divider;
+    if (lower == "item") return SemanticRole::Item;
+    if (lower == "media") return SemanticRole::Media;
+    if (lower == "quote") return SemanticRole::Quote;
+    if (lower == "divider") return SemanticRole::Divider;
     return SemanticRole::Unknown;
 }
 
@@ -63,8 +63,9 @@ std::string WebConcept::flowToString(LayoutFlow f) {
 
 LayoutFlow WebConcept::stringToFlow(const std::string& s) {
     std::string lower = toLower(s);
-    if (lower == "horizontal" || lower == "row" || lower == "inline") return LayoutFlow::Horizontal;
-    if (lower == "grid" || lower == "columns") return LayoutFlow::Grid;
+    if (lower == "horizontal") return LayoutFlow::Horizontal;
+    if (lower == "grid") return LayoutFlow::Grid;
+    if (lower == "vertical") return LayoutFlow::Vertical;
     return LayoutFlow::Vertical;
 }
 
@@ -80,9 +81,9 @@ std::string WebConcept::alignToString(LayoutAlign a) {
 
 LayoutAlign WebConcept::stringToAlign(const std::string& s) {
     std::string lower = toLower(s);
-    if (lower == "center" || lower == "centered" || lower == "middle") return LayoutAlign::Center;
-    if (lower == "end" || lower == "right" || lower == "bottom") return LayoutAlign::End;
-    if (lower == "stretch" || lower == "full") return LayoutAlign::Stretch;
+    if (lower == "center") return LayoutAlign::Center;
+    if (lower == "end") return LayoutAlign::End;
+    if (lower == "stretch") return LayoutAlign::Stretch;
     return LayoutAlign::Start;
 }
 
@@ -99,10 +100,10 @@ std::string WebConcept::justifyToString(LayoutJustify j) {
 
 LayoutJustify WebConcept::stringToJustify(const std::string& s) {
     std::string lower = toLower(s);
-    if (lower == "center" || lower == "centered") return LayoutJustify::Center;
+    if (lower == "center") return LayoutJustify::Center;
     if (lower == "end") return LayoutJustify::End;
-    if (lower == "between" || lower == "space-between") return LayoutJustify::SpaceBetween;
-    if (lower == "around" || lower == "space-around") return LayoutJustify::SpaceAround;
+    if (lower == "between") return LayoutJustify::SpaceBetween;
+    if (lower == "around") return LayoutJustify::SpaceAround;
     return LayoutJustify::Start;
 }
 
@@ -119,10 +120,10 @@ std::string WebConcept::spacingToString(SpacingScale sp) {
 
 SpacingScale WebConcept::stringToSpacing(const std::string& s) {
     std::string lower = toLower(s);
-    if (lower == "none" || lower == "0") return SpacingScale::None;
-    if (lower == "tight" || lower == "compact") return SpacingScale::Tight;
-    if (lower == "relaxed" || lower == "medium") return SpacingScale::Relaxed;
-    if (lower == "generous" || lower == "spacious" || lower == "loose" || lower == "large") return SpacingScale::Generous;
+    if (lower == "none") return SpacingScale::None;
+    if (lower == "tight") return SpacingScale::Tight;
+    if (lower == "relaxed") return SpacingScale::Relaxed;
+    if (lower == "generous") return SpacingScale::Generous;
     return SpacingScale::Normal;
 }
 
@@ -138,9 +139,9 @@ std::string WebConcept::scaleToString(ContentScale sc) {
 
 ContentScale WebConcept::stringToScale(const std::string& s) {
     std::string lower = toLower(s);
-    if (lower == "small" || lower == "sm") return ContentScale::Small;
-    if (lower == "large" || lower == "lg" || lower == "big") return ContentScale::Large;
-    if (lower == "huge" || lower == "xlarge" || lower == "xl" || lower == "hero") return ContentScale::Huge;
+    if (lower == "small") return ContentScale::Small;
+    if (lower == "large") return ContentScale::Large;
+    if (lower == "huge") return ContentScale::Huge;
     return ContentScale::Normal;
 }
 
@@ -156,9 +157,9 @@ std::string WebConcept::weightToString(TypographyWeight w) {
 
 TypographyWeight WebConcept::stringToWeight(const std::string& s) {
     std::string lower = toLower(s);
-    if (lower == "light" || lower == "thin") return TypographyWeight::Light;
-    if (lower == "medium" || lower == "semibold" || lower == "semi-bold") return TypographyWeight::Medium;
-    if (lower == "bold" || lower == "heavy" || lower == "strong") return TypographyWeight::Bold;
+    if (lower == "light") return TypographyWeight::Light;
+    if (lower == "medium") return TypographyWeight::Medium;
+    if (lower == "bold") return TypographyWeight::Bold;
     return TypographyWeight::Normal;
 }
 
@@ -174,9 +175,9 @@ std::string WebConcept::toneToString(TypographyTone t) {
 
 TypographyTone WebConcept::stringToTone(const std::string& s) {
     std::string lower = toLower(s);
-    if (lower == "muted" || lower == "subdued" || lower == "quiet" || lower == "dim") return TypographyTone::Muted;
-    if (lower == "accent" || lower == "highlight") return TypographyTone::Accent;
-    if (lower == "prominent" || lower == "lead" || lower == "loud") return TypographyTone::Prominent;
+    if (lower == "muted") return TypographyTone::Muted;
+    if (lower == "accent") return TypographyTone::Accent;
+    if (lower == "prominent") return TypographyTone::Prominent;
     return TypographyTone::Default;
 }
 
@@ -203,7 +204,7 @@ SurfaceVariant WebConcept::stringToVariant(const std::string& s) {
     if (lower == "card") return SurfaceVariant::Card;
     if (lower == "hero") return SurfaceVariant::Hero;
     if (lower == "subtle") return SurfaceVariant::Subtle;
-    if (lower == "outline" || lower == "bordered") return SurfaceVariant::Outline;
+    if (lower == "outline") return SurfaceVariant::Outline;
     if (lower == "ghost") return SurfaceVariant::Ghost;
     return SurfaceVariant::Default;
 }
@@ -220,9 +221,10 @@ std::string WebConcept::shapeToString(SurfaceShape sh) {
 
 SurfaceShape WebConcept::stringToShape(const std::string& s) {
     std::string lower = toLower(s);
-    if (lower == "sharp" || lower == "square") return SurfaceShape::Sharp;
-    if (lower == "pill" || lower == "capsule") return SurfaceShape::Pill;
-    if (lower == "circle" || lower == "round") return SurfaceShape::Circle;
+    if (lower == "sharp") return SurfaceShape::Sharp;
+    if (lower == "pill") return SurfaceShape::Pill;
+    if (lower == "circle") return SurfaceShape::Circle;
+    if (lower == "rounded") return SurfaceShape::Rounded;
     return SurfaceShape::Rounded;
 }
 
@@ -239,59 +241,91 @@ std::string WebConcept::elevationToString(SurfaceElevation el) {
 SurfaceElevation WebConcept::stringToElevation(const std::string& s) {
     std::string lower = toLower(s);
     if (lower == "subtle") return SurfaceElevation::Subtle;
-    if (lower == "raised" || lower == "shadow") return SurfaceElevation::Raised;
-    if (lower == "floating" || lower == "high") return SurfaceElevation::Floating;
+    if (lower == "raised") return SurfaceElevation::Raised;
+    if (lower == "floating") return SurfaceElevation::Floating;
     return SurfaceElevation::Flat;
 }
 
 void WebConcept::applyToSingular(Singular& being) const {
-    // 1. Universal Earthcall Properties (unprefixed)
-    std::string effectiveRole = roleName.empty() || roleName == "unknown" ? roleToString(role) : roleName;
-    being.setDynamicProperty("role", PropertyValue(effectiveRole));
-    if (!text.empty()) being.setDynamicProperty("text", PropertyValue(text));
-    being.setDynamicProperty("level", PropertyValue(static_cast<double>(headingLevel)));
-    being.setDynamicProperty("layout.flow", PropertyValue(flowName.empty() ? flowToString(flow) : flowName));
-    being.setDynamicProperty("layout.align", PropertyValue(alignName.empty() ? alignToString(align) : alignName));
-    being.setDynamicProperty("layout.justify", PropertyValue(justifyName.empty() ? justifyToString(justify) : justifyName));
-    being.setDynamicProperty("layout.wrap", PropertyValue(wrap));
-    being.setDynamicProperty("layout.spacing", PropertyValue(spacingName.empty() ? spacingToString(spacing) : spacingName));
-    being.setDynamicProperty("layout.columns", PropertyValue(static_cast<double>(gridColumns)));
-    being.setDynamicProperty("scale", PropertyValue(scaleName.empty() ? scaleToString(scale) : scaleName));
-    being.setDynamicProperty("typography.weight", PropertyValue(weightName.empty() ? weightToString(weight) : weightName));
-    being.setDynamicProperty("typography.tone", PropertyValue(toneName.empty() ? toneToString(tone) : toneName));
-    being.setDynamicProperty("surface.variant", PropertyValue(variantName.empty() ? variantToString(variant) : variantName));
-    being.setDynamicProperty("surface.shape", PropertyValue(shapeName.empty() ? shapeToString(shape) : shapeName));
-    being.setDynamicProperty("surface.elevation", PropertyValue(elevationName.empty() ? elevationToString(elevation) : elevationName));
+    // 1. Universal Earthcall Properties: ONLY write explicitly authored facets!
+    std::string effectiveRole = roleName.empty() ? (role != SemanticRole::Unknown ? roleToString(role) : "") : roleName;
+    if (!effectiveRole.empty() && effectiveRole != "unknown") {
+        being.setDynamicProperty("role", PropertyValue(effectiveRole));
+        being.setDynamicProperty("web.role", PropertyValue(effectiveRole));
+    }
+    if (!text.empty()) {
+        being.setDynamicProperty("text", PropertyValue(text));
+        being.setDynamicProperty("web.text", PropertyValue(text));
+    }
+    if (headingLevel.has_value()) {
+        being.setDynamicProperty("level", PropertyValue(static_cast<double>(*headingLevel)));
+        being.setDynamicProperty("web.level", PropertyValue(static_cast<double>(*headingLevel)));
+    }
+    if (!flowName.empty()) {
+        being.setDynamicProperty("layout.flow", PropertyValue(flowName));
+        being.setDynamicProperty("web.layout.flow", PropertyValue(flowName));
+    }
+    if (!alignName.empty()) {
+        being.setDynamicProperty("layout.align", PropertyValue(alignName));
+        being.setDynamicProperty("web.layout.align", PropertyValue(alignName));
+    }
+    if (!justifyName.empty()) {
+        being.setDynamicProperty("layout.justify", PropertyValue(justifyName));
+        being.setDynamicProperty("web.layout.justify", PropertyValue(justifyName));
+    }
+    if (wrap.has_value()) {
+        being.setDynamicProperty("layout.wrap", PropertyValue(*wrap));
+        being.setDynamicProperty("web.layout.wrap", PropertyValue(*wrap));
+    }
+    if (!spacingName.empty()) {
+        being.setDynamicProperty("layout.spacing", PropertyValue(spacingName));
+        being.setDynamicProperty("web.layout.spacing", PropertyValue(spacingName));
+    }
+    if (gridColumns.has_value()) {
+        being.setDynamicProperty("layout.columns", PropertyValue(static_cast<double>(*gridColumns)));
+        being.setDynamicProperty("web.layout.columns", PropertyValue(static_cast<double>(*gridColumns)));
+    }
+    if (!scaleName.empty()) {
+        being.setDynamicProperty("scale", PropertyValue(scaleName));
+        being.setDynamicProperty("web.scale.size", PropertyValue(scaleName));
+    }
+    if (!weightName.empty()) {
+        being.setDynamicProperty("typography.weight", PropertyValue(weightName));
+        being.setDynamicProperty("web.typography.weight", PropertyValue(weightName));
+    }
+    if (!toneName.empty()) {
+        being.setDynamicProperty("typography.tone", PropertyValue(toneName));
+        being.setDynamicProperty("web.typography.tone", PropertyValue(toneName));
+    }
+    if (!variantName.empty()) {
+        being.setDynamicProperty("surface.variant", PropertyValue(variantName));
+        being.setDynamicProperty("web.surface.variant", PropertyValue(variantName));
+    }
+    if (!shapeName.empty()) {
+        being.setDynamicProperty("surface.shape", PropertyValue(shapeName));
+        being.setDynamicProperty("web.surface.shape", PropertyValue(shapeName));
+    }
+    if (!elevationName.empty()) {
+        being.setDynamicProperty("surface.elevation", PropertyValue(elevationName));
+        being.setDynamicProperty("web.surface.elevation", PropertyValue(elevationName));
+    }
     if (!background.empty()) being.setDynamicProperty("surface.background", PropertyValue(background));
     if (!color.empty()) being.setDynamicProperty("surface.color", PropertyValue(color));
     if (subordinate) being.setDynamicProperty("subordinate", PropertyValue(true));
     if (!prominence.empty()) being.setDynamicProperty("prominence", PropertyValue(prominence));
 
     // 2. Medium-Specific Bindings (web.*)
-    if (!actionHref.empty()) being.setDynamicProperty("web.href", PropertyValue(actionHref));
+    if (!actionHref.empty()) {
+        being.setDynamicProperty("web.href", PropertyValue(actionHref));
+        being.setDynamicProperty("web.action.href", PropertyValue(actionHref));
+    }
     if (!actionEvent.empty()) being.setDynamicProperty("web.action.event", PropertyValue(actionEvent));
     if (!mediaSrc.empty()) being.setDynamicProperty("web.media.src", PropertyValue(mediaSrc));
     if (!mediaAlt.empty()) being.setDynamicProperty("web.media.alt", PropertyValue(mediaAlt));
     if (!elementTag.empty()) being.setDynamicProperty("web.element.tag", PropertyValue(elementTag));
 
-    // 3. Backward Compatibility Mirroring (so existing tests/laws querying web.* keep working)
-    being.setDynamicProperty("web.role", PropertyValue(effectiveRole));
-    if (!text.empty()) being.setDynamicProperty("web.text", PropertyValue(text));
-    being.setDynamicProperty("web.level", PropertyValue(static_cast<double>(headingLevel)));
-    being.setDynamicProperty("web.layout.flow", PropertyValue(flowName.empty() ? flowToString(flow) : flowName));
-    being.setDynamicProperty("web.layout.align", PropertyValue(alignName.empty() ? alignToString(align) : alignName));
-    being.setDynamicProperty("web.layout.justify", PropertyValue(justifyName.empty() ? justifyToString(justify) : justifyName));
-    being.setDynamicProperty("web.layout.wrap", PropertyValue(wrap));
-    being.setDynamicProperty("web.layout.spacing", PropertyValue(spacingName.empty() ? spacingToString(spacing) : spacingName));
-    being.setDynamicProperty("web.layout.columns", PropertyValue(static_cast<double>(gridColumns)));
-    being.setDynamicProperty("web.scale.size", PropertyValue(scaleName.empty() ? scaleToString(scale) : scaleName));
-    being.setDynamicProperty("web.typography.weight", PropertyValue(weightName.empty() ? weightToString(weight) : weightName));
-    being.setDynamicProperty("web.typography.tone", PropertyValue(toneName.empty() ? toneToString(tone) : toneName));
-    being.setDynamicProperty("web.surface.variant", PropertyValue(variantName.empty() ? variantToString(variant) : variantName));
-    being.setDynamicProperty("web.surface.shape", PropertyValue(shapeName.empty() ? shapeToString(shape) : shapeName));
-    being.setDynamicProperty("web.surface.elevation", PropertyValue(elevationName.empty() ? elevationToString(elevation) : elevationName));
-    if (!actionHref.empty()) being.setDynamicProperty("web.action.href", PropertyValue(actionHref));
-    if (order != 0) being.setDynamicProperty("web.order", PropertyValue(static_cast<double>(order)));
+    // Refusal 1 & Sun decree: web.order write path is eliminated.
+    // Relational topology (precedes Relation) governs sequence; no numeric order is written.
 }
 
 WebConcept WebConcept::readFromSingular(const Singular& being) {

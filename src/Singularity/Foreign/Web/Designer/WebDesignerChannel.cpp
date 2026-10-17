@@ -5,6 +5,8 @@
 #include "Singularity/Storage/VirtualFileSystem.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
+#include "Relation/Formation/Formation.hpp"
 #include "Person/Person.hpp"
 #include <iostream>
 
@@ -61,7 +63,7 @@ Singular& WebDesignerChannel::authorElementFromPhrase(
     Object compileSlot;
     compileSlot.setObjectID("web-compiler-" + target.getIdentifier());
     std::vector<Relation*> extraRels;
-    for (const auto& r : _relations) {
+    for (const auto& r : _draftRelations) {
         if (r) extraRels.push_back(r.get());
     }
     if (laws) {
@@ -80,7 +82,13 @@ Singular& WebDesignerChannel::authorElementFromPhrase(
 
     if (author) {
         auto authRel = std::make_shared<Relation>(WebRelationType::kAuthoredBy, target, *author, true, 1.0f);
-        _relations.push_back(authRel);
+        _draftRelations.push_back(authRel);
+        if (_activeZone) {
+            _activeZone->getFormation().relations().add(authRel);
+        }
+        if (_activeFormation) {
+            _activeFormation->relations().add(authRel);
+        }
         if (Universe::instance().hasRelationRegistrar()) {
             Universe::instance().addRelation(authRel);
         }
@@ -99,8 +107,37 @@ std::shared_ptr<Singular> WebDesignerChannel::authorElementFromPhrase(
     auto elem = std::make_shared<Object>();
     elem->setObjectID(identifier);
     authorElementFromPhrase(*elem, phrase, text, author, laws);
+
+    if (_activeZone) {
+        _activeZone->addObject(elem);
+    }
+    if (_activeFormation) {
+        _activeFormation->addMember(elem.get());
+    }
+
     _elementCache[identifier] = elem;
     return elem;
+}
+
+std::shared_ptr<Singular> WebDesignerChannel::authorElementInZone(
+    Zone& zone,
+    const std::string& identifier,
+    const std::string& phrase,
+    const std::string& text,
+    Person* author,
+    LawManager* laws) {
+
+    auto elem = std::make_shared<Object>();
+    elem->setObjectID(identifier);
+    authorElementFromPhrase(*elem, phrase, text, author, laws);
+    zone.addObject(elem);
+    _elementCache[identifier] = elem;
+    return elem;
+}
+
+void WebDesignerChannel::setAuthoringContext(Zone* zone, Formation* formation) {
+    _activeZone = zone;
+    _activeFormation = formation;
 }
 
 Singular* WebDesignerChannel::findElement(const std::string& identifier) const {
@@ -130,7 +167,13 @@ std::shared_ptr<Relation> WebDesignerChannel::relateContains(
         *child,
         true); // directed = true
 
-    _relations.push_back(rel);
+    _draftRelations.push_back(rel);
+    if (_activeZone) {
+        _activeZone->getFormation().relations().add(rel);
+    }
+    if (_activeFormation) {
+        _activeFormation->relations().add(rel);
+    }
     if (Universe::instance().hasRelationRegistrar()) {
         Universe::instance().addRelation(rel);
     }
@@ -149,7 +192,13 @@ std::shared_ptr<Relation> WebDesignerChannel::relatePrecedes(
         *second,
         true); // directed = true: first precedes second
 
-    _relations.push_back(rel);
+    _draftRelations.push_back(rel);
+    if (_activeZone) {
+        _activeZone->getFormation().relations().add(rel);
+    }
+    if (_activeFormation) {
+        _activeFormation->relations().add(rel);
+    }
     if (Universe::instance().hasRelationRegistrar()) {
         Universe::instance().addRelation(rel);
     }
@@ -157,7 +206,7 @@ std::shared_ptr<Relation> WebDesignerChannel::relatePrecedes(
 }
 
 std::string WebDesignerChannel::realize(const Singular& root, const RealizeOptions& options) {
-    _lastRealizedHtml = WebRealizer::realizeFullDocument(root, _relations, options);
+    _lastRealizedHtml = WebRealizer::realizeFullDocument(root, _draftRelations, options);
     return _lastRealizedHtml;
 }
 

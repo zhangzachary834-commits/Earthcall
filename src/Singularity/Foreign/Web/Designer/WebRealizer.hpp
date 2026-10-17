@@ -7,6 +7,8 @@
 #include <vector>
 #include <memory>
 
+class Person;
+
 namespace Singularity {
 namespace Foreign {
 namespace Web {
@@ -89,8 +91,31 @@ public:
     // Enforces URL scheme policy on media src (blocks javascript:/vbscript:/file:; permits http, https, data:image/, relative paths)
     static std::string sanitizeMediaSrc(const std::string& src);
 
-    // Escapes/neutralizes </style> inside CSS values to prevent <style> tag breakout
-    static std::string sanitizeCssValue(const std::string& value);
+    // Neutralizes </style> end tags and HTML comments inside any CSS context
+    // Even unrestricted raw CSS must preserve the HTML parser boundary.
+    static std::string sanitizeCssBreakout(const std::string& css);
+
+    // Sanitizes a single CSS property value: neutralizes </style>, strips semicolons and curly
+    // braces to prevent smuggling additional declarations, and blocks network url(...) unless permitted.
+    static std::string sanitizeCssValue(const std::string& value, bool allowNetworkUrl = false);
+};
+
+// ---------------------------------------------------------------------------
+// WebDesignerTheme: Authored Design System / Theme Tokens
+//
+// In accordance with Sun's decree:
+//   "C++ may know how CSS works. C++ must not decide what 'hero', 'primary',
+//    'generous', 'muted', 'subtle', 'floating', etc. look like.
+//    Move the aesthetic defaults into authored/default theme state or a
+//    clearly separate authored presentation Formation."
+// ---------------------------------------------------------------------------
+class WebDesignerTheme {
+public:
+    // Authors full modern dark theme design tokens onto site/page root with Person stewardship
+    static void applyModernDarkTheme(Singular& root, Person* author = nullptr);
+
+    // Authors clean neutral light theme design tokens onto site/page root with Person stewardship
+    static void applyNeutralLightTheme(Singular& root, Person* author = nullptr);
 };
 
 } // namespace Web

@@ -7,38 +7,33 @@
   <meta name="description" content="A genuine frontend prototype authored entirely by Earthcall Laws and Lexemes." />
   <style>
 :root {
-  --web-bg: #090d16;
+  --web-bg: #0b0f19;
   --web-bg-surface: #131c2e;
   --web-bg-card: #182338;
   --web-bg-subtle: #0f172a;
   --web-text: #f8fafc;
   --web-text-muted: #94a3b8;
-  --web-primary: #3b82f6;
-  --web-primary-hover: #3b82f6;
-  --web-primary-text: #090d16;
-  --web-secondary: #334155;
-  --web-secondary-hover: #475569;
-  --web-secondary-text: #f8fafc;
+  --web-primary: #38bdf8;
+  --web-primary-hover: #38bdf8;
+  --web-primary-text: #0b0f19;
   --web-accent: #818cf8;
-  --web-border: rgba(255, 255, 255, 0.08);
-  --web-border-card: rgba(56, 189, 248, 0.15);
   --web-radius: 0.75rem;
   --web-radius-pill: 9999px;
   --web-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --web-shadow-subtle: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
-  --web-shadow-raised: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
-  --web-shadow-floating: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
   --web-hero-bg: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 70%);
   --web-hero-padding: 4rem 1.5rem;
   --web-card-bg: #182338;
   --web-card-border: rgba(56, 189, 248, 0.15);
   --web-card-padding: 1.75rem;
-  --web-card-hover-border: #3b82f6;
-  --web-quote-border: #3b82f6;
+  --web-card-hover-border: #38bdf8;
+  --web-quote-border: #38bdf8;
   --web-quote-bg: #0f172a;
   --web-quote-padding: 1.5rem 2rem;
   --web-action-padding: 0.75rem 1.75rem;
   --web-action-font-size: 0.95rem;
+  --web-shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --web-shadow-raised: 0 4px 6px rgba(0, 0, 0, 0.15);
+  --web-shadow-floating: 0 10px 15px rgba(0, 0, 0, 0.2);
 }
 
 * {
@@ -273,64 +268,64 @@ h6.web-heading { font-size: 1rem; }
   </style>
 </head>
 <body>
-  <main id="ourverse-site" class="web-page web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="ourverse-site">
-    <nav id="site-nav" class="web-navigation web-flow--horizontal web-align--center web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="site-nav">
-      <h2 id="nav-brand" class="web-heading web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="nav-brand">Earthcall Ourverse</h2>
-      <div id="nav-links" class="web-container web-flow--horizontal web-align--center web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="nav-links">
-        <a href="#manifesto" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="nav-link-manifesto">Manifesto</a>
-        <a href="#ontology" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="nav-link-ontology">Ontology</a>
-        <a href="#laws" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="nav-link-laws">Laws</a>
+  <main id="ourverse-site" class="web-page web-flow--vertical" data-being-id="ourverse-site">
+    <nav id="site-nav" class="web-navigation web-flow--horizontal web-align--center web-justify--between" data-being-id="site-nav">
+      <h2 id="nav-brand" class="web-heading web-spacing--normal web-weight--bold" data-being-id="nav-brand">Earthcall Ourverse</h2>
+      <div id="nav-links" class="web-container web-flow--horizontal web-align--center web-spacing--normal" data-being-id="nav-links">
+        <a href="#manifesto" class="web-action web-spacing--normal" data-being-id="nav-link-manifesto">Manifesto</a>
+        <a href="#ontology" class="web-action web-spacing--normal" data-being-id="nav-link-ontology">Ontology</a>
+        <a href="#laws" class="web-action web-spacing--normal" data-being-id="nav-link-laws">Laws</a>
       </div>
     </nav>
-    <section id="hero-section" class="web-section web-flow--vertical web-align--center web-justify--start web-spacing--generous web-scale--normal web-weight--normal web-tone--default web-surface--hero web-shape--rounded web-elevation--flat" data-being-id="hero-section">
-      <h2 id="hero-title" class="web-heading web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--huge web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="hero-title">Earthcall Ourverse</h2>
-      <p id="hero-lead" class="web-paragraph web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--large web-weight--normal web-tone--prominent web-surface--default web-shape--rounded web-elevation--flat" data-being-id="hero-lead">A Person-centered ontology that orders the engine attached to it. A vessel of shared human life that glorifies God and holds encounters with Christ and each other.</p>
-      <div id="hero-actions" class="web-container web-flow--horizontal web-align--center web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="hero-actions">
-        <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--large web-weight--normal web-tone--default web-surface--primary web-shape--rounded web-elevation--flat" data-being-id="hero-cta-primary" data-action-event="explore-laws-clicked">Explore Living Laws</button>
-        <a href="#manifesto" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--large web-weight--normal web-tone--default web-surface--outline web-shape--rounded web-elevation--flat" data-being-id="hero-cta-secondary">Read The Manifesto</a>
+    <section id="hero-section" class="web-section web-flow--vertical web-align--center web-spacing--generous web-surface--hero" data-being-id="hero-section">
+      <h2 id="hero-title" class="web-heading web-align--center web-scale--huge web-weight--bold" data-being-id="hero-title">Earthcall Ourverse</h2>
+      <p id="hero-lead" class="web-paragraph web-align--center web-scale--large web-tone--prominent" data-being-id="hero-lead">A Person-centered ontology that orders the engine attached to it. A vessel of shared human life that glorifies God and holds encounters with Christ and each other.</p>
+      <div id="hero-actions" class="web-container web-flow--horizontal web-align--center web-spacing--normal" data-being-id="hero-actions">
+        <button type="button" class="web-action web-scale--large web-surface--primary web-shape--rounded" data-being-id="hero-cta-primary" data-action-event="explore-laws-clicked">Explore Living Laws</button>
+        <a href="#manifesto" class="web-action web-scale--large web-surface--outline web-shape--rounded" data-being-id="hero-cta-secondary">Read The Manifesto</a>
       </div>
     </section>
-    <section id="features-section" class="web-section web-flow--vertical web-align--start web-justify--start web-spacing--generous web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="features-section">
-      <h2 id="features-title" class="web-heading web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--large web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="features-title">Architectural Pillars</h2>
-      <p id="features-subtitle" class="web-paragraph web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat" data-being-id="features-subtitle">The minimum viable invariants enabling maximum generative, logical, and teleological expressibility.</p>
-      <div id="features-grid" class="web-container web-flow--grid web-align--start web-justify--start web-spacing--generous web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="features-grid">
-        <div id="card-person" class="web-container web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--card web-shape--rounded web-elevation--subtle" data-being-id="card-person">
-          <h2 id="card-person-title" class="web-heading web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-person-title">Person-Centered Ontology</h2>
-          <p id="card-person-text" class="web-paragraph web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-person-text">No C++ class for a domain noun. A Person means an actual human being. Machines and models sense and act; Persons author what things ARE.</p>
-          <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-person-btn">Learn more →</button>
+    <section id="features-section" class="web-section web-flow--vertical web-spacing--generous" data-being-id="features-section">
+      <h2 id="features-title" class="web-heading web-align--center web-scale--large web-weight--bold" data-being-id="features-title">Architectural Pillars</h2>
+      <p id="features-subtitle" class="web-paragraph web-align--center web-spacing--normal web-tone--muted" data-being-id="features-subtitle">The minimum viable invariants enabling maximum generative, logical, and teleological expressibility.</p>
+      <div id="features-grid" class="web-container web-flow--grid web-spacing--generous" data-being-id="features-grid">
+        <div id="card-person" class="web-container web-surface--card web-shape--rounded web-elevation--subtle" data-being-id="card-person">
+          <h2 id="card-person-title" class="web-heading web-spacing--normal web-weight--bold" data-being-id="card-person-title">Person-Centered Ontology</h2>
+          <p id="card-person-text" class="web-paragraph web-spacing--normal web-tone--muted" data-being-id="card-person-text">No C++ class for a domain noun. A Person means an actual human being. Machines and models sense and act; Persons author what things ARE.</p>
+          <button type="button" class="web-action web-spacing--normal" data-being-id="card-person-btn">Learn more →</button>
         </div>
-        <div id="card-laws" class="web-container web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--card web-shape--rounded web-elevation--subtle" data-being-id="card-laws">
-          <h2 id="card-laws-title" class="web-heading web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-laws-title">Living Laws &amp; Metalaws</h2>
-          <p id="card-laws-text" class="web-paragraph web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-laws-text">Behavior emerges from Person-authored Laws, not hardcoded algorithms. Metalaws govern and compile authored sentences without a black box.</p>
-          <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-laws-btn">View law engine →</button>
+        <div id="card-laws" class="web-container web-surface--card web-shape--rounded web-elevation--subtle" data-being-id="card-laws">
+          <h2 id="card-laws-title" class="web-heading web-spacing--normal web-weight--bold" data-being-id="card-laws-title">Living Laws &amp; Metalaws</h2>
+          <p id="card-laws-text" class="web-paragraph web-spacing--normal web-tone--muted" data-being-id="card-laws-text">Behavior emerges from Person-authored Laws, not hardcoded algorithms. Metalaws govern and compile authored sentences without a black box.</p>
+          <button type="button" class="web-action web-spacing--normal" data-being-id="card-laws-btn">View law engine →</button>
         </div>
-        <div id="card-ontomath" class="web-container web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--card web-shape--rounded web-elevation--subtle" data-being-id="card-ontomath">
-          <h2 id="card-ontomath-title" class="web-heading web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-ontomath-title">OntoMath Continuous Fields</h2>
-          <p id="card-ontomath-text" class="web-paragraph web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-ontomath-text">Mathematical meaning owned in closed form: continuous procedural manifolds, signed distance fields, and exact analytic rendering.</p>
-          <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="card-ontomath-btn">Explore geometry →</button>
+        <div id="card-ontomath" class="web-container web-surface--card web-shape--rounded web-elevation--subtle" data-being-id="card-ontomath">
+          <h2 id="card-ontomath-title" class="web-heading web-spacing--normal web-weight--bold" data-being-id="card-ontomath-title">OntoMath Continuous Fields</h2>
+          <p id="card-ontomath-text" class="web-paragraph web-spacing--normal web-tone--muted" data-being-id="card-ontomath-text">Mathematical meaning owned in closed form: continuous procedural manifolds, signed distance fields, and exact analytic rendering.</p>
+          <button type="button" class="web-action web-spacing--normal" data-being-id="card-ontomath-btn">Explore geometry →</button>
         </div>
       </div>
     </section>
-    <section id="demo-section" class="web-section web-flow--vertical web-align--center web-justify--start web-spacing--generous web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="demo-section">
-      <h2 id="demo-title" class="web-heading web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--large web-weight--bold web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="demo-title">Live Law Interactivity Witness</h2>
-      <div id="demo-card" class="web-container web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--card web-shape--rounded web-elevation--subtle" data-being-id="demo-card">
-        <p id="demo-text" class="web-paragraph web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="demo-text">Every element on this page was authored by Earthcall Laws and Lexemes. Click below to verify live EventBus event firing:</p>
-        <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--primary web-shape--rounded web-elevation--flat" data-being-id="demo-btn" data-action-event="interactive-witness-clicked">Invoke Law Event (Test)</button>
+    <section id="demo-section" class="web-section web-flow--vertical web-align--center web-spacing--generous" data-being-id="demo-section">
+      <h2 id="demo-title" class="web-heading web-align--center web-scale--large web-weight--bold" data-being-id="demo-title">Live Law Interactivity Witness</h2>
+      <div id="demo-card" class="web-container web-surface--card web-shape--rounded web-elevation--subtle" data-being-id="demo-card">
+        <p id="demo-text" class="web-paragraph web-align--center web-spacing--normal" data-being-id="demo-text">Every element on this page was authored by Earthcall Laws and Lexemes. Click below to verify live EventBus event firing:</p>
+        <button type="button" class="web-action web-surface--primary web-shape--rounded" data-being-id="demo-btn" data-action-event="interactive-witness-clicked">Invoke Law Event (Test)</button>
       </div>
     </section>
-    <section id="notes-section" class="web-section web-flow--vertical web-align--center web-justify--start web-spacing--relaxed web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="notes-section">
-      <p id="subordinate-note" class="web-paragraph web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--small web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat web-subordinate web-prominence--quiet" data-being-id="subordinate-note" data-subordinate="true">Note: This website is rendered as an ephemeral realization target of living Earthcall world state.</p>
+    <section id="notes-section" class="web-section web-flow--vertical web-align--center web-spacing--relaxed" data-being-id="notes-section">
+      <p id="subordinate-note" class="web-paragraph web-align--center web-scale--small web-subordinate web-prominence--quiet" data-being-id="subordinate-note" data-subordinate="true">Note: This website is rendered as an ephemeral realization target of living Earthcall world state.</p>
     </section>
-    <section id="quote-section" class="web-section web-flow--vertical web-align--center web-justify--start web-spacing--relaxed web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="quote-section">
-      <blockquote id="manifesto-quote" class="web-quote web-flow--vertical web-align--center web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat web-prominence--prominent" data-being-id="manifesto-quote">
+    <section id="quote-section" class="web-section web-flow--vertical web-align--center web-spacing--relaxed" data-being-id="quote-section">
+      <blockquote id="manifesto-quote" class="web-quote web-align--center web-prominence--prominent" data-being-id="manifesto-quote">
         &quot;Earthcall is a Person-centered ontology that orders the engine attached to it. The engine here is not the order of truth in Earthcall—the ontology is, and the engine serves as the vessel for that.&quot; — Zachary Zhang
       </blockquote>
     </section>
-    <section id="footer-section" class="web-section web-flow--horizontal web-align--center web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="footer-section">
-      <p id="footer-text" class="web-paragraph web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--small web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat" data-being-id="footer-text">© 2026 Earthcall Ourverse. Authored natively by Earthcall Laws, Lexemes, and Metalaws.</p>
-      <div id="footer-links" class="web-container web-flow--horizontal web-align--start web-justify--start web-spacing--normal web-scale--normal web-weight--normal web-tone--default web-surface--default web-shape--rounded web-elevation--flat" data-being-id="footer-links">
-        <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--small web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat" data-being-id="footer-link-1">Seven Refusals</button>
-        <button type="button" class="web-action web-flow--vertical web-align--start web-justify--start web-spacing--normal web-scale--small web-weight--normal web-tone--muted web-surface--default web-shape--rounded web-elevation--flat" data-being-id="footer-link-2">Agent Compass</button>
+    <section id="footer-section" class="web-section web-flow--horizontal web-align--center web-justify--between" data-being-id="footer-section">
+      <p id="footer-text" class="web-paragraph web-scale--small web-tone--muted" data-being-id="footer-text">© 2026 Earthcall Ourverse. Authored natively by Earthcall Laws, Lexemes, and Metalaws.</p>
+      <div id="footer-links" class="web-container web-flow--horizontal web-spacing--normal" data-being-id="footer-links">
+        <button type="button" class="web-action web-scale--small web-tone--muted" data-being-id="footer-link-1">Seven Refusals</button>
+        <button type="button" class="web-action web-scale--small web-tone--muted" data-being-id="footer-link-2">Agent Compass</button>
       </div>
     </section>
   </main>

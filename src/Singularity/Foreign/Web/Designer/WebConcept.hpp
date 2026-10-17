@@ -123,47 +123,48 @@ enum class SurfaceElevation {
 
 struct WebConcept {
     // Open semantic role: preserves arbitrary authored roles (e.g. "sanctuary", "article", "badge")
-    std::string roleName = "unknown";
+    // Empty by default: C++ does not author default role.
+    std::string roleName;
     SemanticRole role = SemanticRole::Unknown; // Fast-path cache for known roles
 
     std::string text;
-    int headingLevel = 2; // Default for Heading role
+    std::optional<int> headingLevel; // Unset by default
 
-    // Layout facets
-    std::string flowName = "vertical";
+    // Layout facets (empty by default; enums are ephemeral adapter fallbacks for realization only)
+    std::string flowName;
     LayoutFlow flow = LayoutFlow::Vertical;
 
-    std::string alignName = "start";
+    std::string alignName;
     LayoutAlign align = LayoutAlign::Start;
 
-    std::string justifyName = "start";
+    std::string justifyName;
     LayoutJustify justify = LayoutJustify::Start;
 
-    bool wrap = false;
+    std::optional<bool> wrap;
 
-    std::string spacingName = "normal";
+    std::string spacingName;
     SpacingScale spacing = SpacingScale::Normal;
 
-    int gridColumns = 1;
+    std::optional<int> gridColumns;
 
-    // Typography & scale facets
-    std::string scaleName = "normal";
+    // Typography & scale facets (empty by default)
+    std::string scaleName;
     ContentScale scale = ContentScale::Normal;
 
-    std::string weightName = "normal";
+    std::string weightName;
     TypographyWeight weight = TypographyWeight::Normal;
 
-    std::string toneName = "default";
+    std::string toneName;
     TypographyTone tone = TypographyTone::Default;
 
-    // Surface & presentation facets
-    std::string variantName = "default";
+    // Surface & presentation facets (empty by default)
+    std::string variantName;
     SurfaceVariant variant = SurfaceVariant::Default;
 
-    std::string shapeName = "rounded";
+    std::string shapeName;
     SurfaceShape shape = SurfaceShape::Rounded;
 
-    std::string elevationName = "flat";
+    std::string elevationName;
     SurfaceElevation elevation = SurfaceElevation::Flat;
 
     std::string background; // Hex, rgba, or CSS color

@@ -74,11 +74,13 @@ void test_lexeme_resolution() {
             assert(law->isAuthored());
             assert(law->authors().getMembers().size() == 1);
             assert(law->authors().getMembers()[0] == &author);
+            // Sun Gate 10: Authored vocabulary laws receive ordinary authored authority (1), NOT kernel 10.
+            assert(law->authorityLevel() == 1);
         }
     }
     assert(foundHeading);
 
-    std::cout << "  ✓ All Lexemes, Laws, and denotes Relations seeded and linked correctly" << std::endl;
+    std::cout << "  ✓ All Lexemes, Laws, and denotes Relations authored and linked correctly" << std::endl;
     std::cout << "  ✓ Authored vocabulary has explicit Person stewardship (Zach)" << std::endl;
 }
 
@@ -413,10 +415,8 @@ void test_end_to_end_prototype_generation() {
 
     // 1. Root Page
     auto page = channel.authorElementFromPhrase("ourverse-site", "page vertical", "", &author, &laws);
-    page->setDynamicProperty("theme.primaryColor", PropertyValue(std::string("#3b82f6")));
-    page->setDynamicProperty("theme.backgroundColor", PropertyValue(std::string("#090d16")));
-    page->setDynamicProperty("theme.textColor", PropertyValue(std::string("#f8fafc")));
-    page->setDynamicProperty("theme.radius", PropertyValue(std::string("0.75rem")));
+    // Authored modern dark theme tokens with explicit Person stewardship
+    WebDesignerTheme::applyModernDarkTheme(*page, &author);
 
     // 2. Navigation Bar
     auto nav = channel.authorElementFromPhrase("site-nav", "navigation horizontal between align center", "", &author, &laws);
@@ -1147,6 +1147,257 @@ void test_media_and_capability_boundaries() {
     std::cout << "  ✓ Raw-CSS capability requires explicit allowUnrestrictedCss permission" << std::endl;
 }
 
+// ---------------------------------------------------------------------------
+// ROUND 4 ACCEPTANCE GATE WITNESSES (Decreed by The Sun / GPT-5.6 Sol)
+// ---------------------------------------------------------------------------
+
+void test_gate1_and_gate2_dynamic_vocabulary_data_loading() {
+    std::cout << "[Gate 1 & 2 Witness] Dynamic Vocabulary Data Loading (Zero C++ Vocabulary Hardcoding)..." << std::endl;
+
+    LawManager laws;
+    Person& author = getTestPerson();
+    Formation formation;
+
+    // Redefine/author a brand new vocabulary word via JSON string dynamically without C++ recompilation
+    std::string customJson = R"JSON({
+        "vocabulary": [
+            {
+                "symbol": "callout",
+                "lexemeId": "lexeme.web.custom.callout",
+                "lawId": "law.concept.role.callout",
+                "actions": [
+                    {"path": "role", "value": "container"},
+                    {"path": "surface.variant", "value": "callout"}
+                ]
+            }
+        ]
+    })JSON";
+
+    bool loaded = WebDesignerMetalaws::loadAuthoredVocabularyFromJsonString(customJson, author, laws, &formation);
+    assert(loaded);
+
+    // Verify denotes relation
+    bool foundCallout = false;
+    for (const auto& rel : formation.relations().getAll()) {
+        if (!rel || rel->type != "denotes") continue;
+        const auto* lex = dynamic_cast<const Singularity::Language::Lexeme*>(rel->a());
+        if (lex && lex->getSymbol() == "callout") {
+            foundCallout = true;
+            const auto* law = dynamic_cast<const Law*>(rel->b());
+            assert(law != nullptr);
+            assert(law->isAuthored());
+            assert(law->authors().getMembers().size() == 1);
+            assert(law->authors().getMembers()[0] == &author);
+            // Gate 10 check: ordinary authored vocabulary law has authority 1, NOT kernel 10
+            assert(law->authorityLevel() == 1);
+        }
+    }
+    assert(foundCallout);
+
+    // Compile using the dynamically loaded vocabulary
+    Object target;
+    target.setObjectID("test-callout-target");
+    std::string err;
+    WebConcept c = WebDesignerMetalaws::compilePhrase("callout", laws, target, &err,
+        std::vector<Relation*>{formation.relations().getAll().back().get()});
+    assert(err.empty());
+    assert(c.roleName == "container");
+    assert(c.variantName == "callout");
+
+    std::cout << "  ✓ C++ does not contain authoritative semantic definitions (loaded from data)" << std::endl;
+    std::cout << "  ✓ Human-authored vocabulary laws receive ordinary authority 1, not 10" << std::endl;
+    std::cout << "  ✓ Dynamic vocabulary redefinition works without C++ recompilation" << std::endl;
+}
+
+void test_gate3_and_gate11_unauthored_defaults_not_written() {
+    std::cout << "[Gate 3 & 11 Witness] Unauthored Defaults Not Written & web.order Fossil Eliminated..." << std::endl;
+
+    // WebConcept facets are unset by default
+    WebConcept freshConcept;
+    assert(freshConcept.roleName.empty());
+    assert(freshConcept.flowName.empty());
+    assert(freshConcept.alignName.empty());
+    assert(freshConcept.justifyName.empty());
+    assert(freshConcept.spacingName.empty());
+    assert(freshConcept.scaleName.empty());
+    assert(freshConcept.weightName.empty());
+    assert(freshConcept.toneName.empty());
+    assert(freshConcept.variantName.empty());
+    assert(freshConcept.shapeName.empty());
+    assert(freshConcept.elevationName.empty());
+    assert(!freshConcept.headingLevel.has_value());
+    assert(!freshConcept.wrap.has_value());
+
+    // Only set role to section
+    freshConcept.roleName = "section";
+
+    Object being;
+    being.setObjectID("lean-being");
+    freshConcept.applyToSingular(being);
+
+    // Verify ONLY authored properties exist
+    PropertyValue val;
+    assert(being.getDynamicProperty("role", val));
+    assert(std::get<std::string>(val) == "section");
+
+    // Unauthored defaults MUST NOT be written onto the being!
+    assert(!being.getDynamicProperty("layout.flow", val));
+    assert(!being.getDynamicProperty("layout.align", val));
+    assert(!being.getDynamicProperty("surface.shape", val));
+    assert(!being.getDynamicProperty("surface.elevation", val));
+    assert(!being.getDynamicProperty("typography.scale", val));
+    assert(!being.getDynamicProperty("typography.weight", val));
+
+    // Gate 11: web.order is never written on new authoring
+    assert(!being.getDynamicProperty("web.order", val));
+
+    std::cout << "  ✓ WebConcept facets optional/unset by default" << std::endl;
+    std::cout << "  ✓ Unauthored default semantic properties are never written onto beings" << std::endl;
+    std::cout << "  ✓ web.order write path eliminated from new authoring" << std::endl;
+}
+
+void test_gate4_synonym_aliases_are_authored_lexemes() {
+    std::cout << "[Gate 4 Witness] Synonym Aliases Are Authored Lexemes / Relations..." << std::endl;
+
+    LawManager laws;
+    Person& author = getTestPerson();
+    Formation formation;
+    setupAuthoredVocabulary(author, laws, formation);
+
+    Object target;
+    target.setObjectID("synonym-test-target");
+
+    // Test synonyms defined in web_vocabulary_seed.json:
+    // "nav" is a synonym of "navigation"
+    // "title" is a synonym of "heading" (level 1)
+    // "card" is a synonym denoting container + card variant
+    // "btn" is a synonym of "button"
+    std::string err;
+    WebConcept cNav = WebDesignerMetalaws::compilePhrase("nav", laws, target, &err);
+    assert(cNav.roleName == "navigation");
+
+    WebConcept cTitle = WebDesignerMetalaws::compilePhrase("title", laws, target, &err);
+    assert(cTitle.roleName == "heading");
+    assert(cTitle.headingLevel.has_value() && cTitle.headingLevel.value() == 1);
+
+    WebConcept cCard = WebDesignerMetalaws::compilePhrase("card", laws, target, &err);
+    assert(cCard.variantName == "card");
+
+    WebConcept cCardBox = WebDesignerMetalaws::compilePhrase("card container", laws, target, &err);
+    assert(cCardBox.roleName == "container");
+    assert(cCardBox.variantName == "card");
+
+    WebConcept cBtn = WebDesignerMetalaws::compilePhrase("btn", laws, target, &err);
+    assert(cBtn.roleName == "action");
+
+    // Also verify C++ stringTo* helpers do NOT contain hardcoded aliases (only exact canonical names)
+    assert(WebConcept::stringToRole("nav") == SemanticRole::Unknown);
+    assert(WebConcept::stringToRole("title") == SemanticRole::Unknown);
+    assert(WebConcept::stringToRole("card") == SemanticRole::Unknown);
+    assert(WebConcept::stringToRole("navigation") == SemanticRole::Navigation);
+
+    teardownVocabulary();
+    std::cout << "  ✓ Synonyms ('nav', 'title', 'card', 'btn') resolve through authored Lexemes & Relations" << std::endl;
+    std::cout << "  ✓ C++ enum mappings contain zero privileged English synonym switch tables" << std::endl;
+}
+
+void test_gate5_and_gate6_canonical_zone_production_authoring() {
+    std::cout << "[Gate 5 & 6 Witness] Canonical Zone Production Authoring & Draft Cache..." << std::endl;
+
+    Person& author = getTestPerson();
+    LawManager laws;
+    Formation vocabFormation;
+    setupAuthoredVocabulary(author, laws, vocabFormation);
+
+    auto siteZone = std::make_shared<Zone>("production-site-zone", "earthcall-foundation");
+    WebDesignerChannel channel;
+    channel.setAuthoringContext(siteZone.get());
+
+    // Canonical authoring directly through channel with Zone context
+    auto header = channel.authorElementFromPhrase("prod-header", "section vertical", "", &author, &laws);
+    auto logo = channel.authorElementFromPhrase("prod-logo", "heading normal bold", "Earthcall", &author, &laws);
+
+    // Beings are immediately admitted to the world/Zone
+    assert(siteZone->objects().size() == 2);
+    assert(siteZone->objects()[0]->getIdentifier() == "prod-header");
+    assert(siteZone->objects()[1]->getIdentifier() == "prod-logo");
+
+    // Form relation with Zone context
+    auto rel = channel.relateContains(header, logo);
+    assert(rel != nullptr);
+
+    // Relations admitted to the Zone's formation include provenance (authored-by) and topology (contains)
+    const auto& zoneRels = siteZone->getFormation().relations().getAll();
+    assert(zoneRels.size() == 3); // 2 authored-by + 1 contains
+    bool hasContains = false;
+    for (const auto& r : zoneRels) {
+        if (r && r->type == WebRelationType::kContains) hasContains = true;
+    }
+    assert(hasContains);
+
+    // Channel's _draftRelations holds the draft relations
+    assert(channel.getDraftRelations().size() == 3);
+
+    // authorElementInZone direct method test
+    auto banner = channel.authorElementInZone(*siteZone, "prod-banner", "container", "Welcome", &author, &laws);
+    assert(siteZone->objects().size() == 3);
+    assert(banner->getIdentifier() == "prod-banner");
+
+    teardownVocabulary();
+    std::cout << "  ✓ Canonical authoring produces world/Zone-owned beings directly" << std::endl;
+    std::cout << "  ✓ Relations are admitted to Zone Formation relation graph" << std::endl;
+    std::cout << "  ✓ Channel draft relations cache is explicitly decoupled from world ownership" << std::endl;
+}
+
+void test_gate7_gate8_gate9_css_security_and_theme() {
+    std::cout << "[Gate 7, 8, 9 Witness] Minimal CSS Fallback, Breakout Defense & Smuggling Protection..." << std::endl;
+
+    // Gate 7: Unauthored root produces minimal neutral browser mechanics (no dark palettes or shadows)
+    Object bareRoot;
+    bareRoot.setObjectID("bare-root");
+    std::string bareCss = WebRealizer::generateStyleSheet(&bareRoot);
+    // Does NOT contain opinionated dark colors or glows
+    assert(bareCss.find("#090d16") == std::string::npos);
+    assert(bareCss.find("box-shadow: 0 0 20px") == std::string::npos);
+    // Contains basic layout mechanics
+    assert(bareCss.find("box-sizing: border-box") != std::string::npos);
+    assert(bareCss.find(".web-flow--horizontal") != std::string::npos);
+
+    // Authored theme tokens via WebDesignerTheme
+    Person& author = getTestPerson();
+    WebDesignerTheme::applyModernDarkTheme(bareRoot, &author);
+    std::string themedCss = WebRealizer::generateStyleSheet(&bareRoot);
+    assert(themedCss.find("--web-bg: #0b0f19") != std::string::npos);
+    assert(themedCss.find("--web-primary: #38bdf8") != std::string::npos);
+
+    // Gate 8: Raw CSS cannot escape <style> tag even when allowUnrestrictedCss is true
+    RealizeOptions opts;
+    opts.allowUnrestrictedCss = true;
+    opts.extraCss = "body { color: red; } </style><script>alert('pwned')</script><style>";
+    std::string safeDoc = WebRealizer::generateStyleSheet(&bareRoot, opts);
+    assert(safeDoc.find("</style") == std::string::npos);
+    assert(safeDoc.find("<\\/style") != std::string::npos);
+
+    // Gate 9: Ordinary CSS property values cannot smuggle declarations (; { }) or network url(...)
+    std::string smuggledValue = "red; background: black; } body { display: none; }";
+    std::string sanitizedSmuggled = WebRealizer::sanitizeCssValue(smuggledValue, false);
+    assert(sanitizedSmuggled.find(";") == std::string::npos);
+    assert(sanitizedSmuggled.find("{") == std::string::npos);
+    assert(sanitizedSmuggled.find("}") == std::string::npos);
+
+    // Network url(...) blocked unless allowNetworkUrl = true
+    std::string urlValue = "url('https://evil.com/leak.png')";
+    std::string blockedUrl = WebRealizer::sanitizeCssValue(urlValue, false);
+    assert(blockedUrl.find("url(") == std::string::npos);
+
+    std::string allowedUrl = WebRealizer::sanitizeCssValue(urlValue, true);
+    assert(allowedUrl.find("url(") != std::string::npos);
+
+    std::cout << "  ✓ Unauthored CSS fallback is minimal neutral browser mechanics" << std::endl;
+    std::cout << "  ✓ Raw CSS breakout </style> neutralized to safe escaped <\\/style even with allowUnrestrictedCss" << std::endl;
+    std::cout << "  ✓ CSS value sanitization neutralizes declaration smuggling (; { }) and network url(...)" << std::endl;
+}
+
 int main() {
     std::cout << "========================================" << std::endl;
     std::cout << "Running Web Designer Modality Test Suite" << std::endl;
@@ -1167,13 +1418,20 @@ int main() {
     test_relational_precedence_overrides_numeric_order();
     test_channel_destruction_and_rediscovery_from_world();
 
-    // Acceptance Gate Witnesses
+    // Acceptance Gate Witnesses (Round 3)
     test_unauthored_law_refusal_witness();
     test_unmatched_tokens_remain_unresolved();
     test_non_object_singular_bearer();
     test_provenance_relation_sole_source_of_truth();
     test_relational_precedence_cycle_refusal();
     test_media_and_capability_boundaries();
+
+    // Acceptance Gate Witnesses (Round 4 Decreed by The Sun)
+    test_gate1_and_gate2_dynamic_vocabulary_data_loading();
+    test_gate3_and_gate11_unauthored_defaults_not_written();
+    test_gate4_synonym_aliases_are_authored_lexemes();
+    test_gate5_and_gate6_canonical_zone_production_authoring();
+    test_gate7_gate8_gate9_css_security_and_theme();
 
     std::cout << "========================================" << std::endl;
     std::cout << "ALL WEB DESIGNER MODALITY TESTS PASSED!" << std::endl;

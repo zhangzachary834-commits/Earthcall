@@ -11,6 +11,8 @@
 #include <functional>
 
 class Person;
+class Zone;
+class Formation;
 
 namespace Singularity {
 namespace Foreign {
@@ -70,10 +72,30 @@ public:
         const std::shared_ptr<Singular>& first,
         const std::shared_ptr<Singular>& second);
 
-    // Access live relations
-    const std::vector<std::shared_ptr<Relation>>& getRelations() const { return _relations; }
-    void addRelation(std::shared_ptr<Relation> rel) { if (rel) _relations.push_back(std::move(rel)); }
-    void clearRelations() { _relations.clear(); }
+    // Canonical production authoring context:
+    // When set, newly authored elements and relations are admitted directly into the world/Zone/Formation,
+    // ensuring beings are world-owned rather than detached or privately held.
+    void setAuthoringContext(Zone* zone, Formation* formation = nullptr);
+    Zone* getAuthoringZone() const { return _activeZone; }
+    Formation* getAuthoringFormation() const { return _activeFormation; }
+
+    // Canonical production authoring directly into a Zone
+    std::shared_ptr<Singular> authorElementInZone(
+        Zone& zone,
+        const std::string& identifier,
+        const std::string& phrase,
+        const std::string& text = "",
+        Person* author = nullptr,
+        LawManager* laws = nullptr);
+
+    // Access uncommitted draft relations (ephemeral authoring scratchpad).
+    // Canonical world topology is stored in the Zone/Formation/Universe graph.
+    const std::vector<std::shared_ptr<Relation>>& getDraftRelations() const { return _draftRelations; }
+    const std::vector<std::shared_ptr<Relation>>& getRelations() const { return _draftRelations; }
+    void addDraftRelation(std::shared_ptr<Relation> rel) { if (rel) _draftRelations.push_back(std::move(rel)); }
+    void addRelation(std::shared_ptr<Relation> rel) { addDraftRelation(std::move(rel)); }
+    void clearDraftRelations() { _draftRelations.clear(); }
+    void clearRelations() { clearDraftRelations(); }
 
     // Find an authored element by its identifier (discovers from Universe/world state first).
     // Returns a borrowed Singular* pointer; never constructs fake shared ownership.
@@ -104,10 +126,16 @@ private:
     std::string _lastActionBeing;
     std::string _lastActionEvent;
 
+    Zone* _activeZone = nullptr;
+    Formation* _activeFormation = nullptr;
+
     // Ephemeral non-authoritative cache of authored elements. The world (Universe/Zone/Formation)
     // owns the beings; the channel holds weak references to prevent private lifetime capture.
     std::unordered_map<std::string, std::weak_ptr<Singular>> _elementCache;
-    std::vector<std::shared_ptr<Relation>> _relations;
+
+    // Ephemeral draft cache of relations created during authoring.
+    // Canonical relational topology is admitted to the active Zone's Formation and/or Universe.
+    std::vector<std::shared_ptr<Relation>> _draftRelations;
 
     // Property getters/setters
     bool propEnabled() const { return _enabled; }
