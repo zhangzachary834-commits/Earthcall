@@ -2262,11 +2262,13 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                                         ? nullptr
                                         : activation.token.facts.front()->object;
 
+            const std::string lawId = law->getIdentifier();
+
             // Keep the Event Singular itself available while these nodes
             // evaluate. Rete owns the copy because the EventBus publisher may
             // already have returned; participant aliases remain compatible.
             const Event* occurrence = nullptr;
-            const auto& triggers = triggersOf(law->getIdentifier());
+            const auto& triggers = triggersOf(lawId);
             for (const auto& fact : activation.token.facts) {
                 if (fact && fact->occurrence &&
                     (triggers.empty() ||
@@ -2286,10 +2288,12 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                     if (!being || Universe::instance().isUnmade(being)) continue;
                     bool usedDirect = false;
                     if (!candidateConditionsSatisfied(*law, *being, &usedDirect)) continue;
-                    if (law->drives() &&
-                        hasDriveSession(law->getIdentifier(), being->getIdentifier())) {
-                        if (law->retrigger() == Law::Retrigger::Absorb) continue;
-                        restartDriveSession(*law, being->getIdentifier());
+                    if (law->drives()) {
+                        const std::string beingId = being->getIdentifier();
+                        if (hasDriveSession(lawId, beingId)) {
+                            if (law->retrigger() == Law::Retrigger::Absorb) continue;
+                            restartDriveSession(*law, beingId);
+                        }
                     }
                     applyAndMaybeDrive(*law, *being, records, usedDirect);
                 }
@@ -2297,12 +2301,14 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             }
 
             if (!subject || Universe::instance().isUnmade(subject)) continue;
-            if (law->drives() &&
-                hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
-                if (law->retrigger() == Law::Retrigger::Absorb) {
-                    continue;
+            if (law->drives()) {
+                const std::string subjectId = subject->getIdentifier();
+                if (hasDriveSession(lawId, subjectId)) {
+                    if (law->retrigger() == Law::Retrigger::Absorb) {
+                        continue;
+                    }
+                    restartDriveSession(*law, subjectId);
                 }
-                restartDriveSession(*law, subject->getIdentifier());
             }
             applyAndMaybeDrive(*law, *subject, records);
         }
@@ -2470,12 +2476,14 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                                   ? holds
                                   : (holds && !wasHolding);
             if (!fire) continue;
-            if (law->drives() &&
-                hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
-                if (law->retrigger() == Law::Retrigger::Absorb) {
-                    continue;
+            if (law->drives()) {
+                const std::string subjectId = subject->getIdentifier();
+                if (hasDriveSession(lawId, subjectId)) {
+                    if (law->retrigger() == Law::Retrigger::Absorb) {
+                        continue;
+                    }
+                    restartDriveSession(*law, subjectId);
                 }
-                restartDriveSession(*law, subject->getIdentifier());
             }
             applyAndMaybeDrive(*law, *subject, records, usedDirect);
         }
@@ -2783,7 +2791,8 @@ void LawManager::refreshCandidateRoute(const Law& law) const {
 
 std::string LawManager::candidateTierFor(const Law& law) const {
     refreshCandidateRoute(law);
-    auto it = _candidateRoutes.find(law.getIdentifier());
+    const std::string lawId = law.getIdentifier();
+    auto it = _candidateRoutes.find(lawId);
     if (it == _candidateRoutes.end()) return "sweep";
     switch (it->second.tier) {
         case CandidateTier::LawDirect:   return "law-direct";
@@ -2809,7 +2818,8 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
     }
 
     refreshCandidateRoute(law);
-    auto routeIt = _candidateRoutes.find(law.getIdentifier());
+    const std::string lawId = law.getIdentifier();
+    auto routeIt = _candidateRoutes.find(lawId);
     if (routeIt == _candidateRoutes.end()) {
         // Defensive widening. A missing cache entry may cost a sweep; it must
         // never cost a Law its subjects.
@@ -2831,7 +2841,7 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
 
     if (route.tier == CandidateTier::AdapterRoad) {
         const std::vector<Singular*>* travelled = nullptr;
-        if (_adapter.candidateViewFor(law.getIdentifier(), travelled) && travelled) {
+        if (_adapter.candidateViewFor(lawId, travelled) && travelled) {
             std::vector<Singular*> chosen;
             chosen.reserve(travelled->size());
             for (Singular* being : *travelled) {
@@ -2843,9 +2853,9 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
 
         // The road went stale between selection and consumption. Refuse it,
         // invalidate the decision and immediately descend one rung.
-        invalidateCandidateRoute(law.getIdentifier());
+        invalidateCandidateRoute(lawId);
         refreshCandidateRoute(law);
-        routeIt = _candidateRoutes.find(law.getIdentifier());
+        routeIt = _candidateRoutes.find(lawId);
         if (routeIt == _candidateRoutes.end()) return Universe::instance().beings();
     }
 
@@ -2879,7 +2889,8 @@ bool LawManager::candidateConditionsSatisfied(
     // sweepSubjects() selected/refreshed the route immediately before the
     // candidate loop. Consume that one decision; do not re-run route selection
     // once per candidate and turn O(1)-per-Law planning into O(matches).
-    auto it = _candidateRoutes.find(law.getIdentifier());
+    const std::string lawId = law.getIdentifier();
+    auto it = _candidateRoutes.find(lawId);
     if (it == _candidateRoutes.end() ||
         it->second.tier != CandidateTier::LawDirect ||
         !it->second.directResidual) {
