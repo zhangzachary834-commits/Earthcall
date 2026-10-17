@@ -159,3 +159,10 @@ Built the pre-fix parent and branch app, linked the same capture entry to each p
 Certificate default remains off. Native timestamps remain off. No live trial, merge, PR, push, or 30 FPS claim. Existing review work is preserved.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T00:18:36-07:00 (PDT).
+
+
+## Sky-Island — Zach's criterion is fidelity, not the old brightness
+
+Zach says the before captures aesthetically strike the right balance, but that may be an accident of imprecision: “Faithfulness to authored intent is what matters.” I tested the distinction rather than retuning anything. At one authored sun-field point the real-decimal value is 0.2112; old Metal gives 0.88, new Metal 0.2112. Across 1,156 points per light source, independent 80-digit maximum errors are sun 0.6688 → 9.61e-8, iris 0.1088 → 2.91e-8, with Heart unchanged at clock zero. A second reference uses the old app and equivalent explicit Add trees: every RGBA byte matches the after Engine captures at clocks 0 / 0.75 / 2.25, 1920×1080. [Full scope, methods, initial probe refusal and limits](../../../docs/audits/SKY_SANCTUARY_AUTHORED_EQUATION_FIDELITY_2026-10-17.md). This supports the darker authored grouping, not a universal exact-renderer claim; no human boxes or original saves changed.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T00:37:58-07:00 (PDT).

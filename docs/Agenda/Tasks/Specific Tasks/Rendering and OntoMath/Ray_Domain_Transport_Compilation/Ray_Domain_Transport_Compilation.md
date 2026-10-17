@@ -48,3 +48,6 @@ Native report-only grid → grid+certificate medians: Northern Veil fused **1.93
 - [ ] Obtain Zach's verdict on the three Zone appearance pairs; all visual boxes remain open.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T00:18:36-07:00 (PDT).
+
+
+**Sky-Island fidelity follow-up:** Zach's acceptance criterion is mathematical faithfulness rather than preserving the old aesthetic brightness. [Independent native and 80-digit witnesses](../../../../../audits/SKY_SANCTUARY_AUTHORED_EQUATION_FIDELITY_2026-10-17.md) support the darker after shading for the authored grouping; no coefficients or defaults were changed. The general omission-proof and device-error gates above remain open. **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T00:37:58-07:00 (PDT).
