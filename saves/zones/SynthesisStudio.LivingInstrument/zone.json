@@ -42519,5 +42519,11 @@
     "material.studio.socket",
     "material.studio.track",
     "material.studio.walnut"
-  ]
+  ],
+  "matterGeneration": {
+    "snapshotId": "f24192382d0fbef5",
+    "sha256": "f24192382d0fbef5f9927a54ac826756587ec77aacbb2990cd821112aec84555",
+    "byteLength": 22036,
+    "schemaVersion": 1
+  }
 }

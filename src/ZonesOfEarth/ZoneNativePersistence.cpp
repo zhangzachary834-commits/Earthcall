@@ -284,12 +284,34 @@ bool ZoneManager::persistZone(size_t index) const {
         }
     }
 
+    std::string oldMatterPath;
+    const std::unordered_set<std::string> scopeZoneIds{id};
+    const std::vector<uint8_t> matterBytes = buildMatterFlatBuffer(scopeZoneIds);
+    if (!matterBytes.empty()) {
+        const std::string identityPath = dwelling
+            ? SaveSystem::resolveHomeIdentityPath(id)
+            : SaveSystem::resolveZoneIdentityPath(id);
+        const std::filesystem::path targetIdentityPath = identityPath.empty()
+            ? (dwelling ? std::filesystem::path(SaveSystem::homeIdentityPath(id))
+                        : std::filesystem::path(SaveSystem::zoneIdentityPath(id)))
+            : std::filesystem::path(identityPath);
+
+        oldMatterPath = commitMatterGeneration(targetIdentityPath, matterBytes, doc);
+        if (oldMatterPath == "__FAILED__") {
+            std::cerr << "[zones] REFUSED Save Zone for '" << id
+                      << "': failed to commit matter generation. Stored identity left untouched.\n";
+            return false;
+        }
+    }
+
     const bool wrote = dwelling ? SaveSystem::writeHomeIdentity(id, doc)
                                 : SaveSystem::writeZoneIdentity(id, doc);
     if (!wrote) {
         std::cerr << "[zones] REFUSED or failed Save Zone for '" << id << "'.\n";
         return false;
     }
+
+    cleanupPredecessorMatter(oldMatterPath);
 
     std::cout << "[zones] Saved Zone '" << id
               << "' without creating or rewriting a conglomerate session file.\n";

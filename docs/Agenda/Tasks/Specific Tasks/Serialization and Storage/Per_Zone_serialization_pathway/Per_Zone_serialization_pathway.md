@@ -337,10 +337,22 @@ concurrently in Screen / Law Line files) through
   the source-root-CWD list in `CMakeLists.txt` — under ctest's default build-tree CWD it
   silently read a stale 4-Zone `build/saves/` and passed vacuously before that fix.
 
+### Repair boundary item 2 — fixed (Antigravity, Gemini 2.5 Flash, session `bf1f2c53-eb69-49fd-85b2-cd805a73cac3`, 2026-10-16)
+
+- **Sidecar migration (`scripts/migrate_zone_matter.py`)**:
+  - Backed up all originals to `saves/backups/zone-matter-migration-2026-10-16/`.
+  - Recovered dense geometry (polyhedra, smooth surfaces, Bezier patches, SDF fields) and transforms from `saves/worlds/*.ecmatter` partitioned by Zone ownership (`owner_identifier` stamped per Sol's Invariant 2).
+  - Emitted content-addressed `zone.<snapshotId>.ecmatter` and unversioned `zone.ecmatter` sidecars across all 38 physical zones and Home.
+  - Stamped `matterGeneration` (`snapshotId`, `sha256`, `byteLength`, `schemaVersion: 1`) on `zone.json` and `zone.ecform`. 38/38 verified against FlatBuffers `VerifySaveChunkBuffer`.
+- **Runtime closure verification & hydration (`ZoneManager.cpp`, `ZoneNativePersistence.cpp`)**:
+  - `prepareZoneMatterClosure`: preflights matter closure in `switchTo` and `holdZoneClosure`. Validates byteLength, SHA256 hash, and FlatBuffers integrity. Corrupted or missing sidecar loudly REFUSES activation and keeps the Person safely in the prior Zone.
+  - `readVerifiedMatterGeneration`: checks content-addressed snapshot file first with unversioned fallback, verifying byteLength and hash in both cases.
+  - `persistZone`: emits content-addressed snapshot, updates `matterGeneration`, and cleans up predecessor snapshot.
+- **Tests**: `tests/zones/zone_matter_closure_test.cpp` (26/26 checks passed), `tests/zones/zone_material_closure_test.cpp` (23/23 checks passed), `tests/law/go_zone_native_boot_test.cpp` (39/39 checks passed), `tests/law/chess_zone_native_boot_test.cpp` (99/99 checks passed).
+
 ### Still open (honest list)
 
-- **Zone-scoped matter generations**: only Go and Cathedral have a `zone.ecmatter`; Chess and
-  most other physical Zones still source matter from `saves/worlds/`. Repair-boundary items 2–4.
+- **Zone-scoped matter generations**: Repair-boundary item 2 is DONE. Repair boundary items 3-4 (recovering missing placement for unrecoverable zones like Clawd's Monastery) remain open human decisions.
 - **Category roots** (shared Categories) — no `saves/categories/`; unchanged.
 - **A truly detached whole-closure transaction**: ordering is now dependencies-first, but it is
   not all-or-nothing across files.

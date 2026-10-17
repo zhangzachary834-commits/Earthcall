@@ -44683,5 +44683,11 @@
     "law-sky-sanctuary-lotus-bloom",
     "law-sky-sanctuary-heart-ascend",
     "law-sky-sanctuary-lantern-drift"
-  ]
+  ],
+  "matterGeneration": {
+    "snapshotId": "b65a7063080ee58f",
+    "sha256": "b65a7063080ee58f893133c01db8e8e12c2bad95d1d4ede57fd2cb54662f6a02",
+    "byteLength": 40152,
+    "schemaVersion": 1
+  }
 }

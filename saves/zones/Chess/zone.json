@@ -7678,5 +7678,11 @@
         ]
       }
     ]
+  },
+  "matterGeneration": {
+    "snapshotId": "7a181a929bd75179",
+    "sha256": "7a181a929bd751799cce522c3e6d6fbaac23e4fb20f991f9b150751e29e71fee",
+    "byteLength": 9112,
+    "schemaVersion": 1
   }
 }

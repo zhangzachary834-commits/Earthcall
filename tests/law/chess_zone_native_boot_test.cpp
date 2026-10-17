@@ -83,6 +83,7 @@ int main() {
     }
     saves = std::filesystem::absolute(saves);
     const auto sourceZone = saves / "zones/Chess/zone.json";
+    const auto sourceMatter = saves / "zones/Chess/zone.ecmatter";
 
     check(std::filesystem::exists(sourceZone), "Zone-native Chess identity exists");
     if (!std::filesystem::exists(sourceZone)) return 1;
@@ -114,6 +115,9 @@ int main() {
     const auto targetZoneDir = scratch.path / "zones/Chess";
     std::filesystem::create_directories(targetZoneDir);
     std::filesystem::copy_file(sourceZone, targetZoneDir / "zone.json");
+    if (std::filesystem::exists(sourceMatter)) {
+        std::filesystem::copy_file(sourceMatter, targetZoneDir / "zone.ecmatter");
+    }
 
     std::size_t copiedRoots = 0;
     for (const auto& refJson : zoneJson["lawRefs"]) {

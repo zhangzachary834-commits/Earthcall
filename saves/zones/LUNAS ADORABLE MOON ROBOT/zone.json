@@ -1729,5 +1729,11 @@
     "material.luna.moonsteel",
     "material.luna.starlight",
     "material.luna.sunbeam"
-  ]
+  ],
+  "matterGeneration": {
+    "snapshotId": "09d92ff0bc421fbb",
+    "sha256": "09d92ff0bc421fbbc36c14e40c3c09022d39620636711aeb327f942600d48d83",
+    "byteLength": 4548,
+    "schemaVersion": 1
+  }
 }
