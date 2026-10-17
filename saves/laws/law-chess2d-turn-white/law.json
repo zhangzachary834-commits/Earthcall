@@ -1,0 +1,70 @@
+{
+    "authors": [
+        "Zach",
+        "Gemini"
+    ],
+    "identifier": "law-chess2d-turn-white",
+    "injected_by": "Gemini 3.8 Flash, 2026-10-16 2D Chess Zone authoring",
+    "law": {
+        "id": "law-chess2d-turn-white",
+        "name": "turn-banner-white",
+        "enabled": true,
+        "activation": 0,
+        "scope": 1,
+        "authority": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+            "Zach",
+            "Gemini"
+        ],
+        "conditionModel": {
+            "kind": 3,
+            "children": [
+                {
+                    "kind": 8,
+                    "otherId": "ui.chess2d.turn"
+                },
+                {
+                    "kind": 0,
+                    "path": "@state.chess2d.turn",
+                    "op": 0,
+                    "operand": {
+                        "t": "int",
+                        "v": 0
+                    }
+                }
+            ]
+        },
+        "actionModel": {
+            "kind": 5,
+            "children": [
+                {
+                    "kind": 0,
+                    "path": "label2D",
+                    "operand": {
+                        "t": "string",
+                        "v": "TURN: WHITE"
+                    }
+                },
+                {
+                    "kind": 0,
+                    "path": "face.0.color",
+                    "operand": {
+                        "t": "vec3",
+                        "v": [
+                            0.92,
+                            0.9,
+                            0.86
+                        ]
+                    }
+                }
+            ]
+        },
+        "targets": []
+    },
+    "triggers": [
+        "positions-updated"
+    ]
+}
