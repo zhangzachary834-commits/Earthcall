@@ -21,69 +21,6 @@ The tree used to open like this:
 ```
 Earthcall/
   src/                     the one source root — all languages
-  ConstructedBeing/
-  Material/
-  Singular/
-  Creation/
-  Lexeme/
-  Object/
-  Automation/
-  Creation/
-  Geometry/
-  Object/
-  Property/
-  py/
-  Identity/
-  Person/
-  Body/
-  BodyPart/
-  Limb/
-  Head/
-  Perspective/
-  Relationship/
-  Community/
-  Soul/
-  Voice/
-  VoicePart/
-  Relation/
-  Formation/
-  Traversal/
-  py/
-  Singularity/
-  Audio/
-  Core/
-  Execution/
-  FirstMoverOntology/
-  FirstMoverWindowTools/
-  CreatorConsole/
-  Menu/
-  TalkingRobotGuyAPI/
-  Foreign/
-  API/
-  Adapters/
-  Shell/
-  Sync/
-  Web/
-  web_ui/
-  public/
-  src/
-  assets/
-  mcp/
-  py/
-  agent/
-  api/
-  static/
-  css/
-  js/
-  ui/
-  templates/
-  web/
-  Input/
-  Interaction/
-  Keyboard/
-```
-Earthcall/
-  src/                     the one source root — all languages
     ConstructedBeing/
       Material/
       Singular/
