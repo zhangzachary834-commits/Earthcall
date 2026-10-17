@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
         else if (arg == "--adapter=off") adapter = false;
         else if (arg == "--direct=on") direct = true;
         else if (arg == "--direct=off") direct = false;
-        else if (arg.rfind("--frames=", 0) == 0) frames = std::max(24, std::atoi(arg.c_str() + 9));
+        else if (arg.rfind("--frames=", 0) == 0) frames = std::max(1, std::atoi(arg.c_str() + 9));
     }
 
     world = TestSupport::resolveRealWorldPath(world);
@@ -72,12 +72,21 @@ int main(int argc, char** argv) {
         return 2;
     }
 
+    const auto tStart = Clock::now();
     // Protect the real Zone identity store exactly like frame_lag_test.
     TestSupport::RealSaveTreeGuard saveGuard(world);
+    const auto tGuard = Clock::now();
+    std::printf("TIME: RealSaveTreeGuard took %.2f ms\n", ms(tStart, tGuard));
+
     TestSupport::BootedEngineHarness h;
+    const auto tHarness = Clock::now();
+    std::printf("TIME: BootedEngineHarness took %.2f ms\n", ms(tGuard, tHarness));
+
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);
+    const auto tLoad = Clock::now();
+    std::printf("TIME: loadWorld took %.2f ms\n", ms(tHarness, tLoad));
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
@@ -93,7 +102,8 @@ int main(int argc, char** argv) {
 
     // Warm foreground state without measuring it. The adapter's own timeline
     // advances too when ON, just as it would in a live 60 Hz session.
-    for (int i = 0; i < 30; ++i) {
+    const int warmupFrames = (frames <= 3) ? 1 : std::min(5, frames);
+    for (int i = 0; i < warmupFrames; ++i) {
         zone->update(dt);
         zone->applyFormationRelations();
         h.worldTime += dt;

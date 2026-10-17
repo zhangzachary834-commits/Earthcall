@@ -82,11 +82,13 @@ int main() {
     }
     saves = std::filesystem::absolute(saves);
 
-    const auto sourceZone = saves / "zones/SecondNatureLawForge/zone.json";
-    check(std::filesystem::exists(sourceZone), "Second-Nature Law Forge Zone identity exists");
-    if (!std::filesystem::exists(sourceZone)) return 1;
+    const auto sourceZoneDir = saves / "zones/SecondNatureLawForge";
+    const auto sourceZoneFile = std::filesystem::exists(sourceZoneDir / "zone.ecform")
+        ? sourceZoneDir / "zone.ecform" : sourceZoneDir / "zone.json";
+    check(std::filesystem::exists(sourceZoneFile), "Second-Nature Law Forge Zone identity exists");
+    if (!std::filesystem::exists(sourceZoneFile)) return 1;
 
-    nlohmann::json zoneJson = SaveSystem::readSaveData(sourceZone.string());
+    nlohmann::json zoneJson = SaveSystem::readSaveData(sourceZoneFile.string());
     check(zoneJson.contains("lawRefs") && zoneJson["lawRefs"].is_array() &&
               zoneJson["lawRefs"].size() == 4,
           "Forge names its four authored prototype/instrument Laws through lawRefs");
@@ -97,18 +99,26 @@ int main() {
             std::chrono::steady_clock::now().time_since_epoch().count()))};
     const auto targetZoneDir = scratch.path / "zones/SecondNatureLawForge";
     std::filesystem::create_directories(targetZoneDir);
-    std::filesystem::copy_file(sourceZone, targetZoneDir / "zone.json");
+    for (const auto& entry : std::filesystem::directory_iterator(sourceZoneDir)) {
+        if (entry.is_regular_file()) {
+            std::filesystem::copy_file(entry.path(), targetZoneDir / entry.path().filename());
+        }
+    }
 
     std::size_t copiedRoots = 0;
     for (const auto& refJson : zoneJson["lawRefs"]) {
         if (!refJson.is_string()) continue;
         const std::string ref = refJson.get<std::string>();
-        const auto sourceLaw = saves / "laws" / ref / "law.json";
+        const auto sourceLawDir = saves / "laws" / ref;
         const auto targetLawDir = scratch.path / "laws" / ref;
-        check(std::filesystem::exists(sourceLaw), "shared Forge Law root exists: " + ref);
-        if (!std::filesystem::exists(sourceLaw)) continue;
+        check(std::filesystem::exists(sourceLawDir), "shared Forge Law root exists: " + ref);
+        if (!std::filesystem::exists(sourceLawDir)) continue;
         std::filesystem::create_directories(targetLawDir);
-        std::filesystem::copy_file(sourceLaw, targetLawDir / "law.json");
+        for (const auto& entry : std::filesystem::directory_iterator(sourceLawDir)) {
+            if (entry.is_regular_file()) {
+                std::filesystem::copy_file(entry.path(), targetLawDir / entry.path().filename());
+            }
+        }
         ++copiedRoots;
     }
     check(copiedRoots == zoneJson["lawRefs"].size(),

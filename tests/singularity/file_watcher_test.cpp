@@ -36,6 +36,15 @@ int main() {
     std::printf("Running file_watcher_test...\n");
     std::fflush(stdout);
 
+    // WITNESS DOCUMENTATION:
+    // What the old test could prove:
+    //   That setting watcher.watchPath via property write called rescanBaseline(),
+    //   allowing FileWatcher to track subsequent file modifications, creations, and deletions.
+    // What the old test could NOT prove:
+    //   That the production boot path (syncRegister without an explicit watchPath property write)
+    //   established a baseline scan upon registration, preventing the first runtime tick()
+    //   from firing false "file-created" events for every pre-existing file on disk.
+
     LawManager laws;
     VirtualFileSystem::syncRegister(laws);
     FileWatcher::syncRegister(laws);
@@ -183,11 +192,68 @@ int main() {
     // Clean up
     fs::remove_all(watchDir, ec);
 
+    // -----------------------------------------------------------------------
+    // Case 6: Production Registration Path & Baseline Pre-existing Files Witness
+    // -----------------------------------------------------------------------
+    fs::path prodDir = fs::path("saves") / "test_watcher_prod_sandbox";
+    fs::remove_all(prodDir, ec);
+    fs::create_directories(prodDir, ec);
+
+    // Seed directory with pre-existing files BEFORE FileWatcher registration
+    fs::path existingFile1 = prodDir / "existing_a.json";
+    fs::path existingFile2 = prodDir / "existing_b.wgsl";
+    {
+        std::ofstream f1(existingFile1); f1 << "{\"baseline\": true}\n";
+        std::ofstream f2(existingFile2); f2 << "// baseline shader\n";
+    }
+
+    LawManager prodLaws;
+    VirtualFileSystem::syncRegister(prodLaws);
+
+    // Create watcher via syncRegister (which defaults to watchPath "saves", containing prodDir).
+    // Do NOT call lawSetValue for watcher.watchPath — this tests the real boot path.
+    FileWatcher::syncRegister(prodLaws);
+    FileWatcher* prodWatcher = FileWatcher::find(prodLaws);
+    check(prodWatcher != nullptr, "Production path FileWatcher registered");
+
+    if (prodWatcher) {
+        lawSetValue(*prodWatcher, PropertyPath::parse("watcher.pollIntervalMs"), PropertyValue(20.0));
+
+        // Track events published during the initial tick
+        int initialCreatedEvents = 0;
+        Core::EventBus::instance().subscribe<ECA::Event>([&](const ECA::Event& ev) {
+            if (ev.subject == prodWatcher && ev.type == "file-created") {
+                ++initialCreatedEvents;
+            }
+        });
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        prodWatcher->tick();
+
+        check(initialCreatedEvents == 0,
+              "Initial tick() on pre-existing files publishes 0 false 'file-created' events");
+
+        // Verify that subsequent file creation IS detected
+        fs::path runtimeFile = prodDir / "runtime_new.txt";
+        {
+            std::ofstream rf(runtimeFile);
+            rf << "runtime file\n";
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        prodWatcher->tick();
+
+        check(initialCreatedEvents == 1,
+              "Subsequent runtime file creation correctly publishes 1 'file-created' event");
+    }
+
+    fs::remove_all(prodDir, ec);
+
     if (g_failures > 0) {
         std::printf("file_watcher_test: FAILED (%d failures)\n", g_failures);
         return 1;
     }
 
-    std::printf("file_watcher_test: ALL OK (all 5 cases passed)\n");
+    std::printf("file_watcher_test: ALL OK (all 6 cases passed)\n");
     return 0;
 }

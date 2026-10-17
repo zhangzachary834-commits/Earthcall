@@ -264,7 +264,7 @@ bool Formation::retainRelation(const std::shared_ptr<Relation>& r) {
     return true;
 }
 
-bool Formation::addRelation(const std::shared_ptr<Relation>& r) {
+bool Formation::addRelation(const std::shared_ptr<Relation>& r, bool quiet) {
     if (!r) return false;
     if (!r->hasEndpoints()) {
         Singular* aBeing = r->a() ? r->a() : findMemberByIdentifier(r->aId());
@@ -276,9 +276,6 @@ bool Formation::addRelation(const std::shared_ptr<Relation>& r) {
     if (!r->hasEndpoints()) {
         if (std::find(pendingRelations.begin(), pendingRelations.end(), r) == pendingRelations.end()) {
             pendingRelations.push_back(r);
-            std::fprintf(stderr,
-                "Formation '%s': PENDING relation '%s' (%s -> %s) waiting for Singular endpoints.\n",
-                getIdentifier().c_str(), r->type.c_str(), r->aId().c_str(), r->bId().c_str());
         }
         return false;
     }
@@ -315,7 +312,7 @@ void Formation::retryPendingRelations() {
     pendingRelations.clear();
     for (const auto& r : pending) {
         if (!r) continue;
-        addRelation(r);
+        addRelation(r, true);
     }
 }
 

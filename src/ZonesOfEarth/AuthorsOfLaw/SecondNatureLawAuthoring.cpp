@@ -2,6 +2,8 @@
 
 #include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
 #include "ConstructedBeing/Singular/Property/Property.hpp"
+#include "Person/Person.hpp"
+#include "Identity/PersonPresence.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -35,7 +37,11 @@ void writeString(Singular& being, const char* property, const std::string& value
 Singular* findBeing(const std::string& id) {
     if (id.empty()) return nullptr;
     for (Singular* being : Universe::instance().beings()) {
-        if (being && being->getIdentifier() == id) return being;
+        if (!being) continue;
+        if (being->getIdentifier() == id) return being;
+        if (auto* p = dynamic_cast<Person*>(being)) {
+            if (Identity::personAnswersTo(*p, id)) return p;
+        }
     }
     return nullptr;
 }
