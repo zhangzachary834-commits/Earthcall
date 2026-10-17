@@ -1,0 +1,162 @@
+{
+    "authors": [
+        "Zach",
+        "Gemini"
+    ],
+    "identifier": "law-chess2d-select",
+    "injected_by": "Gemini 3.8 Flash, 2026-10-16 2D Chess Zone authoring",
+    "law": {
+        "id": "law-chess2d-select",
+        "name": "select-chess2d-piece",
+        "enabled": true,
+        "activation": 0,
+        "scope": 1,
+        "authority": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+            "Zach",
+            "Gemini"
+        ],
+        "conditionModel": {
+            "kind": 3,
+            "children": [
+                {
+                    "kind": 2,
+                    "relationType": "instance-of",
+                    "otherId": "category.chess2d.piece"
+                },
+                {
+                    "kind": 0,
+                    "path": "onBoard",
+                    "op": 0,
+                    "operand": {
+                        "t": "bool",
+                        "v": true
+                    }
+                },
+                {
+                    "kind": 0,
+                    "path": "gridX",
+                    "op": 0,
+                    "operandPath": "@state.chess2d.targetX"
+                },
+                {
+                    "kind": 0,
+                    "path": "gridY",
+                    "op": 0,
+                    "operandPath": "@state.chess2d.targetY"
+                },
+                {
+                    "kind": 0,
+                    "path": "chessColor",
+                    "op": 0,
+                    "operandPath": "@state.chess2d.turn"
+                },
+                {
+                    "kind": 0,
+                    "path": "isSelected",
+                    "op": 0,
+                    "operand": {
+                        "t": "bool",
+                        "v": false
+                    }
+                }
+            ]
+        },
+        "actionModel": {
+            "kind": 5,
+            "children": [
+                {
+                    "kind": 0,
+                    "path": "isSelected",
+                    "operand": {
+                        "t": "bool",
+                        "v": true
+                    }
+                },
+                {
+                    "kind": 0,
+                    "path": "zOrder2D",
+                    "operand": {
+                        "t": "int",
+                        "v": 20
+                    }
+                },
+                {
+                    "kind": 8,
+                    "path": "@state.chess2d.selectedX",
+                    "bindings": {
+                        "gx": "gridX"
+                    },
+                    "function": {
+                        "input": "x",
+                        "pieces": [
+                            {
+                                "mathNode": {
+                                    "op": 0,
+                                    "scalarForm": {
+                                        "terms": [
+                                            {
+                                                "c": 1.0,
+                                                "factors": {
+                                                    "gx": 1.0
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "kind": 8,
+                    "path": "@state.chess2d.selectedY",
+                    "bindings": {
+                        "gy": "gridY"
+                    },
+                    "function": {
+                        "input": "x",
+                        "pieces": [
+                            {
+                                "mathNode": {
+                                    "op": 0,
+                                    "scalarForm": {
+                                        "terms": [
+                                            {
+                                                "c": 1.0,
+                                                "factors": {
+                                                    "gy": 1.0
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "kind": 0,
+                    "path": "@state.chess2d.selectionActive",
+                    "operand": {
+                        "t": "bool",
+                        "v": true
+                    }
+                },
+                {
+                    "kind": 10,
+                    "eventType": "piece-selected",
+                    "publishSubject": "",
+                    "publishObject": ""
+                }
+            ]
+        },
+        "targets": []
+    },
+    "triggers": [
+        "board-clicked"
+    ]
+}

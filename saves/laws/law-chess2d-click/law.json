@@ -1,0 +1,195 @@
+{
+    "authors": [
+        "Zach",
+        "Gemini"
+    ],
+    "identifier": "law-chess2d-click",
+    "injected_by": "Gemini 3.8 Flash, 2026-10-16 2D Chess Zone authoring",
+    "law": {
+        "id": "law-chess2d-click",
+        "name": "handle-chess2d-click",
+        "enabled": true,
+        "activation": 0,
+        "scope": 0,
+        "authority": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+            "Zach",
+            "Gemini"
+        ],
+        "conditionModel": {
+            "kind": 4,
+            "children": [
+                {
+                    "kind": 2,
+                    "relationType": "instance-of",
+                    "otherId": "category.chess2d.square"
+                },
+                {
+                    "kind": 3,
+                    "children": [
+                        {
+                            "kind": 2,
+                            "relationType": "instance-of",
+                            "otherId": "category.chess2d.piece"
+                        },
+                        {
+                            "kind": 0,
+                            "path": "isSelected",
+                            "op": 0,
+                            "operand": {
+                                "t": "bool",
+                                "v": false
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "actionModel": {
+            "kind": 5,
+            "children": [
+                {
+                    "kind": 8,
+                    "path": "@state.chess2d.targetX",
+                    "bindings": {
+                        "gx": "gridX"
+                    },
+                    "function": {
+                        "input": "x",
+                        "pieces": [
+                            {
+                                "mathNode": {
+                                    "op": 0,
+                                    "scalarForm": {
+                                        "terms": [
+                                            {
+                                                "c": 1.0,
+                                                "factors": {
+                                                    "gx": 1.0
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "kind": 8,
+                    "path": "@state.chess2d.targetY",
+                    "bindings": {
+                        "gy": "gridY"
+                    },
+                    "function": {
+                        "input": "x",
+                        "pieces": [
+                            {
+                                "mathNode": {
+                                    "op": 0,
+                                    "scalarForm": {
+                                        "terms": [
+                                            {
+                                                "c": 1.0,
+                                                "factors": {
+                                                    "gy": 1.0
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "kind": 8,
+                    "path": "@state.chess2d.dx",
+                    "bindings": {
+                        "tx": "gridX",
+                        "sx": "@state.chess2d.selectedX",
+                        "sa": "@state.chess2d.selectionActive"
+                    },
+                    "function": {
+                        "input": "x",
+                        "pieces": [
+                            {
+                                "mathNode": {
+                                    "op": 0,
+                                    "scalarForm": {
+                                        "terms": [
+                                            {
+                                                "c": 1.0,
+                                                "factors": {
+                                                    "sa": 1.0,
+                                                    "tx": 1.0
+                                                }
+                                            },
+                                            {
+                                                "c": -1.0,
+                                                "factors": {
+                                                    "sa": 1.0,
+                                                    "sx": 1.0
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "kind": 8,
+                    "path": "@state.chess2d.dy",
+                    "bindings": {
+                        "ty": "gridY",
+                        "sy": "@state.chess2d.selectedY",
+                        "sa": "@state.chess2d.selectionActive"
+                    },
+                    "function": {
+                        "input": "x",
+                        "pieces": [
+                            {
+                                "mathNode": {
+                                    "op": 0,
+                                    "scalarForm": {
+                                        "terms": [
+                                            {
+                                                "c": 1.0,
+                                                "factors": {
+                                                    "sa": 1.0,
+                                                    "ty": 1.0
+                                                }
+                                            },
+                                            {
+                                                "c": -1.0,
+                                                "factors": {
+                                                    "sa": 1.0,
+                                                    "sy": 1.0
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "kind": 10,
+                    "eventType": "board-clicked",
+                    "publishSubject": "state.chess2d",
+                    "publishObject": ""
+                }
+            ]
+        },
+        "targets": []
+    },
+    "triggers": [
+        "object-clicked"
+    ]
+}
