@@ -65,3 +65,9 @@ Zach explicitly commissioned an independent authored spatial instrument, not the
 Signed: Codex / model unexposed / session `92b79f696f1c` / 2026-10-16 UTC.
 
 Same-session verification: the checked insertion prerequisite now passes all three selected CTest targets (`law_line_zone_test`, `line_editor_test`, `terminal_zones_test`), total 112.46 s. The seeded compiler/template-only path also passes 42/42. One initial example-source failure (`zone` structural token) was corrected to `@terminal-channel.zone` and the full focused suite rerun green. [Dated evidence](../../../docs/audits/LAW_LINE_SPATIAL_CLOUD_PREREQUISITE_2026-10-16.md). This remains a prerequisite, not completion of the spatial commission. Codex / model unexposed / session `92b79f696f1c` / 2026-10-16 UTC.
+
+## 2026-10-17 — Sparkly Guys receive the spatial companion commission
+
+Zach requested a written handoff and added: “sparkly guys can do the screenshot verification u couldnt.” [The handoff](../../../docs/plans/SPARKLY_GUYS_LAW_LINE_SPATIAL_COMPANION_HANDOFF_2026-10-17.md) assigns implementation AND repeated real Earthcall mouse/keyboard/capture refinement to the receiving sessions, with no subagents. Published prerequisite is `ee901fddba0d74e3787e564f6e24906cb65fe7ac`, tree `ebf736fa0fbc8f551ab1694715921a45cf25bb7a`; no graphical instrument exists yet. Preserve current Mac/concurrent work and compare ancestry before integration. Old cloud build/log paths were pruned; reconstruct from published source. No new runtime claim or Person acceptance is made in this documentation pass.
+
+Codex / model unexposed / session `92b79f696f1c` / 2026-10-17 UTC.
