@@ -169,3 +169,67 @@ Verification and remaining acceptance: [region audit](../../../../../audits/LAW_
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-07 18:54 PDT.*
 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-06 18:22 PDT.*
+
+## Singular bearers and agent authoring route — 2026-10-17
+
+**Human direction.** Zach asked whether this is merely the raw ability to author pixels
+or whether Singulars can carry OntoMath pixel-region/pixel/color Properties, and asked
+that the robot-facing documents stop leading agents into 2D ShapeKind primitives.
+The answer is the existing Singular-borne field/record route, with explicit limits.
+This pass changes guidance, not renderer semantics or authored saves.
+
+| Question | Implemented route and boundary |
+| --- | --- |
+| Can a Singular carry the form? | Yes: ordinary authored typed fields/records on an addressable bearer; `output.colorPath` resolves its VectorField afresh. The bearer need not supply Object geometry. |
+| Can the region have mathematical bounds? | Yes: drawn support is the color Piece's scalar `where` expression ≤ 0 plus any interval; named `region.selector` separately selects observed samples by ScalarField value ≤ 0. Matching sets require matching authored mathematics. This is not universal Property-constraint machinery. |
+| Can one physical pixel have color? | Yes: a mathematical region can isolate one pixel centre, and the VectorField supplies its RGB. A sample is not automatically allocated as a being or a writable framebuffer cell. |
+| Can Laws edit and derive Properties? | Yes: existing AddProperty/Set/Map and checked canonical field paths edit source values; a new-token ScreenSample senses completed viewport pixels, which Laws can carry/derive onto a bearer. Old observations retain their original frame/selector. |
+| Does ScreenRegion create a Singular? | No: it is an authored constructor for a PropertyDict. A region with independent identity uses an appropriately authored existing concrete kind plus Properties and Relations through the common creation route. |
+| Do all region-bearing Singulars render automatically? | No: bind the source explicitly; current Screen admits one composed color field with optional opacity/time. Multi-source ordering, visibility and authority are unfinished. |
+
+**Agent route:** begin at [app guide §5.1](../../../../../architecture/Design/Building%202D%20and%203D%20Apps%20with%20Earthcall%20Guide.md#51-start-with-a-singular-and-its-mathematical-form)
+and [CLI §5b](../../../../../architecture/law/LAW_AUTHORING_CLI_GUIDE.md#5b-a-named-displayed-region-its-source-and-its-sensed-pixels).
+Reuse [region creation/read](../../../../../../examples/law_line_screen_region.txt) and
+[source editing](../../../../../../examples/law_line_screen_region_edit.txt); the public
+example uses Screen as bearer, and the CLI explains a Person-borne source. Do not
+invent a Pixel/Region class or enum, create a private renderer callback, or require a
+ShapeKind rectangle simply to manifest a field. Existing surface texture paint and
+legacy Object hit-testing/text remain separate supported consumers. Direct controls
+use authored pointer-region mathematics; they do not acquire `object-clicked` merely
+by bearing a field. The specific [pixel-art atelier](../Law_Line_Pixel_Art_Editor/Law_Line_Pixel_Art_Editor.md)
+already demonstrates authored interaction, without completing every selection/editing workflow.
+
+**Evidence classification.** Current source inspection follows
+`scripts/seed_law_line.py`'s dictionary constructor, Screen's qualified field and
+selector resolution, the LawLine region/edit assertions, and the native fixture's
+Person-borne source. The [October 7 native audit](../../../../../audits/LAW_LINE_SCREEN_REGIONS_2026-10-07.md)
+records decoded gold/cyan region captures, Person-borne color and a single physical
+pixel; those remain dated witnesses, not a fresh October 17 GPU or whole-suite result.
+Documentation checks passed for 24 added local links/anchors and Markdown code fences;
+AGENTS.md remains 199 lines, and `git diff --check` passes. Existing Person checks
+remain open; no new controls, beings or live-save edits are introduced.
+
+*Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-17T16:18:23-07:00; Zach originated the question and agent-guidance commission.*
+
+### Follow-up: property-only bearer pipeline verified natively
+
+Zach explicitly required proof with a base Singular/Object, adding only Properties
+without any ShapeKind specification. The production CLI/Engine witness now has
+`--property-bearers`: an existing non-Object concrete Singular and a plain Object use
+the Singular interface, with only one added color/selector region record each.
+Neither is admitted as a geometric render carrier. Six native 2560×1440 captures
+cover disconnected bounds, per-pixel color, canonical color edits and single-pixel
+replacement; all 22,118,400 RGB pixels match with zero byte error, also verified by an
+independent image decoder. Output withdrawal passes. The existing renderer required
+no changes. [Audit and reproducible commands](../../../../../audits/SINGULAR_SCREEN_PROPERTY_PIPELINE_2026-10-17.md).
+
+`Singular` itself is abstract; the non-Object fixture uses the existing Lexeme kind,
+and the plain Object's unused constructor geometry remains legacy state. The proof is
+that **no shape/material authoring or geometry rendering is needed by this path**,
+not that every historical Object field has been removed. Source identity is fixture
+setup, with fields authored by real Terminal→Metalaw→Law execution. It does not prove
+the birth/restart of every possible concrete Singular or automatic composition.
+
+*Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-17T16:27:11-07:00; extends Zach's required property-only pipeline check.*
