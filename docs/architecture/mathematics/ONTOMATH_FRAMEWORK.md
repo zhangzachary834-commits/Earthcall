@@ -225,6 +225,17 @@ writes it as a playable `.wav`, and reverses a `Flow` governed by its derivative
 
 ## 8. Direct Screen manifestation
 
+Zach's [pixel doctrine](../ontology/PIXEL_SUBSTRATE_PROCESS_AND_AUTHORED_IDENTITY.md)
+permits substrate Properties, authored process results and identity-bearing pixel/region
+vessels to coexist. OntoMath expresses their bounds, values and mappings as admitted;
+the channel does not choose one exclusive identity model. A source expression, its act
+of manifestation and a dated observed result retain their distinct information. This
+governs authoring direction without claiming a general live substrate locator, inverse
+compositor or automatic conversion between all views.
+
+*Codex / GPT-6.1 Sol / `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-17T16:41:45-07:00; canonized at Zach's request.*
+
 The Screen channel now reads authored `VectorField` color and optional `ScalarField`
 opacity directly at physical framebuffer sample centres. This uses the same MathNode
 calculus and WGSL emitter as surface expressions without an Object, Material, texture,

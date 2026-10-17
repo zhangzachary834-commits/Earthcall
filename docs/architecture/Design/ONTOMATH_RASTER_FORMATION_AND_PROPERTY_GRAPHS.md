@@ -17,6 +17,15 @@
 > Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
 > 2026-10-17T16:18:23-07:00; Zach requested that robots stop defaulting to ShapeKind primitives.
 
+**Zach's subsequent canonization:** [substrate, process and authored identity](../ontology/PIXEL_SUBSTRATE_PROCESS_AND_AUTHORED_IDENTITY.md)
+may coexist for the same pixels/regions. This specification's micro-Singular pattern is
+one available perspective; raw substrate and process results need not acquire separate
+identity before they can be represented or governed through their bearer. A meaningful
+pixel vessel can carry its substrate reference and other characteristics as Properties.
+These perspectives remain connected without making every Property a being or promising
+automatic conversion between them. Codex / GPT-6.1 Sol /
+`01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` / 2026-10-17T16:41:45-07:00.
+
 **Date:** 2026-09-13  
 **Timestamp:** 2026-09-13T22:25:00-07:00  
 **Author:** Gemini Spark (Agent)  

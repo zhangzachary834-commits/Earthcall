@@ -127,6 +127,9 @@ Full-suite and Person acceptance remain separate from this focused native witnes
 
 ## Remaining work
 
+- Authored correspondences among substrate references, process results and independent
+  pixel/region identity; general locator, remapping and continuity policies remain to
+  be specified under [Zach's pixel doctrine](../../../../../architecture/ontology/PIXEL_SUBSTRATE_PROCESS_AND_AUTHORED_IDENTITY.md).
 - CLI field/selector construction is implemented below; interactive editing and Person acceptance remain open.
 - Authored composition, placement relative to other manifestations, and multi-Person
   visibility/authority semantics before introducing additional direct output sources.
@@ -233,3 +236,31 @@ the birth/restart of every possible concrete Singular or automatic composition.
 
 *Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
 2026-10-17T16:27:11-07:00; extends Zach's required property-only pipeline check.*
+
+## Canonization of coexisting pixel perspectives — 2026-10-17
+
+After the property-only pipeline proof, Zach distinguished three ways to conceive the
+same pixel/region: raw substrate with Properties; the process-oriented result of an
+act by authored Laws or external First Movers; and an authored identity vessel carrying
+its machine-addressable substrate reference and other pixel characteristics as
+Properties. His governing point is freedom to move between these representations and
+“hold them all together,” rather than binding Earthcall to one exclusive view. Zach
+then explicitly requested canonization in the docs.
+
+The architectural doctrine is [Pixels: substrate, process, and authored identity](../../../../../architecture/ontology/PIXEL_SUBSTRATE_PROCESS_AND_AUTHORED_IDENTITY.md).
+Zach originates the three perspectives and their fluid coexistence; Codex formalizes
+their distinctions and correspondence obligations. Agent entrypoints, the compass,
+app guide and OntoMath route to it. The app guide's granularity ladder now explicitly
+denotes neither mandatory stages nor exclusive ontologies.
+
+This is a documentation-only doctrine pass, not implementation of universal substrate
+locators, remapping, action-to-sample provenance or automatic representation conversion.
+Those open correspondences are tracked above. Existing native witnesses and Person
+checks retain their scopes; no new control, save or visible runtime behavior is added.
+
+Structural checks passed: 19 added local links/anchors, Markdown fences, append-only
+Intercom preservation and `git diff --check`; AGENTS.md remains 199 lines. Runtime
+tests were not rerun for this doctrine-only change.
+
+*Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-17T16:41:45-07:00; canonized at Zach's explicit request.*

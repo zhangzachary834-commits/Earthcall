@@ -942,9 +942,18 @@ An art style can therefore govern:
 
 ### 7.4 The visual-atomicity ladder
 
-Zach’s goal is mastery down to individual pixels or meaningful pixel batches. The
-extension here is a **promotion rule** that preserves that intent without forcing the
-runtime to allocate a heavyweight C++ Object for every display sample:
+Zach’s goal is mastery down to individual pixels or meaningful pixel batches. His
+[canonized account of substrate, process and authored identity](../ontology/PIXEL_SUBSTRATE_PROCESS_AND_AUTHORED_IDENTITY.md)
+allows these perspectives to coexist and remain connected. The ladder below describes
+granularity, **not compulsory stages or a choice of one exclusive pixel ontology**.
+A sample can remain substrate, belong to an authored process's result, and be referred
+to by a meaningful Singular at the same time. A pixel-identity vessel may carry its
+machine substrate reference and other pixel characteristics as Properties; these
+predicates do not themselves become beings. Promotion is available when identity is
+authored, rather than required merely because a sample exists.
+
+*Canonization: Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-17T16:41:45-07:00; the three perspectives and fluid coexistence originate with Zach.*
 
 > **CURRENT STATUS — DIRECT FIELDS, CLI NAMED REGIONS AND SOURCE EDITS IMPLEMENTED:**
 > Screen now admits typed authored OntoMath color/opacity fields directly at physical
