@@ -21,8 +21,12 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 
 #include <glm/glm.hpp>
+#if defined(__APPLE__)
+#include <sys/clonefile.h>
+#endif
 #include <algorithm>
 #include <chrono>
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -268,6 +272,27 @@ inline std::string hashDirectoryTree(const std::filesystem::path& dir) {
 struct GuardCurrentRootTag {};
 inline constexpr GuardCurrentRootTag GuardCurrentRoot{};
 
+// Snapshot one save-tree entry. On APFS this is clonefile(): the snapshot
+// shares blocks with the original until one of them is written, so a guard
+// over a multi-GB saves/ costs nearly nothing, and a snapshot leaked by an
+// aborted test no longer eats the disk. A plain deep copy of every entry, per
+// guarded test, once filled the disk during a full ctest and truncated
+// saves/backups/before-load.ecform mid-restore (FULL_SYSTEM_AUDIT_2026-10-16
+// F13). Where cloning is unavailable (another filesystem, another OS, or the
+// two paths on different volumes) this falls back to the deep copy.
+inline void cloneOrCopySaveEntry(const std::filesystem::path& from,
+                                 const std::filesystem::path& to,
+                                 std::error_code& ec) {
+    ec.clear();
+#if defined(__APPLE__)
+    if (::clonefile(from.c_str(), to.c_str(), CLONE_NOFOLLOW) == 0) return;
+#endif
+    std::filesystem::copy(from, to,
+                          std::filesystem::copy_options::recursive |
+                              std::filesystem::copy_options::copy_symlinks,
+                          ec);
+}
+
 struct RealSaveTreeGuard {
     std::filesystem::path realSaves;
     std::filesystem::path backup;
@@ -308,16 +333,26 @@ struct RealSaveTreeGuard {
             if (ec) std::terminate();
         }
 
-        // Restore every entry that existed when guarding began.
+        // Restore every entry that existed when guarding began. STAGE FIRST:
+        // the snapshot is materialized beside the original and only then
+        // swapped in, so a restore that fails (a full disk, say) leaves the
+        // original as it was instead of half-copied. Deleting first and then
+        // copying is how before-load.ecform was truncated on 2026-10-16.
         for (const auto& entry : backedUpEntries) {
+            const auto staged = realSaves / (".earthcall-restore-" + entry);
+            std::filesystem::remove_all(staged, ec);
+            if (ec) std::terminate();
+            cloneOrCopySaveEntry(backup / entry, staged, ec);
+            if (ec) {
+                std::fprintf(stderr, "[RealSaveTreeGuard] could not stage %s for restore: %s; "
+                             "original left untouched, snapshot kept at %s\n",
+                             entry.c_str(), ec.message().c_str(), backup.string().c_str());
+                std::terminate(); // Never discard a failed restoration snapshot.
+            }
             std::filesystem::remove_all(realSaves / entry, ec);
             if (ec) std::terminate(); // Preserve the backup for manual recovery.
-            std::filesystem::copy(
-                backup / entry, realSaves / entry,
-                std::filesystem::copy_options::recursive |
-                    std::filesystem::copy_options::copy_symlinks,
-                ec);
-            if (ec) std::terminate(); // Never discard a failed restoration snapshot.
+            std::filesystem::rename(staged, realSaves / entry, ec);
+            if (ec) std::terminate();
         }
 
         // Remove top-level entries created only while the guard was active.
@@ -371,11 +406,7 @@ private:
         if (ec) throw std::filesystem::filesystem_error("save-tree root inspection failed", ec);
 
         for (const auto& entry : initialEntries) {
-            std::filesystem::copy(
-                realSaves / entry, backup / entry,
-                std::filesystem::copy_options::recursive |
-                    std::filesystem::copy_options::copy_symlinks,
-                ec);
+            cloneOrCopySaveEntry(realSaves / entry, backup / entry, ec);
             if (ec) throw std::filesystem::filesystem_error("save-tree backup failed", ec);
             backedUpEntries.insert(entry);
         }

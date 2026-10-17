@@ -465,6 +465,7 @@ public:
             case Field::ActiveLayer: {
                 double n = 0.0;
                 if (!tex || tex->layers.empty() || !propertyValueToNumber(v, n)) return false;
+                if (!(tex = ownTexture())) return false;
                 tex->activeLayer = std::max(
                     0, std::min(static_cast<int>(tex->layers.size()) - 1,
                                 static_cast<int>(n)));
@@ -472,19 +473,23 @@ public:
             }
             case Field::UseLayers: {
                 if (!tex) return false;
+                bool on = false;
                 if (const auto* b = std::get_if<bool>(&v)) {
-                    tex->useLayers = *b;
+                    on = *b;
                 } else {
                     double n = 0.0;
                     if (!propertyValueToNumber(v, n)) return false;
-                    tex->useLayers = n != 0.0;
+                    on = n != 0.0;
                 }
+                if (!(tex = ownTexture())) return false;
+                tex->useLayers = on;
                 recomposite(*tex);
                 return true;
             }
             case Field::LayerOpacity: {
                 double n = 0.0;
                 if (!tex || tex->layers.empty() || !propertyValueToNumber(v, n)) return false;
+                if (!(tex = ownTexture())) return false;
                 tex->setLayerOpacity(clampLayer(*tex), static_cast<float>(n));
                 recomposite(*tex);
                 return true;
@@ -492,6 +497,7 @@ public:
             case Field::BlendMode: {
                 double n = 0.0;
                 if (!tex || tex->layers.empty() || !propertyValueToNumber(v, n)) return false;
+                if (!(tex = ownTexture())) return false;
                 tex->setBlendMode(clampLayer(*tex), static_cast<int>(n));
                 recomposite(*tex);
                 return true;
@@ -504,6 +510,7 @@ public:
                 if (!propertyValueToNumber(v, n) || n <= 0.0 || n > 4096.0) return false;
                 const int res = static_cast<int>(n);
                 if (tex) {
+                    if (!(tex = ownTexture())) return false;
                     tex->resize(res, res);
                     return true;
                 }
@@ -524,9 +531,23 @@ public:
 private:
     // The paint this face wears, reached through the Material the object
     // names. Absent material, or a material with fewer faces than this bridge
-    // addresses, reads as "no paint" rather than inventing any.
+    // addresses, reads as "no paint" rather than inventing any. READ ONLY in
+    // practice: the named Material may be shared, so a write through this
+    // pointer would repaint every Object that names it.
     FaceTexture* texture() const {
         auto mat = materials.resolveOrDefault(_owner->materialId());
+        if (!mat || _face < 0 || _face >= static_cast<int>(mat->faceTextures.size())) {
+            return nullptr;
+        }
+        return &mat->faceTextures[static_cast<std::size_t>(_face)];
+    }
+    // The texture to WRITE. ownMaterial() diverges this Object onto its own
+    // material.<identifier> (copying the shared paint) on the first stroke,
+    // as setFaceColor does, so a validated write never reaches a shared
+    // Material. Call it only after validation, so a refused write does not
+    // fork the Material. (FULL_SYSTEM_AUDIT_2026-10-16 F2.)
+    FaceTexture* ownTexture() const {
+        auto mat = _owner->ownMaterial();
         if (!mat || _face < 0 || _face >= static_cast<int>(mat->faceTextures.size())) {
             return nullptr;
         }

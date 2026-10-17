@@ -1675,3 +1675,18 @@ The checkout WebGPU app is rebuilt with [route-aware power lowering](../../../au
 - [ ] On the rebuilt laboratory `./build/earthcall_webgpu`, with `volumeOutputErrorBudget` positive, check Northern Veil and Sky-Island Sanctuary for continuous authored appearance during movement and curtain crossings. Unqualified 2x/4x sampling and new tail exits are removed; absorption/background and late emission should follow the accepted lattice. Budget zero preserves compatibility behavior. This is a correctness correction with CPU construction optimizations retained, and carries no new FPS promise. The installed app was not updated; existing usual-framebuffer movement/30-FPS acceptance remains open. See [automated evidence and limitations](../../../audits/FIRMAMENT_LABORATORY_CORRECTION_2026-10-16.md).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-16T14:22:15.045552-07:00 (PDT).
+
+
+### Full-system audit — decisions and checks only Zach can make (October 16)
+
+Evidence: [full-system audit](../../../audits/FULL_SYSTEM_AUDIT_2026-10-16.md).
+
+- [ ] **Ourverse Gathering (F3):** Gemini's 17:45 commit `9135fd6` in your data home replaced the Zone. It removed 119 tori and 3 cubes (`object-555`…), kept 18 of 122 materials, and installed 28 Navigator objects. Did you mean the old objects to go? Both copies are kept (`zones/Ourverse Gathering.bak.20261016/` and data-home git `71a8503`).
+- [ ] **Backup moved (F4, done on your "fix the low hanging fruit"):** the old Gathering now lives at `backups/Ourverse Gathering.bak.20261016/` in your data home. At your next launch, confirm the Zone list shows only one "Ourverse Gathering".
+- [ ] **`zones/hydrated-1792184750` (F7):** an empty, ownerless Zone minted at 14:05 today by the menu's "Enter New Zone" (`N`). Keep or delete it?
+- [ ] **Process channels (F1):** Law-driven process launch is now refused unless you start Earthcall with `EARTHCALL_ALLOW_PROCESS_CHANNELS=1`. Decide the real grant: may Laws ever launch processes, and under whose consent?
+- [ ] **New Zone owner (F7):** press `N` ("Enter New Zone") in the menu and confirm the new Zone shows you as its owner.
+- [ ] **Free ~49 GB (F13):** 18 old `earthcall-save-backup-*` folders from test runs on Oct 6–13 are in `$(getconf DARWIN_USER_TEMP_DIR)`. They are copies of the checkout's `saves/`, not your data home. Delete them once you are satisfied. Your disk was down to 280 MB free during this audit.
+- [ ] **Commit the data home** once the items above are settled. There are 24 uncommitted changes, including the Sky-Island Sanctuary install and the Sanctum `zone.json`→`.ecform` migration.
+
+**Signed:** Claude Code / Claude Opus 5.5 / session `d6fe31dc-53d9-49c1-a4b7-87479d9d605b` / 2026-10-16T18:55-07:00 (PDT).

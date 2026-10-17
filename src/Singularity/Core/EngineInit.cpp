@@ -588,7 +588,13 @@ bool Engine::initLogic() {
     });
     _mainMenu.addOption("Enter New Zone (Hydrate ECGRAPH)", GLFW_KEY_N, [this]() {
         std::string newId = "hydrated-" + std::to_string(std::time(nullptr));
-        auto zone = mgr.authorZone(newId, "", "empty");
+        // The Person who pressed it is the Zone's owner: nothing enters the
+        // world without an author (FULL_SYSTEM_AUDIT_2026-10-16 F7). The
+        // timestamp name is still not an authored slug; see the task
+        // Zones and Ourverse/Menu_Minted_Zones_Without_Author.
+        const std::string ownerId = _person ? _person->getIdentifier() : std::string();
+        auto zone = mgr.authorZone(newId, ownerId, "empty",
+                                   ownerId.empty() ? std::string() : std::string(Zone::kOwnerKindPerson));
         if (zone) {
             for (size_t i = 0; i < mgr.zones().size(); ++i) {
                 if (mgr.zones()[i]->getIdentifier() == newId) {

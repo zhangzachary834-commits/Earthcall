@@ -228,6 +228,41 @@ int main() {
         std::printf("  material faceTextures survive JSON round-trip OK\n");
     }
 
+    // ------------------------------------------------------------------
+    // 9. Structural face writes through PropertyPath (face.N.resolution,
+    //    face.N.useLayers, ...) DIVERGE too. They used to write straight
+    //    through the shared Material and repaint every Object naming it
+    //    (FULL_SYSTEM_AUDIT_2026-10-16 F2, witness W3). A refused write must
+    //    not fork the Material either.
+    // ------------------------------------------------------------------
+    {
+        auto stone = materials.create("paint_test_shared_stone");
+        stone->initFaceTextures(6, 16, 16);
+        Object a, b;
+        a.setShapeKind(Object::ShapeKind::Cube);
+        b.setShapeKind(Object::ShapeKind::Cube);
+        a.setMaterialId(stone->getIdentifier());
+        b.setMaterialId(stone->getIdentifier());
+
+        assert(PropertyPath::parse("face.0.resolution").setValue(a, PropertyValue(0.0)) !=
+               PropertyPath::PathResult::Ok);
+        assert(a.materialId() == stone->getIdentifier() &&
+               "a refused write leaves the object sharing");
+
+        assert(PropertyPath::parse("face.0.resolution").setValue(a, PropertyValue(64.0)) ==
+               PropertyPath::PathResult::Ok);
+        assert(a.materialId() != stone->getIdentifier() && "the write diverged a");
+        assert(b.materialId() == stone->getIdentifier() && "b still shares");
+        assert(stone->faceTextures[0].width == 16 && "the shared Material is untouched");
+        assert(materials.resolveOrDefault(a.materialId())->faceTextures[0].width == 64);
+
+        assert(PropertyPath::parse("face.1.useLayers").setValue(b, PropertyValue(true)) ==
+               PropertyPath::PathResult::Ok);
+        assert(!stone->faceTextures[1].useLayers && "useLayers did not reach the shared Material");
+        assert(materials.resolveOrDefault(b.materialId())->faceTextures[1].useLayers);
+        std::printf("  face.N.* writes diverge, never repaint a shared Material OK\n");
+    }
+
     glfwDestroyWindow(window);
     glfwTerminate();
     std::printf("paint_test: ALL OK\n");

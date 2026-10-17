@@ -6,6 +6,12 @@ namespace Singularity {
 namespace Foreign {
 namespace Shell {
 
+// True only when the Person launching Earthcall set
+// EARTHCALL_ALLOW_PROCESS_CHANNELS=1. Shared by every channel that can launch
+// a process (ShellChannel, StreamChannel's "process" pipes). Interim floor;
+// see ShellChannel.cpp.
+bool processChannelsAllowedByPerson();
+
 class ShellChannel : public Law {
 public:
     ShellChannel();

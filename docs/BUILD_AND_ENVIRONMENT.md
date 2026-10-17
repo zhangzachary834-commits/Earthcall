@@ -265,6 +265,20 @@ next full build.
 `law/`, `singularity/`, `identity/`, plus `support/` for shared headers). CMake still
 globs `tests/**/*.cpp`; the ctest name is the file stem. See `tests/README.md`.
 
+**After any suite run, check `git status -- saves` and free disk space.** `RealSaveTreeGuard`
+now snapshots `saves/` with APFS clones and restores by staging and renaming, so a full run can no
+longer fill the disk. But a test that `abort()`s still skips the restore and leaves `saves/`
+dirty. Restore tracked files from git, and never trust an engine-written stash such as
+`saves/backups/before-load.ecform` without its hash. Measurement probes that need arguments go in
+`MANUAL_PROBE_TESTS` in `CMakeLists.txt`: they are built with the suite but not registered with
+ctest. → [audit §4a/§9](audits/FULL_SYSTEM_AUDIT_2026-10-16.md)
+
+**Process launch from Law is closed by default** (interim kernel floor, 2026-10-16). `shell-channel`
+and `StreamChannel` process pipes opened through `stream.open` refuse unless the Person starting
+Earthcall sets `EARTHCALL_ALLOW_PROCESS_CHANNELS=1`. First Mover C++ calling `openPipe()` directly
+is unaffected. `HttpChannel` verifies TLS certificates. The real grant is Zach's ⚑:
+[task](Agenda/Tasks/Specific%20Tasks/Channels%20and%20Language/Process_Launching_Channels_Authority/Process_Launching_Channels_Authority.md).
+
 ---
 
 ## Two live-system notes

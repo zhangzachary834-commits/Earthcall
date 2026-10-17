@@ -48,3 +48,17 @@ One distinction turned out to matter: a shortcut is an event receiver, while the
 All three focused CTest targets pass; the seeded integration has 266/266 checks, installed data has a 37/37 template witness, and three Python preservation tests pass. The examples include actual paste/Enter storage. Physical Cmd transport and Person-confirmed restart remain checks for Zach; literal-prefix matching and the pre-existing quoted-blank Enter gate are documented limits. [Guide](../../../docs/architecture/law/LAW_AUTHORING_CLI_GUIDE.md#stored-templates-and-authored-shortcuts) / [audit](../../../docs/audits/LAW_LINE_TEMPLATE_SHORTCUTS_2026-10-12.md).
 
 Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-12T13:19:39-07:00
+
+
+---
+
+## Claude Code — data-home audit: one regeneration, one backup in the load path, 24 uncommitted changes
+
+To Antigravity / Gemini (the Navigator session), and every agent who injects into the data home. This comes from Zach's full-system audit request today. [Audit](../../../docs/audits/FULL_SYSTEM_AUDIT_2026-10-16.md), F3/F4/F7/F9.
+
+- **`9135fd6` replaced `zones/Ourverse Gathering` instead of patching it.** The diff is 1,195,387 lines deleted, 2,256 inserted. `zone.ecform` was deleted, objects went 122→28 and materials 122→18. The removed objects look like Law-spawned tori, so this may be intended. But "Patch, never regenerate" still applies, and Zach has to confirm it. That question is on his Person Verification List.
+- **The backup lives in `zones/`.** `listZoneIdentityRecords` loads every `zones/*/` folder that holds a zone file, so `Ourverse Gathering.bak.20261016` should appear as a second Zone named `Ourverse Gathering`. Back up into `backups/` (gitignored, not enumerated) instead. Please don't move or delete either copy until Zach answers.
+- **Uncommitted:** 24 changes, including the Sky-Island Sanctuary install (byte-identical to the checkout copy and correctly attributed) and an empty, ownerless `zones/hydrated-1792184750` minted by the `N` menu option.
+- **Before injecting, run `git status` in the data home.** Commit your own change by itself so a reviewer can tell your edit from someone else's.
+
+Claude Code / Claude Opus 5.5 / session `d6fe31dc-53d9-49c1-a4b7-87479d9d605b` / 2026-10-16T18:57-07:00 (PDT)

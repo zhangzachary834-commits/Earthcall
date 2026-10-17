@@ -2,6 +2,8 @@
 #include "Singularity/Storage/FileChannel.hpp"
 #include "Singularity/Core/CodecChannel.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
+#include "Singularity/Foreign/Shell/ShellChannel.hpp"
+#include <iostream>
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -165,6 +167,22 @@ void StreamChannel::propSetChunkDataBase64(const std::string& v) {
 
 void StreamChannel::propSetOpenTrigger(const bool& v) {
     _openTrigger = v;
+    // Same interim kernel floor as ShellChannel (FULL_SYSTEM_AUDIT_2026-10-16
+    // F1). This setter is how Law reaches the channel: stream.open with the
+    // default "process" pipeType launches stream.target as a shell command.
+    // It refuses unless the Person starting Earthcall granted process
+    // launch. FIFO pipes, and First Mover C++ calling openPipe() directly,
+    // are unaffected.
+    const std::string type = _pipeType.empty() ? "process" : _pipeType;
+    if (_openTrigger && type == "process" &&
+        !Singularity::Foreign::Shell::processChannelsAllowedByPerson()) {
+        _status = "error: process launch refused";
+        _lastError = "Process pipes opened by Law are closed until a Person grants them "
+                     "(set EARTHCALL_ALLOW_PROCESS_CHANNELS=1 when starting Earthcall)";
+        std::cerr << "[StreamChannel] " << _lastError << "\n";
+        _openTrigger = false;
+        return;
+    }
     if (_openTrigger) {
         openPipe(_target, _mode, _pipeType);
         _openTrigger = false;

@@ -363,6 +363,13 @@ if(NOT EMSCRIPTEN)
     set(PENDING_FEATURE_TESTS "")
     set(ALL_ACTIVE_TEST_TARGETS "")
 
+    # Measurement probes that take required arguments and are run by hand (or
+    # by a script) in pairs. They are BUILT with the suite so they never rot,
+    # but they are not registered with ctest: run with no arguments they can
+    # only print usage and fail, which made the suite red on every run
+    # (FULL_SYSTEM_AUDIT_2026-10-16 F14). Usage is in each probe's header.
+    set(MANUAL_PROBE_TESTS slow_adapter_zone_perf_test)
+
     foreach(TEST_SOURCE ${TEST_FILES})
         get_filename_component(TEST_NAME ${TEST_SOURCE} NAME_WE)
 
@@ -377,7 +384,6 @@ if(NOT EMSCRIPTEN)
         elseif (${TEST_NAME} STREQUAL "sdf_wgsl_parameter_refresh_test" OR
                  ${TEST_NAME} STREQUAL "gyroid_reliquary_test" OR
                  ${TEST_NAME} STREQUAL "veiled_hour_test" OR
-            ${TEST_NAME} STREQUAL "sky_island_sanctuary_test" OR
                  ${TEST_NAME} STREQUAL "mcp_authoring_surfaces_test" OR
                  ${TEST_NAME} STREQUAL "volume_shared_subexpression_test")
             # Pure codegen witness: it exercises SdfWgsl::compile/collectParams
@@ -462,7 +468,7 @@ if(NOT EMSCRIPTEN)
             find_program(EARTHCALL_LAW_LINE_PYTHON NAMES python3 python REQUIRED)
             add_test(NAME ${TEST_NAME} COMMAND ${EARTHCALL_LAW_LINE_PYTHON}
                 ${CMAKE_SOURCE_DIR}/tests/singularity/run_law_line_zone_test.py $<TARGET_FILE:${TEST_NAME}>)
-        else()
+        elseif (NOT ${TEST_NAME} IN_LIST MANUAL_PROBE_TESTS)
             add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
         endif()
 

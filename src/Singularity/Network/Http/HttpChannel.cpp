@@ -62,8 +62,11 @@ void HttpChannel::propSetSendRequests(const double& v) {
             std::string fullHost = scheme + "://" + host;
             httplib::Client cli(fullHost.c_str());
             
-            // disable cert verification for simple First Mover prototyping (not prod)
-            cli.enable_server_certificate_verification(false);
+            // Server certificates are verified (httplib's default; on macOS it
+            // loads the system keychain). Verification was disabled here for
+            // prototyping, which let any network path impersonate any host
+            // (FULL_SYSTEM_AUDIT_2026-10-16 F6). Plain http:// is unaffected.
+            cli.enable_server_certificate_verification(true);
             
             // Parse headers
             httplib::Headers reqHeaders;
