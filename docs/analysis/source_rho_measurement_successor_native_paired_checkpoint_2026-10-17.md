@@ -53,3 +53,34 @@ The completed predecessor recorded the same **5,624,857** shadow steps eliminate
 - **No shipping recommendation yet.** Preserve PR #482 draft/unmerged, canonical untouched, measurement branch separate. No production semantics or test correctness gates changed.
 
 Next bounded measurement: repeat the **same exact benchmark code** on a verified macOS WebGPU/Metal runner, preserve raw 12-pair records and runner/device details, and compare paired distributions across runs without selecting only favorable outcomes. Where supported, add *measurement-only* adapter/backend/timestamp-capability reporting after verifying API compatibility; do not conflate queue-poll duration with GPU execution. Do not merge or create a PR without explicit authorization.
+
+---
+
+## Second independent native measurement — same benchmark code, economic non-replication
+
+**Date:** 2026-10-17 PDT. **Run:** [#39021012172](https://github.com/zhangzachary834-commits/Earthcall/actions/runs/39021012172), native macOS SDF range-proxy job `117362656193`, SourceRho native A/B step **SUCCESS**. **Artifact:** `webgpu-object-parity-log` #12096522644, extracted `webgpu-source-rho-authority-perf.log` (5,016 bytes). **Workflow head:** `2b355383e629241b4ec43b7c8e6c91aa3889a4f9`; benchmark blob **identical** to tested measurement-code commit `82c910793a047d772eaf4089704909d6e4d75da8` (blob `9b08e6c44717d00f96ccf0f8967547a43a918705`). The only intervening measurement-branch change was this analysis document.
+
+**Exactness:** dedicated native SourceRho step passed again, including the existing framebuffer, diagnostic, occlusion, lifetime/repair, and fail-open gates. GPU-executed shadow-loop counters reproduced **5,624,857** eliminated steps and **290,151** eliminated calls for proven-zero slot; independent live slot remained **6,778,135** steps / **290,151** calls in both arms. Recurring shader compiles 0/0, cache hits 12/12, recurring parameter uploads 0/0. Native runner reported `macOS` / `ARM64` / attempt 1. **Valid GPU timestamps 0/12 in each arm: GPU duration unavailable, not zero.**
+
+| Metric (ms unless noted) | Exact | Authority |
+| --- | ---: | ---: |
+| Median completed-frame wall | 9.470521 | 9.440313 |
+| Median CPU record/submit | 0.282855 | 0.279813 |
+| Median device-poll/wait | 9.196125 | 9.163105 |
+| Warmup median | 9.547105 | 9.489313 |
+| Cold wall (descriptive) | 274.533458 | 192.677292 |
+
+Independent arm median wall ratio `1.003200x`: approximately **0.32%** lower authority wall median. The **median of paired differences** (`exact - authority`) is **-0.002375 ms** (effectively zero; slightly favors exact), with paired MAD **0.911979 ms**. Exactly **6/12** pairs favored authority and **6/12** favored exact; range **[-3.410124, +1.935833] ms**. Exact-first median paired delta **+0.034167 ms**; authority-first **-0.040187 ms**. A few large, oppositely signed outliers dominate the dispersion. The host-side device-poll median difference is only ~0.033 ms, consistent with no detectable advantage in this particular run.
+
+**Crucial replication finding:** two independent macOS ARM64 native runs using the **same benchmark source blob** reported materially different results:
+
+| Native run | Independent arm median reduction | Paired median delta | Paired MAD | Positive pairs |
+| --- | ---: | ---: | ---: | ---: |
+| #39010536979 (commit `82c91079`) | **28.57%** | **+2.530042 ms** | **2.699041 ms** | 10/12 |
+| #39021012172 (commit `2b355383`, identical benchmark blob) | **0.32%** | **-0.002375 ms** | **0.911979 ms** | 6/12 |
+
+The second run directly **fails to reproduce** the first run's large apparent economic benefit while reproducing the exact GPU work eliminated. This is evidence of substantial completed-frame wall-time sensitivity to runner scheduling, synchronization/polling, thermal/power/residency or other unmeasured conditions; **which mechanism dominates remains unproven**. GPU adapter model/backend and valid GPU execution timestamps are absent. Do not assert that the GPU saved zero time, nor that the first run's 28.57% is representative. In particular, a large eliminated instruction count does not by itself guarantee end-to-end frame improvement.
+
+**Bounded economic disposition:** correctness and actual work-elision remain supported, but **a reliable material economic gain has not been demonstrated and the large gain has failed a same-code independent replication**. Retain the predecessor's **economic rejection / do not ship or merge** disposition. This does **not** prove the GPU optimization intrinsically has zero benefit. It means the present measurement cannot earn promotion.
+
+The SourceRho native step passed in run #39021012172; the later shared CPU-SDF proof step failed, as did the unrelated Focused CPU and Slow Adapter lanes. Their causes are not assigned to SourceRho. A targeted SDF job rerun was attempted for further replication but blocked by the repository tool safety gate; no rerun was launched and no bypass attempted.
