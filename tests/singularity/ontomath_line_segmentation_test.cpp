@@ -275,8 +275,11 @@ int main() {
         check(bool(r) && r.form->switches.size() == 3, "clamp(|x| − 5) admitted with abs + two clamp switches");
         OntoMath::LineAlgebraicEvaluator ev(*r.form, lineBindings({{-4, 0, 0}, {1, 0, 0}}));
         const auto pieces = OntoMath::segmentLine({&ev}, 0.0, 8.0, 1e-3);   // x from −4 to 4
-        check(pieces.size() == 1 && pieces[0].definite,
-              "the abs switch at x = 0 is irrelevant under saturation: one definite piece");
+        // Rung 2d proposals may cut at the abs root, so boundaries can appear;
+        // the claim is that an irrelevant switch never forces UNCERTAINTY.
+        bool allDefinite = !pieces.empty();
+        for (const auto& p : pieces) allDefinite = allDefinite && p.definite;
+        check(allDefinite, "the abs switch at x = 0 is irrelevant under saturation: no uncertain piece");
     }
 
     // ---- Abs / min / max / bounded Piecewise -----------------------------
@@ -330,12 +333,83 @@ int main() {
         check(*zeroEv.value(rp.form->roots[0], 7.0) == 16.0, "inside [0,5] the x² piece answers (x = 4)");
     }
 
+    // ---- Rung 2c: affine-argument transcendentals of space ----------------
+    {
+        // clamp(0.6 + 0.3·sin(0.7x + 0.2)·y − 0.25·cos(1.3z) + 0.1·exp(−0.05x), 0, 1)
+        auto leafForm = num(0);
+        leafForm->scalarForm =
+            ScalarForm::constant(0.6)
+                .plus(ScalarForm::transcendental(OntoMath::TransFactor::Kind::Sin, "x", 0.7, 0.2, 0.3)
+                          .times(ScalarForm::variable("y")))
+                .plus(ScalarForm::transcendental(OntoMath::TransFactor::Kind::Cos, "z", 1.3, 0.0, -0.25))
+                .plus(ScalarForm::transcendental(OntoMath::TransFactor::Kind::Exp, "x", -0.05, 0.0, 0.1));
+        auto wave = node(Op::Clamp, std::move(leafForm), num(0), num(1));
+        const auto r = OntoMath::restrictAlgebraicToLine(*wave, false);
+        check(bool(r), "sin/cos/exp of space admitted as ray-affine transcendentals" + (r ? std::string() : " — " + r.refusal));
+        check(!OntoMath::restrictToLine(*wave), "Rung 0 still refuses them (polynomial class unchanged)");
+        if (r) {
+            bool parity = true, sound = true;
+            int probes = 0;
+            for (const auto& ray : rays()) {
+                OntoMath::LineAlgebraicEvaluator ev(*r.form, lineBindings(ray));
+                if (!ev.ok()) { parity = false; break; }
+                for (double s = -10; s <= 30; s += 0.91) {
+                    double e = 0;
+                    const auto ref = wave->evaluate(pointVars(ray.o + s * ray.d));
+                    if (!ref || !propertyValueToNumber(*ref, e) || std::abs(*ev.value(r.form->roots[0], s) - e) > 1e-9 * (1 + std::abs(e)))
+                        parity = false;
+                }
+                for (const auto& piece : OntoMath::segmentLine({&ev}, -10, 30, 0.01)) {
+                    const auto rg = ev.range(r.form->roots[0], piece.s0, piece.s1, piece.signs[0], nullptr);
+                    for (int q = 0; q <= 6; ++q) {
+                        const double v = *ev.value(r.form->roots[0], piece.s0 + (piece.s1 - piece.s0) * q / 6);
+                        ++probes;
+                        if (!(rg.lo <= v && v <= rg.hi)) sound = false;
+                    }
+                }
+            }
+            check(parity, "transcendental parity with MathNode::evaluate (double scalars, 1e-9 relative)");
+            check(sound, "transcendental piece ranges contain every probed value (" + std::to_string(probes) + " probes)");
+            // A ray with dx = dz = 0 leaves only y varying linearly: sin(0.7x+0.2) is ray-constant.
+            OntoMath::LineAlgebraicEvaluator flat(*r.form, lineBindings({{1, -50, 2}, {0, 1, 0}}));
+            std::vector<int8_t> none(r.form->switches.size(), 0);
+            const auto& tnode = r.form->nodes;
+            bool transConstant = false;
+            for (uint32_t i = 0; i < tnode.size(); ++i)
+                if (tnode[i].kind == OntoMath::LineAlgebraicNode::Kind::Trans && flat.constantUnder(i, none)) transConstant = true;
+            check(transConstant, "a transcendental whose argument has zero ray-direction component is proved constant");
+        }
+    }
+
+    // ---- Rung 2d: analytic proposals cut cost, never soundness ------------
+    {
+        uint32_t evalsOn = 0, evalsOff = 0, proposed = 0;
+        bool sameCover = true, soundOn = true;
+        const glm::dvec3 c(1, -2, 0.5);
+        for (const auto& ray : rays()) {
+            OntoMath::LineAlgebraicEvaluator ev(form, lineBindings(ray));
+            OntoMath::LineSegmentationStats on, off;
+            const auto pOn = OntoMath::segmentLine({&ev}, -5.0, 35.0, 0.01, &on, 1u << 16, true);
+            const auto pOff = OntoMath::segmentLine({&ev}, -5.0, 35.0, 0.01, &off, 1u << 16, false);
+            evalsOn += on.rangeEvaluations; evalsOff += off.rangeEvaluations; proposed += on.proposedRoots;
+            sameCover = sameCover && pOn.front().s0 == -5.0 && pOn.back().s1 == 35.0;
+            for (double R : {2.0, 6.0})
+                for (double root : sphereRoots(ray, c, R))
+                    for (const auto& piece : pOn)
+                        if (piece.definite && root > piece.s0 + 1e-9 && root < piece.s1 - 1e-9) soundOn = false;
+        }
+        std::cout << "    radial segmentation over 25 rays: " << evalsOff << " range evaluations without proposals, "
+                  << evalsOn << " with " << proposed << " analytic proposals\n";
+        check(soundOn && sameCover, "with proposals, no analytic root lies inside a definite piece and the cover is intact");
+        check(evalsOn < evalsOff, "analytic root proposals reduce interval range evaluations");
+    }
+
     // ---- Refusals: the exact evaluator stays in charge -------------------
     {
         struct Case { std::string what; std::unique_ptr<MathNode> n; bool vector = false; };
         std::vector<Case> cases;
         cases.push_back({"Noise", node(Op::Noise, leaf("p"))});
-        cases.push_back({"sin(x) factor", [] { auto n = num(0); n->scalarForm = ScalarForm::transcendental(OntoMath::TransFactor::Kind::Sin, "x"); return n; }()});
+        cases.push_back({"ln(x) factor (CPU undefined at ≤ 0, emitter clamps)", [] { auto n = num(0); n->scalarForm = ScalarForm::transcendental(OntoMath::TransFactor::Kind::Ln, "x"); return n; }()});
         cases.push_back({"Clamp with a variable bound", node(Op::Clamp, leaf("x"), num(0), leaf("y"))});
         cases.push_back({"Clamp with inverted bounds", node(Op::Clamp, leaf("x"), num(1), num(0))});
         cases.push_back({"vector Clamp", node(Op::Clamp, leaf("p"), num(0), num(1)), true});

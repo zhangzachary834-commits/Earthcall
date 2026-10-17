@@ -225,7 +225,8 @@ struct VolumeSegmentSchedule {
 VolumeSegmentSchedule scheduleVolumeRaySegment(const std::vector<VolumeSegmentMember>& members,
                                                const VolumeRayInput& ray,
                                                const VolumeLatticeSpan& span,
-                                               double resolutionInSteps = 0.125);
+                                               double resolutionInSteps = 0.125,
+                                               bool analyticProposals = false);   // CPU-neutral; see segmentLine
 
 // Runs the general lattice for samples [firstSample, firstSample + count) of the
 // span, continuing `state` (updating samplesConsumed / terminated). On the GPU

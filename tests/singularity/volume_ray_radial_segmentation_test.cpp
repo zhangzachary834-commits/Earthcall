@@ -402,6 +402,45 @@ int main() {
                               << "% (" << proof.provenCells << "/" << proof.totalCells << " cells proven)"
                               << "; both " << (100.0 * t.both / std::max<uint64_t>(t.samples, 1)) << "%; "
                               << (t.us / std::max<uint64_t>(t.rays, 1)) << " us/ray\n";
+                    // Cost anatomy on the same 64-ray family: density evaluator
+                    // construction vs segmentation with/without analytic proposals.
+                    {
+                        std::mt19937 rr(7u);
+                        std::uniform_real_distribution<double> ur(-1.0, 1.0);
+                        double tBind = 0, tOn = 0, tOff = 0;
+                        uint64_t eOn = 0, eOff = 0, n = 0;
+                        for (int r = 0; r < 64; ++r) {
+                            const glm::dvec3 target = half * glm::dvec3(ur(rr), ur(rr), ur(rr));
+                            glm::dvec3 dir(ur(rr), ur(rr), ur(rr));
+                            if (glm::length(dir) < 1e-3) continue;
+                            dir /= glm::length(dir);
+                            const glm::dvec3 ro = target - dir * (3.0 * glm::length(half) + 1.0);
+                            std::map<std::string, double> bind;
+                            for (int a = 0; a < 3; ++a) {
+                                bind[OntoMath::kLineOriginVars[a]] = ro[a];
+                                bind[OntoMath::kLineDirectionVars[a]] = dir[a];
+                            }
+                            bind[OntoMath::kTimeVar] = 0.0;
+                            auto c0 = std::chrono::steady_clock::now();
+                            OntoMath::LineAlgebraicEvaluator ev(*f.density.algebraic.form, bind, true);
+                            auto c1 = std::chrono::steady_clock::now();
+                            if (!ev.ok()) continue;
+                            OntoMath::LineSegmentationStats son, soff;
+                            const double len = 3.0 * glm::length(half) + 1.0;
+                            OntoMath::segmentLine({&ev}, len - glm::length(half), len + glm::length(half), 0.02 * glm::length(half), &son, 1u << 16, true);
+                            auto c2 = std::chrono::steady_clock::now();
+                            OntoMath::segmentLine({&ev}, len - glm::length(half), len + glm::length(half), 0.02 * glm::length(half), &soff, 1u << 16, false);
+                            auto c3 = std::chrono::steady_clock::now();
+                            tBind += std::chrono::duration<double, std::micro>(c1 - c0).count();
+                            tOn += std::chrono::duration<double, std::micro>(c2 - c1).count();
+                            tOff += std::chrono::duration<double, std::micro>(c3 - c2).count();
+                            eOn += son.rangeEvaluations; eOff += soff.rangeEvaluations; ++n;
+                        }
+                        if (n) std::cout << "        cost anatomy (us/ray): bind density " << tBind / n << "; segment with proposals "
+                                         << tOn / n << " (" << double(eOn) / n << " evals), without " << tOff / n << " ("
+                                         << double(eOff) / n << " evals); density form " << f.density.algebraic.form->nodes.size()
+                                         << " nodes, " << f.density.algebraic.form->switches.size() << " switches\n";
+                    }
                     all.samples += t.samples; all.empty += t.empty; all.constant += t.constant; all.grid += t.grid;
                     all.both += t.both; all.violations += t.violations; all.us += t.us; all.rays += t.rays;
                 }

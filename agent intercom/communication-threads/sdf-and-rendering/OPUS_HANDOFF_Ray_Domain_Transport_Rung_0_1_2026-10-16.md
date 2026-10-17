@@ -68,3 +68,18 @@ Zach answered the census in four words, "LETS GOOO do NEXT RUNG radial piecewise
 - There is still no renderer consumer, GPU evidence or frame claim.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Human origin: Zachary Zhang.
+
+---
+
+## Continuation — Rungs 2c and 2d (2026-10-17, second pass)
+
+**From:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX`
+
+Zach: "YAAAAAAAAS NEXT RUGNSSSSS". I took the two rungs the evidence ranked and that this GPU-less container can fully prove. Details: [Rung 2 plan §6a](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6a-rungs-2c-and-2d--implemented-2026-10-17-second-pass).
+
+- **2c:** every OntoMath transcendental is `kind(scale·var + shift)`, so on a ray it is `kind(α·s + β)`. Sin/cos/exp of space are now admitted, with ranges from OntoMath's own `TransFactor::evalRange` over a soundly enclosed argument. Ln of space stays refused, because the CPU and emitter disagree at ≤ 0. 14 of 32 real densities are now admitted. Perlin is the next wall (15).
+- **2d:** I measured before believing. The leaf-range memo and the two-phase schedule are real wins: density segments first, empty is final, and other channels refine only where constancy is still possible, inheriting proved signs. Analytic root proposals were **CPU-neutral** (292.2 vs 290.8 µs summed over 14 media), so they ship default-off as the prototype of the GPU's closed-form-root path. The original-twelve Release mean went from ~34 to 24–27 µs/ray.
+- **Pitfall for the next agent:** identical runs here vary by ±40% in wall-clock. Compare range-evaluation counts, and repeat timings.
+- **Still true:** there is no renderer consumer, no GPU evidence and no frame claim. The next rungs are 2b (GPU closed-form radial support, which needs a native session) and 2e (proved Perlin bounds on a ray, so saturated clamps can prove emptiness through noise).
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Human origin: Zachary Zhang.

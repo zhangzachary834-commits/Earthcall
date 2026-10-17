@@ -493,7 +493,8 @@ struct MemberEvaluators {
 VolumeSegmentSchedule scheduleVolumeRaySegment(const std::vector<VolumeSegmentMember>& members,
                                                const VolumeRayInput& ray,
                                                const VolumeLatticeSpan& span,
-                                               double resolutionInSteps) {
+                                               double resolutionInSteps,
+                                               bool analyticProposals) {
     VolumeSegmentSchedule schedule;
     auto allGeneral = [&](std::string why) {
         schedule.runs.clear();
@@ -543,20 +544,31 @@ VolumeSegmentSchedule scheduleVolumeRaySegment(const std::vector<VolumeSegmentMe
 
     const double sFirst = span.firstSample;
     const double sLast = span.firstSample + span.step * double(span.count - 1u);
-    OntoMath::LineSegmentationStats stats;
-    const auto pieces = OntoMath::segmentLine(evaluators, sFirst, sLast,
-                                              std::max(resolutionInSteps, 1e-6) * span.step, &stats);
-    schedule.pieces = static_cast<uint32_t>(pieces.size());
-    schedule.rangeEvaluations = stats.rangeEvaluations;
-    schedule.budgetExhausted = stats.budgetExhausted;
-    if (pieces.empty()) return allGeneral("segmentation produced no pieces");
-
+    const double resolution = std::max(resolutionInSteps, 1e-6) * span.step;
     const bool gateOpen = span.firstSample > 0.0 && span.firstSample * dirLen > kDirectionGateMargin;
-    std::vector<VolumeSegmentPlan> plans(pieces.size());
-    for (std::size_t p = 0; p < pieces.size(); ++p) {
-        const auto& piece = pieces[p];
-        auto& plan = plans[p];
-        auto general = [&](std::string why) { plan = VolumeSegmentPlan{}; plan.reason = std::move(why); };
+
+    struct FinalPiece { double s0, s1; VolumeSegmentPlan plan; };
+    std::vector<FinalPiece> finals;
+    auto addStats = [&](const OntoMath::LineSegmentationStats& st, std::size_t pieceCount) {
+        schedule.rangeEvaluations += st.rangeEvaluations;
+        schedule.budgetExhausted = schedule.budgetExhausted || st.budgetExhausted;
+        schedule.pieces += static_cast<uint32_t>(pieceCount);
+    };
+
+    // Phase 1 — density alone decides emptiness. Other channels' switches are
+    // irrelevant to it, so they are not segmented over empty space at all.
+    std::vector<const OntoMath::LineAlgebraicEvaluator*> densityEvals;
+    for (std::size_t j = 0; j < members.size(); ++j)
+        densityEvals.push_back(evaluators[memberEvals[j].index.at(&members[j].forms->density)]);
+    OntoMath::LineSegmentationStats st1;
+    const auto coarse = OntoMath::segmentLine(densityEvals, sFirst, sLast, resolution, &st1, 1u << 16, analyticProposals);
+    addStats(st1, 0);
+    if (coarse.empty()) return allGeneral("segmentation produced no pieces");
+
+    // Phase 2 classifier over ALL evaluators' signs for one refined piece.
+    auto classifyFull = [&](const OntoMath::LineSegmentationPiece& piece) {
+        VolumeSegmentPlan plan;
+        auto general = [&](std::string why) { plan = VolumeSegmentPlan{}; plan.reason = std::move(why); return plan; };
         const double mid = 0.5 * (piece.s0 + piece.s1);
         std::vector<bool> active(members.size(), true);
         for (std::size_t j = 0; j < members.size(); ++j) {
@@ -569,12 +581,9 @@ VolumeSegmentSchedule scheduleVolumeRaySegment(const std::vector<VolumeSegmentMe
         if (std::none_of(active.begin(), active.end(), [](bool a) { return a; })) {
             plan.strategy = VolumeSegmentStrategy::ExactEmpty;
             plan.reason = "every member's density is ≤ 0 over this piece (proved by interval range)";
-            continue;
+            return plan;
         }
-        if (ray.incidentSourceActive) { general("incident light varies along the ray"); continue; }
-        if (!gateOpen) { general("first sample too close to the eye for the direction gates"); continue; }
-        bool ok = true;
-        for (std::size_t j = 0; j < members.size() && ok; ++j) {
+        for (std::size_t j = 0; j < members.size(); ++j) {
             if (!active[j]) continue;
             const auto& f = *members[j].forms;
             std::string why;
@@ -596,29 +605,80 @@ VolumeSegmentSchedule scheduleVolumeRaySegment(const std::vector<VolumeSegmentMe
                 return v;
             };
             const auto density = pieceConstant(f.density, 0, "density", why);
-            if (!density) { general(why); ok = false; break; }
+            if (!density) return general(why);
             const double d = std::max(*density, 0.0);
             if (!(d > 0.0)) continue;   // exactly constant and non-positive: does not participate
-            if (!accumulateConstantMember(f, d, pieceConstant, plan, why)) { general(why); ok = false; }
+            if (!accumulateConstantMember(f, d, pieceConstant, plan, why)) return general(why);
         }
-        if (!ok) continue;
         if (plan.participatingMembers == 0) {
             plan.strategy = VolumeSegmentStrategy::ExactEmpty;
             plan.reason = "every active member's density is exactly constant and ≤ 0 on this piece";
-            continue;
+            return plan;
         }
-        if (!finiteTransport(plan)) { general("non-finite constant transport coefficients"); continue; }
+        if (!finiteTransport(plan)) return general("non-finite constant transport coefficients");
         plan.strategy = VolumeSegmentStrategy::ConstantClosedForm;
         plan.reason = "every participating channel's surviving branch is exactly constant on this piece";
+        return plan;
+    };
+
+    for (const auto& piece : coarse) {
+        // Emptiness under density signs alone.
+        std::vector<bool> active(members.size(), true);
+        for (std::size_t j = 0; j < members.size(); ++j) {
+            bool undefined = false;
+            const auto r = densityEvals[j]->range(densityEvals[j]->form().roots[0], piece.s0, piece.s1,
+                                                  piece.signs[j], &undefined);
+            if (!undefined && r.hi <= 0.0f) active[j] = false;
+        }
+        VolumeSegmentPlan plan;
+        if (std::none_of(active.begin(), active.end(), [](bool a) { return a; })) {
+            plan.strategy = VolumeSegmentStrategy::ExactEmpty;
+            plan.reason = "every member's density is ≤ 0 over this piece (proved by interval range)";
+            finals.push_back({piece.s0, piece.s1, plan});
+            continue;
+        }
+        std::string why;
+        if (ray.incidentSourceActive) why = "incident light varies along the ray";
+        else if (!gateOpen) why = "first sample too close to the eye for the direction gates";
+        else if (!piece.definite) why = "a possible density switch lies inside this sliver";
+        for (std::size_t j = 0; j < members.size() && why.empty(); ++j) {
+            // Definite piece: every relevant density switch is decided, so this
+            // answer is final — refining other channels cannot make D constant.
+            if (active[j] && !densityEvals[j]->constantUnder(densityEvals[j]->form().roots[0], piece.signs[j]))
+                why = "density varies on this piece";
+        }
+        for (std::size_t j = 0; j < members.size() && why.empty(); ++j) {
+            if (!active[j]) continue;
+            const auto& f = *members[j].forms;
+            for (const auto* c : {&f.extinction, &f.scattering, &f.chroma, &f.phase, &f.emission})
+                if (c->present && !memberEvals[j].index.count(c)) { why = "a channel has no admitted algebraic form on this ray"; break; }
+        }
+        if (!why.empty()) {
+            plan.reason = why;
+            finals.push_back({piece.s0, piece.s1, plan});
+            continue;
+        }
+        // Phase 2 — refine only where constancy is still possible.
+        std::vector<std::vector<int8_t>> inherited;
+        for (const auto* ev : evaluators) inherited.emplace_back(ev->form().switches.size(), int8_t(0));
+        for (std::size_t j = 0; j < members.size(); ++j)
+            inherited[memberEvals[j].index.at(&members[j].forms->density)] = piece.signs[j];
+        OntoMath::LineSegmentationStats st2;
+        const auto fine = OntoMath::segmentLine(evaluators, piece.s0, piece.s1, resolution, &st2, 1u << 16,
+                                                analyticProposals, &inherited);
+        addStats(st2, 0);
+        for (const auto& sub : fine) finals.push_back({sub.s0, sub.s1, classifyFull(sub)});
     }
+    schedule.pieces = static_cast<uint32_t>(finals.size());
+    if (finals.empty()) return allGeneral("segmentation produced no pieces");
 
     // Assign each accepted-lattice sample to the piece containing it (pieces
     // are closed, contiguous and ordered; a shared endpoint satisfies both).
     std::size_t p = 0;
     for (uint32_t i = 0; i < span.count; ++i) {
         const double s = span.firstSample + span.step * double(i);
-        while (p + 1 < pieces.size() && s > pieces[p].s1) ++p;
-        const auto& plan = plans[p];
+        while (p + 1 < finals.size() && s > finals[p].s1) ++p;
+        const auto& plan = finals[p].plan;
         if (!schedule.runs.empty() && samePlan(schedule.runs.back().plan, plan) &&
             schedule.runs.back().firstSample + schedule.runs.back().sampleCount == i) {
             ++schedule.runs.back().sampleCount;

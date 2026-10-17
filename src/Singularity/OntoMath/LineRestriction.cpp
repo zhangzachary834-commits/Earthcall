@@ -630,8 +630,10 @@ struct AlgebraicBuilder {
             if (hardRefusal(polyWhy)) { say(&why, polyWhy); return std::nullopt; }
         }
         using Op = MathNode::Op;
-        // Leaves are wholly the polynomial path's office: its reason is the truth.
-        if (n.op == Op::ScalarLeaf || n.op == Op::ValueLeaf) { say(&why, polyWhy); return std::nullopt; }
+        // A ValueLeaf is wholly the polynomial path's office: its reason is the truth.
+        // A ScalarLeaf may still hold sin/cos/exp of a bound coordinate (Rung 2c).
+        if (n.op == Op::ScalarLeaf) return buildScalarLeaf(n.scalarForm);
+        if (n.op == Op::ValueLeaf) { say(&why, polyWhy); return std::nullopt; }
         switch (n.op) {
             case Op::Add:
             case Op::Sub:
@@ -822,6 +824,51 @@ struct AlgebraicBuilder {
                 return std::nullopt;
         }
     }
+
+    // Rung 2c: each term = (polynomial part) × Π kind(scale·var + shift) over the
+    // transcendental factors of bound coordinates; the argument restricted to the
+    // line is the polynomial scale·(o + s·d) + shift.
+    std::optional<AlgValue> buildScalarLeaf(const ScalarForm& form) {
+        std::optional<uint32_t> sum;
+        for (const auto& term : form.terms) {
+            Term rest(term.coefficient, term.factors);
+            std::vector<TransFactor> bound;
+            for (const auto& tf : term.trans) {
+                if (subst.scalars.count(tf.variable) || subst.vectors.count(tf.variable)) bound.push_back(tf);
+                else rest.trans.push_back(tf);
+            }
+            ScalarForm restForm;
+            restForm.terms.push_back(rest);
+            const auto restSub = substitute(restForm, subst, &why);
+            if (!restSub) return std::nullopt;
+            const auto restLeaf = polyLeaf(*restSub);
+            if (!restLeaf) return std::nullopt;
+            uint32_t value = *restLeaf;
+            for (const auto& tf : bound) {
+                if (subst.vectors.count(tf.variable)) {
+                    say(&why, "vector variable '" + tf.variable + "' inside " + tf.print());
+                    return std::nullopt;
+                }
+                if (tf.kind == TransFactor::Kind::Ln) {
+                    say(&why, tf.print() + " of a line-bound coordinate: the CPU is undefined at ≤ 0 where the emitter clamps");
+                    return std::nullopt;
+                }
+                const ScalarForm arg = ScalarForm::variable(tf.variable, 1.0, tf.scale).plus(ScalarForm::constant(tf.shift));
+                const auto argSub = substitute(arg, subst, &why);
+                if (!argSub) return std::nullopt;
+                const auto argLeaf = polyLeaf(*argSub);
+                if (!argLeaf) return std::nullopt;
+                const uint32_t t = op(Kind::Trans, *argLeaf);
+                setTransKind(t, tf.kind);
+                value = op(Kind::Mul, value, t);
+            }
+            sum = sum ? op(Kind::Add, *sum, value) : value;
+        }
+        AlgValue out;
+        out.s = sum ? *sum : constant(0.0);
+        return out;
+    }
+    void setTransKind(uint32_t node, TransFactor::Kind k) { form.nodes[node].transKind = k; }
 
     std::optional<AlgValue> buildPiecewise(const Piecewise& model) {
         if (model.pieces.empty()) { say(&why, "Piecewise has no pieces"); return std::nullopt; }
@@ -1029,6 +1076,7 @@ std::optional<double> LineAlgebraicEvaluator::value(uint32_t node, double s) con
         case Kind::Sqrt: return std::sqrt(std::max(0.0, *a));
         case Kind::Abs: return std::abs(*a);
         case Kind::Clamp: return std::clamp(*a, n.lo, n.hi);
+        case Kind::Trans: return TransFactor(n.transKind, "u").evaluate(*a);
         default: break;
     }
     const auto b = value(n.b, s);
@@ -1049,6 +1097,19 @@ Interval LineAlgebraicEvaluator::range(uint32_t node, double s0, double s1, cons
 }
 
 Interval LineAlgebraicEvaluator::polynomialRange(uint32_t node, double s0, double s1) const {
+    if (s0 != _memoS0 || s1 != _memoS1 || _memoValid.size() != _coefficients.size()) {
+        _memoS0 = s0;
+        _memoS1 = s1;
+        _memoRange.assign(_coefficients.size(), Interval());
+        _memoValid.assign(_coefficients.size(), 0);
+    }
+    if (_memoValid[node]) { ++_memoHits; return _memoRange[node]; }
+    ++_memoMisses;
+    _memoValid[node] = 1;
+    return _memoRange[node] = polynomialRangeUncached(node, s0, s1);
+}
+
+Interval LineAlgebraicEvaluator::polynomialRangeUncached(uint32_t node, double s0, double s1) const {
     const auto& a = _coefficients[node];
     const auto& e = _errors[node];
     const std::size_t n = a.size();
@@ -1120,6 +1181,10 @@ Interval LineAlgebraicEvaluator::rangeAt(uint32_t node, double sa, double sb, co
             const Interval r = rangeAt(n.a, sa, sb, signs, undefined);
             return s0 > 0 ? r : (s0 < 0 ? -r : absOf(r));
         }
+        case Kind::Trans:
+            // OntoMath's own bound (exact sin/cos extrema, monotone exp), given a
+            // sound argument enclosure; scale/shift already live in that argument.
+            return TransFactor(n.transKind, "u", 1.0, 0.0).evalRange(rangeAt(n.a, sa, sb, signs, undefined));
         case Kind::Min:
         case Kind::Max: {
             const bool min = n.kind == Kind::Min;
@@ -1190,7 +1255,7 @@ bool LineAlgebraicEvaluator::constantUnder(uint32_t node, const std::vector<int8
         case Kind::Sqrt:
             if (!n.nonnegativeArgument && s0 < 0) return true;
             return constantUnder(n.a, signs);
-        case Kind::Abs: return constantUnder(n.a, signs);
+        case Kind::Abs: case Kind::Trans: return constantUnder(n.a, signs);
         case Kind::Min: case Kind::Max: {
             const bool min = n.kind == Kind::Min;
             if (s0 > 0) return constantUnder(min ? n.b : n.a, signs);
@@ -1235,6 +1300,9 @@ void LineAlgebraicEvaluator::relevantUndecided(uint32_t node, const std::vector<
             pushIfOpen(n.switchBegin);
             relevantUndecided(n.a, signs, out);
             return;
+        case Kind::Trans:
+            relevantUndecided(n.a, signs, out);
+            return;
         case Kind::Min: case Kind::Max: {
             const bool min = n.kind == Kind::Min;
             if (s0 == 0) {
@@ -1267,6 +1335,92 @@ void LineAlgebraicEvaluator::relevantUndecided(uint32_t node, const std::vector<
             }
             return;
         }
+    }
+}
+
+namespace {
+// Real roots of a·s² + b·s + c in (s0, s1), numerically stable form; a nearly
+// tangent pair (tiny negative discriminant) proposes the vertex.
+void quadraticRoots(double a, double b, double c, double s0, double s1, std::vector<double>& out) {
+    auto push = [&](double r) { if (std::isfinite(r) && r > s0 && r < s1) out.push_back(r); };
+    const double scale = std::max({std::abs(a), std::abs(b), std::abs(c)});
+    if (!(scale > 0.0) || !std::isfinite(scale)) return;
+    if (std::abs(a) <= 1e-14 * scale) { if (b != 0.0) push(-c / b); return; }
+    const double disc = b * b - 4.0 * a * c;
+    if (disc < 0.0) {
+        if (-disc <= 1e-12 * std::max(b * b, std::abs(4.0 * a * c))) push(-b / (2.0 * a));
+        return;
+    }
+    const double q = -0.5 * (b + std::copysign(std::sqrt(disc), b));
+    push(q / a);
+    if (q != 0.0) push(c / q);
+}
+
+struct AffineOver { double alpha = 0.0, beta = 0.0; int64_t base = -1; };
+} // namespace
+
+void LineAlgebraicEvaluator::proposeRoots(double s0, double s1, std::vector<double>& out) const {
+    const auto& nodes = _form->nodes;
+    // g restricted to the form α·B + β, B a Polynomial node or Sqrt of one.
+    std::function<std::optional<AffineOver>(uint32_t)> affineOf = [&](uint32_t id) -> std::optional<AffineOver> {
+        const auto& n = nodes[id];
+        switch (n.kind) {
+            case Kind::Polynomial:
+                if (n.polynomial.exactDegreeOn(_bindings) <= 0)
+                    return AffineOver{0.0, _coefficients[id].empty() ? 0.0 : _coefficients[id][0], -1};
+                return AffineOver{1.0, 0.0, id};
+            case Kind::Sqrt:
+                if (nodes[n.a].kind == Kind::Polynomial) return AffineOver{1.0, 0.0, id};
+                return std::nullopt;
+            case Kind::Add: case Kind::Sub: {
+                const auto A = affineOf(n.a), B = affineOf(n.b);
+                if (!A || !B) return std::nullopt;
+                const double sg = n.kind == Kind::Add ? 1.0 : -1.0;
+                if (B->base == -1) return AffineOver{A->alpha, A->beta + sg * B->beta, A->base};
+                if (A->base == -1) return AffineOver{sg * B->alpha, A->beta + sg * B->beta, B->base};
+                if (A->base == B->base) return AffineOver{A->alpha + sg * B->alpha, A->beta + sg * B->beta, A->base};
+                return std::nullopt;
+            }
+            case Kind::Mul: {
+                const auto A = affineOf(n.a), B = affineOf(n.b);
+                if (!A || !B) return std::nullopt;
+                if (A->base == -1) return AffineOver{A->beta * B->alpha, A->beta * B->beta, B->base};
+                if (B->base == -1) return AffineOver{B->beta * A->alpha, B->beta * A->beta, A->base};
+                return std::nullopt;
+            }
+            default: return std::nullopt;
+        }
+    };
+    auto solve = [&](const std::vector<double>& c, double target) {
+        if (c.size() > 3) return;   // only degree ≤ 2 in closed form
+        const double c0 = (c.empty() ? 0.0 : c[0]) - target;
+        const double c1 = c.size() > 1 ? c[1] : 0.0, c2 = c.size() > 2 ? c[2] : 0.0;
+        quadraticRoots(c2, c1, c0, s0, s1, out);
+    };
+    for (const auto& sw : _form->switches) {
+        const auto& n = nodes[sw.node];
+        if (sw.role >= 4) {   // Select bound: selector(s) = lo_i / hi_i
+            const auto& piece = n.pieces[(sw.role - 4) / 2];
+            solve(_coefficients[sw.node], sw.role % 2 == 0 ? piece.lo : piece.hi);
+            continue;
+        }
+        std::optional<AffineOver> g = affineOf(n.a);
+        double c = 0.0;
+        if (sw.role == 1) {
+            const auto B = affineOf(n.b);
+            if (!g || !B) continue;
+            if (B->base == -1) g = AffineOver{g->alpha, g->beta - B->beta, g->base};
+            else if (g->base == -1) g = AffineOver{-B->alpha, g->beta - B->beta, B->base};
+            else if (g->base == B->base) g = AffineOver{g->alpha - B->alpha, g->beta - B->beta, g->base};
+            else continue;
+        }
+        if (sw.role == 2) c = n.lo;
+        if (sw.role == 3) c = n.hi;
+        if (!g || g->base < 0 || g->alpha == 0.0) continue;
+        const double target = (c - g->beta) / g->alpha;   // B(s) = target
+        const auto& base = nodes[static_cast<std::size_t>(g->base)];
+        if (base.kind == Kind::Polynomial) solve(_coefficients[static_cast<std::size_t>(g->base)], target);
+        else if (target >= 0.0) solve(_coefficients[base.a], target * target);   // sqrt(Q) = t ⇔ Q = t², t ≥ 0
     }
 }
 
@@ -1324,11 +1478,41 @@ struct Segmenter {
 
 std::vector<LineSegmentationPiece> segmentLine(const std::vector<const LineAlgebraicEvaluator*>& evaluators,
                                                double s0, double s1, double resolution,
-                                               LineSegmentationStats* stats, uint32_t maxRangeEvaluations) {
+                                               LineSegmentationStats* stats, uint32_t maxRangeEvaluations,
+                                               bool analyticProposals,
+                                               const std::vector<std::vector<int8_t>>* initialSigns) {
     Segmenter seg{evaluators, resolution, maxRangeEvaluations, {}, {}};
     std::vector<std::vector<int8_t>> signs;
-    for (const auto* e : evaluators) signs.emplace_back(e->form().switches.size(), int8_t(0));
-    if (std::isfinite(s0) && std::isfinite(s1) && s1 >= s0) seg.classify(s0, s1, std::move(signs));
+    for (std::size_t e = 0; e < evaluators.size(); ++e) {
+        const std::size_t n = evaluators[e]->form().switches.size();
+        if (initialSigns && e < initialSigns->size() && (*initialSigns)[e].size() == n) signs.push_back((*initialSigns)[e]);
+        else signs.emplace_back(n, int8_t(0));
+    }
+    if (!(std::isfinite(s0) && std::isfinite(s1) && s1 >= s0)) {
+        if (stats) *stats = seg.stats;
+        return seg.pieces;
+    }
+    std::vector<double> roots;
+    if (analyticProposals) {
+        for (const auto* e : evaluators) e->proposeRoots(s0, s1, roots);
+        std::sort(roots.begin(), roots.end());
+        std::vector<double> merged;
+        for (double r : roots)
+            if (merged.empty() || r - merged.back() > resolution) merged.push_back(r);
+        roots.swap(merged);
+    }
+    seg.stats.proposedRoots = static_cast<uint32_t>(roots.size());
+    // Cut at each proposal: a window of one resolution around it, and the gaps
+    // between. Every piece is still classified (and bisected if needed) by proof.
+    const double w = 0.5 * resolution;
+    double cur = s0;
+    for (double r : roots) {
+        const double lo = std::max(cur, r - w), hi = std::min(s1, r + w);
+        if (lo > cur) seg.classify(cur, lo, signs);
+        if (hi > lo) seg.classify(lo, hi, signs);
+        cur = std::max(cur, hi);
+    }
+    if (s1 > cur || seg.pieces.empty()) seg.classify(cur, s1, signs);
     if (stats) *stats = seg.stats;
     return seg.pieces;
 }

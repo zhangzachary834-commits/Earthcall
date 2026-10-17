@@ -209,7 +209,11 @@ std::optional<std::vector<ScalarForm>> collectPowers(const ScalarForm& form,
 
 struct LineAlgebraicNode {
     // Kernel IR, never serialized: free to grow, unlike MathNode::Op.
-    enum class Kind : uint8_t { Polynomial, Add, Sub, Mul, Sqrt, Abs, Min, Max, Clamp, Select, Undefined };
+    // Trans (Rung 2c): sin/cos/exp of an affine argument. Every OntoMath
+    // transcendental is kind(scale·var + shift); restricted to a line its
+    // argument is the polynomial α·s + β (operand a). Ln of a bound coordinate
+    // stays refused: the CPU answers undefined at ≤ 0, the emitter log(max(·,1e-8)).
+    enum class Kind : uint8_t { Polynomial, Add, Sub, Mul, Sqrt, Abs, Min, Max, Clamp, Select, Undefined, Trans };
     struct Piece {
         bool hasLo = false, hasHi = false;
         double lo = 0.0, hi = 0.0;
@@ -220,6 +224,7 @@ struct LineAlgebraicNode {
     uint32_t a = 0, b = 0;           // operands
     double lo = 0.0, hi = 0.0;       // Clamp bounds
     bool nonnegativeArgument = false; // Sqrt of a sum of squares: no switch
+    TransFactor::Kind transKind = TransFactor::Kind::Sin;   // Trans
     std::vector<Piece> pieces;       // Select, authored order
     uint32_t switchBegin = 0, switchCount = 0;
 };
@@ -282,6 +287,13 @@ public:
     // (a saturated clamp hides everything beneath it).
     void relevantUndecided(uint32_t node, const std::vector<int8_t>& signs,
                            std::vector<uint32_t>& out) const;
+    // Rung 2d: PROPOSE where switches may change sign, in closed form, for the
+    // switches whose function is α·B + β with B a polynomial of degree ≤ 2 on
+    // this line, or sqrt of one (every radial clamp, every Piecewise bound on an
+    // affine selector). Proposals only choose where segmentLine cuts; every
+    // piece is still PROVED by interval range. A wrong proposal costs bisection,
+    // never soundness. Appends roots inside (s0, s1).
+    void proposeRoots(double s0, double s1, std::vector<double>& out) const;
 
 private:
     Interval rangeAt(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs, bool* undefined) const;
@@ -291,12 +303,24 @@ private:
     // widens like |s|·w (the dependency problem) and could not decide a grazing
     // sphere/ray switch; the centered form widens like |f′(m)|·w.
     Interval polynomialRange(uint32_t node, double s0, double s1) const;
+    Interval polynomialRangeUncached(uint32_t node, double s0, double s1) const;
     const LineAlgebraicForm* _form;
     std::map<std::string, double> _bindings;
     bool _undefinedAsZero;
     std::vector<std::vector<double>> _coefficients;    // per node (Polynomial value / Select selector)
     std::vector<std::vector<double>> _errors;          // absolute error bound per coefficient
     std::string _refusal;
+    // Leaf-range memo for ONE interval at a time. A polynomial leaf's enclosure
+    // depends only on [s0, s1] (never on switch signs), yet every switch of a
+    // classification pass re-reads the same leaves. Kernel scratch beneath any
+    // property path; makes the evaluator single-threaded (it is ray-lifetime).
+    mutable double _memoS0 = 0.0, _memoS1 = -1.0;
+    mutable std::vector<Interval> _memoRange;
+    mutable std::vector<char> _memoValid;
+    mutable uint64_t _memoHits = 0, _memoMisses = 0;
+public:
+    uint64_t leafRangeHits() const { return _memoHits; }
+    uint64_t leafRangeMisses() const { return _memoMisses; }
 };
 
 // Partition [s0, s1] into pieces on which every RELEVANT switch of every
@@ -313,11 +337,19 @@ struct LineSegmentationPiece {
 };
 struct LineSegmentationStats {
     uint32_t rangeEvaluations = 0;
+    uint32_t proposedRoots = 0;
     bool budgetExhausted = false;
 };
 std::vector<LineSegmentationPiece> segmentLine(const std::vector<const LineAlgebraicEvaluator*>& evaluators,
                                                double s0, double s1, double resolution,
                                                LineSegmentationStats* stats = nullptr,
-                                               uint32_t maxRangeEvaluations = 1u << 16);
+                                               uint32_t maxRangeEvaluations = 1u << 16,
+                                               // Measured CPU-neutral (2026-10-17: 292.2 vs 290.8 µs summed over
+                                               // 14 real media); kept as the closed-form-root prototype for a
+                                               // GPU consumer, off by default.
+                                               bool analyticProposals = false,
+                                               // Signs already PROVED over a superset of [s0, s1]
+                                               // (they hold on every sub-interval); null = all undecided.
+                                               const std::vector<std::vector<int8_t>>* initialSigns = nullptr);
 
 } // namespace OntoMath
