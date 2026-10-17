@@ -277,10 +277,38 @@ Adapter-relative cost (ABBA ×4, 8 frames each, medians). These numbers **rank l
 **Not done / limits.**
 - Select-piece killers and the density-sign killer are not candidates yet.
 - Device reconstruction is witnessed only with the lane off.
-- Metal pixels and cost are unmeasured.
+- Metal pixels and cost were unmeasured at this cloud pass; the dated Metal verification below records the Mac run.
 - The lane stays off until eligibility, Metal ABBA and Person acceptance.
 
 *Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17.*
+
+### Metal verification — October 17 (Codex)
+
+Zach handed Codex Opus's native-verification commission. MacBook Air Mac17,3 / Apple M5 / 16 GB / macOS 26.6 (25G72), adapter directly observed as Metal (enum 5), HEAD `ee9057845`. Certificate witness **56/56** and timing rerun **56/56**; zero-proof **73/73**; shared-expression **76/76**; overlap tribunal passes with black null-participant samples; Perlin **aborts at `!sawInitialRangeUpload`, line 817**, reproducing the cloud residency assertion. The stock precedence comparison is 0 differing bytes. Sandbox acquisition initially skipped; these results are from desktop execution.
+
+Every report-only TIMING line from the native run:
+
+```text
+TIMING all 4 media (fused set pipeline): exact median 5.03 ms vs certificates median 4.13 ms (ABBA x4, 8 frames each)
+TIMING all 4 media (fused set pipeline): grid median 1.93 ms vs grid+certificates median 2.87 ms (ABBA x4, 8 frames each)
+TIMING one medium (single pipeline): exact median 0.88 ms vs certificates median 0.79 ms (ABBA x4, 8 frames each)
+TIMING one medium (single pipeline): grid median 0.50 ms vs grid+certificates median 0.85 ms (ABBA x4, 8 frames each)
+TIMING prism.wingB.spherical-cloud: grid median 0.74 ms vs grid+certificates median 0.35 ms
+TIMING prism.wingB.hollow-shell: grid median 0.80 ms vs grid+certificates median 0.46 ms
+TIMING prism.wingB.torus-medium: grid median 0.90 ms vs grid+certificates median 0.40 ms
+TIMING prism.wingB.csg-crescent-medium: grid median 0.84 ms vs grid+certificates median 0.45 ms
+TIMING prism.wingB.noise-organic-cloud: grid median 1.27 ms vs grid+certificates median 0.92 ms
+TIMING prism.wingB.time-breathing-nebula: grid median 0.80 ms vs grid+certificates median 0.50 ms
+TIMING prism.wingB.proxy-proof-torus: grid median 0.75 ms vs grid+certificates median 0.18 ms
+TIMING prism.wingB.dual-sovereign-being: grid median 0.82 ms vs grid+certificates median 0.42 ms
+TIMING Prism wing B fused (8 media): grid median 2.86 ms vs grid+certificates median 1.25 ms
+```
+
+Full app builds at the pre-fix parent `5bcb63837` and branch supplied **15 native Engine before/after pairs**, 1920×1080, matched cameras and clocks 0 / 0.75 / 2.25. Screenshot locations: `scratch/verification/ray-domain-metal-2026-10-17-01a148a7/{before,after}/*.png`; the side-by-side `index.html` is beside them. The floating-window fixture overcame Metal Occluded refusals. Original saves and installed app were untouched; copied fixture closure preserved the existing authors.
+
+The independent source-review CPU cancellation case is **reproduced**: original density evaluates to 1 while the planner selects ExactEmpty. Proposed GPU manifestations did not reproduce on this M5: eight black-reference comparisons match, and four nonblack positive controls match. Do not promote the stock green suite into proof qualification. The device tolerance remains declared, certificate-on device reconstruction remains unverified, and the default remains off. Person appearance boxes and live 30 FPS remain open. [Full native record, capture provenance and limits](../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md); [generic eligibility proposal](../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Ray_Domain_Transport_Compilation/Ray_Domain_Transport_Compilation.md#metal-economics-and-eligibility-proposal--october-17).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T00:18:36-07:00 (PDT).
 
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 

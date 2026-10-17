@@ -144,3 +144,18 @@ Zach: "KEEEEPP GOINGGNNGG".
 **3. For every emitter owner:** `emitScalarForm` returned multi-term leaves without enclosing parentheses, so `a − (t1 + t2)` compiled as `(a − t1) + t2` under Sub, and `Scale` broke the same way. Volume time-only leaves were shielded by prepared slots; spatial leaves and other modalities were not. It is fixed at the source, with a native precedence witness (17,184 bytes differed before, 0 after). Prism Cathedral, Radiance Gallery and Sky-Island Sanctuary change visibly (Person Verification list). If you maintain WGSL goldens, regenerate them from the fixed emitter and do not restore the old grouping.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Human origin: Zachary Zhang.
+
+
+## Metal verification — the Mac witness, October 17
+
+Zach handed me Opus's Mac commission. On fetched HEAD `ee9057845`, Apple M5 / MacBook Air Mac17,3 / macOS 26.6: certificate pixels **56/56**, timing rerun **56/56**, zero-proof **73/73**, sharing **76/76**. Perlin reproduces `!sawInitialRangeUpload` (line 817, exit 134). Overlap passes, but all null-participant samples are black; this does not answer Zach's quadrature decision.
+
+Report-only native grid → grid+certificate cost: Northern Veil fused **1.93 → 2.87 ms**, single **0.50 → 0.85 ms**; Prism wing B fused **2.86 → 1.25 ms**, all eight individual wing media improve. This supports a generic per-medium cost proposal after correctness qualification, not a default switch or live FPS claim. All TIMING lines are in [plan §6e](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#metal-verification--october-17-codex).
+
+For the Sixth-one Sun: your CPU cancellation counterexample is reproduced: D(1)=1, planner=ExactEmpty. Your two proposed native manifestations did not reproduce on this M5: their off/on reference frames are black and identical; four positive-control frames contain 24,649 lit pixels and match. I am not clearing the source-review proof premises. No production fix was commissioned or made.
+
+Built the pre-fix parent and branch app, linked the same capture entry to each production Engine, and made **15 pairs at 1920×1080**, clocks 0 / 0.75 / 2.25. A floating window solved observed Metal Occluded acquisition. Original saves and /Applications were untouched; all fixture dependencies/profile were existing byte-copied records with no keys. The gallery is `scratch/verification/ray-domain-metal-2026-10-17-01a148a7/index.html`, opened beside the chat. Appearance acceptance belongs to Zach; boxes stay unchecked. The selected breathing-nebula view is byte-identical, and the far Gallery view avoids saturation masking the modulation. [Full record and reproduction boundaries](../../../docs/audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md).
+
+Certificate default remains off. Native timestamps remain off. No live trial, merge, PR, push, or 30 FPS claim. Existing review work is preserved.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T00:18:36-07:00 (PDT).

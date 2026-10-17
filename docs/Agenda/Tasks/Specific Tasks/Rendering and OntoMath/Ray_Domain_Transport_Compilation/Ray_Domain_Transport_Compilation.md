@@ -2,7 +2,7 @@
 
 **Origin:** Zach's Ray Transport Canon (revived Original Prism Sun, 2026-10-16): compile surviving world mathematics into the smallest lawful one-dimensional transport program per camera-ray segment. The V5 sample loop remains the exact fallback.
 
-**Status (2026-10-16):** Rungs 0 and 1 are built as Kernel/OntoMath infrastructure with CPU witnesses. **No renderer consumer exists.** Full contracts, evidence and continuation: [plan](../../../../../plans/RAY_DOMAIN_TRANSPORT_COMPILATION_RUNG_0_1_2026-10-16.md).
+**Status (2026-10-17):** Rungs 0–2f are built; the original ray-segment planner has no renderer consumer, while support certificates have a separate opt-in production GPU consumer (default off). Native evidence and unresolved proof gates are recorded below. Full contracts, evidence and continuation: [plan](../../../../../plans/RAY_DOMAIN_TRANSPORT_COMPILATION_RUNG_0_1_2026-10-16.md).
 
 ## Done
 - [x] Rung 0 — `OntoMath::restrictToLine` (`src/Singularity/OntoMath/LineRestriction.*`): exact polynomial subset, named refusals, symbolic ray coefficients, proved exact vanishing. Witness `ontomath_line_restriction_test` (57/57, Linux).
@@ -18,10 +18,10 @@
 - [x] **Rung 2f — Lipschitz-certified support tracing, CPU prototype** (`traceVolumeSupport`, interval derivatives, Cauchy–Schwarz norms). It matches full segmentation over 28 real media (70.65% vs 70.60%), and on Northern Veil needs 18–30 curtain evaluations per ray. [§6c](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6c-rung-2f--lipschitz-certified-support-tracing-cpu-prototype-2026-10-17-fourth-pass).
 - [x] **Rung 2f-native groundwork**: authored-tier support certificates (box-mode evaluator, spatial Lipschitz bounds, source operands) and a certificate-only tracer matching per-ray tracing at 70.65% over 28 media (Northern Veil 28–39 curtain evaluations/ray). Also a **cloud software WebGPU lane** (lavapipe + wgpu-native at the vendored tag) that runs the real WGSL offscreen. [§6d](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6d-rung-2f-native-groundwork--authored-tier-certificates-and-a-cloud-webgpu-lane-2026-10-17-fifth-pass).
 - [ ] **⚑ AUTHOR — null members vs unified quadrature.** `webgpu_v5_overlap_physics_test` (PR #361's tribunal, last changed 10-07) contradicts per-segment spacing (10-09): a null overlapping member shifts another medium by up to 42 bytes on lavapipe. Rung 2 proofs could exclude proved-empty members from spacing, but that changes the lattice. Zach decides; confirm on Metal first.
-- [ ] Compare `webgpu_perlin_exact_gradient_test`'s residency assertion (range-hierarchy re-upload) on a Mac to separate a backend effect from a cache regression.
+- [x] Compare the Perlin residency assertion on Metal: `!sawInitialRangeUpload` aborts there too; root-cause investigation remains open below.
 - [x] **Rung 2f-native — the GPU tracer, opt-in** (`ScreenChannel volumeSupportCertificatesEnabled`, default OFF). `sdfwgsl::lowerVolumeSupportKillers` lowers each candidate switch with the production emitter; the renderer attaches per-box certificate headers {sign, δ, 1/L, offset}; both marchers consult them where no grid proof covers a sample, jump `(sign·g − δ)/L` minus a coordinate pad, and skip *checks* by the converse bound. Lavapipe witness `webgpu_volume_support_certificates_test` 56/56 byte-identical (Northern Veil fused/single, 6 views, translated, edits, resize, refusal, full lattice, 2560×1440, Prism Cathedral wing B). [§6e](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6e-rung-2f-native--the-gpu-certificate-tracer-opt-in-2026-10-17-sixth-pass).
 - [ ] **Rung 2f-native eligibility policy.** On lavapipe certificates are a *substitute* (Prism wing B, grid 0% proven: 1.2–4.8× cheaper than the grid lane) but not a *complement* (Northern Veil, grid 95–97%: +16–49% cost over grid alone). Decide per medium from Kernel facts (proven-cell fraction, killer count), never per Zone; then default it on only after Metal ABBA and Person acceptance.
-- [ ] **Metal run of the certificate lane.** Pixel parity (`webgpu_volume_support_certificates_test`) and ABBA cost (`EARTHCALL_CERTIFICATE_TIMING=1`) on Zach's Mac; δ (`kVolumeSupportDeviceTolerance`, 2⁻¹⁰·(1+|args|)) is declared, not proved, for Fast mode.
+- [x] **Metal run of the certificate lane:** 56/56 twice, with report-only ABBA recorded; the independent CPU proof defect, device enclosure and Person acceptance remain open ([native record](../../../../../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md)).
 - [ ] Lower Select-piece killers (roles 4+2i/5+2i) and the density-sign killer to WGSL; today they are not candidates.
 - Note: `volume_ray_radial_segmentation_test` takes ~90 s in Debug, because it runs the full 28-medium census.
 - [ ] Outward-round lone constant terms in `ScalarForm::evalRange` (`Term::evalRange` starts from an un-widened float). This is the proof consumers' office; see Rung 2 plan §5.2.
@@ -32,3 +32,19 @@
 - [ ] Reduce `ScalarForm::plus` quadratic re-normalization before any live consumer lowers heavy polynomials (`(x+y+z)^6` takes ~66 ms in Debug).
 
 *Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-16; Rung 2f-native GPU tracer and the emitter precedence fix 2026-10-17.*
+
+
+## Metal economics and eligibility proposal — October 17
+
+Zach commissioned execution of Opus's Mac handoff. [Native record](../../../../../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md): stock certificates 56/56 twice, zero-proof 73/73, sharing 76/76; overlap passes with black null comparisons; the Perlin residency assertion reproduces on Metal. The separate CPU cancellation counterexample also reproduces and blocks omission-proof qualification; two proposed GPU cases were not reproduced on the M5.
+
+Native report-only grid → grid+certificate medians: Northern Veil fused **1.93 → 2.87 ms**, single **0.50 → 0.85 ms**; Prism wing B fused **2.86 → 1.25 ms**, with all eight selected individual media cheaper. These are completion/readback-inclusive fixed-view costs, not isolated GPU time or live FPS.
+
+**Proposal only:** after correcting execution-equivalence/error admission, derive per-medium cost evidence from existing Kernel facts (proven-cell coverage, killer count and lowered evaluator work), then measure crossover with paired native runs. Do not encode Zone names, infer truth from a cost score, or hardcode an unmeasured coverage threshold. Any variable resource-allocation policy must follow Zach's authored-Law direction; this pass implements no policy and changes no default. A no-killer/unknown-proof medium always keeps the exact path. New retained ranking state would need explicit dependency/invalidation evidence.
+
+- [ ] Correct or conservatively refuse canceled-operation execution-zero proofs; preserve original-DAG provenance before a renderer consumer or promotion.
+- [ ] Qualify computed clamp thresholds and native arithmetic error; same-M5 black parity does not discharge the source-review premise.
+- [ ] Investigate the reproduced Perlin initial range-upload assertion without loosening its check.
+- [ ] Obtain Zach's verdict on the three Zone appearance pairs; all visual boxes remain open.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T00:18:36-07:00 (PDT).
