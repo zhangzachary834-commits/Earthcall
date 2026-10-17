@@ -59,6 +59,8 @@
   - Play Mountain, tap for red mana, cast Lightning Bolt to the stack, and click Resolve: verify Bolt deals 3 damage to opponent (life down to 15) and goes to graveyard.
   - Verify automated state-based actions: lethal damage sends creatures to graveyard, and reducing opponent life to 0 triggers game over.
 
+*Grok 4.7 (Grok Build), session `01a108eb-bfc1-7162-8064-96c491afeb5d`, 2026-10-17 13:24 PDT.* `./build/mtg_zone_native_test` passed 113/113 against this zone: the scripted clicks, the stack, the bolt, and both state-based actions. That does not check the look. What remains for a Person is whether the table, the four cards, the tap, and the stack read as a game under the pointer. The slice is these four cards. The Draw step does not draw, and no second player takes a turn. The arithmetic is witnessed; the feel is not.
+
 ## One-paste Law Line pixel-art editor
 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18`; Zach requested a whole 2D art editor through Law sentences.*
