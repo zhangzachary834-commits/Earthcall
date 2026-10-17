@@ -13,7 +13,6 @@
 // it to an independent same-thread clock.
 
 #include "support/test_harness.hpp"
-#include "support/test_save_helper.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <algorithm>
@@ -73,18 +72,12 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Isolate save root to a temporary scratch directory without copying 1.6GB saves tree.
-    TempSaveRoot tempSaveRoot;
-    std::filesystem::path srcWorldPath(world);
-    std::filesystem::path isolatedWorldPath = tempSaveRoot.path / "worlds" / srcWorldPath.filename();
-    std::filesystem::create_directories(isolatedWorldPath.parent_path());
-    std::error_code ec;
-    std::filesystem::copy(srcWorldPath, isolatedWorldPath, std::filesystem::copy_options::overwrite_existing, ec);
-
-    TestSupport::BootedEngineHarness h("Player", "humanoid", false);
+    // Protect the real Zone identity store exactly like frame_lag_test.
+    TestSupport::RealSaveTreeGuard saveGuard(world);
+    TestSupport::BootedEngineHarness h;
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(isolatedWorldPath.string());
+    h.loadWorld(world);
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
