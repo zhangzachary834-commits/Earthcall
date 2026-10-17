@@ -95,10 +95,13 @@ nlohmann::json findZachProfile() {
 int main() {
     namespace fs = std::filesystem;
 
-    fs::path sourceSaves = fs::current_path() / "saves";
-    if (!fs::exists(sourceSaves)) {
-        sourceSaves = fs::current_path() / ".." / "saves";
+    fs::path repoRoot = fs::current_path();
+    while (!fs::exists(repoRoot / "saves" / "persons" / "Zach.ecform") && repoRoot.has_parent_path()) {
+        auto parent = repoRoot.parent_path();
+        if (parent == repoRoot) break;
+        repoRoot = parent;
     }
+    const fs::path sourceSaves = repoRoot / "saves";
 
     const fs::path sandbox =
         fs::temp_directory_path() / "earthcall_person_home_migration_boot";
