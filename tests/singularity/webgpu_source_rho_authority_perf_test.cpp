@@ -364,7 +364,7 @@ int main() {
         "exact_cpu_submit_median_ms=%.9f authority_cpu_submit_median_ms=%.9f "
         "exact_device_poll_median_ms=%.9f authority_device_poll_median_ms=%.9f "
         "runner_os=%s runner_arch=%s run_attempt=%s "
-        "gpu_timing=%s\\n",
+        "gpu_timing=%s\n",
         median(exactWarmupWallMs), median(authorityWarmupWallMs),
         median(exact.cpuSubmitMs), median(authority.cpuSubmitMs),
         median(exact.devicePollMs), median(authority.devicePollMs),
