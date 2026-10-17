@@ -14,14 +14,17 @@
 
 #include "support/test_harness.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "json.hpp"
 
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <numeric>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace {
@@ -72,8 +75,51 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
+    // Isolate SaveSystem root to a lightweight scratch directory containing only the target world's zone identities.
+    std::filesystem::path scratch = std::filesystem::temp_directory_path() /
+        ("earthcall_slow_adapter_perf_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    std::filesystem::create_directories(scratch / "saves" / "zones");
+    std::filesystem::create_directories(scratch / "saves" / "homes");
+
+    std::unordered_set<std::string> targetZoneIds;
+    try {
+        std::ifstream f(world);
+        if (f.is_open()) {
+            nlohmann::json wj;
+            f >> wj;
+            auto extractIds = [&](const nlohmann::json& arr) {
+                if (arr.is_array()) {
+                    for (const auto& item : arr) {
+                        if (item.is_string()) targetZoneIds.insert(item.get<std::string>());
+                        else if (item.is_object()) {
+                            std::string id = item.value("identifier", item.value("name", std::string{}));
+                            if (!id.empty()) targetZoneIds.insert(id);
+                        }
+                    }
+                }
+            };
+            if (wj.contains("zones")) extractIds(wj["zones"]);
+            if (wj.contains("zoneRefs")) extractIds(wj["zoneRefs"]);
+        }
+    } catch (...) {}
+
+    std::error_code copyEc;
+    for (const auto& zid : targetZoneIds) {
+        std::filesystem::path srcZone = std::filesystem::path("saves") / "zones" / zid;
+        if (std::filesystem::exists(srcZone, copyEc)) {
+            std::filesystem::copy(srcZone, scratch / "saves" / "zones" / zid,
+                                  std::filesystem::copy_options::recursive, copyEc);
+        }
+        std::filesystem::path srcHome = std::filesystem::path("saves") / "homes" / zid;
+        if (std::filesystem::exists(srcHome, copyEc)) {
+            std::filesystem::copy(srcHome, scratch / "saves" / "homes" / zid,
+                                  std::filesystem::copy_options::recursive, copyEc);
+        }
+    }
+
+    const std::string origSaveRoot = SaveSystem::saveRoot();
+    SaveSystem::setSaveRoot(scratch.string());
+
     TestSupport::BootedEngineHarness h;
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
@@ -164,6 +210,9 @@ int main(int argc, char** argv) {
         static_cast<unsigned long long>(h.lawManager.slowAdapterMaintenanceRuns()),
         h.lawManager.slowAdapter().roadsKnown(), h.lawManager.slowAdapter().roadsPending(),
         tierDirect, tierAdapter, tierVocabulary, tierSweep);
+
+    SaveSystem::setSaveRoot(origSaveRoot);
+    std::filesystem::remove_all(scratch, copyEc);
 
     return 0;
 }
