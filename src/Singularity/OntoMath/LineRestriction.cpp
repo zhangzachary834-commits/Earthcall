@@ -621,7 +621,23 @@ struct AlgebraicBuilder {
         const uint32_t sq0 = op(Kind::Mul, c[0], c[0]);
         const uint32_t sq1 = op(Kind::Mul, c[1], c[1]);
         const uint32_t sq2 = op(Kind::Mul, c[2], c[2]);
-        return sqrtNonnegative(op(Kind::Add, op(Kind::Add, sq0, sq1), sq2));
+        const uint32_t n = sqrtNonnegative(op(Kind::Add, op(Kind::Add, sq0, sq1), sq2));
+        setNorm(n, c);
+        return n;
+    }
+    void setNorm(uint32_t n, const uint32_t c[3]) { form.nodes[n].normComponents.assign(c, c + 3); }
+
+    // An authored sum of squares Σ base_i² (Add trees of Pow(base, 2)), so that
+    // sqrt of it is recognized as the Euclidean norm it is, however it is spelled.
+    bool collectSquares(const MathNode& n, std::vector<const MathNode*>& bases) {
+        using Op = MathNode::Op;
+        if (n.op == Op::Add && n.children.size() == 2 && n.children[0] && n.children[1])
+            return collectSquares(*n.children[0], bases) && collectSquares(*n.children[1], bases);
+        if (n.op == Op::Pow && n.children.size() == 2 && n.children[0] && n.children[1]) {
+            const auto e = constantOf(*n.children[1]);
+            if (e && *e == 2.0) { bases.push_back(n.children[0].get()); return true; }
+        }
+        return false;
     }
 
     std::optional<AlgValue> build(const MathNode& n) {
@@ -764,6 +780,21 @@ struct AlgebraicBuilder {
                 if (!a) return std::nullopt;
                 if (a->vector) { say(&why, "componentwise vector Sqrt is not admitted"); return std::nullopt; }
                 AlgValue out;
+                std::vector<const MathNode*> bases;
+                if (collectSquares(*n.children[0], bases) && bases.size() >= 2) {
+                    // A sum of squares is ≥ 0 in the reals, so sqrt(max(a, 0)) = sqrt(a):
+                    // no switch, and its components feed the Cauchy–Schwarz bound.
+                    std::vector<uint32_t> comps;
+                    for (const auto* base : bases) {
+                        const auto c = build(*base);
+                        if (!c) return std::nullopt;
+                        if (c->vector) { say(&why, "a squared vector inside a sum of squares"); return std::nullopt; }
+                        comps.push_back(c->s);
+                    }
+                    out.s = sqrtNonnegative(a->s);
+                    form.nodes[out.s].normComponents = std::move(comps);
+                    return out;
+                }
                 out.s = op(Kind::Sqrt, a->s);
                 return out;
             }
@@ -778,8 +809,12 @@ struct AlgebraicBuilder {
                 if (arity == 2 && n.children[1]) pb = toVectorFormUnder(*n.children[1], subst, &w);
                 if (pa && (arity == 1 || pb)) {
                     ScalarForm sum;
+                    uint32_t comps[3];
                     for (int i = 0; i < 3; ++i) {
                         const ScalarForm d = arity == 1 ? (*pa)[i] : (*pa)[i].plus((*pb)[i].scaled(-1.0));
+                        const auto c = polyLeaf(d);   // kept for the Cauchy–Schwarz derivative bound
+                        if (!c) return std::nullopt;
+                        comps[i] = *c;
                         sum = sum.plus(d.times(d));
                         if (!withinBudget(sum, &why)) return std::nullopt;
                     }
@@ -787,6 +822,7 @@ struct AlgebraicBuilder {
                     if (!leaf) return std::nullopt;
                     AlgValue out;
                     out.s = sqrtNonnegative(*leaf);
+                    setNorm(out.s, comps);
                     return out;
                 }
                 const auto a = childOf(n, 0);
@@ -1148,9 +1184,16 @@ Interval LineAlgebraicEvaluator::polynomialRange(uint32_t node, double s0, doubl
     return _memoRange[node] = polynomialRangeUncached(node, s0, s1);
 }
 
+namespace {
+Interval centeredPolynomialRange(const std::vector<double>& a, const std::vector<double>& e, double s0, double s1);
+}
+
 Interval LineAlgebraicEvaluator::polynomialRangeUncached(uint32_t node, double s0, double s1) const {
-    const auto& a = _coefficients[node];
-    const auto& e = _errors[node];
+    return centeredPolynomialRange(_coefficients[node], _errors[node], s0, s1);
+}
+
+namespace {
+Interval centeredPolynomialRange(const std::vector<double>& a, const std::vector<double>& e, double s0, double s1) {
     const std::size_t n = a.size();
     if (n == 0) return Interval(0.0f);
     constexpr double kEps = std::numeric_limits<double>::epsilon();
@@ -1181,6 +1224,7 @@ Interval LineAlgebraicEvaluator::polynomialRangeUncached(uint32_t node, double s
     for (std::size_t k = n - 1; k-- > 0;) acc = acc * h + b[k];
     return acc;
 }
+} // namespace
 
 namespace {
 // Select piece applicability under signs: +1 applies, −1 does not, 0 unknown.
@@ -1420,6 +1464,117 @@ void LineAlgebraicEvaluator::relevantUndecided(uint32_t node, const std::vector<
                 if (st > 0) return;
             }
             return;
+        }
+    }
+}
+
+Interval LineAlgebraicEvaluator::derivativeRange(uint32_t node, double sa, double sb,
+                                                 const std::vector<int8_t>& signs) const {
+    const auto& n = _form->nodes[node];
+    const int8_t s0 = n.switchCount > 0 ? signs[n.switchBegin] : 0;
+    const int8_t s1 = n.switchCount > 1 ? signs[n.switchBegin + 1] : 0;
+    auto hull = [](const Interval& x, const Interval& y) { return x.joined(y); };
+    auto D = [&](uint32_t c) { return derivativeRange(c, sa, sb, signs); };
+    auto R = [&](uint32_t c) { return rangeAt(c, sa, sb, signs, nullptr); };
+    switch (n.kind) {
+        case Kind::Polynomial: {
+            const auto& a = _coefficients[node];
+            const auto& e = _errors[node];
+            if (a.size() < 2) return Interval(0.0f);
+            std::vector<double> da(a.size() - 1), de(a.size() - 1);
+            constexpr double kEps = std::numeric_limits<double>::epsilon();
+            for (std::size_t k = 1; k < a.size(); ++k) {
+                da[k - 1] = double(k) * a[k];
+                de[k - 1] = double(k) * e[k] + 2 * kEps * std::abs(da[k - 1]);
+            }
+            return centeredPolynomialRange(da, de, sa, sb);
+        }
+        case Kind::Undefined: return _undefinedAsZero ? Interval(0.0f) : Interval::infinite();
+        case Kind::Add: return D(n.a) + D(n.b);
+        case Kind::Sub: return D(n.a) - D(n.b);
+        case Kind::Mul: return D(n.a) * R(n.b) + R(n.a) * D(n.b);
+        case Kind::Sqrt: {
+            if (!n.nonnegativeArgument && s0 < 0) return Interval(0.0f);
+            if (n.nonnegativeArgument && !n.normComponents.empty()) {
+                // Cauchy–Schwarz: |d‖v‖/ds| ≤ ‖v′‖, valid everywhere (‖·‖ is 1-Lipschitz).
+                double sum = 0.0;
+                for (uint32_t c : n.normComponents) {
+                    const Interval d = D(c);
+                    if (!d.bounded()) return Interval::infinite();
+                    const double m = std::max(std::abs(double(d.lo)), std::abs(double(d.hi)));
+                    sum += m * m;
+                }
+                const float bound = Interval::roundUp(static_cast<float>(std::sqrt(sum) * (1.0 + 1e-12)));
+                return Interval(-bound, bound);
+            }
+            const Interval r = R(n.a);
+            if (!(r.lo > 0.0f)) return Interval::infinite();   // sqrt is not Lipschitz at 0
+            return D(n.a) / (sqrtOf(r) * Interval(2.0f));
+        }
+        case Kind::Abs: {
+            const Interval d = D(n.a);
+            if (s0 > 0) return d;
+            if (s0 < 0) return -d;
+            return hull(d, -d);
+        }
+        case Kind::Min: case Kind::Max: {
+            const bool min = n.kind == Kind::Min;
+            if (s0 > 0) return D(min ? n.b : n.a);
+            if (s0 < 0) return D(min ? n.a : n.b);
+            return hull(D(n.a), D(n.b));
+        }
+        case Kind::Clamp:
+            if (s0 < 0 || s1 > 0) return Interval(0.0f);
+            if (s0 > 0 && s1 < 0) return D(n.a);
+            return hull(D(n.a), Interval(0.0f));
+        case Kind::Trans: {
+            const Interval arg = R(n.a), darg = D(n.a);
+            using TK = TransFactor::Kind;
+            if (n.transKind == TK::Sin) return TransFactor(TK::Cos, "u", 1.0, 0.0).evalRange(arg) * darg;
+            if (n.transKind == TK::Cos) return -(TransFactor(TK::Sin, "u", 1.0, 0.0).evalRange(arg)) * darg;
+            if (n.transKind == TK::Exp) return TransFactor(TK::Exp, "u", 1.0, 0.0).evalRange(arg) * darg;
+            return Interval::infinite();
+        }
+        case Kind::Noise: {
+            // |d/ds noise(q(s))| ≤ L·|q′(s)|: OntoMath's proved Lipschitz bound.
+            const Interval da = D(n.a), db = D(n.b), dc = D(n.c);
+            if (!da.bounded() || !db.bounded() || !dc.bounded()) return Interval::infinite();
+            auto mag = [](const Interval& x) { return std::max(std::abs(x.lo), std::abs(x.hi)); };
+            const float norm = Interval::roundUp(std::sqrt(mag(da) * mag(da) + mag(db) * mag(db) + mag(dc) * mag(dc)));
+            const float bound = Interval::roundUp(kClassicPerlin3LipschitzBound * norm);
+            return Interval(-bound, bound);
+        }
+        case Kind::Select: {
+            for (uint32_t p = 0; p < n.pieces.size(); ++p) {
+                const int st = pieceState(n, p, signs);
+                if (st < 0) continue;
+                if (st == 0) return Interval::infinite();   // a possible jump: no Lipschitz claim
+                return D(n.pieces[p].value);
+            }
+            return _undefinedAsZero ? Interval(0.0f) : Interval::infinite();
+        }
+    }
+    return Interval::infinite();
+}
+
+Interval LineAlgebraicEvaluator::switchDerivativeRange(std::size_t k, double sa, double sb,
+                                                       const std::vector<int8_t>& signs) const {
+    const auto& sw = _form->switches[k];
+    const auto& n = _form->nodes[sw.node];
+    switch (sw.role) {
+        case 0: case 2: case 3: return derivativeRange(n.a, sa, sb, signs);
+        case 1: return derivativeRange(n.a, sa, sb, signs) - derivativeRange(n.b, sa, sb, signs);
+        default: {
+            // Select bound on the selector polynomial: sel′ or −sel′.
+            const auto& a = _coefficients[sw.node];
+            if (a.size() < 2) return Interval(0.0f);
+            std::vector<double> da(a.size() - 1), de(a.size() - 1);
+            for (std::size_t q = 1; q < a.size(); ++q) {
+                da[q - 1] = double(q) * a[q];
+                de[q - 1] = double(q) * _errors[sw.node][q] + 4 * std::numeric_limits<double>::epsilon() * std::abs(da[q - 1]);
+            }
+            const Interval d = centeredPolynomialRange(da, de, sa, sb);
+            return sw.role % 2 == 0 ? d : -d;
         }
     }
 }

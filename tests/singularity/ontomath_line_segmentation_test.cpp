@@ -421,6 +421,57 @@ int main() {
         }
     }
 
+    // ---- Rung 2f: interval derivative ranges obey the mean-value bound ----
+    {
+        auto wave = num(0);
+        wave->scalarForm = ScalarForm::constant(0.2)
+            .plus(ScalarForm::transcendental(OntoMath::TransFactor::Kind::Sin, "x", 0.7, 0.2, 1.5))
+            .plus(ScalarForm::transcendental(OntoMath::TransFactor::Kind::Cos, "z", 1.3, 0.0, -0.25).times(ScalarForm::variable("y")));
+        auto noisy = node(Op::Noise, node(Op::Scale, num(0.3), leaf("p")));
+        auto kinked = node(Op::Union, node(Op::Abs, node(Op::Sub, leaf("x"), num(2))), node(Op::Clamp, leaf("y"), num(-1), num(4)));
+        struct Subject { std::string what; const MathNode* n; double tol; };
+        auto rad = radial(false);
+        const std::vector<Subject> subjects = {{"radial clamp", rad.get(), 1e-9}, {"sin/cos of space", wave.get(), 1e-9},
+                                               {"Perlin", noisy.get(), 1e-5}, {"abs/min/clamp kinks", kinked.get(), 1e-9}};
+        std::mt19937 rng(2026u);
+        std::uniform_real_distribution<double> u(-8.0, 28.0);
+        for (const auto& sub : subjects) {
+            const auto r = OntoMath::restrictAlgebraicToLine(*sub.n, false);
+            bool ok = bool(r);
+            int bounded = 0, checks = 0;
+            for (const auto& ray : rays()) {
+                if (!ok) break;
+                OntoMath::LineAlgebraicEvaluator ev(*r.form, lineBindings(ray));
+                const std::vector<int8_t> none(r.form->switches.size(), 0);
+                for (int k = 0; k < 20; ++k) {
+                    double a = u(rng), b = u(rng);
+                    if (a > b) std::swap(a, b);
+                    const auto d = ev.derivativeRange(r.form->roots[0], a, b, none);
+                    if (!d.bounded()) continue;
+                    ++bounded;
+                    const double M = std::max(std::abs(double(d.lo)), std::abs(double(d.hi)));
+                    for (int q = 0; q < 6; ++q) {
+                        const double s1 = a + (b - a) * q / 6.0, s2 = a + (b - a) * (q + 1) / 6.0;
+                        const double dv = std::abs(*ev.value(r.form->roots[0], s2) - *ev.value(r.form->roots[0], s1));
+                        ++checks;
+                        if (dv > M * (s2 - s1) * (1 + 1e-6) + sub.tol) ok = false;
+                    }
+                }
+            }
+            check(ok && bounded > 0, sub.what + ": |Δv| ≤ sup|v′|·|Δs| on every probe (" + std::to_string(checks) +
+                                         " probes, " + std::to_string(bounded) + " bounded intervals)");
+        }
+        // Honesty: a possible jump (undecided Select) refuses a Lipschitz claim.
+        using OntoMath::Piecewise;
+        const auto pw = Piecewise::fromJson(nlohmann::json::parse(R"({"input":"x","pieces":[
+            {"hi":0.0,"mathNode":{"op":0,"scalarForm":{"terms":[{"c":1.0,"factors":{}}]}}}]})"));
+        const auto rp = OntoMath::restrictAlgebraicToLine(pw, false);
+        OntoMath::LineAlgebraicEvaluator ev(*rp.form, lineBindings({{-3, 0, 0}, {1, 0, 0}}), true);
+        const std::vector<int8_t> none(rp.form->switches.size(), 0);
+        check(!ev.derivativeRange(rp.form->roots[0], 0.0, 6.0, none).bounded(),
+              "an interval containing a Piecewise jump answers an unbounded derivative (no false Lipschitz claim)");
+    }
+
     // ---- Rung 2d: analytic proposals cut cost, never soundness ------------
     {
         uint32_t evalsOn = 0, evalsOff = 0, proposed = 0;

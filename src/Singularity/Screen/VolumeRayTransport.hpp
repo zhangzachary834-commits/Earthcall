@@ -237,4 +237,27 @@ void executeVolumeSchedule(const VolumeSegmentSchedule& schedule, const VolumeLa
                            bool outputBudgetZero, VolumeTransportState& state,
                            const VolumeLatticeRunner& lattice);
 
+// --- Rung 2f prototype: Lipschitz-certified support tracing --------------------
+//
+// The GPU-shaped route to Rung 2's emptiness proofs (sphere tracing, Hart 1996).
+// A KILLER is a switch sign that by itself forces a member's density range over
+// the chord to be ≤ 0 (e.g. a curtain clamp saturating at 0 inside a product).
+// For each killer, L = sup |g′| over the chord (interval derivative). Walking the
+// accepted lattice, a not-yet-certified sample s evaluates one point enclosure of
+// g; a margin m > 0 away from the killing side certifies emptiness up to
+// s + m/L (mean value theorem). A sample is empty only when EVERY member's density
+// is certified there. Cost proxy = point evaluations (what a shader would pay).
+// Prototype only: nothing consumes it; witnesses compare it with Rung 2 and the
+// zero-proof grid.
+struct VolumeSupportTrace {
+    std::vector<char> emptySample;
+    uint32_t killers = 0;
+    uint32_t setupEvaluations = 0;   // killer identification + Lipschitz bounds
+    uint32_t pointEvaluations = 0;   // per-step g(s) enclosures
+    uint32_t certifiedSamples = 0;
+    std::string reason;              // set when nothing could be traced
+};
+VolumeSupportTrace traceVolumeSupport(const std::vector<VolumeSegmentMember>& members,
+                                      const VolumeRayInput& ray, const VolumeLatticeSpan& span);
+
 } // namespace Rendering

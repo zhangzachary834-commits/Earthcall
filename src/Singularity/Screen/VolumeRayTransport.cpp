@@ -717,4 +717,80 @@ void executeVolumeSchedule(const VolumeSegmentSchedule& schedule, const VolumeLa
     }
 }
 
+// ---- Rung 2f prototype: Lipschitz-certified support tracing ----------------
+// Claude Code · Claude Opus 5.5 · session_01HvZSR64QghrdyCpq2M7qvX · 2026-10-17.
+VolumeSupportTrace traceVolumeSupport(const std::vector<VolumeSegmentMember>& members,
+                                      const VolumeRayInput& ray, const VolumeLatticeSpan& span) {
+    VolumeSupportTrace trace;
+    trace.emptySample.assign(span.count, 0);
+    if (span.count == 0 || !(span.step > 0.0) || members.empty()) { trace.reason = "degenerate span"; return trace; }
+    const double sFirst = span.firstSample;
+    const double sLast = span.firstSample + span.step * double(span.count - 1u);
+    std::vector<char> all(span.count, 1);
+    for (const auto& m : members) {
+        if (!m.forms || !m.forms->density.present || !m.forms->density.algebraic.form) {
+            trace.reason = "a member's density has no admitted algebraic form";
+            trace.emptySample.assign(span.count, 0);
+            return trace;
+        }
+        const auto& form = *m.forms->density.algebraic.form;
+        OntoMath::LineAlgebraicEvaluator ev(form, rayBindings(m, ray), true);
+        if (!ev.ok()) { trace.reason = "density: " + ev.refusal(); trace.emptySample.assign(span.count, 0); return trace; }
+        const uint32_t root = form.roots[0];
+        const std::vector<int8_t> zeros(form.switches.size(), 0);
+
+        struct Killer { std::size_t k; int8_t sign; double lipschitz; };
+        std::vector<Killer> killers;
+        for (std::size_t k = 0; k < form.switches.size(); ++k) {
+            for (int8_t sg : {int8_t(-1), int8_t(1)}) {
+                auto signs = zeros;
+                signs[k] = sg;
+                bool undefined = false;
+                ++trace.setupEvaluations;
+                const auto r = ev.range(root, sFirst, sLast, signs, &undefined);
+                if (undefined || !(r.hi <= 0.0f)) continue;
+                ++trace.setupEvaluations;
+                const auto d = ev.switchDerivativeRange(k, sFirst, sLast, zeros);
+                if (!d.bounded()) continue;
+                killers.push_back({k, sg, std::max(std::abs(double(d.lo)), std::abs(double(d.hi)))});
+            }
+        }
+        // The density sign itself, when D is Lipschitz: −D(s) > 0 certifies D < 0 nearby.
+        {
+            ++trace.setupEvaluations;
+            const auto d = ev.derivativeRange(root, sFirst, sLast, zeros);
+            if (d.bounded()) killers.push_back({std::size_t(-1), -1, std::max(std::abs(double(d.lo)), std::abs(double(d.hi)))});
+        }
+        trace.killers += static_cast<uint32_t>(killers.size());
+
+        std::vector<char> mine(span.count, 0);
+        for (uint32_t i = 0; i < span.count; ++i) {
+            if (mine[i]) continue;
+            const double si = span.firstSample + span.step * double(i);
+            for (const auto& killer : killers) {
+                ++trace.pointEvaluations;
+                bool undefined = false;
+                const auto r = killer.k == std::size_t(-1) ? ev.range(root, si, si, zeros, &undefined)
+                                                           : ev.switchRange(killer.k, si, si, zeros, &undefined);
+                if (undefined) continue;
+                const double margin = killer.sign < 0 ? -double(r.hi) : double(r.lo);
+                const bool atZero = killer.k == std::size_t(-1) && r.hi <= 0.0f;   // D ≤ 0 here exactly
+                if (!(margin > 0.0) && !atZero) continue;
+                // Certified on [si, si + margin/L]; a tiny relative guard keeps the
+                // double division from rounding the reach outward.
+                const double reach = killer.lipschitz > 0.0 && margin > 0.0
+                                         ? si + (margin / killer.lipschitz) * (1.0 - 1e-9)
+                                         : (killer.lipschitz == 0.0 && margin > 0.0 ? sLast : si);
+                for (uint32_t j = i; j < span.count && span.firstSample + span.step * double(j) <= reach; ++j) mine[j] = 1;
+                mine[i] = 1;
+                break;
+            }
+        }
+        for (uint32_t i = 0; i < span.count; ++i) all[i] = all[i] && mine[i];
+    }
+    trace.emptySample = std::move(all);
+    for (char e : trace.emptySample) trace.certifiedSamples += e ? 1u : 0u;
+    return trace;
+}
+
 } // namespace Rendering

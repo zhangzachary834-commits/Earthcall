@@ -228,6 +228,11 @@ struct LineAlgebraicNode {
     uint32_t a = 0, b = 0, c = 0;    // operands (c: Noise's third component)
     double lo = 0.0, hi = 0.0;       // Clamp bounds
     bool nonnegativeArgument = false; // Sqrt of a sum of squares: no switch
+    // Rung 2f: when that Sqrt is a Euclidean norm ‖v‖ — Length/Distance, or any
+    // authored sqrt of a sum of squares — the components of v (never
+    // operands of the value; read only by derivativeRange, which bounds
+    // |d‖v‖/ds| ≤ ‖v′‖ by Cauchy–Schwarz — finite even where ‖v‖ = 0).
+    std::vector<uint32_t> normComponents;   // empty = not a recognized Euclidean norm
     TransFactor::Kind transKind = TransFactor::Kind::Sin;   // Trans
     std::vector<Piece> pieces;       // Select, authored order
     uint32_t switchBegin = 0, switchCount = 0;
@@ -298,6 +303,14 @@ public:
     // piece is still PROVED by interval range. A wrong proposal costs bisection,
     // never soundness. Appends roots inside (s0, s1).
     void proposeRoots(double s0, double s1, std::vector<double>& out) const;
+    // Rung 2f: sound enclosure of d/ds over [s0, s1] (forward-mode interval
+    // differentiation). Chain rule for sin/cos/exp; Noise via OntoMath's proved
+    // Lipschitz constant (kClassicPerlin3LipschitzBound); undecided abs/min/max/
+    // clamp take the hull of their branches' derivatives (they are Lipschitz, so
+    // that hull bounds every difference quotient); sqrt near 0 and an undecided
+    // Select (a jump) answer the unbounded interval — no false Lipschitz claim.
+    Interval derivativeRange(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs) const;
+    Interval switchDerivativeRange(std::size_t k, double s0, double s1, const std::vector<int8_t>& signs) const;
 
 private:
     Interval rangeAt(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs, bool* undefined) const;

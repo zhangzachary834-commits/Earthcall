@@ -145,6 +145,41 @@ Every grid-proven sample is also Rung 2-proven ("grid but Rung 2 not": 0%). "100
 
 **Therefore the next rung (2f) is Lipschitz-certified support tracing on the GPU**, sphere tracing in the sense of Hart (1996). For a zero-saturating factor `clamp(1 − |g|/w)` whose argument `g` restricts to the ray with a derivative bound `L` (here `|dz| + Σ|A_i·k_i·dx|`, from the authored amplitudes and frequencies), a sample at `s` with `|g(s)| − w = m > 0` certifies emptiness up to `s + m/L`. Each step costs a few sines. It targets exactly the factor that carries 59–85% of the measured gain. It needs native pixel parity and cost evidence, so it cannot be completed in this container. A CPU prototype of the certificate and step rule can be.
 
+## 6c. Rung 2f — Lipschitz-certified support tracing, CPU prototype (2026-10-17, fourth pass)
+
+Zach: "KEEP GOIGNGNGNGNGNG" (continued). This is the GPU-shaped algorithm §6b called for, sphere tracing in the sense of Hart (1996), built and proved on the CPU against the real saves. There is still no shader.
+
+**OntoMath additions.**
+- `derivativeRange` / `switchDerivativeRange`: forward-mode interval differentiation over the piecewise-algebraic form. Polynomials use the centered form on the derivative coefficients; sin/cos/exp use the chain rule (OntoMath's `TransFactor::evalRange` for the outer factor); Noise uses OntoMath's proved Lipschitz constant times ‖q′‖; undecided abs/min/max/clamp take the hull of branch derivatives (sound for Lipschitz functions). A plain sqrt near 0 and an undecided Select (a jump) answer unbounded, so no false Lipschitz claim is ever made.
+- **Euclidean norms recognized however they are spelled.** `Length`/`Distance`, and any authored `sqrt(Σ base²)`, carry their components. Their derivative is bounded by Cauchy–Schwarz, `|d‖v‖/ds| ≤ ‖v′‖`, which stays finite where ‖v‖ = 0. An authored sum of squares also drops its sqrt switch, since `sqrt(max(a,0)) = sqrt(a)` exactly for a ≥ 0 in the reals.
+
+**`Rendering::traceVolumeSupport` (prototype, unconsumed).**
+- A *killer* is a switch sign that by itself forces the density's range over the chord to ≤ 0, such as the curtain clamp saturating at zero. The density's own sign also serves when D is Lipschitz.
+- Per killer, `L = sup|g′|` over the chord.
+- Walking the accepted lattice, each not-yet-certified sample takes one point enclosure of `g`. A margin `m > 0` certifies emptiness up to `s + m/L` (mean value theorem).
+- A sample is empty only if every member's density is certified there.
+
+**Evidence** (Linux; Debug suite green, Release figures below).
+- `ontomath_line_segmentation_test` 52/52: the mean-value bound `|Δv| ≤ sup|v′|·|Δs|` holds on 11,016 probes across radial, sin/cos, Perlin and abs/min/clamp forms, and a Piecewise jump refuses a Lipschitz claim.
+- `volume_ray_radial_segmentation_test` 27/27: tracing certifies 0 real samples with positive density.
+
+| | Rung 2 segmentation | Lipschitz tracing | Zero-proof grid |
+|---|---|---|---|
+| All 28 admitted real media, samples proved empty | 70.60% | **70.65%** | 17.16% |
+| Northern Veil emerald / cyan / violet / crimson | 98.0 / 99.0 / 98.4 / 97.5% | **98.0 / 99.1 / 98.4 / 97.6%** | 95.6 / 97.0 / 96.2 / 95.1% |
+| …point evaluations of `g` per aurora ray | — | **18–30** (+ ~38–40 setup) | — |
+| Borealis hero auroral curtain | 81.8% | **81.9%** (60 points/ray) | 74.3% |
+
+Two witness-driven corrections made those numbers:
+1. Plain `Q′/(2√Q)` derivatives left radial media at 11–42% traced. Cauchy–Schwarz on norm components lifted them to parity with segmentation (synthetic ball 0 → 24/24).
+2. Three tori authored as explicit `sqrt(pow(sqrt(x²+z²) − R, 2) + y²)` stayed at 11–22% until sum-of-squares recognition. They now trace 88.6–99.7%.
+
+**What this means for the GPU (Rung 2b/2f-native).**
+- Killer identification and the symbolic Lipschitz form are *structural*: they can be compiled once per authored revision.
+- Per ray, a shader computes L from the ray coefficients in closed form, then sphere-traces the killer's argument. On the aurora that argument is the curtain function, a few sines, at **~18–30 evaluations per ray instead of 96 full density evaluations**, while matching full per-ray segmentation and beating the 32k-cell grid.
+- The cost is an extra cheap `g` evaluation per not-yet-certified sample (wasted on media that are never empty, up to 192 points/ray here), so eligibility should be decided per medium.
+- Required before any retention: native pixel parity against the current marcher (sample spacing and authored box events unchanged), f32 handling of margins and L (shrink reaches inward, never outward), readback-free ABBA cost, and device reconstruction.
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

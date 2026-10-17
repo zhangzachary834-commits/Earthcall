@@ -99,3 +99,17 @@ Zach: "KEEP GOIGNGNGNGNGNG". Perlin now restricts to a ray through OntoMath's ow
 **Economics:** CPU segmentation costs ~0.4–0.9 ms per aurora ray, not real-time. The right GPU rung is **Lipschitz-certified support tracing** of the curtain factor (Hart's sphere tracing over the restricted argument, a few sines per step). It needs a native session for pixels and cost.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Human origin: Zachary Zhang.
+
+---
+
+## Continuation — Rung 2f: the GPU-shaped proof, prototyped (2026-10-17, fourth pass)
+
+**From:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX`
+
+The economics in 2e said exact per-ray segmentation isn't real-time, so I built the algorithm a shader *can* run: **Lipschitz-certified support tracing**. A switch sign that alone forces D ≤ 0 is a killer. Its argument's derivative bound comes from OntoMath interval differentiation, with Cauchy–Schwarz for any Euclidean norm, however authored. One point evaluation at a sample then certifies emptiness for `margin / L` ahead.
+
+Over 28 real media it certifies **70.65%** of samples empty, against full segmentation's 70.60% and the grid's 17.16%, with 0 violations. On Northern Veil it gets 97.6–99.1% with **18–30 curtain evaluations per ray**. The witnesses forced two corrections on the way: norm-aware derivatives, and recognizing tori authored as raw `sqrt(Σ pow(·,2))`.
+
+**For the native session (whoever holds a Mac):** compile killers and Lipschitz structure per revision, compute L per ray, sphere-trace inside the fused marcher, never move box events or sample spacing, shrink f32 margins inward, and prove pixels and ABBA cost before retaining anything. The CPU prototype and its witnesses are the reference.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Human origin: Zachary Zhang.

@@ -282,6 +282,24 @@ int main() {
               "with a source, the core keeps the lattice but empty space still skips");
     }
 
+    // ---- Rung 2f: Lipschitz-certified support tracing on the ball ---------
+    {
+        std::vector<Rendering::VolumeSegmentMember> members{{&cache.formsFor(bb), glm::dvec3(0.0), 0.0}};
+        const auto trace = Rendering::traceVolumeSupport(members, {eye, forward, false}, span);
+        const auto sched = Rendering::scheduleVolumeRaySegment(members, {eye, forward, false}, span);
+        uint32_t violations = 0;
+        for (uint32_t i = 0; i < span.count; ++i) {
+            if (!trace.emptySample[i]) continue;
+            double D = 0;
+            const glm::dvec3 p = eye + forward * (span.firstSample + span.step * double(i));
+            if (!scalarAt(*bb.densityExpr, varsAt(p, 0.0, -forward), D) || D > 0.0) ++violations;
+        }
+        std::cout << "    trace, ball: " << trace.certifiedSamples << " certified-empty samples (schedule " << sched.emptySamples
+                  << "), " << trace.killers << " killers, " << trace.setupEvaluations << " setup + " << trace.pointEvaluations
+                  << " point evaluations\n";
+        check(violations == 0 && trace.certifiedSamples > 0, "tracing certifies only truly empty samples on the ball");
+    }
+
     // ---- Overlap: two balls with independent clocks -----------------------
     Medium pulse;
     pulse.density = pw(unconditional(radialNode(2.0, glm::dvec3(0.0), 2.0)));   // core |p| ≤ 2, edge 4
@@ -326,7 +344,8 @@ int main() {
     {
         namespace fs = std::filesystem;
         const fs::path root = fs::exists("saves/zones") ? fs::path("saves/zones") : fs::path("../saves/zones");
-        struct Totals { uint64_t samples = 0, empty = 0, constant = 0, grid = 0, both = 0, violations = 0; double us = 0; uint64_t rays = 0; };
+        struct Totals { uint64_t samples = 0, empty = 0, constant = 0, grid = 0, both = 0, violations = 0; double us = 0; uint64_t rays = 0;
+                        uint64_t traced = 0, tracedOrGrid = 0, tracePoints = 0, traceSetup = 0, traceViolations = 0; double traceUs = 0; };
         Totals all;
         int admitted = 0, media = 0;
         std::mt19937 rng(1017u);
@@ -388,6 +407,11 @@ int main() {
                         const auto sched = Rendering::scheduleVolumeRaySegment(members, {ro, dir, false}, chord);
                         t.us += std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now() - c0).count();
                         ++t.rays;
+                        const auto c1 = std::chrono::steady_clock::now();
+                        const auto trace = Rendering::traceVolumeSupport(members, {ro, dir, false}, chord);
+                        t.traceUs += std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now() - c1).count();
+                        t.tracePoints += trace.pointEvaluations;
+                        t.traceSetup += trace.setupEvaluations;
                         std::vector<char> label(chord.count, 'g');
                         for (const auto& run : sched.runs)
                             for (uint32_t i = run.firstSample; i < run.firstSample + run.sampleCount; ++i)
@@ -402,6 +426,13 @@ int main() {
                                 if (k < 0 || k >= proof.dims[a]) inGrid = false; else idx[a] = uint32_t(k);
                             }
                             const bool gridSkip = inGrid && proof.proven(idx.x, idx.y, idx.z);
+                            const bool traced = trace.emptySample[i] != 0;
+                            t.traced += traced;
+                            t.tracedOrGrid += traced || gridSkip;
+                            if (traced) {
+                                double Dt = 0;
+                                if (!scalarAt(*b.densityExpr, varsAt(p, 0.0, -dir), Dt) || Dt > 0.0) ++t.traceViolations;
+                            }
                             ++t.samples;
                             t.empty += label[i] == 'e';
                             t.constant += label[i] == 'c';
@@ -468,6 +499,11 @@ int main() {
                                          << double(eOff) / n << " evals); density form " << f.density.algebraic.form->nodes.size()
                                          << " nodes, " << f.density.algebraic.form->switches.size() << " switches\n";
                     }
+                    std::cout << "        trace: certified " << (100.0 * t.traced / std::max<uint64_t>(t.samples, 1))
+                              << "%, trace∪grid " << (100.0 * t.tracedOrGrid / std::max<uint64_t>(t.samples, 1))
+                              << "%; " << double(t.tracePoints) / std::max<uint64_t>(t.rays, 1) << " point + "
+                              << double(t.traceSetup) / std::max<uint64_t>(t.rays, 1) << " setup evals/ray; "
+                              << t.traceUs / std::max<uint64_t>(t.rays, 1) << " us/ray\n";
                     if (!attribution.empty() && zoneDir.path().filename().string() == "Northern Veil") {
                         std::cout << "        extra-proof attribution (Rung 2 empty, grid not):";
                         for (const auto& [k, v] : attribution) std::cout << " " << k << "=" << v;
@@ -475,6 +511,8 @@ int main() {
                         for (std::size_t k = 0; k < factors.size(); ++k)
                             std::cout << "          f" << k << " = " << factors[k]->print().substr(0, 110) << "\n";
                     }
+                    all.traced += t.traced; all.tracedOrGrid += t.tracedOrGrid; all.traceViolations += t.traceViolations;
+                    all.tracePoints += t.tracePoints; all.traceSetup += t.traceSetup; all.traceUs += t.traceUs;
                     all.samples += t.samples; all.empty += t.empty; all.constant += t.constant; all.grid += t.grid;
                     all.both += t.both; all.violations += t.violations; all.us += t.us; all.rays += t.rays;
                 }
@@ -487,6 +525,12 @@ int main() {
                   << "%, Rung 2 empty but grid not " << (100.0 * (all.empty - all.both) / std::max<uint64_t>(all.samples, 1))
                   << "%, grid but Rung 2 not " << (100.0 * (all.grid - all.both) / std::max<uint64_t>(all.samples, 1))
                   << "%; " << (all.us / std::max<uint64_t>(all.rays, 1)) << " us/ray schedule (CPU, this build type)\n";
+        std::cout << "    trace totals: certified " << (100.0 * all.traced / std::max<uint64_t>(all.samples, 1))
+                  << "%, trace∪grid " << (100.0 * all.tracedOrGrid / std::max<uint64_t>(all.samples, 1)) << "%; "
+                  << double(all.tracePoints) / std::max<uint64_t>(all.rays, 1) << " point + "
+                  << double(all.traceSetup) / std::max<uint64_t>(all.rays, 1) << " setup evals/ray; "
+                  << all.traceUs / std::max<uint64_t>(all.rays, 1) << " us/ray\n";
+        check(all.traceViolations == 0, "Lipschitz tracing certifies no real sample with positive density");
         check(media > 0 && admitted > 0, "the census finds real media the algebraic class admits");
         check(all.violations == 0, "no proved-empty sample on any real medium has positive emitter density (" +
                                        std::to_string(all.samples) + " samples)");
