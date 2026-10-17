@@ -150,6 +150,7 @@ public:
     std::size_t generation() const { return _generation; }
 private:
     void rebuildEndpointIndex() const;
+    std::vector<std::shared_ptr<Relation>> findLiveRenamedRelations(const std::string& identifier) const;
     std::size_t _generation = 0;
     mutable std::size_t _indexedGeneration = static_cast<std::size_t>(-1);
     mutable std::unordered_map<const Singular*, std::vector<Relation*>> _byEndpoint;

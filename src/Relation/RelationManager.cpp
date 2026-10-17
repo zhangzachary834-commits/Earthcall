@@ -180,6 +180,29 @@ void RelationManager::rebuildEndpointIndex() const {
     _indexedGeneration = _generation;
 }
 
+std::vector<std::shared_ptr<Relation>> RelationManager::findLiveRenamedRelations(const std::string& identifier) const {
+    for (const auto& [being, rels] : _byEndpoint) {
+        if (being && being->getIdentifier() == identifier) {
+            rebuildEndpointIndex();
+            auto it = _byIdentifier.find(identifier);
+            if (it != _byIdentifier.end()) {
+                std::vector<std::shared_ptr<Relation>> result;
+                result.reserve(it->second.size());
+                for (Relation* r : it->second) {
+                    if (r && r->involves(identifier)) {
+                        auto sharedIt = _sharedByPointer.find(r);
+                        if (sharedIt != _sharedByPointer.end()) {
+                            result.push_back(sharedIt->second);
+                        }
+                    }
+                }
+                return result;
+            }
+        }
+    }
+    return {};
+}
+
 void RelationManager::relationsInvolving(const Singular& being, std::vector<Relation*>& out) const {
     out.clear();
     if (_indexedGeneration != _generation) rebuildEndpointIndex();
@@ -418,9 +441,9 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const std
     if (identifier.empty()) return {};
     if (_indexedGeneration != _generation) rebuildEndpointIndex();
 
-    std::vector<std::shared_ptr<Relation>> result;
     auto it = _byIdentifier.find(identifier);
     if (it != _byIdentifier.end()) {
+        std::vector<std::shared_ptr<Relation>> result;
         result.reserve(it->second.size());
         for (Relation* r : it->second) {
             if (r && r->involves(identifier)) {
@@ -433,12 +456,7 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const std
         return result;
     }
 
-    // Fallback for rare un-notified live rename where _byIdentifier map key
-    // predates the live endpoint's identifier change.
-    for (const auto& r : relations) {
-        if (r && r->involves(identifier)) result.push_back(r);
-    }
-    return result;
+    return findLiveRenamedRelations(identifier);
 }
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(const Singular& a, const Singular& b) const {
@@ -460,9 +478,9 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(cons
     if (a.empty() || b.empty()) return {};
     if (_indexedGeneration != _generation) rebuildEndpointIndex();
 
-    std::vector<std::shared_ptr<Relation>> result;
     auto it = _byIdentifier.find(a);
     if (it != _byIdentifier.end()) {
+        std::vector<std::shared_ptr<Relation>> result;
         for (Relation* r : it->second) {
             if (r && r->isBetween(a, b)) {
                 auto sharedIt = _sharedByPointer.find(r);
@@ -474,11 +492,22 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(cons
         return result;
     }
 
-    // Fallback for rare un-notified live rename
-    for (const auto& r : relations) {
-        if (r && r->isBetween(a, b)) result.push_back(r);
+    findLiveRenamedRelations(a);
+    it = _byIdentifier.find(a);
+    if (it != _byIdentifier.end()) {
+        std::vector<std::shared_ptr<Relation>> result;
+        for (Relation* r : it->second) {
+            if (r && r->isBetween(a, b)) {
+                auto sharedIt = _sharedByPointer.find(r);
+                if (sharedIt != _sharedByPointer.end()) {
+                    result.push_back(sharedIt->second);
+                }
+            }
+        }
+        return result;
     }
-    return result;
+
+    return {};
 }
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOfType(const std::string& type) const {
@@ -515,9 +544,14 @@ std::vector<std::string> RelationManager::findAdjacentEntities(const std::string
     if (entityId.empty()) return {};
     if (_indexedGeneration != _generation) rebuildEndpointIndex();
 
-    std::vector<std::string> adjacent;
     auto it = _byIdentifier.find(entityId);
+    if (it == _byIdentifier.end()) {
+        findLiveRenamedRelations(entityId);
+        it = _byIdentifier.find(entityId);
+    }
+
     if (it != _byIdentifier.end()) {
+        std::vector<std::string> adjacent;
         for (const Relation* relPtr : it->second) {
             if (!relPtr) continue;
             const Relation& rel = *relPtr;
@@ -532,19 +566,7 @@ std::vector<std::string> RelationManager::findAdjacentEntities(const std::string
         return adjacent;
     }
 
-    // Fallback for rare un-notified live rename
-    for (const auto& relPtr : relations) {
-        if (!relPtr) continue;
-        const Relation& rel = *relPtr;
-        if (!relationType.empty() && rel.type != relationType) continue;
-
-        if (rel.aId() == entityId) {
-            adjacent.push_back(rel.bId());
-        } else if (!rel.directed && rel.bId() == entityId) {
-            adjacent.push_back(rel.aId());
-        }
-    }
-    return adjacent;
+    return {};
 }
 
 bool RelationManager::wouldFormCycle(const Singular* start, const Singular* target, const std::string& relationType) const {
