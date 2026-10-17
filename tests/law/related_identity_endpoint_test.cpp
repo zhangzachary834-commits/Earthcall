@@ -51,7 +51,7 @@ int main() {
         std::fprintf(stderr, "related_identity_endpoint_test: glfwInit failed\n");
         return 1;
     }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_OSMESA_CONTEXT_API);
     GLFWwindow* window = glfwCreateWindow(64, 64, "related_identity_endpoint_test", nullptr, nullptr);
     if (!window) {
         std::fprintf(stderr, "related_identity_endpoint_test: no GL context\n");
