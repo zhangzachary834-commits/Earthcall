@@ -25,7 +25,9 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <vector>
@@ -49,6 +51,8 @@ double median(std::vector<double> values) {
 
 struct Sample {
     double wallMs = 0.0;
+    double cpuSubmitMs = 0.0;
+    double devicePollMs = 0.0;
     Renderer::FrameStats stats;
     std::vector<unsigned char> pixels;
 };
@@ -60,6 +64,8 @@ void onMap(WGPUMapAsyncStatus, WGPUStringView, void* userdata, void*) {
 
 struct Arm {
     std::vector<double> wallMs;
+    std::vector<double> cpuSubmitMs;
+    std::vector<double> devicePollMs;
     std::vector<double> gpuMs;
     uint64_t recurringCompiles = 0;
     uint64_t cacheHits = 0;
@@ -230,14 +236,19 @@ int main() {
             /*memoRevision=*/1, nullptr,
             /*memoParameterRevision=*/1);
         renderer.endFrame();
-        // Include submission completion in wall time, matching the maintained
-        // SDF performance harness rather than timing CPU command recording only.
+        const auto tSubmit = std::chrono::steady_clock::now();
+        // Poll/wait duration is HOST-side time, NOT a GPU timestamp.
+        // Retain the original poll and overall wall-time boundaries.
         wgpuDevicePoll(gpu.device, true, nullptr);
         const auto t1 = std::chrono::steady_clock::now();
 
         Sample s;
         s.wallMs =
             std::chrono::duration<double, std::milli>(t1 - t0).count();
+        s.cpuSubmitMs =
+            std::chrono::duration<double, std::milli>(tSubmit - t0).count();
+        s.devicePollMs =
+            std::chrono::duration<double, std::milli>(t1 - tSubmit).count();
         s.stats = renderer.frameStats();
         if (capturePixels)
             s.pixels = readTargetPixels();
@@ -265,9 +276,11 @@ int main() {
 
     // Warm independently so timestamp pipeline latency and any first-frame
     // residency effects are outside the steady paired samples.
+    std::vector<double> exactWarmupWallMs;
+    std::vector<double> authorityWarmupWallMs;
     for (int i = 0; i < kWarmupFrames; ++i) {
-        (void)renderOne(exactRenderer);
-        (void)renderOne(authorityRenderer);
+        exactWarmupWallMs.push_back(renderOne(exactRenderer).wallMs);
+        authorityWarmupWallMs.push_back(renderOne(authorityRenderer).wallMs);
     }
 
     const auto authorityStatsAfterWarmup =
@@ -284,6 +297,8 @@ int main() {
     auto record = [&](WebGpuRenderer& renderer, Arm& arm) {
         const Sample s = renderOne(renderer);
         arm.wallMs.push_back(s.wallMs);
+        arm.cpuSubmitMs.push_back(s.cpuSubmitMs);
+        arm.devicePollMs.push_back(s.devicePollMs);
         if (s.stats.gpuMainPassTimingValid)
             arm.gpuMs.push_back(static_cast<double>(s.stats.gpuMainPassMs));
         arm.recurringCompiles += s.stats.sdfProgramCompiles;
@@ -316,9 +331,13 @@ int main() {
             .push_back(delta);
         std::printf(
             "SOURCE_RHO_AUTH_PERF PAIR index=%d first=%s "
-            "exact_wall_ms=%.9f authority_wall_ms=%.9f delta_ms=%.9f\n",
+            "exact_wall_ms=%.9f authority_wall_ms=%.9f delta_ms=%.9f "
+            "exact_cpu_submit_ms=%.9f authority_cpu_submit_ms=%.9f "
+            "exact_device_poll_ms=%.9f authority_device_poll_ms=%.9f\n",
             i, (i & 1) == 0 ? "exact" : "authority",
-            exact.wallMs[i], authority.wallMs[i], delta);
+            exact.wallMs[i], authority.wallMs[i], delta,
+            exact.cpuSubmitMs[i], authority.cpuSubmitMs[i],
+            exact.devicePollMs[i], authority.devicePollMs[i]);
     }
     const double pairedMedianMs = median(pairedDeltaMs);
     std::vector<double> absoluteDeviations;
@@ -333,6 +352,27 @@ int main() {
         pairedMedianMs, median(absoluteDeviations),
         median(exactFirstDeltaMs), median(authorityFirstDeltaMs),
         exact.gpuMs.size(), authority.gpuMs.size());
+
+    // Runner metadata and warmup accounting are reported outside the timing
+    // series. Environment strings identify CI context, not GPU hardware.
+    const char* runnerOs = std::getenv("RUNNER_OS");
+    const char* runnerArch = std::getenv("RUNNER_ARCH");
+    const char* runAttempt = std::getenv("GITHUB_RUN_ATTEMPT");
+    std::printf(
+        "SOURCE_RHO_AUTH_PERF HOST_BREAKDOWN "
+        "exact_warmup_median_ms=%.9f authority_warmup_median_ms=%.9f "
+        "exact_cpu_submit_median_ms=%.9f authority_cpu_submit_median_ms=%.9f "
+        "exact_device_poll_median_ms=%.9f authority_device_poll_median_ms=%.9f "
+        "runner_os=%s runner_arch=%s run_attempt=%s "
+        "gpu_timing=%s\\n",
+        median(exactWarmupWallMs), median(authorityWarmupWallMs),
+        median(exact.cpuSubmitMs), median(authority.cpuSubmitMs),
+        median(exact.devicePollMs), median(authority.devicePollMs),
+        runnerOs ? runnerOs : "unavailable",
+        runnerArch ? runnerArch : "unavailable",
+        runAttempt ? runAttempt : "unavailable",
+        exact.gpuMs.empty() || authority.gpuMs.empty()
+            ? "incomplete_or_unavailable" : "valid_samples_present");
 
     const double exactWall = median(exact.wallMs);
     const double authorityWall = median(authority.wallMs);
