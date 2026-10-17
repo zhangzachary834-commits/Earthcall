@@ -120,7 +120,7 @@ int main() {
     home->setOwner("Player");
     auto precious = makeCube("home-precious", glm::vec3(4.0f, 0.5f, 4.0f));
     home->addObject(precious);
-    precious->addZoneDesignation(home->name());
+    precious->addZoneDesignation(home->getIdentifier());
     live.addZone(home);
 
     Person player = makePlayer();
