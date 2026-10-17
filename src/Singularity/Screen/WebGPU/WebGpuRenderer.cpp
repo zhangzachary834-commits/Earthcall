@@ -2446,9 +2446,12 @@ void WebGpuRenderer::flushSdfDraws() {
                 wgpuQueueWriteBuffer(_queue, rangeBuffer, 0, rangeNodes.data(), rangeBytes);
                 persistentRange.mirror = rangeNodes;
                 mutableFrameStats().sdfRangeNodeBytesUploaded += rangeBytes;
-            } else if (rangeChanged) {
-                persistentRange.mirror.clear();
             }
+            // An empty batch writes nothing: the buffer still holds the mirror's
+            // bytes (no instance reads them: every count is 0), so the mirror
+            // stays — clearing it forced identical bytes to re-upload on the
+            // next traversal frame (webgpu_perlin_exact_gradient_test line 817,
+            // reproduced on lavapipe and on Codex's M5; Claude Opus 5.5, 2026-10-17).
         } else {
             // Binding 2 must remain valid even for a batch with no proof grid.
             // A zeroed dummy is never read because each such instance has count=0.

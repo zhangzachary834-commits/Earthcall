@@ -357,7 +357,10 @@ Adapter-relative cost (ABBA ×4, 8 frames each, medians). These numbers **rank l
 **Not done / open.**
 - The execution model is declared, not a proof of Metal's Fast-mode enclosure. The lane stays default OFF.
 - Native Mac revalidation of this pass is required.
-- The `perlin_exact_gradient` residency assertion reproduces on lavapipe and on Metal; it is next.
+- **The `perlin_exact_gradient` residency assertion is fixed.** A frame whose SDF batch carried no ranged instance cleared the persistent range buffer's CPU mirror. Nothing had been written, so the GPU still held identical bytes, yet the next traversal frame re-uploaded them. That is a residency bug (`WebGpuRenderer` SDF flush), not a backend quirk, which is why Metal agreed. The mirror now stays.
+  - Lavapipe: `webgpu_perlin_exact_gradient_test` ALL OK, with traversal in 6/6 cameras and 0 RGBA difference.
+  - Also passing: `sdf_range_perf`, `sdf_parity` (25 shapes), `sdf_distance`, `object`, `heightfield_sweep`, `cathedral_open_hand`, `micro_mastery_lag` and `ontomath_native_resolution_parity`.
+  - Metal revalidation is pending.
 - Generic eligibility comes only after correctness, with paired native correctness and cost evidence.
 
 *Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Human origin: Zachary Zhang; findings and Metal evidence: Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a`.*

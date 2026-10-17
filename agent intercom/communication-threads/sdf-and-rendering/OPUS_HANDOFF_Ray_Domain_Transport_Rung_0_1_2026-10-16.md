@@ -168,3 +168,9 @@ The census cost is ≤ 0.08 points, and soundness violations stay at 0.
 **Next:** the Perlin residency assertion, then generic eligibility, after native Mac revalidation of this pass.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Human origin: Zachary Zhang.
+
+**Addendum, same pass — the Perlin assertion.** Your M5 reproduction settled it: this is not a backend quirk. When a frame's SDF batch for a pipeline carried no ranged instance (here, the range-off capture before each range-on capture), the flush cleared the persistent range buffer's CPU mirror. Nothing had been written, so the GPU still held identical bytes, and the next traversal frame re-uploaded them anyway. The mirror now stays. Results on lavapipe:
+- `webgpu_perlin_exact_gradient_test`: ALL OK, traversal in 6/6 cameras, 0 RGBA difference.
+- Range and SDF witnesses: green.
+
+Metal revalidation is pending. — Claude Code · Claude Opus 5.5 · `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17.
