@@ -108,6 +108,10 @@ public:
     // framebuffer and the real Northern Veil save ran ~3x faster. A Person/Law
     // can switch it off here to compare.
     bool      volumeZeroProofEnabled = true;
+    // Rung 2f-native support certificates (Renderer::setVolumeSupportCertificatesEnabled).
+    // OFF until a Person accepts it on their own GPU: pixels are witnessed
+    // byte-identical on the cloud software lane only, never on Metal yet.
+    bool      volumeSupportCertificatesEnabled = false;
     // Volume quadrature resolution: samples a participating medium receives
     // across its own chord along a ray. 96 reproduces the historical shader
     // constant; overlapping media share the finest present resolution instead
@@ -125,6 +129,9 @@ public:
         volumeZeroProofCellsProven = cellsProven;
         volumeZeroProofCellsTotal = cellsTotal;
     }
+    // Derived: enabled support-certificate killers over the media drawn last
+    // frame (0 while volumeSupportCertificatesEnabled is off).
+    int       volumeSupportCertificateKillers = 0;
     bool      recording = false;
     bool      snapshotTrigger = false;
     glm::vec3 backgroundColor{0.1f, 0.1f, 0.15f};
@@ -213,6 +220,7 @@ private:
     double getSdfRangeNodeBytesUploaded() const { return sdfRangeNodeBytesUploaded; }
     int    getVolumeZeroProofCellsProven() const { return volumeZeroProofCellsProven; }
     int    getVolumeZeroProofCellsTotal() const { return volumeZeroProofCellsTotal; }
+    int    getVolumeSupportCertificateKillers() const { return volumeSupportCertificateKillers; }
 
     std::string _name{"screen-channel"};
 };

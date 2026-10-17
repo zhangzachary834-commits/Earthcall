@@ -407,7 +407,8 @@ private:
         const OntoMath::Piecewise*, const OntoMath::Piecewise*,
         const geom::SdfNode*,
         const OntoMath::Piecewise*, const OntoMath::Piecewise*, const OntoMath::Piecewise*,
-        bool>; // Kernel-only support-trimming lane; selected in flushVolumeComposite.
+        bool,  // Kernel-only support-trimming lane; selected in flushVolumeComposite.
+        bool>; // Rung 2f-native support-certificate lane (volumeSupportCertificatesEnabled).
     std::map<VolumeProgramKey, VolumeProgramMemo> _volumeProgramCache;
 
     // Kernel evaluator retention is independent of set membership and camera lane.
@@ -450,6 +451,13 @@ private:
         uint32_t zeroProofOffset = 0;
         uint32_t zeroProofDims = 0;
         uint32_t zeroProofPresent = 0;
+        // Rung 2f-native support certificates (attachVolumeSupportCertificates):
+        // header block offset in the params batch and enabled candidate count.
+        // Kernel-derived; the two reserved words keep the std430 16-byte stride.
+        uint32_t supportCertOffset = 0;
+        uint32_t supportCertCount = 0;
+        uint32_t supportCertReserved0 = 0;
+        uint32_t supportCertReserved1 = 0;
     };
     // Kernel-derived resident layout/bytes. No authored state is hidden here:
     // equations remain on their registered FieldNodes; camera/clocks stream.
@@ -475,6 +483,23 @@ private:
     };
     std::unordered_map<const OntoMath::Piecewise*, VolumeZeroProofMemo> _volumeZeroProofs;
     uint64_t _volumeZeroProofFrame = 0;
+    // Rung 2f-native certificate payload, same lifetime as the zero proof:
+    // density revision × box extent (revision 0 never gets one). `payload` is
+    // VolumeSupportKillerProgram's header block followed by its operand
+    // constants; `count` the enabled candidates (0 = nothing to attach).
+    struct VolumeSupportCertificateMemo {
+        uint64_t densityRevision = 0;
+        glm::vec3 halfExtent{0.0f};
+        std::vector<float> payload;
+        uint32_t count = 0;
+        std::string refusal;
+        uint64_t lastUsedFrame = 0;
+    };
+    std::unordered_map<const OntoMath::Piecewise*, VolumeSupportCertificateMemo> _volumeSupportCertificates;
+    void attachVolumeSupportCertificates(const Rendering::VolumeDensityBinding& medium,
+                                         const glm::vec3& halfExtent,
+                                         std::vector<float>& params,
+                                         VolumeInstanceData& instance, bool appendPayload);
     void attachVolumeZeroProof(const Rendering::VolumeDensityBinding& medium,
                                const glm::vec3& halfExtent,
                                std::vector<float>& params,

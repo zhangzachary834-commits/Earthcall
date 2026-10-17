@@ -85,6 +85,10 @@ public:
         uint32_t volumeZeroProofBuilds = 0;
         uint32_t volumeZeroProofCellsProven = 0;
         uint32_t volumeZeroProofCellsTotal = 0;
+        // Rung 2f-native support certificates: payload builds this frame (cached
+        // by density revision × extent) and the enabled killers of drawn media.
+        uint32_t volumeSupportCertificateBuilds = 0;
+        uint32_t volumeSupportCertificateKillers = 0;
         // Conservative SDF range-proxy observability. A build is revision-bound;
         // an applied draw used a strictly smaller proved-may-contain-zero proxy;
         // a culled draw was proved to contain no zero set at all.
@@ -300,6 +304,14 @@ public:
     // so witnesses can A/B the exact path against the proven one.
     void setVolumeZeroProofEnabled(bool on) { _volumeZeroProofEnabled = on; }
     bool volumeZeroProofEnabled() const { return _volumeZeroProofEnabled; }
+
+    // Ray-domain transport Rung 2f-native: per-medium support certificates
+    // (Rendering::deriveVolumeSupportCertificates) let the marcher jump over
+    // samples whose density a Lipschitz-certified killer forces to <= 0. OFF by
+    // default: its device tolerance is declared, not proved, for Metal Fast
+    // mode (see kVolumeSupportDeviceTolerance); witnesses A/B it per backend.
+    void setVolumeSupportCertificatesEnabled(bool on) { _volumeSupportCertificatesEnabled = on; }
+    bool volumeSupportCertificatesEnabled() const { return _volumeSupportCertificatesEnabled; }
 
     // Volume quadrature resolution: samples a medium receives across its own
     // chord along a ray (overlapping media share the finest present; see the
@@ -531,6 +543,7 @@ private:
     uint64_t _radianceSourcesRevision = 0;
     bool _radianceVisibilityEnabled = false;
     bool _volumeZeroProofEnabled = true;
+    bool _volumeSupportCertificatesEnabled = false;
     int _volumeSamplesPerChord = 96;
     double _volumeOutputErrorBudget = 0.0;
     std::vector<Rendering::VolumeDensityBinding> _volumeDensitySources;

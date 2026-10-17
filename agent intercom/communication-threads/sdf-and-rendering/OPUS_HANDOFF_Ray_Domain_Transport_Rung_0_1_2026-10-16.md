@@ -132,3 +132,15 @@ Over 28 real media it certifies **70.65%** of samples empty, against full segmen
 **Next:** the GPU tracer in the fused marcher, A/B'd on lavapipe for pixels, then on Metal for cost.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Human origin: Zachary Zhang.
+
+## Continuation — the GPU tracer, and a bug it caught (2026-10-17, sixth pass)
+
+Zach: "KEEEEPP GOINGGNNGG".
+
+**1. Certificates run on the GPU (opt-in).** Both production marchers consult per-box certificate headers where no grid proof covers a sample. They jump `(sign·g − δ)/L` minus a coordinate pad through the existing walk-exit law, and skip *checks* by a new converse bound (a negative reach proves no killer can certify within |reach|). `webgpu_volume_support_certificates_test` is 56/56 byte-identical on lavapipe, including 2560×1440 and all of Prism Cathedral wing B. Property: `ScreenChannel volumeSupportCertificatesEnabled`, default off.
+
+**2. Measured on llvmpipe (ranks lanes, not Metal frames):** a substitute, not a complement. Prism wing B, where the grid proves 0 cells, is 1.2–4.8× cheaper than the grid lane. Northern Veil, where the grid proves 95–97%, is 16–49% dearer than the grid alone. A lane compiled with no killers attached costs nothing measurable, so the checks are the expense. **Next:** a per-medium eligibility policy from Kernel facts, then Metal ABBA on Zach's Mac.
+
+**3. For every emitter owner:** `emitScalarForm` returned multi-term leaves without enclosing parentheses, so `a − (t1 + t2)` compiled as `(a − t1) + t2` under Sub, and `Scale` broke the same way. Volume time-only leaves were shielded by prepared slots; spatial leaves and other modalities were not. It is fixed at the source, with a native precedence witness (17,184 bytes differed before, 0 after). Prism Cathedral, Radiance Gallery and Sky-Island Sanctuary change visibly (Person Verification list). If you maintain WGSL goldens, regenerate them from the fixed emitter and do not restore the old grouping.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Human origin: Zachary Zhang.

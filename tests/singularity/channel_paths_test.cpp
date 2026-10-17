@@ -185,6 +185,21 @@ int main() {
         }
         screen.volumeZeroProofEnabled = true;
 
+        // Rung 2f-native certificates: registered, default OFF, writable.
+        PropertyValue certificates;
+        const PropertyPath certificatesPath = PropertyPath::parse("volumeSupportCertificatesEnabled");
+        if (certificatesPath.getValue(screen, certificates) != PropertyPath::PathResult::Ok ||
+            !std::holds_alternative<bool>(certificates) || std::get<bool>(certificates)) {
+            fail("volumeSupportCertificatesEnabled", "Channel — Screen",
+                 "must resolve as a default-false authorable toggle");
+        }
+        if (certificatesPath.setValue(screen, PropertyValue(true)) != PropertyPath::PathResult::Ok ||
+            !screen.volumeSupportCertificatesEnabled) {
+            fail("volumeSupportCertificatesEnabled", "Channel — Screen",
+                 "must write through the registered ScreenChannel property");
+        }
+        screen.volumeSupportCertificatesEnabled = false;
+
         PropertyValue samples;
         const PropertyPath samplesPath = PropertyPath::parse("volumeSamplesPerChord");
         if (samplesPath.getValue(screen, samples) != PropertyPath::PathResult::Ok ||

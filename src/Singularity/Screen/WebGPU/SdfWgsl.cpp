@@ -2,6 +2,7 @@
 
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
+#include "Singularity/OntoMath/LineRestriction.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -576,7 +577,13 @@ std::string emitScalarForm(const OntoMath::ScalarForm& sf, Emit& e, const std::s
         if (i > 0) res += " + ";
         res += "(" + termStr + ")";
     }
-    return res;
+    // A leaf is ONE value. Callers splice it into `(a - leaf)`, `(a * leaf)`,
+    // `(leaf / b)`: unwrapped, a − (t1 + t2) compiled as (a − t1) + t2. Volume
+    // lowering hid this for time-only leaves (prepared slots), never for spatial
+    // ones (e.g. length(p) − (2.4 + 0.3·y)). Found by the Rung 2f-native
+    // certificate witness, Claude Opus 5.5, 2026-10-17; witness in
+    // webgpu_volume_support_certificates_test ("precedence witness").
+    return sf.terms.size() > 1 ? "(" + res + ")" : res;
 }
 
 bool expensiveTimeOnly(const OntoMath::ScalarForm& form) {
@@ -4062,6 +4069,13 @@ struct VolumeInstanceData {
     zeroProofOffset: u32,
     zeroProofDims: u32,
     zeroProofPresent: u32,
+    // Support certificates (Rung 2f-native, VolumeSupportKillerProgram):
+    // absolute offset of the header block in P and the enabled candidate
+    // count; 0 = none. Kernel-derived from authored density × box.
+    supportCertOffset: u32,
+    supportCertCount: u32,
+    supportCertReserved0: u32,
+    supportCertReserved1: u32,
 };
 
 struct Params { v: array<f32> };
@@ -4230,8 +4244,87 @@ fn volumeZeroCellExit(inst: VolumeInstanceData, p: vec3<f32>,
     return wgsl;
 }
 
+VolumeSupportKillerProgram lowerVolumeSupportKillers(const OntoMath::Piecewise* densityExpr) {
+    VolumeSupportKillerProgram out;
+    if (!densityExpr || densityExpr->pieces.empty()) { out.error = "no authored density"; return out; }
+    const auto restricted = OntoMath::restrictAlgebraicToLine(*densityExpr, false);
+    if (!restricted) { out.error = "density has no line form: " + restricted.refusal; return out; }
+    const auto& form = *restricted.form;
+    out.formSwitches = form.switches.size();
+
+    // Own emitter state: the operands' constants land in the certificate
+    // payload, never in the authored parameter block, so the production
+    // density's slots, kernel DAG and sharing plan are untouched.
+    Emit e;
+    e.bindTime = true;
+    e.timeExpression = "instances[g_instIdx].time.x";
+    e.parameterOffset = "cb";
+    std::string blocks;
+    for (std::size_t k = 0; k < form.switches.size(); ++k) {
+        const auto& sw = form.switches[k];
+        if (sw.role > 3) continue;   // Select pieces: not yet lowered (no candidate)
+        const auto& node = form.nodes[sw.node];
+        if (!node.sourceA || (sw.role == 1 && !node.sourceB)) continue;
+        const std::size_t slot = out.switches.size();
+        const std::string h = "base + " + std::to_string(4u * slot) + "u";
+        const std::size_t bodyBegin = e.body.size();
+        const std::string a = emitMathNode(*node.sourceA, e, "p");
+        const std::string b = sw.role == 1 ? emitMathNode(*node.sourceB, e, "p") : std::string();
+        if (e.refused) { out.error = "certificate operand: " + e.refusal; return out; }
+        const std::string g = sw.role == 0 ? "(" + a + ")"
+                            : sw.role == 1 ? "((" + a + ") - (" + b + "))"
+                                           : "((" + a + ") - P.v[" + h + " + 3u])";
+        // The first certifying candidate answers (any one killer suffices);
+        // only a sample no candidate certifies needs them all, for the
+        // converse recheck bound (volumeSupportRecheck).
+        blocks += "    if (P.v[" + h + "] != 0.0) {\n" + e.body.substr(bodyBegin) +
+                  "        let v" + std::to_string(slot) + " = (P.v[" + h + "] * " + g + " - P.v[" + h +
+                  " + 1u]) * P.v[" + h + " + 2u];\n"
+                  "        if (v" + std::to_string(slot) + " > 0.0) { return v" + std::to_string(slot) + "; }\n"
+                  "        reach = max(reach, v" + std::to_string(slot) + ");\n    }\n";
+        out.switches.push_back(static_cast<uint32_t>(k));
+    }
+    if (out.switches.empty()) { out.error = "no switch with lowerable operands"; return out; }
+    out.params = e.params;
+    out.wgsl = "\nfn volumeSupportReach(p: vec3<f32>, base: u32) -> f32 {\n"
+               "    let cb = base + " + std::to_string(4u * out.switches.size()) + "u;\n"
+               "    var reach = -1.0;\n" + blocks + "    return reach;\n}\n";
+    out.ok = true;
+    return out;
+}
+
+// Certified exit along the ray for the sample at sampleT, or -1. The p-space
+// reach becomes a ray-parameter reach after a pad for f32 coordinate rounding
+// at both samples (p = ro + rd·t − origin, any grouping) and for the jump's own
+// index arithmetic; |rd| = 1 up to rounding the 2⁻¹⁶ shrink absorbs. A NaN reach
+// compares false and certifies nothing.
+static std::string volumeSupportExitWgsl() {
+    return R"WGSL(
+fn volumeSupportExit(reach: f32, inst: VolumeInstanceData, ro: vec3<f32>, sampleT: f32) -> f32 {
+    if (!(reach > 0.0)) { return -1.0; }
+    let ao = abs(inst.origin.xyz);
+    let ah = abs(inst.halfExtent.xyz);
+    let ar = abs(ro);
+    let scale = max(ao.x, max(ao.y, ao.z)) + max(ah.x, max(ah.y, ah.z)) +
+                max(ar.x, max(ar.y, ar.z)) + abs(sampleT);
+    return sampleT + max(reach * (1.0 - 1.52587890625e-5) - 4.0e-5 * scale, 0.0);
+}
+
+// The converse bound. A non-positive reach r means every enabled killer is
+// short of its margin by at least |r|·L in g, so none can certify within |r| of
+// this sample: checks (never samples) are skipped until then. A skipped check
+// only sends the sample down the exact path, so no pad is needed; NaN stops
+// checking for the rest of the ray, which is equally safe.
+fn volumeSupportRecheck(reach: f32, sampleT: f32) -> f32 {
+    if (reach > 0.0) { return sampleT; }
+    if (reach <= 0.0) { return sampleT - reach; }
+    return 3.0e38;
+}
+)WGSL";
+}
+
 static std::string kernelVolumeSingleMarcher(bool trimProofSupport, bool hasSharing,
-                                            bool densityUsesSharing) {
+                                            bool densityUsesSharing, bool supportCertificates = false) {
     std::string wgsl;
     wgsl += R"WGSL(
 @fragment
@@ -4292,6 +4385,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
 
 )WGSL";
     if (trimProofSupport) wgsl += "    let useColumns = volumeColumnsWorthWalking(inst, rd);\n";
+    if (supportCertificates) wgsl += "    var certRecheck = -3.0e38;\n";
     if (trimProofSupport) wgsl += R"WGSL(
     // Keep one extra prefix sample; positions still use the original chord.
     let firstSample = i32(clamp(ceil((supportStart - t0) / stepLength - 0.5) - 1.0,
@@ -4317,6 +4411,21 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             i = max(i, i32(ceil((zeroExit - t0) / stepLength - 0.5)) - 1);
             continue;
         }
+)WGSL";
+    // Rung 2f-native: no grid proof covers this sample; the certificates may
+    // (sphere tracing on the killer's argument, Hart 1996). Same jump law.
+    if (supportCertificates) wgsl += R"WGSL(
+        if (inst.supportCertCount != 0u && sampleT >= certRecheck) {
+            let certReach = volumeSupportReach(p, inst.supportCertOffset);
+            let certExit = volumeSupportExit(certReach, inst, ro, sampleT);
+            if (certExit >= 0.0) {
+                i = max(i, i32(ceil((certExit - t0) / stepLength - 0.5)) - 1);
+                continue;
+            }
+            certRecheck = volumeSupportRecheck(certReach, sampleT);
+        }
+)WGSL";
+    wgsl += R"WGSL(
         /*VOLUME_SHARED_BEFORE_DENSITY*/
         let density = max(volumeDensityEval(p), 0.0);
 
@@ -4741,11 +4850,19 @@ KernelVolumeEvaluator repairVolumeEvaluator(const VolumeProgramInput& m,
     return out;
 }
 
-Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trimProofSupport) {
+Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trimProofSupport,
+                               const OntoMath::Piecewise* supportCertificateDensity) {
     Program out = evaluator.program;
     out.kernelVolumePreparationWgsl = kernelVolumeTimePreparation({evaluator.program}, false);
-    if (out.ok) out.wgsl = kernelVolumePrefix(trimProofSupport) + out.wgsl +
-        kernelVolumeSingleMarcher(trimProofSupport, evaluator.hasSharing, evaluator.densityUsesSharing);
+    if (!out.ok) return out;
+    std::string certificates;
+    if (supportCertificateDensity) {
+        const auto killers = lowerVolumeSupportKillers(supportCertificateDensity);
+        if (killers.ok) certificates = killers.wgsl + volumeSupportExitWgsl();
+    }
+    out.wgsl = kernelVolumePrefix(trimProofSupport) + out.wgsl + certificates +
+        kernelVolumeSingleMarcher(trimProofSupport, evaluator.hasSharing, evaluator.densityUsesSharing,
+                                  !certificates.empty());
     return out;
 }
 
@@ -4755,7 +4872,7 @@ Program compileVolumeSet(const std::vector<VolumeProgramInput>& media, bool trim
 
 Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
                          const std::vector<KernelVolumeEvaluator>& evaluators,
-                         bool trimProofSupport) {
+                         bool trimProofSupport, bool supportCertificates) {
     Program out;
     if (media.empty()) {
         out.ok = false;
@@ -4765,7 +4882,8 @@ Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
     }
     if (media.size() == 1) {
         return composeVolumeEvaluator(evaluators.empty() ? lowerVolumeEvaluator(media.front()) : evaluators.front(),
-                                      trimProofSupport);
+                                      trimProofSupport,
+                                      supportCertificates ? media.front().densityExpr : nullptr);
     }
 
     auto replaceAll = [](std::string& text,
@@ -4780,6 +4898,7 @@ Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
 
     std::vector<Program> members;
     members.reserve(media.size());
+    std::vector<bool> memberCertificates(media.size(), false);
 
     for (std::size_t i = 0; i < media.size(); ++i) {
         const auto& m = media[i];
@@ -4828,6 +4947,18 @@ Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
         replaceAll(evalBlock, "HAS_AUTHORED_LIGHT_ANGULAR", "HAS_AUTHORED_LIGHT_ANGULAR" + suffix);
 
         out.wgsl += evalBlock;
+        if (supportCertificates) {
+            const auto killers = lowerVolumeSupportKillers(m.densityExpr);
+            if (killers.ok) {
+                std::string reach = killers.wgsl;
+                replaceAll(reach, "volumeSupportReach", "volumeSupportReach" + suffix);
+                if (std::none_of(memberCertificates.begin(), memberCertificates.end(),
+                                 [](bool b) { return b; }))
+                    out.wgsl += volumeSupportExitWgsl();
+                out.wgsl += reach;
+                memberCertificates[i] = true;
+            }
+        }
         members.push_back(std::move(member));
     }
     std::vector<KernelVolumeEvaluator> memberSharing;
@@ -4899,6 +5030,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             ", ro, rd), " + inst + ".zeroProofPresent != 0u && all(abs(rd) >= vec3<f32>(1e-8)));\n";
         if (trimProofSupport) out.wgsl += "    let useColumns" + std::to_string(i) +
             " = volumeColumnsWorthWalking(" + inst + ", rd);\n";
+        if (memberCertificates[i]) out.wgsl += "    var certRecheck" + std::to_string(i) + " = -3.0e38;\n";
     }
 
     if (trimProofSupport) {
@@ -5053,9 +5185,23 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             "                    } else if (sampleT < raySupport" + n + ".x) {\n"
             "                        walkExit = min(walkExit, raySupport" + n + ".x);\n"
             "                    } else {\n"
-            "                        let cellExit" + n + " = volumeZeroCellExit(mediumInst" + n +
+            "                        " + std::string(memberCertificates[i] ? "var" : "let") + " cellExit" + n +
+                " = volumeZeroCellExit(mediumInst" + n +
                 ", worldP - mediumInst" + n + ".origin.xyz, ro, rd" +
                 (trimProofSupport ? ", sampleT, useColumns" + n : std::string{}) + ");\n"
+            // Rung 2f-native: where no grid proof covers the sample, a support
+            // certificate may; its exit joins the same collective jump.
+            + std::string(memberCertificates[i]
+                ? "                        if (cellExit" + n + " < 0.0 && mediumInst" + n + ".supportCertCount != 0u && "
+                      "sampleT >= certRecheck" + n + ") {\n"
+                  "                            g_instIdx = " + inst + ";\n"
+                  "                            let certReach" + n + " = volumeSupportReach_" + n +
+                      "(worldP - mediumInst" + n + ".origin.xyz, mediumInst" + n + ".supportCertOffset);\n"
+                  "                            cellExit" + n + " = volumeSupportExit(certReach" + n + ", mediumInst" + n +
+                      ", ro, sampleT);\n"
+                  "                            certRecheck" + n + " = volumeSupportRecheck(certReach" + n + ", sampleT);\n"
+                  "                        }\n"
+                : "") +
             "                        if (cellExit" + n + " < 0.0) {\n"
             "                            walkAllProven = false;\n"
             "                            g_instIdx = " + inst + ";\n"

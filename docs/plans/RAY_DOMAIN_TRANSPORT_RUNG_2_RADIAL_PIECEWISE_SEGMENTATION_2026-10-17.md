@@ -217,6 +217,60 @@ Soundness: 0 violations. Witnesses: `ontomath_line_segmentation_test` 54/54 and 
 
 17 targets in all: 13 pass, 3 fail with recorded causes, 1 cannot be built off Apple. Nothing here is a frame-time or Metal claim.
 
+## 6e. Rung 2f-native — the GPU certificate tracer, opt-in (2026-10-17, sixth pass)
+
+Zach: "KEEEEPP GOINGGNNGG". §6c called for this shader tracer and §6d built what it carries. It now runs inside both production marchers as an **opt-in lane** (`ScreenChannel volumeSupportCertificatesEnabled`, a registered property path, default **off**).
+
+**Mechanism.**
+- **Structure: `sdfwgsl::lowerVolumeSupportKillers`.** Every line-form switch with lowerable operands becomes a candidate: |a| and sqrt(a) (role 0), min/max(a, b) (role 1), clamp(a, lo, hi) (roles 2/3). Each operand is lowered by the **production emitter** (`emitMathNode`) under its own `Emit`, so its constants land in the certificate payload, never in the authored parameter block, the kernel DAG or the sharing plan. Time-only leaves are evaluated inline: a certificate holds at every clock.
+- **Payload: `WebGpuRenderer::attachVolumeSupportCertificates`.** Each header slot stores {sign, δ, 1/L, offset}, filled only where `deriveVolumeSupportCertificates` certified that switch over the box. δ is rounded up, 1/L rounded down, and the offset is the f32 constant the shader's clamp compares against. Cache tier and key: see the [ledger](../architecture/law/DERIVED_STATE_LEDGER.md).
+- **Marchers.** Where no grid proof covers a sample, a member with certificates evaluates its candidates. The first certifying one returns `(sign·g − δ)/L`. The exit `sampleT + reach·(1−2⁻¹⁶) − 4·10⁻⁵·scale` joins the **existing** walk-exit/jump law, so sample positions, box events, spacing and transport arithmetic are untouched.
+- **Converse bound (new here).** If no candidate certifies, every killer is short by at least |r|·L in g, so none can certify within |r|. *Checks* are skipped until then. A skipped check only sends the sample down the exact path, so this needs no pad.
+
+**The device tolerance is declared, not proved.** δ = τ·(1 + sup|a| + sup|b| + |offset|), with τ = 2⁻¹⁰ (`kVolumeSupportDeviceTolerance`). Codex's audits leave Metal Fast mode's complete execution enclosure open ([native profile](../audits/VOLUME_SUPPORT_NATIVE_PROFILE_2026-10-12.md)). That is why the lane is opt-in and witnessed per backend.
+
+**Evidence: `webgpu_volume_support_certificates_test`, 56/56 on lavapipe (llvmpipe, *not* Metal).** Every comparison below is a byte-identical full RGBA framebuffer, with certificates against the matching lane without them:
+- Northern Veil, fused (4 media) and single pipelines, at t = 0 and t = 7.25, certificates alone and over the grid.
+- Six further views: inside, Emerald/Violet support, reverse, axis-parallel, side, fold crossing.
+- Two translated media, up to (−1024, 32, −512).
+- Edits and resizes: an emission edit rebuilds no payload; a density edit rebuilds exactly one payload; a resize re-derives the certificates.
+- A density with no killer attaches nothing.
+- The positive-budget full lattice.
+- 2560×1440 at spawn.
+- All eight Prism Cathedral wing-B media, singly and fused.
+
+Adapter-relative cost (ABBA ×4, 8 frames each, medians). These numbers **rank lanes on llvmpipe only** and are not a frame-time claim:
+
+| Scene | exact | certificates | grid (production) | grid + certificates |
+|---|---|---|---|---|
+| Northern Veil, 4 media fused | 53.5 ms | **31.6** | **21.9** | 29.9 |
+| Northern Veil, 1 medium | 48.0 | **20.0** | **11.8** | 15.9 |
+| Prism wing B, 8 media fused (grid proves 0 cells) | — | — | 9.52 | **4.14** |
+| Prism wing B, per medium (8) | — | — | 14.4–31.7 | **3.2–25.9** (1.2–4.8× cheaper) |
+| Northern Veil 2560×1440, one frame | 2919 | **1434** | — | — |
+
+**Findings.**
+1. **Substitute, not complement.**
+   - Where the grid proves nothing (Prism Cathedral's radial clouds, shells, tori, CSG crescent, noise cloud), certificates cut adapter cost by up to 4.8×.
+   - Where the grid already proves 95–97% (Northern Veil), stacking them *costs* 16–49%.
+   - A scratch run with the lane compiled but no killers attached measured no overhead (grid 23.9 ms vs 23.1 ms). The loss therefore comes from the checks themselves, at samples the grid leaves unknown, not from shader size.
+   - The CPU census (§6d: certificates 70.65% vs grid 17.16% across 28 media) predicted which scenes win. It did not predict that Northern Veil's extra 2–3 points would fail to repay their checks.
+   - Next: a per-medium eligibility policy from Kernel facts (proven-cell fraction, killer count). It ranks cost, never truth.
+2. **A production emitter bug, found by this witness and fixed.**
+   - `emitScalarForm` returned a multi-term leaf as `(t1) + (t2)` with no enclosing parentheses. `Sub` therefore compiled `a − (t1 + t2)` as `(a − t1) + t2`, and `Scale` compiled `a·(t1 + t2)` as `a·t1 + t2`.
+   - Volume lowering hid it for *time-only* leaves, which it pre-computes into a prepared slot. It never hid it for spatial leaves or for other modalities.
+   - The certificate lane exposed it: its killers evaluate time leaves inline, so the breathing nebula's killer read `|p| − 2.4 + 0.8 sin` instead of `|p| − (2.4 + 0.8 sin)`, and pixels differed only when sin ≠ 0.
+   - The new precedence witness renders `length(p) − (2.4 + 0.3y)` as one leaf and as `Add(2.4, 0.3y)`. Before the fix they differed in 17,184 bytes (max 255) with certificates off; after it, 0.
+   - A read-only scan of `saves/zones` finds affected authored expressions in **Prism Cathedral** (light chroma 160 < z ≤ 195, two field members, the root field), **Radiance Gallery** (root field) and **Sky-Island Sanctuary** (two fields). There, the GPU now matches the CPU's multiplicative modulation; before, it applied an additive offset. These are listed for Person verification. No save was edited.
+
+**Not done / limits.**
+- Select-piece killers and the density-sign killer are not candidates yet.
+- Device reconstruction is witnessed only with the lane off.
+- Metal pixels and cost are unmeasured.
+- The lane stays off until eligibility, Metal ABBA and Person acceptance.
+
+*Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

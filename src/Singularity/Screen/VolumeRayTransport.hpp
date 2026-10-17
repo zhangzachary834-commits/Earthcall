@@ -282,7 +282,19 @@ struct VolumeSupportCertificate {
     const OntoMath::MathNode* sourceA = nullptr;
     const OntoMath::MathNode* sourceB = nullptr;
     double offset = 0.0;           // clamp lo/hi for roles 2/3
+    // sup|a| + sup|b| + |offset| over the box at every time: the magnitude a
+    // device's rounding of g scales with (the native lane's slack δ, see
+    // kVolumeSupportDeviceTolerance). Infinite when an operand is unbounded.
+    double argumentMagnitude = 0.0;
 };
+// Native lane (Rung 2f-native): DECLARED device tolerance, not a theorem. The
+// shader trusts a certificate's margin only beyond δ = τ·(1 + argumentMagnitude),
+// τ = 2⁻¹⁰ — room for ~2¹⁴ f32 roundings in any grouping, or two WGSL-accuracy
+// sin/cos errors (2⁻¹¹ absolute), at unit magnitude. Metal Fast mode's complete
+// execution enclosure is still open (docs/audits/VOLUME_SUPPORT_NATIVE_PROFILE_2026-10-12.md),
+// so the lane is opt-in (ScreenChannel volumeSupportCertificatesEnabled) and
+// its pixels are witnessed, not proved, per backend.
+inline constexpr double kVolumeSupportDeviceTolerance = 1.0 / 1024.0;
 struct VolumeSupportCertificates {
     std::vector<VolumeSupportCertificate> killers;
     std::string refusal;

@@ -299,6 +299,7 @@ namespace Core {
                 currentRenderer().setSpaceDistortion(float(screenChannel->spaceDistortion));
                 currentRenderer().setSdfRangeProxyEnabled(screenChannel->sdfRangeProxyEnabled);
                 currentRenderer().setVolumeZeroProofEnabled(screenChannel->volumeZeroProofEnabled);
+                currentRenderer().setVolumeSupportCertificatesEnabled(screenChannel->volumeSupportCertificatesEnabled);
                 currentRenderer().setVolumeSamplesPerChord(screenChannel->volumeSamplesPerChord);
                 currentRenderer().setVolumeOutputErrorBudget(screenChannel->volumeOutputErrorBudget);
             }
@@ -418,6 +419,7 @@ namespace Core {
                 sc->updateVolumeZeroProofMetrics(
                     static_cast<int>(stats.volumeZeroProofCellsProven),
                     static_cast<int>(stats.volumeZeroProofCellsTotal));
+                sc->volumeSupportCertificateKillers = static_cast<int>(stats.volumeSupportCertificateKillers);
             }
             if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
                 recorder->checkPendingSnapshot(fbW, fbH);

@@ -1659,3 +1659,18 @@ The checkout WebGPU app is rebuilt with [route-aware power lowering](../../../au
 [All three tested allocation/traversal variants](../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md) preserve the finite captures but regress in measured cost, so none remains enabled. The checkout app is rebuilt with the prior renderer; the installed app and live saves were untouched. This pass adds no new visual control or promised FPS improvement to inspect. Existing Northern Veil/Sanctuary continuous appearance, usual-framebuffer movement and 30 FPS acceptance checks remain open; the rejected variants do not create a new Person verification obligation.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).
+
+
+### Emitter precedence fix and opt-in support certificates — October 17
+
+**What changed visibly.** The WGSL compiler used to drop the parentheses around a multi-term leaf, so `a × (0.75 + 0.65·cos(1.8t))` rendered as `0.75·a + 0.65·cos(1.8t)`, and `a − (2.4 + 0.3·y)` as `a − 2.4 + 0.3·y`. The CPU always evaluated what you authored; the GPU now agrees with it. No save file was edited. A read-only scan of `saves/zones` finds this pattern in exactly three zones (details in [plan §6e](../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6e-rung-2f-native--the-gpu-certificate-tracer-opt-in-2026-10-17-sixth-pass)):
+
+- [ ] **Prism Cathedral.** In the stretch of the light where 160 < z ≤ 195, the three colour channels should now *pulse in brightness with the light itself* (each scaled by 0.75 + 0.65·cos(1.8t), phase-shifted by 2.09 rad per channel), rather than adding a flat, colour-shifting offset. Also look at the root field and the two field members whose radius breathes with time (2.4 + 1.2·sin 2t, 2.2 + 1.1·sin 1.4t). Their breathing should now scale them rather than shift them. Tell me whether the new look is what you intended.
+- [ ] **Radiance Gallery.** The root field's (1 + 0.28·sin 1.8t + 0.14·cos(3.2t + π/4)) modulation should now breathe proportionally, with no additive glow.
+- [ ] **Sky-Island Sanctuary.** The two fields modulated by 0.88 + 0.12·sin(0.2x)·cos(0.2z) (and 0.84 + 0.16·cos(0.25x)·sin(0.25z)) should now show gentle proportional variation across x/z instead of an offset.
+
+**Opt-in only, nothing to see by default.** The Screen channel's new `volumeSupportCertificatesEnabled` property (default **false**) turns on the GPU certificate tracer. On the cloud software GPU it keeps every pixel byte-identical, and it is up to 4.8× cheaper on Prism Cathedral's wing-B media, but *costs more* on Northern Veil.
+
+- [ ] If you want to try it on your Mac, set the property to true (Law Line or MCP `earthcall_write_property`) in Prism Cathedral and then Northern Veil. The read-only `volumeSupportCertificateKillers` on the same channel shows the lane is live (Northern Veil: 20 with all four curtains). Looks must be identical; report how smoothness changes. Leave it off otherwise. Metal behaviour is unverified, and `webgpu_volume_support_certificates_test` (with `EARTHCALL_CERTIFICATE_TIMING=1`) is the Mac witness to run first.
+
+**Signed:** Claude Code / Claude Opus 5.5 / session `session_01HvZSR64QghrdyCpq2M7qvX` / 2026-10-17.

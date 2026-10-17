@@ -4,6 +4,7 @@
 #include <cmath>
 #include <initializer_list>
 #include <iterator>
+#include <limits>
 #include <memory>
 
 // See VolumeRayTransport.hpp for the transport law this mirrors and the
@@ -842,6 +843,14 @@ VolumeSupportCertificates deriveVolumeSupportCertificates(const VolumeRayChannel
             c.sourceA = node.sourceA;
             c.sourceB = node.sourceB;
             c.offset = sw.role == 2 ? node.lo : (sw.role == 3 ? node.hi : 0.0);
+            auto magnitude = [&](uint32_t operand) {
+                bool u = false;
+                const auto rr = ev.range(operand, 0.0, 0.0, zeros, &u);
+                return u ? std::numeric_limits<double>::infinity()
+                         : std::max(std::abs(double(rr.lo)), std::abs(double(rr.hi)));
+            };
+            c.argumentMagnitude = magnitude(node.a) + (sw.role == 1 ? magnitude(node.b) : 0.0) +
+                                  std::abs(c.offset);
             out.killers.push_back(c);
         }
     }

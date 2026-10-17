@@ -328,10 +328,41 @@ KernelVolumeEvaluator lowerVolumeEvaluator(const VolumeProgramInput& input);
 KernelVolumeEvaluator repairVolumeEvaluator(const VolumeProgramInput& input,
                                             const KernelVolumeEvaluator& previous,
                                             bool parametersOnly);
-Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trimProofSupport = true);
+// Ray-domain transport Rung 2f-native: the density's support-certificate
+// candidates lowered by the production emitter. A candidate is every switch of
+// OntoMath's line form (restrictAlgebraicToLine) whose authored operands are
+// known: |a|, sqrt(a) (role 0), min/max(a, b) (role 1), clamp(a, lo, hi) (roles
+// 2/3). WHICH candidates exist is structural (the Piecewise's shape); whether a
+// candidate kills over a box, its sign, Lipschitz bound and slack are payload
+// (Rendering::deriveVolumeSupportCertificates; revision × extent), so a box
+// resize never recompiles. `wgsl` defines
+//     fn volumeSupportReach(p: vec3<f32>, base: u32) -> f32
+// reading four header floats per candidate at P.v[base + 4k] — {sign (0 =
+// disabled), slack δ, 1/L, offset} — then `params` (the operands' own authored
+// constants, emitted under parameterOffset base + 4K). It returns the first
+// certifying candidate's p-space distance (sign·g − δ)/L > 0, or else the
+// largest non-positive one (the converse recheck bound).
+// Time-only leaves are evaluated inline (no preparation slots): a certificate
+// holds at every clock, so it may read the clock however the emitter does.
+struct VolumeSupportKillerProgram {
+    bool ok = false;
+    std::string error;
+    std::string wgsl;
+    std::vector<uint32_t> switches;   // header slot k -> line-form switch index
+    std::size_t formSwitches = 0;     // the form's switch count (identity cross-check)
+    std::vector<float> params;
+};
+VolumeSupportKillerProgram lowerVolumeSupportKillers(const OntoMath::Piecewise* densityExpr);
+
+// `supportCertificates` adds the Rung 2f-native lane: each member with
+// candidates consults its certificates (VolumeInstanceData supportCert*) at a
+// sample no grid proof covers, before evaluating its density. A structural
+// lane: false emits exactly the pre-existing marcher.
+Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trimProofSupport = true,
+                               const OntoMath::Piecewise* supportCertificateDensity = nullptr);
 Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
                          const std::vector<KernelVolumeEvaluator>& evaluators,
-                         bool trimProofSupport = true);
+                         bool trimProofSupport = true, bool supportCertificates = false);
 
 // V5 exact overlap baseline. Reuses direct lowerVolumeEvaluator() output for every member's evaluator
 // semantics, then composes those evaluators into one shared ray integral. The

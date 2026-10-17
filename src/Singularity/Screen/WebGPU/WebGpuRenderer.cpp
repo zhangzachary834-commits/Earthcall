@@ -3,6 +3,7 @@
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"
+#include "Singularity/Screen/VolumeRayTransport.hpp"
 #include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/SdfRangeProof.hpp"
@@ -2563,6 +2564,64 @@ void WebGpuRenderer::attachVolumeZeroProof(const Rendering::VolumeDensityBinding
             params.insert(params.end(), {band.x, band.y, band.z, band.w});
 }
 
+// Rung 2f-native (Claude Opus 5.5, 2026-10-17; Zach: "KEEEEPP GOINGGNNGG").
+// Header slot k of the compiled VolumeSupportKillerProgram is enabled only when
+// OntoMath certified that switch as a killer over this box at every clock:
+// {sign, δ rounded up, 1/L rounded down, f32 offset}. Anything uncertain stays
+// disabled (sign 0) and the sample takes the exact path.
+void WebGpuRenderer::attachVolumeSupportCertificates(const Rendering::VolumeDensityBinding& medium,
+                                                     const glm::vec3& halfExtent,
+                                                     std::vector<float>& params,
+                                                     VolumeInstanceData& instance, bool appendPayload) {
+    instance.supportCertCount = 0u;
+    if (!volumeSupportCertificatesEnabled() || !medium.densityExpr || medium.densityRevision == 0) return;
+    auto& memo = _volumeSupportCertificates[medium.densityExpr];
+    if (memo.densityRevision != medium.densityRevision || memo.halfExtent != halfExtent) {
+        memo.densityRevision = medium.densityRevision;
+        memo.halfExtent = halfExtent;
+        memo.payload.clear();
+        memo.count = 0;
+        memo.refusal.clear();
+        ++mutableFrameStats().volumeSupportCertificateBuilds;
+        const auto killers = sdfwgsl::lowerVolumeSupportKillers(medium.densityExpr);
+        const auto forms = Rendering::lowerVolumeRayChannels(medium);
+        const auto certificates = Rendering::deriveVolumeSupportCertificates(forms, glm::dvec3(halfExtent));
+        if (!killers.ok) memo.refusal = killers.error;
+        else if (!forms.density.algebraic.form ||
+                 forms.density.algebraic.form->switches.size() != killers.formSwitches)
+            memo.refusal = "compiled candidates and certified form disagree";
+        else if (certificates.killers.empty()) memo.refusal = certificates.refusal;
+        if (memo.refusal.empty()) {
+            memo.payload.assign(4u * killers.switches.size(), 0.0f);
+            for (std::size_t slot = 0; slot < killers.switches.size(); ++slot) {
+                for (const auto& c : certificates.killers) {
+                    if (c.switchIndex != killers.switches[slot]) continue;
+                    if (!std::isfinite(c.spatialLipschitz) || !std::isfinite(c.argumentMagnitude)) break;
+                    const double delta = Rendering::kVolumeSupportDeviceTolerance * (1.0 + c.argumentMagnitude);
+                    const double invRate = c.spatialLipschitz > 0.0
+                        ? std::min(1.0 / (c.spatialLipschitz * (1.0 + 1e-6)), 1e30) : 1e30;
+                    float* h = memo.payload.data() + 4u * slot;
+                    h[0] = c.sign < 0 ? -1.0f : 1.0f;
+                    h[1] = std::nextafter(static_cast<float>(delta), std::numeric_limits<float>::infinity());
+                    h[2] = std::nextafter(static_cast<float>(invRate), 0.0f);
+                    h[3] = static_cast<float>(c.offset);
+                    ++memo.count;
+                    break;
+                }
+            }
+            if (memo.count == 0) { memo.refusal = "no certified killer has a lowered candidate"; memo.payload.clear(); }
+            else memo.payload.insert(memo.payload.end(), killers.params.begin(), killers.params.end());
+        }
+    }
+    memo.lastUsedFrame = _volumeZeroProofFrame;
+    if (memo.count == 0) return;
+    mutableFrameStats().volumeSupportCertificateKillers += memo.count;
+    instance.supportCertCount = memo.count;
+    if (!appendPayload) return;
+    instance.supportCertOffset = static_cast<uint32_t>(params.size());
+    params.insert(params.end(), memo.payload.begin(), memo.payload.end());
+}
+
 void WebGpuRenderer::flushVolumeComposite() {
     if (!_encoder || !_frameColorView || !_depthView || !_inverseViewProjValid) return;
     const auto prepareStart = std::chrono::steady_clock::now();
@@ -2577,6 +2636,7 @@ void WebGpuRenderer::flushVolumeComposite() {
             key.append(reinterpret_cast<const char*>(&value), sizeof(value));
         };
         add(revision); add(trim); const bool proof = volumeZeroProofEnabled(); add(proof);
+        const bool certificates = volumeSupportCertificatesEnabled(); add(certificates);
         for (const auto* medium : media) {
             add(medium->densityExpr); add(medium->densityRevision);
             add(medium->extinctionExpr); add(medium->extinctionRevision);
@@ -2717,7 +2777,8 @@ void WebGpuRenderer::flushVolumeComposite() {
                 medium->occluderSdf,
                 incidentSource ? incidentSource->radianceExpr : nullptr,
                 incidentSource ? incidentSource->chromaExpr : nullptr,
-                incidentSource ? incidentSource->angularExpr : nullptr, trimProofSupport);
+                incidentSource ? incidentSource->angularExpr : nullptr, trimProofSupport,
+                volumeSupportCertificatesEnabled());
             compilerInputs.push_back({
                 medium->densityExpr, medium->extinctionExpr,
                 medium->scatteringExpr, medium->volumeChromaExpr,
@@ -2750,6 +2811,7 @@ void WebGpuRenderer::flushVolumeComposite() {
                 const auto& medium = *activeMedia[i];
                 auto memberKey = setKey[i];
                 std::get<10>(memberKey) = false; // equations have no camera lane
+                std::get<11>(memberKey) = false; // nor a certificate lane (compose-time only)
                 auto& member = _kernelVolumeEvaluators[memberKey];
                 uint64_t revision = Rendering::volumeContentRevision(medium);
                 combineRevision(revision, incidentSourceContentRevision);
@@ -2830,6 +2892,13 @@ void WebGpuRenderer::flushVolumeComposite() {
                 if (!layoutsOk) { layoutError = member.evaluator.program.error; break; }
                 setMemo.phaseReadsWi = setMemo.phaseReadsWi || member.phaseReadsWi;
                 structure += "member:" + std::to_string(i) + "\n" + member.structure;
+                // The certificate lane's WGSL follows the density's line form,
+                // whose admission can turn on constants (inverted clamp bounds,
+                // non-integer powers): its text is part of the structure.
+                if (volumeSupportCertificatesEnabled()) {
+                    const auto killers = sdfwgsl::lowerVolumeSupportKillers(medium.densityExpr);
+                    structure += "\nsupport-certificates:\n" + (killers.ok ? killers.wgsl : "refused");
+                }
                 retainedEvaluators.push_back(member.evaluator);
             }
 
@@ -2842,7 +2911,8 @@ void WebGpuRenderer::flushVolumeComposite() {
                     !setMemo.ok || setMemo.structure != structure ||
                     !setMemo.pipeline;
                 if (needsCompile) {
-                    setMemo.prog = sdfwgsl::composeVolumeSet(compilerInputs, retainedEvaluators, trimProofSupport);
+                    setMemo.prog = sdfwgsl::composeVolumeSet(compilerInputs, retainedEvaluators, trimProofSupport,
+                                                             volumeSupportCertificatesEnabled());
                     ++mutableFrameStats().volumeProgramCompiles;
                     mutableFrameStats().volumeWgslBytesGenerated +=
                         setMemo.prog.wgsl.size();
@@ -2883,7 +2953,8 @@ void WebGpuRenderer::flushVolumeComposite() {
                         for (auto& key : otherKey) std::get<10>(key) = !trimProofSupport;
                         auto& other = _volumeSetProgramCache[otherKey];
                         if (!other.ok || other.structure != structure || !other.pipeline) {
-                            other.prog = sdfwgsl::composeVolumeSet(compilerInputs, retainedEvaluators, !trimProofSupport);
+                            other.prog = sdfwgsl::composeVolumeSet(compilerInputs, retainedEvaluators, !trimProofSupport,
+                                                                   volumeSupportCertificatesEnabled());
                             ++mutableFrameStats().volumeProgramCompiles;
                             mutableFrameStats().volumeWgslBytesGenerated += other.prog.wgsl.size();
                             other.ok = other.prog.ok;
@@ -2974,9 +3045,12 @@ void WebGpuRenderer::flushVolumeComposite() {
             for (std::size_t i = 0; i < activeMedia.size(); ++i) {
                 if (!rebuildPayload) {
                     mediumInstances[i].zeroProofOffset = payload.proofMetadata[i].zeroProofOffset;
+                    mediumInstances[i].supportCertOffset = payload.proofMetadata[i].supportCertOffset;
                 }
                 attachVolumeZeroProof(*activeMedia[i], glm::abs(activeMedia[i]->scale),
                                       params, mediumInstances[i], trimProofSupport, rebuildPayload);
+                attachVolumeSupportCertificates(*activeMedia[i], glm::abs(activeMedia[i]->scale),
+                                                params, mediumInstances[i], rebuildPayload);
                 payload.proofMetadata[i] = mediumInstances[i];
             }
             payload.layoutIdentity = identity;
@@ -3009,7 +3083,8 @@ void WebGpuRenderer::flushVolumeComposite() {
             medium.occluderSdf,
             incidentSource ? incidentSource->radianceExpr : nullptr,
             incidentSource ? incidentSource->chromaExpr : nullptr,
-            incidentSource ? incidentSource->angularExpr : nullptr, trimProofSupport};
+            incidentSource ? incidentSource->angularExpr : nullptr, trimProofSupport,
+            volumeSupportCertificatesEnabled()};
         auto& memo = _volumeProgramCache[programKey];
         uint64_t mediumContentRevision = Rendering::volumeContentRevision(medium);
         combineRevision(mediumContentRevision, incidentSourceContentRevision);
@@ -3060,7 +3135,7 @@ void WebGpuRenderer::flushVolumeComposite() {
                 continue;
             }
 
-            const std::string structure =
+            const std::string memberStructure =
                 "density:\n" + densityLayout.structure +
                 "\nextinction:\n" + extinctionLayout.structure +
                 "\nscattering:\n" + scatteringLayout.structure +
@@ -3075,8 +3150,16 @@ void WebGpuRenderer::flushVolumeComposite() {
                     medium.densityExpr, medium.extinctionExpr, medium.scatteringExpr,
                     medium.volumeChromaExpr, medium.phaseExpr, medium.emissionExpr) +
                 incidentSourceStructure;
+            // Equations first; the certificate lane is composed on top (see the set path).
+            std::string structure = memberStructure;
+            const auto* certificateDensity = volumeSupportCertificatesEnabled() ? medium.densityExpr : nullptr;
+            if (certificateDensity) {
+                const auto killers = sdfwgsl::lowerVolumeSupportKillers(certificateDensity);
+                structure += "\nsupport-certificates:\n" + (killers.ok ? killers.wgsl : "refused");
+            }
             auto memberKey = programKey;
             std::get<10>(memberKey) = false;
+            std::get<11>(memberKey) = false;
             auto& member = _kernelVolumeEvaluators[memberKey];
             const sdfwgsl::VolumeProgramInput input{
                 medium.densityExpr, medium.extinctionExpr, medium.scatteringExpr,
@@ -3085,15 +3168,15 @@ void WebGpuRenderer::flushVolumeComposite() {
                 incidentSource ? incidentSource->chromaExpr : nullptr,
                 incidentSource ? incidentSource->angularExpr : nullptr};
             if (!member.ready || member.revision != mediumContentRevision) {
-                const bool parametersOnly = member.ready && member.evaluator.program.ok && member.structure == structure;
+                const bool parametersOnly = member.ready && member.evaluator.program.ok && member.structure == memberStructure;
                 member.evaluator = sdfwgsl::repairVolumeEvaluator(input, member.evaluator, parametersOnly);
                 if (!parametersOnly) ++mutableFrameStats().volumeLowerings;
                 mutableFrameStats().volumeRepairedNodes += member.evaluator.repairedNodes;
-                member.structure = structure; member.revision = mediumContentRevision;
+                member.structure = memberStructure; member.revision = mediumContentRevision;
                 member.phaseReadsWi = memo.phaseReadsWi; member.ready = true;
             }
             if (!memo.ok || memo.structure != structure || !memo.pipeline) {
-                memo.prog = sdfwgsl::composeVolumeEvaluator(member.evaluator, trimProofSupport);
+                memo.prog = sdfwgsl::composeVolumeEvaluator(member.evaluator, trimProofSupport, certificateDensity);
                 ++mutableFrameStats().volumeProgramCompiles;
                 mutableFrameStats().volumeWgslBytesGenerated += memo.prog.wgsl.size();
                 memo.structure = structure;
@@ -3112,7 +3195,7 @@ void WebGpuRenderer::flushVolumeComposite() {
                 std::get<10>(otherKey) = !trimProofSupport;
                 auto& other = _volumeProgramCache[otherKey];
                 if (!other.ok || other.structure != structure || !other.pipeline) {
-                    other.prog = sdfwgsl::composeVolumeEvaluator(member.evaluator, !trimProofSupport);
+                    other.prog = sdfwgsl::composeVolumeEvaluator(member.evaluator, !trimProofSupport, certificateDensity);
                     ++mutableFrameStats().volumeProgramCompiles;
                     mutableFrameStats().volumeWgslBytesGenerated += other.prog.wgsl.size();
                     other.ok = other.prog.ok; other.error = other.prog.error;
@@ -3168,8 +3251,10 @@ void WebGpuRenderer::flushVolumeComposite() {
             payload.proofMetadata.resize(1);
         } else {
             instance.zeroProofOffset = payload.proofMetadata[0].zeroProofOffset;
+            instance.supportCertOffset = payload.proofMetadata[0].supportCertOffset;
         }
         attachVolumeZeroProof(medium, halfExtent, params, instance, trimProofSupport, rebuildPayload);
+        attachVolumeSupportCertificates(medium, halfExtent, params, instance, rebuildPayload);
         payload.proofMetadata[0] = instance;
         payload.layoutIdentity = identity;
         instances.push_back(instance);
@@ -3178,6 +3263,10 @@ void WebGpuRenderer::flushVolumeComposite() {
 
     for (auto it = _volumeZeroProofs.begin(); it != _volumeZeroProofs.end();) {
         if (it->second.lastUsedFrame != _volumeZeroProofFrame) it = _volumeZeroProofs.erase(it);
+        else ++it;
+    }
+    for (auto it = _volumeSupportCertificates.begin(); it != _volumeSupportCertificates.end();) {
+        if (it->second.lastUsedFrame != _volumeZeroProofFrame) it = _volumeSupportCertificates.erase(it);
         else ++it;
     }
 
