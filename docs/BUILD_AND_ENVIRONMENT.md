@@ -471,6 +471,8 @@ ninja -C build ontomath_line_restriction_test volume_ray_segment_transport_test
 
 System OpenSSL/zlib/libuuid were found without the macOS `local_deps` flags. `webgpu_*` targets remain Apple-only (`EXCLUDE_FROM_ALL`), so a Linux run is never native GPU evidence. Codegen-only witnesses that link `SdfWgsl.cpp` (the named list in `CMakeLists.txt`) do build and run here. Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-16.
 
+**Disk budget (2026-10-17).** A full *Debug* default build (~840 targets, each test linking `earthcall_core` with debug info) exceeds a cloud session's disk allowance: it hit "No space left on device" at 26 GB with ~600 links still to go. For the full suite in the cloud, use a `Release` tree (`-DCMAKE_BUILD_TYPE=Release`), and keep Debug for focused targets. `earthcall_webgpu` (the app) cannot link on Linux, because it uses the vendored macOS `libwgpu_native.a` and Apple window surfaces. Pass `-k 0` so ninja continues past it, and do not count it as a regression.
+
 ## Software WebGPU lane (lavapipe) — 2026-10-17
 
 Offscreen `webgpu_*` witnesses can execute Earthcall's **real WGSL pipelines** in a Linux container with no GPU, on Mesa's software Vulkan device:
