@@ -664,6 +664,9 @@ void reportAmbiguousPrimaryHomes(const Person& person,
                  "Repair requires explicit Person authorization.\n";
 }
 
+} // namespace
+
+namespace detail {
 bool bindOwnedBy(Zone& zone, Person& person) {
     const std::string personId = person.getIdentifier();
     for (const auto& relation : zone.getFormation().relations().getAll()) {
@@ -695,7 +698,7 @@ bool bindOwnedBy(Zone& zone, Person& person) {
     }
     return true;
 }
-} // namespace
+} // namespace detail
 
 Zone* ZoneManager::findPrimaryHome(Person& person) {
     return const_cast<Zone*>(
@@ -748,7 +751,7 @@ bool ZoneManager::ensureHomeZone(Person& person) {
         if (existing->owner().empty()) {
             existing->setOwner(personId, Zone::kOwnerKindPerson);
         }
-        return bindOwnedBy(*existing, person);
+        return detail::bindOwnedBy(*existing, person);
     }
 
     // A save from before ownership existed may hold an unowned "Home". Claim
@@ -758,7 +761,7 @@ bool ZoneManager::ensureHomeZone(Person& person) {
         if (zone && zone->name() == "Home" && zone->owner().empty()
             && !zone->isOurverseGathering()) {
             zone->markPrimaryHome();
-            if (!bindOwnedBy(*zone, person)) return false;
+            if (!detail::bindOwnedBy(*zone, person)) return false;
             zone->setOwner(personId, Zone::kOwnerKindPerson);
             return true;
         }
@@ -775,7 +778,7 @@ bool ZoneManager::ensureHomeZone(Person& person) {
                                         : std::string("Home_of_") + personId;
     auto home = std::make_shared<Home>(id, "strict");
     home->markPrimaryHome();
-    if (!bindOwnedBy(*home, person)) return false;
+    if (!detail::bindOwnedBy(*home, person)) return false;
     home->setOwner(personId, Zone::kOwnerKindPerson);
     addZone(home);
     printf("[Init] Home established for '%s' (zone count now %zu)\n",

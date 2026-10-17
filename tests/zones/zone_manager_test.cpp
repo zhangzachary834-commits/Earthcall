@@ -1,3 +1,5 @@
+#include "Person/Person.hpp"
+#include "Relation/Relation.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
@@ -108,6 +110,40 @@ int main() {
         check(ZoneManager::live() == nullptr, "unbindLive clears binding owned by manager");
     }
 
+
+
+    {
+        std::cout << "\n[6] Testing bindOwnedBy...\n";
+        ZoneManager mgr;
+        Soul soul("TestSoul");
+        Body body("TestBody");
+        Person person(soul, body, "strict");
+        person.soul().bindPerson(&person);
+
+
+        auto zone = std::make_shared<Zone>("test_home", "strict");
+        mgr.addZone(zone);
+
+        check(detail::bindOwnedBy(*zone, person), "bindOwnedBy succeeds on new zone");
+
+        bool found = false;
+        for (const auto& rel : zone->getFormation().relations().getAll()) {
+            if (rel->type == "owned-by" && rel->b() == &person) {
+                found = true;
+                break;
+            }
+        }
+        check(found, "owned-by relation created properly");
+
+        check(detail::bindOwnedBy(*zone, person), "bindOwnedBy idempotency check succeeds");
+
+        // Try conflicting owner
+        Soul soul2("TestSoul2");
+        Body body2("TestBody2");
+        Person person2(soul2, body2, "strict");
+        person2.soul().bindPerson(&person2);
+        check(!detail::bindOwnedBy(*zone, person2), "bindOwnedBy fails when already owned by different person");
+    }
     std::filesystem::remove_all(sandbox);
 
     std::cout << "------------------------------------------------------------\n";

@@ -32,6 +32,11 @@ struct SaveLoadState {
     bool unpackForAuthoring = false;
 };
 
+
+namespace detail {
+    bool bindOwnedBy(Zone& zone, Person& person);
+}
+
 class ZoneManager {
     std::vector<std::shared_ptr<Zone>> _zones;
     size_t _currentIndex = 0;
