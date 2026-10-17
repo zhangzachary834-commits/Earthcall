@@ -470,3 +470,23 @@ ninja -C build ontomath_line_restriction_test volume_ray_segment_transport_test
 ```
 
 System OpenSSL/zlib/libuuid were found without the macOS `local_deps` flags. `webgpu_*` targets remain Apple-only (`EXCLUDE_FROM_ALL`), so a Linux run is never native GPU evidence. Codegen-only witnesses that link `SdfWgsl.cpp` (the named list in `CMakeLists.txt`) do build and run here. Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-16.
+
+## Software WebGPU lane (lavapipe) — 2026-10-17
+
+Offscreen `webgpu_*` witnesses can execute Earthcall's **real WGSL pipelines** in a Linux container with no GPU, on Mesa's software Vulkan device:
+
+```sh
+apt-get update && apt-get install -y --no-install-recommends mesa-vulkan-drivers vulkan-tools
+vulkaninfo --summary | grep deviceName          # expect: llvmpipe (LLVM …)
+TAG=$(cat third_party/wgpu/wgpu-native-meta/wgpu-native-git-tag)      # v29.0.1.1 at writing
+git clone --depth 1 --branch "$TAG" --recurse-submodules --shallow-submodules \
+    https://github.com/gfx-rs/wgpu-native <scratch>/wgpu-native
+(cd <scratch>/wgpu-native && cargo build --release)                    # ~1 min; crates.io is reachable
+cmake -S . -B build -G Ninja -DGLFW_USE_OSMESA=ON \
+    -DEARTHCALL_WGPU_NATIVE_LIBRARY=<scratch>/wgpu-native/target/release/libwgpu_native.a
+ninja -C build webgpu_volume_zero_proof_test && (cd build && ./webgpu_volume_zero_proof_test)
+```
+
+Build wgpu-native from the **same tag** as the vendored headers (ABI). The GitHub *releases* download was refused by this environment's proxy (403, policy), so build from source. Targets stay `EXCLUDE_FROM_ALL`: build them by name.
+
+**What this lane proves:** functional behaviour and same-backend A/B pixel parity of the actual WGSL, on llvmpipe's arithmetic. **What it does not prove:** Metal precision or fast-math behaviour, native driver bugs, or any frame time. llvmpipe timings are CPU rasterizer timings. Label every result "lavapipe" and keep Metal verdicts for a Mac. Results observed on this lane are recorded in the [Rung 2 plan §6d](plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6d-rung-2f-native-groundwork--authored-tier-certificates-and-a-cloud-webgpu-lane-2026-10-17-fifth-pass). Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX`.

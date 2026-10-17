@@ -345,7 +345,8 @@ int main() {
         namespace fs = std::filesystem;
         const fs::path root = fs::exists("saves/zones") ? fs::path("saves/zones") : fs::path("../saves/zones");
         struct Totals { uint64_t samples = 0, empty = 0, constant = 0, grid = 0, both = 0, violations = 0; double us = 0; uint64_t rays = 0;
-                        uint64_t traced = 0, tracedOrGrid = 0, tracePoints = 0, traceSetup = 0, traceViolations = 0; double traceUs = 0; };
+                        uint64_t traced = 0, tracedOrGrid = 0, tracePoints = 0, traceSetup = 0, traceViolations = 0; double traceUs = 0;
+                        uint64_t certTraced = 0, certPoints = 0, certViolations = 0; double certUs = 0; };
         Totals all;
         int admitted = 0, media = 0;
         std::mt19937 rng(1017u);
@@ -381,6 +382,7 @@ int main() {
                     const auto proof = Rendering::buildVolumeZeroProof(*b.densityExpr, glm::vec3(half));
                     const glm::dvec3 cell = 2.0 * half / glm::dvec3(proof.dims);
                     Totals t;
+                    const auto certs = Rendering::deriveVolumeSupportCertificates(f, half);
                     // Attribution of samples Rung 2 proves empty but the grid does not:
                     // which top-level density factor is actually zero there.
                     std::vector<const OntoMath::MathNode*> factors;
@@ -411,6 +413,14 @@ int main() {
                         const auto trace = Rendering::traceVolumeSupport(members, {ro, dir, false}, chord);
                         t.traceUs += std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now() - c1).count();
                         t.tracePoints += trace.pointEvaluations;
+                        Rendering::VolumeSupportTrace certTrace;
+                        certTrace.emptySample.assign(chord.count, 0);
+                        if (!certs.killers.empty()) {
+                            const auto c2 = std::chrono::steady_clock::now();
+                            certTrace = Rendering::traceVolumeSupportCertified(members, {&certs}, {ro, dir, false}, chord);
+                            t.certUs += std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now() - c2).count();
+                            t.certPoints += certTrace.pointEvaluations;
+                        }
                         t.traceSetup += trace.setupEvaluations;
                         std::vector<char> label(chord.count, 'g');
                         for (const auto& run : sched.runs)
@@ -427,6 +437,11 @@ int main() {
                             }
                             const bool gridSkip = inGrid && proof.proven(idx.x, idx.y, idx.z);
                             const bool traced = trace.emptySample[i] != 0;
+                            if (certTrace.emptySample[i]) {
+                                ++t.certTraced;
+                                double Dc = 0;
+                                if (!scalarAt(*b.densityExpr, varsAt(p, 0.0, -dir), Dc) || Dc > 0.0) ++t.certViolations;
+                            }
                             t.traced += traced;
                             t.tracedOrGrid += traced || gridSkip;
                             if (traced) {
@@ -504,6 +519,11 @@ int main() {
                               << "%; " << double(t.tracePoints) / std::max<uint64_t>(t.rays, 1) << " point + "
                               << double(t.traceSetup) / std::max<uint64_t>(t.rays, 1) << " setup evals/ray; "
                               << t.traceUs / std::max<uint64_t>(t.rays, 1) << " us/ray\n";
+                    std::cout << "        certificates: " << certs.killers.size() << " killers"
+                              << (certs.killers.empty() ? " (" + certs.refusal + ")" : "")
+                              << "; certified-only trace " << (100.0 * t.certTraced / std::max<uint64_t>(t.samples, 1))
+                              << "%, " << double(t.certPoints) / std::max<uint64_t>(t.rays, 1) << " point evals/ray, "
+                              << t.certUs / std::max<uint64_t>(t.rays, 1) << " us/ray\n";
                     if (!attribution.empty() && zoneDir.path().filename().string() == "Northern Veil") {
                         std::cout << "        extra-proof attribution (Rung 2 empty, grid not):";
                         for (const auto& [k, v] : attribution) std::cout << " " << k << "=" << v;
@@ -511,6 +531,7 @@ int main() {
                         for (std::size_t k = 0; k < factors.size(); ++k)
                             std::cout << "          f" << k << " = " << factors[k]->print().substr(0, 110) << "\n";
                     }
+                    all.certTraced += t.certTraced; all.certPoints += t.certPoints; all.certViolations += t.certViolations; all.certUs += t.certUs;
                     all.traced += t.traced; all.tracedOrGrid += t.tracedOrGrid; all.traceViolations += t.traceViolations;
                     all.tracePoints += t.tracePoints; all.traceSetup += t.traceSetup; all.traceUs += t.traceUs;
                     all.samples += t.samples; all.empty += t.empty; all.constant += t.constant; all.grid += t.grid;
@@ -531,6 +552,10 @@ int main() {
                   << double(all.traceSetup) / std::max<uint64_t>(all.rays, 1) << " setup evals/ray; "
                   << all.traceUs / std::max<uint64_t>(all.rays, 1) << " us/ray\n";
         check(all.traceViolations == 0, "Lipschitz tracing certifies no real sample with positive density");
+        std::cout << "    certificate totals: certified-only trace " << (100.0 * all.certTraced / std::max<uint64_t>(all.samples, 1))
+                  << "%, " << double(all.certPoints) / std::max<uint64_t>(all.rays, 1) << " point evals/ray, "
+                  << all.certUs / std::max<uint64_t>(all.rays, 1) << " us/ray\n";
+        check(all.certViolations == 0, "certificate-only tracing certifies no real sample with positive density");
         check(media > 0 && admitted > 0, "the census finds real media the algebraic class admits");
         check(all.violations == 0, "no proved-empty sample on any real medium has positive emitter density (" +
                                        std::to_string(all.samples) + " samples)");

@@ -793,4 +793,109 @@ VolumeSupportTrace traceVolumeSupport(const std::vector<VolumeSegmentMember>& me
     return trace;
 }
 
+// ---- Rung 2f-native groundwork: authored-tier support certificates ---------
+// Claude Code · Claude Opus 5.5 · session_01HvZSR64QghrdyCpq2M7qvX · 2026-10-17.
+VolumeSupportCertificates deriveVolumeSupportCertificates(const VolumeRayChannelForms& forms,
+                                                          const glm::dvec3& halfExtent) {
+    VolumeSupportCertificates out;
+    if (!forms.density.present || !forms.density.algebraic.form) {
+        out.refusal = "density has no admitted algebraic form";
+        return out;
+    }
+    const auto& form = *forms.density.algebraic.form;
+    const OntoMath::Interval box[3] = {
+        OntoMath::Interval::outward(float(-std::abs(halfExtent.x)), float(std::abs(halfExtent.x))),
+        OntoMath::Interval::outward(float(-std::abs(halfExtent.y)), float(std::abs(halfExtent.y))),
+        OntoMath::Interval::outward(float(-std::abs(halfExtent.z)), float(std::abs(halfExtent.z)))};
+    // Every clock: t unbounded. Directions as the volume channels bind them
+    // without a source: wi = 0, wo/omega anywhere on the unit sphere.
+    std::map<std::string, OntoMath::Interval> others = {{OntoMath::kTimeVar, OntoMath::Interval::infinite()}};
+    for (const char* v : {OntoMath::kWiXVar, OntoMath::kWiYVar, OntoMath::kWiZVar}) others[v] = OntoMath::Interval(0.0f);
+    for (const char* v : {OntoMath::kWoXVar, OntoMath::kWoYVar, OntoMath::kWoZVar,
+                          OntoMath::kOmegaXVar, OntoMath::kOmegaYVar, OntoMath::kOmegaZVar})
+        others[v] = OntoMath::Interval(-1.0f, 1.0f);
+    std::map<std::string, OntoMath::Interval> b = others;
+    for (int i = 0; i < 3; ++i) {
+        b[OntoMath::kLineOriginVars[i]] = box[i];
+        b[OntoMath::kLineDirectionVars[i]] = OntoMath::Interval(i == 0 ? 1.0f : 0.0f);
+    }
+    OntoMath::LineAlgebraicEvaluator ev(form, b, true);
+    if (!ev.ok()) { out.refusal = "density over the box: " + ev.refusal(); return out; }
+    const std::vector<int8_t> zeros(form.switches.size(), 0);
+    for (std::size_t k = 0; k < form.switches.size(); ++k) {
+        for (int8_t sg : {int8_t(-1), int8_t(1)}) {
+            auto signs = zeros;
+            signs[k] = sg;
+            bool undefined = false;
+            // s ∈ [0, 0] with o over the whole box: the density's range anywhere in it.
+            const auto r = ev.range(form.roots[0], 0.0, 0.0, signs, &undefined);
+            if (undefined || !(r.hi <= 0.0f)) continue;
+            const auto L = OntoMath::lipschitzBoundOverBox(form, k, box, others, true);
+            if (!L) continue;
+            const auto& sw = form.switches[k];
+            const auto& node = form.nodes[sw.node];
+            VolumeSupportCertificate c;
+            c.switchIndex = k;
+            c.sign = sg;
+            c.spatialLipschitz = *L;
+            c.role = sw.role;
+            c.sourceA = node.sourceA;
+            c.sourceB = node.sourceB;
+            c.offset = sw.role == 2 ? node.lo : (sw.role == 3 ? node.hi : 0.0);
+            out.killers.push_back(c);
+        }
+    }
+    if (out.killers.empty()) out.refusal = "no switch kills the density over the whole box at every time";
+    return out;
+}
+
+VolumeSupportTrace traceVolumeSupportCertified(const std::vector<VolumeSegmentMember>& members,
+                                               const std::vector<const VolumeSupportCertificates*>& certificates,
+                                               const VolumeRayInput& ray, const VolumeLatticeSpan& span) {
+    VolumeSupportTrace trace;
+    trace.emptySample.assign(span.count, 0);
+    if (span.count == 0 || !(span.step > 0.0) || members.empty() || certificates.size() != members.size()) {
+        trace.reason = "degenerate span or mismatched certificates";
+        return trace;
+    }
+    const double dirLen = glm::length(ray.direction);
+    std::vector<char> all(span.count, 1);
+    for (std::size_t j = 0; j < members.size(); ++j) {
+        const auto* certs = certificates[j];
+        const auto& m = members[j];
+        if (!certs || certs->killers.empty() || !m.forms || !m.forms->density.algebraic.form) {
+            trace.reason = "a member has no support certificate";
+            trace.emptySample.assign(span.count, 0);
+            return trace;
+        }
+        // Point values of g only: the per-ray binding is the shader's per-ray work.
+        OntoMath::LineAlgebraicEvaluator ev(*m.forms->density.algebraic.form, rayBindings(m, ray), true);
+        if (!ev.ok()) { trace.reason = "density: " + ev.refusal(); trace.emptySample.assign(span.count, 0); return trace; }
+        const std::vector<int8_t> zeros(m.forms->density.algebraic.form->switches.size(), 0);
+        trace.killers += static_cast<uint32_t>(certs->killers.size());
+        std::vector<char> mine(span.count, 0);
+        for (uint32_t i = 0; i < span.count; ++i) {
+            if (mine[i]) continue;
+            const double si = span.firstSample + span.step * double(i);
+            for (const auto& c : certs->killers) {
+                ++trace.pointEvaluations;
+                bool undefined = false;
+                const auto r = ev.switchRange(c.switchIndex, si, si, zeros, &undefined);
+                if (undefined) continue;
+                const double margin = c.sign < 0 ? -double(r.hi) : double(r.lo);
+                if (!(margin > 0.0)) continue;
+                const double rate = c.spatialLipschitz * dirLen;
+                const double reach = rate > 0.0 ? si + (margin / rate) * (1.0 - 1e-9) : span.firstSample + span.step * double(span.count);
+                for (uint32_t q = i; q < span.count && span.firstSample + span.step * double(q) <= reach; ++q) mine[q] = 1;
+                mine[i] = 1;
+                break;
+            }
+        }
+        for (uint32_t i = 0; i < span.count; ++i) all[i] = all[i] && mine[i];
+    }
+    trace.emptySample = std::move(all);
+    for (char e : trace.emptySample) trace.certifiedSamples += e ? 1u : 0u;
+    return trace;
+}
+
 } // namespace Rendering

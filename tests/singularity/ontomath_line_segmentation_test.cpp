@@ -472,6 +472,52 @@ int main() {
               "an interval containing a Piecewise jump answers an unbounded derivative (no false Lipschitz claim)");
     }
 
+    // ---- Rung 2f-native groundwork: spatial Lipschitz bounds over a box ---
+    {
+        const OntoMath::Interval box[3] = {OntoMath::Interval(-8.0f, 8.0f), OntoMath::Interval(-8.0f, 8.0f),
+                                           OntoMath::Interval(-8.0f, 8.0f)};
+        const std::map<std::string, OntoMath::Interval> others = {{"t", OntoMath::Interval::infinite()}};
+        // Radial clamp: switch a − 0 with a = 1.5 − |p − c|/4, so ‖∇g‖ = 1/4 exactly.
+        std::size_t clampLo = 0;
+        for (std::size_t k = 0; k < form.switches.size(); ++k) if (form.switches[k].role == 2) clampLo = k;
+        const auto L = OntoMath::lipschitzBoundOverBox(form, clampLo, box, others);
+        // Per-axis partials are bounded independently and combined as √(Σ m_i²):
+        // sound, but for an isotropic g each axis reaches the full ‖∇g‖ = 1/4, so the
+        // bound is 1/4·√3. Tighter directional bounds are future work (§6d).
+        check(L && *L >= 0.25 && *L <= 0.25 * std::sqrt(3.0) * 1.001,
+              "radial clamp: spatial Lipschitz bound is sound (≥ 1/4) and within the per-axis √3 factor, got " +
+                  (L ? std::to_string(*L) : std::string("none")));
+        // A curtain like Northern Veil's: clamp(1 − |z − 15·sin(0.026x) − 5.5·cos(0.068x + 0.5)|/3.2, 0, 1)
+        auto f = num(0);
+        f->scalarForm = ScalarForm::variable("z")
+            .plus(ScalarForm::transcendental(OntoMath::TransFactor::Kind::Sin, "x", 0.026, 0.0, -15.0))
+            .plus(ScalarForm::transcendental(OntoMath::TransFactor::Kind::Cos, "x", 0.068, 0.5, -5.5));
+        auto curtain = node(Op::Clamp, node(Op::Sub, num(1), node(Op::Div, node(Op::Abs, std::move(f)), num(3.2))), num(0), num(1));
+        const auto rc = OntoMath::restrictAlgebraicToLine(*curtain, false);
+        std::size_t ck = 0;
+        for (std::size_t k = 0; k < rc.form->switches.size(); ++k) if (rc.form->switches[k].role == 2) ck = k;
+        const auto Lc = OntoMath::lipschitzBoundOverBox(*rc.form, ck, box, others);
+        // Sample difference quotients of g = a − 0 in random directions inside the box.
+        std::mt19937 rng(77u);
+        std::uniform_real_distribution<double> u(-8.0, 8.0), du(-1.0, 1.0);
+        double worst = 0.0;
+        for (int i = 0; i < 4000; ++i) {
+            const glm::dvec3 p(u(rng), u(rng), u(rng));
+            glm::dvec3 d(du(rng), du(rng), du(rng));
+            d /= glm::length(d);
+            const double h = 1e-3;
+            if (glm::any(glm::greaterThan(glm::abs(p + h * d), glm::dvec3(8.0)))) continue;
+            auto a = [&](const glm::dvec3& q) {
+                double v = 0;
+                propertyValueToNumber(*curtain->children[0]->evaluate(pointVars(q)), v);
+                return v;
+            };
+            worst = std::max(worst, std::abs(a(p + h * d) - a(p)) / h);
+        }
+        std::cout << "    curtain: spatial Lipschitz bound " << (Lc ? *Lc : -1.0) << ", sampled max quotient " << worst << "\n";
+        check(Lc && *Lc >= worst, "curtain: the spatial Lipschitz bound dominates every sampled difference quotient");
+    }
+
     // ---- Rung 2d: analytic proposals cut cost, never soundness ------------
     {
         uint32_t evalsOn = 0, evalsOff = 0, proposed = 0;

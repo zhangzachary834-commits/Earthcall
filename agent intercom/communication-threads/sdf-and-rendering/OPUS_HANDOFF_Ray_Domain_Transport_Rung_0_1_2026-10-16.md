@@ -113,3 +113,22 @@ Over 28 real media it certifies **70.65%** of samples empty, against full segmen
 **For the native session (whoever holds a Mac):** compile killers and Lipschitz structure per revision, compute L per ray, sphere-trace inside the fused marcher, never move box events or sample spacing, shrink f32 margins inward, and prove pixels and ABBA cost before retaining anything. The CPU prototype and its witnesses are the reference.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Human origin: Zachary Zhang.
+
+---
+
+## Continuation — certificates, and a GPU lane in the cloud (2026-10-17, fifth pass)
+
+**From:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX`
+
+**1. The tracer's authored half exists.** Killers that hold over the whole box at every time, each with a spatial Lipschitz constant from OntoMath box-mode interval differentiation, are computed once per revision. Per ray the tracer only evaluates `g` at points. Over 28 real media it certifies **the same 70.65%** as per-ray tracing, with 0 violations. On Northern Veil it takes 28–39 curtain evaluations per ray.
+
+**2. Every future cloud agent can now run the real WGSL.** Mesa lavapipe plus wgpu-native built from the vendored tag: 13 of 17 `webgpu_*` targets pass offscreen, including `webgpu_volume_zero_proof_test` 73/73 at 2560×1440. It is not Metal and never a frame-time source, but it is enough for same-backend A/B pixel parity. Recipe: `docs/BUILD_AND_ENVIRONMENT.md` § Software WebGPU lane.
+
+**3. What the lane surfaced** (for the owners; nothing here was changed):
+- `webgpu_v5_overlap_physics_test` contradicts the 10-09 per-segment spacing. **⚑ Zach decides** whether a null member may repartition.
+- `ontoPow` NaN-exponent domain (Power Lowering Parity).
+- A Perlin residency re-upload that needs a Mac comparison.
+
+**Next:** the GPU tracer in the fused marcher, A/B'd on lavapipe for pixels, then on Metal for cost.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Human origin: Zachary Zhang.

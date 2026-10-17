@@ -260,4 +260,40 @@ struct VolumeSupportTrace {
 VolumeSupportTrace traceVolumeSupport(const std::vector<VolumeSegmentMember>& members,
                                       const VolumeRayInput& ray, const VolumeLatticeSpan& span);
 
+// --- Rung 2f-native groundwork: authored-tier support certificates ------------
+//
+// What a shader can carry. A certificate is a killer that holds over the WHOLE
+// medium box at EVERY time (t is bound as the unbounded interval, so a clock-
+// dependent kill simply refuses), with a SPATIAL Lipschitz constant
+// L ≥ sup‖∇g‖ over the box (OntoMath::lipschitzBoundOverBox). On any ray inside
+// the box, |dg/ds| ≤ L·|d|, so one point value of g certifies emptiness for
+// margin/(L·|d|) ahead — no per-ray interval work at all.
+//
+// Lifetime: AUTHORED-REVISION × BOX. Derived from the density channel's
+// algebraic form (same key as VolumeRayFormCache) and the half-extent; invalid
+// when either changes. Independent of camera, ray, origin and clock. `source`
+// points into the authored Piecewise for a future emitter; it is valid exactly
+// as long as the form it came from.
+struct VolumeSupportCertificate {
+    std::size_t switchIndex = 0;
+    int8_t sign = 0;               // the killing side of g
+    double spatialLipschitz = 0.0;
+    uint32_t role = 0;             // LineSwitch role (what g is in terms of source)
+    const OntoMath::MathNode* sourceA = nullptr;
+    const OntoMath::MathNode* sourceB = nullptr;
+    double offset = 0.0;           // clamp lo/hi for roles 2/3
+};
+struct VolumeSupportCertificates {
+    std::vector<VolumeSupportCertificate> killers;
+    std::string refusal;
+};
+VolumeSupportCertificates deriveVolumeSupportCertificates(const VolumeRayChannelForms& forms,
+                                                          const glm::dvec3& halfExtent);
+
+// The shader-shaped tracer: certificates only, one point evaluation of g per
+// not-yet-certified sample. members[i] pairs with certificates[i].
+VolumeSupportTrace traceVolumeSupportCertified(const std::vector<VolumeSegmentMember>& members,
+                                               const std::vector<const VolumeSupportCertificates*>& certificates,
+                                               const VolumeRayInput& ray, const VolumeLatticeSpan& span);
+
 } // namespace Rendering

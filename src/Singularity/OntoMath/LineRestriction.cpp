@@ -710,7 +710,12 @@ struct AlgebraicBuilder {
                 }
                 // Union = min, Intersection = max; vectors componentwise, scalars broadcast.
                 const Kind k = n.op == Op::Union ? Kind::Min : Kind::Max;
-                if (!a->vector && !b->vector) { out.s = op(k, a->s, b->s); return out; }
+                if (!a->vector && !b->vector) {
+                    out.s = op(k, a->s, b->s);
+                    form.nodes[out.s].sourceA = n.children[0].get();
+                    form.nodes[out.s].sourceB = n.children[1].get();
+                    return out;
+                }
                 out.vector = true;
                 for (int i = 0; i < 3; ++i) out.v[i] = op(k, a->vector ? a->v[i] : a->s, b->vector ? b->v[i] : b->s);
                 return out;
@@ -770,7 +775,7 @@ struct AlgebraicBuilder {
                 const auto a = childOf(n, 0);
                 if (!a) return std::nullopt;
                 AlgValue out = *a;
-                if (!a->vector) out.s = op(Kind::Abs, a->s);
+                if (!a->vector) { out.s = op(Kind::Abs, a->s); form.nodes[out.s].sourceA = n.children[0].get(); }
                 else for (int i = 0; i < 3; ++i) out.v[i] = op(Kind::Abs, a->v[i]);
                 return out;
             }
@@ -796,6 +801,7 @@ struct AlgebraicBuilder {
                     return out;
                 }
                 out.s = op(Kind::Sqrt, a->s);
+                form.nodes[out.s].sourceA = n.children[0].get();
                 return out;
             }
             case Op::Length:
@@ -865,6 +871,7 @@ struct AlgebraicBuilder {
                 out.s = op(Kind::Clamp, a->s);
                 form.nodes[out.s].lo = *lo;
                 form.nodes[out.s].hi = *hi;
+                form.nodes[out.s].sourceA = n.children[0].get();
                 return out;
             }
             default:
@@ -1071,27 +1078,7 @@ LineAlgebraicEvaluator::LineAlgebraicEvaluator(const LineAlgebraicForm& form,
     : _form(&form), _bindings(std::move(bindings)), _undefinedAsZero(undefinedAsZero) {
     _coefficients.resize(form.nodes.size());
     _errors.resize(form.nodes.size());
-    // Operands are always built before their parents, so one forward pass decides
-    // which subtrees carry no switch (their range depends on the interval alone).
-    _signFree.assign(form.nodes.size(), 0);
-    for (std::size_t i = 0; i < form.nodes.size(); ++i) {
-        const auto& n = form.nodes[i];
-        bool free = n.switchCount == 0;
-        switch (n.kind) {
-            case Kind::Polynomial: case Kind::Undefined: break;
-            case Kind::Sqrt: case Kind::Abs: case Kind::Trans: case Kind::Clamp:
-                free = free && n.a < i && _signFree[n.a];
-                break;
-            case Kind::Noise:
-                free = free && _signFree[n.a] && _signFree[n.b] && _signFree[n.c];
-                break;
-            case Kind::Select: free = false; break;
-            default:
-                free = free && n.a < i && n.b < i && _signFree[n.a] && _signFree[n.b];
-                break;
-        }
-        _signFree[i] = free ? 1 : 0;
-    }
+    computeSignFree();
     constexpr double kEps = std::numeric_limits<double>::epsilon();
     for (std::size_t i = 0; i < form.nodes.size(); ++i) {
         const auto& n = form.nodes[i];
@@ -1116,6 +1103,53 @@ LineAlgebraicEvaluator::LineAlgebraicEvaluator(const LineAlgebraicForm& form,
             const double gamma = 4.0 * double(n.polynomial.coefficients[k].terms.size() + factors + 4) * kEps;
             _errors[i].push_back(gamma * magnitude);
         }
+    }
+}
+
+LineAlgebraicEvaluator::LineAlgebraicEvaluator(const LineAlgebraicForm& form,
+                                               const std::map<std::string, Interval>& boxBindings,
+                                               bool undefinedAsZero)
+    : _form(&form), _undefinedAsZero(undefinedAsZero), _boxMode(true) {
+    _coefficients.resize(form.nodes.size());
+    _errors.resize(form.nodes.size());
+    computeSignFree();
+    for (std::size_t i = 0; i < form.nodes.size(); ++i) {
+        const auto& n = form.nodes[i];
+        if (n.kind != Kind::Polynomial && n.kind != Kind::Select) continue;
+        for (const auto& c : n.polynomial.coefficients) {
+            const Interval r = c.evalRange(boxBindings);
+            if (!r.bounded() || r.empty()) { _refusal = "a coefficient is unbounded over the box"; return; }
+            // One extra outward ulp: evalRange's lone constant terms are float points.
+            const double lo = Interval::roundDown(r.lo), hi = Interval::roundUp(r.hi);
+            const double mid = 0.5 * (lo + hi);
+            _coefficients[i].push_back(mid);
+            _errors[i].push_back(0.5 * (hi - lo) + 4.0 * std::numeric_limits<double>::epsilon() * std::abs(mid));
+        }
+    }
+}
+
+void LineAlgebraicEvaluator::computeSignFree() {
+    const auto& form = *_form;
+    // Operands are always built before their parents, so one forward pass decides
+    // which subtrees carry no switch (their range depends on the interval alone).
+    _signFree.assign(form.nodes.size(), 0);
+    for (std::size_t i = 0; i < form.nodes.size(); ++i) {
+        const auto& n = form.nodes[i];
+        bool free = n.switchCount == 0;
+        switch (n.kind) {
+            case Kind::Polynomial: case Kind::Undefined: break;
+            case Kind::Sqrt: case Kind::Abs: case Kind::Trans: case Kind::Clamp:
+                free = free && n.a < i && _signFree[n.a];
+                break;
+            case Kind::Noise:
+                free = free && _signFree[n.a] && _signFree[n.b] && _signFree[n.c];
+                break;
+            case Kind::Select: free = false; break;
+            default:
+                free = free && n.a < i && n.b < i && _signFree[n.a] && _signFree[n.b];
+                break;
+        }
+        _signFree[i] = free ? 1 : 0;
     }
 }
 
@@ -1577,6 +1611,30 @@ Interval LineAlgebraicEvaluator::switchDerivativeRange(std::size_t k, double sa,
             return sw.role % 2 == 0 ? d : -d;
         }
     }
+}
+
+std::optional<double> lipschitzBoundOverBox(const LineAlgebraicForm& form, std::size_t switchIndex,
+                                            const Interval box[3],
+                                            const std::map<std::string, Interval>& others,
+                                            bool undefinedAsZero) {
+    if (switchIndex >= form.switches.size()) return std::nullopt;
+    double sum = 0.0;
+    for (int axis = 0; axis < 3; ++axis) {
+        std::map<std::string, Interval> b = others;
+        for (int i = 0; i < 3; ++i) {
+            b[kLineOriginVars[i]] = box[i];
+            b[kLineDirectionVars[i]] = Interval(i == axis ? 1.0f : 0.0f);
+        }
+        LineAlgebraicEvaluator ev(form, b, undefinedAsZero);
+        if (!ev.ok()) return std::nullopt;
+        const std::vector<int8_t> none(form.switches.size(), 0);
+        // d/ds g(o + s·e_axis) at s = 0, for every o in the box: ∂g/∂x_axis.
+        const Interval d = ev.switchDerivativeRange(switchIndex, 0.0, 0.0, none);
+        if (!d.bounded()) return std::nullopt;
+        const double m = std::max(std::abs(double(d.lo)), std::abs(double(d.hi)));
+        sum += m * m;
+    }
+    return std::sqrt(sum) * (1.0 + 1e-12);
 }
 
 namespace {

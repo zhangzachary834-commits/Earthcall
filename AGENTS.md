@@ -107,7 +107,7 @@ third_party/ local_deps/ imgui/                     the foreign
 - App: `cmake --build build --target earthcall_webgpu -j8`; `earthcall` is the OpenGL fallback. Installed `/Applications/Earthcall.app`: `scripts/macos/install_app.sh` (BUILD_AND_ENVIRONMENT § Installing Earthcall.app).
 - Tests: build the named targets for a focused pass; the default build builds the active suite; `ctest --test-dir build --output-on-failure -j4` runs it.
 - Inventory: `ctest --test-dir build -N` lists the local configuration, which can be stale; reconfigure after adding/removing `.cpp` files.
-- GPU/GL tests need a desktop GPU/display session; a device-acquisition refusal is an environment result. `Not Run` is not an assertion failure.
+- GPU/GL tests need a desktop GPU/display session (offscreen `webgpu_*` can also run on cloud lavapipe: BUILD_AND_ENVIRONMENT § Software WebGPU lane, not Metal evidence); a device-acquisition refusal is an environment result. `Not Run` is not an assertion failure.
 - `frame_lag_test`: `STANDING` is existing baseline cost, `LAG` is worse than baseline; never widen the baseline to quiet it.
 - Never call `buildProperties()` from a constructor: lazy registration would run twice.
 

@@ -180,6 +180,43 @@ Two witness-driven corrections made those numbers:
 - The cost is an extra cheap `g` evaluation per not-yet-certified sample (wasted on media that are never empty, up to 192 points/ray here), so eligibility should be decided per medium.
 - Required before any retention: native pixel parity against the current marcher (sample spacing and authored box events unchanged), f32 handling of margins and L (shrink reaches inward, never outward), readback-free ABBA cost, and device reconstruction.
 
+## 6d. Rung 2f-native groundwork — authored-tier certificates and a cloud WebGPU lane (2026-10-17, fifth pass)
+
+Zach: "YAAAAA NEXT PASSSS".
+
+**1. Support certificates (what a shader can carry).**
+- **Box mode.** `LineAlgebraicEvaluator` accepts *interval* bindings, with coefficients as centre ± radius from `ScalarForm::evalRange` plus one outward ulp (§5.2). Binding the line origin to the whole medium box with `d = e_i`, the derivative at `s = 0` encloses `∂g/∂x_i` everywhere in the box.
+- **`lipschitzBoundOverBox`** combines the axes as `√(Σ sup|∂_i g|²)`. It is sound, though per-axis independence costs up to √3 for isotropic g (radial clamp 0.433 against the exact 0.25). On a Northern Veil-like curtain it is tight: 0.3373 against a sampled maximum of 0.3311 over 4,000 random directions.
+- **`deriveVolumeSupportCertificates`** records killers that hold over the **whole box at every time** (t bound as the unbounded interval), each with a spatial L and its authored source operand. Branch nodes now remember their `MathNode` operands, so a future emitter can lower `g` with the production emitter's own arithmetic. Lifetime: authored revision × half-extent. It does not depend on camera, ray, origin or clock.
+- **`traceVolumeSupportCertified`** is the shader-shaped tracer. Per ray it binds the ray, then makes one point evaluation of `g` per not-yet-certified sample, jumping `margin/(L·|d|)`. There is no per-ray interval work.
+
+| All 28 admitted real media (Release, 64 random rays, t = 0) | Proved empty | Point evals/ray | CPU µs/ray |
+|---|---|---|---|
+| Rung 2 segmentation | 70.60% | — | 356 |
+| Per-ray Lipschitz tracing (2f) | 70.65% | 95 (+17 setup) | 302 |
+| **Certificate-only tracing (2f-native shape)** | **70.65%** | **73** | **160** |
+| Northern Veil per curtain, certificates | 97.6–99.1% (5 killers each) | 28–39 | 33–68 |
+
+Soundness: 0 violations. Witnesses: `ontomath_line_segmentation_test` 54/54 and `volume_ray_radial_segmentation_test` 28/28.
+
+**2. A software WebGPU lane in the cloud.** Earthcall's real WGSL pipelines now execute in this Linux container: Mesa **lavapipe** (llvmpipe Vulkan on the CPU), plus wgpu-native built from source at the vendored tag (`v29.0.1.1`, `cargo build --release`, 67 s), linked through the new opt-in `EARTHCALL_WGPU_NATIVE_LIBRARY` CMake cache path. See [Build and Environment](../BUILD_AND_ENVIRONMENT.md#software-webgpu-lane-lavapipe-2026-10-17). **Evidence class:** same-backend A/B pixel parity and functional witnesses of the real WGSL. **Not** Metal precision, and never frame time. Existing native witnesses on this lane:
+- `webgpu_volume_zero_proof_test`: **73/73**, including full 2560×1440 RGBA preservation and device replacement.
+- `webgpu_volume_unified_quadrature_test`: 15/15.
+- `webgpu_volumetric_mist_test`: PASS.
+- `webgpu_volume_shared_subexpression_test`: 74/76. Both failures are `ontoPow` normal/domain cases, e.g. `base = −2, exp = NaN`: CPU route 0, lavapipe NaN. This sits inside the open [Power Lowering Parity](../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Power_Lowering_Parity/Power_Lowering_Parity.md) task. It is backend-specific and was not introduced here.
+- `webgpu_v5_overlap_physics_test`: **aborts**. A semantically null overlapping member shifts another medium's centre pixel by up to 42 bytes "solely by repartitioning samples". The test was last changed 2026-10-07; per-segment unified spacing (`segmentSpacing`, commit `10082310`) landed 2026-10-09, so the test predates the design it now contradicts. Whether Metal shows the same drift needs a Mac run. **⚑ AUTHOR (Zach):** PR #361's tribunal ("a null member must not repartition") and the 10-09 unified quadrature ("finest resolution of the media present") now conflict. Rung 2's proofs offer a reconciliation, excluding a member *proved* empty on a segment from spacing, but that changes the accepted lattice and is not done here.
+
+**Full sweep of the 17 `webgpu_*` targets on lavapipe (head `68d7d2ca` + this pass):**
+
+| Result | Targets |
+|---|---|
+| pass (13) | `cathedral_open_hand` (519 s on llvmpipe), `heightfield_sweep`, `micro_mastery_lag`, `object`, `ontomath_native_resolution_parity`, `particle`, `sdf_color_expr`, `sdf_distance`, `sdf_parity` (25 shapes agree with the CPU), `sdf_range_perf`, `volume_unified_quadrature` (15/15), `volume_zero_proof` (73/73), `volumetric_mist` |
+| fail, recorded above | `volume_shared_subexpression` 74/76 (ontoPow NaN-exponent domain, backend-specific) and `v5_overlap_physics` (null-member repartition drift, ⚑ AUTHOR conflict) |
+| fail, needs a Mac comparison | `perlin_exact_gradient`: every mathematical gate passes (exact C2/C3 counterexamples; Gate D 16384/16384 hits, 0 RGBA difference), then a residency assertion fires because a later camera re-uploaded range-hierarchy bytes. Backend buffer behaviour or a real cache regression; unknown |
+| not buildable off Apple | `screen_recorder` (needs the macOS window surface: `createWindowContext`/`configureSurface` live in `WebGpuContext.mm`). The lane is offscreen-only |
+
+17 targets in all: 13 pass, 3 fail with recorded causes, 1 cannot be built off Apple. Nothing here is a frame-time or Metal claim.
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

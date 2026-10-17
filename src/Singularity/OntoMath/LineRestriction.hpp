@@ -233,6 +233,12 @@ struct LineAlgebraicNode {
     // operands of the value; read only by derivativeRange, which bounds
     // |d‖v‖/ds| ≤ ‖v′‖ by Cauchy–Schwarz — finite even where ‖v‖ = 0).
     std::vector<uint32_t> normComponents;   // empty = not a recognized Euclidean norm
+    // The authored MathNode operand(s) a branch node was built from (Clamp/Abs/
+    // Sqrt/Min/Max), so a GPU emitter can lower a switch function with the
+    // production emitter's own arithmetic. Points into the authored Piecewise:
+    // valid exactly as long as the cached form (same revision + identity key).
+    const MathNode* sourceA = nullptr;
+    const MathNode* sourceB = nullptr;
     TransFactor::Kind transKind = TransFactor::Kind::Sin;   // Trans
     std::vector<Piece> pieces;       // Select, authored order
     uint32_t switchBegin = 0, switchCount = 0;
@@ -277,6 +283,16 @@ public:
     // piece matches); OntoMath's own default keeps Undefined undefined.
     LineAlgebraicEvaluator(const LineAlgebraicForm& form, std::map<std::string, double> bindings,
                            bool undefinedAsZero = false);
+    // BOX mode (Rung 2f-native groundwork): bindings are INTERVALS — e.g. the line
+    // origin ranging over a whole medium box, so derivativeRange at s ∈ [0, 0]
+    // with d = e_i encloses ∂g/∂x_i everywhere in the box. Coefficients become
+    // enclosures (centre ± radius) from ScalarForm::evalRange, widened one ulp
+    // outward (its lone constants are float points). range()/derivativeRange()
+    // stay sound; value()/proposeRoots() are not meaningful in this mode, and
+    // constantUnder() is conservative (no binding is exactly zero).
+    LineAlgebraicEvaluator(const LineAlgebraicForm& form, const std::map<std::string, Interval>& boxBindings,
+                           bool undefinedAsZero);
+    bool boxMode() const { return _boxMode; }
     bool ok() const { return _refusal.empty(); }
     const std::string& refusal() const { return _refusal; }
     const LineAlgebraicForm& form() const { return *_form; }
@@ -322,6 +338,7 @@ private:
     // sphere/ray switch; the centered form widens like |f′(m)|·w.
     Interval polynomialRange(uint32_t node, double s0, double s1) const;
     Interval polynomialRangeUncached(uint32_t node, double s0, double s1) const;
+    void computeSignFree();
     const LineAlgebraicForm* _form;
     std::map<std::string, double> _bindings;
     bool _undefinedAsZero;
@@ -334,6 +351,7 @@ private:
     // never on switch signs, yet every switch of a classification pass re-reads
     // it. Kernel scratch beneath any property path; makes the evaluator
     // single-threaded (it is ray-lifetime).
+    bool _boxMode = false;
     std::vector<char> _signFree;
     mutable double _memoS0 = 0.0, _memoS1 = -1.0;
     mutable std::vector<Interval> _memoRange;
@@ -354,6 +372,16 @@ public:
 // a piece is only ever called definite by proof, never by sampling. Pieces are
 // contiguous, ordered, and cover [s0, s1]. maxRangeEvaluations is a Kernel
 // budget: when exhausted, the remainder is uncertain (exact fallback).
+// Sound spatial Lipschitz bound of switch k's function over an axis-aligned box:
+// sqrt(Σ_i sup|∂g/∂x_i|²) (Cauchy–Schwarz), each partial enclosed by a box-mode
+// derivative along e_i. `others` binds every non-point symbol (e.g. t as the
+// unbounded interval for a clock-independent certificate). nullopt when any
+// partial is unbounded (sqrt at 0, a possible jump, an unbounded symbol).
+std::optional<double> lipschitzBoundOverBox(const LineAlgebraicForm& form, std::size_t switchIndex,
+                                            const Interval box[3],
+                                            const std::map<std::string, Interval>& others,
+                                            bool undefinedAsZero = true);
+
 struct LineSegmentationPiece {
     double s0 = 0.0, s1 = 0.0;
     bool definite = false;
