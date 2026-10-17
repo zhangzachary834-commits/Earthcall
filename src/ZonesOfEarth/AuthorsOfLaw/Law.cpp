@@ -830,9 +830,8 @@ void ReteNetwork::refillBetaMemory(BetaNode& beta) {
     if (!right) return;
     
     if (beta.leftIsBeta) {
-        auto it = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == beta.leftId; });
-        if (it == _betaNodes.end()) return;
-        const BetaNode* left = &(*it);
+        const BetaNode* left = findBeta(beta.leftId);
+        if (!left) return;
         
         for (const auto& leftToken : left->memory) {
             for (const auto& rightFact : right->memory) {
@@ -868,6 +867,9 @@ std::string ReteNetwork::assertFact(FactPtr fact) {
     if (fact->object)  _factParticipants.insert(fact->object);
     if (fact->subject && fact->isState && fact->type == "relation-state") {
         _relationStateIndex[fact->subject].insert(fact->attribute);
+    }
+    if (!fact->isState) {
+        ++_transientFactCount;
     }
     _facts.push_back(fact);
     const FactPtr& f = fact;
@@ -922,9 +924,8 @@ void ReteNetwork::propagateFact(const FactPtr& f) {
         bool betaActivated = false;
 
         if (beta.leftIsBeta) {
-            auto it = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == beta.leftId; });
-            if (it == _betaNodes.end()) continue;
-            const BetaNode* left = &(*it);
+            const BetaNode* left = findBeta(beta.leftId);
+            if (!left) continue;
             
             if (inLeftBeta) {
                 for (const auto& leftToken : newBetaTokens[beta.leftId]) {
@@ -1031,19 +1032,25 @@ void ReteNetwork::propagateFact(const FactPtr& f) {
 }
 
 void ReteNetwork::retractFirst(std::size_t count) {
-    if (count == 0) return;
-    if (count >= _facts.size()) {
+    if (count == 0 || _transientFactCount == 0) return;
+    if (count > _facts.size()) {
         count = _facts.size();
     }
 
+    std::size_t firstTransient = count;
     std::unordered_set<std::string> removedIds;
-    std::vector<FactPtr> new_facts;
+
     for (std::size_t i = 0; i < count; ++i) {
         if (!_facts[i]->isState) {
+            if (firstTransient == count) {
+                firstTransient = i;
+            }
             removedIds.insert(_facts[i]->id);
-        } else {
-            new_facts.push_back(_facts[i]);
         }
+    }
+
+    if (removedIds.empty()) {
+        return;
     }
 
     std::unordered_set<std::size_t> affectedAlphas;
@@ -1097,10 +1104,23 @@ void ReteNetwork::retractFirst(std::size_t count) {
                                      [&](const FactPtr& f) { return removedIds.count(f->id) != 0; }),
                       _dirtyFacts.end());
 
-    for (std::size_t i = count; i < _facts.size(); ++i) {
-        new_facts.push_back(_facts[i]);
+    if (_transientFactCount >= removedIds.size()) {
+        _transientFactCount -= removedIds.size();
+    } else {
+        _transientFactCount = 0;
     }
-    _facts = std::move(new_facts);
+
+    std::size_t writeIdx = firstTransient;
+    for (std::size_t readIdx = firstTransient; readIdx < _facts.size(); ++readIdx) {
+        if (readIdx < count && !_facts[readIdx]->isState) {
+            continue;
+        }
+        if (writeIdx != readIdx) {
+            _facts[writeIdx] = std::move(_facts[readIdx]);
+        }
+        ++writeIdx;
+    }
+    _facts.erase(_facts.begin() + writeIdx, _facts.end());
 }
 
 void ReteNetwork::detachFactConsequences(const FactPtr& fact) {
@@ -1151,6 +1171,10 @@ bool ReteNetwork::retractFact(const std::string& factId) {
     if (factIt == _factById.end()) return false;
     FactPtr fact = factIt->second;
     _factById.erase(factIt);
+
+    if (!fact->isState && _transientFactCount > 0) {
+        --_transientFactCount;
+    }
 
     if (fact->isState) {
         auto sIt = _stateFactsBySubjectAttr.find(fact->subjectId + ":" + fact->attribute);
@@ -1395,9 +1419,13 @@ std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
     }
     std::unordered_set<std::string> removedIds;
     std::unordered_set<std::string> subjects;
+    std::size_t removedTransientCount = 0;
     _facts.erase(std::remove_if(_facts.begin(), _facts.end(),
                                 [&](const FactPtr& fact) {
                                     if (fact->subject == being || fact->object == being) {
+                                        if (!fact->isState) {
+                                            ++removedTransientCount;
+                                        }
                                         removedIds.insert(fact->id);
                                         if (fact->subject == being && !fact->subjectId.empty()) {
                                             subjects.insert(fact->subjectId);
@@ -1407,6 +1435,11 @@ std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
                                     return false;
                                 }),
                  _facts.end());
+    if (_transientFactCount >= removedTransientCount) {
+        _transientFactCount -= removedTransientCount;
+    } else {
+        _transientFactCount = 0;
+    }
     orphanedSubjects.assign(subjects.begin(), subjects.end());
     _factParticipants.erase(being);
     _relationStateIndex.erase(being);
@@ -1484,6 +1517,7 @@ std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
 
 void ReteNetwork::clearFacts() {
     _facts.clear();
+    _transientFactCount = 0;
     _factParticipants.clear();
     _relationStateIndex.clear();
     _stateFactsBySubjectAttr.clear();
@@ -1526,7 +1560,12 @@ std::size_t ReteNetwork::addBetaNode(const std::string& description,
     node.leftId = leftId;
     node.rightAlphaId = rightAlphaId;
     node.join = std::move(join);
+    const std::size_t id = node.id;
     _betaNodes.push_back(std::move(node));
+    if (id >= _betaIndexById.size()) {
+        _betaIndexById.resize(id + 1, static_cast<std::size_t>(-1));
+    }
+    _betaIndexById[id] = _betaNodes.size() - 1;
     BetaNode& added = _betaNodes.back();
 
     // Creating the beta is what makes its two alphas read. Until now they may
@@ -1578,12 +1617,11 @@ void ReteNetwork::bindLawToBeta(const std::string& lawId, std::size_t betaNodeId
     // Beta memory is kept current from creation onward (addBetaNode refills
     // it), so the backlog is simply whatever the join already holds.
     const std::time_t now = std::time(nullptr);
-    for (const auto& beta : _betaNodes) {
-        if (beta.id != betaNodeId) continue;
-        for (const auto& token : beta.memory) {
+    const BetaNode* beta = findBeta(betaNodeId);
+    if (beta) {
+        for (const auto& token : beta->memory) {
             _agenda.push_back(ReteActivation{lawId, token, now});
         }
-        break;
     }
 }
 
@@ -1819,6 +1857,24 @@ ReteNetwork::AlphaNode* ReteNetwork::findAlpha(std::size_t id) {
     return &_alphaNodes[index];
 }
 
+const ReteNetwork::BetaNode* ReteNetwork::findBeta(std::size_t id) const {
+    if (id >= _betaIndexById.size()) return nullptr;
+    const std::size_t index = _betaIndexById[id];
+    if (index == static_cast<std::size_t>(-1) || index >= _betaNodes.size()) {
+        return nullptr;
+    }
+    return &_betaNodes[index];
+}
+
+ReteNetwork::BetaNode* ReteNetwork::findBeta(std::size_t id) {
+    if (id >= _betaIndexById.size()) return nullptr;
+    const std::size_t index = _betaIndexById[id];
+    if (index == static_cast<std::size_t>(-1) || index >= _betaNodes.size()) {
+        return nullptr;
+    }
+    return &_betaNodes[index];
+}
+
 std::vector<Singular*> ReteNetwork::collectTerminalSubjects(
     const std::vector<std::size_t>& terminalIds) const {
     // Collect unique subjects from terminal node memories.
@@ -1837,10 +1893,10 @@ std::vector<Singular*> ReteNetwork::collectTerminalSubjects(
             }
             continue;
         }
-        // Check beta nodes.
-        for (const auto& beta : _betaNodes) {
-            if (beta.id != termId) continue;
-            for (const auto& token : beta.memory) {
+        // Check beta nodes using O(1) index lookup.
+        const BetaNode* beta = findBeta(termId);
+        if (beta) {
+            for (const auto& token : beta->memory) {
                 Singular* subj = nullptr;
                 for (const auto& fact : token.facts) {
                     if (fact->subject) { subj = fact->subject; break; }
@@ -1849,7 +1905,6 @@ std::vector<Singular*> ReteNetwork::collectTerminalSubjects(
                     result.push_back(subj);
                 }
             }
-            break;
         }
     }
     return result;
@@ -2492,6 +2547,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     _tickTiming.driveMs = static_cast<float>((T4 - T3) * 1000.0);
     _tickTiming.reapMs  = static_cast<float>((T5 - T4) * 1000.0);
     _tickTiming.totalMs = static_cast<float>((T5 - T0) * 1000.0);
+
 
     return records;
 }

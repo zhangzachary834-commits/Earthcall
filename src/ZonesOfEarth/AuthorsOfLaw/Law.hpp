@@ -568,6 +568,7 @@ public:
     void retractFirst(std::size_t count);
     void clearFacts();
     const std::vector<FactPtr>& facts() const { return _facts; }
+    std::size_t transientFactCount() const { return _transientFactCount; }
 
     // Is a live relation-state fact already keyed on this being and type?
     //
@@ -734,6 +735,8 @@ public:
 private:
     const AlphaNode* findAlpha(std::size_t id) const;
     AlphaNode* findAlpha(std::size_t id);
+    const BetaNode* findBeta(std::size_t id) const;
+    BetaNode* findBeta(std::size_t id);
     void propagateFact(const FactPtr& fact);
     void detachFactConsequences(const FactPtr& fact);
     void refreshStateFact(const FactPtr& fact, nlohmann::json newValue);
@@ -767,6 +770,7 @@ private:
     static ReteToken joinedToken(const ReteToken& left, const FactPtr& right);
 
     std::vector<FactPtr> _facts;
+    std::size_t _transientFactCount{0};
     // Every being that has ever been a fact's subject or object, so
     // retractFactsAbout can answer "this one has no facts" in O(1) instead of
     // scanning the table. It fires on EVERY Singular destructor — including
@@ -813,6 +817,7 @@ private:
     // alpha ids) contain size_t(-1). Cost therefore follows historical max id,
     // not only the number of currently live alpha nodes.
     std::vector<std::size_t> _alphaIndexById;
+    std::vector<std::size_t> _betaIndexById;
     // ONE counter for both tables. Alpha and beta ids are handed to callers as
     // bare `std::size_t` and are told apart afterwards by isAlphaNode(), which
     // answers by looking the id up in the alpha table — so two independent
