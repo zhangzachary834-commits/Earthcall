@@ -1418,9 +1418,25 @@ bool conditionKindPalette(ConditionNode& node) {
     if (ImGui::BeginPopup("condition-kind-palette")) {
         ImGui::TextColored(kHeaderColor, "CHOOSE WHAT MUST BE TRUE");
         ImGui::TextDisabled("Grouped by meaning; this changes the selected condition card.");
+
+        static char searchBuf[64] = "";
+        if (ImGui::IsWindowAppearing()) {
+            searchBuf[0] = '\0';
+            ImGui::SetKeyboardFocusHere();
+        }
+        ImGui::SetNextItemWidth(-1.0f);
+        ImGui::InputTextWithHint("##condition_search", "Search...", searchBuf, sizeof(searchBuf));
+
         ImGui::Separator();
         const char* group = nullptr;
         for (const auto& choice : choices) {
+            if (searchBuf[0] != '\0' &&
+                !(choice.title && searchMatches(choice.title, searchBuf)) &&
+                !(choice.summary && searchMatches(choice.summary, searchBuf)) &&
+                !(choice.group && searchMatches(choice.group, searchBuf))) {
+                continue;
+            }
+
             if (!group || std::strcmp(group, choice.group) != 0) {
                 group = choice.group;
                 ImGui::Spacing();
@@ -1834,9 +1850,25 @@ bool actionKindPalette(ActionNode& node) {
     if (ImGui::BeginPopup("action-kind-palette")) {
         ImGui::TextColored(kHeaderColor, "CHOOSE WHAT THIS LAW DOES");
         ImGui::TextDisabled("Grouped by intent; this changes the selected action card.");
+
+        static char searchBuf[64] = "";
+        if (ImGui::IsWindowAppearing()) {
+            searchBuf[0] = '\0';
+            ImGui::SetKeyboardFocusHere();
+        }
+        ImGui::SetNextItemWidth(-1.0f);
+        ImGui::InputTextWithHint("##action_search", "Search...", searchBuf, sizeof(searchBuf));
+
         ImGui::Separator();
         const char* group = nullptr;
         for (const auto& choice : choices) {
+            if (searchBuf[0] != '\0' &&
+                !(choice.title && searchMatches(choice.title, searchBuf)) &&
+                !(choice.summary && searchMatches(choice.summary, searchBuf)) &&
+                !(choice.group && searchMatches(choice.group, searchBuf))) {
+                continue;
+            }
+
             if (!group || std::strcmp(group, choice.group) != 0) {
                 group = choice.group;
                 ImGui::Spacing();
