@@ -160,12 +160,19 @@ void RelationManager::rebuildEndpointIndex() const {
     _byEndpoint.clear();
     _byIdentifier.clear();
     _sharedByPointer.clear();
+    _boundIds.clear();
     for (const auto& owned : relations) {
         Relation* r = owned.get();
         if (!r) continue;
         _sharedByPointer[r] = owned;
-        if (Singular* a = r->a()) _byEndpoint[a].push_back(r);
-        if (Singular* b = r->b(); b && b != r->a()) _byEndpoint[b].push_back(r);
+        if (Singular* a = r->a()) {
+            _byEndpoint[a].push_back(r);
+            _boundIds[a] = a->getIdentifier();
+        }
+        if (Singular* b = r->b(); b && b != r->a()) {
+            _byEndpoint[b].push_back(r);
+            _boundIds[b] = b->getIdentifier();
+        }
         // aId()/bId(): a bound endpoint's live name, an unbound one's kept name.
         // Reading it here also fills the endpoint's cached id, which is what
         // lets Relation::Endpoint::forget() keep the name when the being dies.
@@ -178,29 +185,23 @@ void RelationManager::rebuildEndpointIndex() const {
         if (!bId.empty() && bId != aId) _byIdentifier[bId].push_back(r);
     }
     _indexedGeneration = _generation;
+    _allEndpointsFresh = true;
 }
 
-std::vector<std::shared_ptr<Relation>> RelationManager::findLiveRenamedRelations(const std::string& identifier) const {
-    for (const auto& [being, rels] : _byEndpoint) {
-        if (being && being->getIdentifier() == identifier) {
+void RelationManager::ensureEndpointFreshness() const {
+    if (_indexedGeneration != _generation) {
+        rebuildEndpointIndex();
+        return;
+    }
+    if (_allEndpointsFresh) return;
+
+    for (const auto& [being, cachedId] : _boundIds) {
+        if (being && being->getIdentifier() != cachedId) {
             rebuildEndpointIndex();
-            auto it = _byIdentifier.find(identifier);
-            if (it != _byIdentifier.end()) {
-                std::vector<std::shared_ptr<Relation>> result;
-                result.reserve(it->second.size());
-                for (Relation* r : it->second) {
-                    if (r && r->involves(identifier)) {
-                        auto sharedIt = _sharedByPointer.find(r);
-                        if (sharedIt != _sharedByPointer.end()) {
-                            result.push_back(sharedIt->second);
-                        }
-                    }
-                }
-                return result;
-            }
+            return;
         }
     }
-    return {};
+    _allEndpointsFresh = true;
 }
 
 void RelationManager::relationsInvolving(const Singular& being, std::vector<Relation*>& out) const {
@@ -439,7 +440,7 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const Sin
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const std::string& identifier) const {
     if (identifier.empty()) return {};
-    if (_indexedGeneration != _generation) rebuildEndpointIndex();
+    ensureEndpointFreshness();
 
     auto it = _byIdentifier.find(identifier);
     if (it != _byIdentifier.end()) {
@@ -456,7 +457,26 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const std
         return result;
     }
 
-    return findLiveRenamedRelations(identifier);
+    // Map miss: check if an un-notified live rename invalidated our cache
+    _allEndpointsFresh = false;
+    ensureEndpointFreshness();
+
+    it = _byIdentifier.find(identifier);
+    if (it != _byIdentifier.end()) {
+        std::vector<std::shared_ptr<Relation>> result;
+        result.reserve(it->second.size());
+        for (Relation* r : it->second) {
+            if (r && r->involves(identifier)) {
+                auto sharedIt = _sharedByPointer.find(r);
+                if (sharedIt != _sharedByPointer.end()) {
+                    result.push_back(sharedIt->second);
+                }
+            }
+        }
+        return result;
+    }
+
+    return {};
 }
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(const Singular& a, const Singular& b) const {
@@ -476,7 +496,7 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(cons
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(const std::string& a, const std::string& b) const {
     if (a.empty() || b.empty()) return {};
-    if (_indexedGeneration != _generation) rebuildEndpointIndex();
+    ensureEndpointFreshness();
 
     auto it = _byIdentifier.find(a);
     if (it != _byIdentifier.end()) {
@@ -492,7 +512,10 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(cons
         return result;
     }
 
-    findLiveRenamedRelations(a);
+    // Map miss: check if an un-notified live rename invalidated our cache
+    _allEndpointsFresh = false;
+    ensureEndpointFreshness();
+
     it = _byIdentifier.find(a);
     if (it != _byIdentifier.end()) {
         std::vector<std::shared_ptr<Relation>> result;
@@ -542,11 +565,12 @@ void RelationManager::loadFromJson(const nlohmann::json& j, const RelationEndpoi
 
 std::vector<std::string> RelationManager::findAdjacentEntities(const std::string& entityId, const std::string& relationType) const {
     if (entityId.empty()) return {};
-    if (_indexedGeneration != _generation) rebuildEndpointIndex();
+    ensureEndpointFreshness();
 
     auto it = _byIdentifier.find(entityId);
     if (it == _byIdentifier.end()) {
-        findLiveRenamedRelations(entityId);
+        _allEndpointsFresh = false;
+        ensureEndpointFreshness();
         it = _byIdentifier.find(entityId);
     }
 
