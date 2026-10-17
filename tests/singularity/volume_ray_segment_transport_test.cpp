@@ -523,7 +523,20 @@ int main() {
     // ---- Census of real authored media (read-only) ------------------------
     {
         namespace fs = std::filesystem;
-        fs::path root = fs::exists("saves/zones") ? fs::path("saves/zones") : fs::path("../saves/zones");
+        // Other suite tests create fixture Zones under the build directory's own
+        // saves/zones; the census reads whichever candidate holds the most Zones
+        // (the frozen snapshot), never merely the first that exists.
+        fs::path root = "../saves/zones";
+        {
+            std::size_t best = 0;
+            for (const char* candidate : {"saves/zones", "../saves/zones"}) {
+                std::error_code ec;
+                if (!fs::is_directory(candidate, ec)) continue;
+                std::size_t zones = 0;
+                for (const auto& entry : fs::directory_iterator(candidate, ec)) zones += entry.is_directory() ? 1u : 0u;
+                if (zones > best) { best = zones; root = candidate; }
+            }
+        }
         int media = 0, densityAdmitted = 0, allAdmitted = 0, rung2Candidates = 0,
             radialCandidates = 0, noiseBearing = 0;
         bool northernVeilSeen = false, northernVeilRefused = true;

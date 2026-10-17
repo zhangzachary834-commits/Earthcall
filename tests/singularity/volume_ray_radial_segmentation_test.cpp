@@ -343,7 +343,20 @@ int main() {
     // ---- Real authored media: soundness and sample demand vs the zero-proof grid
     {
         namespace fs = std::filesystem;
-        const fs::path root = fs::exists("saves/zones") ? fs::path("saves/zones") : fs::path("../saves/zones");
+        // Other suite tests create fixture Zones under the build directory's own
+        // saves/zones; the census reads whichever candidate holds the most Zones
+        // (the frozen snapshot), never merely the first that exists.
+        fs::path root = "../saves/zones";
+        {
+            std::size_t best = 0;
+            for (const char* candidate : {"saves/zones", "../saves/zones"}) {
+                std::error_code ec;
+                if (!fs::is_directory(candidate, ec)) continue;
+                std::size_t zones = 0;
+                for (const auto& entry : fs::directory_iterator(candidate, ec)) zones += entry.is_directory() ? 1u : 0u;
+                if (zones > best) { best = zones; root = candidate; }
+            }
+        }
         struct Totals { uint64_t samples = 0, empty = 0, constant = 0, grid = 0, both = 0, violations = 0; double us = 0; uint64_t rays = 0;
                         uint64_t traced = 0, tracedOrGrid = 0, tracePoints = 0, traceSetup = 0, traceViolations = 0; double traceUs = 0;
                         uint64_t certTraced = 0, certPoints = 0, certViolations = 0; double certUs = 0; };
