@@ -399,7 +399,7 @@ static void testSaveSystemEnforcesTheRegister() {
     assert(reg.trustAuthenticatedPerson(zach));
     assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
                          FirstMover::Kind::Model, "claude-fable-5",
-                         {"worlds/test_*.ecform"}, 1000));
+                         {"worlds/test_*.ecsave"}, 1000));
 
     {
         Identity::FirstMoverSession session(reg, model.id());
@@ -414,7 +414,7 @@ static void testSaveSystemEnforcesTheRegister() {
         std::string refused = SaveSystem::writeSaveData(payload, "production_world",
                                                         SaveSystem::SaveType::WORLD);
         assert(refused.empty());
-        assert(!std::filesystem::exists("saves/worlds/production_world.ecform"));
+        assert(!std::filesystem::exists("saves/worlds/production_world.ecsave"));
 
         // 4. A different save TYPE is a different directory, so the scope
         //    does not reach it even with a matching stem.
