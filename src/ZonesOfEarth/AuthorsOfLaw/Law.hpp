@@ -335,6 +335,9 @@ public:
     const std::vector<std::string>& requiredProperties() const { return _requiredProperties; }
     const std::vector<ConditionPredicate>& compiledGates() const { return _compiledGates; }
     bool writesQualifiedRoots() const { return _writesQualifiedRoots; }
+    bool writesMotionProperties() const { return _writesMotionProperties; }
+    bool writesZoneCanExit() const { return _writesZoneCanExit; }
+    bool writesZoneOwner() const { return _writesZoneOwner; }
     bool couldApplyTo(Singular& being) const;
 
     void setConditionModel(ConditionModel model);
@@ -464,6 +467,9 @@ private:
     std::vector<std::string> _requiredProperties;   // derived at recompile()
     std::vector<ConditionPredicate> _compiledGates;
     bool _writesQualifiedRoots{false};
+    bool _writesMotionProperties{false};
+    bool _writesZoneCanExit{false};
+    bool _writesZoneOwner{false};
 };
 
 struct LawRegisteredEvent {
