@@ -8,6 +8,7 @@
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/TransferPolicy.hpp"
+#include "Person/Person.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -158,6 +159,46 @@ int main() {
     // Declared parameters are never guessed.
     request.setDynamicProperty(SecondNatureLawAuthoring::kTargetProperty,
                                PropertyValue(std::string("no-such-being")));
+    assert(!SecondNatureLawAuthoring::instantiate(invoke));
+    assert(readString(request, SecondNatureLawAuthoring::kStatusProperty) ==
+           "refused: prototype requires a selected target");
+
+    // Test Person name-addressing and ambiguous same-spelled Person refusal.
+    auto makePerson = [](const std::string& name) {
+        Soul soul(name);
+        Body body("Humanoid", "Voxel");
+        Person person(soul, std::move(body), "");
+        person.setDisplayName(name);
+        return person;
+    };
+
+    Person personA = makePerson("Zach");
+
+    // Single Person named "Zach": resolves unambiguously.
+    request.setDynamicProperty(SecondNatureLawAuthoring::kTargetProperty,
+                               PropertyValue(std::string("Zach")));
+    Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+        beings.push_back(&author);
+        beings.push_back(&personA);
+        beings.push_back(&request);
+        for (const auto& law : laws.getAll()) {
+            if (law) beings.push_back(law.get());
+        }
+    });
+    assert(SecondNatureLawAuthoring::instantiate(invoke));
+
+    // Two distinct Persons with identical display name "Zach": ambiguous, must refuse.
+    Person personB = makePerson("Zach");
+
+    Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+        beings.push_back(&author);
+        beings.push_back(&personA);
+        beings.push_back(&personB);
+        beings.push_back(&request);
+        for (const auto& law : laws.getAll()) {
+            if (law) beings.push_back(law.get());
+        }
+    });
     assert(!SecondNatureLawAuthoring::instantiate(invoke));
     assert(readString(request, SecondNatureLawAuthoring::kStatusProperty) ==
            "refused: prototype requires a selected target");
