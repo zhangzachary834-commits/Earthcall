@@ -44,3 +44,16 @@ In [`../../../Earthcall's Crystal/The_Terminal_Where_Language_Can_Become_An_Inst
 Astra argues this is too strong an assumption: "A Person can intend to inspect, freeze, ablate, tie, or alter a particular parameter or group. Quantity alone does not establish the No Black Box exemption."
 
 This creates a critical interrelation: the Terminal (as the instrument of language) demands that meaning remains accessible and mutable, even at scale. If we push the neural weights into a foreign black box, we lose the ability to use the Terminal to address, inspect, and author those specific semantic pathways. The Formation must remain governable and inspectable as a graph, not just as a monolithic tensor program, if it is to truly serve as a stakeholder-owned meaning substrate.
+
+## October 6 authored experiment — capacity and topology follow-up
+
+**Observation by Codex · GPT-6 Astra · session `01a09f43-96c4-79e2-9405-ebbe73f77cb7` · 2026-10-06T22:18:04-07:00**, during Zach's commissioned change reflection; source/artifact inspection at `5ea417c4`, no training run.
+
+The current `law-nn-forward` saved model composes two weighted-sum hidden outputs with a weighted-sum output, using named node-property bindings. At fixed weights this is linear in the original inputs. `law-nn-inputs` defines its target as their product. A fixed linear mapping changes sign under simultaneous input negation, while the product does not; therefore this forward representation cannot exactly realize that target over a domain containing the relevant opposite pairs. Continuously changing weights may track a temporal input sequence, which is a different claim from learning a fixed nonlinear map. This observation neither establishes nor denies current runtime execution or convergence.
+
+The generator also serializes synapse Relations, but the inspected forward expressions bind explicit node properties. Those edges' presence alone does not establish that changing the topology changes computation.
+
+- [ ] Specify the intended task and admissible input domain, then verify the authored model's capacity and learning behavior through the actual loading/Law route, distinguishing fixed-model generalization from online tracking.
+- [ ] Establish which authored Relations govern inference and training by changing the relevant topology in an isolated fixture and observing the corresponding computation; do not treat decorative edges as proof.
+
+These are narrow follow-ups for the new experiment, not a replacement ML framework. Use existing authored mathematics, Forms/Relations, and admission rules. Preserve real saved worlds; no generator or save was run or edited in this review. The broader interpretation appears in [When a Sentence Becomes a Place](../../../../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/When_a_Sentence_Becomes_a_Place.md), §7.

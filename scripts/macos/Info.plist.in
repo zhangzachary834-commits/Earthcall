@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Earthcall.app's Info.plist. package_app.sh substitutes the @TOKENS@. -->
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>      <string>en</string>
+    <key>CFBundleExecutable</key>             <string>Earthcall</string>
+    <key>CFBundleIdentifier</key>             <string>@BUNDLE_ID@</string>
+    <key>CFBundleInfoDictionaryVersion</key>  <string>6.0</string>
+    <key>CFBundleName</key>                   <string>Earthcall</string>
+    <key>CFBundleDisplayName</key>            <string>Earthcall</string>
+    <key>CFBundlePackageType</key>            <string>APPL</string>
+    <key>CFBundleShortVersionString</key>     <string>@VERSION@</string>
+    <key>CFBundleVersion</key>                <string>@BUILD@</string>
+    <key>EarthcallSourceCommit</key>          <string>@COMMIT@</string>
+    <key>CFBundleIconFile</key>               <string>AppIcon</string>
+    <key>LSMinimumSystemVersion</key>         <string>13.0</string>
+    <key>LSApplicationCategoryType</key>      <string>public.app-category.graphics-design</string>
+    <key>NSHighResolutionCapable</key>        <true/>
+    <key>NSSupportsAutomaticGraphicsSwitching</key> <true/>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Earthcall listens only when you start a recording or speak to a Law that hears sound.</string>
+</dict>
+</plist>

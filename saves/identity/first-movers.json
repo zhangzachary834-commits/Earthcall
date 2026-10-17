@@ -1,0 +1,24 @@
+{
+  "movers": [
+    {
+      "displayName": "Claude Sonnet 4.5",
+      "grant": {
+        "issuedAt": 1790881692,
+        "issuer": "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga",
+        "nonce": "43feeda1788a60f65a48d0dc10584d73",
+        "object": "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga",
+        "predicate": "first-mover:model:23:laws/screen-recorder/**;16:laws/sonnet-*/**;21:zones/SonnetGarden/**;",
+        "signature": "3deee49679b17b617cb46900f52a897be23b38d366dd73c7111154891ea09eb1896cc22981e3a4dd5436ea7fa60c2804ab379887419f86b304c3fa5ade124b03",
+        "subject": "did:earthcall:ynqocokbbbzoiirpkw5ew47pxaz3zps7estt4e6frsm32iboqnja"
+      },
+      "grantedBy": "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga",
+      "id": "did:earthcall:ynqocokbbbzoiirpkw5ew47pxaz3zps7estt4e6frsm32iboqnja",
+      "kind": "model",
+      "scopes": [
+        "zones/SonnetGarden/**",
+        "laws/sonnet-*/**",
+        "laws/screen-recorder/**"
+      ]
+    }
+  ]
+}

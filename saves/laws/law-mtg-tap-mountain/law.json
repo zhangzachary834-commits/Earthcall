@@ -1,0 +1,95 @@
+{
+  "authors": [
+    "author.antigravity"
+  ],
+  "identifier": "law-mtg-tap-mountain",
+  "injected_by": "Antigravity, 2026-10-11 MTG Zone Law",
+  "law": {
+    "actionDescriptions": [
+      "sequence"
+    ],
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 0,
+          "path": "isTapped",
+          "operand": {
+            "t": "int",
+            "v": 1
+          },
+          "desc": "set(isTapped)"
+        },
+        {
+          "kind": 0,
+          "path": "rotation.y",
+          "operand": {
+            "t": "float",
+            "v": 90.0
+          },
+          "desc": "set(rotation.y)"
+        },
+        {
+          "kind": 1,
+          "path": "@state.mtg.manaRed",
+          "operand": {
+            "t": "int",
+            "v": 1
+          },
+          "desc": "add(@state.mtg.manaRed)"
+        }
+      ],
+      "desc": "sequence"
+    },
+    "activation": 0,
+    "authority": 0,
+    "authors": [
+      "author.antigravity"
+    ],
+    "conditionDescriptions": [
+      "all"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "card.mountain_1",
+          "desc": "identity(card.mountain_1)"
+        },
+        {
+          "kind": 0,
+          "path": "zone",
+          "op": 0,
+          "desc": "compare(zone)",
+          "operand": {
+            "t": "string",
+            "v": "battlefield"
+          }
+        },
+        {
+          "kind": 0,
+          "path": "isTapped",
+          "op": 0,
+          "desc": "compare(isTapped)",
+          "operand": {
+            "t": "int",
+            "v": 0
+          }
+        }
+      ],
+      "desc": "all"
+    },
+    "drives": false,
+    "enabled": true,
+    "id": "law-mtg-tap-mountain",
+    "name": "mtg-tap-mountain",
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}

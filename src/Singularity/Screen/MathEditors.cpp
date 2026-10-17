@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstring>
+#include <limits>
 #include <string>
 
 namespace Rendering {
@@ -535,6 +536,60 @@ void editFunctionRegistry() {
     }
 }
 
+void initializeMathNodeForEditor(OntoMath::MathNode& node, OntoMath::MathNode::Op op) {
+    using Op = OntoMath::MathNode::Op;
+
+    node.op = op;
+
+    auto makeScalarZero = []() {
+        auto child = std::make_unique<OntoMath::MathNode>();
+        child->op = Op::ScalarLeaf;
+        child->scalarForm = OntoMath::ScalarForm::constant(0.0);
+        return child;
+    };
+
+    auto resizeChildren = [&](std::size_t count) {
+        node.children.resize(count);
+        for (auto& child : node.children) {
+            if (!child) child = makeScalarZero();
+        }
+    };
+
+    switch (op) {
+        case Op::MatrixConstruct:
+            if (node.matrixRows == 0) node.matrixRows = 2;
+            if (node.matrixCols == 0) node.matrixCols = 2;
+            if (node.matrixRows > std::numeric_limits<std::size_t>::max() / node.matrixCols) {
+                node.matrixRows = 2;
+                node.matrixCols = 2;
+            }
+            resizeChildren(node.matrixRows * node.matrixCols);
+            break;
+        case Op::MatrixIdentity:
+            if (node.matrixRows == 0) node.matrixRows = 4;
+            node.matrixCols = node.matrixRows;
+            node.children.clear();
+            break;
+        case Op::MatrixAdd:
+        case Op::MatrixSub:
+        case Op::MatrixScale:
+        case Op::MatrixMultiply:
+        case Op::MatrixVectorMultiply:
+            node.matrixRows = node.matrixCols = 0;
+            resizeChildren(2);
+            break;
+        case Op::MatrixTranspose:
+        case Op::MatrixDeterminant:
+        case Op::MatrixInverse:
+            node.matrixRows = node.matrixCols = 0;
+            resizeChildren(1);
+            break;
+        default:
+            node.matrixRows = node.matrixCols = 0;
+            break;
+    }
+}
+
 bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings) {
     bool changed = false;
 
@@ -578,7 +633,17 @@ bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings) {
         { OntoMath::MathNode::Op::Clamp, "Clamp", 3, false, false, false, nullptr },
         { OntoMath::MathNode::Op::Sqrt, "Sqrt", 1, false, false, false, nullptr },
         { OntoMath::MathNode::Op::Tan, "Tan", 1, false, false, false, nullptr },
-        { OntoMath::MathNode::Op::Noise, "Noise", 1, false, false, false, nullptr }
+        { OntoMath::MathNode::Op::Noise, "Noise", 1, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::MatrixConstruct, "Matrix Construct", 0, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::MatrixIdentity, "Identity Matrix", 0, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::MatrixAdd, "Matrix Add (+)", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::MatrixSub, "Matrix Subtract (-)", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::MatrixScale, "Scalar × Matrix", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::MatrixMultiply, "Matrix × Matrix", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::MatrixVectorMultiply, "Matrix × Vector", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::MatrixTranspose, "Matrix Transpose", 1, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::MatrixDeterminant, "Matrix Determinant", 1, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::MatrixInverse, "Matrix Inverse", 1, false, false, false, nullptr }
     };
 
     constexpr int numDescriptors = sizeof(descriptors) / sizeof(descriptors[0]);
@@ -609,7 +674,12 @@ bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings) {
         const char* previousGroup = nullptr;
         for (int i = 0; i < numDescriptors; ++i) {
             if (!containsCaseInsensitive(descriptors[i].name, opSearch)) continue;
-            const char* group = i <= 3 ? "VALUES"
+            const auto candidateOp = descriptors[i].op;
+            const bool matrixOp =
+                static_cast<int>(candidateOp) >= static_cast<int>(OntoMath::MathNode::Op::MatrixConstruct) &&
+                static_cast<int>(candidateOp) <= static_cast<int>(OntoMath::MathNode::Op::MatrixInverse);
+            const char* group = matrixOp ? "MATRICES"
+                                : i <= 3 ? "VALUES"
                                 : i <= 10 ? "ARITHMETIC & VECTORS"
                                 : i <= 14 ? "TRANSFORMS"
                                 : i <= 23 ? "SPACE & FIELDS"
@@ -620,7 +690,7 @@ bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings) {
             }
             if (ImGui::Selectable(descriptors[i].name, i == currentOpIndex,
                                   0, ImVec2(0.0f, 31.0f))) {
-                node.op = descriptors[i].op;
+                initializeMathNodeForEditor(node, descriptors[i].op);
                 currentOpIndex = i;
                 changed = true;
                 opSearch[0] = '\0';
@@ -633,8 +703,55 @@ bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings) {
 
     const auto& desc = descriptors[currentOpIndex];
 
-    if (node.children.size() != desc.requiredChildren) {
-        node.children.resize(desc.requiredChildren);
+    if (node.op == OntoMath::MathNode::Op::MatrixConstruct) {
+        int rows = static_cast<int>(std::min<std::size_t>(
+            node.matrixRows ? node.matrixRows : 2,
+            static_cast<std::size_t>(std::numeric_limits<int>::max())));
+        int cols = static_cast<int>(std::min<std::size_t>(
+            node.matrixCols ? node.matrixCols : 2,
+            static_cast<std::size_t>(std::numeric_limits<int>::max())));
+
+        fieldCaption("Matrix dimensions", "rows × columns; dimensions are authored mathematics");
+        ImGui::SetNextItemWidth(120.0f);
+        bool shapeChanged = ImGui::InputInt("Rows##matrix", &rows);
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(120.0f);
+        shapeChanged = ImGui::InputInt("Columns##matrix", &cols) || shapeChanged;
+
+        if (shapeChanged) {
+            rows = std::max(1, rows);
+            cols = std::max(1, cols);
+            node.matrixRows = static_cast<std::size_t>(rows);
+            node.matrixCols = static_cast<std::size_t>(cols);
+            initializeMathNodeForEditor(node, node.op);
+            changed = true;
+        }
+    } else if (node.op == OntoMath::MathNode::Op::MatrixIdentity) {
+        int dim = static_cast<int>(std::min<std::size_t>(
+            node.matrixRows ? node.matrixRows : 4,
+            static_cast<std::size_t>(std::numeric_limits<int>::max())));
+        fieldCaption("Identity dimension");
+        ImGui::SetNextItemWidth(120.0f);
+        if (ImGui::InputInt("Dimension##identity", &dim)) {
+            dim = std::max(1, dim);
+            node.matrixRows = node.matrixCols = static_cast<std::size_t>(dim);
+            initializeMathNodeForEditor(node, node.op);
+            changed = true;
+        }
+    }
+
+    std::size_t requiredChildren = desc.requiredChildren;
+    if (node.op == OntoMath::MathNode::Op::MatrixConstruct) {
+        if (node.matrixRows == 0 || node.matrixCols == 0 ||
+            node.matrixRows > std::numeric_limits<std::size_t>::max() / node.matrixCols) {
+            requiredChildren = 0;
+        } else {
+            requiredChildren = node.matrixRows * node.matrixCols;
+        }
+    }
+
+    if (node.children.size() != requiredChildren) {
+        node.children.resize(requiredChildren);
         for (auto& child : node.children) {
             if (!child) {
                 child = std::make_unique<OntoMath::MathNode>();
@@ -677,7 +794,15 @@ bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings) {
 
     for (std::size_t i = 0; i < node.children.size(); ++i) {
         ImGui::PushID(static_cast<int>(i));
-        if (ImGui::TreeNode((void*)(intptr_t)i, "Child %zu", i + 1)) {
+        const bool isMatrixElement =
+            node.op == OntoMath::MathNode::Op::MatrixConstruct &&
+            node.matrixCols > 0;
+        const std::size_t matrixRow = isMatrixElement ? i / node.matrixCols : 0;
+        const std::size_t matrixCol = isMatrixElement ? i % node.matrixCols : 0;
+        const bool open = isMatrixElement
+            ? ImGui::TreeNode((void*)(intptr_t)i, "Element [%zu,%zu]", matrixRow, matrixCol)
+            : ImGui::TreeNode((void*)(intptr_t)i, "Child %zu", i + 1);
+        if (open) {
             if (node.children[i]) {
                 if (editMathNode(*node.children[i], bindings)) changed = true;
             }

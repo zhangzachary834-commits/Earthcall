@@ -37,11 +37,24 @@
 - [x] §13.4 object/property provenance: foreign spawns and writes are now recorded via `addStakeholder` in WebSocketServer.cpp.
 - [x] `onBehalfOf` is on the wire for property_write and spawn_object, correctly recorded in provenance context.
 - Person login is still headless (env passphrase). No interactive unlock UI.
-- [x] The register is now a Singular `first-movers` overriding `getIdentifier` and `buildProperties`.
+- [x] The register is now a Singular `first-movers` overriding `getIdentifier` and `buildProperties`. (2026-09-30, Opus 5.5: Gemini's `buildProperties()` was empty, the black box Refusal 6 forbids; it now registers read-only `moverCount`, `personPresent`, `saveRoot`, `activeMover`.)
 - [x] A mover-authored Law.s reach *when it fires* is governed by Law authority/targets/TransferPolicy, not by the mover.s file scope. Decide whether fire-time reach should also be bounded by the author.s scope (Decided: NO. Reach is bounded at injection time. Documented in FIRST_MOVER_AUTHORING.md).
-- [x] Legacy socket clients bypass mutation rejection gracefully using `legacy-person-session` when `Relation::s_developerMode` is active.
+  - ⚑ AUTHOR, still Zach's: this was listed as "decide", and a Gemini pass (2026-09-27) decided it and wrote FIRST_MOVER_AUTHORING.md §9. Opus 5.5 did not reverse it, but it has not been ratified by Zach.
+- [ ] ~~Legacy socket clients bypass mutation rejection via `legacy-person-session` when `Relation::s_developerMode` is active.~~ **REMOVED 2026-09-30 (Opus 5.5).** `s_developerMode` defaults to `true`, so this admitted *every* unauthenticated socket client. It also could not work: the minted mover had no standing, so SaveSystem refused its writes and its Laws came out Unauthored. `first_mover_websocket_test` had been switched to `s_developerMode = false`, which is how it stayed green. It now runs with dev mode on and asserts the refusal. `bridge.py` still needs its own First Mover.
 - Signer custody: the mover passphrase lives in env or the Keychain; a process running as the user can still read the user's Keychain.
 - [x] Merge seam: Already resolved in master via unique_ptr refactor.
+
+### Follow-up — 2026-09-30 (Claude Opus 5.5, session `08b0f730-6e49-4c49-b27f-3a89c810ca4b`)
+
+Zach: "MAKE SURE THE SDFS WORK … MAKE SURE VOLUMETRICS CAN BE AUTHORED … MAKE SURE SONNET CAN USE THE NEW LAW AUTHORING CLI TOO".
+
+| Surface | What landed | Witness |
+|---|---|---|
+| SDF | `geom::parseSdfShorthand`: `sphere/box/roundBox/ellipsoid/cylinder/cone/torus`, `union/intersect/subtract/smoothUnion/morph`, `move`. It builds the existing SdfNode tree. The MCP tool had advertised this syntax while the only string path was the implicit compiler, so every example spawned *nothing* and answered "success". Unparseable text is now refused. One `sdfFromText` serves spawn_field, `field.expr` and volume occluders. | `mcp_authoring_surfaces_test` (exact CPU distances + real WGSL compile for 7 shapes), `mcp_sdf_contract_test` |
+| Volumes | Socket `author_field_node` / MCP `earthcall_author_volume`: a Zone-owned FieldNode with density/extinction/scattering/chroma/phase/emission/occluder. Expression strings go through the faithful lift and are refused when inexact; Piecewise JSON is accepted as-is. `property_write` now finds FieldNodes and scopes them by owning Zone, and accepts JSON documents for `.ast`/`.sdf` paths. | discovered by `readVolumeDensity`, accepted by `inspectDensity/Extinction/ScatteringExpression` and `sdfwgsl::compile(Authored)`, persisted and round-tripped via `readZoneIdentity`, refused outside scope |
+| Law Line | `TerminalChannel::authorForeign`, sharing one `enact()` with `speak`; socket `law_sentence` / MCP `earthcall_law_sentence`. Needs scope over the Law path *and* the active Zone (adoption edits lawRefs), then persists. `?`/`??` read-only. | Law authored by the mover with its trigger and operand; socket gate refusals; real bridge |
+
+Found along the way (To-Do): `LawManager` never unsubscribes from EventBus in its destructor (dangling handler); `law_line_test` fails at HEAD (`"shared spelling"` is written to `description`, the test reads `detail`); `ActionNode::describe()` omits Set operands.
 
 ---
 

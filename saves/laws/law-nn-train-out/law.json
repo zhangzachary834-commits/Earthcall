@@ -1,0 +1,98 @@
+{
+    "identifier": "law-nn-train-out",
+    "authors": [
+        "Zach"
+    ],
+    "injected_by": "Antigravity - ML Relations",
+    "law": {
+        "id": "law-nn-train-out",
+        "name": "NN Train Output",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+            "Zach"
+        ],
+        "conditionModel": {
+            "kind": 3,
+            "children": []
+        },
+        "actionModel": {
+            "kind": 5,
+            "children": [
+                {
+                    "kind": 9,
+                    "path": "@node-out.authored.w1",
+                    "bindings": {
+                        "tgt": "@node-target.authored.activation",
+                        "out": "@node-out.authored.activation",
+                        "h1": "@node-h-1.authored.activation"
+                    },
+                    "function": {
+                        "pieces": [
+                            {
+                                "expr": {
+                                    "terms": [
+                                        {
+                                            "c": 5.0,
+                                            "factors": {
+                                                "tgt": 1,
+                                                "h1": 1
+                                            }
+                                        },
+                                        {
+                                            "c": -5.0,
+                                            "factors": {
+                                                "out": 1,
+                                                "h1": 1
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "kind": 9,
+                    "path": "@node-out.authored.w2",
+                    "bindings": {
+                        "tgt": "@node-target.authored.activation",
+                        "out": "@node-out.authored.activation",
+                        "h2": "@node-h-2.authored.activation"
+                    },
+                    "function": {
+                        "pieces": [
+                            {
+                                "expr": {
+                                    "terms": [
+                                        {
+                                            "c": 5.0,
+                                            "factors": {
+                                                "tgt": 1,
+                                                "h2": 1
+                                            }
+                                        },
+                                        {
+                                            "c": -5.0,
+                                            "factors": {
+                                                "out": 1,
+                                                "h2": 1
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "provenance": []
+    },
+    "triggers": []
+}

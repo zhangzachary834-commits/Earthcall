@@ -1,0 +1,31 @@
+{
+  "guide": "docs/architecture/law/LAW_AUTHORING_CLI_GUIDE.md",
+  "snippets": 13,
+  "expectedLaws": 17,
+  "exitCode": 0,
+  "results": [
+    "  ok: guide snippet 1 adopts exactly 1 Laws: authored law_9d73b377-6687-4821-ab93-9bf8a006d9a5 (written by did:earthcall:fivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfiva) \u00b7 live in Law Line \u00b7 Save Zone to keep it after restart",
+    "  ok: guide snippet 2 adopts exactly 1 Laws: authored law_b797550c-c76d-4dad-9c82-c132e711b5fe (written by did:earthcall:fivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfiva) \u00b7 live in Law Line \u00b7 Save Zone to keep it after restart",
+    "  ok: guide snippet 3 adopts exactly 1 Laws: authored law_be8cb17b-cf21-4bb4-a10f-3321796a75b5 (written by did:earthcall:fivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfiva) \u00b7 live in Law Line \u00b7 Save Zone to keep it after restart",
+    "  ok: guide snippet 4 adopts exactly 1 Laws: authored law_5852d835-3350-4ebe-9da0-ae07e90b9b7b (written by did:earthcall:fivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfiva) \u00b7 live in Law Line \u00b7 Save Zone to keep it after restart",
+    "  ok: guide snippet 5 adopts exactly 3 Laws: authored 3 Laws in sentence order",
+    "  ok: guide snippet 6 adopts exactly 1 Laws: authored law_db2059b1-99da-426e-a652-86ffbcd63de0 (written by did:earthcall:fivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfiva) \u00b7 live in Law Line \u00b7 Save Zone to keep it after restart",
+    "  ok: guide snippet 7 adopts exactly 1 Laws: authored law_1798f7f8-1f7f-4c2d-9b81-3d62f6e3581a (written by did:earthcall:fivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfiva) \u00b7 live in Law Line \u00b7 Save Zone to keep it after restart",
+    "  ok: guide snippet 8 adopts exactly 1 Laws: authored law_a10bb07a-57d5-4183-b8b3-57318f6868f0 (written by did:earthcall:fivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfiva) \u00b7 live in Law Line \u00b7 Save Zone to keep it after restart",
+    "  ok: guide snippet 9 adopts exactly 1 Laws: authored law_4ec60d46-6e80-4688-a26e-b1c020cf4ad0 (written by did:earthcall:fivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfiva) \u00b7 live in Law Line \u00b7 Save Zone to keep it after restart",
+    "  ok: guide snippet 10 adopts exactly 2 Laws: authored 2 Laws in sentence order",
+    "  ok: guide snippet 11 adopts exactly 1 Laws: authored law_793daa8c-5398-49a1-ab9f-1b588eec1398 (written by did:earthcall:fivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfiva) \u00b7 live in Law Line \u00b7 Save Zone to keep it after restart",
+    "  ok: guide snippet 12 adopts exactly 1 Laws: authored law_2cbbc450-3136-412d-b0c0-d79a260e888a (written by did:earthcall:fivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfivcukrkfiva) \u00b7 live in Law Line \u00b7 Save Zone to keep it after restart",
+    "  ok: guide snippet 13 adopts exactly 2 Laws: authored 2 Laws in sentence order",
+    "  ok: guide trailing-question preview does not adopt any Law",
+    "law_line_zone_test: 176/176 checks passed"
+  ],
+  "scope": "Isolated production Terminal/Metalaw adoption checks plus the existing 162-check LawLine harness; no new native capture or advanced channel execution claim.",
+  "attribution": {
+    "harness": "Codex",
+    "model": "GPT-6.1 Sol",
+    "session": "01a10992-828e-7e80-890c-c64b09141e18",
+    "date": "2026-10-05",
+    "documentationTimestamp": "13:16 PDT"
+  }
+}

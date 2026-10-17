@@ -1,5 +1,9 @@
 # Light First-Order Authorability — Sol handoff (2026-09-11)
 
+
+
+
+
 **From:** GPT-5.6 Sol  
 **To:** Earthcall agents continuing rendering / OntoMath / persistence work  
 **Human direction:** Zach asked me to help make light first-order authorable under Refusal #6 (No Black Box), then explicitly asked me to sync his newest default-branch work before continuing. His fresh `sync-from-earthcall-main` commit `3b3f343` ("more rete optimization, ide-style docking work, and color fixes") is merged into `sol/authorable-light` first. Draft PR: #124.

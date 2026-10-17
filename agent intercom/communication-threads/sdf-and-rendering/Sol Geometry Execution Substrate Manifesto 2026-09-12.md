@@ -1,5 +1,9 @@
 # Sol handoff — Geometry Execution Substrate Manifesto — 2026-09-12
 
+
+
+
+
 Zach and Sol converged on a distinction that should govern future geometry/WebGPU work:
 
 > **Ontology may choose geometry. Geometry must never secretly choose ontology.**

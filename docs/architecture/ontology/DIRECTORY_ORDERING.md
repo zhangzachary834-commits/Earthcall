@@ -59,7 +59,7 @@ TOP LEVEL = the ontology + the modality layer.
     (b) a mode of the machine  — Singularity (and its modalities beneath)
 
   The Person-facing authorship surface is not a top-level region. Tools, chat,
-  and controls live in Singularity/FirstMoverWindowTools/. Ourverse the being
+  and controls live in Singularity/FirstMoverOntology/FirstMoverWindowTools/. Ourverse the being
   lives in ZonesOfEarth/Ourverse/. There is no src/OurVerse/.
 
   Everything else is either
@@ -241,7 +241,7 @@ into their proper ontological homes:
 | `Integration/` | `Singularity/Foreign/` | **Done.** The Singularity-level modality holding hardwired connectors to external applications (`ForeignChannel`, `EarthcallAPI`, `SecurityManager`). |
 | `Perspective/` | split | **Done.** `KeyboardHandler`, `MouseHandler` → `Singularity/Input/`; `PersonPerspective`, `AvatarHandler` → `Person/Perspective/`. |
 | `Util/` | `Singularity/Storage/` | **Done.** Persistence and serialization moved to the Storage channel (`SaveSystem`, `CloudStorage`, `FileChannel`, `StreamChannel`, `VirtualFileSystem`). |
-| `Form/` | `ConstructedBeing/` | **Done.** Renamed to clarify domain of constructed entities. `Object`, `Lexeme`, and `Property` nest under `Singular/`; `ObjectConcept` is `Singular/Object/Creation`; Formation lives under `Relation/` (symlinked from Object); `Material` stays beside Singular. |
+| `Form/` | `ConstructedBeing/` | **Done.** Renamed to clarify domain of constructed entities. `Object`, `Lexeme`, and `Property` nest under `Singular/`; `ObjectConcept` is `Singular/Object/Creation`; Formation lives under `Relation/Formation/` with direct includes; `Material` stays beside Singular. |
 
 | Subsystem | Action | Why |
 |---|---|---|
@@ -281,7 +281,7 @@ Two build-environment facts are **not** consequences of the move, but you will m
 them on a fresh configure because the old `CMakeCache.txt` (which carried them) lived
 in `sight-cpp/build/` and went with it:
 
-- **OpenSSL** is vendored and prebuilt at `local_deps/openssl-3.0.13/` (`libssl.a`,
+- **OpenSSL** is vendored and prebuilt at `local_deps/openssl-3.0.22/` (`libssl.a`,
   `libcrypto.a`). There is no system or Homebrew OpenSSL on this machine, and
   `find_package(OpenSSL REQUIRED)` at `CMakeLists.txt:16` carries no hint, so it must
   be pointed at the vendored copy.
@@ -294,10 +294,10 @@ The working invocation:
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
   -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-  -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
-  -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
-  -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
-  -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+  -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.22" \
+  -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.22/include" \
+  -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.22/libcrypto.a" \
+  -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.22/libssl.a"
 cmake --build build --target earthcall -j8
 ```
 
@@ -350,3 +350,5 @@ tree said.
 
 The tree is the first document anyone reads and the only one nobody skips. Make it say
 the true thing.
+
+*Routing correction: Codex · GPT-6.1 Sol · session `01a122ec-b377-7391-ad6f-86d11b501d1b` · 2026-10-09 16:10 PDT; Zach’s agent-guidance refresh reconciles the prose tool path and Formation placement with the existing tree diagram and source.*

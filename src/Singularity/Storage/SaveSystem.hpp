@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <filesystem>
 #include "json.hpp"
 
 namespace SaveSystem {
@@ -18,12 +19,38 @@ enum class SaveType {
     HOME         // Per-Home identity directory under saves/homes/<id>/ — dwelling memory, not a Zone file
 };
 
-// Pin every relative save path to this directory (the repository `saves/`
-// folder). Empty means "saves" under the process cwd, which is what tests
-// use. The engine sets this at boot so a launch from `build/` or Finder
-// does not write a second, invisible tree.
+// Pin every relative save path to this directory. Empty means "saves" under
+// the process cwd, which is what tests use. The engine sets this at boot from
+// chooseDataRoot() so a launch from `build/` or Finder does not write a
+// second, invisible tree.
 void setSaveRoot(const std::string& absoluteSavesDir);
 std::string saveRoot();
+// saveRoot() as a path, with the empty-means-"saves" rule applied once here
+// instead of at every caller.
+std::filesystem::path rootPath();
+
+// The Person's data home, outside any source checkout — where an installed
+// app keeps what is its own: $EARTHCALL_DATA, else macOS
+// ~/Library/Application Support/Earthcall, Linux $XDG_DATA_HOME/earthcall
+// (~/.local/share/earthcall), Windows %APPDATA%\Earthcall. Empty when no home
+// directory is known. Signing keys are not here; see Identity::KeyStore.
+// scripts/migrate_saves_to_data_home.py mirrors this order — change both.
+std::filesystem::path platformDataHome();
+// Written last by the migration and by first creation; its presence is the
+// claim that the data home is complete. A home without it is never trusted.
+inline constexpr const char* kDataHomeMarker = "data-home.json";
+
+// Which directory this process saves under. The verified data home wins.
+// When it is absent but a checkout's `saves/` exists, that is returned and
+// `note` says loudly that migration has not run: starting from an empty home
+// would make every world, Law and Relation look erased. With neither, the
+// data home is created (an installed app's first run). `note` is never empty.
+// On that first creation, `foundation` (the bundle's Resources/Foundation) is
+// copied in without overwriting anything, and the home becomes a git
+// repository with one commit when git is present — history from the start.
+std::filesystem::path chooseDataRoot(const std::filesystem::path& checkoutSaves,
+                                     std::string& note,
+                                     const std::filesystem::path& foundation = {});
 
 // Ensure organized save folder structure exists
 std::string ensureSaveFolder();
@@ -157,6 +184,16 @@ std::string lawIdentityPath(const std::string& identifier);
 bool lawIdentityExists(const std::string& identifier);
 bool writeLawIdentity(const std::string& identifier, const nlohmann::json& j);
 nlohmann::json readLawIdentity(const std::string& identifier);
+
+// Shared Material identity store (Claude Sonnet 5.5, 2026-10-07; Per-Zone
+// serialization pathway, proof 5). A Material two Zones both use lives ONCE at
+// saves/materials/<stem>/material.json and each Zone names it through
+// `materialRefs`, exactly as `lawRefs` names a Law. <stem> is the Material's
+// name without the "material." prefix (its identifier is "material." + name).
+std::string materialIdentityPath(const std::string& identifier);
+bool materialIdentityExists(const std::string& identifier);
+bool writeMaterialIdentity(const std::string& identifier, const nlohmann::json& j);
+nlohmann::json readMaterialIdentity(const std::string& identifier);
 
 // Where an identity WOULD live, computed without touching the filesystem.
 // The *Directory/*IdentityPath builders above create their folder as a side

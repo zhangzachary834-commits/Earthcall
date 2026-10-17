@@ -1,5 +1,9 @@
 # SUN HANDOFF — Already-Known Execution-Key Consumer After PR #350
 
+
+
+
+
 Date: 2026-09-24  
 Canonical branch: `sync-from-earthcall-main`  
 Parent analysis: `docs/analysis/rendering_relevance_economics_after_pr329_2026-09-23.md`  

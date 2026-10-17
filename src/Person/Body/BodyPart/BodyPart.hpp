@@ -5,7 +5,7 @@
 #include <ctime>
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/Formation/Formation.hpp"
-#include "ConstructedBeing/Singular/Object/Automation/Automation.hpp"
+#include "Relation/Relation.hpp"
 
 #include "ConstructedBeing/Singular/Object/Object/ObjectTypes.hpp"
 #include <glm/glm.hpp>
@@ -39,65 +39,60 @@ class BodyPart : public Formation {
              const glm::mat4& initialTransform);
 
     void draw() const;
-    void update(float deltaTime);
 
     // Accessors
     const std::string& getName() const { return partName; }
     Type getType() const { return partType; }
     std::string getIdentifier() const override { return partName; }
-    glm::mat4 getRaycastTransform() const;
     glm::mat4 getTransform() const { return _transform; }
-    void setFaceColor(int faceIndex, float r, float g, float b);
+    // transform ∘ scale(dimensions): the geometry the primary manifestation
+    // is DRAWN and COLLIDED with. Before 2026-10-13 this was named
+    // getRaycastTransform — a leftover override from when BodyPart inherited
+    // Object, which has overridden nothing since. Object face-raycasting still
+    // uses the Object's own unscaled transform: an open picking seam, see
+    // BodyPart_Constitution_As_Explicit_Relation.md.
+    glm::mat4 scaledTransform() const;
 
+    // The primary manifestation. Machine custody (lifetime) stays in the
+    // unique_ptr below; the ONTOLOGY of why this Object belongs to this part
+    // is the `constituted-by` Relation in relations(). Geometry, paint,
+    // collision and Automation clips are the Object's own affordances — call
+    // them on the Object. BodyPart does not re-sell them (o3 seam audit,
+    // 2026-10-13: the forwarding "gift shop" was removed).
     Object* getPrimaryObject() { return _primaryObject.get(); }
     const Object* getPrimaryObject() const { return _primaryObject.get(); }
 
-
-    bool hasAutomations() const { return _primaryObject ? _primaryObject->hasAutomations() : false; }
-    glm::mat4 sampleAutomations(const glm::mat4& restTransform) { 
-        return _primaryObject ? _primaryObject->sampleAutomations(restTransform) : restTransform; 
-    }
-    void setAutomationRest(const glm::mat4& rest) { if (_primaryObject) _primaryObject->setAutomationRest(rest); }
-    void advanceAutomations(float dt) { if (_primaryObject) _primaryObject->advanceAutomations(dt); }
-    void clearAutomations() { if (_primaryObject) _primaryObject->clearAutomations(); }
-    void addAutomation(const Automation::Clip& clip) { if (_primaryObject) _primaryObject->addAutomation(clip); }
-    Automation::State& automationState() { return _primaryObject->automationState(); }
-    const Automation::State& automationState() const { return _primaryObject->automationState(); }
-
-
-
-    // A literal body part is an actual limb or organ. Have a constant updater that always sets these variables to the opposite of each other.
+    // Zach's literal/symbolic distinction (2025-08-11): a literal body part is
+    // an actual limb or organ. Registered as `isLiteral` / `isSymbolic`.
     bool isLiteral, isSymbolic = true;
 
     // Override to ensure collision box follows visual scale
     void setTransform(const glm::mat4& t);
     void setLocalTransform(const glm::mat4& t) { _localTransform = t; setTransform(t); }
 
-
-    // Color accessor
-    void setColor(float r,float g,float b){color[0]=r;color[1]=g;color[2]=b;}
+    // The part's tint. Paint lives on the Material: setColor paints the
+    // primary Object through Object::setFaceColor (diverging it onto its own
+    // material); `color` is also the seed paint for newly added sub-Objects.
+    void setColor(float r, float g, float b);
     const float* getColor() const {return color;}
 
     // Dimensions accessor
     const glm::vec3& getDimensions() const { return _dimensions; }
-    void setDimensions(const glm::vec3& dims) { _dimensions = dims; }
+    void setDimensions(const glm::vec3& dims);
 
     const glm::mat4& localTransform() const {return _localTransform;}
 
-    // -----------------------------------------------------------------
-    // Shape management — change the primary shape of this body part
-    // -----------------------------------------------------------------
+    // Changes the primary Object's shape AND repaints it with this part's
+    // color — a shape change re-sizes the face set, so it is not a forwarder.
     void setPrimaryShape(ObjectTypes::ShapeKind gt);
-    ObjectTypes::ShapeKind getPrimaryShape() const;
-
-    // True if any face texture has been painted (i.e. not a flat fill).
-    bool hasCustomTextures() const;
 
     // -----------------------------------------------------------------
     // Composite sub-objects — a body part is a Formation of 1+ Objects
     // Sub-objects store world transforms on the Object for raycasting/
     // collision; the *local* offsets (relative to this body part) are
     // kept in a parallel vector so they survive transform propagation.
+    // Each addition forms a `constituted-by` Relation (and publishes
+    // relation-formed, so Laws hear it); removal dissolves it.
     // -----------------------------------------------------------------
     Object* addSubObject(ObjectTypes::ShapeKind kind,
                          const glm::mat4& localOffset = glm::mat4(1.0f));
@@ -114,7 +109,16 @@ class BodyPart : public Formation {
     const glm::mat4& getSubObjectLocalOffset(size_t index) const;
     void setSubObjectLocalOffset(size_t index, const glm::mat4& localOffset);
 
+    // ---- Constitution (BodyPart_Constitution_As_Explicit_Relation) -----
+    // Zach's decision, 2026-10-13: BodyPart <-constituted-by-> Object(s).
+    // Constitution does not imply identity, and shared manifestation does
+    // not imply shared being. Directed edges, a = this part, b = the Object.
+    static constexpr const char* kConstitutedByType = "constituted-by";
+    // The constitution edge naming this Object, or null if it does not
+    // constitute this part.
+    Relation* constitutionOf(const Object* obj) const;
 
+    void buildProperties() override;
 
     private:
     std::unique_ptr<Object> _primaryObject;
@@ -130,6 +134,18 @@ class BodyPart : public Formation {
     std::vector<std::unique_ptr<Object>> _subObjects;
     // Parallel vector: each sub-object's transform relative to this body part
     std::vector<glm::mat4> _subObjectLocalOffsets;
-    
-    void updateColor();
+
+    void constitute(Object* obj, bool newInteraction);
+    void dissolveConstitution(Object* obj);
+
+    // Property bridge (see buildProperties).
+    std::string propPartName() const { return partName; }
+    int propPartType() const { return static_cast<int>(partType); }
+    glm::vec3 propDimensions() const { return _dimensions; }
+    glm::vec3 propColor() const { return glm::vec3(color[0], color[1], color[2]); }
+    void propSetColor(const glm::vec3& c) { setColor(c.x, c.y, c.z); }
+    glm::mat4 propLocalTransform() const { return _localTransform; }
+    std::string propPrimaryObject() const;
+    std::shared_ptr<PropertyList> propConstitutedBy() const;
+    std::shared_ptr<PropertyList> propSubObjectLocalOffsets() const;
 };

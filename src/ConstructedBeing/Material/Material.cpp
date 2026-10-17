@@ -279,7 +279,19 @@ json Material::toJson() const {
 }
 
 Material Material::fromJson(const json& j) {
-    Material m(j.value("name", std::string("default")));
+    // A Material's identity IS its name ("material." + name). Hand-authored
+    // files (scripts/generate_prism_cathedral.py) wrote the identity under
+    // "id" and a display label under "name"; the loader ignored "id", so the
+    // 13 Prism Cathedral Materials were registered as "Cathedral Basalt Floor"
+    // and every Object naming material.cathedral_basalt resolved to nothing.
+    // An explicit "id" is the identity, and "name" is kept only when absent.
+    std::string identityName = j.value("name", std::string("default"));
+    if (j.contains("id") && j["id"].is_string() && !j["id"].get<std::string>().empty()) {
+        static const std::string prefix = "material.";
+        const std::string id = j["id"].get<std::string>();
+        identityName = id.rfind(prefix, 0) == 0 ? id.substr(prefix.size()) : id;
+    }
+    Material m(identityName);
     if (j.contains("baseColor") && j["baseColor"].is_array() && j["baseColor"].size() == 3) {
         m.baseColor = glm::vec3(j["baseColor"][0].get<float>(),
                                 j["baseColor"][1].get<float>(),

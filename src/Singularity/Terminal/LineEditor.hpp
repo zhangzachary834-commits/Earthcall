@@ -39,10 +39,10 @@ struct Key {
         Redraw, HistorySearch, PasteBegin, PasteEnd,
         // Rung 3: the mouse (only reported while a menu or help is open),
         // paging, help, and the terminal's answer to "where is the cursor?".
-        WheelUp, WheelDown, Click, PageUp, PageDown, Help, CursorReport
+        WheelUp, WheelDown, Click, PageUp, PageDown, Help, CursorReport, Chord
     };
     Kind kind = Kind::Text;
-    std::string text;   // Kind::Text: one UTF-8 character
+    std::string text;   // Text: one UTF-8 character; Chord: canonical modifier+key
     int x = 0;          // Click / CursorReport: column (Click: region-relative once mapped)
     int y = 0;          // Click / CursorReport: row
 };
@@ -81,6 +81,26 @@ public:
     enum class Outcome { None, Submitted, Interrupt, EndOfInput, Redraw, Help };
 
     void setProviders(SuggestFn suggest, HighlightFn highlight, StatusFn status);
+
+    // How a reading, a word, or a piece of the line's own chrome LOOKS. Keys:
+    // "role.<role>", "lexeme.<identifier>", "chrome.<element>". The channel
+    // answers from authored data (a Lexeme's or Zone's `appearance.*`); an
+    // empty field keeps the built-in look, so an unauthored world is unchanged.
+    // `sgr` is a colour's SGR parameters ("38;2;255;200;90"); `style` is
+    // attributes laid over whichever colour wins ("1;3" = bold italic), so
+    // authoring only a style keeps the colour beneath it. `glyphSgr`, when
+    // set, colours a word's glyph apart from the word (a colour word's swatch).
+    struct Look {
+        std::string glyph;
+        std::string sgr;
+        std::string style;
+        std::string glyphSgr;
+        bool operator==(const Look& o) const {
+            return glyph == o.glyph && sgr == o.sgr && style == o.style && glyphSgr == o.glyphSgr;
+        }
+        bool operator!=(const Look& o) const { return !(*this == o); }
+    };
+    std::function<Look(const std::string& key)> look;
     // Asked before Enter submits: "" lets the line go; anything else keeps it
     // in place and shows the answer (what is still missing, with an example).
     std::function<std::string(const std::string& text)> submitGate;
@@ -97,6 +117,8 @@ public:
     int overlayScroll() const { return _overlayScroll; }
     // Mouse reporting is wanted only while there is something to point at.
     bool wantsMouse() const { return menuVisible() || overlayVisible(); }
+    void openMenu() { edited(false); _menuSuppressed = false; _menuForced = !_suggestions.empty(); _navigated = true; }
+    std::function<void()> accepted; // generic completion act acknowledgement
     void refresh() { edited(false); }   // the world changed: recompute menu and status
 
     void setHistory(std::vector<std::string> history) { _history = std::move(history); }
@@ -108,6 +130,16 @@ public:
     bool autoMenu = true;
     bool color = true;
     bool hints = true;
+    // A SECRET line (the Identity Zone's passphrase): drawn as bullets, never
+    // shown to the suggest/highlight/status providers, never kept in history,
+    // and never echoed by the channel. State beneath the Kernel (NO_BLACK_BOX
+    // §5) -- the channel sets it for exactly one line and clears it.
+    bool secret = false;
+    // While a multi-line block is open, Enter on an empty line is how the
+    // Person ends it, so an empty line is submitted (normally it is ignored).
+    bool submitEmpty = false;
+    // Put text on the line (auto-indent for the next line of a block).
+    void prefill(const std::string& text) { _buffer = text; _cursor = _buffer.size(); edited(true); }
     int overlayRows = 18;
     // The status footer (plain text; the editor styles it) and the colour of
     // its leading mark — green when this Zone hears the line, yellow if not.
@@ -152,6 +184,9 @@ private:
     void eraseSelectedPlaceholder();
     void clickAt(int row, int col);
     std::string sgr(const std::string& code, const std::string& text) const;
+    Look lookOr(const std::string& key, const std::string& glyph, const std::string& code) const;
+    std::string wordCode(const std::string& role, const std::string& lexemeId) const;
+    Look wordLook(const std::string& lexemeId) const;
 
     std::string _buffer;
     std::size_t _cursor = 0;
@@ -186,6 +221,12 @@ private:
     HighlightFn _highlight;
     StatusFn _statusFn;
 };
+
+// Terminal device text primitives. A display cluster is indivisible for
+// clipping, styling and cursor placement; authored glyphs cannot issue controls.
+std::size_t nextDisplayCluster(const std::string& text, std::size_t at);
+bool isPrintableGlyph(const std::string& text);
+std::string clipToCells(const std::string& text, std::size_t budget, bool markCut = false);
 
 // Visible width of text that may contain ANSI SGR sequences and UTF-8.
 std::size_t visibleWidth(const std::string& text);

@@ -67,6 +67,10 @@ public:
     struct Sense {
         float pointerX = 0.0f;          // screen pixels
         float pointerY = 0.0f;
+        // GLFW cursor coordinates are window points, not framebuffer pixels.
+        // Window extent supplies the invariant normalized viewport address.
+        int windowWidth = 1;
+        int windowHeight = 1;
         glm::vec3 rayOrigin{0.0f};
         glm::vec3 rayDirection{0.0f, 0.0f, -1.0f};
         bool left = false;              // button LEVELS this frame
@@ -145,6 +149,16 @@ public:
     // ------------------------------------------------------------------
     float pointerX = 0.0f;
     float pointerY = 0.0f;
+    // observe()/step() supply this bounded GLFW window-point extent. The
+    // read-only projections announce changes and share u/v with direct
+    // framebuffer mathematics (including Retina). Authored controls consume
+    // them; no tool decision lives here. See Law_Line_Pixel_Art_Editor task.
+    int windowWidth = 1;
+    int windowHeight = 1;
+    int propWindowWidth() const { return windowWidth; }
+    int propWindowHeight() const { return windowHeight; }
+    float propPointerU() const { return pointerX / windowWidth; }
+    float propPointerV() const { return pointerY / windowHeight; }
     glm::vec3 pointerWorld{0.0f};      // ray hit on the picked being
     // Read-only scalar views of the sensed hit point. OntoMath's scalar
     // bindings use these when a Law needs to compare a current hit with an

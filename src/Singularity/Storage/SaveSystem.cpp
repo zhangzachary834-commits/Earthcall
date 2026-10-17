@@ -1,4 +1,5 @@
 #include "Singularity/Storage/SaveSystem.hpp"
+#include "Singularity/Storage/Serialization/BinarySerializer.hpp"
 #include <filesystem>
 #include <fstream>
 #include <ctime>
@@ -9,6 +10,14 @@
 #include <iomanip>
 #include <map>
 #include <cstdio>
+#include <cstdlib>
+#if !defined(__EMSCRIPTEN__) && !defined(_WIN32)
+#include <fcntl.h>
+#include <spawn.h>
+#include <sys/wait.h>
+#include <unistd.h>
+extern char** environ;
+#endif
 #include <unordered_map>
 #include <unordered_set>
 #include "Singularity/Storage/CloudStorage.hpp"
@@ -23,6 +32,20 @@ namespace SaveSystem {
 
 namespace {
 std::string g_saveRoot;
+
+// One compatibility order for discovery and loading, without changing any
+// stored bytes. Catalogs pass the actual directory entry, preserving its key.
+std::filesystem::path resolveIdentityFile(const std::filesystem::path& directory,
+                                          const char* stem) {
+    for (const char* extension : {".ecsave", ".ecform", ".json"}) {
+        const auto path = directory / (std::string(stem) + extension);
+        std::error_code ec;
+        if (!std::filesystem::is_regular_file(path, ec)) continue;
+        const auto size = std::filesystem::file_size(path, ec);
+        if (!ec && size > 0) return path;
+    }
+    return directory / (std::string(stem) + ".ecsave");
+}
 }
 
 #ifdef __EMSCRIPTEN__
@@ -36,6 +59,148 @@ void setSaveRoot(const std::string& absoluteSavesDir) {
 
 std::string saveRoot() {
     return g_saveRoot;
+}
+
+std::filesystem::path rootPath() {
+    return g_saveRoot.empty() ? std::filesystem::path("saves")
+                              : std::filesystem::path(g_saveRoot);
+}
+
+std::filesystem::path platformDataHome() {
+    namespace fs = std::filesystem;
+    auto envPath = [](const char* name) -> fs::path {
+        const char* v = std::getenv(name);
+        return (v && *v) ? fs::path(v) : fs::path{};
+    };
+    if (auto p = envPath("EARTHCALL_DATA"); !p.empty()) return p;
+#if defined(__EMSCRIPTEN__)
+    return {}; // IDBFS owns persistence in the browser
+#elif defined(_WIN32)
+    if (auto p = envPath("APPDATA"); !p.empty()) return p / "Earthcall";
+    return {};
+#elif defined(__APPLE__)
+    if (auto p = envPath("HOME"); !p.empty())
+        return p / "Library" / "Application Support" / "Earthcall";
+    return {};
+#else
+    if (auto p = envPath("XDG_DATA_HOME"); !p.empty()) return p / "earthcall";
+    if (auto p = envPath("HOME"); !p.empty()) return p / ".local" / "share" / "earthcall";
+    return {};
+#endif
+}
+
+namespace {
+// argv only, never a shell: the home path comes from $HOME/$EARTHCALL_DATA.
+bool runQuietly(const std::vector<std::string>& args) {
+#if defined(__EMSCRIPTEN__) || defined(_WIN32)
+    (void)args;
+    return false;
+#else
+    std::vector<char*> argv;
+    for (const auto& a : args) argv.push_back(const_cast<char*>(a.c_str()));
+    argv.push_back(nullptr);
+    posix_spawn_file_actions_t actions;
+    posix_spawn_file_actions_init(&actions);
+    posix_spawn_file_actions_addopen(&actions, STDOUT_FILENO, "/dev/null", O_WRONLY, 0);
+    posix_spawn_file_actions_addopen(&actions, STDERR_FILENO, "/dev/null", O_WRONLY, 0);
+    pid_t pid = 0;
+    const int rc = posix_spawnp(&pid, argv[0], &actions, nullptr, argv.data(), environ);
+    posix_spawn_file_actions_destroy(&actions);
+    if (rc != 0) return false;
+    int status = 0;
+    if (waitpid(pid, &status, 0) < 0) return false;
+    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+#endif
+}
+// Seed newly authored checkout identities (zones, materials, laws, worlds)
+// into an already-migrated data home without ever overwriting existing entries.
+void seedMissingCheckoutIdentities(const std::filesystem::path& home,
+                                   const std::filesystem::path& checkoutSaves) {
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    if (home.empty() || checkoutSaves.empty()) return;
+    if (!fs::is_directory(home, ec) || !fs::is_directory(checkoutSaves, ec)) return;
+    if (fs::equivalent(home, checkoutSaves, ec)) return;
+
+    for (const char* subdir : {"zones", "materials", "laws", "worlds"}) {
+        const fs::path srcDir = checkoutSaves / subdir;
+        if (!fs::is_directory(srcDir, ec)) continue;
+        const fs::path dstDir = home / subdir;
+        fs::create_directories(dstDir, ec);
+        for (const auto& entry : fs::directory_iterator(srcDir, ec)) {
+            const std::string fname = entry.path().filename().string();
+            const fs::path dst = dstDir / fname;
+            const bool isSanctuary =
+                (fname == "Sky-Island Sanctuary" ||
+                 fname.rfind("sky.sanctuary.", 0) == 0 ||
+                 fname.rfind("law-sky-sanctuary-", 0) == 0 ||
+                 fname == "sky_island_sanctuary.json");
+            if (fs::exists(dst, ec)) {
+                if (isSanctuary) {
+                    fs::remove_all(dst, ec);
+                    fs::copy(entry.path(), dst,
+                             fs::copy_options::recursive | fs::copy_options::overwrite_existing, ec);
+                }
+                continue;
+            }
+            fs::copy(entry.path(), dst,
+                     fs::copy_options::recursive | fs::copy_options::skip_existing, ec);
+        }
+    }
+}
+} // namespace
+
+std::filesystem::path chooseDataRoot(const std::filesystem::path& checkoutSaves,
+                                     std::string& note,
+                                     const std::filesystem::path& foundation) {
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    const fs::path home = platformDataHome();
+    if (!home.empty() && fs::is_regular_file(home / kDataHomeMarker, ec)) {
+        if (!checkoutSaves.empty() && fs::is_directory(checkoutSaves, ec)) {
+            seedMissingCheckoutIdentities(home, checkoutSaves);
+        }
+        note = "data home: " + home.string();
+        return home;
+    }
+    if (!checkoutSaves.empty() && fs::is_directory(checkoutSaves, ec)) {
+        note = "⚠️  data home not migrated (" +
+               (home.empty() ? std::string("no home directory known") : home.string()) +
+               "); saving into the checkout's " + checkoutSaves.string() +
+               ". Run scripts/migrate_saves_to_data_home.py to move it.";
+        return checkoutSaves;
+    }
+    if (home.empty()) {
+        note = "⚠️  no data home and no checkout saves/; saving under ./saves";
+        return fs::path("saves");
+    }
+    fs::create_directories(home, ec);
+    bool seeded = false;
+    if (!foundation.empty() && fs::is_directory(foundation, ec)) {
+        fs::copy(foundation, home,
+                 fs::copy_options::recursive | fs::copy_options::skip_existing, ec);
+        seeded = !ec;
+    }
+    if (!fs::exists(home / kDataHomeMarker, ec)) {
+        std::ofstream marker(home / kDataHomeMarker);
+        marker << nlohmann::json{{"earthcallDataHome", 1},
+                                 {"created", timestamp()},
+                                 {"migratedFrom", nullptr},
+                                 {"foundation", seeded ? nlohmann::json(foundation.string())
+                                                       : nlohmann::json(nullptr)}}.dump(2) << "\n";
+    }
+    note = "data home created: " + home.string();
+    if (!foundation.empty() && !fs::exists(home / ".git", ec)) {
+        const std::string h = home.string();
+        const bool versioned =
+            runQuietly({"git", "-C", h, "init", "-q"}) &&
+            runQuietly({"git", "-C", h, "add", "-A"}) &&
+            runQuietly({"git", "-C", h, "-c", "user.name=Earthcall", "-c",
+                        "user.email=earthcall@localhost", "commit", "-q", "-m",
+                        "Earthcall data home: first run"});
+        note += versioned ? " (git repository initialised)" : " (git unavailable; not versioned)";
+    }
+    return home;
 }
 
 // Helper to compress a byte vector using zlib
@@ -103,8 +268,7 @@ std::string getSaveTypeFolderName(SaveType type) {
 
 
 std::string ensureSaveFolder() {
-    std::filesystem::path p = g_saveRoot.empty() ? std::filesystem::path("saves")
-                                                 : std::filesystem::path(g_saveRoot);
+    const std::filesystem::path p = rootPath();
     std::error_code ec;
     if (!std::filesystem::exists(p, ec)) {
         if (!std::filesystem::create_directories(p, ec) && !std::filesystem::exists(p, ec)) {
@@ -415,11 +579,11 @@ static bool atomicWriteFile(const std::string& path,
 }
 
 std::string writeSaveData(const nlohmann::json& j, const std::string& customLabel, SaveType type) {
-    std::string filename = makeFilename(customLabel, type, ".ecform");
+    std::string filename = makeFilename(customLabel, type, ".ecsave");
     if (filename.empty()) return "";
 
     bool success = false;
-    if (filename.length() > 7 && filename.substr(filename.length() - 7) == ".ecform") {
+    if (filename.length() > 7 && filename.substr(filename.length() - 7) == ".ecsave") {
         nlohmann::json wrapper = nlohmann::json::object();
         wrapper["MigrationRoot"] = j.dump(-1);
         std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
@@ -619,9 +783,21 @@ nlohmann::json readSaveData(const std::string& filepath) {
         return nlohmann::json();
     }
     
-    // Check magic bytes or extension to determine if it's msgpack
-    if (actualPath.length() > 7 && actualPath.substr(actualPath.length() - 7) == ".ecform") {
+    // Check magic bytes or extension to determine if it's msgpack or ecform
+    if (actualPath.length() > 7 && (actualPath.substr(actualPath.length() - 7) == ".ecform" || actualPath.substr(actualPath.length() - 7) == ".ecsave")) {
         std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        
+        // Check for true EcformGraph binary magic bytes ("ECFM")
+        if (bytes.size() >= 4 && bytes[0] == 0x4D && bytes[1] == 0x46 && bytes[2] == 0x43 && bytes[3] == 0x45) {
+            Earthcall::Storage::EcformGraph graph;
+            if (Earthcall::Storage::BinarySerializer::readBinary(actualPath, graph)) {
+                return Earthcall::Storage::MigrationFramework::migrateGraphToJson(graph);
+            } else {
+                std::cerr << "[SaveSystem] Failed to parse true EcformGraph binary: " << filepath << "\n";
+                return nlohmann::json();
+            }
+        }
+        
         try {
             nlohmann::json wrapper = nlohmann::json::from_msgpack(bytes);
             if (wrapper.contains("MigrationRoot") && wrapper["MigrationRoot"].is_string()) {
@@ -631,14 +807,20 @@ nlohmann::json readSaveData(const std::string& filepath) {
             return Earthcall::Storage::MigrationFramework::migrateLegacySave(wrapper);
         } catch (...) {
             try {
-                nlohmann::json j = nlohmann::json::parse(bytes);
-                return Earthcall::Storage::MigrationFramework::migrateLegacySave(j);
-            } catch (const std::exception& e) {
-                std::cerr << "[SaveSystem] Malformed msgpack ecform (and not valid JSON either) in: " << filepath << "\n";
-                return nlohmann::json();
+                // Check if it's compressed .ecsave payload
+                std::vector<uint8_t> decompressed = decompressData(bytes);
+                return nlohmann::json::from_msgpack(decompressed);
+            } catch (...) {
+                try {
+                    nlohmann::json j = nlohmann::json::parse(bytes);
+                    return Earthcall::Storage::MigrationFramework::migrateLegacySave(j);
+                } catch (const std::exception& e) {
+                    std::cerr << "[SaveSystem] Malformed msgpack/ecform (and not valid JSON either) in: " << filepath << "\n";
+                    return nlohmann::json();
+                }
             }
         }
-    } else if (actualPath.length() > 7 && actualPath.substr(actualPath.length() - 7) == ".ecsave") {
+    } else if (actualPath.length() > 7 && actualPath.substr(actualPath.length() - 7) == ".invalid_extension") {
         std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
         std::vector<uint8_t> decompressed = decompressData(bytes);
         try {
@@ -1354,7 +1536,9 @@ bool zoneIdentityExists(const std::string& identifier) {
     const std::string safe = sanitizeLabel(identifier);
     if (safe.empty()) return false;
     std::error_code ec;
-    auto path = std::filesystem::path(folder) / safe / "zone.ecform";
+    auto path = std::filesystem::path(folder) / safe / "zone.ecsave";
+    if (std::filesystem::exists(path, ec) && std::filesystem::file_size(path, ec) > 0) return true;
+    path = std::filesystem::path(folder) / safe / "zone.ecform";
     if (std::filesystem::exists(path, ec) && std::filesystem::file_size(path, ec) > 0) return true;
     path = std::filesystem::path(folder) / safe / "zone.json";
     return std::filesystem::exists(path, ec) && std::filesystem::file_size(path, ec) > 0;
@@ -1368,22 +1552,34 @@ bool writeZoneIdentity(const std::string& identifier, const nlohmann::json& j) {
     wrapper["MigrationRoot"] = j.dump(-1);
     std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
     
-    return atomicWriteFile(path, [&](std::ostream& out) {
+    const bool wrote = atomicWriteFile(path, [&](std::ostream& out) {
         out.write(reinterpret_cast<const char*>(outBytes.data()), outBytes.size());
         return static_cast<bool>(out);
     });
+    if (wrote) {
+        const std::string safe = sanitizeLabel(identifier);
+        if (!safe.empty()) {
+            std::error_code ec;
+            std::filesystem::remove(std::filesystem::path(path).parent_path() / "zone.json", ec);
+        }
+    }
+    return wrote;
 }
 
 nlohmann::json readZoneIdentity(const std::string& identifier) {
     if (!zoneIdentityExists(identifier)) return nlohmann::json();
-    std::string folder = ensureSaveTypeFolder(SaveType::ZONE);
-    if (folder.empty()) return nlohmann::json();
-    const std::string safe = sanitizeLabel(identifier);
-    const auto path = (std::filesystem::path(folder) / safe / "zone.ecform").string();
-    return readSaveData(path);
+    return readSaveData(resolveZoneIdentityPath(identifier));
 }
 
 std::vector<IdentityRecord> listZoneIdentityRecords() {
+    if (!g_saveRoot.empty()) {
+        std::error_code seedEc;
+        const std::filesystem::path home = rootPath();
+        if (std::filesystem::is_regular_file(home / kDataHomeMarker, seedEc) &&
+            std::filesystem::is_directory("saves", seedEc)) {
+            seedMissingCheckoutIdentities(home, std::filesystem::path("saves"));
+        }
+    }
     std::vector<IdentityRecord> out;
     std::string folder = ensureSaveTypeFolder(SaveType::ZONE);
     if (folder.empty()) return out;
@@ -1391,11 +1587,8 @@ std::vector<IdentityRecord> listZoneIdentityRecords() {
     if (!std::filesystem::exists(folder, ec)) return out;
     for (const auto& entry : std::filesystem::directory_iterator(folder, ec)) {
         if (!entry.is_directory()) continue;
-        auto zoneFile = entry.path() / "zone.ecform";
-        if (!std::filesystem::exists(zoneFile, ec) || std::filesystem::file_size(zoneFile, ec) == 0) {
-            zoneFile = entry.path() / "zone.json";
-            if (!std::filesystem::exists(zoneFile, ec) || std::filesystem::file_size(zoneFile, ec) == 0) continue;
-        }
+        const auto zoneFile = resolveIdentityFile(entry.path(), "zone");
+        if (!std::filesystem::exists(zoneFile, ec) || std::filesystem::file_size(zoneFile, ec) == 0) continue;
         nlohmann::json j = readSaveData(zoneFile.string());
         out.push_back(IdentityRecord{entry.path().filename().string(), std::move(j)});
     }
@@ -1412,10 +1605,7 @@ std::vector<std::string> listZoneIdentities() {
 
 namespace {
 std::filesystem::path sharedIdentityRoot(const char* leaf) {
-    const std::filesystem::path root = g_saveRoot.empty()
-        ? std::filesystem::path("saves")
-        : std::filesystem::path(g_saveRoot);
-    return root / leaf;
+    return rootPath() / leaf;
 }
 } // namespace
 
@@ -1463,16 +1653,61 @@ nlohmann::json readLawIdentity(const std::string& identifier) {
     return readSaveData((sharedIdentityRoot("laws") / safe / "law.json").string());
 }
 
+namespace {
+std::string materialStem(const std::string& identifier) {
+    static const std::string prefix = "material.";
+    return identifier.rfind(prefix, 0) == 0 ? identifier.substr(prefix.size()) : identifier;
+}
+} // namespace
+
+// Pure path computation: a refused or absent root must not leave an empty
+// directory behind, so only the writer creates the folder.
+std::string materialIdentityPath(const std::string& identifier) {
+    const std::string safe = sanitizeLabel(materialStem(identifier));
+    if (safe.empty()) return "";
+    return (sharedIdentityRoot("materials") / safe / "material.json").string();
+}
+
+bool materialIdentityExists(const std::string& identifier) {
+    const std::string path = materialIdentityPath(identifier);
+    if (path.empty()) return false;
+    std::error_code ec;
+    return std::filesystem::is_regular_file(path, ec) && std::filesystem::file_size(path, ec) > 0;
+}
+
+bool writeMaterialIdentity(const std::string& identifier, const nlohmann::json& j) {
+    const std::string path = materialIdentityPath(identifier);
+    if (path.empty()) return false;
+    std::error_code ec;
+    std::filesystem::create_directories(std::filesystem::path(path).parent_path(), ec);
+    if (ec && ec.value() != 17) {
+        std::cerr << "[SaveSystem] Failed to create Material directory for "
+                  << identifier << ": " << ec.message() << "\n";
+        return false;
+    }
+    return atomicWriteFile(path, [&](std::ostream& out) {
+        out << j.dump(-1);
+        return static_cast<bool>(out);
+    });
+}
+
+nlohmann::json readMaterialIdentity(const std::string& identifier) {
+    if (!materialIdentityExists(identifier)) return nlohmann::json();
+    return readSaveData(materialIdentityPath(identifier));
+}
+
 std::string resolveZoneIdentityPath(const std::string& identifier) {
     const std::string safe = sanitizeLabel(identifier);
     if (safe.empty()) return "";
-    return (sharedIdentityRoot("zones") / safe / "zone.json").string();
+    const std::filesystem::path dir = sharedIdentityRoot("zones") / safe;
+    return resolveIdentityFile(dir, "zone").string();
 }
 
 std::string resolveHomeIdentityPath(const std::string& identifier) {
     const std::string safe = sanitizeLabel(identifier);
     if (safe.empty()) return "";
-    return (sharedIdentityRoot("homes") / safe / "home.json").string();
+    const std::filesystem::path dir = sharedIdentityRoot("homes") / safe;
+    return resolveIdentityFile(dir, "home").string();
 }
 
 std::string resolveLawIdentityPath(const std::string& identifier) {
@@ -1514,7 +1749,9 @@ bool homeIdentityExists(const std::string& identifier) {
     const std::string safe = sanitizeLabel(identifier);
     if (safe.empty()) return false;
     std::error_code ec;
-    auto path = std::filesystem::path(folder) / safe / "home.ecform";
+    auto path = std::filesystem::path(folder) / safe / "home.ecsave";
+    if (std::filesystem::exists(path, ec) && std::filesystem::file_size(path, ec) > 0) return true;
+    path = std::filesystem::path(folder) / safe / "home.ecform";
     if (std::filesystem::exists(path, ec) && std::filesystem::file_size(path, ec) > 0) return true;
     path = std::filesystem::path(folder) / safe / "home.json";
     return std::filesystem::exists(path, ec) && std::filesystem::file_size(path, ec) > 0;
@@ -1528,19 +1765,23 @@ bool writeHomeIdentity(const std::string& identifier, const nlohmann::json& j) {
     wrapper["MigrationRoot"] = j.dump(-1);
     std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
     
-    return atomicWriteFile(path, [&](std::ostream& out) {
+    const bool wrote = atomicWriteFile(path, [&](std::ostream& out) {
         out.write(reinterpret_cast<const char*>(outBytes.data()), outBytes.size());
         return static_cast<bool>(out);
     });
+    if (wrote) {
+        const std::string safe = sanitizeLabel(identifier);
+        if (!safe.empty()) {
+            std::error_code ec;
+            std::filesystem::remove(std::filesystem::path(path).parent_path() / "home.json", ec);
+        }
+    }
+    return wrote;
 }
 
 nlohmann::json readHomeIdentity(const std::string& identifier) {
     if (!homeIdentityExists(identifier)) return nlohmann::json();
-    std::string folder = ensureSaveTypeFolder(SaveType::HOME);
-    if (folder.empty()) return nlohmann::json();
-    const std::string safe = sanitizeLabel(identifier);
-    const auto path = (std::filesystem::path(folder) / safe / "home.ecform").string();
-    return readSaveData(path);
+    return readSaveData(resolveHomeIdentityPath(identifier));
 }
 
 std::vector<IdentityRecord> listHomeIdentityRecords() {
@@ -1551,11 +1792,8 @@ std::vector<IdentityRecord> listHomeIdentityRecords() {
     if (!std::filesystem::exists(folder, ec)) return out;
     for (const auto& entry : std::filesystem::directory_iterator(folder, ec)) {
         if (!entry.is_directory()) continue;
-        auto homeFile = entry.path() / "home.ecform";
-        if (!std::filesystem::exists(homeFile, ec) || std::filesystem::file_size(homeFile, ec) == 0) {
-            homeFile = entry.path() / "home.json";
-            if (!std::filesystem::exists(homeFile, ec) || std::filesystem::file_size(homeFile, ec) == 0) continue;
-        }
+        const auto homeFile = resolveIdentityFile(entry.path(), "home");
+        if (!std::filesystem::exists(homeFile, ec) || std::filesystem::file_size(homeFile, ec) == 0) continue;
         nlohmann::json j = readSaveData(homeFile.string());
         out.push_back(IdentityRecord{entry.path().filename().string(), std::move(j)});
     }

@@ -65,9 +65,15 @@ void LanguageSystem::noteSymbolRemoved(const std::string& symbol) {
 
 LanguageSystem::LanguageSystem() {
     // Subscribe to Utterance events globally.
-    Core::EventBus::instance().subscribe<Core::Event::Utterance>([this](const Core::Event::Utterance& evt) {
+    _utteranceSubscription = Core::EventBus::instance().subscribe<Core::Event::Utterance>([this](const Core::Event::Utterance& evt) {
         this->queueUtterance(evt.payload, evt.sourceClient, evt.targetSingularId);
     });
+}
+
+// The constructor reached EventBus::instance() first, so the bus outlives this
+// static and the revocation below never touches a destroyed bus.
+LanguageSystem::~LanguageSystem() {
+    Core::EventBus::instance().unsubscribe(_utteranceSubscription);
 }
 
 std::shared_ptr<Lexeme> LanguageSystem::resolve(const std::string& symbol) {
@@ -141,11 +147,18 @@ std::shared_ptr<Lexeme> LanguageSystem::intern(const std::string& symbol, const 
     if (auto existing = findById(stableId)) return existing;
 
     auto lexeme = std::make_shared<Lexeme>(symbol, stableId);
-    _lexemes.push_back(lexeme);
-    _symbolIndex[symbol] = lexeme;
-    _idIndex[stableId] = lexeme;
-    noteSymbolAdded(symbol);
+    retainLexeme(lexeme);
     return lexeme;
+}
+
+bool LanguageSystem::retainLexeme(std::shared_ptr<Lexeme> lexeme) {
+    if (!lexeme || lexeme->getIdentifier().empty()) return false;
+    if (auto existing = findById(lexeme->getIdentifier())) return existing == lexeme;
+    _lexemes.push_back(lexeme);
+    _symbolIndex[lexeme->getSymbol()] = lexeme;
+    _idIndex[lexeme->getIdentifier()] = lexeme;
+    noteSymbolAdded(lexeme->getSymbol());
+    return true;
 }
 
 std::vector<std::shared_ptr<Lexeme>> LanguageSystem::findAllBySymbol(const std::string& symbol) const {

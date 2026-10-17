@@ -1,0 +1,103 @@
+{
+  "authors": [
+    "author.antigravity"
+  ],
+  "identifier": "law-mtg-resolve-grizzly-bears",
+  "injected_by": "Antigravity, 2026-10-11 MTG Zone Law",
+  "law": {
+    "actionDescriptions": [
+      "sequence"
+    ],
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 0,
+          "path": "zone",
+          "operand": {
+            "t": "string",
+            "v": "battlefield"
+          },
+          "desc": "set(zone)"
+        },
+        {
+          "kind": 0,
+          "path": "position",
+          "operand": {
+            "t": "vec3",
+            "x": 0.5,
+            "y": 0.52,
+            "z": 0.5
+          },
+          "desc": "set(position)"
+        },
+        {
+          "kind": 0,
+          "path": "stackOrder",
+          "operand": {
+            "t": "int",
+            "v": 0
+          },
+          "desc": "set(stackOrder)"
+        },
+        {
+          "kind": 1,
+          "path": "@state.mtg.stackCount",
+          "operand": {
+            "t": "int",
+            "v": -1
+          },
+          "desc": "add(@state.mtg.stackCount)"
+        }
+      ],
+      "desc": "sequence"
+    },
+    "activation": 0,
+    "authority": 0,
+    "authors": [
+      "author.antigravity"
+    ],
+    "conditionDescriptions": [
+      "all"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "card.grizzly_bears_1",
+          "desc": "identity(card.grizzly_bears_1)"
+        },
+        {
+          "kind": 0,
+          "path": "zone",
+          "op": 0,
+          "desc": "compare(zone)",
+          "operand": {
+            "t": "string",
+            "v": "stack"
+          }
+        },
+        {
+          "kind": 0,
+          "path": "stackOrder",
+          "op": 0,
+          "desc": "compare(stackOrder)",
+          "operandPath": "@state.mtg.stackCount"
+        }
+      ],
+      "desc": "all"
+    },
+    "drives": false,
+    "enabled": true,
+    "id": "law-mtg-resolve-grizzly-bears",
+    "name": "mtg-resolve-grizzly-bears",
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  "triggers": [
+    "resolve-stack"
+  ]
+}

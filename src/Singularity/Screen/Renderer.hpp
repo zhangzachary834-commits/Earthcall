@@ -4,6 +4,7 @@
 #include "ConstructedBeing/Singular/Object/Geometry/SmoothSurface.hpp" // geom::TessMesh
 
 #include <cstdint>
+#include <cmath>
 #include <string>
 #include <utility>
 #include <vector>
@@ -67,10 +68,23 @@ public:
         // instance data, so advancing only t must hit the memo and never
         // regenerate the authored density shader.
         uint32_t volumeProgramCompiles = 0;
+        // Kernel diagnostics: compiler repairs, resident data transfers and
+        // CPU preparation are distinct from delayed GPU execution samples.
+        uint32_t volumeLowerings = 0;
+        uint32_t volumeRepairedNodes = 0;
+        size_t volumeParameterBytesUploaded = 0;
+        size_t volumeProofBytesUploaded = 0;
+        float volumeCpuPrepareMs = 0.0f;
         uint32_t volumeProgramCacheHits = 0;
         uint32_t volumeProgramRefusals = 0;
         std::string volumeLastProgramRefusal;
         size_t volumeWgslBytesGenerated = 0;
+        // Zero-density proofs (Rendering::VolumeZeroProof): builds this frame
+        // (each is cached by density revision), and the proven/total cells of
+        // the media drawn this frame.
+        uint32_t volumeZeroProofBuilds = 0;
+        uint32_t volumeZeroProofCellsProven = 0;
+        uint32_t volumeZeroProofCellsTotal = 0;
         // Conservative SDF range-proxy observability. A build is revision-bound;
         // an applied draw used a strictly smaller proved-may-contain-zero proxy;
         // a culled draw was proved to contain no zero set at all.
@@ -89,6 +103,9 @@ public:
         bool     gpuMainPassTimingSupported = false;
         bool     gpuMainPassTimingValid = false;
         float    gpuMainPassMs = 0.0f;
+        bool     gpuVolumePassTimingValid = false;
+        float    gpuVolumePassMs = 0.0f;
+        uint64_t gpuTimingSampleFrame = 0;
     };
 
     const FrameStats& frameStats() const { return _frameStats; }
@@ -277,6 +294,34 @@ public:
     void setRadianceVisibilityEnabled(bool on) { _radianceVisibilityEnabled = on; }
     bool radianceVisibilityEnabled() const { return _radianceVisibilityEnabled; }
 
+    // Zero-density proof: skip evaluating a medium's density in cells where
+    // OntoMath interval arithmetic proved it can never be positive. Such a
+    // sample contributes nothing, so the image is unchanged; the switch exists
+    // so witnesses can A/B the exact path against the proven one.
+    void setVolumeZeroProofEnabled(bool on) { _volumeZeroProofEnabled = on; }
+    bool volumeZeroProofEnabled() const { return _volumeZeroProofEnabled; }
+
+    // Volume quadrature resolution: samples a medium receives across its own
+    // chord along a ray (overlapping media share the finest present; see the
+    // unified quadrature in SdfWgsl's compileVolumeSet). Formerly a literal 96
+    // in the shader. It reaches the GPU as a uniform, so changing it never
+    // recompiles. Clamped to [1, 8192]: a 12288 reference render produced
+    // saturated nonsense on Metal on 2026-10-09, not yet explained.
+    void setVolumeSamplesPerChord(int samples) {
+        _volumeSamplesPerChord = samples < 1 ? 1 : (samples > 8192 ? 8192 : samples);
+    }
+    int volumeSamplesPerChord() const { return _volumeSamplesPerChord; }
+
+    // Authored ScreenChannel input mirrored beneath the Kernel boundary.
+    // A positive budget removes the uncertified opacity cutoff. Until a tail
+    // proof is available, every accepted sample is evaluated. Unknown proofs
+    // must never restore that cutoff. Zero preserves the compatibility image.
+    void setVolumeOutputErrorBudget(double budget) {
+        _volumeOutputErrorBudget = std::isfinite(budget) && budget > 0.0
+            ? (budget < 1.0 / 255.0 ? budget : 1.0 / 255.0) : 0.0;
+    }
+    double volumeOutputErrorBudget() const { return _volumeOutputErrorBudget; }
+
     // The object-to-world transform, as a stack. setModel replaces it outright;
     // pushModel/popModel compose a child transform onto its parent for the nested
     // draws — a Body's parts, a Formation's members — exactly as glPushMatrix +
@@ -412,6 +457,15 @@ public:
     virtual void drawImage2D(const uint8_t* rgba, uint32_t width, uint32_t height,
                              const glm::vec4& rect, const glm::vec4& tint) = 0;
 
+    // Irreducible Screen act: sample an authored field at physical framebuffer
+    // centres. Backends must realize it or refuse, never substitute a Shape,
+    // texture or CPU image. A null temporal coordinate leaves t unbound.
+    virtual bool drawScreenForm(const OntoMath::Piecewise&, const OntoMath::Piecewise*,
+                                uint32_t, uint32_t, const double*, std::string& reason) {
+        reason = "direct Screen fields require the WebGPU backend";
+        return false;
+    }
+
     // -----------------------------------------------------------------------
     // Persistent textures — the per-face albedo the Face Brush paints. Unlike
     // drawImage2D's transient blit, these live across frames and are re-uploaded
@@ -476,6 +530,9 @@ private:
     std::vector<Rendering::RadianceSourceBinding> _radianceSources;
     uint64_t _radianceSourcesRevision = 0;
     bool _radianceVisibilityEnabled = false;
+    bool _volumeZeroProofEnabled = true;
+    int _volumeSamplesPerChord = 96;
+    double _volumeOutputErrorBudget = 0.0;
     std::vector<Rendering::VolumeDensityBinding> _volumeDensitySources;
     uint64_t _volumeDensitySourcesRevision = 0;
     Rendering::RenderedFieldSemanticObserver _renderedFieldObserver;

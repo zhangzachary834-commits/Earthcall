@@ -7745,5 +7745,17 @@
         }
       ]
     }
+  ],
+  "materialRefs": [
+    "material.farlands.amber",
+    "material.farlands.amethyst",
+    "material.farlands.beacon",
+    "material.farlands.emerald",
+    "material.farlands.gold",
+    "material.farlands.obsidian",
+    "material.farlands.platform",
+    "material.farlands.rock",
+    "material.farlands.safezone",
+    "material.farlands.terrain"
   ]
 }

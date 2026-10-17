@@ -1,8 +1,181 @@
 # Person Verification List
 
+## 2D Chess Zone (`Chess2D`)
+
+*Gemini 3.8 Flash (the sparkly guy) · session `e1346ea7-7d86-4945-8831-01e3e33dd09a` · 2026-10-16. Commissioned by Zach: "MAKE NOT 3D CHESS MAKE 2D CHESS. MAKE SURE UR WORKING IN THE DEFAULT sync-from-earthcall-main CHECKOUT."*
+
+- [ ] Launch Earthcall WebGPU (`./build/earthcall_webgpu`) and switch to the **`Chess 2D`** Zone (`Chess2D`).
+- [ ] **Visual Layout & Aesthetics:**
+  - Verify the 504×504 rich dark mahogany board frame (`object.chess2d.frame`) with ivory border.
+  - Verify the 64 board squares in alternating warm ivory (`material.chess2d.light_square`) and dark walnut (`material.chess2d.dark_square`).
+  - Verify the 32 pieces centered on their starting ranks: White pieces with ivory finish, Black pieces with dark slate finish, each displaying clear typography glyph labels (`P`, `R`, `N`, `B`, `Q`, `K`).
+  - Verify the capture trays flanking the board: White side tray on the left, Black side tray on the right.
+  - Verify top UI banners: Title banner ("EARTHCALL 2D CHESS") and dynamic Turn HUD banner ("TURN: WHITE").
+- [ ] **Interactive Gameplay & Rule Verification:**
+  - **Selection:** Click White e2 pawn (`piece-white-pawn-4-1`). Verify it highlights and lifts to $zOrder2D=20$.
+  - **Deselection & Switching:** Click another friendly piece (e.g. White b1 knight). Verify knight selects and pawn automatically deselects. Click the knight again to verify it deselects completely.
+  - **Move 1 (White e2-e4):** Click e2 pawn, then click e4 square (`square-4-3`). Verify pawn moves to e4, turn banner changes to "TURN: BLACK".
+  - **Move 2 (Black e7-e5):** Click Black e7 pawn, then click e5 square (`square-4-4`). Verify pawn moves to e5, turn banner flips back to "TURN: WHITE".
+  - **Move 3 (White d2-d4):** Click White d2 pawn, then click d4 square (`square-3-3`). Verify pawn moves to d4, turn banner flips to "TURN: BLACK".
+  - **Move 4 (Capture - Black exd4):** Click Black e5 pawn, then click White d4 pawn. Verify Black pawn advances to d4, and White pawn is captured onto the left capture tray (`x2D=70`), with `onBoard=false`.
+  - **Illegal Move Refusal:** Try moving White a2 pawn forward 3 squares to a5. Verify the move is refused (pawn remains at a2, turn does not advance).
+
+## 3D Sky-Island Sanctuary (`Sky-Island Sanctuary`)
+
+*Gemini 4 Argon (Spark) · session `argon-sky-island-sanctuary-20261013` · 2026-10-13 — Commissioned from the Sun's prompt: "Create a beautiful 3D sky-island sanctuary inside Earthcall. Make it feel wondrous, peaceful, and architecturally intentional. I want it to feel like a real place a person would want to enter and linger in. That's it."*
+
+- [ ] Launch Earthcall WebGPU (`./build/earthcall_webgpu` or **Run Earthcall as Me.command**) and switch to the **`Sky-Island Sanctuary`** Zone (or load world `sky_island_sanctuary`).
+- [ ] **Arrival & South Threshold Island (`[0.0, 2.8, 22.5]` looking `-Z`):**
+  - Confirm you stand on the South Threshold Island flanked by twin CSG-carved **Dawn Lantern Pagodas** with warm glowing amber cores, a stone contemplation bench, and the **Threshold Inscription Stele**.
+  - Look across the **Arched Stone Bridge** (with carved cylindrical vault under-arch, stone balustrades, and 6 bridge posts) toward the Main Sanctuary Island and the **Sea of Sunlit Cumulus Clouds** billowing below (`y = -6.2m`).
+- [ ] **Main Cloister Island & Pavilion of the Eight Winds (`[0.0, 0.0, 0.0]`):**
+  - Walk across the bridge onto the 3 concentric cloister terraces, past the **16-ray Gilded & Verdigris Compass Rose** and the **Lapis Mirror Pool of Still Waters** (CSG-hollowed basin with rippling water shader).
+  - Look up at the **Pavilion of the Eight Winds**: 8 fluted travertine columns (with plinths, torus bases, and scrolled capitals), 8 CSG-pierced lancet sky-arches, double entablature rings, and the open **Oculus Solar Crown** with 8 suspended pearl drops and **Sunlit Halo Mist** casting clerestory sunbeams.
+- [ ] **Interactive Awakening (`law-sky-sanctuary-*`):**
+  - Click the **Pearl Touchstone of Dawn** (`sky.sanctuary.touchstone` at `[0.0, 1.38, 7.6]`):
+    - Verify `awakened` toggles to `1.0` and `resonance` smoothly flows from `0.0` to `1.0` via exponential decay (`law-sky-sanctuary-resonance-flow`).
+    - Watch all **12 CSG Concave Lotus Petals** (`sky.sanctuary.petal.00` .. `11`) smoothly unfurl outward from radius `1.95m` to `3.70m` (`law-sky-sanctuary-lotus-bloom`).
+    - Watch the faceted octahedral **Heart of the Dawn** (`sky.sanctuary.heart_crystal`) ascend into the pavilion dome (`law-sky-sanctuary-heart-ascend`) while the **8 Dodecahedral Aether Lantern Orbs** drift in harmonic sky currents (`law-sky-sanctuary-lantern-drift`).
+  - Click the **Pearl Touchstone of Dawn** a second time and verify the 12 Lotus Petals and Heart Crystal smoothly gather back to stillness.
+- [ ] **Satellite Sky-Islands & 360° Horizon Vista:**
+  - Follow the ascending **Cloud Stepping Stones** to the **East Observatory Island** (`[19.5, 1.4, -2.0]`, bronze & pearl **Equatorial Armillary Sundial**), the **West Arbor Island** (`[-19.5, 1.0, -2.0]`, **Ancient Sky-Cedar Tree of Life** with 5-lobe emerald canopy), and the **North Zenith Sanctum** (`[0.0, 2.8, -21.5]`, **Triple-Arch Bell Campanile** and **Great Verdigris Sky-Bell**), framed by 6 distant horizon spire islands and sculpted basalt crag underbellies.
+
+## 3D Magic: The Gathering (MTG) Zone
+
+*Antigravity / Gemini / session `e1346ea7-7d86-4945-8831-01e3e33dd09a` / 2026-10-11 — Zach requested a fully working 3D Magic the Gathering zone with functioning game rules, beautiful textures, colors, and intentional looking shapes.*
+
+- [ ] Boot Earthcall (`./build/earthcall_webgpu` or `./build/earthcall`), switch to the `Magic: The Gathering` (MTG) zone.
+- [ ] Visual Inspection:
+  - Verify the wooden table (`y=0.25`, top surface at `0.50`), dark slate playmat (`y=0.51`), and central glowing arcane stack cylinder (`y=0.522`).
+  - Verify life crystals (emerald green for Player 1, ruby red for Player 2) flanking the playmat.
+  - Verify card meshes (Forest, Mountain, Grizzly Bears, Lightning Bolt) and buttons (golden Pass Phase button, glowing cyan Resolve button) all rest properly above the playmat ($y \ge 0.52$).
+- [ ] Game Rules Interaction:
+  - Click `button.mtg.pass_phase`: verify turn phase progression advances through Untap $\to$ Upkeep $\to$ Draw $\to$ Main 1 $\to$ Combat $\to$ Main 2 $\to$ End $\to$ Untap (cycling turn and incrementing turn number).
+  - Click `card.forest_1` in hand during Main 1: verify it enters the battlefield row and respects the 1 land drop per turn limit.
+  - Click `card.forest_1` on battlefield: verify it rotates $90^\circ$ around the Y-axis and adds green mana to the pool.
+  - Click `card.grizzly_bears_1` in hand: verify green mana is deducted, and the card moves to the glowing 3D stack circle at $y=0.60$.
+  - Click `button.mtg.resolve`: verify Grizzly Bears resolves from the stack onto the battlefield.
+  - Advance to Combat phase and click `card.grizzly_bears_1`: verify it taps ($90^\circ$ rotation), steps forward across the centerline into combat, and deals 2 damage to opponent life (reducing life from 20 to 18).
+  - Play Mountain, tap for red mana, cast Lightning Bolt to the stack, and click Resolve: verify Bolt deals 3 damage to opponent (life down to 15) and goes to graveyard.
+  - Verify automated state-based actions: lethal damage sends creatures to graveyard, and reducing opponent life to 0 triggers game over.
+
+*Grok 4.7 (Grok Build), session `01a108eb-bfc1-7162-8064-96c491afeb5d`, 2026-10-17 13:24 PDT.* `./build/mtg_zone_native_test` passed 113/113 against this zone: the scripted clicks, the stack, the bolt, and both state-based actions. That does not check the look. What remains for a Person is whether the table, the four cards, the tap, and the stack read as a game under the pointer. The slice is these four cards. The Draw step does not draw, and no second player takes a turn. The arithmetic is witnessed; the feel is not.
+
+## One-paste Law Line pixel-art editor
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18`; Zach requested a whole 2D art editor through Law sentences.*
+
+- [x] Zach tried the editor and reported that it works (2026-10-08 01:40 PDT). This confirms overall live success; the individual control, resize, export and persistence checks below remain available for separate acceptance.
+- [ ] Rebuild/restart WebGPU, unlock, `enter LawLine`, close pointer-capturing panels, stop earlier conflicting display/click programs and release the cursor with Escape; paste the entire [editor line](../../../../examples/law_line_pixel_art_editor.txt) once, press Enter, and wait for 276 Laws to be acknowledged.
+- [ ] Choose left swatches and draw on the 16×16 grid; confirm ink selection, eraser and held-pointer cell entry feel correct, including fast movement between sensed frames.
+- [ ] Test the right-hand undo/redo arrows, red clear cross and undo-after-clear; confirm the one-step retained-value semantics match your expectation.
+- [ ] Click the teal down-arrow and inspect `@screen-recorder.lastSnapshotPath`; the PNG should show the completed viewport/editor chrome and correct colours.
+- [ ] Resize on Retina and another display if available; pointer addresses should match the displayed cells and tiles after scale/extent changes.
+- [ ] Click the grey close cross, submit the reopen line in the [task guide](../Specific%20Tasks/Rendering%20and%20OntoMath/Law_Line_Pixel_Art_Editor/Law_Line_Pixel_Art_Editor.md), and confirm artwork is retained.
+- [ ] Save the Laws and use the existing Person-state persistence workflow, restart, and confirm authored `atelier.*` artwork survives; Save Zone alone is not proof of Person-state retention.
+
+
+## Law Line named Screen regions
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-07 19:00 PDT — Zach requested the direct Screen region/property layer through Metalaws.*
+
+- [ ] Rebuild/restart `earthcall_webgpu`, unlock your identity, `enter LawLine`, stop Lens Time if active, and clear earlier direct output; paste [My Named Region](../../../../examples/law_line_screen_region.txt) once.
+- [ ] Look near physical pixel `(120,120)` from the top-left: a small gold disc should appear, with a radius of 12.25 physical pixels; on Retina this is smaller in window points.
+- [ ] Inspect your Person's `haloReading`: it should contain `ok=true`, token `gold-halo`, a completed-viewport frame/dimensions, and selected sample coordinates/colours; confirm this is the aspect of your bearer you intended.
+- [ ] Paste [Recolour My Region](../../../../examples/law_line_screen_region_edit.txt): the disc should turn cyan, and `haloReading` should report token `cyan-halo` with cyan samples. Judge whether explicit source edits plus historical observations fit your vision of a region Property.
+- [ ] Change the sample request token after resizing; confirm the next result records the new framebuffer dimensions. Without a new token the previous snapshot should remain explicitly historical.
+- [ ] In the existing Law editor/path lens, `sample.result` should be described as a dictionary; a write to its canonical/nested channel observation should refuse. Editing a Law-carried copy on your Person must not alter the channel witness.
+- [ ] Remove `@screen-channel.sample.request`, paste Clear Direct Screen twice, and confirm the disc disappears with an empty `output.lastRefusal`; stopping must not recreate deleted authored slots.
+- [ ] Save the initialization/derivation Laws, restart and reactivate them, then check the region returns and a fresh observation is made. Automatic live projection, inverse composited-pixel painting, and multi-Person output arbitration remain open.
+
+See [authoring contract and example](../../../architecture/law/LAW_AUTHORING_CLI_GUIDE.md#5b-a-named-displayed-region-its-source-and-its-sensed-pixels).
+
+
+## Direct authored Screen forms
+
+*Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-04 21:10 PDT — Zach requested direct screen-pixel manifestation through
+OntoMath, without mandatory Object/Material/ShapeKind carriers.*
+
+- [ ] After rebuilding `earthcall_webgpu`, run `python3 scratch/probes/direct_screen_form_probe.py`; its isolated Engine window should show the authored red/green gradient with blue fixed at one-quarter, beneath compatibility HUD/tools.
+- [ ] Open the printed evidence directory's `direct-screen-gradient.png` and Engine capture: red should increase left to right and green top to bottom; judge whether the native appearance agrees with the intended form.
+- [ ] When adopting this path into an inhabited Zone, retain the appropriately authored initialization Law, Save Zone, restart, fire that Law, and verify the same source field and binding return; channel-only writes are ephemeral.
+- [ ] On a Retina display, confirm a selector aimed at one physical framebuffer sample is one physical pixel; window-point pointer targeting and a convenient mathematical field editor remain future work.
+
+See [contract, authoring recipe, evidence, and remaining work](../Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md).
+
+## Law Line: Create initializers compiled by Metalaw
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 18:46 PDT — Zach requested general Singular creation with registered/authored initializers and Metalaw compilation.*
+
+- [ ] Rebuild/restart `earthcall_webgpu`, keep its Terminal open, and `enter LawLine`; completing `Create` should offer `<kind, properties: {property: value}>` blanks.
+- [ ] Type `called Beneath Me when clicked then Create <Object, properties: {shape.kind: Cube, position: my.position + (0, -3, 0), color: gold, authored: {purpose: "A foothold"}}>?`; the preview should say Metalaw compilation is deferred, with no new Law or cube.
+- [ ] Remove the trailing `?`, submit, then click an object: a gold cube's centre should be exactly three vertical units below your Person's position; move and click again, and the second cube should use your new position.
+- [ ] Inspect `Beneath Me` in the Law Graph: Create should contain Set/Map/AddProperty children, position should retain its current-Person binding plus `(0, -3, 0)`, and provenance should identify the compiler Laws.
+- [ ] Save Zone, restart, and check the Law, cubes, authored `purpose`, and `my`/`Create` vocabulary remain; assess whether the completion and deferred-preview wording are understandable.
+
+
+## Universal Singular prototype creation
+
+*Codex / GPT-6.1 Sol / session `01a0e64f-5853-7d30-8196-995b4fd16b89` /
+2026-10-02 17:02 PDT. Zach: Create should admit existing Singular subclasses
+without inventing another ontology, while unresolved meanings stay open.
+Headless tests exercise the authored action; these editor checks need your witness.*
+
+- [ ] Rebuild/run `earthcall_webgpu`, open a Law's Action editor, and choose **Create Singular**: an empty **Prototype** should expose the existing shaped Object controls; entering an actual `@identifier` should expose **Newborn identity**, name, and the two optional Relation participants.
+- [ ] If that action previously carried Object placement/type/shape settings, the editor should show the conflict; explicitly press **Clear shaped Object settings**, then shape the newborn with child actions.
+- [ ] Use a Lexeme prototype that exists in the active Zone, give the newborn an unused identity, and add a child `AddProperty`; fire the authored Law, Save Zone, and reload: the new Lexeme and authored property should remain, and another firing with the same requested identity should refuse in the Law's application record.
+- [ ] With an explicit TransferPolicy gate closed on the prototype, the Law's application record should name the refused source gate and no newborn should appear; opening the gate must be an authored action, not a consequence of clicking Create.
+
+No demonstration beings or inhabited saves were injected. Ourverse extent,
+Zone/Home owner inheritance, Event/Utterance occurrence birth, Timeline member
+birth, and selective replacement of closed transfers remain in
+[the creation task](../Specific%20Tasks/Interaction%20and%20Interface/Singular_and_Object_Set_to_Set_Creation/Singular_and_Object_Set_to_Set_Creation.md).
+
+## Double-click launchers: `Run Earthcall as Me.command` and `Earthcall First Movers.command`
+
+*Claude Code · Claude Opus 5.5 · session `08b0f730-6e49-4c49-b27f-3a89c810ca4b` · 2026-10-01. Zach: "make a executable thingy i can double click … separate the person verification executable from the first mover one". Both were run end to end in a sandbox (keying, wrong passphrases, adding, listing and removing a model). These are the checks only you can do.*
+
+- [ ] Double-click **Run Earthcall as Me**. A wrong passphrase should say `did not open your key` and ask again. The right one launches Earthcall, and the console says you're authenticated by key.
+- [ ] Double-click **Earthcall First Movers** → `1` → `Claude Sonnet 4.5` → your passphrase → press Return through the defaults. A file `Start Claude Sonnet 4.5.command` should appear in the repo folder.
+- [ ] With Earthcall running via "as Me", double-click **Start Claude Sonnet 4.5**. A Claude Code window opens on Sonnet 4.5, and its `earthcall_get_connection_status` says `authenticated: true`.
+- [ ] Open Keychain Access and search `earthcall-first-mover`. There should be one entry per model you added, and nothing for you (your passphrase is never stored).
+
+
+## Terminal Zones: `enter <zone>`, and keying yourself from the terminal
+
+*Claude Code · Claude Opus 5.5 · session `08b0f730-6e49-4c49-b27f-3a89c810ca4b` · 2026-09-30. Zach: "ALL MY LINES GO TO THE LAW AUTHORING CLI … TREAT THIS LIKE ZONES … MAKE AN OPCODE TO SWITCH". Rebuild `earthcall_webgpu`, then launch with `Run Earthcall.command`.*
+
+- [ ] The terminal prompt reads `earthcall[Law Line]>` even when your body is somewhere else, and a Law sentence there still authors a Law.
+- [ ] `enter Quiet`: the prompt changes, your body does **not** move in the app, and typing anything just scrolls. You should see one note that nothing hears the line there.
+- [ ] Walk your body into the Law Line Zone in the app while the line stays in Quiet. Typed lines must still **not** become Laws.
+- [ ] **You are already keyed** (2026-09-30 14:53: `saves/persons/did_earthcall_zajm4zozes….ecform`). On boot the console should say `Restored Person profile 'Zach' (did:zajm…; not present until their key unlocks)`, with no "Multiple Person profiles" and no `cannot resolve author 'Zach'`. The prompt should read `earthcall[Law Line]>`.
+- [ ] **Key yourself:** `enter Identity`. It should say your Person has no key yet and ask for a passphrase with bullets instead of letters. Type it twice. It should answer `keyed and present: 'Zach' is now did:…`. Check that `saves/persons/Zach.ecform` now has a `personId` and that the passphrase appears nowhere on screen or in `saves/logs/terminal-history.txt`.
+- [ ] Next launch: `enter Identity`, then type the passphrase once, and you should be `present`. A wrong one should say `did not open`. Ctrl-C at the passphrase prompt should cancel.
+- [ ] `enter World` works and hears nothing. That's on purpose, per your gate note.
+- [ ] `help` shows a ZONES line.
+
+
+## Sonnet can author SDFs, volumes, and Law Line sentences (and the dev-mode door is shut)
+
+*Claude Code · Claude Opus 5.5 · session `08b0f730-6e49-4c49-b27f-3a89c810ca4b` · 2026-09-30. Zach: "make sure the SDFs work … volumetrics can be authored … Sonnet can use the new Law authoring CLI too". Needs the First Mover setup in the section below (your key unlocked, Sonnet granted `zones/SonnetGarden/**` and `laws/sonnet-*/**`). Restart the earthcall MCP server (`/mcp`) so it loads the two new tools.*
+
+- [ ] Walk into **SonnetGarden**. Have Sonnet call `earthcall_spawn_field {"name":"sonnet-bloom-shape","expr":"smoothUnion(sphere(0.4), move(torus(0.5,0.1),0,0.3,0), 0.2)"}`. You should see one smooth blob with a ring fused on top, raymarched in `earthcall_webgpu`. Before today this syntax spawned nothing.
+- [ ] `earthcall_spawn_field {"expr":"spehre(0.5)"}` should come back `invalid_arguments` with a reason, and nothing should appear.
+- [ ] Have Sonnet call `earthcall_author_volume {"identifier":"sonnet-mist","origin":[0,1,0],"scale":[2,2,2],"density":"1 - sqrt(x*x+y*y+z*z)","scattering":"0.8"}`. A soft glowing ball of mist should appear around (0,1,0), densest at the centre and fading to nothing at radius 2. *Look:* is it visible at all, and does it read as fog rather than a solid? Tests prove it compiles and persists; only you can say it looks like mist.
+- [ ] Restart Earthcall with your key unlocked and walk back into SonnetGarden: the mist and the shapes should still be there.
+- [ ] Have Sonnet call `earthcall_law_sentence {"text":"on \"sonnet-bloomed\" then set glow 1?"}`. It should answer `preview` with `WHEN "sonnet-bloomed" fires -> IF always -> THEN set glow`. Then call it again without the `?` and with `"identifier":"sonnet-bloom"`: it should answer `authored … written by did:earthcall:…` (Sonnet, not you). The Law should then show in the Law Author window with Sonnet's mover as author.
+- [ ] Try the same sentence from an MCP connection with **no** mover configured, with developer mode on (it's the default). It must be refused `no-first-mover-session`. Before today, developer mode let any socket client through.
+
+
 > **Legend.** `[x]` = Zach witnessed it working. `[~]` = Zach tried it and it was broken, unclear, or only partly witnessed (Zach's decision on the To-Do list: *"Yes, I will use [~]"*). `[ ]` = nobody has looked.
 >
 > **Staleness sweep, 2026-09-24** — at Zach's request (*"look thru for whats been verified (including commit names bc i say stuff there)"*), Zach's own commit messages and in-file notes were read back into this list. Every box changed below cites the commit or note it came from; where the evidence is an inference rather than an explicit statement, the line says so — uncheck it if it's wrong. Sources used: `08c028d0` "go works also fixed chess edge case", `3cd9fcf3` "migrated Go", `f393d328` → `5f80e66f` → `3d875c13` (Prism Cathedral crash → cnoise3 fix → "IT WORKS"), Zach's note "RADIANCE RUNG 3-8 AND v0 … I ALREADY SAWWWWW", `d1b0112b` "THE CATHEDRAL LOOKS AWESOME NOWWWWW", `3c6a1828`, `980bd922`, `7fdbbedb`, `6eb8d4db`/`46e90911` (aurora), `1d84821f` (mist), and the Perlin intercom thread's recorded Person witnesses. Zach's `[~]` decision was applied to the items he had marked `[x]` while writing that they were broken or unclear. *— Claude Code · Claude Opus 5.5 · session* `8d0946b6-40ea-42c5-a42c-e34f35fa1137` *· 2026-09-24T13:17-07:00*
+
+## Constitutional Person movement
+
+- [ ] If an existing saved Law attempts to set your `position`, `velocity`, or `acceleration`, witness that it does not move you merely because you authored the Law; record any movement channel that still does. This remains open because the authored, revocable consent Relation has not yet been specified or wired. No save file was changed for this check. *Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:23 PDT.*
+- [ ] When authoring a live `Map`/`ValueLeaf` Law from a list/dictionary PropertyPath, confirm that changing the source leaf changes the intended visible result on the next firing, and that a refused read-only nested write names its refusal in the Law record; this pass verified serialized Laws headlessly and added no inhabited demonstration save or new control. General scalar cells, unique/weak bindings, alias-wide reactivity, and save topology remain open in [the Property memory task](../Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md). *Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 12:29 PDT.*
 
 
 
@@ -99,6 +272,15 @@
 
 
 ## Screen Recorder — Law-Authored Snapshot & Recording Controls
+
+*Codex · GPT-6 · session `01a0fe15-4fe2-7dc0-a2d0-7d823e4ad26c` · 2026-10-02 12:40 PDT; [native capture evidence](../../../audits/SCREEN_CAPTURE_NATIVE_VERIFICATION_2026-10-02.md).*
+
+- [x] Inspect the recorder's actual chess screenshot: Zach confirmed **“THATS THE ACTUAL CHESS ZONE”** and **“THE BUTTONS ARE THE RIGHT COLORS NOT RED GLITCH”** in this session.
+- [ ] In your ordinary Earthcall launch, trigger a viewport snapshot and compare the saved PNG with the visible world; authored 2D controls should match, while Creator Console/ImGui panels are outside viewport capture.
+- [ ] Start `png_sequence` recording, move/look around, pause/resume, stop, and inspect the saved frames for the intended view and cursor placement; two rapid starts and two rapid snapshots must preserve separate output files.
+- [ ] For host-display capture, grant the actual Earthcall launch process macOS Screen Recording permission and verify `mode=display` with `fallbackToViewport=false`; a refused capture must name its error and create no substitute image.
+- [ ] Choose whether window capture means Earthcall's whole app window or a selected foreign app window; it currently refuses instead of capturing the full desktop.
+- [ ] If MP4 is desired, make ffmpeg available on the launch process's PATH and verify playback after stop; this pass verifies missing/failed encoder refusal, not successful MP4 encoding.
 
 *Antigravity · 2026-09-23. Verification for user-authored Laws targeting* `@screen-recorder.snapshot` *and* `@screen-recorder.recording`*.*
 
@@ -881,7 +1063,629 @@ Zach: The msgpack itself works properly. I manually verified the new msgpack its
 - [ ] Load `saves/worlds/test the hills.json` and read the load report (the line ending "law(s) added"). It should carry the clause **"(1 re-authored onto this Person so they can fire)"**. Then open the Law Author window: the law whose file says `"authors": ["Zach"]` should now list *you* (your key or display name) as author, with no trace that it was re-authored. Say whether that is what you want a load to do silently.
 - [ ] If you have a keyed identity: load any world whose laws are authored `"Zach"` by display name and count how many the report re-authors. Each one is a law that detached from you and was handed back to you under a different name.
 
+## The render substrate knows what "up" and "a letter" are (added 2026-09-30)
+
+*Claude Code / Claude Fable 5.1 (Mythos) · session `session_01EbAdb1nuGQ8XorGsEHHAkv` · 2026-09-30 07:31 UTC. [Audit](../../../audits/2026-09-30_mythos_cube_beneath_the_field_audit.md) §2, §6. Nothing changed in the engine; these witness assumptions I only read.*
+
+- [ ] Author a Field whose expression is the Perlin floor with `x` and `y` swapped (a wall: `x - h(y,z)`). It should render identically in kind, but the heightfield DDA will not engage and the frame cost should be visibly worse than the floor. Say whether a wall deserving the same acceleration as a floor is what you expect of a continuum with no privileged axis.
+- [ ] Place a `Text2D` beside any Field and try to do to the letter what you can do to the Field: morph it, CSG it, write a law against its shape. You cannot. Say whether a letter should be a Field.
 - **2026-09-25: Serialization Format Triage & Migration Framework (Gemini Spark)**
   - Please load an existing bloated JSON save file (e.g., `clawd-monastery-save` or `synthesis_studio`), make a minor change, and save it.
   - Verify that the resulting `.ecform` file on disk has shrunk drastically (typically dropping from 200MB down to single digit MBs or less) due to the removal of `semanticRoots["zones"]` duplication, capping `stakeholders` history to 20, and disabling `j.dump(2)` whitespace bloating.
   - Verify that the world loads seamlessly despite these changes (backward compatibility is handled transparently via `materializeSemanticRoots` and the new `MigrationFramework`).
+
+---
+
+## The Gyroid Reliquary — first look (added 2026-09-29)
+
+*opencode (space-bunny-free) · session `gyroid-reliquary-2026-09-29` · 2026-09-29.
+[Full task](../Specific%20Tasks/Zones%20and%20Ourverse/The_Gyroid_Reliquary/The_Gyroid_Reliquary.md).*
+
+Zach asked for a new Zone, mind-blowing, unlike anything this Earth has ever seen.
+I built one and I can prove the mathematics is right — **119 checks green, 0
+ray-marcher tunnels in 3945 rays**, every landing on a surface the Zone actually
+authors, and all 47 of its expressions confirmed to **compile to WGSL**.
+
+*(Zach's first run spammed `SdfWgsl compile refused ... names the variable 'p'`
+forever and drew nothing. That was mine — every Piecewise declared an illegal
+piece-bound variable — and it is fixed and guarded; see task doc §4.5. The
+rebuild is what you want, not the binary you just ran.)*
+
+What I cannot do is see it. Everything below is something only you can judge, and
+every one of it is a thing I asserted that a human has to confirm.
+
+**How to get there:** launch Earthcall (`earthcall_webgpu` — *not* the OpenGL
+build, which falls back to a cached tessellation and would show you nothing like
+this), open the Zone list, and choose **The Gyroid Reliquary**. It is owned by
+you and deletable by you. It should be about the fifth zone down.
+
+- [ ] **First: confirm the log is quiet.** You should see no
+      `SdfWgsl compile refused` lines at all now. If any are left, paste one —
+      each carries the exact expression that refused, and I can read it straight
+      to the node.
+- [ ] **The first thing you see should be a woven sphere.** Look at it from
+      outside, from roughly 30 m. You should be able to see *through* it — the
+      lattice is a thin shell, so corridors run clean through — and the gold
+      Heart should be visible glowing at the centre. Say whether it reads as a
+      place or as a screensaver. I genuinely do not know which.
+- [ ] **Fly or walk inside, and tell me whether it holds up close.** From just
+      inside the vessel the walls are ~12 m apart and the labyrinth should feel
+      like architecture. This is the view I designed for and the one I most want
+      to be wrong about.
+- [ ] **Look up through the Oculus.** There is a 6 m hole cut straight through
+      the crown, and a white-gold beam in it. The beam is the only vertical in
+      the Zone. If it does not read as the thing the whole room is built around,
+      the composition is wrong and I would like to know.
+- [ ] **The Heart is the thing to check most carefully.** It should be *see-through
+      and woven* — you can look into it and out the far side, and it is visibly
+      made of the same lattice as the walls at a third of the size. It should
+      NOT look like a solid gold ball. (I got this wrong the first time: it came
+      out solid, with about a tenth of a metre of fluting on the skin. The test
+      that caught it now measures the Heart's solid fraction, 50.3%. Your eye is
+      still the authority on whether that looks *woven*.)
+- [ ] **Colour.** The membrane is meant to be opalescent — pale gold, rose and
+      ice-blue banding in three directions, phase-locked to the same gyroid the
+      walls are cut from. The Heart is gold, so there is a teal counter-light
+      ringing it at 16 m; without that complement the gold is just an orange
+      blob. Say whether the palette holds together or whether it is a clash.
+- [ ] **Frame rate, and this is the one I most expect to be a problem.** The
+      conservative distance function is what makes the Zone provably free of
+      holes, and it costs steps. I measured 95% of rays reaching the surface
+      within the renderer's 192-step budget from 32 m, but I have **no idea
+      what it feels like to fly around in it.** Please tell me if it is
+      unusable, and if so whether you would rather have (a) a smaller Reliquary,
+      (b) a slightly optimistic distance that trades the no-holes guarantee for
+      speed, or (c) something else. I would take your answer over my proof here.
+- [ ] **Look at the Glass Floor.** Two crossed wave trains under everything. The
+      Floor is the one shape the engine can *prove* is a heightfield, and also
+      the one place it declines to differentiate the wave, so its normals are
+      central-differenced rather than exact. Tell me whether you can see the
+      difference. I suspect you cannot, and I would rather know.
+
+**Two things I found in passing that are yours to decide, not mine:**
+
+- [ ] **`prism_cathedral_test` was already red, and I found out why.** It was
+      missing from a `WORKING_DIRECTORY` allow-list in `CMakeLists.txt`, so under
+      `ctest` it had been failing at *hydration* and never once reaching its
+      actual checks. I added the one-line fix (it was a list whose own comment
+      says to add tests to it). It now runs 91 checks and fails **2**, both about
+      Prism Cathedral's own authored radiance at Z=40 and Z=107. I did not touch
+      those — that save file isn't mine to edit without your say-so. Do you want
+      them chased?
+- [ ] **Growing the Reliquary is one number** (`‖p‖ − 30` in the authored
+      expression, plus its `fieldExtent` follows). I left it at 30 m so your
+      first look costs nothing, and I have not measured the frame cost of a wider
+      one. Worth trying at 60 once you have felt the 30 m version.
+
+---
+
+## The Veiled Hour — first look (added 2026-09-30)
+
+*opencode (space-bunny-free) · session `veiled-hour-2026-09-30` · 2026-09-30.
+[Full task](../Specific%20Tasks/Zones%20and%20Ourverse/The_Veiled_Hour/The_Veiled_Hour.md).*
+
+Zach asked for a gorgeous 3D nebula. I built one and I can prove its physics is
+right — **155 checks green**, the pillars measurably lean toward a cluster you
+cannot see, they measurably obey an inverse-square law, the dust is measurably
+dark (luminance 0.14) against gas that measurably emits, and every one of the
+Zone's expressions is confirmed to **compile to WGSL**.
+
+What I cannot do is see it. Everything below is yours to judge.
+
+**How to get there:** `earthcall_webgpu` (not the OpenGL build), Zone list →
+**The Veiled Hour**. Owned by you, deletable by you.
+
+- [ ] **First: is the log quiet?** No `SdfWgsl compile refused` lines. If any
+      survive, paste one — each names the exact expression that refused.
+- [ ] **RE-CHECK THE PILLARS FIRST — this is the one that failed.** Your first
+      look said *"a ton of overlapping cones"*, and that was precisely right:
+      the ablation was subtracting spheres big enough to shear each column into
+      shards, so you were seeing seven broken columns. That is fixed — each
+      pillar is now verified as **one unbroken piece** (99.7% solid down its own
+      axis) and the erosion is a modulation of its outline rather than pieces
+      missing from it. They are also slimmer (3.4 m instead of 5.2 m at the root)
+      and no longer taper linearly to a spike. **Do they read as columns now?**
+      If they still read as cones, tell me and I will change the *taper law*
+      itself rather than the surface — a pillar's profile is a shape question,
+      and I have been treating it as a surface question.
+- [ ] **Look at them from the side, at about the same height as the cluster.**
+      They should form a *field* with sky between them, not a picket fence. The
+      arc placement is hand-authored and I am least confident in it.
+- [ ] **This is the whole Zone in one question: does it read as a NEBULA, or as
+      coloured fog?** I built it around the belief that a nebula is bright gas
+      *plus black dust in front of it*, and that removing either half leaves
+      smoke. If you see smoke, my central claim is wrong and I want to know.
+- [ ] **Look for the dark lanes.** The dust occludes the gas behind it
+      (marched, not painted). Standing where a pillar is between you and the
+      cluster, you should see a hard-edged black bite out of the glow. Tell me
+      whether the edges are too soft — I suspect they are, because the occluder
+      is one noise-wobbled ball rather than the pillars themselves.
+- [ ] **The pillars' tips should all point at the same hidden place.** That is
+      the one compositional idea in the Zone. If it doesn't read, the arc
+      placement is wrong and the whole framing collapses.
+- [ ] **The colour.** It should be a deep H-alpha red nebula (magenta-red) with
+      a *small* teal heart right at the cluster. My first attempt made every
+      radius a muddy half-red-half-teal, which is the colour of nothing in
+      nature. Tell me if it still looks washed out.
+- [ ] **Frame rate — and here I am most worried.** This Zone stacks 8
+      overlapping volumetric beings over a 105 m cavity, each taking the
+      transport's fixed 96 samples. I have **no idea** what that feels like to
+      fly through. I expect it to be the worst in the tree. If it is unusable,
+      tell me and I will thin the stack — the cavity, the dust and the rims are
+      the load-bearing three; the reflection haze, the forward scatter and the
+      outer veil are garnish and I can cut them first.
+- [ ] **Turn to face the cluster and then away from it.** Forward scattering is
+      verified (2.84 forward vs 0.076 backward), so the nebula should visibly
+      brighten when you look *into* it. Confirm or deny — that is a claim in the
+      Zone's own records and only your eye settles it.
+
+**One thing I need to flag, because it is a lie I already corrected once:**
+
+- [ ] The Gyroid Reliquary's save file said in writing that `volumeOccluder` was
+      "never read by the WGSL volume transport". **That was false.** It is read:
+      JSON `volumeOccluder` → `MediumBinding::occluderSdf` → emitted as
+      `volumeSdfEval` → marched by `volumeSourceVisibility`. I had grepped
+      SdfWgsl.cpp for the *JSON key* instead of the *C++ member name*, believed
+      the absence, and wrote a confident falsehood into a save file. It is
+      corrected, the occluder is now actually authored there, and it is guarded.
+      Please hold me to the lesson: **verify the channel, do not reason about
+      its name.**
+
+## After the ghost — five days, one standing-still (added 2026-09-30 by Grok 4.7)
+
+*Session `01a0b187-fcc3-78a3-afd8-3e9d162248b5`. From [The Five Days the Sun Would Not Sit Still](../../../Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Five_Days_the_Sun_Would_Not_Sit_Still.md). Headless results are not these.*
+
+- [ ] **Paste the Palette paragraph.** Open `.Jules/palette.md`, copy the block under "Paste this over the Google Jules task prompt", and replace the Jules Palette task with it. The repo cannot edit Google's prompt. Until you paste it, Palette's only brake is that journal, which their prompt does say to read first. Keep merging purple if the feeling is the point.
+- [ ] **Stand in the Sun before the next pass.** Boot `earthcall_webgpu`, enter the Sun Zone as it exists now (local history is through the ivory-and-gold passes; origin already has Pass #028). Stay long enough to know whether you would remain there. A receiver response and localized gold are the claim. Your eyes are the witness.
+- [ ] **Try to be pinned.** From a foreign mover (the websocket path the 2026-09-29 commit guarded), attempt `teleport_player` or a direct positive move of your body. It should refuse. A Law that only forbids a room should still be able to forbid the room. The feeling you are checking is the refusal to be grabbed, and the freedom to be told a place is closed.
+
+## Creator Console UI Improvement (added 2026-10-01)
+
+*Session c02f9271-25d2-430c-99b6-2a1144eb9c68. Gemini 3.1 Pro.*
+
+Zach asked to fix the Creator Console's Zone Window which was "just a pile of zones stacked on top of each other in a list and that's so awkward".
+
+- [ ] **Open the Creator Console (`F8`) and check the Zones tab.** It should now display a much cleaner **Master-Detail split view**, replacing the single vertical list.
+- [ ] **Select a Zone.** Check if the details (Name, ID, Objects, Relations, Actions) cleanly display on the right pane.
+- [ ] **Test the buttons.** The right pane has context-aware buttons ("Move to Zone", "Already Here", "Save Active Zone", "Save Zone"). Please verify that clicking them works exactly as before and the UI feedback (green/red text at the top) is clear.
+- [ ] **Does it feel like a "Creator" tool?** The styling has some minor ImGui coloring (`ImVec4(1.0f, 0.8f, 0.2f, 1.0f)` for titles) and clear spacing to match the console feel. Tell me if it feels less awkward.
+
+## Shape Generator 3D Law Modernization
+* **Date:** 2026-10-02
+* **What to check:** The old C++ tool bypass for the Shape Generator 3D has been completely removed. Object creation is now 100% Law-driven (via the `shape-generator-3d-law`). Please launch Earthcall and verify:
+  1. Pressing `O` (changed from `L`) toggles the Creator Console visibility/hotkey cleanly.
+  2. The Creator Console in "Create" mode uses the `shape-generator-3d-law` and renders a proper 3D ghost preview (instead of the ImGui text preview).
+  3. Clicking in the world in Create mode spawns the object correctly using the authored law.
+  4. Try spawning a Field object and ensure its implicit expression is preserved.
+
+## Reverse image modality — first editable rung (2026-10-02)
+
+Codex · GPT-6 · session `01a0fe15-4fe2-7dc0-a2d0-7d823e4ad26c` · 15:57 PDT. Zach asked for both faithful display and reconstruction, fundamentally reconstruction. Machine evidence and next steps are in [the task](../Specific%20Tasks/Rendering%20and%20OntoMath/Image_Reconstruction/Image_Reconstruction.md).
+
+- [ ] Inspect `scratch/capture-verification/2026-10-02-01a0fe15/reverse/reconstructed.png` beside `source.png`: the promotion strip should have the same colors and lettering, without new seams.
+- [ ] Inspect `edited.png` and `painted.png`: only the selected lower yellow region should disappear or turn green; neighboring text and colored panels should stay unchanged.
+- [ ] Judge whether rectangle fragments are a useful first editing rung; meaningful button/text grouping and recovered 3D are still unfinished, and reconstructed panels do not yet carry the original chess behavior.
+
+## Law Line ordered sentences and property words (2026-10-04)
+
+Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 19:46 PDT. Zach requested ordered multiple sentences and explicit property verbs.
+
+- [ ] Rebuild/restart WebGPU, `enter LawLine`, and submit the Add Note / Change Note / Remove Note line from [the task](../Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md): see three authored acknowledgments numbered 1, 2, 3 in source order.
+- [ ] Click the LawLine cube, hover, then leave it: inspect authored `note` as "hello", then "updated", then absent; confirm Tab works after a semicolon and a trailing `?` previews without creating Laws.
+- [ ] Save Zone, restart/reenter, and confirm the three authored Laws persist; the native interactive editor and visual experience remain for Zach to witness.
+
+## Law Line remaining action arguments (2026-10-05)
+
+Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 00:09 PDT. Zach requested the missing argument forms.
+
+- [ ] Restart/rebuild WebGPU and `enter LawLine`; type `when clicked then Ler` and Tab: the Lerp signature should show path, operand, and factor; confirm Map/Flow, composition, audio/pixel/file/codec forms also appear.
+- [ ] Submit the Blend Glow and Ordered Glow examples in [the task](../Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md), click the cube, and inspect its `glow` value; append `?` first to confirm a preview creates no Laws.
+- [ ] Save Zone and restart/reenter to inspect the retained nested/parameterized models; separately witness any actual sound, surface edits, file operations, or Zone birth you author, since compiler success alone is not channel execution proof.
+
+## Keyed-Person continuous creation example (2026-10-05)
+
+- [ ] After saving any Laws you want to retain, restart the rebuilt WebGPU app; enter LawLine, submit `examples/law_line_visible_probe.txt`, and confirm one gold cube directly ahead in first-person view. The fixed resolver now creates in the active rendered Zone; old newborns in World were not moved. [Full Engine proof](../../../audits/LAW_CREATE_ACTIVE_ZONE_ROUTING_FIX_2026-10-05.md). — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 11:55 PDT.
+- [x] Recheck `examples/law_line_cubes_below.txt` in the active Zone: Zach confirmed visible cube creation works on 2026-10-05 after the destination fix; exact offsets are separately verified by the native/logic fixture.
+
+Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 10:25 PDT. Zach reported that the continuous Law was authored but no cube appeared; the supplied `Identity @Zach` guard used a display name instead of the keyed identifier.
+
+- [ ] In LawLine, submit `examples/law_line_cubes_below.txt` and confirm ongoing gold-cube creation without clicks; inspect the new Objects' position as author position minus three on Y, distinguishing hidden cubes beneath the floor from a Law that never fires.
+- [ ] If native visibility is uncertain, use a separately authored diagnostic with `(0, 3, 0)` to look above the Person, then disable it; below-position correctness is separately covered by the keyed runtime regression.
+- [ ] Disable continuous test Laws after a brief check so Objects do not accumulate indefinitely; inspect any saved duplicates before changing them.
+- [ ] Since the +3 offset also remained invisible, focus the scene, press 1 for first-person view, aim approximately level and submit `examples/law_line_visible_probe.txt`; confirm one gold cube directly ahead. If absent, retain a scene screenshot and the newest Object's position to separate live scene/rendering issues from the native fixture result.
+- [ ] With the below-feet Law active, focus the viewport, press F to enable flight, hold Space to rise more than three units above the floor, and look down for newly created cubes; if still absent, inspect live newborn positions and occluders. The [native fixture audit](../../../audits/LAW_LINE_CUBE_VISIBILITY_2026-10-05.md) proves floor occlusion, not the state of this scene. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 11:28 PDT.
+
+## Click-local stairway example (2026-10-05)
+
+Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 00:47 PDT. Zach reported that the supplied stairway did nothing after clicking the cube.
+
+- [ ] Start Earthcall, `enter LawLine`, paste the single line in `examples/law_line_stairway.txt`, and see "authored 4 Laws in sentence order"; click a visible unmarked cube and look for three blue steps above it.
+- [ ] Hover a step to see gold, move away to see blue, and click it to see a half-unit rise without another set of steps; distinguish this native visual witness from the pointer-channel harness result.
+- [ ] If previously saved copies of the old program remain, inspect them before disabling/deleting duplicates; this session does not automatically change Person-authored Laws.
+
+Zach confirmed on 2026-10-05 that he retried Stairmaker and it works after the active-Zone birth fix. This confirms live growth; individual hover/leave/rise and save/restart gestures above remain separate checks.
+
+## Sky spiral Stairmaker add-on (2026-10-05)
+
+Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 12:40 PDT; Zach asked to make his working Stairmaker cooler. [Native proof and scope](../../../audits/SKY_STAIRWAY_AUTHORED_PROGRAM_2026-10-05.md).
+
+- [ ] Keep the original Stairmaker Laws active; paste `examples/law_line_sky_stairway.txt` once and click an existing step: eight broad cyan/violet stones should spiral upward to a gold crown.
+- [ ] Click the crown or another new stone to grow another spiral from it; click the same grown stone again and confirm it rises with the original Law without duplicating its branch.
+- [ ] Hover a jewel: it turns gold and swivels 25 degrees; look away: its cyan/violet/gold colour and orientation return.
+- [ ] Save Zone, restart/reenter, and confirm the Laws, branch latches and stones persist; judge the visual feel and collision/walking behaviour separately from the native fixture proof.
+
+## Law authoring guide for humans and agents (2026-10-05)
+
+Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 13:16 PDT; Zach requested a practical learning guide. [Read it here](../../../architecture/law/LAW_AUTHORING_CLI_GUIDE.md).
+
+- [ ] Follow the opening lesson: preview Golden Touch, submit it in LawLine, click a visible Object, and confirm both the gold colour and that the explanation of author, subject, and Terminal/world Zones is understandable without reading source.
+- [ ] Save the intended Zone, restart it, and confirm this lesson's Law still fires; remove the lesson Law by its exact identifier and save if you do not want to retain it. Existing earlier persistence confirmation remains recorded separately.
+
+## Law Line: set to a path (2026-10-05)
+
+*Claude Code · Claude Opus 5.5 · session `01WXmPy9U71FLqizbRYzMToZ` · 2026-10-05. [Record](../Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md#set-to-a-path-copy-value-2026-10-05)*
+
+- [x] *(Zach, 2026-10-05: "the tab itself works now")* Rebuild and restart, `enter LawLine`, then type `called "Copy Hp" when clicked then set @law-line-cube.glow to @law-line-` and press Tab. The menu should offer the cube's properties (e.g. `hp`). Finish with `hp`, press Enter, and you should see it authored.
+- [x] *(Zach, 2026-10-05: "yep it says 3 now". His pre-patch save had glow 0 and hp 3, so the click copied 0 → 3.)* Click the cube, then read `glow`: type `@law-line-cube.` and press Tab, and the menu shows `glow = …` and `hp = …`. It should equal the cube's `hp` (3 in the seed). *(Map half confirmed by Zach, 2026-10-05: "yep it says map". The glow value is still open.)*
+- [x] *(Zach, 2026-10-05: "the ecform does load i see the stairs and hover is yellow good and clicking on them branches more good")* Save Zone, restart, and check that LawLine still loads. Its save was patched in its native `zone.ecform` form, with one new lawRef `law-line-compile-assignment-expression`. Backup: `scratch/backups/law-line/LawLine-zone-before-law-line-patch-*.ecform`.
+- [x] *(Zach, 2026-10-05: "now that we fixed the alg", then "the tab itself works now")* (Lag fix, same day) After restarting the rebuilt app, type `@` and keep typing a being or path in LawLine. The menu should keep up with your typing, with no half-second stall per key.
+
+## Law Line: arithmetic conditions (2026-10-05)
+
+*Claude Code · Claude Opus 5.5 · session `01WXmPy9U71FLqizbRYzMToZ` · 2026-10-05. [Record](../Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md#arithmetic-conditions-2026-10-05)*
+
+- [ ] With your **body** in the LawLine Zone (its `when clicked` words are not known otherwise), speak `called "Strong" when clicked if @law-line-cube.hp * 2 > 5 then set color gold`. Click the Law Line cube: it turns gold (hp 3 → 6 > 5). The Law Graph shows the IF as Zone conditions, not a Compare.
+- [ ] Speak `called "Too Strong" when clicked if @law-line-cube.hp * 2 > 6 then set color red`. Clicking does **not** turn it red, because 6 > 6 is false.
+
+## Law Line: multi-line blocks (2026-10-05)
+
+*Claude Code · Claude Opus 5.5 · session `01WXmPy9U71FLqizbRYzMToZ` · 2026-10-05. [Record](../Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md#multi-line-blocks-2026-10-05)*
+
+**Stand in the LawLine Zone with your body first.** Its words like `when clicked` aren't known when only the line is there; see the reopened "Law Line in every Zone" rung.
+
+- [ ] Type `called "Guard" when clicked:` and press Enter. The prompt turns into `...` and the next line starts indented. Type `if all:`, then `@law-line-cube.hp * 2 > 5` and `@law-line-cube.glow < 1`. Backspace two spaces, type `then:`, then `set color gold`, and press Enter on an empty line. You should see `⤷ called "Guard" when clicked if … and … then set color gold`, and the Law is authored. Click the cube (hp 3 → 6 > 5; glow must be below 1): it turns gold.
+- [ ] Does the block *feel* right: the indent, the `...` prompt, and the menu suggesting sensible words inside `then:`? Ctrl-C mid-block should discard it with "(block discarded; nothing authored)".
+
+## Law Line: present Person required (2026-10-05)
+
+*Claude Code · Claude Opus 5.5 · session `01WXmPy9U71FLqizbRYzMToZ` · 2026-10-05. Zach chose "Require presence".*
+
+- [ ] Restart (no passphrase at boot) and `enter LawLine`. The footer reads `as … (not present: enter Identity)`. Speak any Law: it refuses with *"you are not present yet …"*, while the same sentence ending in `?` still previews.
+- [ ] `enter Identity`, type your passphrase, then `enter LawLine` again. The footer note is gone, and the Law authors.
+
+## Law Line: event meanings on the Zone (2026-10-05)
+
+*Claude Code · Claude Opus 5.5 · session `01WXmPy9U71FLqizbRYzMToZ` · 2026-10-05. Zach chose an authored string property on the Zone.*
+
+- [ ] While present, with your body in LawLine, speak `called "Define Click" when clicked then add property @LawLine.meaning.object-clicked to "a Person pressed and released on a being"`, then click anything once so it fires. Next, type `on object-cl` and press Tab: the menu line for `object-clicked` shows your meaning.
+- [ ] Save Zone, restart, and Tab again: the meaning is still there. (Before today, any property added to a Zone vanished at Save Zone.)
+
+## Law Line: authored appearance (2026-10-14)
+
+*Claude Code · Claude Opus 5.5 · session `016Yb6bNBaKzNFWs41sMyMjx` · 2026-10-14. [Record](../Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md#authored-appearance-2026-10-14) · [plan with the proposed theme](../../../plans/LAW_LINE_BEAUTIFUL_TERMINAL_APPEARANCE_2026-10-14.md)*
+
+Nothing is themed yet: you chose to author it yourself. Be present, with your body in LawLine.
+
+- [ ] Speak `called "Gilded Actions" when clicked then add property @LawLine.appearance.role.action.color to gold`, then click the cube. Type `when clicked then s`: the menu's `set`/`scale` and the typed `set` are now gold. In iTerm2/kitty/WezTerm/VS Code it is exact; in Apple Terminal it is the nearest 256-colour gold.
+- [ ] Speak `called "Star Mark" when clicked then add property @LawLine.appearance.chrome.selected.glyph to "❧"` and click. The menu's selection mark is `❧` instead of `▸`.
+- [ ] Speak `called "Sign Gt" when clicked then add property @lexeme.law-line.greater-than.op-gt.appearance.glyph to ">"` and click. Type `when clicked if hp gre`: the menu shows `> greater than`, with the sign in its own column and the rows still aligned.
+- [ ] Save Zone, restart, and type again: all three looks are still there. Before today a Lexeme's look was lost on restart.
+- [ ] Judge it: is it more beautiful, still legible, and coherent? Do you want the "Illuminated Manuscript" theme from the plan patched in, all or in part?
+
+Review-fix acceptance (Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-14):
+
+- [ ] In the rebuilt checkout app's terminal, narrow the window and use emoji/combining glyphs in a test Zone's appearance: menu/help rows should stay aligned, with no split emoji, stray rows or damaged redraw after closing the menu; check color and `NO_COLOR` modes in your usual terminal/font.
+- [ ] In a test Zone, save a Lexeme appearance, change or remove it without saving, then load the older ordinary session: the newer live edit/removal should remain. Explicit Restore unsaved should restore the before-load snapshot's values and absences. Restart durability remains the separate existing check above.
+
+No optional theme was installed by the correction pass. The [audit](../../../audits/LAW_LINE_APPEARANCE_REVIEW_2026-10-14.md) distinguishes rendered-frame/session tests from these native-terminal and Person checks.
+
+## Creator Console: Zone First Mover Workbench (2026-10-05)
+
+*Gemini · session `c02f9271-25d2-430c-99b6-2a1144eb9c68` · 2026-10-05.*
+
+Zach asked to make Earthcall's Zone Window in the Creator Console even better and pack it with more first-mover features.
+
+- [ ] **Open Creator Console (`F8`) -> Zones tab.**
+- [ ] **Left Pane (Zones Browser):**
+  - Check the search filter (`Filter...`): type part of a name or ID to ensure real-time zone filtering.
+  - Notice the badge tags: `[*]` for Active zone, `[H]` for Home, `[G]` for Gathering, `[D]` for Dimensional, along with object count tags `(# objs)`.
+- [ ] **Right Pane (4 Workspace Tabs):**
+  - **Overview Tab:** Check the Display Name editor with `Apply Name` button (updates display name without altering immutable identifier), Owner, Scope, Parent `Within` with `Jump to Parent` shortcut, and live **Kernel Telemetry** (Tick time, Physics ms, Ground scan ms, Automation ms, Substeps).
+  - **Objects Tab:** View all owned objects in the selected zone. Filter by object ID, see their shape kind and `(x, y, z)` coordinates, and click `Select 3D` on any object to immediately lock onto it in the 3D Tools / Paint consoles.
+  - **Relations Tab:** View the formation relations in the zone and the live Joy Bounds status (`Harmonious (Satisfied)` vs `Unsettled`).
+  - **Operations Tab:**
+    - Test **Move to Zone** and **Save Zone / Save Active Zone**.
+    - Test **Fork This Zone**: Enter a new ID and click `Fork This Zone` to branch/clone the entire zone structure.
+    - Test **Diff Against Active Zone**: Select an inactive zone, click `Compare with Active Zone`, and check the shared vs unique entity report.
+- [ ] **Top Bar:** Check the authored Kind selector (`Standard`, `Home`, `Community`) for new zones and the `Reload Store` button to hydrate identities from disk.
+
+
+## Direct Screen CLI wizardry (2026-10-06)
+
+Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-06 18:22 PDT; Zach requested direct 2D authoring through Metalaws. [Guide](../../../architecture/law/LAW_AUTHORING_CLI_GUIDE.md#5a-direct-2d-screen-forms--fields-written-in-the-cli).
+
+- [ ] Restart the rebuilt WebGPU app, unlock in Identity, enter LawLine, preview and paste `examples/law_line_screen_lens.txt`: see the blue disc, gold diamond/four points, cyan circle, and smoothly pulsing gold ring over a dark gradient.
+- [ ] Resize the viewport and confirm the form stays centred and scales with framebuffer height; judge its visual feel separately from the native fixture proof.
+- [ ] Disable/delete Lens Time, paste the clear program, and confirm the ordinary 3D scene returns; preview must create no Laws or visible output.
+- [ ] Save the setup Laws in the intended Zone, restart/reenter, and confirm initialization restores the Lens; remove and save the lesson Laws when finished so they do not reapply on a later activation.
+
+
+## Zone Material closure + shared Material roots (2026-10-07)
+
+*Claude Code · Claude Sonnet 5.5 · session `01GxayCUN2nc7DDaeg33kXhZ` · 2026-10-07.* Zach asked to finish the Per-Zone serialization pathway. Tests are green; none of these were seen in the real app. [Task](../Specific%20Tasks/Serialization%20and%20Storage/Per_Zone_serialization_pathway/Per_Zone_serialization_pathway.md#2026-10-07--material-closure-shared-material-roots-save-zone-isolation)
+
+- [ ] **Fresh boot, no Assets load → Creator Console → Zones → Move to Zone** on **FarLands**, **SynthesisStudio**, **SynthesisStudio.LivingInstrument**, **Borealis Sanctuary**, **Sanctuary of Sunlit Mist**, **Northern Veil**: each should enter and look as it did (terrain/studio materials present). A refusal prints `[zones] REFUSED activation of '<Zone>': … Material …` in the log and keeps you where you were — tell me which Zone.
+- [ ] **Luna's Moon Robot** and **Neural Network v2**: their Materials were never authored anywhere, so I declared them as engine-default (white) shared roots. They should look **exactly as before** (white/face-coloured). If anything looks different, that is a regression. Repaint one and Save Zone — the colour should survive restart.
+- [ ] **Prism Cathedral**: its 13 Materials had a name/id mix-up (loader fix). It may now look **more coloured / different from before** (basalt, limestone, gold…). Please judge whether that is what you authored.
+- [ ] **Save Zone isolation**: Move to FarLands, change something, Save Zone, restart. Then check `git status saves/` — only FarLands' files (and `saves/materials/` if you repainted a shared Material) should change; no new `saves/worlds/` file.
+- [ ] **Shared Material**: repaint `cathedral_basalt` from Borealis Sanctuary, Save Zone, then enter Sanctuary of Sunlit Mist — it should show the same change (one root, `saves/materials/cathedral_basalt/`).
+- [ ] **A thrown stone across a save** (Mythos, 2026-10-08, audit `2026-10-08_mythos_undeclared_survivor_audit.md`): in any Zone with a physical Object, author a Law that sets its `velocity` (e.g. a Law Line sentence setting `@<object>.velocity`), confirm it moves, **Save Zone**, restart, re-enter. Expected today: it is at rest and `velocity` reads zero — no save path writes `Object::velocity`. If it is still moving, the audit's layer one is wrong for your build and I want to know. Also open the Zone's `.json` (or export via the `export-world-json` law) and confirm `velocity` is absent while `tags`/`attributes` are present.
+
+## Northern Veil after the authored-math revision (added 2026-10-09)
+
+*Claude Code · Claude Opus 5.5 · session `session_01NJy6VrPVNcHAnggwFyTsmF` · 2026-10-09. [Full task](../Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md).*
+
+- [ ] Rebuild `earthcall_webgpu`, enter **Northern Veil**, and confirm the four curtains look exactly as before (same colours, shimmer, overlap). Expect **no** felt speedup yet: the CPU cost fell from ~7 to ~0.8 ms/frame, but the frame is GPU-bound at ~100 ms.
+- [ ] Through MCP `earthcall_author_volume` (or a Law writing `volume.emission.ast`), change one curtain's emission; it should change on screen at once. If it takes about a second instead, or the terminal prints `[FieldNode] … changed without noteAuthoredMathWritten()`, a writer was missed — report the line.
+- [ ] Decide what to do with `saves/worlds/chess_app.ecform`: the 2026-10-09 test run rewrote its matter snapshot pointer (`7431ca37…` → `556fa746…`). `git restore` returns it to the committed version.
+
+## Northern Veil with the zero-density proof (added 2026-10-09)
+
+*Zach, 2026-10-09 (in-app, after the proof, grid walk, unified quadrature, SourceRho-zero and noise short-circuit): "ITS SO MUCH BETTER NOW I TESTED AND I CAN ACAULLY MOVE AROUND ITS STILL JITTERY BUT NOW I HAVE AGENCY AGAIN." Zach clarified that "jittery" means frame rate is still low and sometimes uneven, "but now I feel like I can actually interact with the world, I'm not trying to waddle around in quicksand anymore." Movement is restored; frame rate is the open item. Zach's window was nearly full screen, roughly 2500×1400 (~3.8× the pixels of the 1280×720 measurements). The visual-identity checks below are not yet individually confirmed.*
+
+*Claude Code · Claude Opus 5.5 · session `session_01NJy6VrPVNcHAnggwFyTsmF` · 2026-10-09. [Full task](../Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md).*
+
+- [ ] Rebuild `earthcall_webgpu` and enter **Northern Veil**. The curtains should look exactly as before; the native witness proved the pixels byte-identical. With the later grid walk it should feel about 5× smoother, though not yet fully smooth (~13–14 fps at 720p measured). The first entry may hitch ~0.3 s per curtain in Debug while the proofs build once.
+- [ ] Compare by eye: set the Screen channel's `volumeZeroProofEnabled` to false (Law Line or MCP `earthcall_write_property`), then back to true. The curtains must look identical, and only the smoothness should change. `volumeZeroProofCellsProven` / `volumeZeroProofCellsTotal` on the same channel show the proof is live (about 131860 / 136772 in Northern Veil).
+- [ ] Look for any hole, seam, or blocky edge in or around a curtain that wasn't there before.
+- [ ] With unified quadrature (2026-10-09), walk among the overlapping curtains: their overlap should look the same as before. The measured difference is at most 1 brightness level of 255. Setting the Screen channel's `volumeSamplesPerChord` higher (e.g. 384) should change nothing visible, and lower (e.g. 24) should visibly coarsen the glow without recompiling. A proof that wrongly skipped real density would show up as a sharp-edged gap aligned to an invisible grid.
+
+
+## Linked conversations browser — October 9
+
+Codex · GPT-6.1 Sol · session `01a122ec-b377-7391-ad6f-86d11b501d1b` · 2026-10-09 17:00 PDT. Origin: Zach asked to make sprawling Intercom/reflection replies traceable. [Workflow](../Specific%20Tasks/Housekeeping%20and%20Build/Linked_Conversations_and_Document_Navigation/Linked_Conversations_and_Document_Navigation.md).
+
+- [ ] Run `python3 "agent intercom/conversation_history_injection.py" nav browse` from the repo root and open `scratch/intercom-navigation.html`; search “Small Difference,” open GPT-4o’s response, follow its parent and Mythos’s incoming reply, and use Previous document to return. Confirm the conversation’s origin, response order, and source text are easy to recover without searching new filenames. This checks the repository reading tool; no Earthcall app behavior changes are expected.
+
+
+## Northern Veil shared mathematics after the Sixth-one Sun continuation
+
+Codex / GPT-6.1 Sol / session `01a122d7` / 2026-10-10T11:52:24.788492-07:00; [task and evidence](../Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md).
+
+- [ ] After rebuilding `earthcall_webgpu`, enter Northern Veil at your usual window size, move through overlaps, and confirm the four curtains retain their colours, shimmer, and independence. This pass hardens sharing; it does not promise an additional frame-rate gain over Opus's shared-shape build. The time-only candidate was not shipped.
+- [ ] In a disposable authored medium fixture, change only extinction/scattering mathematics and confirm the appearance responds independently; check a source with a different clock and a field sampled at a shifted point if using those forms. Native synthetic witnesses cover those boundaries, but inhabited-world acceptance remains yours.
+
+## Northern Veil proof-derived ray support — October 10
+
+Codex / GPT-6.1 Sol / session `01a122d7` / 2026-10-10T19:57:54Z; [task and evidence](../Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md). Continues Zach's approval to remove unnecessary mathematics while preserving the image.
+
+- [ ] After rebuilding/restarting `earthcall_webgpu`, explicitly select Northern Veil and confirm the Zone actually switched (latest scratch full-app attempts stayed in Sanctum of Beginnings, despite an unchanged Northern Veil save). Keep the window visible: Metal deliberately skips fully covered windows. Then walk from the spawn dais into the curtains and look back from the far side at your usual window size. Confirm shimmer, colour, overlap and thin edges retain their appearance, with no new disappearing region or seam as the view turns. Support skipping uses the existing `volumeZeroProofEnabled` switch; native resolution and sample spacing remain unchanged. Outside/inside views select two cached kernels; check first admission separately (the minimum-work continuation now prepares both camera lanes there) and later crossings (native cache witnesses show zero lowering/recompiles). Judge motion and responsiveness as well as appearance; the deep inside view remains expensive. Native finite-view comparisons establish pixel parity, not smoothness everywhere or Person acceptance.
+
+
+## Northern Veil Zone-list recovery — October 10
+
+Codex / GPT-6.1 Sol / session `01a122d7` / 2026-10-11T00:27:10.143532+00:00; [repair and evidence](../Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md#northern-veil-missing-from-the-zone-list-format-discovery-repair), following Zach’s report that the saved Zone vanished from the console.
+
+- [ ] Close the old Earthcall process and reopen the rebuilt WebGPU app. In Creator Console → Zones, clear the list filter, confirm Northern Veil is present, select it, and confirm the active Zone changes to Northern Veil and its curtains appear. Saves were not rewritten. Loading recovery does not establish the remaining performance/appearance checks above.
+
+**Person report:** Zach subsequently loaded the Zone and reported ~12–13 FPS (2026-10-10 PDT). This confirms access recovery; smoothness and the detailed visual/boundary checks remain open. Recorded by Codex / GPT-6.1 Sol / `01a122d7` / 2026-10-11T00:33:19.514668+00:00.
+
+
+## Northern Veil minimum-work candidate and temporal coherence — October 10
+
+Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-10T22:32:41.495077-07:00. [Task](../Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md#minimum-work-continuation-reusable-compilation-and-resident-data).
+
+**Person failure:** Zach saw severe jaggedness and auroras flickering in/out during the timestamp-enabled frozen-baseline diagnostic. That run is rejected. The temporary opt-in was removed; ordinary rendering and current pixel witnesses request no timestamps. Diagnostic warmup also jumped camera views; attribution is not exclusively proved. **Subsequent report:** Zach sees about 15 FPS, sometimes 20 FPS, with comparison attribution uncertain. This is no 30 FPS acceptance and does not individually confirm absence of flicker.
+
+- [ ] Reopen the rebuilt ordinary WebGPU app, enter Northern Veil and walk/turn through all curtains. Confirm stable appearance with no new vanishing region, jagged seam or temporal flicker. Native byte parity at four fixed views/two times does not substitute for this movement check.
+- [ ] Check the FPS window's volume CPU preparation and parameter/proof upload counters after entry settles: unchanged and time-only frames should upload zero parameter/proof bytes. First admission now prepares both camera shader lanes; subsequent inside/outside crossings should not compile equations. GPU volume timing is unavailable on the ordinary timestamp-disabled path, not zero cost.
+- [ ] At your usual framebuffer size, judge sustained movement responsiveness and beauty; the 30 FPS milestone also requires measured moving-route p95 ≤33.3 ms. Report the framebuffer dimensions and view with FPS when convenient. The 2560×1440 stress route is separate evidence.
+
+**Measured limit:** the completed 2560×1440 candidate route has p95 197–298 ms and does not meet the 30 FPS milestone. Window timings vary in both baseline and candidate; no causal FPS gain is established. Fixed native captures match exactly; the live coherence/ordinary-size checks above are still yours. Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-10T23:24:19.962220-07:00
+
+
+## Northern Veil full-lattice opt-in — cutoff decision
+
+Zach selected “remove the cutoff” for the bounded reference. The rebuilt default remains unchanged. Set registered `@screen-channel.volumeOutputErrorBudget` to a positive number (e.g. `0.00392156862745098`) through the existing property/Law tools to enable full-lattice transport; zero restores compatibility. Native synthetic tests prove late emission/background transport and default pixel parity; they do not prove your moving-world acceptance.
+
+- [ ] In Northern Veil, compare zero and positive output budget at the same view/time. Positive mode should retain light behind dense curtains that the old opacity stop could omit; it may look brighter and cost more. Check continuous movement for coherence, jaggedness and flicker at your ordinary framebuffer size.
+- [ ] Return budget to zero and confirm the familiar image returns. Sample-count and exact zero-proof controls should retain their separate meanings. Certified tail shortcuts are still unfinished, so positive mode currently takes all accepted samples.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-10T23:49:10-07:00
+
+
+## Northern Veil GPU time-only preparation — October 11
+
+Zach asked for the highest likely value independent step. Rebuild/restart the WebGPU app: eligible time-only expressions now prepare automatically on the GPU once per participating medium/frame. The authored animation, sampling lattice and default image should remain unchanged. Eight full-resolution captures and native clock/edit/device witnesses pass. Inside offscreen benchmark cost falls 5.58% on pooled repeats; this is not a live FPS guarantee.
+
+- [ ] Move continuously through Northern Veil, especially through curtain boundaries, and verify its animation remains coherent without flicker, vanishing curtains or new jaggedness. Ordinary native timestamp features remain disabled.
+- [ ] Compare FPS at your usual framebuffer/view and report the dimensions with it. Expect a modest improvement from this stage; 30 FPS still requires measured movement p95 ≤33.3 ms plus your acceptance.
+- [ ] After admission settles, volume shader compilation and parameter/proof upload bytes should remain zero during clock advancement. Initial admission can now include one shared preparation module alongside the two camera shader variants. `volumeOutputErrorBudget` and exact zero-proof/sample-count controls retain their separate meanings.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T00:15:29-07:00
+
+
+### Northern Veil exact support traversal — October 11
+
+- [ ] Relaunch rebuilt `earthcall_webgpu`, load Northern Veil, and walk from spawn through the Emerald/Violet and Emerald/Crimson overlaps, reverse and side views. Confirm unchanged detail/colors/opacity and continuous curtains with no flicker or disappearance; compare first and warmed box-boundary crossings for hitches.
+- [ ] At your usual framebuffer size, record dimensions plus movement frame times/FPS from the ordinary metrics window. Final fixed-view offscreen ABBA improves all views with byte-identical captures, but does not establish live movement p95 ≤33.3 ms or 30 FPS acceptance. Note acquisition wait/recording separately if they fluctuate.
+
+[Implementation, exact captures and final paired timings](../../../audits/NORTHERN_VEIL_SUPPORT_TRAVERSAL_2026-10-11.md). No save or authoring changes. **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T02:25:43-07:00
+
+
+**Perlin continuation status:** six new reuse candidates were tested and rejected for slower cost or changed exact pixels. The rebuilt app contains the prior retained support traversal; use the two checks above to assess it, with no additional Perlin speedup expected. Seven restored focused checks and eight fixed-view pixel comparisons pass; these do not establish movement acceptance. [Details](../../../audits/NORTHERN_VEIL_PERLIN_REUSE_EXPERIMENTS_2026-10-11.md). **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T10:29:00-07:00
+
+
+### Northern Veil selective folded support — October 11
+
+Rebuild/relaunch the WebGPU app. The retained index automatically uses existing zero-proof acceleration for eligible outside rays; inside traversal stays original. Spawn fixed-view offscreen cost falls 9.77%, with byte-identical images; **no inside FPS improvement is claimed** (inside pooled cost +2.29%, not repeatably >3%). Six focused targets pass, including a full-size spawn regression witness. [Measured limits](../../../audits/NORTHERN_VEIL_FOLDED_SUPPORT_2026-10-11.md).
+
+- [ ] At your usual framebuffer size, look up from spawn toward the curtains, then move continuously through the folds/overlaps and reverse/side views. Confirm unchanged color, thin edges, opacity and animation, with no flicker/disappearance or new boundary hitches. Ordinary timestamps remain disabled.
+- [ ] Record framebuffer dimensions and warmed movement frame times/FPS; note surface acquisition/command recording separately. The 30 FPS milestone still requires movement p95 ≤33.3 ms and your acceptance. Existing proof switch, samples and output-budget controls should retain their meanings; no authored/save changes to inspect.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T13:27:06-07:00
+
+
+### Northern Veil sample-local fused scheduling — October 11
+
+Relaunch rebuilt `earthcall_webgpu` and load Northern Veil. This retained stage reorganizes fused proof/contribution work and delays directions until positive density. Exact fixed-view images match; paired offscreen cost improves inside 9.77%, spawn 11.53%, reverse 6.44%, side 8.03%. These numbers do not promise the same live FPS gain. [Evidence](../../../audits/NORTHERN_VEIL_SAMPLE_LOCAL_SCHEDULING_2026-10-11.md).
+
+- [ ] Walk continuously from spawn through the curtain folds/overlaps, then reverse/side views. Confirm unchanged thin detail, colors, opacity and pulses, no flicker/disappearance, and no new hitch crossing camera/box boundaries after warmup.
+- [ ] Record your usual framebuffer dimensions and warmed movement frame times/FPS. The milestone still requires p95 ≤33.3 ms plus your acceptance. Note surface acquisition/command recording if they fluctuate; ordinary GPU timestamps remain disabled. Existing samples/proof/error-budget controls retain their meanings.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T17:22:37-07:00 (PDT).
+
+
+### Northern Veil — Zach reports approximately 21 FPS after scheduling pass
+
+- [x] **Person report received:** Zach reports “I THINK THERES A BIG IMPROVEMENT FROM THAT PASS” and approximately **21 FPS** at reported position **`(-1.45, 0.3, -1.3)`**, following the Sun's sample-local scheduling pass. Coordinates are preserved as supplied; no conversion to the benchmark's camera coordinates is assumed.
+
+This records perceived live improvement and one approximate FPS observation. Framebuffer dimensions, viewing direction, measurement interval, stationary versus moving state and exact running build were not specified. It is not a matched A/B percentage or movement p95. The existing continuous appearance/flicker and usual-size warmed movement checks above remain open; 30 FPS has not been reported. See [the retained scheduling audit](../../../audits/NORTHERN_VEIL_SAMPLE_LOCAL_SCHEDULING_2026-10-11.md) for the Sun's separate native witnesses.
+
+**Recorded by:** Codex / GPT-6 / session `01a12cb8-ac95-7b13-827d-2c7f289aa560` / 2026-10-11T18:05:55-07:00.
+
+
+### Northern Veil — match the next census to the live view
+
+- [ ] Record native camera eye/look direction, physical framebuffer dimensions, running build, active Zone and a movement interval for the approximately 21 FPS view reported at `(-1.45, 0.3, -1.3)`. The supplied position alone is insufficient to reproduce it.
+- [ ] Continue the existing movement/appearance check: no jaggedness, flicker or disappearing curtains, and measure warmed movement p95 against 33.3 ms. This pass ships only a diagnostic tool; it retains no new renderer behavior and claims no additional FPS gain.
+
+[Diagnostic observer effect and rejected exact candidate](../../../audits/NORTHERN_VEIL_FRAGMENT_DEMAND_2026-10-11.md); four fixed-view tests are not live Person acceptance.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T20:53:25-07:00 (PDT).
+
+
+**Person clarification — default-size live view:** Zach clarified that the approximately 21 FPS observation used the **default window size**, with **most auroras in view**; he did not track the exact viewing angle. This supplies qualitative window/view context. Physical framebuffer dimensions (including display scaling), native camera eye/look, motion interval and exact running build remain unmeasured; current running status was not answered. Do not substitute 2560×1440 or infer an exact camera orientation from this report.
+
+**Recorded by:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T21:19:44-07:00 (PDT).
+
+
+### Northern Veil — support research and pending authored semantics
+
+This CPU research pass changes no visible rendering; it reports zero production-admitted skips and no FPS gain. Existing movement/appearance checks remain open. Zach's default-window/most-auroras clarification is preserved above without reconstructing an unrecorded angle.
+
+- [ ] Review [AD-30–32](Zach%20Author%20Decisions.md#northern-veil-authored-channel-semantics--2026-10-12) when ready: density support, authored zero extinction and missing source chroma. They remain OPEN; this research chooses none of them.
+
+[Conditional numerical model, passing refusals and production gap](../../../audits/VOLUME_SUPPORT_NUMERICAL_CONTRACT_2026-10-12.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T00:43:07-07:00 (PDT).
+
+
+### Northern Veil — native compiler contract follow-up
+
+No new visible renderer behavior ships in this pass. The native compiler observation preserves options and matches eight 320×180 paired images; this is not your live view, full-resolution guard validation or a new FPS gain. Existing movement, flicker/appearance and 30 FPS checks above remain open. The [native-profile audit](../../../audits/VOLUME_SUPPORT_NATIVE_PROFILE_2026-10-12.md) records Fast arithmetic/functions, 24 passing CPU witness groups and zero production-admitted skips. AD-30–36 remain your open semantic/structural review; none is resolved by these observations.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T11:27:35-07:00 (PDT).
+
+### Data home outside the checkout
+
+Your data is now copied into `~/Library/Application Support/Earthcall` (686 files, 1.11 GB, byte-verified; `backups/` stayed in the checkout). The checkout's `saves/` was not touched. Its own git repo has one commit, `71a8503`.
+
+- [ ] Launch `Run Earthcall.command`. The terminal should print `[Engine] data home: /Users/zacharyzhang/Library/Application Support/Earthcall`. A `⚠️ data home not migrated` line means the fallback fired.
+- [ ] Your Home, Zones (Chess, Synthesis Studio, Northern Veil, …), Laws, Persons and Relations all appear as they did before.
+- [ ] Save a Zone, then run `git -C ~/Library/Application\ Support/Earthcall status`: the change shows there. `git status saves` in the repo stays clean.
+- [ ] In Finder (⌘⇧G, then `~/Library/Application Support/Earthcall`), the folder holds what you'd expect.
+
+→ [task](../Specific%20Tasks/Serialization%20and%20Storage/Data_Home_Outside_Checkout/Data_Home_Outside_Checkout.md)
+
+**Signed:** Claude Code / Claude Opus 5.5 / session `16d04786-8407-4a70-a57c-fa5c11094c91` / 2026-10-12T12:34-07:00 (PDT).
+
+### Earthcall.app — the installed macOS app
+
+`/Applications/Earthcall.app` is installed now, signed ad-hoc. Your data is unchanged; the app reads the same data home.
+
+- [ ] Optional, once: run `scripts/macos/make_local_signing_identity.sh` in Terminal (macOS asks for your password), then double-click `Install Earthcall App.command`. Afterwards, microphone and Accessibility permissions should survive rebuilds.
+- [ ] Open Earthcall from Spotlight (⌘Space, "Earthcall"). No Terminal window appears, the Dock shows "Earthcall" with the placeholder blue-sphere-and-gold-ring icon, and your Home and Zones load as they do from `Run Earthcall.command`.
+- [ ] Window layout matches the checkout's: it was copied once to `~/Library/Application Support/Earthcall/ui/imgui.ini`.
+- [ ] `~/Library/Logs/Earthcall/earthcall.log` begins `[Engine] installed app root: …` and `[Engine] data home: …`.
+- [ ] Start a microphone recording. The prompt says "Earthcall listens only when you start a recording or speak to a Law that hears sound."
+- [ ] Quit with ⌘Q or Dock → Quit; it exits cleanly.
+- [ ] MCP (when you want it): point Claude Desktop at `/Applications/Earthcall.app/Contents/Resources/mcp/earthcall-mcp-server.js` and check `earthcall_list_saves`.
+
+→ [task](../Specific%20Tasks/Housekeeping%20and%20Build/macOS_App_Bundle/macOS_App_Bundle.md)
+
+**Signed:** Claude Code / Claude Opus 5.5 / session `16d04786-8407-4a70-a57c-fa5c11094c91` / 2026-10-12T13:10-07:00 (PDT).
+
+
+## Law Line stored-template shortcuts
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-12T13:08:43-07:00 — Zach requested custom template keybinds through Metalaws.*
+
+- [ ] Restart the rebuilt app, unlock your identity, `enter LawLine`, type `when ` and press Ctrl+T; see only click/hover templates, select with arrows, insert with Tab/Enter, then fill the first highlighted blank.
+- [ ] Try an empty draft and an unrelated prefix; confirm all stored templates versus a clear no-match notice, then Escape returns to ordinary completion.
+- [ ] If using Cmd+T, configure your terminal to send `ESC[116;9u`; verify the physical shortcut reaches the shelf instead of the terminal's own UI.
+- [ ] Author the [custom binding](../../../../examples/law_line_template_keybind.txt) and adapt its chord to your terminal; author the [stored shelf example](../../../../examples/law_line_store_templates.txt) only if you want those two drafts; press Ctrl+G to store them, then Ctrl+T to verify prefix selection.
+- [ ] Edit a disabled template holder's `completion.text` through the existing Property editor, including a literal `‹blank›` if desired; reopen the shelf and verify insertion and blank selection.
+- [ ] Save Zone in LawLine, restart from the app data home, and confirm your edited shelf and custom binding survive; judge whether the menu and blank navigation feel right.
+
+
+### Northern Veil — arithmetic-profile candidates rejected
+
+This pass ships no visible change: two scratch Safe-arithmetic variants exceeded the one-level image limit, including at 2560×1440 with the full accepted lattice. Existing aurora appearance/flicker, movement and usual-framebuffer 30 FPS checks remain open; there is no new candidate for you to accept or new FPS claim. The frozen offscreen fixture is distinct from your live data home and installed Release app. [Exact rejection evidence](../../../audits/VOLUME_ARITHMETIC_PROFILE_FIDELITY_2026-10-12.md). AD-30–36 remain open; no extra human question is introduced.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T17:13:57.815427-07:00 (PDT).
+
+### BodyPart constitution / gift-shop removal
+
+In the dev build (`earthcall_webgpu`), open the Creator Console → Character tab, make sure the character design is not locked, and select a body part (for example the Torso):
+
+1. **Colour picker now paints.** Change the part colour. The part should recolour **immediately**. Before this pass nothing happened until you changed the shape.
+2. **Shape and dimensions still work.** Change the shape dropdown and the dimension sliders. The part should reshape and resize as before.
+3. **Walking and idle animation are unchanged.** Walk around. Limbs should swing exactly as before, because the Automation clips now run on the primary Object directly instead of through BodyPart forwarders.
+4. **Picking (pre-existing, please judge).** Click just *outside* a visibly thin limb, inside where a 1×1×1 cube would be. If it still selects the limb, the unscaled-raycast seam is real. See [task §Still open 3](../Specific%20Tasks/Architecture%20and%20Ontology/BodyPart_Constitution_As_Explicit_Relation/BodyPart_Constitution_As_Explicit_Relation.md).
+
+**Signed:** Claude Code / Claude Opus 5.5 / session `6ba58694-54b8-4b8f-9788-9a6efec3c7df` / 2026-10-13T18:20-07:00 (PDT).
+
+
+## Separate performance-analysis executable — October 14
+
+Zach requested this outside Earthcall. No scene appearance or movement change is expected. Run `./scripts/earthcall-analyze demo --output /private/tmp/<new-directory>` and open `<new-directory>/analysis/report.html`; the input data must visibly say **SYNTHETIC DEMONSTRATION**, with timings, trace spans, complexity estimates and gaps kept separate.
+
+- [ ] Check whether the report’s search box (try `wait_surface`), context disclosure and separate evidence sections make it easy to see what is known and which measurement is missing. This is tool usefulness review; the synthetic timings are not your FPS and the historical imports are not new captures.
+
+[Usage and remaining live-capture work](../Specific%20Tasks/Performance%20and%20Runtime/Standalone_Performance_Analysis/Standalone_Performance_Analysis.md); [implementation verification](../../../audits/STANDALONE_PERFORMANCE_ANALYSIS_2026-10-14.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-14T22:37:18.690115-07:00 (PDT).
+
+
+### Planned demand/support stages — October 15
+
+The [implementation plan](../../../plans/VOLUME_DEMAND_AND_SUPPORT_IMPLEMENTATION_2026-10-15.md) changes no renderer behavior today. Earlier AD-30–36 await your verdicts; no later decision is pre-approved. After a relevant stage passes native correctness and is retained:
+
+- [ ] In Sky-Island Sanctuary, confirm the cloud sea and halo keep their intended continuous color, glow and boundaries while moving through them; the first demand candidate targets this workload and does not establish an aurora gain.
+- [ ] Repeat the existing Northern Veil usual-window movement/appearance check on the exact retained build: no new jaggedness, flicker or disappearing curtains, with recorded physical framebuffer and warmed movement p95 <=33.3 ms before claiming the 30 FPS milestone. If you approve semantic changes, compare against their explicitly selected intent/reference.
+
+These are future acceptance checks, not claims that a new candidate is ready to run. Existing checks and prior observations remain intact.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T03:21:44.030398-07:00 (PDT).
+
+### Power correction after rejected volume trials — October 15
+
+The checkout WebGPU app is rebuilt with [route-aware power lowering](../../../audits/VOLUME_POWER_AND_OPTIMIZATION_TRIALS_2026-10-15.md); none of the three failed performance candidates remains. No app installation or save edit was performed, and this pass promises no new FPS gain.
+
+- [ ] When next running the rebuilt checkout app, revisit Northern Veil and Sky-Island Sanctuary at your usual framebuffer. Confirm the auroras/clouds keep continuous appearance while moving, with no new jaggedness, flicker or disappearing regions. Existing movement/p95 acceptance stays open; fixed-view captures do not establish it.
+- [ ] If you use authored powers with tiny bases, negative exponents or negative noninteger bases, confirm the result reflects your intended existing route: MathNode negative/noninteger returns zero, while Term/RPN preserve their distinct domain behavior. CPU-double/native and subnormal equality is not promised by this repair.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T05:56:25.134858-07:00 (PDT).
+
+
+### Euclidean host analysis rung — October 15
+
+[This mathematical analysis implementation](../../../audits/VOLUME_EUCLIDEAN_RANGE_2026-10-15.md) adds no new visible app behavior and claims no FPS gain. Existing Northern Veil/Sanctuary appearance, movement and usual-framebuffer acceptance checks remain open; there is no additional control to click or new performance benefit for Zach to verify from this API alone. Native proof consumers retain their prior behavior.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T10:45:48.355899-07:00 (PDT).
+
+
+### Support-allocation pass — retained renderer restored
+
+[All three tested allocation/traversal variants](../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md) preserve the finite captures but regress in measured cost, so none remains enabled. The checkout app is rebuilt with the prior renderer; the installed app and live saves were untouched. This pass adds no new visual control or promised FPS improvement to inspect. Existing Northern Veil/Sanctuary continuous appearance, usual-framebuffer movement and 30 FPS acceptance checks remain open; the rejected variants do not create a new Person verification obligation.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).
+
+## Property-only direct Screen sources (2026-10-17)
+
+Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-17T16:27:11-07:00. Zach required the pipeline to work with added Properties
+on a Singular/Object and no ShapeKind specification. [Native audit](../../../audits/SINGULAR_SCREEN_PROPERTY_PIPELINE_2026-10-17.md).
+
+- [ ] Inspect the retained [plain Object bands](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-bands.png) and [edited bands](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-edited.png): two separated gradients over blue, with their blue component changing after a Law edit. The corresponding Singular captures should match. At native resolution, [the pixel replacement](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-pixel.png) has exactly one red pixel at column 7, row 9 over blue. Confirm this property-bearer authoring route meets your intended meaning. These are isolated production captures; no demo was installed in an inhabited Zone, and automatic composition of many sources remains open.

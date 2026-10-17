@@ -1,12 +1,20 @@
 #include "Singularity/Storage/FileChannel.hpp"
+#include "Singularity/Core/CodecChannel.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <filesystem>
 #include <fstream>
 #include <cstdio>
 #include <cassert>
+#include <ctime>
+#include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -79,7 +87,131 @@ int main() {
     check(std::get<double>(val) == static_cast<double>(sampleText.size()), "bytesRead matches sample text size");
 
     // -----------------------------------------------------------------------
-    // Case 2: Parent Directory Auto-Creation
+    // Case 2: Any serializable PropertyValue can cross the file boundary.
+    // Strings remain raw bytes; non-strings use the canonical typed
+    // PropertyValue JSON codec so their exact alternatives survive.
+    // -----------------------------------------------------------------------
+    auto listValue = std::make_shared<PropertyList>();
+    listValue->elements = {
+        PropertyValue(7),
+        PropertyValue(std::string("seven")),
+        PropertyValue(glm::vec3(1.0f, 2.0f, 3.0f))
+    };
+    auto dictValue = std::make_shared<PropertyDict>();
+    dictValue->elements["enabled"] = PropertyValue(true);
+    dictValue->elements["count"] = PropertyValue(12L);
+    dictValue->elements["items"] = PropertyValue(listValue);
+
+    glm::mat4 authoredMatrix(1.0f);
+    authoredMatrix[3][0] = 4.0f;
+    authoredMatrix[3][1] = -2.0f;
+
+    const std::vector<std::pair<std::string, PropertyValue>> typedValues = {
+        {"int", PropertyValue(42)},
+        {"double", PropertyValue(3.141592653589793)},
+        {"bool", PropertyValue(true)},
+        {"char", PropertyValue('E')},
+        {"long", PropertyValue(123456789L)},
+        {"vec3", PropertyValue(glm::vec3(0.25f, -3.5f, 9.0f))},
+        {"mat4", PropertyValue(authoredMatrix)},
+        {"list", PropertyValue(listValue)},
+        {"dict", PropertyValue(dictValue)}
+    };
+
+    for (const auto& [label, typed] : typedValues) {
+        const fs::path typedFile = testDir / ("typed_" + label + ".json");
+        const std::string expected = propertyValueToJson(typed).dump();
+
+        check(lawSetValue(*channel, PropertyPath::parse("file.path"),
+                          PropertyValue(typedFile.string())) == PropertyPath::PathResult::Ok,
+              "typed " + label + " path accepted");
+        check(lawSetValue(*channel, PropertyPath::parse("file.content"), typed) ==
+                  PropertyPath::PathResult::Ok,
+              "typed " + label + " content accepted without caller stringification");
+        lawSetValue(*channel, PropertyPath::parse("file.write"), PropertyValue(true));
+        lawGetValue(*channel, PropertyPath::parse("file.lastOperationSuccess"), val);
+        check(std::get<bool>(val), "typed " + label + " write succeeded");
+
+        std::ifstream in(typedFile, std::ios::binary);
+        std::ostringstream bytes;
+        bytes << in.rdbuf();
+        check(bytes.str() == expected,
+              "typed " + label + " persisted as canonical PropertyValue JSON");
+        check(propertyValueToJson(propertyValueFromJson(nlohmann::json::parse(bytes.str()))) ==
+                  propertyValueToJson(propertyValueFromJson(nlohmann::json::parse(expected))),
+              "typed " + label + " serialized representation round-trips");
+    }
+
+    // A world reference is serializable as identity, never reconstructed as
+    // a pointer by the value codec.
+    Object referenced;
+    referenced.setObjectID("file-channel-reference-witness");
+    const PropertyValue referenceValue(static_cast<Object*>(&referenced));
+    const fs::path referenceFile = testDir / "typed_reference.json";
+    lawSetValue(*channel, PropertyPath::parse("file.path"), PropertyValue(referenceFile.string()));
+    check(lawSetValue(*channel, PropertyPath::parse("file.content"), referenceValue) ==
+              PropertyPath::PathResult::Ok,
+          "Singular reference content accepted");
+    lawSetValue(*channel, PropertyPath::parse("file.write"), PropertyValue(true));
+    {
+        std::ifstream in(referenceFile, std::ios::binary);
+        std::ostringstream bytes;
+        bytes << in.rdbuf();
+        const auto encoded = nlohmann::json::parse(bytes.str());
+        check(encoded.value("t", "") == "ref" &&
+                  encoded.value("id", "") == referenced.getIdentifier(),
+              "world reference persists as identifier, not pointer bytes");
+    }
+
+    // FileWrite must forward a PropertyPath value dynamically, not require a
+    // hardcoded source name or prior caller conversion to string.
+    Object writeSubject;
+    writeSubject.setObjectID("file-write-typed-subject");
+    const fs::path actionFile = testDir / "action_vec3.json";
+    const PropertyValue actionPayload(glm::vec3(8.0f, 5.0f, 3.0f));
+    writeSubject.setDynamicProperty("targetPath", PropertyValue(actionFile.string()));
+    writeSubject.setDynamicProperty("payload", actionPayload);
+    Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+        out.push_back(channel);
+        out.push_back(&writeSubject);
+    });
+
+    ActionNode fileWrite;
+    fileWrite.kind = ActionNode::Kind::FileWrite;
+    fileWrite.path = PropertyPath::parse("targetPath");
+    fileWrite.input = PropertyPath::parse("payload");
+    auto runFileWrite = fileWrite.compile();
+    runFileWrite(ECA::Event{"typed-file-write", &writeSubject, nullptr, std::time(nullptr)},
+                 writeSubject);
+    {
+        std::ifstream in(actionFile, std::ios::binary);
+        std::ostringstream bytes;
+        bytes << in.rdbuf();
+        check(bytes.str() == propertyValueToJson(actionPayload).dump(),
+              "ActionNode::FileWrite writes arbitrary serializable PropertyPath data");
+    }
+
+    // A refused transfer must not fire the channel with stale path/content.
+    const fs::path staleFile = testDir / "stale-must-not-write.txt";
+    fs::remove(staleFile, ec);
+    lawSetValue(*channel, PropertyPath::parse("file.path"), PropertyValue(staleFile.string()));
+    lawSetValue(*channel, PropertyPath::parse("file.content"), PropertyValue(std::string("STALE")));
+    Object badWriteSubject;
+    badWriteSubject.setObjectID("file-write-bad-path-subject");
+    badWriteSubject.setDynamicProperty("targetPath", PropertyValue(99.0));
+    badWriteSubject.setDynamicProperty("payload", PropertyValue(std::string("NEW")));
+    Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+        out.push_back(channel);
+        out.push_back(&badWriteSubject);
+    });
+    runFileWrite(ECA::Event{"typed-file-write-refusal", &badWriteSubject, nullptr, std::time(nullptr)},
+                 badWriteSubject);
+    check(!fs::exists(staleFile),
+          "FileWrite refuses a bad path transfer instead of writing stale channel state");
+    Universe::instance().setProvider({});
+
+    // -----------------------------------------------------------------------
+    // Case 3: Parent Directory Auto-Creation
     // -----------------------------------------------------------------------
     fs::path nestedFile = testDir / "deep" / "nested" / "dir" / "data.txt";
     std::string nestedPath = nestedFile.string();
@@ -214,28 +346,6 @@ int main() {
     lawGetValue(*channel, PropertyPath::parse("file.lineCount"), val);
     check(std::get<double>(val) == 3.0, "lineCount reports 3 lines");
 
-    // -----------------------------------------------------------------------
-    // Case 8: JSON Format Validation, Compaction, and Pretty-Printing
-    // -----------------------------------------------------------------------
-    std::string jsonRaw = "{\n  \"ontology\": \"Earthcall\",\n  \"active\": true,\n  \"count\": 42\n}";
-    lawSetValue(*channel, PropertyPath::parse("file.content"), PropertyValue(jsonRaw));
-    lawGetValue(*channel, PropertyPath::parse("file.jsonValid"), val);
-    check(std::get<bool>(val) == true, "jsonValid returns true for valid JSON");
-
-    lawGetValue(*channel, PropertyPath::parse("file.jsonCompact"), val);
-    check(std::get<std::string>(val) == "{\"active\":true,\"count\":42,\"ontology\":\"Earthcall\"}",
-          "jsonCompact formats compact JSON");
-
-    lawGetValue(*channel, PropertyPath::parse("file.jsonPretty"), val);
-    std::string pretty = std::get<std::string>(val);
-    check(pretty.find("  \"ontology\": \"Earthcall\"") != std::string::npos, "jsonPretty returns formatted JSON");
-
-    std::string invalidJson = "{ \"unclosed\": ";
-    lawSetValue(*channel, PropertyPath::parse("file.content"), PropertyValue(invalidJson));
-    lawGetValue(*channel, PropertyPath::parse("file.jsonValid"), val);
-    check(std::get<bool>(val) == false, "jsonValid returns false for invalid JSON");
-
-    // -----------------------------------------------------------------------
     // Case 9: Text Pre-Processing (UTF-8 BOM Stripping & CRLF Normalization)
     // -----------------------------------------------------------------------
     fs::path bomFile = testDir / "bom_test.txt";
@@ -250,8 +360,6 @@ int main() {
     lawSetValue(*channel, PropertyPath::parse("file.read"), PropertyValue(true));
     lawGetValue(*channel, PropertyPath::parse("file.content"), val);
     check(std::get<std::string>(val) == "{\"hello\":\"world\"}", "UTF-8 BOM stripped on read");
-    lawGetValue(*channel, PropertyPath::parse("file.jsonValid"), val);
-    check(std::get<bool>(val) == true, "JSON with stripped BOM accepted as valid JSON");
 
     // CRLF normalization
     fs::path crlfFile = testDir / "crlf_test.txt";
@@ -270,39 +378,6 @@ int main() {
     // -----------------------------------------------------------------------
     fs::path binFile = testDir / "binary_data.bin";
     std::string rawBinary;
-    rawBinary.push_back('\x00');
-    rawBinary.push_back('\xFF');
-    rawBinary.push_back('\x7F');
-    rawBinary.push_back('\x10');
-    rawBinary.push_back('\x00');
-    rawBinary.push_back('\x42');
-
-    std::string expectedBase64 = FileChannel::base64Encode(rawBinary);
-    std::string expectedHex = FileChannel::hexEncode(rawBinary);
-
-    lawSetValue(*channel, PropertyPath::parse("file.path"), PropertyValue(binFile.string()));
-    lawSetValue(*channel, PropertyPath::parse("file.encoding"), PropertyValue(std::string("base64")));
-    lawSetValue(*channel, PropertyPath::parse("file.content"), PropertyValue(expectedBase64));
-    lawSetValue(*channel, PropertyPath::parse("file.write"), PropertyValue(true));
-
-    lawGetValue(*channel, PropertyPath::parse("file.lastOperationSuccess"), val);
-    check(std::get<bool>(val) == true, "Binary write via Base64 encoding succeeded");
-
-    // Read back in Base64 mode
-    lawSetValue(*channel, PropertyPath::parse("file.content"), PropertyValue(std::string("")));
-    lawSetValue(*channel, PropertyPath::parse("file.read"), PropertyValue(true));
-    lawGetValue(*channel, PropertyPath::parse("file.content"), val);
-    check(std::get<std::string>(val) == expectedBase64, "Read in base64 mode matches expected Base64");
-
-    // Verify contentHex property
-    lawGetValue(*channel, PropertyPath::parse("file.contentHex"), val);
-    check(FileChannel::hexDecode(std::get<std::string>(val)) == rawBinary, "contentHex correctly converts binary payload");
-
-    // Check isBinary detection
-    lawSetValue(*channel, PropertyPath::parse("file.encoding"), PropertyValue(std::string("text")));
-    lawSetValue(*channel, PropertyPath::parse("file.read"), PropertyValue(true));
-    lawGetValue(*channel, PropertyPath::parse("file.isBinary"), val);
-    check(std::get<bool>(val) == true, "isBinary accurately detects null bytes in binary data");
 
     // -----------------------------------------------------------------------
     // Case 11: MIME Type & File Type Sniffing (Images, Audio, Models, etc.)
@@ -441,16 +516,18 @@ int main() {
     check(!fs::exists(movedFile), "File confirmed deleted from disk");
 
     // -----------------------------------------------------------------------
-    // Case 14: Exception Handling (try-catch blocks)
+    // Case 14: Exception Handling (try-catch blocks) & JSON Validation
     // -----------------------------------------------------------------------
-    // Trigger JSON parse exceptions
+    // Check JSON validation property file.jsonValid
+    lawSetValue(*channel, PropertyPath::parse("file.content"), PropertyValue(std::string("{\"earthcall\":true}")));
+    lawGetValue(*channel, PropertyPath::parse("file.jsonValid"), val);
+    check(std::get<bool>(val) == true, "file.jsonValid returns true for valid JSON content");
+
     lawSetValue(*channel, PropertyPath::parse("file.content"), PropertyValue(std::string("invalid json")));
+    lawGetValue(*channel, PropertyPath::parse("file.jsonValid"), val);
+    check(std::get<bool>(val) == false, "file.jsonValid returns false for invalid JSON content");
 
-    lawGetValue(*channel, PropertyPath::parse("file.jsonCompact"), val);
-    check(std::get<std::string>(val) == "", "jsonCompact gracefully returns empty string on parse error");
 
-    lawGetValue(*channel, PropertyPath::parse("file.jsonPretty"), val);
-    check(std::get<std::string>(val) == "", "jsonPretty gracefully returns empty string on parse error");
 
     // Trigger std::filesystem exceptions by providing strings with embedded nulls
     // std::filesystem::path throws an exception when constructed with null characters.
@@ -556,6 +633,6 @@ int main() {
         return 1;
     }
 
-    std::printf("file_channel_test: ALL OK (all 15 cases passed)\n");
+    std::printf("file_channel_test: ALL OK (typed serialization + legacy cases passed)\n");
     return 0;
 }

@@ -2,7 +2,7 @@
   "authoredLaws": {
     "formationMembers": [
       "creation-channel",
-      "law-3"
+      "shape-generator-3d-law"
     ],
     "laws": [
       {
@@ -38,7 +38,7 @@
         "conditionSubjects": [],
         "drives": false,
         "enabled": true,
-        "id": "law-3",
+        "id": "shape-generator-3d-law",
         "name": "Tool: Shape Generator 3D",
         "provenance": [
           {
@@ -77,7 +77,7 @@
               ]
             },
             "directed": true,
-            "entityA": "law-3",
+            "entityA": "shape-generator-3d-law",
             "entityB": "Player",
             "events": [
               {
@@ -164,7 +164,7 @@
           "type": "property-state",
           "value": {
             "t": "string",
-            "v": "law-3"
+            "v": "shape-generator-3d-law"
           }
         },
         {
@@ -180,14 +180,14 @@
         {
           "attribute": "",
           "id": "fact-9",
-          "subjectId": "law-3",
+          "subjectId": "shape-generator-3d-law",
           "type": "law-registered",
           "value": null
         }
       ]
     },
     "triggers": {
-      "law-3": [
+      "shape-generator-3d-law": [
         "onMouseClicked"
       ]
     }

@@ -110,6 +110,10 @@ public:
     // and PERSISTABLE (a property that vanishes on save was never granted).
     // The registry above is the first-mover vocabulary; this is the authored one.
     bool hasDynamicProperty(const std::string& name) const;
+    // Derived codec provenance, not a permission tier: a lazy bridge remains
+    // authored after its value is removed. AddProperty must not mistake that
+    // bridge for a registered engine path (direct Screen CLI regression).
+    bool hasAuthoredPropertyAccessor(const std::string& name) const;
     bool hasDynamicProperty(Earthcall::StringId id) const {
         return _dynamicProperties.find(id) != _dynamicProperties.end();
     }

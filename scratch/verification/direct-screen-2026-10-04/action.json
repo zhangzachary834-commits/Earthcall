@@ -1,0 +1,65 @@
+{
+  "kind": 12,
+  "operand": {
+    "t": "vector_field",
+    "v": {
+      "amplitude": 1.0,
+      "astDefinition": {
+        "input": "x",
+        "pieces": [
+          {
+            "mathNode": {
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.0,
+                        "factors": {
+                          "u": 1.0
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.0,
+                        "factors": {
+                          "v": 1.0
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.25,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                }
+              ],
+              "op": 2
+            }
+          }
+        ]
+      },
+      "baseFlowX": 0.0,
+      "baseFlowY": 0.0,
+      "baseFlowZ": 0.0,
+      "frequency": 1.0,
+      "mode": "AST"
+    }
+  },
+  "path": "@screen-channel",
+  "propertyName": "output.color"
+}

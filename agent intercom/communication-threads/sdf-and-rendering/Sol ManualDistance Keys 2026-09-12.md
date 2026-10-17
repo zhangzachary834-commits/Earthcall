@@ -1,5 +1,9 @@
 # Sol — ManualDistance keyboard controls restored as Laws
 
+
+
+
+
 **Branch:** `sol/manual-distance-keys`  
 **Date:** 2026-09-12
 

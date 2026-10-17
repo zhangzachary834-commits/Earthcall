@@ -2,7 +2,7 @@
 
 Split out of `AGENTS.md` so that file stays short enough to be read in full. This is the
 workshop half: how to build, what the test suite means, and what tooling is allowed to walk
-the tree. `AGENTS.md` holds the ontology and the refusals, and links here.
+the tree. `AGENTS.md` holds the ontology and the refusals, and links here. [The agent compass](AGENT_COMPASS.md) supplies the current authoring routes and implementation boundaries.
 
 *(Note: unlike the framework corpus, this file lives at `docs/`, not `docs/architecture/` —
 it describes the workshop, not the ontology.)*
@@ -24,9 +24,35 @@ holds it in raw mode and draws its own line editor (`LineEditor`: live menu, gho
 transient preview panel, history in `saves/logs/terminal-history.txt`) — the Law Line, where sentences
 become Laws. While it is attached, the app's stdout/stderr are relayed above the prompt and kept in
 `saves/logs/earthcall-terminal.log` (both gitignored). It attaches only when stdin and stdout are TTYs,
-so ctest and IDE launches leave it quiet; set `NO_COLOR` to drop colour. No dependency: libedit was
-tried and removed (its Tab cannot offer a selectable menu). →
-`docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Law_Line/Law_Line.md`
+so ctest and IDE launches leave it quiet; set `NO_COLOR` to drop colour. Vendored [utf8proc](../third_party/utf8proc/README.earthcall.md) supplies locale-independent Unicode decoding, grapheme boundaries and character widths; libedit was tried and removed (its Tab cannot offer a selectable menu). →
+`docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Law_Line/Law_Line.md`.
+For pasteable lessons and the action reference, read [the Law authoring CLI guide for humans and agents](architecture/law/LAW_AUTHORING_CLI_GUIDE.md).
+Stored-template shortcuts are covered by the [new CLI lesson](architecture/law/LAW_AUTHORING_CLI_GUIDE.md#stored-templates-and-authored-shortcuts). `law_line_zone_test` now layers the current authored seed into an isolated frozen-fixture copy through a Python runner; CTest never seeds the live app home. Seed-preservation checks run with `python3 tests/singularity/test_seed_law_line.py`. Terminal history/log files now live under `SaveSystem::rootPath()/logs`, following the app data-home migration.
+
+
+**2026-10-06 direct Screen CLI:** rebuild/restart `earthcall_webgpu`, unlock in Identity, then `enter LawLine`. The seeded VectorField/ScalarField/Piece and mathematical Lexemes compile through authored value Metalaws; paste `examples/law_line_screen_lens.txt` for the pulsing lens, and stop Lens Time then use `examples/law_line_screen_clear.txt` to restore the scene. [Contract and verification](Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md#cli-field-and-selector-authoring--2026-10-06). — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-06 18:22 PDT.
+
+**2026-10-05 stairway example:** `examples/law_line_stairway.txt` is one pasteable line, tested through pointer press/release and authored Metalaws. It creates steps above the clicked cube; the earlier example required a specific `law-line-cube` and placed steps below the Person. `enter LawLine` moves only the Terminal line. Native appearance remains in Person Verification. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 00:47 PDT.
+
+**2026-10-05 sky spiral add-on:** Zach confirmed the original Stairmaker and cube visibility work. Keep the original program enabled, paste `examples/law_line_sky_stairway.txt`, then click an existing step to grow eight coloured jewel steps; each new step can grow another spiral once, and hover turns/settles its orientation. No app rebuild or new vocabulary is needed. `law_line_zone_test` passes 162/162 checks; `python3 scratch/probes/law_line_visibility_probe.py --stairway` verifies growth and gestures in the full production Engine and captures the actual native spiral. Enhanced Person acceptance remains open. See [the audit](audits/SKY_STAIRWAY_AUTHORED_PROGRAM_2026-10-05.md). — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 12:40 PDT.
+
+**2026-10-05 Law Line action arguments:** the remaining 16 action kinds have authored named-argument signatures and compiler Metalaws; use `Lerp <path: "glow", operand: 1, factor: 0.25>` or `Map <path: "glow", expression: @law-line-cube.hp + 2>`. Rebuild/restart, and see the Law Line task for every signature and channel-execution limits. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 00:09 PDT.
+
+**2026-10-04 Law Line batches:** top-level `;` separates complete Law sentences; `law-line-compile-sentences` authorizes source-order registration. Authored aliases `add property`, `remove property`, and `modify property` use existing actions. Rebuild/restart; Save Zone keeps submitted Laws. See the Law Line task and Person Verification List for examples and native acceptance. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 19:46 PDT.
+
+**2026-10-04 Law Line creation:** `Create <Object, properties: {position: my.position + (0, -3, 0), authored: {purpose: "A foothold"}}>` is compiled through authored `law-line-compile-*` Metalaws; rebuild/restart the app to use the channel change. `scripts/seed_law_line.py` installs missing roots and appends missing Zone vocabulary while preserving existing bytes; it never rewrites existing Law roots. See [the Law Line task](Agenda/Tasks/Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md) for full syntax and scope, and [the creation audit](audits/LAW_LINE_CREATE_METALAW_2026-10-04.md) for verification. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 18:46 PDT.
+
+**2026-10-05 keyed-Person continuous example:** `examples/law_line_cubes_below.txt` uses `always if is a Person`, tested through Terminal/Metalaw/LawManager ticks with a keyed Person. `Identity @Zach` compares an exact identifier and does not match a keyed Person's display name. Three units below the author can be below the floor; native visibility remains open. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 10:25 PDT.
+
+**2026-10-05 cube visibility:** `python3 scratch/probes/law_line_visibility_probe.py` links an isolated native probe against the built WebGPU app objects and exercises the exact continuous Create line. The created cube renders without a floor; an opaque floor at feet height hides every pixel. Person.position is feet level, not camera height. See `docs/audits/LAW_LINE_CUBE_VISIBILITY_2026-10-05.md`; live scene acceptance remains open. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 11:28 PDT.
+
+**2026-10-05 confirmed Create routing fix:** `resolveZone` no longer lets an inactive Zone named World override the active/rendered Zone. The shared boot harness now exposes inactive Zones as the Engine does. Build/restart `earthcall_webgpu`; the original authored lines still apply. `python3 scratch/probes/law_line_visibility_probe.py --engine` exercises actual Engine/Terminal/Metalaw ticks and captures the visible gold cube at native resolution in an isolated fixture. See `docs/audits/LAW_CREATE_ACTIVE_ZONE_ROUTING_FIX_2026-10-05.md`. — Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 11:55 PDT.
+
+**Verification limit from that pass:** seven focused creation/Terminal/native-Zone checks passed; the broader run was stopped after a legacy chess capture assertion and expensive unrelated full-store pre-load serialization. The capture assertion also fails with pre-fix routing/harness code; the native Zone boot chess test passes. Historical green results below are dated evidence, not a current whole-suite claim. See [legacy test follow-up](Agenda/Tasks/Specific%20Tasks/Law%20and%20Reasoning/Legacy_Test_Store_Isolation/Legacy_Test_Store_Isolation.md).
+
+### Installing Earthcall.app (macOS, 2026-10-12)
+
+Double-click `Install Earthcall App.command` (or run `scripts/macos/install_app.sh`). It builds Release into `build_release/`, assembles and signs `Earthcall.app` (CMake target `earthcall_app`, `scripts/macos/package_app.sh`), and installs it to `/Applications`, keeping one `Earthcall.previous.app`. The installed app has no checkout. It reads resources from `Contents/Resources` (`resource://`), saves to the data home, writes logs to `~/Library/Logs/Earthcall/earthcall.log`, and keeps window layout in `<data home>/ui/imgui.ini`. Run `scripts/macos/make_local_signing_identity.sh` once so macOS keeps microphone, Screen Recording and Accessibility grants across rebuilds; without it the app is signed ad-hoc. Apple Developer ID and notarization are a later, optional release step and no part of Earthcall's identity model. The dev target `earthcall_webgpu` and `Run Earthcall.command` are unchanged. → [task](Agenda/Tasks/Specific%20Tasks/Housekeeping%20and%20Build/macOS_App_Bundle/macOS_App_Bundle.md)
 
 ### One-click WASM launch (macOS)
 
@@ -51,10 +77,10 @@ Both flags are required:
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
   -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-  -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
-  -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
-  -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
-  -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+  -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.22" \
+  -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.22/include" \
+  -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.22/libcrypto.a" \
+  -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.22/libssl.a"
 
 cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` is the
                                                        # OpenGL build, where every
@@ -65,7 +91,8 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 247 registered (2026-09-25); WebGPU/GL tests require a desktop GPU/display session; frame_lag_test is machine-load-sensitive
+ctest --test-dir build --output-on-failure -j4        # desktop GPU/display required for GPU/GL tests; frame_lag_test is load-sensitive
+ctest --test-dir build -N                            # inventory this local configuration; reconfigure after source changes
 cmake --build build --target lag                       # just the frame-cost probe, with its report
 ```
 
@@ -82,6 +109,19 @@ The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 ---
 
 ## The test suite
+
+**2026-10-10 native volume verification:** ordinary offscreen `wgpu::Device::init()` now requests no timestamps, matching the visible native device. Explicit timestamp diagnostics remain optional, but enabling them on the Northern Veil window produced Person-reported flicker and invalid all-zero timing results; ordinary measurements keep them disabled. Unavailable execution samples are not zero GPU cost. The volume compiler/residency pass passed seven focused CPU/native targets and full-resolution pixel comparisons; see [the current plan and retention evidence](plans/NORTHERN_VEIL_MINIMUM_WORK_IMPLEMENTATION_2026-10-10.md). Readback-free performance batches remain separate from pixel/GPU correctness witnesses. Codex / GPT-6.1 Sol / `01a122d7` / 2026-10-10T23:15:58.738143-07:00.
+
+**Inventory is local and dated.** Use `ctest --test-dir build -N` after configuration; compare its registered names with the current test sources when auditing drift. Old counts/results below preserve their original witness dates. Registration, executable availability, environment acquisition, and passing assertions are separate facts. This documentation refresh enumerated 284 local registrations on 2026-10-09 without executing the suite; see [the refresh audit](audits/AGENT_GUIDANCE_REFRESH_2026-10-09.md).
+
+**2026-10-02 creation addition:** `universal_singular_creation_test` exercises
+the real authored prototype Create action, concrete-kind preservation,
+authorship and transfer refusals, canonical typed references on Zone reload,
+and preservation of enduring Relation history. Configure after adding its
+source, then build the named target before selecting it with CTest. The
+2026-10-02 configuration registered 262 tests; this dated inventory is not a suite verdict or a current count.
+*Codex / GPT-6.1 Sol / session `01a0e64f-5853-7d30-8196-995b4fd16b89` /
+2026-10-02 17:02 PDT; Zach's universal Singular creation request.*
 
 **As of 2026-09-07, 109 tests are registered and the default build is clean.** (`smooth_tessellation_cache_test` fixed and verified by Jules (Gemini model unexposed), session jules-6175025450238978931-25cb60c8, 2026-09-07).
 WebGPU tests and `zone_facetexture_test` require a desktop GPU/display session; failure to
@@ -173,11 +213,13 @@ honest rather than convenient:
 
 | Test | Guards against |
 |---|---|
-| `synthesis_studio_app_test` | the actual Studio save's controls losing their actions: repeated input, press/release, voice selection, selected ink reaching new strokes, note-reactive geometry, bounded musical play, and real Object/Law round-trips; click targets follow authored rectangles. Live visual/audio acceptance remains in `docs/Agenda/Tasks/Person Verification List.md`. Updated by Codex, session `synthesis-studio-20260904`, 2026-09-04 22:53 PDT. |
+| `synthesis_studio_app_test` | the actual Studio save's controls losing their actions: repeated input, press/release, voice selection, selected ink reaching new strokes, note-reactive geometry, bounded musical play, and real Object/Law round-trips; click targets follow authored rectangles. Live visual/audio acceptance remains in `docs/Agenda/Tasks/For Zach/Person Verification List.md`. Updated by Codex, session `synthesis-studio-20260904`, 2026-09-04 22:53 PDT. |
 | `paint_test` | paint written through a *shared* material (repaints the world), and a `color` property that does not read back what was written — `propSetColor` was an empty function for a month |
 | `object_roundtrip_test` | a field `to_json` writes and `from_json` drops. `faceColors` was write-only for a month with the write side making it look covered; `serialization_compat_test` covers the msgpack/Frontier *plumbing* and cannot see this |
 | `channel_paths_test` | the law-authoring picker offering a property path no registry answers. `CreationChannel::activeShapeKind` was advertised and unregistered, so every law reading it silently fell back |
 | `no_black_box_test` | refusal #6 — a being that registers nothing, a registry built twice, a setter that accepts a write and drops it, and a registered property the picker never offers |
+| `property_memory_access_test` | nested list/dictionary paths losing getter-returned memory, bypassing a read-only container, accepting a partial list index, widening an exact integer binding, losing equal-content rebinding, or overflowing the comparison stack; the second path runs serialized authored Laws for typed passthrough and existing container alias/rebinding behavior. General cells and persistent alias topology remain open in the Property storage task. |
+| `screen_recorder_test` / `webgpu_screen_recorder_test` | failed capture saved as a fabricated gradient, same-second recording overwrite, raw-session mixing, dead encoder pipes terminating the engine, and successful-looking screenshots with wrong native GPU pixels; the WebGPU witness requires a desktop surface and decodes recorded PNGs for full-pixel equality. |
 | `ground_plane_test` | a subsystem deciding, by list index, which being is the floor. `Zone::update` (formerly `World::update`) fell back to `_objects[1]` when nothing carried `baseline=ground` — and a Zone starts empty, so the **second being a Person spawned** silently became the ground. `Physics::integrate` then clamped its *centre* to its own *top*, lifting it half a height per substep, raising the floor, lifting it again: the whole world climbed at 30 m/s and every later spawn was teleported up to it |
 | `test_observation_load_test` | loading a test dump so a Person can see it. The Developer window called `loadState`, which erases Home, and never wrote `Person.position`, so `LocomotionChannel` snapped the camera back onto wherever the Person was standing. The live office is `ZoneManager::loadTestObservation` |
 | `world_switch_test` | two saved sessions mixing. json/.ecsave twins and a 0-byte file listed as separate worlds; a refused load retitled the live world; same-named Zones share identity (loading the other session does not rewind the Zone) |
@@ -186,7 +228,11 @@ honest rather than convenient:
 | `zone_identity_test` | Home was copied into every "world" file, so loading another session showed an empty Home. Zones now have `saves/zones/<id>/zone.json`; sessions reference them; fork/diff are first-class |
 | `prophetic_rete_test` | **Section F is the point.** It guards the direction the Prophetic Rete analysis is allowed to be wrong in: a possibility-space filter that answers too NARROWLY makes a law go deaf — still registered, still enabled, still compiled, alpha memory simply empty — and nothing reports it. F fires real laws through a real `LawManager` and asserts they still hear, then checks all three fail-open paths (stale index, incomplete index, foreign alpha node). It also guards the change-feed fix: before 2026-09-01, `PropertyRef::set` was the ONLY caller of `notifyPropertyChanged` in the engine, so every `ComputedProperty`, every hand-written `Property` bridge, and every authored property was invisible to the Rete's dirty tracking. See `docs/architecture/law/PROPHETIC_RETE.md` §4 |
 | `frame_lag_test` | the frame quietly getting dearer. Guards three things nothing else could see: that per-frame cost stays sub-quadratic in the population, that an *idle* world fires no laws and grows no objects (CLAUDE.md's edge-not-level rule, measured rather than asserted), and that no being registers a property path twice (the `buildProperties()`-in-a-constructor bug, which doubles the cost of every law evaluation and shows up nowhere else) |
-| `zone_home_ontology_test` | manifesto Home/Zone: primary Home kernel-locked per Person (not "any owned Zone"); owner is Person/Relationship/Community; community-home / community-zone authored kinds; AuthorZone mints extras; unused `class Home` retired |
+| `zone_home_ontology_test` | manifesto Home/Zone: primary Home kernel-locked per Person (not "any owned Zone"); owner is Person/Relationship/Community; community-home / community-zone authored kinds; AuthorZone mints extras; the primary dwelling is a constitutive `Home` with dwelling state, not merely a Zone kind label |
+
+*Property-memory test entry and configured count: Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 12:29 PDT. The count comes from `ctest -N`; it is not a full-suite verdict.*
+
+*Native screen-capture entry and refreshed configured count: Codex · GPT-6 · session `01a0fe15-4fe2-7dc0-a2d0-7d823e4ad26c` · 2026-10-02 12:40 PDT. Run the real engine witness with `python3 scratch/probes/screen_recorder_engine_probe.py` after building `earthcall_webgpu`; it links production objects and uses an isolated save root. See [the capture audit](audits/SCREEN_CAPTURE_NATIVE_VERIFICATION_2026-10-02.md).*
 
 If you add a field to `Object` that `to_json` writes, add it to `object_roundtrip_test`.
 
@@ -222,6 +268,24 @@ globs `tests/**/*.cpp`; the ctest name is the file stem. See `tests/README.md`.
 ---
 
 ## Two live-system notes
+
+### Direct Screen developer witness (2026-10-04)
+
+After building `earthcall_webgpu`, run `python3 scratch/probes/direct_screen_form_probe.py`
+in a desktop GPU/display session. It links actual production app objects and uses an
+isolated first-seed save root, checks independent CPU/native samples, then boots the
+Engine and decodes its viewport capture. The verified 2560 × 1440 frame matched all
+3,686,400 pixels with zero byte error. The existing shader parameter-refresh regression
+also passed; this is not a full-suite claim. Direct fields need no Object/Material/
+ShapeKind carrier. See [contract and authoring scope](Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md)
+and [native evidence](audits/DIRECT_SCREEN_FORMS_NATIVE_VERIFICATION_2026-10-04.md).
+— Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-04 21:20 PDT; Zach's direct-medium request.
+
+### Reverse-image developer witness (2026-10-02)
+
+`scripts/reconstruct_flat_image.py` needs Python with Pillow and emits only new authored seeds. `scripts/test_image_reconstruction.py` supplies independent raster and preservation checks; `scripts/verify_image_reconstruction.py` links the built production WebGPU app objects and needs a desktop GPU with the documented Retina fixture. This argument-driven probe is under `scripts/`, outside the registered test glob. See [scope, evidence, commands and unfinished work](Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Image_Reconstruction/Image_Reconstruction.md).
+
 
 **`Core::Engine`'s core subsystems are now actually constructed (fixed 2026-08-13).**
 `_lawManager`, `_player`, `_camera`, `_mouseHandler`, `_keyboardHandler` were declared as
@@ -274,7 +338,7 @@ of the same problem — see below.
 
 `CMAKE_EXPORT_COMPILE_COMMANDS` is ON, so configuring writes `build/compile_commands.json`
 (410 translation units). The `clangd-lsp` plugin, and any editor's clangd, reads it to
-recover each file's real include paths — `local_deps/openssl-3.0.13/include`, `imgui/`,
+recover each file's real include paths — `local_deps/openssl-3.0.22/include`, `imgui/`,
 `build/_deps/{asio,websocketpp,flatbuffers,vhacd,glfw}-src/`, `third_party/wgpu/include`.
 
 Without it clangd cannot resolve a single vendored header, every file reports as one large
@@ -293,6 +357,10 @@ Untracking does not affect clangd — the index regenerates locally regardless.
 
 ---
 
+## Where data lives — the data home (2026-10-12)
+
+The Person's saves live outside the checkout, in `~/Library/Application Support/Earthcall` on macOS (Linux `$XDG_DATA_HOME/earthcall`, Windows `%APPDATA%\Earthcall`; `$EARTHCALL_DATA` overrides). That directory is **its own git repository**: commit save changes there, not in this repo. The engine trusts a home only when it carries `data-home.json`. Otherwise it falls back to the checkout's `saves/` and prints `⚠️ data home not migrated`. Tests keep an empty root (`./saves` under cwd). The checkout's `saves/` is now a frozen snapshot plus fixtures. Authored `"saves/..."` strings resolve under the data home through `VirtualFileSystem::resolve`. Scripts use `scripts/earthcall_data_home.py`'s `data_root()`. Signing keys stay in `~/.earthcall/identity`. → [task](Agenda/Tasks/Specific%20Tasks/Serialization%20and%20Storage/Data_Home_Outside_Checkout/Data_Home_Outside_Checkout.md)
+
 ## The tree, in detail
 
 **Language is a leaf, never a branch.** Python lives in `py/` subfolders *inside* the
@@ -310,10 +378,92 @@ external software. So there is no `src/Integration/` (that would be refusal #2) 
 this has been attempted. See `docs/architecture/Integration/INTEGRATION_FRAMEWORK.md` §0.
 
 **`ConstructedBeing/`** was named `Form/` until 2a11f94; the docs corpus still says Form in
-places. `Object`, `Lexeme`, and `Property` live under `ConstructedBeing/Singular/`;
-`ObjectConcept` is the ONE set-to-set machine (`Singular/Object/Creation`) — do not add
-a second one. See §7 of `LAW_AND_CREATION_SYSTEM.md`; a `Concept`/`SynthesisSystem` pair
+places. `Object`, `Lexeme`, and the non-Singular Property bridge live under `ConstructedBeing/Singular/`;
+`ObjectConcept` is the Object-facing set-to-set mechanism (`Singular/Object/Creation`);
+`Singular/Creation/SingularSetToSetCreation` supplies the common prototype algebra across
+admitted concrete Singular kinds. Keep these existing seams coherent rather than adding
+a second creation system. See §7 of `LAW_AND_CREATION_SYSTEM.md`; a `Concept`/`SynthesisSystem` pair
 lived beside it until 2026-08-11 and was deleted. Formation is `Relation/Formation`
 (all includes point directly to `Relation/Formation/Formation.hpp`). Lexeme is a Singular, not a Language-channel type.
 
 **Test harnesses (`TestLabInterfaces/`, `TestLabAI/`)** sit at the repository root as external harness interfaces (renamed from `TestLab/` in commit e813b6b6 to distinguish interface tools from the ontology).
+
+## Named Screen-region witness — 2026-10-07
+
+**Property-only source regression (2026-10-17):** after building, run
+`python3 scratch/probes/law_line_screen_probe.py --property-bearers` with desktop GPU
+access. It exercises a non-Object Singular and plain Object through real Terminal /
+Metalaws, adding only region Properties and making no shape/material specification.
+Six complete native captures match with zero RGB byte error. An independent decoder is
+`scratch/probes/check_singular_screen_captures.py` (bundled workspace Python with
+Pillow/NumPy). [Fixture, results and limits](audits/SINGULAR_SCREEN_PROPERTY_PIPELINE_2026-10-17.md).
+Codex / GPT-6.1 Sol / `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` / 2026-10-17T16:27:11-07:00.
+
+Build `earthcall_webgpu` before running `python3 scratch/probes/law_line_screen_probe.py`. The probe links the production Engine with an isolated first-seed fixture, enters real Terminal sentences, and retains decoded native captures under `scratch/verification/law-line-screen-regions-2026-10-07/`. It needs desktop GPU/display access; a sandbox acquisition failure is not a rendering verdict. The fixture uses only a public author DID and the sanctioned presence test seam, disables its physical keyboard/mouse polling, and never unlocks a human identity or modifies inhabited saves. See [the region audit](audits/LAW_LINE_SCREEN_REGIONS_2026-10-07.md) for exact proof and remaining Person checks.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-07 19:16 PDT; Zach requested named Screen regions through Metalaws.*
+
+## One-paste pixel-art atelier
+
+`examples/law_line_pixel_art_editor.txt` is one physical line containing 276 authored Laws for a 16×16 direct Screen editor. Rebuild/restart, unlock, `enter LawLine`, close pointer-capturing panels and release the cursor with Escape before pasting once and pressing Enter. The line is substantial; wait for compilation acknowledgement. Run `python3 scratch/probes/law_line_screen_probe.py --art-editor` with desktop GPU access for the real Engine/Terminal/Metalaw/viewport witness. It retains a separate art report, preserving the earlier region proof. [Controls and scope](Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Law_Line_Pixel_Art_Editor/Law_Line_Pixel_Art_Editor.md), [verification](audits/LAW_LINE_PIXEL_ART_EDITOR_2026-10-07.md).
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18`; Zach requested the whole editor; native final execution `2026-10-08T07:19:33Z`.*
+
+*Guidance refresh: Codex · GPT-6.1 Sol · session `01a122ec-b377-7391-ad6f-86d11b501d1b` · 2026-10-09 16:10 PDT; Zach commissioned the repository routing review; historical witnesses above retain their original scope.*
+
+
+## Intercom navigation checks
+
+Repository conversation tooling uses Python 3.10+ and the standard library. Run `python3 "agent intercom/conversation_history_injection.py" self-test` and `python3 -m unittest discover -s "agent intercom" -p "test_conversation_navigation.py" -v` from the repo root when changing it. Search, trace, register replies, and export a local browser through its `nav` subcommand; [workflow and preservation record](Agenda/Tasks/Specific%20Tasks/Housekeeping%20and%20Build/Linked_Conversations_and_Document_Navigation/Linked_Conversations_and_Document_Navigation.md). The engine suite does not exercise this developer tool.
+
+
+**2026-10-10 cutoff continuation:** `earthcall_webgpu` and eight focused targets rebuild/pass for the added volume uniform: `channel_paths_test`, `sdf_wgsl_parameter_refresh_test`, `volume_shared_subexpression_test`, `volume_zero_proof_test`, `webgpu_volume_shared_subexpression_test`, `webgpu_volume_zero_proof_test`, `webgpu_volume_unified_quadrature_test`, `webgpu_object_test`. Property paths also need desktop access because that witness creates a hidden GLFW window. Positive `volumeOutputErrorBudget` now bypasses the opacity stop and uses the accepted full lattice; no certified tail exit exists yet. Eight default native captures remain byte-identical. See [reference contract and evidence](plans/NORTHERN_VEIL_MINIMUM_WORK_IMPLEMENTATION_2026-10-10.md#cutoff-reference-decision-implemented). Rebuild all renderer consumers after layout changes; never relink old probe constructor objects against the new Renderer layout.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-10T23:49:10-07:00
+
+
+**2026-10-11 GPU clock preparation:** rebuild `earthcall_webgpu` and the named native volume consumers together after changing the compiler Program/renderer layouts. CPU sharing and parameter-refresh tests pass; final native sharing 65/65, proof 42/42, quadrature 15/15 and object consumer pass. Preparation pipelines count as shader compilation at admission; warm frames remain zero. Its GPU commands execute before volume rendering without ordinary-frame CPU waits; native timestamps stay disabled. Eight default captures match exactly. [Dated protocol, retention and limits](plans/NORTHERN_VEIL_MINIMUM_WORK_IMPLEMENTATION_2026-10-10.md#independent-high-value-step-retained-gpu-time-only-preparation).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T00:15:29-07:00
+
+
+**2026-10-11 support traversal:** rebuild the app and native volume consumers together after changing proof payload layout. Both camera lanes now store six support-bound floats after each packed zero proof. Final six focused targets pass (native proof 54/54), eight full-resolution captures match bytes, and two sequential ABBA series per view pass retention. GPU correctness/readback and performance runs are separate; ordinary timestamps stay disabled. [Final benchmark and runtime limits](audits/NORTHERN_VEIL_SUPPORT_TRAVERSAL_2026-10-11.md). **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T02:25:43-07:00
+
+
+**Northern Veil fragment census (2026-10-11):** `scripts/northern_veil_fragment_demand.py --output /private/tmp/<new-directory>` links configured app objects into read-only fixture binaries, requires a desktop GPU, and writes only outside the repository. Build `earthcall_webgpu` first. It is diagnostic, not a timing probe: native pixel comparisons expose a one-level instrumentation observer effect. [Contract and rejected transport experiment](audits/NORTHERN_VEIL_FRAGMENT_DEMAND_2026-10-11.md). Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T20:53:25-07:00 (PDT).
+
+
+**Volume support numerical research (2026-10-12):** `scripts/volume_support_certificate_research.py --fixture <existing-decoded-json> --output <new-report.json>` runs CPU-only, reads its fixture and refuses report overwrites; no build or GPU session is needed. Eighteen named witness groups pass, but production skips stay zero because the complete backend/coordinate contract is unresolved. Conditional table coverage is not native performance or production proof. [Model, reproduction and refusal boundaries](audits/VOLUME_SUPPORT_NUMERICAL_CONTRACT_2026-10-12.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T00:43:07-07:00 (PDT).
+
+
+**Native volume compiler observer (2026-10-12):** after building `earthcall_webgpu`, run `python3 scripts/volume_backend_contract_probe.py --output /private/tmp/<new-directory>`. It links app objects with a scratch-only Metal compilation observer; options/source are forwarded unchanged and no hooks enter the app. Requires desktop GPU, defaults to 320×180 diagnostic images, uses no timestamps, and writes a fresh external directory. Eight paired images match; 104 native libraries compile, with 16 volume-containing module records at Fast arithmetic/Fast functions. The rational support tool now passes 24 witness groups but admits zero production skips; the former 18-group report is dated evidence. [Scope and reproduction](audits/VOLUME_SUPPORT_NATIVE_PROFILE_2026-10-12.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T11:27:35-07:00 (PDT).
+
+
+**Scratch volume arithmetic-profile experiment (2026-10-12):** `python3 -B scripts/volume_arithmetic_profile_experiment.py --output /private/tmp/<new-directory>` builds separate process-local volume option overrides after the app build. The original compiler observer remains read-only. `--full-lattice --width 2560 --height 1440 --camera side --time 0` sets the copied fixture’s positive budget for the stress-reference check. Safe/Fast and Safe/Precise are rejected for pixel differences up to 12 levels; no option-changing hook is installed in the app or timed for performance. Frozen checkout fixture, not current live data; desktop GPU and a fresh external output directory required. [Failure gates and provenance](audits/VOLUME_ARITHMETIC_PROFILE_FIDELITY_2026-10-12.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T17:13:57.815427-07:00 (PDT).
+
+
+## Standalone performance analysis — October 14
+
+Zach commissioned a separate executable, outside the app. `./scripts/earthcall-analyze doctor` checks capture-tool availability; `demo --output /private/tmp/<new-directory>` creates labeled synthetic inputs and a searchable offline report. `package --output /private/tmp/earthcall-analyze.pyz` creates a portable executable requiring Python 3.9+ only. Import existing frame samples, standard trace JSON, demand census, emitted WGSL and explicit models with `analyze`; no app rebuild, CMake dependency, live exporter or GPU hook is added. Run the focused checks with `python3 -B tests/singularity/test_performance_analysis.py` (20 pass). Trace spans, counts, models and historical image artifacts retain distinct evidence labels. Raw native trace bundles/protobufs need external tools/export; no fresh frame/GPU timing or FPS claim. [Contracts and commands](Agenda/Tasks/Specific%20Tasks/Performance%20and%20Runtime/Standalone_Performance_Analysis/Standalone_Performance_Analysis.md); [execution evidence](audits/STANDALONE_PERFORMANCE_ANALYSIS_2026-10-14.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-14T22:37:18.690115-07:00 (PDT).
+
+**October 15 volume experiments:** `python3 -B scripts/volume_traversal_experiment.py --help` describes a separate frozen-fixture build/image/cost harness using configured app objects and explicit compatible control sources. It requires a new external output directory, separates native correctness readback from sequential completion-fenced ABBA batches and refuses cost without matching passing images. Build `earthcall_webgpu` first; run native witnesses in a desktop GPU session. No ordinary timestamp feature or app hook is added. The [retained power correction and three rejected candidates](audits/VOLUME_POWER_AND_OPTIMIZATION_TRIALS_2026-10-15.md) give focused test results and the native subnormal limit; no live FPS gain is inferred.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T05:56:25.134858-07:00 (PDT).
+
+
+**Scoped Euclidean range witness (October 15):** build `volume_zero_proof_test sdf_range_soundness_test ontomath_test prophetic_rete_test webgpu_volume_zero_proof_test webgpu_ontomath_native_resolution_parity_test`. The first target includes explicit host Length/Distance tests; production callers retain the legacy range entrypoint. `prophetic_rete_test` uses GLFW's timer and its macOS sandbox invocation may stall on XPC setup; a desktop rerun passed. A device skip or interrupted setup is not a pass. [Executed scope and separate read-only census](audits/VOLUME_EUCLIDEAN_RANGE_2026-10-15.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T10:45:48.355899-07:00 (PDT).
+
+
+**Support-allocation diagnostics (October 15):** `volume_traversal_experiment.py` now substitutes matching `VolumeZeroProof.cpp` control objects as well as compiler/renderer sources; an old shader cannot consume a candidate grid interpreted differently. `--mode proof --proof-metadata-floats CONTROL CANDIDATE` measures direct host construction without a GPU and accounts for bitmap, optional hierarchy, metadata and bands. Optional strict image/control-regression stop gates preserve counterexamples. Native proof tests add four translated/parallel/support-edge cases and structural-edit preparation/upload diagnostics; these are correctness/diagnostic observations, not live FPS. [Three rejected variants and restored witnesses](audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).

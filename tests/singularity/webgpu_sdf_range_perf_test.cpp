@@ -144,6 +144,7 @@ struct alignas(16) RuntimeTaxOut {
 struct RuntimeTaxInstance {
     glm::mat4 model{1.0f};
     glm::mat4 invModel{1.0f};
+    glm::mat4 normalMat{1.0f};
     glm::vec4 baseColor{1.0f};
     glm::vec4 shading{1.0f};
     glm::vec4 extents{0.0f};
@@ -158,7 +159,7 @@ struct RuntimeTaxInstance {
     uint32_t rangeProofDepth = 0;
 };
 
-static_assert(sizeof(RuntimeTaxInstance) == 224,
+static_assert(sizeof(RuntimeTaxInstance) == 288,
               "diagnostic instance ABI must match SdfInstanceData");
 
 struct RuntimeTaxTotals {

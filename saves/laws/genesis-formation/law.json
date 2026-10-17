@@ -1,0 +1,43 @@
+{
+    "id": "genesis-formation",
+    "name": "Metalaw: Genesis Phase 1 (Mint Formation)",
+    "authors": [
+        "Zach"
+    ],
+    "enabled": true,
+    "conditions": [
+        {
+            "kind": 3,
+            "children": [
+                {
+                    "kind": 0,
+                    "path": "@state.genesis.phase",
+                    "op": 0,
+                    "operand": 1.0
+                },
+                {
+                    "kind": 0,
+                    "path": "@state.genesis.type",
+                    "op": 0,
+                    "operand": "Formation"
+                }
+            ]
+        }
+    ],
+    "actionModel": {
+        "kind": 5,
+        "children": [
+            {
+                "kind": 13,
+                "path": "lexeme.christ",
+                "newbornId": "@@state.genesis.id",
+                "newbornName": "@@state.genesis.name"
+            },
+            {
+                "kind": 0,
+                "path": "@state.genesis.phase",
+                "operand": 0.0
+            }
+        ]
+    }
+}

@@ -302,6 +302,7 @@ public:
     }
     // Derived: setValue returns false, which is how Property spells read-only.
     bool setValue(const PropertyValue&) override { return false; }
+    bool isStructurallyWritable() const override { return false; }
 
 private:
     std::string _name;

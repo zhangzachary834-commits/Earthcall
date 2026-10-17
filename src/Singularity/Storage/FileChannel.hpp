@@ -6,6 +6,8 @@
 namespace Singularity {
 namespace Storage {
 
+class FileContentProperty;
+
 // FileChannel implements sense and act for native computer file system I/O.
 // It is a first mover Law under Singularity/Storage whose properties are
 // governed by ordinary K4 Laws (@file-channel.path, @file-channel.read, ...).
@@ -44,15 +46,12 @@ public:
     bool isPathAllowed(const std::string& targetPath, bool isWrite) const;
 
     // Static utilities for encoding, hashes, and MIME detection
-    static std::string base64Encode(const std::string& input);
-    static std::string base64Decode(const std::string& input);
-    static std::string hexEncode(const std::string& input);
-    static std::string hexDecode(const std::string& input);
     static std::string computeSha256(const std::string& data);
     static std::string detectMimeType(const std::string& path, const std::string& content);
     static std::string categorizeFileType(const std::string& mimeType, const std::string& path);
 
 private:
+    friend class FileContentProperty;
     void buildProperties() override;
 
     // Property getters/setters - Core state
@@ -64,9 +63,6 @@ private:
 
     std::string propPath() const { return _path; }
     void propSetPath(const std::string& v) { _path = v; }
-
-    std::string propContent() const { return _content; }
-    void propSetContent(const std::string& v) { _content = v; }
 
     // Triggers
     bool propReadTrigger() const { return _readTrigger; }
@@ -100,9 +96,6 @@ private:
     bool propAtomicWrite() const { return _atomicWrite; }
     void propSetAtomicWrite(const bool& v) { _atomicWrite = v; }
 
-    std::string propEncoding() const { return _encoding; }
-    void propSetEncoding(const std::string& v) { _encoding = v; }
-
     bool propStripBom() const { return _stripBom; }
     void propSetStripBom(const bool& v) { _stripBom = v; }
 
@@ -129,11 +122,6 @@ private:
     std::string propDirectoryEntries() const { return _directoryEntries; }
 
     // Computed / format properties
-    std::string propContentBase64() const;
-    void propSetContentBase64(const std::string& v);
-
-    std::string propContentHex() const;
-    void propSetContentHex(const std::string& v);
 
     bool propExists() const;
     bool propIsDirectory() const;
@@ -157,13 +145,14 @@ private:
 
     // JSON structured operations
     bool propJsonValid() const;
-    std::string propJsonCompact() const;
-    std::string propJsonPretty() const;
 
     // State members
     bool _enabled = true;
     bool _sandboxMode = true;
     std::string _path;
+    // Raw bytes ready for FileChannel I/O. file.content accepts strings
+    // unchanged and serializes every other PropertyValue through the canonical
+    // typed PropertyValue codec before storing those bytes here.
     std::string _content;
     bool _readTrigger = false;
     bool _writeTrigger = false;
@@ -176,7 +165,6 @@ private:
 
     std::string _writeMode = "overwrite";  // "overwrite" or "append"
     bool _atomicWrite = true;
-    std::string _encoding = "auto";       // "auto", "text", "base64", "hex"
     bool _stripBom = true;
     bool _normalizeNewlines = false;
     double _maxFileSize = 67108864.0;      // 64 MB default ceiling

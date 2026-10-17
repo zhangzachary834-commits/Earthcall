@@ -28,5 +28,7 @@ void zoneObjectsFromJson(const nlohmann::json& j, Zone& zone);
 // Zone that has been live for any length of time.
 void mergeZoneObjectsFromJson(const nlohmann::json& j, Zone& zone);
 nlohmann::json zoneToJson(const Zone& zone);
-void applyZoneJson(Zone& zone, const nlohmann::json& j, bool replaceObjects);
-std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& j);
+// Lexemes are shared canonical beings, independently of Zone object replacement.
+// Only explicit Restore-unsaved requests may rewind already-live Lexeme state.
+void applyZoneJson(Zone& zone, const nlohmann::json& j, bool replaceObjects, bool restoreExistingLexemes = false);
+std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& j, bool restoreExistingLexemes = false);

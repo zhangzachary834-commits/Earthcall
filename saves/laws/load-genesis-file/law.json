@@ -1,0 +1,40 @@
+{
+    "id": "load-genesis-file",
+    "name": "Metalaw: Load Genesis File",
+    "authors": ["Zach"],
+    "enabled": true,
+    "conditions": [
+        {
+            "kind": 3,
+            "children": [
+                {
+                    "kind": 0,
+                    "path": "@codec.codec.arrayEmpty",
+                    "op": 0,
+                    "operand": true
+                },
+                {
+                    "kind": 5,
+                    "children": [
+                        {
+                            "kind": 0,
+                            "path": "@state.genesis.loaded",
+                            "op": 0,
+                            "operand": true
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "actionModel": {
+        "kind": 5,
+        "children": [
+            { "kind": 0, "path": "@state.genesis.filePath", "operand": "saves/seed.ecgraph" },
+            { "kind": 23, "input": "@state.genesis.filePath", "path": "@codec.codec.input" },
+            { "kind": 25, "propertyName": "ecgraphToJson", "input": "@codec.codec.input", "path": "@codec.codec.jsonArray" },
+            { "kind": 0, "path": "@state.genesis.loaded", "operand": true },
+            { "kind": 0, "path": "@state.genesis.phase", "operand": 0.0 }
+        ]
+    }
+}

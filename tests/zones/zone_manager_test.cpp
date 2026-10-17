@@ -98,6 +98,16 @@ int main() {
         check(!isObservationZone(z_empty), "Zone with no kind quality is not an observation zone");
     }
 
+    {
+        std::cout << "\n[5] Testing bindLive...\n";
+        ZoneManager mgr;
+        check(ZoneManager::live() != &mgr, "Manager is not live before bindLive");
+        mgr.bindLive();
+        check(ZoneManager::live() == &mgr, "bindLive sets global live manager pointer");
+        mgr.unbindLive();
+        check(ZoneManager::live() == nullptr, "unbindLive clears binding owned by manager");
+    }
+
     std::filesystem::remove_all(sandbox);
 
     std::cout << "------------------------------------------------------------\n";

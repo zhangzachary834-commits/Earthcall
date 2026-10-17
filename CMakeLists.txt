@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 if(APPLE)
-    project(Earthcall VERSION 1.0 LANGUAGES CXX OBJCXX)
+    project(Earthcall VERSION 1.0 LANGUAGES C CXX OBJCXX)
 else()
-    project(Earthcall VERSION 1.0 LANGUAGES CXX)
+    project(Earthcall VERSION 1.0 LANGUAGES C CXX)
 endif()
 
 set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/local_deps" CACHE PATH "" FORCE)
@@ -191,8 +191,20 @@ if(APPLE)
     set_source_files_properties(src/Singularity/Foreign/Web/DomMirrorBridge.cpp PROPERTIES LANGUAGE OBJCXX)
 endif()
 
+# Unicode decoding/segmentation at the terminal modality boundary. Pinned,
+# vendored source keeps builds offline and independent of platform locales.
+add_library(earthcall_utf8proc STATIC third_party/utf8proc/utf8proc.c)
+target_include_directories(earthcall_utf8proc PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party/utf8proc)
+target_compile_definitions(earthcall_utf8proc PRIVATE UTF8PROC_STATIC)
+set_property(SOURCE src/Singularity/Terminal/LineEditor.cpp APPEND PROPERTY
+    INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/third_party/utf8proc)
+set_property(SOURCE src/Singularity/Terminal/LineEditor.cpp APPEND PROPERTY
+    COMPILE_DEFINITIONS UTF8PROC_STATIC)
+set_target_properties(earthcall_utf8proc PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED YES)
+
 # Object library for shared code
 add_library(earthcall_core OBJECT ${SRC_FILES} ${IMGUI_SOURCES})
+target_link_libraries(earthcall_core PUBLIC earthcall_utf8proc)
 if(NOT EMSCRIPTEN AND OpenGL_FOUND)
     target_link_libraries(earthcall_core PUBLIC OpenGL::GL)
 else()
@@ -276,6 +288,7 @@ if(NOT EMSCRIPTEN)
     endif()
 
     add_executable(earthcall_webgpu src/entry.cpp ${WEBGPU_APP_SOURCES} ${IMGUI_WEBGPU_SOURCES})
+    target_link_libraries(earthcall_webgpu PRIVATE earthcall_utf8proc)
     target_include_directories(earthcall_webgpu PRIVATE ${WGPU_NATIVE_DIR}/include)
     target_compile_definitions(earthcall_webgpu PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU GLFW_INCLUDE_NONE)
 
@@ -322,6 +335,18 @@ if(NOT EMSCRIPTEN)
     add_executable(earthcall_fmt src/Singularity/Storage/EarthcallFmtTool.cpp)
     target_link_libraries(earthcall_fmt PRIVATE earthcall_core)
 
+    # Earthcall.app — the installed macOS app (scripts/macos/package_app.sh).
+    # Not in ALL: building it signs and assembles a bundle, which a test or dev
+    # build should never pay for. scripts/macos/install_app.sh builds it.
+    if(APPLE AND TARGET earthcall_webgpu)
+        add_custom_target(earthcall_app
+            COMMAND ${CMAKE_SOURCE_DIR}/scripts/macos/package_app.sh ${CMAKE_BINARY_DIR}
+            DEPENDS earthcall_webgpu earthcall_first_mover
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Assembling and signing Earthcall.app"
+            VERBATIM)
+    endif()
+
     # --- Tests ---
     enable_testing()
     file(GLOB_RECURSE TEST_FILES "tests/*.cpp")
@@ -343,24 +368,41 @@ if(NOT EMSCRIPTEN)
 
         if (${TEST_NAME} STREQUAL "syntactic_parser_test" OR ${TEST_NAME} STREQUAL "utterance_test")
             add_executable(${TEST_NAME} ${TEST_SOURCE})
-            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
+            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
         elseif (${TEST_NAME} STREQUAL "brush_system_test")
             add_executable(${TEST_NAME} ${TEST_SOURCE})
             target_include_directories(${TEST_NAME} PRIVATE ${GLFW_SOURCE_DIR}/include ${GLFW_SOURCE_DIR}/deps)
             target_compile_definitions(${TEST_NAME} PRIVATE GLFW_INCLUDE_NONE)
-            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
-        elseif (${TEST_NAME} STREQUAL "sdf_wgsl_parameter_refresh_test")
+            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
+        elseif (${TEST_NAME} STREQUAL "sdf_wgsl_parameter_refresh_test" OR
+                 ${TEST_NAME} STREQUAL "gyroid_reliquary_test" OR
+                 ${TEST_NAME} STREQUAL "veiled_hour_test" OR
+            ${TEST_NAME} STREQUAL "sky_island_sanctuary_test" OR
+                 ${TEST_NAME} STREQUAL "mcp_authoring_surfaces_test" OR
+                 ${TEST_NAME} STREQUAL "volume_shared_subexpression_test")
             # Pure codegen witness: it exercises SdfWgsl::compile/collectParams
             # but never creates a WebGPU device. Link only the compiler source so
             # the test stays runnable on CPU-only CI instead of masquerading as
             # a webgpu_* integration test.
+            #
+            # gyroid_reliquary_test is here for the same reason and with a
+            # sharper edge. It runs the production WGSL emitter over an authored
+            # Zone's radiance, chroma, angular, medium and geometry expressions
+            # on the CPU, purely to READ BACK its refusals. That is the only
+            # way to catch a Zone that is mathematically perfect and cannot be
+            # drawn: this one declared `"input": "p"` on every Piecewise, which
+            # emitPiecewise resolves through pointComponent, which binds no
+            # such variable — so every field refused to compile and the log
+            # spammed one line per frame per source, while 72 green checks
+            # agreed the Zone was perfect. No CPU evaluator cares (MathNode
+            # binds `p` happily), so this needs the real emitter.
             add_executable(${TEST_NAME}
                 ${TEST_SOURCE}
                 src/Singularity/Screen/WebGPU/SdfWgsl.cpp)
             target_link_libraries(${TEST_NAME} PRIVATE
                 earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto
                 ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
-        elseif (${TEST_NAME} MATCHES "webgpu_.*" OR ${TEST_NAME} STREQUAL "gpu_mastery_test")
+        elseif (${TEST_NAME} MATCHES "webgpu_.*" OR ${TEST_NAME} STREQUAL "gpu_mastery_test" OR ${TEST_NAME} STREQUAL "sky_island_sanctuary_test")
             set(WEBGPU_TEST_EXTRA_SRCS
                 src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
                 src/Singularity/Screen/WebGPU/SdfWgsl.cpp
@@ -409,12 +451,20 @@ if(NOT EMSCRIPTEN)
         # tests/<region>/; ctest target names stay NAME_WE of the .cpp.
         target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/tests ${CMAKE_SOURCE_DIR}/tests/support)
         target_compile_options(${TEST_NAME} PRIVATE -UNDEBUG)
-        if (${TEST_NAME} IN_LIST PENDING_FEATURE_TESTS OR (NOT APPLE AND (${TEST_NAME} MATCHES "webgpu_.*" OR ${TEST_NAME} STREQUAL "gpu_mastery_test")))
+        if (${TEST_NAME} IN_LIST PENDING_FEATURE_TESTS OR (NOT APPLE AND (${TEST_NAME} MATCHES "webgpu_.*" OR ${TEST_NAME} STREQUAL "gpu_mastery_test" OR ${TEST_NAME} STREQUAL "sky_island_sanctuary_test")))
             set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
         else()
             list(APPEND ALL_ACTIVE_TEST_TARGETS ${TEST_NAME})
         endif()
-        add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+        if (${TEST_NAME} STREQUAL "law_line_zone_test")
+            # The app home is live; saves/ is frozen. Layer the current authored
+            # seed into an isolated fixture so new Metalaws are actually tested.
+            find_program(EARTHCALL_LAW_LINE_PYTHON NAMES python3 python REQUIRED)
+            add_test(NAME ${TEST_NAME} COMMAND ${EARTHCALL_LAW_LINE_PYTHON}
+                ${CMAKE_SOURCE_DIR}/tests/singularity/run_law_line_zone_test.py $<TARGET_FILE:${TEST_NAME}>)
+        else()
+            add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+        endif()
 
         # ctest's default WORKING_DIRECTORY for an add_test() target is the
         # build tree, not the source tree. synthesis_studio_app_test opens an
@@ -435,6 +485,12 @@ if(NOT EMSCRIPTEN)
             ${TEST_NAME} STREQUAL "synthesis_studio_living_test" OR
             ${TEST_NAME} STREQUAL "synthesis_studio_full_store_boot_test" OR
             ${TEST_NAME} STREQUAL "person_home_migration_boot_test" OR
+            ${TEST_NAME} STREQUAL "prism_cathedral_test" OR
+            ${TEST_NAME} STREQUAL "gyroid_reliquary_test" OR
+            ${TEST_NAME} STREQUAL "veiled_hour_test" OR
+            ${TEST_NAME} STREQUAL "sky_island_sanctuary_test" OR
+            ${TEST_NAME} STREQUAL "zone_material_corpus_test" OR
+            ${TEST_NAME} STREQUAL "gift_shop_guardrail_test" OR
             ${TEST_NAME} MATCHES "^foreign_web_dom_")
             set_tests_properties(${TEST_NAME} PROPERTIES
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
@@ -525,3 +581,4 @@ if (EMSCRIPTEN)
     set_target_properties(earthcall_wasm PROPERTIES OUTPUT_NAME "earthcall")
     set_target_properties(earthcall_wasm PROPERTIES SUFFIX ".js")
 endif()
+

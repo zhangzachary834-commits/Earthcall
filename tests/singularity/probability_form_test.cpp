@@ -14,7 +14,7 @@ int main() {
     Distribution uniform(Distribution::Kind::Uniform, {0.0, 10.0});
     assert(uniform.kind == Distribution::Kind::Uniform);
     assert(neard(uniform.expectedValue(), 5.0));
-    double s1 = uniform.sample();
+    double s1 = uniform.sample()[0];
     assert(s1 >= 0.0 && s1 <= 10.0);
 
     Distribution gaussian(Distribution::Kind::Gaussian, {5.0, 2.0});
@@ -24,7 +24,7 @@ int main() {
     Distribution bernoulli(Distribution::Kind::Bernoulli, {0.75});
     assert(bernoulli.kind == Distribution::Kind::Bernoulli);
     assert(neard(bernoulli.expectedValue(), 0.75));
-    double s3 = bernoulli.sample();
+    double s3 = bernoulli.sample()[0];
     assert(s3 == 0.0 || s3 == 1.0);
 
     Distribution uniform_def(Distribution::Kind::Uniform, {5.0});
