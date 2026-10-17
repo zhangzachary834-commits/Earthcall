@@ -2446,9 +2446,12 @@ void WebGpuRenderer::flushSdfDraws() {
                 wgpuQueueWriteBuffer(_queue, rangeBuffer, 0, rangeNodes.data(), rangeBytes);
                 persistentRange.mirror = rangeNodes;
                 mutableFrameStats().sdfRangeNodeBytesUploaded += rangeBytes;
-            } else if (rangeChanged) {
-                persistentRange.mirror.clear();
             }
+            // An empty batch writes nothing: the buffer still holds the mirror's
+            // bytes (no instance reads them: every count is 0), so the mirror
+            // stays — clearing it forced identical bytes to re-upload on the
+            // next traversal frame (webgpu_perlin_exact_gradient_test line 817,
+            // reproduced on lavapipe and on Codex's M5; Claude Opus 5.5, 2026-10-17).
         } else {
             // Binding 2 must remain valid even for a batch with no proof grid.
             // A zeroed dummy is never read because each such instance has count=0.
@@ -2576,16 +2579,19 @@ void WebGpuRenderer::attachVolumeSupportCertificates(const Rendering::VolumeDens
     instance.supportCertCount = 0u;
     if (!volumeSupportCertificatesEnabled() || !medium.densityExpr || medium.densityRevision == 0) return;
     auto& memo = _volumeSupportCertificates[medium.densityExpr];
-    if (memo.densityRevision != medium.densityRevision || memo.halfExtent != halfExtent) {
+    const double clockBucket = Rendering::volumeClockMagnitudeBucket(medium.temporalCoordinate);
+    if (memo.densityRevision != medium.densityRevision || memo.halfExtent != halfExtent ||
+        memo.clockBucket != clockBucket) {
         memo.densityRevision = medium.densityRevision;
         memo.halfExtent = halfExtent;
+        memo.clockBucket = clockBucket;
         memo.payload.clear();
         memo.count = 0;
         memo.refusal.clear();
         ++mutableFrameStats().volumeSupportCertificateBuilds;
         const auto killers = sdfwgsl::lowerVolumeSupportKillers(medium.densityExpr);
         const auto forms = Rendering::lowerVolumeRayChannels(medium);
-        const auto certificates = Rendering::deriveVolumeSupportCertificates(forms, glm::dvec3(halfExtent));
+        const auto certificates = Rendering::deriveVolumeSupportCertificates(forms, glm::dvec3(halfExtent), clockBucket);
         if (!killers.ok) memo.refusal = killers.error;
         else if (!forms.density.algebraic.form ||
                  forms.density.algebraic.form->switches.size() != killers.formSwitches)
@@ -2596,8 +2602,8 @@ void WebGpuRenderer::attachVolumeSupportCertificates(const Rendering::VolumeDens
             for (std::size_t slot = 0; slot < killers.switches.size(); ++slot) {
                 for (const auto& c : certificates.killers) {
                     if (c.switchIndex != killers.switches[slot]) continue;
-                    if (!std::isfinite(c.spatialLipschitz) || !std::isfinite(c.argumentMagnitude)) break;
-                    const double delta = Rendering::kVolumeSupportDeviceTolerance * (1.0 + c.argumentMagnitude);
+                    if (!std::isfinite(c.spatialLipschitz) || !std::isfinite(c.deviceSlack)) break;
+                    const double delta = c.deviceSlack;   // τ + 2·slack(g), from the authored operands
                     const double invRate = c.spatialLipschitz > 0.0
                         ? std::min(1.0 / (c.spatialLipschitz * (1.0 + 1e-6)), 1e30) : 1e30;
                     float* h = memo.payload.data() + 4u * slot;
@@ -2637,6 +2643,12 @@ void WebGpuRenderer::flushVolumeComposite() {
         };
         add(revision); add(trim); const bool proof = volumeZeroProofEnabled(); add(proof);
         const bool certificates = volumeSupportCertificatesEnabled(); add(certificates);
+        // Certificate slack is derived per clock bucket: a crossing re-lays the payload.
+        if (certificates)
+            for (const auto* medium : media) {
+                const double bucket = Rendering::volumeClockMagnitudeBucket(medium->temporalCoordinate);
+                add(bucket);
+            }
         for (const auto* medium : media) {
             add(medium->densityExpr); add(medium->densityRevision);
             add(medium->extinctionExpr); add(medium->extinctionRevision);

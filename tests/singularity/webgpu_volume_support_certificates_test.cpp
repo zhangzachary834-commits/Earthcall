@@ -482,6 +482,28 @@ int main() {
                 const Frame leafCertified = render({leafShell}, false, true, 0.75, 0);
                 check(leafCertified.killers > 0 && leafCertified.rgba == leaf.rgba,
                       "the spatial multi-term shell keeps every byte under certificates");
+
+            // Codex P1 (2026-10-17): D = −min(F, 0), F = ((A + x) − A) − x with
+            // A = 2^25. The algebra says D ≡ 0 (and once certified it with an
+            // infinite reach); f32 execution makes D ∈ [0, 2]. Certificates must
+            // keep every byte: their δ now comes from the authored tree.
+            {
+                const auto cancelled = OntoMath::Piecewise::fromJson(nlohmann::json::parse(
+                    R"({"input":"x","pieces":[{"mathNode":{"op":6,"children":[{"op":0,"scalarForm":{"terms":[{"c":-1.0,"factors":{}}]}},)"
+                    R"({"op":20,"children":[{"op":5,"children":[{"op":5,"children":[{"op":4,"children":[)"
+                    R"({"op":0,"scalarForm":{"terms":[{"c":33554432.0,"factors":{}}]}},{"op":1,"var":"x"}]},)"
+                    R"({"op":0,"scalarForm":{"terms":[{"c":33554432.0,"factors":{}}]}}]},{"op":1,"var":"x"}]},)"
+                    R"({"op":0,"scalarForm":{"terms":[{"c":0.0,"factors":{}}]}}]}]}}]})"));
+                auto cancelMedium = geom::FieldNode::fromJson(nlohmann::json::parse(leafShell->toJson().dump()));
+                *cancelMedium->volumeDensity = cancelled;
+                cancelMedium->noteAuthoredMathWritten();
+                const Frame exactCancel = render({cancelMedium}, false, false, 0.75, 0);
+                const Frame certCancel = render({cancelMedium}, false, true, 0.75, 0);
+                std::printf("       cancellation witness: lit %llu, killers %u, %s\n", (unsigned long long)exactCancel.lit,
+                            certCancel.killers, byteDiff(exactCancel.rgba, certCancel.rgba).c_str());
+                check(exactCancel.rgba == certCancel.rgba,
+                      "an f32 cancellation the algebra erased keeps every byte under certificates");
+            }
             }
 
             const glm::vec3 centre = 0.5f * (lo + hi);

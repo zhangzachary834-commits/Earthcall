@@ -484,12 +484,13 @@ private:
     std::unordered_map<const OntoMath::Piecewise*, VolumeZeroProofMemo> _volumeZeroProofs;
     uint64_t _volumeZeroProofFrame = 0;
     // Rung 2f-native certificate payload, same lifetime as the zero proof:
-    // density revision × box extent (revision 0 never gets one). `payload` is
+    // density revision × box extent × clock bucket (revision 0 never gets one). `payload` is
     // VolumeSupportKillerProgram's header block followed by its operand
     // constants; `count` the enabled candidates (0 = nothing to attach).
     struct VolumeSupportCertificateMemo {
         uint64_t densityRevision = 0;
         glm::vec3 halfExtent{0.0f};
+        double clockBucket = 0.0;   // volumeClockMagnitudeBucket(t): slack grows with |t|
         std::vector<float> payload;
         uint32_t count = 0;
         std::string refusal;

@@ -253,6 +253,10 @@ std::optional<Flat> flatten(const MathNode& node, const ScalarSubstitution& subs
                 say(why, "Div by a non-constant operand leaves the polynomial algebra");
                 return std::nullopt;
             }
+            if (!literalConstant(*node.children[1])) {
+                say(why, "Div by a computed constant (only a literal divisor reads the same number on host and device)");
+                return std::nullopt;
+            }
             // MathNode::evaluate answers 0 below the degenerate threshold. That
             // is an authored guard, not a reciprocal; refuse rather than encode it.
             if (!(std::abs(*c) >= kDegenerateDivisor) || !std::isfinite(*c)) {
@@ -273,6 +277,10 @@ std::optional<Flat> flatten(const MathNode& node, const ScalarSubstitution& subs
             if (a->vector || b->vector) { say(why, "componentwise vector Pow is not admitted"); return std::nullopt; }
             const auto e = pureConstant(b->scalar);
             if (!e) { say(why, "Pow with a non-constant exponent"); return std::nullopt; }
+            if (!literalConstant(*node.children[1])) {
+                say(why, "Pow with a computed exponent (only a literal reads the same number on host and device)");
+                return std::nullopt;
+            }
             const auto n = admittedPower(*e, "Pow", why);
             if (!n) return std::nullopt;
             auto s = power(a->scalar, *n, why);
@@ -564,7 +572,18 @@ struct AlgebraicBuilder {
         n.polynomial = std::move(*r);
         return push(std::move(n));
     }
-    uint32_t constant(double c) { return *polyLeaf(ScalarForm::constant(c)); }
+    uint32_t constant(double c) {
+        const uint32_t n = *polyLeaf(ScalarForm::constant(c));
+        provenanceForm(n, ScalarForm::constant(c));
+        return n;
+    }
+    void provenance(uint32_t node, const MathNode* origin, int component) {
+        form.nodes[node].provenance = origin;
+        form.nodes[node].provenanceComponent = static_cast<int8_t>(component);
+    }
+    void provenanceForm(uint32_t node, const ScalarForm& authored) {
+        form.nodes[node].provenanceForm = std::make_shared<const ScalarForm>(authored);
+    }
     uint32_t op(Kind k, uint32_t a, uint32_t b = 0) {
         LineAlgebraicNode n;
         n.kind = k;
@@ -578,19 +597,21 @@ struct AlgebraicBuilder {
         return n;
     }
 
-    std::optional<AlgValue> fromFlat(const Flat& f) {
+    std::optional<AlgValue> fromFlat(const Flat& f, const MathNode& origin) {
         AlgValue out;
         out.vector = f.vector;
         if (!f.vector) {
             auto leaf = polyLeaf(f.scalar);
             if (!leaf) return std::nullopt;
             out.s = *leaf;
+            provenance(out.s, &origin, -1);
             return out;
         }
         for (int i = 0; i < 3; ++i) {
             auto leaf = polyLeaf(f.components[i]);
             if (!leaf) return std::nullopt;
             out.v[i] = *leaf;
+            provenance(out.v[i], &origin, i);
         }
         return out;
     }
@@ -601,11 +622,13 @@ struct AlgebraicBuilder {
                reason.find("reserved line symbol") != std::string::npos;
     }
 
+    // Divisors, exponents and clamp bounds: literals only (Codex P1 finding 2:
+    // a computed bound folds exactly on the host and differently in f32).
     std::optional<double> constantOf(const MathNode& n) {
-        std::string w;
-        const auto f = flatten(n, subst, &w);
-        if (!f || f->vector) return std::nullopt;
-        return pureConstant(f->scalar);
+        const auto c = literalConstant(n);
+        if (!c) say(&why, std::string("a ") + mathOpName(n.op) + " where a literal constant is required "
+                              "(a computed constant folds exactly on the host and differently on the device)");
+        return c;
     }
 
     std::optional<AlgValue> childOf(const MathNode& n, std::size_t i) {
@@ -634,7 +657,7 @@ struct AlgebraicBuilder {
         if (n.op == Op::Add && n.children.size() == 2 && n.children[0] && n.children[1])
             return collectSquares(*n.children[0], bases) && collectSquares(*n.children[1], bases);
         if (n.op == Op::Pow && n.children.size() == 2 && n.children[0] && n.children[1]) {
-            const auto e = constantOf(*n.children[1]);
+            const auto e = literalConstant(*n.children[1]);
             if (e && *e == 2.0) { bases.push_back(n.children[0].get()); return true; }
         }
         return false;
@@ -644,7 +667,7 @@ struct AlgebraicBuilder {
         std::string polyWhy;
         {
             const auto f = flatten(n, subst, &polyWhy);
-            if (f) return fromFlat(*f);
+            if (f) return fromFlat(*f, n);
             if (hardRefusal(polyWhy)) { say(&why, polyWhy); return std::nullopt; }
         }
         using Op = MathNode::Op;
@@ -829,6 +852,7 @@ struct AlgebraicBuilder {
                     AlgValue out;
                     out.s = sqrtNonnegative(*leaf);
                     setNorm(out.s, comps);
+                    provenance(out.s, &n, -1);   // the authored norm is what runs
                     return out;
                 }
                 const auto a = childOf(n, 0);
@@ -898,6 +922,7 @@ struct AlgebraicBuilder {
             if (!restSub) return std::nullopt;
             const auto restLeaf = polyLeaf(*restSub);
             if (!restLeaf) return std::nullopt;
+            provenanceForm(*restLeaf, restForm);
             uint32_t value = *restLeaf;
             for (const auto& tf : bound) {
                 if (subst.vectors.count(tf.variable)) {
@@ -913,6 +938,7 @@ struct AlgebraicBuilder {
                 if (!argSub) return std::nullopt;
                 const auto argLeaf = polyLeaf(*argSub);
                 if (!argLeaf) return std::nullopt;
+                provenanceForm(*argLeaf, arg);
                 const uint32_t t = op(Kind::Trans, *argLeaf);
                 setTransKind(t, tf.kind);
                 value = op(Kind::Mul, value, t);
@@ -1072,6 +1098,279 @@ LineAlgebraicRestriction restrictAlgebraicToLine(const Piecewise& model, bool ve
     return finish(b, v, vectorValued);
 }
 
+// ---- Execution provenance (Codex review P1, 2026-10-17) --------------------
+std::optional<double> literalConstant(const MathNode& node) {
+    if (node.op != MathNode::Op::ScalarLeaf || node.scalarForm.terms.size() > 1) return std::nullopt;
+    if (node.scalarForm.terms.empty()) return 0.0;
+    const auto& t = node.scalarForm.terms.front();
+    if (!t.factors.empty() || !t.trans.empty() || !std::isfinite(t.coefficient)) return std::nullopt;
+    return t.coefficient;
+}
+
+namespace {
+constexpr double kInf = std::numeric_limits<double>::infinity();
+
+// A value an IEEE f32 device holds exactly: reading it, and correctly-rounded
+// arithmetic whose exact result is such a value, err by nothing at all.
+bool exactF32(double v) { return std::isfinite(v) && double(static_cast<float>(v)) == v; }
+double literalSlack(double c, double e) { return exactF32(c) ? 0.0 : e * std::abs(c); }
+
+struct ExecValue {
+    bool vector = false;
+    ExecutionBound c[3];
+};
+
+std::optional<double> magnitudeOf(const std::string& name, const std::map<std::string, double>& m) {
+    const auto it = m.find(name);
+    if (it == m.end() || std::isnan(it->second)) return std::nullopt;
+    return std::abs(it->second);
+}
+
+// Magnitude-arithmetic rules. ε is the declared per-operation relative error.
+ExecutionBound execAdd(const ExecutionBound& a, const ExecutionBound& b, double e) {
+    const double m = a.magnitude + b.magnitude;
+    return {m, a.slack + b.slack + e * m};
+}
+ExecutionBound execMul(const ExecutionBound& a, const ExecutionBound& b, double e) {
+    const double m = a.magnitude * b.magnitude;
+    return {m, a.magnitude * b.slack + b.magnitude * a.slack + a.slack * b.slack + e * m};
+}
+
+std::optional<ExecutionBound> execScalarForm(const ScalarForm& form, const std::map<std::string, double>& mags,
+                                             const ExecutionModel& model) {
+    const double e = model.relative, tr = model.transcendental;
+    ExecutionBound sum;
+    bool first = true;
+    for (const auto& term : form.terms) {
+        if (!std::isfinite(term.coefficient)) return std::nullopt;
+        ExecutionBound t{std::abs(term.coefficient), literalSlack(term.coefficient, e)};
+        for (const auto& [var, exponent] : term.factors) {
+            const auto a = magnitudeOf(var, mags);
+            if (!a || !std::isfinite(exponent) || exponent < 0.0) return std::nullopt;
+            const ExecutionBound v{*a, e * *a};
+            if (std::floor(exponent) == exponent && exponent <= kMaxLineDegree) {
+                for (int k = 0; k < static_cast<int>(exponent); ++k) t = execMul(t, v, e);
+            } else {
+                // ontoRawPow: |x|^q, Hölder-q in x; charge a full magnitude of error.
+                const double m = std::pow(*a + v.slack, exponent);
+                t = execMul(t, {m, m}, e);
+            }
+        }
+        for (const auto& tf : term.trans) {
+            const auto a = magnitudeOf(tf.variable, mags);
+            if (!a) return std::nullopt;
+            const ExecutionBound arg = execAdd(execMul({std::abs(tf.scale), e * std::abs(tf.scale)}, {*a, e * *a}, e),
+                                               {std::abs(tf.shift), e * std::abs(tf.shift)}, e);
+            ExecutionBound f;
+            if (tf.kind == TransFactor::Kind::Sin || tf.kind == TransFactor::Kind::Cos) {
+                f = {1.0, arg.slack + tr};
+            } else if (tf.kind == TransFactor::Kind::Exp) {
+                const double m = std::exp(arg.magnitude + arg.slack);
+                f = {std::exp(arg.magnitude), m * (arg.slack + tr)};
+            } else {
+                return std::nullopt;   // Ln: the CPU and emitter disagree at ≤ 0
+            }
+            t = execMul(t, f, e);
+        }
+        // The first term is not added to anything: no rounding to charge.
+        sum = first ? t : execAdd(sum, t, e);
+        first = false;
+    }
+    if (!std::isfinite(sum.magnitude) || std::isnan(sum.slack)) return std::nullopt;
+    return sum;
+}
+
+std::optional<ExecValue> execNode(const MathNode& n, const std::map<std::string, double>& mags,
+                                  const ExecutionModel& model, const std::string& pointVariable) {
+    using Op = MathNode::Op;
+    const double e = model.relative, tr = model.transcendental;
+    auto child = [&](std::size_t i) -> std::optional<ExecValue> {
+        if (i >= n.children.size() || !n.children[i]) return std::nullopt;
+        return execNode(*n.children[i], mags, model, pointVariable);
+    };
+    auto scalar = [](const ExecutionBound& b) { ExecValue v; v.c[0] = b; return v; };
+    auto pointwise = [&](const ExecValue& a, const ExecValue& b, auto&& f) -> std::optional<ExecValue> {
+        ExecValue out;
+        out.vector = a.vector || b.vector;
+        for (int i = 0; i < (out.vector ? 3 : 1); ++i)
+            out.c[i] = f(a.vector ? a.c[i] : a.c[0], b.vector ? b.c[i] : b.c[0]);
+        return out;
+    };
+    switch (n.op) {
+        case Op::ScalarLeaf: {
+            const auto b = execScalarForm(n.scalarForm, mags, model);
+            if (!b) return std::nullopt;
+            return scalar(*b);
+        }
+        case Op::ValueLeaf: {
+            static const char* const kAxes[3] = {"x", "y", "z"};
+            if (n.variableName == pointVariable) {
+                ExecValue v;
+                v.vector = true;
+                for (int i = 0; i < 3; ++i) {
+                    const auto a = magnitudeOf(kAxes[i], mags);
+                    if (!a) return std::nullopt;
+                    v.c[i] = {*a, e * *a};
+                }
+                return v;
+            }
+            const auto a = magnitudeOf(n.variableName, mags);
+            if (!a) return std::nullopt;
+            return scalar({*a, e * *a});
+        }
+        case Op::VectorConstruct: {
+            if (n.children.size() != 3) return std::nullopt;
+            ExecValue v;
+            v.vector = true;
+            for (int i = 0; i < 3; ++i) {
+                const auto c = child(i);
+                if (!c || c->vector) return std::nullopt;
+                v.c[i] = c->c[0];
+            }
+            return v;
+        }
+        case Op::Component: {
+            const auto a = child(0);
+            if (!a || !a->vector) return std::nullopt;
+            const int i = n.stringArg == "x" ? 0 : n.stringArg == "y" ? 1 : n.stringArg == "z" ? 2 : -1;
+            if (i < 0) return std::nullopt;
+            return scalar(a->c[i]);
+        }
+        case Op::Add:
+        case Op::Sub: {
+            const auto a = child(0), b = child(1);
+            if (!a || !b || a->vector != b->vector) return std::nullopt;
+            return pointwise(*a, *b, [&](const ExecutionBound& x, const ExecutionBound& y) { return execAdd(x, y, e); });
+        }
+        case Op::Scale:
+        case Op::Hadamard: {
+            const auto a = child(0), b = child(1);
+            if (!a || !b) return std::nullopt;
+            return pointwise(*a, *b, [&](const ExecutionBound& x, const ExecutionBound& y) { return execMul(x, y, e); });
+        }
+        case Op::Dot: {
+            const auto a = child(0), b = child(1);
+            if (!a || !b || !a->vector || !b->vector) return std::nullopt;
+            ExecutionBound acc = execMul(a->c[0], b->c[0], e);
+            for (int i = 1; i < 3; ++i) acc = execAdd(acc, execMul(a->c[i], b->c[i], e), e);
+            return scalar(acc);
+        }
+        case Op::Cross: {
+            const auto a = child(0), b = child(1);
+            if (!a || !b || !a->vector || !b->vector) return std::nullopt;
+            ExecValue v;
+            v.vector = true;
+            for (int i = 0; i < 3; ++i) {
+                const int j = (i + 1) % 3, k = (i + 2) % 3;
+                v.c[i] = execAdd(execMul(a->c[j], b->c[k], e), execMul(a->c[k], b->c[j], e), e);
+            }
+            return v;
+        }
+        case Op::Div: {
+            const auto a = child(0);
+            const auto c = n.children.size() == 2 && n.children[1] ? literalConstant(*n.children[1]) : std::nullopt;
+            if (!a || !c || !(std::abs(*c) >= kDegenerateDivisor)) return std::nullopt;
+            ExecValue out = *a;
+            for (int i = 0; i < (a->vector ? 3 : 1); ++i) {
+                const double m = a->c[i].magnitude / std::abs(*c);
+                out.c[i] = {m, a->c[i].slack / std::abs(*c) + 3.0 * e * m};
+            }
+            return out;
+        }
+        case Op::Pow: {
+            const auto a = child(0);
+            const auto p = n.children.size() == 2 && n.children[1] ? literalConstant(*n.children[1]) : std::nullopt;
+            if (!a || a->vector || !p || *p < 0.0 || std::floor(*p) != *p || *p > kMaxLineDegree) return std::nullopt;
+            ExecutionBound acc{1.0, 0.0};
+            for (int k = 0; k < static_cast<int>(*p); ++k) acc = execMul(acc, a->c[0], e);
+            acc.slack += 2.0 * e * acc.magnitude;   // pow() is a library call, not a product chain
+            return scalar(acc);
+        }
+        case Op::Abs: {
+            return child(0);   // 1-Lipschitz and exact
+        }
+        case Op::Union:
+        case Op::Intersection:
+        case Op::Difference: {
+            const auto a = child(0), b = child(1);
+            if (!a || !b) return std::nullopt;
+            return pointwise(*a, *b, [](const ExecutionBound& x, const ExecutionBound& y) {
+                return ExecutionBound{std::max(x.magnitude, y.magnitude), std::max(x.slack, y.slack)};
+            });
+        }
+        case Op::Clamp: {
+            const auto a = child(0);
+            const auto lo = n.children.size() == 3 && n.children[1] ? literalConstant(*n.children[1]) : std::nullopt;
+            const auto hi = n.children.size() == 3 && n.children[2] ? literalConstant(*n.children[2]) : std::nullopt;
+            if (!a || a->vector || !lo || !hi) return std::nullopt;
+            const double bound = std::max(std::abs(*lo), std::abs(*hi));
+            return scalar({bound, std::max({a->c[0].slack, literalSlack(*lo, e), literalSlack(*hi, e)})});
+        }
+        case Op::Sqrt: {
+            const auto a = child(0);
+            if (!a || a->vector) return std::nullopt;
+            const double m = std::sqrt(a->c[0].magnitude);
+            return scalar({m, std::sqrt(a->c[0].slack) + e * m});   // |√x − √y| ≤ √|x − y|
+        }
+        case Op::Length:
+        case Op::Distance: {
+            const auto a = child(0);
+            if (!a || !a->vector) return std::nullopt;
+            ExecValue d = *a;
+            if (n.op == Op::Distance) {
+                const auto b = child(1);
+                if (!b || !b->vector) return std::nullopt;
+                for (int i = 0; i < 3; ++i) d.c[i] = execAdd(a->c[i], b->c[i], e);
+            }
+            double m2 = 0.0, sl = 0.0;
+            for (int i = 0; i < 3; ++i) { m2 += d.c[i].magnitude * d.c[i].magnitude; sl += d.c[i].slack; }
+            const double m = std::sqrt(m2);
+            return scalar({m, sl + 4.0 * e * m});   // ‖·‖ is 1-Lipschitz; squares, sums, sqrt
+        }
+        case Op::Noise: {
+            const auto q = child(0);
+            if (!q || !q->vector) return std::nullopt;
+            double sl = 0.0;
+            for (int i = 0; i < 3; ++i) sl += q->c[i].slack;
+            return scalar({double(kClassicPerlin3ValueBound), double(kClassicPerlin3LipschitzBound) * sl + tr});
+        }
+        default:
+            return std::nullopt;
+    }
+}
+} // namespace
+
+std::optional<ExecutionBound> executionBound(const ScalarForm& form, const std::map<std::string, double>& magnitudes,
+                                             const ExecutionModel& model) {
+    return execScalarForm(form, magnitudes, model);
+}
+
+std::optional<ExecutionBound> executionBound(const MathNode& node, const std::map<std::string, double>& magnitudes,
+                                             const ExecutionModel& model, int component, const std::string& pointVariable) {
+    const auto v = execNode(node, magnitudes, model, pointVariable);
+    if (!v) return std::nullopt;
+    if (v->vector != (component >= 0) || component > 2) return std::nullopt;
+    const auto& b = v->c[component >= 0 ? component : 0];
+    if (!std::isfinite(b.magnitude) || !std::isfinite(b.slack)) return std::nullopt;
+    return b;
+}
+
+std::optional<ExecutionBound> executionBound(const Piecewise& piecewise, const std::map<std::string, double>& magnitudes,
+                                             const ExecutionModel& model, int component, const std::string& pointVariable) {
+    ExecutionBound out;
+    bool any = false;
+    for (const auto& piece : piecewise.pieces) {
+        if (!piece.mathNode) continue;
+        const auto b = executionBound(*piece.mathNode, magnitudes, model, component, pointVariable);
+        if (!b) return std::nullopt;
+        out = {std::max(out.magnitude, b->magnitude), std::max(out.slack, b->slack)};
+        any = true;
+        if (!piece.hasLo && !piece.hasHi) break;
+    }
+    if (!any) return std::nullopt;
+    return out;
+}
+
 LineAlgebraicEvaluator::LineAlgebraicEvaluator(const LineAlgebraicForm& form,
                                                std::map<std::string, double> bindings,
                                                bool undefinedAsZero)
@@ -1110,6 +1409,7 @@ LineAlgebraicEvaluator::LineAlgebraicEvaluator(const LineAlgebraicForm& form,
                                                const std::map<std::string, Interval>& boxBindings,
                                                bool undefinedAsZero)
     : _form(&form), _undefinedAsZero(undefinedAsZero), _boxMode(true) {
+    _box = boxBindings;
     _coefficients.resize(form.nodes.size());
     _errors.resize(form.nodes.size());
     computeSignFree();
@@ -1126,6 +1426,203 @@ LineAlgebraicEvaluator::LineAlgebraicEvaluator(const LineAlgebraicForm& form,
             _errors[i].push_back(0.5 * (hi - lo) + 4.0 * std::numeric_limits<double>::epsilon() * std::abs(mid));
         }
     }
+}
+
+// ---- Execution slack (Codex review P1, 2026-10-17) -------------------------
+void LineAlgebraicEvaluator::setExecutionModel(const ExecutionModel& model, std::map<std::string, double> magnitudeOverrides) {
+    _model = {std::max(model.relative, 0.0), std::max(model.transcendental, 0.0)};
+    _magnitudeOverrides = std::move(magnitudeOverrides);
+    _slackMemoS1 = _slackMemoS0 - 1.0;
+}
+
+std::map<std::string, double> LineAlgebraicEvaluator::symbolMagnitudes(double s0, double s1) const {
+    std::map<std::string, double> m;
+    static const char* const kAxes[3] = {"x", "y", "z"};
+    const double sMax = std::max(std::abs(s0), std::abs(s1));
+    auto widen = [](double v) { return v * (1.0 + 4.0 * std::numeric_limits<double>::epsilon()); };
+    if (_boxMode) {
+        auto sup = [&](const std::string& name) {
+            const auto it = _box.find(name);
+            if (it == _box.end()) return std::numeric_limits<double>::infinity();
+            return std::max(std::abs(double(it->second.lo)), std::abs(double(it->second.hi)));
+        };
+        for (const auto& [name, r] : _box) m[name] = std::max(std::abs(double(r.lo)), std::abs(double(r.hi)));
+        for (int i = 0; i < 3; ++i)
+            m[kAxes[i]] = widen(sup(kLineOriginVars[i]) + sMax * sup(kLineDirectionVars[i]));
+    } else {
+        for (const auto& [name, v] : _bindings) m[name] = std::abs(v);
+        for (int i = 0; i < 3; ++i) {
+            const auto o = _bindings.find(kLineOriginVars[i]), d = _bindings.find(kLineDirectionVars[i]);
+            if (o == _bindings.end() || d == _bindings.end()) continue;
+            // Linear in s: the extreme is at an endpoint.
+            m[kAxes[i]] = widen(std::max(std::abs(o->second + s0 * d->second), std::abs(o->second + s1 * d->second)));
+        }
+    }
+    for (const auto& [name, v] : _magnitudeOverrides) m[name] = std::abs(v);
+    return m;
+}
+
+double LineAlgebraicEvaluator::magnitudeAt(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs) const {
+    bool undefined = false;
+    const Interval r = rangeAt(node, s0, s1, signs, &undefined);
+    if (std::isnan(r.lo) || std::isnan(r.hi)) return std::numeric_limits<double>::infinity();
+    const double m = std::max(std::abs(double(r.lo)), std::abs(double(r.hi)));
+    return undefined && !_undefinedAsZero ? std::numeric_limits<double>::infinity() : m;
+}
+
+double LineAlgebraicEvaluator::slack(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs) const {
+    if (!_model.active()) return 0.0;
+    constexpr double inf = std::numeric_limits<double>::infinity();
+    const auto& form = *_form;
+    const auto& n = form.nodes[node];
+    const double e = _model.relative, tr = _model.transcendental;
+    if (n.provenance || n.provenanceForm) {
+        // Switch-free authored subtree: its slack is monotone in the region, so
+        // a memo over an enclosing interval is a sound answer for [s0, s1].
+        if (!(_slackMemoS0 <= s0 && s1 <= _slackMemoS1) || _slackMemo.size() != form.nodes.size()) {
+            _slackMemoS0 = s0; _slackMemoS1 = s1;
+            _slackMemo.assign(form.nodes.size(), 0.0);
+            _slackMemoValid.assign(form.nodes.size(), 0);
+            _slackMagnitudes = symbolMagnitudes(s0, s1);
+        }
+        if (_slackMemoValid[node]) return _slackMemo[node];
+        const auto& mags = _slackMagnitudes;
+        const auto b = n.provenance ? executionBound(*n.provenance, mags, _model, n.provenanceComponent)
+                                    : executionBound(*n.provenanceForm, mags, _model);
+        const double out = b ? b->slack : inf;
+        _slackMemo[node] = out;
+        _slackMemoValid[node] = 1;
+        return out;
+    }
+    // A switch the caller left undecided may still be decided HERE by its own
+    // range beyond its own slack — the very proof segmentLine would make — so a
+    // clamp every interval proves saturated executes its literal (e.g. a box
+    // that never reaches a pillar's centre). Never a guess: undecided stays 0.
+    auto sign = [&](uint32_t offset) -> int8_t {
+        const uint32_t k = n.switchBegin + offset;
+        if (k < signs.size() && signs[k] != 0) return signs[k];
+        bool undefined = false;
+        const Interval r = switchRange(k, s0, s1, signs, &undefined);
+        if (undefined || std::isnan(r.lo) || std::isnan(r.hi)) return 0;
+        const double sl = switchSlack(k, s0, s1, signs);
+        const bool strict = form.switches[k].strict;
+        const double lo = double(r.lo) - sl, hi = double(r.hi) + sl;
+        if (strict ? lo > 0.0 : lo >= 0.0) return 1;
+        if (strict ? hi < 0.0 : hi <= 0.0) return -1;
+        return 0;
+    };
+    switch (n.kind) {
+        case Kind::Polynomial: return inf;   // no authored provenance: never silently exact
+        case Kind::Undefined: return _undefinedAsZero ? 0.0 : inf;
+        case Kind::Add:
+        case Kind::Sub:
+        case Kind::Mul: {
+            const double sa = slack(n.a, s0, s1, signs), sb = slack(n.b, s0, s1, signs);
+            if (sa == 0.0 && sb == 0.0) {
+                // Two exactly-held point values (a saturated clamp's literal, an
+                // exact literal): correctly-rounded arithmetic is exact when the
+                // exact result is itself an f32 value (e.g. 1 − 1, 0·x̂).
+                bool ua = false, ub = false;
+                const Interval ra = rangeAt(n.a, s0, s1, signs, &ua), rb = rangeAt(n.b, s0, s1, signs, &ub);
+                if (!ua && !ub && ra.lo == ra.hi && rb.lo == rb.hi) {
+                    const double x = ra.lo, y = rb.lo;
+                    const double r = n.kind == Kind::Add ? x + y : n.kind == Kind::Sub ? x - y : x * y;
+                    if (exactF32(x) && exactF32(y) && exactF32(r)) return 0.0;
+                }
+            }
+            const double ma = magnitudeAt(n.a, s0, s1, signs), mb = magnitudeAt(n.b, s0, s1, signs);
+            if (n.kind == Kind::Mul) return ma * sb + mb * sa + sa * sb + e * ma * mb;
+            return sa + sb + e * (ma + mb);
+        }
+        case Kind::Sqrt: {
+            if (!n.nonnegativeArgument && sign(0) < 0) return 0.0;   // executes sqrt(max(a, 0)) = 0 exactly
+            if (n.nonnegativeArgument && !n.normComponents.empty()) {
+                // A Euclidean norm is 1-Lipschitz — even at 0, where Hölder √S is
+                // hopeless (a torus box contains its axis): the components' slack
+                // plus the squares, sums and sqrt rounding, relative to ‖v‖.
+                double components = 0.0;
+                for (uint32_t c : n.normComponents) components += slack(c, s0, s1, signs);
+                return components + 4.0 * e * std::sqrt(magnitudeAt(n.a, s0, s1, signs));
+            }
+            const double sa = slack(n.a, s0, s1, signs);
+            bool undefined = false;
+            const Interval r = rangeAt(n.a, s0, s1, signs, &undefined);
+            // Hölder √S near 0; where the argument provably stays above its own
+            // slack, sqrt is Lipschitz: |√x − √y| ≤ |x − y| / (√x + √y).
+            const double floorArg = double(r.lo) - sa;
+            const double propagated = floorArg > 0.0 && !undefined
+                                          ? sa / (std::sqrt(floorArg) + std::sqrt(std::max(double(r.lo), 0.0)))
+                                          : std::sqrt(sa);
+            return std::min(propagated, std::sqrt(sa)) + e * std::sqrt(magnitudeAt(n.a, s0, s1, signs));
+        }
+        case Kind::Abs: return slack(n.a, s0, s1, signs);
+        case Kind::Min:
+        case Kind::Max: {
+            const int8_t g = sign(0);   // a − b
+            if (g != 0) {
+                const bool takeA = (g > 0) == (n.kind == Kind::Max);
+                return slack(takeA ? n.a : n.b, s0, s1, signs);
+            }
+            return std::max(slack(n.a, s0, s1, signs), slack(n.b, s0, s1, signs));
+        }
+        case Kind::Clamp: {
+            const int8_t lo = sign(0), hi = sign(1);   // a − lo, a − hi
+            if (lo < 0) return literalSlack(n.lo, e);  // saturated: the literal bound, as read
+            if (hi > 0) return literalSlack(n.hi, e);
+            const double sa = slack(n.a, s0, s1, signs);
+            if (lo > 0 && hi < 0) return sa;
+            return std::max({sa, literalSlack(n.lo, e), literalSlack(n.hi, e)});
+        }
+        case Kind::Select: {
+            // Only a DECIDED piece is faithful: an undecided boundary may jump.
+            uint32_t offset = 0;
+            for (const auto& piece : n.pieces) {
+                int8_t state = 1;   // 1 satisfied, -1 violated, 0 unknown
+                if (piece.hasLo) { const int8_t g = sign(offset++); state = std::min<int8_t>(state, g); }
+                if (piece.hasHi) { const int8_t g = sign(offset++); if (g < 0) state = -1; else if (g == 0 && state > 0) state = 0; }
+                if (state < 0) continue;
+                if (state == 0) return inf;
+                return slack(piece.value, s0, s1, signs);
+            }
+            return _undefinedAsZero ? 0.0 : inf;
+        }
+        case Kind::Trans: {
+            const double sa = slack(n.a, s0, s1, signs);
+            if (n.transKind == TransFactor::Kind::Exp) {
+                bool undefined = false;
+                const Interval r = rangeAt(n.a, s0, s1, signs, &undefined);
+                return std::exp(double(r.hi) + sa) * (sa + tr);
+            }
+            return sa + tr;
+        }
+        case Kind::Noise:
+            return double(kClassicPerlin3LipschitzBound) *
+                       (slack(n.a, s0, s1, signs) + slack(n.b, s0, s1, signs) + slack(n.c, s0, s1, signs)) +
+                   tr;
+    }
+    return inf;
+}
+
+double LineAlgebraicEvaluator::switchSlack(std::size_t k, double s0, double s1, const std::vector<int8_t>& signs) const {
+    if (!_model.active()) return 0.0;
+    const auto& sw = _form->switches[k];
+    const auto& n = _form->nodes[sw.node];
+    const double e = _model.relative;
+    if (sw.role == 0) return slack(n.a, s0, s1, signs);
+    if (sw.role == 1)
+        return slack(n.a, s0, s1, signs) + slack(n.b, s0, s1, signs) +
+               e * (magnitudeAt(n.a, s0, s1, signs) + magnitudeAt(n.b, s0, s1, signs));
+    if (sw.role == 2 || sw.role == 3) {
+        const double bound = std::abs(sw.role == 2 ? n.lo : n.hi);
+        return slack(n.a, s0, s1, signs) + e * (magnitudeAt(n.a, s0, s1, signs) + 2.0 * bound);
+    }
+    // Select: the selector is an authored coordinate read against a literal bound.
+    const uint32_t p = (sw.role - 4) / 2;
+    if (p >= n.pieces.size()) return std::numeric_limits<double>::infinity();
+    const double bound = std::abs(sw.role % 2 == 0 ? n.pieces[p].lo : n.pieces[p].hi);
+    const Interval sel = polynomialRange(sw.node, s0, s1);
+    const double ms = std::max(std::abs(double(sel.lo)), std::abs(double(sel.hi)));
+    return e * (2.0 * ms + 2.0 * bound);
 }
 
 void LineAlgebraicEvaluator::computeSignFree() {
@@ -1761,8 +2258,10 @@ struct Segmenter {
                 const auto& [e, node] = targets[t];
                 const Interval r = evaluators[e]->range(node, a, b, signs[e], &undefined);
                 if (undefined || std::isnan(r.lo) || std::isnan(r.hi)) { pending = true; continue; }
-                if (r.hi <= 0.0f) { targetSigns[t] = -1; progress = true; }
-                else if (r.lo > 0.0f) { targetSigns[t] = 1; progress = true; }
+                // Execution-faithful decision: beyond what the device may err by.
+                const double sl = evaluators[e]->slack(node, a, b, signs[e]);
+                if (double(r.hi) + sl <= 0.0) { targetSigns[t] = -1; progress = true; }
+                else if (double(r.lo) - sl > 0.0) { targetSigns[t] = 1; progress = true; }
                 else pending = true;
             }
             for (std::size_t e = 0; e < evaluators.size(); ++e) {
@@ -1782,8 +2281,10 @@ struct Segmenter {
                     const Interval r = ev.switchRange(k, a, b, signs[e], &undefined);
                     const bool strict = ev.form().switches[k].strict;
                     if (undefined || std::isnan(r.lo) || std::isnan(r.hi)) { pending = true; continue; }
-                    if (strict ? r.lo > 0.0f : r.lo >= 0.0f) { signs[e][k] = 1; progress = true; }
-                    else if (strict ? r.hi < 0.0f : r.hi <= 0.0f) { signs[e][k] = -1; progress = true; }
+                    const double sl = ev.switchSlack(k, a, b, signs[e]);
+                    const double lo = double(r.lo) - sl, hi = double(r.hi) + sl;
+                    if (strict ? lo > 0.0 : lo >= 0.0) { signs[e][k] = 1; progress = true; }
+                    else if (strict ? hi < 0.0 : hi <= 0.0) { signs[e][k] = -1; progress = true; }
                     else pending = true;
                 }
             }

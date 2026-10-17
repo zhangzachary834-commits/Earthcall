@@ -310,6 +310,89 @@ The independent source-review CPU cancellation case is **reproduced**: original 
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T00:18:36-07:00 (PDT).
 
+## 6f. Execution provenance: the Codex P1 repair (2026-10-17, seventh pass)
+
+**Origin.**
+- Codex (GPT-6.1 Sol, session `01a148a7-bd85-7550-a416-0e859a729c1a`) returned Zach's macOS verification commission. It arrived as a relayed handoff, because its evidence commits are local and unpushed.
+- **Metal results** (M5, macOS 26.6):
+  - certificate witness 56/56, including 2560×1440 parity and the precedence witness;
+  - zero-proof 73/73;
+  - shared-subexpression 76/76: the lavapipe `ontoPow` NaN case does not reproduce;
+  - `v5_overlap_physics` passes, but its null comparisons were all black, which leaves the ⚑ AUTHOR question open;
+  - `perlin_exact_gradient` **aborts on Metal too**.
+- A separate Codex source review raised two **P1** findings, both reproduced on the CPU:
+  1. **Cancellation.** `F = ((A + x) − A) − x` simplifies to the exact 0. The retained evaluator executes `−1` at x = 1 for A = 2^54, yet `planVolumeRaySegment` returned ExactEmpty for `D = −F`. A certificate on `D = −min(F, 0)` would have inherited zero magnitude and zero Lipschitz from the simplified F.
+  2. **Computed bound.** `lo = B − (B − 1)` folds to 1 in double on the host. In f32 the shader computes 0.
+- **Zach's criterion:** "Faithfulness to authored intent is what matters." A claim that *replaces or skips execution* must hold for what executes, and must refuse when equivalence is unknown, never loosen.
+
+**Repair (OntoMath, then every consumer).**
+- **Literal constants only.** Divisors, exponents and clamp bounds must be `literalConstant`: one constant ScalarLeaf. That holds in the polynomial flattening and in the algebraic builder alike. A computed one refuses with "a … where a literal constant is required". *No real medium was affected: 28/32 still admitted.*
+- **`executionBound` (new OntoMath API).** It works on an authored MathNode, ScalarForm or Piecewise and returns two numbers:
+  - `sup|value|`, by magnitude arithmetic (no cancellation, so no rounding is erased);
+  - an absolute **slack ≥ |executed − exact|**, under a declared **`ExecutionModel`**.
+
+  The production model `kVolumeExecutionModel` charges two things:
+  - each operation, literal read and coordinate read errs by ≤ 2⁻¹⁶ of its magnitude bound (256 f32 ulps, room for Fast-mode reassociation, fusion and approximate division);
+  - each sin/cos/exp/noise evaluation errs by ≤ 2⁻¹⁰ absolute.
+
+  f32-exact literals, and point arithmetic with f32-exact results, err by nothing.
+- **Provenance.** Every Polynomial leaf of the line form records the authored subtree it was flattened from, and so does every Length/Distance norm. A leaf with no provenance has unbounded slack, never a silent exact.
+- **`LineAlgebraicEvaluator::slack`/`switchSlack`.** These propagate slack per branch, under decided signs:
+  - a proved-saturated clamp executes its literal exactly;
+  - an undecided Select may jump, so its slack is unbounded;
+  - a Euclidean norm is 1-Lipschitz, even at its axis;
+  - sqrt is Lipschitz above its argument's slack and Hölder below it;
+  - an undecided switch is first decided by its own range beyond its own slack (the proof segmentLine would make).
+- **Decisions.** `segmentLine` decides switch and target signs only beyond the slack. The schedule's empty and non-participating claims require `hi + slack ≤ 0`. Rung 1 ExactEmpty requires the raw constant plus the original-tree slack to be ≤ 0. Closed-form constants pass a cancellation guard: slack ≤ 16·2⁻¹⁰·(1 + |c|).
+- **Certificates.**
+  - A killer must keep the *executed* density ≤ 0.
+  - δ = 2⁻¹⁰ + 2·switchSlack(g), from the authored operands (twice, because the shader evaluates g in the killer and again in the density). This is never looser than the former 2⁻¹⁰·(1 + |args|).
+  - Device error in sin(k·t) grows with |t|, so the slack is derived for |t| ≤ a **clock-magnitude bucket** (the next power of two). The memo and the payload identity carry that bucket.
+
+**Evidence (Linux Release; lavapipe for native).**
+- `ontomath_line_segmentation_test` **61/61**:
+  - cancellation slack scales with what cancelled;
+  - exact semantics prove the cancelled D empty, while the execution model proves no stretch of it empty;
+  - the computed clamp bound refuses;
+  - a literal reads exactly.
+- `volume_ray_segment_transport_test` **53/53**:
+  - the original tree executes D(1) = 1;
+  - the planner keeps the lattice for it;
+  - literal zero stays exact-empty;
+  - a computed divisor refuses.
+- `volume_ray_radial_segmentation_test` **32/32**. On the cancelled density, 51/96 samples execute D > 0, and the schedule, the trace and the certificates each prove 0 of them (the killer's δ ≈ 2.7·10¹²). The computed clamp bound gets no form and no certificate.
+- `webgpu_volume_support_certificates_test` **57/57** on lavapipe. It adds an f32 cancellation medium (A = 2²⁵, lit 29,388 px, one never-clearing killer) with 0 differing bytes.
+- Also passing:
+  - `webgpu_volume_zero_proof_test` 73/73;
+  - `webgpu_volume_unified_quadrature_test` 15/15;
+  - mist;
+  - `channel_paths_test`.
+
+  The two lavapipe-only failures are unchanged.
+
+| 28 real media, CPU census | before the repair | after |
+|---|---|---|
+| Rung 2 empty | 70.60% | 70.59% |
+| Lipschitz trace | 70.65% | 70.62% |
+| certificate-only trace | 70.65% (73 evals, 160 µs/ray) | 70.57% (73.4 evals, ~123–147 µs/ray) |
+| soundness violations | 0 | 0 |
+
+**Three refinements, each driven by a witness** (a first, coarser model lost 21 points of certificate coverage):
+1. Separating per-operation rounding (2⁻¹⁶) from transcendental error (2⁻¹⁰).
+2. Exact literal and point arithmetic. `veil.pillar-rims` went from 0% back to 100%: its box never reaches a pillar, and every saturated clamp executes 0 exactly.
+3. The norm rule. The three tori went from 19–69% back to 88.6–99.6%: a torus box contains its axis, where Hölder √S is hopeless.
+
+**Not done / open.**
+- The execution model is declared, not a proof of Metal's Fast-mode enclosure. The lane stays default OFF.
+- Native Mac revalidation of this pass is required.
+- **The `perlin_exact_gradient` residency assertion is fixed.** A frame whose SDF batch carried no ranged instance cleared the persistent range buffer's CPU mirror. Nothing had been written, so the GPU still held identical bytes, yet the next traversal frame re-uploaded them. That is a residency bug (`WebGpuRenderer` SDF flush), not a backend quirk, which is why Metal agreed. The mirror now stays.
+  - Lavapipe: `webgpu_perlin_exact_gradient_test` ALL OK, with traversal in 6/6 cameras and 0 RGBA difference.
+  - Also passing: `sdf_range_perf`, `sdf_parity` (25 shapes), `sdf_distance`, `object`, `heightfield_sweep`, `cathedral_open_hand`, `micro_mastery_lag` and `ontomath_native_resolution_parity`.
+  - Metal revalidation is pending.
+- Generic eligibility comes only after correctness, with paired native correctness and cost evidence.
+
+*Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Human origin: Zachary Zhang; findings and Metal evidence: Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a`.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

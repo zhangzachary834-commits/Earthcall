@@ -4,6 +4,7 @@
 
 #include <array>
 #include <map>
+#include <memory>
 #include <optional>
 #include <set>
 #include <string>
@@ -240,6 +241,16 @@ struct LineAlgebraicNode {
     const MathNode* sourceA = nullptr;
     const MathNode* sourceB = nullptr;
     TransFactor::Kind transKind = TransFactor::Kind::Sin;   // Trans
+    // Execution provenance (Codex P1, 2026-10-17): the AUTHORED expression a
+    // device executes for this node's value, when the line algebra simplified
+    // it — every Polynomial leaf (a flattened subtree may have cancelled) and a
+    // Length/Distance norm. Exactly one of `provenance` (a switch-free authored
+    // subtree, component −1 for a scalar) or `provenanceForm` (an authored
+    // ScalarForm in pre-substitution symbols) is set; a Polynomial leaf with
+    // neither is UNBOUNDED for execution slack (never silently exact).
+    const MathNode* provenance = nullptr;
+    int8_t provenanceComponent = -1;
+    std::shared_ptr<const ScalarForm> provenanceForm;
     std::vector<Piece> pieces;       // Select, authored order
     uint32_t switchBegin = 0, switchCount = 0;
 };
@@ -270,6 +281,52 @@ LineAlgebraicRestriction restrictAlgebraicToLine(const MathNode& node, bool vect
                                                  const std::string& pointVariable = kAmbientPointVar);
 LineAlgebraicRestriction restrictAlgebraicToLine(const Piecewise& model, bool vectorValued,
                                                  const std::string& pointVariable = kAmbientPointVar);
+
+// ---------------------------------------------------------------------------
+// Execution provenance (2026-10-17). Codex's source review (P1, two findings)
+// showed that the algebra above can be MORE exact than what runs:
+// ((A + x) − A) − x simplifies to the exact 0 while an f32/f64 device executing
+// the authored tree returns ±1 at A = 2^54, and lo = B − (B − 1) folds to 1 on
+// the host while f32 gives 0 at B = 2^25. A claim that replaces or skips
+// execution must therefore carry a bound on |executed − exact| computed from
+// the ORIGINAL authored tree, never from its simplification.
+//
+// executionBound answers, per (component of a) node, sup|value| by magnitude
+// arithmetic (|a + b| ≤ |a| + |b|: no cancellation, so no erased rounding) and
+// an absolute slack ≥ |executed − exact| under a DECLARED device model:
+//   relative       every arithmetic operation, literal and coordinate read errs
+//                  by ≤ relative × its magnitude bound, in any grouping
+//                  (reassociation and fusion only move error between
+//                  operations the model already charges);
+//   transcendental each sin/cos/exp/noise evaluation errs by ≤ this, absolute.
+// It is a declared model, not a proof of any device's Fast-math enclosure (see
+// docs/audits/VOLUME_SUPPORT_NATIVE_PROFILE_2026-10-12.md). `magnitudes` maps a
+// symbol to sup|symbol| over the region; the point variable resolves through
+// "x"/"y"/"z". An unknown symbol, an operation outside the line-admitted
+// class, or a non-literal divisor, exponent or clamp bound answers nullopt:
+// the caller must refuse its claim.
+struct ExecutionModel {
+    double relative = 0.0;
+    double transcendental = 0.0;
+    bool active() const { return relative > 0.0 || transcendental > 0.0; }
+};
+struct ExecutionBound {
+    double magnitude = 0.0;
+    double slack = 0.0;
+};
+std::optional<ExecutionBound> executionBound(const MathNode& node, const std::map<std::string, double>& magnitudes,
+                                             const ExecutionModel& model, int component = -1,
+                                             const std::string& pointVariable = kAmbientPointVar);
+std::optional<ExecutionBound> executionBound(const ScalarForm& form, const std::map<std::string, double>& magnitudes,
+                                             const ExecutionModel& model);
+// Every piece the emitter can answer with (through the first unbounded one).
+std::optional<ExecutionBound> executionBound(const Piecewise& piecewise, const std::map<std::string, double>& magnitudes,
+                                             const ExecutionModel& model, int component = -1,
+                                             const std::string& pointVariable = kAmbientPointVar);
+// A literal: a ScalarLeaf of at most one constant term. Host and device read
+// the same authored number (f32-rounded once on upload), so it is the only
+// constant a divisor, exponent or clamp bound may be (Codex P1 finding 2).
+std::optional<double> literalConstant(const MathNode& node);
 
 // RAY tier: one LineAlgebraicForm bound to one concrete line. Construction
 // evaluates every polynomial coefficient once (double value plus a sound
@@ -328,7 +385,34 @@ public:
     Interval derivativeRange(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs) const;
     Interval switchDerivativeRange(std::size_t k, double s0, double s1, const std::vector<int8_t>& signs) const;
 
+    // Execution slack (Codex P1, 2026-10-17). With an active model (the
+    // declared device model of executionBound), slack() bounds |executed −
+    // exact| for a node over [s0, s1] under decided signs, from each leaf's
+    // AUTHORED provenance: a clamp proved saturated executes its literal bound
+    // exactly (slack ε|bound|), an undecided Select may jump (unbounded), a
+    // proved-negative sqrt argument executes 0. switchSlack() bounds a switch
+    // function's. segmentLine decides a sign only beyond that slack, so an
+    // algebraic cancellation can never certify what the device does not do.
+    // An inactive model (the default) keeps exact-arithmetic semantics. Symbols
+    // the evaluator does not bind (e.g. a box's unbounded clock) take
+    // `magnitudeOverrides` (sup|symbol|) for slack only. A leaf's authored slack
+    // is monotone in its region, so the first interval asked (segmentLine's
+    // whole span) is reused for every interval inside it.
+    void setExecutionModel(const ExecutionModel& model, std::map<std::string, double> magnitudeOverrides = {});
+    const ExecutionModel& executionModel() const { return _model; }
+    double slack(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs) const;
+    double switchSlack(std::size_t k, double s0, double s1, const std::vector<int8_t>& signs) const;
+
 private:
+    double magnitudeAt(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs) const;
+    std::map<std::string, double> symbolMagnitudes(double s0, double s1) const;
+    ExecutionModel _model;
+    std::map<std::string, double> _magnitudeOverrides;
+    std::map<std::string, Interval> _box;
+    mutable double _slackMemoS0 = 0.0, _slackMemoS1 = -1.0;
+    mutable std::vector<double> _slackMemo;
+    mutable std::vector<char> _slackMemoValid;
+    mutable std::map<std::string, double> _slackMagnitudes;
     Interval rangeAt(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs, bool* undefined) const;
     Interval rangeUnmemoized(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs, bool* undefined) const;
     // Centered (Taylor-shifted) enclosure of a polynomial node over [s0, s1]:

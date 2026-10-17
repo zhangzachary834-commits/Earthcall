@@ -585,6 +585,63 @@ int main() {
               "an exhausted evaluation budget leaves the remainder uncertain and the cover intact");
     }
 
+    // ---- Execution provenance (Codex review P1, 2026-10-17) -----------------
+    {
+        const OntoMath::ExecutionModel model{1.0 / 65536.0, 1.0 / 1024.0};
+        // F = ((A + x) − A) − x: the algebra says 0, the original tree does not.
+        auto cancelled = [](double A) {
+            return node(Op::Sub, node(Op::Sub, node(Op::Add, num(A), leaf("x")), num(A)), leaf("x"));
+        };
+        const auto F54 = cancelled(18014398509481984.0);   // 2^54
+        const std::map<std::string, double> mags = {{"x", 4.0}, {"y", 4.0}, {"z", 4.0}, {"t", 1.0}};
+        const auto b = OntoMath::executionBound(*F54, mags, model);
+        check(b && b->slack >= model.relative * 2.0 * 18014398509481984.0,
+              "the original-tree slack of a cancellation scales with what cancelled, not with the exact 0");
+        const auto zero = OntoMath::executionBound(*num(0.0), mags, model);
+        const auto tenth = OntoMath::executionBound(*num(0.1), mags, model);
+        check(zero && zero->slack == 0.0 && tenth && tenth->slack > 0.0,
+              "an f32-exact literal executes exactly; 0.1 carries its representation slack");
+        check(OntoMath::literalConstant(*num(2.0)) && !OntoMath::literalConstant(*node(Op::Sub, num(3.0), num(1.0))),
+              "a literal is a lone constant leaf; a computed constant is not");
+
+        // Segmentation: D = −min(F, 0) at A = 2^25 (f32 cancels; the algebra says D ≡ 0).
+        OntoMath::Piecewise pw;
+        pw.inputVariable = "x";
+        OntoMath::Piecewise::Piece piece;
+        piece.mathNode = std::shared_ptr<MathNode>(
+            node(Op::Scale, num(-1.0), node(Op::Union, cancelled(33554432.0), num(0.0))).release());
+        pw.pieces.push_back(piece);
+        const auto form = OntoMath::restrictAlgebraicToLine(pw, false);
+        check(bool(form), "the cancelled density is admitted (its algebra is exact)");
+        if (form) {
+            const Ray ray{{-3.0, 0.2, 0.1}, {1.0, 0.0, 0.0}};
+            const std::vector<std::pair<std::size_t, uint32_t>> target = {{0, form.form->roots[0]}};
+            OntoMath::LineAlgebraicEvaluator exact(*form.form, lineBindings(ray), true);
+            const auto exactPieces = OntoMath::segmentLine({&exact}, 0.0, 6.0, 1e-3, nullptr, 1u << 16, true, nullptr, &target);
+            bool exactEmpty = !exactPieces.empty();
+            for (const auto& pc : exactPieces) exactEmpty = exactEmpty && !pc.targetSigns.empty() && pc.targetSigns[0] < 0;
+            OntoMath::LineAlgebraicEvaluator faithful(*form.form, lineBindings(ray), true);
+            faithful.setExecutionModel(model);
+            const auto faithfulPieces = OntoMath::segmentLine({&faithful}, 0.0, 6.0, 1e-3, nullptr, 1u << 16, true, nullptr, &target);
+            bool anyEmpty = false;
+            for (const auto& pc : faithfulPieces) anyEmpty = anyEmpty || (!pc.targetSigns.empty() && pc.targetSigns[0] < 0);
+            check(exactEmpty, "exact semantics prove D ≤ 0 along the whole ray (the cancellation is erased)");
+            check(!anyEmpty, "under the execution model no stretch of the cancelled density is proved empty");
+        }
+
+        // A computed clamp bound (B − (B − 1): 1 in double, 0 in f32) refuses the line form.
+        OntoMath::Piecewise clampPw;
+        clampPw.inputVariable = "x";
+        OntoMath::Piecewise::Piece clampPiece;
+        clampPiece.mathNode = std::shared_ptr<MathNode>(
+            node(Op::Sub, num(0.5),
+                 node(Op::Clamp, leaf("x"), node(Op::Sub, num(33554432.0), num(33554431.0)), num(1.0))).release());
+        clampPw.pieces.push_back(clampPiece);
+        const auto clampForm = OntoMath::restrictAlgebraicToLine(clampPw, false);
+        check(!clampForm && clampForm.refusal.find("literal constant is required") != std::string::npos,
+              "a computed clamp bound refuses the line form (" + clampForm.refusal + ")");
+    }
+
     // ---- Observation (not an assertion): ScalarForm::evalRange constants ----
     {
         const auto r = ScalarForm::constant(0.1).evalRange({});
