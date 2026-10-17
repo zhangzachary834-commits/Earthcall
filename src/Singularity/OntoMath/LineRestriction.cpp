@@ -1,6 +1,9 @@
 #include "Singularity/OntoMath/LineRestriction.hpp"
 
+#include <algorithm>
 #include <cmath>
+#include <functional>
+#include <limits>
 #include <sstream>
 
 // Exact line restriction over OntoMath's own signomial algebra. Every algebraic
@@ -522,6 +525,812 @@ std::string LineRestrictedForm::print() const {
         else if (k > 1) out << "·s^" << k;
     }
     return out.str();
+}
+
+// ============================================================================
+// Rung 2 — piecewise-algebraic restriction, ray-tier evaluation, segmentation.
+// Claude Code · Claude Opus 5.5 · session_01HvZSR64QghrdyCpq2M7qvX · 2026-10-17.
+// ============================================================================
+namespace {
+
+using Kind = LineAlgebraicNode::Kind;
+
+struct AlgValue {
+    bool vector = false;
+    uint32_t s = 0;
+    uint32_t v[3] = {0, 0, 0};
+};
+
+// Builds a LineAlgebraicForm bottom-up. Every subtree first tries the Rung 0
+// polynomial flattening (exact, cheap, closed under + − ×); only a subtree
+// that genuinely leaves the polynomial class becomes an algebraic node.
+struct AlgebraicBuilder {
+    ScalarSubstitution subst;
+    std::string pointVariable;
+    LineAlgebraicForm form;
+    std::string why;
+
+    uint32_t push(LineAlgebraicNode n) {
+        form.nodes.push_back(std::move(n));
+        return static_cast<uint32_t>(form.nodes.size() - 1);
+    }
+    std::optional<uint32_t> polyLeaf(const ScalarForm& f) {
+        auto r = restrictedFrom(f, &why);
+        if (!r) return std::nullopt;
+        LineAlgebraicNode n;
+        n.kind = Kind::Polynomial;
+        n.polynomial = std::move(*r);
+        return push(std::move(n));
+    }
+    uint32_t constant(double c) { return *polyLeaf(ScalarForm::constant(c)); }
+    uint32_t op(Kind k, uint32_t a, uint32_t b = 0) {
+        LineAlgebraicNode n;
+        n.kind = k;
+        n.a = a;
+        n.b = b;
+        return push(std::move(n));
+    }
+    uint32_t sqrtNonnegative(uint32_t a) {
+        const uint32_t n = op(Kind::Sqrt, a);
+        form.nodes[n].nonnegativeArgument = true;
+        return n;
+    }
+
+    std::optional<AlgValue> fromFlat(const Flat& f) {
+        AlgValue out;
+        out.vector = f.vector;
+        if (!f.vector) {
+            auto leaf = polyLeaf(f.scalar);
+            if (!leaf) return std::nullopt;
+            out.s = *leaf;
+            return out;
+        }
+        for (int i = 0; i < 3; ++i) {
+            auto leaf = polyLeaf(f.components[i]);
+            if (!leaf) return std::nullopt;
+            out.v[i] = *leaf;
+        }
+        return out;
+    }
+
+    // A refusal that must not be routed around by the algebraic path.
+    static bool hardRefusal(const std::string& reason) {
+        return reason.find("budget") != std::string::npos ||
+               reason.find("reserved line symbol") != std::string::npos;
+    }
+
+    std::optional<double> constantOf(const MathNode& n) {
+        std::string w;
+        const auto f = flatten(n, subst, &w);
+        if (!f || f->vector) return std::nullopt;
+        return pureConstant(f->scalar);
+    }
+
+    std::optional<AlgValue> childOf(const MathNode& n, std::size_t i) {
+        if (i >= n.children.size() || !n.children[i]) {
+            say(&why, std::string(mathOpName(n.op)) + " has a missing operand");
+            return std::nullopt;
+        }
+        return build(*n.children[i]);
+    }
+
+    // Sum of squares of three algebraic components, then sqrt (no switch).
+    uint32_t euclidean(const uint32_t c[3]) {
+        const uint32_t sq0 = op(Kind::Mul, c[0], c[0]);
+        const uint32_t sq1 = op(Kind::Mul, c[1], c[1]);
+        const uint32_t sq2 = op(Kind::Mul, c[2], c[2]);
+        return sqrtNonnegative(op(Kind::Add, op(Kind::Add, sq0, sq1), sq2));
+    }
+
+    std::optional<AlgValue> build(const MathNode& n) {
+        std::string polyWhy;
+        {
+            const auto f = flatten(n, subst, &polyWhy);
+            if (f) return fromFlat(*f);
+            if (hardRefusal(polyWhy)) { say(&why, polyWhy); return std::nullopt; }
+        }
+        using Op = MathNode::Op;
+        // Leaves are wholly the polynomial path's office: its reason is the truth.
+        if (n.op == Op::ScalarLeaf || n.op == Op::ValueLeaf) { say(&why, polyWhy); return std::nullopt; }
+        switch (n.op) {
+            case Op::Add:
+            case Op::Sub:
+            case Op::Scale:
+            case Op::Hadamard:
+            case Op::Dot:
+            case Op::Cross:
+            case Op::Union:
+            case Op::Intersection:
+            case Op::Difference: {
+                if (!exactArity(n, 2, &why)) return std::nullopt;
+                const auto a = childOf(n, 0);
+                if (!a) return std::nullopt;
+                const auto b = childOf(n, 1);
+                if (!b) return std::nullopt;
+                AlgValue out;
+                if (n.op == Op::Add || n.op == Op::Sub) {
+                    if (a->vector != b->vector) { say(&why, std::string(mathOpName(n.op)) + " of a vector and a scalar is undefined"); return std::nullopt; }
+                    const Kind k = n.op == Op::Add ? Kind::Add : Kind::Sub;
+                    out.vector = a->vector;
+                    if (!out.vector) out.s = op(k, a->s, b->s);
+                    else for (int i = 0; i < 3; ++i) out.v[i] = op(k, a->v[i], b->v[i]);
+                    return out;
+                }
+                if (n.op == Op::Scale) {
+                    if (a->vector && b->vector) { say(&why, "Scale of two vectors is undefined"); return std::nullopt; }
+                    if (!a->vector && !b->vector) { out.s = op(Kind::Mul, a->s, b->s); return out; }
+                    const uint32_t k = a->vector ? b->s : a->s;
+                    const AlgValue& vec = a->vector ? *a : *b;
+                    out.vector = true;
+                    for (int i = 0; i < 3; ++i) out.v[i] = op(Kind::Mul, vec.v[i], k);
+                    return out;
+                }
+                if (n.op == Op::Hadamard || n.op == Op::Dot || n.op == Op::Cross) {
+                    if (!a->vector || !b->vector) { say(&why, std::string(mathOpName(n.op)) + " needs two vector operands"); return std::nullopt; }
+                    if (n.op == Op::Dot) {
+                        out.s = op(Kind::Add, op(Kind::Add, op(Kind::Mul, a->v[0], b->v[0]), op(Kind::Mul, a->v[1], b->v[1])),
+                                   op(Kind::Mul, a->v[2], b->v[2]));
+                        return out;
+                    }
+                    out.vector = true;
+                    if (n.op == Op::Hadamard) {
+                        for (int i = 0; i < 3; ++i) out.v[i] = op(Kind::Mul, a->v[i], b->v[i]);
+                    } else {
+                        for (int i = 0; i < 3; ++i) {
+                            const int j = (i + 1) % 3, k = (i + 2) % 3;
+                            out.v[i] = op(Kind::Sub, op(Kind::Mul, a->v[j], b->v[k]), op(Kind::Mul, a->v[k], b->v[j]));
+                        }
+                    }
+                    return out;
+                }
+                if (n.op == Op::Difference) {
+                    if (a->vector || b->vector) { say(&why, "Difference of vectors is undefined in MathNode::evaluate"); return std::nullopt; }
+                    out.s = op(Kind::Max, a->s, op(Kind::Mul, constant(-1.0), b->s));
+                    return out;
+                }
+                // Union = min, Intersection = max; vectors componentwise, scalars broadcast.
+                const Kind k = n.op == Op::Union ? Kind::Min : Kind::Max;
+                if (!a->vector && !b->vector) { out.s = op(k, a->s, b->s); return out; }
+                out.vector = true;
+                for (int i = 0; i < 3; ++i) out.v[i] = op(k, a->vector ? a->v[i] : a->s, b->vector ? b->v[i] : b->s);
+                return out;
+            }
+            case Op::Component: {
+                if (!exactArity(n, 1, &why)) return std::nullopt;
+                const int axis = axisIndex(n.stringArg);
+                if (axis < 0) { say(&why, "Component names axis '" + n.stringArg + "'"); return std::nullopt; }
+                const auto c = childOf(n, 0);
+                if (!c) return std::nullopt;
+                if (!c->vector) { say(&why, "Component of a non-vector operand"); return std::nullopt; }
+                AlgValue out;
+                out.s = c->v[axis];
+                return out;
+            }
+            case Op::VectorConstruct: {
+                if (!exactArity(n, 3, &why)) return std::nullopt;
+                AlgValue out;
+                out.vector = true;
+                for (std::size_t i = 0; i < 3; ++i) {
+                    const auto c = childOf(n, i);
+                    if (!c) return std::nullopt;
+                    if (c->vector) { say(&why, "VectorConstruct component is a vector"); return std::nullopt; }
+                    out.v[i] = c->s;
+                }
+                return out;
+            }
+            case Op::Div: {
+                if (!exactArity(n, 2, &why)) return std::nullopt;
+                const auto c = n.children[1] ? constantOf(*n.children[1]) : std::nullopt;
+                if (!c) { say(&why, "Div by a non-constant operand"); return std::nullopt; }
+                if (!(std::abs(*c) >= kDegenerateDivisor) || !std::isfinite(*c)) { say(&why, "Div by a degenerate or non-finite constant"); return std::nullopt; }
+                const auto a = childOf(n, 0);
+                if (!a) return std::nullopt;
+                const uint32_t k = constant(1.0 / *c);
+                AlgValue out = *a;
+                if (!a->vector) out.s = op(Kind::Mul, a->s, k);
+                else for (int i = 0; i < 3; ++i) out.v[i] = op(Kind::Mul, a->v[i], k);
+                return out;
+            }
+            case Op::Pow: {
+                if (!exactArity(n, 2, &why)) return std::nullopt;
+                const auto e = n.children[1] ? constantOf(*n.children[1]) : std::nullopt;
+                if (!e) { say(&why, "Pow with a non-constant exponent"); return std::nullopt; }
+                const auto p = admittedPower(*e, "Pow", &why);
+                if (!p) return std::nullopt;
+                const auto a = childOf(n, 0);
+                if (!a) return std::nullopt;
+                if (a->vector) { say(&why, "componentwise vector Pow is not admitted"); return std::nullopt; }
+                AlgValue out;
+                out.s = constant(1.0);
+                for (int i = 0; i < *p; ++i) out.s = op(Kind::Mul, out.s, a->s);
+                return out;
+            }
+            case Op::Abs: {
+                if (!exactArity(n, 1, &why)) return std::nullopt;
+                const auto a = childOf(n, 0);
+                if (!a) return std::nullopt;
+                AlgValue out = *a;
+                if (!a->vector) out.s = op(Kind::Abs, a->s);
+                else for (int i = 0; i < 3; ++i) out.v[i] = op(Kind::Abs, a->v[i]);
+                return out;
+            }
+            case Op::Sqrt: {
+                if (!exactArity(n, 1, &why)) return std::nullopt;
+                const auto a = childOf(n, 0);
+                if (!a) return std::nullopt;
+                if (a->vector) { say(&why, "componentwise vector Sqrt is not admitted"); return std::nullopt; }
+                AlgValue out;
+                out.s = op(Kind::Sqrt, a->s);
+                return out;
+            }
+            case Op::Length:
+            case Op::Distance: {
+                const std::size_t arity = n.op == Op::Length ? 1 : 2;
+                if (!exactArity(n, arity, &why)) return std::nullopt;
+                // Polynomial operands: one exact polynomial Σ(Δ_i)², then sqrt.
+                std::string w;
+                std::optional<std::array<ScalarForm, 3>> pa = toVectorFormUnder(*n.children[0], subst, &w);
+                std::optional<std::array<ScalarForm, 3>> pb;
+                if (arity == 2 && n.children[1]) pb = toVectorFormUnder(*n.children[1], subst, &w);
+                if (pa && (arity == 1 || pb)) {
+                    ScalarForm sum;
+                    for (int i = 0; i < 3; ++i) {
+                        const ScalarForm d = arity == 1 ? (*pa)[i] : (*pa)[i].plus((*pb)[i].scaled(-1.0));
+                        sum = sum.plus(d.times(d));
+                        if (!withinBudget(sum, &why)) return std::nullopt;
+                    }
+                    const auto leaf = polyLeaf(sum);
+                    if (!leaf) return std::nullopt;
+                    AlgValue out;
+                    out.s = sqrtNonnegative(*leaf);
+                    return out;
+                }
+                const auto a = childOf(n, 0);
+                if (!a) return std::nullopt;
+                if (!a->vector) { say(&why, std::string(mathOpName(n.op)) + " needs vector operands"); return std::nullopt; }
+                uint32_t c[3] = {a->v[0], a->v[1], a->v[2]};
+                if (arity == 2) {
+                    const auto b = childOf(n, 1);
+                    if (!b) return std::nullopt;
+                    if (!b->vector) { say(&why, "Distance needs vector operands"); return std::nullopt; }
+                    for (int i = 0; i < 3; ++i) c[i] = op(Kind::Sub, a->v[i], b->v[i]);
+                }
+                AlgValue out;
+                out.s = euclidean(c);
+                return out;
+            }
+            case Op::Clamp: {
+                if (!exactArity(n, 3, &why)) return std::nullopt;
+                const auto lo = n.children[1] ? constantOf(*n.children[1]) : std::nullopt;
+                const auto hi = n.children[2] ? constantOf(*n.children[2]) : std::nullopt;
+                if (!lo || !hi) { say(&why, "Clamp with non-constant bounds"); return std::nullopt; }
+                if (!std::isfinite(*lo) || !std::isfinite(*hi) || *lo > *hi) {
+                    say(&why, "Clamp with inverted or non-finite bounds (std::clamp is undefined there)");
+                    return std::nullopt;
+                }
+                const auto a = childOf(n, 0);
+                if (!a) return std::nullopt;
+                if (a->vector) { say(&why, "componentwise vector Clamp is not admitted"); return std::nullopt; }
+                AlgValue out;
+                out.s = op(Kind::Clamp, a->s);
+                form.nodes[out.s].lo = *lo;
+                form.nodes[out.s].hi = *hi;
+                return out;
+            }
+            default:
+                say(&why, std::string("no exact line restriction for ") + mathOpName(n.op));
+                return std::nullopt;
+        }
+    }
+
+    std::optional<AlgValue> buildPiecewise(const Piecewise& model) {
+        if (model.pieces.empty()) { say(&why, "Piecewise has no pieces"); return std::nullopt; }
+        struct Built { const Piecewise::Piece* piece; AlgValue value; };
+        std::vector<Built> built;
+        for (const auto& piece : model.pieces) {
+            if (piece.guard) { say(&why, "a piece carries a world guard"); return std::nullopt; }
+            if (piece.whereLEZero) { say(&why, "a piece carries a pure guard"); return std::nullopt; }
+            if (piece.call) { say(&why, "a piece is a function call"); return std::nullopt; }
+            if (piece.fold) { say(&why, "a piece is a fold over the world"); return std::nullopt; }
+            if (!piece.mathNode) { say(&why, "a piece carries no MathNode (the CPU and emitter treat it differently)"); return std::nullopt; }
+            const auto v = build(*piece.mathNode);
+            if (!v) return std::nullopt;
+            built.push_back({&piece, *v});
+            if (!piece.hasLo && !piece.hasHi) break;   // emitPiecewise returns here
+        }
+        for (const auto& b : built) {
+            if (b.value.vector != built.front().value.vector) { say(&why, "pieces disagree on value kind"); return std::nullopt; }
+        }
+        const auto& first = *built.front().piece;
+        if (!first.hasLo && !first.hasHi) return built.front().value;
+        // Selector: the Piecewise input variable restricted to the line.
+        if (model.inputVariable == pointVariable) {
+            say(&why, "Piecewise input variable is the vector point");
+            return std::nullopt;
+        }
+        MathNode selectorNode;
+        selectorNode.op = MathNode::Op::ValueLeaf;
+        selectorNode.variableName = model.inputVariable;
+        std::string w;
+        const auto sel = toScalarFormUnder(selectorNode, subst, &w);
+        if (!sel) { say(&why, "Piecewise input variable: " + w); return std::nullopt; }
+        auto selector = restrictedFrom(*sel, &why);
+        if (!selector) return std::nullopt;
+        const bool vector = built.front().value.vector;
+        AlgValue out;
+        out.vector = vector;
+        for (int c = 0; c < (vector ? 3 : 1); ++c) {
+            LineAlgebraicNode node;
+            node.kind = Kind::Select;
+            node.polynomial = *selector;
+            for (const auto& b : built) {
+                LineAlgebraicNode::Piece p;
+                p.hasLo = b.piece->hasLo;
+                p.hasHi = b.piece->hasHi;
+                p.lo = b.piece->lo;
+                p.hi = b.piece->hi;
+                p.value = vector ? b.value.v[c] : b.value.s;
+                node.pieces.push_back(p);
+            }
+            const uint32_t id = push(std::move(node));
+            if (vector) out.v[c] = id; else out.s = id;
+        }
+        return out;
+    }
+
+    void finalize() {
+        for (uint32_t i = 0; i < form.nodes.size(); ++i) {
+            auto& n = form.nodes[i];
+            n.switchBegin = static_cast<uint32_t>(form.switches.size());
+            auto add = [&](uint32_t role, bool strict) { form.switches.push_back({i, role, strict}); };
+            switch (n.kind) {
+                case Kind::Sqrt: if (!n.nonnegativeArgument) add(0, false); break;
+                case Kind::Abs: add(0, false); break;
+                case Kind::Min: case Kind::Max: add(1, false); break;
+                case Kind::Clamp: add(2, false); add(3, false); break;
+                case Kind::Select:
+                    for (uint32_t p = 0; p < n.pieces.size(); ++p) {
+                        if (n.pieces[p].hasLo) add(4 + 2 * p, true);
+                        if (n.pieces[p].hasHi) add(5 + 2 * p, true);
+                    }
+                    break;
+                default: break;
+            }
+            n.switchCount = static_cast<uint32_t>(form.switches.size()) - n.switchBegin;
+            if (n.kind == Kind::Polynomial || n.kind == Kind::Select)
+                form.reads.insert(n.polynomial.reads.begin(), n.polynomial.reads.end());
+        }
+    }
+};
+
+LineAlgebraicRestriction finish(AlgebraicBuilder& b, const std::optional<AlgValue>& v, bool vectorValued) {
+    LineAlgebraicRestriction out;
+    if (!v) { out.refusal = b.why.empty() ? "not admitted" : b.why; return out; }
+    if (v->vector != vectorValued) {
+        out.refusal = vectorValued ? "expression is scalar-valued where a vector was required"
+                                   : "expression is vector-valued where a scalar was required";
+        return out;
+    }
+    if (vectorValued) b.form.roots = {v->v[0], v->v[1], v->v[2]};
+    else b.form.roots = {v->s};
+    b.finalize();
+    out.form = std::move(b.form);
+    return out;
+}
+
+// --- interval helpers (outward where rounding can occur) -------------------
+Interval pointOrEnclose(double v) {
+    if (!std::isfinite(v) || std::abs(v) > double(std::numeric_limits<float>::max())) return Interval::infinite();
+    const float f = static_cast<float>(v);
+    if (double(f) == v) return Interval(f);   // exact: keep the singleton (0 stays 0)
+    return Interval::outward(f, f);
+}
+Interval enclose(double v, double err) {
+    if (!std::isfinite(v) || !std::isfinite(err)) return Interval::infinite();
+    const double lo = v - err, hi = v + err;
+    if (std::abs(lo) > double(std::numeric_limits<float>::max()) ||
+        std::abs(hi) > double(std::numeric_limits<float>::max())) return Interval::infinite();
+    return Interval::outward(static_cast<float>(lo), static_cast<float>(hi));
+}
+Interval sqrtOf(const Interval& r) {
+    const float lo = std::max(r.lo, 0.0f), hi = std::max(r.hi, 0.0f);
+    const float l = lo == 0.0f ? 0.0f : Interval::roundDown(std::sqrt(lo));
+    const float h = std::isinf(hi) ? hi : (hi == 0.0f ? 0.0f : Interval::roundUp(std::sqrt(hi)));
+    return Interval(std::max(l, 0.0f), h);
+}
+Interval absOf(const Interval& r) {
+    if (r.lo >= 0.0f) return r;
+    if (r.hi <= 0.0f) return -r;
+    return Interval(0.0f, std::max(-r.lo, r.hi));
+}
+Interval minOf(const Interval& a, const Interval& b) { return Interval(std::min(a.lo, b.lo), std::min(a.hi, b.hi)); }
+Interval maxOf(const Interval& a, const Interval& b) { return Interval(std::max(a.lo, b.lo), std::max(a.hi, b.hi)); }
+
+double horner(const std::vector<double>& a, double s) { return LineRestrictedForm::evaluatePolynomial(a, s); }
+
+} // namespace
+
+bool LineAlgebraicForm::polynomialOnly() const {
+    return std::all_of(nodes.begin(), nodes.end(), [](const LineAlgebraicNode& n) {
+        return n.kind == Kind::Polynomial || n.kind == Kind::Add || n.kind == Kind::Sub || n.kind == Kind::Mul;
+    });
+}
+
+LineAlgebraicRestriction restrictAlgebraicToLine(const MathNode& node, bool vectorValued,
+                                                 const std::string& pointVariable) {
+    AlgebraicBuilder b{linePointSubstitution(pointVariable), pointVariable, {}, {}};
+    const auto v = b.build(node);
+    return finish(b, v, vectorValued);
+}
+
+LineAlgebraicRestriction restrictAlgebraicToLine(const Piecewise& model, bool vectorValued,
+                                                 const std::string& pointVariable) {
+    AlgebraicBuilder b{linePointSubstitution(pointVariable), pointVariable, {}, {}};
+    const auto v = b.buildPiecewise(model);
+    return finish(b, v, vectorValued);
+}
+
+LineAlgebraicEvaluator::LineAlgebraicEvaluator(const LineAlgebraicForm& form,
+                                               std::map<std::string, double> bindings,
+                                               bool undefinedAsZero)
+    : _form(&form), _bindings(std::move(bindings)), _undefinedAsZero(undefinedAsZero) {
+    _coefficients.resize(form.nodes.size());
+    _errors.resize(form.nodes.size());
+    constexpr double kEps = std::numeric_limits<double>::epsilon();
+    for (std::size_t i = 0; i < form.nodes.size(); ++i) {
+        const auto& n = form.nodes[i];
+        if (n.kind != Kind::Polynomial && n.kind != Kind::Select) continue;
+        const auto a = n.polynomial.evaluateCoefficients(_bindings);
+        if (!a) { _refusal = "a coefficient is undefined, unbound or non-finite on this line"; return; }
+        _coefficients[i] = *a;
+        for (std::size_t k = 0; k < a->size(); ++k) {
+            // Forward-error bound of evaluating c_k in double: each term is a
+            // product of ≤ (degree + factors) correctly-rounded operations, and
+            // the sum adds one rounding per term. 4× slack over γ_n·Σ|terms|.
+            double magnitude = 0.0;
+            std::size_t factors = 0;
+            for (const auto& term : n.polynomial.coefficients[k].terms) {
+                const auto tv = term.evaluate(_bindings);
+                if (!tv) { _refusal = "a coefficient term is undefined on this line"; return; }
+                magnitude += std::abs(*tv);
+                double f = 0.0;
+                for (const auto& [name, e] : term.factors) f += std::abs(e);
+                factors = std::max<std::size_t>(factors, static_cast<std::size_t>(f) + term.trans.size() * 4);
+            }
+            const double gamma = 4.0 * double(n.polynomial.coefficients[k].terms.size() + factors + 4) * kEps;
+            _errors[i].push_back(gamma * magnitude);
+        }
+    }
+}
+
+std::optional<double> LineAlgebraicEvaluator::value(uint32_t node, double s) const {
+    const auto& n = _form->nodes[node];
+    auto undefinedValue = [&]() -> std::optional<double> {
+        if (_undefinedAsZero) return 0.0;
+        return std::nullopt;
+    };
+    switch (n.kind) {
+        case Kind::Polynomial: return horner(_coefficients[node], s);
+        case Kind::Undefined: return undefinedValue();
+        case Kind::Select: {
+            const double sel = horner(_coefficients[node], s);
+            for (const auto& p : n.pieces) {
+                // The emitter's tests (>=, <=); STRICT switches keep definite
+                // pieces away from the bound, where the CPU's include flags differ.
+                if ((!p.hasLo || sel >= p.lo) && (!p.hasHi || sel <= p.hi)) return value(p.value, s);
+            }
+            return undefinedValue();
+        }
+        default: break;
+    }
+    const auto a = value(n.a, s);
+    if (!a) return std::nullopt;
+    switch (n.kind) {
+        case Kind::Sqrt: return std::sqrt(std::max(0.0, *a));
+        case Kind::Abs: return std::abs(*a);
+        case Kind::Clamp: return std::clamp(*a, n.lo, n.hi);
+        default: break;
+    }
+    const auto b = value(n.b, s);
+    if (!b) return std::nullopt;
+    switch (n.kind) {
+        case Kind::Add: return *a + *b;
+        case Kind::Sub: return *a - *b;
+        case Kind::Mul: return *a * *b;
+        case Kind::Min: return std::min(*a, *b);
+        case Kind::Max: return std::max(*a, *b);
+        default: return std::nullopt;
+    }
+}
+
+Interval LineAlgebraicEvaluator::range(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs,
+                                       bool* undefined) const {
+    return rangeAt(node, s0, s1, signs, undefined);
+}
+
+Interval LineAlgebraicEvaluator::polynomialRange(uint32_t node, double s0, double s1) const {
+    const auto& a = _coefficients[node];
+    const auto& e = _errors[node];
+    const std::size_t n = a.size();
+    if (n == 0) return Interval(0.0f);
+    constexpr double kEps = std::numeric_limits<double>::epsilon();
+    const double m = 0.5 * (s0 + s1);   // any double: it is the chosen centre, exact by definition
+    // h = s − m for real s ∈ [s0, s1]; each endpoint subtraction rounds once.
+    const double h0 = s0 - m, h1 = s1 - m;
+    const Interval h = enclose(0.5 * (h0 + h1), 0.5 * (h1 - h0) + 2 * kEps * (std::abs(h0) + std::abs(h1)) + 1e-300);
+    // Taylor shift b_k = Σ_{j≥k} C(j,k)·a_j·m^{j−k}, with error from the a_j
+    // enclosures plus the shift's own rounding (4× slack over γ_{2n+4}).
+    std::vector<Interval> b(n);
+    for (std::size_t k = 0; k < n; ++k) {
+        double sum = 0.0, magnitude = 0.0, err = 0.0;
+        double binom = 1.0, mPow = 1.0, mAbsPow = 1.0;   // C(j,k), m^{j−k}
+        for (std::size_t j = k; j < n; ++j) {
+            if (j > k) {
+                binom = binom * double(j) / double(j - k);
+                mPow *= m;
+                mAbsPow *= std::abs(m);
+            }
+            const double term = binom * a[j] * mPow;
+            sum += term;
+            magnitude += std::abs(term);
+            err += binom * mAbsPow * e[j];
+        }
+        b[k] = enclose(sum, err + 4.0 * double(2 * n + 4) * kEps * magnitude);
+    }
+    Interval acc = b[n - 1];
+    for (std::size_t k = n - 1; k-- > 0;) acc = acc * h + b[k];
+    return acc;
+}
+
+namespace {
+// Select piece applicability under signs: +1 applies, −1 does not, 0 unknown.
+int pieceState(const LineAlgebraicNode& n, uint32_t p, const std::vector<int8_t>& signs) {
+    const auto& piece = n.pieces[p];
+    int state = 1;
+    uint32_t k = n.switchBegin;
+    for (uint32_t q = 0; q < p; ++q) k += (n.pieces[q].hasLo ? 1 : 0) + (n.pieces[q].hasHi ? 1 : 0);
+    for (int t = 0; t < 2; ++t) {
+        const bool present = t == 0 ? piece.hasLo : piece.hasHi;
+        if (!present) continue;
+        const int8_t sg = signs[k++];
+        if (sg < 0) return -1;
+        if (sg == 0) state = 0;
+    }
+    return state;
+}
+} // namespace
+
+Interval LineAlgebraicEvaluator::rangeAt(uint32_t node, double sa, double sb, const std::vector<int8_t>& signs,
+                                         bool* undefined) const {
+    const auto& n = _form->nodes[node];
+    const int8_t s0 = n.switchCount > 0 ? signs[n.switchBegin] : 0;
+    const int8_t s1 = n.switchCount > 1 ? signs[n.switchBegin + 1] : 0;
+    switch (n.kind) {
+        case Kind::Polynomial: return polynomialRange(node, sa, sb);
+        case Kind::Undefined:
+            if (!_undefinedAsZero && undefined) *undefined = true;
+            return Interval(0.0f);
+        case Kind::Add: return rangeAt(n.a, sa, sb, signs, undefined) + rangeAt(n.b, sa, sb, signs, undefined);
+        case Kind::Sub: return rangeAt(n.a, sa, sb, signs, undefined) - rangeAt(n.b, sa, sb, signs, undefined);
+        case Kind::Mul: return rangeAt(n.a, sa, sb, signs, undefined) * rangeAt(n.b, sa, sb, signs, undefined);
+        case Kind::Sqrt:
+            if (!n.nonnegativeArgument && s0 < 0) return Interval(0.0f);
+            return sqrtOf(rangeAt(n.a, sa, sb, signs, undefined));
+        case Kind::Abs: {
+            const Interval r = rangeAt(n.a, sa, sb, signs, undefined);
+            return s0 > 0 ? r : (s0 < 0 ? -r : absOf(r));
+        }
+        case Kind::Min:
+        case Kind::Max: {
+            const bool min = n.kind == Kind::Min;
+            if (s0 > 0) return rangeAt(min ? n.b : n.a, sa, sb, signs, undefined);   // a ≥ b
+            if (s0 < 0) return rangeAt(min ? n.a : n.b, sa, sb, signs, undefined);   // a ≤ b
+            const Interval a = rangeAt(n.a, sa, sb, signs, undefined), b = rangeAt(n.b, sa, sb, signs, undefined);
+            return min ? minOf(a, b) : maxOf(a, b);
+        }
+        case Kind::Clamp: {
+            const Interval lo = pointOrEnclose(n.lo), hi = pointOrEnclose(n.hi);
+            if (s0 < 0) return lo;     // a ≤ lo
+            if (s1 > 0) return hi;     // a ≥ hi
+            const Interval a = rangeAt(n.a, sa, sb, signs, undefined);
+            if (s0 > 0 && s1 < 0) {
+                const Interval m = a.met(Interval(lo.lo, hi.hi));
+                return m.empty() ? a : m;
+            }
+            // clamp is monotone in each argument (lo ≤ hi).
+            return Interval(std::min(std::max(a.lo, lo.lo), hi.lo), std::min(std::max(a.hi, lo.hi), hi.hi));
+        }
+        case Kind::Select: {
+            Interval acc;
+            bool any = false;
+            for (uint32_t p = 0; p < n.pieces.size(); ++p) {
+                const int st = pieceState(n, p, signs);
+                if (st < 0) continue;
+                const Interval v = rangeAt(n.pieces[p].value, sa, sb, signs, undefined);
+                acc = any ? acc.joined(v) : v;
+                any = true;
+                if (st > 0) return acc;
+            }
+            // No piece certainly applies: falling through is possible.
+            if (_undefinedAsZero) return any ? acc.joined(Interval(0.0f)) : Interval(0.0f);
+            if (undefined) *undefined = true;
+            return any ? acc : Interval(0.0f);
+        }
+    }
+    return Interval::infinite();
+}
+
+Interval LineAlgebraicEvaluator::switchRange(std::size_t k, double s0, double s1,
+                                             const std::vector<int8_t>& signs, bool* undefined) const {
+    const auto& sw = _form->switches[k];
+    const auto& n = _form->nodes[sw.node];
+    const double sa = s0, sb = s1;
+    switch (sw.role) {
+        case 0: return rangeAt(n.a, sa, sb, signs, undefined);
+        case 1: return rangeAt(n.a, sa, sb, signs, undefined) - rangeAt(n.b, sa, sb, signs, undefined);
+        case 2: return rangeAt(n.a, sa, sb, signs, undefined) - pointOrEnclose(n.lo);
+        case 3: return rangeAt(n.a, sa, sb, signs, undefined) - pointOrEnclose(n.hi);
+        default: {
+            const uint32_t p = (sw.role - 4) / 2;
+            const Interval sel = polynomialRange(sw.node, sa, sb);
+            return (sw.role % 2 == 0) ? sel - pointOrEnclose(n.pieces[p].lo) : pointOrEnclose(n.pieces[p].hi) - sel;
+        }
+    }
+}
+
+bool LineAlgebraicEvaluator::constantUnder(uint32_t node, const std::vector<int8_t>& signs) const {
+    const auto& n = _form->nodes[node];
+    const int8_t s0 = n.switchCount > 0 ? signs[n.switchBegin] : 0;
+    const int8_t s1 = n.switchCount > 1 ? signs[n.switchBegin + 1] : 0;
+    switch (n.kind) {
+        case Kind::Polynomial: return n.polynomial.exactDegreeOn(_bindings) <= 0;
+        case Kind::Undefined: return _undefinedAsZero;
+        case Kind::Add: case Kind::Sub: case Kind::Mul:
+            return constantUnder(n.a, signs) && constantUnder(n.b, signs);
+        case Kind::Sqrt:
+            if (!n.nonnegativeArgument && s0 < 0) return true;
+            return constantUnder(n.a, signs);
+        case Kind::Abs: return constantUnder(n.a, signs);
+        case Kind::Min: case Kind::Max: {
+            const bool min = n.kind == Kind::Min;
+            if (s0 > 0) return constantUnder(min ? n.b : n.a, signs);
+            if (s0 < 0) return constantUnder(min ? n.a : n.b, signs);
+            return constantUnder(n.a, signs) && constantUnder(n.b, signs);
+        }
+        case Kind::Clamp:
+            if (s0 < 0 || s1 > 0) return true;
+            return constantUnder(n.a, signs);
+        case Kind::Select:
+            for (uint32_t p = 0; p < n.pieces.size(); ++p) {
+                const int st = pieceState(n, p, signs);
+                if (st < 0) continue;
+                if (st == 0) return false;
+                return constantUnder(n.pieces[p].value, signs);
+            }
+            return _undefinedAsZero;
+    }
+    return false;
+}
+
+void LineAlgebraicEvaluator::relevantUndecided(uint32_t node, const std::vector<int8_t>& signs,
+                                               std::vector<uint32_t>& out) const {
+    const auto& n = _form->nodes[node];
+    auto pushIfOpen = [&](uint32_t k) { if (signs[k] == 0) out.push_back(k); };
+    const int8_t s0 = n.switchCount > 0 ? signs[n.switchBegin] : 0;
+    const int8_t s1 = n.switchCount > 1 ? signs[n.switchBegin + 1] : 0;
+    switch (n.kind) {
+        case Kind::Polynomial: case Kind::Undefined: return;
+        case Kind::Add: case Kind::Sub: case Kind::Mul:
+            relevantUndecided(n.a, signs, out);
+            relevantUndecided(n.b, signs, out);
+            return;
+        case Kind::Sqrt:
+            if (!n.nonnegativeArgument) {
+                if (s0 < 0) return;   // sqrt(max(a,0)) = 0: a is irrelevant
+                pushIfOpen(n.switchBegin);
+            }
+            relevantUndecided(n.a, signs, out);
+            return;
+        case Kind::Abs:
+            pushIfOpen(n.switchBegin);
+            relevantUndecided(n.a, signs, out);
+            return;
+        case Kind::Min: case Kind::Max: {
+            const bool min = n.kind == Kind::Min;
+            if (s0 == 0) {
+                pushIfOpen(n.switchBegin);
+                relevantUndecided(n.a, signs, out);
+                relevantUndecided(n.b, signs, out);
+            } else {
+                relevantUndecided((s0 > 0) == min ? n.b : n.a, signs, out);
+            }
+            return;
+        }
+        case Kind::Clamp:
+            if (s0 < 0 || s1 > 0) return;   // saturated: nothing beneath can matter
+            pushIfOpen(n.switchBegin);
+            pushIfOpen(n.switchBegin + 1);
+            relevantUndecided(n.a, signs, out);
+            return;
+        case Kind::Select: {
+            uint32_t k = n.switchBegin;
+            for (uint32_t p = 0; p < n.pieces.size(); ++p) {
+                const auto& piece = n.pieces[p];
+                const uint32_t tests = (piece.hasLo ? 1 : 0) + (piece.hasHi ? 1 : 0);
+                const int st = pieceState(n, p, signs);
+                if (st >= 0) {
+                    for (uint32_t t = 0; t < tests; ++t) pushIfOpen(k + t);
+                    relevantUndecided(piece.value, signs, out);
+                }
+                k += tests;
+                if (st > 0) return;
+            }
+            return;
+        }
+    }
+}
+
+namespace {
+struct Segmenter {
+    const std::vector<const LineAlgebraicEvaluator*>& evaluators;
+    double resolution;
+    uint32_t maxEvaluations;
+    LineSegmentationStats stats;
+    std::vector<LineSegmentationPiece> pieces;
+
+    void emit(double a, double b, bool definite, const std::vector<std::vector<int8_t>>& signs) {
+        if (!pieces.empty() && pieces.back().definite == definite && pieces.back().signs == signs) {
+            pieces.back().s1 = b;
+            return;
+        }
+        pieces.push_back({a, b, definite, signs});
+    }
+
+    void classify(double a, double b, std::vector<std::vector<int8_t>> signs) {
+        for (;;) {
+            bool progress = false, pending = false;
+            for (std::size_t e = 0; e < evaluators.size(); ++e) {
+                const auto& ev = *evaluators[e];
+                std::vector<uint32_t> relevant;
+                for (uint32_t root : ev.form().roots) ev.relevantUndecided(root, signs[e], relevant);
+                std::sort(relevant.begin(), relevant.end());
+                relevant.erase(std::unique(relevant.begin(), relevant.end()), relevant.end());
+                for (uint32_t k : relevant) {
+                    if (stats.rangeEvaluations >= maxEvaluations) {
+                        stats.budgetExhausted = true;
+                        emit(a, b, false, signs);
+                        return;
+                    }
+                    ++stats.rangeEvaluations;
+                    bool undefined = false;
+                    const Interval r = ev.switchRange(k, a, b, signs[e], &undefined);
+                    const bool strict = ev.form().switches[k].strict;
+                    if (undefined || std::isnan(r.lo) || std::isnan(r.hi)) { pending = true; continue; }
+                    if (strict ? r.lo > 0.0f : r.lo >= 0.0f) { signs[e][k] = 1; progress = true; }
+                    else if (strict ? r.hi < 0.0f : r.hi <= 0.0f) { signs[e][k] = -1; progress = true; }
+                    else pending = true;
+                }
+            }
+            if (!pending) { emit(a, b, true, signs); return; }
+            if (!progress) break;
+        }
+        const double mid = 0.5 * (a + b);
+        if (!(b - a > resolution) || !(mid > a && mid < b)) { emit(a, b, false, signs); return; }
+        classify(a, mid, signs);
+        classify(mid, b, std::move(signs));
+    }
+};
+} // namespace
+
+std::vector<LineSegmentationPiece> segmentLine(const std::vector<const LineAlgebraicEvaluator*>& evaluators,
+                                               double s0, double s1, double resolution,
+                                               LineSegmentationStats* stats, uint32_t maxRangeEvaluations) {
+    Segmenter seg{evaluators, resolution, maxRangeEvaluations, {}, {}};
+    std::vector<std::vector<int8_t>> signs;
+    for (const auto* e : evaluators) signs.emplace_back(e->form().switches.size(), int8_t(0));
+    if (std::isfinite(s0) && std::isfinite(s1) && s1 >= s0) seg.classify(s0, s1, std::move(signs));
+    if (stats) *stats = seg.stats;
+    return seg.pieces;
 }
 
 } // namespace OntoMath

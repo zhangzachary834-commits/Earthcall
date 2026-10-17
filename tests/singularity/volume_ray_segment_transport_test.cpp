@@ -394,7 +394,7 @@ int main() {
                   VolumeSegmentStrategy::GeneralLattice,
               "an active incident source keeps the lattice (Li varies with source distance/visibility)");
         Medium noisy;
-        noisy.density = pw(R"({"input":"x","pieces":[{"mathNode":{"op":29,"children":[{"op":1,"variableName":"p"}]}}]})");
+        noisy.density = pw(R"({"input":"x","pieces":[{"mathNode":{"op":29,"children":[{"op":1,"var":"p"}]}}]})");
         const auto nb = noisy.binding("medium.noisy", 900);
         const auto nsc = scenario(cache, {{&nb, glm::dvec3(0), 0.0}});
         const auto plan = Rendering::planVolumeRaySegment(nsc.members, {eye, forward, false}, span);

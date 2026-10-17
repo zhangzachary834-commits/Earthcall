@@ -380,7 +380,8 @@ if(NOT EMSCRIPTEN)
             ${TEST_NAME} STREQUAL "sky_island_sanctuary_test" OR
                  ${TEST_NAME} STREQUAL "mcp_authoring_surfaces_test" OR
                  ${TEST_NAME} STREQUAL "volume_shared_subexpression_test" OR
-                 ${TEST_NAME} STREQUAL "volume_ray_segment_transport_test")
+                 ${TEST_NAME} STREQUAL "volume_ray_segment_transport_test" OR
+                 ${TEST_NAME} STREQUAL "volume_ray_radial_segmentation_test")
             # Pure codegen witness: it exercises SdfWgsl::compile/collectParams
             # but never creates a WebGPU device. Link only the compiler source so
             # the test stays runnable on CPU-only CI instead of masquerading as

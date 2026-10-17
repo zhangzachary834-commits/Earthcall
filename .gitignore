@@ -33,6 +33,7 @@ __pycache__/
 # ---------------------------------------------------------------------------
 build/
 build_release/
+build-release/
 build-wasm/
 *.o
 *.d

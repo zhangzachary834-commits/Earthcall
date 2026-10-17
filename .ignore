@@ -27,6 +27,7 @@ third_party/websocketpp/
 # reason: a tool that honours only one of these two files should still skip them.
 build/
 build2/
+build-release/
 build_ag/
 build_agy/
 build-*/

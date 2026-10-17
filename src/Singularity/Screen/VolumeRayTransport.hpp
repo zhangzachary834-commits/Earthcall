@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <set>
 #include <string>
@@ -66,8 +67,12 @@ struct VolumeRayChannelForm {
     // way, and they change transport (phase = 0 without a source).
     std::set<std::string> emitterReads;
     std::string refusal;                        // empty iff admitted (or absent)
+    // Rung 2: the piecewise-algebraic restriction (a superset of the polynomial
+    // one above). Same lifetime and key; its own refusal reason.
+    OntoMath::LineAlgebraicRestriction algebraic;
 
     bool admitted() const { return !present || refusal.empty(); }
+    bool algebraicAdmitted() const { return !present || algebraic.form.has_value(); }
     bool reads(const std::string& prefix) const;
 };
 
@@ -183,5 +188,52 @@ std::optional<double> affineSegmentTransmittance(const std::vector<VolumeSegment
                                                  double transmittanceIn,
                                                  bool outputBudgetZero,
                                                  std::string* reason = nullptr);
+
+// --- Rung 2: per-ray segmentation of one V5 segment ---------------------------
+//
+// OntoMath::segmentLine partitions the segment's sample interval by every
+// relevant switching function of every admitted channel of every member
+// (abs/min/max/clamp/sqrt/Piecewise bounds — radial falloffs' ball boundaries
+// are exact quadratic roots). Each piece is then classified with the same
+// proofs as Rung 1, but on the reduced branch:
+//   exact-empty      every member's density range over the piece is ≤ 0
+//   constant         every participating channel's surviving branch is exactly
+//                    constant on this line (no source, direction gates open)
+//   general-lattice  anything else, including the narrow uncertain pieces
+//                    around possible switches
+// The accepted lattice is never re-spaced: each sample is assigned to the piece
+// containing it, and consecutive samples with the same plan form one run.
+// Pieces/runs are RAY-lifetime values, never cached.
+struct VolumeScheduleRun {
+    uint32_t firstSample = 0;
+    uint32_t sampleCount = 0;
+    VolumeSegmentPlan plan;
+};
+
+struct VolumeSegmentSchedule {
+    std::vector<VolumeScheduleRun> runs;
+    std::string reason;   // set when the whole segment stays on the lattice
+    uint32_t pieces = 0;
+    uint32_t rangeEvaluations = 0;
+    bool budgetExhausted = false;
+    uint32_t emptySamples = 0, constantSamples = 0, generalSamples = 0;
+};
+
+// resolutionInSteps: uncertain pieces are refined until no wider than this
+// fraction of the lattice step (a coarser value costs fewer proofs and leaves
+// at most a sample or two near each switch on the lattice).
+VolumeSegmentSchedule scheduleVolumeRaySegment(const std::vector<VolumeSegmentMember>& members,
+                                               const VolumeRayInput& ray,
+                                               const VolumeLatticeSpan& span,
+                                               double resolutionInSteps = 0.125);
+
+// Runs the general lattice for samples [firstSample, firstSample + count) of the
+// span, continuing `state` (updating samplesConsumed / terminated). On the GPU
+// this is the existing marcher; in tests a CPU mirror.
+using VolumeLatticeRunner = std::function<void(uint32_t firstSample, uint32_t count, VolumeTransportState&)>;
+
+void executeVolumeSchedule(const VolumeSegmentSchedule& schedule, const VolumeLatticeSpan& span,
+                           bool outputBudgetZero, VolumeTransportState& state,
+                           const VolumeLatticeRunner& lattice);
 
 } // namespace Rendering

@@ -4,6 +4,7 @@
 #include <cmath>
 #include <initializer_list>
 #include <iterator>
+#include <memory>
 
 // See VolumeRayTransport.hpp for the transport law this mirrors and the
 // exactness contract. Every constant below that is not new mathematics is a
@@ -87,6 +88,19 @@ VolumeRayChannelForm lowerChannel(const OntoMath::Piecewise* expr, uint64_t revi
     if (!form.present) return form;
     form.emitterReads = emitterReadsOf(*expr);
 
+    // Rung 2 algebraic restriction first: independent of whether the polynomial
+    // class below admits the channel.
+    form.algebraic = OntoMath::restrictAlgebraicToLine(*expr, vectorValued);
+    if (form.algebraic) {
+        for (const auto& name : form.algebraic.form->reads) {
+            if (!bindsInContext(name, ctx)) {
+                form.algebraic.form.reset();
+                form.algebraic.refusal = "reads '" + name + "', which this channel's execution context does not bind";
+                break;
+            }
+        }
+    }
+
     std::set<std::string> reads;
     if (vectorValued) {
         form.vector = OntoMath::restrictVectorToLine(*expr);
@@ -161,18 +175,6 @@ std::optional<double> constantOn(const OntoMath::LineRestrictedForm& f,
     return a->empty() ? 0.0 : (*a)[0];
 }
 
-std::optional<glm::dvec3> constantVectorOn(const VolumeRayChannelForm& c,
-                                           const std::map<std::string, double>& b,
-                                           const std::string& what, std::string& reason) {
-    glm::dvec3 v(0.0);
-    for (int i = 0; i < 3; ++i) {
-        const auto x = constantOn((*c.vector.form)[i], b, what, reason);
-        if (!x) return std::nullopt;
-        v[i] = *x;
-    }
-    return v;
-}
-
 // D_j on the ray when exactly constant; std::nullopt (with reason) otherwise.
 std::optional<double> constantDensity(const VolumeSegmentMember& m, const std::map<std::string, double>& b,
                                       std::string& reason) {
@@ -182,6 +184,72 @@ std::optional<double> constantDensity(const VolumeSegmentMember& m, const std::m
     const auto value = constantOn(*d.scalar.form, b, "density", reason);
     if (!value) return std::nullopt;
     return std::max(*value, 0.0);
+}
+
+// One participating member's constant transport contribution under the
+// marchers' laws (compatibility defaults, clamps, Li = 1 without a source, the
+// READS_WI gate). `constant` answers the exactly-constant value of a present
+// channel component on the region in question, or nullopt with a reason.
+using ConstantChannel = std::function<std::optional<double>(const VolumeRayChannelForm&, int component,
+                                                            const char* what, std::string& why)>;
+
+bool accumulateConstantMember(const VolumeRayChannelForms& f, double density, const ConstantChannel& constant,
+                              VolumeSegmentPlan& plan, std::string& why) {
+    auto vec = [&](const VolumeRayChannelForm& c, const char* what) -> std::optional<glm::dvec3> {
+        glm::dvec3 v(0.0);
+        for (int i = 0; i < 3; ++i) {
+            const auto x = constant(c, i, what, why);
+            if (!x) return std::nullopt;
+            v[i] = *x;
+        }
+        return v;
+    };
+    double extinction = 0.5 * density;   // V1 compatibility law
+    if (f.extinction.present) {
+        const auto v = constant(f.extinction, 0, "extinction", why);
+        if (!v) return false;
+        extinction = *v;
+    }
+    extinction = std::max(extinction, kMinExtinction);
+    double scattering = density;          // V2 compatibility law
+    if (f.scattering.present) {
+        const auto v = constant(f.scattering, 0, "scattering", why);
+        if (!v) return false;
+        scattering = std::max(*v, 0.0);
+    }
+    glm::dvec3 chroma(1.0);               // V2 neutral white
+    if (f.chroma.present) {
+        const auto v = vec(f.chroma, "medium chroma");
+        if (!v) return false;
+        chroma = *v;
+    }
+    double phase = 1.0;                   // V3 isotropic identity
+    if (f.phase.present) {
+        // Without a source, the marchers evaluate phase only when the emitted
+        // phase never reads wi; otherwise phase = 0.
+        phase = 0.0;
+        if (!f.phase.reads("wi.")) {
+            const auto v = constant(f.phase, 0, "phase", why);
+            if (!v) return false;
+            phase = std::max(*v, 0.0);
+        }
+    }
+    glm::dvec3 emitted(0.0);
+    if (f.emission.present) {
+        const auto v = vec(f.emission, "emission");
+        if (!v) return false;
+        emitted = glm::max(*v, glm::dvec3(0.0));
+    }
+    // Li = 1 without a source (the marchers' incidentLi default).
+    plan.totalExtinction += extinction;
+    plan.totalSource += chroma * scattering * phase + emitted;
+    ++plan.participatingMembers;
+    return true;
+}
+
+bool finiteTransport(const VolumeSegmentPlan& plan) {
+    return std::isfinite(plan.totalExtinction) && std::isfinite(plan.totalSource.x) &&
+           std::isfinite(plan.totalSource.y) && std::isfinite(plan.totalSource.z);
 }
 
 } // namespace
@@ -300,52 +368,13 @@ VolumeSegmentPlan planVolumeRaySegment(const std::vector<VolumeSegmentMember>& m
         for (const auto* c : {&f.extinction, &f.scattering, &f.chroma, &f.phase, &f.emission}) {
             if (!c->admitted()) return lattice("channel refused: " + c->refusal);
         }
-        double extinction = 0.5 * density;   // V1 compatibility law
-        if (f.extinction.present) {
-            const auto v = constantOn(*f.extinction.scalar.form, b, "extinction", why);
-            if (!v) return lattice(why);
-            extinction = *v;
-        }
-        extinction = std::max(extinction, kMinExtinction);
-
-        double scattering = density;          // V2 compatibility law
-        if (f.scattering.present) {
-            const auto v = constantOn(*f.scattering.scalar.form, b, "scattering", why);
-            if (!v) return lattice(why);
-            scattering = std::max(*v, 0.0);
-        }
-        glm::dvec3 chroma(1.0);               // V2 neutral white
-        if (f.chroma.present) {
-            const auto v = constantVectorOn(f.chroma, b, "medium chroma", why);
-            if (!v) return lattice(why);
-            chroma = *v;
-        }
-        double phase = 1.0;                   // V3 isotropic identity
-        if (f.phase.present) {
-            // Without a source, the marchers evaluate phase only when the
-            // emitted phase never reads wi (any piece); otherwise phase = 0.
-            phase = 0.0;
-            if (!f.phase.reads("wi.")) {
-                const auto v = constantOn(*f.phase.scalar.form, b, "phase", why);
-                if (!v) return lattice(why);
-                phase = std::max(*v, 0.0);
-            }
-        }
-        glm::dvec3 emitted(0.0);
-        if (f.emission.present) {
-            const auto v = constantVectorOn(f.emission, b, "emission", why);
-            if (!v) return lattice(why);
-            emitted = glm::max(*v, glm::dvec3(0.0));
-        }
-        // Li = 1 without a source (the marchers' incidentLi default).
-        plan.totalExtinction += extinction;
-        plan.totalSource += chroma * scattering * phase + emitted;
-        ++plan.participatingMembers;
+        const ConstantChannel polynomialConstant = [&](const VolumeRayChannelForm& c, int component,
+                                                       const char* what, std::string& reason) {
+            return constantOn(c.vectorValued ? (*c.vector.form)[component] : *c.scalar.form, b, what, reason);
+        };
+        if (!accumulateConstantMember(f, density, polynomialConstant, plan, why)) return lattice(why);
     }
-    if (!std::isfinite(plan.totalExtinction) || !std::isfinite(plan.totalSource.x) ||
-        !std::isfinite(plan.totalSource.y) || !std::isfinite(plan.totalSource.z)) {
-        return lattice("non-finite constant transport coefficients");
-    }
+    if (!finiteTransport(plan)) return lattice("non-finite constant transport coefficients");
     plan.strategy = VolumeSegmentStrategy::ConstantClosedForm;
     plan.reason = "every participating channel is exactly constant on this ray";
     return plan;
@@ -441,6 +470,182 @@ std::optional<double> affineSegmentTransmittance(const std::vector<VolumeSegment
     if (outputBudgetZero && !(out >= kLegacyCutoff))
         return refuse("legacy opacity cutoff could fire inside the span");
     return out;
+}
+
+// ---- Rung 2: per-ray segment schedule --------------------------------------
+// Claude Code · Claude Opus 5.5 · session_01HvZSR64QghrdyCpq2M7qvX · 2026-10-17.
+
+namespace {
+
+bool samePlan(const VolumeSegmentPlan& a, const VolumeSegmentPlan& b) {
+    if (a.strategy != b.strategy) return false;
+    if (a.strategy != VolumeSegmentStrategy::ConstantClosedForm) return true;
+    return a.totalExtinction == b.totalExtinction && a.totalSource == b.totalSource;
+}
+
+// One member's evaluators on this ray, one per admitted present channel.
+struct MemberEvaluators {
+    std::map<const VolumeRayChannelForm*, std::size_t> index;   // into the shared list
+};
+
+} // namespace
+
+VolumeSegmentSchedule scheduleVolumeRaySegment(const std::vector<VolumeSegmentMember>& members,
+                                               const VolumeRayInput& ray,
+                                               const VolumeLatticeSpan& span,
+                                               double resolutionInSteps) {
+    VolumeSegmentSchedule schedule;
+    auto allGeneral = [&](std::string why) {
+        schedule.runs.clear();
+        schedule.reason = std::move(why);
+        if (span.count > 0) {
+            VolumeScheduleRun run;
+            run.firstSample = 0;
+            run.sampleCount = span.count;
+            run.plan.reason = schedule.reason;
+            schedule.runs.push_back(run);
+        }
+        schedule.emptySamples = schedule.constantSamples = 0;
+        schedule.generalSamples = span.count;
+        return schedule;
+    };
+    if (span.count == 0 || !(span.step > 0.0) || !std::isfinite(span.step) || !std::isfinite(span.firstSample))
+        return allGeneral("degenerate lattice span");
+    const double dirLen = glm::length(ray.direction);
+    if (!(dirLen > 0.0) || !std::isfinite(dirLen) || !std::isfinite(glm::length(ray.origin)))
+        return allGeneral("degenerate or non-finite ray");
+    if (members.empty()) return allGeneral("no member media on this segment");
+
+    std::vector<std::unique_ptr<OntoMath::LineAlgebraicEvaluator>> owned;
+    std::vector<const OntoMath::LineAlgebraicEvaluator*> evaluators;
+    std::vector<MemberEvaluators> memberEvals(members.size());
+    for (std::size_t j = 0; j < members.size(); ++j) {
+        const auto* f = members[j].forms;
+        if (!f) return allGeneral("member without lowered forms");
+        const auto b = rayBindings(members[j], ray);
+        for (const auto* c : {&f->density, &f->extinction, &f->scattering, &f->chroma, &f->phase, &f->emission}) {
+            if (!c->present || !c->algebraic.form) continue;
+            // The volume emitter returns 0 when no piece matches: this channel
+            // binding (not OntoMath) decides that Undefined reads as zero.
+            auto ev = std::make_unique<OntoMath::LineAlgebraicEvaluator>(*c->algebraic.form, b, true);
+            if (!ev->ok()) {
+                if (c == &f->density) return allGeneral("density: " + ev->refusal());
+                continue;   // that channel simply cannot prove anything on this ray
+            }
+            memberEvals[j].index[c] = evaluators.size();
+            evaluators.push_back(ev.get());
+            owned.push_back(std::move(ev));
+        }
+        if (!f->density.present) return allGeneral("medium has no authored density");
+        if (!memberEvals[j].index.count(&f->density))
+            return allGeneral("density not admitted: " + f->density.algebraic.refusal);
+    }
+
+    const double sFirst = span.firstSample;
+    const double sLast = span.firstSample + span.step * double(span.count - 1u);
+    OntoMath::LineSegmentationStats stats;
+    const auto pieces = OntoMath::segmentLine(evaluators, sFirst, sLast,
+                                              std::max(resolutionInSteps, 1e-6) * span.step, &stats);
+    schedule.pieces = static_cast<uint32_t>(pieces.size());
+    schedule.rangeEvaluations = stats.rangeEvaluations;
+    schedule.budgetExhausted = stats.budgetExhausted;
+    if (pieces.empty()) return allGeneral("segmentation produced no pieces");
+
+    const bool gateOpen = span.firstSample > 0.0 && span.firstSample * dirLen > kDirectionGateMargin;
+    std::vector<VolumeSegmentPlan> plans(pieces.size());
+    for (std::size_t p = 0; p < pieces.size(); ++p) {
+        const auto& piece = pieces[p];
+        auto& plan = plans[p];
+        auto general = [&](std::string why) { plan = VolumeSegmentPlan{}; plan.reason = std::move(why); };
+        const double mid = 0.5 * (piece.s0 + piece.s1);
+        std::vector<bool> active(members.size(), true);
+        for (std::size_t j = 0; j < members.size(); ++j) {
+            const std::size_t e = memberEvals[j].index.at(&members[j].forms->density);
+            bool undefined = false;
+            const auto r = evaluators[e]->range(evaluators[e]->form().roots[0], piece.s0, piece.s1,
+                                                piece.signs[e], &undefined);
+            if (!undefined && r.hi <= 0.0f) active[j] = false;
+        }
+        if (std::none_of(active.begin(), active.end(), [](bool a) { return a; })) {
+            plan.strategy = VolumeSegmentStrategy::ExactEmpty;
+            plan.reason = "every member's density is ≤ 0 over this piece (proved by interval range)";
+            continue;
+        }
+        if (ray.incidentSourceActive) { general("incident light varies along the ray"); continue; }
+        if (!gateOpen) { general("first sample too close to the eye for the direction gates"); continue; }
+        bool ok = true;
+        for (std::size_t j = 0; j < members.size() && ok; ++j) {
+            if (!active[j]) continue;
+            const auto& f = *members[j].forms;
+            std::string why;
+            const ConstantChannel pieceConstant = [&](const VolumeRayChannelForm& c, int component,
+                                                      const char* what, std::string& reason) -> std::optional<double> {
+                const auto it = memberEvals[j].index.find(&c);
+                if (it == memberEvals[j].index.end()) {
+                    reason = std::string(what) + " has no admitted algebraic form on this ray";
+                    return std::nullopt;
+                }
+                const auto& ev = *evaluators[it->second];
+                const uint32_t root = ev.form().roots[static_cast<std::size_t>(component)];
+                if (!ev.constantUnder(root, piece.signs[it->second])) {
+                    reason = std::string(what) + " varies on this piece";
+                    return std::nullopt;
+                }
+                const auto v = ev.value(root, mid);
+                if (!v || !std::isfinite(*v)) { reason = std::string(what) + " undefined on this piece"; return std::nullopt; }
+                return v;
+            };
+            const auto density = pieceConstant(f.density, 0, "density", why);
+            if (!density) { general(why); ok = false; break; }
+            const double d = std::max(*density, 0.0);
+            if (!(d > 0.0)) continue;   // exactly constant and non-positive: does not participate
+            if (!accumulateConstantMember(f, d, pieceConstant, plan, why)) { general(why); ok = false; }
+        }
+        if (!ok) continue;
+        if (plan.participatingMembers == 0) {
+            plan.strategy = VolumeSegmentStrategy::ExactEmpty;
+            plan.reason = "every active member's density is exactly constant and ≤ 0 on this piece";
+            continue;
+        }
+        if (!finiteTransport(plan)) { general("non-finite constant transport coefficients"); continue; }
+        plan.strategy = VolumeSegmentStrategy::ConstantClosedForm;
+        plan.reason = "every participating channel's surviving branch is exactly constant on this piece";
+    }
+
+    // Assign each accepted-lattice sample to the piece containing it (pieces
+    // are closed, contiguous and ordered; a shared endpoint satisfies both).
+    std::size_t p = 0;
+    for (uint32_t i = 0; i < span.count; ++i) {
+        const double s = span.firstSample + span.step * double(i);
+        while (p + 1 < pieces.size() && s > pieces[p].s1) ++p;
+        const auto& plan = plans[p];
+        if (!schedule.runs.empty() && samePlan(schedule.runs.back().plan, plan) &&
+            schedule.runs.back().firstSample + schedule.runs.back().sampleCount == i) {
+            ++schedule.runs.back().sampleCount;
+        } else {
+            schedule.runs.push_back({i, 1u, plan});
+        }
+        switch (plan.strategy) {
+            case VolumeSegmentStrategy::ExactEmpty: ++schedule.emptySamples; break;
+            case VolumeSegmentStrategy::ConstantClosedForm: ++schedule.constantSamples; break;
+            case VolumeSegmentStrategy::GeneralLattice: ++schedule.generalSamples; break;
+        }
+    }
+    return schedule;
+}
+
+void executeVolumeSchedule(const VolumeSegmentSchedule& schedule, const VolumeLatticeSpan& span,
+                           bool outputBudgetZero, VolumeTransportState& state,
+                           const VolumeLatticeRunner& lattice) {
+    for (const auto& run : schedule.runs) {
+        if (state.terminated) return;
+        if (run.plan.strategy == VolumeSegmentStrategy::GeneralLattice) {
+            lattice(run.firstSample, run.sampleCount, state);
+            continue;
+        }
+        const VolumeLatticeSpan sub{span.firstSample + span.step * double(run.firstSample), span.step, run.sampleCount};
+        executeVolumeSegment(run.plan, sub, outputBudgetZero, state);
+    }
 }
 
 } // namespace Rendering

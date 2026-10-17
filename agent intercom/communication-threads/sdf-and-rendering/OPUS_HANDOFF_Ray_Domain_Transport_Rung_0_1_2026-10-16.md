@@ -39,3 +39,32 @@ The handoff questions Zach listed are answered one by one in the plan's §8.
 Prism, your sentence carried the work, and I tried to keep it literal: *do not simplify reality by erasing distinctions; simplify execution by understanding those distinctions deeply enough to compile unnecessary work away.* Density, extinction, scattering, chroma, phase and emission still each answer to their own revision and their own binding. Only their execution learned to be quiet where the mathematics proves there is nothing left to say.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-16T16:09-07:00 (PDT). Human origin: Zachary Zhang (both canons, this commission); canon text: revived Original Prism Sun (GPT-5.6 Sol).
+
+---
+
+## Continuation — Rung 2: radial-piecewise segmentation (2026-10-17)
+
+**From:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` (same session, next day)
+
+Zach answered the census in four words, "LETS GOOO do NEXT RUNG radial piecewise segmentation", and the rung is built. Full contract and findings: [Rung 2 plan](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md).
+
+**What exists now.**
+- OntoMath restricts sqrt/abs/min/max/clamp and bounded Piecewise over Rung 0 polynomials into a piecewise-algebraic line form. Each branch declares its switching function. `Length(p − c)` becomes `sqrt(quadratic)`, with no switch at all.
+- `segmentLine` proves sign regions by interval branch-and-bound, pruning switches that a saturated clamp hides.
+- The Screen schedule turns each piece into a run over the *unchanged* lattice: exact-empty (skip), constant (Rung 1 closed form) or general. Uncertain slivers around roots, and any refused channel, keep the lattice.
+
+**What the witnesses caught.**
+1. A grazing ray (distance 2.06 against radius 2) could not be decided by plain interval Horner. The dependency problem widens like `|s|·w`. A centered (Taylor-shifted) enclosure with a double-precision error bound fixed it.
+2. My own Rung 1 Perlin fixture used `"variableName"` where the codec says `"var"`, so it was refusing a nameless leaf, not Noise. It is corrected.
+3. `ScalarForm::evalRange(constant 0.1)` is the float point `0.1f`, which excludes the double. That is an observation for the proof owners; Rung 2 does not lean on it.
+
+**What the real media say.** 12 of 32 densities are admitted. On them, 69.8% of random-ray lattice samples are *proved* empty, re-checked with 0 violations over 73,728 samples. The existing zero-proof grid proves **0 cells** for the same twelve, because `evalRange` deliberately does not admit Length/Distance (the Oct 15 Euclidean scope decision). The remaining 20 refuse first on Perlin (7), `sin`/`cos` of space (10), division by a non-constant (2) and `x^1.8` (1).
+
+**For the next agent (Jules especially) — pitfalls.**
+- CPU scheduling costs ~0.2 ms per ray in Debug and ~34 µs in Release, about 70 s per 1080p frame on one core. **Do not** port branch-and-bound into the fragment shader. Rung 2b should emit closed-form sphere/ray roots per member: one quadratic, cheaper than one density evaluation.
+- Support intervals trim traversal *inside* authored boxes. They never move box events or sample spacing. Widen f32 roots outward: an inward root silences a medium.
+- Strict signs on Piecewise bounds are deliberate. The CPU's include flags and the emitter's `>=`/`<=` disagree exactly there.
+- `undefinedAsZero` is a channel decision (the volume emitter's no-match 0), never OntoMath's default.
+- There is still no renderer consumer, GPU evidence or frame claim.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Human origin: Zachary Zhang.

@@ -169,4 +169,155 @@ std::optional<std::vector<ScalarForm>> collectPowers(const ScalarForm& form,
                                                      const std::string& parameter,
                                                      std::string* why = nullptr);
 
+// ============================================================================
+// Rung 2 — piecewise-algebraic line restriction and sound line segmentation.
+//
+// The polynomial class above cannot hold the operations real authored media
+// are made of: the 2026-10-16 census of saves/zones found 30 of 32 densities
+// stopping at Clamp, with Length/Distance/Sqrt beneath most of them. On a line
+// those are still exactly structured:
+//   |o + s·d − c|                 = sqrt(Q(s)),  Q a polynomial (quadratic if affine)
+//   abs / min / max / clamp / bounded Piecewise
+//                                 = one algebraic branch on each region where a
+//                                   SWITCHING FUNCTION g(s) keeps its sign.
+// A LineAlgebraicForm is a small node arena whose leaves are the Rung 0
+// polynomial forms (still symbolic in o/d, authored-revision lifetime). Each
+// branch node declares its switching functions. Mirrored semantics
+// (MathNode::evaluate / the WGSL emitter):
+//   Sqrt(a)        sqrt(max(a, 0))            switch a          (none for Length/Distance:
+//                                                                a sum of squares is ≥ 0)
+//   Abs(a)         |a|                        switch a
+//   Min/Max(a,b)   Union / Intersection       switch a − b      (Difference = max(a, −b))
+//   Clamp(a,lo,hi) std::clamp, lo ≤ hi pure constants only (std::clamp is
+//                  undefined for lo > hi)     switches a − lo, a − hi
+//   Select         a Piecewise with interval bounds on its input variable, first
+//                  match wins, pieces after the first unbounded one never
+//                  reached (exactly where emitPiecewise stops); no match is
+//                  Undefined — the CPU says nullopt, the emitter says 0, and
+//                  OntoMath refuses to choose: a channel binding decides.
+//                  Switches sel − lo, hi − sel, STRICT (the emitter's >=/<= and
+//                  the CPU's include flags differ exactly at the bound, and a
+//                  Piecewise is discontinuous there, so no piece may claim it).
+// Continuous branches use non-strict signs: at g = 0 both branches agree.
+//
+// Still refused: Noise, sin/cos/exp/ln of a bound coordinate, Tan, Map, SDF,
+// Gradient, matrix ops, guards, calls, folds, pieces without a MathNode, vector
+// Clamp/Sqrt/Pow, Clamp with non-constant or inverted bounds, and a Piecewise
+// whose input variable is the vector point.
+// Claude Code · Claude Opus 5.5 · session_01HvZSR64QghrdyCpq2M7qvX · 2026-10-17.
+// ============================================================================
+
+struct LineAlgebraicNode {
+    // Kernel IR, never serialized: free to grow, unlike MathNode::Op.
+    enum class Kind : uint8_t { Polynomial, Add, Sub, Mul, Sqrt, Abs, Min, Max, Clamp, Select, Undefined };
+    struct Piece {
+        bool hasLo = false, hasHi = false;
+        double lo = 0.0, hi = 0.0;
+        uint32_t value = 0;
+    };
+    Kind kind = Kind::Polynomial;
+    LineRestrictedForm polynomial;   // Polynomial: the value; Select: the selector
+    uint32_t a = 0, b = 0;           // operands
+    double lo = 0.0, hi = 0.0;       // Clamp bounds
+    bool nonnegativeArgument = false; // Sqrt of a sum of squares: no switch
+    std::vector<Piece> pieces;       // Select, authored order
+    uint32_t switchBegin = 0, switchCount = 0;
+};
+
+struct LineSwitch {
+    uint32_t node = 0;
+    // 0: a (Sqrt/Abs)   1: a − b (Min/Max)   2: a − lo   3: a − hi (Clamp)
+    // 4 + 2i: sel − lo_i   5 + 2i: hi_i − sel (Select piece i)
+    uint32_t role = 0;
+    bool strict = false;
+};
+
+struct LineAlgebraicForm {
+    std::vector<LineAlgebraicNode> nodes;
+    std::vector<uint32_t> roots;       // one for a scalar channel, three for vec3
+    std::vector<LineSwitch> switches;
+    std::set<std::string> reads;       // every symbol any leaf or selector reads
+    bool polynomialOnly() const;
+};
+
+struct LineAlgebraicRestriction {
+    std::optional<LineAlgebraicForm> form;
+    std::string refusal;
+    explicit operator bool() const { return form.has_value(); }
+};
+
+LineAlgebraicRestriction restrictAlgebraicToLine(const MathNode& node, bool vectorValued,
+                                                 const std::string& pointVariable = kAmbientPointVar);
+LineAlgebraicRestriction restrictAlgebraicToLine(const Piecewise& model, bool vectorValued,
+                                                 const std::string& pointVariable = kAmbientPointVar);
+
+// RAY tier: one LineAlgebraicForm bound to one concrete line. Construction
+// evaluates every polynomial coefficient once (double value plus a sound
+// enclosure from a forward-error bound — deliberately NOT ScalarForm::evalRange,
+// whose constant terms are float points that need not contain the double
+// coefficient). Signs vectors are indexed like form.switches: 0 undecided,
+// +1 g ≥ 0 (> 0 when strict), −1 g ≤ 0 (< 0 when strict).
+class LineAlgebraicEvaluator {
+public:
+    // undefinedAsZero is a CHANNEL decision (the volume emitter returns 0 when no
+    // piece matches); OntoMath's own default keeps Undefined undefined.
+    LineAlgebraicEvaluator(const LineAlgebraicForm& form, std::map<std::string, double> bindings,
+                           bool undefinedAsZero = false);
+    bool ok() const { return _refusal.empty(); }
+    const std::string& refusal() const { return _refusal; }
+    const LineAlgebraicForm& form() const { return *_form; }
+
+    // Point value with the authored semantics; nullopt when Undefined.
+    std::optional<double> value(uint32_t node, double s) const;
+    // Sound enclosure of the real value over s ∈ [s0, s1] under decided signs.
+    // *undefined is set when Undefined may be selected somewhere in the range.
+    Interval range(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs,
+                   bool* undefined) const;
+    Interval switchRange(std::size_t k, double s0, double s1, const std::vector<int8_t>& signs,
+                         bool* undefined) const;
+    // Proved constant over the whole region the signs describe: every surviving
+    // polynomial leaf vanishes exactly in degree ≥ 1 on this line.
+    bool constantUnder(uint32_t node, const std::vector<int8_t>& signs) const;
+    // Undecided switches that can still change the value under these signs
+    // (a saturated clamp hides everything beneath it).
+    void relevantUndecided(uint32_t node, const std::vector<int8_t>& signs,
+                           std::vector<uint32_t>& out) const;
+
+private:
+    Interval rangeAt(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs, bool* undefined) const;
+    // Centered (Taylor-shifted) enclosure of a polynomial node over [s0, s1]:
+    // re-expanded about the midpoint in double with an explicit forward-error
+    // bound, then evaluated over h ∈ [s0 − m, s1 − m]. Plain Horner over [s0, s1]
+    // widens like |s|·w (the dependency problem) and could not decide a grazing
+    // sphere/ray switch; the centered form widens like |f′(m)|·w.
+    Interval polynomialRange(uint32_t node, double s0, double s1) const;
+    const LineAlgebraicForm* _form;
+    std::map<std::string, double> _bindings;
+    bool _undefinedAsZero;
+    std::vector<std::vector<double>> _coefficients;    // per node (Polynomial value / Select selector)
+    std::vector<std::vector<double>> _errors;          // absolute error bound per coefficient
+    std::string _refusal;
+};
+
+// Partition [s0, s1] into pieces on which every RELEVANT switch of every
+// evaluator has a proved sign ("definite"), plus narrow pieces no wider than
+// `resolution` that still straddle a possible switch ("uncertain" — the exact
+// evaluator must run there). Interval branch-and-bound over OntoMath::Interval;
+// a piece is only ever called definite by proof, never by sampling. Pieces are
+// contiguous, ordered, and cover [s0, s1]. maxRangeEvaluations is a Kernel
+// budget: when exhausted, the remainder is uncertain (exact fallback).
+struct LineSegmentationPiece {
+    double s0 = 0.0, s1 = 0.0;
+    bool definite = false;
+    std::vector<std::vector<int8_t>> signs;   // per evaluator
+};
+struct LineSegmentationStats {
+    uint32_t rangeEvaluations = 0;
+    bool budgetExhausted = false;
+};
+std::vector<LineSegmentationPiece> segmentLine(const std::vector<const LineAlgebraicEvaluator*>& evaluators,
+                                               double s0, double s1, double resolution,
+                                               LineSegmentationStats* stats = nullptr,
+                                               uint32_t maxRangeEvaluations = 1u << 16);
+
 } // namespace OntoMath
