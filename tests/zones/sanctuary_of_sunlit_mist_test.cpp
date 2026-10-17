@@ -44,30 +44,34 @@ int main() {
         return 1;
     }
 
-    // Ensure SaveSystem saveRoot points to the containing saves directory
-    const auto absWorld = std::filesystem::absolute(worldSavePath);
-    const auto savesDir = absWorld.parent_path().parent_path();
-    SaveSystem::setSaveRoot(savesDir.string());
+    const std::string beforeTreeHash =
+        TestSupport::hashDirectoryTree("saves/zones") + "|" +
+        TestSupport::hashDirectoryTree("saves/homes");
+    bool guardedSectionThrew = false;
+    std::string guardedSectionException;
 
-    ZoneManager mgr;
-    Core::Camera camera;
-    MouseHandler mouse;
-    LawManager laws;
-    Soul soul("Player");
-    Body body("humanoid", "default");
-    Person player(std::move(soul), std::move(body), "default");
-    float color[3] = {1.0f, 1.0f, 1.0f};
-    double worldTime = 0.0;
+    try {
+        TestSupport::RealSaveTreeGuard realTreeGuard(worldSavePath);
 
-    SaveContext ctx;
-    ctx.camera = &camera;
-    ctx.mouseHandler = &mouse;
-    ctx.currentColor = color;
-    ctx.person = &player;
-    ctx.lawManager = &laws;
-    ctx.worldTime = &worldTime;
+        ZoneManager mgr;
+        Core::Camera camera;
+        MouseHandler mouse;
+        LawManager laws;
+        Soul soul("Player");
+        Body body("humanoid", "default");
+        Person player(std::move(soul), std::move(body), "default");
+        float color[3] = {1.0f, 1.0f, 1.0f};
+        double worldTime = 0.0;
 
-    mgr.loadState(worldSavePath, ctx);
+        SaveContext ctx;
+        ctx.camera = &camera;
+        ctx.mouseHandler = &mouse;
+        ctx.currentColor = color;
+        ctx.person = &player;
+        ctx.lawManager = &laws;
+        ctx.worldTime = &worldTime;
+
+        mgr.loadState(worldSavePath, ctx);
 
     check(!mgr.zones().empty(), "zones loaded from sanctuary save");
     if (mgr.zones().empty()) {
@@ -158,6 +162,25 @@ int main() {
     check(findObj("mist.sanctuary.altar_table") != nullptr, "altar table object exists");
     check(findObj("mist.sanctuary.clerestory_lintel") != nullptr, "clerestory lintel object exists");
     check(findObj("mist.sanctuary.stele") != nullptr, "physics stele object exists");
+
+    } catch (const std::exception& e) {
+        guardedSectionThrew = true;
+        guardedSectionException = e.what();
+    } catch (...) {
+        guardedSectionThrew = true;
+        guardedSectionException = "non-std::exception thrown";
+    }
+
+    check(!guardedSectionThrew,
+          std::string("the guarded section completed without throwing") +
+              (guardedSectionThrew ? (" (threw: " + guardedSectionException + ")") : ""));
+
+    const std::string afterTreeHash =
+        TestSupport::hashDirectoryTree("saves/zones") + "|" +
+        TestSupport::hashDirectoryTree("saves/homes");
+    check(afterTreeHash == beforeTreeHash,
+          "saves/zones and saves/homes hash byte-identical after the guarded section — "
+          "the real identity tree was restored, even if the section above threw");
 
     std::cout << "------------------------------------------------------------\n";
     std::cout << g_checks - g_failures << "/" << g_checks << " checks passed\n";
