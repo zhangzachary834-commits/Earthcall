@@ -4,7 +4,11 @@
 #include "Singularity/Foreign/Web/Designer/WebDesignerChannel.hpp"
 #include "Singularity/Storage/VirtualFileSystem.hpp"
 #include "Singularity/Storage/FileChannel.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
+#include "Relation/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "Person/Person.hpp"
@@ -30,22 +34,30 @@ static Person& getTestPerson() {
     return s_person;
 }
 
+static void setupAuthoredVocabulary(Person& author, LawManager& laws, Formation& formation) {
+    WebDesignerMetalaws::authorVocabulary(author, laws, &formation);
+    Universe::instance().setRelationProvider([&formation](std::vector<Relation*>& out) {
+        for (const auto& r : formation.relations().getAll()) {
+            out.push_back(r.get());
+        }
+    });
+}
+
+static void teardownVocabulary() {
+    Universe::instance().setRelationProvider(nullptr);
+}
+
 void test_lexeme_resolution() {
     std::cout << "[Test 1] Lexeme & Relation In-World Resolution..." << std::endl;
 
     LawManager laws;
-    // In accordance with Refusal 5 and Sun's instruction:
-    // Built-in substrate vocabulary takes NO author parameter. Runtime initializer is not human author.
-    WebDesignerMetalaws::syncRegister(laws);
+    Person& author = getTestPerson();
+    Formation formation;
+    WebDesignerMetalaws::authorVocabulary(author, laws, &formation);
 
-    // Verify seeded in-world Lexemes
-    const auto& lexemes = WebDesignerMetalaws::seededLexemes();
-    assert(!lexemes.empty());
-
-    // Verify seeded "denotes" Relations linking Lexemes to Laws
-    const auto& relations = WebDesignerMetalaws::seededRelations();
+    // Verify in-world Lexemes and "denotes" Relations in formation
+    const auto& relations = formation.relations().getAll();
     assert(!relations.empty());
-    assert(relations.size() == lexemes.size());
 
     // Find heading Lexeme and its relation
     bool foundHeading = false;
@@ -57,17 +69,17 @@ void test_lexeme_resolution() {
             foundHeading = true;
             assert(rel->b() != nullptr);
             assert(rel->b()->getIdentifier() == "law.concept.role.heading");
-            // Built-in substrate laws must NOT have human authors attached
             const auto* law = dynamic_cast<const Law*>(rel->b());
             assert(law != nullptr);
-            assert(!law->isAuthored());
-            assert(law->authors().getMembers().empty());
+            assert(law->isAuthored());
+            assert(law->authors().getMembers().size() == 1);
+            assert(law->authors().getMembers()[0] == &author);
         }
     }
     assert(foundHeading);
 
     std::cout << "  ✓ All Lexemes, Laws, and denotes Relations seeded and linked correctly" << std::endl;
-    std::cout << "  ✓ Built-in substrate vocabulary is unauthored infrastructure (no fake author)" << std::endl;
+    std::cout << "  ✓ Authored vocabulary has explicit Person stewardship (Zach)" << std::endl;
 }
 
 void test_metalaw_composition() {
@@ -75,10 +87,11 @@ void test_metalaw_composition() {
 
     LawManager laws;
     Person& author = getTestPerson();
+    Formation formation;
+    setupAuthoredVocabulary(author, laws, formation);
+
     Object channelTarget;
     channelTarget.setObjectID("test-channel-target");
-
-    WebDesignerMetalaws::syncRegister(laws);
 
     // 1. "a large centered heading"
     {
@@ -124,6 +137,7 @@ void test_metalaw_composition() {
         assert(c.elevation == SurfaceElevation::Subtle);
     }
 
+    teardownVocabulary();
     std::cout << "  ✓ Universal concepts composed orthogonally onto target Singular" << std::endl;
 }
 
@@ -132,8 +146,13 @@ void test_relational_ordering_and_provenance() {
 
     LawManager laws;
     Person& author = getTestPerson();
+    Formation formation;
+    setupAuthoredVocabulary(author, laws, formation);
+
     WebDesignerChannel channel;
-    WebDesignerMetalaws::syncRegister(laws);
+    for (const auto& r : formation.relations().getAll()) {
+        channel.addRelation(r);
+    }
 
     // Create container
     auto grid = channel.authorElementFromPhrase("items-grid", "container grid spacing normal", "", &author, &laws);
@@ -144,8 +163,7 @@ void test_relational_ordering_and_provenance() {
     auto cardB = channel.authorElementFromPhrase("card-b", "card rounded subtle", "Beta Item", &author, &laws);
     auto cardC = channel.authorElementFromPhrase("card-c", "card rounded subtle", "Gamma Item", &author, &laws);
 
-    // 1. Verify Real Earthcall Authorship Provenance Relation (Mandate 6)
-    // The author endpoint MUST be the actual live Person, NEVER a Zach Plush!
+    // 1. Verify Real Earthcall Authorship Provenance Relation
     bool foundAuthRelA = false;
     for (const auto& rel : channel.getRelations()) {
         if (rel->type == WebRelationType::kAuthoredBy && rel->a() == cardA.get() && rel->b() == &author) {
@@ -157,13 +175,12 @@ void test_relational_ordering_and_provenance() {
     }
     assert(foundAuthRelA);
 
-    // 2. Add containment relations (arbitrary order)
+    // 2. Add containment relations
     channel.relateContains(grid, cardA);
     channel.relateContains(grid, cardB);
     channel.relateContains(grid, cardC);
 
-    // 3. Assert Topological Ordering via "precedes" relations (Mandate 7):
-    // Desired sequence: Card C precedes Card A, Card A precedes Card B (C -> A -> B)
+    // 3. Assert Topological Ordering via "precedes" relations: C -> A -> B
     channel.relatePrecedes(cardC, cardA);
     channel.relatePrecedes(cardA, cardB);
 
@@ -182,6 +199,7 @@ void test_relational_ordering_and_provenance() {
     assert(posC < posA);
     assert(posA < posB);
 
+    teardownVocabulary();
     std::cout << "  ✓ Sibling sequence derived strictly from precedes Relation topology" << std::endl;
     std::cout << "  ✓ Provenance relation authored-by verified on authored element" << std::endl;
 }
@@ -191,12 +209,17 @@ void test_thin_realizer_and_authored_theme() {
 
     LawManager laws;
     Person& author = getTestPerson();
+    Formation formation;
+    setupAuthoredVocabulary(author, laws, formation);
+
     WebDesignerChannel channel;
-    WebDesignerMetalaws::syncRegister(laws);
+    for (const auto& r : formation.relations().getAll()) {
+        channel.addRelation(r);
+    }
 
     auto page = channel.authorElementFromPhrase("themed-page", "page vertical", "", &author, &laws);
 
-    // Author theme tokens on root Singular (Mandate 8)
+    // Author theme tokens on root Singular
     page->setDynamicProperty("theme.primaryColor", PropertyValue(std::string("#10b981")));
     page->setDynamicProperty("theme.backgroundColor", PropertyValue(std::string("#020617")));
     page->setDynamicProperty("theme.radius", PropertyValue(std::string("1.25rem")));
@@ -210,10 +233,11 @@ void test_thin_realizer_and_authored_theme() {
     assert(html.find("--web-bg: #020617;") != std::string::npos);
     assert(html.find("--web-radius: 1.25rem;") != std::string::npos);
 
-    // Verify Mandate 11: NO unauthored #earthcall-feedback toast in CSS or JS!
+    // Verify NO unauthored feedback toast substrate
     assert(html.find("#earthcall-feedback") == std::string::npos);
     assert(html.find("showFeedback") == std::string::npos);
 
+    teardownVocabulary();
     std::cout << "  ✓ Authored theme tokens emitted into :root CSS" << std::endl;
     std::cout << "  ✓ Unauthored feedback toast substrate completely removed" << std::endl;
 }
@@ -223,12 +247,15 @@ void test_extensibility_exit_test() {
 
     LawManager laws;
     Person& author = getTestPerson();
+    Formation formation;
+    setupAuthoredVocabulary(author, laws, formation);
+
     Object target;
     target.setObjectID("target-sanctuary");
 
     // Introduce a brand-new semantic concept: "sanctuary" as role, and "ethereal" as surface variant.
     // NEITHER "sanctuary" nor "ethereal" exists in any C++ enum!
-    auto lexSanctuary = std::make_shared<Singularity::Language::Lexeme>("sanctuary", "lexeme.custom.sanctuary");
+    auto lexSanctuary = Singularity::Language::LanguageSystem::instance().intern("sanctuary", "lexeme.custom.sanctuary");
     auto lawSanctuary = std::make_shared<Law>("law.custom.sanctuary", std::vector<Singular*>{&author});
     lawSanctuary->setActionModel(ActionNode::sequence({
         ActionNode::set("role", PropertyValue(std::string("sanctuary"))),
@@ -240,7 +267,7 @@ void test_extensibility_exit_test() {
     // Connect Lexeme <---denotes---> Law
     auto rel = std::make_shared<Relation>("denotes", *lexSanctuary, *lawSanctuary, true, 1.0f);
 
-    // Compile phrase incorporating the custom concept and universal modifiers
+    // Compile phrase incorporating custom concept and universal modifiers
     std::string err;
     WebConcept compiled = WebDesignerMetalaws::compilePhrase(
         "a sanctuary centered generous", laws, target, &err, {rel.get()});
@@ -262,6 +289,7 @@ void test_extensibility_exit_test() {
     assert(html.find("web-prominence--luminous") != std::string::npos);
     assert(html.find("data-being-id=\"custom-sanctuary-1\"") != std::string::npos);
 
+    teardownVocabulary();
     std::cout << "  ✓ Brand new semantic concept authored purely via in-world Lexeme & Law" << std::endl;
     std::cout << "  ✓ Zero C++ enum modifications required for new concept" << std::endl;
 }
@@ -271,16 +299,24 @@ void test_vfs_and_file_channel_storage() {
 
     LawManager laws;
     Person& author = getTestPerson();
+    Formation formation;
+    setupAuthoredVocabulary(author, laws, formation);
+
     WebDesignerChannel channel;
-    WebDesignerMetalaws::syncRegister(laws);
+    for (const auto& r : formation.relations().getAll()) {
+        channel.addRelation(r);
+    }
 
     auto page = channel.authorElementFromPhrase("vfs-page", "page vertical", "", &author, &laws);
     auto heading = channel.authorElementFromPhrase("vfs-title", "heading large bold centered", "VFS Storage Test", &author, &laws);
     channel.relateContains(page, heading);
 
-    // 1. Save to in-memory VFS URI (zero disk I/O)
-    std::string memUri = "memory://web_designer/test_site.html";
+    // 1. Pure realization: generate HTML without touching storage
     std::string html = channel.realize(*page);
+    assert(!html.empty());
+
+    // 2. Save to in-memory VFS URI via VirtualFileSystem directly
+    std::string memUri = "memory://web_designer/test_site.html";
     bool memOk = Singularity::Storage::VirtualFileSystem::instance().writeMemoryFile(memUri, html);
     assert(memOk);
     assert(Singularity::Storage::VirtualFileSystem::instance().memoryFileExists(memUri));
@@ -290,7 +326,7 @@ void test_vfs_and_file_channel_storage() {
     assert(readOk);
     assert(memContent.find("VFS Storage Test") != std::string::npos);
 
-    // 2. Decoupled Storage: Save to persistent physical path via FileChannel directly
+    // 3. Decoupled Storage: Save to persistent physical path via FileChannel directly
     std::string filePath = "saves/web_designer/test_governed_vfs.html";
     Singularity::Storage::FileChannel fc;
     PropertyPath::parse("file.path").setValue(fc, PropertyValue(filePath));
@@ -302,10 +338,8 @@ void test_vfs_and_file_channel_storage() {
     assert(std::filesystem::file_size(filePath) > 200);
     std::filesystem::remove(filePath);
 
-    // 3. Also verify saveToVfs convenience method on channel
-    bool saveOk = channel.saveToVfs(*page, memUri, &laws);
-    assert(saveOk);
-
+    teardownVocabulary();
+    std::cout << "  ✓ Pure realization decoupled from storage" << std::endl;
     std::cout << "  ✓ In-memory VFS (memory://) write verified without disk I/O" << std::endl;
     std::cout << "  ✓ Decoupled FileChannel storage verified without raw std::ofstream" << std::endl;
 }
@@ -315,15 +349,20 @@ void test_law_driven_behavior() {
 
     LawManager laws;
     Person& author = getTestPerson();
+    Formation formation;
+    setupAuthoredVocabulary(author, laws, formation);
+
     WebDesignerChannel channel;
-    WebDesignerMetalaws::syncRegister(laws);
+    for (const auto& r : formation.relations().getAll()) {
+        channel.addRelation(r);
+    }
     laws.connectToEventBus();
 
     auto page = channel.authorElementFromPhrase("page-root", "page vertical", "", &author, &laws);
     auto btn = channel.authorElementFromPhrase("theme-btn", "button rounded primary", "Toggle Theme", &author, &laws);
     btn->setDynamicProperty("web.action.event", PropertyValue(std::string("theme-toggled")));
 
-    channel.relateContains(page, btn, 1);
+    channel.relateContains(page, btn);
 
     // Initial state
     std::string btnMarkupInitial = WebRealizer::realizeElement(*btn, channel.getRelations(), 0);
@@ -355,35 +394,40 @@ void test_law_driven_behavior() {
     std::string btnMarkupUpdated = WebRealizer::realizeElement(*btn, channel.getRelations(), 0);
     assert(btnMarkupUpdated.find("web-surface--secondary") != std::string::npos);
 
+    teardownVocabulary();
     std::cout << "  ✓ Web actions dispatched to EventBus, triggered Laws, and re-realized truthfully" << std::endl;
 }
 
 void test_end_to_end_prototype_generation() {
-    std::cout << "[Test 8] End-to-End Frontend Website Prototype Generation..." << std::endl;
+    std::cout << "[Test 8] End-to-End Real Frontend Website Prototype..." << std::endl;
 
     LawManager laws;
     Person& author = getTestPerson();
+    Formation formation;
+    setupAuthoredVocabulary(author, laws, formation);
+
     WebDesignerChannel channel;
-    WebDesignerMetalaws::syncRegister(laws);
+    for (const auto& r : formation.relations().getAll()) {
+        channel.addRelation(r);
+    }
 
     // 1. Root Page
-    auto page = channel.authorElementFromPhrase("earthcall-prototype", "page vertical", "", &author, &laws);
-    page->setDynamicProperty("theme.primaryColor", PropertyValue(std::string("#38bdf8")));
-    page->setDynamicProperty("theme.backgroundColor", PropertyValue(std::string("#0b0f19")));
+    auto page = channel.authorElementFromPhrase("ourverse-site", "page vertical", "", &author, &laws);
+    page->setDynamicProperty("theme.primaryColor", PropertyValue(std::string("#3b82f6")));
+    page->setDynamicProperty("theme.backgroundColor", PropertyValue(std::string("#090d16")));
+    page->setDynamicProperty("theme.textColor", PropertyValue(std::string("#f8fafc")));
     page->setDynamicProperty("theme.radius", PropertyValue(std::string("0.75rem")));
 
-    // 2. Navigation Landmark
-    auto nav = channel.authorElementFromPhrase("navbar", "navigation horizontal between align center", "", &author, &laws);
-    auto brand = channel.authorElementFromPhrase("nav-brand", "heading normal bold", "Earthcall Ourverse", &author, &laws);
-    auto navLinks = channel.authorElementFromPhrase("nav-links", "container horizontal spacing relaxed align center", "", &author, &laws);
+    // 2. Navigation Bar
+    auto nav = channel.authorElementFromPhrase("site-nav", "navigation horizontal between align center", "", &author, &laws);
+    auto navBrand = channel.authorElementFromPhrase("nav-brand", "heading normal bold", "Earthcall Ourverse", &author, &laws);
+    auto navLinks = channel.authorElementFromPhrase("nav-links", "container horizontal spacing normal align center", "", &author, &laws);
     auto l1 = channel.authorElementFromPhrase("nav-link-manifesto", "link normal", "Manifesto", &author, &laws);
     l1->setDynamicProperty("action.href", PropertyValue(std::string("#manifesto")));
     auto l2 = channel.authorElementFromPhrase("nav-link-ontology", "link normal", "Ontology", &author, &laws);
     l2->setDynamicProperty("action.href", PropertyValue(std::string("#ontology")));
-    auto l3 = channel.authorElementFromPhrase("nav-link-laws", "link normal", "Living Laws", &author, &laws);
+    auto l3 = channel.authorElementFromPhrase("nav-link-laws", "link normal", "Laws", &author, &laws);
     l3->setDynamicProperty("action.href", PropertyValue(std::string("#laws")));
-    auto navCta = channel.authorElementFromPhrase("nav-cta", "button rounded primary", "Enter Ourverse", &author, &laws);
-    navCta->setDynamicProperty("action.event", PropertyValue(std::string("enter-ourverse")));
 
     channel.relateContains(navLinks, l1);
     channel.relateContains(navLinks, l2);
@@ -391,11 +435,9 @@ void test_end_to_end_prototype_generation() {
     channel.relatePrecedes(l1, l2);
     channel.relatePrecedes(l2, l3);
 
-    channel.relateContains(nav, brand);
+    channel.relateContains(nav, navBrand);
     channel.relateContains(nav, navLinks);
-    channel.relateContains(nav, navCta);
-    channel.relatePrecedes(brand, navLinks);
-    channel.relatePrecedes(navLinks, navCta);
+    channel.relatePrecedes(navBrand, navLinks);
 
     // 3. Hero Section
     auto hero = channel.authorElementFromPhrase("hero-section", "section vertical centered generous hero", "", &author, &laws);
@@ -491,7 +533,7 @@ void test_end_to_end_prototype_generation() {
     channel.relateContains(demoSec, demoCard);
     channel.relatePrecedes(demoTitle, demoCard);
 
-    // 6. Subordinated Notes Section (exercising 'subordinate' and 'quiet')
+    // 6. Subordinated Notes Section
     auto notesSec = channel.authorElementFromPhrase("notes-section", "section vertical centered relaxed", "", &author, &laws);
     auto noteText = channel.authorElementFromPhrase("subordinate-note", "paragraph small quiet centered subordinate",
         "Note: This website is rendered as an ephemeral realization target of living Earthcall world state.", &author, &laws);
@@ -534,14 +576,27 @@ void test_end_to_end_prototype_generation() {
     channel.relatePrecedes(notesSec, quoteSec);
     channel.relatePrecedes(quoteSec, footer);
 
-    // Realize and export via VFS
+    // Pure realization of the document
     RealizeOptions opts;
     opts.title = "Earthcall Ourverse — Law-Authored Web Designer Prototype";
     opts.metaDescription = "A genuine frontend prototype authored entirely by Earthcall Laws and Lexemes.";
 
-    bool ok1 = channel.saveToVfs(*page, "web_ui/designer_prototype.html", &laws, opts);
+    std::string html = WebRealizer::realizeFullDocument(*page, channel.getRelations(), opts);
+    assert(!html.empty());
+
+    // Decoupled storage: Save via FileChannel directly
+    Singularity::Storage::FileChannel fc1;
+    PropertyPath::parse("file.path").setValue(fc1, PropertyValue(std::string("web_ui/designer_prototype.html")));
+    PropertyPath::parse("file.content").setValue(fc1, PropertyValue(html));
+    PropertyPath::parse("file.atomicWrite").setValue(fc1, PropertyValue(true));
+    bool ok1 = fc1.executeWrite();
     assert(ok1);
-    bool ok2 = channel.saveToVfs(*page, "saves/web_designer/prototype.html", &laws, opts);
+
+    Singularity::Storage::FileChannel fc2;
+    PropertyPath::parse("file.path").setValue(fc2, PropertyValue(std::string("saves/web_designer/prototype.html")));
+    PropertyPath::parse("file.content").setValue(fc2, PropertyValue(html));
+    PropertyPath::parse("file.atomicWrite").setValue(fc2, PropertyValue(true));
+    bool ok2 = fc2.executeWrite();
     assert(ok2);
 
     // Verify files exist and are substantial
@@ -549,6 +604,7 @@ void test_end_to_end_prototype_generation() {
     assert(std::filesystem::file_size("web_ui/designer_prototype.html") > 5000);
     assert(std::filesystem::exists("saves/web_designer/prototype.html"));
 
+    teardownVocabulary();
     std::cout << "  ✓ Exported complete working frontend prototype to web_ui/designer_prototype.html ("
               << std::filesystem::file_size("web_ui/designer_prototype.html") << " bytes)" << std::endl;
 }
@@ -560,24 +616,30 @@ void test_alice_and_bob_two_person_provenance() {
     Person alice = makeTestPerson("Alice");
     Person bob = makeTestPerson("Bob");
 
-    // 2. Alice initializes Web modality in her context
+    // 2. Alice authors vocabulary in her context
     LawManager lawsAlice;
-    WebDesignerMetalaws::syncRegister(lawsAlice);
+    Formation formationAlice;
+    WebDesignerMetalaws::authorVocabulary(alice, lawsAlice, &formationAlice);
 
-    // 3. Bob initializes Web modality in his context
+    // 3. Bob authors vocabulary in his context
     LawManager lawsBob;
-    WebDesignerMetalaws::syncRegister(lawsBob);
+    Formation formationBob;
+    WebDesignerMetalaws::authorVocabulary(bob, lawsBob, &formationBob);
 
-    // ASSERT Criterion 3: Built-in substrate vocabulary does not become Alice-authored or Bob-authored
+    // Alice's vocabulary Laws are authored by Alice
     Law* headingLawAlice = lawsAlice.find("law.concept.role.heading");
     assert(headingLawAlice != nullptr);
-    assert(!headingLawAlice->isAuthored());
-    assert(headingLawAlice->authors().getMembers().empty());
+    assert(headingLawAlice->isAuthored());
+    assert(headingLawAlice->authors().getMembers().size() == 1);
+    assert(headingLawAlice->authors().getMembers()[0] == &alice);
 
+    // Bob's vocabulary Laws are authored by Bob
     Law* headingLawBob = lawsBob.find("law.concept.role.heading");
     assert(headingLawBob != nullptr);
-    assert(!headingLawBob->isAuthored());
-    assert(headingLawBob->authors().getMembers().empty());
+    assert(headingLawBob->isAuthored());
+    assert(headingLawBob->authors().getMembers().size() == 1);
+    assert(headingLawBob->authors().getMembers()[0] == &bob);
+    assert(headingLawBob->authors().getMembers()[0] != &alice);
 
     // 4. Alice authors a distinct custom law
     auto lawAlice = std::make_shared<Law>("law.alice.brand", std::vector<Singular*>{&alice});
@@ -599,9 +661,15 @@ void test_alice_and_bob_two_person_provenance() {
 
     // 6. Alice and Bob author web elements through channels
     WebDesignerChannel channelAlice;
+    for (const auto& r : formationAlice.relations().getAll()) {
+        channelAlice.addRelation(r);
+    }
     auto elemAlice = channelAlice.authorElementFromPhrase("alice-box", "container rounded", "", &alice, &lawsAlice);
 
     WebDesignerChannel channelBob;
+    for (const auto& r : formationBob.relations().getAll()) {
+        channelBob.addRelation(r);
+    }
     auto elemBob = channelBob.authorElementFromPhrase("bob-box", "container rounded", "", &bob, &lawsBob);
 
     // ASSERT Criterion 1 & 5: Authorship is strictly Person-exclusive and independent
@@ -626,7 +694,6 @@ void test_alice_and_bob_two_person_provenance() {
     }
     assert(foundBobAuth);
 
-    std::cout << "  ✓ Built-in substrate vocabulary remained unauthored across both initializations" << std::endl;
     std::cout << "  ✓ Alice-authored state and Bob-authored state maintained strictly distinct Person provenance" << std::endl;
     std::cout << "  ✓ Bob did not inherit Alice as author (no process-global leak)" << std::endl;
 }
@@ -635,7 +702,6 @@ void test_person_absence_and_enduring_authorship() {
     std::cout << "[Test 10] Person Absence & Enduring Authorship..." << std::endl;
 
     LawManager laws;
-    WebDesignerMetalaws::syncRegister(laws);
 
     // Person Carol authored a Law earlier
     auto carol = std::make_shared<Person>(makeTestPerson("Carol"));
@@ -646,17 +712,12 @@ void test_person_absence_and_enduring_authorship() {
     assert(enduringLaw->isAuthored());
     assert(enduringLaw->authors().getMembers()[0] == carol.get());
 
-    // Carol is absent now: no Person is passed to the execution environment or runtime call.
-    // In accordance with Sun's instruction:
-    // "Person authored Law earlier -> authorship persists -> Person may be absent now -> Law still exists and executes"
-    // No cube or Object proxy needed!
-    assert(enduringLaw->isAuthored());
-
+    // Carol is absent at runtime application: no Person is passed to the runtime call.
     Object testTarget;
     testTarget.setObjectID("absence-test-target");
     testTarget.setDynamicProperty("surface.variant", PropertyValue(std::string("default")));
 
-    // Law applies cleanly without Carol being present at runtime
+    // Law applies cleanly without Carol being passed into runtime execution call
     auto result = enduringLaw->applyTo(testTarget);
     assert(result == Law::ApplicationResult::Applied);
 
@@ -664,7 +725,7 @@ void test_person_absence_and_enduring_authorship() {
     assert(testTarget.getDynamicProperty("surface.variant", v));
     assert(std::get<std::string>(v) == "accent");
 
-    std::cout << "  ✓ Enduring authorship persists across Person absence" << std::endl;
+    std::cout << "  ✓ Enduring authorship persists across Person absence from runtime execution call" << std::endl;
     std::cout << "  ✓ Law executed truthfully without proxy objects or cubes babysitting it" << std::endl;
 }
 
@@ -760,7 +821,7 @@ void test_universe_discovery_and_pure_realization() {
 
     WebDesignerChannel channel;
     // Discover being through Universe even though channel never saw it
-    auto found = channel.findElement("universe-elem-42");
+    Singular* found = channel.findElement("universe-elem-42");
     assert(found != nullptr);
     assert(found->getIdentifier() == "universe-elem-42");
 
@@ -818,43 +879,55 @@ void test_channel_destruction_and_rediscovery_from_world() {
     std::cout << "[Test 14] Channel Destruction & World State Independence..." << std::endl;
 
     Person& author = getTestPerson();
-    std::shared_ptr<Singular> rootElem;
-    std::shared_ptr<Singular> childElem;
-    std::shared_ptr<Relation> containsRel;
 
-    // 1. Author site beings inside a scoped channel that will be destroyed
+    // 1. Create a canonical Zone womb for the site
+    auto siteZone = std::make_shared<Zone>("site-womb-zone", "earthcall-foundation");
+
+    // 2. Author site beings inside a scoped channel that will be destroyed
     {
         WebDesignerChannel temporaryChannel;
-        rootElem = temporaryChannel.authorElementFromPhrase("site-root-destruct", "section", "", &author);
-        childElem = temporaryChannel.authorElementFromPhrase("site-child-destruct", "paragraph", "Enduring World Content", &author);
-        containsRel = temporaryChannel.relateContains(rootElem, childElem);
-        // temporaryChannel goes out of scope and is destroyed here
+        auto root = temporaryChannel.authorElementFromPhrase("site-root-destruct", "section", "", &author);
+        auto child = temporaryChannel.authorElementFromPhrase("site-child-destruct", "paragraph", "Enduring World Content", &author);
+        auto containsRel = temporaryChannel.relateContains(root, child);
+
+        // Canonically admit beings into Zone womb
+        if (auto objRoot = std::dynamic_pointer_cast<Object>(root)) {
+            siteZone->addObject(objRoot);
+        }
+        if (auto objChild = std::dynamic_pointer_cast<Object>(child)) {
+            siteZone->addObject(objChild);
+        }
+        // Admit topology into Zone's Formation Relation graph
+        siteZone->getFormation().relations().add(containsRel);
+
+        // root, child, containsRel, and temporaryChannel all drop out of scope here!
     }
 
-    // 2. Register beings and relations in ordinary Earthcall Universe / world state
-    std::vector<Singular*> beings = { rootElem.get(), childElem.get() };
-    std::vector<Relation*> rels = { containsRel.get() };
-
-    Universe::instance().setProvider([&](std::vector<Singular*>& out) {
-        for (auto* b : beings) out.push_back(b);
+    // 3. Connect Universe to the Zone (the canonical Earthcall wiring)
+    Universe::instance().setProvider([siteZone](std::vector<Singular*>& out) {
+        for (const auto& obj : siteZone->objects()) {
+            out.push_back(obj.get());
+        }
     });
-    Universe::instance().setRelationProvider([&](std::vector<Relation*>& out) {
-        for (auto* r : rels) out.push_back(r);
+    Universe::instance().setRelationProvider([siteZone](std::vector<Relation*>& out) {
+        for (const auto& r : siteZone->getFormation().relations().getAll()) {
+            out.push_back(r.get());
+        }
     });
 
-    // 3. Create a brand new WebDesignerChannel that never saw the authoring calls
+    // 4. Create a fresh WebDesignerChannel that has never seen authoring calls
     WebDesignerChannel freshChannel;
 
-    // Assert beings are discoverable from world state
-    auto discoveredRoot = freshChannel.findElement("site-root-destruct");
+    // Discover beings from world state (Universe yields Zone objects)
+    Singular* discoveredRoot = freshChannel.findElement("site-root-destruct");
     assert(discoveredRoot != nullptr);
     assert(discoveredRoot->getIdentifier() == "site-root-destruct");
 
-    auto discoveredChild = freshChannel.findElement("site-child-destruct");
+    Singular* discoveredChild = freshChannel.findElement("site-child-destruct");
     assert(discoveredChild != nullptr);
     assert(discoveredChild->getIdentifier() == "site-child-destruct");
 
-    // Realize entire site through the fresh channel
+    // Realize entire site through fresh channel
     std::string html = freshChannel.realize(*discoveredRoot);
     assert(!html.empty());
     assert(html.find("id=\"site-root-destruct\"") != std::string::npos);
@@ -866,7 +939,212 @@ void test_channel_destruction_and_rediscovery_from_world() {
     Universe::instance().setRelationProvider(nullptr);
 
     std::cout << "  ✓ Authored site survived channel destruction completely" << std::endl;
+    std::cout << "  ✓ Zone womb canonically held objects and relations after test dropped all shared_ptrs" << std::endl;
     std::cout << "  ✓ Fresh channel discovered beings and realized site directly from world state" << std::endl;
+}
+
+// ---------------------------------------------------------------------------
+// NEW ACCEPTANCE GATE WITNESSES (Decreed by The Sun / GPT-5.6 Sol)
+// ---------------------------------------------------------------------------
+
+void test_unauthored_law_refusal_witness() {
+    std::cout << "[Gate 1 Witness] Unauthored Law Refusal & Backdoor Elimination..." << std::endl;
+
+    LawManager laws;
+    // Create an unauthored Law (no author Person attached)
+    auto unauthoredLaw = std::make_shared<Law>("law.unauthored.hack");
+    unauthoredLaw->setLawIdentifier("law.unauthored.hack");
+    unauthoredLaw->grantAuthority(10);
+    unauthoredLaw->setEnabled(true);
+    unauthoredLaw->setActionModel(ActionNode::set("role", PropertyValue(std::string("hacked-role"))));
+    laws.add(unauthoredLaw);
+
+    assert(!unauthoredLaw->isAuthored());
+    assert(unauthoredLaw->authors().getMembers().empty());
+
+    auto lex = Singularity::Language::LanguageSystem::instance().intern("hack", "lexeme.hack");
+    auto rel = std::make_shared<Relation>("denotes", *lex, *unauthoredLaw, true, 1.0f);
+
+    Object target;
+    target.setObjectID("gate1-target");
+
+    // Attempt to compile phrase referencing the unauthored Law
+    std::string err;
+    WebConcept c = WebDesignerMetalaws::compilePhrase("hack", laws, target, &err, {rel.get()});
+
+    // The unauthored Law MUST refuse in applyTo (Unauthored) and NOT execute via ActionModel backdoor!
+    assert(!err.empty());
+    assert(err.find("refused to apply (res=Unauthored)") != std::string::npos);
+
+    // The target must NOT have been mutated by the unauthored Law's ActionModel!
+    PropertyValue val;
+    assert(!target.getDynamicProperty("role", val));
+
+    std::cout << "  ✓ Unauthored Law refused to apply (ApplicationResult::Unauthored)" << std::endl;
+    std::cout << "  ✓ ActionModel backdoor eliminated: no unauthored action executed" << std::endl;
+}
+
+void test_unmatched_tokens_remain_unresolved() {
+    std::cout << "[Gate 3 Witness] Unmatched Tokens Remain Unresolved (No Role by Fiat)..." << std::endl;
+
+    LawManager laws;
+    Person& author = getTestPerson();
+    Formation formation;
+    setupAuthoredVocabulary(author, laws, formation);
+
+    Object target;
+    target.setObjectID("unresolved-target");
+
+    // Phrase with unknown token "quantumflux"
+    std::string err;
+    WebConcept c = WebDesignerMetalaws::compilePhrase("quantumflux", laws, target, &err);
+
+    // The unknown token must NOT become role!
+    PropertyValue roleVal;
+    assert(!target.getDynamicProperty("role", roleVal));
+
+    // Instead, it must be recorded as unresolved
+    PropertyValue unresVal;
+    assert(target.getDynamicProperty("unresolved.concept.quantumflux", unresVal));
+
+    teardownVocabulary();
+    std::cout << "  ✓ Unknown token recorded as unresolved.concept, not assigned as role by fiat" << std::endl;
+}
+
+void test_non_object_singular_bearer() {
+    std::cout << "[Gate 8 Witness] Non-Object Singular Bearer Authoring..." << std::endl;
+
+    Person& author = getTestPerson();
+
+    // Author web concept onto a Formation instead of an Object!
+    Formation navGroup;
+    navGroup.setIdentifier("nav-formation-bearer");
+
+    WebConcept concept;
+    concept.roleName = "navigation";
+    concept.flow = LayoutFlow::Horizontal;
+    concept.spacing = SpacingScale::Normal;
+
+    std::vector<std::shared_ptr<Relation>> relations;
+    WebDesignerMetalaws::applyAuthoredConcept(navGroup, concept, &author, &relations);
+
+    // Verify concept applied directly onto Formation
+    PropertyValue rVal;
+    assert(navGroup.getDynamicProperty("role", rVal));
+    assert(std::get<std::string>(rVal) == "navigation");
+
+    // Verify authorship relation attaches to Formation
+    bool foundAuth = false;
+    for (const auto& r : relations) {
+        if (r->type == WebRelationType::kAuthoredBy && r->a() == &navGroup && r->b() == &author) {
+            foundAuth = true;
+            break;
+        }
+    }
+    assert(foundAuth);
+
+    // Realize the Formation as a web element!
+    std::string html = WebRealizer::realizeElement(navGroup, relations);
+    assert(html.find("class=\"web-navigation") != std::string::npos);
+    assert(html.find("data-being-id=\"nav-formation-bearer\"") != std::string::npos);
+
+    std::cout << "  ✓ Web concept authored onto Formation bearer (not forced to Object)" << std::endl;
+    std::cout << "  ✓ WebRealizer realized non-Object Singular faithfully" << std::endl;
+}
+
+void test_provenance_relation_sole_source_of_truth() {
+    std::cout << "[Gate 9 Witness] Provenance Relation Sole Source of Truth..." << std::endl;
+
+    Person& author = getTestPerson();
+    WebConcept c;
+    c.roleName = "section";
+
+    std::vector<std::shared_ptr<Relation>> rels;
+    auto elem = WebDesignerMetalaws::createAuthoredElement("truth-elem", c, &author, &rels);
+
+    // 1. Author-by relation exists and links to author
+    bool hasRel = false;
+    for (const auto& r : rels) {
+        if (r->type == WebRelationType::kAuthoredBy && r->a() == elem.get() && r->b() == &author) {
+            hasRel = true;
+            break;
+        }
+    }
+    assert(hasRel);
+
+    // 2. NO shadow string property "authored.by"!
+    PropertyValue shadowProp;
+    assert(!elem->getDynamicProperty("authored.by", shadowProp));
+
+    std::cout << "  ✓ Relation('authored-by', elem, author) is sole source of truth" << std::endl;
+    std::cout << "  ✓ Shadow property 'authored.by' completely eliminated" << std::endl;
+}
+
+void test_relational_precedence_cycle_refusal() {
+    std::cout << "[Gate 10 Witness] Relational Precedence Cycle Refusal..." << std::endl;
+
+    Person& author = getTestPerson();
+    WebDesignerChannel channel;
+
+    auto container = channel.authorElementFromPhrase("cycle-container", "container", "", &author);
+    auto childA = channel.authorElementFromPhrase("cycle-a", "item", "Child A", &author);
+    auto childB = channel.authorElementFromPhrase("cycle-b", "item", "Child B", &author);
+
+    channel.relateContains(container, childA);
+    channel.relateContains(container, childB);
+
+    // Create a cycle: childA precedes childB AND childB precedes childA!
+    channel.relatePrecedes(childA, childB);
+    channel.relatePrecedes(childB, childA);
+
+    std::string outErr;
+    auto children = WebRealizer::findChildren(*container, channel.getRelations(), &outErr);
+
+    // Kahn's algorithm detects cycle, refuses fallback to numeric fiat, and reports error
+    assert(!outErr.empty());
+    assert(outErr.find("cycle detected") != std::string::npos || outErr.find("Cycle detected") != std::string::npos);
+    assert(children.empty()); // Refusal!
+
+    std::cout << "  ✓ Precedence cycle detected and refused cleanly" << std::endl;
+    std::cout << "  ✓ Silent fallback to numeric fiat completely prevented" << std::endl;
+}
+
+void test_media_and_capability_boundaries() {
+    std::cout << "[Gate 11 Witness] Media & Raw-CSS Capability Boundaries..." << std::endl;
+
+    // 1. Media Source URL Policy
+    assert(WebRealizer::sanitizeMediaSrc("https://earthcall.org/hero.webp") == "https://earthcall.org/hero.webp");
+    assert(WebRealizer::sanitizeMediaSrc("http://cdn.example.com/img.png") == "http://cdn.example.com/img.png");
+    assert(WebRealizer::sanitizeMediaSrc("/images/logo.svg") == "/images/logo.svg");
+    assert(WebRealizer::sanitizeMediaSrc("data:image/png;base64,iVBORw0KGgo=") == "data:image/png;base64,iVBORw0KGgo=");
+    assert(WebRealizer::sanitizeMediaSrc("data:image/webp;base64,UklGRg==") == "data:image/webp;base64,UklGRg==");
+
+    // Rejected executable / sensitive schemes
+    assert(WebRealizer::sanitizeMediaSrc("javascript:alert(1)") == "");
+    assert(WebRealizer::sanitizeMediaSrc("file:///etc/passwd") == "");
+    assert(WebRealizer::sanitizeMediaSrc("blob:http://example.com/uuid") == "");
+    assert(WebRealizer::sanitizeMediaSrc("data:text/html,<script>") == "");
+    assert(WebRealizer::sanitizeMediaSrc("vbscript:run()") == "");
+
+    // 2. Raw-CSS Capability Distinction in RealizeOptions
+    Object root;
+    root.setObjectID("css-root");
+
+    RealizeOptions defaultOpts;
+    defaultOpts.extraCss = "body { background: purple; }";
+    // Without allowUnrestrictedCss, extraCss is NOT injected into stylesheet
+    std::string defaultSheet = WebRealizer::generateStyleSheet(&root, defaultOpts);
+    assert(defaultSheet.find("background: purple") == std::string::npos);
+
+    // With explicit allowUnrestrictedCss, authorized raw CSS is admitted
+    RealizeOptions governedOpts;
+    governedOpts.allowUnrestrictedCss = true;
+    governedOpts.extraCss = "body { background: purple; }";
+    std::string governedSheet = WebRealizer::generateStyleSheet(&root, governedOpts);
+    assert(governedSheet.find("background: purple") != std::string::npos);
+
+    std::cout << "  ✓ Media src allowlist enforced against executable schemes" << std::endl;
+    std::cout << "  ✓ Raw-CSS capability requires explicit allowUnrestrictedCss permission" << std::endl;
 }
 
 int main() {
@@ -888,6 +1166,14 @@ int main() {
     test_universe_discovery_and_pure_realization();
     test_relational_precedence_overrides_numeric_order();
     test_channel_destruction_and_rediscovery_from_world();
+
+    // Acceptance Gate Witnesses
+    test_unauthored_law_refusal_witness();
+    test_unmatched_tokens_remain_unresolved();
+    test_non_object_singular_bearer();
+    test_provenance_relation_sole_source_of_truth();
+    test_relational_precedence_cycle_refusal();
+    test_media_and_capability_boundaries();
 
     std::cout << "========================================" << std::endl;
     std::cout << "ALL WEB DESIGNER MODALITY TESTS PASSED!" << std::endl;

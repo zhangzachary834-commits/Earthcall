@@ -1,13 +1,13 @@
 #include "Singularity/Foreign/Web/Designer/WebDesignerMetalaws.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "Person/Person.hpp"
 #include <algorithm>
 #include <cctype>
 #include <sstream>
-
-#include "Person/Person.hpp"
 
 namespace Singularity {
 namespace Foreign {
@@ -28,94 +28,85 @@ std::string trim(const std::string& s) {
     return s.substr(first, (last - first + 1));
 }
 
-// Global storage for seeded authoring vocabulary
-std::vector<std::shared_ptr<Singularity::Language::Lexeme>> s_seededLexemes;
-std::vector<std::shared_ptr<Law>> s_seededLaws;
-std::vector<std::shared_ptr<Relation>> s_seededRelations;
-
-void seedLexemeAndLaw(LawManager& laws,
+void seedAuthoredWord(Person& author,
+                      LawManager& laws,
+                      Formation* formation,
                       const std::string& symbol,
                       const std::string& stableId,
                       const std::string& lawId,
-                      ActionNode action) {
-    // 1. Instantiate the real Lexeme
-    auto lexeme = std::make_shared<Singularity::Language::Lexeme>(symbol, stableId);
-    s_seededLexemes.push_back(lexeme);
+                      ActionNode action,
+                      std::vector<std::shared_ptr<Relation>>* outRelations = nullptr) {
+    // Retain Lexeme canonically in LanguageSystem so relation endpoint never dangles
+    auto lexeme = Singularity::Language::LanguageSystem::instance().intern(symbol, stableId);
 
-    // 2. Instantiate the denoted Law as built-in substrate infrastructure with NO author.
-    // In accordance with Refusal 5 and the Sun's instruction, built-in substrate vocabulary
-    // is unauthored infrastructure and must NEVER have fake Object or Person authors.
-    auto law = std::make_shared<Law>(lawId, std::vector<Singular*>{});
-    law->setLawIdentifier(lawId);
-    // Legacy numerical authority level. Pending AD-24 (which retires integer authority
-    // levels in favor of an authority-over Relation DAG), grantAuthority(10) serves
-    // as compatibility substrate for Kernel/Singularity level authority.
-    law->grantAuthority(10);
-    law->setEnabled(true);
-    law->setActionModel(std::move(action));
-    s_seededLaws.push_back(law);
-    laws.add(law);
+    // Reuse existing Law if already added, allowing multiple Lexemes (synonyms) to denote the same Law
+    Law* targetLaw = laws.find(lawId);
+    if (!targetLaw) {
+        auto law = std::make_shared<Law>(lawId, std::vector<Singular*>{&author});
+        law->setLawIdentifier(lawId);
+        law->grantAuthority(10);
+        law->setEnabled(true);
+        law->setActionModel(std::move(action));
+        laws.add(law);
+        targetLaw = law.get();
+    }
 
-    // 3. Connect them with a first-class Relation("denotes", *lexeme, *law, true, 1.0f)
-    auto rel = std::make_shared<Relation>("denotes", *lexeme, *law, true, 1.0f);
-    s_seededRelations.push_back(rel);
-
+    auto rel = std::make_shared<Relation>("denotes", *lexeme, *targetLaw, true, 1.0f);
+    if (formation) {
+        formation->relations().add(rel);
+    }
     if (Universe::instance().hasRelationRegistrar()) {
         Universe::instance().addRelation(rel);
+    }
+    if (outRelations) {
+        outRelations->push_back(rel);
     }
 }
 
 } // namespace
 
-const std::vector<std::shared_ptr<Singularity::Language::Lexeme>>& WebDesignerMetalaws::seededLexemes() {
-    return s_seededLexemes;
+void WebDesignerMetalaws::syncRegister(LawManager& /*laws*/) {
+    // Built-in modality infrastructure initialization.
+    // In accordance with Refusal 5, Refusal 7, and Sun's decree:
+    // Runtime initialization does NOT manufacture human authorship, nor does it seed
+    // unauthored Laws that bypass Law::applyTo().
+    // Meaning is authored into the world by Persons via authorVocabulary().
 }
 
-const std::vector<std::shared_ptr<Relation>>& WebDesignerMetalaws::seededRelations() {
-    return s_seededRelations;
-}
-
-void WebDesignerMetalaws::syncRegister(LawManager& laws) {
-    if (!s_seededLaws.empty()) {
-        // Already seeded in this process; ensure laws are attached to this manager
-        for (const auto& law : s_seededLaws) {
-            if (!laws.find(law->getIdentifier())) {
-                laws.add(law);
-            }
-        }
-        return;
-    }
-
-    // 1. Roles
-    seedLexemeAndLaw(laws, "page", "lexeme.web.page", "law.concept.role.page",
+void WebDesignerMetalaws::authorVocabulary(Person& author,
+                                           LawManager& laws,
+                                           Formation* formation,
+                                           std::vector<std::shared_ptr<Relation>>* outRelations) {
+    auto seed = [&](const std::string& symbol, const std::string& stableId, const std::string& lawId, ActionNode action) {
+        seedAuthoredWord(author, laws, formation, symbol, stableId, lawId, std::move(action), outRelations);
+    };
+    // 1. Semantic Roles (Atomic mapping — zero procedural aesthetic decree)
+    seed("page", "lexeme.web.page", "law.concept.role.page",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("page"))),
                          ActionNode::set("compilation.output.web.role", PropertyValue(std::string("page")))
                      }));
 
-    seedLexemeAndLaw(laws, "section", "lexeme.web.section", "law.concept.role.section",
+    seed("section", "lexeme.web.section", "law.concept.role.section",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("section"))),
                          ActionNode::set("compilation.output.web.role", PropertyValue(std::string("section")))
                      }));
 
-    seedLexemeAndLaw(laws, "navigation", "lexeme.web.navigation", "law.concept.role.navigation",
+    // Navigation: sets role = navigation. Does NOT force layout.flow = horizontal!
+    seed("navigation", "lexeme.web.navigation", "law.concept.role.navigation",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("navigation"))),
-                         ActionNode::set("layout.flow", PropertyValue(std::string("horizontal"))),
-                         ActionNode::set("compilation.output.web.role", PropertyValue(std::string("navigation"))),
-                         ActionNode::set("compilation.output.web.layout.flow", PropertyValue(std::string("horizontal")))
+                         ActionNode::set("compilation.output.web.role", PropertyValue(std::string("navigation")))
                      }));
 
-    seedLexemeAndLaw(laws, "nav", "lexeme.web.nav", "law.concept.role.navigation",
+    seed("nav", "lexeme.web.nav", "law.concept.role.navigation",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("navigation"))),
-                         ActionNode::set("layout.flow", PropertyValue(std::string("horizontal"))),
-                         ActionNode::set("compilation.output.web.role", PropertyValue(std::string("navigation"))),
-                         ActionNode::set("compilation.output.web.layout.flow", PropertyValue(std::string("horizontal")))
+                         ActionNode::set("compilation.output.web.role", PropertyValue(std::string("navigation")))
                      }));
 
-    seedLexemeAndLaw(laws, "heading", "lexeme.web.heading", "law.concept.role.heading",
+    seed("heading", "lexeme.web.heading", "law.concept.role.heading",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("heading"))),
                          ActionNode::set("level", PropertyValue(2.0)),
@@ -123,7 +114,7 @@ void WebDesignerMetalaws::syncRegister(LawManager& laws) {
                          ActionNode::set("compilation.output.web.level", PropertyValue(2.0))
                      }));
 
-    seedLexemeAndLaw(laws, "title", "lexeme.web.title", "law.concept.role.heading",
+    seed("title", "lexeme.web.title", "law.concept.role.heading",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("heading"))),
                          ActionNode::set("level", PropertyValue(1.0)),
@@ -131,55 +122,54 @@ void WebDesignerMetalaws::syncRegister(LawManager& laws) {
                          ActionNode::set("compilation.output.web.level", PropertyValue(1.0))
                      }));
 
-    seedLexemeAndLaw(laws, "subtitle", "lexeme.web.subtitle", "law.concept.role.subtitle",
+    // Subtitle: sets level = 3. Does NOT force muted tone!
+    seed("subtitle", "lexeme.web.subtitle", "law.concept.role.subtitle",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("heading"))),
                          ActionNode::set("level", PropertyValue(3.0)),
-                         ActionNode::set("typography.tone", PropertyValue(std::string("muted"))),
                          ActionNode::set("compilation.output.web.role", PropertyValue(std::string("heading"))),
-                         ActionNode::set("compilation.output.web.level", PropertyValue(3.0)),
-                         ActionNode::set("compilation.output.web.typography.tone", PropertyValue(std::string("muted")))
+                         ActionNode::set("compilation.output.web.level", PropertyValue(3.0))
                      }));
 
-    seedLexemeAndLaw(laws, "paragraph", "lexeme.web.paragraph", "law.concept.role.paragraph",
+    seed("paragraph", "lexeme.web.paragraph", "law.concept.role.paragraph",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("paragraph"))),
                          ActionNode::set("compilation.output.web.role", PropertyValue(std::string("paragraph")))
                      }));
 
-    seedLexemeAndLaw(laws, "text", "lexeme.web.text", "law.concept.role.paragraph",
+    seed("text", "lexeme.web.text", "law.concept.role.paragraph",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("paragraph"))),
                          ActionNode::set("compilation.output.web.role", PropertyValue(std::string("paragraph")))
                      }));
 
-    seedLexemeAndLaw(laws, "button", "lexeme.web.button", "law.concept.role.action",
-                     ActionNode::sequence({
-                         ActionNode::set("role", PropertyValue(std::string("action"))),
-                         ActionNode::set("surface.shape", PropertyValue(std::string("rounded"))),
-                         ActionNode::set("compilation.output.web.role", PropertyValue(std::string("action"))),
-                         ActionNode::set("compilation.output.web.surface.shape", PropertyValue(std::string("rounded")))
-                     }));
-
-    seedLexemeAndLaw(laws, "action", "lexeme.web.action", "law.concept.role.action",
+    // Button: sets role = action. Does NOT force surface.shape = rounded!
+    seed("button", "lexeme.web.button", "law.concept.role.action",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("action"))),
                          ActionNode::set("compilation.output.web.role", PropertyValue(std::string("action")))
                      }));
 
-    seedLexemeAndLaw(laws, "link", "lexeme.web.link", "law.concept.role.link",
+    seed("action", "lexeme.web.action", "law.concept.role.action",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("action"))),
                          ActionNode::set("compilation.output.web.role", PropertyValue(std::string("action")))
                      }));
 
-    seedLexemeAndLaw(laws, "container", "lexeme.web.container", "law.concept.role.container",
+    seed("link", "lexeme.web.link", "law.concept.role.link",
+                     ActionNode::sequence({
+                         ActionNode::set("role", PropertyValue(std::string("action"))),
+                         ActionNode::set("compilation.output.web.role", PropertyValue(std::string("action")))
+                     }));
+
+    seed("container", "lexeme.web.container", "law.concept.role.container",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("container"))),
                          ActionNode::set("compilation.output.web.role", PropertyValue(std::string("container")))
                      }));
 
-    seedLexemeAndLaw(laws, "card", "lexeme.web.card", "law.concept.role.card",
+    // Card: sets role = container, surface.variant = card. Does NOT force rounded or subtle elevation!
+    seed("card", "lexeme.web.card", "law.concept.role.card",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("container"))),
                          ActionNode::set("surface.variant", PropertyValue(std::string("card"))),
@@ -187,170 +177,169 @@ void WebDesignerMetalaws::syncRegister(LawManager& laws) {
                          ActionNode::set("compilation.output.web.surface.variant", PropertyValue(std::string("card")))
                      }));
 
-    seedLexemeAndLaw(laws, "list", "lexeme.web.list", "law.concept.role.list",
+    // List: sets role = list. Does NOT force layout.flow = vertical!
+    seed("list", "lexeme.web.list", "law.concept.role.list",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("list"))),
-                         ActionNode::set("layout.flow", PropertyValue(std::string("vertical"))),
-                         ActionNode::set("compilation.output.web.role", PropertyValue(std::string("list"))),
-                         ActionNode::set("compilation.output.web.layout.flow", PropertyValue(std::string("vertical")))
+                         ActionNode::set("compilation.output.web.role", PropertyValue(std::string("list")))
                      }));
 
-    seedLexemeAndLaw(laws, "item", "lexeme.web.item", "law.concept.role.item",
+    seed("item", "lexeme.web.item", "law.concept.role.item",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("item"))),
                          ActionNode::set("compilation.output.web.role", PropertyValue(std::string("item")))
                      }));
 
-    seedLexemeAndLaw(laws, "media", "lexeme.web.media", "law.concept.role.media",
+    seed("media", "lexeme.web.media", "law.concept.role.media",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("media"))),
                          ActionNode::set("compilation.output.web.role", PropertyValue(std::string("media")))
                      }));
 
-    seedLexemeAndLaw(laws, "image", "lexeme.web.image", "law.concept.role.media",
+    seed("image", "lexeme.web.image", "law.concept.role.media",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("media"))),
                          ActionNode::set("compilation.output.web.role", PropertyValue(std::string("media")))
                      }));
 
-    seedLexemeAndLaw(laws, "quote", "lexeme.web.quote", "law.concept.role.quote",
+    seed("quote", "lexeme.web.quote", "law.concept.role.quote",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("quote"))),
                          ActionNode::set("compilation.output.web.role", PropertyValue(std::string("quote")))
                      }));
 
-    seedLexemeAndLaw(laws, "divider", "lexeme.web.divider", "law.concept.role.divider",
+    seed("divider", "lexeme.web.divider", "law.concept.role.divider",
                      ActionNode::sequence({
                          ActionNode::set("role", PropertyValue(std::string("divider"))),
                          ActionNode::set("compilation.output.web.role", PropertyValue(std::string("divider")))
                      }));
 
     // 2. Flows & Layout
-    seedLexemeAndLaw(laws, "vertical", "lexeme.web.vertical", "law.concept.flow.vertical",
+    seed("vertical", "lexeme.web.vertical", "law.concept.flow.vertical",
                      ActionNode::sequence({
                          ActionNode::set("layout.flow", PropertyValue(std::string("vertical"))),
                          ActionNode::set("compilation.output.web.layout.flow", PropertyValue(std::string("vertical")))
                      }));
 
-    seedLexemeAndLaw(laws, "column", "lexeme.web.column", "law.concept.flow.vertical",
+    seed("column", "lexeme.web.column", "law.concept.flow.vertical",
                      ActionNode::sequence({
                          ActionNode::set("layout.flow", PropertyValue(std::string("vertical"))),
                          ActionNode::set("compilation.output.web.layout.flow", PropertyValue(std::string("vertical")))
                      }));
 
-    seedLexemeAndLaw(laws, "horizontal", "lexeme.web.horizontal", "law.concept.flow.horizontal",
+    seed("horizontal", "lexeme.web.horizontal", "law.concept.flow.horizontal",
                      ActionNode::sequence({
                          ActionNode::set("layout.flow", PropertyValue(std::string("horizontal"))),
                          ActionNode::set("compilation.output.web.layout.flow", PropertyValue(std::string("horizontal")))
                      }));
 
-    seedLexemeAndLaw(laws, "row", "lexeme.web.row", "law.concept.flow.horizontal",
+    seed("row", "lexeme.web.row", "law.concept.flow.horizontal",
                      ActionNode::sequence({
                          ActionNode::set("layout.flow", PropertyValue(std::string("horizontal"))),
                          ActionNode::set("compilation.output.web.layout.flow", PropertyValue(std::string("horizontal")))
                      }));
 
-    seedLexemeAndLaw(laws, "grid", "lexeme.web.grid", "law.concept.flow.grid",
+    seed("grid", "lexeme.web.grid", "law.concept.flow.grid",
                      ActionNode::sequence({
                          ActionNode::set("layout.flow", PropertyValue(std::string("grid"))),
                          ActionNode::set("compilation.output.web.layout.flow", PropertyValue(std::string("grid")))
                      }));
 
     // 3. Alignments
-    seedLexemeAndLaw(laws, "start", "lexeme.web.align.start", "law.concept.align.start",
+    seed("start", "lexeme.web.align.start", "law.concept.align.start",
                      ActionNode::sequence({
                          ActionNode::set("layout.align", PropertyValue(std::string("start"))),
                          ActionNode::set("compilation.output.web.layout.align", PropertyValue(std::string("start")))
                      }));
 
-    seedLexemeAndLaw(laws, "center", "lexeme.web.align.center", "law.concept.align.center",
+    seed("center", "lexeme.web.align.center", "law.concept.align.center",
                      ActionNode::sequence({
                          ActionNode::set("layout.align", PropertyValue(std::string("center"))),
                          ActionNode::set("compilation.output.web.layout.align", PropertyValue(std::string("center")))
                      }));
 
-    seedLexemeAndLaw(laws, "centered", "lexeme.web.align.centered", "law.concept.align.center",
+    seed("centered", "lexeme.web.align.centered", "law.concept.align.center",
                      ActionNode::sequence({
                          ActionNode::set("layout.align", PropertyValue(std::string("center"))),
                          ActionNode::set("compilation.output.web.layout.align", PropertyValue(std::string("center")))
                      }));
 
-    seedLexemeAndLaw(laws, "end", "lexeme.web.align.end", "law.concept.align.end",
+    seed("end", "lexeme.web.align.end", "law.concept.align.end",
                      ActionNode::sequence({
                          ActionNode::set("layout.align", PropertyValue(std::string("end"))),
                          ActionNode::set("compilation.output.web.layout.align", PropertyValue(std::string("end")))
                      }));
 
-    seedLexemeAndLaw(laws, "stretch", "lexeme.web.align.stretch", "law.concept.align.stretch",
+    seed("stretch", "lexeme.web.align.stretch", "law.concept.align.stretch",
                      ActionNode::sequence({
                          ActionNode::set("layout.align", PropertyValue(std::string("stretch"))),
                          ActionNode::set("compilation.output.web.layout.align", PropertyValue(std::string("stretch")))
                      }));
 
     // 4. Spacing
-    seedLexemeAndLaw(laws, "tight", "lexeme.web.spacing.tight", "law.concept.spacing.tight",
+    seed("tight", "lexeme.web.spacing.tight", "law.concept.spacing.tight",
                      ActionNode::sequence({
                          ActionNode::set("layout.spacing", PropertyValue(std::string("tight"))),
                          ActionNode::set("compilation.output.web.layout.spacing", PropertyValue(std::string("tight")))
                      }));
 
-    seedLexemeAndLaw(laws, "normal", "lexeme.web.spacing.normal", "law.concept.spacing.normal",
+    seed("normal", "lexeme.web.spacing.normal", "law.concept.spacing.normal",
                      ActionNode::sequence({
                          ActionNode::set("layout.spacing", PropertyValue(std::string("normal"))),
                          ActionNode::set("compilation.output.web.layout.spacing", PropertyValue(std::string("normal")))
                      }));
 
-    seedLexemeAndLaw(laws, "relaxed", "lexeme.web.spacing.relaxed", "law.concept.spacing.relaxed",
+    seed("relaxed", "lexeme.web.spacing.relaxed", "law.concept.spacing.relaxed",
                      ActionNode::sequence({
                          ActionNode::set("layout.spacing", PropertyValue(std::string("relaxed"))),
                          ActionNode::set("compilation.output.web.layout.spacing", PropertyValue(std::string("relaxed")))
                      }));
 
-    seedLexemeAndLaw(laws, "generous", "lexeme.web.spacing.generous", "law.concept.spacing.generous",
+    seed("generous", "lexeme.web.spacing.generous", "law.concept.spacing.generous",
                      ActionNode::sequence({
                          ActionNode::set("layout.spacing", PropertyValue(std::string("generous"))),
                          ActionNode::set("compilation.output.web.layout.spacing", PropertyValue(std::string("generous")))
                      }));
 
     // 5. Scales
-    seedLexemeAndLaw(laws, "small", "lexeme.web.small", "law.concept.size.small",
+    seed("small", "lexeme.web.small", "law.concept.size.small",
                      ActionNode::sequence({
                          ActionNode::set("scale", PropertyValue(std::string("small"))),
                          ActionNode::set("compilation.output.web.scale.size", PropertyValue(std::string("small")))
                      }));
 
-    seedLexemeAndLaw(laws, "large", "lexeme.web.large", "law.concept.size.large",
+    seed("large", "lexeme.web.large", "law.concept.size.large",
                      ActionNode::sequence({
                          ActionNode::set("scale", PropertyValue(std::string("large"))),
                          ActionNode::set("compilation.output.web.scale.size", PropertyValue(std::string("large")))
                      }));
 
-    seedLexemeAndLaw(laws, "huge", "lexeme.web.huge", "law.concept.size.huge",
+    seed("huge", "lexeme.web.huge", "law.concept.size.huge",
                      ActionNode::sequence({
                          ActionNode::set("scale", PropertyValue(std::string("huge"))),
                          ActionNode::set("compilation.output.web.scale.size", PropertyValue(std::string("huge")))
                      }));
 
     // 6. Typography
-    seedLexemeAndLaw(laws, "bold", "lexeme.web.bold", "law.concept.weight.bold",
+    seed("bold", "lexeme.web.bold", "law.concept.weight.bold",
                      ActionNode::sequence({
                          ActionNode::set("typography.weight", PropertyValue(std::string("bold"))),
                          ActionNode::set("compilation.output.web.typography.weight", PropertyValue(std::string("bold")))
                      }));
 
-    seedLexemeAndLaw(laws, "light", "lexeme.web.light", "law.concept.weight.light",
+    seed("light", "lexeme.web.light", "law.concept.weight.light",
                      ActionNode::sequence({
                          ActionNode::set("typography.weight", PropertyValue(std::string("light"))),
                          ActionNode::set("compilation.output.web.typography.weight", PropertyValue(std::string("light")))
                      }));
 
-    seedLexemeAndLaw(laws, "muted", "lexeme.web.muted", "law.concept.tone.muted",
+    seed("muted", "lexeme.web.muted", "law.concept.tone.muted",
                      ActionNode::sequence({
                          ActionNode::set("typography.tone", PropertyValue(std::string("muted"))),
                          ActionNode::set("compilation.output.web.typography.tone", PropertyValue(std::string("muted")))
                      }));
 
-    seedLexemeAndLaw(laws, "lead", "lexeme.web.lead", "law.concept.tone.prominent",
+    seed("lead", "lexeme.web.lead", "law.concept.tone.prominent",
                      ActionNode::sequence({
                          ActionNode::set("scale", PropertyValue(std::string("large"))),
                          ActionNode::set("typography.tone", PropertyValue(std::string("prominent"))),
@@ -359,76 +348,75 @@ void WebDesignerMetalaws::syncRegister(LawManager& laws) {
                      }));
 
     // 7. Surface & Presentation
-    seedLexemeAndLaw(laws, "rounded", "lexeme.web.rounded", "law.concept.shape.rounded",
+    seed("rounded", "lexeme.web.rounded", "law.concept.shape.rounded",
                      ActionNode::sequence({
                          ActionNode::set("surface.shape", PropertyValue(std::string("rounded"))),
                          ActionNode::set("compilation.output.web.surface.shape", PropertyValue(std::string("rounded")))
                      }));
 
-    seedLexemeAndLaw(laws, "pill", "lexeme.web.pill", "law.concept.shape.pill",
+    seed("pill", "lexeme.web.pill", "law.concept.shape.pill",
                      ActionNode::sequence({
                          ActionNode::set("surface.shape", PropertyValue(std::string("pill"))),
                          ActionNode::set("compilation.output.web.surface.shape", PropertyValue(std::string("pill")))
                      }));
 
-    seedLexemeAndLaw(laws, "sharp", "lexeme.web.sharp", "law.concept.shape.sharp",
+    seed("sharp", "lexeme.web.sharp", "law.concept.shape.sharp",
                      ActionNode::sequence({
                          ActionNode::set("surface.shape", PropertyValue(std::string("sharp"))),
                          ActionNode::set("compilation.output.web.surface.shape", PropertyValue(std::string("sharp")))
                      }));
 
-    seedLexemeAndLaw(laws, "primary", "lexeme.web.primary", "law.concept.variant.primary",
+    seed("primary", "lexeme.web.primary", "law.concept.variant.primary",
                      ActionNode::sequence({
                          ActionNode::set("surface.variant", PropertyValue(std::string("primary"))),
                          ActionNode::set("compilation.output.web.surface.variant", PropertyValue(std::string("primary")))
                      }));
 
-    seedLexemeAndLaw(laws, "secondary", "lexeme.web.secondary", "law.concept.variant.secondary",
+    seed("secondary", "lexeme.web.secondary", "law.concept.variant.secondary",
                      ActionNode::sequence({
                          ActionNode::set("surface.variant", PropertyValue(std::string("secondary"))),
                          ActionNode::set("compilation.output.web.surface.variant", PropertyValue(std::string("secondary")))
                      }));
 
-    seedLexemeAndLaw(laws, "hero", "lexeme.web.hero", "law.concept.variant.hero",
+    // Hero: sets surface.variant = hero. Does NOT force layout.align = center!
+    seed("hero", "lexeme.web.hero", "law.concept.variant.hero",
                      ActionNode::sequence({
                          ActionNode::set("surface.variant", PropertyValue(std::string("hero"))),
-                         ActionNode::set("layout.align", PropertyValue(std::string("center"))),
-                         ActionNode::set("compilation.output.web.surface.variant", PropertyValue(std::string("hero"))),
-                         ActionNode::set("compilation.output.web.layout.align", PropertyValue(std::string("center")))
+                         ActionNode::set("compilation.output.web.surface.variant", PropertyValue(std::string("hero")))
                      }));
 
-    seedLexemeAndLaw(laws, "outline", "lexeme.web.outline", "law.concept.variant.outline",
+    seed("outline", "lexeme.web.outline", "law.concept.variant.outline",
                      ActionNode::sequence({
                          ActionNode::set("surface.variant", PropertyValue(std::string("outline"))),
                          ActionNode::set("compilation.output.web.surface.variant", PropertyValue(std::string("outline")))
                      }));
 
-    seedLexemeAndLaw(laws, "subtle", "lexeme.web.subtle", "law.concept.elevation.subtle",
+    seed("subtle", "lexeme.web.subtle", "law.concept.elevation.subtle",
                      ActionNode::sequence({
                          ActionNode::set("surface.elevation", PropertyValue(std::string("subtle"))),
                          ActionNode::set("compilation.output.web.surface.elevation", PropertyValue(std::string("subtle")))
                      }));
 
-    seedLexemeAndLaw(laws, "elevated", "lexeme.web.elevated", "law.concept.elevation.raised",
+    seed("elevated", "lexeme.web.elevated", "law.concept.elevation.raised",
                      ActionNode::sequence({
                          ActionNode::set("surface.elevation", PropertyValue(std::string("raised"))),
                          ActionNode::set("compilation.output.web.surface.elevation", PropertyValue(std::string("raised")))
                      }));
 
     // 8. Relational Modifiers
-    seedLexemeAndLaw(laws, "subordinate", "lexeme.web.subordinate", "law.concept.rel.subordinate",
+    seed("subordinate", "lexeme.web.subordinate", "law.concept.rel.subordinate",
                      ActionNode::sequence({
                          ActionNode::set("subordinate", PropertyValue(true)),
                          ActionNode::set("compilation.output.web.subordinate", PropertyValue(true))
                      }));
 
-    seedLexemeAndLaw(laws, "prominent", "lexeme.web.prominent", "law.concept.rel.prominent",
+    seed("prominent", "lexeme.web.prominent", "law.concept.rel.prominent",
                      ActionNode::sequence({
                          ActionNode::set("prominence", PropertyValue(std::string("prominent"))),
                          ActionNode::set("compilation.output.web.prominence", PropertyValue(std::string("prominent")))
                      }));
 
-    seedLexemeAndLaw(laws, "quiet", "lexeme.web.quiet", "law.concept.rel.quiet",
+    seed("quiet", "lexeme.web.quiet", "law.concept.rel.quiet",
                      ActionNode::sequence({
                          ActionNode::set("prominence", PropertyValue(std::string("quiet"))),
                          ActionNode::set("compilation.output.web.prominence", PropertyValue(std::string("quiet")))
@@ -443,6 +431,7 @@ WebConcept WebDesignerMetalaws::compilePhrase(const std::string& phrase,
     if (outError) outError->clear();
 
     // 1. Gather all candidate "denotes" Relations linking in-world Lexemes to Laws
+    // No private process-global hidden fallback; gathers strictly from in-world relations.
     struct LexemeMapping {
         std::string symbol;
         Law* law = nullptr;
@@ -461,11 +450,6 @@ WebConcept WebDesignerMetalaws::compilePhrase(const std::string& phrase,
     };
 
     collectFrom(extraRelations);
-    {
-        std::vector<Relation*> seeded;
-        for (const auto& r : s_seededRelations) seeded.push_back(r.get());
-        collectFrom(seeded);
-    }
     collectFrom(Universe::instance().relations());
 
     // Sort mappings by symbol length descending (greedy longest-match)
@@ -500,29 +484,26 @@ WebConcept WebDesignerMetalaws::compilePhrase(const std::string& phrase,
                     if (atWordBoundary) {
                         Law* denotedLaw = m.law;
                         if (denotedLaw) {
-                            if (const auto* am = denotedLaw->actionModel()) {
-                                std::vector<PropertyPath> paths;
-                                am->collectPaths(paths);
-                                for (const auto& p : paths) {
-                                    PropertyValue existing;
-                                    if (!channelTarget.getDynamicProperty(p.fullId(), existing)) {
-                                        channelTarget.setDynamicProperty(p.fullId(), PropertyValue(std::string("")));
+                            if (denotedLaw->isAuthored()) {
+                                if (const auto* am = denotedLaw->actionModel()) {
+                                    std::vector<PropertyPath> paths;
+                                    am->collectPaths(paths);
+                                    for (const auto& p : paths) {
+                                        PropertyValue existing;
+                                        if (!channelTarget.getDynamicProperty(p.fullId(), existing)) {
+                                            channelTarget.setDynamicProperty(p.fullId(), PropertyValue(std::string("")));
+                                        }
                                     }
                                 }
                             }
 
-                            if (denotedLaw->isAuthored()) {
-                                auto res = denotedLaw->applyTo(channelTarget);
-                                if (res != Law::ApplicationResult::Applied) {
-                                    if (outError) {
-                                        *outError = "Law " + denotedLaw->getIdentifier() + " failed to apply (res=" + std::to_string(static_cast<int>(res)) + ")";
-                                    }
-                                }
-                            } else if (const auto* am = denotedLaw->actionModel()) {
-                                // Substrate / unauthored law: compile and execute ActionModel directly
-                                auto exec = am->compile();
-                                if (exec) {
-                                    exec(ECA::Event{}, channelTarget);
+                            // Mandate 1: All Laws MUST execute strictly via Law::applyTo().
+                            // Unauthored laws refuse (ApplicationResult::Unauthored); NO ActionModel backdoor!
+                            auto res = denotedLaw->applyTo(channelTarget);
+                            if (res != Law::ApplicationResult::Applied) {
+                                if (outError) {
+                                    *outError = "Law " + denotedLaw->getIdentifier() + " refused to apply (res=" +
+                                                (res == Law::ApplicationResult::Unauthored ? "Unauthored" : std::to_string(static_cast<int>(res))) + ")";
                                 }
                             }
                         }
@@ -544,16 +525,9 @@ WebConcept WebDesignerMetalaws::compilePhrase(const std::string& phrase,
         std::string token = lowerPhrase.substr(pos, nextDelim - pos);
         pos = nextDelim;
 
-        // Open semantic vocabulary (e.g. "sanctuary", "ethereal", custom concept)
+        // Mandate 3: Unmatched text remains open / unresolved; do NOT assign role by fiat!
         if (!token.empty() && token != "a" && token != "an" && token != "the" && token != "with" && token != "and") {
-            // Apply as open authored semantic modifier on target
-            channelTarget.setDynamicProperty("custom.concept." + token, PropertyValue(true));
-            PropertyValue currentRole;
-            if (!channelTarget.getDynamicProperty("compilation.output.web.role", currentRole) ||
-                (std::holds_alternative<std::string>(currentRole) && std::get<std::string>(currentRole).empty())) {
-                channelTarget.setDynamicProperty("compilation.output.web.role", PropertyValue(token));
-                channelTarget.setDynamicProperty("role", PropertyValue(token));
-            }
+            channelTarget.setDynamicProperty("unresolved.concept." + token, PropertyValue(true));
         }
     }
 
@@ -573,21 +547,16 @@ WebConcept WebDesignerMetalaws::compileTokens(const std::vector<std::string>& to
     return compilePhrase(phrase, laws, channelTarget, outError, extraRelations);
 }
 
-std::shared_ptr<Singular> WebDesignerMetalaws::createAuthoredElement(
-    const std::string& identifier,
+Singular& WebDesignerMetalaws::applyAuthoredConcept(
+    Singular& bearer,
     const WebConcept& concept,
     Person* author,
     std::vector<std::shared_ptr<Relation>>* outRelations) {
 
-    auto obj = std::make_shared<Object>();
-    obj->setObjectID(identifier);
-
     if (author) {
-        // Record authorship property
-        obj->setDynamicProperty("authored.by", PropertyValue(author->getIdentifier()));
-
-        // Form first-class Earthcall provenance Relation connecting to the actual author Person
-        auto authRel = std::make_shared<Relation>(WebRelationType::kAuthoredBy, *obj, *author, true, 1.0f);
+        // Form first-class Earthcall provenance Relation connecting to the actual author Person.
+        // The Relation is the SOLE source of truth — NO shadow string property!
+        auto authRel = std::make_shared<Relation>(WebRelationType::kAuthoredBy, bearer, *author, true, 1.0f);
         if (outRelations) {
             outRelations->push_back(authRel);
         }
@@ -596,7 +565,19 @@ std::shared_ptr<Singular> WebDesignerMetalaws::createAuthoredElement(
         }
     }
 
-    concept.applyToSingular(*obj);
+    concept.applyToSingular(bearer);
+    return bearer;
+}
+
+std::shared_ptr<Singular> WebDesignerMetalaws::createAuthoredElement(
+    const std::string& identifier,
+    const WebConcept& concept,
+    Person* author,
+    std::vector<std::shared_ptr<Relation>>* outRelations) {
+
+    auto obj = std::make_shared<Object>();
+    obj->setObjectID(identifier);
+    applyAuthoredConcept(*obj, concept, author, outRelations);
     return obj;
 }
 

@@ -16,20 +16,26 @@ std::string makeIndent(int level) {
     return std::string(level * 2, ' ');
 }
 
-int getBeingOrder(const Singular* s) {
-    if (!s) return 0;
+std::string getThemeString(const Singular* root, const std::string& key, const std::string& fallback) {
+    if (!root) return fallback;
     PropertyValue v;
-    if (s->getDynamicProperty("web.order", v) || s->getDynamicProperty("order", v)) {
-        if (auto d = std::get_if<double>(&v)) return static_cast<int>(*d);
+    if (root->getDynamicProperty(key, v)) {
+        if (auto s = std::get_if<std::string>(&v)) {
+            if (!s->empty()) return *s;
+        }
     }
-    return 0;
+    return fallback;
 }
+
+} // namespace
 
 // Find all children connected to `parent` via "contains" relations,
 // querying both caller-supplied relations and Universe relations,
 // and order them topologically using "precedes" relations.
-std::vector<const Singular*> findChildren(const Singular& parent,
-                                         const std::vector<std::shared_ptr<Relation>>& relations) {
+// Detects cycles in "precedes" relations and refuses rather than falling back to numeric fiat.
+std::vector<const Singular*> WebRealizer::findChildren(const Singular& parent,
+                                                      const std::vector<std::shared_ptr<Relation>>& relations,
+                                                      std::string* outError) {
     std::vector<const Singular*> rawChildren;
     std::unordered_set<const Singular*> childSet;
 
@@ -79,11 +85,9 @@ std::vector<const Singular*> findChildren(const Singular& parent,
     for (const auto* rel : Universe::instance().relations()) checkPrecedes(rel);
 
     // 3. Topological sort using Kahn's algorithm
+    // Deterministic tie-breaking using stable identifiers for nodes with equal in-degree
     auto cmp = [&](size_t i, size_t j) {
-        int ordI = getBeingOrder(rawChildren[i]);
-        int ordJ = getBeingOrder(rawChildren[j]);
-        if (ordI != ordJ) return ordI > ordJ; // Min-heap
-        return i > j;
+        return rawChildren[i]->getIdentifier() > rawChildren[j]->getIdentifier();
     };
     std::priority_queue<size_t, std::vector<size_t>, decltype(cmp)> pq(cmp);
 
@@ -112,35 +116,17 @@ std::vector<const Singular*> findChildren(const Singular& parent,
         }
     }
 
-    // Append any unvisited nodes if a cycle or unconstrained node was missed
+    // Cycle detection: If fewer nodes were visited than exist, a precedence cycle exists!
+    // Refusal: Do NOT silently fall back to numeric fiat. Report cycle and refuse.
     if (sortedChildren.size() < n) {
-        std::vector<size_t> remaining;
-        for (size_t i = 0; i < n; ++i) {
-            if (!visited[i]) remaining.push_back(i);
+        if (outError) {
+            *outError = "Precedence cycle detected among children of '" + parent.getIdentifier() + "'. Relational ordering refused.";
         }
-        std::stable_sort(remaining.begin(), remaining.end(), [&](size_t a, size_t b) {
-            return getBeingOrder(rawChildren[a]) < getBeingOrder(rawChildren[b]);
-        });
-        for (size_t idx : remaining) {
-            sortedChildren.push_back(rawChildren[idx]);
-        }
+        return {};
     }
 
     return sortedChildren;
 }
-
-std::string getThemeString(const Singular* root, const std::string& key, const std::string& fallback) {
-    if (!root) return fallback;
-    PropertyValue v;
-    if (root->getDynamicProperty(key, v)) {
-        if (auto s = std::get_if<std::string>(&v)) {
-            if (!s->empty()) return *s;
-        }
-    }
-    return fallback;
-}
-
-} // namespace
 
 std::string WebRealizer::escapeHtml(const std::string& text) {
     std::string out;
@@ -267,6 +253,67 @@ std::string WebRealizer::sanitizeHref(const std::string& href) {
     return trimmed;
 }
 
+std::string WebRealizer::sanitizeMediaSrc(const std::string& src) {
+    auto isIgnored = [](char c) {
+        return std::isspace(static_cast<unsigned char>(c)) || std::iscntrl(static_cast<unsigned char>(c));
+    };
+
+    size_t first = 0;
+    while (first < src.size() && isIgnored(src[first])) {
+        first++;
+    }
+    if (first == src.size()) return "";
+
+    size_t last = src.size() - 1;
+    while (last > first && isIgnored(src[last])) {
+        last--;
+    }
+    std::string trimmed = src.substr(first, last - first + 1);
+
+    // If colon exists, extract scheme
+    size_t colonPos = trimmed.find(':');
+    if (colonPos != std::string::npos) {
+        std::string scheme;
+        for (size_t i = 0; i < colonPos; ++i) {
+            char c = trimmed[i];
+            if (!isIgnored(c)) {
+                scheme += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            }
+        }
+
+        // Safe web schemes
+        if (scheme == "http" || scheme == "https") {
+            return trimmed;
+        }
+
+        // Safe image data URL scheme (strictly images, never text/html or scripts)
+        if (scheme == "data") {
+            std::string lowerTrimmed;
+            for (char c : trimmed) {
+                if (!isIgnored(c)) lowerTrimmed += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            }
+            if (lowerTrimmed.rfind("data:image/png", 0) == 0 ||
+                lowerTrimmed.rfind("data:image/jpeg", 0) == 0 ||
+                lowerTrimmed.rfind("data:image/jpg", 0) == 0 ||
+                lowerTrimmed.rfind("data:image/webp", 0) == 0 ||
+                lowerTrimmed.rfind("data:image/gif", 0) == 0 ||
+                lowerTrimmed.rfind("data:image/svg+xml", 0) == 0) {
+                return trimmed;
+            }
+        }
+
+        // Explicitly block all other schemes (javascript:, vbscript:, file:, blob:, data:text/html, etc.)
+        return "";
+    }
+
+    // Relative paths and images (e.g. "images/hero.png", "./photo.jpg", "/assets/logo.svg")
+    if (trimmed[0] == '/' || trimmed[0] == '.' || std::isalnum(static_cast<unsigned char>(trimmed[0]))) {
+        return trimmed;
+    }
+
+    return "";
+}
+
 std::string WebRealizer::sanitizeCssValue(const std::string& value) {
     std::string out = value;
     std::string lower;
@@ -316,7 +363,7 @@ std::string WebRealizer::sanitizeCssValue(const std::string& value) {
     return out;
 }
 
-std::string WebRealizer::generateStyleSheet(const Singular* root) {
+std::string WebRealizer::generateStyleSheet(const Singular* root, const RealizeOptions& options) {
     // Read authored theme tokens from root if available, otherwise use clean defaults
     std::string bg = sanitizeCssValue(getThemeString(root, "theme.backgroundColor", "#0b0f19"));
     std::string surface = sanitizeCssValue(getThemeString(root, "theme.surfaceColor", "#131c2e"));
@@ -401,22 +448,10 @@ body {
 
 .web-section {
   width: 100%;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
 }
 
 .web-navigation {
   width: 100%;
-  border-bottom: 1px solid var(--web-border);
-  background-color: rgba(11, 15, 25, 0.85);
-  backdrop-filter: blur(12px);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  padding: 1rem 1.5rem;
 }
 
 /* Flows */
@@ -620,6 +655,12 @@ h6.web-heading { font-size: 1rem; }
 }
 )CSS";
 
+    if (!options.extraCss.empty()) {
+        if (options.allowUnrestrictedCss) {
+            css << "\n/* Author-governed raw CSS */\n" << options.extraCss << "\n";
+        }
+    }
+
     return css.str();
 }
 
@@ -651,7 +692,8 @@ std::string WebRealizer::generateClientScript() {
 
 std::string WebRealizer::realizeElement(const Singular& element,
                                        const std::vector<std::shared_ptr<Relation>>& relations,
-                                       int indentLevel) {
+                                       int indentLevel,
+                                       std::string* outError) {
     WebConcept concept = WebConcept::readFromSingular(element);
     std::string indent = makeIndent(indentLevel);
     std::ostringstream out;
@@ -724,7 +766,7 @@ std::string WebRealizer::realizeElement(const Singular& element,
     }
 
     // Children ordered topologically by "precedes" relations
-    auto children = findChildren(element, relations);
+    auto children = findChildren(element, relations, outError);
 
     // Escape hatch for explicit tag override
     if (!concept.elementTag.empty()) {
@@ -734,7 +776,7 @@ std::string WebRealizer::realizeElement(const Singular& element,
             out << indent << "  " << escapeHtml(concept.text) << "\n";
         }
         for (const auto* child : children) {
-            out << realizeElement(*child, relations, indentLevel + 1);
+            out << realizeElement(*child, relations, indentLevel + 1, outError);
         }
         out << indent << "</" << tag << ">\n";
         return out.str();
@@ -744,19 +786,19 @@ std::string WebRealizer::realizeElement(const Singular& element,
     if (effectiveRole == "page") {
         out << indent << "<main id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
         for (const auto* child : children) {
-            out << realizeElement(*child, relations, indentLevel + 1);
+            out << realizeElement(*child, relations, indentLevel + 1, outError);
         }
         out << indent << "</main>\n";
     } else if (effectiveRole == "section") {
         out << indent << "<section id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
         for (const auto* child : children) {
-            out << realizeElement(*child, relations, indentLevel + 1);
+            out << realizeElement(*child, relations, indentLevel + 1, outError);
         }
         out << indent << "</section>\n";
     } else if (effectiveRole == "navigation" || effectiveRole == "nav") {
         out << indent << "<nav id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
         for (const auto* child : children) {
-            out << realizeElement(*child, relations, indentLevel + 1);
+            out << realizeElement(*child, relations, indentLevel + 1, outError);
         }
         out << indent << "</nav>\n";
     } else if (effectiveRole == "heading" || effectiveRole == "title" || effectiveRole == "subtitle") {
@@ -779,7 +821,7 @@ std::string WebRealizer::realizeElement(const Singular& element,
     } else if (effectiveRole == "list") {
         out << indent << "<ul id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
         for (const auto* child : children) {
-            out << realizeElement(*child, relations, indentLevel + 1);
+            out << realizeElement(*child, relations, indentLevel + 1, outError);
         }
         out << indent << "</ul>\n";
     } else if (effectiveRole == "item") {
@@ -788,11 +830,12 @@ std::string WebRealizer::realizeElement(const Singular& element,
             out << indent << "  " << escapeHtml(concept.text) << "\n";
         }
         for (const auto* child : children) {
-            out << realizeElement(*child, relations, indentLevel + 1);
+            out << realizeElement(*child, relations, indentLevel + 1, outError);
         }
         out << indent << "</li>\n";
     } else if (effectiveRole == "media" || effectiveRole == "image") {
-        out << indent << "<img id=\"" << escapeAttr(element.getIdentifier()) << "\" src=\"" << escapeAttr(concept.mediaSrc) << "\" alt=\""
+        std::string safeMediaSrc = sanitizeMediaSrc(concept.mediaSrc);
+        out << indent << "<img id=\"" << escapeAttr(element.getIdentifier()) << "\" src=\"" << escapeAttr(safeMediaSrc) << "\" alt=\""
             << escapeAttr(concept.mediaAlt) << "\" " << classAttr << styleAttr << " " << beingAttr << " />\n";
     } else if (effectiveRole == "quote") {
         out << indent << "<blockquote id=\"" << escapeAttr(element.getIdentifier()) << "\" " << classAttr << styleAttr << " " << beingAttr << ">\n";
@@ -800,7 +843,7 @@ std::string WebRealizer::realizeElement(const Singular& element,
             out << indent << "  " << escapeHtml(concept.text) << "\n";
         }
         for (const auto* child : children) {
-            out << realizeElement(*child, relations, indentLevel + 1);
+            out << realizeElement(*child, relations, indentLevel + 1, outError);
         }
         out << indent << "</blockquote>\n";
     } else if (effectiveRole == "divider") {
@@ -812,7 +855,7 @@ std::string WebRealizer::realizeElement(const Singular& element,
             out << indent << "  <p class=\"web-paragraph\">" << escapeHtml(concept.text) << "</p>\n";
         }
         for (const auto* child : children) {
-            out << realizeElement(*child, relations, indentLevel + 1);
+            out << realizeElement(*child, relations, indentLevel + 1, outError);
         }
         out << indent << "</div>\n";
     }
@@ -836,14 +879,8 @@ std::string WebRealizer::realizeFullDocument(const Singular& root,
     }
 
     doc << "  <style>\n"
-        << generateStyleSheet(&root)
+        << generateStyleSheet(&root, options)
         << "  </style>\n";
-
-    if (!options.extraCss.empty()) {
-        doc << "  <style>\n"
-            << sanitizeCssValue(options.extraCss) << "\n"
-            << "  </style>\n";
-    }
 
     doc << "</head>\n"
         << "<body>\n";

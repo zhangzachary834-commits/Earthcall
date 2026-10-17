@@ -27,7 +27,10 @@ struct RealizeOptions {
           metaDescription("Authored natively through Earthcall Laws and Lexemes"),
           includeInteractiveScript(true),
           minify(false),
-          extraCss("") {}
+          extraCss(""),
+          allowUnrestrictedCss(false) {}
+
+    bool allowUnrestrictedCss; // Requires explicit Person governance to inject raw unrestricted CSS
 };
 
 // ---------------------------------------------------------------------------
@@ -50,10 +53,18 @@ public:
     // Realize a single element (and its children recursively) to an HTML fragment
     static std::string realizeElement(const Singular& element,
                                       const std::vector<std::shared_ptr<Relation>>& relations,
-                                      int indentLevel = 0);
+                                      int indentLevel = 0,
+                                      std::string* outError = nullptr);
 
-    // Generate the complete responsive CSS stylesheet with authored design tokens
-    static std::string generateStyleSheet(const Singular* root = nullptr);
+    // Find all children connected to parent via 'contains' and ordered by 'precedes'.
+    // Detects cycles in 'precedes' relations and refuses/reports rather than falling back to fiat.
+    static std::vector<const Singular*> findChildren(const Singular& parent,
+                                                     const std::vector<std::shared_ptr<Relation>>& relations,
+                                                     std::string* outError = nullptr);
+
+    // Generate the minimal responsive CSS stylesheet with authored design tokens
+    static std::string generateStyleSheet(const Singular* root = nullptr,
+                                          const RealizeOptions& options = RealizeOptions());
 
     // Generate the interactive DOM client script that hooks clicks into Earthcall
     static std::string generateClientScript();
@@ -74,6 +85,9 @@ public:
 
     // Enforces URL scheme policy on action hrefs (blocks javascript:/data:/vbscript:; permits http, https, mailto, tel, #, /)
     static std::string sanitizeHref(const std::string& href);
+
+    // Enforces URL scheme policy on media src (blocks javascript:/vbscript:/file:; permits http, https, data:image/, relative paths)
+    static std::string sanitizeMediaSrc(const std::string& src);
 
     // Escapes/neutralizes </style> inside CSS values to prevent <style> tag breakout
     static std::string sanitizeCssValue(const std::string& value);

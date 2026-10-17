@@ -31,23 +31,20 @@ namespace Web {
 
 class WebDesignerMetalaws {
 public:
-    // Seeds standard substrate authoring Lexemes, Laws, and "denotes" Relations into LawManager.
-    // Built-in infrastructure has NO human author.
-    static void syncRegister(LawManager& laws);
+    // Authors standard web authoring vocabulary into the world with explicit Person stewardship.
+    // In accordance with Earthcall ontology, Laws expressing meaning require human stewardship.
+    // Each Law is authored by `author`, and each `denotes` Relation is admitted to the Formation / Universe.
+    static void authorVocabulary(Person& author,
+                                 LawManager& laws,
+                                 Formation* formation = nullptr,
+                                 std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 
-    // Access live seeded Lexemes and denotation Relations
-    static const std::vector<std::shared_ptr<Singularity::Language::Lexeme>>& seededLexemes();
-    static const std::vector<std::shared_ptr<Relation>>& seededRelations();
+    // Compatibility registration for modality infrastructure (does NOT manufacture fake author)
+    static void syncRegister(LawManager& laws);
 
     // In-World Lexeme Relation Scanner:
     // Compiles tokens into a target Singular using in-world Lexemes and their "denotes" Relations.
     // Resolution occurs exclusively via live Relation("denotes", *lexeme, *law) edges.
-    //
-    // Architectural Note: This is an in-world Lexeme scanner operating over the active
-    // denotation relation graph (Relation("denotes", *lexeme, *law)). It does not invoke
-    // the Mac Terminal's LawSentence parser (which is explicitly scoped only to the Mac
-    // Terminal command-line grammar per Zach 2026-09-25) nor SyntacticParser (which requires
-    // an active Zone context and resolves parts of speech).
     static WebConcept compileTokens(const std::vector<std::string>& tokens,
                                     LawManager& laws,
                                     Singular& channelTarget,
@@ -56,17 +53,25 @@ public:
 
     // Parse and compile an authored natural language phrase into a target Singular.
     // Scans character sequences against in-world Lexemes and resolves via denotes Relations.
+    // All Laws execute strictly via Law::applyTo(); unauthored Laws are refused (no backdoor).
     static WebConcept compilePhrase(const std::string& phrase,
                                     LawManager& laws,
                                     Singular& channelTarget,
                                     std::string* outError = nullptr,
                                     const std::vector<Relation*>& extraRelations = {});
 
-    // Create an authored newborn Singular (Object) in the world with real Person authorship relation.
-    // If an author (a living Person) is provided, connects Relation("authored-by", *obj, *author).
+    // Create an authored newborn Singular in the world with real Person authorship relation.
     // Person authorship is Person-exclusive — no arbitrary Singular or Object may satisfy it.
     static std::shared_ptr<Singular> createAuthoredElement(
         const std::string& identifier,
+        const WebConcept& concept,
+        Person* author = nullptr,
+        std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    // Authors concept onto any existing Singular bearer (Object, Formation, Lexeme, etc.).
+    // The Web adapter reads meaning from a being; it does not force every bearer to be an Object.
+    static Singular& applyAuthoredConcept(
+        Singular& bearer,
         const WebConcept& concept,
         Person* author = nullptr,
         std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);

@@ -43,6 +43,15 @@ public:
     static WebDesignerChannel* find(LawManager& laws);
 
     // Compilation and Authoring API (author must be a Person)
+    // Authors an element onto an existing Singular bearer (Object, Formation, etc.)
+    Singular& authorElementFromPhrase(
+        Singular& target,
+        const std::string& phrase,
+        const std::string& text = "",
+        Person* author = nullptr,
+        LawManager* laws = nullptr);
+
+    // Convenience authoring: creates a new Singular bearer (Object by default)
     std::shared_ptr<Singular> authorElementFromPhrase(
         const std::string& identifier,
         const std::string& phrase,
@@ -51,10 +60,10 @@ public:
         LawManager* laws = nullptr);
 
     // Form a parent-child containment relation between two web beings
+    // Relational ordering is governed by relatePrecedes; no numeric order parameter.
     std::shared_ptr<Relation> relateContains(
         const std::shared_ptr<Singular>& parent,
-        const std::shared_ptr<Singular>& child,
-        int order = 0);
+        const std::shared_ptr<Singular>& child);
 
     // Form a precedence relation between two sibling web beings (first precedes second in DOM sequence)
     std::shared_ptr<Relation> relatePrecedes(
@@ -66,24 +75,13 @@ public:
     void addRelation(std::shared_ptr<Relation> rel) { if (rel) _relations.push_back(std::move(rel)); }
     void clearRelations() { _relations.clear(); }
 
-    // Find an authored element by its identifier (discovers from Universe/world state first)
-    std::shared_ptr<Singular> findElement(const std::string& identifier) const;
+    // Find an authored element by its identifier (discovers from Universe/world state first).
+    // Returns a borrowed Singular* pointer; never constructs fake shared ownership.
+    Singular* findElement(const std::string& identifier) const;
 
-    // Realize a root element / page to HTML (Pure Realization: the core modality interface)
+    // Realize a root element / page to HTML (Pure Realization: the core modality interface).
+    // Web realization computes and returns HTML; persistent storage is orthogonal.
     std::string realize(const Singular& root, const RealizeOptions& options = RealizeOptions());
-
-    // Save realized HTML via VFS URI addressing (memory://, save://, file://, or relative path)
-    // Non-authoritative convenience routing storage through VirtualFileSystem and FileChannel
-    // without claiming Web Modality ownership of persistent storage.
-    bool saveToVfs(const Singular& root,
-                   const std::string& vfsUri,
-                   LawManager* laws = nullptr,
-                   const RealizeOptions& options = RealizeOptions());
-
-    // Export realized HTML (non-authoritative convenience route calling saveToVfs)
-    bool exportHtml(const Singular& root,
-                    const std::string& filePath,
-                    const RealizeOptions& options = RealizeOptions());
 
     // Ingest a web action (click, toggle) and trigger Earthcall Law events
     void handleWebAction(const std::string& beingId,
@@ -103,7 +101,6 @@ private:
     std::string _activeSite = "Earthcall Website";
     std::string _activePage = "index";
     std::string _lastRealizedHtml;
-    std::string _exportPath;
     std::string _lastActionBeing;
     std::string _lastActionEvent;
 
@@ -123,9 +120,6 @@ private:
     void propSetActivePage(const std::string& v) { _activePage = v; }
 
     std::string propLastRealizedHtml() const { return _lastRealizedHtml; }
-
-    std::string propExportPath() const { return _exportPath; }
-    void propSetExportPath(const std::string& v) { _exportPath = v; }
 
     std::string propLastActionBeing() const { return _lastActionBeing; }
     std::string propLastActionEvent() const { return _lastActionEvent; }
