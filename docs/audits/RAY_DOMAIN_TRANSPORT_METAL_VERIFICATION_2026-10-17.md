@@ -81,3 +81,24 @@ Keep the certificate lane **default off**. No optional live-property trial was r
 ## Zach's fidelity criterion and Sky-Island follow-up
 
 Zach prefers the before lighting aesthetically but accepts the after change only if it follows the authored equations more closely. [Independent 80-digit/native field comparison and old-renderer grouping reference](SKY_SANCTUARY_AUTHORED_EQUATION_FIDELITY_2026-10-17.md) support the darker Sky-Island result: sun field error falls from 0.6688 to 9.61e-8, and the old renderer with explicit Add trees matches all three after captures byte-for-byte. This is bounded evidence for the grouping/shading change, not a complete exact-renderer certification. No aesthetic retuning or silent Person checkbox acceptance. **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T00:37:58-07:00 (PDT).
+
+
+## Post-repair Metal revalidation — Opus seventh pass
+
+Zach relayed Opus's return and requested continuation after the merge. Rebuilt all three requested native targets from merged HEAD `a597da4cd` (including `09143a5df` execution provenance and `94554ae93` range residency), then ran them sequentially with desktop GPU access on the same Apple M5 Mac. Existing Debug configuration; default test modes, no timing mode or timestamp requests. No production source, test, save, lighting coefficient, installed app or default was changed.
+
+| Witness | Result | Observed scope |
+|---|---|---|
+| `webgpu_volume_support_certificates_test` | **57/57, exit 0** | Single/fused, edits/extents, warm residency, full lattice, Prism and 2560×1440 comparisons pass. Precedence witness: 6,592 lit pixels, 0 differing bytes. |
+| `webgpu_volume_zero_proof_test` | **73/73, exit 0** | Includes density/emission edits, mixed membership, full lattice, device replacement and 2560×1440. |
+| `webgpu_perlin_exact_gradient_test` | **ALL OK, exit 0** | Gates A–D execute; residency assertion passes; traversal active 6/6 cameras, identical OFF/ON hit coverage and sampled CPU root agreement, 0 reported GPU validation errors. |
+
+**Two important limits.** The added cancellation case reports **0 lit pixels**, 1 killer and 0 differing bytes on this M5. The witness asserts RGBA equality but does not require the cancellation frame to be nonblack. Thus it passes here without reproducing lavapipe's 29,388-lit-pixel cancellation manifestation; do not cite it as native positive-density cancellation coverage.
+
+Perlin's “45 degrees down” camera reports **27 differing RGBA bytes** despite identical hit coverage; all other five cameras report 0. The stock witness asserts coverage and root agreement, while color-byte differences are diagnostic only. The prior pre-repair run aborted before this camera, so these results alone cannot classify the color difference as a regression. The residency fix is verified within this witness; full RGBA parity is not established. No assertions or tolerances were changed.
+
+Raw logs and exit/duration metadata: `scratch/verification/ray-domain-metal-2026-10-17-01a148a7/repair-revalidation/{webgpu_*_test.log,results.json}`. Elapsed test durations were 40.180 / 25.588 / 6.432 seconds; these are test execution durations, not renderer performance measurements. No ABBA rerun or CPU-census rerun was performed.
+
+Certificates and ordinary timestamps stay default off. The declared execution-error model is still not a complete Metal Fast-mode enclosure. Generic authored eligibility, device proof, the null-member AUTHOR decision and existing Person appearance/movement checks remain open. This pass verifies the three requested native witnesses, not the entire renderer or a new FPS result.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T12:12:06-07:00 (PDT).

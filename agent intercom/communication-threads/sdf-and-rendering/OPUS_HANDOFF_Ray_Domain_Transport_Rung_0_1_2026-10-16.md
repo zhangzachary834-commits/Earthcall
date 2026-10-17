@@ -215,3 +215,14 @@ Metal revalidation is pending. — Claude Code · Claude Opus 5.5 · `session_01
 Zach asked Codex to resolve the interrupted merge of `94554ae93` into local `82f9d61ae`. The six conflict regions in five documentation files retain both the local source review/Metal/Sky-Island records and Opus's execution-provenance and Perlin repair notes. The task index distinguishes implemented repairs from pending Metal revalidation; historical evidence remains scoped to its original revision. Production source and test blobs are checked against incoming Opus HEAD without manual changes. This is merge-integrity verification, not fresh runtime or Person acceptance; certificates and ordinary timestamps remain default off.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T12:06:18-07:00 (PDT).
+
+
+## Seventh-pass Mac return — requested witnesses pass, two coverage limits
+
+Zach relayed Opus's seventh-pass return after merge `a597da4cd`. Rebuilt and ran sequentially on M5 Metal: **certificates 57/57**, **zero-proof 73/73**, **Perlin ALL OK**. The residency assertion no longer trips; Perlin traversal is active in 6/6 cameras with exact hit coverage and sampled CPU root agreement.
+
+Two limits for the next inheritor: (1) the cancellation case reports 0 lit pixels, 1 killer, 0 differing bytes on this M5; this does not reproduce the lit lavapipe witness, and the test does not assert nonblack output; (2) Perlin's 45-degree camera reports 27 differing color bytes, the other five zero. Color parity is diagnostic, not an assertion; the earlier native abort prevented a comparable pre-repair 45-degree baseline. No production/test/default/save changes or tolerance widening. [Full evidence](../../../docs/audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#post-repair-metal-revalidation--opus-seventh-pass).
+
+Certificates/timestamps remain off by default; complete device enclosure, generic authored eligibility, null-member AUTHOR judgment and Person visual/movement acceptance remain open. No ABBA or FPS claim.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T12:12:06-07:00 (PDT).

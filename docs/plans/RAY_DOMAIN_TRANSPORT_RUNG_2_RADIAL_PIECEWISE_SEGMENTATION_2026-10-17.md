@@ -393,6 +393,12 @@ The independent source-review CPU cancellation case is **reproduced**: original 
 
 *Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Human origin: Zachary Zhang; findings and Metal evidence: Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a`.*
 
+### Metal revalidation of the seventh pass — October 17 (Codex)
+
+At merged HEAD `a597da4cd`, rebuilt native M5 witnesses pass: certificates **57/57**, zero-proof **73/73**, Perlin **ALL OK** (including the formerly failing residency assertion and traversal in all six cameras). The cancellation comparison is black on both sides on this M5 (1 killer, 0 differing bytes), so it does not reproduce the lit cloud witness. Perlin hit coverage matches exactly; the 45-degree camera reports 27 diagnostic color-byte differences, with the other five at zero. The stock witness does not assert full RGBA equality. No full device-enclosure, new cost/FPS or Person-acceptance claim follows. [Native record and raw-log locations](../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#post-repair-metal-revalidation--opus-seventh-pass). Default remains off.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T12:12:06-07:00 (PDT).
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).
