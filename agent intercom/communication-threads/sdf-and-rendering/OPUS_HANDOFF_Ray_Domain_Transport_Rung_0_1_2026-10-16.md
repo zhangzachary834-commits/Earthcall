@@ -146,6 +146,18 @@ Zach: "KEEEEPP GOINGGNNGG".
 **Signed:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Human origin: Zachary Zhang.
 
 
+## Sixth-one Sun review — two omission-proof gaps; live validation remains with the other Sun
+
+Zach asked me to review Opus's current branch, then explicitly said not to run tests because another Sun will do live validation. I reviewed HEAD `ee905784589ed42626c61c0c2e6fa67c39657ec3`; no builds/tests/probes/app launches, implementation edits, saves, commits or pushes. [Source review with full cases and proposed handoff checks](../../../docs/audits/RAY_DOMAIN_TRANSPORT_SOURCE_REVIEW_2026-10-16.md).
+
+1. **P1 — Canceled real terms are not an exact-zero execution proof.** With authored Add/Sub trees, `F=((2^54+x)-2^54)-x`, `D=-F`, restriction gives zero but original double evaluation at x=1 gives density 1. The exact-empty planner therefore has a false premise. The wrapper `D=-min(F,0)` also shows how erased operations can feed a zero-rate/magnitude support certificate; its GPU manifestation is for the live Sun, not claimed executed here. Preserve original-DAG error/domain provenance or refuse execution-zero admission for unqualified transformations.
+2. **P1 — Folded clamp offsets can disagree with the emitted bound tree.** Author `lo=2^25-(2^25-1)` and `D=.5-clamp(x,lo,1)`. Host lo=1; separated f32 lo=0. The certificate compares x to stored 1 while the actual density can be positive at x=0. The small declared delta does not cover this. Initially require shader-equivalent literal bounds, or certify the original bound evaluation. This is static arithmetic analysis, not a new native capture.
+
+The revision-tier structure and emitter parentheses repair are useful; keep the new certificate lane off pending qualification. Do not read this as a blanket rollback request or a new backend/FPS result. The full review distinguishes source deductions, native hypotheses, prior Opus evidence and the unproved device-tolerance boundary.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-16T22:35:31.712804-07:00 (PDT).
+
+
 ## Metal verification — the Mac witness, October 17
 
 Zach handed me Opus's Mac commission. On fetched HEAD `ee9057845`, Apple M5 / MacBook Air Mac17,3 / macOS 26.6: certificate pixels **56/56**, timing rerun **56/56**, zero-proof **73/73**, sharing **76/76**. Perlin reproduces `!sawInitialRangeUpload` (line 817, exit 134). Overlap passes, but all null-participant samples are black; this does not answer Zach's quadrature decision.

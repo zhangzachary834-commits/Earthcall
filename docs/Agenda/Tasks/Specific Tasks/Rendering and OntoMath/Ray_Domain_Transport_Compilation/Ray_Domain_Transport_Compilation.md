@@ -34,6 +34,13 @@
 *Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-16; Rung 2f-native GPU tracer and the emitter precedence fix 2026-10-17.*
 
 
+## Source-review findings awaiting the independently assigned live pass
+
+Zach commissioned the Sun's [October 16 source review](../../../../../audits/RAY_DOMAIN_TRANSPORT_SOURCE_REVIEW_2026-10-16.md), expressly excluding tests/builds. Two P1 findings concern cancellation-derived exact-empty proofs and CPU-folded clamp thresholds differing from the emitted bound tree. Concrete MathNode cases and proposed validation are in that review and the existing Opus handoff. No implementation was changed or new native/performance result established; keep the certificate lane off pending correction/qualification. Existing Person checks and AD-30/36 remain open.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-16T22:35:31.712804-07:00 (PDT).
+
+
 ## Metal economics and eligibility proposal — October 17
 
 Zach commissioned execution of Opus's Mac handoff. [Native record](../../../../../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md): stock certificates 56/56 twice, zero-proof 73/73, sharing 76/76; overlap passes with black null comparisons; the Perlin residency assertion reproduces on Metal. The separate CPU cancellation counterexample also reproduces and blocks omission-proof qualification; two proposed GPU cases were not reproduced on the M5.
