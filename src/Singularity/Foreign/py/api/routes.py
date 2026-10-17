@@ -276,11 +276,12 @@ def list_saves():
     save_files = []
     if saves_dir.exists():
         for f in saves_dir.glob("*.json"):
+            st = f.stat()
             save_files.append({
                 "filename": f.name,
                 "path": str(f),
-                "size_kb": round(f.stat().st_size / 1024, 2),
-                "modified": f.stat().st_mtime
+                "size_kb": round(st.st_size / 1024, 2),
+                "modified": st.st_mtime
             })
             
     return jsonify({"saves": save_files})
