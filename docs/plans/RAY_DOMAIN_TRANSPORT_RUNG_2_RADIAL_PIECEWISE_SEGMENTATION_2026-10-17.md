@@ -263,6 +263,17 @@ Adapter-relative cost (ABBA ×4, 8 frames each, medians). These numbers **rank l
    - The new precedence witness renders `length(p) − (2.4 + 0.3y)` as one leaf and as `Add(2.4, 0.3y)`. Before the fix they differed in 17,184 bytes (max 255) with certificates off; after it, 0.
    - A read-only scan of `saves/zones` finds affected authored expressions in **Prism Cathedral** (light chroma 160 < z ≤ 195, two field members, the root field), **Radiance Gallery** (root field) and **Sky-Island Sanctuary** (two fields). There, the GPU now matches the CPU's multiplicative modulation; before, it applied an additive offset. These are listed for Person verification. No save was edited.
 
+**Regression check after the emitter fix (Linux Release, 4 cores).**
+- **WebGPU sweep on lavapipe:** identical to §6d. 13 pass, the new certificate witness passes 56/56, and the same three fail for their recorded causes; `screen_recorder` is Apple-only.
+- **Full default ctest:** 216/296 pass. The failures fall into five groups:
+  - headless environment: "no GL context" or window creation;
+  - a network-backed cloud test;
+  - a usage-only perf tool;
+  - the 18 explicit-target `webgpu_*` entries, run by the sweep instead;
+  - 15 others: Prism hydration, `.ecform` semantic files, the Sun radiance contract, an OntoMath witness segfault, the chess/go/zone-boot kills, first-mover aborts, cloud upload and two app tests.
+- **Those 15 were rebuilt at the pre-pass commit `5bcb6383`, and every one fails identically there.** They pre-date this pass and are not regressions.
+- My two census tests briefly failed in the full suite, because other tests create a fixture `saves/zones` in the build directory. They now read the root holding the most Zones.
+
 **Not done / limits.**
 - Select-piece killers and the density-sign killer are not candidates yet.
 - Device reconstruction is witnessed only with the lane off.
