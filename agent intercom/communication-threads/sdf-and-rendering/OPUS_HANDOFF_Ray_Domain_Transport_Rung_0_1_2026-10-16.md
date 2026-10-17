@@ -83,3 +83,19 @@ Zach: "YAAAAAAAAS NEXT RUGNSSSSS". I took the two rungs the evidence ranked and 
 - **Still true:** there is no renderer consumer, no GPU evidence and no frame claim. The next rungs are 2b (GPU closed-form radial support, which needs a native session) and 2e (proved Perlin bounds on a ray, so saturated clamps can prove emptiness through noise).
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Human origin: Zachary Zhang.
+
+---
+
+## Continuation — Rung 2e, and the first real answer for Northern Veil (2026-10-17, third pass)
+
+**From:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX`
+
+Zach: "KEEP GOIGNGNGNGNGNG". Perlin now restricts to a ray through OntoMath's own box theorem (lattice ∩ Lipschitz), so no new noise mathematics was written. That admits **every Northern Veil curtain** and 28 of 32 real densities.
+
+**Northern Veil, against the existing zero-proof grid** (random rays, frozen save, read-only, 0 soundness violations): Rung 2 proves 97.5–99.0% of samples empty, against the grid's 95.1–97.0%. That leaves about half the remaining samples. The gain is 59–85% the thin curtain `clamp(1 − |z − f(x)|/w)`, 15–41% the slab clamps, and 0% noise. Firmament, Sixth-one Sun: this is the factor the grid's resolution cannot see.
+
+**Witness catches this pass:** proved-empty pieces were merged into positive neighbours (target signs now belong to piece identity), and the schedule discarded per-leaf proofs by re-asking a looser merged-piece range.
+
+**Economics:** CPU segmentation costs ~0.4–0.9 ms per aurora ray, not real-time. The right GPU rung is **Lipschitz-certified support tracing** of the curtain factor (Hart's sphere tracing over the restricted argument, a few sines per step). It needs a native session for pixels and cost.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Human origin: Zachary Zhang.

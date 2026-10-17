@@ -381,6 +381,46 @@ int main() {
         }
     }
 
+    // ---- Rung 2e: Perlin noise through OntoMath's own box theorem --------
+    {
+        // clamp(0.7 + 0.3·noise(0.08·p), 0, 1) · clamp(1 − |x|/6, 0, 1)
+        auto noisy = node(Op::Scale,
+            node(Op::Clamp, node(Op::Add, num(0.7), node(Op::Scale, num(0.3), node(Op::Noise, node(Op::Scale, num(0.08), leaf("p"))))), num(0), num(1)),
+            node(Op::Clamp, node(Op::Sub, num(1), node(Op::Div, node(Op::Abs, leaf("x")), num(6))), num(0), num(1)));
+        const auto r = OntoMath::restrictAlgebraicToLine(*noisy, false);
+        check(bool(r), "noise-modulated envelope admitted (Noise ranged by OntoMath's lattice/Lipschitz theorem)" +
+                           (r ? std::string() : " — " + r.refusal));
+        if (r) {
+            bool parity = true, sound = true, emptyOutside = true;
+            int probes = 0;
+            for (const auto& ray : rays()) {
+                OntoMath::LineAlgebraicEvaluator ev(*r.form, lineBindings(ray));
+                for (double s = -10; s <= 30; s += 1.13) {
+                    double e = 0;
+                    const auto ref = noisy->evaluate(pointVars(ray.o + s * ray.d));
+                    // Noise reads its argument as glm::vec3 on both paths: identical f32 inputs.
+                    if (!ref || !propertyValueToNumber(*ref, e) || std::abs(*ev.value(r.form->roots[0], s) - e) > 1e-6)
+                        parity = false;
+                }
+                for (const auto& piece : OntoMath::segmentLine({&ev}, -10, 30, 0.01)) {
+                    const auto rg = ev.range(r.form->roots[0], piece.s0, piece.s1, piece.signs[0], nullptr);
+                    for (int q = 0; q <= 6; ++q) {
+                        const double s = piece.s0 + (piece.s1 - piece.s0) * q / 6;
+                        const double v = *ev.value(r.form->roots[0], s);
+                        ++probes;
+                        if (!(rg.lo <= v && v <= rg.hi)) sound = false;
+                        // |x| ≥ 6 makes the envelope saturate at exactly 0, noise or not.
+                        if (std::abs((ray.o + s * ray.d).x) > 6.5 && piece.definite && !(rg.lo == 0.0f && rg.hi == 0.0f))
+                            emptyOutside = false;
+                    }
+                }
+            }
+            check(parity, "noise parity with MathNode::evaluate (same f32 lattice argument)");
+            check(sound, "noise piece ranges contain every probed value (" + std::to_string(probes) + " probes)");
+            check(emptyOutside, "a saturated envelope proves exact emptiness THROUGH the noise factor");
+        }
+    }
+
     // ---- Rung 2d: analytic proposals cut cost, never soundness ------------
     {
         uint32_t evalsOn = 0, evalsOff = 0, proposed = 0;
@@ -408,7 +448,6 @@ int main() {
     {
         struct Case { std::string what; std::unique_ptr<MathNode> n; bool vector = false; };
         std::vector<Case> cases;
-        cases.push_back({"Noise", node(Op::Noise, leaf("p"))});
         cases.push_back({"ln(x) factor (CPU undefined at ≤ 0, emitter clamps)", [] { auto n = num(0); n->scalarForm = ScalarForm::transcendental(OntoMath::TransFactor::Kind::Ln, "x"); return n; }()});
         cases.push_back({"Clamp with a variable bound", node(Op::Clamp, leaf("x"), num(0), leaf("y"))});
         cases.push_back({"Clamp with inverted bounds", node(Op::Clamp, leaf("x"), num(1), num(0))});

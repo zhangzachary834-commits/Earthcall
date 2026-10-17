@@ -1,5 +1,7 @@
 #include "Singularity/OntoMath/LineRestriction.hpp"
 
+#include <glm/gtc/noise.hpp>
+
 #include <algorithm>
 #include <cmath>
 #include <functional>
@@ -801,6 +803,16 @@ struct AlgebraicBuilder {
                 out.s = euclidean(c);
                 return out;
             }
+            case Op::Noise: {
+                if (!exactArity(n, 1, &why)) return std::nullopt;
+                const auto q = childOf(n, 0);
+                if (!q) return std::nullopt;
+                if (!q->vector) { say(&why, "Noise needs a vector argument"); return std::nullopt; }
+                AlgValue out;
+                out.s = op(Kind::Noise, q->v[0], q->v[1]);
+                form.nodes[out.s].c = q->v[2];
+                return out;
+            }
             case Op::Clamp: {
                 if (!exactArity(n, 3, &why)) return std::nullopt;
                 const auto lo = n.children[1] ? constantOf(*n.children[1]) : std::nullopt;
@@ -1023,6 +1035,27 @@ LineAlgebraicEvaluator::LineAlgebraicEvaluator(const LineAlgebraicForm& form,
     : _form(&form), _bindings(std::move(bindings)), _undefinedAsZero(undefinedAsZero) {
     _coefficients.resize(form.nodes.size());
     _errors.resize(form.nodes.size());
+    // Operands are always built before their parents, so one forward pass decides
+    // which subtrees carry no switch (their range depends on the interval alone).
+    _signFree.assign(form.nodes.size(), 0);
+    for (std::size_t i = 0; i < form.nodes.size(); ++i) {
+        const auto& n = form.nodes[i];
+        bool free = n.switchCount == 0;
+        switch (n.kind) {
+            case Kind::Polynomial: case Kind::Undefined: break;
+            case Kind::Sqrt: case Kind::Abs: case Kind::Trans: case Kind::Clamp:
+                free = free && n.a < i && _signFree[n.a];
+                break;
+            case Kind::Noise:
+                free = free && _signFree[n.a] && _signFree[n.b] && _signFree[n.c];
+                break;
+            case Kind::Select: free = false; break;
+            default:
+                free = free && n.a < i && n.b < i && _signFree[n.a] && _signFree[n.b];
+                break;
+        }
+        _signFree[i] = free ? 1 : 0;
+    }
     constexpr double kEps = std::numeric_limits<double>::epsilon();
     for (std::size_t i = 0; i < form.nodes.size(); ++i) {
         const auto& n = form.nodes[i];
@@ -1077,6 +1110,12 @@ std::optional<double> LineAlgebraicEvaluator::value(uint32_t node, double s) con
         case Kind::Abs: return std::abs(*a);
         case Kind::Clamp: return std::clamp(*a, n.lo, n.hi);
         case Kind::Trans: return TransFactor(n.transKind, "u").evaluate(*a);
+        case Kind::Noise: {
+            // MathNode::evaluate carries the argument as glm::vec3 (f32).
+            const auto b = value(n.b, s), c = value(n.c, s);
+            if (!b || !c) return std::nullopt;
+            return static_cast<double>(glm::perlin(glm::vec3(float(*a), float(*b), float(*c))));
+        }
         default: break;
     }
     const auto b = value(n.b, s);
@@ -1164,6 +1203,26 @@ int pieceState(const LineAlgebraicNode& n, uint32_t p, const std::vector<int8_t>
 Interval LineAlgebraicEvaluator::rangeAt(uint32_t node, double sa, double sb, const std::vector<int8_t>& signs,
                                          bool* undefined) const {
     const auto& n = _form->nodes[node];
+    if (_signFree[node] && n.kind != Kind::Polynomial && n.kind != Kind::Undefined) {
+        if (sa != _treeMemoS0 || sb != _treeMemoS1 || _treeMemoValid.size() != _signFree.size()) {
+            _treeMemoS0 = sa;
+            _treeMemoS1 = sb;
+            _treeMemoRange.assign(_signFree.size(), Interval());
+            _treeMemoValid.assign(_signFree.size(), 0);
+        }
+        if (_treeMemoValid[node]) { ++_memoHits; return _treeMemoRange[node]; }
+        // Sign-free: signs cannot change this answer, and undefined cannot arise.
+        static const std::vector<int8_t> kNoSigns;
+        _treeMemoValid[node] = 1;
+        ++_memoMisses;
+        return _treeMemoRange[node] = rangeUnmemoized(node, sa, sb, kNoSigns, undefined);
+    }
+    return rangeUnmemoized(node, sa, sb, signs, undefined);
+}
+
+Interval LineAlgebraicEvaluator::rangeUnmemoized(uint32_t node, double sa, double sb, const std::vector<int8_t>& signs,
+                                                 bool* undefined) const {
+    const auto& n = _form->nodes[node];
     const int8_t s0 = n.switchCount > 0 ? signs[n.switchBegin] : 0;
     const int8_t s1 = n.switchCount > 1 ? signs[n.switchBegin + 1] : 0;
     switch (n.kind) {
@@ -1180,6 +1239,27 @@ Interval LineAlgebraicEvaluator::rangeAt(uint32_t node, double sa, double sb, co
         case Kind::Abs: {
             const Interval r = rangeAt(n.a, sa, sb, signs, undefined);
             return s0 > 0 ? r : (s0 < 0 ? -r : absOf(r));
+        }
+        case Kind::Noise: {
+            // The rounded f32 argument the CPU actually evaluates stays inside a
+            // float-bounded box that encloses the real argument, so OntoMath's
+            // box theorem covers it too.
+            static const MathNode noiseOfQ = [] {
+                MathNode q;
+                q.op = MathNode::Op::ValueLeaf;
+                q.variableName = "q";
+                MathNode nz;
+                nz.op = MathNode::Op::Noise;
+                nz.children.push_back(std::make_unique<MathNode>(q));
+                return nz;
+            }();
+            const Interval ra = rangeAt(n.a, sa, sb, signs, undefined);
+            const Interval rb = rangeAt(n.b, sa, sb, signs, undefined);
+            const Interval rc = rangeAt(n.c, sa, sb, signs, undefined);
+            const auto r = noiseOfQ.evalRange({{"q", MathNode::RangeValue::makeVector(ra, rb, rc)}});
+            if (!r || r->kind != ValueKind::Scalar)
+                return Interval(-kClassicPerlin3ValueBound, kClassicPerlin3ValueBound);
+            return r->scalar;
         }
         case Kind::Trans:
             // OntoMath's own bound (exact sin/cos extrema, monotone exp), given a
@@ -1256,6 +1336,7 @@ bool LineAlgebraicEvaluator::constantUnder(uint32_t node, const std::vector<int8
             if (!n.nonnegativeArgument && s0 < 0) return true;
             return constantUnder(n.a, signs);
         case Kind::Abs: case Kind::Trans: return constantUnder(n.a, signs);
+        case Kind::Noise: return constantUnder(n.a, signs) && constantUnder(n.b, signs) && constantUnder(n.c, signs);
         case Kind::Min: case Kind::Max: {
             const bool min = n.kind == Kind::Min;
             if (s0 > 0) return constantUnder(min ? n.b : n.a, signs);
@@ -1302,6 +1383,11 @@ void LineAlgebraicEvaluator::relevantUndecided(uint32_t node, const std::vector<
             return;
         case Kind::Trans:
             relevantUndecided(n.a, signs, out);
+            return;
+        case Kind::Noise:
+            relevantUndecided(n.a, signs, out);
+            relevantUndecided(n.b, signs, out);
+            relevantUndecided(n.c, signs, out);
             return;
         case Kind::Min: case Kind::Max: {
             const bool min = n.kind == Kind::Min;
@@ -1431,18 +1517,41 @@ struct Segmenter {
     uint32_t maxEvaluations;
     LineSegmentationStats stats;
     std::vector<LineSegmentationPiece> pieces;
+    std::vector<std::pair<std::size_t, uint32_t>> targets;
 
-    void emit(double a, double b, bool definite, const std::vector<std::vector<int8_t>>& signs) {
-        if (!pieces.empty() && pieces.back().definite == definite && pieces.back().signs == signs) {
+    // Adjacent pieces merge only when switches AND targets agree: a proved-empty
+    // stretch must never be absorbed into a neighbouring positive one.
+    void emit(double a, double b, bool definite, const std::vector<std::vector<int8_t>>& signs,
+              const std::vector<int8_t>& targetSigns) {
+        if (!pieces.empty() && pieces.back().definite == definite && pieces.back().signs == signs &&
+            pieces.back().targetSigns == targetSigns) {
             pieces.back().s1 = b;
             return;
         }
-        pieces.push_back({a, b, definite, signs});
+        pieces.push_back({a, b, definite, signs, targetSigns});
     }
 
-    void classify(double a, double b, std::vector<std::vector<int8_t>> signs) {
+    void classify(double a, double b, std::vector<std::vector<int8_t>> signs,
+                  std::vector<int8_t> targetSigns = {}) {
+        if (targetSigns.size() != targets.size()) targetSigns.assign(targets.size(), 0);
         for (;;) {
             bool progress = false, pending = false;
+            for (std::size_t t = 0; t < targets.size(); ++t) {
+                if (targetSigns[t] != 0) continue;
+                if (stats.rangeEvaluations >= maxEvaluations) {
+                    stats.budgetExhausted = true;
+                    emit(a, b, false, signs, targetSigns);
+                    return;
+                }
+                ++stats.rangeEvaluations;
+                bool undefined = false;
+                const auto& [e, node] = targets[t];
+                const Interval r = evaluators[e]->range(node, a, b, signs[e], &undefined);
+                if (undefined || std::isnan(r.lo) || std::isnan(r.hi)) { pending = true; continue; }
+                if (r.hi <= 0.0f) { targetSigns[t] = -1; progress = true; }
+                else if (r.lo > 0.0f) { targetSigns[t] = 1; progress = true; }
+                else pending = true;
+            }
             for (std::size_t e = 0; e < evaluators.size(); ++e) {
                 const auto& ev = *evaluators[e];
                 std::vector<uint32_t> relevant;
@@ -1452,7 +1561,7 @@ struct Segmenter {
                 for (uint32_t k : relevant) {
                     if (stats.rangeEvaluations >= maxEvaluations) {
                         stats.budgetExhausted = true;
-                        emit(a, b, false, signs);
+                        emit(a, b, false, signs, targetSigns);
                         return;
                     }
                     ++stats.rangeEvaluations;
@@ -1465,13 +1574,15 @@ struct Segmenter {
                     else pending = true;
                 }
             }
-            if (!pending) { emit(a, b, true, signs); return; }
+            if (!pending) { emit(a, b, true, signs, targetSigns); return; }
             if (!progress) break;
         }
         const double mid = 0.5 * (a + b);
-        if (!(b - a > resolution) || !(mid > a && mid < b)) { emit(a, b, false, signs); return; }
-        classify(a, mid, signs);
-        classify(mid, b, std::move(signs));
+        if (!(b - a > resolution) || !(mid > a && mid < b)) { emit(a, b, false, signs, targetSigns); return; }
+        // Decided signs (switches and targets) were proved over [a, b], so they
+        // hold on both halves and are inherited; pending ones are retried there.
+        classify(a, mid, signs, targetSigns);
+        classify(mid, b, std::move(signs), std::move(targetSigns));
     }
 };
 } // namespace
@@ -1480,8 +1591,10 @@ std::vector<LineSegmentationPiece> segmentLine(const std::vector<const LineAlgeb
                                                double s0, double s1, double resolution,
                                                LineSegmentationStats* stats, uint32_t maxRangeEvaluations,
                                                bool analyticProposals,
-                                               const std::vector<std::vector<int8_t>>* initialSigns) {
-    Segmenter seg{evaluators, resolution, maxRangeEvaluations, {}, {}};
+                                               const std::vector<std::vector<int8_t>>* initialSigns,
+                                               const std::vector<std::pair<std::size_t, uint32_t>>* signTargets) {
+    Segmenter seg{evaluators, resolution, maxRangeEvaluations, {}, {}, {}};
+    if (signTargets) seg.targets = *signTargets;
     std::vector<std::vector<int8_t>> signs;
     for (std::size_t e = 0; e < evaluators.size(); ++e) {
         const std::size_t n = evaluators[e]->form().switches.size();

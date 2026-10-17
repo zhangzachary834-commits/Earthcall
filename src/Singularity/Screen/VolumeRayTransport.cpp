@@ -560,8 +560,14 @@ VolumeSegmentSchedule scheduleVolumeRaySegment(const std::vector<VolumeSegmentMe
     std::vector<const OntoMath::LineAlgebraicEvaluator*> densityEvals;
     for (std::size_t j = 0; j < members.size(); ++j)
         densityEvals.push_back(evaluators[memberEvals[j].index.at(&members[j].forms->density)]);
+    // The marchers branch on max(D, 0) > 0, so each member's density sign is a
+    // segmentation target in its own right (it splits even a structurally
+    // non-negative D at its zeros).
+    std::vector<std::pair<std::size_t, uint32_t>> densitySigns;
+    for (std::size_t j = 0; j < densityEvals.size(); ++j) densitySigns.push_back({j, densityEvals[j]->form().roots[0]});
     OntoMath::LineSegmentationStats st1;
-    const auto coarse = OntoMath::segmentLine(densityEvals, sFirst, sLast, resolution, &st1, 1u << 16, analyticProposals);
+    const auto coarse = OntoMath::segmentLine(densityEvals, sFirst, sLast, resolution, &st1, 1u << 16, analyticProposals,
+                                              nullptr, &densitySigns);
     addStats(st1, 0);
     if (coarse.empty()) return allGeneral("segmentation produced no pieces");
 
@@ -622,9 +628,12 @@ VolumeSegmentSchedule scheduleVolumeRaySegment(const std::vector<VolumeSegmentMe
     };
 
     for (const auto& piece : coarse) {
-        // Emptiness under density signs alone.
+        // Emptiness under density signs alone. A merged piece's recorded target
+        // sign is the proof (each merged leaf was proved ≤ 0 over itself); a fresh
+        // range over the whole merged piece is looser and must not overrule it.
         std::vector<bool> active(members.size(), true);
         for (std::size_t j = 0; j < members.size(); ++j) {
+            if (j < piece.targetSigns.size() && piece.targetSigns[j] < 0) { active[j] = false; continue; }
             bool undefined = false;
             const auto r = densityEvals[j]->range(densityEvals[j]->form().roots[0], piece.s0, piece.s1,
                                                   piece.signs[j], &undefined);

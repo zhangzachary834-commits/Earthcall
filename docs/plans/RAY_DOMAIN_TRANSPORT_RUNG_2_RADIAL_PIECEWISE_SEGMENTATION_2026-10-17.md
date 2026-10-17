@@ -109,6 +109,42 @@ Zach: "YAAAAAAAAS NEXT RUGNSSSSS". Taken in the order the census and cost eviden
 
 Release, original twelve media: **24–27 µs/ray mean over three runs**, from ~34 at Rung 2's first commit. That is still about 50 s per 1080p frame on one CPU core. The conclusion for the GPU consumer stands: use closed-form roots per member, not fragment-shader branch-and-bound.
 
+## 6b. Rung 2e — Perlin noise on a ray, and what it showed about Northern Veil (2026-10-17, third pass)
+
+Zach: "KEEP GOIGNGNGNGNGNG".
+
+**Built.**
+- **Noise node.** `noise(q)` for an algebraic vec3 argument. Its range is never re-derived here: the argument's enclosure box goes to OntoMath's own load-bearing theorem (`MathNode::evalRange` on Noise: glm::perlin's lattice formula intersected with the proved Lipschitz ball). The CPU evaluates `glm::perlin` at the f32-rounded argument. Rounding a value inside a float-bounded box stays inside it, so the theorem covers the CPU's actual value too.
+- **Sign-free range memo.** This generalizes 2d's leaf memo. Any node with no switch beneath it (a polynomial, or a noise of a polynomial argument) has a range that depends only on the interval, so it is memoized per interval. Northern Veil fell from 12–15 to 4–6 ms/ray in Debug with identical proofs.
+- **Density-sign targets.** The marchers branch on `max(D,0) > 0`, so phase 1 resolves each member's density sign as an asymmetric target: proved ≤ 0, or proved strictly > 0. This splits even a structurally non-negative D at its zeros. It costs evaluations on simple media (synthetic ball 90 → 131).
+- **Two bugs the witnesses caught.**
+  1. Adjacent pieces merged on switch signs alone, so a proved-empty stretch could be absorbed by a positive neighbour. Target signs are now part of a piece's identity.
+  2. The schedule re-asked emptiness as a fresh range over a merged piece. That range is looser than the per-leaf proofs, which were being discarded. It now consumes the recorded target sign.
+
+  A pure-noise chord went from 0/96 to 64/96 proved-empty samples, re-checked sound.
+- **Proposals re-decided.** With all 28 media, analytic root proposals halve segmentation cost (26.2 vs 50.7 ms summed; Northern Veil about 3×; real schedule 0.71–1.36 → 0.44–0.76 ms/ray, Release). The 2d "neutral" verdict came from a 14-medium sample without these forms and is superseded. Proposals now default **on**.
+
+**Census (Release, frozen `saves/zones`, 64 random rays × 96 samples, t = 0, read-only).** **28 of 32** densities are admitted; 4 refuse (division by a non-constant 3, `x^1.8` 1). Soundness: 0 violations. Selected media:
+
+| Medium | Rung 2 proved empty | Zero-proof grid | Schedule µs/ray |
+|---|---|---|---|
+| Northern Veil emerald / cyan / violet / crimson | 98.0 / 99.0 / 98.4 / 97.5% | 95.6 / 97.0 / 96.2 / 95.1% | 564 / 628 / 429 / 908 |
+| Borealis hero auroral curtain | 81.8% | 74.3% | 327 |
+| Borealis v1/v2 clouds (four media) | 88.5–93.7% | 0% | 630–969 |
+| Prism organic noise cloud | 93.0% | 0% | 1138 |
+| Sky-Island sea of clouds / halo mist | 42.5 / 60.8% | 0 / 22.4% | 571 / 140 |
+
+Every grid-proven sample is also Rung 2-proven ("grid but Rung 2 not": 0%). "100% empty" rows (veil pillar-rims, reliquary iris-halo) are t = 0 observations of time-varying media.
+
+**What it means for Northern Veil (Zach's actual frame-cost problem).** The grid leaves 3.0–4.9% of random-ray samples to evaluate, and Rung 2 leaves 1.0–2.5%. Exact per-ray reasoning would roughly **halve the aurora's remaining sample work beyond the existing grid**. Attributing each extra-proved sample to the density factor actually zero there gives:
+- the thin sinusoidal curtain `clamp(1 − |z − f(x)|/w)`: 59–85%;
+- the cheap slab clamps (`|x| ≤ W`, the y-envelope): 15–41%;
+- noise alone: 0%.
+
+**Economics, stated plainly.** At ~0.4–0.9 ms per aurora ray, CPU segmentation is minutes per frame. That route to the proof is not real-time, and porting branch-and-bound into a fragment shader would not be either. These are random rays, not camera views, and proved demand, not GPU time.
+
+**Therefore the next rung (2f) is Lipschitz-certified support tracing on the GPU**, sphere tracing in the sense of Hart (1996). For a zero-saturating factor `clamp(1 − |g|/w)` whose argument `g` restricts to the ray with a derivative bound `L` (here `|dz| + Σ|A_i·k_i·dx|`, from the authored amplitudes and frequencies), a sample at `s` with `|g(s)| − w = m > 0` certifies emptiness up to `s + m/L`. Each step costs a few sines. It targets exactly the factor that carries 59–85% of the measured gain. It needs native pixel parity and cost evidence, so it cannot be completed in this container. A CPU prototype of the certificate and step rule can be.
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

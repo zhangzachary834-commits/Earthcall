@@ -200,7 +200,7 @@ std::optional<std::vector<ScalarForm>> collectPowers(const ScalarForm& form,
 //                  Piecewise is discontinuous there, so no piece may claim it).
 // Continuous branches use non-strict signs: at g = 0 both branches agree.
 //
-// Still refused: Noise, sin/cos/exp/ln of a bound coordinate, Tan, Map, SDF,
+// Still refused (after Rungs 2c/2e): ln of a bound coordinate, Tan, Map, SDF,
 // Gradient, matrix ops, guards, calls, folds, pieces without a MathNode, vector
 // Clamp/Sqrt/Pow, Clamp with non-constant or inverted bounds, and a Piecewise
 // whose input variable is the vector point.
@@ -213,7 +213,11 @@ struct LineAlgebraicNode {
     // transcendental is kind(scale·var + shift); restricted to a line its
     // argument is the polynomial α·s + β (operand a). Ln of a bound coordinate
     // stays refused: the CPU answers undefined at ≤ 0, the emitter log(max(·,1e-8)).
-    enum class Kind : uint8_t { Polynomial, Add, Sub, Mul, Sqrt, Abs, Min, Max, Clamp, Select, Undefined, Trans };
+    // Noise (Rung 2e): classic Perlin of a vec3 argument (operands a, b, c).
+    // Never re-derived here: its range is OntoMath's own load-bearing theorem
+    // (MathNode::evalRange on Noise — glm::perlin's lattice formula intersected
+    // with the proved Lipschitz ball) over the argument's enclosure box.
+    enum class Kind : uint8_t { Polynomial, Add, Sub, Mul, Sqrt, Abs, Min, Max, Clamp, Select, Undefined, Trans, Noise };
     struct Piece {
         bool hasLo = false, hasHi = false;
         double lo = 0.0, hi = 0.0;
@@ -221,7 +225,7 @@ struct LineAlgebraicNode {
     };
     Kind kind = Kind::Polynomial;
     LineRestrictedForm polynomial;   // Polynomial: the value; Select: the selector
-    uint32_t a = 0, b = 0;           // operands
+    uint32_t a = 0, b = 0, c = 0;    // operands (c: Noise's third component)
     double lo = 0.0, hi = 0.0;       // Clamp bounds
     bool nonnegativeArgument = false; // Sqrt of a sum of squares: no switch
     TransFactor::Kind transKind = TransFactor::Kind::Sin;   // Trans
@@ -297,6 +301,7 @@ public:
 
 private:
     Interval rangeAt(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs, bool* undefined) const;
+    Interval rangeUnmemoized(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs, bool* undefined) const;
     // Centered (Taylor-shifted) enclosure of a polynomial node over [s0, s1]:
     // re-expanded about the midpoint in double with an explicit forward-error
     // bound, then evaluated over h ∈ [s0 − m, s1 − m]. Plain Horner over [s0, s1]
@@ -310,13 +315,19 @@ private:
     std::vector<std::vector<double>> _coefficients;    // per node (Polynomial value / Select selector)
     std::vector<std::vector<double>> _errors;          // absolute error bound per coefficient
     std::string _refusal;
-    // Leaf-range memo for ONE interval at a time. A polynomial leaf's enclosure
-    // depends only on [s0, s1] (never on switch signs), yet every switch of a
-    // classification pass re-reads the same leaves. Kernel scratch beneath any
-    // property path; makes the evaluator single-threaded (it is ray-lifetime).
+    // Range memo for ONE interval at a time, over every SIGN-FREE node (no
+    // switch anywhere beneath it: polynomial leaves, and e.g. a Perlin noise of a
+    // polynomial argument). Such a node's enclosure depends only on [s0, s1],
+    // never on switch signs, yet every switch of a classification pass re-reads
+    // it. Kernel scratch beneath any property path; makes the evaluator
+    // single-threaded (it is ray-lifetime).
+    std::vector<char> _signFree;
     mutable double _memoS0 = 0.0, _memoS1 = -1.0;
     mutable std::vector<Interval> _memoRange;
     mutable std::vector<char> _memoValid;
+    mutable double _treeMemoS0 = 0.0, _treeMemoS1 = -1.0;
+    mutable std::vector<Interval> _treeMemoRange;
+    mutable std::vector<char> _treeMemoValid;
     mutable uint64_t _memoHits = 0, _memoMisses = 0;
 public:
     uint64_t leafRangeHits() const { return _memoHits; }
@@ -334,6 +345,7 @@ struct LineSegmentationPiece {
     double s0 = 0.0, s1 = 0.0;
     bool definite = false;
     std::vector<std::vector<int8_t>> signs;   // per evaluator
+    std::vector<int8_t> targetSigns;          // per sign target: −1 proved ≤ 0, +1 proved > 0, 0 unknown
 };
 struct LineSegmentationStats {
     uint32_t rangeEvaluations = 0;
@@ -344,12 +356,19 @@ std::vector<LineSegmentationPiece> segmentLine(const std::vector<const LineAlgeb
                                                double s0, double s1, double resolution,
                                                LineSegmentationStats* stats = nullptr,
                                                uint32_t maxRangeEvaluations = 1u << 16,
-                                               // Measured CPU-neutral (2026-10-17: 292.2 vs 290.8 µs summed over
-                                               // 14 real media); kept as the closed-form-root prototype for a
-                                               // GPU consumer, off by default.
-                                               bool analyticProposals = false,
+                                               // Measured: neutral over the first 14 admitted media (292.2 vs
+                                               // 290.8 µs), but once Noise is admitted (28 media incl. Northern
+                                               // Veil) it halves segmentation cost (26.2 vs 50.7 ms summed,
+                                               // Release). On by default; always sound (proposals never decide).
+                                               bool analyticProposals = true,
                                                // Signs already PROVED over a superset of [s0, s1]
                                                // (they hold on every sub-interval); null = all undecided.
-                                               const std::vector<std::vector<int8_t>>* initialSigns = nullptr);
+                                               const std::vector<std::vector<int8_t>>* initialSigns = nullptr,
+                                               // Expressions whose own sign must also be resolved, as
+                                               // (evaluator index, node): a piece is definite only once each
+                                               // is proved ≤ 0 or STRICTLY > 0 over it. This mirrors a
+                                               // consumer's own branch (the volume marchers gate on D > 0),
+                                               // so a structurally non-negative D still splits at its zeros.
+                                               const std::vector<std::pair<std::size_t, uint32_t>>* signTargets = nullptr);
 
 } // namespace OntoMath

@@ -226,7 +226,7 @@ VolumeSegmentSchedule scheduleVolumeRaySegment(const std::vector<VolumeSegmentMe
                                                const VolumeRayInput& ray,
                                                const VolumeLatticeSpan& span,
                                                double resolutionInSteps = 0.125,
-                                               bool analyticProposals = false);   // CPU-neutral; see segmentLine
+                                               bool analyticProposals = true);   // measured win at 28 media; see segmentLine
 
 // Runs the general lattice for samples [firstSample, firstSample + count) of the
 // span, continuing `state` (updating samplesConsumed / terminated). On the GPU

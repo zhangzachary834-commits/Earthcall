@@ -122,6 +122,16 @@ bool vectorAt(const Piecewise& f, const std::map<std::string, PropertyValue>& v,
     return false;
 }
 
+// Diagnostic: the top-level multiplicative factors of an authored density.
+void productFactors(const OntoMath::MathNode& n, std::vector<const OntoMath::MathNode*>& out) {
+    if (n.op == OntoMath::MathNode::Op::Scale && n.children.size() == 2 && n.children[0] && n.children[1]) {
+        productFactors(*n.children[0], out);
+        productFactors(*n.children[1], out);
+        return;
+    }
+    out.push_back(&n);
+}
+
 struct MirrorMember { const VolumeDensityBinding* b; glm::dvec3 origin; double time; bool readsWi; bool readsOmega; };
 
 bool emitterFlag(const VolumeDensityBinding& b, const std::string& name) {
@@ -296,7 +306,10 @@ int main() {
         noisy.density = pw(unconditional(opNode(29, {leafNode("p")})));
         const auto nb = noisy.binding("medium.noisy", 400);
         const auto s = run("Perlin density", cache, {{{&nb, glm::dvec3(0.0), 0.0}}}, eye, forward, span, false, 1e-12);
-        check(s.generalSamples == span.count && !s.reason.empty(), "a refused density keeps the whole segment on the lattice");
+        // Rung 2e: Perlin is admitted. D = noise(p) is negative over much of a chord;
+        // the density-sign target proves those stretches empty (soundness checked in run()).
+        check(s.reason.empty() && s.emptySamples > 0 && s.constantSamples == 0,
+              "a pure-noise density: proved-empty where noise ≤ 0, lattice elsewhere, never constant");
     }
 
     // ---- Resolution trades proofs for lattice samples near switches -------
@@ -349,6 +362,11 @@ int main() {
                     const auto proof = Rendering::buildVolumeZeroProof(*b.densityExpr, glm::vec3(half));
                     const glm::dvec3 cell = 2.0 * half / glm::dvec3(proof.dims);
                     Totals t;
+                    // Attribution of samples Rung 2 proves empty but the grid does not:
+                    // which top-level density factor is actually zero there.
+                    std::vector<const OntoMath::MathNode*> factors;
+                    if (b.densityExpr->pieces[0].mathNode) productFactors(*b.densityExpr->pieces[0].mathNode, factors);
+                    std::map<std::string, uint64_t> attribution;
                     for (int r = 0; r < 64; ++r) {
                         // A ray from outside the box through a random interior point.
                         const glm::dvec3 target = half * glm::dvec3(u(rng), u(rng), u(rng));
@@ -389,6 +407,15 @@ int main() {
                             t.constant += label[i] == 'c';
                             t.grid += gridSkip;
                             t.both += gridSkip && label[i] == 'e';
+                            if (label[i] == 'e' && !gridSkip && factors.size() > 1) {
+                                std::string zeros;
+                                for (std::size_t k = 0; k < factors.size(); ++k) {
+                                    const auto fv = factors[k]->evaluate(varsAt(p, 0.0, -dir));
+                                    double x = 1;
+                                    if (fv && propertyValueToNumber(*fv, x) && x <= 0.0) zeros += (zeros.empty() ? "" : "+") + std::string("f") + std::to_string(k);
+                                }
+                                ++attribution[zeros.empty() ? "none-zero" : zeros];
+                            }
                             if (label[i] == 'e') {
                                 double D = 0;
                                 if (!scalarAt(*b.densityExpr, varsAt(p, 0.0, -dir), D) || D > 0.0) ++t.violations;
@@ -409,7 +436,7 @@ int main() {
                         std::uniform_real_distribution<double> ur(-1.0, 1.0);
                         double tBind = 0, tOn = 0, tOff = 0;
                         uint64_t eOn = 0, eOff = 0, n = 0;
-                        for (int r = 0; r < 64; ++r) {
+                        for (int r = 0; r < 16; ++r) {   // 16 rays: the anatomy is a cost probe, not a sweep
                             const glm::dvec3 target = half * glm::dvec3(ur(rr), ur(rr), ur(rr));
                             glm::dvec3 dir(ur(rr), ur(rr), ur(rr));
                             if (glm::length(dir) < 1e-3) continue;
@@ -440,6 +467,13 @@ int main() {
                                          << tOn / n << " (" << double(eOn) / n << " evals), without " << tOff / n << " ("
                                          << double(eOff) / n << " evals); density form " << f.density.algebraic.form->nodes.size()
                                          << " nodes, " << f.density.algebraic.form->switches.size() << " switches\n";
+                    }
+                    if (!attribution.empty() && zoneDir.path().filename().string() == "Northern Veil") {
+                        std::cout << "        extra-proof attribution (Rung 2 empty, grid not):";
+                        for (const auto& [k, v] : attribution) std::cout << " " << k << "=" << v;
+                        std::cout << "\n";
+                        for (std::size_t k = 0; k < factors.size(); ++k)
+                            std::cout << "          f" << k << " = " << factors[k]->print().substr(0, 110) << "\n";
                     }
                     all.samples += t.samples; all.empty += t.empty; all.constant += t.constant; all.grid += t.grid;
                     all.both += t.both; all.violations += t.violations; all.us += t.us; all.rays += t.rays;
