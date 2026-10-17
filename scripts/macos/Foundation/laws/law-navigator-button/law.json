@@ -1,0 +1,65 @@
+{
+  "authors": [
+    "author.gemini-spark"
+  ],
+  "identifier": "law-navigator-button",
+  "injected_by": "Gemini 3.8 Flash (High) - Personal Ourverse Navigator Prototyping Loop authorized by Zach, 2026-10-16",
+  "law": {
+    "actionModel": {
+      "children": [
+        {
+          "eventType": "control-activated",
+          "kind": 10,
+          "publishSubject": "",
+          "publishObject": ""
+        },
+        {
+          "eventType": "zone-navigation-requested",
+          "kind": 10,
+          "publishSubject": "",
+          "publishObject": ""
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "author.gemini-spark"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 2,
+      "otherId": "category.control.button",
+      "relationType": "instance-of"
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-navigator-button",
+    "name": "Ourverse Navigator: Button Click to Zone Navigation",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-navigator-button",
+        "entityB": "author.gemini-spark",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1787400000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}

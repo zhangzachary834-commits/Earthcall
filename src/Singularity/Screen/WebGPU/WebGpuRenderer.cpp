@@ -660,6 +660,9 @@ void WebGpuRenderer::shutdown() {
     if (_depthView) { wgpuTextureViewRelease(_depthView); _depthView = nullptr; }
     if (_depthTex)  { wgpuTextureRelease(_depthTex); _depthTex = nullptr; }
     _depthW = _depthH = 0;
+    if (_fallbackView) { wgpuTextureViewRelease(_fallbackView); _fallbackView = nullptr; }
+    if (_fallbackTex)  { wgpuTextureRelease(_fallbackTex); _fallbackTex = nullptr; }
+    _fallbackW = _fallbackH = 0;
     if (_whiteView) { wgpuTextureViewRelease(_whiteView); _whiteView = nullptr; }
     if (_whiteTex)  { wgpuTextureRelease(_whiteTex); _whiteTex = nullptr; }
     if (_sampler)   { wgpuSamplerRelease(_sampler); _sampler = nullptr; }
@@ -869,14 +872,38 @@ void WebGpuRenderer::ensureDepth(uint32_t w, uint32_t h) {
     _depthW = w; _depthH = h;
 }
 
+void WebGpuRenderer::ensureOffscreenFallback(uint32_t w, uint32_t h) {
+    if (_fallbackTex && _fallbackW == w && _fallbackH == h) return;
+    if (_fallbackView) { wgpuTextureViewRelease(_fallbackView); _fallbackView = nullptr; }
+    if (_fallbackTex)  { wgpuTextureRelease(_fallbackTex); _fallbackTex = nullptr; }
+    WGPUTextureDescriptor td = {};
+    td.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_CopySrc;
+    td.dimension = WGPUTextureDimension_2D;
+    td.size = { w, h, 1 };
+    td.format = _colorFormat;
+    td.mipLevelCount = 1; td.sampleCount = 1;
+    _fallbackTex = wgpuDeviceCreateTexture(_device, &td);
+    _fallbackView = wgpuTextureCreateView(_fallbackTex, nullptr);
+    _fallbackW = w; _fallbackH = h;
+}
+
 void WebGpuRenderer::applyBeginFrame(uint32_t width, uint32_t height, const glm::vec4& clear) {
     // Offscreen users call beginFrameOffscreen with an explicit target, so with no
     // surface attached there is nothing to open — and every draw verb no-ops on a
     // null pass, so the frame is simply skipped rather than being an error.
-    if (!_surface || width == 0 || height == 0) return;
+    if (!_surface || width == 0 || height == 0) {
+        return;
+    }
 
     WGPUSurfaceTexture st = {};
     wgpuSurfaceGetCurrentTexture(_surface, &st);
+    if (st.status == 0x00030001) { // WGPUSurfaceGetCurrentTextureStatus_Occluded (e.g. backgrounded or headless)
+        ensureOffscreenFallback(width, height);
+        _surfaceTex = _fallbackTex;
+        _surfaceView = _fallbackView;
+        beginFrameOffscreen(_surfaceView, width, height, clear);
+        return;
+    }
     if (st.status != WGPUSurfaceGetCurrentTextureStatus_SuccessOptimal &&
         st.status != WGPUSurfaceGetCurrentTextureStatus_SuccessSuboptimal) {
         // Lost/outdated (usually a resize that raced this frame). Drop the frame;
@@ -919,6 +946,11 @@ void WebGpuRenderer::overlayPass(const std::function<void(WGPURenderPassEncoder)
 
 void WebGpuRenderer::present() {
     if (!_surface || !_surfaceView) return;
+    if (_surfaceTex == _fallbackTex) {
+        _surfaceView = nullptr;
+        _surfaceTex = nullptr;
+        return;
+    }
 #ifndef __EMSCRIPTEN__
     wgpuSurfacePresent(_surface);
 #endif
@@ -3823,10 +3855,21 @@ void WebGpuRenderer::releaseTexture(TextureHandle handle) {
 }
 
 bool WebGpuRenderer::readPixels(uint8_t* outRgba, uint32_t width, uint32_t height) {
-    if (!outRgba || width == 0 || height == 0) return false;
-    if (!_device || !_queue || !_surfaceTex) return false;
+    if (!outRgba || width == 0 || height == 0) {
+        std::fprintf(stderr, "[WebGPU readPixels REFUSED] bad args: outRgba=%p w=%u h=%u\n", (void*)outRgba, width, height);
+        return false;
+    }
+    if (!_device || !_queue || !_surfaceTex) {
+        std::fprintf(stderr, "[WebGPU readPixels REFUSED] missing handles: dev=%p q=%p tex=%p\n", (void*)_device, (void*)_queue, (void*)_surfaceTex);
+        return false;
+    }
     if (_pass || width > wgpuTextureGetWidth(_surfaceTex) ||
-        height > wgpuTextureGetHeight(_surfaceTex)) return false;
+        height > wgpuTextureGetHeight(_surfaceTex)) {
+        std::fprintf(stderr, "[WebGPU readPixels REFUSED] pass=%p w=%u texW=%u h=%u texH=%u\n",
+                     (void*)_pass, width, _surfaceTex ? wgpuTextureGetWidth(_surfaceTex) : 0,
+                     height, _surfaceTex ? wgpuTextureGetHeight(_surfaceTex) : 0);
+        return false;
+    }
 
     // WebGPU requires bytesPerRow to be 256-byte aligned
     const uint32_t bytesPerRow = (width * 4 + 255) & ~255;
@@ -3890,6 +3933,7 @@ bool WebGpuRenderer::readPixels(uint8_t* outRgba, uint32_t width, uint32_t heigh
     }
 
     if (!mr.ok) {
+        std::fprintf(stderr, "[WebGPU readPixels REFUSED] mr.ok is false!\n");
         return false;
     }
 

@@ -1,5 +1,27 @@
 # Person Verification List
 
+## Personal Ourverse Navigator (`Ourverse Gathering`)
+
+*Gemini · session `feb60581-5952-44ea-9dfa-5d87e8fcb273` · 2026-10-16 — Prototyping loop authorized by Zach for the Personal Ourverse Navigator specification.*
+
+- [ ] **Launch & Arrival:**
+  - Launch Earthcall WebGPU (`./build/earthcall_webgpu` or `./scripts/macos/install_app.sh && open /Applications/Earthcall.app`).
+  - Confirm the engine opens directly into **Ourverse Gathering** (or select "Ourverse Navigator" [O] from the main menu).
+  - Stand on the central Observation Plinth with dark slate and gold compass rose inlay.
+- [ ] **Visual Archipelago Inspection:**
+  - Look across the 4 floating world islands arranged in a graceful semicircular arc across glowing aether filaments:
+    - **Sanctum of Beginnings (North-West, gold):** Stepped gold spire, sunlit portal arch, and gleaming gold navigation beacon.
+    - **Temple of Echoes (North-North-West, azure):** Deep blue crags, silver colonnade, floating pediment roof, and sapphire navigation beacon.
+    - **Cavern of Light (North-North-East, emerald):** Dark obsidian base, cluster of glowing teal/cyan crystals, and vibrant emerald navigation beacon.
+    - **Character Architect Forge (North-East, ember):** Magma blocks, obsidian anvil, glowing crucible, and warm ember navigation beacon.
+- [ ] **Interactive Law-Governed Navigation:**
+  - Click on the **Sanctum beacon** (`navigator-beacon-sanctum`):
+    - Verify `object-clicked` is published, matches `category.control.button` via `law-navigator-button`, emits `control-activated` with destination `"Sanctum of Beginnings"`, and cleanly transitions you into the **Sanctum of Beginnings** zone.
+  - Press `M` to open Menu, select `Ourverse Navigator` (`O`), or switch back to `Ourverse Gathering`.
+  - Click on the **Temple beacon** (`navigator-beacon-temple`):
+    - Verify seamless transition into **Temple of Echoes**.
+  - Try the **Cavern beacon** (`navigator-beacon-cavern`) and **Forge beacon** (`navigator-beacon-forge`) to visit each destination world island.
+
 ## 3D Sky-Island Sanctuary (`Sky-Island Sanctuary`)
 
 *Gemini 4 Argon (Spark) · session `argon-sky-island-sanctuary-20261013` · 2026-10-13 — Commissioned from the Sun's prompt: "Create a beautiful 3D sky-island sanctuary inside Earthcall. Make it feel wondrous, peaceful, and architecturally intentional. I want it to feel like a real place a person would want to enter and linger in. That's it."*

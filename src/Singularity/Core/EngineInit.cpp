@@ -314,6 +314,23 @@ bool Engine::initLogic() {
         }
     });
 
+    // In-world zone navigation requested via Law or Control
+    Core::EventBus::instance().subscribe<ECA::Event>([](const ECA::Event& ev) {
+        if (ev.type == "zone-navigation-requested" || ev.type == "control-activated") {
+            if (!ev.subject) return;
+            PropertyValue targetVal;
+            std::string destZone;
+            if (lawGetValue(*ev.subject, PropertyPath::parse("destinationZone"), targetVal)) {
+                if (const auto* s = std::get_if<std::string>(&targetVal)) destZone = *s;
+            } else if (lawGetValue(*ev.subject, PropertyPath::parse("targetZone"), targetVal)) {
+                if (const auto* s = std::get_if<std::string>(&targetVal)) destZone = *s;
+            }
+            if (!destZone.empty()) {
+                Core::Engine::instance().requestZoneSwitch(destZone);
+            }
+        }
+    });
+
     // Register first-mover TerminalChannel: the Mac Terminal's command line
     // (the window Run Earthcall.command opened) as a modality of this world.
     // Lines become Laws only through the authored LawLine seed Laws.
@@ -547,6 +564,14 @@ bool Engine::initLogic() {
     _ourverse.ensureGatheringZone(mgr);
     if (_lawManager) _ourverse.registerMetalaws(*_lawManager);
 
+    // The Personal Ourverse Navigator in Ourverse Gathering is what a Person meets when Earthcall opens
+    for (size_t i = 0; i < mgr.zones().size(); ++i) {
+        if (mgr.zones()[i] && mgr.zones()[i]->isOurverseGathering()) {
+            mgr.switchTo(i);
+            break;
+        }
+    }
+
     // Initialize elemental tool handler with zone manager
     _elementalToolHandler = std::make_unique<ElementalToolHandler>(&mgr);
 
@@ -685,6 +710,20 @@ bool Engine::initLogic() {
         const auto& zones = mgr.zones();
         for (size_t i = 0; i < zones.size(); ++i) {
             if (zones[i]->name().find("Character") != std::string::npos) {
+                mgr.switchTo(i);
+                break;
+            }
+        }
+        _mainMenu.close();
+        _keyboardHandler->setMenuOpen(false);
+        _mouseHandler->setMenuOpen(false);
+        if (_mouseHandler->isCursorLocked()) _mouseHandler->toggleCursorLock(_window);
+    });
+
+    _mainMenu.addOption("Ourverse Navigator", GLFW_KEY_O, [this]() {
+        const auto& zones = mgr.zones();
+        for (size_t i = 0; i < zones.size(); ++i) {
+            if (zones[i] && zones[i]->isOurverseGathering()) {
                 mgr.switchTo(i);
                 break;
             }
