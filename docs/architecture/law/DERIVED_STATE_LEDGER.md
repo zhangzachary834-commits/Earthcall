@@ -459,3 +459,14 @@ Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 
 - **Per-ray `certRecheck` and certified exits.** These are fragment-lifetime values and are never retained. A skipped *check* only routes a sample to the exact path, so the converse bound needs no pad. A *jump* carries δ = τ(1+|args|) (declared device tolerance, τ = 2⁻¹⁰) plus a coordinate/index pad of 4·10⁻⁵·(|ro|+|origin|+|halfExtent|+|t|).
 
 Witness: `webgpu_volume_support_certificates_test` 56/56 on lavapipe. It covers byte-identical frames, density-edit and resize rebuild counts, the emission-edit non-rebuild, refusal, the full lattice and 2560×1440. It does **not** witness Metal or device reconstruction under the lane; the zero-proof witness still covers device replacement with the lane off. Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17.
+
+**Execution-provenance addendum (2026-10-17, Codex P1, [§6f](../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6f-execution-provenance-the-codex-p1-repair-2026-10-17-seventh-pass)):**
+- **`LineAlgebraicNode::provenance` / `provenanceForm`.** Authored-revision IR inside the cached algebraic form. Same key, writers and lifetime as the form. It points into the authored Piecewise exactly like `sourceA/B`.
+- **Evaluator slack memo** (`_slackMemo*`, `_slackMagnitudes`). Kernel scratch with ray or box lifetime, single-threaded. It is valid for any interval inside the one it was computed over, because slack is monotone in the region.
+- **Certificate memo (`_volumeSupportCertificates`).**
+  - *Key:* density expression × revision × half-extent × **clock-magnitude bucket** (`volumeClockMagnitudeBucket(t)`, the next power of two ≥ |t|).
+  - *Payload identity:* `payloadIdentity` adds each medium's bucket when the lane is on, so a bucket crossing re-lays the payload instead of reusing stale bytes.
+  - *Writers:* unchanged, plus the clock crossing a power of two.
+  - *Fallback:* a non-finite clock refuses certificates.
+
+Witnesses: `ontomath_line_segmentation_test` 61/61, `volume_ray_segment_transport_test` 53/53, `volume_ray_radial_segmentation_test` 32/32, `webgpu_volume_support_certificates_test` 57/57 (lavapipe). Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17.

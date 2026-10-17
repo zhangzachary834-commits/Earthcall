@@ -300,6 +300,58 @@ int main() {
         check(violations == 0 && trace.certifiedSamples > 0, "tracing certifies only truly empty samples on the ball");
     }
 
+    // ---- Codex P1 (2026-10-17): cancellation and computed bounds -----------
+    // D = −min(F, 0), F = ((A + x) − A) − x, A = 2^54: the algebra says D ≡ 0;
+    // the retained double evaluator executes D > 0 wherever round-to-4(x) < x.
+    // Nothing may be proved empty or certified where the original tree runs > 0.
+    {
+        const std::string A = constNode(18014398509481984.0), X = R"({"op":1,"var":"x"})";
+        const std::string F = opNode(5, {opNode(5, {opNode(4, {A, X}), A}), X});
+        Medium cancel;
+        cancel.density = pw(unconditional(opNode(6, {constNode(-1.0), opNode(20, {F, constNode(0.0)})})));
+        cancel.emission = pw(unconditional(opNode(2, {constNode(0.3), constNode(0.2), constNode(0.05)})));
+        const auto cb = cancel.binding("medium.cancel", 900);
+        const auto& forms = cache.formsFor(cb);
+        check(forms.density.algebraicAdmitted(), "the cancelled density is admitted by the algebra");
+        std::vector<Rendering::VolumeSegmentMember> members{{&forms, glm::dvec3(0.0), 0.0}};
+        const Rendering::VolumeRayInput ray{{-6.0, 0.3, 0.2}, {1.0, 0.0, 0.0}, false};
+        const Rendering::VolumeLatticeSpan along{0.37, 0.113, 96};
+        const auto sched = Rendering::scheduleVolumeRaySegment(members, ray, along);
+        const auto trace = Rendering::traceVolumeSupport(members, ray, along);
+        const auto certs = Rendering::deriveVolumeSupportCertificates(forms, glm::dvec3(8.0), 1.0);
+        const auto certTrace = Rendering::traceVolumeSupportCertified(members, {&certs}, ray, along);
+        std::vector<char> scheduled(along.count, 0);
+        for (const auto& run : sched.runs)
+            if (run.plan.strategy == Rendering::VolumeSegmentStrategy::ExactEmpty)
+                for (uint32_t i = run.firstSample; i < run.firstSample + run.sampleCount; ++i) scheduled[i] = 1;
+        uint32_t positive = 0, violations = 0;
+        for (uint32_t i = 0; i < along.count; ++i) {
+            double D = 0;
+            const glm::dvec3 p = ray.origin + ray.direction * (along.firstSample + along.step * double(i));
+            if (!scalarAt(*cb.densityExpr, varsAt(p, 0.0, -ray.direction), D)) { ++violations; continue; }
+            if (D > 0.0) {
+                ++positive;
+                violations += scheduled[i] + (trace.emptySample.size() > i && trace.emptySample[i]) +
+                              (certTrace.emptySample.size() > i && certTrace.emptySample[i]);
+            }
+        }
+        std::cout << "    cancelled density: " << positive << "/" << along.count << " samples execute D > 0; schedule empty "
+                  << sched.emptySamples << ", trace " << trace.certifiedSamples << ", certificates "
+                  << certTrace.certifiedSamples << " (" << certs.killers.size() << " killers"
+                  << (certs.killers.empty() ? "" : ", δ " + std::to_string(certs.killers.front().deviceSlack)) << ")\n";
+        check(positive > 0, "the original tree really executes positive density on this ray");
+        check(violations == 0, "no proof (schedule, trace, certificate) covers a sample the original tree executes > 0");
+
+        // Computed clamp bound: B − (B − 1) folds to 1 on the host, 0 in f32.
+        const std::string B = constNode(33554432.0), Bm1 = constNode(33554431.0);
+        Medium bound;
+        bound.density = pw(unconditional(opNode(5, {constNode(0.5), opNode(26, {X, opNode(5, {B, Bm1}), constNode(1.0)})})));
+        const auto boundForms = Rendering::lowerVolumeRayChannels(bound.binding("medium.bound", 910));
+        const auto boundCerts = Rendering::deriveVolumeSupportCertificates(boundForms, glm::dvec3(8.0), 1.0);
+        check(!boundForms.density.algebraicAdmitted() && boundCerts.killers.empty(),
+              "a computed clamp bound gets no line form and no certificate (" + boundForms.density.algebraic.refusal + ")");
+    }
+
     // ---- Overlap: two balls with independent clocks -----------------------
     Medium pulse;
     pulse.density = pw(unconditional(radialNode(2.0, glm::dvec3(0.0), 2.0)));   // core |p| ≤ 2, edge 4

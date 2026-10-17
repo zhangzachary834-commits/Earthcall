@@ -329,6 +329,45 @@ int main() {
               "D ≤ 0 constant: exact-empty, bit-identical to the f32 lattice (T=1, L=0), even with a source");
     }
 
+    // ---- Codex P1 (2026-10-17): algebraic cancellation is not execution --
+    // F = ((A + x) − A) − x simplifies to the exact 0, but the retained CPU
+    // evaluator executing the ORIGINAL tree returns −1 at x = 1 for A = 2^54, so
+    // D = −F = 1 participates there. Exact-empty must not erase that.
+    {
+        const std::string A = R"({"op":0,"scalarForm":{"terms":[{"c":18014398509481984.0,"factors":{}}]}})";
+        const std::string X = R"({"op":1,"var":"x"})";
+        const std::string F = R"({"op":5,"children":[{"op":5,"children":[{"op":4,"children":[)" + A + "," + X +
+                              R"(]},)" + A + R"(]},)" + X + "]}";
+        Medium cancel;
+        cancel.density = pw(R"({"input":"x","pieces":[{"mathNode":{"op":6,"children":[)" + leafJson(R"({"c":-1.0,"factors":{}})") +
+                            "," + F + "]}}]}");
+        const auto executed = cancel.density->evaluate({{"x", PropertyValue(1.0)}});
+        const double atOne = executed && std::holds_alternative<double>(*executed) ? std::get<double>(*executed) : -99.0;
+        check(atOne == 1.0, "the original-tree evaluator really executes D(1) = 1 (cancellation erased by algebra)");
+        const auto cb = cancel.binding("medium.cancel", 410);
+        const auto sc = scenario(cache, {{&cb, glm::dvec3(0.0), 0.0}});
+        const auto plan = Rendering::planVolumeRaySegment(sc.members, {eye, tilted, false}, span);
+        check(plan.strategy == VolumeSegmentStrategy::GeneralLattice,
+              "Codex P1 counterexample: a cancelled density keeps the lattice (" + plan.reason + ")");
+        // Controls: authored literals carry no arithmetic, so exact-empty stays.
+        Medium zero;
+        zero.density = scalarPw(R"({"c":0.0,"factors":{}})");
+        const auto zb = zero.binding("medium.zero", 420);
+        const auto zsc = scenario(cache, {{&zb, glm::dvec3(0.0), 0.0}});
+        check(Rendering::planVolumeRaySegment(zsc.members, {eye, tilted, false}, span).strategy ==
+                  VolumeSegmentStrategy::ExactEmpty,
+              "a literal-zero density is still exact-empty (no arithmetic, no slack)");
+        // A computed divisor (B − (B − 1) = 1 on the host, 0 in f32) refuses the line form.
+        const std::string B = R"({"op":0,"scalarForm":{"terms":[{"c":33554432.0,"factors":{}}]}})";
+        const std::string Bm1 = R"({"op":0,"scalarForm":{"terms":[{"c":33554431.0,"factors":{}}]}})";
+        Medium computed;
+        computed.density = pw(R"({"input":"x","pieces":[{"mathNode":{"op":23,"children":[)" + leafJson(R"({"c":0.5,"factors":{}})") +
+                              R"(,{"op":5,"children":[)" + B + "," + Bm1 + "]}]}}]}");
+        const auto forms = Rendering::lowerVolumeRayChannels(computed.binding("medium.computed", 430));
+        check(!forms.density.admitted() && forms.density.refusal.find("computed") != std::string::npos,
+              "a computed divisor refuses the polynomial form (" + forms.density.refusal + ")");
+    }
+
     // ---- Overlap with independent clocks ---------------------------------
     Medium pulseA, pulseB;
     pulseA.density = scalarPw(R"({"c":0.4,"factors":{}},{"c":0.1,"factors":{"t":1.0}})");    // 0.4 + 0.1t

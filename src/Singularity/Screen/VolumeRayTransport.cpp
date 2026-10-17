@@ -176,6 +176,28 @@ std::optional<double> constantOn(const OntoMath::LineRestrictedForm& f,
     return a->empty() ? 0.0 : (*a)[0];
 }
 
+// Execution provenance for Rung 1 (Codex P1, 2026-10-17): sup|symbol| over the
+// lattice span, so OntoMath::executionBound can bound what the device executes
+// for an authored channel there, from its ORIGINAL tree.
+std::map<std::string, double> spanMagnitudes(const std::map<std::string, double>& b, const VolumeLatticeSpan& span) {
+    std::map<std::string, double> m;
+    for (const auto& [name, v] : b) m[name] = std::abs(v);
+    static const char* const kAxes[3] = {"x", "y", "z"};
+    const double s0 = span.firstSample, s1 = span.firstSample + span.step * double(span.count ? span.count - 1u : 0u);
+    for (int i = 0; i < 3; ++i) {
+        const double o = b.at(OntoMath::kLineOriginVars[i]), d = b.at(OntoMath::kLineDirectionVars[i]);
+        m[kAxes[i]] = std::max(std::abs(o + s0 * d), std::abs(o + s1 * d)) * (1.0 + 1e-12);
+    }
+    return m;
+}
+
+// Slack of an authored channel component over the span, or +∞ (refuse).
+double channelSlack(const VolumeRayChannelForm& c, int component, const std::map<std::string, double>& mags) {
+    if (!c.expr) return std::numeric_limits<double>::infinity();
+    const auto b = OntoMath::executionBound(*c.expr, mags, kVolumeExecutionModel, c.vectorValued ? component : -1);
+    return b ? b->slack : std::numeric_limits<double>::infinity();
+}
+
 // D_j on the ray when exactly constant; std::nullopt (with reason) otherwise.
 std::optional<double> constantDensity(const VolumeSegmentMember& m, const std::map<std::string, double>& b,
                                       std::string& reason) {
@@ -337,17 +359,27 @@ VolumeSegmentPlan planVolumeRaySegment(const std::vector<VolumeSegmentMember>& m
     if (members.empty()) return lattice("no member media on this segment");
 
     // Pass 1: density alone decides exact emptiness, with or without a source.
-    std::vector<std::map<std::string, double>> bindings;
+    std::vector<std::map<std::string, double>> bindings, magnitudes;
     std::vector<double> densities;
+    bool executedEmpty = true;
     for (const auto& m : members) {
         if (!m.forms) return lattice("member without lowered forms");
         bindings.push_back(rayBindings(m, ray));
+        magnitudes.push_back(spanMagnitudes(bindings.back(), span));
         std::string why;
         const auto d = constantDensity(m, bindings.back(), why);
         if (!d) return lattice(why);
         densities.push_back(*d);
+        // The raw constant (before max(·, 0)) must stay ≤ 0 under execution too.
+        const auto raw = constantOn(*m.forms->density.scalar.form, bindings.back(), "density", why);
+        const double sl = channelSlack(m.forms->density, -1, magnitudes.back());
+        if (!raw || !(*raw + sl <= 0.0)) executedEmpty = false;
+        if (*d > 0.0 && !(sl <= kExecutionCancellationGuard * kVolumeSupportDeviceTolerance * (1.0 + *d)))
+            return lattice("density: execution may drift from the exact constant (cancellation guard)");
     }
     if (std::all_of(densities.begin(), densities.end(), [](double d) { return d <= 0.0; })) {
+        if (!executedEmpty)
+            return lattice("density is exactly constant and non-positive, but execution may exceed 0 (original-tree slack)");
         plan.strategy = VolumeSegmentStrategy::ExactEmpty;
         plan.reason = "every member's density is exactly constant and non-positive on this ray";
         return plan;
@@ -370,8 +402,15 @@ VolumeSegmentPlan planVolumeRaySegment(const std::vector<VolumeSegmentMember>& m
             if (!c->admitted()) return lattice("channel refused: " + c->refusal);
         }
         const ConstantChannel polynomialConstant = [&](const VolumeRayChannelForm& c, int component,
-                                                       const char* what, std::string& reason) {
-            return constantOn(c.vectorValued ? (*c.vector.form)[component] : *c.scalar.form, b, what, reason);
+                                                       const char* what, std::string& reason) -> std::optional<double> {
+            const auto v = constantOn(c.vectorValued ? (*c.vector.form)[component] : *c.scalar.form, b, what, reason);
+            if (!v) return std::nullopt;
+            if (!(channelSlack(c, component, magnitudes[j]) <=
+                  kExecutionCancellationGuard * kVolumeSupportDeviceTolerance * (1.0 + std::abs(*v)))) {
+                reason = std::string(what) + ": execution may drift from the exact constant (cancellation guard)";
+                return std::nullopt;
+            }
+            return v;
         };
         if (!accumulateConstantMember(f, density, polynomialConstant, plan, why)) return lattice(why);
     }
@@ -530,6 +569,9 @@ VolumeSegmentSchedule scheduleVolumeRaySegment(const std::vector<VolumeSegmentMe
             // The volume emitter returns 0 when no piece matches: this channel
             // binding (not OntoMath) decides that Undefined reads as zero.
             auto ev = std::make_unique<OntoMath::LineAlgebraicEvaluator>(*c->algebraic.form, b, true);
+            // Every proof below is execution-faithful: signs and emptiness are
+            // decided beyond the authored tree's execution slack (Codex P1).
+            ev->setExecutionModel(kVolumeExecutionModel);
             if (!ev->ok()) {
                 if (c == &f->density) return allGeneral("density: " + ev->refusal());
                 continue;   // that channel simply cannot prove anything on this ray
@@ -581,9 +623,10 @@ VolumeSegmentSchedule scheduleVolumeRaySegment(const std::vector<VolumeSegmentMe
         for (std::size_t j = 0; j < members.size(); ++j) {
             const std::size_t e = memberEvals[j].index.at(&members[j].forms->density);
             bool undefined = false;
-            const auto r = evaluators[e]->range(evaluators[e]->form().roots[0], piece.s0, piece.s1,
-                                                piece.signs[e], &undefined);
-            if (!undefined && r.hi <= 0.0f) active[j] = false;
+            const uint32_t root = evaluators[e]->form().roots[0];
+            const auto r = evaluators[e]->range(root, piece.s0, piece.s1, piece.signs[e], &undefined);
+            if (!undefined && double(r.hi) + evaluators[e]->slack(root, piece.s0, piece.s1, piece.signs[e]) <= 0.0)
+                active[j] = false;
         }
         if (std::none_of(active.begin(), active.end(), [](bool a) { return a; })) {
             plan.strategy = VolumeSegmentStrategy::ExactEmpty;
@@ -609,12 +652,25 @@ VolumeSegmentSchedule scheduleVolumeRaySegment(const std::vector<VolumeSegmentMe
                 }
                 const auto v = ev.value(root, mid);
                 if (!v || !std::isfinite(*v)) { reason = std::string(what) + " undefined on this piece"; return std::nullopt; }
+                const double sl = ev.slack(root, piece.s0, piece.s1, piece.signs[it->second]);
+                if (!(sl <= kExecutionCancellationGuard * kVolumeSupportDeviceTolerance * (1.0 + std::abs(*v)))) {
+                    reason = std::string(what) + ": execution may drift from the exact constant (cancellation guard)";
+                    return std::nullopt;
+                }
                 return v;
             };
             const auto density = pieceConstant(f.density, 0, "density", why);
             if (!density) return general(why);
             const double d = std::max(*density, 0.0);
-            if (!(d > 0.0)) continue;   // exactly constant and non-positive: does not participate
+            if (!(d > 0.0)) {
+                // Non-participation is an execution-zero claim: the device's D
+                // must stay ≤ 0 too, beyond its slack.
+                const std::size_t e = memberEvals[j].index.at(&f.density);
+                const uint32_t root = evaluators[e]->form().roots[0];
+                if (!(*density + evaluators[e]->slack(root, piece.s0, piece.s1, piece.signs[e]) <= 0.0))
+                    return general("density is constant at the zero boundary within execution slack");
+                continue;
+            }
             if (!accumulateConstantMember(f, d, pieceConstant, plan, why)) return general(why);
         }
         if (plan.participatingMembers == 0) {
@@ -636,9 +692,10 @@ VolumeSegmentSchedule scheduleVolumeRaySegment(const std::vector<VolumeSegmentMe
         for (std::size_t j = 0; j < members.size(); ++j) {
             if (j < piece.targetSigns.size() && piece.targetSigns[j] < 0) { active[j] = false; continue; }
             bool undefined = false;
-            const auto r = densityEvals[j]->range(densityEvals[j]->form().roots[0], piece.s0, piece.s1,
-                                                  piece.signs[j], &undefined);
-            if (!undefined && r.hi <= 0.0f) active[j] = false;
+            const uint32_t root = densityEvals[j]->form().roots[0];
+            const auto r = densityEvals[j]->range(root, piece.s0, piece.s1, piece.signs[j], &undefined);
+            if (!undefined && double(r.hi) + densityEvals[j]->slack(root, piece.s0, piece.s1, piece.signs[j]) <= 0.0)
+                active[j] = false;
         }
         VolumeSegmentPlan plan;
         if (std::none_of(active.begin(), active.end(), [](bool a) { return a; })) {
@@ -736,6 +793,7 @@ VolumeSupportTrace traceVolumeSupport(const std::vector<VolumeSegmentMember>& me
         }
         const auto& form = *m.forms->density.algebraic.form;
         OntoMath::LineAlgebraicEvaluator ev(form, rayBindings(m, ray), true);
+        ev.setExecutionModel(kVolumeExecutionModel);
         if (!ev.ok()) { trace.reason = "density: " + ev.refusal(); trace.emptySample.assign(span.count, 0); return trace; }
         const uint32_t root = form.roots[0];
         const std::vector<int8_t> zeros(form.switches.size(), 0);
@@ -749,7 +807,8 @@ VolumeSupportTrace traceVolumeSupport(const std::vector<VolumeSegmentMember>& me
                 bool undefined = false;
                 ++trace.setupEvaluations;
                 const auto r = ev.range(root, sFirst, sLast, signs, &undefined);
-                if (undefined || !(r.hi <= 0.0f)) continue;
+                // Killed means the EXECUTED density stays ≤ 0 too.
+                if (undefined || !(double(r.hi) + ev.slack(root, sFirst, sLast, signs) <= 0.0)) continue;
                 ++trace.setupEvaluations;
                 const auto d = ev.switchDerivativeRange(k, sFirst, sLast, zeros);
                 if (!d.bounded()) continue;
@@ -774,8 +833,11 @@ VolumeSupportTrace traceVolumeSupport(const std::vector<VolumeSegmentMember>& me
                 const auto r = killer.k == std::size_t(-1) ? ev.range(root, si, si, zeros, &undefined)
                                                            : ev.switchRange(killer.k, si, si, zeros, &undefined);
                 if (undefined) continue;
-                const double margin = killer.sign < 0 ? -double(r.hi) : double(r.lo);
-                const bool atZero = killer.k == std::size_t(-1) && r.hi <= 0.0f;   // D ≤ 0 here exactly
+                // The device evaluates g twice (killer, density): clear 2·slack.
+                const double sl = 2.0 * (killer.k == std::size_t(-1) ? ev.slack(root, si, si, zeros)
+                                                                     : ev.switchSlack(killer.k, si, si, zeros));
+                const double margin = (killer.sign < 0 ? -double(r.hi) : double(r.lo)) - sl;
+                const bool atZero = killer.k == std::size_t(-1) && double(r.hi) + sl <= 0.0;   // executed D ≤ 0 here
                 if (!(margin > 0.0) && !atZero) continue;
                 // Certified on [si, si + margin/L]; a tiny relative guard keeps the
                 // double division from rounding the reach outward.
@@ -796,9 +858,22 @@ VolumeSupportTrace traceVolumeSupport(const std::vector<VolumeSegmentMember>& me
 
 // ---- Rung 2f-native groundwork: authored-tier support certificates ---------
 // Claude Code · Claude Opus 5.5 · session_01HvZSR64QghrdyCpq2M7qvX · 2026-10-17.
+double volumeClockMagnitudeBucket(double t) {
+    const double a = std::abs(t);
+    if (!std::isfinite(a)) return std::numeric_limits<double>::infinity();
+    double bucket = 1.0;
+    while (bucket < a) bucket *= 2.0;
+    return bucket;
+}
+
 VolumeSupportCertificates deriveVolumeSupportCertificates(const VolumeRayChannelForms& forms,
-                                                          const glm::dvec3& halfExtent) {
+                                                          const glm::dvec3& halfExtent,
+                                                          double clockMagnitude) {
     VolumeSupportCertificates out;
+    if (!std::isfinite(clockMagnitude)) {
+        out.refusal = "the clock is not finite: no execution slack can be derived";
+        return out;
+    }
     if (!forms.density.present || !forms.density.algebraic.form) {
         out.refusal = "density has no admitted algebraic form";
         return out;
@@ -821,6 +896,9 @@ VolumeSupportCertificates deriveVolumeSupportCertificates(const VolumeRayChannel
         b[OntoMath::kLineDirectionVars[i]] = OntoMath::Interval(i == 0 ? 1.0f : 0.0f);
     }
     OntoMath::LineAlgebraicEvaluator ev(form, b, true);
+    // Range and Lipschitz hold at every clock; execution slack is the device's
+    // and grows with |t|, so it is derived for |t| ≤ clockMagnitude only.
+    ev.setExecutionModel(kVolumeExecutionModel, {{OntoMath::kTimeVar, clockMagnitude}});
     if (!ev.ok()) { out.refusal = "density over the box: " + ev.refusal(); return out; }
     const std::vector<int8_t> zeros(form.switches.size(), 0);
     for (std::size_t k = 0; k < form.switches.size(); ++k) {
@@ -830,7 +908,11 @@ VolumeSupportCertificates deriveVolumeSupportCertificates(const VolumeRayChannel
             bool undefined = false;
             // s ∈ [0, 0] with o over the whole box: the density's range anywhere in it.
             const auto r = ev.range(form.roots[0], 0.0, 0.0, signs, &undefined);
-            if (undefined || !(r.hi <= 0.0f)) continue;
+            // Killed must hold for the EXECUTED density as well (a saturated
+            // clamp executes its literal bound exactly; a cancelled leaf does not).
+            if (undefined || !(double(r.hi) + ev.slack(form.roots[0], 0.0, 0.0, signs) <= 0.0)) continue;
+            const double gSlack = ev.switchSlack(k, 0.0, 0.0, zeros);
+            if (!std::isfinite(gSlack)) continue;
             const auto L = OntoMath::lipschitzBoundOverBox(form, k, box, others, true);
             if (!L) continue;
             const auto& sw = form.switches[k];
@@ -843,14 +925,7 @@ VolumeSupportCertificates deriveVolumeSupportCertificates(const VolumeRayChannel
             c.sourceA = node.sourceA;
             c.sourceB = node.sourceB;
             c.offset = sw.role == 2 ? node.lo : (sw.role == 3 ? node.hi : 0.0);
-            auto magnitude = [&](uint32_t operand) {
-                bool u = false;
-                const auto rr = ev.range(operand, 0.0, 0.0, zeros, &u);
-                return u ? std::numeric_limits<double>::infinity()
-                         : std::max(std::abs(double(rr.lo)), std::abs(double(rr.hi)));
-            };
-            c.argumentMagnitude = magnitude(node.a) + (sw.role == 1 ? magnitude(node.b) : 0.0) +
-                                  std::abs(c.offset);
+            c.deviceSlack = kVolumeSupportDeviceTolerance + 2.0 * gSlack;
             out.killers.push_back(c);
         }
     }
@@ -891,7 +966,8 @@ VolumeSupportTrace traceVolumeSupportCertified(const std::vector<VolumeSegmentMe
                 bool undefined = false;
                 const auto r = ev.switchRange(c.switchIndex, si, si, zeros, &undefined);
                 if (undefined) continue;
-                const double margin = c.sign < 0 ? -double(r.hi) : double(r.lo);
+                // The shader's law: clear the certificate's device slack first.
+                const double margin = (c.sign < 0 ? -double(r.hi) : double(r.lo)) - c.deviceSlack;
                 if (!(margin > 0.0)) continue;
                 const double rate = c.spatialLipschitz * dirLen;
                 const double reach = rate > 0.0 ? si + (margin / rate) * (1.0 - 1e-9) : span.firstSample + span.step * double(span.count);

@@ -269,7 +269,7 @@ VolumeSupportTrace traceVolumeSupport(const std::vector<VolumeSegmentMember>& me
 // the box, |dg/ds| ≤ L·|d|, so one point value of g certifies emptiness for
 // margin/(L·|d|) ahead — no per-ray interval work at all.
 //
-// Lifetime: AUTHORED-REVISION × BOX. Derived from the density channel's
+// Lifetime: AUTHORED-REVISION × BOX × CLOCK BUCKET. Derived from the density channel's
 // algebraic form (same key as VolumeRayFormCache) and the half-extent; invalid
 // when either changes. Independent of camera, ray, origin and clock. `source`
 // points into the authored Piecewise for a future emitter; it is valid exactly
@@ -282,25 +282,43 @@ struct VolumeSupportCertificate {
     const OntoMath::MathNode* sourceA = nullptr;
     const OntoMath::MathNode* sourceB = nullptr;
     double offset = 0.0;           // clamp lo/hi for roles 2/3
-    // sup|a| + sup|b| + |offset| over the box at every time: the magnitude a
-    // device's rounding of g scales with (the native lane's slack δ, see
-    // kVolumeSupportDeviceTolerance). Infinite when an operand is unbounded.
-    double argumentMagnitude = 0.0;
+    // δ, the margin the native lane must clear: τ + 2·slack(g), with slack(g)
+    // OntoMath's execution slack of the switch function from its AUTHORED
+    // operands over the box for |t| ≤ clockMagnitude (Codex P1, 2026-10-17:
+    // never from the simplified form, which may have cancelled). Twice, because
+    // the shader evaluates g once in the killer and once inside the density.
+    double deviceSlack = 0.0;
 };
-// Native lane (Rung 2f-native): DECLARED device tolerance, not a theorem. The
-// shader trusts a certificate's margin only beyond δ = τ·(1 + argumentMagnitude),
-// τ = 2⁻¹⁰ — room for ~2¹⁴ f32 roundings in any grouping, or two WGSL-accuracy
-// sin/cos errors (2⁻¹¹ absolute), at unit magnitude. Metal Fast mode's complete
+// DECLARED device tolerance τ for every claim that replaces or skips executed
+// arithmetic (OntoMath::executionBound's model), not a theorem: τ = 2⁻¹⁰ per
+// magnitude unit — room for ~2¹⁴ f32 roundings in any grouping, or two
+// WGSL-accuracy sin/cos errors (2⁻¹¹ absolute). Metal Fast mode's complete
 // execution enclosure is still open (docs/audits/VOLUME_SUPPORT_NATIVE_PROFILE_2026-10-12.md),
-// so the lane is opt-in (ScreenChannel volumeSupportCertificatesEnabled) and
-// its pixels are witnessed, not proved, per backend.
+// so the native lane is opt-in (ScreenChannel volumeSupportCertificatesEnabled)
+// and its pixels are witnessed, not proved, per backend.
 inline constexpr double kVolumeSupportDeviceTolerance = 1.0 / 1024.0;
+// The execution model every replacing or skipping claim is decided under
+// (OntoMath::executionBound): each arithmetic operation, literal and
+// coordinate read errs by ≤ 2⁻¹⁶ of its magnitude bound (256 f32 ulps, room for
+// Fast-mode reassociation, fusion and approximate division), and each
+// sin/cos/exp/noise evaluation by ≤ 2⁻¹⁰ absolute (the device tolerance).
+inline constexpr OntoMath::ExecutionModel kVolumeExecutionModel{1.0 / 65536.0, kVolumeSupportDeviceTolerance};
+// A closed form replaces execution only when execution cannot drift far from
+// the algebra: an exactly-constant channel value c is admitted only while its
+// authored tree's execution slack is ≤ κ·τ·(1 + |c|), κ = 16. Beyond that the
+// algebra may have cancelled what the device computes, and the lattice runs.
+inline constexpr double kExecutionCancellationGuard = 16.0;
+// Clock-magnitude bucket for certificates: the smallest power of two ≥ |t|
+// (at least 1). Device error in sin(k·t) grows with |t|, so a certificate's
+// slack is derived for |t| ≤ bucket and re-derived when the clock crosses it.
+double volumeClockMagnitudeBucket(double t);
 struct VolumeSupportCertificates {
     std::vector<VolumeSupportCertificate> killers;
     std::string refusal;
 };
 VolumeSupportCertificates deriveVolumeSupportCertificates(const VolumeRayChannelForms& forms,
-                                                          const glm::dvec3& halfExtent);
+                                                          const glm::dvec3& halfExtent,
+                                                          double clockMagnitude = 1.0);
 
 // The shader-shaped tracer: certificates only, one point evaluation of g per
 // not-yet-certified sample. members[i] pairs with certificates[i].
