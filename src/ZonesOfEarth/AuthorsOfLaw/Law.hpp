@@ -1027,6 +1027,7 @@ private:
     mutable std::unordered_map<std::string, CandidateRoute> _candidateRoutes;
     mutable std::uint64_t _candidateRouteRefreshCount = 0;
     void refreshCandidateRoute(const Law& law) const;
+    void refreshCandidateRoute(const Law& law, const std::string& lawId) const;
     void invalidateCandidateRoute(const std::string& lawId) const {
         _candidateRoutes.erase(lawId);
     }
