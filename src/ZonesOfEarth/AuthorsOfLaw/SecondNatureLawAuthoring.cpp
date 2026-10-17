@@ -37,16 +37,10 @@ void writeString(Singular& being, const char* property, const std::string& value
 Singular* findBeing(const std::string& id) {
     if (id.empty()) return nullptr;
 
-    const auto identifierMatches = [&](Singular* being) {
-        if (!being) return false;
-        if (auto* person = dynamic_cast<Person*>(being)) {
-            return Identity::personAnswersTo(*person, id);
-        }
-        return being->getIdentifier() == id;
-    };
+    const std::vector<Singular*> beings = Universe::instance().beings();
 
     Singular* found = nullptr;
-    for (Singular* being : Universe::instance().beings()) {
+    for (Singular* being : beings) {
         if (being && being->getIdentifier() == id) {
             if (found && found != being) return nullptr;
             found = being;
@@ -54,10 +48,14 @@ Singular* findBeing(const std::string& id) {
     }
     if (found) return found;
 
-    for (Singular* being : Universe::instance().beings()) {
-        if (identifierMatches(being)) {
-            if (found && found != being) return nullptr;
-            found = being;
+    for (Singular* being : beings) {
+        if (being) {
+            if (auto* person = dynamic_cast<Person*>(being)) {
+                if (Identity::personAnswersTo(*person, id)) {
+                    if (found && found != being) return nullptr;
+                    found = being;
+                }
+            }
         }
     }
     return found;
