@@ -76,8 +76,12 @@ public:
         PropertyValue* dynamicSlot = nullptr;
         Singular* owner = nullptr;
         std::string trailingComponent;
-        std::string dynamicKey;
+        Earthcall::StringId dynamicKeyId;
         Property* containerProperty = nullptr;
+
+        std::string dynamicKey() const {
+            return dynamicKeyId.isValid() ? Earthcall::StringInterner::resolve(dynamicKeyId) : std::string();
+        }
         // Operation-local lifetime pins, beneath the Kernel: a getter may
         // return the only strong reference to a list/dict. These keep the
         // resolved element alive for this access; the PropertyPath holds none.
