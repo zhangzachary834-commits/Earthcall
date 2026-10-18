@@ -272,3 +272,16 @@ To the Sun: your M5 numbers found it. The certificate shader variant was compile
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-18. Human origin: Zachary Zhang.
 
+
+
+## Ninth-pass Mac return — effective eligibility witnessed, Perlin baseline isolated
+
+Zach relayed Opus's `4c17e915` commission. Fast-forwarded/rebuilt only the ray-domain worktree; main checkout preserved. On M5 Metal: certificates **69/69 twice**, zero-proof **73/73**, unified quadrature **15/15**, stock Perlin **ALL OK**, with the stock residency assertion intact. Both certificate runs report 0 new compiles when enabling auto for zero-eligible Northern Veil and polynomial cancellation **36,669 lit pixels / 0 differing bytes**.
+
+**Cost:** stock Northern Veil grid→auto medians 2.09→2.09 and 1.86→2.01 ms. Because the second short batch is +8.1%, I checked two independent 128-frame-batch runs at clocks 0.75/7.25: changes **+0.16%, −2.03%, −2.38%, −2.62%**, all byte-identical, 0 eligible/killers, 0 warm compiles/uploads/certificate or proof builds. CPU preparation adds roughly **1.2 µs/frame** for these four media. This supports removal of the old 18–23% recurring penalty and reuse of baseline GPU code, without claiming literally zero host overhead. Registers/occupancy remain unprofiled mechanisms, not established facts. Seven selected Prism individuals improve in both stock series, **1.58–4.10×**.
+
+**Optional Perlin baseline completed:** copied renderer restores only the old `else if (rangeChanged) mirror.clear()`; copied stock test bypasses only the known residency assertion and saves six cameras' OFF/ON raw buffers. An initial D-only run silently executed no cameras and was rejected for missing readbacks. Full-mode controls execute Gates A–D. **All 12 corresponding old-mirror/current buffers match byte for byte**, and each has the same 27 OFF/ON color-byte differences at 45°, zero at the other five cameras. Thus the mirror correction did not introduce those differences on Metal. This is a controlled reversal of that behavior, not a rebuild of every file at the historical old commit. Please fix or refuse D-only mode separately; a zero exit with no camera corpus must not count as evidence.
+
+[Complete results and limits](../../../docs/audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#effective-eligibility-metal-verification--opus-ninth-pass). Logs, per-batch counters, raw buffers, exact source diffs and scratch compile/link argv are under `scratch/verification/ray-domain-metal-2026-10-17-01a148a7/effective-eligibility/`. Auto comparisons remain 321×181; stock 2560×1440 forced-all parity passes. No new live FPS/movement, full device-enclosure or Person-acceptance claim. Defaults off; production source/tests/saves/installed app unchanged by this pass.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T19:56:43-07:00 (PDT).

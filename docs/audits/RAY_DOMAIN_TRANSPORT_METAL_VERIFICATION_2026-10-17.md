@@ -138,3 +138,56 @@ Certificates stay **default off**. Person live-trial/visual/movement acceptance,
 **Raw evidence:** `scratch/verification/ray-domain-metal-2026-10-17-01a148a7/auto-eligibility/` retains build log, two full stock logs, all 42 TIMING lines, channel log, exact source HEAD, commands, fixture hashes and result metadata. `northern-veil-clock-probe.cpp`, its compile/link argv, build log and full per-batch log retain the scratch diagnostic. Original copy also remains at `/private/tmp/earthcall-auto-metal-01a148a7-20261017/`.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T19:22:42-07:00 (PDT).
+
+
+## Effective eligibility Metal verification — Opus ninth pass
+
+Zach relayed Opus's per-member shader-selection return. Fetched and fast-forwarded only the clean ray-domain worktree to `4c17e91502b4034d7a8f8531d0087f0273d415e5`; the main checkout and its unrelated ongoing work remained untouched. Rebuilt four focused native targets in the existing Debug tree with assertions enabled. No production/test source, saves, lighting, defaults or installed app changed during verification. Scratch controls query **Metal backend 5 / Apple M5**. Ordinary timestamps remain disabled.
+
+### Stock witnesses and paired cost
+
+Two sequential timing-enabled certificate runs pass **69/69**, exits 0 (42.998 and 42.014 seconds). Both report **0 new program compiles** after enabling auto mode for zero-eligible Northern Veil, **36,669 lit pixels** for the polynomial cancellation witness and **0 differing bytes** there. All finite parity/edit/full-lattice checks pass, including the stock 2560×1440 forced-all comparison. Separate native witnesses pass: **zero-proof 73/73**, **unified quadrature 15/15**, and **Perlin ALL OK** with its residency assertion intact and traversal active in 6/6 cameras. These are focused results, not the full suite.
+
+Stock auto timing is 321×181, eight submitted frames per warmed batch, four alternating grid/auto and auto/grid rounds, median completion/readback-inclusive cost per frame. Runs/builds were sequential; no native timestamps, usual-framebuffer movement or live FPS was measured.
+
+| Median cost, ms | Series 1 grid → auto | Series 2 grid → auto |
+|---|---|---|
+| Northern Veil fused | 2.09 → 2.09 | 1.86 → 2.01 |
+| spherical-cloud | 0.72 → 0.36 | 0.74 → 0.36 |
+| hollow-shell | 0.83 → 0.51 | 0.85 → 0.47 |
+| torus-medium | 1.83 → 0.78 | 0.94 → 0.43 |
+| csg-crescent-medium | 0.89 → 0.47 | 0.85 → 0.48 |
+| time-breathing-nebula | 0.85 → 0.51 | 0.82 → 0.52 |
+| proxy-proof-torus | 0.80 → 0.21 | 0.82 → 0.20 |
+| dual-sovereign-being | 0.74 → 0.42 | 1.17 → 0.65 |
+
+The seven selected Prism individual media remain cheaper in both series, **1.58–4.10×** across the paired medians. The noise cloud remains excluded. Northern Veil's first short series is neutral; its second shows +8.1%, so short medians alone do not establish literally zero overhead. They also must not be compared by absolute cost against yesterday's/different-process lows.
+
+### Longer Northern Veil batches
+
+To investigate that short-run residual, a scratch-only entry retained the same stock renderer/readback helper, used 128 submitted frames per batch, and reported CPU volume-preparation averages and warm counters. Two independent process runs each measured clocks 0.75 and 7.25 in alternating AB/BA order. Both clocks remain lit and byte-identical off/on, with **0 eligible media / killers**. Every warm batch reports **0 compiles, uploads, certificate builds and zero-proof builds**.
+
+| Probe / clock | Grid median ms | Auto median ms | Relative change |
+|---|---:|---:|---:|
+| 1 / 0.75 | 1.3842185 | 1.3863645 | +0.16% |
+| 1 / 7.25 | 1.4177710 | 1.3889410 | −2.03% |
+| 2 / 0.75 | 1.5002395 | 1.4645215 | −2.38% |
+| 2 / 7.25 | 1.5106975 | 1.4711615 | −2.62% |
+
+The earlier repeatable 18–23% penalty is not reproduced in these longer comparisons; the measured changes span −2.62% to +0.16%. Median CPU volume-preparation time rises from about 0.0072–0.0073 ms to 0.0084–0.0086 ms, roughly **1.2 microseconds per frame** in this four-medium fixture. That supports small remaining host bookkeeping, not a claim that every cost is mathematically zero. The 128-frame medians amortize readback differently and are not interchangeable with the stock eight-frame medians.
+
+Source inspection confirms the effective certificate boolean enters each member's program key/structure/composition before payload attachment. With no eligible members the baseline variant is reused. Together with measured neutral longer-batch costs, this verifies the intended removal on this M5. **Register pressure/occupancy remains an explanation hypothesis:** no GPU disassembly or hardware register/occupancy counter was measured, so the exact driver mechanism is not established.
+
+### Perlin mirror-fix baseline, native raw bytes
+
+Built two throwaway controls from the current source and same freshly compiled objects. Both use the same copied stock test plus raw-readback capture and bypass **only** `assert(!sawInitialRangeUpload)`. One uses the current renderer; the other restores exactly the historical `else if (rangeChanged) persistentRange.mirror.clear()` behavior from before `94554ae93` in a copied renderer. Every other assertion remains enabled; the unchanged stock Perlin test separately passes with the residency assertion intact. This isolates the mirror fix, not every unrelated change since the historical commit.
+
+The initial `EARTHCALL_PERLIN_TEST_MODE=D` controls exited 0 but executed no camera corpus and produced no readbacks. The wrapper rejected them for missing captures; they are explicitly marked **invalid evidence**. Repeating in full mode executes Gates A–D and yields the required 12 raw buffers per control: OFF and ON images for six cameras, 128×128 RGBA8.
+
+**All 12 corresponding current/old-mirror buffers match byte for byte (0 cross-version differing bytes; SHA-256s recorded).** Within each control, the 45-degree OFF/ON comparison has the same 27 differing color bytes; the other five have zero, and hit coverage agrees in all six. Thus those 27 bytes predate the residency-behavior correction on this Metal device; the correction did not introduce them. This does not establish full OFF/ON color parity or prove that the remaining traversal difference is mathematically exact.
+
+**Remaining:** fix or explicitly refuse the no-op Perlin D-only mode; full device arithmetic enclosure, shared-noise cost modeling, the null-member AUTHOR decision and existing Person visual/movement acceptance remain open. Certificates remain **default off**. No live trial, installation or save mutation occurred; the two frozen fixture hashes are unchanged.
+
+**Evidence:** `scratch/verification/ray-domain-metal-2026-10-17-01a148a7/effective-eligibility/` retains all stock/probe logs, all TIMING lines, source HEAD, fixture hashes, raw Perlin buffers, source diffs, and exact scratch compile/link argv. Large throwaway executables/objects remain only in the original `/private/tmp/earthcall-member-lane-metal-01a148a7-20261017/`.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T19:56:43-07:00 (PDT).

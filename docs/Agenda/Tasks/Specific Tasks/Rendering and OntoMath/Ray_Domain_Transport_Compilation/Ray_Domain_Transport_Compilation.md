@@ -26,7 +26,7 @@
 - [x] **Rung 2f-native eligibility policy** — a Kernel cost estimate over the shader's own loop and the `volumeSupportCertificatesAutoEligibility` switch (default on within the off-by-default lane). Northern Veil stays on the grid lane, and Prism wing B gets 1.5–5.2× cheaper on lavapipe. [§6g](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6g-eligibility-where-certificates-pay-2026-10-18-eighth-pass).
 - [ ] Model the shared-noise prelude in the eligibility estimate (the noise cloud is a safe-direction miss).
 - [x] Metal ABBA and polynomial-cancellation witness: 68/68 twice at `993f92a6`, 36,669 lit pixels, byte-identical. Seven Prism media improve; zero-eligible Northern Veil is 18–23% slower, so neutral-cost/default promotion remains blocked ([record](../../../../../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#auto-eligibility-metal-verification--opus-eighth-pass)).
-- [~] Remove or explain the zero-eligible Metal overhead with an effective-eligibility baseline program path; preserve generic cache/payload identity, byte parity and paired cost evidence. **Implemented:** eligibility is now decided before the program key, and the certificate lane is keyed and composed per member. With nothing eligible, enabling the lane reuses the lane-off program (lavapipe: 0 compiles, byte-identical, 69/69). Paired M5 cost remains to confirm ([§6h](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6h-effective-eligibility-the-lane-off-program-when-nothing-is-eligible-2026-10-18-ninth-pass)).
+- [x] Remove the idle certificate program for zero-eligible media: per-member effective eligibility in `4c17e915` reuses the baseline variant, native 69/69 twice and zero new compiles; longer paired M5 costs span −2.62% to +0.16%, while short-run +8.1% and ~1.2 µs/frame host bookkeeping remain documented ([record](../../../../../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#effective-eligibility-metal-verification--opus-ninth-pass)).
 - [x] **Metal run of the pre-repair certificate lane:** 56/56 twice, with report-only ABBA recorded; Opus has since implemented the P1 repair, while its Metal revalidation, device enclosure and Person acceptance remain open ([native record](../../../../../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md)).
 - [ ] Lower Select-piece killers (roles 4+2i/5+2i) and the density-sign killer to WGSL; today they are not candidates.
 - Note: `volume_ray_radial_segmentation_test` takes ~90 s in Debug, because it runs the full 28-medium census.
@@ -73,10 +73,17 @@ Native report-only grid → grid+certificate medians: Northern Veil fused **1.93
 
 The three requested witnesses pass on M5 Metal: certificates 57/57, zero-proof 73/73, Perlin ALL OK. [Exact scope and caveats](../../../../../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#post-repair-metal-revalidation--opus-seventh-pass) supersede the historical pending-native status below the earlier signed records. No new performance or Person acceptance is claimed.
 
-- [~] Characterize Perlin's 27 Metal color-byte differences before claiming full native RGBA parity: Opus reproduced the pre-fix 18-byte lavapipe baseline, but the native pre-fix 45-degree baseline remains unexecuted; stock coverage/root assertions pass.
+- [x] Attribute Perlin's 27 Metal color-byte differences relative to the residency fix: restoring only the old mirror-clear behavior in a scratch renderer produces all 12 OFF/ON raw buffers byte-identical to current; the same 27-byte 45-degree OFF/ON difference exists in both. Full OFF/ON color parity remains unclaimed.
 - [x] Obtain a nonblack Metal cancellation witness: the polynomial identity at A=4096 has 36,669 lit pixels, 1 killer and 0 byte differences in both `993f92a6` M5 runs. The simple cancellation case remains black; this is finite-case coverage, not universal execution equivalence.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T12:12:06-07:00 (PDT).
 
 
 **Eighth-pass native return:** [68/68 twice, lit polynomial witness and paired auto-mode costs](../../../../../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#auto-eligibility-metal-verification--opus-eighth-pass) complete the requested measurements, while zero-eligible Metal overhead is a remaining performance gate. Default-off certificates and existing Person checks remain. **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T19:22:42-07:00 (PDT).
+
+
+**Ninth-pass native return:** [69/69 twice, longer zero-eligible cost probe and exact Perlin baseline readbacks](../../../../../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#effective-eligibility-metal-verification--opus-ninth-pass) verify the requested per-member path and isolate the pre-existing color difference. No default or Person acceptance change.
+
+- [ ] Correct or explicitly refuse `EARTHCALL_PERLIN_TEST_MODE=D`: it currently exits 0 without executing camera cases or producing readbacks; full-mode stock coverage passes. Inspect the `runCore`/`runGateD` scopes and require observable camera execution.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T19:56:43-07:00 (PDT).

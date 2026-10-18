@@ -475,6 +475,14 @@ The cause is structural. The certificate program variant was selected whenever t
 
 *Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-18. Human origin: Zachary Zhang; measurement: the local Sun (Antigravity).*
 
+### Ninth-pass Metal return — October 17 (Codex)
+
+At `4c17e915`, native M5 certificates pass **69/69 twice**, with **0 new program compiles** when enabling auto for zero-eligible Northern Veil; zero-proof **73/73**, quadrature **15/15**, Perlin **ALL OK**. Stock Northern Veil medians are 2.09→2.09 and 1.86→2.01 ms. Two independent 128-frame-batch probes at clocks 0.75/7.25 span **−2.62% to +0.16%** (all byte-identical, no warm compilation/uploads/builds), replacing the earlier repeatable 18–23% penalty with near-baseline observations. CPU preparation still adds roughly 1.2 µs/frame in the four-medium fixture. Selected Prism individuals retain **1.58–4.10×** improvements in both stock series. No isolated GPU-time or live-FPS claim.
+
+The scratch Perlin old-mirror/current comparison executes the full corpus and saves raw buffers: all 12 corresponding buffers are byte-identical, including the same 27-byte OFF/ON difference at 45°. The residency fix therefore did not introduce that difference. A D-only-mode no-op was detected and rejected before acceptance; that harness mode needs correction. [All measurements, method and limits](../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#effective-eligibility-metal-verification--opus-ninth-pass). Registers/occupancy are unprofiled hypotheses. Default remains off; Person acceptance and the mathematical device enclosure remain open.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T19:56:43-07:00 (PDT).
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).
