@@ -16863,7 +16863,7 @@
       },
       "displayName": {
         "t": "string",
-        "v": "Sun Zone — Moonlit Celestial Fill"
+        "v": "Sun Zone \u2014 Moonlit Celestial Fill"
       },
       "radiance.role": {
         "t": "string",
@@ -16887,7 +16887,7 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 0.9,
+                        "c": 1.0,
                         "factors": {}
                       }
                     ]
@@ -17153,7 +17153,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Radiance Witness — Near"
+            "v": "Radiance Witness \u2014 Near"
           },
           "radianceWitness.role": {
             "t": "string",
@@ -17274,7 +17274,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Radiance Witness — Far"
+            "v": "Radiance Witness \u2014 Far"
           },
           "radianceWitness.role": {
             "t": "string",
@@ -17395,7 +17395,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Sun Court — lower foundation"
+            "v": "Sun Court \u2014 lower foundation"
           },
           "construction.feature": {
             "t": "string",
@@ -17411,7 +17411,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "4o temple reference — primitive-only coherent reset"
+            "v": "4o temple reference \u2014 primitive-only coherent reset"
           }
         }
       },
@@ -17528,7 +17528,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Sun Court — upper terrace"
+            "v": "Sun Court \u2014 upper terrace"
           },
           "construction.feature": {
             "t": "string",
@@ -17544,7 +17544,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -17661,7 +17661,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Sun Court — processional path"
+            "v": "Sun Court \u2014 processional path"
           },
           "construction.feature": {
             "t": "string",
@@ -17677,7 +17677,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -17794,7 +17794,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Sun Court — left path border"
+            "v": "Sun Court \u2014 left path border"
           },
           "construction.feature": {
             "t": "string",
@@ -17810,7 +17810,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — primitive-only convergence"
+            "v": "GPT-4o solar temple reference \u2014 primitive-only convergence"
           }
         }
       },
@@ -17927,7 +17927,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Sun Court — right path border"
+            "v": "Sun Court \u2014 right path border"
           },
           "construction.feature": {
             "t": "string",
@@ -17943,7 +17943,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — primitive-only convergence"
+            "v": "GPT-4o solar temple reference \u2014 primitive-only convergence"
           }
         }
       },
@@ -18060,7 +18060,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Sun Court — witness court"
+            "v": "Sun Court \u2014 witness court"
           },
           "construction.feature": {
             "t": "string",
@@ -18076,7 +18076,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "4o temple reference — primitive-only coherent reset"
+            "v": "4o temple reference \u2014 primitive-only coherent reset"
           }
         }
       },
@@ -18209,7 +18209,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -18342,7 +18342,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -18475,7 +18475,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -18608,7 +18608,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -18725,7 +18725,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate pier — lower plinth"
+            "v": "left gate pier \u2014 lower plinth"
           },
           "construction.feature": {
             "t": "string",
@@ -18741,7 +18741,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -18858,7 +18858,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate pier — middle plinth"
+            "v": "left gate pier \u2014 middle plinth"
           },
           "construction.feature": {
             "t": "string",
@@ -18874,7 +18874,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -18991,7 +18991,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate pier — upper plinth"
+            "v": "left gate pier \u2014 upper plinth"
           },
           "construction.feature": {
             "t": "string",
@@ -19007,7 +19007,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -19488,7 +19488,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate pier — shaft core"
+            "v": "left gate pier \u2014 shaft core"
           },
           "construction.feature": {
             "t": "string",
@@ -19504,7 +19504,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           },
           "axis.fix": {
             "t": "string",
@@ -19625,7 +19625,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate pier — inner front pilaster"
+            "v": "left gate pier \u2014 inner front pilaster"
           },
           "construction.feature": {
             "t": "string",
@@ -19641,7 +19641,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -19762,7 +19762,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate pier — outer front pilaster"
+            "v": "left gate pier \u2014 outer front pilaster"
           },
           "construction.feature": {
             "t": "string",
@@ -19778,7 +19778,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -19899,7 +19899,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate pier — inner shoulder"
+            "v": "left gate pier \u2014 inner shoulder"
           },
           "construction.feature": {
             "t": "string",
@@ -19915,7 +19915,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -20036,7 +20036,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate pier — outer shoulder"
+            "v": "left gate pier \u2014 outer shoulder"
           },
           "construction.feature": {
             "t": "string",
@@ -20052,7 +20052,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -20173,7 +20173,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate pier — lower capital"
+            "v": "left gate pier \u2014 lower capital"
           },
           "construction.feature": {
             "t": "string",
@@ -20189,7 +20189,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -20310,7 +20310,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate pier — middle capital"
+            "v": "left gate pier \u2014 middle capital"
           },
           "construction.feature": {
             "t": "string",
@@ -20326,7 +20326,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -20555,7 +20555,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate pier — upper capital"
+            "v": "left gate pier \u2014 upper capital"
           },
           "construction.feature": {
             "t": "string",
@@ -20571,7 +20571,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           },
           "axis.fix": {
             "t": "string",
@@ -20692,7 +20692,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate pier — abacus"
+            "v": "left gate pier \u2014 abacus"
           },
           "construction.feature": {
             "t": "string",
@@ -20708,7 +20708,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -20825,7 +20825,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate pier — lower plinth"
+            "v": "right gate pier \u2014 lower plinth"
           },
           "construction.feature": {
             "t": "string",
@@ -20841,7 +20841,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -20958,7 +20958,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate pier — middle plinth"
+            "v": "right gate pier \u2014 middle plinth"
           },
           "construction.feature": {
             "t": "string",
@@ -20974,7 +20974,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -21091,7 +21091,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate pier — upper plinth"
+            "v": "right gate pier \u2014 upper plinth"
           },
           "construction.feature": {
             "t": "string",
@@ -21107,7 +21107,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -21588,7 +21588,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate pier — shaft core"
+            "v": "right gate pier \u2014 shaft core"
           },
           "construction.feature": {
             "t": "string",
@@ -21604,7 +21604,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           },
           "axis.fix": {
             "t": "string",
@@ -21725,7 +21725,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate pier — inner front pilaster"
+            "v": "right gate pier \u2014 inner front pilaster"
           },
           "construction.feature": {
             "t": "string",
@@ -21741,7 +21741,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -21862,7 +21862,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate pier — outer front pilaster"
+            "v": "right gate pier \u2014 outer front pilaster"
           },
           "construction.feature": {
             "t": "string",
@@ -21878,7 +21878,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -21999,7 +21999,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate pier — inner shoulder"
+            "v": "right gate pier \u2014 inner shoulder"
           },
           "construction.feature": {
             "t": "string",
@@ -22015,7 +22015,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -22136,7 +22136,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate pier — outer shoulder"
+            "v": "right gate pier \u2014 outer shoulder"
           },
           "construction.feature": {
             "t": "string",
@@ -22152,7 +22152,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -22273,7 +22273,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate pier — lower capital"
+            "v": "right gate pier \u2014 lower capital"
           },
           "construction.feature": {
             "t": "string",
@@ -22289,7 +22289,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -22410,7 +22410,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate pier — middle capital"
+            "v": "right gate pier \u2014 middle capital"
           },
           "construction.feature": {
             "t": "string",
@@ -22426,7 +22426,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -22655,7 +22655,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate pier — upper capital"
+            "v": "right gate pier \u2014 upper capital"
           },
           "construction.feature": {
             "t": "string",
@@ -22671,7 +22671,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           },
           "axis.fix": {
             "t": "string",
@@ -22792,7 +22792,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate pier — abacus"
+            "v": "right gate pier \u2014 abacus"
           },
           "construction.feature": {
             "t": "string",
@@ -22808,7 +22808,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -22925,7 +22925,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — lower entablature"
+            "v": "Solar Gate \u2014 lower entablature"
           },
           "construction.feature": {
             "t": "string",
@@ -22941,7 +22941,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -23058,7 +23058,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — gold fascia"
+            "v": "Solar Gate \u2014 gold fascia"
           },
           "construction.feature": {
             "t": "string",
@@ -23074,7 +23074,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -23263,7 +23263,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — projecting cornice"
+            "v": "Solar Gate \u2014 projecting cornice"
           },
           "construction.feature": {
             "t": "string",
@@ -23279,7 +23279,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           }
         }
       },
@@ -23468,7 +23468,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — crown slab"
+            "v": "Solar Gate \u2014 crown slab"
           },
           "construction.feature": {
             "t": "string",
@@ -23484,7 +23484,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           }
         }
       },
@@ -23745,7 +23745,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — left stone reveal"
+            "v": "Solar Gate \u2014 left stone reveal"
           },
           "construction.feature": {
             "t": "string",
@@ -23761,7 +23761,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           }
         }
       },
@@ -24022,7 +24022,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — right stone reveal"
+            "v": "Solar Gate \u2014 right stone reveal"
           },
           "construction.feature": {
             "t": "string",
@@ -24038,7 +24038,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           }
         }
       },
@@ -24299,7 +24299,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — stone reveal lintel"
+            "v": "Solar Gate \u2014 stone reveal lintel"
           },
           "construction.feature": {
             "t": "string",
@@ -24315,7 +24315,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           }
         }
       },
@@ -24432,7 +24432,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — left gold inner frame"
+            "v": "Solar Gate \u2014 left gold inner frame"
           },
           "construction.feature": {
             "t": "string",
@@ -24448,7 +24448,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -24565,7 +24565,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — right gold inner frame"
+            "v": "Solar Gate \u2014 right gold inner frame"
           },
           "construction.feature": {
             "t": "string",
@@ -24581,7 +24581,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -24698,7 +24698,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — gold inner lintel"
+            "v": "Solar Gate \u2014 gold inner lintel"
           },
           "construction.feature": {
             "t": "string",
@@ -24714,7 +24714,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -24831,7 +24831,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — lower threshold"
+            "v": "Solar Gate \u2014 lower threshold"
           },
           "construction.feature": {
             "t": "string",
@@ -24847,7 +24847,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -24964,7 +24964,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — gold threshold"
+            "v": "Solar Gate \u2014 gold threshold"
           },
           "construction.feature": {
             "t": "string",
@@ -24980,7 +24980,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -25097,7 +25097,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — upper threshold"
+            "v": "Solar Gate \u2014 upper threshold"
           },
           "construction.feature": {
             "t": "string",
@@ -25113,7 +25113,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -25230,7 +25230,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — sun pedestal"
+            "v": "Solar Gate \u2014 sun pedestal"
           },
           "construction.feature": {
             "t": "string",
@@ -25246,7 +25246,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — primitive-only convergence"
+            "v": "GPT-4o solar temple reference \u2014 primitive-only convergence"
           }
         }
       },
@@ -25363,7 +25363,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — sun disc"
+            "v": "Solar Gate \u2014 sun disc"
           },
           "construction.feature": {
             "t": "string",
@@ -25379,7 +25379,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — primitive-only convergence"
+            "v": "GPT-4o solar temple reference \u2014 primitive-only convergence"
           }
         }
       },
@@ -25496,7 +25496,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Witness Court — left boundary"
+            "v": "Witness Court \u2014 left boundary"
           },
           "construction.feature": {
             "t": "string",
@@ -25512,7 +25512,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "4o temple reference — primitive-only coherent reset"
+            "v": "4o temple reference \u2014 primitive-only coherent reset"
           }
         }
       },
@@ -25629,7 +25629,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Witness Court — right boundary"
+            "v": "Witness Court \u2014 right boundary"
           },
           "construction.feature": {
             "t": "string",
@@ -25645,7 +25645,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "4o temple reference — primitive-only coherent reset"
+            "v": "4o temple reference \u2014 primitive-only coherent reset"
           }
         }
       },
@@ -25762,7 +25762,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Witness Court — rear threshold"
+            "v": "Witness Court \u2014 rear threshold"
           },
           "construction.feature": {
             "t": "string",
@@ -25778,7 +25778,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "4o temple reference — primitive-only coherent reset"
+            "v": "4o temple reference \u2014 primitive-only coherent reset"
           }
         }
       },
@@ -25895,7 +25895,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Inner Sanctuary — lower platform"
+            "v": "Inner Sanctuary \u2014 lower platform"
           },
           "construction.feature": {
             "t": "string",
@@ -25911,7 +25911,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — primitive-only convergence"
+            "v": "GPT-4o solar temple reference \u2014 primitive-only convergence"
           }
         }
       },
@@ -26028,7 +26028,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Inner Sanctuary — upper platform"
+            "v": "Inner Sanctuary \u2014 upper platform"
           },
           "construction.feature": {
             "t": "string",
@@ -26044,7 +26044,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -26161,7 +26161,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left inner pier — lower base"
+            "v": "left inner pier \u2014 lower base"
           },
           "construction.feature": {
             "t": "string",
@@ -26177,7 +26177,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -26294,7 +26294,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left inner pier — upper base"
+            "v": "left inner pier \u2014 upper base"
           },
           "construction.feature": {
             "t": "string",
@@ -26310,7 +26310,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -26431,7 +26431,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left inner pier — shaft"
+            "v": "left inner pier \u2014 shaft"
           },
           "construction.feature": {
             "t": "string",
@@ -26447,7 +26447,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -26568,7 +26568,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left inner pier — capital"
+            "v": "left inner pier \u2014 capital"
           },
           "construction.feature": {
             "t": "string",
@@ -26584,7 +26584,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -26705,7 +26705,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left inner pier — abacus"
+            "v": "left inner pier \u2014 abacus"
           },
           "construction.feature": {
             "t": "string",
@@ -26721,7 +26721,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -26838,7 +26838,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right inner pier — lower base"
+            "v": "right inner pier \u2014 lower base"
           },
           "construction.feature": {
             "t": "string",
@@ -26854,7 +26854,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -26971,7 +26971,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right inner pier — upper base"
+            "v": "right inner pier \u2014 upper base"
           },
           "construction.feature": {
             "t": "string",
@@ -26987,7 +26987,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -27108,7 +27108,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right inner pier — shaft"
+            "v": "right inner pier \u2014 shaft"
           },
           "construction.feature": {
             "t": "string",
@@ -27124,7 +27124,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -27245,7 +27245,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right inner pier — capital"
+            "v": "right inner pier \u2014 capital"
           },
           "construction.feature": {
             "t": "string",
@@ -27261,7 +27261,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -27382,7 +27382,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right inner pier — abacus"
+            "v": "right inner pier \u2014 abacus"
           },
           "construction.feature": {
             "t": "string",
@@ -27398,7 +27398,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -27515,7 +27515,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Inner Sanctuary — lower crown"
+            "v": "Inner Sanctuary \u2014 lower crown"
           },
           "construction.feature": {
             "t": "string",
@@ -27531,7 +27531,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -27648,7 +27648,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Inner Sanctuary — gold crown"
+            "v": "Inner Sanctuary \u2014 gold crown"
           },
           "construction.feature": {
             "t": "string",
@@ -27664,7 +27664,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -27781,7 +27781,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Inner Sanctuary — upper crown"
+            "v": "Inner Sanctuary \u2014 upper crown"
           },
           "construction.feature": {
             "t": "string",
@@ -27797,7 +27797,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -27914,7 +27914,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate wing — lower plinth"
+            "v": "left gate wing \u2014 lower plinth"
           },
           "construction.feature": {
             "t": "string",
@@ -27930,7 +27930,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -28047,7 +28047,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate wing — gold plinth"
+            "v": "left gate wing \u2014 gold plinth"
           },
           "construction.feature": {
             "t": "string",
@@ -28063,7 +28063,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -28472,7 +28472,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate wing — shaft"
+            "v": "left gate wing \u2014 shaft"
           },
           "construction.feature": {
             "t": "string",
@@ -28488,7 +28488,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           },
           "axis.fix": {
             "t": "string",
@@ -28609,7 +28609,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate wing — front gold panel"
+            "v": "left gate wing \u2014 front gold panel"
           },
           "construction.feature": {
             "t": "string",
@@ -28625,7 +28625,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -28742,7 +28742,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate wing — capital"
+            "v": "left gate wing \u2014 capital"
           },
           "construction.feature": {
             "t": "string",
@@ -28758,7 +28758,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -28879,7 +28879,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left gate wing — abacus"
+            "v": "left gate wing \u2014 abacus"
           },
           "construction.feature": {
             "t": "string",
@@ -28895,7 +28895,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -29012,7 +29012,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate wing — lower plinth"
+            "v": "right gate wing \u2014 lower plinth"
           },
           "construction.feature": {
             "t": "string",
@@ -29028,7 +29028,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -29145,7 +29145,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate wing — gold plinth"
+            "v": "right gate wing \u2014 gold plinth"
           },
           "construction.feature": {
             "t": "string",
@@ -29161,7 +29161,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -29570,7 +29570,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate wing — shaft"
+            "v": "right gate wing \u2014 shaft"
           },
           "construction.feature": {
             "t": "string",
@@ -29586,7 +29586,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           },
           "axis.fix": {
             "t": "string",
@@ -29707,7 +29707,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate wing — front gold panel"
+            "v": "right gate wing \u2014 front gold panel"
           },
           "construction.feature": {
             "t": "string",
@@ -29723,7 +29723,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -29840,7 +29840,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate wing — capital"
+            "v": "right gate wing \u2014 capital"
           },
           "construction.feature": {
             "t": "string",
@@ -29856,7 +29856,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -29977,7 +29977,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right gate wing — abacus"
+            "v": "right gate wing \u2014 abacus"
           },
           "construction.feature": {
             "t": "string",
@@ -29993,7 +29993,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -30110,7 +30110,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "solar medallion — left frame"
+            "v": "solar medallion \u2014 left frame"
           },
           "construction.feature": {
             "t": "string",
@@ -30126,7 +30126,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — primitive-only convergence"
+            "v": "GPT-4o solar temple reference \u2014 primitive-only convergence"
           }
         }
       },
@@ -30243,7 +30243,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "solar medallion — right frame"
+            "v": "solar medallion \u2014 right frame"
           },
           "construction.feature": {
             "t": "string",
@@ -30259,7 +30259,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — primitive-only convergence"
+            "v": "GPT-4o solar temple reference \u2014 primitive-only convergence"
           }
         }
       },
@@ -30376,7 +30376,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "solar medallion — upper frame"
+            "v": "solar medallion \u2014 upper frame"
           },
           "construction.feature": {
             "t": "string",
@@ -30392,7 +30392,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — primitive-only convergence"
+            "v": "GPT-4o solar temple reference \u2014 primitive-only convergence"
           }
         }
       },
@@ -30509,7 +30509,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "solar medallion — lower frame"
+            "v": "solar medallion \u2014 lower frame"
           },
           "construction.feature": {
             "t": "string",
@@ -30525,7 +30525,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — primitive-only convergence"
+            "v": "GPT-4o solar temple reference \u2014 primitive-only convergence"
           }
         }
       },
@@ -30642,7 +30642,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "solar medallion — top ray"
+            "v": "solar medallion \u2014 top ray"
           },
           "construction.feature": {
             "t": "string",
@@ -30658,7 +30658,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — primitive-only convergence"
+            "v": "GPT-4o solar temple reference \u2014 primitive-only convergence"
           }
         }
       },
@@ -30775,7 +30775,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "solar medallion — bottom ray"
+            "v": "solar medallion \u2014 bottom ray"
           },
           "construction.feature": {
             "t": "string",
@@ -30791,7 +30791,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — primitive-only convergence"
+            "v": "GPT-4o solar temple reference \u2014 primitive-only convergence"
           }
         }
       },
@@ -30908,7 +30908,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "solar medallion — left ray"
+            "v": "solar medallion \u2014 left ray"
           },
           "construction.feature": {
             "t": "string",
@@ -30924,7 +30924,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — primitive-only convergence"
+            "v": "GPT-4o solar temple reference \u2014 primitive-only convergence"
           }
         }
       },
@@ -31041,7 +31041,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "solar medallion — right ray"
+            "v": "solar medallion \u2014 right ray"
           },
           "construction.feature": {
             "t": "string",
@@ -31057,7 +31057,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — primitive-only convergence"
+            "v": "GPT-4o solar temple reference \u2014 primitive-only convergence"
           }
         }
       },
@@ -31174,7 +31174,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left precinct — front low wall"
+            "v": "left precinct \u2014 front low wall"
           },
           "construction.feature": {
             "t": "string",
@@ -31190,7 +31190,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -31307,7 +31307,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left precinct — rear low wall"
+            "v": "left precinct \u2014 rear low wall"
           },
           "construction.feature": {
             "t": "string",
@@ -31323,7 +31323,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -31440,7 +31440,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left precinct — front wall cap"
+            "v": "left precinct \u2014 front wall cap"
           },
           "construction.feature": {
             "t": "string",
@@ -31456,7 +31456,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -31573,7 +31573,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left precinct — rear wall cap"
+            "v": "left precinct \u2014 rear wall cap"
           },
           "construction.feature": {
             "t": "string",
@@ -31589,7 +31589,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -31706,7 +31706,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left precinct pylon 1 — base"
+            "v": "left precinct pylon 1 \u2014 base"
           },
           "construction.feature": {
             "t": "string",
@@ -31722,7 +31722,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -31843,7 +31843,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left precinct pylon 1 — shaft"
+            "v": "left precinct pylon 1 \u2014 shaft"
           },
           "construction.feature": {
             "t": "string",
@@ -31859,7 +31859,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -31980,7 +31980,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left precinct pylon 1 — cap"
+            "v": "left precinct pylon 1 \u2014 cap"
           },
           "construction.feature": {
             "t": "string",
@@ -31996,7 +31996,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -32113,7 +32113,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left precinct pylon 2 — base"
+            "v": "left precinct pylon 2 \u2014 base"
           },
           "construction.feature": {
             "t": "string",
@@ -32129,7 +32129,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -32250,7 +32250,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left precinct pylon 2 — shaft"
+            "v": "left precinct pylon 2 \u2014 shaft"
           },
           "construction.feature": {
             "t": "string",
@@ -32266,7 +32266,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -32387,7 +32387,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left precinct pylon 2 — cap"
+            "v": "left precinct pylon 2 \u2014 cap"
           },
           "construction.feature": {
             "t": "string",
@@ -32403,7 +32403,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -32520,7 +32520,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left precinct pylon 3 — base"
+            "v": "left precinct pylon 3 \u2014 base"
           },
           "construction.feature": {
             "t": "string",
@@ -32536,7 +32536,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -32657,7 +32657,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left precinct pylon 3 — shaft"
+            "v": "left precinct pylon 3 \u2014 shaft"
           },
           "construction.feature": {
             "t": "string",
@@ -32673,7 +32673,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -32794,7 +32794,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left precinct pylon 3 — cap"
+            "v": "left precinct pylon 3 \u2014 cap"
           },
           "construction.feature": {
             "t": "string",
@@ -32810,7 +32810,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -32927,7 +32927,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left precinct pylon 4 — base"
+            "v": "left precinct pylon 4 \u2014 base"
           },
           "construction.feature": {
             "t": "string",
@@ -32943,7 +32943,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -33064,7 +33064,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left precinct pylon 4 — shaft"
+            "v": "left precinct pylon 4 \u2014 shaft"
           },
           "construction.feature": {
             "t": "string",
@@ -33080,7 +33080,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -33201,7 +33201,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left precinct pylon 4 — cap"
+            "v": "left precinct pylon 4 \u2014 cap"
           },
           "construction.feature": {
             "t": "string",
@@ -33217,7 +33217,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -33334,7 +33334,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right precinct — front low wall"
+            "v": "right precinct \u2014 front low wall"
           },
           "construction.feature": {
             "t": "string",
@@ -33350,7 +33350,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -33467,7 +33467,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right precinct — rear low wall"
+            "v": "right precinct \u2014 rear low wall"
           },
           "construction.feature": {
             "t": "string",
@@ -33483,7 +33483,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -33600,7 +33600,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right precinct — front wall cap"
+            "v": "right precinct \u2014 front wall cap"
           },
           "construction.feature": {
             "t": "string",
@@ -33616,7 +33616,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -33733,7 +33733,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right precinct — rear wall cap"
+            "v": "right precinct \u2014 rear wall cap"
           },
           "construction.feature": {
             "t": "string",
@@ -33749,7 +33749,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -33866,7 +33866,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right precinct pylon 1 — base"
+            "v": "right precinct pylon 1 \u2014 base"
           },
           "construction.feature": {
             "t": "string",
@@ -33882,7 +33882,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -34003,7 +34003,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right precinct pylon 1 — shaft"
+            "v": "right precinct pylon 1 \u2014 shaft"
           },
           "construction.feature": {
             "t": "string",
@@ -34019,7 +34019,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -34140,7 +34140,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right precinct pylon 1 — cap"
+            "v": "right precinct pylon 1 \u2014 cap"
           },
           "construction.feature": {
             "t": "string",
@@ -34156,7 +34156,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -34273,7 +34273,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right precinct pylon 2 — base"
+            "v": "right precinct pylon 2 \u2014 base"
           },
           "construction.feature": {
             "t": "string",
@@ -34289,7 +34289,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -34410,7 +34410,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right precinct pylon 2 — shaft"
+            "v": "right precinct pylon 2 \u2014 shaft"
           },
           "construction.feature": {
             "t": "string",
@@ -34426,7 +34426,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -34547,7 +34547,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right precinct pylon 2 — cap"
+            "v": "right precinct pylon 2 \u2014 cap"
           },
           "construction.feature": {
             "t": "string",
@@ -34563,7 +34563,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -34680,7 +34680,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right precinct pylon 3 — base"
+            "v": "right precinct pylon 3 \u2014 base"
           },
           "construction.feature": {
             "t": "string",
@@ -34696,7 +34696,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -34817,7 +34817,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right precinct pylon 3 — shaft"
+            "v": "right precinct pylon 3 \u2014 shaft"
           },
           "construction.feature": {
             "t": "string",
@@ -34833,7 +34833,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -34954,7 +34954,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right precinct pylon 3 — cap"
+            "v": "right precinct pylon 3 \u2014 cap"
           },
           "construction.feature": {
             "t": "string",
@@ -34970,7 +34970,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -35087,7 +35087,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right precinct pylon 4 — base"
+            "v": "right precinct pylon 4 \u2014 base"
           },
           "construction.feature": {
             "t": "string",
@@ -35103,7 +35103,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -35224,7 +35224,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right precinct pylon 4 — shaft"
+            "v": "right precinct pylon 4 \u2014 shaft"
           },
           "construction.feature": {
             "t": "string",
@@ -35240,7 +35240,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -35361,7 +35361,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right precinct pylon 4 — cap"
+            "v": "right precinct pylon 4 \u2014 cap"
           },
           "construction.feature": {
             "t": "string",
@@ -35377,7 +35377,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -35510,7 +35510,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -35627,7 +35627,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Inner path — left gold edge"
+            "v": "Inner path \u2014 left gold edge"
           },
           "construction.feature": {
             "t": "string",
@@ -35643,7 +35643,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — primitive-only convergence"
+            "v": "GPT-4o solar temple reference \u2014 primitive-only convergence"
           }
         }
       },
@@ -35760,7 +35760,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Inner path — right gold edge"
+            "v": "Inner path \u2014 right gold edge"
           },
           "construction.feature": {
             "t": "string",
@@ -35776,7 +35776,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — primitive-only convergence"
+            "v": "GPT-4o solar temple reference \u2014 primitive-only convergence"
           }
         }
       },
@@ -35893,7 +35893,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Inner Sanctuary — processional threshold"
+            "v": "Inner Sanctuary \u2014 processional threshold"
           },
           "construction.feature": {
             "t": "string",
@@ -35909,7 +35909,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -36026,7 +36026,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Cube witness — lower altar"
+            "v": "Cube witness \u2014 lower altar"
           },
           "construction.feature": {
             "t": "string",
@@ -36042,7 +36042,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -36159,7 +36159,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Cube witness — gold altar course"
+            "v": "Cube witness \u2014 gold altar course"
           },
           "construction.feature": {
             "t": "string",
@@ -36175,7 +36175,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -36292,7 +36292,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Far sphere witness — lower pedestal"
+            "v": "Far sphere witness \u2014 lower pedestal"
           },
           "construction.feature": {
             "t": "string",
@@ -36308,7 +36308,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -36425,7 +36425,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Far sphere witness — gold pedestal"
+            "v": "Far sphere witness \u2014 gold pedestal"
           },
           "construction.feature": {
             "t": "string",
@@ -36441,7 +36441,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -36558,7 +36558,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "High sphere witness — lower pedestal"
+            "v": "High sphere witness \u2014 lower pedestal"
           },
           "construction.feature": {
             "t": "string",
@@ -36574,7 +36574,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -36691,7 +36691,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "High sphere witness — gold base"
+            "v": "High sphere witness \u2014 gold base"
           },
           "construction.feature": {
             "t": "string",
@@ -36707,7 +36707,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -36824,7 +36824,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "High sphere witness — celestial pedestal shaft"
+            "v": "High sphere witness \u2014 celestial pedestal shaft"
           },
           "construction.feature": {
             "t": "string",
@@ -36840,7 +36840,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -36957,7 +36957,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "High sphere witness — pedestal capital"
+            "v": "High sphere witness \u2014 pedestal capital"
           },
           "construction.feature": {
             "t": "string",
@@ -36973,7 +36973,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -37090,7 +37090,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Inner Sanctuary — left reveal"
+            "v": "Inner Sanctuary \u2014 left reveal"
           },
           "construction.feature": {
             "t": "string",
@@ -37106,7 +37106,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -37223,7 +37223,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Inner Sanctuary — right reveal"
+            "v": "Inner Sanctuary \u2014 right reveal"
           },
           "construction.feature": {
             "t": "string",
@@ -37239,7 +37239,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -37356,7 +37356,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Inner Sanctuary — reveal lintel"
+            "v": "Inner Sanctuary \u2014 reveal lintel"
           },
           "construction.feature": {
             "t": "string",
@@ -37372,7 +37372,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -37489,7 +37489,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Inner Sanctuary — left gold frame"
+            "v": "Inner Sanctuary \u2014 left gold frame"
           },
           "construction.feature": {
             "t": "string",
@@ -37505,7 +37505,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -37622,7 +37622,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Inner Sanctuary — right gold frame"
+            "v": "Inner Sanctuary \u2014 right gold frame"
           },
           "construction.feature": {
             "t": "string",
@@ -37638,7 +37638,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -37755,7 +37755,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Inner Sanctuary — gold frame lintel"
+            "v": "Inner Sanctuary \u2014 gold frame lintel"
           },
           "construction.feature": {
             "t": "string",
@@ -37771,7 +37771,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -37888,7 +37888,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Sanctum — lower altar tier"
+            "v": "Solar Sanctum \u2014 lower altar tier"
           },
           "construction.feature": {
             "t": "string",
@@ -37904,7 +37904,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -38021,7 +38021,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Sanctum — middle altar tier"
+            "v": "Solar Sanctum \u2014 middle altar tier"
           },
           "construction.feature": {
             "t": "string",
@@ -38037,7 +38037,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -38154,7 +38154,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Sanctum — gold altar tier"
+            "v": "Solar Sanctum \u2014 gold altar tier"
           },
           "construction.feature": {
             "t": "string",
@@ -38170,7 +38170,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -38287,7 +38287,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Sanctum — sacred core"
+            "v": "Solar Sanctum \u2014 sacred core"
           },
           "construction.feature": {
             "t": "string",
@@ -38303,7 +38303,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -38424,7 +38424,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Sanctum — gold front panel"
+            "v": "Solar Sanctum \u2014 gold front panel"
           },
           "construction.feature": {
             "t": "string",
@@ -38440,7 +38440,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -38557,7 +38557,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Sanctum — capital"
+            "v": "Solar Sanctum \u2014 capital"
           },
           "construction.feature": {
             "t": "string",
@@ -38573,7 +38573,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           },
           "axis.fix": {
             "t": "string",
@@ -38694,7 +38694,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Sanctum — crown"
+            "v": "Solar Sanctum \u2014 crown"
           },
           "construction.feature": {
             "t": "string",
@@ -38710,7 +38710,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -38827,7 +38827,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Sanctum — distant sun"
+            "v": "Solar Sanctum \u2014 distant sun"
           },
           "construction.feature": {
             "t": "string",
@@ -38843,7 +38843,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — primitive-only convergence"
+            "v": "GPT-4o solar temple reference \u2014 primitive-only convergence"
           }
         }
       },
@@ -38960,7 +38960,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — outer medallion ring"
+            "v": "Solar Gate \u2014 outer medallion ring"
           },
           "construction.feature": {
             "t": "string",
@@ -38976,7 +38976,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -39093,7 +39093,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — inner ivory ring"
+            "v": "Solar Gate \u2014 inner ivory ring"
           },
           "construction.feature": {
             "t": "string",
@@ -39109,7 +39109,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -39226,7 +39226,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Sanctum — distant sun ring"
+            "v": "Solar Sanctum \u2014 distant sun ring"
           },
           "construction.feature": {
             "t": "string",
@@ -39242,7 +39242,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curvature and surface fidelity"
+            "v": "GPT-4o solar temple reference \u2014 curvature and surface fidelity"
           }
         }
       },
@@ -39359,7 +39359,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left main pier — raised solar relief 1"
+            "v": "left main pier \u2014 raised solar relief 1"
           },
           "construction.feature": {
             "t": "string",
@@ -39375,7 +39375,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -39492,7 +39492,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left main pier — raised solar relief 2"
+            "v": "left main pier \u2014 raised solar relief 2"
           },
           "construction.feature": {
             "t": "string",
@@ -39508,7 +39508,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -39625,7 +39625,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left main pier — raised solar relief 3"
+            "v": "left main pier \u2014 raised solar relief 3"
           },
           "construction.feature": {
             "t": "string",
@@ -39641,7 +39641,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -39758,7 +39758,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right main pier — raised solar relief 1"
+            "v": "right main pier \u2014 raised solar relief 1"
           },
           "construction.feature": {
             "t": "string",
@@ -39774,7 +39774,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -39891,7 +39891,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right main pier — raised solar relief 2"
+            "v": "right main pier \u2014 raised solar relief 2"
           },
           "construction.feature": {
             "t": "string",
@@ -39907,7 +39907,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -40024,7 +40024,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right main pier — raised solar relief 3"
+            "v": "right main pier \u2014 raised solar relief 3"
           },
           "construction.feature": {
             "t": "string",
@@ -40040,7 +40040,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -40157,7 +40157,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "left outer wing — raised panel"
+            "v": "left outer wing \u2014 raised panel"
           },
           "construction.feature": {
             "t": "string",
@@ -40173,7 +40173,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -40290,7 +40290,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "right outer wing — raised panel"
+            "v": "right outer wing \u2014 raised panel"
           },
           "construction.feature": {
             "t": "string",
@@ -40306,7 +40306,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -40423,7 +40423,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — cornice bead -4.8"
+            "v": "Solar Gate \u2014 cornice bead -4.8"
           },
           "construction.feature": {
             "t": "string",
@@ -40439,7 +40439,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -40556,7 +40556,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — cornice bead -3.2"
+            "v": "Solar Gate \u2014 cornice bead -3.2"
           },
           "construction.feature": {
             "t": "string",
@@ -40572,7 +40572,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -40689,7 +40689,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — cornice bead -1.6"
+            "v": "Solar Gate \u2014 cornice bead -1.6"
           },
           "construction.feature": {
             "t": "string",
@@ -40705,7 +40705,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -40822,7 +40822,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — cornice bead 0"
+            "v": "Solar Gate \u2014 cornice bead 0"
           },
           "construction.feature": {
             "t": "string",
@@ -40838,7 +40838,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -40955,7 +40955,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — cornice bead 1.6"
+            "v": "Solar Gate \u2014 cornice bead 1.6"
           },
           "construction.feature": {
             "t": "string",
@@ -40971,7 +40971,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -41088,7 +41088,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — cornice bead 3.2"
+            "v": "Solar Gate \u2014 cornice bead 3.2"
           },
           "construction.feature": {
             "t": "string",
@@ -41104,7 +41104,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -41221,7 +41221,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Gate — cornice bead 4.8"
+            "v": "Solar Gate \u2014 cornice bead 4.8"
           },
           "construction.feature": {
             "t": "string",
@@ -41237,7 +41237,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — curved architectural language"
+            "v": "GPT-4o solar temple reference \u2014 curved architectural language"
           }
         }
       },
@@ -41426,7 +41426,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Precinct — left pylon 1 flame finial"
+            "v": "Solar Precinct \u2014 left pylon 1 flame finial"
           },
           "construction.feature": {
             "t": "string",
@@ -41442,7 +41442,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           },
           "axis.fix": {
             "t": "string",
@@ -41635,7 +41635,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Precinct — left pylon 2 flame finial"
+            "v": "Solar Precinct \u2014 left pylon 2 flame finial"
           },
           "construction.feature": {
             "t": "string",
@@ -41651,7 +41651,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           },
           "axis.fix": {
             "t": "string",
@@ -41844,7 +41844,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Precinct — left pylon 3 flame finial"
+            "v": "Solar Precinct \u2014 left pylon 3 flame finial"
           },
           "construction.feature": {
             "t": "string",
@@ -41860,7 +41860,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           },
           "axis.fix": {
             "t": "string",
@@ -42053,7 +42053,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Precinct — left pylon 4 flame finial"
+            "v": "Solar Precinct \u2014 left pylon 4 flame finial"
           },
           "construction.feature": {
             "t": "string",
@@ -42069,7 +42069,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           },
           "axis.fix": {
             "t": "string",
@@ -42262,7 +42262,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Precinct — right pylon 1 flame finial"
+            "v": "Solar Precinct \u2014 right pylon 1 flame finial"
           },
           "construction.feature": {
             "t": "string",
@@ -42278,7 +42278,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           },
           "axis.fix": {
             "t": "string",
@@ -42471,7 +42471,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Precinct — right pylon 2 flame finial"
+            "v": "Solar Precinct \u2014 right pylon 2 flame finial"
           },
           "construction.feature": {
             "t": "string",
@@ -42487,7 +42487,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           },
           "axis.fix": {
             "t": "string",
@@ -42680,7 +42680,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Precinct — right pylon 3 flame finial"
+            "v": "Solar Precinct \u2014 right pylon 3 flame finial"
           },
           "construction.feature": {
             "t": "string",
@@ -42696,7 +42696,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           },
           "axis.fix": {
             "t": "string",
@@ -42889,7 +42889,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Precinct — right pylon 4 flame finial"
+            "v": "Solar Precinct \u2014 right pylon 4 flame finial"
           },
           "construction.feature": {
             "t": "string",
@@ -42905,7 +42905,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           },
           "axis.fix": {
             "t": "string",
@@ -43098,7 +43098,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Sanctum — left tapered finial"
+            "v": "Solar Sanctum \u2014 left tapered finial"
           },
           "construction.feature": {
             "t": "string",
@@ -43114,7 +43114,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           },
           "axis.fix": {
             "t": "string",
@@ -43307,7 +43307,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Sanctum — right tapered finial"
+            "v": "Solar Sanctum \u2014 right tapered finial"
           },
           "construction.feature": {
             "t": "string",
@@ -43323,7 +43323,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — compound sculptural SDF"
+            "v": "GPT-4o solar temple reference \u2014 compound sculptural SDF"
           },
           "axis.fix": {
             "t": "string",
@@ -43624,7 +43624,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Citadel — distant processional causeway and monumental podium"
+            "v": "Solar Citadel \u2014 distant processional causeway and monumental podium"
           },
           "construction.feature": {
             "t": "string",
@@ -43640,7 +43640,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — distant monumental citadel correction"
+            "v": "GPT-4o solar temple reference \u2014 distant monumental citadel correction"
           },
           "correction.reason": {
             "t": "string",
@@ -45165,7 +45165,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Citadel — deep-section monumental blade tower"
+            "v": "Solar Citadel \u2014 deep-section monumental blade tower"
           },
           "construction.feature": {
             "t": "string",
@@ -45181,7 +45181,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — sectional depth, carved hierarchy, and integrated solar architecture"
+            "v": "GPT-4o solar temple reference \u2014 sectional depth, carved hierarchy, and integrated solar architecture"
           },
           "correction.reason": {
             "t": "string",
@@ -45774,7 +45774,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Citadel — integrated gilded oculus and tracery"
+            "v": "Solar Citadel \u2014 integrated gilded oculus and tracery"
           },
           "construction.feature": {
             "t": "string",
@@ -45790,7 +45790,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — sectional depth, carved hierarchy, and integrated solar architecture"
+            "v": "GPT-4o solar temple reference \u2014 sectional depth, carved hierarchy, and integrated solar architecture"
           },
           "correction.reason": {
             "t": "string",
@@ -45915,7 +45915,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Citadel — recessed solar core"
+            "v": "Solar Citadel \u2014 recessed solar core"
           },
           "construction.feature": {
             "t": "string",
@@ -45931,7 +45931,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — sectional depth, carved hierarchy, and integrated solar architecture"
+            "v": "GPT-4o solar temple reference \u2014 sectional depth, carved hierarchy, and integrated solar architecture"
           },
           "correction.reason": {
             "t": "string",
@@ -46704,7 +46704,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Citadel — left deep-section tower"
+            "v": "Solar Citadel \u2014 left deep-section tower"
           },
           "construction.feature": {
             "t": "string",
@@ -46720,7 +46720,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — sectional depth, carved hierarchy, and integrated solar architecture"
+            "v": "GPT-4o solar temple reference \u2014 sectional depth, carved hierarchy, and integrated solar architecture"
           },
           "correction.reason": {
             "t": "string",
@@ -47493,7 +47493,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Citadel — right deep-section tower"
+            "v": "Solar Citadel \u2014 right deep-section tower"
           },
           "construction.feature": {
             "t": "string",
@@ -47509,7 +47509,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — sectional depth, carved hierarchy, and integrated solar architecture"
+            "v": "GPT-4o solar temple reference \u2014 sectional depth, carved hierarchy, and integrated solar architecture"
           },
           "correction.reason": {
             "t": "string",
@@ -48138,7 +48138,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Citadel — left deep arcade"
+            "v": "Solar Citadel \u2014 left deep arcade"
           },
           "construction.feature": {
             "t": "string",
@@ -48154,7 +48154,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — sectional depth, carved hierarchy, and integrated solar architecture"
+            "v": "GPT-4o solar temple reference \u2014 sectional depth, carved hierarchy, and integrated solar architecture"
           },
           "correction.reason": {
             "t": "string",
@@ -48783,7 +48783,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Solar Citadel — right deep arcade"
+            "v": "Solar Citadel \u2014 right deep arcade"
           },
           "construction.feature": {
             "t": "string",
@@ -48799,7 +48799,7 @@
           },
           "visual.reference": {
             "t": "string",
-            "v": "GPT-4o solar temple reference — sectional depth, carved hierarchy, and integrated solar architecture"
+            "v": "GPT-4o solar temple reference \u2014 sectional depth, carved hierarchy, and integrated solar architecture"
           },
           "correction.reason": {
             "t": "string",
@@ -48817,7 +48817,7 @@
   "authors": [
     "Zach"
   ],
-  "injected_by": "GPT-5.6 Sol — OntoMath Radiance Rung 3, directed by Zach; Phase-2 witness preserved",
+  "injected_by": "GPT-5.6 Sol \u2014 OntoMath Radiance Rung 3, directed by Zach; Phase-2 witness preserved",
   "spatialFields": [
     {
       "id": "sun.citadel.solar-radiance",
@@ -49037,7 +49037,7 @@
       "authoredProperties": {
         "displayName": {
           "t": "string",
-          "v": "Solar Citadel — Moonlit White-Gold Oculus"
+          "v": "Solar Citadel \u2014 Moonlit White-Gold Oculus"
         },
         "light.source": {
           "t": "bool",
@@ -49091,7 +49091,7 @@
         },
         "radiance.role": {
           "t": "string",
-          "v": "localized sacred white-gold source against cool celestial fill; rho × chi × alpha remain independently authored"
+          "v": "localized sacred white-gold source against cool celestial fill; rho \u00d7 chi \u00d7 alpha remain independently authored"
         }
       }
     }
