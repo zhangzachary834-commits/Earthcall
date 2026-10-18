@@ -62,6 +62,9 @@ struct BootedEngineHarness {
         // same runtime graph as the app.
         Physics::setLawManager(&lawManager);
 
+        // Wire physics collision event listeners to EventBus, matching EngineInit.cpp
+        Physics::setupPhysicsEventListeners();
+
         // 1. Sync register standard channels like InteractionChannel
         Singularity::Input::InteractionChannel::syncRegister(lawManager);
         interaction = Singularity::Input::InteractionChannel::find(lawManager);
