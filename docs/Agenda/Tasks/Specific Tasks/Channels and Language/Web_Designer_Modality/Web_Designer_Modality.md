@@ -22,9 +22,13 @@ Establish the Earthcall Web Designer Modality as a genuine Earthcall Law-authori
 - **Test Suite**: `tests/singularity/web_designer_modality_test.cpp` (all 14 tests passing).
 - **Prototype Artifact**: `web_ui/designer_prototype.html` and `saves/web_designer/prototype.html`.
 - **Governed VFS Export**: `saves/web_designer/test_governed_vfs.html`.
-- **Core Architecture Document**: [WEB_DESIGNER_MODALITY.md](../../../../architecture/Integration/WEB_DESIGNER_MODALITY.md).
+- **Core Architecture Document**: [WEB_DESIGNER_MODALITY.md](../../../../../architecture/Integration/WEB_DESIGNER_MODALITY.md).
 
 ## Future Rungs
 1. Live WebSocket bidirectional sync between browser RealWebView and `WebDesignerChannel` during interactive authoring sessions.
 2. Direct OntoMath SDF rasterization / embedding into authored canvas/SVG elements.
 3. Form input concepts (text field, toggle, range slider) bound directly to `PropertyPath`.
+4. Governed data binding (`web.data.source`) so compiled pages can show live foreign data without Earthcall running. → [Compiled Live Pages](../Web_Designer_Compiled_Live_Pages/Web_Designer_Compiled_Live_Pages.md) (added 2026-10-18 from Zach's direction)
+5. Compile a subset of canonical Laws into page script, without a second Law language, as the first pieces of a future web Law runtime. → [Compiled Live Pages](../Web_Designer_Compiled_Live_Pages/Web_Designer_Compiled_Live_Pages.md)
+
+*Clarified by Zach, 2026-10-18: the Web Designer is a compiler. Earthcall runs the Laws at authoring time and emits HTML that runs without Earthcall; EventBus reactivity ([architecture §7](../../../../../architecture/Integration/WEB_DESIGNER_MODALITY.md#7-dynamic-reactivity-dom-actions-to-earthcall-laws)) holds only inside Earthcall's own WebKit view. A web engine that runs Laws live is future work.*

@@ -133,6 +133,8 @@ User interactions in the browser cross into Earthcall without black-box JavaScri
 4. Any Person-authored reactive `Law` listening for the event fires and mutates the in-world `Singular` properties.
 5. Upon re-realization, the mutated properties update the HTML/DOM output.
 
+This loop holds only while the page is hosted inside Earthcall's own WebKit view (`window.webkit.messageHandlers.earthcall`). An exported page opened in an ordinary browser keeps its structure and styling but its actions only log; see §9.
+
 ---
 
 ## 8. Verification & Extensibility Exit Test
@@ -151,3 +153,26 @@ The modality is validated by 8 comprehensive automated tests in `tests/singulari
 - **Frontend Prototype**: `web_ui/designer_prototype.html` (22 KB) and `saves/web_designer/prototype.html`.
 - **Governed VFS File**: `saves/web_designer/test_governed_vfs.html`.
 - **Visual Witness**: `web_ui/designer_prototype.png` (291 KB, 1280x2400 rendered screenshot captured via headless Google Chrome).
+
+---
+
+## 9. Realization Mode: Compiled Today, Live Runtime Later
+
+*Added 2026-10-18 from Zach's direction (Claude Code / Claude Opus 5.5, session `c1339adf-4919-4ca2-bbde-3d0f0eb32a19`).*
+
+Earthcall is a C++ application, and no Python or web reimplementation of the ontology exists yet. The Web Designer is therefore a **compiler**: Earthcall evaluates Lexemes and Laws at authoring time and emits HTML/CSS that runs on the web **without** Earthcall. People who visit a realized site are not running Earthcall and are not running Laws.
+
+The path from compiler to live runtime has three stages, each useful on its own:
+
+| Stage | Where Laws run | What the page can do |
+|---|---|---|
+| 1. Compiled static (today) | Earthcall, at authoring time | Authored structure, theme, and layout; behavior lives in whatever foreign app serves the page |
+| 2. Compiled live | Earthcall at authoring time, plus a compiled subset in page script | Governed `web.data.source` binding to allowed endpoints; filters, sorts, and condition→set Laws realized as JS |
+| 3. Web Law runtime (future) | An engine modeled on the ontology, in the browser or a sidecar | Persons author live by speaking to the page |
+
+Invariants for stage 2:
+- Compiled script is a **realization** of canonical `ConditionNode`/`ActionNode` Laws, never a second web-specific Law language or serialization.
+- `web.data.source` is a network capability governed through authority (origin allowlist), on the same footing as the round-5 raw-CSS capability, not a caller-set bool.
+- Realized behavior carries its Law's identity into the page so provenance survives realization.
+
+Plan, first real use (TeacherOps "Waiting Board"), and open questions: [Compiled Live Pages task](../../Agenda/Tasks/Specific%20Tasks/Channels%20and%20Language/Web_Designer_Compiled_Live_Pages/Web_Designer_Compiled_Live_Pages.md).
