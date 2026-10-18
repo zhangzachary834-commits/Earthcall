@@ -228,3 +228,54 @@ All 8 Prism wing-B media now get certificates in auto mode, and all keep byte pa
 **Evidence:** `scratch/verification/ray-domain-tenth-pass-2026-10-18/`. Method and design: [Rung 2 plan §6i](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6i-what-the-noise-clouds-miss-actually-was-and-the-perlin-d-mode-2026-10-18-tenth-pass). No live FPS, movement or Person-acceptance claim.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T01:20 PDT.
+
+## Enabled-killer compilation, killer subsets and the unmeasured promotions — eleventh pass (M5)
+
+Zach asked the local session to keep going on the next pass and to answer the Firmament's eleventh-pass counsel. Built in the `ourverse_navigator_prototype_loop` worktree, which holds `claude/ray-domain-transport-rung0`, in a fresh Release tree (`build-ray`) from `9967cb2cf` plus this pass. Native Apple M5 Metal throughout, with ordinary timestamps disabled. WindowServer held about 40% CPU and grid baselines drifted up to 2× between runs, so only within-run ABBA pairs are compared. No save, default or installed app changed.
+
+| Witness (final tree) | Result |
+|---|---|
+| `webgpu_volume_support_certificates_test` (timing on) | **83/83** in each of two final runs (new: per-curtain Northern Veil auto parity, Borealis and Sky-Island auto parity and timing) |
+| `volume_ray_radial_segmentation_test` (CPU) | **33/33**; 17 of 28 eligible (unchanged); 4 compile fewer killers than they certify |
+| `webgpu_volume_zero_proof_test` / `webgpu_volume_shared_subexpression_test` / `webgpu_volume_unified_quadrature_test` / `webgpu_volumetric_mist_test` | 73/73 / 76/76 / 15/15 / PASS |
+| `webgpu_perlin_exact_gradient_test` | ALL OK (Gates A–D) |
+| `volume_ray_segment_transport_test` / `volume_shared_subexpression_test` / `volume_zero_proof_test` / `sdf_wgsl_parameter_refresh_test` | 53/53 / 60/60 / 48/48 / PASS |
+| After the `ScalarForm` fix: `ontomath_line_segmentation_test` / `prophetic_rete_test` / `sdf_range_soundness_test` / `ontomath_authoring_reachability_test` | 64/64 / ALL OK / PASS / PASS; zero-proof cells proven identical on all 28 real media |
+
+**Northern Veil, forced certificates (ms; old = every switch compiled, runs 2–3; new = only certified killers compiled, final runs 1–2):**
+
+| Configuration | Baseline | Old | New |
+|---|---|---|---|
+| Fused, certificates alone | exact 3.97–4.25 | 2.99 / 3.02 | 2.46 / 2.19 |
+| Fused, grid + certificates | grid 1.41–1.44 | 2.38 / 2.43 | 2.10 / 2.12 |
+| Single curtain, certificates alone | exact 0.75 | 0.67 / 0.67 | 0.48 / 0.48 |
+| Single curtain, grid + certificates | grid 0.30–0.31 | 0.61 / 0.62 | 0.47 / 0.47 |
+
+**The decomposition** (scratch builds that were never committed; grid → variant, ms, one run each):
+- *Idle:* the certificate program is attached with count 0. It cost 1–21%: emerald 0.32→0.34, cyan 0.16→0.18, spherical-cloud 0.29→0.35.
+- *No jump:* every check runs but no skip is taken. Spherical-cloud went 0.29→0.50, noise cloud 1.15→2.27, emerald 0.32→0.60.
+- *Only switches 5 and 8 compiled:* emerald 0.60→0.66, cyan 0.53→0.49. The same subset with all 12 switches compiled had run 1.6–1.75× and 1.47–1.63×.
+
+**Subset-promoted curtains** (rejected as an eligibility rule): with only the subset compiled, emerald still ran 0.31→0.36 and 0.30→0.36, and cyan 0.16→0.16 and 0.17→0.16. In the final tree, Northern Veil auto has 0 eligible and 0 compiles, and runs fused 1.53→1.57 and 1.55→1.59.
+
+**The tenth pass's unmeasured promotions** (auto mode, every byte equal to the grid lane):
+
+| Medium | Side framing, before pruning (3 runs) | Top-down framing, final (2 runs) |
+|---|---|---|
+| Borealis v1 airy cloud | 1.18→0.73, 1.66→1.04, 1.29→0.84 | 0.99→1.05, 1.12→1.19 |
+| Borealis v1 dense cloud | 1.15→0.59, 1.58→0.78, 1.26→0.64 | 0.95→0.94, 1.03→1.03 |
+| Borealis v2 emerald-cyan | 1.23→0.55 (run 1) | 1.15→0.87, 1.22→0.93 |
+| Borealis v2 violet-magenta | 1.19→0.55 (run 1) | 1.25→0.94, 1.27→0.95 |
+| Sky-Island sea-of-clouds | 0.93→1.17, 1.78→2.38, 1.68→2.29 | 2.83→3.03, 2.87→3.09 |
+| Sky-Island sunlit-halo-mist | lit nothing (side camera) | 2.52→2.43, 2.53→2.42 |
+
+**Findings.**
+- Compiling only the enabled killers is a reproducible win for every certificate configuration, and is retained.
+- The program cache gated structure on content revisions only. A forced→auto change of the killer set therefore kept the old program under a re-laid payload: emerald's bytes differed once, and the repair is witnessed.
+- Killer subsets do not make Northern Veil pay.
+- Sea-of-clouds is a measured false positive (+7% top-down, +26–36% side).
+- Borealis v1 gains only from a distance.
+
+**Evidence:** `scratch/verification/ray-domain-eleventh-pass-2026-10-18/`. Method and design: [Rung 2 plan §6j](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6j-compile-only-the-enabled-killers-a-killer-subset-measured-2026-10-18-eleventh-pass). No live FPS, movement or Person-acceptance claim.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T11:46 PDT.

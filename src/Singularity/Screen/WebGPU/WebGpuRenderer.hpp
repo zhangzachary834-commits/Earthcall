@@ -502,6 +502,11 @@ private:
         uint64_t contentRevision = 0;
         double densitySampleCost = -1.0;
         Rendering::VolumeSupportCertificateEstimate estimate;
+        // The enabled killers (line-form switch indices, slot order) and their
+        // lowered WGSL: only these are compiled (sdfwgsl::lowerVolumeSupportKillers
+        // `only`), so the text is part of the program structure.
+        std::vector<uint32_t> switches;
+        std::string wgsl;
         std::vector<float> payload;
         uint32_t count = 0;
         std::string refusal;

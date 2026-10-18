@@ -1107,6 +1107,61 @@ VolumeSupportCertificateEstimate estimateVolumeSupportCertificateGain(const Volu
     return out;
 }
 
+VolumeSupportCertificateEstimate selectVolumeSupportCertificateKillers(const VolumeRayChannelForms& forms,
+                                                                       const VolumeSupportCertificates& candidates,
+                                                                       const VolumeZeroProof* proof,
+                                                                       const glm::dvec3& halfExtent,
+                                                                       int samplesPerChord, double clock,
+                                                                       double densitySampleCost,
+                                                                       VolumeSupportCertificates& chosen) {
+    const std::size_t n = candidates.killers.size();
+    // Eligibility stays with every killer enabled: ranking subsets promoted two
+    // Northern Veil curtains, and the M5 ran the emerald one 16–20% slower even
+    // with only its two killers compiled (2026-10-18). A subset only narrows
+    // what an eligible medium checks and compiles.
+    auto all = estimateVolumeSupportCertificateGain(forms, candidates, proof, halfExtent,
+                                                    samplesPerChord, clock, densitySampleCost);
+    if (!all.eligible) { chosen = candidates; return all; }
+    std::vector<bool> in(n, false);
+    auto subset = [&](std::size_t extra) {
+        VolumeSupportCertificates s;
+        s.refusal = candidates.refusal;
+        for (std::size_t k = 0; k < n; ++k)
+            if (in[k] || k == extra) s.killers.push_back(candidates.killers[k]);
+        return s;
+    };
+    VolumeSupportCertificateEstimate best;
+    best.reason = "no enabled certificate";
+    double current = std::numeric_limits<double>::infinity();   // nothing chosen yet
+    for (;;) {
+        std::size_t pick = n;
+        VolumeSupportCertificateEstimate pickEstimate;
+        for (std::size_t k = 0; k < n; ++k) {
+            if (in[k]) continue;
+            auto e = estimateVolumeSupportCertificateGain(forms, subset(k), proof, halfExtent,
+                                                          samplesPerChord, clock, densitySampleCost);
+            if (e.rays > 0 && e.costWith < (pick == n ? current : pickEstimate.costWith)) {
+                pick = k;
+                pickEstimate = std::move(e);
+            }
+        }
+        if (pick == n) break;
+        in[pick] = true;
+        best = std::move(pickEstimate);
+        current = best.costWith;
+    }
+    // Greedy can stop where no single addition helps but the whole set would:
+    // never choose worse than every candidate together.
+    if (all.costWith <= current) {
+        in.assign(n, true);
+        best = std::move(all);
+    }
+    best.eligible = true;
+    best.reason = "estimated cheaper with certificates";
+    chosen = subset(n);
+    return best;
+}
+
 VolumeSupportTrace traceVolumeSupportCertified(const std::vector<VolumeSegmentMember>& members,
                                                const std::vector<const VolumeSupportCertificates*>& certificates,
                                                const VolumeRayInput& ray, const VolumeLatticeSpan& span) {

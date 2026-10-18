@@ -4263,7 +4263,8 @@ fn volumeZeroCellExit(inst: VolumeInstanceData, p: vec3<f32>,
     return wgsl;
 }
 
-VolumeSupportKillerProgram lowerVolumeSupportKillers(const OntoMath::Piecewise* densityExpr) {
+VolumeSupportKillerProgram lowerVolumeSupportKillers(const OntoMath::Piecewise* densityExpr,
+                                                     const std::vector<uint32_t>* only) {
     VolumeSupportKillerProgram out;
     if (!densityExpr || densityExpr->pieces.empty()) { out.error = "no authored density"; return out; }
     const auto restricted = OntoMath::restrictAlgebraicToLine(*densityExpr, false);
@@ -4282,6 +4283,7 @@ VolumeSupportKillerProgram lowerVolumeSupportKillers(const OntoMath::Piecewise* 
     for (std::size_t k = 0; k < form.switches.size(); ++k) {
         const auto& sw = form.switches[k];
         if (sw.role > 3) continue;   // Select pieces: not yet lowered (no candidate)
+        if (only && std::find(only->begin(), only->end(), static_cast<uint32_t>(k)) == only->end()) continue;
         const auto& node = form.nodes[sw.node];
         if (!node.sourceA || (sw.role == 1 && !node.sourceB)) continue;
         const std::size_t slot = out.switches.size();
@@ -4870,13 +4872,14 @@ KernelVolumeEvaluator repairVolumeEvaluator(const VolumeProgramInput& m,
 }
 
 Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trimProofSupport,
-                               const OntoMath::Piecewise* supportCertificateDensity) {
+                               const OntoMath::Piecewise* supportCertificateDensity,
+                               const std::vector<uint32_t>* supportCertificateSwitches) {
     Program out = evaluator.program;
     out.kernelVolumePreparationWgsl = kernelVolumeTimePreparation({evaluator.program}, false);
     if (!out.ok) return out;
     std::string certificates;
     if (supportCertificateDensity) {
-        const auto killers = lowerVolumeSupportKillers(supportCertificateDensity);
+        const auto killers = lowerVolumeSupportKillers(supportCertificateDensity, supportCertificateSwitches);
         if (killers.ok) certificates = killers.wgsl + volumeSupportExitWgsl();
     }
     out.wgsl = kernelVolumePrefix(trimProofSupport) + out.wgsl + certificates +
@@ -4891,7 +4894,8 @@ Program compileVolumeSet(const std::vector<VolumeProgramInput>& media, bool trim
 
 Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
                          const std::vector<KernelVolumeEvaluator>& evaluators,
-                         bool trimProofSupport, const std::vector<bool>& supportCertificates) {
+                         bool trimProofSupport, const std::vector<bool>& supportCertificates,
+                         const std::vector<std::vector<uint32_t>>& supportCertificateSwitches) {
     Program out;
     if (media.empty()) {
         out.ok = false;
@@ -4903,7 +4907,8 @@ Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
         return composeVolumeEvaluator(evaluators.empty() ? lowerVolumeEvaluator(media.front()) : evaluators.front(),
                                       trimProofSupport,
                                       !supportCertificates.empty() && supportCertificates.front()
-                                          ? media.front().densityExpr : nullptr);
+                                          ? media.front().densityExpr : nullptr,
+                                      supportCertificateSwitches.empty() ? nullptr : &supportCertificateSwitches.front());
     }
 
     auto replaceAll = [](std::string& text,
@@ -4968,7 +4973,8 @@ Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
 
         out.wgsl += evalBlock;
         if (i < supportCertificates.size() && supportCertificates[i]) {
-            const auto killers = lowerVolumeSupportKillers(m.densityExpr);
+            const auto killers = lowerVolumeSupportKillers(
+                m.densityExpr, i < supportCertificateSwitches.size() ? &supportCertificateSwitches[i] : nullptr);
             if (killers.ok) {
                 std::string reach = killers.wgsl;
                 replaceAll(reach, "volumeSupportReach", "volumeSupportReach" + suffix);

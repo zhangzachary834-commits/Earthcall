@@ -414,6 +414,7 @@ int main() {
                         uint64_t certTraced = 0, certPoints = 0, certViolations = 0; double certUs = 0; };
         Totals all;
         int admitted = 0, media = 0, eligibleMedia = 0, preludeMedia = 0, preludeFlips = 0, preludeDemotions = 0;
+        int allKillersEligible = 0, subsetMedia = 0, subsetWorse = 0;
         std::mt19937 rng(1017u);
         std::uniform_real_distribution<double> u(-1.0, 1.0);
         if (fs::exists(root)) {
@@ -611,7 +612,24 @@ int main() {
                                   << est.reason << "; cost with/without " << est.costWith << "/" << est.costWithout
                                   << " (ratio " << (est.costWithout > 0 ? est.costWith / est.costWithout : 0.0) << "), grid "
                                   << est.gridSamples << "/" << est.samples << ", certified " << est.certifiedSamples << "\n";
-                        eligibleMedia += est.eligible ? 1 : 0;
+                        allKillersEligible += est.eligible ? 1 : 0;
+                        // The production choice (auto mode): the greedy killer subset.
+                        Rendering::VolumeSupportCertificates chosen;
+                        const auto sel = Rendering::selectVolumeSupportCertificateKillers(f, certs, &proof, half, 96, 0.0,
+                                                                                          sampleCost, chosen);
+                        if (!certs.killers.empty()) {
+                            std::cout << "        greedy subset: " << chosen.killers.size() << " of " << certs.killers.size()
+                                      << " killers (switch";
+                            for (const auto& c : chosen.killers) std::cout << " " << c.switchIndex;
+                            std::cout << " of";
+                            for (const auto& c : certs.killers) std::cout << " " << c.switchIndex;
+                            std::cout << "); " << (sel.eligible ? "ELIGIBLE" : "not eligible") << ", cost with "
+                                      << sel.costWith << " (ratio " << (sel.costWithout > 0 ? sel.costWith / sel.costWithout : 0.0)
+                                      << "), certified " << sel.certifiedSamples << ", checks " << sel.checks << " vs " << est.checks << "\n";
+                            subsetMedia += chosen.killers.size() < certs.killers.size() ? 1 : 0;
+                            subsetWorse += sel.costWith > est.costWith ? 1 : 0;
+                        }
+                        eligibleMedia += sel.eligible ? 1 : 0;
                     }
                     if (!attribution.empty() && zoneDir.path().filename().string() == "Northern Veil") {
                         std::cout << "        extra-proof attribution (Rung 2 empty, grid not):";
@@ -644,7 +662,10 @@ int main() {
         std::cout << "    certificate totals: certified-only trace " << (100.0 * all.certTraced / std::max<uint64_t>(all.samples, 1))
                   << "%, " << double(all.certPoints) / std::max<uint64_t>(all.rays, 1) << " point evals/ray, "
                   << all.certUs / std::max<uint64_t>(all.rays, 1) << " us/ray\n";
-        std::cout << "    eligibility: " << eligibleMedia << " of " << admitted << " admitted media estimated cheaper with certificates\n";
+        std::cout << "    eligibility: " << eligibleMedia << " of " << admitted << " admitted media estimated cheaper with certificates"
+                  << " (greedy subset; " << allKillersEligible << " with every killer enabled; " << subsetMedia
+                  << " media enable fewer than all)\n";
+        check(subsetWorse == 0, "the greedy killer subset never estimates costlier than every killer enabled");
         std::cout << "    shared prelude: " << preludeMedia << " admitted media fill it before density; counting it promotes "
                   << preludeFlips << " and demotes " << preludeDemotions << "\n";
         check(all.certViolations == 0, "certificate-only tracing certifies no real sample with positive density");

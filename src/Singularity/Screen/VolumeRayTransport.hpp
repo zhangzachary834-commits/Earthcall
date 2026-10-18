@@ -361,6 +361,24 @@ VolumeSupportCertificateEstimate estimateVolumeSupportCertificateGain(const Volu
                                                                       const glm::dvec3& halfExtent,
                                                                       int samplesPerChord, double clock,
                                                                       double densitySampleCost = -1.0);
+// Which killers to enable (2026-10-18, eleventh pass; direction from the
+// Firmament, Gemini 4 Argon). Every enabled killer is checked at each
+// undecided sample until one certifies, and the converse recheck bound is the
+// NEAREST reach of all of them, so a killer that rarely certifies but hovers
+// just below zero costs checks and shortens every skip. Eligibility is still
+// decided with every candidate enabled (ranking subsets promoted Northern Veil
+// curtains the M5 measured slower); for an eligible medium, greedy forward
+// selection over the estimate's own ray set picks the killers it checks and
+// compiles: the cheapest single killer, then the one that lowers costWith
+// most, until none does, never worse than all of them. Returns the chosen
+// subset's estimate; `chosen` receives the subset in `candidates` order.
+VolumeSupportCertificateEstimate selectVolumeSupportCertificateKillers(const VolumeRayChannelForms& forms,
+                                                                       const VolumeSupportCertificates& candidates,
+                                                                       const VolumeZeroProof* proof,
+                                                                       const glm::dvec3& halfExtent,
+                                                                       int samplesPerChord, double clock,
+                                                                       double densitySampleCost,
+                                                                       VolumeSupportCertificates& chosen);
 // What one undecided sample's density evaluation costs in the shader, the unit
 // a skipped sample saves: density with each shared site read from its slot
 // (cost 1), plus every shared group of the medium's prelude when the marchers

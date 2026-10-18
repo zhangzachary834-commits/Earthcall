@@ -2622,24 +2622,57 @@ bool WebGpuRenderer::volumeSupportCertificatesActive(const Rendering::VolumeDens
         memo.gridProof = gridProof;
         memo.samplesPerChord = samplesPerChord;
         memo.estimate = {};
+        memo.switches.clear();
+        memo.wgsl.clear();
         memo.payload.clear();
         memo.count = 0;
         memo.refusal.clear();
         ++mutableFrameStats().volumeSupportCertificateBuilds;
-        const auto killers = sdfwgsl::lowerVolumeSupportKillers(medium.densityExpr);
+        const auto candidates = sdfwgsl::lowerVolumeSupportKillers(medium.densityExpr);
         const auto forms = Rendering::lowerVolumeRayChannels(medium);
         const auto certificates = Rendering::deriveVolumeSupportCertificates(forms, glm::dvec3(halfExtent), clockBucket);
-        if (!killers.ok) memo.refusal = killers.error;
+        if (!candidates.ok) memo.refusal = candidates.error;
         else if (!forms.density.algebraic.form ||
-                 forms.density.algebraic.form->switches.size() != killers.formSwitches)
+                 forms.density.algebraic.form->switches.size() != candidates.formSwitches)
             memo.refusal = "compiled candidates and certified form disagree";
         else if (certificates.killers.empty()) memo.refusal = certificates.refusal;
+        // The certified killers with a lowered candidate, in slot (form) order.
+        Rendering::VolumeSupportCertificates enabledSet;
         if (memo.refusal.empty()) {
-            memo.payload.assign(4u * killers.switches.size(), 0.0f);
-            for (std::size_t slot = 0; slot < killers.switches.size(); ++slot) {
+            for (const uint32_t sw : candidates.switches)
                 for (const auto& c : certificates.killers) {
-                    if (c.switchIndex != killers.switches[slot]) continue;
-                    if (!std::isfinite(c.spatialLipschitz) || !std::isfinite(c.deviceSlack)) break;
+                    if (c.switchIndex != sw) continue;
+                    if (std::isfinite(c.spatialLipschitz) && std::isfinite(c.deviceSlack)) enabledSet.killers.push_back(c);
+                    break;
+                }
+            if (enabledSet.killers.empty()) memo.refusal = "no certified killer has a lowered candidate";
+        }
+        if (memo.refusal.empty() && autoEligibility) {
+            const Rendering::VolumeZeroProof* proof = nullptr;
+            if (gridProof) {
+                const auto it = _volumeZeroProofs.find(medium.densityExpr);
+                if (it != _volumeZeroProofs.end() && it->second.densityRevision == medium.densityRevision &&
+                    it->second.halfExtent == halfExtent)
+                    proof = &it->second.proof;
+            }
+            // Only the killers worth their checks stay enabled (and compiled).
+            Rendering::VolumeSupportCertificates chosen;
+            memo.estimate = Rendering::selectVolumeSupportCertificateKillers(
+                forms, enabledSet, proof, glm::dvec3(halfExtent), samplesPerChord, medium.temporalCoordinate,
+                memo.densitySampleCost, chosen);
+            if (!memo.estimate.eligible) memo.refusal = memo.estimate.reason;
+            else enabledSet = std::move(chosen);
+        }
+        if (memo.refusal.empty()) {
+            for (const auto& c : enabledSet.killers) memo.switches.push_back(static_cast<uint32_t>(c.switchIndex));
+            const auto killers = sdfwgsl::lowerVolumeSupportKillers(medium.densityExpr, &memo.switches);
+            if (!killers.ok) memo.refusal = killers.error;
+            else if (killers.switches != memo.switches) memo.refusal = "compiled killers and enabled set disagree";
+            if (memo.refusal.empty()) {
+                memo.wgsl = killers.wgsl;
+                memo.payload.assign(4u * killers.switches.size(), 0.0f);
+                for (std::size_t slot = 0; slot < enabledSet.killers.size(); ++slot) {
+                    const auto& c = enabledSet.killers[slot];
                     const double delta = c.deviceSlack;   // τ + 2·slack(g), from the authored operands
                     const double invRate = c.spatialLipschitz > 0.0
                         ? std::min(1.0 / (c.spatialLipschitz * (1.0 + 1e-6)), 1e30) : 1e30;
@@ -2648,35 +2681,11 @@ bool WebGpuRenderer::volumeSupportCertificatesActive(const Rendering::VolumeDens
                     h[1] = std::nextafter(static_cast<float>(delta), std::numeric_limits<float>::infinity());
                     h[2] = std::nextafter(static_cast<float>(invRate), 0.0f);
                     h[3] = static_cast<float>(c.offset);
-                    ++memo.count;
-                    break;
                 }
-            }
-            if (memo.count == 0) { memo.refusal = "no certified killer has a lowered candidate"; memo.payload.clear(); }
-            else memo.payload.insert(memo.payload.end(), killers.params.begin(), killers.params.end());
-        }
-        if (memo.count > 0 && autoEligibility) {
-            // Cost ranking over exactly the killers the payload enables, in slot order.
-            Rendering::VolumeSupportCertificates enabledSet;
-            for (std::size_t slot = 0; slot < killers.switches.size(); ++slot) {
-                if (memo.payload[4u * slot] == 0.0f) continue;
-                for (const auto& c : certificates.killers)
-                    if (c.switchIndex == killers.switches[slot]) { enabledSet.killers.push_back(c); break; }
-            }
-            const Rendering::VolumeZeroProof* proof = nullptr;
-            if (gridProof) {
-                const auto it = _volumeZeroProofs.find(medium.densityExpr);
-                if (it != _volumeZeroProofs.end() && it->second.densityRevision == medium.densityRevision &&
-                    it->second.halfExtent == halfExtent)
-                    proof = &it->second.proof;
-            }
-            memo.estimate = Rendering::estimateVolumeSupportCertificateGain(
-                forms, enabledSet, proof, glm::dvec3(halfExtent), samplesPerChord, medium.temporalCoordinate,
-                memo.densitySampleCost);
-            if (!memo.estimate.eligible) {
-                memo.refusal = memo.estimate.reason;
-                memo.count = 0;
-                memo.payload.clear();
+                memo.payload.insert(memo.payload.end(), killers.params.begin(), killers.params.end());
+                memo.count = static_cast<uint32_t>(killers.switches.size());
+            } else {
+                memo.switches.clear();
             }
         }
     }
@@ -2766,6 +2775,15 @@ void WebGpuRenderer::flushVolumeComposite() {
     // principle at the renderer boundary.
     auto combineRevision = [](uint64_t& seed, uint64_t value) {
         seed ^= value + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
+    };
+    // The enabled killer set is compiled (structure), yet it moves without any
+    // content revision (forced <-> auto, a re-rank, a clock bucket): fold it into
+    // the revision that gates structure, so the program and the payload layout
+    // can never disagree.
+    auto combineCertificateSet = [&](uint64_t& seed, const Rendering::VolumeDensityBinding& medium) {
+        const auto& switches = _volumeSupportCertificates[medium.densityExpr].switches;
+        combineRevision(seed, 0x5c3e7f1du + switches.size());
+        for (const uint32_t sw : switches) combineRevision(seed, sw);
     };
     uint64_t incidentSourceContentRevision = 0;
     if (incidentSource) {
@@ -2860,8 +2878,13 @@ void WebGpuRenderer::flushVolumeComposite() {
         // Per-member certificate lane, decided before the key: a member whose
         // certificates are not attached carries no certificate code.
         std::vector<bool> certificateMembers;
-        for (const auto* medium : activeMedia)
-            certificateMembers.push_back(volumeSupportCertificatesActive(*medium, glm::abs(medium->scale)));
+        std::vector<std::vector<uint32_t>> certificateSwitches;   // the killers each member compiles
+        for (const auto* medium : activeMedia) {
+            const bool active = volumeSupportCertificatesActive(*medium, glm::abs(medium->scale));
+            certificateMembers.push_back(active);
+            certificateSwitches.push_back(active ? _volumeSupportCertificates[medium->densityExpr].switches
+                                                 : std::vector<uint32_t>{});
+        }
         for (std::size_t m = 0; m < activeMedia.size(); ++m) {
             const auto* medium = activeMedia[m];
             setKey.emplace_back(
@@ -2886,6 +2909,8 @@ void WebGpuRenderer::flushVolumeComposite() {
         auto& setMemo = _volumeSetProgramCache[setKey];
         uint64_t setContentRevision = volumeDensitySourcesRevision();
         combineRevision(setContentRevision, incidentSourceContentRevision);
+        for (std::size_t m = 0; m < activeMedia.size(); ++m)
+            if (certificateMembers[m]) combineCertificateSet(setContentRevision, *activeMedia[m]);
         if (unrevisionedSource || std::any_of(activeMedia.begin(), activeMedia.end(),
             [&](const auto* m) { return unrevisionedMedium(*m); }))
             combineRevision(setContentRevision, _volumeZeroProofFrame);
@@ -2988,11 +3013,9 @@ void WebGpuRenderer::flushVolumeComposite() {
                 structure += "member:" + std::to_string(i) + "\n" + member.structure;
                 // The certificate lane's WGSL follows the density's line form,
                 // whose admission can turn on constants (inverted clamp bounds,
-                // non-integer powers): its text is part of the structure.
-                if (certificateMembers[i]) {
-                    const auto killers = sdfwgsl::lowerVolumeSupportKillers(medium.densityExpr);
-                    structure += "\nsupport-certificates:\n" + (killers.ok ? killers.wgsl : "refused");
-                }
+                // non-integer powers), and the enabled killers: part of the structure.
+                if (certificateMembers[i])
+                    structure += "\nsupport-certificates:\n" + _volumeSupportCertificates[medium.densityExpr].wgsl;
                 retainedEvaluators.push_back(member.evaluator);
             }
 
@@ -3006,7 +3029,7 @@ void WebGpuRenderer::flushVolumeComposite() {
                     !setMemo.pipeline;
                 if (needsCompile) {
                     setMemo.prog = sdfwgsl::composeVolumeSet(compilerInputs, retainedEvaluators, trimProofSupport,
-                                                             certificateMembers);
+                                                             certificateMembers, certificateSwitches);
                     ++mutableFrameStats().volumeProgramCompiles;
                     mutableFrameStats().volumeWgslBytesGenerated +=
                         setMemo.prog.wgsl.size();
@@ -3048,7 +3071,7 @@ void WebGpuRenderer::flushVolumeComposite() {
                         auto& other = _volumeSetProgramCache[otherKey];
                         if (!other.ok || other.structure != structure || !other.pipeline) {
                             other.prog = sdfwgsl::composeVolumeSet(compilerInputs, retainedEvaluators, !trimProofSupport,
-                                                                   certificateMembers);
+                                                                   certificateMembers, certificateSwitches);
                             ++mutableFrameStats().volumeProgramCompiles;
                             mutableFrameStats().volumeWgslBytesGenerated += other.prog.wgsl.size();
                             other.ok = other.prog.ok;
@@ -3184,7 +3207,10 @@ void WebGpuRenderer::flushVolumeComposite() {
         uint64_t mediumContentRevision = Rendering::volumeContentRevision(medium);
         combineRevision(mediumContentRevision, incidentSourceContentRevision);
         if (unrevisionedSource || unrevisionedMedium(medium)) combineRevision(mediumContentRevision, _volumeZeroProofFrame);
-        if (memo.contentRevision != mediumContentRevision) {
+        // The program (not the equations' evaluator) also follows the killer set.
+        uint64_t programRevision = mediumContentRevision;
+        if (certificateMedium) combineCertificateSet(programRevision, medium);
+        if (memo.contentRevision != programRevision) {
             const auto densityLayout =
                 sdfwgsl::inspectDensityExpression(medium.densityExpr);
             const auto extinctionLayout =
@@ -3199,7 +3225,7 @@ void WebGpuRenderer::flushVolumeComposite() {
                 sdfwgsl::inspectEmissionExpression(medium.emissionExpr);
             const auto occluderLayout =
                 sdfwgsl::inspectOccluderLayout(medium.occluderSdf);
-            memo.contentRevision = mediumContentRevision;
+            memo.contentRevision = programRevision;
             memo.phaseReadsWi = phaseLayout.readsWi;
             memo.phaseReadsWo = phaseLayout.readsWo;
             memo.emissionReadsOmega = emissionLayout.readsOmega;
@@ -3248,10 +3274,10 @@ void WebGpuRenderer::flushVolumeComposite() {
             // Equations first; the certificate lane is composed on top (see the set path).
             std::string structure = memberStructure;
             const auto* certificateDensity = certificateMedium ? medium.densityExpr : nullptr;
-            if (certificateDensity) {
-                const auto killers = sdfwgsl::lowerVolumeSupportKillers(certificateDensity);
-                structure += "\nsupport-certificates:\n" + (killers.ok ? killers.wgsl : "refused");
-            }
+            const std::vector<uint32_t>* certificateSwitches =
+                certificateDensity ? &_volumeSupportCertificates[certificateDensity].switches : nullptr;
+            if (certificateDensity)
+                structure += "\nsupport-certificates:\n" + _volumeSupportCertificates[certificateDensity].wgsl;
             auto memberKey = programKey;
             std::get<10>(memberKey) = false;
             std::get<11>(memberKey) = false;
@@ -3271,7 +3297,8 @@ void WebGpuRenderer::flushVolumeComposite() {
                 member.phaseReadsWi = memo.phaseReadsWi; member.ready = true;
             }
             if (!memo.ok || memo.structure != structure || !memo.pipeline) {
-                memo.prog = sdfwgsl::composeVolumeEvaluator(member.evaluator, trimProofSupport, certificateDensity);
+                memo.prog = sdfwgsl::composeVolumeEvaluator(member.evaluator, trimProofSupport, certificateDensity,
+                                                            certificateSwitches);
                 ++mutableFrameStats().volumeProgramCompiles;
                 mutableFrameStats().volumeWgslBytesGenerated += memo.prog.wgsl.size();
                 memo.structure = structure;
@@ -3290,14 +3317,15 @@ void WebGpuRenderer::flushVolumeComposite() {
                 std::get<10>(otherKey) = !trimProofSupport;
                 auto& other = _volumeProgramCache[otherKey];
                 if (!other.ok || other.structure != structure || !other.pipeline) {
-                    other.prog = sdfwgsl::composeVolumeEvaluator(member.evaluator, !trimProofSupport, certificateDensity);
+                    other.prog = sdfwgsl::composeVolumeEvaluator(member.evaluator, !trimProofSupport, certificateDensity,
+                                                                 certificateSwitches);
                     ++mutableFrameStats().volumeProgramCompiles;
                     mutableFrameStats().volumeWgslBytesGenerated += other.prog.wgsl.size();
                     other.ok = other.prog.ok; other.error = other.prog.error;
                     other.pipeline = other.ok ? volumePipeline(other.prog) : nullptr;
                     if (!other.pipeline) other.ok = false;
                 }
-                other.contentRevision = mediumContentRevision; other.structure = structure;
+                other.contentRevision = programRevision; other.structure = structure;
                 other.phaseReadsWi = memo.phaseReadsWi; other.phaseReadsWo = memo.phaseReadsWo;
                 other.emissionReadsOmega = memo.emissionReadsOmega;
                 other.prog.params = memo.prog.params;

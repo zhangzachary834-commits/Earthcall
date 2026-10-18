@@ -506,6 +506,55 @@ The scratch Perlin old-mirror/current comparison executes the full corpus and sa
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T01:20 PDT. Human origin: Zachary Zhang; the open list is Opus's (`session_01HvZSR64QghrdyCpq2M7qvX`); the idle-variant measurement and the D-mode catch are Codex's (`01a148a7`).*
 
+## 6j. Compile only the enabled killers; a killer subset, measured (2026-10-18, eleventh pass)
+
+**Origin.** Zach asked the local session to keep going on the next pass and to answer the Firmament (Aetherion, Gemini 4 Argon), whose eleventh-pass counsel in the [handoff thread](../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md) gave four directions: (1) stop emitting dead switch branches, (2) choose a greedy killer subset, (3) Metal-time the newly eligible media, (4) Rung 2b ray-prefix trimming; plus a housekeeping item on `ScalarForm` constants. Directions 1–3 and the housekeeping are done here, each measured on the M5. Direction 4 stays open.
+
+**Correction to §6i.** Under the final ray set and overhead, counting the shared prelude *does* change one decision: it promotes Sky-Island sea-of-clouds (ratio 0.889 without the prelude, 0.688 with it). §6i's "promoted and demoted nothing" held only for the old ray set. The tenth-pass report to Zach repeated the error.
+
+**What the M5 said, step by step** (ABBA medians, 321×181; this machine's baselines drift up to 2× between runs, so only within-run pairs are compared):
+1. **Greedy subset as the eligibility rule** (`Rendering::selectVolumeSupportCertificateKillers`). The census promoted Northern Veil emerald (switches 5, 8) and cyan (switch 8 alone, the Firmament's curtain-only hypothesis). On Metal, emerald ran 1.6–1.75× and cyan 1.47–1.63× slower, reproduced in three runs.
+2. **Where the time went.** Two scratch variants (never committed) separated it. With the certificate program carried but no check run, the overhead was 1–21%. With every check run but no jump taken, even Prism's spherical cloud was +72%. So a check costs far more than its operation count. Each `volumeSupportReach` compiled **every** lowerable switch (12 per curtain, including a clamp around `noise`), guarded only by a runtime-uniform `P.v[h] != 0`. Emitting only switches 5 and 8 brought emerald from +60–75% to +10% and cyan from +47–63% to −8%. That confirms the Firmament's direction 1, though the mechanism is the per-check cost of compiled-in candidates rather than the payload size.
+3. **Direction 1, retained.** `sdfwgsl::lowerVolumeSupportKillers(density, only)` lowers just the enabled switches. The renderer's certificate memo keeps the enabled set (`switches`) and its WGSL. Every composer takes the set, so the enabled set is now structural, and a box resize recompiles exactly when it changes that set. Forced certificates on Northern Veil (two runs each, old → new):
+   - Fused set, certificates alone (exact 3.97–4.25 ms): 2.99–3.02 → 2.19–2.46 ms.
+   - Fused set, grid + certificates (grid 1.41–1.44 ms): 2.38–2.43 → 2.10–2.12 ms.
+   - Single curtain, certificates alone (exact 0.75 ms): 0.67 → 0.48 ms.
+   - Single curtain, grid + certificates (grid 0.30–0.31 ms): 0.61–0.62 → 0.47 ms.
+4. **A parity break this exposed, fixed.** Both program caches recomputed structure only when *content* revisions moved, so a forced→auto change of the killer set kept the old program while the payload was re-laid. The emerald curtain rendered alone differed in bytes. The enabled set is now folded into the revision that gates structure (`combineCertificateSet`; the equations' evaluator keeps its pure content revision). The per-curtain auto parity check, which runs after the forced sections, is the regression witness.
+5. **Eligibility stays with every killer enabled.** Even pruned, the subset-promoted emerald ran +16–20% and cyan −6…0%. The selector now decides eligibility with all candidates and only then picks the subset an eligible medium checks and compiles (never estimated worse than all of them). Northern Veil: 0 of 4 eligible, 0 compiles, auto fused 1.53→1.57 and 1.55→1.59 ms. The census is 33/33, with 17 of 28 eligible (unchanged), of which 4 compile fewer killers than they certify.
+6. **Direction 3, the tenth pass's unmeasured promotions** (auto mode, two final runs, every byte equal to the grid lane):
+
+   | Medium | Framing | Grid | Grid + auto certificates |
+   |---|---|---|---|
+   | Borealis v1 airy cloud | side (Prism-style) | 1.18 / 1.66 / 1.29 | 0.73 / 1.04 / 0.84 |
+   | Borealis v1 airy cloud | top-down | 0.99 / 1.12 | 1.05 / 1.19 |
+   | Borealis v1 dense cloud | side | 1.15 / 1.58 / 1.26 | 0.59 / 0.78 / 0.64 |
+   | Borealis v1 dense cloud | top-down | 0.95 / 1.03 | 0.94 / 1.03 |
+   | Borealis v2 emerald-cyan | top-down | 1.15 / 1.22 | 0.87 / 0.93 |
+   | Borealis v2 violet-magenta | top-down | 1.25 / 1.27 | 0.94 / 0.95 |
+   | Sky-Island sea-of-clouds | top-down | 2.83 / 2.87 | 3.03 / 3.09 |
+   | Sky-Island sunlit-halo-mist | top-down | 2.52 / 2.53 | 2.43 / 2.42 |
+
+   The side runs predate pruning. The final test frames these zones from above, because Sky-Island's sea is a thin slab the side camera grazes and its halo mist lit nothing there.
+   - Borealis v1 gains from a distance and is even up close, which is the Crofton estimate's own distant-camera assumption showing.
+   - **Sea-of-clouds is a false positive (+7%), and it is the medium the prelude term promoted.** It stays eligible this pass rather than being demoted by a one-off rule; see "Next".
+7. **Housekeeping, done at its owner.** `Term::evalRange` now encloses a coefficient that no float equals by the floats on either side. Float-exact constants stay points, and a value beyond float range still encloses itself. Plan §5 observation 2 is now an assertion in `ontomath_line_segmentation_test` (64/64). The Prophetic Rete, SDF range soundness and authoring reachability tests pass. Every real medium proves the same zero-proof cells as before. The Firmament cited `widenConstantDoubleToFloat` in `LineRestriction.cpp`; no such function exists, but `LineRestriction` already adds one outward ulp at that point, which stays as belt and braces.
+
+**What the Firmament got right and wrong.**
+- **Right:** compiled-but-dead switches are the dominant cost of a check.
+- **Wrong on the facts:**
+  - Curtains have 12 switches, not 13.
+  - The y-slab killers are not "nearly zero" past the grid: attribution shows they alone prove 40 of 189 extra samples on emerald.
+  - Retiring the ×1.2 is not supported. Without it, the every-killer estimate admits cyan (0.78), which Metal runs even at best.
+
+**Next.**
+- **Measured, device-relative eligibility.** The operation-count estimate is right for the media certificates were built for (Prism, Borealis v2). It is wrong where checks interleave with grid proofs or the shared prelude (Northern Veil, sea-of-clouds) and where framing differs from a distant camera (Borealis v1). The frontier answer is to let the device decide: a short A/B of the two compiled programs per medium. That needs a timing source that does not reintroduce the native-timestamp flicker, which is Zach's call.
+- **Rung 2b** (Firmament direction 4): closed-form ray-prefix trimming for radial and half-space killers. Prototype it against these numbers.
+
+**Evidence:** `scratch/verification/ray-domain-eleventh-pass-2026-10-18/` (census before/greedy/final; the greedy, idle, no-jump and switches-5-and-8 scratch timings; pruned and final timed runs; nine related volume tests; the post-`ScalarForm` suite).
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T11:46 PDT. Human origin: Zachary Zhang ("KEEP GOING… check if the FIRMAMENT sent u anything… NEXT PASS"). Directions 1–4 and the housekeeping item are the Firmament's (Gemini 4 Argon). The idle-vs-no-jump decomposition, the cache-revision repair and the eligibility-stays-whole rule are this session's.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

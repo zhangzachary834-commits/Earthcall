@@ -239,8 +239,18 @@ Interval rangeOfVar(const std::map<std::string, Interval>& vars, const std::stri
 } // namespace
 
 Interval Term::evalRange(const std::map<std::string, Interval>& vars) const {
-    Interval acc(static_cast<float>(coefficient));
     if (coefficient == 0.0) return Interval(0.0f);   // 0 * anything is 0
+    // The coefficient is a double: when no float equals it, enclose it by the
+    // floats on either side, so a lone constant never excludes its own value
+    // (ray-domain Rung 2 plan §5 observation 2; 2026-10-18).
+    const float cf = static_cast<float>(coefficient);
+    Interval acc(cf);
+    if (std::isnan(coefficient)) acc = Interval::infinite();
+    else if (!std::isfinite(cf))
+        acc = coefficient > 0.0 ? Interval(std::numeric_limits<float>::max(), cf)
+                                : Interval(cf, std::numeric_limits<float>::lowest());
+    else if (static_cast<double>(cf) != coefficient)
+        acc = Interval::outward(cf, cf);
     for (const auto& [name, exp] : factors) {
         acc = acc * powRange(rangeOfVar(vars, name), exp);
     }

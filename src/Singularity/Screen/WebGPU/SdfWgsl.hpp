@@ -360,6 +360,15 @@ KernelVolumeEvaluator repairVolumeEvaluator(const VolumeProgramInput& input,
 // largest non-positive one (the converse recheck bound).
 // Time-only leaves are evaluated inline (no preparation slots): a certificate
 // holds at every clock, so it may read the clock however the emitter does.
+//
+// `only` (2026-10-18, eleventh pass; the Firmament's direction 1) lowers just
+// those switch indices, in form order: the renderer passes the killers its
+// payload enables. Measured on the M5, every compiled candidate costs at each
+// check even when its sign is 0 — Northern Veil's curtains carry 12 switches
+// (one clamp around noise) for 1–2 enabled killers, and checking them ran
+// +50–60% where the two killers alone ran −8…+10%. So the enabled set is
+// structural: a box resize recompiles exactly when it changes that set.
+// nullptr lowers every candidate (the census and witnesses).
 struct VolumeSupportKillerProgram {
     bool ok = false;
     std::string error;
@@ -368,17 +377,22 @@ struct VolumeSupportKillerProgram {
     std::size_t formSwitches = 0;     // the form's switch count (identity cross-check)
     std::vector<float> params;
 };
-VolumeSupportKillerProgram lowerVolumeSupportKillers(const OntoMath::Piecewise* densityExpr);
+VolumeSupportKillerProgram lowerVolumeSupportKillers(const OntoMath::Piecewise* densityExpr,
+                                                     const std::vector<uint32_t>* only = nullptr);
 
 // `supportCertificates[i]` adds the Rung 2f-native lane to member i: it
 // consults its certificates (VolumeInstanceData supportCert*) at a sample no
 // grid proof covers, before evaluating its density. A structural lane, per
 // member: an all-false (or empty) vector emits exactly the pre-existing marcher.
+// `supportCertificateSwitches` (per member, or the one pointer) narrows the
+// lowered killers as lowerVolumeSupportKillers's `only`; absent = every candidate.
 Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trimProofSupport = true,
-                               const OntoMath::Piecewise* supportCertificateDensity = nullptr);
+                               const OntoMath::Piecewise* supportCertificateDensity = nullptr,
+                               const std::vector<uint32_t>* supportCertificateSwitches = nullptr);
 Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
                          const std::vector<KernelVolumeEvaluator>& evaluators,
-                         bool trimProofSupport = true, const std::vector<bool>& supportCertificates = {});
+                         bool trimProofSupport = true, const std::vector<bool>& supportCertificates = {},
+                         const std::vector<std::vector<uint32_t>>& supportCertificateSwitches = {});
 
 // V5 exact overlap baseline. Reuses direct lowerVolumeEvaluator() output for every member's evaluator
 // semantics, then composes those evaluators into one shared ray integral. The

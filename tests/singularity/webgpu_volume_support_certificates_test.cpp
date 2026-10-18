@@ -593,15 +593,37 @@ int main() {
                            glm::perspectiveZO(glm::radians(60.0f), float(width) / height, 0.1f, 1000.0f), eye);
         const Frame nvExact = render(media, true, false, 7.25, 0);
         const Frame nvAuto = render(media, true, true, 7.25, 0);
-        std::printf("       auto eligibility, Northern Veil: %u of %zu media eligible\n", nvAuto.eligible, media.size());
+        std::printf("       auto eligibility, Northern Veil: %u of %zu media eligible, %u killers enabled\n",
+                    nvAuto.eligible, media.size(), nvAuto.killers);
         check(nvAuto.eligible == 0 && nvAuto.rgba == nvExact.rgba,
               "auto eligibility keeps every Northern Veil curtain on the grid lane, every byte intact");
+        // Per curtain (2026-10-18, eleventh pass). Ranking killer subsets for
+        // eligibility promoted emerald and cyan; the M5 ran emerald 16–20% slower
+        // and cyan even, so eligibility stays with every killer enabled. Rendered
+        // alone after the forced sections above, each curtain also witnesses that
+        // a changed killer set recompiles with its payload (it once did not).
+        bool idleSeen = false;
+        uint32_t idleCompiles = 0;
+        for (const auto& m : media) {
+            const Frame grid = render({m}, true, false, 7.25, 0);
+            const Frame autoFrame = render({m}, true, true, 7.25, 0);
+            std::printf("       auto eligibility, %s: %s (%u killers enabled)\n", m->getIdentifier().c_str(),
+                        autoFrame.eligible ? "certificates attached" : "grid lane only", autoFrame.killers);
+            check(grid.rgba == autoFrame.rgba, m->getIdentifier() + ": auto eligibility keeps every byte");
+            if (!autoFrame.eligible && !idleSeen) {
+                idleSeen = true;
+                idleCompiles = autoFrame.firstCompiles + autoFrame.warmCompiles;
+            }
+            if (timing && autoFrame.eligible) abba({m}, m->getIdentifier().c_str());
+        }
         // The Sun's M5 measured the idle certificate variant 18–23% slower: with
         // nothing eligible the lane must select the lane-off program itself.
-        std::printf("       auto eligibility, Northern Veil: %u program compiles after enabling the lane\n",
-                    nvAuto.firstCompiles + nvAuto.warmCompiles);
-        check(nvAuto.firstCompiles == 0 && nvAuto.warmCompiles == 0,
-              "with nothing eligible, enabling the lane reuses the lane-off program (no certificate shader variant)");
+        if (idleSeen) {
+            std::printf("       auto eligibility, an ineligible curtain: %u program compiles after enabling the lane\n",
+                        idleCompiles);
+            check(idleCompiles == 0,
+                  "with nothing eligible, enabling the lane reuses the lane-off program (no certificate shader variant)");
+        }
         if (timing) abba(media, "Northern Veil fused (auto)");
         if (!prismWing.empty()) {
             uint32_t eligible = 0;
@@ -620,6 +642,52 @@ int main() {
                 if (timing && autoFrame.eligible) abba({m}, m->getIdentifier().c_str());
             }
             check(eligible * 2 > prismWing.size(), "auto eligibility admits most of Prism wing B (the grid proves none of it)");
+        }
+        // Every other medium the census ranks eligible gets a native witness
+        // (the Firmament's direction 3, 2026-10-18): Borealis v1 ×2 and Sky-Island
+        // sea-of-clouds were promoted by the tenth pass, unmeasured until now.
+        for (const auto& [zoneName, prefix] : std::vector<std::pair<std::string, std::string>>{
+                 {"Borealis Sanctuary", "borealis."}, {"Sky-Island Sanctuary", "sky.sanctuary."}}) {
+            const std::string json = TestSupport::resolveRealWorldPath("saves/zones/" + zoneName + "/zone.json");
+            const std::string ecform = TestSupport::resolveRealWorldPath("saves/zones/" + zoneName + "/zone.ecform");
+            nlohmann::json z;
+            if (std::filesystem::exists(json)) {
+                std::ifstream zin(json);
+                z = nlohmann::json::parse(zin);
+            } else if (std::filesystem::exists(ecform)) {
+                std::ifstream zin(ecform, std::ios::binary);
+                const std::vector<uint8_t> zb((std::istreambuf_iterator<char>(zin)), std::istreambuf_iterator<char>());
+                z = nlohmann::json::parse(nlohmann::json::from_msgpack(zb).at("MigrationRoot").get<std::string>());
+            }
+            uint32_t found = 0;
+            if (z.is_object() && z.contains("spatialFields"))
+                for (const auto& f : z.at("spatialFields")) {
+                    auto m = geom::FieldNode::fromJson(f);
+                    if (!m || !m->volumeDensity || m->volumeDensity->pieces.empty() ||
+                        m->getIdentifier().rfind(prefix, 0) != 0)
+                        continue;
+                    ++found;
+                    // From above at an angle: Sky-Island's sea is a thin slab a level
+                    // camera grazes, and its halo mist is small and faint.
+                    const glm::vec3 h = glm::abs(m->scale);
+                    const float r = glm::length(h);
+                    const glm::vec3 at = m->origin + glm::normalize(glm::vec3(0.35f, 0.6f, 1.0f)) * (1.6f * r);
+                    renderer.setCamera(glm::lookAt(at, m->origin, glm::vec3(0, 1, 0)),
+                                       glm::perspectiveZO(glm::radians(60.0f), float(width) / height, 0.05f, 8.0f * r + 10.0f), at);
+                    const Frame grid = render({m}, true, false, 0.75, 0);
+                    const Frame autoFrame = render({m}, true, true, 0.75, 0);
+                    std::size_t visible = 0;
+                    for (std::size_t px = 0; px < grid.rgba.size(); px += 4)
+                        visible += (grid.rgba[px] | grid.rgba[px + 1] | grid.rgba[px + 2]) != 0;
+                    std::printf("       auto eligibility, %s: %s (%u killers enabled), %zu visible pixels\n",
+                                m->getIdentifier().c_str(), autoFrame.eligible ? "certificates attached" : "grid lane only",
+                                autoFrame.killers, visible);
+                    if (grid.rgba != autoFrame.rgba)
+                        std::printf("       %s: %s\n", m->getIdentifier().c_str(), byteDiff(grid.rgba, autoFrame.rgba).c_str());
+                    check(visible > 0 && grid.rgba == autoFrame.rgba, m->getIdentifier() + ": auto eligibility keeps every byte");
+                    if (timing && autoFrame.eligible) abba({m}, m->getIdentifier().c_str());
+                }
+            if (found == 0) std::printf("  SKIP: %s media not present (not a pass)\n", zoneName.c_str());
         }
         // Auto mode also reads the other channels, through the shared-noise
         // prelude a density may fill first (Rendering::volumeDensitySampleCost):

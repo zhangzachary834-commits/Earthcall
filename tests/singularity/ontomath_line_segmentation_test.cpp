@@ -642,12 +642,16 @@ int main() {
               "a computed clamp bound refuses the line form (" + clampForm.refusal + ")");
     }
 
-    // ---- Observation (not an assertion): ScalarForm::evalRange constants ----
+    // ---- ScalarForm::evalRange constants enclose their double (was an
+    // observation until 2026-10-18; plan §5 observation 2, fixed at its owner) ----
     {
         const auto r = ScalarForm::constant(0.1).evalRange({});
-        std::cout << "    observation: ScalarForm::constant(0.1).evalRange = [" << double(r.lo) << ", " << double(r.hi)
-                  << "] contains 0.1: " << (double(r.lo) <= 0.1 && 0.1 <= double(r.hi) ? "yes" : "NO")
-                  << " (Rung 2 encloses coefficients itself)\n";
+        std::cout << "    ScalarForm::constant(0.1).evalRange = [" << double(r.lo) << ", " << double(r.hi) << "]\n";
+        check(double(r.lo) <= 0.1 && 0.1 <= double(r.hi), "a lone double constant's float range contains the double");
+        const auto exact = ScalarForm::constant(0.25).evalRange({});
+        check(exact.lo == 0.25f && exact.hi == 0.25f, "a float-exact constant stays a point (no needless widening)");
+        const auto huge = ScalarForm::constant(1e300).evalRange({});
+        check(double(huge.lo) <= 1e300 && 1e300 <= double(huge.hi), "a constant beyond float range still encloses itself");
     }
 
     std::cout << "ontomath_line_segmentation_test: " << (g_checks - g_failures) << "/" << g_checks
