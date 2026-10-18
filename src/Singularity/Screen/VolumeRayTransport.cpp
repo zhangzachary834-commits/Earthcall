@@ -934,7 +934,10 @@ VolumeSupportCertificates deriveVolumeSupportCertificates(const VolumeRayChannel
     return out;
 }
 
-double volumeExecutionCost(const OntoMath::MathNode& node) {
+namespace {
+// Authored operation count; a node in `slots` is read from a filled shared slot.
+double executionCost(const OntoMath::MathNode& node, const std::set<const OntoMath::MathNode*>* slots) {
+    if (slots && slots->count(&node)) return 1.0;
     using Op = OntoMath::MathNode::Op;
     double cost = 0.0;
     switch (node.op) {
@@ -946,7 +949,27 @@ double volumeExecutionCost(const OntoMath::MathNode& node) {
         default: cost = 1.0; break;
     }
     for (const auto& c : node.children)
-        if (c) cost += volumeExecutionCost(*c);
+        if (c) cost += executionCost(*c, slots);
+    return cost;
+}
+} // namespace
+
+double volumeExecutionCost(const OntoMath::MathNode& node) { return executionCost(node, nullptr); }
+
+double volumeDensitySampleCost(const OntoMath::Piecewise& density, bool preludeBeforeDensity,
+                               const std::vector<const OntoMath::MathNode*>& preludeGroups,
+                               const std::vector<const OntoMath::MathNode*>& densitySites) {
+    const std::set<const OntoMath::MathNode*> slots(densitySites.begin(), densitySites.end());
+    double cost = 0.0;
+    // Pieces the emitter can answer with, up to the first unbounded one.
+    for (const auto& piece : density.pieces) {
+        if (!piece.mathNode) continue;
+        cost += executionCost(*piece.mathNode, &slots);
+        if (!piece.hasLo && !piece.hasHi) break;
+    }
+    if (preludeBeforeDensity)
+        for (const auto* g : preludeGroups)
+            if (g) cost += 1.0 + volumeExecutionCost(*g);   // + the slot store
     return cost;
 }
 
@@ -954,20 +977,18 @@ VolumeSupportCertificateEstimate estimateVolumeSupportCertificateGain(const Volu
                                                                       const VolumeSupportCertificates& enabled,
                                                                       const VolumeZeroProof* proof,
                                                                       const glm::dvec3& halfExtent,
-                                                                      int samplesPerChord, double clock) {
+                                                                      int samplesPerChord, double clock,
+                                                                      double densitySampleCost) {
     VolumeSupportCertificateEstimate out;
     if (enabled.killers.empty()) { out.reason = "no enabled certificate"; return out; }
     if (!forms.density.expr || !forms.density.algebraic.form) { out.reason = "density has no algebraic form"; return out; }
     const int n = std::max(samplesPerChord, 1);
     const glm::dvec3 h = glm::abs(halfExtent);
-    // Density evaluation cost (pieces the emitter can answer with) and each
-    // certificate's check cost (its authored operands, as the shader lowers them).
-    double densityCost = 0.0;
-    for (const auto& piece : forms.density.expr->pieces) {
-        if (!piece.mathNode) continue;
-        densityCost += volumeExecutionCost(*piece.mathNode);
-        if (!piece.hasLo && !piece.hasHi) break;
-    }
+    // What an undecided sample's density evaluation costs (the caller's shared
+    // prelude included) and each certificate's check cost (its authored
+    // operands, as the shader lowers them).
+    const double densityCost = densitySampleCost >= 0.0
+        ? densitySampleCost : volumeDensitySampleCost(*forms.density.expr, false, {}, {});
     std::vector<double> checkCost;
     for (const auto& c : enabled.killers)
         checkCost.push_back(2.0 + (c.sourceA ? volumeExecutionCost(*c.sourceA) : 1.0) +
@@ -996,16 +1017,22 @@ VolumeSupportCertificateEstimate estimateVolumeSupportCertificateGain(const Volu
         return tExit;
     };
 
-    constexpr uint32_t kRays = 48;
+    constexpr uint32_t kRays = 96;
     const double golden = 2.399963229728653;   // golden angle
     for (uint32_t r = 0; r < kRays; ++r) {
         // Deterministic: Fibonacci-sphere directions through stratified targets.
         const double z = 1.0 - 2.0 * (double(r) + 0.5) / double(kRays);
         const double rho = std::sqrt(std::max(0.0, 1.0 - z * z));
         const glm::dvec3 d(rho * std::cos(golden * r), z, rho * std::sin(golden * r));
-        const glm::dvec3 target = h * glm::dvec3(std::fmod(0.6180339887 * (r + 1), 1.0) * 1.6 - 0.8,
-                                                 std::fmod(0.7548776662 * (r + 1), 1.0) * 1.6 - 0.8,
-                                                 std::fmod(0.5698402910 * (r + 1), 1.0) * 1.6 - 0.8);
+        // Lines as a distant camera's pixels meet the box (Crofton measure):
+        // uniform over the box's silhouette across d, so short corner chords —
+        // where n samples crowd and one certified reach skips many — weigh as
+        // much as they do on screen.
+        const glm::dvec3 helper = std::abs(d.y) < 0.9 ? glm::dvec3(0, 1, 0) : glm::dvec3(1, 0, 0);
+        const glm::dvec3 eu = glm::normalize(glm::cross(d, helper)), ev2 = glm::cross(d, eu);
+        const double ru = glm::dot(h, glm::abs(eu)), rv = glm::dot(h, glm::abs(ev2));
+        const glm::dvec3 target = eu * (ru * (std::fmod(0.7548776662 * (r + 1), 1.0) * 2.0 - 1.0)) +
+                                  ev2 * (rv * (std::fmod(0.5698402910 * (r + 1), 1.0) * 2.0 - 1.0));
         const glm::dvec3 o = target - d * (3.0 * glm::length(h) + 1.0);
         double t0 = -std::numeric_limits<double>::infinity(), t1 = std::numeric_limits<double>::infinity();
         for (int a = 0; a < 3; ++a) {
@@ -1074,7 +1101,8 @@ VolumeSupportCertificateEstimate estimateVolumeSupportCertificateGain(const Volu
         }
     }
     if (out.rays == 0) { out.reason = "no estimate ray crossed the box"; return out; }
-    out.eligible = out.costWith < kVolumeSupportCertificateGainMargin * out.costWithout;
+    out.eligible = kVolumeSupportCertificateVariantOverhead * out.costWith <
+                   kVolumeSupportCertificateGainMargin * out.costWithout;
     out.reason = out.eligible ? "estimated cheaper with certificates" : "estimated no cheaper than the grid lane alone";
     return out;
 }

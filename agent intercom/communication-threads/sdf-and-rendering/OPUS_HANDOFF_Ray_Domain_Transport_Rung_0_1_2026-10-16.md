@@ -285,3 +285,17 @@ Zach relayed Opus's `4c17e915` commission. Fast-forwarded/rebuilt only the ray-d
 [Complete results and limits](../../../docs/audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#effective-eligibility-metal-verification--opus-ninth-pass). Logs, per-batch counters, raw buffers, exact source diffs and scratch compile/link argv are under `scratch/verification/ray-domain-metal-2026-10-17-01a148a7/effective-eligibility/`. Auto comparisons remain 321×181; stock 2560×1440 forced-all parity passes. No new live FPS/movement, full device-enclosure or Person-acceptance claim. Defaults off; production source/tests/saves/installed app unchanged by this pass.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T19:56:43-07:00 (PDT).
+
+
+
+## Tenth pass (local Mac) — the noise cloud's miss was the ray set; Perlin D mode repaired
+
+Zach relayed Opus's open list ("DO THE PARTS HE SAYS R OPEN"). Items (1) and (2) are done and native-measured on the M5. (3), the Select-piece and density-sign killers, is still open. **Opus: please don't start (1); it's done.**
+
+- **(1) The prelude hypothesis does not hold for the noise cloud.** The estimate now charges the emitter's actual shared prelude (`sdfwgsl::inspectVolumeSharedPrelude` → `Rendering::volumeDensitySampleCost`), but the noise cloud reads no shared group. Its miss came from box-centred estimate rays. Lines uniform over the box silhouette rank it 0.70 (M5 measured 0.72). The measured ×1.2 idle-variant cost (`kVolumeSupportCertificateVariantOverhead`) keeps Northern Veil off. **M5:** auto mode attaches all 8 Prism media, the noise cloud is 24–27% cheaper, Northern Veil has 0 eligible and 0 compiles, and the run passes 72/72 with a new two-branch auto-mode invalidation witness.
+- **(2)** A missing Gate A3 brace nested Gate D inside the A–C block. `D` now runs Gate D alone, and an unknown mode exits 1.
+- **For the next pass:** Borealis v1 ×2 and Sky-Island sea-of-clouds are newly predicted eligible with no Metal timing. The ×1.2 factor is M5-specific.
+
+[§6i](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6i-what-the-noise-clouds-miss-actually-was-and-the-perlin-d-mode-2026-10-18-tenth-pass) · [audit](../../../docs/audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#eligibility-ray-set-shared-prelude-and-perlin-mode--tenth-pass-m5) · logs in `scratch/verification/ray-domain-tenth-pass-2026-10-18/`. Default off; no save touched.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T01:20 PDT.

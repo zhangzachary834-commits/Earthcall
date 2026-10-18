@@ -413,7 +413,7 @@ int main() {
                         uint64_t traced = 0, tracedOrGrid = 0, tracePoints = 0, traceSetup = 0, traceViolations = 0; double traceUs = 0;
                         uint64_t certTraced = 0, certPoints = 0, certViolations = 0; double certUs = 0; };
         Totals all;
-        int admitted = 0, media = 0, eligibleMedia = 0;
+        int admitted = 0, media = 0, eligibleMedia = 0, preludeMedia = 0, preludeFlips = 0, preludeDemotions = 0;
         std::mt19937 rng(1017u);
         std::uniform_real_distribution<double> u(-1.0, 1.0);
         if (fs::exists(root)) {
@@ -590,8 +590,23 @@ int main() {
                               << "%, " << double(t.certPoints) / std::max<uint64_t>(t.rays, 1) << " point evals/ray, "
                               << t.certUs / std::max<uint64_t>(t.rays, 1) << " us/ray\n";
                     {
-                        // Eligibility (Kernel cost ranking over the renderer's own loop).
-                        const auto est = Rendering::estimateVolumeSupportCertificateGain(f, certs, &proof, half, 96, 0.0);
+                        // Eligibility (Kernel cost ranking over the renderer's own loop),
+                        // with the shared-noise prelude the renderer's memo also counts.
+                        const auto prelude = sdfwgsl::inspectVolumeSharedPrelude(
+                            b.densityExpr, b.extinctionExpr, b.scatteringExpr, b.volumeChromaExpr, b.phaseExpr, b.emissionExpr);
+                        const double sampleCost = Rendering::volumeDensitySampleCost(
+                            *b.densityExpr, prelude.densityUses, prelude.groups, prelude.densitySites);
+                        const double ownCost = Rendering::volumeDensitySampleCost(*b.densityExpr, false, {}, {});
+                        const auto est = Rendering::estimateVolumeSupportCertificateGain(f, certs, &proof, half, 96, 0.0, sampleCost);
+                        if (prelude.densityUses) {
+                            ++preludeMedia;
+                            const auto own = Rendering::estimateVolumeSupportCertificateGain(f, certs, &proof, half, 96, 0.0, ownCost);
+                            preludeFlips += (est.eligible && !own.eligible) ? 1 : 0;
+                            preludeDemotions += (!est.eligible && own.eligible) ? 1 : 0;
+                            std::cout << "        shared prelude before density: " << prelude.groups.size()
+                                      << " group(s); sample cost " << sampleCost << " vs density text " << ownCost
+                                      << "; ratio without prelude " << (own.costWithout > 0 ? own.costWith / own.costWithout : 0.0) << "\n";
+                        }
                         std::cout << "        eligibility: " << (est.eligible ? "ELIGIBLE" : "not eligible") << " — "
                                   << est.reason << "; cost with/without " << est.costWith << "/" << est.costWithout
                                   << " (ratio " << (est.costWithout > 0 ? est.costWith / est.costWithout : 0.0) << "), grid "
@@ -630,6 +645,8 @@ int main() {
                   << "%, " << double(all.certPoints) / std::max<uint64_t>(all.rays, 1) << " point evals/ray, "
                   << all.certUs / std::max<uint64_t>(all.rays, 1) << " us/ray\n";
         std::cout << "    eligibility: " << eligibleMedia << " of " << admitted << " admitted media estimated cheaper with certificates\n";
+        std::cout << "    shared prelude: " << preludeMedia << " admitted media fill it before density; counting it promotes "
+                  << preludeFlips << " and demotes " << preludeDemotions << "\n";
         check(all.certViolations == 0, "certificate-only tracing certifies no real sample with positive density");
         check(media > 0 && admitted > 0, "the census finds real media the algebraic class admits");
         check(all.violations == 0, "no proved-empty sample on any real medium has positive emitter density (" +

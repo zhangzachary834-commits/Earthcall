@@ -328,7 +328,10 @@ VolumeSupportCertificates deriveVolumeSupportCertificates(const VolumeRayChannel
 // certificates substitute for a weak grid (Prism wing B, grid 0%: up to 4.8×
 // cheaper) but do not complement a strong one (Northern Veil, grid 95–97%:
 // +16–49%). The estimate simulates the shader's own loop over a fixed,
-// deterministic ray set through the box at the renderer's samplesPerChord:
+// deterministic set of lines distributed as a distant camera's pixels meet the
+// box (uniform over its silhouette; 2026-10-18, replacing box-centred targets,
+// which under-weighted short corner chords and misranked Prism's noise cloud
+// 1.07 where the M5 measured 0.72), at the renderer's samplesPerChord:
 // grid-proven cells jump to their exit; otherwise certificates are checked
 // (first success answers, the converse bound skips checks) before the density
 // is evaluated. Costs are authored operation counts (noise dominates). Whether
@@ -344,12 +347,30 @@ struct VolumeSupportCertificateEstimate {
 // Eligible only when the estimate with certificates is below this fraction of
 // the estimate without (rough units must clear a margin to justify the lane).
 inline constexpr double kVolumeSupportCertificateGainMargin = 0.85;
+// What carrying certificate code costs a member before any check runs: the M5
+// measured an idle certificate variant 18–23% slower on Northern Veil (Codex,
+// 2026-10-17, register pressure/occupancy unprofiled), which no operation count
+// sees. With it, forced certificates on Northern Veil rank slower (as measured)
+// and all eight Prism wing-B media rank faster (as measured). Device-relative:
+// re-measure before trusting it on another adapter.
+inline constexpr double kVolumeSupportCertificateVariantOverhead = 1.2;
 struct VolumeZeroProof;
 VolumeSupportCertificateEstimate estimateVolumeSupportCertificateGain(const VolumeRayChannelForms& forms,
                                                                       const VolumeSupportCertificates& enabled,
                                                                       const VolumeZeroProof* proof,
                                                                       const glm::dvec3& halfExtent,
-                                                                      int samplesPerChord, double clock);
+                                                                      int samplesPerChord, double clock,
+                                                                      double densitySampleCost = -1.0);
+// What one undecided sample's density evaluation costs in the shader, the unit
+// a skipped sample saves: density with each shared site read from its slot
+// (cost 1), plus every shared group of the medium's prelude when the marchers
+// fill it before density (sdfwgsl::inspectVolumeSharedPrelude); 8 of the 28
+// census media do (Northern Veil's curtains among them). The noise cloud reads
+// no shared group: its miss was the ray set, not the prelude (2026-10-18).
+// A negative densitySampleCost above means density's own text, no prelude.
+double volumeDensitySampleCost(const OntoMath::Piecewise& density, bool preludeBeforeDensity,
+                               const std::vector<const OntoMath::MathNode*>& preludeGroups,
+                               const std::vector<const OntoMath::MathNode*>& densitySites);
 // Authored operation count of an expression, the estimate's cost unit.
 double volumeExecutionCost(const OntoMath::MathNode& node);
 

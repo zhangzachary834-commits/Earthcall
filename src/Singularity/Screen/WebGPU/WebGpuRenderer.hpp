@@ -496,6 +496,11 @@ private:
         bool autoEligibility = true;
         bool gridProof = true;
         int samplesPerChord = 0;
+        // Rendering::volumeDensitySampleCost, which every channel's text decides
+        // through the shared-noise prelude: re-derived when any channel revision
+        // moves (contentRevision), and the estimate re-ranks only if it changed.
+        uint64_t contentRevision = 0;
+        double densitySampleCost = -1.0;
         Rendering::VolumeSupportCertificateEstimate estimate;
         std::vector<float> payload;
         uint32_t count = 0;

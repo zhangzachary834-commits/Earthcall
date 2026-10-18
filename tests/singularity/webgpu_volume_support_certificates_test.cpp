@@ -17,6 +17,7 @@
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"
 #include "Singularity/Screen/VolumeDensity.hpp"
+#include "Singularity/Screen/VolumeRayTransport.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
@@ -619,6 +620,47 @@ int main() {
                 if (timing && autoFrame.eligible) abba({m}, m->getIdentifier().c_str());
             }
             check(eligible * 2 > prismWing.size(), "auto eligibility admits most of Prism wing B (the grid proves none of it)");
+        }
+        // Auto mode also reads the other channels, through the shared-noise
+        // prelude a density may fill first (Rendering::volumeDensitySampleCost):
+        // an edit re-ranks exactly when it moves that per-sample cost.
+        {
+            renderer.setCamera(glm::lookAt(eye, glm::vec3(0, 60, 90), glm::vec3(0, 1, 0)),
+                               glm::perspectiveZO(glm::radians(60.0f), float(width) / height, 0.1f, 1000.0f), eye);
+            auto curtain = geom::FieldNode::fromJson(zone.at("spatialFields").front());
+            auto sampleCost = [&] {
+                Rendering::VolumeDensityBinding b;
+                if (!Rendering::readVolumeDensity(*curtain, 7.25, 1.0 / 60.0, b) || !b.densityExpr) return -1.0;
+                const auto prelude = sdfwgsl::inspectVolumeSharedPrelude(b.densityExpr, b.extinctionExpr,
+                    b.scatteringExpr, b.volumeChromaExpr, b.phaseExpr, b.emissionExpr);
+                return Rendering::volumeDensitySampleCost(*b.densityExpr, prelude.densityUses, prelude.groups,
+                                                          prelude.densitySites);
+            };
+            auto editAndRender = [&](const std::vector<std::pair<const char*, std::string>>& edits, const char* label) {
+                const double before = sampleCost();
+                bool accepted = true;
+                for (const auto& [path, json] : edits) {
+                    Property* p = curtain->findProperty(path);
+                    accepted = accepted && p && p->setValue(PropertyValue(json));
+                }
+                const double after = sampleCost();
+                const Frame f = render({curtain}, true, true, 7.25, 0);
+                std::printf("       auto eligibility, %s: per-sample cost %.0f -> %.0f, %u certificate builds\n",
+                            label, before, after, f.firstCertificateBuilds);
+                check(accepted && f.firstCertificateBuilds == (after != before ? 1u : 0u),
+                      std::string("auto mode, ") + label + ": re-ranks exactly when the per-sample cost moves");
+                return after != before;
+            };
+            render({curtain}, true, true, 7.25, 0);
+            const auto& other = media.size() > 1 ? media[1] : media.front();
+            editAndRender({{"volume.emission.ast", other->volumeEmission->toJson().dump()}},
+                          "another curtain's emission");
+            const std::string scalar = R"({"input":"x","pieces":[{"mathNode":{"op":0,"scalarForm":{"terms":[{"c":0.1,"factors":{}}]}}}]})";
+            const std::string c = R"({"op":0,"scalarForm":{"terms":[{"c":0.1,"factors":{}}]}})";
+            const std::string vec = R"({"input":"x","pieces":[{"mathNode":{"op":2,"children":[)" + c + "," + c + "," + c + "]}}]}";
+            const bool moved = editAndRender({{"volume.extinction.ast", scalar}, {"volume.scattering.ast", scalar},
+                                              {"volume.emission.ast", vec}}, "noise-free companion channels");
+            check(moved, "removing the companions' noise changes the curtain's prelude (the witness is not vacuous)");
         }
     }
     autoEligibility = false;

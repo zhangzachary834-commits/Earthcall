@@ -474,6 +474,7 @@ Witnesses: `ontomath_line_segmentation_test` 61/61, `volume_ray_segment_transpor
 **Eligibility addendum (2026-10-18, [§6g](../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6g-eligibility-where-certificates-pay-2026-10-18-eighth-pass)):** `VolumeSupportCertificateMemo` now also holds the `estimate` (Kernel cost ranking).
 - *Key:* the existing key plus auto mode × zero-proof enabled × `volumeSamplesPerChord`.
 - *Payload identity:* adds auto mode and samples per chord when the lane is on.
+- *Per-sample cost (2026-10-18, §6i):* `contentRevision` × `densitySampleCost` in the same memo. *Derived from:* every medium channel, through the emitter's sharing plan. *Writers:* any channel revision re-derives the cost, and the estimate re-ranks only if the cost changed, so an emission edit that leaves the prelude alone still rebuilds nothing. *Witness:* the M5 auto-mode run covers both branches (135→135 with 0 builds, 135→133 with 1). Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T01:20 PDT.
 - *Reads:* the same frame's zero-proof memo, only when its revision and extent match.
 - *Fallback:* "not eligible" attaches nothing (count 0), so the grid lane runs unchanged.
 

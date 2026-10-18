@@ -2595,9 +2595,26 @@ bool WebGpuRenderer::volumeSupportCertificatesActive(const Rendering::VolumeDens
     const bool autoEligibility = volumeSupportCertificatesAutoEligibility();
     const bool gridProof = volumeZeroProofEnabled();
     const int samplesPerChord = volumeSamplesPerChord();
+    // An undecided sample also pays the shared-noise prelude when density reads
+    // it, and any channel's text can change that prelude. An edit that leaves
+    // the sample cost alone (most emission edits) rebuilds nothing.
+    bool sampleCostChanged = false;
+    if (autoEligibility) {
+        const uint64_t content = Rendering::volumeContentRevision(medium);
+        if (memo.contentRevision != content || memo.densitySampleCost < 0.0) {
+            memo.contentRevision = content;
+            const auto prelude = sdfwgsl::inspectVolumeSharedPrelude(
+                medium.densityExpr, medium.extinctionExpr, medium.scatteringExpr,
+                medium.volumeChromaExpr, medium.phaseExpr, medium.emissionExpr);
+            const double cost = Rendering::volumeDensitySampleCost(
+                *medium.densityExpr, prelude.densityUses, prelude.groups, prelude.densitySites);
+            sampleCostChanged = cost != memo.densitySampleCost;
+            memo.densitySampleCost = cost;
+        }
+    }
     if (memo.densityRevision != medium.densityRevision || memo.halfExtent != halfExtent ||
         memo.clockBucket != clockBucket || memo.autoEligibility != autoEligibility ||
-        memo.gridProof != gridProof || memo.samplesPerChord != samplesPerChord) {
+        memo.gridProof != gridProof || memo.samplesPerChord != samplesPerChord || sampleCostChanged) {
         memo.densityRevision = medium.densityRevision;
         memo.halfExtent = halfExtent;
         memo.clockBucket = clockBucket;
@@ -2654,7 +2671,8 @@ bool WebGpuRenderer::volumeSupportCertificatesActive(const Rendering::VolumeDens
                     proof = &it->second.proof;
             }
             memo.estimate = Rendering::estimateVolumeSupportCertificateGain(
-                forms, enabledSet, proof, glm::dvec3(halfExtent), samplesPerChord, medium.temporalCoordinate);
+                forms, enabledSet, proof, glm::dvec3(halfExtent), samplesPerChord, medium.temporalCoordinate,
+                memo.densitySampleCost);
             if (!memo.estimate.eligible) {
                 memo.refusal = memo.estimate.reason;
                 memo.count = 0;

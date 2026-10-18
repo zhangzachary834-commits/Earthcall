@@ -233,6 +233,22 @@ std::string inspectVolumeSharing(const OntoMath::Piecewise* densityExpr,
                                  const OntoMath::Piecewise* volumeChromaExpr,
                                  const OntoMath::Piecewise* phaseExpr,
                                  const OntoMath::Piecewise* emissionExpr);
+// The same plan as the Kernel's cost ranking needs it (Rendering::
+// volumeDensitySampleCost): one representative node per shared group, and the
+// density nodes the emitter reads from a group's slot. When densityUses, the
+// marchers fill EVERY group before density at each undecided sample, so a
+// sample a certificate skips saves the whole prelude, not only density's text.
+struct VolumeSharedPreludeShape {
+    bool densityUses = false;
+    std::vector<const OntoMath::MathNode*> groups;
+    std::vector<const OntoMath::MathNode*> densitySites;
+};
+VolumeSharedPreludeShape inspectVolumeSharedPrelude(const OntoMath::Piecewise* densityExpr,
+                                                    const OntoMath::Piecewise* extinctionExpr,
+                                                    const OntoMath::Piecewise* scatteringExpr,
+                                                    const OntoMath::Piecewise* volumeChromaExpr,
+                                                    const OntoMath::Piecewise* phaseExpr,
+                                                    const OntoMath::Piecewise* emissionExpr);
 
 // V1 authored participating-medium extinction sigma_t(p,t). Absence is a
 // compatibility state, not a refusal: sigma_t falls back to 0.5 * D.

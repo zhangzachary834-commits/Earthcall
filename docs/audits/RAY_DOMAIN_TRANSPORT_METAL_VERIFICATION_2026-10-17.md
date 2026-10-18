@@ -191,3 +191,40 @@ The initial `EARTHCALL_PERLIN_TEST_MODE=D` controls exited 0 but executed no cam
 **Evidence:** `scratch/verification/ray-domain-metal-2026-10-17-01a148a7/effective-eligibility/` retains all stock/probe logs, all TIMING lines, source HEAD, fixture hashes, raw Perlin buffers, source diffs, and exact scratch compile/link argv. Large throwaway executables/objects remain only in the original `/private/tmp/earthcall-member-lane-metal-01a148a7-20261017/`.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T19:56:43-07:00 (PDT).
+
+
+## Eligibility ray set, shared prelude and Perlin mode — tenth pass (M5)
+
+Zach asked the local session to do the items Opus listed as open. Built in the clean ray-domain worktree, on a fresh Debug tree from `a67643b03` plus this pass's changes. Native Apple M5 Metal throughout, with ordinary timestamps disabled. No save, default or installed app changed.
+
+| Witness | Result |
+|---|---|
+| `webgpu_volume_support_certificates_test` (timing on) | **69/69** twice; then **72/72** with the new auto-mode invalidation witness |
+| `webgpu_volume_zero_proof_test` | **73/73** |
+| `webgpu_perlin_exact_gradient_test` | full mode ALL OK (Gates A–D); `ABC` ALL OK (A–C); `D` ALL OK (Gate D only, 6 cameras, 45° still 27 bytes); `bogus` exits 1 |
+| `volume_ray_radial_segmentation_test` (CPU) | **32/32**; 17 of 28 media eligible (was 13) |
+
+**Auto-mode costs (321×181, 8 frames, ABBA ×4 medians, completion/readback-inclusive; grid → grid+auto, ms):**
+
+| Medium | Run 1 | Run 2 |
+|---|---|---|
+| Northern Veil fused (0 eligible, 0 compiles) | 3.03 → 3.06 | 3.19 → 3.45 |
+| spherical-cloud | 0.92 → 0.46 | 0.76 → 0.40 |
+| hollow-shell | 0.94 → 0.53 | 0.90 → 0.54 |
+| torus-medium | 1.03 → 0.49 | 0.99 → 0.49 |
+| csg-crescent-medium | 0.66 → 0.39 | 1.03 → 0.58 |
+| **noise-organic-cloud (newly eligible)** | **1.66 → 1.21** | **1.44 → 1.10** |
+| time-breathing-nebula | 1.13 → 0.77 | 0.94 → 0.60 |
+| proxy-proof-torus | 0.89 → 0.30 | 0.72 → 0.29 |
+| dual-sovereign-being | 1.11 → 0.63 | 1.08 → 0.54 |
+
+All 8 Prism wing-B media now get certificates in auto mode, and all keep byte parity. Northern Veil runs the identical lane-off program, so its spread is run-to-run noise. Absolute times this session ran above Codex's (another process load; run 1's forced "Prism wing B fused" grid median of 22.61 ms is an outlier). Every TIMING line from both runs is in `cert-timing-1.log` and `cert-timing-2.log`.
+
+**Findings.**
+- The shared-noise prelude did not cause the noise cloud's miss: its density reads no shared group. The estimate's box-centred ray set did. Lines uniform over the box silhouette rank it 0.70, against 0.72 measured.
+- The measured idle-variant cost (×1.2) keeps Northern Veil ineligible under the new ray set.
+- Borealis v1 ×2 and Sky-Island sea-of-clouds are newly predicted eligible and **not yet measured** on Metal.
+
+**Evidence:** `scratch/verification/ray-domain-tenth-pass-2026-10-18/`. Method and design: [Rung 2 plan §6i](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6i-what-the-noise-clouds-miss-actually-was-and-the-perlin-d-mode-2026-10-18-tenth-pass). No live FPS, movement or Person-acceptance claim.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T01:20 PDT.

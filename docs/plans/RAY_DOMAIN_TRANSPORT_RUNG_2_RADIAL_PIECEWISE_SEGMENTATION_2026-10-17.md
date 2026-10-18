@@ -483,6 +483,27 @@ The scratch Perlin old-mirror/current comparison executes the full corpus and sa
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T19:56:43-07:00 (PDT).
 
+## 6i. What the noise cloud's miss actually was, and the Perlin D mode (2026-10-18, tenth pass)
+
+**Origin.** Zach relayed Opus's open list and asked the local session to do it: (1) model the shared-noise prelude in the eligibility estimate, (2) make the Perlin D-only mode run or refuse, (3) lower Select-piece and density-sign killers. This pass does (1) and (2), measured natively on the M5. (3) remains open.
+
+**(1) The shared-noise hypothesis (§6g "Known miss") was wrong for the noise cloud.**
+- `sdfwgsl::inspectVolumeSharedPrelude` now exposes the emitter's own sharing plan. `Rendering::volumeDensitySampleCost` charges an undecided sample what the marcher runs: density with shared sites read from slots, plus every group when the prelude fills before density. The renderer's memo re-derives this cost when any channel revision moves and re-ranks only if it changed.
+- The census shows 8 of 28 media fill the prelude before density (Northern Veil's curtains among them). **The noise cloud is not one of them.** Its density, `1.7·clamp(1 − (|p| − 0.7·noise(1.2p))/2.2, 0, 1)`, reads no shared group. Its one killer is that clamp, whose operand carries the noise, so a check costs about one density evaluation. Counting the prelude alone promoted and demoted nothing.
+- **The real miss was the estimate's ray set.** All 48 rays aimed within 0.8 of the half-extent, which made every one a long central chord. A camera's pixels meet the box uniformly over its silhouette (Crofton measure), so many chords are short corner chords. There samples crowd (spacing = chord/n), and one certified reach skips many. The estimate now uses 96 such lines, which ranks the noise cloud **0.70**; the M5 measured **0.72**.
+- That ray set alone overshoots, though. It would make Northern Veil's cyan ribbon eligible (0.78), while forced certificates on Northern Veil are measured 1.5–2.2× slower on the M5. Scanning the per-sample base cost (2–80 units) moves nothing except the grid-heavy curtains. The missing term is the one the M5 already measured: carrying certificate code costs a member about 18–23% before any check runs. So eligibility now needs `1.2 × costWith < 0.85 × costWithout` (`kVolumeSupportCertificateVariantOverhead`, device-relative).
+- **Census (32/32):** 17 of 28 eligible, up from 13. New predictions: the noise cloud, Borealis v1 ×2 and Sky-Island sea-of-clouds. The last three are **unmeasured on Metal**. Every Northern Veil curtain stays ineligible.
+- **M5 (`webgpu_volume_support_certificates_test` 69/69 twice, then 72/72 with the new witness):** auto mode now attaches all 8 Prism wing-B media. The noise cloud runs 1.66→1.21 and 1.44→1.10 ms (−27%, −24%), and the other seven keep 1.6–3.0×. Northern Veil has 0 eligible and 0 new compiles, so it runs the identical lane-off program; its auto medians 3.03→3.06 and 3.19→3.45 ms are run-to-run spread on a busier machine (absolute times this session ran higher than Codex's).
+- **Invalidation witness (new, auto mode):** another curtain's emission leaves the per-sample cost at 135 and rebuilds nothing. Noise-free companion channels move it 135→133 and rebuild exactly once. A check also makes sure the witness is not vacuous.
+
+**(2) Perlin D mode.** Gate A3's block never closed, so the `} // runCore` brace actually closed Gate A. That nested Gate D and the final "ALL OK" inside the A–C block, and `EARTHCALL_PERLIN_TEST_MODE=D` ran nothing yet exited 0, as Codex caught. The brace now closes A3, "ALL OK" names the gates that ran, and any other mode value fails. M5: full mode 17 gate lines; `ABC` 9; `D` 8, including the same 27 bytes at 45°; `bogus` exits 1.
+
+**Not done.** Select-piece and density-sign killers (3); Metal timing of the four newly predicted media; Person acceptance; the device enclosure. Certificates stay default off. No save, default or installed app changed.
+
+**Evidence:** `scratch/verification/ray-domain-tenth-pass-2026-10-18/` (census before/after and the base-cost scan, both timed certificate runs, the witness run, zero-proof 73/73, Perlin in every mode).
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T01:20 PDT. Human origin: Zachary Zhang; the open list is Opus's (`session_01HvZSR64QghrdyCpq2M7qvX`); the idle-variant measurement and the D-mode catch are Codex's (`01a148a7`).*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

@@ -4024,6 +4024,25 @@ std::string inspectVolumeSharing(const OntoMath::Piecewise* densityExpr,
     return planVolumeSharing(channels).signature;
 }
 
+VolumeSharedPreludeShape inspectVolumeSharedPrelude(const OntoMath::Piecewise* densityExpr,
+                                                    const OntoMath::Piecewise* extinctionExpr,
+                                                    const OntoMath::Piecewise* scatteringExpr,
+                                                    const OntoMath::Piecewise* volumeChromaExpr,
+                                                    const OntoMath::Piecewise* phaseExpr,
+                                                    const OntoMath::Piecewise* emissionExpr) {
+    const OntoMath::Piecewise* channels[6] = {densityExpr, extinctionExpr, scatteringExpr,
+                                              volumeChromaExpr, phaseExpr, emissionExpr};
+    const auto plan = planVolumeSharing(channels);
+    VolumeSharedPreludeShape out;
+    out.densityUses = plan.densityUses;
+    for (const auto& g : plan.groups) {
+        out.groups.push_back(g.node);
+        for (const auto& site : g.sites)
+            if (site.channel == 0) out.densitySites.push_back(site.node);
+    }
+    return out;
+}
+
 // Kernel lowering output: evaluator mathematics is emitted directly, independently
 // of the standalone marcher's entrypoint. Combined modules consume this boundary
 // rather than search/extract functions from a complete shader.
