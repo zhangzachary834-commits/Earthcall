@@ -1,5 +1,9 @@
 #include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "Identity/SingularId.hpp"
+#include "Person/Person.hpp"
+#include "Person/Soul/Soul.hpp"
+#include "Person/Body/Body.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
@@ -161,6 +165,55 @@ int main() {
     assert(!SecondNatureLawAuthoring::instantiate(invoke));
     assert(readString(request, SecondNatureLawAuthoring::kStatusProperty) ==
            "refused: prototype requires a selected target");
+
+    // Test distinct identities with same spelling / personAnswersTo:
+    // When two unkeyed Person beings share the same display name ("Alice"),
+    // findBeing should return nullptr due to ambiguity rather than collapsing them.
+    Soul soulAlice1, soulAlice2;
+    Body bodyAlice1, bodyAlice2;
+    Person personAlice1(soulAlice1, bodyAlice1, "default");
+    personAlice1.setDisplayName("Alice");
+    personAlice1.soul().bindPerson(&personAlice1);
+    Person personAlice2(soulAlice2, bodyAlice2, "default");
+    personAlice2.setDisplayName("Alice");
+    personAlice2.soul().bindPerson(&personAlice2);
+
+    Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+        beings.push_back(&author);
+        beings.push_back(&target);
+        beings.push_back(&request);
+        beings.push_back(&objectPrototype);
+        beings.push_back(&zone);
+        beings.push_back(&personAlice1);
+        beings.push_back(&personAlice2);
+        for (const auto& object : zone.getOwnedObjects()) {
+            if (object) beings.push_back(object.get());
+        }
+        for (const auto& law : laws.getAll()) {
+            if (law) beings.push_back(law.get());
+        }
+    });
+
+    // Asking for target "Alice" when two distinct persons answer to "Alice" must resolve to nullptr (ambiguous)
+    request.setDynamicProperty(SecondNatureLawAuthoring::kTargetProperty,
+                               PropertyValue(std::string("Alice")));
+    assert(!SecondNatureLawAuthoring::instantiate(invoke));
+    assert(readString(request, SecondNatureLawAuthoring::kStatusProperty) ==
+           "refused: prototype requires a selected target");
+
+    // Once personAlice1 takes a cryptographic key, its getIdentifier() becomes a unique DID key.
+    std::array<uint8_t, 32> pk1{};
+    pk1[0] = 0x01;
+    personAlice1.setPersonId(Identity::SingularId::fromPublicKey(pk1));
+
+    // Asking for exact unique identifier (DID key) of personAlice1 resolves uniquely to personAlice1
+    request.setDynamicProperty(SecondNatureLawAuthoring::kTargetProperty,
+                               PropertyValue(personAlice1.getIdentifier()));
+    bool ok = SecondNatureLawAuthoring::instantiate(invoke);
+    if (!ok) {
+        std::cerr << "FAILED STATUS: " << readString(request, SecondNatureLawAuthoring::kStatusProperty) << std::endl;
+    }
+    assert(ok);
 
     Physics::setLawManager(nullptr);
     Universe::instance().setProvider({});
