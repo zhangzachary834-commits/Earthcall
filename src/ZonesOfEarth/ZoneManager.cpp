@@ -1780,37 +1780,30 @@ std::vector<uint8_t> ZoneManager::readVerifiedMatterGeneration(const std::filesy
 
     const std::filesystem::path matterPath =
         ecformPath.parent_path() / (ecformPath.stem().string() + "." + snapshotId + ".ecmatter");
-    std::filesystem::path resolvedMatterPath = matterPath;
     std::error_code ec;
-    if (!std::filesystem::exists(resolvedMatterPath, ec)) {
-        const std::filesystem::path unversioned =
-            ecformPath.parent_path() / (ecformPath.stem().string() + ".ecmatter");
-        if (std::filesystem::exists(unversioned, ec)) {
-            resolvedMatterPath = unversioned;
-        } else {
-            std::cerr << "[ZoneManager] readVerifiedMatterGeneration: '" << ecformPath
-                      << "' names generation '" << snapshotId << "' but " << matterPath
-                      << " is missing — refusing to hydrate physical matter.\n";
-            return {};
-        }
+    if (!std::filesystem::exists(matterPath, ec)) {
+        std::cerr << "[ZoneManager] readVerifiedMatterGeneration: '" << ecformPath
+                  << "' names generation '" << snapshotId << "' but " << matterPath
+                  << " is missing — refusing to hydrate physical matter.\n";
+        return {};
     }
 
-    std::ifstream in(resolvedMatterPath.string(), std::ios::binary);
+    std::ifstream in(matterPath.string(), std::ios::binary);
     if (!in.is_open()) {
-        std::cerr << "[ZoneManager] readVerifiedMatterGeneration: could not open " << resolvedMatterPath << "\n";
+        std::cerr << "[ZoneManager] readVerifiedMatterGeneration: could not open " << matterPath << "\n";
         return {};
     }
     std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
 
     if (bytes.size() != expectedLength) {
-        std::cerr << "[ZoneManager] readVerifiedMatterGeneration: " << resolvedMatterPath
+        std::cerr << "[ZoneManager] readVerifiedMatterGeneration: " << matterPath
                   << " is " << bytes.size() << " bytes, root expected " << expectedLength
                   << " — truncated or swapped sidecar, refusing.\n";
         return {};
     }
     const std::string actualHash = sha256Hex(bytes);
     if (actualHash != expectedHash) {
-        std::cerr << "[ZoneManager] readVerifiedMatterGeneration: " << resolvedMatterPath
+        std::cerr << "[ZoneManager] readVerifiedMatterGeneration: " << matterPath
                   << " hash mismatch (root names " << expectedHash << ", file hashes to "
                   << actualHash << ") — refusing.\n";
         return {};
