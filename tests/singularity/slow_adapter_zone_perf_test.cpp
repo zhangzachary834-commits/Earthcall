@@ -72,9 +72,9 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    // Isolate test save root without copying 1.6+ GB saves tree for timing-only probe.
+    TestSupport::TempSaveRoot saveGuard;
+    TestSupport::BootedEngineHarness h("Player", "humanoid", false /* hydrateAllZones */);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);

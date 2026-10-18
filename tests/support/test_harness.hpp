@@ -384,4 +384,27 @@ private:
     }
 };
 
+struct TempSaveRoot {
+    std::string previousRoot;
+    std::filesystem::path tempPath;
+
+    TempSaveRoot() {
+        previousRoot = SaveSystem::saveRoot();
+        tempPath = std::filesystem::temp_directory_path() /
+            ("earthcall-temp-save-root-" + std::to_string(
+                std::chrono::steady_clock::now().time_since_epoch().count()));
+        std::filesystem::create_directories(tempPath);
+        SaveSystem::setSaveRoot(tempPath.string());
+    }
+
+    ~TempSaveRoot() {
+        SaveSystem::setSaveRoot(previousRoot);
+        std::error_code ec;
+        std::filesystem::remove_all(tempPath, ec);
+    }
+
+    TempSaveRoot(const TempSaveRoot&) = delete;
+    TempSaveRoot& operator=(const TempSaveRoot&) = delete;
+};
+
 } // namespace TestSupport
