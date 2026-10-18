@@ -51,7 +51,9 @@ public:
         const std::string& phrase,
         const std::string& text = "",
         Person* author = nullptr,
-        LawManager* laws = nullptr);
+        LawManager* laws = nullptr,
+        Zone* explicitZone = nullptr,
+        Formation* explicitFormation = nullptr);
 
     // Convenience authoring: creates a new Singular bearer (Object by default)
     std::shared_ptr<Singular> authorElementFromPhrase(
@@ -59,7 +61,14 @@ public:
         const std::string& phrase,
         const std::string& text = "",
         Person* author = nullptr,
-        LawManager* laws = nullptr);
+        LawManager* laws = nullptr,
+        Zone* explicitZone = nullptr,
+        Formation* explicitFormation = nullptr);
+
+    // Single-sink admission: guarantees a relation is admitted to exactly ONE sink without double-counting
+    void admitRelation(const std::shared_ptr<Relation>& rel,
+                       Zone* overrideZone = nullptr,
+                       Formation* overrideFormation = nullptr);
 
     // Form a parent-child containment relation between two web beings
     // Relational ordering is governed by relatePrecedes; no numeric order parameter.

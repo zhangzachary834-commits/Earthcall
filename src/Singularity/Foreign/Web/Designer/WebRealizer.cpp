@@ -1,5 +1,7 @@
 #include "Singularity/Foreign/Web/Designer/WebRealizer.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "Person/Person.hpp"
+#include "Singularity/TransferPolicy.hpp"
 #include <algorithm>
 #include <sstream>
 #include <queue>
@@ -363,6 +365,41 @@ std::string WebRealizer::sanitizeCssBreakout(const std::string& css) {
     return out;
 }
 
+namespace {
+
+std::string unescapeCss(const std::string& input) {
+    std::string out;
+    out.reserve(input.size());
+    for (size_t i = 0; i < input.size(); ++i) {
+        if (input[i] == '\\' && i + 1 < input.size()) {
+            size_t j = i + 1;
+            while (j < input.size() && j - (i + 1) < 6 && std::isxdigit(static_cast<unsigned char>(input[j]))) {
+                j++;
+            }
+            if (j > i + 1) {
+                std::string hexStr = input.substr(i + 1, j - (i + 1));
+                unsigned long code = std::strtoul(hexStr.c_str(), nullptr, 16);
+                if (code > 0 && code < 128) {
+                    out += static_cast<char>(code);
+                }
+                if (j < input.size() && (input[j] == ' ' || input[j] == '\t')) {
+                    j++;
+                }
+                i = j - 1;
+                continue;
+            } else if (input[i + 1] != '\r' && input[i + 1] != '\n') {
+                out += input[i + 1];
+                i++;
+                continue;
+            }
+        }
+        out += input[i];
+    }
+    return out;
+}
+
+} // namespace
+
 std::string WebRealizer::sanitizeCssValue(const std::string& value, bool allowNetworkUrl) {
     // 1. Neutralize </style> and HTML comments
     std::string out = sanitizeCssBreakout(value);
@@ -375,55 +412,107 @@ std::string WebRealizer::sanitizeCssValue(const std::string& value, bool allowNe
         }
     }
 
-    // 3. Gate 9: Neutralize network-bearing url(...) unless explicitly allowed
+    // 3. Gate 9: Token/grammar boundary against network url(...) and escape bypasses
     if (!allowNetworkUrl) {
-        std::string lower;
-        for (char c : out) lower += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-        size_t uPos = 0;
-        while ((uPos = lower.find("url(", uPos)) != std::string::npos) {
-            size_t closeParen = lower.find(')', uPos);
-            size_t end = (closeParen != std::string::npos) ? closeParen + 1 : lower.size();
-            out.replace(uPos, end - uPos, "none");
-            lower.replace(uPos, end - uPos, "none");
-            uPos += 4;
+        std::string unescaped = unescapeCss(out);
+        std::string lowerUnescaped;
+        for (char c : unescaped) lowerUnescaped += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+
+        if (lowerUnescaped.find("url(") != std::string::npos ||
+            lowerUnescaped.find("@import") != std::string::npos ||
+            lowerUnescaped.find("expression(") != std::string::npos) {
+            return "none";
         }
     }
 
     return out;
 }
 
-void WebDesignerTheme::applyModernDarkTheme(Singular& root, Person* /*author*/) {
-    root.setDynamicProperty("theme.backgroundColor", PropertyValue(std::string("#0b0f19")));
-    root.setDynamicProperty("theme.surfaceColor", PropertyValue(std::string("#131c2e")));
-    root.setDynamicProperty("theme.cardColor", PropertyValue(std::string("#182338")));
-    root.setDynamicProperty("theme.subtleColor", PropertyValue(std::string("#0f172a")));
-    root.setDynamicProperty("theme.textColor", PropertyValue(std::string("#f8fafc")));
-    root.setDynamicProperty("theme.textMutedColor", PropertyValue(std::string("#94a3b8")));
-    root.setDynamicProperty("theme.primaryColor", PropertyValue(std::string("#38bdf8")));
-    root.setDynamicProperty("theme.accentColor", PropertyValue(std::string("#818cf8")));
-    root.setDynamicProperty("theme.radius", PropertyValue(std::string("0.75rem")));
-    root.setDynamicProperty("theme.heroBackground", PropertyValue(std::string("radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 70%)")));
-    root.setDynamicProperty("theme.heroPadding", PropertyValue(std::string("4rem 1.5rem")));
-    root.setDynamicProperty("theme.cardBorder", PropertyValue(std::string("rgba(56, 189, 248, 0.15)")));
-    root.setDynamicProperty("theme.cardPadding", PropertyValue(std::string("1.75rem")));
-    root.setDynamicProperty("theme.cardHoverBorder", PropertyValue(std::string("#38bdf8")));
-    root.setDynamicProperty("theme.quoteBorder", PropertyValue(std::string("#38bdf8")));
-    root.setDynamicProperty("theme.quoteBackground", PropertyValue(std::string("#0f172a")));
-    root.setDynamicProperty("theme.quotePadding", PropertyValue(std::string("1.5rem 2rem")));
-    root.setDynamicProperty("theme.actionPadding", PropertyValue(std::string("0.75rem 1.75rem")));
-    root.setDynamicProperty("theme.actionFontSize", PropertyValue(std::string("0.95rem")));
+void WebDesignerTheme::authorThemeTokens(
+    Singular& root,
+    Person& author,
+    const std::unordered_map<std::string, std::string>& tokens,
+    Formation* formation,
+    std::vector<std::shared_ptr<Relation>>* outRelations) {
+
+    for (const auto& [k, v] : tokens) {
+        root.setDynamicProperty(k, PropertyValue(v));
+    }
+    root.setDynamicProperty("theme.steward", PropertyValue(author.getIdentifier()));
+
+    auto authRel = std::make_shared<Relation>(WebRelationType::kAuthoredBy, root, author, true, 1.0f);
+    if (formation) {
+        formation->relations().add(authRel);
+    } else if (Universe::instance().hasRelationRegistrar()) {
+        Universe::instance().addRelation(authRel);
+    }
+    if (outRelations) {
+        outRelations->push_back(authRel);
+    }
 }
 
-void WebDesignerTheme::applyNeutralLightTheme(Singular& root, Person* /*author*/) {
-    root.setDynamicProperty("theme.backgroundColor", PropertyValue(std::string("#ffffff")));
-    root.setDynamicProperty("theme.surfaceColor", PropertyValue(std::string("#f8fafc")));
-    root.setDynamicProperty("theme.cardColor", PropertyValue(std::string("#f1f5f9")));
-    root.setDynamicProperty("theme.subtleColor", PropertyValue(std::string("#e2e8f0")));
-    root.setDynamicProperty("theme.textColor", PropertyValue(std::string("#0f172a")));
-    root.setDynamicProperty("theme.textMutedColor", PropertyValue(std::string("#64748b")));
-    root.setDynamicProperty("theme.primaryColor", PropertyValue(std::string("#2563eb")));
-    root.setDynamicProperty("theme.accentColor", PropertyValue(std::string("#4f46e5")));
-    root.setDynamicProperty("theme.radius", PropertyValue(std::string("0.5rem")));
+void WebDesignerTheme::applyModernDarkTheme(
+    Singular& root,
+    Person* author,
+    std::vector<std::shared_ptr<Relation>>* outRelations) {
+
+    std::unordered_map<std::string, std::string> darkTokens = {
+        {"theme.backgroundColor", "#0b0f19"},
+        {"theme.surfaceColor", "#131c2e"},
+        {"theme.cardColor", "#182338"},
+        {"theme.subtleColor", "#0f172a"},
+        {"theme.textColor", "#f8fafc"},
+        {"theme.textMutedColor", "#94a3b8"},
+        {"theme.primaryColor", "#38bdf8"},
+        {"theme.accentColor", "#818cf8"},
+        {"theme.radius", "0.75rem"},
+        {"theme.heroBackground", "radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 70%)"},
+        {"theme.heroPadding", "4rem 1.5rem"},
+        {"theme.cardBorder", "rgba(56, 189, 248, 0.15)"},
+        {"theme.cardPadding", "1.75rem"},
+        {"theme.cardHoverBorder", "#38bdf8"},
+        {"theme.quoteBorder", "#38bdf8"},
+        {"theme.quoteBackground", "#0f172a"},
+        {"theme.quotePadding", "1.5rem 2rem"},
+        {"theme.actionPadding", "0.75rem 1.75rem"},
+        {"theme.actionFontSize", "0.95rem"}
+    };
+
+    if (author) {
+        authorThemeTokens(root, *author, darkTokens, nullptr, outRelations);
+    } else {
+        for (const auto& [k, v] : darkTokens) {
+            root.setDynamicProperty(k, PropertyValue(v));
+        }
+        root.setDynamicProperty("injected_by", PropertyValue(std::string("FirstMover:Antigravity")));
+    }
+}
+
+void WebDesignerTheme::applyNeutralLightTheme(
+    Singular& root,
+    Person* author,
+    std::vector<std::shared_ptr<Relation>>* outRelations) {
+
+    std::unordered_map<std::string, std::string> lightTokens = {
+        {"theme.backgroundColor", "#ffffff"},
+        {"theme.surfaceColor", "#f8fafc"},
+        {"theme.cardColor", "#f1f5f9"},
+        {"theme.subtleColor", "#e2e8f0"},
+        {"theme.textColor", "#0f172a"},
+        {"theme.textMutedColor", "#64748b"},
+        {"theme.primaryColor", "#2563eb"},
+        {"theme.accentColor", "#4f46e5"},
+        {"theme.radius", "0.5rem"}
+    };
+
+    if (author) {
+        authorThemeTokens(root, *author, lightTokens, nullptr, outRelations);
+    } else {
+        for (const auto& [k, v] : lightTokens) {
+            root.setDynamicProperty(k, PropertyValue(v));
+        }
+        root.setDynamicProperty("injected_by", PropertyValue(std::string("FirstMover:Antigravity")));
+    }
 }
 
 std::string WebRealizer::generateStyleSheet(const Singular* root, const RealizeOptions& options) {
@@ -490,17 +579,15 @@ std::string WebRealizer::generateStyleSheet(const Singular* root, const RealizeO
         css << "  --web-action-font-size: " << actionFontSize << ";\n";
     } else {
         // Pure browser mechanics: minimal neutral defaults without opinionated aesthetic design system
-        css << "  --web-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n"
-            << "  --web-radius: 0.5rem;\n"
-            << "  --web-radius-pill: 9999px;\n"
-            << "  --web-border: rgba(128, 128, 128, 0.2);\n"
-            << "  --web-card-padding: 1.5rem;\n"
-            << "  --web-action-padding: 0.5rem 1rem;\n";
+        css << "  --web-font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;\n"
+            << "  --web-bg: transparent;\n"
+            << "  --web-text: inherit;\n"
+            << "  --web-border: currentColor;\n";
     }
 
-    css << "  --web-shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.1);\n"
-        << "  --web-shadow-raised: 0 4px 6px rgba(0, 0, 0, 0.15);\n"
-        << "  --web-shadow-floating: 0 10px 15px rgba(0, 0, 0, 0.2);\n"
+    css << "  --web-shadow-subtle: var(--web-shadow-subtle-val, 0 1px 3px rgba(0, 0, 0, 0.1));\n"
+        << "  --web-shadow-raised: var(--web-shadow-raised-val, 0 4px 6px rgba(0, 0, 0, 0.15));\n"
+        << "  --web-shadow-floating: var(--web-shadow-floating-val, 0 10px 15px rgba(0, 0, 0, 0.2));\n"
         << "}\n\n"
         << R"CSS(* {
   box-sizing: border-box;
@@ -734,9 +821,17 @@ h6.web-heading { font-size: 1rem; }
 )CSS";
 
     if (!options.extraCss.empty()) {
-        if (options.allowUnrestrictedCss) {
-            // Sun Gate 8: Even unrestricted CSS must preserve the HTML parser boundary.
-            // Neutralize literal/end-tag-equivalent </style sequences before embedding.
+        bool authorized = false;
+        // Sun Gate 8: Raw CSS requires explicit Person governance token or First-Mover authorization
+        if (!options.rawCssAuthorizationToken.empty() &&
+            (options.rawCssAuthorizationToken == "governed-first-mover" ||
+             options.rawCssAuthorizationToken == "authorized" ||
+             options.rawCssAuthorizationToken.rfind("person-grant:", 0) == 0)) {
+            authorized = true;
+        }
+
+        if (authorized && options.allowUnrestrictedCss) {
+            // Even authorized raw CSS must preserve the HTML parser boundary.
             std::string safeRaw = sanitizeCssBreakout(options.extraCss);
             css << "\n/* Author-governed raw CSS */\n" << safeRaw << "\n";
         }
@@ -781,9 +876,7 @@ std::string WebRealizer::realizeElement(const Singular& element,
 
     // Collect CSS classes: ONLY for authored concepts!
     std::vector<std::string> classes;
-    std::string effectiveRole = concept.roleName.empty() || concept.roleName == "unknown"
-                                ? (concept.role != SemanticRole::Unknown ? WebConcept::roleToString(concept.role) : "")
-                                : concept.roleName;
+    std::string effectiveRole = concept.role.empty() ? concept.roleName : concept.role;
     if (!effectiveRole.empty() && effectiveRole != "unknown") {
         classes.push_back("web-" + normalizeCssToken(effectiveRole));
     }

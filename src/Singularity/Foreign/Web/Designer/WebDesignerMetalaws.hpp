@@ -33,7 +33,9 @@ class WebDesignerMetalaws {
 public:
     // Authors a single vocabulary word into the world with explicit Person stewardship.
     // In accordance with Earthcall ontology, Laws expressing meaning require human stewardship.
-    // Ordinary authored Laws receive authority 1 (least privilege), NOT kernel authority 10.
+    // Ordinary authored Laws receive clamped authority (0), NOT First-Mover authority.
+    // If lawId already exists and a new action is provided, re-authors a new version with
+    // "redefined-from" provenance and updates the denotes Relation.
     static void authorWord(Person& author,
                            LawManager& laws,
                            const std::string& symbol,
@@ -44,27 +46,51 @@ public:
                            std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 
     // Loads vocabulary definitions from an authored Earthcall data fixture (JSON) into the world.
-    // Meaning lives in authored data, not in C++ tables.
-    // If fixturePath is empty, loads from "saves/fixtures/web_vocabulary_seed.json".
+    // Sun Gate 1 & Gate 2: The loader does NOT manufacture authorship. Recorded stewardship is
+    // restored from the fixture. If recorded author cannot be resolved, Laws remain unauthored
+    // in canonical quarantine and refuse to fire.
     static bool loadAuthoredVocabulary(const std::string& fixturePath,
-                                       Person& author,
                                        LawManager& laws,
                                        Formation* formation = nullptr,
                                        std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 
-    // Loads vocabulary from a JSON string directly (e.g. for dynamic in-memory test redefinitions).
+    // Compatibility overload taking loader Person: preserves recorded stewardship; loader is NOT assigned as author!
+    static bool loadAuthoredVocabulary(const std::string& fixturePath,
+                                       Person& loader,
+                                       LawManager& laws,
+                                       Formation* formation = nullptr,
+                                       std::vector<std::shared_ptr<Relation>>* outRelations = nullptr) {
+        (void)loader;
+        return loadAuthoredVocabulary(fixturePath, laws, formation, outRelations);
+    }
+
+    // Loads vocabulary from a JSON string directly.
     static bool loadAuthoredVocabularyFromJsonString(const std::string& jsonString,
-                                                     Person& author,
                                                      LawManager& laws,
                                                      Formation* formation = nullptr,
                                                      std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 
-    // Authors standard web authoring vocabulary into the world with explicit Person stewardship
-    // by loading the authored fixture "saves/fixtures/web_vocabulary_seed.json".
+    // Compatibility overload taking loader Person: preserves recorded stewardship; loader is NOT assigned as author!
+    static bool loadAuthoredVocabularyFromJsonString(const std::string& jsonString,
+                                                     Person& loader,
+                                                     LawManager& laws,
+                                                     Formation* formation = nullptr,
+                                                     std::vector<std::shared_ptr<Relation>>* outRelations = nullptr) {
+        (void)loader;
+        return loadAuthoredVocabularyFromJsonString(jsonString, laws, formation, outRelations);
+    }
+
+    // Authors standard web authoring vocabulary into the world by loading the authored fixture
+    // "saves/fixtures/web_vocabulary_seed.json", restoring recorded stewardship.
     static void authorVocabulary(Person& author,
                                  LawManager& laws,
                                  Formation* formation = nullptr,
                                  std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    // Loads standard web authoring vocabulary restoring recorded stewardship.
+    static void loadVocabulary(LawManager& laws,
+                               Formation* formation = nullptr,
+                               std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 
     // Compatibility registration for modality infrastructure (does NOT manufacture fake author)
     static void syncRegister(LawManager& laws);

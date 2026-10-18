@@ -57,7 +57,9 @@ Singular& WebDesignerChannel::authorElementFromPhrase(
     const std::string& phrase,
     const std::string& text,
     Person* author,
-    LawManager* laws) {
+    LawManager* laws,
+    Zone* explicitZone,
+    Formation* explicitFormation) {
 
     WebConcept concept;
     Object compileSlot;
@@ -83,15 +85,7 @@ Singular& WebDesignerChannel::authorElementFromPhrase(
     if (author) {
         auto authRel = std::make_shared<Relation>(WebRelationType::kAuthoredBy, target, *author, true, 1.0f);
         _draftRelations.push_back(authRel);
-        if (_activeZone) {
-            _activeZone->getFormation().relations().add(authRel);
-        }
-        if (_activeFormation) {
-            _activeFormation->relations().add(authRel);
-        }
-        if (Universe::instance().hasRelationRegistrar()) {
-            Universe::instance().addRelation(authRel);
-        }
+        admitRelation(authRel, explicitZone, explicitFormation);
     }
 
     return target;
@@ -102,17 +96,22 @@ std::shared_ptr<Singular> WebDesignerChannel::authorElementFromPhrase(
     const std::string& phrase,
     const std::string& text,
     Person* author,
-    LawManager* laws) {
+    LawManager* laws,
+    Zone* explicitZone,
+    Formation* explicitFormation) {
 
     auto elem = std::make_shared<Object>();
     elem->setObjectID(identifier);
-    authorElementFromPhrase(*elem, phrase, text, author, laws);
+    authorElementFromPhrase(*elem, phrase, text, author, laws, explicitZone, explicitFormation);
 
-    if (_activeZone) {
-        _activeZone->addObject(elem);
+    Zone* targetZone = explicitZone ? explicitZone : _activeZone;
+    Formation* targetFormation = explicitFormation ? explicitFormation : _activeFormation;
+
+    if (targetZone) {
+        targetZone->addObject(elem);
     }
-    if (_activeFormation) {
-        _activeFormation->addMember(elem.get());
+    if (targetFormation) {
+        targetFormation->addMember(elem.get());
     }
 
     _elementCache[identifier] = elem;
@@ -129,10 +128,32 @@ std::shared_ptr<Singular> WebDesignerChannel::authorElementInZone(
 
     auto elem = std::make_shared<Object>();
     elem->setObjectID(identifier);
-    authorElementFromPhrase(*elem, phrase, text, author, laws);
+    // Sun Gate 11: Explicitly scope both being and provenance to the supplied Zone!
+    authorElementFromPhrase(*elem, phrase, text, author, laws, &zone, nullptr);
     zone.addObject(elem);
     _elementCache[identifier] = elem;
     return elem;
+}
+
+void WebDesignerChannel::admitRelation(
+    const std::shared_ptr<Relation>& rel,
+    Zone* overrideZone,
+    Formation* overrideFormation) {
+
+    if (!rel) return;
+
+    // Sun Gate 10: Exactly ONE canonical admission sink per act.
+    if (overrideFormation) {
+        overrideFormation->relations().add(rel);
+    } else if (overrideZone) {
+        overrideZone->getFormation().relations().add(rel);
+    } else if (_activeFormation) {
+        _activeFormation->relations().add(rel);
+    } else if (_activeZone) {
+        _activeZone->getFormation().relations().add(rel);
+    } else if (Universe::instance().hasRelationRegistrar()) {
+        Universe::instance().addRelation(rel);
+    }
 }
 
 void WebDesignerChannel::setAuthoringContext(Zone* zone, Formation* formation) {
@@ -168,15 +189,7 @@ std::shared_ptr<Relation> WebDesignerChannel::relateContains(
         true); // directed = true
 
     _draftRelations.push_back(rel);
-    if (_activeZone) {
-        _activeZone->getFormation().relations().add(rel);
-    }
-    if (_activeFormation) {
-        _activeFormation->relations().add(rel);
-    }
-    if (Universe::instance().hasRelationRegistrar()) {
-        Universe::instance().addRelation(rel);
-    }
+    admitRelation(rel, nullptr, nullptr);
     return rel;
 }
 
@@ -193,15 +206,7 @@ std::shared_ptr<Relation> WebDesignerChannel::relatePrecedes(
         true); // directed = true: first precedes second
 
     _draftRelations.push_back(rel);
-    if (_activeZone) {
-        _activeZone->getFormation().relations().add(rel);
-    }
-    if (_activeFormation) {
-        _activeFormation->relations().add(rel);
-    }
-    if (Universe::instance().hasRelationRegistrar()) {
-        Universe::instance().addRelation(rel);
-    }
+    admitRelation(rel, nullptr, nullptr);
     return rel;
 }
 

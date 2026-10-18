@@ -51,24 +51,36 @@ void WebDesignerMetalaws::authorWord(Person& author,
     // Retain Lexeme canonically in LanguageSystem so relation endpoint never dangles
     auto lexeme = Singularity::Language::LanguageSystem::instance().intern(symbol, stableLexemeId);
 
-    // Reuse existing Law if already added, allowing multiple Lexemes (synonyms) to denote the same Law
     Law* targetLaw = laws.find(lawId);
     if (!targetLaw) {
         auto law = std::make_shared<Law>(lawId, std::vector<Singular*>{&author});
         law->setLawIdentifier(lawId);
-        // Sun Gate 10: Authored vocabulary laws receive ordinary authored authority (1), NOT kernel 10.
-        law->grantAuthority(1);
+        // Sun Gate 2/3: Ordinary authored Laws use clamped authority level (0), never grantAuthority!
+        law->setAuthorityLevel(0);
         law->setEnabled(true);
         law->setActionModel(std::move(action));
         laws.add(law);
         targetLaw = law.get();
+    } else {
+        // Sun Gate 5: Real Semantic Redefinition!
+        // Author an updated Law version under Person stewardship, recording provenance
+        static int s_redefCounter = 1;
+        std::string versionedId = lawId + ".v" + std::to_string(s_redefCounter++);
+        auto newLaw = std::make_shared<Law>(versionedId, std::vector<Singular*>{&author});
+        newLaw->setLawIdentifier(versionedId);
+        newLaw->setAuthorityLevel(0);
+        newLaw->setEnabled(true);
+        newLaw->setActionModel(std::move(action));
+        newLaw->recordProvenance("redefined-from", *targetLaw, author);
+        laws.add(newLaw);
+        targetLaw = newLaw.get();
     }
 
     auto rel = std::make_shared<Relation>("denotes", *lexeme, *targetLaw, true, 1.0f);
+    // Sun Gate 10: Single sink admission
     if (formation) {
         formation->relations().add(rel);
-    }
-    if (Universe::instance().hasRelationRegistrar()) {
+    } else if (Universe::instance().hasRelationRegistrar()) {
         Universe::instance().addRelation(rel);
     }
     if (outRelations) {
@@ -78,51 +90,160 @@ void WebDesignerMetalaws::authorWord(Person& author,
 
 bool WebDesignerMetalaws::loadAuthoredVocabularyFromJsonString(
     const std::string& jsonString,
-    Person& author,
     LawManager& laws,
     Formation* formation,
     std::vector<std::shared_ptr<Relation>>* outRelations) {
     try {
         nlohmann::json root = nlohmann::json::parse(jsonString);
-        if (!root.contains("vocabulary") || !root["vocabulary"].is_array()) {
-            return false;
+
+        // Sun Gate 1 & 2: Provenance is restored from data; the importer is NOT the author!
+        std::string defaultAuthorName;
+        if (root.contains("author") && root["author"].is_string()) {
+            defaultAuthorName = root["author"].get<std::string>();
+        } else if (root.contains("injectedBy") && root["injectedBy"].contains("onBehalfOf")) {
+            defaultAuthorName = root["injectedBy"]["onBehalfOf"].get<std::string>();
         }
 
-        for (const auto& item : root["vocabulary"]) {
-            std::string symbol = item.value("symbol", "");
-            std::string lexemeId = item.value("lexemeId", "");
-            std::string lawId = item.value("lawId", "");
-            if (symbol.empty() || lawId.empty()) continue;
-            if (lexemeId.empty()) {
-                lexemeId = "lexeme.web." + symbol;
-            }
-
-            std::vector<ActionNode> subActions;
-            if (item.contains("actions") && item["actions"].is_array()) {
-                for (const auto& act : item["actions"]) {
-                    std::string path = act.value("path", "");
-                    if (path.empty()) continue;
-
-                    PropertyValue val;
-                    if (act.contains("value")) {
-                        const auto& v = act["value"];
-                        if (v.is_boolean()) {
-                            val = PropertyValue(v.get<bool>());
-                        } else if (v.is_number()) {
-                            val = PropertyValue(v.get<double>());
-                        } else if (v.is_string()) {
-                            val = PropertyValue(v.get<std::string>());
-                        }
+        auto resolvePerson = [](const std::string& name) -> Person* {
+            if (name.empty()) return nullptr;
+            for (Singular* b : Universe::instance().beings()) {
+                if (auto* p = dynamic_cast<Person*>(b)) {
+                    if (p->matchesIdentifier(name) || p->getIdentifier() == name || p->getDisplayName() == name ||
+                        (p->called() && p->called()->getSymbol() == name)) {
+                        return p;
                     }
-
-                    // Set both semantic property path and compilation output path
-                    subActions.push_back(ActionNode::set(path, val));
-                    subActions.push_back(ActionNode::set("compilation.output.web." + path, val));
                 }
             }
+            return nullptr;
+        };
 
-            ActionNode action = subActions.size() == 1 ? subActions[0] : ActionNode::sequence(subActions);
-            authorWord(author, laws, symbol, lexemeId, lawId, std::move(action), formation, outRelations);
+        // 1. Canonical Earthcall Laws loading (if root contains "laws" array)
+        if (root.contains("laws") && root["laws"].is_array()) {
+            for (const auto& lj : root["laws"]) {
+                auto law = Law::fromJson(lj);
+                if (!law) continue;
+                // Reattach authors from recorded authors array
+                if (lj.contains("authors") && lj["authors"].is_array()) {
+                    for (const auto& authVal : lj["authors"]) {
+                        std::string authName = authVal.is_string() ? authVal.get<std::string>() : "";
+                        if (Person* p = resolvePerson(authName)) {
+                            law->addAuthor(*p);
+                        }
+                    }
+                } else if (!defaultAuthorName.empty()) {
+                    if (Person* p = resolvePerson(defaultAuthorName)) {
+                        law->addAuthor(*p);
+                    }
+                }
+                // Authored authority is clamped to kAuthoredCeiling (0)
+                law->setAuthorityLevel(lj.value("authority", 0));
+                laws.add(law);
+            }
+        }
+
+        // 2. Canonical Earthcall Lexemes loading
+        if (root.contains("lexemes") && root["lexemes"].is_array()) {
+            for (const auto& lx : root["lexemes"]) {
+                std::string sym = lx.value("symbol", "");
+                std::string lid = lx.value("id", "lexeme.web." + sym);
+                if (!sym.empty()) {
+                    Singularity::Language::LanguageSystem::instance().intern(sym, lid);
+                }
+            }
+        }
+
+        // 3. Canonical Earthcall Relations loading
+        if (root.contains("relations") && root["relations"].is_array()) {
+            for (const auto& rj : root["relations"]) {
+                std::string type = rj.value("type", "denotes");
+                std::string srcId = rj.value("source", rj.value("a", ""));
+                std::string tgtId = rj.value("target", rj.value("b", ""));
+                Singular* src = nullptr;
+                Singular* tgt = nullptr;
+                for (Singular* b : Universe::instance().beings()) {
+                    if (!b) continue;
+                    if (b->getIdentifier() == srcId) src = b;
+                    if (b->getIdentifier() == tgtId) tgt = b;
+                }
+                if (!tgt) {
+                    tgt = laws.find(tgtId);
+                }
+                if (src && tgt) {
+                    auto rel = std::make_shared<Relation>(type, *src, *tgt, rj.value("directed", true), rj.value("weight", 1.0f));
+                    if (formation) formation->relations().add(rel);
+                    else if (Universe::instance().hasRelationRegistrar()) Universe::instance().addRelation(rel);
+                    if (outRelations) outRelations->push_back(rel);
+                }
+            }
+        }
+
+        // 4. Vocabulary items format
+        if (root.contains("vocabulary") && root["vocabulary"].is_array()) {
+            for (const auto& item : root["vocabulary"]) {
+                std::string symbol = item.value("symbol", "");
+                std::string lexemeId = item.value("lexemeId", "");
+                std::string lawId = item.value("lawId", "");
+                if (symbol.empty() || lawId.empty()) continue;
+                if (lexemeId.empty()) {
+                    lexemeId = "lexeme.web." + symbol;
+                }
+
+                std::string itemAuthor = item.value("author", defaultAuthorName);
+                Person* steward = resolvePerson(itemAuthor);
+
+                std::vector<ActionNode> subActions;
+                if (item.contains("actions") && item["actions"].is_array()) {
+                    for (const auto& act : item["actions"]) {
+                        std::string path = act.value("path", "");
+                        if (path.empty()) continue;
+
+                        PropertyValue val;
+                        if (act.contains("value")) {
+                            const auto& v = act["value"];
+                            if (v.is_boolean()) {
+                                val = PropertyValue(v.get<bool>());
+                            } else if (v.is_number()) {
+                                val = PropertyValue(v.get<double>());
+                            } else if (v.is_string()) {
+                                val = PropertyValue(v.get<std::string>());
+                            }
+                        }
+
+                        subActions.push_back(ActionNode::set(path, val));
+                        subActions.push_back(ActionNode::set("compilation.output.web." + path, val));
+                    }
+                }
+
+                ActionNode action = subActions.size() == 1 ? subActions[0] : ActionNode::sequence(subActions);
+
+                auto lexeme = Singularity::Language::LanguageSystem::instance().intern(symbol, lexemeId);
+                Law* targetLaw = laws.find(lawId);
+                if (!targetLaw) {
+                    std::vector<Singular*> authorList;
+                    if (steward) {
+                        authorList.push_back(steward);
+                    }
+                    // If steward is not found in the world, authorList is empty -> Law remains Unauthored!
+                    auto law = std::make_shared<Law>(lawId, authorList);
+                    law->setLawIdentifier(lawId);
+                    // Authority clamped to kAuthoredCeiling (0)
+                    law->setAuthorityLevel(0);
+                    law->setEnabled(true);
+                    law->setActionModel(std::move(action));
+                    laws.add(law);
+                    targetLaw = law.get();
+                }
+
+                auto rel = std::make_shared<Relation>("denotes", *lexeme, *targetLaw, true, 1.0f);
+                if (formation) {
+                    formation->relations().add(rel);
+                } else if (Universe::instance().hasRelationRegistrar()) {
+                    Universe::instance().addRelation(rel);
+                }
+                if (outRelations) {
+                    outRelations->push_back(rel);
+                }
+            }
         }
         return true;
     } catch (...) {
@@ -132,7 +253,6 @@ bool WebDesignerMetalaws::loadAuthoredVocabularyFromJsonString(
 
 bool WebDesignerMetalaws::loadAuthoredVocabulary(
     const std::string& fixturePath,
-    Person& author,
     LawManager& laws,
     Formation* formation,
     std::vector<std::shared_ptr<Relation>>* outRelations) {
@@ -142,19 +262,27 @@ bool WebDesignerMetalaws::loadAuthoredVocabulary(
         return false;
     }
     std::string content((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-    return loadAuthoredVocabularyFromJsonString(content, author, laws, formation, outRelations);
+    return loadAuthoredVocabularyFromJsonString(content, laws, formation, outRelations);
 }
 
-void WebDesignerMetalaws::authorVocabulary(Person& author,
+void WebDesignerMetalaws::authorVocabulary(Person& /*author*/,
                                            LawManager& laws,
                                            Formation* formation,
                                            std::vector<std::shared_ptr<Relation>>* outRelations) {
     // In accordance with Sun's decree & Gate 1/Gate 2:
     // C++ does not contain authoritative semantic definitions of web vocabulary.
     // Meaning is loaded from authored Earthcall data fixtures, preserving human stewardship.
-    if (!loadAuthoredVocabulary("", author, laws, formation, outRelations)) {
+    if (!loadAuthoredVocabulary("", laws, formation, outRelations)) {
         // Fallback if running in directory where fixture is relative
-        loadAuthoredVocabulary("../saves/fixtures/web_vocabulary_seed.json", author, laws, formation, outRelations);
+        loadAuthoredVocabulary("../saves/fixtures/web_vocabulary_seed.json", laws, formation, outRelations);
+    }
+}
+
+void WebDesignerMetalaws::loadVocabulary(LawManager& laws,
+                                         Formation* formation,
+                                         std::vector<std::shared_ptr<Relation>>* outRelations) {
+    if (!loadAuthoredVocabulary("", laws, formation, outRelations)) {
+        loadAuthoredVocabulary("../saves/fixtures/web_vocabulary_seed.json", laws, formation, outRelations);
     }
 }
 
@@ -187,6 +315,16 @@ WebConcept WebDesignerMetalaws::compilePhrase(const std::string& phrase,
 
     collectFrom(extraRelations);
     collectFrom(Universe::instance().relations());
+
+    // For identical symbols, the most recently added denotes relation takes precedence (repointing)
+    std::unordered_map<std::string, Law*> latestMapping;
+    for (const auto& m : mappings) {
+        latestMapping[m.symbol] = m.law;
+    }
+    mappings.clear();
+    for (const auto& [sym, law] : latestMapping) {
+        mappings.push_back({sym, law});
+    }
 
     // Sort mappings by symbol length descending (greedy longest-match)
     std::sort(mappings.begin(), mappings.end(), [](const LexemeMapping& a, const LexemeMapping& b) {

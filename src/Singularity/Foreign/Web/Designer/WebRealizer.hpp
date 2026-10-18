@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <unordered_map>
 
 class Person;
 
@@ -23,6 +24,8 @@ struct RealizeOptions {
     bool includeInteractiveScript;
     bool minify;
     std::string extraCss;
+    std::string rawCssAuthorizationToken; // Explicit Person governance or First-Mover authorization token
+    bool allowUnrestrictedCss; // Requires explicit Person governance token or TransferPolicy gate
 
     RealizeOptions()
         : title("Earthcall Web Designer"),
@@ -30,9 +33,8 @@ struct RealizeOptions {
           includeInteractiveScript(true),
           minify(false),
           extraCss(""),
+          rawCssAuthorizationToken(""),
           allowUnrestrictedCss(false) {}
-
-    bool allowUnrestrictedCss; // Requires explicit Person governance to inject raw unrestricted CSS
 };
 
 // ---------------------------------------------------------------------------
@@ -95,8 +97,9 @@ public:
     // Even unrestricted raw CSS must preserve the HTML parser boundary.
     static std::string sanitizeCssBreakout(const std::string& css);
 
-    // Sanitizes a single CSS property value: neutralizes </style>, strips semicolons and curly
-    // braces to prevent smuggling additional declarations, and blocks network url(...) unless permitted.
+    // Sanitizes a single CSS property value: unescapes CSS escape sequences, neutralizes </style>,
+    // strips semicolons and curly braces to prevent smuggling additional declarations,
+    // and blocks network url(...) unless permitted.
     static std::string sanitizeCssValue(const std::string& value, bool allowNetworkUrl = false);
 };
 
@@ -112,10 +115,21 @@ public:
 class WebDesignerTheme {
 public:
     // Authors full modern dark theme design tokens onto site/page root with Person stewardship
-    static void applyModernDarkTheme(Singular& root, Person* author = nullptr);
+    static void applyModernDarkTheme(Singular& root,
+                                     Person* author = nullptr,
+                                     std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 
     // Authors clean neutral light theme design tokens onto site/page root with Person stewardship
-    static void applyNeutralLightTheme(Singular& root, Person* author = nullptr);
+    static void applyNeutralLightTheme(Singular& root,
+                                       Person* author = nullptr,
+                                       std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    // Authors custom design system tokens with explicit Person stewardship
+    static void authorThemeTokens(Singular& root,
+                                  Person& author,
+                                  const std::unordered_map<std::string, std::string>& tokens,
+                                  Formation* formation = nullptr,
+                                  std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 };
 
 } // namespace Web

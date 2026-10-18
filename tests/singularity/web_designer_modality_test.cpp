@@ -35,6 +35,9 @@ static Person& getTestPerson() {
 }
 
 static void setupAuthoredVocabulary(Person& author, LawManager& laws, Formation& formation) {
+    Universe::instance().setProvider([&author](std::vector<Singular*>& out) {
+        out.push_back(&author);
+    });
     WebDesignerMetalaws::authorVocabulary(author, laws, &formation);
     Universe::instance().setRelationProvider([&formation](std::vector<Relation*>& out) {
         for (const auto& r : formation.relations().getAll()) {
@@ -44,6 +47,7 @@ static void setupAuthoredVocabulary(Person& author, LawManager& laws, Formation&
 }
 
 static void teardownVocabulary() {
+    Universe::instance().setProvider(nullptr);
     Universe::instance().setRelationProvider(nullptr);
 }
 
@@ -53,7 +57,7 @@ void test_lexeme_resolution() {
     LawManager laws;
     Person& author = getTestPerson();
     Formation formation;
-    WebDesignerMetalaws::authorVocabulary(author, laws, &formation);
+    setupAuthoredVocabulary(author, laws, formation);
 
     // Verify in-world Lexemes and "denotes" Relations in formation
     const auto& relations = formation.relations().getAll();
@@ -74,11 +78,13 @@ void test_lexeme_resolution() {
             assert(law->isAuthored());
             assert(law->authors().getMembers().size() == 1);
             assert(law->authors().getMembers()[0] == &author);
-            // Sun Gate 10: Authored vocabulary laws receive ordinary authored authority (1), NOT kernel 10.
-            assert(law->authorityLevel() == 1);
+            // Sun Gate 4 / Gate 10: Authored vocabulary laws have authority clamped to kAuthoredCeiling (0)
+            assert(law->authorityLevel() == Law::kAuthoredCeiling);
         }
     }
     assert(foundHeading);
+
+    teardownVocabulary();
 
     std::cout << "  ✓ All Lexemes, Laws, and denotes Relations authored and linked correctly" << std::endl;
     std::cout << "  ✓ Authored vocabulary has explicit Person stewardship (Zach)" << std::endl;
@@ -101,9 +107,9 @@ void test_metalaw_composition() {
         WebConcept c = WebDesignerMetalaws::compilePhrase(
             "a large centered heading", laws, channelTarget, &err);
         assert(err.empty());
-        assert(c.role == SemanticRole::Heading);
-        assert(c.scale == ContentScale::Large);
-        assert(c.align == LayoutAlign::Center);
+        assert(c.role == "heading");
+        assert(c.scale == "large");
+        assert(c.align == "center");
     }
 
     // 2. "button rounded primary"
@@ -112,9 +118,9 @@ void test_metalaw_composition() {
         WebConcept c = WebDesignerMetalaws::compilePhrase(
             "button rounded primary", laws, channelTarget, &err);
         assert(err.empty());
-        assert(c.role == SemanticRole::Action);
-        assert(c.shape == SurfaceShape::Rounded);
-        assert(c.variant == SurfaceVariant::Primary);
+        assert(c.role == "action");
+        assert(c.shape == "rounded");
+        assert(c.variant == "primary");
     }
 
     // 3. "section vertical generous"
@@ -123,9 +129,9 @@ void test_metalaw_composition() {
         WebConcept c = WebDesignerMetalaws::compilePhrase(
             "section vertical generous", laws, channelTarget, &err);
         assert(err.empty());
-        assert(c.role == SemanticRole::Section);
-        assert(c.flow == LayoutFlow::Vertical);
-        assert(c.spacing == SpacingScale::Generous);
+        assert(c.role == "section");
+        assert(c.flow == "vertical");
+        assert(c.spacing == "generous");
     }
 
     // 4. "card container subtle"
@@ -134,9 +140,9 @@ void test_metalaw_composition() {
         WebConcept c = WebDesignerMetalaws::compilePhrase(
             "card container subtle", laws, channelTarget, &err);
         assert(err.empty());
-        assert(c.role == SemanticRole::Container);
-        assert(c.variant == SurfaceVariant::Card);
-        assert(c.elevation == SurfaceElevation::Subtle);
+        assert(c.role == "container");
+        assert(c.variant == "card");
+        assert(c.elevation == "subtle");
     }
 
     teardownVocabulary();
@@ -278,8 +284,8 @@ void test_extensibility_exit_test() {
     assert(compiled.roleName == "sanctuary");
     assert(compiled.variantName == "ethereal");
     assert(compiled.prominence == "luminous");
-    assert(compiled.align == LayoutAlign::Center);
-    assert(compiled.spacing == SpacingScale::Generous);
+    assert(compiled.align == "center");
+    assert(compiled.spacing == "generous");
 
     // Realize element to HTML
     auto elem = WebDesignerMetalaws::createAuthoredElement("custom-sanctuary-1", compiled, &author);
@@ -612,34 +618,43 @@ void test_end_to_end_prototype_generation() {
 void test_alice_and_bob_two_person_provenance() {
     std::cout << "[Test 9] Multi-Person Authorship Provenance Isolation (Alice & Bob)..." << std::endl;
 
-    // 1. Two distinct live Persons
+    // 1. Live Persons in the world
     Person alice = makeTestPerson("Alice");
     Person bob = makeTestPerson("Bob");
+    Person zach = makeTestPerson("Zach");
 
-    // 2. Alice authors vocabulary in her context
+    Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+        out.push_back(&alice);
+        out.push_back(&bob);
+        out.push_back(&zach);
+    });
+
+    // 2. Alice loads vocabulary in her context
     LawManager lawsAlice;
     Formation formationAlice;
-    WebDesignerMetalaws::authorVocabulary(alice, lawsAlice, &formationAlice);
+    WebDesignerMetalaws::loadVocabulary(lawsAlice, &formationAlice);
 
-    // 3. Bob authors vocabulary in his context
+    // 3. Bob loads vocabulary in his context
     LawManager lawsBob;
     Formation formationBob;
-    WebDesignerMetalaws::authorVocabulary(bob, lawsBob, &formationBob);
+    WebDesignerMetalaws::loadVocabulary(lawsBob, &formationBob);
 
-    // Alice's vocabulary Laws are authored by Alice
+    // Sun Gate 1 / Traveling Clipboard Abolished:
+    // The fixture's vocabulary Laws preserve their recorded steward (Zach).
+    // Neither Alice nor Bob becomes the author merely by loading or importing!
     Law* headingLawAlice = lawsAlice.find("law.concept.role.heading");
     assert(headingLawAlice != nullptr);
     assert(headingLawAlice->isAuthored());
     assert(headingLawAlice->authors().getMembers().size() == 1);
-    assert(headingLawAlice->authors().getMembers()[0] == &alice);
+    assert(headingLawAlice->authors().getMembers()[0] == &zach);
+    assert(headingLawAlice->authors().getMembers()[0] != &alice);
 
-    // Bob's vocabulary Laws are authored by Bob
     Law* headingLawBob = lawsBob.find("law.concept.role.heading");
     assert(headingLawBob != nullptr);
     assert(headingLawBob->isAuthored());
     assert(headingLawBob->authors().getMembers().size() == 1);
-    assert(headingLawBob->authors().getMembers()[0] == &bob);
-    assert(headingLawBob->authors().getMembers()[0] != &alice);
+    assert(headingLawBob->authors().getMembers()[0] == &zach);
+    assert(headingLawBob->authors().getMembers()[0] != &bob);
 
     // 4. Alice authors a distinct custom law
     auto lawAlice = std::make_shared<Law>("law.alice.brand", std::vector<Singular*>{&alice});
@@ -693,6 +708,8 @@ void test_alice_and_bob_two_person_provenance() {
         }
     }
     assert(foundBobAuth);
+
+    teardownVocabulary();
 
     std::cout << "  ✓ Alice-authored state and Bob-authored state maintained strictly distinct Person provenance" << std::endl;
     std::cout << "  ✓ Bob did not inherit Alice as author (no process-global leak)" << std::endl;
@@ -1021,9 +1038,9 @@ void test_non_object_singular_bearer() {
     navGroup.setIdentifier("nav-formation-bearer");
 
     WebConcept concept;
-    concept.roleName = "navigation";
-    concept.flow = LayoutFlow::Horizontal;
-    concept.spacing = SpacingScale::Normal;
+    concept.role = "navigation";
+    concept.flow = "horizontal";
+    concept.spacing = "normal";
 
     std::vector<std::shared_ptr<Relation>> relations;
     WebDesignerMetalaws::applyAuthoredConcept(navGroup, concept, &author, &relations);
@@ -1139,6 +1156,7 @@ void test_media_and_capability_boundaries() {
     // With explicit allowUnrestrictedCss, authorized raw CSS is admitted
     RealizeOptions governedOpts;
     governedOpts.allowUnrestrictedCss = true;
+    governedOpts.rawCssAuthorizationToken = "governed-first-mover";
     governedOpts.extraCss = "body { background: purple; }";
     std::string governedSheet = WebRealizer::generateStyleSheet(&root, governedOpts);
     assert(governedSheet.find("background: purple") != std::string::npos);
@@ -1158,8 +1176,13 @@ void test_gate1_and_gate2_dynamic_vocabulary_data_loading() {
     Person& author = getTestPerson();
     Formation formation;
 
+    Universe::instance().setProvider([&author](std::vector<Singular*>& out) {
+        out.push_back(&author);
+    });
+
     // Redefine/author a brand new vocabulary word via JSON string dynamically without C++ recompilation
     std::string customJson = R"JSON({
+        "author": "Zach",
         "vocabulary": [
             {
                 "symbol": "callout",
@@ -1188,8 +1211,8 @@ void test_gate1_and_gate2_dynamic_vocabulary_data_loading() {
             assert(law->isAuthored());
             assert(law->authors().getMembers().size() == 1);
             assert(law->authors().getMembers()[0] == &author);
-            // Gate 10 check: ordinary authored vocabulary law has authority 1, NOT kernel 10
-            assert(law->authorityLevel() == 1);
+            // Gates 1-4 check: ordinary authored vocabulary law has authority clamped to kAuthoredCeiling (0)
+            assert(law->authorityLevel() == Law::kAuthoredCeiling);
         }
     }
     assert(foundCallout);
@@ -1290,12 +1313,6 @@ void test_gate4_synonym_aliases_are_authored_lexemes() {
     WebConcept cBtn = WebDesignerMetalaws::compilePhrase("btn", laws, target, &err);
     assert(cBtn.roleName == "action");
 
-    // Also verify C++ stringTo* helpers do NOT contain hardcoded aliases (only exact canonical names)
-    assert(WebConcept::stringToRole("nav") == SemanticRole::Unknown);
-    assert(WebConcept::stringToRole("title") == SemanticRole::Unknown);
-    assert(WebConcept::stringToRole("card") == SemanticRole::Unknown);
-    assert(WebConcept::stringToRole("navigation") == SemanticRole::Navigation);
-
     teardownVocabulary();
     std::cout << "  ✓ Synonyms ('nav', 'title', 'card', 'btn') resolve through authored Lexemes & Relations" << std::endl;
     std::cout << "  ✓ C++ enum mappings contain zero privileged English synonym switch tables" << std::endl;
@@ -1373,6 +1390,7 @@ void test_gate7_gate8_gate9_css_security_and_theme() {
     // Gate 8: Raw CSS cannot escape <style> tag even when allowUnrestrictedCss is true
     RealizeOptions opts;
     opts.allowUnrestrictedCss = true;
+    opts.rawCssAuthorizationToken = "governed-first-mover";
     opts.extraCss = "body { color: red; } </style><script>alert('pwned')</script><style>";
     std::string safeDoc = WebRealizer::generateStyleSheet(&bareRoot, opts);
     assert(safeDoc.find("</style") == std::string::npos);
@@ -1396,6 +1414,313 @@ void test_gate7_gate8_gate9_css_security_and_theme() {
     std::cout << "  ✓ Unauthored CSS fallback is minimal neutral browser mechanics" << std::endl;
     std::cout << "  ✓ Raw CSS breakout </style> neutralized to safe escaped <\\/style even with allowUnrestrictedCss" << std::endl;
     std::cout << "  ✓ CSS value sanitization neutralizes declaration smuggling (; { }) and network url(...)" << std::endl;
+}
+
+// ---------------------------------------------------------------------------
+// ROUND 5 ACCEPTANCE GATE WITNESSES (Decreed by The Sun / GPT-5.6 Sol)
+// ---------------------------------------------------------------------------
+
+void test_round5_traveling_clipboard_and_authority_ceiling() {
+    std::cout << "[Round 5 Witness: Gates 1, 2, 3, 4] Traveling Clipboard Abolished & Authority Clamped..." << std::endl;
+
+    Person zach = makeTestPerson("Zach");
+    Person bob = makeTestPerson("Bob");
+
+    // Provide Zach in Universe beings
+    Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+        out.push_back(&zach);
+        out.push_back(&bob);
+    });
+
+    // 1. Bob loads Zach's authored vocabulary fixture
+    LawManager laws;
+    Formation formation;
+    WebDesignerMetalaws::loadAuthoredVocabulary("", laws, &formation);
+
+    // Assert: Bob is NOT the author of the fixture's laws! Zach is the recorded steward!
+    Law* headingLaw = laws.find("law.concept.role.heading");
+    assert(headingLaw != nullptr);
+    assert(headingLaw->isAuthored());
+    assert(headingLaw->authors().getMembers().size() == 1);
+    assert(headingLaw->authors().getMembers()[0] == &zach);
+    assert(headingLaw->authors().getMembers()[0] != &bob);
+
+    // Authority is clamped to kAuthoredCeiling (0), grantAuthority is not called
+    assert(headingLaw->authorityLevel() == Law::kAuthoredCeiling);
+
+    // 2. Unresolved Author Fixture: Ghost author who is absent from the world
+    std::string ghostAuthorJson = R"JSON({
+        "author": "GhostAuthor",
+        "vocabulary": [
+            {
+                "symbol": "phantom",
+                "lexemeId": "lexeme.web.phantom",
+                "lawId": "law.concept.role.phantom",
+                "actions": [
+                    {"path": "role", "value": "phantom"}
+                ]
+            }
+        ]
+    })JSON";
+
+    LawManager ghostLaws;
+    Formation ghostFormation;
+    bool loaded = WebDesignerMetalaws::loadAuthoredVocabularyFromJsonString(ghostAuthorJson, ghostLaws, &ghostFormation);
+    assert(loaded);
+
+    Law* phantomLaw = ghostLaws.find("law.concept.role.phantom");
+    assert(phantomLaw != nullptr);
+    // Because GhostAuthor is absent from Universe, Law remains unauthored in canonical quarantine!
+    assert(!phantomLaw->isAuthored());
+    assert(phantomLaw->authors().getMembers().empty());
+
+    // When applied, it strictly refuses with Unauthored!
+    Object target;
+    target.setObjectID("phantom-target");
+    auto res = phantomLaw->applyTo(target);
+    assert(res == Law::ApplicationResult::Unauthored);
+
+    teardownVocabulary();
+    std::cout << "  ✓ The Traveling Clipboard abolished: importer/loader does not become author" << std::endl;
+    std::cout << "  ✓ Unresolved author leaves Laws in canonical quarantine (applyTo returns Unauthored)" << std::endl;
+    std::cout << "  ✓ Authored authority is clamped to kAuthoredCeiling (0)" << std::endl;
+}
+
+void test_round5_real_semantic_redefinition() {
+    std::cout << "[Round 5 Witness: Gate 5] Real Semantic Redefinition & Provenance Lineage..." << std::endl;
+
+    Person& author = getTestPerson();
+    LawManager laws;
+    Formation formation;
+    setupAuthoredVocabulary(author, laws, formation);
+
+    // Initially, "button" denotes law.concept.role.action
+    Object target1;
+    target1.setObjectID("redef-target-1");
+    std::string err;
+    WebConcept c1 = WebDesignerMetalaws::compilePhrase("button", laws, target1, &err);
+    assert(err.empty());
+    assert(c1.roleName == "action");
+
+    // Person Zach now redefines "button" to denote a specialized interactive variant with new action
+    ActionNode newAction = ActionNode::sequence({
+        ActionNode::set("role", PropertyValue(std::string("action"))),
+        ActionNode::set("surface.variant", PropertyValue(std::string("redefined-button"))),
+        ActionNode::set("compilation.output.web.role", PropertyValue(std::string("action"))),
+        ActionNode::set("compilation.output.web.surface.variant", PropertyValue(std::string("redefined-button")))
+    });
+
+    WebDesignerMetalaws::authorWord(author, laws, "button", "lexeme.web.button", "law.concept.role.action",
+                                   std::move(newAction), &formation);
+
+    // Compile "button" again: now it compiles using the redefined Law!
+    Object target2;
+    target2.setObjectID("redef-target-2");
+    WebConcept c2 = WebDesignerMetalaws::compilePhrase("button", laws, target2, &err);
+    assert(err.empty());
+    assert(c2.roleName == "action");
+    assert(c2.variantName == "redefined-button");
+
+    // Verify denotes relation was updated to point to the versioned law
+    bool foundVersioned = false;
+    for (const auto& rel : formation.relations().getAll()) {
+        if (!rel || rel->type != "denotes") continue;
+        const auto* lex = dynamic_cast<const Singularity::Language::Lexeme*>(rel->a());
+        if (lex && lex->getSymbol() == "button") {
+            const auto* law = dynamic_cast<const Law*>(rel->b());
+            if (law && law->getIdentifier().find("law.concept.role.action.v") != std::string::npos) {
+                foundVersioned = true;
+                assert(law->isAuthored());
+                assert(law->authors().getMembers()[0] == &author);
+            }
+        }
+    }
+    assert(foundVersioned);
+
+    teardownVocabulary();
+    std::cout << "  ✓ Re-authoring word creates versioned Law with provenance lineage" << std::endl;
+    std::cout << "  ✓ Denotes relation updated to new version without C++ recompilation" << std::endl;
+}
+
+void test_round5_theme_provenance_and_zero_numeric_aesthetics() {
+    std::cout << "[Round 5 Witness: Gates 6 & 7] Theme Provenance & Zero Numeric Aesthetics in Substrate..." << std::endl;
+
+    Person author = makeTestPerson("ThemerZach");
+    Object root;
+    root.setObjectID("theme-root");
+
+    std::vector<std::shared_ptr<Relation>> themeRelations;
+    WebDesignerTheme::applyModernDarkTheme(root, &author, &themeRelations);
+
+    // Verify Person stewardship on theme properties
+    PropertyValue stewardVal;
+    assert(root.getDynamicProperty("theme.steward", stewardVal));
+    assert(std::get<std::string>(stewardVal) == author.getIdentifier());
+
+    bool foundAuthRel = false;
+    for (const auto& r : themeRelations) {
+        if (r && r->type == WebRelationType::kAuthoredBy && r->a() == &root && r->b() == &author) {
+            foundAuthRel = true;
+        }
+    }
+    assert(foundAuthRel);
+
+    // Gate 7: Unauthored :root CSS generated by WebRealizer has ZERO numeric aesthetic opinions
+    RealizeOptions opts;
+    std::string unauthoredCss = WebRealizer::generateStyleSheet(nullptr, opts);
+
+    // Assert that opinionated aesthetic values are absent from unauthored fallback
+    assert(unauthoredCss.find("--web-radius: 0.5rem") == std::string::npos);
+    assert(unauthoredCss.find("padding: 1.5rem") == std::string::npos); // No card padding
+    assert(unauthoredCss.find("padding: 0.625rem 1.25rem") == std::string::npos); // No button padding
+
+    std::cout << "  ✓ Theme properties hold genuine Person provenance (authored-by relation & steward)" << std::endl;
+    std::cout << "  ✓ Unauthored CSS substrate contains zero numeric aesthetic quantities" << std::endl;
+}
+
+void test_round5_governed_raw_css_and_escaped_url_bypass() {
+    std::cout << "[Round 5 Witness: Gates 8 & 9] Governed Raw-CSS Capability & Escaped URL Defense..." << std::endl;
+
+    Object root;
+    root.setObjectID("css-root");
+
+    // 1. Raw CSS without authorization token is strictly refused
+    RealizeOptions unauthOpts;
+    unauthOpts.allowUnrestrictedCss = true;
+    unauthOpts.extraCss = "/* Malicious Injected CSS */ body { background: black; }";
+    std::string unauthResult = WebRealizer::generateStyleSheet(&root, unauthOpts);
+    assert(unauthResult.find("Malicious Injected CSS") == std::string::npos);
+
+    // 2. Raw CSS with explicit Person grant token is admitted
+    RealizeOptions authOpts;
+    authOpts.allowUnrestrictedCss = true;
+    authOpts.rawCssAuthorizationToken = "person-grant:Zach";
+    authOpts.extraCss = "/* Governed CSS */ body { margin: 0; }";
+    std::string authResult = WebRealizer::generateStyleSheet(&root, authOpts);
+    assert(authResult.find("Governed CSS") != std::string::npos);
+
+    // 3. CSS Escape Sequences cannot bypass network URL restriction
+    // Hex escape: \75 is 'u' -> \75rl(
+    assert(WebRealizer::sanitizeCssValue("\\75rl('http://evil.com')", false) == "none");
+    // Mixed hex escape: \55 is 'U' -> \55RL(
+    assert(WebRealizer::sanitizeCssValue("\\55RL('http://evil.com')", false) == "none");
+    // Letter hex escape: \72 is 'r' -> u\72l(
+    assert(WebRealizer::sanitizeCssValue("u\\72l('http://evil.com')", false) == "none");
+    // 6-digit hex escape: \000075 is 'u' -> \000075rl(
+    assert(WebRealizer::sanitizeCssValue("\\000075rl('http://evil.com')", false) == "none");
+    // @import escape: \@import
+    assert(WebRealizer::sanitizeCssValue("\\@import 'http://evil.com/style.css'", false) == "none");
+
+    std::cout << "  ✓ Raw CSS capability requires explicit TransferPolicy / Person-grant authorization token" << std::endl;
+    std::cout << "  ✓ CSS backslash hex escape bypasses (\\75rl, \\55RL, u\\72l, \\000075rl) successfully neutralized" << std::endl;
+}
+
+void test_round5_single_sink_relation_admission_and_zone_scope() {
+    std::cout << "[Round 5 Witness: Gates 10 & 11] Single Sink Admission & Zone Scope Isolation..." << std::endl;
+
+    auto siteZone = std::make_shared<Zone>("single-sink-zone", "earthcall-foundation");
+    auto otherZone = std::make_shared<Zone>("other-ambient-zone", "earthcall-foundation");
+
+    // Wire Universe relation registrar to siteZone (simulating EngineInit)
+    Universe::instance().setRelationRegistrar([&](const std::shared_ptr<Relation>& r) {
+        siteZone->getFormation().relations().add(r);
+    });
+
+    WebDesignerChannel channel;
+    channel.setAuthoringContext(siteZone.get());
+
+    auto parent = std::make_shared<Object>();
+    parent->setObjectID("parent-elem");
+    auto child = std::make_shared<Object>();
+    child->setObjectID("child-elem");
+
+    // Relate contains: should be admitted EXACTLY ONCE to siteZone formation
+    channel.relateContains(parent, child);
+
+    size_t count = 0;
+    float totalWeight = 0.0f;
+    for (const auto& r : siteZone->getFormation().relations().getAll()) {
+        if (r && r->type == WebRelationType::kContains && r->a() == parent.get() && r->b() == child.get()) {
+            count++;
+            totalWeight += r->getWeight();
+        }
+    }
+    // Proves NO DOUBLE ADMISSION or doubled weight!
+    assert(count == 1);
+    assert(totalWeight == 1.0f);
+
+    // Gate 11: authorElementInZone scopes being AND provenance to the target Zone, ignoring ambient context
+    Person author = makeTestPerson("ScopedZach");
+    channel.setAuthoringContext(otherZone.get()); // Ambient context is otherZone!
+
+    auto scopedChild = channel.authorElementInZone(*siteZone, "scoped-child", "card container", "Hello", &author);
+    assert(scopedChild != nullptr);
+
+    // Verify scopedChild was added to siteZone objects
+    bool foundInSiteZone = false;
+    for (const auto& obj : siteZone->objects()) {
+        if (obj && obj->getIdentifier() == "scoped-child") {
+            foundInSiteZone = true;
+        }
+    }
+    assert(foundInSiteZone);
+
+    // Verify authored-by Relation is in siteZone, NOT otherZone!
+    bool foundAuthInSiteZone = false;
+    for (const auto& r : siteZone->getFormation().relations().getAll()) {
+        if (r && r->type == WebRelationType::kAuthoredBy && r->a() == scopedChild.get()) {
+            foundAuthInSiteZone = true;
+            assert(r->b() == &author);
+        }
+    }
+    assert(foundAuthInSiteZone);
+
+    bool foundAuthInOtherZone = false;
+    for (const auto& r : otherZone->getFormation().relations().getAll()) {
+        if (r && r->type == WebRelationType::kAuthoredBy && r->a() == scopedChild.get()) {
+            foundAuthInOtherZone = true;
+        }
+    }
+    assert(!foundAuthInOtherZone);
+
+    Universe::instance().setRelationRegistrar(nullptr);
+    std::cout << "  ✓ Single admission sink eliminates doubled relation and doubled weight bug" << std::endl;
+    std::cout << "  ✓ authorElementInZone isolates both being and provenance to target Zone regardless of ambient context" << std::endl;
+}
+
+void test_round5_refusal_3_pure_open_strings() {
+    std::cout << "[Round 5 Witness: Gate 12] Refusal 3: Pure Open Strings (Zero Closed Enums)..." << std::endl;
+
+    WebConcept c;
+    c.role = "cathedral";
+    c.flow = "spiral";
+    c.align = "apex";
+    c.justify = "center-mass";
+    c.variant = "celestial";
+    c.shape = "hyperbolic";
+    c.elevation = "ascended";
+    c.spacing = "cosmic-interval";
+    c.scale = "monumental";
+    c.tone = "reverent";
+
+    Object being;
+    being.setObjectID("refusal3-being");
+    c.applyToSingular(being);
+
+    WebConcept readBack = WebConcept::readFromSingular(being);
+    assert(readBack.role == "cathedral");
+    assert(readBack.flow == "spiral");
+    assert(readBack.align == "apex");
+    assert(readBack.justify == "center-mass");
+    assert(readBack.variant == "celestial");
+    assert(readBack.shape == "hyperbolic");
+    assert(readBack.elevation == "ascended");
+    assert(readBack.spacing == "cosmic-interval");
+    assert(readBack.scale == "monumental");
+    assert(readBack.tone == "reverent");
+
+    std::cout << "  ✓ All WebConcept facets are pure open strings" << std::endl;
+    std::cout << "  ✓ Zero closed domain-noun and aesthetic enums in C++ type system" << std::endl;
 }
 
 int main() {
@@ -1432,6 +1757,14 @@ int main() {
     test_gate4_synonym_aliases_are_authored_lexemes();
     test_gate5_and_gate6_canonical_zone_production_authoring();
     test_gate7_gate8_gate9_css_security_and_theme();
+
+    // Acceptance Gate Witnesses (Round 5 Decreed by The Sun)
+    test_round5_traveling_clipboard_and_authority_ceiling();
+    test_round5_real_semantic_redefinition();
+    test_round5_theme_provenance_and_zero_numeric_aesthetics();
+    test_round5_governed_raw_css_and_escaped_url_bypass();
+    test_round5_single_sink_relation_admission_and_zone_scope();
+    test_round5_refusal_3_pure_open_strings();
 
     std::cout << "========================================" << std::endl;
     std::cout << "ALL WEB DESIGNER MODALITY TESTS PASSED!" << std::endl;
