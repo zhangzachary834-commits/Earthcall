@@ -9,11 +9,13 @@
 //      the Person in the prior Zone intact.
 //   3. Corrupted .ecmatter (truncated, hash mismatch, or invalid FlatBuffer) REFUSES
 //      activation, leaving the Person in the prior Zone intact.
-//   4. Pure-symbolic Zone without matterGeneration switches cleanly without error.
-//   5. persistZone writes a content-addressed snapshot sidecar (<stem>.<snapshotId>.ecmatter),
+//   4. A named generation cannot fall back to an unversioned compatibility sidecar;
+//      the exact <stem>.<snapshotId>.ecmatter pointer must exist.
+//   5. Pure-symbolic Zone without matterGeneration switches cleanly without error.
+//   6. persistZone writes a content-addressed snapshot sidecar (<stem>.<snapshotId>.ecmatter),
 //      writes unversioned <stem>.ecmatter, updates matterGeneration metadata (snapshotId,
 //      sha256, byteLength, schemaVersion: 1), and cleans up predecessor generations.
-//   6. Save Zone isolation: leaves other zones byte-identical and creates no conglomerate
+//   7. Save Zone isolation: leaves other zones byte-identical and creates no conglomerate
 //      saves/worlds directory.
 
 #include "support/test_harness.hpp"
@@ -214,6 +216,37 @@ int main() {
         std::ofstream(dir / "zone.json") << j.dump(2);
     }
 
+    // ZtFallbackOnly: semantic root names a content-addressed generation,
+    // but only the legacy unversioned sidecar exists. Even byte-identical
+    // fallback bytes must NOT satisfy a generation pointer: the named
+    // snapshot file is the durable generation witness.
+    {
+        const std::string zoneId = "ZtFallbackOnly";
+        const auto dir = scratch.path / "zones" / zoneId;
+        std::filesystem::create_directories(dir);
+
+        std::vector<uint8_t> matterBytes =
+            makeTestMatterBuffer("fallback-only-obj", zoneId, 7.0f, 8.0f, 9.0f);
+        const std::string hash = sha256Hex(matterBytes);
+        const std::string snapId = hash.substr(0, 16);
+
+        std::ofstream(dir / "zone.ecmatter", std::ios::binary).write(
+            reinterpret_cast<const char*>(matterBytes.data()), matterBytes.size());
+
+        nlohmann::json j = base;
+        j["identifier"] = zoneId;
+        j["name"] = zoneId;
+        j.erase("materials");
+        j["world"]["objects"][0]["objectID"] = "fallback-only-obj";
+        j["matterGeneration"] = {
+            {"snapshotId", snapId},
+            {"sha256", hash},
+            {"byteLength", matterBytes.size()},
+            {"schemaVersion", 1}
+        };
+        std::ofstream(dir / "zone.json") << j.dump(2);
+    }
+
     // ZtPure
     {
         const std::string zoneId = "ZtPure";
@@ -239,13 +272,16 @@ int main() {
         const std::size_t alpha = indexOf(zm, "ZtAlpha");
         const std::size_t corrupt = indexOf(zm, "ZtCorrupt");
         const std::size_t missing = indexOf(zm, "ZtMissing");
+        const std::size_t fallbackOnly = indexOf(zm, "ZtFallbackOnly");
         const std::size_t pure = indexOf(zm, "ZtPure");
 
         check(alpha < zm.zones().size() && corrupt < zm.zones().size() &&
-              missing < zm.zones().size() && pure < zm.zones().size(),
-              "fresh boot discovers all four Zones from saves/zones alone");
+              missing < zm.zones().size() && fallbackOnly < zm.zones().size() &&
+              pure < zm.zones().size(),
+              "fresh boot discovers all five Zones from saves/zones alone");
         if (alpha >= zm.zones().size() || corrupt >= zm.zones().size() ||
-            missing >= zm.zones().size() || pure >= zm.zones().size()) return 1;
+            missing >= zm.zones().size() || fallbackOnly >= zm.zones().size() ||
+            pure >= zm.zones().size()) return 1;
 
         // (1) Move to ZtAlpha: valid matter generation commits and hydrates
         check(zm.switchTo(alpha), "Move to ZtAlpha commits with valid matter generation");
@@ -268,7 +304,14 @@ int main() {
         check(!zm.switchTo(missing), "Move to ZtMissing REFUSES due to missing sidecar file");
         check(zm.currentIndex() == alpha, "Person remains safely in ZtAlpha after missing refusal");
 
-        // (4) Move to ZtPure: pure symbolic zone without matter switches cleanly
+        // (4) Named generation cannot be satisfied by an unversioned compatibility
+        // copy, even when that copy has the exact expected hash and length.
+        check(!zm.switchTo(fallbackOnly),
+              "Move to ZtFallbackOnly REFUSES when named snapshot file is absent");
+        check(zm.currentIndex() == alpha,
+              "Person remains safely in ZtAlpha after generation-pointer refusal");
+
+        // (5) Move to ZtPure: pure symbolic zone without matter switches cleanly
         check(zm.switchTo(pure), "Move to ZtPure succeeds cleanly without matter sidecar");
         check(zm.currentIndex() == pure, "active zone is ZtPure");
 
@@ -293,7 +336,7 @@ int main() {
         const auto priorMatterFile = scratch.path / "zones/ZtAlpha" / ("zone." + priorSnapId + ".ecmatter");
         check(std::filesystem::exists(priorMatterFile), "prior matter snapshot exists before save");
 
-        // (5) Save Zone commits new matter snapshot and retires predecessor
+        // (6) Save Zone commits new matter snapshot and retires predecessor
         check(zm.persistZone(alpha), "persistZone commits ZtAlpha");
 
         nlohmann::json newDoc = SaveSystem::readSaveData(alphaZoneJsonPath.string());
@@ -318,7 +361,7 @@ int main() {
         check(slurp(newMatterFile) == slurp(unversionedMatter),
               "unversioned zone.ecmatter content matches new generation snapshot");
 
-        // (6) Isolation: ZtPure is byte-identical and no worlds/ directory was created
+        // (7) Isolation: ZtPure is byte-identical and no worlds/ directory was created
         check(slurp(pureZoneJsonPath) == pureBefore, "ZtPure remains byte-identical");
         check(!std::filesystem::exists(scratch.path / "worlds"),
               "persistZone created no conglomerate worlds/ directory");
