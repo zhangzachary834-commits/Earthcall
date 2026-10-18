@@ -312,6 +312,10 @@ Testing/
 /test_eval*.cpp
 /test_perf.cpp
 /test_perf*.patch
+/scratch_test*
+/test_fmt*
+/test_lawrefs*
+/test_parse*
 /tune_math.py
 /update_hpp.py
 /update_task.py
