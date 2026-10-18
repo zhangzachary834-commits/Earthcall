@@ -350,6 +350,10 @@ concurrently in Screen / Law Line files) through
   - `persistZone`: emits content-addressed snapshot, updates `matterGeneration`, and cleans up predecessor snapshot.
 - **Tests**: `tests/zones/zone_matter_closure_test.cpp` (26/26 checks passed), `tests/zones/zone_material_closure_test.cpp` (23/23 checks passed), `tests/law/go_zone_native_boot_test.cpp` (39/39 checks passed), `tests/law/chess_zone_native_boot_test.cpp` (99/99 checks passed).
 
+### Sun pre-PR review follow-up (2026-10-17)
+
+The original Sparkly execution record above is **26/26** for `zone_matter_closure_test`. A later Sun review tightened one contract before PR: if `matterGeneration` names `<stem>.<snapshotId>.ecmatter`, the reader no longer falls back to the unversioned compatibility copy when that named generation is absent. The test now contains **two additional regression checks** proving byte-identical `<stem>.ecmatter` alone cannot satisfy the content-addressed pointer. Those new checks are source-reviewed but have not been re-run by hosted CI on the reviewed head.
+
 ### Still open (honest list)
 
 - **Zone-scoped matter generations**: Repair-boundary item 2 is DONE. Repair boundary items 3-4 (recovering missing placement for unrecoverable zones like Clawd's Monastery) remain open human decisions.
