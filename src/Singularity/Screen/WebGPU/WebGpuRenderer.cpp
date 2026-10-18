@@ -2580,11 +2580,19 @@ void WebGpuRenderer::attachVolumeSupportCertificates(const Rendering::VolumeDens
     if (!volumeSupportCertificatesEnabled() || !medium.densityExpr || medium.densityRevision == 0) return;
     auto& memo = _volumeSupportCertificates[medium.densityExpr];
     const double clockBucket = Rendering::volumeClockMagnitudeBucket(medium.temporalCoordinate);
+    const bool autoEligibility = volumeSupportCertificatesAutoEligibility();
+    const bool gridProof = volumeZeroProofEnabled();
+    const int samplesPerChord = volumeSamplesPerChord();
     if (memo.densityRevision != medium.densityRevision || memo.halfExtent != halfExtent ||
-        memo.clockBucket != clockBucket) {
+        memo.clockBucket != clockBucket || memo.autoEligibility != autoEligibility ||
+        memo.gridProof != gridProof || memo.samplesPerChord != samplesPerChord) {
         memo.densityRevision = medium.densityRevision;
         memo.halfExtent = halfExtent;
         memo.clockBucket = clockBucket;
+        memo.autoEligibility = autoEligibility;
+        memo.gridProof = gridProof;
+        memo.samplesPerChord = samplesPerChord;
+        memo.estimate = {};
         memo.payload.clear();
         memo.count = 0;
         memo.refusal.clear();
@@ -2618,10 +2626,34 @@ void WebGpuRenderer::attachVolumeSupportCertificates(const Rendering::VolumeDens
             if (memo.count == 0) { memo.refusal = "no certified killer has a lowered candidate"; memo.payload.clear(); }
             else memo.payload.insert(memo.payload.end(), killers.params.begin(), killers.params.end());
         }
+        if (memo.count > 0 && autoEligibility) {
+            // Cost ranking over exactly the killers the payload enables, in slot order.
+            Rendering::VolumeSupportCertificates enabledSet;
+            for (std::size_t slot = 0; slot < killers.switches.size(); ++slot) {
+                if (memo.payload[4u * slot] == 0.0f) continue;
+                for (const auto& c : certificates.killers)
+                    if (c.switchIndex == killers.switches[slot]) { enabledSet.killers.push_back(c); break; }
+            }
+            const Rendering::VolumeZeroProof* proof = nullptr;
+            if (gridProof) {
+                const auto it = _volumeZeroProofs.find(medium.densityExpr);
+                if (it != _volumeZeroProofs.end() && it->second.densityRevision == medium.densityRevision &&
+                    it->second.halfExtent == halfExtent)
+                    proof = &it->second.proof;
+            }
+            memo.estimate = Rendering::estimateVolumeSupportCertificateGain(
+                forms, enabledSet, proof, glm::dvec3(halfExtent), samplesPerChord, medium.temporalCoordinate);
+            if (!memo.estimate.eligible) {
+                memo.refusal = memo.estimate.reason;
+                memo.count = 0;
+                memo.payload.clear();
+            }
+        }
     }
     memo.lastUsedFrame = _volumeZeroProofFrame;
     if (memo.count == 0) return;
     mutableFrameStats().volumeSupportCertificateKillers += memo.count;
+    ++mutableFrameStats().volumeSupportCertificateEligibleMedia;
     instance.supportCertCount = memo.count;
     if (!appendPayload) return;
     instance.supportCertOffset = static_cast<uint32_t>(params.size());
@@ -2643,7 +2675,12 @@ void WebGpuRenderer::flushVolumeComposite() {
         };
         add(revision); add(trim); const bool proof = volumeZeroProofEnabled(); add(proof);
         const bool certificates = volumeSupportCertificatesEnabled(); add(certificates);
-        // Certificate slack is derived per clock bucket: a crossing re-lays the payload.
+        // Certificate slack is derived per clock bucket, and eligibility reads the
+        // auto mode and sample count: any change re-lays the payload.
+        if (certificates) {
+            const bool autoEligibility = volumeSupportCertificatesAutoEligibility(); add(autoEligibility);
+            const int samples = volumeSamplesPerChord(); add(samples);
+        }
         if (certificates)
             for (const auto* medium : media) {
                 const double bucket = Rendering::volumeClockMagnitudeBucket(medium->temporalCoordinate);

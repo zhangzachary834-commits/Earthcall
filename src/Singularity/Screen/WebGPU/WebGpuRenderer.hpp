@@ -16,6 +16,7 @@
 #include "Singularity/Screen/WebGPU/GpuMeshCache.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Screen/VolumeZeroProof.hpp"
+#include "Singularity/Screen/VolumeRayTransport.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 
 #include <webgpu/webgpu.h>
@@ -491,6 +492,11 @@ private:
         uint64_t densityRevision = 0;
         glm::vec3 halfExtent{0.0f};
         double clockBucket = 0.0;   // volumeClockMagnitudeBucket(t): slack grows with |t|
+        // Eligibility inputs (Rendering::estimateVolumeSupportCertificateGain).
+        bool autoEligibility = true;
+        bool gridProof = true;
+        int samplesPerChord = 0;
+        Rendering::VolumeSupportCertificateEstimate estimate;
         std::vector<float> payload;
         uint32_t count = 0;
         std::string refusal;

@@ -200,6 +200,20 @@ int main() {
         }
         screen.volumeSupportCertificatesEnabled = false;
 
+        // Eligibility: auto mode is a registered, default-true authorable toggle.
+        PropertyValue autoMode;
+        const PropertyPath autoPath = PropertyPath::parse("volumeSupportCertificatesAutoEligibility");
+        if (autoPath.getValue(screen, autoMode) != PropertyPath::PathResult::Ok ||
+            !std::holds_alternative<bool>(autoMode) || !std::get<bool>(autoMode)) {
+            fail("volumeSupportCertificatesAutoEligibility", "Channel — Screen",
+                 "must resolve as a default-true authorable toggle");
+        }
+        PropertyValue eligibleMedia;
+        if (PropertyPath::parse("volumeSupportCertificateEligibleMedia").getValue(screen, eligibleMedia) !=
+            PropertyPath::PathResult::Ok) {
+            fail("volumeSupportCertificateEligibleMedia", "Channel — Screen", "must publish the eligible-media count");
+        }
+
         PropertyValue samples;
         const PropertyPath samplesPath = PropertyPath::parse("volumeSamplesPerChord");
         if (samplesPath.getValue(screen, samples) != PropertyPath::PathResult::Ok ||

@@ -70,6 +70,7 @@ struct Frame {
     double ms = 0.0;
     uint32_t proven = 0;
     uint32_t killers = 0;
+    uint32_t eligible = 0;   // media whose certificates are attached (auto eligibility)
     uint32_t firstCertificateBuilds = 0;
     uint32_t firstCompiles = 0;
     uint32_t warmCompiles = 0;
@@ -143,10 +144,14 @@ int main() {
                        glm::perspectiveZO(glm::radians(60.0f), float(width) / height, 0.1f, 1000.0f), eye);
 
     std::vector<unsigned char> lastRgba(width * height * 4u);
+    // Parity sections A/B EVERY medium (auto eligibility off); the eligibility
+    // section below turns the Kernel's per-medium cost ranking back on.
+    bool autoEligibility = false;
     auto render = [&](const std::vector<std::shared_ptr<geom::FieldNode>>& set, bool proofOn,
                       bool certificatesOn, double t, int timedFrames) {
         renderer.setVolumeZeroProofEnabled(proofOn);
         renderer.setVolumeSupportCertificatesEnabled(certificatesOn);
+        renderer.setVolumeSupportCertificatesAutoEligibility(autoEligibility);
         auto drawOnce = [&] {
             std::vector<Rendering::VolumeDensityBinding> bindings;
             std::string identity;
@@ -206,6 +211,7 @@ int main() {
         drawOnce();
         frame.proven = renderer.frameStats().volumeZeroProofCellsProven;
         frame.killers = renderer.frameStats().volumeSupportCertificateKillers;
+        frame.eligible = renderer.frameStats().volumeSupportCertificateEligibleMedia;
         frame.warmCompiles += renderer.frameStats().volumeProgramCompiles;
         frame.lit = sync();
         frame.rgba = lastRgba;
@@ -370,6 +376,7 @@ int main() {
     }
     renderer.setVolumeOutputErrorBudget(0.0);
 
+    std::vector<std::shared_ptr<geom::FieldNode>> prismWing;   // reused by the eligibility section
     // Prism Cathedral wing B: radial clouds, shells, tori, a CSG crescent and a
     // noise cloud whose zero-proof grid proves 0% of cells while the CPU census
     // certifies 86-99.7% of samples (volume_ray_radial_segmentation_test). This
@@ -394,6 +401,7 @@ int main() {
                     node->getIdentifier().rfind("prism.wingB.", 0) == 0)
                     wing.push_back(node);
             }
+        prismWing = wing;
         if (wing.empty()) {
             std::printf("  SKIP: Prism Cathedral wing B media not present (not a pass)\n");
         } else {
@@ -503,6 +511,32 @@ int main() {
                             certCancel.killers, byteDiff(exactCancel.rgba, certCancel.rgba).c_str());
                 check(exactCancel.rgba == certCancel.rgba,
                       "an f32 cancellation the algebra erased keeps every byte under certificates");
+
+                // Fast-math compilers may reassociate ((A + x) − A) − x into the
+                // exact 0 (the Sun's M5 frames were black). No compiler expands a
+                // polynomial identity: F = (x + A)·(x + A) − A·A − 2A·x − x·x is
+                // 0 in the algebra, but at A = 2^12 its f32 terms reach 2^24 and
+                // execution keeps errors of a few units, so D = −min(F, 0) stays
+                // lit on every backend. Certificates must keep every byte.
+                const auto polyCancelled = OntoMath::Piecewise::fromJson(nlohmann::json::parse(
+                    R"({"input":"x","pieces":[{"mathNode":{"op":6,"children":[{"op":0,"scalarForm":{"terms":[{"c":-1.0,"factors":{}}]}},)"
+                    R"({"op":20,"children":[{"op":5,"children":[{"op":5,"children":[{"op":5,"children":[)"
+                    R"({"op":6,"children":[{"op":4,"children":[{"op":1,"var":"x"},{"op":0,"scalarForm":{"terms":[{"c":4096.0,"factors":{}}]}}]},)"
+                    R"({"op":4,"children":[{"op":1,"var":"x"},{"op":0,"scalarForm":{"terms":[{"c":4096.0,"factors":{}}]}}]}]},)"
+                    R"({"op":0,"scalarForm":{"terms":[{"c":16777216.0,"factors":{}}]}}]},)"
+                    R"({"op":6,"children":[{"op":0,"scalarForm":{"terms":[{"c":8192.0,"factors":{}}]}},{"op":1,"var":"x"}]}]},)"
+                    R"({"op":6,"children":[{"op":1,"var":"x"},{"op":1,"var":"x"}]}]},)"
+                    R"({"op":0,"scalarForm":{"terms":[{"c":0.0,"factors":{}}]}}]}]}}]})"));
+                auto polyMedium = geom::FieldNode::fromJson(nlohmann::json::parse(leafShell->toJson().dump()));
+                *polyMedium->volumeDensity = polyCancelled;
+                polyMedium->noteAuthoredMathWritten();
+                const Frame exactPoly = render({polyMedium}, false, false, 0.75, 0);
+                const Frame certPoly = render({polyMedium}, false, true, 0.75, 0);
+                std::printf("       polynomial cancellation witness: lit %llu, killers %u, %s\n",
+                            (unsigned long long)exactPoly.lit, certPoly.killers,
+                            byteDiff(exactPoly.rgba, certPoly.rgba).c_str());
+                check(exactPoly.lit > 0 && exactPoly.rgba == certPoly.rgba,
+                      "a polynomial identity the algebra cancels (lit on every backend) keeps every byte under certificates");
             }
             }
 
@@ -532,6 +566,56 @@ int main() {
             }
         }
     }
+
+    // Rung 2f-native eligibility (auto mode, the default within an enabled
+    // lane). The Kernel's cost estimate should keep Northern Veil on the grid
+    // lane (measured +16–49% with certificates) and admit Prism wing B (up to
+    // 4.8× cheaper). Pixels stay byte-identical either way; timings report only.
+    autoEligibility = true;
+    {
+        const bool timing = std::getenv("EARTHCALL_CERTIFICATE_TIMING") &&
+                            *std::getenv("EARTHCALL_CERTIFICATE_TIMING") == '1';
+        auto abba = [&](const std::vector<std::shared_ptr<geom::FieldNode>>& set, const char* label) {
+            std::vector<double> tg, ta;
+            for (int round = 0; round < 4; ++round) {
+                const bool gFirst = round % 2 == 0;
+                for (int k = 0; k < 2; ++k) {
+                    const bool g = (k == 0) == gFirst;
+                    (g ? tg : ta).push_back(render(set, true, !g, 0.75, 8).ms);
+                }
+            }
+            std::sort(tg.begin(), tg.end()); std::sort(ta.begin(), ta.end());
+            std::printf("TIMING %s: grid median %.2f ms vs grid+auto-certificates median %.2f ms\n",
+                        label, 0.5 * (tg[1] + tg[2]), 0.5 * (ta[1] + ta[2]));
+        };
+        renderer.setCamera(glm::lookAt(eye, glm::vec3(0, 60, 90), glm::vec3(0, 1, 0)),
+                           glm::perspectiveZO(glm::radians(60.0f), float(width) / height, 0.1f, 1000.0f), eye);
+        const Frame nvExact = render(media, true, false, 7.25, 0);
+        const Frame nvAuto = render(media, true, true, 7.25, 0);
+        std::printf("       auto eligibility, Northern Veil: %u of %zu media eligible\n", nvAuto.eligible, media.size());
+        check(nvAuto.eligible == 0 && nvAuto.rgba == nvExact.rgba,
+              "auto eligibility keeps every Northern Veil curtain on the grid lane, every byte intact");
+        if (timing) abba(media, "Northern Veil fused (auto)");
+        if (!prismWing.empty()) {
+            uint32_t eligible = 0;
+            for (const auto& m : prismWing) {
+                const glm::vec3 h = glm::abs(m->scale);
+                const float r = std::max(h.x, std::max(h.y, h.z));
+                const glm::vec3 at = m->origin + glm::vec3(0.35f * r, 0.25f * r, 2.6f * r);
+                renderer.setCamera(glm::lookAt(at, m->origin, glm::vec3(0, 1, 0)),
+                                   glm::perspectiveZO(glm::radians(60.0f), float(width) / height, 0.05f, 2000.0f), at);
+                const Frame grid = render({m}, true, false, 0.75, 0);
+                const Frame autoFrame = render({m}, true, true, 0.75, 0);
+                eligible += autoFrame.eligible;
+                std::printf("       auto eligibility, %s: %s\n", m->getIdentifier().c_str(),
+                            autoFrame.eligible ? "certificates attached" : "grid lane only");
+                check(grid.rgba == autoFrame.rgba, m->getIdentifier() + ": auto eligibility keeps every byte");
+                if (timing && autoFrame.eligible) abba({m}, m->getIdentifier().c_str());
+            }
+            check(eligible * 2 > prismWing.size(), "auto eligibility admits most of Prism wing B (the grid proves none of it)");
+        }
+    }
+    autoEligibility = false;
 
     // Native stress size: one spawn frame at 2560x1440, certificates alone.
     wgpuBufferRelease(readback); wgpuTextureViewRelease(view); wgpuTextureRelease(target);

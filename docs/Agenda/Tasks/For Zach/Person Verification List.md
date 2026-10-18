@@ -1685,3 +1685,12 @@ The checkout WebGPU app is rebuilt with [route-aware power lowering](../../../au
 
 
 **Post-repair Metal evidence, October 17:** rebuilt at `a597da4cd`; certificates 57/57, zero-proof 73/73, Perlin ALL OK. The Perlin residency assertion is repaired on the M5, with identical hit coverage in 6/6 cameras; 27 diagnostic color bytes differ in the 45-degree case. The cancellation comparison remains black on this device. [Bounded native evidence](../../../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#post-repair-metal-revalidation--opus-seventh-pass) updates the earlier pending-native notes; visual/movement boxes remain unchecked and the optional live certificate trial was not performed. No new visual change or FPS improvement is promised by this verification pass. **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T12:12:06-07:00 (PDT).
+
+
+### Certificate eligibility (auto mode) — October 18
+
+Nothing changes by default: `volumeSupportCertificatesEnabled` is still off. If you turn it on, the new `volumeSupportCertificatesAutoEligibility` (on by default) attaches certificates only to media whose estimated cost improves. `volumeSupportCertificateEligibleMedia` shows how many did.
+
+- [ ] Optional, on your Mac: enable certificates in **Prism Cathedral**. Wing B should read about 7 eligible media and should look identical while moving more smoothly (lavapipe: 1.5–5.2× cheaper per medium). Then in **Northern Veil**, which should read 0 eligible and feel exactly as before. Leave the lane off afterwards. The Mac witness is `EARTHCALL_CERTIFICATE_TIMING=1 ./webgpu_volume_support_certificates_test` (68 checks, including a polynomial-cancellation medium that should render lit on Metal).
+
+**Signed:** Claude Code / Claude Opus 5.5 / session `session_01HvZSR64QghrdyCpq2M7qvX` / 2026-10-18.

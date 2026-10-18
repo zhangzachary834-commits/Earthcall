@@ -322,6 +322,37 @@ VolumeSupportCertificates deriveVolumeSupportCertificates(const VolumeRayChannel
 
 // The shader-shaped tracer: certificates only, one point evaluation of g per
 // not-yet-certified sample. members[i] pairs with certificates[i].
+// ---- Rung 2f-native eligibility (2026-10-17, eighth pass) -------------------
+// A Kernel COST RANKING, never a truth claim: whether a medium's certificates
+// are worth their checks on top of the zero-proof grid. Measured on lavapipe,
+// certificates substitute for a weak grid (Prism wing B, grid 0%: up to 4.8×
+// cheaper) but do not complement a strong one (Northern Veil, grid 95–97%:
+// +16–49%). The estimate simulates the shader's own loop over a fixed,
+// deterministic ray set through the box at the renderer's samplesPerChord:
+// grid-proven cells jump to their exit; otherwise certificates are checked
+// (first success answers, the converse bound skips checks) before the density
+// is evaluated. Costs are authored operation counts (noise dominates). Whether
+// certificates run at all stays the Person/Law-authored ScreenChannel switch;
+// this only chooses where, under its auto mode, and every outcome is published
+// (volumeSupportCertificateEligibleMedia).
+struct VolumeSupportCertificateEstimate {
+    double costWithout = 0.0, costWith = 0.0;   // operation units over the ray set
+    uint32_t rays = 0, samples = 0, gridSamples = 0, certifiedSamples = 0, checks = 0;
+    bool eligible = false;
+    std::string reason;
+};
+// Eligible only when the estimate with certificates is below this fraction of
+// the estimate without (rough units must clear a margin to justify the lane).
+inline constexpr double kVolumeSupportCertificateGainMargin = 0.85;
+struct VolumeZeroProof;
+VolumeSupportCertificateEstimate estimateVolumeSupportCertificateGain(const VolumeRayChannelForms& forms,
+                                                                      const VolumeSupportCertificates& enabled,
+                                                                      const VolumeZeroProof* proof,
+                                                                      const glm::dvec3& halfExtent,
+                                                                      int samplesPerChord, double clock);
+// Authored operation count of an expression, the estimate's cost unit.
+double volumeExecutionCost(const OntoMath::MathNode& node);
+
 VolumeSupportTrace traceVolumeSupportCertified(const std::vector<VolumeSegmentMember>& members,
                                                const std::vector<const VolumeSupportCertificates*>& certificates,
                                                const VolumeRayInput& ray, const VolumeLatticeSpan& span);

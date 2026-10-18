@@ -23,7 +23,9 @@
 - [x] **Codex P1 repair — execution provenance.** Literal-only divisors, exponents and clamp bounds; `OntoMath::executionBound` and per-leaf authored provenance; margin-aware segmentation, Rung 1 and certificates (δ from authored operands, clock-magnitude bucket). It costs ≤ 0.08 points of proof over 28 media, with 0 violations. [§6f](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6f-execution-provenance-the-codex-p1-repair-2026-10-17-seventh-pass).
 - [x] **Native Mac revalidation of the P1 repair:** rebuilt at `a597da4cd`, certificates 57/57 and zero-proof 73/73 on Apple M5 Metal; the cancellation case is black on this device and does not supply native positive-density coverage ([record](../../../../../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#post-repair-metal-revalidation--opus-seventh-pass)).
 - [x] **`webgpu_perlin_exact_gradient_test` residency assertion** (line 817, lavapipe AND Metal): an empty SDF range batch cleared the persistent buffer's mirror, so identical bytes re-uploaded. The mirror now stays; lavapipe ALL OK and M5 Metal ALL OK after rebuilding at `a597da4cd` (6/6 camera hit coverage; 27 diagnostic color-byte differences at 45 degrees, so full RGBA parity is not established) ([§6f](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6f-execution-provenance-the-codex-p1-repair-2026-10-17-seventh-pass)).
-- [ ] **Rung 2f-native eligibility policy.** On lavapipe certificates are a *substitute* (Prism wing B, grid 0% proven: 1.2–4.8× cheaper than the grid lane) but not a *complement* (Northern Veil, grid 95–97%: +16–49% cost over grid alone). Decide per medium from Kernel facts (proven-cell fraction, killer count), never per Zone; then default it on only after Metal ABBA and Person acceptance.
+- [x] **Rung 2f-native eligibility policy** — a Kernel cost estimate over the shader's own loop and the `volumeSupportCertificatesAutoEligibility` switch (default on within the off-by-default lane). Northern Veil stays on the grid lane, and Prism wing B gets 1.5–5.2× cheaper on lavapipe. [§6g](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6g-eligibility-where-certificates-pay-2026-10-18-eighth-pass).
+- [ ] Model the shared-noise prelude in the eligibility estimate (the noise cloud is a safe-direction miss).
+- [ ] Metal ABBA of auto mode, and a lit polynomial-cancellation witness on Metal (`webgpu_volume_support_certificates_test`, 68 checks).
 - [x] **Metal run of the pre-repair certificate lane:** 56/56 twice, with report-only ABBA recorded; Opus has since implemented the P1 repair, while its Metal revalidation, device enclosure and Person acceptance remain open ([native record](../../../../../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md)).
 - [ ] Lower Select-piece killers (roles 4+2i/5+2i) and the density-sign killer to WGSL; today they are not candidates.
 - Note: `volume_ray_radial_segmentation_test` takes ~90 s in Debug, because it runs the full 28-medium census.
@@ -55,9 +57,9 @@ Native report-only grid → grid+certificate medians: Northern Veil fused **1.93
 
 **Proposal only:** after correcting execution-equivalence/error admission, derive per-medium cost evidence from existing Kernel facts (proven-cell coverage, killer count and lowered evaluator work), then measure crossover with paired native runs. Do not encode Zone names, infer truth from a cost score, or hardcode an unmeasured coverage threshold. Any variable resource-allocation policy must follow Zach's authored-Law direction; this pass implements no policy and changes no default. A no-killer/unknown-proof medium always keeps the exact path. New retained ranking state would need explicit dependency/invalidation evidence.
 
-- [ ] Correct or conservatively refuse canceled-operation execution-zero proofs; preserve original-DAG provenance before a renderer consumer or promotion.
-- [ ] Qualify computed clamp thresholds and native arithmetic error; same-M5 black parity does not discharge the source-review premise.
-- [ ] Investigate the reproduced Perlin initial range-upload assertion without loosening its check.
+- [x] Correct or conservatively refuse canceled-operation execution-zero proofs; preserve original-DAG provenance before a renderer consumer or promotion. (§6f, `09143a5d`.)
+- [x] Qualify computed clamp thresholds and native arithmetic error; same-M5 black parity does not discharge the source-review premise. (Literal-only bounds plus the declared execution model, §6f; a lit polynomial witness is added in §6g.)
+- [x] Investigate the reproduced Perlin initial range-upload assertion without loosening its check. (A residency bug, fixed in `94554ae9`; M5 ALL OK.)
 - [ ] Obtain Zach's verdict on the three Zone appearance pairs; all visual boxes remain open.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T00:18:36-07:00 (PDT).
@@ -70,7 +72,7 @@ Native report-only grid → grid+certificate medians: Northern Veil fused **1.93
 
 The three requested witnesses pass on M5 Metal: certificates 57/57, zero-proof 73/73, Perlin ALL OK. [Exact scope and caveats](../../../../../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#post-repair-metal-revalidation--opus-seventh-pass) supersede the historical pending-native status below the earlier signed records. No new performance or Person acceptance is claimed.
 
-- [ ] Characterize whether Perlin's 27 differing color bytes at the 45-degree camera are baseline or regression before claiming full native RGBA parity; stock coverage/root assertions pass.
-- [ ] Obtain a nonblack Metal cancellation witness, or retain the explicit device-coverage limitation; equality of two black frames does not establish positive-density protection.
+- [x] Characterize whether Perlin's 27 differing color bytes at the 45-degree camera are baseline or regression before claiming full native RGBA parity; stock coverage/root assertions pass. (Baseline: the pre-fix renderer shows the identical 18 bytes on lavapipe, from traversal sample order, §6g.)
+- [~] Obtain a nonblack Metal cancellation witness, or retain the explicit device-coverage limitation; equality of two black frames does not establish positive-density protection. (A non-reassociable polynomial identity is now in the witness, lit on lavapipe; it awaits the next Mac run.)
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T12:12:06-07:00 (PDT).

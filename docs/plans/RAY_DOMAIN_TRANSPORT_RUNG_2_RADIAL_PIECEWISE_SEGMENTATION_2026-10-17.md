@@ -399,6 +399,50 @@ At merged HEAD `a597da4cd`, rebuilt native M5 witnesses pass: certificates **57/
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T12:12:06-07:00 (PDT).
 
+## 6g. Eligibility: where certificates pay (2026-10-18, eighth pass)
+
+Zach: "YAAAAAAAAAAA". The pass follows Codex's and the Sun's handoffs (Metal results recorded in `docs/audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md`). It reads Refusal 7 and Codex's note ("resource allocation must retain the authored-Law direction") as one constraint: the engine ranks cost, and Persons and Laws decide.
+
+**Authority stays authored.**
+- `volumeSupportCertificatesEnabled` (default off) remains the Person/Law switch.
+- Within it, `volumeSupportCertificatesAutoEligibility` (default **on**) lets the Kernel attach a medium's certificates only where its cost estimate favours them. Off attaches them to every medium (the A/B mode the parity witnesses use).
+- The outcome is published as read-only `volumeSupportCertificateEligibleMedia`, next to `volumeSupportCertificateKillers`.
+- All three are registered paths (`channel_paths_test` 547/547).
+
+**The estimate** (`Rendering::estimateVolumeSupportCertificateGain`, a cost ranking, never truth):
+- It simulates the shader's own loop over 48 deterministic rays through the box at the renderer's `samplesPerChord`. A grid-proven cell jumps to its exit; otherwise the certificates are checked (the first success answers, the converse bound skips checks) and then the density is evaluated.
+- Cost units are authored operation counts (noise 40, sin/cos/exp 4 per term, sqrt/length/div/pow 4).
+- A medium is eligible only if its cost with certificates is < 0.85× its cost without.
+- The certificate memo key gains auto mode × grid state × samples per chord, and the payload identity gains auto mode and samples, so a change re-lays the payload.
+
+**Evidence.**
+- CPU census (`volume_ray_radial_segmentation_test` 32/32): **13 of 28** admitted media are estimated eligible.
+  - Northern Veil: all four curtains are not eligible (ratios 0.90–1.25).
+  - Prism wing B: 7 of 8 are eligible (0.09–0.47). The noise cloud is the exception, at 1.07.
+- Lavapipe (`webgpu_volume_support_certificates_test` **68/68**, ABBA medians, adapter-relative):
+
+| Scene | grid lane | grid + auto certificates |
+|---|---|---|
+| Northern Veil fused (0/4 eligible) | 17.24 ms | 17.35 ms (no penalty, within noise) |
+| Prism wing B, the 7 eligible media | 8.78–16.69 ms | 2.31–6.41 ms (1.5–5.2× cheaper) |
+
+Every auto-mode frame is byte-identical to the grid lane.
+
+**Known miss.** The noise cloud is estimated ineligible, but lavapipe measured it about 18% faster with certificates. The likely cause is the shader's shared-noise prelude: a density that uses sharing evaluates every shared noise group before itself, so each skipped sample saves more than its op count credits. The miss is in the safe direction (that medium keeps the production path). Modeling the sharing plan is a follow-up.
+
+**Also in this pass.**
+- **The Sun's two limits.**
+  - *Perlin 45°:* a scratch run of the pre-fix renderer shows the identical 18 differing bytes on lavapipe. It is the range traversal's lawful sample-sequence change (the test asserts coverage, not RGBA), and the baseline, not a regression.
+  - *Black Metal cancellation frames:* fast math may reassociate `((A+x)−A)−x` into the exact 0. A polynomial identity is not reassociable: `(x+A)² − A² − 2Ax − x²` at A = 2¹² now runs as a lit witness (36,726 px on lavapipe, one never-clearing killer, 0 differing bytes). Metal should see it lit; that is a prediction until the next Mac run.
+
+**Open.**
+- Metal ABBA of the auto mode.
+- Person acceptance before any default change.
+- Modeling the sharing plan in the estimate.
+- Calibrating the cost weights on Metal; the lavapipe agreement is directional.
+
+*Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-18. Human origin: Zachary Zhang; Metal evidence: Codex / GPT-6.1 Sol and the local Sun.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

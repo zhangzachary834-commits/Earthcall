@@ -470,3 +470,12 @@ Witness: `webgpu_volume_support_certificates_test` 56/56 on lavapipe. It covers 
   - *Fallback:* a non-finite clock refuses certificates.
 
 Witnesses: `ontomath_line_segmentation_test` 61/61, `volume_ray_segment_transport_test` 53/53, `volume_ray_radial_segmentation_test` 32/32, `webgpu_volume_support_certificates_test` 57/57 (lavapipe). Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17.
+
+**Eligibility addendum (2026-10-18, [§6g](../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6g-eligibility-where-certificates-pay-2026-10-18-eighth-pass)):** `VolumeSupportCertificateMemo` now also holds the `estimate` (Kernel cost ranking).
+- *Key:* the existing key plus auto mode × zero-proof enabled × `volumeSamplesPerChord`.
+- *Payload identity:* adds auto mode and samples per chord when the lane is on.
+- *Reads:* the same frame's zero-proof memo, only when its revision and extent match.
+- *Fallback:* "not eligible" attaches nothing (count 0), so the grid lane runs unchanged.
+
+Witnesses: `webgpu_volume_support_certificates_test` 68/68 (auto-mode byte parity), `channel_paths_test`. Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-18.
+

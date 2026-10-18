@@ -89,6 +89,7 @@ public:
         // by density revision × extent) and the enabled killers of drawn media.
         uint32_t volumeSupportCertificateBuilds = 0;
         uint32_t volumeSupportCertificateKillers = 0;
+        uint32_t volumeSupportCertificateEligibleMedia = 0;   // media whose certificates are attached
         // Conservative SDF range-proxy observability. A build is revision-bound;
         // an applied draw used a strictly smaller proved-may-contain-zero proxy;
         // a culled draw was proved to contain no zero set at all.
@@ -312,6 +313,11 @@ public:
     // mode (see kVolumeSupportDeviceTolerance); witnesses A/B it per backend.
     void setVolumeSupportCertificatesEnabled(bool on) { _volumeSupportCertificatesEnabled = on; }
     bool volumeSupportCertificatesEnabled() const { return _volumeSupportCertificatesEnabled; }
+    // Auto eligibility (default on): within an enabled lane, a medium gets its
+    // certificates only where the Kernel's cost estimate says they pay
+    // (Rendering::estimateVolumeSupportCertificateGain). Off = every medium (A/B).
+    void setVolumeSupportCertificatesAutoEligibility(bool on) { _volumeSupportCertificatesAutoEligibility = on; }
+    bool volumeSupportCertificatesAutoEligibility() const { return _volumeSupportCertificatesAutoEligibility; }
 
     // Volume quadrature resolution: samples a medium receives across its own
     // chord along a ray (overlapping media share the finest present; see the
@@ -544,6 +550,7 @@ private:
     bool _radianceVisibilityEnabled = false;
     bool _volumeZeroProofEnabled = true;
     bool _volumeSupportCertificatesEnabled = false;
+    bool _volumeSupportCertificatesAutoEligibility = true;
     int _volumeSamplesPerChord = 96;
     double _volumeOutputErrorBudget = 0.0;
     std::vector<Rendering::VolumeDensityBinding> _volumeDensitySources;

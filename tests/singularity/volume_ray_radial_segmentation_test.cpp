@@ -413,7 +413,7 @@ int main() {
                         uint64_t traced = 0, tracedOrGrid = 0, tracePoints = 0, traceSetup = 0, traceViolations = 0; double traceUs = 0;
                         uint64_t certTraced = 0, certPoints = 0, certViolations = 0; double certUs = 0; };
         Totals all;
-        int admitted = 0, media = 0;
+        int admitted = 0, media = 0, eligibleMedia = 0;
         std::mt19937 rng(1017u);
         std::uniform_real_distribution<double> u(-1.0, 1.0);
         if (fs::exists(root)) {
@@ -589,6 +589,15 @@ int main() {
                               << "; certified-only trace " << (100.0 * t.certTraced / std::max<uint64_t>(t.samples, 1))
                               << "%, " << double(t.certPoints) / std::max<uint64_t>(t.rays, 1) << " point evals/ray, "
                               << t.certUs / std::max<uint64_t>(t.rays, 1) << " us/ray\n";
+                    {
+                        // Eligibility (Kernel cost ranking over the renderer's own loop).
+                        const auto est = Rendering::estimateVolumeSupportCertificateGain(f, certs, &proof, half, 96, 0.0);
+                        std::cout << "        eligibility: " << (est.eligible ? "ELIGIBLE" : "not eligible") << " — "
+                                  << est.reason << "; cost with/without " << est.costWith << "/" << est.costWithout
+                                  << " (ratio " << (est.costWithout > 0 ? est.costWith / est.costWithout : 0.0) << "), grid "
+                                  << est.gridSamples << "/" << est.samples << ", certified " << est.certifiedSamples << "\n";
+                        eligibleMedia += est.eligible ? 1 : 0;
+                    }
                     if (!attribution.empty() && zoneDir.path().filename().string() == "Northern Veil") {
                         std::cout << "        extra-proof attribution (Rung 2 empty, grid not):";
                         for (const auto& [k, v] : attribution) std::cout << " " << k << "=" << v;
@@ -620,6 +629,7 @@ int main() {
         std::cout << "    certificate totals: certified-only trace " << (100.0 * all.certTraced / std::max<uint64_t>(all.samples, 1))
                   << "%, " << double(all.certPoints) / std::max<uint64_t>(all.rays, 1) << " point evals/ray, "
                   << all.certUs / std::max<uint64_t>(all.rays, 1) << " us/ray\n";
+        std::cout << "    eligibility: " << eligibleMedia << " of " << admitted << " admitted media estimated cheaper with certificates\n";
         check(all.certViolations == 0, "certificate-only tracing certifies no real sample with positive density");
         check(media > 0 && admitted > 0, "the census finds real media the algebraic class admits");
         check(all.violations == 0, "no proved-empty sample on any real medium has positive emitter density (" +

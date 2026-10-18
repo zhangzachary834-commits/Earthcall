@@ -112,6 +112,9 @@ public:
     // OFF until a Person accepts it on their own GPU: pixels are witnessed
     // byte-identical on the cloud software lane only, never on Metal yet.
     bool      volumeSupportCertificatesEnabled = false;
+    // Within the enabled lane: true = only media the Kernel's cost estimate
+    // favours (published below); false = every medium with certificates.
+    bool      volumeSupportCertificatesAutoEligibility = true;
     // Volume quadrature resolution: samples a participating medium receives
     // across its own chord along a ray. 96 reproduces the historical shader
     // constant; overlapping media share the finest present resolution instead
@@ -132,6 +135,7 @@ public:
     // Derived: enabled support-certificate killers over the media drawn last
     // frame (0 while volumeSupportCertificatesEnabled is off).
     int       volumeSupportCertificateKillers = 0;
+    int       volumeSupportCertificateEligibleMedia = 0;
     bool      recording = false;
     bool      snapshotTrigger = false;
     glm::vec3 backgroundColor{0.1f, 0.1f, 0.15f};
@@ -221,6 +225,7 @@ private:
     int    getVolumeZeroProofCellsProven() const { return volumeZeroProofCellsProven; }
     int    getVolumeZeroProofCellsTotal() const { return volumeZeroProofCellsTotal; }
     int    getVolumeSupportCertificateKillers() const { return volumeSupportCertificateKillers; }
+    int    getVolumeSupportCertificateEligibleMedia() const { return volumeSupportCertificateEligibleMedia; }
 
     std::string _name{"screen-channel"};
 };

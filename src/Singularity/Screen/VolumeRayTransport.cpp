@@ -1,4 +1,5 @@
 #include "Singularity/Screen/VolumeRayTransport.hpp"
+#include "Singularity/Screen/VolumeZeroProof.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -930,6 +931,151 @@ VolumeSupportCertificates deriveVolumeSupportCertificates(const VolumeRayChannel
         }
     }
     if (out.killers.empty()) out.refusal = "no switch kills the density over the whole box at every time";
+    return out;
+}
+
+double volumeExecutionCost(const OntoMath::MathNode& node) {
+    using Op = OntoMath::MathNode::Op;
+    double cost = 0.0;
+    switch (node.op) {
+        case Op::Noise: cost = 40.0; break;
+        case Op::ScalarLeaf:
+            for (const auto& t : node.scalarForm.terms) cost += 1.0 + double(t.factors.size()) + 4.0 * double(t.trans.size());
+            break;
+        case Op::Sqrt: case Op::Length: case Op::Distance: case Op::Div: case Op::Pow: cost = 4.0; break;
+        default: cost = 1.0; break;
+    }
+    for (const auto& c : node.children)
+        if (c) cost += volumeExecutionCost(*c);
+    return cost;
+}
+
+VolumeSupportCertificateEstimate estimateVolumeSupportCertificateGain(const VolumeRayChannelForms& forms,
+                                                                      const VolumeSupportCertificates& enabled,
+                                                                      const VolumeZeroProof* proof,
+                                                                      const glm::dvec3& halfExtent,
+                                                                      int samplesPerChord, double clock) {
+    VolumeSupportCertificateEstimate out;
+    if (enabled.killers.empty()) { out.reason = "no enabled certificate"; return out; }
+    if (!forms.density.expr || !forms.density.algebraic.form) { out.reason = "density has no algebraic form"; return out; }
+    const int n = std::max(samplesPerChord, 1);
+    const glm::dvec3 h = glm::abs(halfExtent);
+    // Density evaluation cost (pieces the emitter can answer with) and each
+    // certificate's check cost (its authored operands, as the shader lowers them).
+    double densityCost = 0.0;
+    for (const auto& piece : forms.density.expr->pieces) {
+        if (!piece.mathNode) continue;
+        densityCost += volumeExecutionCost(*piece.mathNode);
+        if (!piece.hasLo && !piece.hasHi) break;
+    }
+    std::vector<double> checkCost;
+    for (const auto& c : enabled.killers)
+        checkCost.push_back(2.0 + (c.sourceA ? volumeExecutionCost(*c.sourceA) : 1.0) +
+                            (c.sourceB ? volumeExecutionCost(*c.sourceB) : 0.0));
+    constexpr double kLookup = 2.0;   // one proof-cell or support lookup
+    const auto& form = *forms.density.algebraic.form;
+    const std::vector<int8_t> zeros(form.switches.size(), 0);
+
+    auto cellOf = [&](const glm::dvec3& p, glm::uvec3& cell) {
+        if (!proof || !proof->any()) return false;
+        for (int a = 0; a < 3; ++a) {
+            const double u = (p[a] + h[a]) / (2.0 * h[a]) * double(proof->dims[a]);
+            if (!(u >= 0.0) || u >= double(proof->dims[a])) return false;
+            cell[a] = static_cast<uint32_t>(u);
+        }
+        return proof->proven(cell.x, cell.y, cell.z);
+    };
+    auto cellExit = [&](const glm::dvec3& o, const glm::dvec3& d, const glm::uvec3& cell) {
+        double tExit = std::numeric_limits<double>::infinity();
+        for (int a = 0; a < 3; ++a) {
+            const double size = 2.0 * h[a] / double(proof->dims[a]);
+            const double lo = -h[a] + size * double(cell[a]), hi = lo + size;
+            if (d[a] > 0.0) tExit = std::min(tExit, (hi - o[a]) / d[a]);
+            else if (d[a] < 0.0) tExit = std::min(tExit, (lo - o[a]) / d[a]);
+        }
+        return tExit;
+    };
+
+    constexpr uint32_t kRays = 48;
+    const double golden = 2.399963229728653;   // golden angle
+    for (uint32_t r = 0; r < kRays; ++r) {
+        // Deterministic: Fibonacci-sphere directions through stratified targets.
+        const double z = 1.0 - 2.0 * (double(r) + 0.5) / double(kRays);
+        const double rho = std::sqrt(std::max(0.0, 1.0 - z * z));
+        const glm::dvec3 d(rho * std::cos(golden * r), z, rho * std::sin(golden * r));
+        const glm::dvec3 target = h * glm::dvec3(std::fmod(0.6180339887 * (r + 1), 1.0) * 1.6 - 0.8,
+                                                 std::fmod(0.7548776662 * (r + 1), 1.0) * 1.6 - 0.8,
+                                                 std::fmod(0.5698402910 * (r + 1), 1.0) * 1.6 - 0.8);
+        const glm::dvec3 o = target - d * (3.0 * glm::length(h) + 1.0);
+        double t0 = -std::numeric_limits<double>::infinity(), t1 = std::numeric_limits<double>::infinity();
+        for (int a = 0; a < 3; ++a) {
+            if (d[a] == 0.0) { if (std::abs(o[a]) > h[a]) { t0 = 1.0; t1 = 0.0; } continue; }
+            const double ta = (-h[a] - o[a]) / d[a], tb = (h[a] - o[a]) / d[a];
+            t0 = std::max(t0, std::min(ta, tb));
+            t1 = std::min(t1, std::max(ta, tb));
+        }
+        if (!(t1 > t0)) continue;
+        ++out.rays;
+        const double step = (t1 - t0) / double(n);
+        VolumeSegmentMember member{&forms, glm::dvec3(0.0), clock};
+        OntoMath::LineAlgebraicEvaluator ev(form, rayBindings(member, {o, d, false}), true);
+        if (!ev.ok()) continue;
+        auto sampleT = [&](int i) { return t0 + (double(i) + 0.5) * step; };
+        auto firstAfter = [&](double t) { return std::max(0, int(std::ceil((t - t0) / step - 0.5))); };
+        // Without certificates (the production grid lane).
+        for (int i = 0; i < n;) {
+            ++out.samples;
+            const double s = sampleT(i);
+            glm::uvec3 cell;
+            if (cellOf(o + d * s, cell)) {
+                out.costWithout += kLookup;
+                ++out.gridSamples;
+                i = std::max(i + 1, firstAfter(cellExit(o, d, cell)));
+                continue;
+            }
+            out.costWithout += kLookup + densityCost;
+            ++i;
+        }
+        // With certificates: the shader's law (first success, converse recheck).
+        double recheck = -std::numeric_limits<double>::infinity();
+        for (int i = 0; i < n;) {
+            const double s = sampleT(i);
+            glm::uvec3 cell;
+            if (cellOf(o + d * s, cell)) {
+                out.costWith += kLookup;
+                i = std::max(i + 1, firstAfter(cellExit(o, d, cell)));
+                continue;
+            }
+            out.costWith += kLookup;
+            if (s >= recheck) {
+                double best = -1.0;
+                bool certified = false;
+                for (std::size_t k = 0; k < enabled.killers.size(); ++k) {
+                    const auto& c = enabled.killers[k];
+                    out.costWith += checkCost[k];
+                    ++out.checks;
+                    bool undefined = false;
+                    const auto g = ev.switchRange(c.switchIndex, s, s, zeros, &undefined);
+                    if (undefined) continue;
+                    const double margin = (c.sign < 0 ? -double(g.hi) : double(g.lo)) - c.deviceSlack;
+                    const double v = c.spatialLipschitz > 0.0 ? margin / c.spatialLipschitz : (margin > 0.0 ? 1e30 : -1.0);
+                    if (v > 0.0) { best = v; certified = true; break; }
+                    best = std::max(best, v);
+                }
+                if (certified) {
+                    out.certifiedSamples += 1;
+                    i = std::max(i + 1, firstAfter(s + best));
+                    continue;
+                }
+                recheck = s - best;
+            }
+            out.costWith += densityCost;
+            ++i;
+        }
+    }
+    if (out.rays == 0) { out.reason = "no estimate ray crossed the box"; return out; }
+    out.eligible = out.costWith < kVolumeSupportCertificateGainMargin * out.costWithout;
+    out.reason = out.eligible ? "estimated cheaper with certificates" : "estimated no cheaper than the grid lane alone";
     return out;
 }
 
