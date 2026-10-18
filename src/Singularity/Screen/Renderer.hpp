@@ -90,6 +90,7 @@ public:
         uint32_t volumeSupportCertificateBuilds = 0;
         uint32_t volumeSupportCertificateKillers = 0;
         uint32_t volumeSupportCertificateEligibleMedia = 0;   // media whose certificates are attached
+        uint32_t volumeSupportCertificateClosedKillers = 0;   // of those killers, Rung 2b closed forms
         // Measured eligibility (auto mode): hidden timing renders run after this
         // frame's submit, the compiles they caused, and media the estimate admitted
         // whose certificates the device measurement then vetoed.

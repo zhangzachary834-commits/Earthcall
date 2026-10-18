@@ -867,6 +867,262 @@ double volumeClockMagnitudeBucket(double t) {
     return bucket;
 }
 
+namespace {
+// Rung 2b: g = K + n·p + k1·r + ka·|c0 + c1·r| by structure (Polynomial leaves
+// of degree ≤ 1 reading only the line, one Euclidean norm of affine components,
+// one Abs of a term affine in r, Add/Sub, Mul by a constant). Anything else
+// becomes a bounded residual: its range over the box at every clock joins K.
+// Leaf coefficients come from their own symbolic coefficients evaluated at unit
+// origins/directions (exact for an affine form up to double rounding).
+struct ClosedTerm {
+    bool ok = false;
+    double k0lo = 0.0, k0hi = 0.0;   // K: a point unless a residual widened it
+    bool residual = false;
+    double k1 = 0.0, ka = 0.0, c0lo = 0.0, c0hi = 0.0, c1 = 0.0;   // |c0 + c1·r|, c0 in [c0lo, c0hi]
+    glm::dvec3 n{0.0};
+    int norm = -1, abs = -1;
+    bool constant() const { return k1 == 0.0 && ka == 0.0 && n == glm::dvec3(0.0); }
+};
+bool affineLeaf(const OntoMath::LineRestrictedForm& f, double& beta, glm::dvec3& alpha) {
+    if (f.degree() > 1) return false;
+    for (const auto& symbol : f.reads) {
+        bool line = false;
+        for (int i = 0; i < 3; ++i)
+            line = line || symbol == OntoMath::kLineOriginVars[i] || symbol == OntoMath::kLineDirectionVars[i];
+        if (!line) return false;   // the clock, a direction channel, an unbound symbol
+    }
+    if (f.degree() < 0) { beta = 0.0; alpha = glm::dvec3(0.0); return true; }
+    auto at = [&](const glm::dvec3& o, const glm::dvec3& d) -> std::optional<std::vector<double>> {
+        std::map<std::string, double> b;
+        for (int i = 0; i < 3; ++i) { b[OntoMath::kLineOriginVars[i]] = o[i]; b[OntoMath::kLineDirectionVars[i]] = d[i]; }
+        return f.evaluateCoefficients(b);
+    };
+    const auto base = at(glm::dvec3(0.0), glm::dvec3(1.0, 0.0, 0.0));
+    if (!base || base->empty()) return false;
+    beta = (*base)[0];
+    for (int j = 0; j < 3; ++j) {
+        glm::dvec3 e(0.0);
+        e[j] = 1.0;
+        const auto c = at(e, e);
+        if (!c || c->empty()) return false;
+        alpha[j] = (*c)[0] - beta;
+        const double slope = c->size() > 1 ? (*c)[1] : 0.0;
+        if (!(std::abs(slope - alpha[j]) <= 1e-12 * (1.0 + std::abs(alpha[j])))) return false;
+    }
+    const glm::dvec3 probe(1.25, -2.5, 3.75);
+    const auto c = at(probe, glm::dvec3(0.0, 1.0, 0.0));
+    const double expect = beta + glm::dot(alpha, probe);
+    return c && !c->empty() && std::abs((*c)[0] - expect) <= 1e-12 * (1.0 + std::abs(expect));
+}
+struct ClosedContext {
+    const OntoMath::LineAlgebraicForm& form;
+    const OntoMath::LineAlgebraicEvaluator& ev;
+    const std::vector<int8_t>& zeros;
+};
+ClosedTerm residualTerm(const ClosedContext& cx, uint32_t index) {
+    ClosedTerm out;
+    bool undefined = false;
+    const auto r = cx.ev.range(index, 0.0, 0.0, cx.zeros, &undefined);
+    if (undefined || !std::isfinite(r.lo) || !std::isfinite(r.hi)) return out;
+    out.ok = true;
+    out.residual = true;
+    out.k0lo = r.lo;
+    out.k0hi = r.hi;
+    return out;
+}
+ClosedTerm closedTerm(const ClosedContext& cx, uint32_t index, int depth) {
+    ClosedTerm out;
+    if (depth > 64 || index >= cx.form.nodes.size()) return out;
+    using Kind = OntoMath::LineAlgebraicNode::Kind;
+    const auto& node = cx.form.nodes[index];
+    switch (node.kind) {
+        case Kind::Polynomial: {
+            double beta = 0.0;
+            if (!affineLeaf(node.polynomial, beta, out.n)) return residualTerm(cx, index);
+            out.ok = true;
+            out.k0lo = out.k0hi = beta;
+            return out;
+        }
+        case Kind::Sqrt: {
+            bool affine = !node.normComponents.empty() && node.normComponents.size() <= 3 && node.nonnegativeArgument;
+            for (const uint32_t c : node.normComponents) {
+                double beta = 0.0;
+                glm::dvec3 alpha(0.0);
+                affine = affine && c < cx.form.nodes.size() && cx.form.nodes[c].kind == Kind::Polynomial &&
+                         affineLeaf(cx.form.nodes[c].polynomial, beta, alpha);
+            }
+            if (!affine) return residualTerm(cx, index);
+            out.ok = true;
+            out.k1 = 1.0;
+            out.norm = static_cast<int>(index);
+            return out;
+        }
+        case Kind::Abs: {
+            // The offset may be a bounded residual (a radius breathing with the
+            // clock): the classifier then certifies for every offset in range.
+            const auto x = closedTerm(cx, node.a, depth + 1);
+            if (x.ok && x.ka == 0.0 && x.n == glm::dvec3(0.0) && x.k1 != 0.0) {
+                out.ok = true;
+                out.residual = x.residual;
+                out.ka = 1.0;
+                out.c0lo = x.k0lo;
+                out.c0hi = x.k0hi;
+                out.c1 = x.k1;
+                out.norm = x.norm;
+                out.abs = static_cast<int>(index);
+                return out;
+            }
+            return residualTerm(cx, index);
+        }
+        case Kind::Add: case Kind::Sub: {
+            const auto a = closedTerm(cx, node.a, depth + 1), b = closedTerm(cx, node.b, depth + 1);
+            if (!a.ok || !b.ok || (a.norm >= 0 && b.norm >= 0 && a.norm != b.norm) ||
+                (a.abs >= 0 && b.abs >= 0 && a.abs != b.abs))
+                return residualTerm(cx, index);
+            const double s = node.kind == Kind::Add ? 1.0 : -1.0;
+            out.ok = true;
+            out.residual = a.residual || b.residual;
+            out.k0lo = a.k0lo + (s > 0 ? b.k0lo : -b.k0hi);
+            out.k0hi = a.k0hi + (s > 0 ? b.k0hi : -b.k0lo);
+            out.k1 = a.k1 + s * b.k1;
+            out.ka = a.ka + s * b.ka;
+            out.n = a.n + s * b.n;
+            out.norm = a.norm >= 0 ? a.norm : b.norm;
+            out.abs = a.abs >= 0 ? a.abs : b.abs;
+            out.c0lo = a.abs >= 0 ? a.c0lo : b.c0lo;
+            out.c0hi = a.abs >= 0 ? a.c0hi : b.c0hi;
+            out.c1 = a.abs >= 0 ? a.c1 : b.c1;
+            return out;
+        }
+        case Kind::Mul: {
+            const auto a = closedTerm(cx, node.a, depth + 1), b = closedTerm(cx, node.b, depth + 1);
+            const bool pointA = a.ok && a.constant() && !a.residual, pointB = b.ok && b.constant() && !b.residual;
+            if (!pointA && !pointB) return residualTerm(cx, index);
+            const ClosedTerm& v = pointA ? b : a;
+            if (!v.ok) return residualTerm(cx, index);
+            const double c = pointA ? a.k0lo : b.k0lo;
+            out = v;
+            out.k0lo = std::min(c * v.k0lo, c * v.k0hi);
+            out.k0hi = std::max(c * v.k0lo, c * v.k0hi);
+            out.k1 *= c; out.ka *= c; out.n *= c;
+            return out;
+        }
+        default:
+            return residualTerm(cx, index);
+    }
+}
+void classifyClosedForm(const ClosedContext& cx, VolumeSupportCertificate& c) {
+    using CF = VolumeSupportCertificate::ClosedForm;
+    const auto& sw = cx.form.switches[c.switchIndex];
+    const auto& node = cx.form.nodes[sw.node];
+    ClosedTerm g = closedTerm(cx, node.a, 0);
+    if (!g.ok) return;
+    if (sw.role == 1) {
+        const auto b = closedTerm(cx, node.b, 0);
+        if (!b.ok || (g.norm >= 0 && b.norm >= 0 && g.norm != b.norm) || (g.abs >= 0 && b.abs >= 0 && g.abs != b.abs)) return;
+        g.k0lo -= b.k0hi; g.k0hi -= b.k0lo;
+        g.k1 -= b.k1; g.ka -= b.ka; g.n -= b.n;
+        g.residual = g.residual || b.residual;
+        if (g.norm < 0) g.norm = b.norm;
+        if (g.abs < 0) { g.abs = b.abs; g.c0lo = b.c0lo; g.c0hi = b.c0hi; g.c1 = b.c1; }
+    } else if (sw.role == 2 || sw.role == 3) {
+        g.k0lo -= c.offset;
+        g.k0hi -= c.offset;
+    } else if (sw.role != 0) {
+        return;   // Select pieces: never lowered as killers
+    }
+    // Certified where sign·g > δ; the worst K over the box decides.
+    const double sign = c.sign < 0 ? -1.0 : 1.0;
+    const double K = sign > 0 ? g.k0lo : -g.k0hi;
+    const double T = c.deviceSlack - K;   // certified ⇔ sign·(rest of g) > T
+    if (!std::isfinite(T) || !std::isfinite(g.k1) || !std::isfinite(g.ka)) return;
+    const bool radial = g.norm >= 0 && g.n == glm::dvec3(0.0) && (g.k1 != 0.0) != (g.ka != 0.0);
+    if (radial) {
+        const double inf = std::numeric_limits<double>::infinity();
+        double rhoIn = -1.0, rhoOut = inf;
+        if (g.k1 != 0.0) {
+            const double kappa = sign * g.k1;   // κ·r > T
+            if (kappa > 0.0) rhoOut = T / kappa;
+            else rhoIn = T / kappa;
+        } else {
+            const double kappa = sign * g.ka;   // κ·|c0 + c1·r| > T
+            if (!(kappa > 0.0) || g.c1 == 0.0) return;   // an empty annulus: not represented
+            const double U = T / kappa;               // |c0 + c1·r| > U for every c0 in range
+            if (U < 0.0) { rhoOut = -1.0; }           // certified everywhere
+            else {
+                rhoIn = inf;
+                rhoOut = -inf;
+                for (const double c0 : {g.c0lo, g.c0hi}) {
+                    const double ra = (-U - c0) / g.c1, rb = (U - c0) / g.c1;
+                    rhoIn = std::min(rhoIn, std::min(ra, rb));
+                    rhoOut = std::max(rhoOut, std::max(ra, rb));
+                }
+            }
+        }
+        if (!(rhoIn > 0.0) && !(rhoOut < inf)) return;   // certifies nowhere a ray could use
+        const auto& components = cx.form.nodes[static_cast<std::size_t>(g.norm)].normComponents;
+        for (std::size_t row = 0; row < components.size(); ++row) {
+            double beta = 0.0;
+            glm::dvec3 alpha(0.0);
+            affineLeaf(cx.form.nodes[components[row]].polynomial, beta, alpha);
+            for (int j = 0; j < 3; ++j) c.closedM[j][row] = alpha[j];   // glm: column-major
+            c.closedB[row] = beta;
+        }
+        c.closedForm = CF::Radial;
+        c.closedRhoIn = rhoIn;
+        c.closedRhoOut = rhoOut;
+        c.closedExact = !g.residual;
+    } else if (g.norm < 0 && g.ka == 0.0 && g.k1 == 0.0 && g.n != glm::dvec3(0.0) &&
+               std::isfinite(glm::dot(g.n, g.n))) {
+        c.closedForm = CF::HalfSpace;
+        c.closedN = sign * g.n;
+        c.closedThreshold = T;
+        c.closedExact = !g.residual;
+    }
+}
+} // namespace
+
+VolumeSupportClosedInterval volumeSupportClosedInterval(const VolumeSupportCertificate& c,
+                                                        const glm::dvec3& o, const glm::dvec3& d) {
+    VolumeSupportClosedInterval out;
+    const double inf = std::numeric_limits<double>::infinity();
+    if (c.closedForm == VolumeSupportCertificate::ClosedForm::HalfSpace) {
+        // Certified where N·p > E: a·s > w along the line.
+        const double a = glm::dot(c.closedN, d), w = c.closedThreshold - glm::dot(c.closedN, o);
+        if (a == 0.0) {
+            if (w < 0.0) { out.hullLo = inf; out.hullHi = -inf; }   // the whole line is certified
+            return out;
+        }
+        if (a > 0.0) out.hullHi = w / a;
+        else out.hullLo = w / a;
+        return out;
+    }
+    if (c.closedForm != VolumeSupportCertificate::ClosedForm::Radial) return out;
+    // Certified where r > ρout or r < ρin, r = |M p + b|; along the line r² is
+    // A·(s − sc)² + |w|² (closest-point form: no cancellation against |u0|²).
+    const glm::dvec3 u0 = c.closedM * o + c.closedB, du = c.closedM * d;
+    const double A = glm::dot(du, du);
+    if (!(A > 0.0)) {
+        const double r = glm::length(u0);
+        if (r > c.closedRhoOut) { out.hullLo = inf; out.hullHi = -inf; }
+        else if (r < c.closedRhoIn) { out.holeLo = -inf; out.holeHi = inf; }
+        return out;
+    }
+    const double sc = -glm::dot(u0, du) / A;
+    const double w2 = glm::dot(u0 + sc * du, u0 + sc * du);
+    if (c.closedRhoOut < inf) {
+        const double h2 = (c.closedRhoOut * c.closedRhoOut - w2) / A;
+        if (c.closedRhoOut < 0.0 || h2 < 0.0) { out.hullLo = inf; out.hullHi = -inf; return out; }
+        out.hullLo = sc - std::sqrt(h2);
+        out.hullHi = sc + std::sqrt(h2);
+    }
+    if (c.closedRhoIn > 0.0) {
+        const double h2 = (c.closedRhoIn * c.closedRhoIn - w2) / A;
+        if (h2 > 0.0) { out.holeLo = sc - std::sqrt(h2); out.holeHi = sc + std::sqrt(h2); }
+    }
+    return out;
+}
+
 VolumeSupportCertificates deriveVolumeSupportCertificates(const VolumeRayChannelForms& forms,
                                                           const glm::dvec3& halfExtent,
                                                           double clockMagnitude) {
@@ -927,6 +1183,7 @@ VolumeSupportCertificates deriveVolumeSupportCertificates(const VolumeRayChannel
             c.sourceB = node.sourceB;
             c.offset = sw.role == 2 ? node.lo : (sw.role == 3 ? node.hi : 0.0);
             c.deviceSlack = kVolumeSupportDeviceTolerance + 2.0 * gSlack;
+            classifyClosedForm(ClosedContext{form, ev, zeros}, c);
             out.killers.push_back(c);
         }
     }
@@ -993,7 +1250,16 @@ VolumeSupportCertificateEstimate estimateVolumeSupportCertificateGain(const Volu
     for (const auto& c : enabled.killers)
         checkCost.push_back(2.0 + (c.sourceA ? volumeExecutionCost(*c.sourceA) : 1.0) +
                             (c.sourceB ? volumeExecutionCost(*c.sourceB) : 0.0));
+    // Rung 2b: closed-form killers are solved once per ray (volumeSupportClosed)
+    // and never checked per sample; the rest keep the per-sample law.
+    std::vector<std::size_t> reachKillers, closedKillers;
+    for (std::size_t k = 0; k < enabled.killers.size(); ++k) {
+        const auto& c = enabled.killers[k];
+        if (c.closedForm != VolumeSupportCertificate::ClosedForm::None) closedKillers.push_back(k);
+        if (c.closedForm == VolumeSupportCertificate::ClosedForm::None || !c.closedExact) reachKillers.push_back(k);
+    }
     constexpr double kLookup = 2.0;   // one proof-cell or support lookup
+    constexpr double kClosedCost = 40.0;   // one closed-form killer solved per ray (a quadratic, padded)
     const auto& form = *forms.density.algebraic.form;
     const std::vector<int8_t> zeros(form.switches.size(), 0);
 
@@ -1064,20 +1330,41 @@ VolumeSupportCertificateEstimate estimateVolumeSupportCertificateGain(const Volu
             ++i;
         }
         // With certificates: the shader's law (first success, converse recheck).
+        // Closed forms first: the support hull is the intersection of every
+        // closed killer's, the hole the longest one (the shader keeps one).
+        double hullLo = -std::numeric_limits<double>::infinity(), hullHi = std::numeric_limits<double>::infinity();
+        double holeLo = 0.0, holeHi = 0.0;
+        for (const std::size_t k : closedKillers) {
+            const auto c = volumeSupportClosedInterval(enabled.killers[k], o, d);
+            hullLo = std::max(hullLo, c.hullLo);
+            hullHi = std::min(hullHi, c.hullHi);
+            if (c.holeHi - c.holeLo > holeHi - holeLo) { holeLo = c.holeLo; holeHi = c.holeHi; }
+            out.costWith += kClosedCost;
+        }
         double recheck = -std::numeric_limits<double>::infinity();
-        for (int i = 0; i < n;) {
+        const int closedFirst = hullLo > t0 ? std::max(0, firstAfter(hullLo) - 1) : 0;
+        if (closedFirst > 0) out.closedSamples += uint32_t(std::min(closedFirst, n));
+        for (int i = closedFirst; i < n;) {
             const double s = sampleT(i);
+            if (s > hullHi) { out.closedSamples += uint32_t(n - i); break; }
             glm::uvec3 cell;
+            if (s < hullLo || (s > holeLo && s < holeHi)) {
+                out.costWith += kLookup;
+                const int next = std::max(i + 1, firstAfter(s < hullLo ? hullLo : holeHi));
+                out.closedSamples += uint32_t(std::min(next, n) - i);
+                i = next;
+                continue;
+            }
             if (cellOf(o + d * s, cell)) {
                 out.costWith += kLookup;
                 i = std::max(i + 1, firstAfter(cellExit(o, d, cell)));
                 continue;
             }
             out.costWith += kLookup;
-            if (s >= recheck) {
+            if (s >= recheck && !reachKillers.empty()) {
                 double best = -1.0;
                 bool certified = false;
-                for (std::size_t k = 0; k < enabled.killers.size(); ++k) {
+                for (const std::size_t k : reachKillers) {
                     const auto& c = enabled.killers[k];
                     out.costWith += checkCost[k];
                     ++out.checks;

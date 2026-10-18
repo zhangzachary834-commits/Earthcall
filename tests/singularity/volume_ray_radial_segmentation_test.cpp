@@ -411,9 +411,13 @@ int main() {
         }
         struct Totals { uint64_t samples = 0, empty = 0, constant = 0, grid = 0, both = 0, violations = 0; double us = 0; uint64_t rays = 0;
                         uint64_t traced = 0, tracedOrGrid = 0, tracePoints = 0, traceSetup = 0, traceViolations = 0; double traceUs = 0;
-                        uint64_t certTraced = 0, certPoints = 0, certViolations = 0; double certUs = 0; };
+                        uint64_t certTraced = 0, certPoints = 0, certViolations = 0; double certUs = 0;
+                        // Rung 2b closed forms: killers classified, identity mismatches against
+                        // the authored switch, samples they certify, and any with positive density.
+                        uint64_t closedRadial = 0, closedHalfSpace = 0, closedResidual = 0, closedMismatch = 0,
+                                 closedSkipped = 0, closedViolations = 0; };
         Totals all;
-        int admitted = 0, media = 0, eligibleMedia = 0, preludeMedia = 0, preludeFlips = 0, preludeDemotions = 0;
+        int admitted = 0, media = 0, eligibleMedia = 0, preludeMedia = 0, preludeFlips = 0, preludeDemotions = 0, closedMedia = 0;
         int allKillersEligible = 0, subsetMedia = 0, subsetWorse = 0;
         std::mt19937 rng(1017u);
         std::uniform_real_distribution<double> u(-1.0, 1.0);
@@ -454,6 +458,40 @@ int main() {
                     std::vector<const OntoMath::MathNode*> factors;
                     if (b.densityExpr->pieces[0].mathNode) productFactors(*b.densityExpr->pieces[0].mathNode, factors);
                     std::map<std::string, uint64_t> attribution;
+                    // Rung 2b: where a closed form certifies, the authored switch function
+                    // must certify too (sign·g > δ), checked at random box points; an
+                    // exact closed form must also certify everywhere the switch does.
+                    std::vector<const Rendering::VolumeSupportCertificate*> closed;
+                    for (const auto& c : certs.killers) {
+                        using CF = Rendering::VolumeSupportCertificate::ClosedForm;
+                        if (c.closedForm == CF::None) continue;
+                        closed.push_back(&c);
+                        (c.closedForm == CF::Radial ? t.closedRadial : t.closedHalfSpace) += 1;
+                        t.closedResidual += c.closedExact ? 0 : 1;
+                        for (int k = 0; k < 256; ++k) {
+                            const glm::dvec3 p = half * glm::dvec3(u(rng), u(rng), u(rng));
+                            double a = 0, bv = 0;
+                            bool ok = true;
+                            for (double time : {0.0, 0.75, 7.25}) {
+                                const auto vars = varsAt(p, time, glm::dvec3(0, 0, 1));
+                                const auto av = c.sourceA ? c.sourceA->evaluate(vars) : std::nullopt;
+                                const auto bvv = c.sourceB ? c.sourceB->evaluate(vars) : std::nullopt;
+                                if (!av || !propertyValueToNumber(*av, a) ||
+                                    (c.role == 1 && (!bvv || !propertyValueToNumber(*bvv, bv)))) { ok = false; break; }
+                                const double g = c.role == 1 ? a - bv : (c.role == 2 || c.role == 3) ? a - c.offset : a;
+                                const double margin = (c.sign < 0 ? -g : g) - c.deviceSlack;
+                                const double r = glm::length(c.closedM * p + c.closedB);
+                                const bool claims = c.closedForm == CF::Radial
+                                    ? (r > c.closedRhoOut || r < c.closedRhoIn)
+                                    : glm::dot(c.closedN, p) > c.closedThreshold;
+                                // A claim must be backed by the switch (tiny double slack);
+                                // an exact form must not miss a clear certification.
+                                if (claims && !(margin > -1e-9 * (1.0 + std::abs(g)))) ++t.closedMismatch;
+                                if (c.closedExact && !claims && margin > 1e-9 * (1.0 + std::abs(g))) ++t.closedMismatch;
+                            }
+                            if (!ok) ++t.closedMismatch;
+                        }
+                    }
                     for (int r = 0; r < 64; ++r) {
                         // A ray from outside the box through a random interior point.
                         const glm::dvec3 target = half * glm::dvec3(u(rng), u(rng), u(rng));
@@ -502,6 +540,20 @@ int main() {
                                 if (k < 0 || k >= proof.dims[a]) inGrid = false; else idx[a] = uint32_t(k);
                             }
                             const bool gridSkip = inGrid && proof.proven(idx.x, idx.y, idx.z);
+                            {
+                                const double sp = chord.firstSample + chord.step * double(i);
+                                bool closedSkip = false;
+                                for (const auto* c : closed) {
+                                    const auto iv = Rendering::volumeSupportClosedInterval(*c, ro, dir);
+                                    closedSkip = closedSkip || sp < iv.hullLo || sp > iv.hullHi ||
+                                                 (sp > iv.holeLo && sp < iv.holeHi);
+                                }
+                                if (closedSkip) {
+                                    ++t.closedSkipped;
+                                    double Dc = 0;
+                                    if (!scalarAt(*b.densityExpr, varsAt(p, 0.0, -dir), Dc) || Dc > 0.0) ++t.closedViolations;
+                                }
+                            }
                             const bool traced = trace.emptySample[i] != 0;
                             if (certTrace.emptySample[i]) {
                                 ++t.certTraced;
@@ -585,6 +637,10 @@ int main() {
                               << "%; " << double(t.tracePoints) / std::max<uint64_t>(t.rays, 1) << " point + "
                               << double(t.traceSetup) / std::max<uint64_t>(t.rays, 1) << " setup evals/ray; "
                               << t.traceUs / std::max<uint64_t>(t.rays, 1) << " us/ray\n";
+                    if (t.closedRadial + t.closedHalfSpace > 0)
+                        std::cout << "        closed forms: " << t.closedRadial << " radial, " << t.closedHalfSpace
+                                  << " half-space (" << t.closedResidual << " with a bounded residual); certify " << (100.0 * t.closedSkipped / std::max<uint64_t>(t.samples, 1))
+                                  << "% of samples without a check; " << t.closedMismatch << " identity mismatches\n";
                     std::cout << "        certificates: " << certs.killers.size() << " killers"
                               << (certs.killers.empty() ? " (" + certs.refusal + ")" : "")
                               << "; certified-only trace " << (100.0 * t.certTraced / std::max<uint64_t>(t.samples, 1))
@@ -611,7 +667,8 @@ int main() {
                         std::cout << "        eligibility: " << (est.eligible ? "ELIGIBLE" : "not eligible") << " — "
                                   << est.reason << "; cost with/without " << est.costWith << "/" << est.costWithout
                                   << " (ratio " << (est.costWithout > 0 ? est.costWith / est.costWithout : 0.0) << "), grid "
-                                  << est.gridSamples << "/" << est.samples << ", certified " << est.certifiedSamples << "\n";
+                                  << est.gridSamples << "/" << est.samples << ", certified " << est.certifiedSamples
+                                  << ", closed-form skipped " << est.closedSamples << ", checks " << est.checks << "\n";
                         allKillersEligible += est.eligible ? 1 : 0;
                         // The production choice (auto mode): the greedy killer subset.
                         Rendering::VolumeSupportCertificates chosen;
@@ -639,6 +696,10 @@ int main() {
                             std::cout << "          f" << k << " = " << factors[k]->print().substr(0, 110) << "\n";
                     }
                     all.certTraced += t.certTraced; all.certPoints += t.certPoints; all.certViolations += t.certViolations; all.certUs += t.certUs;
+                    all.closedRadial += t.closedRadial; all.closedHalfSpace += t.closedHalfSpace; all.closedResidual += t.closedResidual;
+                    all.closedMismatch += t.closedMismatch; all.closedSkipped += t.closedSkipped;
+                    all.closedViolations += t.closedViolations;
+                    closedMedia += (t.closedRadial + t.closedHalfSpace) > 0 ? 1 : 0;
                     all.traced += t.traced; all.tracedOrGrid += t.tracedOrGrid; all.traceViolations += t.traceViolations;
                     all.tracePoints += t.tracePoints; all.traceSetup += t.traceSetup; all.traceUs += t.traceUs;
                     all.samples += t.samples; all.empty += t.empty; all.constant += t.constant; all.grid += t.grid;
@@ -666,6 +727,13 @@ int main() {
                   << " (greedy subset; " << allKillersEligible << " with every killer enabled; " << subsetMedia
                   << " media enable fewer than all)\n";
         check(subsetWorse == 0, "the greedy killer subset never estimates costlier than every killer enabled");
+        std::cout << "    closed forms (Rung 2b): " << all.closedRadial << " radial and " << all.closedHalfSpace
+                  << " half-space killers on " << closedMedia << " media; they certify "
+                  << (100.0 * all.closedSkipped / std::max<uint64_t>(all.samples, 1)) << "% of samples without a check\n";
+        check(all.closedRadial + all.closedHalfSpace > 0, "the census finds closed-form killers on real media");
+        std::cout << "    closed forms with a bounded residual: " << all.closedResidual << "\n";
+        check(all.closedMismatch == 0, "every closed form's claim is backed by its authored switch at random box points and clocks");
+        check(all.closedViolations == 0, "no sample a closed form certifies has positive density (exact arithmetic)");
         std::cout << "    shared prelude: " << preludeMedia << " admitted media fill it before density; counting it promotes "
                   << preludeFlips << " and demotes " << preludeDemotions << "\n";
         check(all.certViolations == 0, "certificate-only tracing certifies no real sample with positive density");

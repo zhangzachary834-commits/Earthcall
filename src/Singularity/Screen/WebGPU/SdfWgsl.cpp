@@ -4093,8 +4093,8 @@ struct VolumeInstanceData {
     // count; 0 = none. Kernel-derived from authored density × box.
     supportCertOffset: u32,
     supportCertCount: u32,
-    supportCertReserved0: u32,
-    supportCertReserved1: u32,
+    supportClosedOffset: u32,
+    supportClosedCount: u32,
 };
 
 struct Params { v: array<f32> };
@@ -4305,7 +4305,7 @@ VolumeSupportKillerProgram lowerVolumeSupportKillers(const OntoMath::Piecewise* 
                   "        reach = max(reach, v" + std::to_string(slot) + ");\n    }\n";
         out.switches.push_back(static_cast<uint32_t>(k));
     }
-    if (out.switches.empty()) { out.error = "no switch with lowerable operands"; return out; }
+    if (out.switches.empty() && !(only && only->empty())) { out.error = "no switch with lowerable operands"; return out; }
     out.params = e.params;
     out.wgsl = "\nfn volumeSupportReach(p: vec3<f32>, base: u32) -> f32 {\n"
                "    let cb = base + " + std::to_string(4u * out.switches.size()) + "u;\n"
@@ -4329,6 +4329,88 @@ fn volumeSupportExit(reach: f32, inst: VolumeInstanceData, ro: vec3<f32>, sample
     let scale = max(ao.x, max(ao.y, ao.z)) + max(ah.x, max(ah.y, ah.z)) +
                 max(ar.x, max(ar.y, ar.z)) + abs(sampleT);
     return sampleT + max(reach * (1.0 - 1.52587890625e-5) - 4.0e-5 * scale, 0.0);
+}
+
+// Rung 2b (2026-10-18): closed-form killers, solved once per ray. The f32
+// mirror of Rendering::volumeSupportClosedInterval, widened outward under a
+// generous 2^-12 model (4096 ulps: Fast-mode reassociation, the f32 copies of
+// M, b and the thresholds, world/local coordinate rounding at |origin|, |ro|
+// and |t|) so a skipped sample is certified with margin. Returns the hull
+// (density may be nonzero only inside it) and one hole (never nonzero inside;
+// none when .z >= .w) in ray t. Payload, 16 floats per killer:
+//   radial    [1, rhoIn, rhoOut, |M|_F, m0, b0, m1, b1, m2, b2]  r = |M p + b|
+//   half      [2, 0, e, |n|, n, 0 ...]                             n·p > e
+// The closest-point form r² = A·(s − sc)² + |w|² avoids cancelling |u0|²
+// against the root, which a camera hundreds of radii away would otherwise do.
+fn volumeSupportClosed(inst: VolumeInstanceData, ro: vec3<f32>, rd: vec3<f32>, tMax: f32) -> vec4<f32> {
+    var hull = vec2<f32>(-3.0e38, 3.0e38);
+    var hole = vec2<f32>(1.0, -1.0);
+    let op = ro - inst.origin.xyz;
+    let ao = abs(inst.origin.xyz);
+    let ah = abs(inst.halfExtent.xyz);
+    let ar = abs(ro);
+    let scale = max(ao.x, max(ao.y, ao.z)) + max(ah.x, max(ah.y, ah.z)) +
+                max(ar.x, max(ar.y, ar.z)) + abs(tMax);
+    let kPad = 2.44140625e-4;
+    for (var k = 0u; k < inst.supportClosedCount; k = k + 1u) {
+        let at = inst.supportClosedOffset + 16u * k;
+        let norm = P.v[at + 3u];
+        if (P.v[at] > 1.5) {
+            // Certified where a·s − w exceeds every error, |s| ≤ scale.
+            let n = vec3<f32>(P.v[at + 4u], P.v[at + 5u], P.v[at + 6u]);
+            let e = P.v[at + 2u];
+            let a = dot(n, rd);
+            let w = e - dot(n, op);
+            let margin = kPad * (abs(e) + 2.0 * norm * scale);
+            if (abs(a) <= kPad * norm) {
+                if (-w > margin) { hull = vec2<f32>(1.0, -1.0); }
+                continue;
+            }
+            let root = (w + margin) / a;
+            let pad = kPad * (abs(root) + scale);
+            if (a > 0.0) { hull.y = min(hull.y, root + pad); }
+            else { hull.x = max(hull.x, root - pad); }
+            continue;
+        }
+        let m0 = vec3<f32>(P.v[at + 4u], P.v[at + 5u], P.v[at + 6u]);
+        let m1 = vec3<f32>(P.v[at + 8u], P.v[at + 9u], P.v[at + 10u]);
+        let m2 = vec3<f32>(P.v[at + 12u], P.v[at + 13u], P.v[at + 14u]);
+        let b = vec3<f32>(P.v[at + 7u], P.v[at + 11u], P.v[at + 15u]);
+        let u0 = vec3<f32>(dot(m0, op), dot(m1, op), dot(m2, op)) + b;
+        let du = vec3<f32>(dot(m0, rd), dot(m1, rd), dot(m2, rd));
+        let A = dot(du, du);
+        let ePos = kPad * (norm * scale + length(b));
+        let rhoIn = P.v[at + 1u];
+        let rhoOut = P.v[at + 2u];
+        if (!(A > kPad * kPad * norm * norm)) {
+            // r is nearly constant along this ray.
+            let r = length(u0);
+            let drift = sqrt(max(A, 0.0)) * scale + ePos;
+            if (r - drift > rhoOut || r + drift < rhoIn) { hull = vec2<f32>(1.0, -1.0); }
+            continue;
+        }
+        let sc = -dot(u0, du) / A;
+        let wl = length(u0 + sc * du);
+        let tPad = ePos / sqrt(A) + kPad * abs(sc);
+        if (rhoOut < 1.0e38) {
+            let outer = rhoOut + ePos;
+            let wlo = max(wl - ePos, 0.0);
+            if (rhoOut < 0.0 || wlo > outer) { hull = vec2<f32>(1.0, -1.0); continue; }
+            let h = sqrt(max(outer * outer - wlo * wlo, 0.0) / (A * (1.0 - kPad)));
+            hull = vec2<f32>(max(hull.x, sc - h - tPad), min(hull.y, sc + h + tPad));
+        }
+        if (rhoIn > 0.0) {
+            let inner = rhoIn - ePos;
+            let whi = wl + ePos;
+            if (inner > whi) {
+                let h = sqrt((inner * inner - whi * whi) / (A * (1.0 + kPad)));
+                let lo = sc - h + tPad;
+                let hi = sc + h - tPad;
+                if (hi - lo > hole.y - hole.x) { hole = vec2<f32>(lo, hi); }
+            }
+        }
+    }
+    return vec4<f32>(hull, hole);
 }
 
 // The converse bound. A non-positive reach r means every enabled killer is
@@ -4387,12 +4469,28 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     if (t1 <= t0) { discard; }
 
 )WGSL";
-    if (trimProofSupport) wgsl += R"WGSL(
+    if (trimProofSupport && !supportCertificates) wgsl += R"WGSL(
     let support = volumeSupportInterval(inst, ro, rd);
     let supportStart = max(t0, support.x);
     let supportEnd = min(t1, support.y);
     if (supportEnd <= supportStart) { discard; }
 )WGSL";
+    if (supportCertificates) {
+        wgsl += "    var supportStart = t0;\n    var supportEnd = t1;\n";
+        if (trimProofSupport) wgsl += R"WGSL(
+    let support = volumeSupportInterval(inst, ro, rd);
+    supportStart = max(supportStart, support.x);
+    supportEnd = min(supportEnd, support.y);
+)WGSL";
+        // Rung 2b: closed-form killers trim the prefix/tail and carry one hole;
+        // box events and sample spacing are untouched.
+        wgsl += R"WGSL(
+    let closed = volumeSupportClosed(inst, ro, rd, t1);
+    supportStart = max(supportStart, closed.x);
+    supportEnd = min(supportEnd, closed.y);
+    if (supportEnd <= supportStart) { discard; }
+)WGSL";
+    }
     wgsl += R"WGSL(
 
     let span = t1 - t0;
@@ -4407,7 +4505,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
 )WGSL";
     if (trimProofSupport) wgsl += "    let useColumns = volumeColumnsWorthWalking(inst, rd);\n";
     if (supportCertificates) wgsl += "    var certRecheck = -3.0e38;\n";
-    if (trimProofSupport) wgsl += R"WGSL(
+    if (trimProofSupport || supportCertificates) wgsl += R"WGSL(
     // Keep one extra prefix sample; positions still use the original chord.
     let firstSample = i32(clamp(ceil((supportStart - t0) / stepLength - 0.5) - 1.0,
                                  0.0, f32(samplesPerChord)));
@@ -4422,6 +4520,15 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     wgsl += R"WGSL(
         let worldP = ro + rd * sampleT;
         let p = worldP - inst.origin.xyz;
+)WGSL";
+    if (supportCertificates) wgsl += R"WGSL(
+        if (sampleT < closed.x || (sampleT > closed.z && sampleT < closed.w)) {
+            let closedExit = select(closed.w, closed.x, sampleT < closed.x);
+            i = max(i, i32(ceil((closedExit - t0) / stepLength - 0.5)) - 1);
+            continue;
+        }
+)WGSL";
+    wgsl += R"WGSL(
         // Grid walk: this sample and every later one before the ray leaves its
         // proven-empty cell contribute exactly nothing. Jump past them (the
         // loop's own increment then lands on the first sample beyond the exit).
@@ -5051,9 +5158,18 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
         // Unknown/near-parallel intervals cannot certify absence, including
         // samples rounded onto an authored box boundary. Keep them unbounded
         // here; the existing box events still delimit their sampling domain.
-        out.wgsl += "    let raySupport" + std::to_string(i) +
+        if (!memberCertificates[i]) out.wgsl += "    let raySupport" + std::to_string(i) +
             " = select(vec2<f32>(-3.0e38, 3.0e38), volumeSupportInterval(" + inst +
             ", ro, rd), " + inst + ".zeroProofPresent != 0u && all(abs(rd) >= vec3<f32>(1e-8)));\n";
+        // Rung 2b: closed-form killers narrow the member's ray support (prefix,
+        // tail) and carry one hole the walk jumps; box events never move.
+        else out.wgsl += "    let closed" + std::to_string(i) + " = volumeSupportClosed(" + inst + ", ro, rd, t1);\n"
+            "    let raySupportGrid" + std::to_string(i) +
+            " = select(vec2<f32>(-3.0e38, 3.0e38), volumeSupportInterval(" + inst +
+            ", ro, rd), " + inst + ".zeroProofPresent != 0u && all(abs(rd) >= vec3<f32>(1e-8)));\n"
+            "    let raySupport" + std::to_string(i) + " = vec2<f32>(max(raySupportGrid" + std::to_string(i) +
+            ".x, closed" + std::to_string(i) + ".x), min(raySupportGrid" + std::to_string(i) + ".y, closed" +
+            std::to_string(i) + ".y));\n";
         if (trimProofSupport) out.wgsl += "    let useColumns" + std::to_string(i) +
             " = volumeColumnsWorthWalking(" + inst + ", rd);\n";
         if (memberCertificates[i]) out.wgsl += "    var certRecheck" + std::to_string(i) + " = -3.0e38;\n";
@@ -5218,7 +5334,9 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             // Rung 2f-native: where no grid proof covers the sample, a support
             // certificate may; its exit joins the same collective jump.
             + std::string(memberCertificates[i]
-                ? "                        if (cellExit" + n + " < 0.0 && mediumInst" + n + ".supportCertCount != 0u && "
+                ? "                        if (cellExit" + n + " < 0.0 && sampleT > closed" + n + ".z && sampleT < closed" + n +
+                      ".w) { cellExit" + n + " = closed" + n + ".w; }\n"
+                  "                        if (cellExit" + n + " < 0.0 && mediumInst" + n + ".supportCertCount != 0u && "
                       "sampleT >= certRecheck" + n + ") {\n"
                   "                            g_instIdx = " + inst + ";\n"
                   "                            let certReach" + n + " = volumeSupportReach_" + n +

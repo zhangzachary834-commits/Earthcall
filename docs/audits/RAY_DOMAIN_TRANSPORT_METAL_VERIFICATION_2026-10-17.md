@@ -318,3 +318,33 @@ Zach chose the hidden render for measured eligibility, "measuring once per neces
 **Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/`. Design: [Rung 2 plan §6k](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6k-measured-eligibility-the-device-may-veto-the-estimate-2026-10-18-twelfth-pass). No live FPS, movement or Person-acceptance claim.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T15:23 PDT.
+
+## Rung 2b closed-form killers — thirteenth pass (M5)
+
+Zach: "NEXT PASS". This is the Firmament's direction 4. Built in the same worktree and `build-ray` tree from `319628733` plus this pass. Native Apple M5 Metal, with ordinary timestamps disabled. No save, default or installed app changed.
+
+| Witness (final tree) | Result |
+|---|---|
+| `webgpu_volume_support_certificates_test` (timing on) | **116/116** (new: inside, grazing and 150-radii byte parity on 6 closed-form Prism media; 2560×1440 parity on each) |
+| `volume_ray_radial_segmentation_test` | **36/36**; 48 closed forms on 23 media; 0 claims unbacked by the authored switch; 0 certified samples with positive density |
+| `webgpu_volume_zero_proof_test` / `webgpu_volume_shared_subexpression_test` / `webgpu_volume_unified_quadrature_test` / `webgpu_volumetric_mist_test` / `webgpu_v5_overlap_physics_test` | 73/73 / 76/76 / 15/15 / PASS / PASS |
+| `webgpu_perlin_exact_gradient_test` / `sdf_wgsl_parameter_refresh_test` / `channel_paths_test` | ALL OK (A–D) / PASS / ALL OK |
+| `volume_zero_proof_test` / `volume_shared_subexpression_test` / `volume_ray_segment_transport_test` / `ontomath_line_segmentation_test` | 48/48 / 60/60 / 53/53 / 64/64 |
+| `sdf_range_soundness_test` / `ontomath_authoring_reachability_test` / `prophetic_rete_test` | PASS / PASS / ALL OK |
+
+**Closed form against sphere tracing**, 2560×1440, forced grid + certificates, ABBA within one run, bytes equal across lanes (ms; two runs):
+- spherical-cloud: 2.68 → 1.86, 2.88 → 2.04
+- hollow-shell: 4.46 → 2.96, 4.79 → 3.21
+- csg-crescent: 3.06 → 2.00, 3.25 → 2.25
+- dual-sovereign: 3.51 → 2.37, 3.58 → 2.52
+- noise-organic-cloud: 39.9 → 34.0, 41.4 → 35.1
+
+**Auto mode with the measured veto** (2560×1440, settled ms, against grid): spherical 1.77 / 13.1, hollow 3.00 / 15.7, csg 1.89 / 15.7, noise-organic 34.6 / 60.4, time-breathing 5.77 / 15.4, dual 2.33 / 16.7. Every Prism medium was kept. Sea-of-clouds was vetoed. Northern Veil has 0 eligible.
+
+**Corrected:**
+- A scratch A/B's −91% on noise-organic came from a stale payload under a toggle production cannot make. The memo `generation` now joins the payload identity regardless.
+- The census caught a residual abs marked exact. Fixed before any native run used it.
+
+**Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/` (`census-closed-*`, `closed-ab-fixed-*`, `2b-*`). Design: [Rung 2 plan §6l](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6l-rung-2b-closed-form-killers-solved-once-per-ray-2026-10-18-thirteenth-pass). No live FPS, movement or Person-acceptance claim.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T16:40 PDT.

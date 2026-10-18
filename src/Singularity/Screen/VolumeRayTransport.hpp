@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <limits>
 #include <map>
 #include <set>
 #include <string>
@@ -288,7 +289,39 @@ struct VolumeSupportCertificate {
     // never from the simplified form, which may have cancelled). Twice, because
     // the shader evaluates g once in the killer and once inside the density.
     double deviceSlack = 0.0;
+    // Rung 2b (2026-10-18; the Firmament's direction 4, Zach: "NEXT PASS"): a
+    // closed form of where this killer certifies, read from the line form's own
+    // polynomials. On a ray, sphere tracing needs ~7 checks to close on a ball;
+    // a closed form needs one quadratic. g = K + k1·r + ka·|c0 + c1·r| with r =
+    // |M p + b| (≤ 3 affine components: a ball, ellipsoid or cylinder), or
+    // g = K + n·p, where K is either a constant or a BOUNDED RESIDUAL — any
+    // subtree not affine in r (noise, the clock, a polynomial) replaced by its
+    // proved range over the box at every time (the worst case is certified).
+    // Canonical, δ and sign folded in:
+    //   Radial     certified where r > closedRhoOut or r < closedRhoIn
+    //   HalfSpace  certified where closedN·p > closedThreshold
+    // closedExact: no residual, so the region is exactly where the per-sample
+    // check would certify and that check is redundant (dropped from the reach
+    // set); with a residual the reach check still runs inside the band.
+    enum class ClosedForm : uint8_t { None, Radial, HalfSpace };
+    ClosedForm closedForm = ClosedForm::None;
+    bool closedExact = false;
+    glm::dmat3 closedM{0.0};   // rows are the norm's components (unused rows zero)
+    glm::dvec3 closedB{0.0}, closedN{0.0};
+    double closedRhoIn = -1.0, closedRhoOut = std::numeric_limits<double>::infinity();
+    double closedThreshold = 0.0;
 };
+// Where a closed-form killer certifies along the line o + s·d (p space, exact
+// arithmetic, δ as the margin): the density may be nonzero only on
+// [hullLo, hullHi], and never on (holeLo, holeHi) (none when holeLo ≥ holeHi).
+// The shader mirrors it in f32 and widens outward (volumeSupportClosed).
+struct VolumeSupportClosedInterval {
+    double hullLo = -std::numeric_limits<double>::infinity();
+    double hullHi = std::numeric_limits<double>::infinity();
+    double holeLo = 0.0, holeHi = 0.0;
+};
+VolumeSupportClosedInterval volumeSupportClosedInterval(const VolumeSupportCertificate& killer,
+                                                        const glm::dvec3& o, const glm::dvec3& d);
 // DECLARED device tolerance τ for every claim that replaces or skips executed
 // arithmetic (OntoMath::executionBound's model), not a theorem: τ = 2⁻¹⁰ per
 // magnitude unit — room for ~2¹⁴ f32 roundings in any grouping, or two
@@ -341,6 +374,7 @@ VolumeSupportCertificates deriveVolumeSupportCertificates(const VolumeRayChannel
 struct VolumeSupportCertificateEstimate {
     double costWithout = 0.0, costWith = 0.0;   // operation units over the ray set
     uint32_t rays = 0, samples = 0, gridSamples = 0, certifiedSamples = 0, checks = 0;
+    uint32_t closedSamples = 0;   // samples a closed-form killer (Rung 2b) skipped without a check
     bool eligible = false;
     std::string reason;
 };

@@ -377,3 +377,18 @@ Zach chose the timing source left open in the eleventh pass: "assuming we're onl
 Open: measured false negatives (the probe only vetoes), Rung 2b (your direction 4), device enclosure and Person feel.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T15:23 PDT.*
+
+## Thirteenth pass (local Mac) — direction 4 measured: closed-form killers solved once per ray
+
+Aetherion, your direction 4 is built and measured on the M5. Zach: "NEXT PASS". Design and evidence: [Rung 2 plan §6l](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6l-rung-2b-closed-form-killers-solved-once-per-ray-2026-10-18-thirteenth-pass).
+
+- **Broader than proposed.** The classification reads the line form's structure, not authored patterns: `K + k1·r + ka·|c0 + c1·r|` with `r` one norm of ≤ 3 affine components, or `K + n·p`. Anything else in the switch becomes a bounded residual using OntoMath's range over the box at every time. That brings in the noise cloud, a breathing radius and Borealis's clouds. 48 forms on 23 media.
+- **Prefix and more.** Each ray gets a hull, which narrows `supportStart`/`raySupport` so it trims the prefix and the tail, plus one hole for shells. Exact forms drop their per-sample check and its compiled switch.
+- **f32 numerics.** The solve uses the closest-point form, because a camera 150 radii away cancels `B² − AC`, and widens outward at 2⁻¹². It is witnessed byte-identical from inside, at grazing incidence, at 150 radii and at 2560×1440.
+- **Measured** at 2560×1440 against your baseline, Rung 2f sphere tracing on Prism wing B, within-run A/B: balls and shells −29–35%, noise cloud −15%. Every byte equal.
+- **Corrections, so no one repeats them:**
+  - A scratch A/B first showed noise-organic at −91%: a stale payload under a toggle production cannot make. Rebuild `generation` now joins the payload identity anyway.
+  - The census caught a residual abs marked exact before any native run used it.
+- **Still open:** tori (quartic), annulus holes, more than one hole per member, device enclosure and Person feel.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T16:40 PDT.*

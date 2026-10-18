@@ -71,6 +71,7 @@ struct Frame {
     double ms = 0.0;
     uint32_t proven = 0;
     uint32_t killers = 0;
+    uint32_t closedKillers = 0;   // of those, Rung 2b closed forms (solved once per ray)
     uint32_t eligible = 0;   // media whose certificates are attached (auto eligibility)
     uint32_t firstCertificateBuilds = 0;
     uint32_t firstCompiles = 0;
@@ -230,6 +231,7 @@ int main() {
         drawOnce();
         frame.proven = renderer.frameStats().volumeZeroProofCellsProven;
         frame.killers = renderer.frameStats().volumeSupportCertificateKillers;
+        frame.closedKillers = renderer.frameStats().volumeSupportCertificateClosedKillers;
         frame.eligible = renderer.frameStats().volumeSupportCertificateEligibleMedia;
         frame.vetoes = renderer.frameStats().volumeSupportCertificateMeasuredVetoes;
         frame.lastProbes = renderer.frameStats().volumeSupportCertificateProbeRenders;
@@ -424,6 +426,7 @@ int main() {
                     wing.push_back(node);
             }
         prismWing = wing;
+        uint32_t closedPrism = 0;
         if (wing.empty()) {
             std::printf("  SKIP: Prism Cathedral wing B media not present (not a pass)\n");
         } else {
@@ -441,8 +444,10 @@ int main() {
                 const Frame grid = render({m}, true, false, 0.75, 0);
                 const Frame certified = render({m}, false, true, 0.75, 0);
                 const Frame both = render({m}, true, true, 0.75, 0);
-                std::printf("       %s: killers %u, grid cells proven %u, lit %llu\n", m->getIdentifier().c_str(),
-                            certified.killers, grid.proven, (unsigned long long)exact.lit);
+                std::printf("       %s: killers %u (%u closed-form), grid cells proven %u, lit %llu\n",
+                            m->getIdentifier().c_str(), certified.killers, certified.closedKillers, grid.proven,
+                            (unsigned long long)exact.lit);
+                closedPrism += certified.closedKillers > 0 ? 1 : 0;
                 if (exact.rgba != certified.rgba || grid.rgba != both.rgba)
                     std::printf("       %s: alone %s; over grid %s\n", m->getIdentifier().c_str(),
                                 byteDiff(exact.rgba, certified.rgba).c_str(), byteDiff(grid.rgba, both.rgba).c_str());
@@ -455,6 +460,32 @@ int main() {
                 }
                 check(exact.lit > 0 && exact.rgba == certified.rgba && grid.rgba == both.rgba,
                       m->getIdentifier() + ": certificates keep every RGBA byte");
+                // Rung 2b's numerics where they are hardest: from inside the box,
+                // past the support at grazing incidence, and from 150 radii away
+                // (where |u0|² dwarfs the root unless the closest-point form holds).
+                if (certified.closedKillers > 0) {
+                    const View closedViews[] = {
+                        {"inside", m->origin + glm::vec3(0.1f * r, -0.05f * r, 0.08f * r), m->origin + glm::vec3(0, 0, 2.0f * r)},
+                        {"grazing", m->origin + glm::vec3(0.9f * r, 0.3f * r, -2.5f * r), m->origin + glm::vec3(0.9f * r, 0.3f * r, 2.5f * r)},
+                        {"150 radii", m->origin + glm::vec3(3.0f * r, 2.0f * r, 150.0f * r), m->origin},
+                    };
+                    for (const auto& v : closedViews) {
+                        const float fov = std::string(v.label) == "150 radii" ? 2.0f : 60.0f;
+                        renderer.setCamera(glm::lookAt(v.eye, v.target, glm::vec3(0, 1, 0)),
+                                           glm::perspectiveZO(glm::radians(fov), float(width) / height, 0.05f, 4000.0f), v.eye);
+                        const Frame e = render({m}, false, false, 0.75, 0);
+                        const Frame c = render({m}, false, true, 0.75, 0);
+                        const Frame g = render({m}, true, false, 0.75, 0);
+                        const Frame gc = render({m}, true, true, 0.75, 0);
+                        if (e.rgba != c.rgba || g.rgba != gc.rgba)
+                            std::printf("       %s %s: alone %s; over grid %s\n", m->getIdentifier().c_str(), v.label,
+                                        byteDiff(e.rgba, c.rgba).c_str(), byteDiff(g.rgba, gc.rgba).c_str());
+                        check(e.lit > 0 && e.rgba == c.rgba && g.rgba == gc.rgba,
+                              m->getIdentifier() + " " + v.label + ": closed-form killers keep every RGBA byte");
+                    }
+                    renderer.setCamera(glm::lookAt(at, m->origin, glm::vec3(0, 1, 0)),
+                                       glm::perspectiveZO(glm::radians(60.0f), float(width) / height, 0.05f, 2000.0f), at);
+                }
                 if (timing) {
                     std::vector<double> tg, tb;
                     for (int round = 0; round < 4; ++round) {
@@ -469,6 +500,8 @@ int main() {
                                 m->getIdentifier().c_str(), 0.5 * (tg[1] + tg[2]), 0.5 * (tb[1] + tb[2]));
                 }
             }
+            std::printf("       Prism wing B: %u media carry closed-form killers (Rung 2b)\n", closedPrism);
+            check(closedPrism >= 4, "closed-form killers reach the GPU on Prism's balls and shells");
             // Emitter precedence witness (found by this lane, 2026-10-17). A
             // multi-term ScalarLeaf under Sub/Scale was emitted as
             // `(a - (t1) + (t2))`, i.e. (a - t1) + t2. Volume lowering hid it for
@@ -819,6 +852,31 @@ int main() {
                     stressExact.ms, stressCertified.ms);
         check(stressCertified.killers > 0 && stressCertified.rgba == stressExact.rgba,
               "full 2560x1440 spawn preserves every RGBA byte under certificates alone");
+    }
+    // Rung 2b at full size: every Prism medium carrying closed-form killers keeps
+    // every byte, certificates alone and over the grid (the M5 measured
+    // noise-organic-cloud 36 -> 3.3 ms here, so its pixels are witnessed here).
+    {
+        uint32_t closedMedia = 0;
+        for (const auto& m : prismWing) {
+            const glm::vec3 h = glm::abs(m->scale);
+            const float r = std::max(h.x, std::max(h.y, h.z));
+            const glm::vec3 at = m->origin + glm::vec3(0.35f * r, 0.25f * r, 2.6f * r);
+            renderer.setCamera(glm::lookAt(at, m->origin, glm::vec3(0, 1, 0)),
+                               glm::perspectiveZO(glm::radians(60.0f), float(width) / height, 0.05f, 2000.0f), at);
+            const Frame c = render({m}, false, true, 0.75, 0);
+            if (c.closedKillers == 0) continue;
+            ++closedMedia;
+            const Frame e = render({m}, false, false, 0.75, 0);
+            const Frame g = render({m}, true, false, 0.75, 0);
+            const Frame gc = render({m}, true, true, 0.75, 0);
+            if (e.rgba != c.rgba || g.rgba != gc.rgba)
+                std::printf("       2560x1440 %s: alone %s; over grid %s\n", m->getIdentifier().c_str(),
+                            byteDiff(e.rgba, c.rgba).c_str(), byteDiff(g.rgba, gc.rgba).c_str());
+            check(e.lit > 0 && e.rgba == c.rgba && g.rgba == gc.rgba,
+                  "2560x1440 " + m->getIdentifier() + ": closed-form killers keep every RGBA byte");
+        }
+        if (!prismWing.empty()) check(closedMedia >= 4, "2560x1440: the closed-form Prism media were rendered");
     }
     // What a measured verdict costs at full size while it is owed (report only):
     // each measuring frame also runs one hidden on/off pair and waits for it.

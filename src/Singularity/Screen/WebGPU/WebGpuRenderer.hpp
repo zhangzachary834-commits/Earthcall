@@ -457,8 +457,8 @@ private:
         // Kernel-derived; the two reserved words keep the std430 16-byte stride.
         uint32_t supportCertOffset = 0;
         uint32_t supportCertCount = 0;
-        uint32_t supportCertReserved0 = 0;
-        uint32_t supportCertReserved1 = 0;
+        uint32_t supportClosedOffset = 0;   // Rung 2b closed-form killers: 16 floats each
+        uint32_t supportClosedCount = 0;
     };
     // Kernel-derived resident layout/bytes. No authored state is hidden here:
     // equations remain on their registered FieldNodes; camera/clocks stream.
@@ -508,7 +508,13 @@ private:
         std::vector<uint32_t> switches;
         std::string wgsl;
         std::vector<float> payload;
-        uint32_t count = 0;
+        uint32_t count = 0;          // per-sample (reach) killers, compiled
+        uint32_t closedCount = 0;    // Rung 2b closed forms, 16 floats each after the reach block
+        uint32_t closedOffset = 0;   // within payload
+        // Bumped by every rebuild and folded into the payload identity, so a
+        // re-laid payload (killer set, closed-form block) is always re-uploaded,
+        // even when the compiled switches, and so the pipeline, stay the same.
+        uint64_t generation = 0;
         std::string refusal;
         uint64_t lastUsedFrame = 0;
         // Measured eligibility (auto mode; Zach 2026-10-18: "we can do hidden

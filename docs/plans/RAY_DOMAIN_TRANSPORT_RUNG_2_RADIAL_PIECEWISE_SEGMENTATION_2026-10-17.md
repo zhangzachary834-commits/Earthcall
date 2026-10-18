@@ -596,6 +596,63 @@ Pixels are byte-identical either way, so a verdict changes only speed. Forced mo
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T15:23 PDT. Human origin: Zachary Zhang chose the hidden render and the once-per-interval rule. The regime key, the strip sampling, the overhead subtraction and the veto-only rule are this session's.*
 
+## 6l. Rung 2b: closed-form killers, solved once per ray (2026-10-18, thirteenth pass)
+
+**Origin.** Zach: "NEXT PASS". This is the Firmament's direction 4 (Gemini 4 Argon): closed-form ray-prefix trimming for radial and half-space killers, measured against Rung 2f's in-loop sphere tracing on Prism wing B. Rung 2b was first planned (§3, before certificates existed) as "one sphere/ray quadratic per member per ray". Here it lands as a refinement of the certificate lane rather than a separate lane. The Firmament proposed it at the ray prefix; this pass also adds a hole for shells.
+
+**Classification (CPU, `deriveVolumeSupportCertificates`).**
+- A certified killer gets a closed form when its switch function is, by the line form's own structure, `K + k1·r + ka·|c0 + c1·r|` with `r = |M p + b|`, or `K + n·p`:
+  - `r` is one Euclidean norm of at most 3 affine components (a ball, ellipsoid or cylinder).
+  - Allowed combinators are Add/Sub, Mul by a constant, and one Abs of a term affine in `r`.
+- Coefficients come from the Polynomial leaves' symbolic coefficients, evaluated at unit origins and directions. That is exact for an affine leaf, and each leaf is verified affine at a probe point.
+- **Bounded residual:** any subtree that does not fit is replaced by OntoMath's proven range for it over the box at every time. This covers noise, the clock and non-affine polynomials, including a time-varying `c0`.
+- The worst case is certified, folded with δ and the sign into a canonical form:
+  - radial: certified where `r > ρout` or `r < ρin`
+  - half-space: certified where `n·p > e`
+- A form without a residual is **exact**: it certifies exactly where the per-sample check would. That check is then dropped, so its switch is never compiled. A form with a residual keeps the check for the band the residual leaves open.
+
+**Per ray (GPU, `volumeSupportClosed`).**
+- One solve per closed killer gives a **hull** (density may be nonzero only inside it) and the longest **hole** (never nonzero inside it).
+- It uses the closest-point form `r² = A·(s − sc)² + |w|²`. The obvious `B² − AC` cancels `|u0|²` against the root when the camera is hundreds of radii away.
+- It widens outward under a 2⁻¹² model, about 4096 ulps. That covers Fast-mode arithmetic, the f32 copies of `M`, `b` and the thresholds (each rounded toward certifying less), and coordinate rounding at `|origin|`, `|ro|` and `|t|`.
+- **Single marcher:** the hull narrows `supportStart`/`supportEnd`, so the first sample index and the tail break use the authored chord lattice unchanged. The hole is one compare and a lattice jump per sample.
+- **Fused marcher:** the hull intersects each member's `raySupport`, which already feeds the collective walk and the prefix union. The hole sets that member's cell exit.
+- Box events and sample spacing never move.
+
+**Census (CPU, 28 real media).**
+- 48 closed forms (40 radial, 8 half-space, 6 with a bounded residual) on 23 media. They certify 35.5% of all census samples without a check.
+- **Witnesses:**
+  - Every claim is backed by the authored switch at random box points and clocks 0, 0.75 and 7.25. Every exact form also covers every clear certification.
+  - No sample a closed form certifies has positive density.
+  - The census was 36/36. It caught a bug in this pass: an abs whose offset was a residual had been marked exact.
+- **Estimate** (cost with certificates over without, before → after):
+  - spherical-cloud 0.136 → 0.075, hollow-shell 0.222 → 0.109, csg-crescent 0.103 → 0.067, dual-sovereign 0.147 → 0.067, noise-organic 0.70 → 0.53, time-breathing 0.205 → 0.181.
+  - Northern Veil's y-slab half-spaces become closed forms. Its curtains stay ineligible (0.83–1.16).
+
+**Native (M5).**
+- Bytes are equal throughout: `webgpu_volume_support_certificates_test` passes 116/116.
+- New byte-parity witnesses on every closed-form Prism medium, each at 321×181 from inside the box, at grazing incidence and from 150 radii away, and at 2560×1440.
+- Within-run A/B at 2560×1440, forced grid + certificates, sphere-traced → closed form (ms; two runs):
+
+  | Medium | Grid | Sphere-traced | Closed form |
+  |---|---|---|---|
+  | spherical-cloud | 12.6 / 13.6 | 2.68 / 2.88 | 1.86 / 2.04 (−29–31%) |
+  | hollow-shell | 14.8 / 16.3 | 4.46 / 4.79 | 2.96 / 3.21 (−33–34%) |
+  | csg-crescent | 15.0 / 16.0 | 3.06 / 3.25 | 2.00 / 2.25 (−31–35%) |
+  | dual-sovereign | 16.2 / 17.0 | 3.51 / 3.58 | 2.37 / 2.52 (−30–32%) |
+  | noise-organic-cloud | 58.1 / 61.2 | 39.9 / 41.4 | 34.0 / 35.1 (−15%) |
+
+  Time-breathing-nebula was classified after this A/B. Cross-run, it settled at 5.8 ms against 6.2–6.5 ms before; that is not a claim.
+
+**Scratch-harness correction.** A first A/B reported noise-organic at 3.2 ms (−91%). The scratch toggle had changed the closed set while the compiled switches, and therefore the pipeline and its payload identity, stayed the same, so the GPU read a stale payload for that one medium. Production cannot reach that state: every memo rebuild trigger is already in the payload identity. It is now structural anyway: the memo's rebuild `generation` joins the payload identity. Warm frames still upload nothing.
+
+**Not done.**
+- The tori: a nested norm is quartic along a ray.
+- A residual abs certifying inside an annulus.
+- More than one hole per member.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T16:40 PDT. Human origin: Zachary Zhang ("NEXT PASS"). Direction 4 and the prefix-trimming idea are the Firmament's; Rung 2b's sphere/ray quadratic is the §3 plan's. The classification by line-form structure, the bounded residual, the hull-and-hole lowering, the closest-point numerics and the generation key are this session's.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

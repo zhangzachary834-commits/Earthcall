@@ -1706,3 +1706,9 @@ Nothing changes by default: `volumeSupportCertificatesEnabled` is still off. If 
 Nothing changes by default: certificates are still off. If you turn `volumeSupportCertificatesEnabled` on, auto mode now also times each admitted medium on your Mac and drops certificates where they don't actually help. It does this once per camera distance octave, using a hidden render, and keeps the verdict. `volumeSupportCertificateMeasuredVetoes` shows how many media were dropped. `volumeSupportCertificateProbeRenders` is nonzero only on the frames where a measurement is running.
 
 - [ ] Optional, on your Mac with certificates on: fly toward a Prism wing-B medium from far away. Each time you cross a distance octave, about five frames carry a hidden measurement, roughly 3–5 ms extra each at 2560×1440. Tell me whether you can feel a hitch. Everything should look identical. In Sky-Island, the sea of clouds should usually show up as vetoed. Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T15:23 PDT.
+
+### Closed-form certificate killers (Rung 2b) — October 18
+
+Nothing changes by default: certificates are still off. With `volumeSupportCertificatesEnabled` on, Prism wing B's balls and shells (spherical cloud, hollow shell, crescent, dual sovereign, breathing nebula) and the noise cloud now find their empty space with one calculation per ray. In offscreen tests at 2560×1440 they draw about 30% faster than last pass (the noise cloud about 15%). Every pixel matched in testing, and `volumeSupportCertificateKillers` now also counts these.
+
+- [ ] Optional, with certificates on, in Prism Cathedral wing B: fly in close to the hollow shell and the crescent, and pass through them. They should look exactly as before, including from inside, and move more smoothly. Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T16:40 PDT.

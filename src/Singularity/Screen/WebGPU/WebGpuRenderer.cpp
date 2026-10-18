@@ -2630,8 +2630,11 @@ bool WebGpuRenderer::volumeSupportCertificatesActive(const Rendering::VolumeDens
         memo.wgsl.clear();
         memo.payload.clear();
         memo.count = 0;
+        memo.closedCount = 0;
+        memo.closedOffset = 0;
         memo.refusal.clear();
         memo.measured.clear();
+        ++memo.generation;
         ++mutableFrameStats().volumeSupportCertificateBuilds;
         const auto candidates = sdfwgsl::lowerVolumeSupportKillers(medium.densityExpr);
         const auto forms = Rendering::lowerVolumeRayChannels(medium);
@@ -2669,15 +2672,23 @@ bool WebGpuRenderer::volumeSupportCertificatesActive(const Rendering::VolumeDens
             else enabledSet = std::move(chosen);
         }
         if (memo.refusal.empty()) {
-            for (const auto& c : enabledSet.killers) memo.switches.push_back(static_cast<uint32_t>(c.switchIndex));
+            // Rung 2b: an exact closed form replaces its per-sample check, so it is
+            // never compiled; one with a bounded residual keeps the check as well.
+            std::vector<const Rendering::VolumeSupportCertificate*> reach, closed;
+            for (const auto& c : enabledSet.killers) {
+                const bool closedForm = c.closedForm != Rendering::VolumeSupportCertificate::ClosedForm::None;
+                if (closedForm) closed.push_back(&c);
+                if (!closedForm || !c.closedExact) reach.push_back(&c);
+            }
+            for (const auto* c : reach) memo.switches.push_back(static_cast<uint32_t>(c->switchIndex));
             const auto killers = sdfwgsl::lowerVolumeSupportKillers(medium.densityExpr, &memo.switches);
             if (!killers.ok) memo.refusal = killers.error;
             else if (killers.switches != memo.switches) memo.refusal = "compiled killers and enabled set disagree";
             if (memo.refusal.empty()) {
                 memo.wgsl = killers.wgsl;
                 memo.payload.assign(4u * killers.switches.size(), 0.0f);
-                for (std::size_t slot = 0; slot < enabledSet.killers.size(); ++slot) {
-                    const auto& c = enabledSet.killers[slot];
+                for (std::size_t slot = 0; slot < reach.size(); ++slot) {
+                    const auto& c = *reach[slot];
                     const double delta = c.deviceSlack;   // τ + 2·slack(g), from the authored operands
                     const double invRate = c.spatialLipschitz > 0.0
                         ? std::min(1.0 / (c.spatialLipschitz * (1.0 + 1e-6)), 1e30) : 1e30;
@@ -2689,13 +2700,43 @@ bool WebGpuRenderer::volumeSupportCertificatesActive(const Rendering::VolumeDens
                 }
                 memo.payload.insert(memo.payload.end(), killers.params.begin(), killers.params.end());
                 memo.count = static_cast<uint32_t>(killers.switches.size());
+                // Closed-form block (sdfwgsl volumeSupportClosed): thresholds rounded
+                // toward certifying less, so the f32 copy never claims more.
+                memo.closedOffset = static_cast<uint32_t>(memo.payload.size());
+                const float inf = std::numeric_limits<float>::infinity();
+                for (const auto* c : closed) {
+                    float h[16] = {};
+                    using CF = Rendering::VolumeSupportCertificate::ClosedForm;
+                    if (c->closedForm == CF::HalfSpace) {
+                        h[0] = 2.0f;
+                        h[2] = std::nextafter(static_cast<float>(c->closedThreshold), inf);
+                        for (int j = 0; j < 3; ++j) h[4 + j] = static_cast<float>(c->closedN[j]);
+                        h[3] = std::nextafter(static_cast<float>(glm::length(c->closedN)), inf);
+                    } else {
+                        h[0] = 1.0f;
+                        h[1] = c->closedRhoIn > 0.0 ? std::nextafter(static_cast<float>(c->closedRhoIn), -inf) : -1.0f;
+                        h[2] = std::isfinite(c->closedRhoOut)
+                            ? std::nextafter(static_cast<float>(c->closedRhoOut), inf) : 3.0e38f;
+                        double frob = 0.0;
+                        for (int row = 0; row < 3; ++row) {
+                            for (int j = 0; j < 3; ++j) {
+                                h[4 + 4 * row + j] = static_cast<float>(c->closedM[j][row]);
+                                frob += c->closedM[j][row] * c->closedM[j][row];
+                            }
+                            h[7 + 4 * row] = static_cast<float>(c->closedB[row]);
+                        }
+                        h[3] = std::nextafter(static_cast<float>(std::sqrt(frob)), inf);
+                    }
+                    memo.payload.insert(memo.payload.end(), h, h + 16);
+                }
+                memo.closedCount = static_cast<uint32_t>(closed.size());
             } else {
                 memo.switches.clear();
             }
         }
     }
     memo.lastUsedFrame = _volumeZeroProofFrame;
-    if (memo.count == 0) return false;
+    if (memo.count == 0 && memo.closedCount == 0) return false;
     // A hidden timing lane forces its medium; every other medium keeps its decision.
     if (_certificateProbeMedium == medium.densityExpr) return _certificateProbeOn;
     if (autoEligibility) {
@@ -2765,7 +2806,9 @@ void WebGpuRenderer::probeVolumeSupportCertificates() {
     glm::uvec4 footprint{0u};
     for (const auto& medium : volumeDensitySources()) {
         const auto it = _volumeSupportCertificates.find(medium.densityExpr);
-        if (!medium.densityExpr || it == _volumeSupportCertificates.end() || it->second.count == 0) continue;
+        if (!medium.densityExpr || it == _volumeSupportCertificates.end() ||
+            (it->second.count == 0 && it->second.closedCount == 0))
+            continue;
         const glm::vec3 halfExtent = glm::abs(medium.scale);
         const uint64_t r = volumeSupportCertificateRegime(medium, halfExtent);
         const auto at = it->second.measured.find(r);
@@ -2925,16 +2968,19 @@ void WebGpuRenderer::attachVolumeSupportCertificates(const Rendering::VolumeDens
         // Admitted by the estimate (a payload exists) yet not attached: vetoed.
         if (volumeSupportCertificatesEnabled() && volumeSupportCertificatesAutoEligibility() && medium.densityExpr)
             if (const auto it = _volumeSupportCertificates.find(medium.densityExpr);
-                it != _volumeSupportCertificates.end() && it->second.count > 0)
+                it != _volumeSupportCertificates.end() && (it->second.count > 0 || it->second.closedCount > 0))
                 ++mutableFrameStats().volumeSupportCertificateMeasuredVetoes;
         return;
     }
     const auto& memo = _volumeSupportCertificates[medium.densityExpr];
-    mutableFrameStats().volumeSupportCertificateKillers += memo.count;
+    mutableFrameStats().volumeSupportCertificateKillers += memo.count + memo.closedCount;
+    mutableFrameStats().volumeSupportCertificateClosedKillers += memo.closedCount;
     ++mutableFrameStats().volumeSupportCertificateEligibleMedia;
     instance.supportCertCount = memo.count;
+    instance.supportClosedCount = memo.closedCount;
     if (!appendPayload) return;
     instance.supportCertOffset = static_cast<uint32_t>(params.size());
+    instance.supportClosedOffset = instance.supportCertOffset + memo.closedOffset;
     params.insert(params.end(), memo.payload.begin(), memo.payload.end());
 }
 
@@ -2963,6 +3009,9 @@ void WebGpuRenderer::flushVolumeComposite() {
             for (const auto* medium : media) {
                 const double bucket = Rendering::volumeClockMagnitudeBucket(medium->temporalCoordinate);
                 add(bucket);
+                const auto memo = _volumeSupportCertificates.find(medium->densityExpr);
+                const uint64_t generation = memo == _volumeSupportCertificates.end() ? 0 : memo->second.generation;
+                add(generation);
             }
         for (const auto* medium : media) {
             add(medium->densityExpr); add(medium->densityRevision);
@@ -3393,6 +3442,7 @@ void WebGpuRenderer::flushVolumeComposite() {
                 if (!rebuildPayload) {
                     mediumInstances[i].zeroProofOffset = payload.proofMetadata[i].zeroProofOffset;
                     mediumInstances[i].supportCertOffset = payload.proofMetadata[i].supportCertOffset;
+                    mediumInstances[i].supportClosedOffset = payload.proofMetadata[i].supportClosedOffset;
                 }
                 attachVolumeZeroProof(*activeMedia[i], glm::abs(activeMedia[i]->scale),
                                       params, mediumInstances[i], trimProofSupport, rebuildPayload);
@@ -3605,6 +3655,7 @@ void WebGpuRenderer::flushVolumeComposite() {
         } else {
             instance.zeroProofOffset = payload.proofMetadata[0].zeroProofOffset;
             instance.supportCertOffset = payload.proofMetadata[0].supportCertOffset;
+            instance.supportClosedOffset = payload.proofMetadata[0].supportClosedOffset;
         }
         attachVolumeZeroProof(medium, halfExtent, params, instance, trimProofSupport, rebuildPayload);
         attachVolumeSupportCertificates(medium, halfExtent, params, instance, rebuildPayload);
