@@ -83,6 +83,12 @@ All tests compiled and passing cleanly:
 
 ---
 
+## Sun review follow-up — strict generation pointer (2026-10-17)
+
+A pre-PR review found that the migrated runtime reader would accept the unversioned compatibility copy `<stem>.ecmatter` when a semantic root explicitly named a content-addressed `<stem>.<snapshotId>.ecmatter` generation but that named file was absent. The bytes were still length/hash checked, but this weakened the generation-pointer contract documented above.
+
+Sun restored strict lookup: once `matterGeneration` exists, the exact named generation file must exist. `zone_matter_closure_test` now adds a fixture with byte-identical unversioned bytes but a missing named snapshot and requires activation to refuse without moving the Person. This adds two checks beyond the original 26/26 execution record. Those two new checks have **not** been re-executed by hosted CI on this branch; the repository currently reports no hosted status checks for the head.
+
 ## 4. Boundaries & Stewardship
 
 - **Confined strictly to worktree**: `/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/audit_zone_save_migration`.
