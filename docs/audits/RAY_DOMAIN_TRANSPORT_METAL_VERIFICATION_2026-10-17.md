@@ -102,3 +102,39 @@ Raw logs and exit/duration metadata: `scratch/verification/ray-domain-metal-2026
 Certificates and ordinary timestamps stay default off. The declared execution-error model is still not a complete Metal Fast-mode enclosure. Generic authored eligibility, device proof, the null-member AUTHOR decision and existing Person appearance/movement checks remain open. This pass verifies the three requested native witnesses, not the entire renderer or a new FPS result.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T12:12:06-07:00 (PDT).
+
+
+## Auto eligibility Metal verification — Opus eighth pass
+
+Zach relayed Opus's `993f92a6` handoff, asking for continuation of the native commission. The main checkout had moved to `sync-from-earthcall-main`, so Codex used the existing clean ray-domain worktree at `993f92a6d5619359c59b9043f0a52a10671b62bd`. Refreshed that worktree's stale Debug CMake inventory using the documented policy/OpenSSL flags; rebuilt `webgpu_volume_support_certificates_test` and `channel_paths_test` with assertions enabled (`-UNDEBUG`). No source, test, default, authored coefficient, original save or installed app changed. The main checkout stayed untouched. The scratch probe directly reports **backend 5 (Metal), Apple M5**. Ordinary timestamps remained disabled.
+
+**Executed:** channel paths reports **547 advertised paths resolved, 3 skipped (clock), 0 failed; ALL OK**. Two independent, sequential process invocations of `EARTHCALL_CERTIFICATE_TIMING=1 ./webgpu_volume_support_certificates_test` each pass **68/68**, exits 0, in 52.512 and 46.598 seconds. These are focused witnesses, not a full-suite verdict. Native auto-mode parity/timings use **321×181**; the stock **2560×1440** stress comparison passes with forced-all certificates, not auto mode. No ABBA run overlaps another test/build. Timing batches warm first, alternate grid/auto then auto/grid over four rounds, eight submitted frames per batch, and report median completion/readback-inclusive cost per frame. They are not isolated GPU timestamps, live FPS, or usual-framebuffer movement measurements.
+
+**Cancellation:** the simple reassociable case remains black. The new polynomial identity at A=4096 produces **36,669 lit pixels**, 1 killer, and **0 differing bytes** in both Metal runs. This supplies the previously missing nonblack native case for that authored expression. It does not prove any compiler universally preserves the expression or establish a complete device error enclosure.
+
+**Auto selection:** Northern Veil reports **0/4** at clock 7.25; Prism wing B **7/8** at clock 0.75, excluding the noise cloud. Every stock auto-mode comparison matches the grid lane byte for byte. Both frozen fixture hashes (Northern Veil ecform, Prism JSON) are unchanged.
+
+| Auto-mode median cost, ms | Series 1 grid → auto | Series 2 grid → auto |
+|---|---|---|
+| Northern Veil fused | 2.95 → 3.49 | 2.64 → 3.24 |
+| Prism sphere | 0.58 → 0.30 | 0.55 → 0.29 |
+| Prism shell | 0.55 → 0.34 | 0.82 → 0.50 |
+| Prism torus | 2.85 → 1.14 | 1.02 → 0.49 |
+| Prism crescent | 0.92 → 0.50 | 0.84 → 0.48 |
+| Prism breathing nebula | 0.66 → 0.37 | 0.84 → 0.53 |
+| Prism proxy torus | 0.82 → 0.21 | 0.78 → 0.21 |
+| Prism dual medium | 0.79 → 0.44 | 1.15 → 0.68 |
+
+The seven admitted individual Prism media improve **1.58–3.90×** across these paired medians. Absolute costs drift across series, particularly the torus, so do not pool unrelated low/high observations. Northern Veil instead costs **18.3% and 22.7% more** with auto mode. The cloud's “no penalty” conclusion is not established on this Metal device. Forced-all (not auto) Prism fused comparisons also improve, 2.31→0.96 and 1.72→0.69 ms, but no auto-mode fused-Prism timing is supplied by this stock witness.
+
+**Northern Veil diagnostic:** the stock test asserts eligibility at clock 7.25 but times it at 0.75. A scratch-only entry retained its exact renderer/readback helper, linked the same freshly built objects, and checked both clocks. Both are lit, byte-identical off/on, with **0 eligible media and 0 killers**. Every timed batch reports **0 warm compiles and 0 parameter uploads**. Separate per-batch ABBA medians are 2.3012945→2.918323 ms at 0.75 (+26.8%), and 2.3306825→2.7031175 ms at 7.25 (+16.0%). Thus the clock mismatch does not explain away the overhead. These instrumented batches corroborate the stock finding rather than replace its medians.
+
+**Concrete source lead, not a proved cost attribution:** `WebGpuRenderer::flushVolumeComposite` still keys/composes the certificate shader using the master `volumeSupportCertificatesEnabled()` value (including `composeVolumeSet`) even when auto filtering clears every certificate payload. A zero eligible count therefore does not select the original no-certificate shader. Next investigate a generic effective-eligibility program identity / baseline fast path for an empty eligible set, with coherent memo/payload invalidation and renewed paired pixels/costs; no Zone names or authored-equation changes. No such optimization was implemented in this verification pass.
+
+**Other bounds:** Opus's pre-fix Perlin comparison was on lavapipe (18 diagnostic bytes). It does not independently establish that the M5's 27-byte difference was present before the residency fix; native baseline attribution remains open. The fixed Metal residency assertion and coverage results from the prior pass remain valid.
+
+Certificates stay **default off**. Person live-trial/visual/movement acceptance, the null-member decision, shared-noise estimate modeling, full device enclosure, and zero-eligible Metal overhead remain open. The new positive-density cancellation witness is complete on M5; the performance gate for neutral Northern Veil auto mode is not.
+
+**Raw evidence:** `scratch/verification/ray-domain-metal-2026-10-17-01a148a7/auto-eligibility/` retains build log, two full stock logs, all 42 TIMING lines, channel log, exact source HEAD, commands, fixture hashes and result metadata. `northern-veil-clock-probe.cpp`, its compile/link argv, build log and full per-batch log retain the scratch diagnostic. Original copy also remains at `/private/tmp/earthcall-auto-metal-01a148a7-20261017/`.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T19:22:42-07:00 (PDT).

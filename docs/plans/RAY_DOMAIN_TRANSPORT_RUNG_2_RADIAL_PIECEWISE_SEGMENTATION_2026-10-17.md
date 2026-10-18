@@ -443,6 +443,14 @@ Every auto-mode frame is byte-identical to the grid lane.
 
 *Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-18. Human origin: Zachary Zhang; Metal evidence: Codex / GPT-6.1 Sol and the local Sun.*
 
+### Eighth-pass Metal return — October 17 (Codex)
+
+Rebuilt `993f92a6` on M5 Metal: **68/68 twice** with timing enabled; channel paths **547 advertised, 3 clock skips, 0 failures**. The polynomial cancellation case is now lit (36,669 pixels) with 0 differing bytes in both runs. Auto mode selects 7/8 Prism media and 0/4 Northern Veil curtains; finite auto-mode byte parity passes. The seven selected individual Prism media improve 1.58–3.90× across paired medians. **Northern Veil auto is slower**: stock 2.95→3.49 and 2.64→3.24 ms (+18.3%, +22.7%). A scratch same-clock probe confirms zero eligible media/killers and zero warm compiles/uploads at both 0.75 and 7.25, yet preserves the overhead. The cloud's no-penalty inference does not transfer to Metal.
+
+The renderer still composes certificate WGSL from the master switch even when no medium is eligible; inspect an effective-eligibility baseline fast path next, without encoding Zone names. This is a source lead, not an isolated attribution of all cost. Auto measurements are 321×181 completion/readback-inclusive observations; the forced-all 2560×1440 comparison also passes but does not establish full-resolution auto-mode cost/parity. No default, source, save or installed-app change. [All results, raw paths and limits](../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#auto-eligibility-metal-verification--opus-eighth-pass). Default remains off and Person acceptance remains open.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T19:22:42-07:00 (PDT).
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).
