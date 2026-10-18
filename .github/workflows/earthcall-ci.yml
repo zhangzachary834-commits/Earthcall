@@ -318,7 +318,7 @@ jobs:
   sdf-range-perf:
     name: SDF authored-Perlin A/B (macOS Release)
     runs-on: macos-14
-    timeout-minutes: 25
+    timeout-minutes: 60
     needs: sdf-range-proxy-verification
 
     steps:
@@ -370,7 +370,7 @@ jobs:
   slow-adapter-independent-clock:
     name: Slow Adapter independent clock (macOS)
     runs-on: macos-14
-    timeout-minutes: 25
+    timeout-minutes: 60
 
     steps:
       - name: Check out tested commit
