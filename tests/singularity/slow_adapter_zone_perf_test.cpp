@@ -74,10 +74,27 @@ int main(int argc, char** argv) {
 
     // Isolate test save root without copying 1.6+ GB saves tree for timing-only probe.
     TestSupport::TempSaveRoot saveGuard;
+
+    // Copy the target world file into the temporary save root's worlds directory so
+    // loadState writes any persistence or identity updates to the isolated temp path.
+    const std::filesystem::path srcWorldPath(world);
+    const std::filesystem::path targetWorldsDir = saveGuard.tempPath / "worlds";
+    std::filesystem::create_directories(targetWorldsDir);
+    const std::filesystem::path targetWorldPath = targetWorldsDir / srcWorldPath.filename();
+    std::error_code ec;
+    std::filesystem::copy(srcWorldPath, targetWorldPath, std::filesystem::copy_options::overwrite_existing, ec);
+
+    // Copy associated .ecmatter file if present
+    const std::filesystem::path srcMatterPath = srcWorldPath.parent_path() / (srcWorldPath.stem().string() + ".ecmatter");
+    if (std::filesystem::exists(srcMatterPath)) {
+        const std::filesystem::path targetMatterPath = targetWorldsDir / srcMatterPath.filename();
+        std::filesystem::copy(srcMatterPath, targetMatterPath, std::filesystem::copy_options::overwrite_existing, ec);
+    }
+
     TestSupport::BootedEngineHarness h("Player", "humanoid", false /* hydrateAllZones */);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld(targetWorldPath.string());
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
