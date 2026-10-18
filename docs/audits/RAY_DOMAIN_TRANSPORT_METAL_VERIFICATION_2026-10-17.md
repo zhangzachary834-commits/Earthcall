@@ -279,3 +279,42 @@ Zach asked the local session to keep going on the next pass and to answer the Fi
 **Evidence:** `scratch/verification/ray-domain-eleventh-pass-2026-10-18/`. Method and design: [Rung 2 plan §6j](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6j-compile-only-the-enabled-killers-a-killer-subset-measured-2026-10-18-eleventh-pass). No live FPS, movement or Person-acceptance claim.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T11:46 PDT.
+
+## Measured eligibility (hidden render) — twelfth pass (M5)
+
+Zach chose the hidden render for measured eligibility, "measuring once per necessary interval." Built in the same worktree and `build-ray` tree from `4a0b591c5` plus this pass. Native Apple M5 Metal, with ordinary timestamps disabled (the probe uses none). WindowServer held about 40% CPU. No save, default or installed app changed.
+
+| Witness (final tree) | Result |
+|---|---|
+| `webgpu_volume_support_certificates_test` (timing on) | **90/90** in each of three final runs (new: measured, held, new-octave, return and rebuild regime witnesses; per-medium verdicts; measuring cost at 321×181 and 2560×1440) |
+| `webgpu_volume_zero_proof_test` / `webgpu_volume_shared_subexpression_test` / `webgpu_volume_unified_quadrature_test` / `webgpu_volumetric_mist_test` / `webgpu_perlin_exact_gradient_test` | 73/73 / 76/76 / 15/15 / PASS / ALL OK (A–D) |
+| `volume_zero_proof_test` / `volume_shared_subexpression_test` / `volume_ray_segment_transport_test` / `volume_ray_radial_segmentation_test` | 48/48 / 60/60 / 53/53 / 33/33 |
+| `sdf_range_soundness_test` / `ontomath_authoring_reachability_test` / `prophetic_rete_test` | PASS / PASS / ALL OK |
+
+**Verdicts, three runs** (5 ms pair budget; K = kept, V = vetoed):
+
+| Medium | Verdicts | Hand ABBA (§6j) |
+|---|---|---|
+| Prism wing B ×8 | K K K (also K at 2560×1440) | 2–4× faster |
+| Borealis v2 emerald-cyan, violet-magenta | K K K | −24–29% |
+| Borealis v1 dense | K K K | even top-down |
+| Borealis v1 airy | K V K | even top-down |
+| Sky-Island sea-of-clouds | K V V | +7% |
+| Sky-Island sunlit-halo-mist | K K K | −4% |
+
+**Cost while measuring, 2560×1440, per frame for five frames** (settled → measuring, ms; three runs):
+- spherical-cloud 2.6→5.6, 2.7→6.0, 2.8→5.6
+- torus 5.2→9.3, 6.1→10.7, 6.0→10.0
+- noise-organic 42.6→48.1, 44.6→49.8, 44.1→48.4
+- proxy-proof-torus 1.7→5.4, 1.8→5.7, 1.9→5.8
+
+**Rejected along the way:**
+- Full-footprint pairs: up to +80 ms per frame for five frames.
+- One centred band: vetoed noise-organic-cloud, which is kept in settled timing at 41 against 61 ms.
+- A 3 ms budget: vetoed csg-crescent and violet-magenta at 321×181.
+
+**Found:** a hidden lane sharing the frame's number made the resident payload fall back to the frame stream. That shares one buffer with the instances under the preparation dispatch, and wgpu raised a validation panic. Fixed with a per-submission payload epoch. The fallback remains reachable on a failed buffer creation.
+
+**Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/`. Design: [Rung 2 plan §6k](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6k-measured-eligibility-the-device-may-veto-the-estimate-2026-10-18-twelfth-pass). No live FPS, movement or Person-acceptance claim.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T15:23 PDT.

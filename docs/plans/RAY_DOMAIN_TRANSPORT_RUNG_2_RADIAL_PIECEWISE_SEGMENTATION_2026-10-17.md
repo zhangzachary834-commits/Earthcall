@@ -555,6 +555,47 @@ The scratch Perlin old-mirror/current comparison executes the full corpus and sa
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T11:46 PDT. Human origin: Zachary Zhang ("KEEP GOING… check if the FIRMAMENT sent u anything… NEXT PASS"). Directions 1–4 and the housekeeping item are the Firmament's (Gemini 4 Argon). The idle-vs-no-jump decomposition, the cache-revision repair and the eligibility-stays-whole rule are this session's.*
 
+## 6k. Measured eligibility: the device may veto the estimate (2026-10-18, twelfth pass)
+
+**Origin.** §6j left measured eligibility as Zach's decision because a timing source must not bring back the native-timestamp flicker. Asked to choose, Zach picked the hidden render: "assuming we're only measuring once per necessary interval instead of recomputing the measurement from scratch every time, we can do hidden render." This section is that design, built and measured on the M5.
+
+**Rule.** In auto mode the operation-count estimate still *admits* a medium. The device can then *veto* it. Once per regime (defined below), `WebGpuRenderer::probeVolumeSupportCertificates` times the frame's own volume pass with that medium's certificates on and off:
+- It runs at the end of `endFrame`, after the visible frame is submitted, against that frame's finished opaque depth, with every member present.
+- It uses the CPU clock around queue completion. No timestamp queries are used.
+- It runs one on/off pair per frame, alternating which lane goes first (ABBA across frames).
+- The first pair warms up and is not recorded. Four recorded pairs follow.
+- The medium keeps its certificates only if its median work is at least 3% below the median without them. The margin favors the simpler program on ties.
+
+Pixels are byte-identical either way, so a verdict changes only speed. Forced mode (auto off) never measures.
+
+**The interval.** A verdict is keyed by a regime: inside or outside the box, the camera's distance octave in box radii, the viewport's pixel octave, and the set's membership.
+- Returning to a regime reuses its verdict, so a camera oscillating across an octave boundary does not re-measure.
+- Any rebuild of the certificate memo clears every regime: density revision, extent, clock bucket, auto mode, grid lane, samples per chord, or per-sample cost.
+- A medium whose box covers under 2% of the view is not measured, and the estimate stands until it does.
+- At most 32 regimes are kept per medium.
+
+**Cost of measuring.** A full-footprint pair at 2560×1440 cost up to 80 ms per frame for five frames (noise-organic-cloud: 120 ms against 41 ms settled), a visible stutter. The hidden lanes now draw only 8 full-width strips spread down the medium's projected footprint, using the same full-resolution rays the frame casts there, just fewer of them. The strips start at 1/16 of the footprint's height for the warm-up pair, then are sized once so a pair's work is about 5 ms. Each pair also times an empty submission, and that round trip is subtracted. Two failed attempts showed why both pieces are needed:
+- **One centred band:** it vetoed noise-organic-cloud at full size, whose gain lives at the edges.
+- **A 3 ms budget:** at 321×181 each lane's fixed setup cost diluted the strips' comparison, and true 2× gains were vetoed.
+
+**What the M5 said** (three runs, 5 ms budget, every byte equal):
+- **Clear wins, kept in all three runs:** Prism ×8 (at 321×181 and at 2560×1440), Borealis v2 ×2, and Borealis v1 dense.
+- **Near-ties, can flip between runs:**
+  - Borealis v1 airy: kept 2 of 3.
+  - Sky-Island sea-of-clouds, §6j's false positive at +7%: vetoed 2 of 3.
+  - Sunlit-halo-mist, at −4%: kept 3 of 3.
+
+  Either choice costs about the same, and within a run each verdict is held.
+- **Measuring cost at 2560×1440:** settled → measuring went 2.6→5.6, 5.2→9.3 and 42.6→48.1 ms per frame. So it adds about 3–5 ms per frame for five frames, once per regime.
+
+**A latent hazard the first run found.** A hidden lane reused the frame's number. The resident volume payload refused a second write in one frame and fell back to the per-frame stream, which shares one buffer with the instances under the time-only preparation dispatch, and wgpu rejected it. Every frame and every hidden lane now gets its own encoding epoch (`_volumePayloadEpoch`). The same fallback is still reachable if the resident buffer cannot be created, and it would fail the same way for a medium with GPU preparation.
+
+**Witnesses** (`webgpu_volume_support_certificates_test`, 90/90): an admitted medium is timed (warm-up plus 4 pairs) and then settles; a held regime runs no further hidden renders; one octave farther is measured once; returning reuses the verdict; a rebuild clears it; and no verdict changes a byte. The visible frame's statistics stay its own; the probe reports `volumeSupportCertificateProbeRenders`, `…ProbeCompiles` and `…MeasuredVetoes` separately.
+
+**Not done.** Measurement only vetoes: a medium the estimate rejects is never timed, so false negatives remain the estimate's. None was observed: Northern Veil, the only rejected medium measured by hand, was slower when forced. Live movement and Person feel are unverified. Rung 2b is next.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T15:23 PDT. Human origin: Zachary Zhang chose the hidden render and the once-per-interval rule. The regime key, the strip sampling, the overhead subtraction and the veto-only rule are this session's.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

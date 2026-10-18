@@ -213,6 +213,12 @@ int main() {
             PropertyPath::PathResult::Ok) {
             fail("volumeSupportCertificateEligibleMedia", "Channel — Screen", "must publish the eligible-media count");
         }
+        // Measured eligibility (2026-10-18) publishes its hidden renders and vetoes.
+        for (const char* measuredPath : {"volumeSupportCertificateProbeRenders", "volumeSupportCertificateMeasuredVetoes"}) {
+            PropertyValue measured;
+            if (PropertyPath::parse(measuredPath).getValue(screen, measured) != PropertyPath::PathResult::Ok)
+                fail(measuredPath, "Channel — Screen", "must publish the measured-eligibility count");
+        }
 
         PropertyValue samples;
         const PropertyPath samplesPath = PropertyPath::parse("volumeSamplesPerChord");

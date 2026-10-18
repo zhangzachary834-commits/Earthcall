@@ -661,6 +661,9 @@ void WebGpuRenderer::shutdown() {
     if (_depthView) { wgpuTextureViewRelease(_depthView); _depthView = nullptr; }
     if (_depthTex)  { wgpuTextureRelease(_depthTex); _depthTex = nullptr; }
     _depthW = _depthH = 0;
+    if (_certificateProbeView) { wgpuTextureViewRelease(_certificateProbeView); _certificateProbeView = nullptr; }
+    if (_certificateProbeTex)  { wgpuTextureRelease(_certificateProbeTex); _certificateProbeTex = nullptr; }
+    _certificateProbeW = _certificateProbeH = 0;
     if (_whiteView) { wgpuTextureViewRelease(_whiteView); _whiteView = nullptr; }
     if (_whiteTex)  { wgpuTextureRelease(_whiteTex); _whiteTex = nullptr; }
     if (_sampler)   { wgpuSamplerRelease(_sampler); _sampler = nullptr; }
@@ -970,6 +973,7 @@ void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width,
     mutableFrameStats().gpuVolumePassMs = _latestGpuVolumePassMs;
     mutableFrameStats().gpuTimingSampleFrame = _latestGpuTimingFrame;
     _frameCount++;
+    ++_volumePayloadEpoch;
     _meshCache.beginFrame(_frameCount);
     ensureDepth(width, height);
     _encoder = wgpuDeviceCreateCommandEncoder(_device, nullptr);
@@ -2627,6 +2631,7 @@ bool WebGpuRenderer::volumeSupportCertificatesActive(const Rendering::VolumeDens
         memo.payload.clear();
         memo.count = 0;
         memo.refusal.clear();
+        memo.measured.clear();
         ++mutableFrameStats().volumeSupportCertificateBuilds;
         const auto candidates = sdfwgsl::lowerVolumeSupportKillers(medium.densityExpr);
         const auto forms = Rendering::lowerVolumeRayChannels(medium);
@@ -2690,7 +2695,225 @@ bool WebGpuRenderer::volumeSupportCertificatesActive(const Rendering::VolumeDens
         }
     }
     memo.lastUsedFrame = _volumeZeroProofFrame;
-    return memo.count > 0;
+    if (memo.count == 0) return false;
+    // A hidden timing lane forces its medium; every other medium keeps its decision.
+    if (_certificateProbeMedium == medium.densityExpr) return _certificateProbeOn;
+    if (autoEligibility) {
+        const auto it = memo.measured.find(volumeSupportCertificateRegime(medium, halfExtent));
+        if (it != memo.measured.end() && it->second.verdict == 0) return false;
+    }
+    return true;
+}
+
+uint64_t WebGpuRenderer::volumeSupportCertificateRegime(const Rendering::VolumeDensityBinding& medium,
+                                                        const glm::vec3& halfExtent) const {
+    uint64_t seed = 0x2f6b1e93u;
+    auto combine = [&](uint64_t value) { seed ^= value + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2); };
+    const glm::vec3 offset = _eyePos - medium.origin;
+    const bool inside = glm::all(glm::lessThanEqual(glm::abs(offset), halfExtent));
+    combine(inside ? 1u : 2u);
+    if (!inside) {
+        const float radius = std::max(halfExtent.x, std::max(halfExtent.y, halfExtent.z));
+        const double ratio = std::max(double(glm::length(offset)) / std::max(double(radius), 1e-6), 1.0 / 16.0);
+        combine(static_cast<uint64_t>(std::clamp(std::floor(std::log2(ratio)), -4.0, 16.0) + 8.0));
+    }
+    const double pixels = std::max(double(_depthW) * double(_depthH), 1.0);
+    combine(static_cast<uint64_t>(std::floor(std::log2(pixels))));
+    for (const auto& member : volumeDensitySources()) combine(reinterpret_cast<uintptr_t>(member.densityExpr));
+    return seed;
+}
+
+bool WebGpuRenderer::volumeSupportCertificateFootprint(const glm::vec3& origin, const glm::vec3& halfExtent,
+                                                       glm::uvec4& pixels) const {
+    pixels = glm::uvec4(0u, 0u, _depthW, _depthH);
+    glm::vec2 lo(std::numeric_limits<float>::max()), hi(std::numeric_limits<float>::lowest());
+    int behind = 0;
+    for (int corner = 0; corner < 8; ++corner) {
+        const glm::vec3 sign((corner & 1) ? 1.0f : -1.0f, (corner & 2) ? 1.0f : -1.0f, (corner & 4) ? 1.0f : -1.0f);
+        const glm::vec4 clip = _viewProj * glm::vec4(origin + sign * halfExtent, 1.0f);
+        if (clip.w <= 1e-4f) { ++behind; continue; }
+        const glm::vec2 ndc = glm::vec2(clip) / clip.w;
+        lo = glm::min(lo, ndc); hi = glm::max(hi, ndc);
+    }
+    if (behind == 8) return false;
+    if (behind > 0) return true;   // the box straddles the eye plane: it fills part of the view
+    const glm::vec2 a = glm::clamp(lo, glm::vec2(-1.0f), glm::vec2(1.0f));
+    const glm::vec2 b = glm::clamp(hi, glm::vec2(-1.0f), glm::vec2(1.0f));
+    // NDC y points up; framebuffer rows run down.
+    const auto column = [&](float x) { return static_cast<uint32_t>(std::floor((x * 0.5f + 0.5f) * float(_depthW))); };
+    const auto row = [&](float y) { return static_cast<uint32_t>(std::floor((0.5f - y * 0.5f) * float(_depthH))); };
+    const uint32_t x0 = std::min(column(a.x), _depthW), x1 = std::min(column(b.x) + 1u, _depthW);
+    const uint32_t y0 = std::min(row(b.y), _depthH), y1 = std::min(row(a.y) + 1u, _depthH);
+    pixels = glm::uvec4(x0, y0, x1 > x0 ? x1 - x0 : 0u, y1 > y0 ? y1 - y0 : 0u);
+    return double(b.x - a.x) * double(b.y - a.y) / 4.0 >= kCertificateProbeMinCoverage;
+}
+
+// Measured eligibility (Claude Opus 5.5, 2026-10-18; Zach chose the hidden render
+// over re-enabling timestamp queries, "measuring once per necessary interval").
+// The estimate counts operations; the M5 showed what it cannot see (sea-of-clouds
+// admitted and 7% slower, greedy curtains admitted and slower). This times the
+// real thing: the frame's own volume pass, every member present, against the
+// frame's finished opaque depth, with one medium's certificates on and off.
+// Pixels are byte-identical either way, so a verdict changes only speed.
+void WebGpuRenderer::probeVolumeSupportCertificates() {
+    if (!volumeSupportCertificatesEnabled() || !volumeSupportCertificatesAutoEligibility() || !_instance ||
+        !_device || !_queue || !_depthView || !_inverseViewProjValid || _depthW == 0 || _depthH == 0)
+        return;
+    // One medium per frame: the first admitted, visible and unmeasured.
+    const Rendering::VolumeDensityBinding* target = nullptr;
+    uint64_t regime = 0;
+    glm::uvec4 footprint{0u};
+    for (const auto& medium : volumeDensitySources()) {
+        const auto it = _volumeSupportCertificates.find(medium.densityExpr);
+        if (!medium.densityExpr || it == _volumeSupportCertificates.end() || it->second.count == 0) continue;
+        const glm::vec3 halfExtent = glm::abs(medium.scale);
+        const uint64_t r = volumeSupportCertificateRegime(medium, halfExtent);
+        const auto at = it->second.measured.find(r);
+        if (at != it->second.measured.end() && at->second.verdict >= 0) continue;
+        if (!volumeSupportCertificateFootprint(medium.origin, halfExtent, footprint) || footprint.z == 0 ||
+            footprint.w == 0)
+            continue;
+        target = &medium;
+        regime = r;
+        break;
+    }
+    if (!target) return;
+
+    if (!_certificateProbeTex || _certificateProbeW != _depthW || _certificateProbeH != _depthH) {
+        if (_certificateProbeView) wgpuTextureViewRelease(_certificateProbeView);
+        if (_certificateProbeTex) wgpuTextureRelease(_certificateProbeTex);
+        WGPUTextureDescriptor td = {};
+        td.usage = WGPUTextureUsage_RenderAttachment;
+        td.dimension = WGPUTextureDimension_2D;
+        td.size = {_depthW, _depthH, 1};
+        td.format = _colorFormat;
+        td.mipLevelCount = 1; td.sampleCount = 1;
+        _certificateProbeTex = wgpuDeviceCreateTexture(_device, &td);
+        _certificateProbeView = wgpuTextureCreateView(_certificateProbeTex, nullptr);
+        _certificateProbeW = _depthW; _certificateProbeH = _depthH;
+    }
+
+    // The visible frame's statistics stay its own; the probe reports separately.
+    const FrameStats visible = mutableFrameStats();
+    auto encodeLane = [&](bool on) {
+        _certificateProbeMedium = target->densityExpr;
+        _certificateProbeOn = on;
+        // Its own submission: resident payloads write in place rather than fall
+        // back to the frame stream (which would share one buffer with the
+        // instances under the same preparation dispatch).
+        ++_volumePayloadEpoch;
+        _encoder = wgpuDeviceCreateCommandEncoder(_device, nullptr);
+        _frameColorView = _certificateProbeView;
+        WGPURenderPassColorAttachment ca = {};
+        ca.view = _certificateProbeView;
+        ca.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+        ca.loadOp = WGPULoadOp_Load;
+        ca.storeOp = WGPUStoreOp_Store;
+        WGPURenderPassDepthStencilAttachment da = {};
+        da.view = _depthView;   // this frame's finished depth, already submitted ahead in queue order
+        da.depthLoadOp = WGPULoadOp_Load;
+        da.depthStoreOp = WGPUStoreOp_Store;
+        WGPURenderPassDescriptor rp = {};
+        rp.colorAttachmentCount = 1;
+        rp.colorAttachments = &ca;
+        rp.depthStencilAttachment = &da;
+        _pass = wgpuCommandEncoderBeginRenderPass(_encoder, &rp);
+        _boundPipeline = nullptr;
+        flushVolumeComposite();
+        if (_pass) {
+            wgpuRenderPassEncoderEnd(_pass);
+            wgpuRenderPassEncoderRelease(_pass);
+            _pass = nullptr;
+        }
+        WGPUCommandBuffer cmd = wgpuCommandEncoderFinish(_encoder, nullptr);
+        wgpuCommandEncoderRelease(_encoder);
+        _encoder = nullptr;
+        _frameColorView = nullptr;
+        _certificateProbeMedium = nullptr;
+        return cmd;
+    };
+    auto waitForQueue = [&] {
+        bool done = false;
+        WGPUQueueWorkDoneCallbackInfo info = {};
+        info.mode = WGPUCallbackMode_AllowProcessEvents;
+        info.callback = [](WGPUQueueWorkDoneStatus, WGPUStringView, void* flag, void*) {
+            *static_cast<bool*>(flag) = true;
+        };
+        info.userdata1 = &done;
+        wgpuQueueOnSubmittedWorkDone(_queue, info);
+        while (!done) wgpuInstanceProcessEvents(_instance);
+    };
+    auto measured = [&]() -> VolumeSupportCertificateMemo::Measurement& {
+        return _volumeSupportCertificates[target->densityExpr].measured[regime];
+    };
+    // ABBA across frames: alternate which lane goes first on each recorded pair.
+    const bool onFirst = measured().onMs.size() % 2 == 0;
+    // Both lanes of a pair time the same rows: kCertificateProbeStrips full-width
+    // strips spread evenly down the footprint (the gain lives at the edges as much
+    // as through the middle), together `band` of its height.
+    const double band = measured().warmed ? measured().band : kCertificateProbeWarmBand;
+    _certificateProbeFootprint = footprint;
+    _certificateProbeStripRows = std::max(1u, static_cast<uint32_t>(std::ceil(band * footprint.w / kCertificateProbeStrips)));
+    WGPUCommandBuffer lanes[2] = {encodeLane(onFirst), encodeLane(!onFirst)};
+    const uint32_t compiles = mutableFrameStats().volumeProgramCompiles - visible.volumeProgramCompiles;
+    // An empty submission's round trip: the first lands the staged parameter
+    // writes and drains the visible frame; the second is the fixed cost every
+    // timed submission also pays, subtracted so a thin band still compares work.
+    auto submitEmpty = [&] {
+        WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(_device, nullptr);
+        WGPUCommandBuffer empty = wgpuCommandEncoderFinish(encoder, nullptr);
+        const auto t0 = std::chrono::steady_clock::now();
+        wgpuQueueSubmit(_queue, 1, &empty);
+        waitForQueue();
+        wgpuCommandBufferRelease(empty);
+        wgpuCommandEncoderRelease(encoder);
+        return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+    };
+    submitEmpty();
+    const double overhead = submitEmpty();
+    double work[2] = {0.0, 0.0};
+    for (int k = 0; k < 2; ++k) {
+        const auto t0 = std::chrono::steady_clock::now();
+        wgpuQueueSubmit(_queue, 1, &lanes[k]);
+        waitForQueue();
+        const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+        work[k] = std::max(ms - overhead, 0.0);
+        wgpuCommandBufferRelease(lanes[k]);
+    }
+    const double onWork = onFirst ? work[0] : work[1];
+    const double offWork = onFirst ? work[1] : work[0];
+    auto& m = measured();
+    if (!m.warmed) {
+        m.warmed = true;
+        // Size the recorded band once, so every recorded pair times the same rows:
+        // the warm-up band's work scaled to the budget (a cheap medium takes it all).
+        const double pair = onWork + offWork;
+        m.band = pair <= 1e-3 ? 1.0
+                              : std::clamp(kCertificateProbeWarmBand * kCertificateProbePairBudgetMs / pair,
+                                           kCertificateProbeMinBand, 1.0);
+    } else {
+        m.onMs.push_back(onWork);
+        m.offMs.push_back(offWork);
+        if (m.onMs.size() >= kCertificateProbePairs) {
+            auto median = [](std::vector<double> v) {
+                std::sort(v.begin(), v.end());
+                const std::size_t n = v.size();
+                return n % 2 ? v[n / 2] : 0.5 * (v[n / 2 - 1] + v[n / 2]);
+            };
+            m.verdict = median(m.onMs) < kCertificateProbeKeepRatio * median(m.offMs) ? 1 : 0;
+        }
+    }
+    auto& memo = _volumeSupportCertificates[target->densityExpr];
+    if (memo.measured.size() > kCertificateProbeMaxRegimes) {
+        const auto kept = memo.measured[regime];
+        memo.measured.clear();
+        memo.measured[regime] = kept;
+    }
+    mutableFrameStats() = visible;
+    mutableFrameStats().volumeSupportCertificateProbeRenders = 2;
+    mutableFrameStats().volumeSupportCertificateProbeCompiles = compiles;
+    // Queue-ordered writes are submitted; the next frame reuses the offsets.
+    bufferPool().resetFrame();
 }
 
 void WebGpuRenderer::attachVolumeSupportCertificates(const Rendering::VolumeDensityBinding& medium,
@@ -2698,7 +2921,14 @@ void WebGpuRenderer::attachVolumeSupportCertificates(const Rendering::VolumeDens
                                                      std::vector<float>& params,
                                                      VolumeInstanceData& instance, bool appendPayload) {
     instance.supportCertCount = 0u;
-    if (!volumeSupportCertificatesActive(medium, halfExtent)) return;
+    if (!volumeSupportCertificatesActive(medium, halfExtent)) {
+        // Admitted by the estimate (a payload exists) yet not attached: vetoed.
+        if (volumeSupportCertificatesEnabled() && volumeSupportCertificatesAutoEligibility() && medium.densityExpr)
+            if (const auto it = _volumeSupportCertificates.find(medium.densityExpr);
+                it != _volumeSupportCertificates.end() && it->second.count > 0)
+                ++mutableFrameStats().volumeSupportCertificateMeasuredVetoes;
+        return;
+    }
     const auto& memo = _volumeSupportCertificates[medium.densityExpr];
     mutableFrameStats().volumeSupportCertificateKillers += memo.count;
     ++mutableFrameStats().volumeSupportCertificateEligibleMedia;
@@ -3507,7 +3737,7 @@ void WebGpuRenderer::flushVolumeComposite() {
         };
         WGPUBuffer paramBuffer = payload.buffer;
         uint64_t paramOffset = 0;
-        if (paramBuffer && payload.capacityBytes >= bytes && payload.lastEncodedFrame != _frameCount) {
+        if (paramBuffer && payload.capacityBytes >= bytes && payload.lastEncodedFrame != _volumePayloadEpoch) {
             auto changed = [&](size_t i) {
                 return i >= payload.mirror.size() ||
                     std::memcmp(&params[i], &payload.mirror[i], sizeof(float)) != 0;
@@ -3532,7 +3762,7 @@ void WebGpuRenderer::flushVolumeComposite() {
             paramBuffer = alloc.buffer; paramOffset = alloc.offset;
             countUpload(0, params.size());
         }
-        payload.lastEncodedFrame = _frameCount;
+        payload.lastEncodedFrame = _volumePayloadEpoch;
         auto instanceAlloc =
             bufferPool().suballocateStorage(instances.data(),
                                             instances.size() * sizeof(VolumeInstanceData));
@@ -3605,8 +3835,23 @@ void WebGpuRenderer::flushVolumeComposite() {
             countIt != _volumeDrawInstanceCounts.end()) {
             drawInstanceCount = countIt->second;
         }
-        wgpuRenderPassEncoderDraw(
-            _pass, 36, drawInstanceCount, 0, 0);
+        if (_certificateProbeMedium &&
+            _certificateProbeStripRows * kCertificateProbeStrips < _certificateProbeFootprint.w) {
+            // A hidden certificate-timing lane draws only its strips: the same
+            // full-resolution rays the frame casts there, fewer of them.
+            const auto& f = _certificateProbeFootprint;
+            for (uint32_t strip = 0; strip < kCertificateProbeStrips; ++strip) {
+                const uint32_t centre = f.y + static_cast<uint32_t>((strip + 0.5) * f.w / kCertificateProbeStrips);
+                const uint32_t top = std::max(f.y, centre - std::min(centre, _certificateProbeStripRows / 2u));
+                const uint32_t rows = std::min(_certificateProbeStripRows, f.y + f.w - top);
+                wgpuRenderPassEncoderSetScissorRect(_pass, f.x, top, f.z, rows);
+                wgpuRenderPassEncoderDraw(_pass, 36, drawInstanceCount, 0, 0);
+            }
+            wgpuRenderPassEncoderSetScissorRect(_pass, 0, 0, _depthW, _depthH);
+        } else {
+            wgpuRenderPassEncoderDraw(
+                _pass, 36, drawInstanceCount, 0, 0);
+        }
 
         mutableFrameStats().drawCalls++;
         mutableFrameStats().trianglesDrawn +=
@@ -3704,6 +3949,10 @@ void WebGpuRenderer::endFrame() {
     // pool's resident GPU memory.
     bufferPool().resetFrame();
     _meshCache.endFrame();
+
+    // Measured certificate eligibility: at most one hidden on/off pair, after the
+    // visible submit (so its depth is final) and only while a verdict is owed.
+    probeVolumeSupportCertificates();
 
     // The submit is done recording; the resources it referenced can go now.
     releaseFrameResources();

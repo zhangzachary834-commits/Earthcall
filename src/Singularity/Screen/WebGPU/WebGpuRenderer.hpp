@@ -511,9 +511,59 @@ private:
         uint32_t count = 0;
         std::string refusal;
         uint64_t lastUsedFrame = 0;
+        // Measured eligibility (auto mode; Zach 2026-10-18: "we can do hidden
+        // render", measured once per necessary interval). The estimate admits,
+        // the device may veto: hidden renders time this frame's volume pass with
+        // the medium's certificates on and off, one pair per frame in ABBA order,
+        // and the verdict holds per regime (volumeSupportCertificateRegime) until
+        // the structure above rebuilds, which clears every regime.
+        struct Measurement {
+            int verdict = -1;          // -1 unmeasured (the estimate stands), 0 veto, 1 keep
+            bool warmed = false;       // the first pair compiles and warms; it is not recorded
+            // Height of the timed band as a fraction of the footprint: the warm-up
+            // pair uses kCertificateProbeWarmBand, then it is sized once to the budget.
+            double band = 0.0;
+            std::vector<double> onMs, offMs;
+        };
+        std::map<uint64_t, Measurement> measured;
     };
     std::unordered_map<const OntoMath::Piecewise*, VolumeSupportCertificateMemo> _volumeSupportCertificates;
     bool volumeSupportCertificatesActive(const Rendering::VolumeDensityBinding& medium, const glm::vec3& halfExtent);
+    // The interval a measured verdict holds for: inside or outside the box, the
+    // camera's distance octave in box radii, the viewport's pixel octave and the
+    // set's membership. Returning to a regime reuses its verdict.
+    uint64_t volumeSupportCertificateRegime(const Rendering::VolumeDensityBinding& medium,
+                                            const glm::vec3& halfExtent) const;
+    // Whether the box covers enough of the view for a timing to mean anything,
+    // and its projected rectangle in framebuffer pixels (the whole view when the
+    // box straddles the eye plane).
+    bool volumeSupportCertificateFootprint(const glm::vec3& origin, const glm::vec3& halfExtent,
+                                           glm::uvec4& pixels) const;
+    // Runs one hidden on/off pair after endFrame's submit (CPU clock around
+    // queue completion; no timestamp queries, which stay off after flicker).
+    void probeVolumeSupportCertificates();
+    const OntoMath::Piecewise* _certificateProbeMedium = nullptr;   // set only while a hidden lane encodes
+    bool _certificateProbeOn = false;
+    glm::uvec4 _certificateProbeFootprint{0u};   // x, y, w, h in pixels (hidden lanes only)
+    uint32_t _certificateProbeStripRows = 0;      // rows per timed strip
+    static constexpr std::size_t kCertificateProbePairs = 4;     // recorded pairs after the warm-up pair
+    static constexpr double kCertificateProbeKeepRatio = 0.97;    // keep only if ≥3% faster (median)
+    static constexpr double kCertificateProbeMinCoverage = 0.02;  // of the view, by projected box rectangle
+    static constexpr std::size_t kCertificateProbeMaxRegimes = 32;
+    // The hidden pair times full-resolution rays in strips through the medium's
+    // footprint, never a smaller image: warm up on 1/16 of its height, then size
+    // the strips so one pair's work (round-trip overhead subtracted) is about the
+    // budget (2026-10-18: a full-footprint pair at 2560x1440 cost up to 80 ms per
+    // frame for five frames; one centred band misjudged edge-dominated gains).
+    static constexpr double kCertificateProbeWarmBand = 1.0 / 16.0;
+    static constexpr double kCertificateProbeMinBand = 1.0 / 64.0;
+    static constexpr double kCertificateProbePairBudgetMs = 5.0;
+    static constexpr uint32_t kCertificateProbeStrips = 8;
+    // Hidden timing target. Beneath the Kernel (GPU handles; Refusal 6 exemption):
+    // its pixels are never read, only the time the pass took to fill them.
+    WGPUTexture     _certificateProbeTex  = nullptr;
+    WGPUTextureView _certificateProbeView = nullptr;
+    uint32_t _certificateProbeW = 0, _certificateProbeH = 0;
     void attachVolumeSupportCertificates(const Rendering::VolumeDensityBinding& medium,
                                          const glm::vec3& halfExtent,
                                          std::vector<float>& params,
@@ -670,6 +720,9 @@ private:
     Singularity::Screen::WebGPU::GpuBufferPool _bufferPool;
     Singularity::Screen::WebGPU::GpuMeshCache  _meshCache;
     uint64_t _frameCount = 0;
+    // One resident volume payload write per submission: every frame and every
+    // hidden certificate-timing lane is its own encoding (KernelVolumePayload).
+    uint64_t _volumePayloadEpoch = 0;
 
     // ---- Instanced mesh batching (CPU-GPU micro-mastery Phase 4.3) ----
     // drawMesh no longer draws immediately: it groups by everything that has

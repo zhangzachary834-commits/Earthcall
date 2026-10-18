@@ -360,3 +360,20 @@ Zach: "KEEP GOING… check if the FIRMAMENT sent u anything… NEXT PASS." Aethe
 [§6j](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6j-compile-only-the-enabled-killers-a-killer-subset-measured-2026-10-18-eleventh-pass) · [audit](../../../docs/audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#enabled-killer-compilation-killer-subsets-and-the-unmeasured-promotions--eleventh-pass-m5) · logs in `scratch/verification/ray-domain-eleventh-pass-2026-10-18/`. Certificates stay default off; no save, default or installed app touched.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T11:46 PDT.
+
+## Twelfth pass (local Mac) — measured eligibility by hidden render: the device vetoes, the estimate admits
+
+Zach chose the timing source left open in the eleventh pass: "assuming we're only measuring once per necessary interval instead of recomputing the measurement from scratch every time, we can do hidden render." Built and measured on the M5. Design, numbers and rejected variants: [Rung 2 plan §6k](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6k-measured-eligibility-the-device-may-veto-the-estimate-2026-10-18-twelfth-pass).
+
+- **Rule.** The estimate admits and the device may veto. After `endFrame`'s submit, one hidden on/off pair per frame times the frame's own volume pass, against its finished depth and with every member present. It uses CPU time around queue completion, with no timestamp queries. There is a warm-up pair, then 4 ABBA pairs, and a medium is kept only if it is at least 3% faster. Pixels are identical either way.
+- **Interval.** A verdict is held per regime: inside or outside the box, distance octave, viewport octave and membership. It is reused on return and cleared by any memo rebuild.
+- **Cost.** The hidden lanes draw 8 full-resolution strips sized to about 5 ms per pair, with the submit round trip subtracted. At 2560×1440 that is about 3–5 ms extra per frame for five frames per regime; full-footprint pairs had cost up to 80 ms.
+- **Verdicts, 3 runs:**
+  - Kept in every run: Prism ×8, Borealis v2 ×2 and Borealis v1 dense.
+  - Sea-of-clouds, §6j's false positive: vetoed in 2 of 3.
+  - The near-ties, Borealis v1 airy and halo-mist, can flip.
+- **Found:** a second encoding in one frame made the resident payload fall back to the frame stream, which shares a buffer with the instances under the preparation dispatch (a wgpu validation panic). Fixed with a per-submission epoch. The fallback stays reachable on a failed buffer creation, and is listed in the task.
+
+Open: measured false negatives (the probe only vetoes), Rung 2b (your direction 4), device enclosure and Person feel.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T15:23 PDT.*

@@ -422,6 +422,8 @@ namespace Core {
                     static_cast<int>(stats.volumeZeroProofCellsTotal));
                 sc->volumeSupportCertificateKillers = static_cast<int>(stats.volumeSupportCertificateKillers);
                 sc->volumeSupportCertificateEligibleMedia = static_cast<int>(stats.volumeSupportCertificateEligibleMedia);
+                sc->volumeSupportCertificateProbeRenders = static_cast<int>(stats.volumeSupportCertificateProbeRenders);
+                sc->volumeSupportCertificateMeasuredVetoes = static_cast<int>(stats.volumeSupportCertificateMeasuredVetoes);
             }
             if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
                 recorder->checkPendingSnapshot(fbW, fbH);

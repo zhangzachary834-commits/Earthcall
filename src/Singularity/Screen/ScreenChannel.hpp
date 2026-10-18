@@ -136,6 +136,10 @@ public:
     // frame (0 while volumeSupportCertificatesEnabled is off).
     int       volumeSupportCertificateKillers = 0;
     int       volumeSupportCertificateEligibleMedia = 0;
+    // Derived, auto mode: hidden timing renders run after last frame (nonzero
+    // only while a measured verdict is owed) and admitted media the device vetoed.
+    int       volumeSupportCertificateProbeRenders = 0;
+    int       volumeSupportCertificateMeasuredVetoes = 0;
     bool      recording = false;
     bool      snapshotTrigger = false;
     glm::vec3 backgroundColor{0.1f, 0.1f, 0.15f};
@@ -226,6 +230,8 @@ private:
     int    getVolumeZeroProofCellsTotal() const { return volumeZeroProofCellsTotal; }
     int    getVolumeSupportCertificateKillers() const { return volumeSupportCertificateKillers; }
     int    getVolumeSupportCertificateEligibleMedia() const { return volumeSupportCertificateEligibleMedia; }
+    int    getVolumeSupportCertificateProbeRenders() const { return volumeSupportCertificateProbeRenders; }
+    int    getVolumeSupportCertificateMeasuredVetoes() const { return volumeSupportCertificateMeasuredVetoes; }
 
     std::string _name{"screen-channel"};
 };

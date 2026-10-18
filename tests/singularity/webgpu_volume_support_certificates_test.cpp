@@ -76,6 +76,14 @@ struct Frame {
     uint32_t firstCompiles = 0;
     uint32_t warmCompiles = 0;
     size_t warmParameterUploads = 0;
+    // Measured eligibility (auto mode): hidden timing renders over the whole
+    // call, the extra frames drawn until the verdict settled, the renders the
+    // last frame still ran, and admitted media the measurement vetoed.
+    uint32_t probes = 0;
+    uint32_t settleFrames = 0;
+    uint32_t lastProbes = 0;
+    uint32_t vetoes = 0;
+    double settleMs = 0.0;   // wall time of the settle frames (each one visible frame + one hidden pair)
     std::vector<unsigned char> rgba;
 };
 
@@ -199,7 +207,17 @@ int main() {
         drawOnce();
         frame.firstCompiles = renderer.frameStats().volumeProgramCompiles;
         frame.firstCertificateBuilds = renderer.frameStats().volumeSupportCertificateBuilds;
+        frame.probes += renderer.frameStats().volumeSupportCertificateProbeRenders;
+        // A verdict owed in this regime is timed one hidden pair per frame; let
+        // it settle so timed frames carry no probe (bounded: warm-up + 4 pairs).
+        const auto settleStart = std::chrono::steady_clock::now();
+        for (int i = 0; i < 16 && renderer.frameStats().volumeSupportCertificateProbeRenders > 0; ++i) {
+            drawOnce();
+            frame.probes += renderer.frameStats().volumeSupportCertificateProbeRenders;
+            ++frame.settleFrames;
+        }
         sync();
+        frame.settleMs = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - settleStart).count();
         const auto t0 = std::chrono::steady_clock::now();
         for (int i = 0; i < timedFrames; ++i) {
             drawOnce();
@@ -213,6 +231,9 @@ int main() {
         frame.proven = renderer.frameStats().volumeZeroProofCellsProven;
         frame.killers = renderer.frameStats().volumeSupportCertificateKillers;
         frame.eligible = renderer.frameStats().volumeSupportCertificateEligibleMedia;
+        frame.vetoes = renderer.frameStats().volumeSupportCertificateMeasuredVetoes;
+        frame.lastProbes = renderer.frameStats().volumeSupportCertificateProbeRenders;
+        frame.probes += frame.lastProbes;
         frame.warmCompiles += renderer.frameStats().volumeProgramCompiles;
         frame.lit = sync();
         frame.rgba = lastRgba;
@@ -625,6 +646,15 @@ int main() {
                   "with nothing eligible, enabling the lane reuses the lane-off program (no certificate shader variant)");
         }
         if (timing) abba(media, "Northern Veil fused (auto)");
+        // Measured eligibility (2026-10-18; Zach: hidden render, "measuring once
+        // per necessary interval"): the device times the admitted medium on and
+        // off and may veto. The verdict is cached per regime; these witness that
+        // it is measured, held, re-measured on a new regime, reused on return
+        // and cleared by a structural rebuild. Which way it goes is the device's.
+        bool regimeWitnessed = false;
+        auto verdict = [](const Frame& f) {
+            return f.eligible ? "measured: kept" : f.vetoes ? "measured: vetoed" : "not admitted";
+        };
         if (!prismWing.empty()) {
             uint32_t eligible = 0;
             for (const auto& m : prismWing) {
@@ -635,13 +665,41 @@ int main() {
                                    glm::perspectiveZO(glm::radians(60.0f), float(width) / height, 0.05f, 2000.0f), at);
                 const Frame grid = render({m}, true, false, 0.75, 0);
                 const Frame autoFrame = render({m}, true, true, 0.75, 0);
-                eligible += autoFrame.eligible;
-                std::printf("       auto eligibility, %s: %s\n", m->getIdentifier().c_str(),
-                            autoFrame.eligible ? "certificates attached" : "grid lane only");
+                eligible += autoFrame.eligible + autoFrame.vetoes;
+                std::printf("       auto eligibility, %s: %s (%u hidden renders over %u settle frames)\n",
+                            m->getIdentifier().c_str(), verdict(autoFrame), autoFrame.probes, autoFrame.settleFrames);
                 check(grid.rgba == autoFrame.rgba, m->getIdentifier() + ": auto eligibility keeps every byte");
+                if (!regimeWitnessed && (autoFrame.eligible || autoFrame.vetoes)) {
+                    regimeWitnessed = true;
+                    auto aim = [&](const glm::vec3& from) {
+                        renderer.setCamera(glm::lookAt(from, m->origin, glm::vec3(0, 1, 0)),
+                                           glm::perspectiveZO(glm::radians(60.0f), float(width) / height, 0.05f, 2000.0f), from);
+                    };
+                    const Frame held = render({m}, true, true, 0.75, 0);
+                    aim(m->origin + (at - m->origin) * 2.0f);   // one distance octave out
+                    const Frame farther = render({m}, true, true, 0.75, 0);
+                    aim(at);
+                    const Frame back = render({m}, true, true, 0.75, 0);
+                    autoEligibility = false;                    // forced mode rebuilds the memo...
+                    render({m}, true, true, 0.75, 0);
+                    autoEligibility = true;                     // ...and auto rebuilds it again
+                    const Frame rebuilt = render({m}, true, true, 0.75, 0);
+                    std::printf("       measured regimes, %s: first %u renders, held %u, one octave out %u (%s), "
+                                "back %u, after rebuild %u\n", m->getIdentifier().c_str(), autoFrame.probes,
+                                held.probes, farther.probes, verdict(farther), back.probes, rebuilt.probes);
+                    check(autoFrame.probes >= 2u * (1u + 4u) && autoFrame.lastProbes == 0,
+                          "measured eligibility: an admitted medium is timed (warm-up + 4 pairs), then settles");
+                    check(held.probes == 0, "a verdict holds within its regime: no further hidden renders");
+                    check(farther.probes > 0 && farther.lastProbes == 0, "a new distance octave is measured once");
+                    check(back.probes == 0, "returning to a measured regime reuses its verdict");
+                    check(rebuilt.probes > 0, "a structural rebuild clears every measured verdict");
+                    check(held.rgba == autoFrame.rgba && back.rgba == autoFrame.rgba && rebuilt.rgba == autoFrame.rgba,
+                          "measured verdicts change no byte");
+                }
                 if (timing && autoFrame.eligible) abba({m}, m->getIdentifier().c_str());
             }
             check(eligible * 2 > prismWing.size(), "auto eligibility admits most of Prism wing B (the grid proves none of it)");
+            check(regimeWitnessed, "measured-regime witness ran on an admitted medium");
         }
         // Every other medium the census ranks eligible gets a native witness
         // (the Firmament's direction 3, 2026-10-18): Borealis v1 ×2 and Sky-Island
@@ -680,8 +738,19 @@ int main() {
                     for (std::size_t px = 0; px < grid.rgba.size(); px += 4)
                         visible += (grid.rgba[px] | grid.rgba[px + 1] | grid.rgba[px + 2]) != 0;
                     std::printf("       auto eligibility, %s: %s (%u killers enabled), %zu visible pixels\n",
-                                m->getIdentifier().c_str(), autoFrame.eligible ? "certificates attached" : "grid lane only",
-                                autoFrame.killers, visible);
+                                m->getIdentifier().c_str(), verdict(autoFrame), autoFrame.killers, visible);
+                    // What a measurement costs while it runs: frames with a hidden
+                    // pair against the same view's settled frames (report only).
+                    if (timing && autoFrame.settleFrames > 0) {
+                        autoEligibility = false;   // forced then auto: a rebuild clears the verdicts
+                        render({m}, true, true, 0.75, 0);
+                        autoEligibility = true;
+                        const Frame measuring = render({m}, true, true, 0.75, 0);
+                        const Frame settled = render({m}, true, true, 0.75, 8);
+                        std::printf("TIMING %s measuring: %.2f ms per frame over %u frames vs %.2f ms settled\n",
+                                    m->getIdentifier().c_str(), measuring.settleMs / std::max(measuring.settleFrames, 1u),
+                                    measuring.settleFrames, settled.ms);
+                    }
                     if (grid.rgba != autoFrame.rgba)
                         std::printf("       %s: %s\n", m->getIdentifier().c_str(), byteDiff(grid.rgba, autoFrame.rgba).c_str());
                     check(visible > 0 && grid.rgba == autoFrame.rgba, m->getIdentifier() + ": auto eligibility keeps every byte");
@@ -751,6 +820,26 @@ int main() {
         check(stressCertified.killers > 0 && stressCertified.rgba == stressExact.rgba,
               "full 2560x1440 spawn preserves every RGBA byte under certificates alone");
     }
+    // What a measured verdict costs at full size while it is owed (report only):
+    // each measuring frame also runs one hidden on/off pair and waits for it.
+    if (const char* timing = std::getenv("EARTHCALL_CERTIFICATE_TIMING"); timing && *timing == '1')
+        for (const auto& m : prismWing) {
+            const glm::vec3 h = glm::abs(m->scale);
+            const float r = std::max(h.x, std::max(h.y, h.z));
+            const glm::vec3 at = m->origin + glm::vec3(0.35f * r, 0.25f * r, 2.6f * r);
+            renderer.setCamera(glm::lookAt(at, m->origin, glm::vec3(0, 1, 0)),
+                               glm::perspectiveZO(glm::radians(60.0f), float(width) / height, 0.05f, 2000.0f), at);
+            render({m}, true, true, 0.75, 0);   // forced: a rebuild clears every verdict
+            autoEligibility = true;
+            const Frame measuring = render({m}, true, true, 0.75, 0);
+            const Frame settled = render({m}, true, true, 0.75, 8);
+            autoEligibility = false;
+            const Frame grid = render({m}, true, false, 0.75, 8);
+            std::printf("TIMING 2560x1440 %s: measuring %.2f ms per frame over %u frames (%s), settled %.2f ms, "
+                        "grid %.2f ms\n", m->getIdentifier().c_str(),
+                        measuring.settleMs / std::max(measuring.settleFrames, 1u), measuring.settleFrames,
+                        settled.eligible ? "kept" : settled.vetoes ? "vetoed" : "not admitted", settled.ms, grid.ms);
+        }
 
     wgpuBufferRelease(readback); wgpuTextureViewRelease(view); wgpuTextureRelease(target);
     setCurrentRenderer(nullptr);

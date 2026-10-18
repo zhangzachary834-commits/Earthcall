@@ -357,6 +357,8 @@ void ScreenChannel::buildProperties() {
     readOnlyInt("volumeZeroProofCellsTotal", &ScreenChannel::getVolumeZeroProofCellsTotal);
     readOnlyInt("volumeSupportCertificateKillers", &ScreenChannel::getVolumeSupportCertificateKillers);
     readOnlyInt("volumeSupportCertificateEligibleMedia", &ScreenChannel::getVolumeSupportCertificateEligibleMedia);
+    readOnlyInt("volumeSupportCertificateProbeRenders", &ScreenChannel::getVolumeSupportCertificateProbeRenders);
+    readOnlyInt("volumeSupportCertificateMeasuredVetoes", &ScreenChannel::getVolumeSupportCertificateMeasuredVetoes);
     vector3("backgroundColor", &ScreenChannel::backgroundColor);
 
     // Illumination placement is first-order authored state. These names are

@@ -90,6 +90,12 @@ public:
         uint32_t volumeSupportCertificateBuilds = 0;
         uint32_t volumeSupportCertificateKillers = 0;
         uint32_t volumeSupportCertificateEligibleMedia = 0;   // media whose certificates are attached
+        // Measured eligibility (auto mode): hidden timing renders run after this
+        // frame's submit, the compiles they caused, and media the estimate admitted
+        // whose certificates the device measurement then vetoed.
+        uint32_t volumeSupportCertificateProbeRenders = 0;
+        uint32_t volumeSupportCertificateProbeCompiles = 0;
+        uint32_t volumeSupportCertificateMeasuredVetoes = 0;
         // Conservative SDF range-proxy observability. A build is revision-bound;
         // an applied draw used a strictly smaller proved-may-contain-zero proxy;
         // a culled draw was proved to contain no zero set at all.
