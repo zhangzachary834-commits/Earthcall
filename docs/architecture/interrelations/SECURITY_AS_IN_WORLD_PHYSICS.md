@@ -7,6 +7,7 @@
 *   `../migration/SECURITY_FEATURES.md` (TransferPolicy, First Mover Register)
 *   `../law/PROPHETIC_RETE.md` (Static analysis and deterministic state changes)
 *   `../ontology/NO_BLACK_BOX.md` (Total legibility of state)
+*   `../ourverse/PERSON_ROOTED_DELEGATED_AUTHORITY.md` (Person-rooted delegation, temporal/dynamic scope, and causal authority continuity)
 
 ---
 
@@ -23,6 +24,16 @@ Crucially, neither of these is a hidden OS-level mechanism. Both are exposed as 
 
 *   When a set-to-set creation attempts to take a Property, it encounters the deterministic, Law-governable `TransferPolicy` gate. Ordinary `PropertyPath` reads and writes do not yet pass through a general access gate; extending that same authority office is the open work.
 *   An active `FirstMoverSession` makes save writes pass the register's grant and scope checks; section-level `injectedBy` provenance remains open, per `FIRST_MOVER_AUTHORING.md` §8.
+
+### Authority conservation across causation
+
+Zach's 2026-10-18 direction adds a constraint that legibility alone does not supply: **authority is Person-rooted and cannot be manufactured by representation**. A First Mover may receive only authority that its granting Person or Persons are themselves permitted to delegate. A new delegation is empty until its scopes are positively authored; a Law, interface, save field, or model assertion saying "granted" is not sufficient proof.
+
+Dynamic authored scope may follow changing Formations, Relations, Categories, Lexemes, Properties, or time, but such recomputation changes which referents are covered, not the capability class itself. A Formation gaining a more powerful member cannot silently upgrade a visual/property grant into process, filesystem, network, device, or Person-actuation authority.
+
+Most importantly, durable Law execution must not discard the authority ancestry under which the Law was authored or adopted. If a model is allowed to author inside one resource scope, a later firing through a qualified Property path must not thereby acquire unrelated global native-effect authority. The intended invariant is monotonic: authority at a consequential effect is a subset of the effective authority of the executing semantic machinery, which is in turn a subset of the valid upstream delegation.
+
+This is canonical design direction, not a claim that the general actor-aware Property/effect funnel is implemented today. See `PERSON_ROOTED_DELEGATED_AUTHORITY.md` for the full decree and implementation boundary.
 
 ### The Prophetic Advantage
 Because access rules are intended to be legible Law data, they can eventually participate in **Prophetic Rete** analysis.
