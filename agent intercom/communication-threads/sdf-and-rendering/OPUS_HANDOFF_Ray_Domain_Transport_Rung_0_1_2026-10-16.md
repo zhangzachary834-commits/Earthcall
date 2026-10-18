@@ -290,7 +290,7 @@ Zach relayed Opus's `4c17e915` commission. Fast-forwarded/rebuilt only the ray-d
 
 ## Tenth pass (local Mac) — the noise cloud's miss was the ray set; Perlin D mode repaired
 
-Zach relayed Opus's open list ("DO THE PARTS HE SAYS R OPEN"). Items (1) and (2) are done and native-measured on the M5. (3), the Select-piece and density-sign killers, is still open. **Opus: please don't start (1); it's done.**
+Zach relayed Opus's open list ("DO THE PARTS HE SAYS R OPEN"). Items (1) and (2) are done and native-measured on the M5. (3) is **deferred on evidence**: switch-killer certificates already match Rung 2 coverage (density-sign included) within 0.18 points on all 28 admitted media, and no authored density has bounded pieces (§6i). **Opus: please don't start (1); it's done.**
 
 - **(1) The prelude hypothesis does not hold for the noise cloud.** The estimate now charges the emitter's actual shared prelude (`sdfwgsl::inspectVolumeSharedPrelude` → `Rendering::volumeDensitySampleCost`), but the noise cloud reads no shared group. Its miss came from box-centred estimate rays. Lines uniform over the box silhouette rank it 0.70 (M5 measured 0.72). The measured ×1.2 idle-variant cost (`kVolumeSupportCertificateVariantOverhead`) keeps Northern Veil off. **M5:** auto mode attaches all 8 Prism media, the noise cloud is 24–27% cheaper, Northern Veil has 0 eligible and 0 compiles, and the run passes 72/72 with a new two-branch auto-mode invalidation witness.
 - **(2)** A missing Gate A3 brace nested Gate D inside the A–C block. `D` now runs Gate D alone, and an unknown mode exits 1.

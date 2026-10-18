@@ -498,7 +498,9 @@ The scratch Perlin old-mirror/current comparison executes the full corpus and sa
 
 **(2) Perlin D mode.** Gate A3's block never closed, so the `} // runCore` brace actually closed Gate A. That nested Gate D and the final "ALL OK" inside the A–C block, and `EARTHCALL_PERLIN_TEST_MODE=D` ran nothing yet exited 0, as Codex caught. The brace now closes A3, "ALL OK" names the gates that ran, and any other mode value fails. M5: full mode 17 gate lines; `ABC` 9; `D` 8, including the same 27 bytes at 45°; `bogus` exits 1.
 
-**Not done.** Select-piece and density-sign killers (3); Metal timing of the four newly predicted media; Person acceptance; the device enclosure. Certificates stay default off. No save, default or installed app changed.
+**(3) Deferred on evidence.** In the census, certificate-only coverage equals Rung 2's own empty fraction, density-sign targets included, on every admitted medium: the largest shortfall is 0.18 points (Sky-Island sea-of-clouds, 36.93% vs 37.11%), and hollow-shell's certificates exceed it. No authored density in the frozen saves has bounded pieces, so Select-piece killers would have no consumer. A density-sign check costs a full density evaluation. Lowering either now adds shader structure with no measurable proof to gain. Build it when an authored medium shows the gap.
+
+**Not done.** Select-piece and density-sign killers (3, deferred above); Metal timing of the four newly predicted media; Person acceptance; the device enclosure. Certificates stay default off. No save, default or installed app changed.
 
 **Evidence:** `scratch/verification/ray-domain-tenth-pass-2026-10-18/` (census before/after and the base-cost scan, both timed certificate runs, the witness run, zero-proof 73/73, Perlin in every mode).
 
