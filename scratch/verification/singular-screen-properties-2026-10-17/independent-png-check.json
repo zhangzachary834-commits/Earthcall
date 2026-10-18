@@ -1,0 +1,44 @@
+{
+  "property-screen-singular-bands.png": {
+    "width": 2560,
+    "height": 1440,
+    "pixelsChecked": 3686400,
+    "maxRgbByteError": 0,
+    "redPixels": 0
+  },
+  "property-screen-singular-edited.png": {
+    "width": 2560,
+    "height": 1440,
+    "pixelsChecked": 3686400,
+    "maxRgbByteError": 0,
+    "redPixels": 0
+  },
+  "property-screen-singular-pixel.png": {
+    "width": 2560,
+    "height": 1440,
+    "pixelsChecked": 3686400,
+    "maxRgbByteError": 0,
+    "redPixels": 1
+  },
+  "property-screen-object-bands.png": {
+    "width": 2560,
+    "height": 1440,
+    "pixelsChecked": 3686400,
+    "maxRgbByteError": 0,
+    "redPixels": 0
+  },
+  "property-screen-object-edited.png": {
+    "width": 2560,
+    "height": 1440,
+    "pixelsChecked": 3686400,
+    "maxRgbByteError": 0,
+    "redPixels": 0
+  },
+  "property-screen-object-pixel.png": {
+    "width": 2560,
+    "height": 1440,
+    "pixelsChecked": 3686400,
+    "maxRgbByteError": 0,
+    "redPixels": 1
+  }
+}

@@ -18,15 +18,27 @@
   - Click any button on the page (e.g. "Invoke Law Event (Test)", "Explore Living Laws", or "Enter Ourverse").
   - Verify clean DOM event dispatching to Earthcall EventBus logged in console (no invasive toast notifications injected into page).
 - [ ] Law Reactivity & Modality Test Suite:
-  - Run `ctest --test-dir build -R web_designer_modality_test` and confirm all 8 tests pass cleanly:
-    1. Lexeme & Relation In-World Resolution (`"denotes"` edges).
-    2. Law & Lexeme Universal Composition.
-    3. Relational Ordering & Provenance DAG (`precedes` topological sorting and `authored-by` relations).
-    4. Thin WebRealizer & Authored Theme Tokens (CSS `:root` emission and zero toast UI).
-    5. Extensibility Exit Test: Zero C++ Enum Modification (authored `"sanctuary"` role and `"ethereal"` variant purely in data).
-    6. Orthogonal Storage via VFS & FileChannel (`memory://` and physical paths).
-    7. Law-Driven Event Reactivity (`theme-toggled` mutating `surface.variant`).
-    8. End-to-End Frontend Website Prototype Generation (full 8-section site export).
+  - Run `ctest --test-dir build -R web_designer_modality_test` and confirm all 25 tests pass cleanly.
+
+## 2D Chess Zone (`Chess2D`)
+
+*Gemini 3.8 Flash (the sparkly guy) · session `e1346ea7-7d86-4945-8831-01e3e33dd09a` · 2026-10-16. Commissioned by Zach: "MAKE NOT 3D CHESS MAKE 2D CHESS. MAKE SURE UR WORKING IN THE DEFAULT sync-from-earthcall-main CHECKOUT."*
+
+- [ ] Launch Earthcall WebGPU (`./build/earthcall_webgpu`) and switch to the **`Chess 2D`** Zone (`Chess2D`).
+- [ ] **Visual Layout & Aesthetics:**
+  - Verify the 504×504 rich dark mahogany board frame (`object.chess2d.frame`) with ivory border.
+  - Verify the 64 board squares in alternating warm ivory (`material.chess2d.light_square`) and dark walnut (`material.chess2d.dark_square`).
+  - Verify the 32 pieces centered on their starting ranks: White pieces with ivory finish, Black pieces with dark slate finish, each displaying clear typography glyph labels (`P`, `R`, `N`, `B`, `Q`, `K`).
+  - Verify the capture trays flanking the board: White side tray on the left, Black side tray on the right.
+  - Verify top UI banners: Title banner ("EARTHCALL 2D CHESS") and dynamic Turn HUD banner ("TURN: WHITE").
+- [ ] **Interactive Gameplay & Rule Verification:**
+  - **Selection:** Click White e2 pawn (`piece-white-pawn-4-1`). Verify it highlights and lifts to $zOrder2D=20$.
+  - **Deselection & Switching:** Click another friendly piece (e.g. White b1 knight). Verify knight selects and pawn automatically deselects. Click the knight again to verify it deselects completely.
+  - **Move 1 (White e2-e4):** Click e2 pawn, then click e4 square (`square-4-3`). Verify pawn moves to e4, turn banner changes to "TURN: BLACK".
+  - **Move 2 (Black e7-e5):** Click Black e7 pawn, then click e5 square (`square-4-4`). Verify pawn moves to e5, turn banner flips back to "TURN: WHITE".
+  - **Move 3 (White d2-d4):** Click White d2 pawn, then click d4 square (`square-3-3`). Verify pawn moves to d4, turn banner flips to "TURN: BLACK".
+  - **Move 4 (Capture - Black exd4):** Click Black e5 pawn, then click White d4 pawn. Verify Black pawn advances to d4, and White pawn is captured onto the left capture tray (`x2D=70`), with `onBoard=false`.
+  - **Illegal Move Refusal:** Try moving White a2 pawn forward 3 squares to a5. Verify the move is refused (pawn remains at a2, turn does not advance).
 
 ## 3D Sky-Island Sanctuary (`Sky-Island Sanctuary`)
 
@@ -67,6 +79,8 @@
   - Advance to Combat phase and click `card.grizzly_bears_1`: verify it taps ($90^\circ$ rotation), steps forward across the centerline into combat, and deals 2 damage to opponent life (reducing life from 20 to 18).
   - Play Mountain, tap for red mana, cast Lightning Bolt to the stack, and click Resolve: verify Bolt deals 3 damage to opponent (life down to 15) and goes to graveyard.
   - Verify automated state-based actions: lethal damage sends creatures to graveyard, and reducing opponent life to 0 triggers game over.
+
+*Grok 4.7 (Grok Build), session `01a108eb-bfc1-7162-8064-96c491afeb5d`, 2026-10-17 13:24 PDT.* `./build/mtg_zone_native_test` passed 113/113 against this zone: the scripted clicks, the stack, the bolt, and both state-based actions. That does not check the look. What remains for a Person is whether the table, the four cards, the tap, and the stack read as a game under the pointer. The slice is these four cards. The Draw step does not draw, and no second player takes a turn. The arithmetic is witnessed; the feel is not.
 
 ## One-paste Law Line pixel-art editor
 
@@ -3296,3 +3310,11 @@ The checkout WebGPU app is rebuilt with [route-aware power lowering](../../../au
 [All three tested allocation/traversal variants](../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md) preserve the finite captures but regress in measured cost, so none remains enabled. The checkout app is rebuilt with the prior renderer; the installed app and live saves were untouched. This pass adds no new visual control or promised FPS improvement to inspect. Existing Northern Veil/Sanctuary continuous appearance, usual-framebuffer movement and 30 FPS acceptance checks remain open; the rejected variants do not create a new Person verification obligation.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).
+
+## Property-only direct Screen sources (2026-10-17)
+
+Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-17T16:27:11-07:00. Zach required the pipeline to work with added Properties
+on a Singular/Object and no ShapeKind specification. [Native audit](../../../audits/SINGULAR_SCREEN_PROPERTY_PIPELINE_2026-10-17.md).
+
+- [ ] Inspect the retained [plain Object bands](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-bands.png) and [edited bands](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-edited.png): two separated gradients over blue, with their blue component changing after a Law edit. The corresponding Singular captures should match. At native resolution, [the pixel replacement](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-pixel.png) has exactly one red pixel at column 7, row 9 over blue. Confirm this property-bearer authoring route meets your intended meaning. These are isolated production captures; no demo was installed in an inhabited Zone, and automatic composition of many sources remains open.

@@ -390,6 +390,15 @@ lived beside it until 2026-08-11 and was deleted. Formation is `Relation/Formati
 
 ## Named Screen-region witness — 2026-10-07
 
+**Property-only source regression (2026-10-17):** after building, run
+`python3 scratch/probes/law_line_screen_probe.py --property-bearers` with desktop GPU
+access. It exercises a non-Object Singular and plain Object through real Terminal /
+Metalaws, adding only region Properties and making no shape/material specification.
+Six complete native captures match with zero RGB byte error. An independent decoder is
+`scratch/probes/check_singular_screen_captures.py` (bundled workspace Python with
+Pillow/NumPy). [Fixture, results and limits](audits/SINGULAR_SCREEN_PROPERTY_PIPELINE_2026-10-17.md).
+Codex / GPT-6.1 Sol / `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` / 2026-10-17T16:27:11-07:00.
+
 Build `earthcall_webgpu` before running `python3 scratch/probes/law_line_screen_probe.py`. The probe links the production Engine with an isolated first-seed fixture, enters real Terminal sentences, and retains decoded native captures under `scratch/verification/law-line-screen-regions-2026-10-07/`. It needs desktop GPU/display access; a sandbox acquisition failure is not a rendering verdict. The fixture uses only a public author DID and the sanctioned presence test seam, disables its physical keyboard/mouse polling, and never unlocks a human identity or modifies inhabited saves. See [the region audit](audits/LAW_LINE_SCREEN_REGIONS_2026-10-07.md) for exact proof and remaining Person checks.
 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-07 19:16 PDT; Zach requested named Screen regions through Metalaws.*
