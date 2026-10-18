@@ -503,10 +503,13 @@ private:
         uint64_t lastUsedFrame = 0;
     };
     std::unordered_map<const OntoMath::Piecewise*, VolumeSupportCertificateMemo> _volumeSupportCertificates;
+    bool volumeSupportCertificatesActive(const Rendering::VolumeDensityBinding& medium, const glm::vec3& halfExtent);
     void attachVolumeSupportCertificates(const Rendering::VolumeDensityBinding& medium,
                                          const glm::vec3& halfExtent,
                                          std::vector<float>& params,
                                          VolumeInstanceData& instance, bool appendPayload);
+    VolumeZeroProofMemo* updateVolumeZeroProofMemo(const Rendering::VolumeDensityBinding& medium,
+                                                   const glm::vec3& halfExtent);
     void attachVolumeZeroProof(const Rendering::VolumeDensityBinding& medium,
                                const glm::vec3& halfExtent,
                                std::vector<float>& params,

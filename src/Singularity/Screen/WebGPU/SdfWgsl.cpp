@@ -4872,7 +4872,7 @@ Program compileVolumeSet(const std::vector<VolumeProgramInput>& media, bool trim
 
 Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
                          const std::vector<KernelVolumeEvaluator>& evaluators,
-                         bool trimProofSupport, bool supportCertificates) {
+                         bool trimProofSupport, const std::vector<bool>& supportCertificates) {
     Program out;
     if (media.empty()) {
         out.ok = false;
@@ -4883,7 +4883,8 @@ Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
     if (media.size() == 1) {
         return composeVolumeEvaluator(evaluators.empty() ? lowerVolumeEvaluator(media.front()) : evaluators.front(),
                                       trimProofSupport,
-                                      supportCertificates ? media.front().densityExpr : nullptr);
+                                      !supportCertificates.empty() && supportCertificates.front()
+                                          ? media.front().densityExpr : nullptr);
     }
 
     auto replaceAll = [](std::string& text,
@@ -4947,7 +4948,7 @@ Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
         replaceAll(evalBlock, "HAS_AUTHORED_LIGHT_ANGULAR", "HAS_AUTHORED_LIGHT_ANGULAR" + suffix);
 
         out.wgsl += evalBlock;
-        if (supportCertificates) {
+        if (i < supportCertificates.size() && supportCertificates[i]) {
             const auto killers = lowerVolumeSupportKillers(m.densityExpr);
             if (killers.ok) {
                 std::string reach = killers.wgsl;

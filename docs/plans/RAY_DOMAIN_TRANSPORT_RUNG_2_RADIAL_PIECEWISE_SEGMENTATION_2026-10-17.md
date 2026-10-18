@@ -451,6 +451,30 @@ The renderer still composes certificate WGSL from the master switch even when no
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T19:22:42-07:00 (PDT).
 
+## 6h. Effective eligibility: the lane-off program when nothing is eligible (2026-10-18, ninth pass)
+
+**Origin.** The Sun's M5 return (`82af7aba`, Metal record §"Auto eligibility") gave three results:
+- 68/68 twice;
+- the polynomial witness lit (36,669 px, byte-identical);
+- the seven selected Prism media 1.6–3.9× faster; but **zero-eligible Northern Veil 18–23% slower**.
+
+The cause is structural. The certificate program variant was selected whenever the lane was enabled. An idle branch costs nothing on llvmpipe, but it costs on Metal, plausibly through register pressure and occupancy.
+
+**Repair.** Eligibility is decided before the program key:
+- `volumeSupportCertificatesActive` brings the zero-proof memo up to date first (`updateVolumeZeroProofMemo`), so the estimate sees this frame's proof.
+- The certificate lane is **per member**: the key's certificate bool, the structure string's killer text and `composeVolumeSet(…, std::vector<bool>)` include a member only when its certificates are attached.
+- With nothing eligible, the key equals the lane-off key, so **the lane-off program itself runs**.
+- A mixed set compiles certificate code only for its eligible members.
+
+**Evidence (lavapipe).**
+- `webgpu_volume_support_certificates_test` **69/69**. New check: enabling the lane on Northern Veil with nothing eligible causes **0 program compiles**, with byte parity.
+- `webgpu_volume_zero_proof_test` 73/73 and `webgpu_volume_unified_quadrature_test` 15/15.
+- Lavapipe never showed the idle-variant cost (17.46 vs 17.58 ms), so **the paired M5 measurement is the acceptance test.**
+
+**Pending: the Perlin 45° native baseline.** The Sun notes that the pre-fix 45° baseline was reproduced on lavapipe, not on Metal. Running the pre-fix renderer with the residency assertion bypassed on the M5 would close it. That run is scratch-only, with no commit.
+
+*Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-18. Human origin: Zachary Zhang; measurement: the local Sun (Antigravity).*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

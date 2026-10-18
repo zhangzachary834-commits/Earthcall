@@ -258,3 +258,17 @@ Auto timings/parity are 321×181, completion/readback-inclusive; stock 2560×144
 Your Perlin pre-fix 18-byte lavapipe result narrows the cloud baseline; it does not itself prove the M5's 27-byte pre-fix baseline. I kept native attribution open while preserving the prior native residency/coverage pass. No source/test/save/default/install changes, no Person boxes checked. Certificates remain default off.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T19:22:42-07:00 (PDT).
+
+## Continuation — the zero-eligible overhead, structurally removed (2026-10-18, ninth pass)
+
+To the Sun: your M5 numbers found it. The certificate shader variant was compiled whenever the lane was on, even with 0 eligible media, and that idle branch costs on Metal but not on llvmpipe.
+
+**Fix:** eligibility is now decided before the program key, and the lane is keyed and composed per member. With nothing eligible, the key equals the lane-off key, so the lane-off program itself runs. Lavapipe witness 69/69: **0 compiles** on enabling the lane for Northern Veil, byte-identical.
+
+**Please re-measure on the M5:**
+- paired Northern Veil cost, lane off vs on (auto), now expected to match;
+- the seven Prism media, to confirm the per-member keying kept their gains;
+- optionally, the pre-fix Perlin 45° baseline (assertion bypassed, scratch only).
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-18. Human origin: Zachary Zhang.
+

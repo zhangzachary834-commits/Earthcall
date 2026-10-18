@@ -224,7 +224,7 @@ int main() {
         std::vector<sdfwgsl::VolumeProgramInput> inputs;
         for (const auto& f : media) inputs.push_back({f->volumeDensity.get()});
         const auto off = sdfwgsl::compileVolumeSet(inputs, true);
-        const auto on = sdfwgsl::composeVolumeSet(inputs, {}, true, true);
+        const auto on = sdfwgsl::composeVolumeSet(inputs, {}, true, std::vector<bool>(inputs.size(), true));
         check(off.ok && off.wgsl.find("volumeSupportReach") == std::string::npos,
               "certificate lane off: no certificate code in the fused marcher");
         check(on.ok && on.wgsl.find("volumeSupportReach_0") != std::string::npos &&
@@ -595,6 +595,12 @@ int main() {
         std::printf("       auto eligibility, Northern Veil: %u of %zu media eligible\n", nvAuto.eligible, media.size());
         check(nvAuto.eligible == 0 && nvAuto.rgba == nvExact.rgba,
               "auto eligibility keeps every Northern Veil curtain on the grid lane, every byte intact");
+        // The Sun's M5 measured the idle certificate variant 18–23% slower: with
+        // nothing eligible the lane must select the lane-off program itself.
+        std::printf("       auto eligibility, Northern Veil: %u program compiles after enabling the lane\n",
+                    nvAuto.firstCompiles + nvAuto.warmCompiles);
+        check(nvAuto.firstCompiles == 0 && nvAuto.warmCompiles == 0,
+              "with nothing eligible, enabling the lane reuses the lane-off program (no certificate shader variant)");
         if (timing) abba(media, "Northern Veil fused (auto)");
         if (!prismWing.empty()) {
             uint32_t eligible = 0;

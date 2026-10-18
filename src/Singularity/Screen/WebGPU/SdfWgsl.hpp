@@ -354,15 +354,15 @@ struct VolumeSupportKillerProgram {
 };
 VolumeSupportKillerProgram lowerVolumeSupportKillers(const OntoMath::Piecewise* densityExpr);
 
-// `supportCertificates` adds the Rung 2f-native lane: each member with
-// candidates consults its certificates (VolumeInstanceData supportCert*) at a
-// sample no grid proof covers, before evaluating its density. A structural
-// lane: false emits exactly the pre-existing marcher.
+// `supportCertificates[i]` adds the Rung 2f-native lane to member i: it
+// consults its certificates (VolumeInstanceData supportCert*) at a sample no
+// grid proof covers, before evaluating its density. A structural lane, per
+// member: an all-false (or empty) vector emits exactly the pre-existing marcher.
 Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trimProofSupport = true,
                                const OntoMath::Piecewise* supportCertificateDensity = nullptr);
 Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
                          const std::vector<KernelVolumeEvaluator>& evaluators,
-                         bool trimProofSupport = true, bool supportCertificates = false);
+                         bool trimProofSupport = true, const std::vector<bool>& supportCertificates = {});
 
 // V5 exact overlap baseline. Reuses direct lowerVolumeEvaluator() output for every member's evaluator
 // semantics, then composes those evaluators into one shared ray integral. The

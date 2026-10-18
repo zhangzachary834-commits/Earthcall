@@ -479,3 +479,5 @@ Witnesses: `ontomath_line_segmentation_test` 61/61, `volume_ray_segment_transpor
 
 Witnesses: `webgpu_volume_support_certificates_test` 68/68 (auto-mode byte parity), `channel_paths_test`. Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-18.
 
+**Per-member certificate lane (2026-10-18, §6h):** the certificate bool in `VolumeProgramKey` is now *per member*: lane enabled **and** that member's certificates attached this frame (`volumeSupportCertificatesActive`, decided before the key from the memo above). An all-false set shares the lane-off program and its cache entry. The single-medium key follows the same rule. Witness: 0 compiles when the lane is enabled with nothing eligible (`webgpu_volume_support_certificates_test` 69/69). Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-18.
+
