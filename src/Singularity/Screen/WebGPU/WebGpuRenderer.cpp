@@ -2676,9 +2676,8 @@ bool WebGpuRenderer::volumeSupportCertificatesActive(const Rendering::VolumeDens
             // never compiled; one with a bounded residual keeps the check as well.
             std::vector<const Rendering::VolumeSupportCertificate*> reach, closed;
             for (const auto& c : enabledSet.killers) {
-                const bool closedForm = c.closedForm != Rendering::VolumeSupportCertificate::ClosedForm::None;
-                if (closedForm) closed.push_back(&c);
-                if (!closedForm || !c.closedExact) reach.push_back(&c);
+                if (!c.closedForms.empty()) closed.push_back(&c);
+                if (c.closedForms.empty() || !c.closedExact) reach.push_back(&c);
             }
             for (const auto* c : reach) memo.switches.push_back(static_cast<uint32_t>(c->switchIndex));
             const auto killers = sdfwgsl::lowerVolumeSupportKillers(medium.densityExpr, &memo.switches);
@@ -2704,32 +2703,33 @@ bool WebGpuRenderer::volumeSupportCertificatesActive(const Rendering::VolumeDens
                 // toward certifying less, so the f32 copy never claims more.
                 memo.closedOffset = static_cast<uint32_t>(memo.payload.size());
                 const float inf = std::numeric_limits<float>::infinity();
-                for (const auto* c : closed) {
-                    float h[16] = {};
-                    using CF = Rendering::VolumeSupportCertificate::ClosedForm;
-                    if (c->closedForm == CF::HalfSpace) {
-                        h[0] = 2.0f;
-                        h[2] = std::nextafter(static_cast<float>(c->closedThreshold), inf);
-                        for (int j = 0; j < 3; ++j) h[4 + j] = static_cast<float>(c->closedN[j]);
-                        h[3] = std::nextafter(static_cast<float>(glm::length(c->closedN)), inf);
-                    } else {
-                        h[0] = 1.0f;
-                        h[1] = c->closedRhoIn > 0.0 ? std::nextafter(static_cast<float>(c->closedRhoIn), -inf) : -1.0f;
-                        h[2] = std::isfinite(c->closedRhoOut)
-                            ? std::nextafter(static_cast<float>(c->closedRhoOut), inf) : 3.0e38f;
-                        double frob = 0.0;
-                        for (int row = 0; row < 3; ++row) {
-                            for (int j = 0; j < 3; ++j) {
-                                h[4 + 4 * row + j] = static_cast<float>(c->closedM[j][row]);
-                                frob += c->closedM[j][row] * c->closedM[j][row];
+                uint32_t forms = 0;
+                for (const auto* killer : closed)
+                    for (const auto& f : killer->closedForms) {
+                        float h[16] = {};
+                        if (f.kind == Rendering::VolumeSupportClosedForm::Kind::HalfSpace) {
+                            h[0] = 2.0f;
+                            h[2] = std::nextafter(static_cast<float>(f.threshold), inf);
+                            for (int j = 0; j < 3; ++j) h[4 + j] = static_cast<float>(f.n[j]);
+                            h[3] = std::nextafter(static_cast<float>(glm::length(f.n)), inf);
+                        } else {
+                            h[0] = 1.0f;
+                            h[1] = f.rhoIn > 0.0 ? std::nextafter(static_cast<float>(f.rhoIn), -inf) : -1.0f;
+                            h[2] = std::isfinite(f.rhoOut) ? std::nextafter(static_cast<float>(f.rhoOut), inf) : 3.0e38f;
+                            double frob = 0.0;
+                            for (int row = 0; row < 3; ++row) {
+                                for (int j = 0; j < 3; ++j) {
+                                    h[4 + 4 * row + j] = static_cast<float>(f.M[j][row]);
+                                    frob += f.M[j][row] * f.M[j][row];
+                                }
+                                h[7 + 4 * row] = static_cast<float>(f.b[row]);
                             }
-                            h[7 + 4 * row] = static_cast<float>(c->closedB[row]);
+                            h[3] = std::nextafter(static_cast<float>(std::sqrt(frob)), inf);
                         }
-                        h[3] = std::nextafter(static_cast<float>(std::sqrt(frob)), inf);
+                        memo.payload.insert(memo.payload.end(), h, h + 16);
+                        ++forms;
                     }
-                    memo.payload.insert(memo.payload.end(), h, h + 16);
-                }
-                memo.closedCount = static_cast<uint32_t>(closed.size());
+                memo.closedCount = forms;
             } else {
                 memo.switches.clear();
             }
@@ -3808,9 +3808,31 @@ void WebGpuRenderer::flushVolumeComposite() {
                 payload.uploadedLayoutIdentity = payload.layoutIdentity;
             }
         } else {
-            // Allocation failure uses the existing correct frame stream.
-            const auto alloc = bufferPool().suballocateStorage(params.data(), bytes);
-            paramBuffer = alloc.buffer; paramOffset = alloc.offset;
+            // Allocation failure (or a second encoding this submission) uses the
+            // frame stream. GPU preparation writes these parameters in a compute
+            // dispatch that also reads the instances, which the stream would put
+            // in the same buffer, a usage conflict wgpu rejects (found 2026-10-18
+            // when a hidden timing lane re-encoded): such a pipeline gets its own
+            // frame-lifetime buffer.
+            WGPUBuffer own = nullptr;
+            if (pipeline->preparation) {
+                WGPUBufferDescriptor desc = {};
+                desc.label = wgpu::Device::str("Kernel volume parameters (frame, preparation)");
+                desc.size = std::max<uint64_t>(bytes, 16);
+                desc.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
+                own = wgpuDeviceCreateBuffer(_device, &desc);
+                if (own) {
+                    wgpuQueueWriteBuffer(_queue, own, 0, params.data(), bytes);
+                    _frameBuffers.push_back(own);
+                }
+            }
+            if (own) {
+                paramBuffer = own;
+                paramOffset = 0;
+            } else {
+                const auto alloc = bufferPool().suballocateStorage(params.data(), bytes);
+                paramBuffer = alloc.buffer; paramOffset = alloc.offset;
+            }
             countUpload(0, params.size());
         }
         payload.lastEncodedFrame = _volumePayloadEpoch;

@@ -275,6 +275,24 @@ VolumeSupportTrace traceVolumeSupport(const std::vector<VolumeSegmentMember>& me
 // when either changes. Independent of camera, ray, origin and clock. `source`
 // points into the authored Piecewise for a future emitter; it is valid exactly
 // as long as the form it came from.
+// A closed form of where a killer certifies (Rung 2b), δ and sign folded in:
+//   Radial     certified where r > rhoOut or r < rhoIn, r = |M p + b| (rows of
+//              M: ≤ 3 affine components; a ball, ellipsoid, cylinder or slab)
+//   HalfSpace  certified where n·p > threshold
+// Derived from g = K + k1·r + ka·|c0 + c1·r| or K + n·p, K a constant or a
+// BOUNDED RESIDUAL (any subtree not affine in r — noise, the clock — replaced by
+// its proved range over the box at every time: the worst case is certified).
+// A norm whose components are not all affine still bounds itself below by each
+// of them (r ≥ |c_i|): a torus |(ρ − R, y)| > a is certified where |y| > a (a
+// slab) or |ρ − R| > a (a cylindrical shell) — forms, never exact.
+struct VolumeSupportClosedForm {
+    enum class Kind : uint8_t { Radial, HalfSpace };
+    Kind kind = Kind::Radial;
+    glm::dmat3 M{0.0};   // rows are the norm's components (unused rows zero)
+    glm::dvec3 b{0.0}, n{0.0};
+    double rhoIn = -1.0, rhoOut = std::numeric_limits<double>::infinity();
+    double threshold = 0.0;
+};
 struct VolumeSupportCertificate {
     std::size_t switchIndex = 0;
     int8_t sign = 0;               // the killing side of g
@@ -289,27 +307,15 @@ struct VolumeSupportCertificate {
     // never from the simplified form, which may have cancelled). Twice, because
     // the shader evaluates g once in the killer and once inside the density.
     double deviceSlack = 0.0;
-    // Rung 2b (2026-10-18; the Firmament's direction 4, Zach: "NEXT PASS"): a
-    // closed form of where this killer certifies, read from the line form's own
-    // polynomials. On a ray, sphere tracing needs ~7 checks to close on a ball;
-    // a closed form needs one quadratic. g = K + k1·r + ka·|c0 + c1·r| with r =
-    // |M p + b| (≤ 3 affine components: a ball, ellipsoid or cylinder), or
-    // g = K + n·p, where K is either a constant or a BOUNDED RESIDUAL — any
-    // subtree not affine in r (noise, the clock, a polynomial) replaced by its
-    // proved range over the box at every time (the worst case is certified).
-    // Canonical, δ and sign folded in:
-    //   Radial     certified where r > closedRhoOut or r < closedRhoIn
-    //   HalfSpace  certified where closedN·p > closedThreshold
-    // closedExact: no residual, so the region is exactly where the per-sample
-    // check would certify and that check is redundant (dropped from the reach
-    // set); with a residual the reach check still runs inside the band.
-    enum class ClosedForm : uint8_t { None, Radial, HalfSpace };
-    ClosedForm closedForm = ClosedForm::None;
+    // Rung 2b (2026-10-18; the Firmament's direction 4, Zach: "NEXT PASS"):
+    // closed forms of where this killer certifies, read from the line form's own
+    // polynomials (VolumeSupportClosedForm). On a ray, sphere tracing needs ~7
+    // checks to close on a ball; a closed form needs one quadratic. closedExact:
+    // the forms certify exactly where the per-sample check would (no residual,
+    // no bound), so that check is dropped from the reach set; otherwise it still
+    // runs inside the band the forms leave open.
+    std::vector<VolumeSupportClosedForm> closedForms;
     bool closedExact = false;
-    glm::dmat3 closedM{0.0};   // rows are the norm's components (unused rows zero)
-    glm::dvec3 closedB{0.0}, closedN{0.0};
-    double closedRhoIn = -1.0, closedRhoOut = std::numeric_limits<double>::infinity();
-    double closedThreshold = 0.0;
 };
 // Where a closed-form killer certifies along the line o + s·d (p space, exact
 // arithmetic, δ as the margin): the density may be nonzero only on
@@ -320,7 +326,7 @@ struct VolumeSupportClosedInterval {
     double hullHi = std::numeric_limits<double>::infinity();
     double holeLo = 0.0, holeHi = 0.0;
 };
-VolumeSupportClosedInterval volumeSupportClosedInterval(const VolumeSupportCertificate& killer,
+VolumeSupportClosedInterval volumeSupportClosedInterval(const VolumeSupportClosedForm& form,
                                                         const glm::dvec3& o, const glm::dvec3& d);
 // DECLARED device tolerance τ for every claim that replaces or skips executed
 // arithmetic (OntoMath::executionBound's model), not a theorem: τ = 2⁻¹⁰ per

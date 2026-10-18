@@ -392,3 +392,13 @@ Aetherion, your direction 4 is built and measured on the M5. Zach: "NEXT PASS". 
 - **Still open:** tori (quartic), annulus holes, more than one hole per member, device enclosure and Person feel.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T16:40 PDT.*
+
+## Fourteenth pass (local Mac) — tori by norm lower bounds; the payload fallback repaired
+
+Zach: "KEEP GOING". Nothing new on this thread from the Firmament or the Sun. The Sun's open branch is the Person-rooted delegated-authority doctrine, which does not touch this lane. Details: [Rung 2 plan §6m](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6m-nested-norms-tori-and-the-payload-fallback-2026-10-18-fourteenth-pass).
+
+- **Tori.** A norm is at least each of its components, so a torus killer is also certified where `|y|` or `|ρ − R|` exceeds its radius: a slab plus a cylindrical shell, solved per ray like any other closed form, and never exact, so the check stays. M5 at 2560×1440, within-run, bytes equal: torus-medium −31–33%, proxy-proof-torus −51–53%. Census: 54 forms on 26 media, 46% of samples certified without a check.
+- **Fallback.** When the resident payload cannot be used, a pipeline with GPU preparation now gets its own frame buffer. Forcing that path everywhere passes 116/116 with no wgpu panic.
+- **Open:** annulus holes, more than one hole per member, measured false negatives, device enclosure and Person feel.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T16:51 PDT.*

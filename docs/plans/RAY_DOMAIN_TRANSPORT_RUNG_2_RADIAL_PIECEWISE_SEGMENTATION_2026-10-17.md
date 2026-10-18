@@ -653,6 +653,36 @@ Pixels are byte-identical either way, so a verdict changes only speed. Forced mo
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T16:40 PDT. Human origin: Zachary Zhang ("NEXT PASS"). Direction 4 and the prefix-trimming idea are the Firmament's; Rung 2b's sphere/ray quadratic is the §3 plan's. The classification by line-form structure, the bounded residual, the hull-and-hole lowering, the closest-point numerics and the generation key are this session's.*
 
+## 6m. Nested norms (tori) and the payload fallback (2026-10-18, fourteenth pass)
+
+**Origin.** Zach: "KEEP GOING". This pass takes two items §6l and §6k left open. The Sun's new branch (`sun/person-rooted-delegated-authority-20261018`, a governance doctrine) and the Firmament had nothing addressed to this thread.
+
+**Nested norms.** A norm bounds itself below by each of its components (`r ≥ |c_i|`), so a killer certified where `r > ρout` is also certified wherever any `|c_i| > ρout`. A torus `|(ρ − R, y)|` therefore yields two closed forms:
+- `|y| > ρout`: its affine components together, as one radial form (a slab here).
+- `|ρ − R| > ρout`: each component that is itself affine in an affine norm, as a cylindrical shell (hull plus hole).
+
+These are bounds, never exact, so the per-sample check stays. A killer now carries a list of `VolumeSupportClosedForm`s, and the renderer lays out one 16-float block per form.
+- **Census:** 54 forms (46 radial, 8 half-space; 12 from residuals or bounds) on 26 media. They certify 46.4% of samples without a check (was 35.5%). Every claim is backed by the authored switch, and no certified sample has positive density (36/36).
+- **M5 at 2560×1440,** within-run A/B against sphere tracing, bytes equal (ms; two runs):
+
+  | Medium | Grid | Sphere-traced | Closed forms |
+  |---|---|---|---|
+  | torus-medium | 33.2 / 34.9 | 4.73 / 4.91 | 3.17 / 3.37 (−31–33%) |
+  | proxy-proof-torus | 20.5 / 21.4 | 1.52 / 1.56 | 0.74 / 0.73 (−51–53%) |
+
+  All eight Prism wing-B media now carry closed forms. `webgpu_volume_support_certificates_test` passes 124/124 (inside, grazing, 150-radii and 2560×1440 parity on both tori).
+
+**Payload fallback (§6k's latent hazard).** When the resident parameter buffer cannot be used, a pipeline with GPU preparation now gets its own frame-lifetime parameter buffer instead of the frame stream. The stream shares one buffer with the instances under the preparation dispatch, which wgpu rejects. **Witness:** with the probe's payload epoch removed by hand, which forces every hidden lane down this path, the certificate test passes 116/116 with no validation panic, where §6k's first run had panicked. The epoch was then restored.
+
+**Still open:**
+- A residual abs certifying inside an annulus.
+- More than one hole per member.
+- Measured false negatives.
+- Device enclosure.
+- Person acceptance.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T16:51 PDT. Human origin: Zachary Zhang ("KEEP GOING"). The norm lower bound and the fallback repair are this session's.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

@@ -348,3 +348,24 @@ Zach: "NEXT PASS". This is the Firmament's direction 4. Built in the same worktr
 **Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/` (`census-closed-*`, `closed-ab-fixed-*`, `2b-*`). Design: [Rung 2 plan §6l](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6l-rung-2b-closed-form-killers-solved-once-per-ray-2026-10-18-thirteenth-pass). No live FPS, movement or Person-acceptance claim.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T16:40 PDT.
+
+## Nested-norm closed forms and the payload fallback — fourteenth pass (M5)
+
+Zach: "KEEP GOING". Built from `999c7fe1e` plus this pass, on native Apple M5 Metal with ordinary timestamps disabled. No save, default or installed app changed.
+
+| Witness (final tree) | Result |
+|---|---|
+| `webgpu_volume_support_certificates_test` (timing on) | **124/124** (new: both tori's inside, grazing, 150-radii and 2560×1440 parity) |
+| `volume_ray_radial_segmentation_test` | **36/36**; 54 closed forms on 26 media, certifying 46.4% of samples; 0 unbacked claims; 0 positive certified samples |
+| The 15 other suites of §6l's sweep | all pass, unchanged |
+| Forced payload fallback (probe epoch removed by hand) | 116/116, no wgpu validation panic (previously a panic) |
+
+**Tori,** 2560×1440 within-run A/B, bytes equal (ms; two runs):
+- torus-medium: 4.73 → 3.17, 4.91 → 3.37
+- proxy-proof-torus: 1.52 → 0.74, 1.56 → 0.73
+
+**Auto mode** (settled ms, against grid): torus 3.48 / 37.5, proxy-proof-torus 0.61 / 23.3, spherical 1.65 / 12.4, hollow 2.79 / 14.4, csg 1.68 / 14.8, noise 32.3 / 57.9, breathing 4.98 / 14.3, dual 2.07 / 14.7. Every Prism medium was kept. Sea-of-clouds was kept this run, a near-tie as in §6k.
+
+**Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/` (`census-forms-1`, `forms-*`, `torus-ab-*`, `fallback-forced`). Design: [Rung 2 plan §6m](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6m-nested-norms-tori-and-the-payload-fallback-2026-10-18-fourteenth-pass). No live FPS, movement or Person-acceptance claim.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T16:51 PDT.

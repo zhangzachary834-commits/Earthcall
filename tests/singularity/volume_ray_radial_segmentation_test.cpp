@@ -461,13 +461,15 @@ int main() {
                     // Rung 2b: where a closed form certifies, the authored switch function
                     // must certify too (sign·g > δ), checked at random box points; an
                     // exact closed form must also certify everywhere the switch does.
-                    std::vector<const Rendering::VolumeSupportCertificate*> closed;
+                    std::vector<const Rendering::VolumeSupportClosedForm*> closed;
                     for (const auto& c : certs.killers) {
-                        using CF = Rendering::VolumeSupportCertificate::ClosedForm;
-                        if (c.closedForm == CF::None) continue;
-                        closed.push_back(&c);
-                        (c.closedForm == CF::Radial ? t.closedRadial : t.closedHalfSpace) += 1;
-                        t.closedResidual += c.closedExact ? 0 : 1;
+                        using Kind = Rendering::VolumeSupportClosedForm::Kind;
+                        if (c.closedForms.empty()) continue;
+                        for (const auto& f : c.closedForms) {
+                            closed.push_back(&f);
+                            (f.kind == Kind::Radial ? t.closedRadial : t.closedHalfSpace) += 1;
+                            t.closedResidual += c.closedExact ? 0 : 1;
+                        }
                         for (int k = 0; k < 256; ++k) {
                             const glm::dvec3 p = half * glm::dvec3(u(rng), u(rng), u(rng));
                             double a = 0, bv = 0;
@@ -480,10 +482,12 @@ int main() {
                                     (c.role == 1 && (!bvv || !propertyValueToNumber(*bvv, bv)))) { ok = false; break; }
                                 const double g = c.role == 1 ? a - bv : (c.role == 2 || c.role == 3) ? a - c.offset : a;
                                 const double margin = (c.sign < 0 ? -g : g) - c.deviceSlack;
-                                const double r = glm::length(c.closedM * p + c.closedB);
-                                const bool claims = c.closedForm == CF::Radial
-                                    ? (r > c.closedRhoOut || r < c.closedRhoIn)
-                                    : glm::dot(c.closedN, p) > c.closedThreshold;
+                                bool claims = false;
+                                for (const auto& f : c.closedForms) {
+                                    const double r = glm::length(f.M * p + f.b);
+                                    claims = claims || (f.kind == Kind::Radial ? (r > f.rhoOut || r < f.rhoIn)
+                                                                               : glm::dot(f.n, p) > f.threshold);
+                                }
                                 // A claim must be backed by the switch (tiny double slack);
                                 // an exact form must not miss a clear certification.
                                 if (claims && !(margin > -1e-9 * (1.0 + std::abs(g)))) ++t.closedMismatch;
@@ -543,8 +547,8 @@ int main() {
                             {
                                 const double sp = chord.firstSample + chord.step * double(i);
                                 bool closedSkip = false;
-                                for (const auto* c : closed) {
-                                    const auto iv = Rendering::volumeSupportClosedInterval(*c, ro, dir);
+                                for (const auto* f : closed) {
+                                    const auto iv = Rendering::volumeSupportClosedInterval(*f, ro, dir);
                                     closedSkip = closedSkip || sp < iv.hullLo || sp > iv.hullHi ||
                                                  (sp > iv.holeLo && sp < iv.holeHi);
                                 }

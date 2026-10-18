@@ -509,7 +509,7 @@ private:
         std::string wgsl;
         std::vector<float> payload;
         uint32_t count = 0;          // per-sample (reach) killers, compiled
-        uint32_t closedCount = 0;    // Rung 2b closed forms, 16 floats each after the reach block
+        uint32_t closedCount = 0;    // Rung 2b closed forms (all closed killers'), 16 floats each after the reach block
         uint32_t closedOffset = 0;   // within payload
         // Bumped by every rebuild and folded into the payload identity, so a
         // re-laid payload (killer set, closed-form block) is always re-uploaded,

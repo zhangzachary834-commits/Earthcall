@@ -1709,6 +1709,6 @@ Nothing changes by default: certificates are still off. If you turn `volumeSuppo
 
 ### Closed-form certificate killers (Rung 2b) — October 18
 
-Nothing changes by default: certificates are still off. With `volumeSupportCertificatesEnabled` on, Prism wing B's balls and shells (spherical cloud, hollow shell, crescent, dual sovereign, breathing nebula) and the noise cloud now find their empty space with one calculation per ray. In offscreen tests at 2560×1440 they draw about 30% faster than last pass (the noise cloud about 15%). Every pixel matched in testing, and `volumeSupportCertificateKillers` now also counts these.
+Nothing changes by default: certificates are still off. With `volumeSupportCertificatesEnabled` on, Prism wing B's balls and shells (spherical cloud, hollow shell, crescent, dual sovereign, breathing nebula), both tori (since the fourteenth pass: about 30% and 50% faster) and the noise cloud now find their empty space with one calculation per ray. In offscreen tests at 2560×1440 they draw about 30% faster than last pass (the noise cloud about 15%). Every pixel matched in testing, and `volumeSupportCertificateKillers` now also counts these.
 
 - [ ] Optional, with certificates on, in Prism Cathedral wing B: fly in close to the hollow shell and the crescent, and pass through them. They should look exactly as before, including from inside, and move more smoothly. Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T16:40 PDT.
