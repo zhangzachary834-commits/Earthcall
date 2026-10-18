@@ -31,3 +31,5 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating Unified Brush System and Object Hover Events](unified_brush_and_hover_events_addendum.md)
 *   [Integrating Unified Brush System and CPU-GPU Micro-Mastery](unified_brush_and_micro_mastery_addendum.md)
 *   [Integrating the Event Bus, Discrete Moments, and Continuous Time](event_bus_and_time_moment_addendum.md)
+*   [Integrating Prophetic Collision and Dimensional Zones](prophetic_collision_and_dimensional_zones_addendum.md)
+*   [Integrating Zone Timeline Jurisdiction and Moment Execution Weave](zone_timeline_and_moment_weave_addendum.md)
