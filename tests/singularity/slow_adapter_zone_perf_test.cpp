@@ -72,12 +72,21 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    // For performance tests, using RealSaveTreeGuard copies the entire saves/ tree,
+    // causing extreme disk I/O and CI timeouts. Instead, isolate the run to a scratch
+    // directory and prevent BootedEngineHarness from hydrating all zones.
+    std::filesystem::path scratch = std::filesystem::temp_directory_path() / ("perf_" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count()));
+    std::filesystem::create_directories(scratch / "worlds");
+    std::filesystem::create_directories(scratch / "zones");
+    std::filesystem::copy(world, scratch / "worlds" / std::filesystem::path(world).filename());
+    std::filesystem::copy(std::filesystem::absolute(world).parent_path().parent_path() / "zones", scratch / "zones", std::filesystem::copy_options::recursive);
+    std::filesystem::copy(std::filesystem::absolute(world).parent_path().parent_path() / "homes", scratch / "homes", std::filesystem::copy_options::recursive);
+    SaveSystem::setSaveRoot(scratch.string());
+
+    TestSupport::BootedEngineHarness h("Player", "humanoid", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld(scratch / "worlds" / std::filesystem::path(world).filename());
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
