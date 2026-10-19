@@ -1698,12 +1698,12 @@ bool ZoneManager::atomicWriteFile(const std::filesystem::path& finalPath, const 
     std::error_code ec;
     std::filesystem::rename(tmp, finalPath, ec);
     if (ec) {
-        // Cross-device or other rename failure: fall back to copy+remove,
-        // still finishing with the destination fully written before any
-        // caller can observe it under its final name.
-        std::filesystem::copy_file(tmp, finalPath, std::filesystem::copy_options::overwrite_existing, ec);
-        std::filesystem::remove(tmp, ec);
-        if (ec) return false;
+        // tmp is created in finalPath's own directory, so EXDEV is not a
+        // legitimate reason to downgrade this transaction to copy+remove.
+        // A copy can expose a partially-written semantic root; refuse instead.
+        std::error_code cleanupEc;
+        std::filesystem::remove(tmp, cleanupEc);
+        return false;
     }
     return true;
 }
@@ -1735,7 +1735,7 @@ std::string ZoneManager::commitMatterGeneration(const std::filesystem::path& ecf
         std::ifstream existingIn(matterPath.string(), std::ios::binary);
         const std::vector<uint8_t> existingBytes(
             (std::istreambuf_iterator<char>(existingIn)), std::istreambuf_iterator<char>());
-        if (!existingIn.eof() || existingBytes != matterBytes) {
+        if (!existingIn.is_open() || existingBytes != matterBytes) {
             std::cerr << "[ZoneManager] commitMatterGeneration: existing content-addressed file "
                       << matterPath << " does not equal the bytes implied by its name — "
                          "refusing rather than overwriting a possible hash-prefix collision/corruption.\n";
@@ -3128,7 +3128,10 @@ std::vector<uint8_t> ZoneManager::buildMatterFlatBuffer(
         }
     }
 
-    auto chunk_id = builder.CreateString("matter_" + SaveSystem::timestamp());
+    // This buffer is content-addressed.  Never inject wall-clock time into
+    // the bytes being hashed: identical physical state must mint identical
+    // bytes and therefore the same generation id across repeated saves.
+    auto chunk_id = builder.CreateString("matter");
     auto entities_vec = builder.CreateVector(entity_offsets);
     auto chunk = Earthcall::Schema::CreateSaveChunk(builder, chunk_id, entities_vec);
 
