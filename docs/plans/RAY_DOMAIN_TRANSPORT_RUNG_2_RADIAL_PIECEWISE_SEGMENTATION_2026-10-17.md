@@ -1000,6 +1000,54 @@ Mean relative error of ∫max(D, 0) per ray.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T14:53 PDT. Human origin: Zachary Zhang (adopting the Sun's verdict). The hierarchy, distinctions and acceptance criteria are the Original Prism Sun's; the implementation, the branch condition and its repair, the R_J repairs and the reference discipline are this session's.*
 
+## 6w. Transmittance by line integration: the renderer's own σ, in levels of 255 (2026-10-19, twenty-fourth pass)
+
+**Origin.** Zach: "KEEP GOIGGGNNNGN". §6u's integrals were optical depths of ∫max(D, 0); pixels see the renderer's own extinction. This rung integrates exactly what the marcher integrates and states the result in the unit a Person sees.
+
+**First, the elliptic graduation is deferred, honestly.**
+- **Two attempts failed verification:** a search over formula variants for the crescent's second-kind integral, and a fit of the third-kind structure. Neither matched mpmath, so my memory of Carlson's tables is wrong.
+- **The derivable path, recorded for its own pass:**
+  1. a Möbius map making both quadratics even;
+  2. a tangent substitution to Legendre's F, E and Π;
+  3. DLMF §19.25 to R_F, R_D and R_J.
+- **What that path needs first:** the third-kind piece meets a pole inside the interval (u = 1), so it needs R_J's Cauchy principal value (p < 0). That should be admitted only with its own witness.
+- Until then the tori and crescent keep the hybrid.
+
+**The quantity.** The marcher's optical depth is τ = ∫σ ds, with σ = (D > 0 ? max(σₜ, 10⁻⁶) : 0), where σₜ is the authored extinction or 0.5·D. The pixel's transmittance is e^(−τ). The same quantity §6q measured: the 96-sample sum is 3.85/255 off on Borealis hero.
+
+**How** (`webgpu_volume_faithfulness_test`, CPU section, 16 rays per medium):
+- `segmentLine` decides D's sign.
+- On pieces where D > 0 is proved, `hybridIntegral` integrates σₜ.
+- The 10⁻⁶ floor adds nothing where σₜ ≥ 10⁻⁶ is proved; elsewhere its contribution goes into the radius.
+- Root slivers keep their bound.
+- All three estimators (plain 96-sample, hybrid, reference) use OntoMath's own evaluation of σ.
+
+**A reference-error lesson.** An authored σₜ *jumps* where D crosses zero: 0.16 → 0 on the Borealis clouds, ≥ 0.25 → 0 on the hero. There the midpoint sum is first order, and Richardson's second-order correction is invalid. The first version of this witness used it anyway and reported 33 hybrid "misses" that were the reference's own error. Such references are now the plain 2¹⁸ sum, bounded by (sign changes × sup σ × h), plus the observed 2¹⁷→2¹⁸ change, plus N·ε summation rounding.
+
+**Result** (27 admitted media, against the continuum, max |ΔT| over rays, in levels of 255):
+
+| Medium | 96-sample | **Line-integrated** |
+|---|---|---|
+| Borealis hero curtain | 3.83 | **0.0009** |
+| Borealis v2 clouds | 1.92 | **0.0009** |
+| Borealis v1 clouds | 0.97–1.56 | **0.0002–0.0004** |
+| Northern Veil curtains | 0.02–0.17 | **0.002–0.004** |
+| Prism wing B (8 media) | 0.02–0.22 | **≤ 0.0003** |
+| Sky-Island sea of clouds | 0.008 | 0.005 |
+| nimbus, halo mist | ≤ 0.0005 | 0.0002, 0.0010 |
+
+- **Worst case:** 3.83/255 → 0.0047/255.
+- **At least as faithful** on 24 of 27. The three exceptions are all below 0.005/255, where the 96-sample sum happens to land close.
+- **Proved radius** holds on every ray.
+- **Cost:** most media need 0–36 remainder evaluations per ray, against the lattice's 96 full evaluations.
+- **The Borealis clouds need none at all.** Their extinction is a constant, so τ is 0.16 × the length where D > 0, and segmentation alone measures that length.
+
+**Not admitted (4):** `veil.cavity`, `veil.reflection`, `prism.summit.celestial-veil` (a computed constant where the line algebra requires a literal) and `veil.dust` (a non-integer power). Their 96-sample errors are among the smallest; they stay on the lattice.
+
+**What this is not.** It is transmittance only. A pixel's colour also integrates the lit in-scattering ∫T(s)σₛ(s)L(s)ds, with T inside the integral. That is the next rung, followed by the GPU emission. Nothing rendered changed; the 96-sample image remains the definition (Zach).
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T15:43 PDT. Human origin: Zachary Zhang (integration operations first; faithfulness to exact math). The renderer's σ semantics are the marcher's; the line-integrated transmittance, the discontinuous-reference bound and the deferral analysis are this session's.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

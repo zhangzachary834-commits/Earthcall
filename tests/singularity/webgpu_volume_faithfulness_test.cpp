@@ -22,6 +22,7 @@
 // Claude Code · Claude Opus 5.5 · session f3af84cf-bfe3-429d-b417-2d533119f169 ·
 // 2026-10-18. Harness pattern: webgpu_volume_support_enclosure_test.
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
+#include "Singularity/OntoMath/LineRestriction.hpp"
 #include "Singularity/Screen/VolumeDensity.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
@@ -35,6 +36,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <limits>
 #include <map>
 #include <optional>
 #include <random>
@@ -385,6 +387,12 @@ int main() {
     double sumRatio[2] = {};
     double quadratureWorst = 0.0, quadratureWorst2 = 0.0;
     uint32_t quadratureMeasured = 0;
+    // Transmittance by OntoMath's integration office (2026-10-19): the renderer's
+    // own sigma integrated by hybridIntegral on segmentLine's pieces, against the
+    // 96-sample midpoint sum the lattice computes, both against the continuum.
+    double lineWorst96 = 0.0, lineWorstHybrid = 0.0;
+    uint32_t lineMedia = 0, lineBetter = 0, lineMisses = 0;
+    std::string lineWorstWho;
     std::string quadratureWho;
     double worstNormalized = 0.0;
     std::string worstWho;
@@ -637,6 +645,15 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                 double worstT = 0.0, worstTau = 0.0, worstConv = 0.0;
                 bool ok = true;
                 std::mt19937 qrng(99u);
+                // The same sigma on OntoMath's line algebra: D's sign by segmentLine,
+                // sigma_t (authored extinction, or 0.5·D) by hybridIntegral.
+                const auto lineD = OntoMath::restrictAlgebraicToLine(*b.densityExpr, false);
+                const bool authoredSigma = b.extinctionExpr && !b.extinctionExpr->pieces.empty();
+                const auto lineE = authoredSigma ? OntoMath::restrictAlgebraicToLine(*b.extinctionExpr, false)
+                                                 : OntoMath::LineAlgebraicRestriction{};
+                const bool lineOk = bool(lineD) && (!authoredSigma || bool(lineE));
+                double line96 = 0.0, lineHybrid = 0.0, lineEvals = 0.0;
+                uint32_t lineRays = 0, lineMiss = 0;
                 for (int r = 0; r < 16 && ok; ++r) {
                     glm::dvec3 dir(u(qrng), u(qrng), u(qrng));
                     if (glm::length(dir) < 1e-3) dir = glm::dvec3(0.3, 0.2, 1.0);
@@ -666,6 +683,126 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                     worstConv = std::max(worstConv, std::abs(std::exp(-*tauA) - std::exp(-*tauB)));
                     worstT = std::max(worstT, std::abs(std::exp(-*tau96) - std::exp(-*tauB)));
                     if (*tauB > 1e-9) worstTau = std::max(worstTau, std::abs(*tau96 - *tauB) / *tauB);
+                    if (!lineOk) continue;
+                    std::map<std::string, double> bind;
+                    for (int a = 0; a < 3; ++a) {
+                        bind[OntoMath::kLineOriginVars[a]] = o[a];
+                        bind[OntoMath::kLineDirectionVars[a]] = dir[a];
+                    }
+                    bind[OntoMath::kTimeVar] = clocks[1];
+                    for (const char* v : {OntoMath::kWiXVar, OntoMath::kWiYVar, OntoMath::kWiZVar}) bind[v] = 0.0;
+                    bind[OntoMath::kWoXVar] = -dir.x; bind[OntoMath::kWoYVar] = -dir.y; bind[OntoMath::kWoZVar] = -dir.z;
+                    bind[OntoMath::kOmegaXVar] = -dir.x; bind[OntoMath::kOmegaYVar] = -dir.y; bind[OntoMath::kOmegaZVar] = -dir.z;
+                    OntoMath::LineAlgebraicEvaluator evD(*lineD.form, bind, true);
+                    std::optional<OntoMath::LineAlgebraicEvaluator> evE;
+                    if (authoredSigma) evE.emplace(*lineE.form, bind, true);
+                    if (!evD.ok() || (evE && !evE->ok())) continue;
+                    const uint32_t rootD = lineD.form->roots[0], rootE = authoredSigma ? lineE.form->roots[0] : 0;
+                    auto sigma = [&](double s) {
+                        const double D = evD.value(rootD, s).value_or(0.0);
+                        if (!(D > 0.0)) return 0.0;
+                        const double st = evE ? evE->value(rootE, s).value_or(0.0) : 0.5 * D;
+                        return std::max(st, 1e-6);
+                    };
+                    // The midpoint sum, and how many times D's sign flips between its
+                    // samples and the largest sigma it saw (for the reference's bound).
+                    int jumps = 0;
+                    double sigmaMax = 0.0;
+                    auto mid = [&](int m) {
+                        const double h = (t1 - t0) / m;
+                        double sum = 0.0;
+                        bool wasPositive = false;
+                        jumps = 0;
+                        for (int i = 0; i < m; ++i) {
+                            const double sg = sigma(t0 + (i + 0.5) * h);
+                            sum += sg * h;
+                            if (i > 0 && (sg > 0.0) != wasPositive) ++jumps;
+                            wasPositive = sg > 0.0;
+                            sigmaMax = std::max(sigmaMax, sg);
+                        }
+                        return sum;
+                    };
+                    // An authored sigma_t jumps where D crosses zero (0.16 → 0 for the
+                    // Borealis clouds): the midpoint sum is then first order and
+                    // Richardson's second-order correction is invalid. Such a reference is
+                    // the plain 2^18 sum, carrying (jumps × sup sigma × h) plus its
+                    // observed change from 2^17. 0.5·D is continuous there: Richardson.
+                    double reference, referenceError;
+                    if (authoredSigma) {
+                        const double coarse = mid(1 << 17);
+                        reference = mid(1 << 18);
+                        // + the summation's own rounding, N·ε of the sum.
+                        referenceError = jumps * sigmaMax * (t1 - t0) / double(1 << 18) + std::abs(reference - coarse) +
+                                         double(1 << 18) * std::numeric_limits<double>::epsilon() * reference;
+                    } else {
+                        const double fine = mid(32768);
+                        reference = fine + (fine - mid(16384)) / 3.0;
+                        referenceError = 1e-6 * reference;
+                    }
+                    const double plain = mid(kSamples);
+                    const std::vector<std::pair<std::size_t, uint32_t>> signTarget{{0, rootD}};
+                    const auto pieces = OntoMath::segmentLine({&evD}, t0, t1, 1e-7 * (t1 - t0), nullptr, 1u << 16, true, nullptr, &signTarget);
+                    double dense = 0.0;
+                    for (const auto& pc : pieces)
+                        if (pc.definite && pc.targetSigns[0] > 0) dense += pc.s1 - pc.s0;
+                    double est = 0.0, rad = 0.0;
+                    bool pieceOk = true;
+                    const std::vector<int8_t> openE(authoredSigma ? lineE.form->switches.size() : 0, 0);
+                    for (const auto& pc : pieces) {
+                        if (pc.targetSigns[0] < 0) continue;   // D proved ≤ 0: sigma is 0
+                        const double w = pc.s1 - pc.s0;
+                        bool undefined = false;
+                        const auto rd = evD.range(rootD, pc.s0, pc.s1, pc.signs[0], &undefined);
+                        if (undefined) { pieceOk = false; break; }
+                        if (!pc.definite) {
+                            // A root sliver: 0 ≤ ∫sigma ≤ w·sup sigma.
+                            double hi = 0.5 * std::max(0.0, double(rd.hi));
+                            if (evE) { bool u2 = false; hi = std::max(0.0, double(evE->range(rootE, pc.s0, pc.s1, openE, &u2).hi)); }
+                            hi = std::max(hi, 1e-6) * w;
+                            est += 0.5 * hi; rad += 0.5 * hi;
+                            continue;
+                        }
+                        const uint32_t cells = std::max<uint32_t>(1, uint32_t(std::lround(95.0 * w / std::max(dense, 1e-300))));
+                        if (!evE) {
+                            // sigma = max(0.5·D, 1e-6) with D > 0 proved: 0.5∫D, plus what the
+                            // floor adds — exactly nothing where 0.5·D ≥ 1e-6 is proved.
+                            const auto h = evD.hybridIntegral(rootD, pc.s0, pc.s1, pc.signs[0], cells);
+                            if (!h) { pieceOk = false; break; }
+                            const double floorGap = 0.5 * double(rd.lo) >= 1e-6 ? 0.0 : 1e-6 * w;
+                            est += 0.5 * h->estimate + 0.5 * floorGap;
+                            rad += 0.5 * h->radius + 0.5 * floorGap;
+                            lineEvals += h->remainderEvaluations;
+                            continue;
+                        }
+                        // Authored sigma_t: its integral, plus what the 1e-6 floor can add.
+                        const auto h = evE->hybridIntegral(rootE, pc.s0, pc.s1, openE, cells);
+                        bool u2 = false;
+                        const auto re = evE->range(rootE, pc.s0, pc.s1, openE, &u2);
+                        if (!h || u2) { pieceOk = false; break; }
+                        const double floorGap = std::max(0.0, 1e-6 - double(re.lo)) * w;
+                        est += h->estimate + 0.5 * floorGap;
+                        rad += h->radius + 0.5 * floorGap;
+                        lineEvals += h->remainderEvaluations;
+                    }
+                    if (!pieceOk) continue;
+                    ++lineRays;
+                    line96 = std::max(line96, std::abs(std::exp(-plain) - std::exp(-reference)));
+                    lineHybrid = std::max(lineHybrid, std::abs(std::exp(-est) - std::exp(-reference)));
+                    if (std::abs(est - reference) > rad + referenceError + 1e-12) ++lineMiss;
+                }
+                if (lineRays) {
+                    std::printf("    %s transmittance by line integration (%u rays): 96-sample max |dT| %.3g (%.3f of 255 levels), "
+                                "hybrid %.3g (%.5f of 255) at %.0f remainder evaluations/ray; %u outside the proved radius\n",
+                                b.producerId.c_str(), lineRays, line96, 255.0 * line96, lineHybrid, 255.0 * lineHybrid,
+                                lineEvals / lineRays, lineMiss);
+                    ++lineMedia;
+                    lineBetter += lineHybrid <= line96 ? 1 : 0;
+                    lineMisses += lineMiss;
+                    lineWorstHybrid = std::max(lineWorstHybrid, lineHybrid);
+                    if (line96 > lineWorst96) { lineWorst96 = line96; lineWorstWho = b.producerId; }
+                } else if (!lineOk) {
+                    std::printf("    %s transmittance by line integration: not admitted (%s)\n", b.producerId.c_str(),
+                                !lineD ? lineD.refusal.c_str() : lineE.refusal.c_str());
                 }
                 if (ok) {
                     std::printf("    %s quadrature: 96-sample transmittance vs the continuum, max |dT| %.3g (%.2f of 255 levels), "
@@ -704,6 +841,11 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                 measured ? sumRatio[0] / measured : 0.0, measured ? sumRatio[1] / measured : 0.0);
     std::printf("    quadrature: %u media; worst 96-sample transmittance error against the continuum %.3g (%.2f of 255 levels, %s)\n",
                 quadratureMeasured, quadratureWorst, 255.0 * quadratureWorst, quadratureWho.c_str());
+    std::printf("    transmittance by line integration: %u media; worst 96-sample |dT| %.3g (%.2f of 255, %s), worst hybrid %.3g "
+                "(%.4f of 255); hybrid at least as faithful on %u; %u rays outside the proved radius\n",
+                lineMedia, lineWorst96, 255.0 * lineWorst96, lineWorstWho.c_str(), lineWorstHybrid, 255.0 * lineWorstHybrid,
+                lineBetter, lineMisses);
+    check(lineMedia > 0 && lineMisses == 0, "line-integrated optical depth lies inside its proved radius on every ray");
     check(lessFaithful == 0, "the medium-frame lattice point is never less faithful than the world-frame one (near and far cameras)");
     std::printf("webgpu_volume_faithfulness_test: %d/%d checks passed\n", g_checks - g_failures, g_checks);
     return g_failures == 0 ? 0 : 1;

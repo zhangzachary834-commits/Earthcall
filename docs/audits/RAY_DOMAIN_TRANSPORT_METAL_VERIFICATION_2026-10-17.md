@@ -466,3 +466,15 @@ Zach: "Faithfulness to exact math should be the rule." A new witness, `webgpu_vo
 - No medium is wired to it yet.
 
 **Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/carlson-witness-1.log`. Design: [§6v](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6v-the-carlson-rung-exact-special-function-reduction-witnessed-before-it-is-trusted-2026-10-19-twenty-third-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T14:53 PDT.
+
+## Transmittance by line integration — twenty-fourth pass (CPU only)
+
+- **Max |ΔT| against the continuum, 27 admitted media:**
+  - worst 96-sample 3.83/255 (Borealis hero), worst line-integrated 0.0047/255;
+  - Borealis hero itself 3.83 → 0.0009/255;
+  - Northern Veil 0.17 → 0.0045/255 worst.
+- **Proved radius** holds on every ray.
+- **The reference for jump-discontinuous σ** now carries a first-order bound; with Richardson, the first version reported false misses.
+- 4 media not admitted.
+
+**Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/transmittance-line-1.log`. Design: [§6w](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6w-transmittance-by-line-integration-the-renderers-own-σ-in-levels-of-255-2026-10-19-twenty-fourth-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T15:43 PDT.
