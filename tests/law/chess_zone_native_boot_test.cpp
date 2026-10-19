@@ -118,6 +118,8 @@ int main() {
     if (std::filesystem::exists(sourceMatter)) {
         std::filesystem::copy_file(sourceMatter, targetZoneDir / "zone.ecmatter");
     }
+    check(TestSupport::copyZoneMatterClosure(sourceZone, targetZoneDir),
+          "Chess sandbox carries its exact physical matter generation");
 
     std::size_t copiedRoots = 0;
     for (const auto& refJson : zoneJson["lawRefs"]) {
