@@ -915,6 +915,50 @@ So:
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T13:17 PDT. Human origin: Zachary Zhang (the rung and the order; "integration operations first"). The diagnosis, the moment recurrence, the product rules and the census correction are this session's; "hybrid integration" is the Original Prism Sun's decree step 3.*
 
+## 6u. Hybrid integration: closed-form weights, sampled remainders, and focus (2026-10-19, twenty-second pass)
+
+**Origin.** Zach: "NEXT RUGN" (he is meanwhile learning about elliptic integrals; §6t's ⚑ stays open). The rung is the Original Prism Sun's decree step 3: "where smooth factors can be solved and only an irreducible factor remains numerical". Zach's standing rule applies: integration operations, not more sampling; 96 stays the image.
+
+**What it is.** `LineAlgebraicEvaluator::hybridIntegral(node, s₀, s₁, signs, cells)`, in OntoMath's integration office beside `integral()`. Both now share one core.
+- **The split.** The decided branch becomes a closed form plus Σ wₖ(s)·Gₖ(s). Gₖ is the irreducible remainder, an authored node with no closed form here: noise, an elliptic product, a root times a wave. wₖ is the closed-form weight its parents multiply it by.
+- **How a node becomes a remainder.** Any node that refuses becomes a remainder with weight 1. Its parents carry it through every operation that is linear in it: sums, products with closed-form factors, a decided abs, an in-range clamp, a decided min/max or Select piece. Sqrt and sin/cos/exp of a remainder are not linear, so the node itself becomes the remainder there.
+- **Product Simpson rule (product integration).** Gₖ is sampled at `cells` + 1 edges and interpolated by a quadratic per pair of cells; an odd count closes with one cubic panel over the last three. Each ∫ wₖ·(Lagrange basis) is exact, so a sharp closed-form profile adds no quadrature error at all. Order 4 where Gₖ is smooth, against the midpoint sum's 2; measured: each doubling of cells cuts the error ≥ 6×.
+- **Proved radius.** Per panel, sup|w|·width·(1 + Λ)·min(G's proved range width, L′·half-width), with Λ the interpolant's Lebesgue constant (1, 1.25, 1.6311). It holds on every ray of every refused medium (0 misses). It is loose: 0.01–6× the integral. It is a certificate of soundness, not of accuracy.
+
+**Two numerical repairs it forced.** Both affect `integral()` too; all exact-path checks still pass.
+1. **Wave integrals re-centre on the interval.** `integrateWave` evaluated P(s)·G at the global s. At Northern Veil's s ≈ 500, a cubic basis cancelled terms of size 10⁹.
+2. **Slow waves integrate their Taylor series.** Along a ray nearly perpendicular to a wave's axis, the ray frequency α = scale·dₓ is tiny, and the tabular rule divides by α^(j+1). When |α|·h ≤ 1, Σ g⁽ᵏ⁾(β)(αv)ᵏ/k! is integrated term by term instead. It converges geometrically to rounding, as `sin` itself is computed.
+
+Each repair has a witness that fails without it.
+
+**Witness** (`volume_ray_radial_segmentation_test` 41/41; `ontomath_line_segmentation_test` 81/81). Every medium the closed form refuses, on the same rays, against the converged Richardson midpoint sum. Three estimators, all at about 96 evaluations per ray:
+- **plain**: the 96-sample midpoint sum over the chord, as the renderer's lattice does;
+- **focused**: the same budget on only the pieces segmentation could not prove empty;
+- **hybrid**: focused, plus closed-form weights and product Simpson.
+
+| Medium | Plain 96 | Focused | **Hybrid** |
+|---|---|---|---|
+| Northern Veil curtains ×4 | 4.1–6.6×10⁻³ | 7.7×10⁻⁶–3.6×10⁻⁵ | **3.7–4.5×10⁻⁶** |
+| Borealis hero curtain | 1.6×10⁻³ | 1.9×10⁻⁵ | **1.3×10⁻⁶** |
+| Borealis v1 / v2 clouds | 5.0×10⁻⁴ / 1.6×10⁻³ | 7.3×10⁻⁵ / 1.9×10⁻⁵ | **1.3×10⁻⁷ / 1.1×10⁻⁶** |
+| Tori (wing B, summit, proxy) | 2.2×10⁻³–0.12 | 4.5–5.5×10⁻⁵ | **4.7×10⁻⁸–1.0×10⁻⁶** |
+| Crescent | 9.8×10⁻⁴ | 3.7×10⁻⁵ | **6.5×10⁻⁷** |
+| noise-organic | 1.1×10⁻³ | 7.2×10⁻⁵ | **4.7×10⁻⁷** |
+| Sky-Island ×2 | 1.5×10⁻⁴ / 6.5×10⁻⁵ | 1.1×10⁻⁴ / 3.8×10⁻⁵ | **3.4×10⁻⁶ / 1.7×10⁻⁶** |
+| `veil.outer` (3 remainders, 288 evaluations) | 9.1×10⁻⁸ | 1.9×10⁻⁷ | 1.4×10⁻⁷ |
+
+Mean relative error of ∫max(D, 0) per ray.
+
+**Reading.**
+- **Where the gain comes from.** Focus alone beats plain on 17 of 19 media; the weights then beat focus on 19 of 19. The hybrid beats plain on 18 of 19. The exception is `veil.outer`, whose three remainders cost 3× the evaluations, and where both errors are under 2×10⁻⁷.
+- **Optical depth only, CPU only.** These are errors in ∫max(D, 0), not pixels. They become pixels through transmittance and lit emission, which is the next rung, and the GPU emission gated by `webgpu_volume_faithfulness_test` follows that. The 96-sample image is still the definition (Zach); nothing rendered changed.
+
+**Open.**
+- The radius is first-order loose. A second-derivative bound on Perlin noise (OntoMath proves only its Lipschitz constant) would make it fourth-order like the estimate.
+- The elliptic ⚑ (§6t) would turn the tori's remainder into closed form.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T14:06 PDT. Human origin: Zachary Zhang (the rung order; integration first; faithfulness to exact math). Hybrid integration as a step is the Original Prism Sun's decree; the remainder algebra, product Simpson rule, radius, focus attribution and the two numerical repairs are this session's.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

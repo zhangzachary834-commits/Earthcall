@@ -124,7 +124,7 @@ This is **architecture direction, not a landed implementation claim**. Existing 
 **Integration operations** (Zach: integration first, 96 samples for now):
 - [x] Exact ray integral, CPU (§6r).
 - [x] **Value-branch segmentation (§6t):** decided-branch integration, polynomial × √Q, wave products; 7 of 28 media exact on every ray, every refusal named. *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T13:17 PDT.*
-- [ ] Hybrid integration: noise as the only numerical factor.
+- [x] **Hybrid integration (§6u):** closed-form weights × sampled remainders by product Simpson, ~96 evaluations focused on proved-dense pieces; Northern Veil optical depth ~1,400× closer to the continuum than the 96-sample sum, proved radius on every ray. *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T14:06 PDT.*
 - [ ] Exact transmittance (σₜ).
 - [ ] ⚑ Zach: may elliptic integrals (Carlson R_F/R_D/R_J, convergent to machine precision) count as exact? Tori and the crescent wait on it.
 - [ ] GPU emission gated by `webgpu_volume_faithfulness_test`.

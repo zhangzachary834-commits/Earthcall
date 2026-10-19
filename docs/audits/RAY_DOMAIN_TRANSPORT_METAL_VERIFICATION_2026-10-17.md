@@ -446,3 +446,14 @@ Zach: "Faithfulness to exact math should be the rule." A new witness, `webgpu_vo
 - `ontomath_line_segmentation_test` 70/70: six new analytic checks, all failing against the previous code.
 
 **Not run:** `ontomath_two_direction_witness_test` segfaults at `main` (null active Zone from the booted harness), independent of this diff. `sky_island_sanctuary_test` fails to link (missing WebGPU objects in its target). Neither touches the line algebra. Design: [§6t](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6t-value-branch-segmentation-every-piece-integrates-its-decided-branch-and-the-office-holds-more-products-2026-10-19-twenty-first-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T13:17 PDT.
+
+## Hybrid integration — twenty-second pass (CPU only)
+
+- **Mean ∫max(D, 0) error per ray at ~96 evaluations,** against the converged sum:
+  - Northern Veil curtains 3.7–4.5×10⁻⁶ (plain 96-sample midpoint 4.1–6.6×10⁻³);
+  - Borealis hero 1.3×10⁻⁶ (plain 1.6×10⁻³);
+  - tori 4.7×10⁻⁸–1.0×10⁻⁶ (plain up to 0.12).
+- **Proved radius** holds on every ray of all 19 refused media.
+- **Two numerical repairs,** each with a failing-without witness: wave integrals re-centred on their interval, and slow waves (|α|h ≤ 1) integrated by Taylor series.
+
+**Not run:** the same two pre-existing failures as the twenty-first pass. Evidence: `scratch/verification/ray-domain-twelfth-pass-2026-10-18/hybrid-integration-1.log`. Design: [§6u](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6u-hybrid-integration-closed-form-weights-sampled-remainders-and-focus-2026-10-19-twenty-second-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T14:06 PDT.

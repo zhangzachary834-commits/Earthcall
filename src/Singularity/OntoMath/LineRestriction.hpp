@@ -334,6 +334,15 @@ std::optional<double> literalConstant(const MathNode& node);
 // whose constant terms are float points that need not contain the double
 // coefficient). Signs vectors are indexed like form.switches: 0 undecided,
 // +1 g ≥ 0 (> 0 when strict), −1 g ≤ 0 (< 0 when strict).
+// What hybridIntegral answers: the estimate, a proved bound on its distance from
+// the exact integral, and how much numerical work the remainder cost.
+struct LineHybridIntegral {
+    double estimate = 0.0;
+    double radius = 0.0;
+    uint32_t remainderTerms = 0;         // sampled w·G terms (0: closed form)
+    uint32_t remainderEvaluations = 0;   // point evaluations of their G nodes
+};
+
 class LineAlgebraicEvaluator {
 public:
     // undefinedAsZero is a CHANNEL decision (the volume emitter returns 0 when no
@@ -403,6 +412,19 @@ public:
     // semantics; not available in box mode.
     std::optional<double> integral(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs,
                                    std::string* why = nullptr) const;
+    // Hybrid integration (2026-10-19; the Original Prism Sun's decree step 3,
+    // "numerically integrate only the irreducible remainder"). The decided branch
+    // splits into a closed form plus Σ w_k(s)·G_k(s): each G_k an authored node
+    // with no closed form here (noise, an elliptic product), each weight w_k
+    // closed-form. G_k is sampled at `cells` + 1 evenly spaced points and
+    // interpolated by a quadratic over each pair of cells (product Simpson);
+    // ∫ w_k·(that interpolant) is exact, so the smooth factors contribute no
+    // quadrature error at all. `radius` is a proved bound on |estimate − exact|
+    // from G's proved range and derivative bound on each panel.
+    // A fully closed-form branch answers with radius 0 and no evaluations.
+    std::optional<LineHybridIntegral> hybridIntegral(uint32_t node, double s0, double s1,
+                                                     const std::vector<int8_t>& signs, uint32_t cells,
+                                                     std::string* why = nullptr) const;
     Interval switchDerivativeRange(std::size_t k, double s0, double s1, const std::vector<int8_t>& signs) const;
 
     // Execution slack (Codex P1, 2026-10-17). With an active model (the
@@ -424,6 +446,9 @@ public:
     double switchSlack(std::size_t k, double s0, double s1, const std::vector<int8_t>& signs) const;
 
 private:
+    std::optional<LineHybridIntegral> integrateCore(uint32_t node, double s0, double s1,
+                                                    const std::vector<int8_t>& signs, uint32_t cells,
+                                                    std::string* why) const;
     double magnitudeAt(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs) const;
     std::map<std::string, double> symbolMagnitudes(double s0, double s1) const;
     ExecutionModel _model;

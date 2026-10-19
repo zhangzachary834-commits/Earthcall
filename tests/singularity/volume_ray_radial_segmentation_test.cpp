@@ -419,6 +419,9 @@ int main() {
         Totals all;
         int admitted = 0, media = 0, eligibleMedia = 0, preludeMedia = 0, preludeFlips = 0, preludeDemotions = 0, closedMedia = 0, checksDropped = 0, integralMedia = 0;
         double integralWorst = 0.0, integralBoundWorst = 0.0, integralEnclosureMiss = 0.0;
+        // Hybrid integration (2026-10-19): media the closed form refuses, against the
+        // 96-sample midpoint sum the renderer's lattice uses.
+        int hybridMedia = 0, hybridBetter = 0, hybridMisses = 0, focusBetter = 0, weightBetter = 0;
         int allKillersEligible = 0, subsetMedia = 0, subsetWorse = 0;
         std::mt19937 rng(1017u);
         std::uniform_real_distribution<double> u(-1.0, 1.0);
@@ -652,6 +655,9 @@ int main() {
                         // piece by definite piece, against a converged midpoint sum of the same D.
                         const auto& form = *f.density.algebraic.form;
                         int exactRays = 0, rays = 0, slivers = 0;
+                        double focusedErr = 0.0, hybridErr = 0.0, plainErr = 0.0, hybridWorstErr = 0.0, plainWorstErr = 0.0, hybridRadius = 0.0;
+                        uint64_t hybridEvals = 0, hybridSampledLength = 0, hybridLength = 0, fallbackLength = 0, sliverLength = 0;
+                        int hybridRays = 0, hybridMiss = 0;
                         double worstBound = 0.0, enclosureMiss = 0.0;
                         std::string lastWhy;
                         // A definite piece's refusal is the medium's real limit; a root
@@ -739,6 +745,76 @@ int main() {
                             const double fine = midpoint(32768), coarse = midpoint(16384);
                             const double reference = fine + (fine - coarse) / 3.0;   // Richardson (midpoint is O(h²))
                             if (!(reference > 1e-9)) { --rays; continue; }   // the ray meets no density: no evidence
+                            {
+                                // Hybrid: closed-form weights times sampled remainders, about 96
+                                // remainder samples per ray spread over the length segmentation
+                                // could not prove empty (by piece length); pieces whose
+                                // density may dip below zero inside take the midpoint sum of
+                                // max(D, 0) on their share; root slivers keep their bound.
+                                // `focused`: the plain midpoint sum on exactly the hybrid's pieces and
+                                // budget, separating what segmentation's focus buys from what the
+                                // closed-form weights buy.
+                                double est = 0.0, rad = 0.0, dense = 0.0, focused = 0.0;
+                                bool hybridOk = true;
+                                for (const auto& piece : pieces) {
+                                    if (!piece.definite || (!piece.targetSigns.empty() && piece.targetSigns[0] < 0)) continue;
+                                    bool undefinedD = false;
+                                    const auto rd = ev.range(form.roots[0], piece.s0, piece.s1, piece.signs[0], &undefinedD);
+                                    if (undefinedD || double(rd.hi) > 0.0) dense += piece.s1 - piece.s0;
+                                }
+                                for (const auto& piece : pieces) {
+                                    if (!piece.targetSigns.empty() && piece.targetSigns[0] < 0) continue;
+                                    bool undefinedD = false;
+                                    const auto rd = ev.range(form.roots[0], piece.s0, piece.s1, piece.signs[0], &undefinedD);
+                                    if (undefinedD) { hybridOk = false; break; }
+                                    if (double(rd.hi) <= 0.0) continue;
+                                    const double w = piece.s1 - piece.s0;
+                                    const uint32_t cells = std::max<uint32_t>(1, uint32_t(std::lround(95.0 * w / std::max(dense, 1e-300))));
+                                    hybridLength += uint64_t(1e6 * w / (c1 - c0));
+                                    if (!piece.definite) {
+                                        const double hi = std::max(0.0, double(rd.hi)) * w;
+                                        est += 0.5 * hi;
+                                        rad += 0.5 * hi;
+                                        focused += 0.5 * hi;
+                                        sliverLength += uint64_t(1e6 * w / (c1 - c0));
+                                        continue;
+                                    }
+                                    {
+                                        const double step = w / cells;
+                                        for (uint32_t i = 0; i < cells; ++i)
+                                            focused += std::max(0.0, ev.value(form.roots[0], piece.s0 + (i + 0.5) * step).value_or(0.0)) * step;
+                                    }
+                                    // D > 0 was PROVED on every part of a definite piece (segmentLine merges
+                                    // equal neighbours, so re-ranging the merged span is looser than that proof).
+                                    if (double(rd.lo) >= 0.0 || (!piece.targetSigns.empty() && piece.targetSigns[0] > 0)) {
+                                        const auto h = ev.hybridIntegral(form.roots[0], piece.s0, piece.s1, piece.signs[0], cells);
+                                        if (!h) { hybridOk = false; break; }
+                                        est += h->estimate;
+                                        rad += h->radius;
+                                        hybridEvals += h->remainderEvaluations;
+                                        if (h->remainderTerms) hybridSampledLength += uint64_t(1e6 * w / (c1 - c0));
+                                        continue;
+                                    }
+                                    fallbackLength += uint64_t(1e6 * w / (c1 - c0));
+                                    const double step = w / cells;
+                                    for (uint32_t i = 0; i < cells; ++i)
+                                        est += std::max(0.0, ev.value(form.roots[0], piece.s0 + (i + 0.5) * step).value_or(0.0)) * step;
+                                    hybridEvals += cells;
+                                    rad += w * (std::max(0.0, double(rd.hi)) - std::max(0.0, double(rd.lo)));
+                                }
+                                if (hybridOk) {
+                                    const double plain = midpoint(96);
+                                    const double eh = std::abs(est - reference) / reference, ep = std::abs(plain - reference) / reference;
+                                    ++hybridRays;
+                                    hybridErr += eh; plainErr += ep;
+                                    focusedErr += std::abs(focused - reference) / reference;
+                                    hybridWorstErr = std::max(hybridWorstErr, eh); plainWorstErr = std::max(plainWorstErr, ep);
+                                    hybridRadius = std::max(hybridRadius, rad / reference);
+                                    // The reference is itself a converged sum: the same 1e-6 relative
+                                    // allowance the closed-form enclosure check uses.
+                                    if (std::abs(est - reference) > rad + 1e-6 * reference) ++hybridMiss;
+                                }
+                            }
                             // Agreement outside the proved enclosure, always; "closed form"
                             // only when that enclosure is tight (root slivers, grazing zeros).
                             enclosureMiss = std::max(enclosureMiss, std::max(0.0, std::abs(exact - reference) - bound) / reference);
@@ -757,6 +833,22 @@ int main() {
                                                  << " beyond a proved sliver bound of at most " << worstBound << " (" << slivers << " slivers)";
                         if (exactRays < rays) std::cout << "; refused: " << refusal;
                         std::cout << "\n";
+                        if (hybridRays && exactRays < rays) {
+                            std::cout << "        hybrid optical depth (" << hybridRays << " rays): mean relative error " << hybridErr / hybridRays
+                                      << " (worst " << hybridWorstErr << ") vs the 96-sample midpoint sum's " << plainErr / hybridRays
+                                      << " (worst " << plainWorstErr << ") and the focused midpoint sum's " << focusedErr / hybridRays
+                                      << "; " << double(hybridEvals) / hybridRays
+                                      << " remainder evaluations/ray; " << (hybridLength ? 100.0 * hybridSampledLength / hybridLength : 0.0)
+                                      << "% of the dense length sampled through a closed-form weight, "
+                                      << (hybridLength ? 100.0 * fallbackLength / hybridLength : 0.0) << "% where D's sign is unproved, "
+                                      << (hybridLength ? 100.0 * sliverLength / hybridLength : 0.0) << "% undecided; proved radius ≤ "
+                                      << hybridRadius << " relative; " << hybridMiss << " containment misses\n";
+                            ++hybridMedia;
+                            hybridBetter += hybridErr < plainErr ? 1 : 0;
+                            focusBetter += focusedErr < plainErr ? 1 : 0;
+                            weightBetter += hybridErr < focusedErr ? 1 : 0;
+                            hybridMisses += hybridMiss;
+                        }
                         integralMedia += (rays > 0 && exactRays == rays) ? 1 : 0;
                         integralEnclosureMiss = std::max(integralEnclosureMiss, enclosureMiss);
                         integralWorst = std::max(integralWorst, exactRays ? worstRel : 0.0);
@@ -864,6 +956,11 @@ int main() {
                   << " admitted media integrate max(D, 0) along every ray in closed form; worst relative difference "
                   << integralWorst << " from the converged midpoint sum beyond a proved enclosure of at most "
                   << integralBoundWorst << "\n";
+        std::cout << "    hybrid integration: on " << hybridBetter << " of " << hybridMedia
+                  << " media the closed form refuses, the hybrid's mean error beats the 96-sample midpoint sum's; "
+                  << hybridMisses << " rays outside the proved radius; focusing the same budget on the pieces segmentation leaves "
+                  << "dense beats it on " << focusBetter << ", and the closed-form weights beat the focused sum on " << weightBetter << "\n";
+        check(hybridMedia > 0 && hybridMisses == 0, "on every ray of every refused medium the converged sum lies inside the hybrid's proved radius");
         check(integralMedia >= 7, "the exact line integral covers the noise-free balls, shells and the shaft beam on every ray");
         check(integralEnclosureMiss < 1e-6, "on every ray, closed form or not, the converged sum lies inside the proved enclosure");
         check(integralWorst < 1e-6, "every closed-form optical depth agrees with the converged sum (beyond its proved bound)");

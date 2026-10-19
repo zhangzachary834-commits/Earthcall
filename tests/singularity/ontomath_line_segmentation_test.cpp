@@ -716,6 +716,104 @@ int main() {
         check(!v6 && why.find("square root times a wave") != std::string::npos, "a square root times a wave refuses: " + why);
     }
 
+    // ---- Hybrid integration (2026-10-19): only the remainder is sampled -------
+    {
+        using TK = OntoMath::TransFactor::Kind;
+        auto scalar = [](ScalarForm f) {
+            auto n = std::make_unique<MathNode>();
+            n->op = Op::ScalarLeaf;
+            n->scalarForm = std::move(f);
+            return n;
+        };
+        // (2 + sin 40x) · (0.5 + 0.3·noise(0.2p)): a fast closed-form weight times a
+        // slow noise factor, along x from −3 to 3.
+        const auto m = node(Op::Scale, scalar(ScalarForm::constant(2).plus(ScalarForm::transcendental(TK::Sin, "x", 40.0))),
+                            node(Op::Add, num(0.5), node(Op::Scale, num(0.3), node(Op::Noise, node(Op::Scale, num(0.2), leaf("p"))))));
+        const auto r = OntoMath::restrictAlgebraicToLine(*m, false);
+        check(bool(r), "hybrid witness form admitted");
+        if (r) {
+            const Ray ray{{-3, 0.37, 0.11}, {1, 0, 0}};
+            OntoMath::LineAlgebraicEvaluator ev(*r.form, lineBindings(ray), true);
+            const uint32_t root = r.form->roots[0];
+            const std::vector<int8_t> none(r.form->switches.size(), 0);
+            auto midpoint = [&](int n) {
+                const double h = 6.0 / n;
+                double sum = 0.0;
+                for (int i = 0; i < n; ++i) sum += ev.value(root, (i + 0.5) * h).value_or(0.0) * h;
+                return sum;
+            };
+            const double fine = midpoint(1 << 20), coarse = midpoint(1 << 19);
+            const double reference = fine + (fine - coarse) / 3.0;
+            std::string why;
+            check(!ev.integral(root, 0.0, 6.0, none, &why), "the exact integral still refuses noise: " + why);
+            const auto hyb = ev.hybridIntegral(root, 0.0, 6.0, none, 15, &why);
+            // Fourth order where the remainder is smooth (product Simpson), against
+            // the midpoint sum's second: each doubling of cells cuts the error ≥ 6×.
+            {
+                double previous = 0.0;
+                bool order = true;
+                for (uint32_t c : {8u, 16u, 32u}) {
+                    const auto hc = ev.hybridIntegral(root, 0.0, 6.0, none, c);
+                    const double e = hc ? std::abs(hc->estimate - reference) : 1.0;
+                    if (previous > 0.0 && !(e * 6.0 < previous)) order = false;
+                    previous = e;
+                }
+                check(order, "the hybrid converges at better than third order in its cells (8, 16, 32)");
+            }
+            const double plain = midpoint(16);
+            check(hyb.has_value(), "the hybrid integral answers" + (why.empty() ? "" : " — " + why));
+            if (hyb) {
+                const double eh = std::abs(hyb->estimate - reference), ep = std::abs(plain - reference);
+                std::cout << "    hybrid (2 + sin 40x)·(0.5 + 0.3 noise): reference " << reference << "; 16 noise evaluations: hybrid error "
+                          << eh << " (proved radius " << hyb->radius << "), plain midpoint error " << ep << "; "
+                          << hyb->remainderTerms << " remainder term(s), " << hyb->remainderEvaluations << " evaluations\n";
+                check(hyb->remainderEvaluations == 16, "the remainder is sampled exactly cells + 1 times");
+                check(eh <= hyb->radius, "the proved radius contains the converged integral");
+                check(eh * 10.0 < ep, "at equal noise evaluations the hybrid is over ten times closer than the plain midpoint sum");
+            }
+            // A slow wave far from the origin: x³·sin(0.0003x + 0.3) for x ∈ [500, 501].
+            // The tabular rule divides by α⁴ ≈ 8e−15 and cancels; the series does not.
+            {
+                const auto slow = scalar(ScalarForm::variable("x", 3.0).times(ScalarForm::transcendental(TK::Sin, "x", 0.0003, 0.3)));
+                const auto rs = OntoMath::restrictAlgebraicToLine(*slow, false);
+                check(bool(rs), "slow-wave witness admitted" + (rs ? std::string() : " — " + rs.refusal));
+                if (rs) {
+                    OntoMath::LineAlgebraicEvaluator es(*rs.form, lineBindings({{500, 0.2, 0.1}, {1, 0, 0}}), true);
+                    const uint32_t sr = rs.form->roots[0];
+                    auto mid = [&](int n) {
+                        double sum = 0.0;
+                        for (int i = 0; i < n; ++i) sum += es.value(sr, (i + 0.5) / n).value_or(0.0) / n;
+                        return sum;
+                    };
+                    const double fine = mid(1 << 16), ref = fine + (fine - mid(1 << 15)) / 3.0;
+                    const auto v = es.integral(sr, 0.0, 1.0, std::vector<int8_t>(rs.form->switches.size(), 0));
+                    std::cout << "    slow wave far out: closed form " << (v ? *v : NAN) << ", converged sum " << ref << "\n";
+                    check(v && std::abs(*v - ref) <= 1e-10 * std::abs(ref), "a slow wave far from the origin integrates to rounding (Taylor series, not the tabular rule)");
+                }
+            }
+            // A fully closed-form branch: radius 0, nothing sampled.
+            const auto ball = node(Op::Clamp, node(Op::Sub, num(1), node(Op::Length, leaf("p"))), num(0), num(1));
+            const auto rb = OntoMath::restrictAlgebraicToLine(*ball, false);
+            check(bool(rb), "closed-form witness admitted" + (rb ? std::string() : " — " + rb.refusal));
+            if (rb) {
+                OntoMath::LineAlgebraicEvaluator eb(*rb.form, lineBindings({{-0.5, 0.1, 0}, {1, 0, 0}}), true);
+                // Signs decided as production decides them (interval ranges alone
+                // leave the clamp's upper switch open where |p| is near its minimum).
+                int pieces = 0, agree = 0;
+                for (const auto& piece : OntoMath::segmentLine({&eb}, 0.0, 1.0, 1e-7)) {
+                    if (!piece.definite) continue;
+                    ++pieces;
+                    const auto hb = eb.hybridIntegral(rb.form->roots[0], piece.s0, piece.s1, piece.signs[0], 8);
+                    const auto xb = eb.integral(rb.form->roots[0], piece.s0, piece.s1, piece.signs[0]);
+                    agree += hb && xb && hb->remainderTerms == 0 && hb->radius == 0.0 && hb->estimate == *xb;
+                }
+                check(pieces > 0 && agree == pieces,
+                      "a closed-form branch answers the hybrid exactly, with nothing sampled (" + std::to_string(agree) + "/" +
+                          std::to_string(pieces) + " definite pieces)");
+            }
+        }
+    }
+
     std::cout << "ontomath_line_segmentation_test: " << (g_checks - g_failures) << "/" << g_checks
               << " checks passed\n";
     return g_failures == 0 ? 0 : 1;

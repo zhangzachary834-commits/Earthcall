@@ -2352,8 +2352,13 @@ struct LineIntegrand {
     std::vector<Radical> radicals;
     struct Wave { std::vector<double> poly; TransFactor::Kind kind; double alpha, beta; };   // P(s)·g(αs + β)
     std::vector<Wave> waves;
+    // Hybrid integration (2026-10-19): w(s)·G(s) where G is an authored node with
+    // no closed form here (noise, an elliptic product) sampled numerically, and
+    // w is closed-form. Only hybridIntegral admits these.
+    struct Remainder { uint32_t node; std::shared_ptr<LineIntegrand> weight; };
+    std::vector<Remainder> remainders;
     bool constant() const {
-        return radicals.empty() && waves.empty() && poly.size() <= 1;
+        return radicals.empty() && waves.empty() && remainders.empty() && poly.size() <= 1;
     }
     double constantValue() const { return poly.empty() ? 0.0 : poly[0]; }
 };
@@ -2372,6 +2377,7 @@ void polyAdd(std::vector<double>& a, const std::vector<double>& b, double k) {
 void scaleIntegrand(LineIntegrand& f, double k) {
     for (auto& a : f.poly) a *= k;
     for (auto& r : f.radicals) for (auto& a : r.poly) a *= k;
+    for (auto& r : f.remainders) { auto w = std::make_shared<LineIntegrand>(*r.weight); scaleIntegrand(*w, k); r.weight = w; }
     for (auto& w : f.waves) for (auto& a : w.poly) a *= k;
 }
 
@@ -2476,10 +2482,44 @@ double integrateWave(const LineIntegrand::Wave& w, double s0, double s1) {
         const double g = TransFactor(w.kind, "u").evaluate(w.beta).value_or(0.0);
         return g * integratePolynomial(w.poly, s0, s1);
     }
+    // About the midpoint (2026-10-19): P(m + v)·g(αv + αm + β) over v ∈ [−h, h],
+    // so a ray far from its origin (s ≈ 500 in Northern Veil) does not cancel
+    // P(s)·G terms of size s^deg against each other.
+    const double m = 0.5 * (s0 + s1), h = 0.5 * (s1 - s0);
+    const std::vector<double> local = shiftPolynomial(w.poly, m);
+    const double beta = w.alpha * m + w.beta;
+    if (std::abs(w.alpha) * h <= 1.0) {
+        // A slow wave over the interval (a ray nearly perpendicular to the wave's
+        // axis): the tabular rule divides by α^(j+1) and cancels. Integrate the
+        // Taylor series of g(αv + β) instead, g^(k)(β)·(αv)^k/k!, term by term;
+        // with |αh| ≤ 1 it converges geometrically to rounding.
+        double total = 0.0, ck = 1.0, prev = 0.0;   // ck = (α^k / k!)
+        for (int k = 0; k < 60; ++k) {
+            double gk;
+            if (w.kind == TransFactor::Kind::Exp) gk = std::exp(beta);
+            else {
+                const int q = k % 4;
+                const double sn = std::sin(beta), cs = std::cos(beta);
+                gk = w.kind == TransFactor::Kind::Sin ? (q == 0 ? sn : q == 1 ? cs : q == 2 ? -sn : -cs)
+                                                     : (q == 0 ? cs : q == 1 ? -sn : q == 2 ? -cs : sn);
+            }
+            double term = 0.0;
+            for (std::size_t j = 0; j < local.size(); ++j) {
+                const std::size_t n = j + std::size_t(k);
+                if (n % 2 == 0) term += local[j] * 2.0 * std::pow(h, double(n + 1)) / double(n + 1);
+            }
+            term *= gk * ck;
+            total += term;
+            if (std::size_t(k) > local.size() + 2 && std::abs(term) <= 1e-18 * std::abs(total) && std::abs(prev) <= 1e-18 * std::abs(total)) break;
+            prev = term;
+            ck *= w.alpha / double(k + 1);
+        }
+        return total;
+    }
     auto antiderivativeAt = [&](double s) {
-        const double u = w.alpha * s + w.beta;
+        const double u = w.alpha * s + beta;
         double total = 0.0;
-        std::vector<double> d = w.poly;   // P^(j)
+        std::vector<double> d = local;   // P^(j)
         for (int j = 0; !d.empty(); ++j) {
             const int m = j + 1;
             double G = 0.0;
@@ -2492,25 +2532,160 @@ double integrateWave(const LineIntegrand::Wave& w, double s0, double s1) {
                 else G = q == 0 ? cs : q == 1 ? sn : q == 2 ? -cs : -sn;
             }
             G /= std::pow(w.alpha, m);
-            total += (j % 2 ? -1.0 : 1.0) * horner(d, s) * G;
+            total += (j % 2 ? -1.0 : 1.0) * horner(d, s) * G;   // s is the local v here
             std::vector<double> next;   // derivative
             for (std::size_t k = 1; k < d.size(); ++k) next.push_back(d[k] * double(k));
             d = std::move(next);
         }
         return total;
     };
-    return antiderivativeAt(s1) - antiderivativeAt(s0);
+    return antiderivativeAt(h) - antiderivativeAt(-h);
+}
+} // namespace
+
+namespace {
+// The exact product of two closed-form integrands (no remainders), or nullopt
+// with the reason. Value-branch segmentation (2026-10-19) widened the products:
+//  · (P₁ + R₁√Q)(P₂ + R₂√Q) = P₁P₂ + R₁R₂·Q + (P₁R₂ + P₂R₁)·√Q for one Q
+//    (a squared norm such as (√Q − R)² in a torus, a shell's falloff times a
+//    polynomial);
+//  · products of waves by product-to-sum: sin·cos = ½[sin(u+v) + sin(u−v)], and
+//    so on; exp·exp = exp(u + v) (a gyroid is Σ sin·cos).
+// Still refused: two different square roots (√(Q₁Q₂) is an elliptic integral in
+// general), a square root times a wave, exp times sin/cos.
+std::optional<LineIntegrand> multiplyExact(const LineIntegrand& a, const LineIntegrand& b, std::string& reason) {
+    if (a.constant()) { LineIntegrand f = b; scaleIntegrand(f, a.constantValue()); return f; }
+    if (b.constant()) { LineIntegrand f = a; scaleIntegrand(f, b.constantValue()); return f; }
+    const bool aWaves = !a.waves.empty(), bWaves = !b.waves.empty();
+    const bool aRoots = !a.radicals.empty(), bRoots = !b.radicals.empty();
+    if ((aRoots && bWaves) || (bRoots && aWaves))
+        { reason = "a square root times a wave (no elementary closed form here)"; return std::nullopt; };
+    LineIntegrand f;
+    if (aRoots || bRoots) {
+        const LineIntegrand::Radical* root = nullptr;
+        auto oneRoot = [&](const LineIntegrand& g, std::vector<double>& R) {
+            for (const auto& q : g.radicals) {
+                if (root && (q.A != root->A || q.B != root->B || q.C != root->C)) return false;
+                root = &q;
+                polyAdd(R, q.poly, 1.0);
+            }
+            return true;
+        };
+        std::vector<double> R1, R2;
+        if (!oneRoot(a, R1) || !oneRoot(b, R2))
+            { reason = "a product of two different square roots (an elliptic integral in general)"; return std::nullopt; };
+        const LineIntegrand::Radical q = *root;
+        f.poly = polyTimes(a.poly, b.poly);
+        polyAdd(f.poly, polyTimes(polyTimes(R1, R2), {q.C, q.B, q.A}), 1.0);
+        std::vector<double> R = polyTimes(a.poly, R2);
+        polyAdd(R, polyTimes(b.poly, R1), 1.0);
+        if (!R.empty()) f.radicals.push_back({R, q.A, q.B, q.C});
+        return f;
+    }
+    f.poly = polyTimes(a.poly, b.poly);
+    for (auto w : b.waves) { w.poly = polyTimes(a.poly, w.poly); if (!w.poly.empty()) f.waves.push_back(w); }
+    for (auto w : a.waves) { w.poly = polyTimes(b.poly, w.poly); if (!w.poly.empty()) f.waves.push_back(w); }
+    using TK = TransFactor::Kind;
+    for (const auto& u : a.waves)
+        for (const auto& v : b.waves) {
+            const std::vector<double> P = polyTimes(u.poly, v.poly);
+            if (P.empty()) continue;
+            const bool uExp = u.kind == TK::Exp, vExp = v.kind == TK::Exp;
+            if (uExp != vExp) { reason = "an exponential times a sine or cosine (not held by this algebra yet)"; return std::nullopt; };
+            if (uExp) { f.waves.push_back({P, TK::Exp, u.alpha + v.alpha, u.beta + v.beta}); continue; }
+            // g(x)·h(y) = ½[k₊·G(x + y) + k₋·G(x − y)]
+            const double sa = u.alpha + v.alpha, sb = u.beta + v.beta;
+            const double da = u.alpha - v.alpha, db = u.beta - v.beta;
+            std::vector<double> half = P;
+            for (auto& c : half) c *= 0.5;
+            std::vector<double> neg = half;
+            for (auto& c : neg) c = -c;
+            if (u.kind == TK::Sin && v.kind == TK::Sin) {          // ½[cos(x−y) − cos(x+y)]
+                f.waves.push_back({half, TK::Cos, da, db});
+                f.waves.push_back({neg, TK::Cos, sa, sb});
+            } else if (u.kind == TK::Cos && v.kind == TK::Cos) {   // ½[cos(x−y) + cos(x+y)]
+                f.waves.push_back({half, TK::Cos, da, db});
+                f.waves.push_back({half, TK::Cos, sa, sb});
+            } else if (u.kind == TK::Sin) {                        // sin x cos y = ½[sin(x+y) + sin(x−y)]
+                f.waves.push_back({half, TK::Sin, sa, sb});
+                f.waves.push_back({half, TK::Sin, da, db});
+            } else {                                               // cos x sin y = ½[sin(x+y) − sin(x−y)]
+                f.waves.push_back({half, TK::Sin, sa, sb});
+                f.waves.push_back({neg, TK::Sin, da, db});
+            }
+        }
+    return f;
+}
+
+// ∫[s0, s1] of the closed-form part of f (its remainders are the caller's).
+std::optional<double> integrateExact(const LineIntegrand& f, double s0, double s1, std::string* why) {
+    double total = integratePolynomial(f.poly, s0, s1);
+    for (const auto& r : f.radicals) {
+        const auto v = integrateRadicalPolynomial(r.poly, r.A, r.B, r.C, s0, s1, why);
+        if (!v) return std::nullopt;
+        total += *v;
+    }
+    for (const auto& w : f.waves) total += integrateWave(w, s0, s1);
+    if (!std::isfinite(total)) { if (why) *why = "the closed form is not finite on the interval"; return std::nullopt; }
+    return total;
+}
+
+// sup |f| over [s0, s1], an upper bound: each term is centred on the interval
+// (|Σ b_k u^k| ≤ Σ |b_k| h^k), |sin|, |cos| ≤ 1, exp at the larger end.
+double supAbs(const LineIntegrand& f, double s0, double s1) {
+    const double m = 0.5 * (s0 + s1), h = 0.5 * (s1 - s0);
+    auto polyBound = [&](const std::vector<double>& a) {
+        const std::vector<double> b = shiftPolynomial(a, m);
+        double sum = 0.0, hp = 1.0;
+        for (double c : b) { sum += std::abs(c) * hp; hp *= h; }
+        return sum;
+    };
+    double total = polyBound(f.poly);
+    for (const auto& r : f.radicals)
+        total += polyBound(r.poly) * std::sqrt(polyBound({r.C, r.B, r.A}));
+    for (const auto& w : f.waves) {
+        const double g = w.kind == TransFactor::Kind::Exp
+            ? std::exp(std::max(w.alpha * s0 + w.beta, w.alpha * s1 + w.beta)) : 1.0;
+        total += polyBound(w.poly) * g;
+    }
+    return total * (1.0 + 1e-12) + 1e-300;
+}
+
+// f(m + v) as an integrand in v: a panel's own coordinates, so products with a
+// panel's interpolation basis stay small (no s^deg coefficients far from 0).
+LineIntegrand shiftIntegrand(const LineIntegrand& f, double m) {
+    LineIntegrand g;
+    g.poly = shiftPolynomial(f.poly, m);
+    for (const auto& r : f.radicals)
+        g.radicals.push_back({shiftPolynomial(r.poly, m), r.A, 2.0 * r.A * m + r.B, (r.A * m + r.B) * m + r.C});
+    for (const auto& w : f.waves) g.waves.push_back({shiftPolynomial(w.poly, m), w.kind, w.alpha, w.alpha * m + w.beta});
+    return g;
 }
 } // namespace
 
 std::optional<double> LineAlgebraicEvaluator::integral(uint32_t root, double s0, double s1,
                                                        const std::vector<int8_t>& signs, std::string* why) const {
+    const auto r = integrateCore(root, s0, s1, signs, 0, why);
+    if (!r) return std::nullopt;
+    return r->estimate;
+}
+
+std::optional<LineHybridIntegral> LineAlgebraicEvaluator::hybridIntegral(uint32_t root, double s0, double s1,
+                                                                         const std::vector<int8_t>& signs,
+                                                                         uint32_t cells, std::string* why) const {
+    return integrateCore(root, s0, s1, signs, std::max<uint32_t>(cells, 1), why);
+}
+
+std::optional<LineHybridIntegral> LineAlgebraicEvaluator::integrateCore(uint32_t root, double s0, double s1,
+                                                                        const std::vector<int8_t>& signs,
+                                                                        uint32_t cells, std::string* why) const {
     if (_boxMode) { if (why) *why = "the integral needs a concrete line, not box bindings"; return std::nullopt; }
+    const bool hybrid = cells > 0;
     std::string reason;
     // A switch the caller's signs leave open is decided here when its proved
     // range over [s0, s1] is one-sided (continuous branches agree at zero, so
     // ≤/≥ suffice; a Select bound is STRICT). One that changes sign inside the
-    // interval is refused: the caller must split there.
+    // interval is refused: the caller must split there (or, hybrid, sample it).
     std::vector<int8_t> decided = signs;
     auto decide = [&](uint32_t k) -> int8_t {
         if (decided[k] != 0) return decided[k];
@@ -2522,7 +2697,19 @@ std::optional<double> LineAlgebraicEvaluator::integral(uint32_t root, double s0,
         if (strict ? double(r.lo) > 0.0 : double(r.lo) >= 0.0) return decided[k] = 1;
         return 0;
     };
-    std::function<std::optional<LineIntegrand>(uint32_t)> build = [&](uint32_t node) -> std::optional<LineIntegrand> {
+    std::function<std::optional<LineIntegrand>(uint32_t)> build;
+    // Hybrid: a node with no closed form becomes a remainder of weight 1, to be
+    // sampled; its parents carry it through every exact operation they can.
+    auto buildOrRemainder = [&](uint32_t node) -> std::optional<LineIntegrand> {
+        auto f = build(node);
+        if (f || !hybrid) return f;
+        LineIntegrand g;
+        auto one = std::make_shared<LineIntegrand>();
+        one->poly = {1.0};
+        g.remainders.push_back({node, one});
+        return g;
+    };
+    build = [&](uint32_t node) -> std::optional<LineIntegrand> {
         const auto& n = _form->nodes[node];
         auto refuse = [&](const std::string& r) -> std::optional<LineIntegrand> {
             if (reason.empty()) reason = r;
@@ -2542,7 +2729,7 @@ std::optional<double> LineAlgebraicEvaluator::integral(uint32_t root, double s0,
                     const int st = pieceState(n, p, decided);
                     if (st < 0) continue;
                     if (st == 0) return refuse("a Select piece changes inside the interval (split at its bound)");
-                    return build(n.pieces[p].value);
+                    return buildOrRemainder(n.pieces[p].value);
                 }
                 if (_undefinedAsZero) return LineIntegrand{};
                 return refuse("no Select piece applies (Undefined)");
@@ -2553,20 +2740,24 @@ std::optional<double> LineAlgebraicEvaluator::integral(uint32_t root, double s0,
             case Kind::Clamp:
                 if (sw0 < 0) { LineIntegrand f; f.poly = {n.lo}; return f; }
                 if (sw1 > 0) { LineIntegrand f; f.poly = {n.hi}; return f; }
-                if (sw0 > 0 && sw1 < 0) return build(n.a);
+                if (sw0 > 0 && sw1 < 0) return buildOrRemainder(n.a);
                 return refuse("clamp changes branch inside the interval (split at its root)");
             case Kind::Min: case Kind::Max: {
                 if (sw0 == 0) return refuse("min/max changes branch inside the interval (split at its root)");
                 const bool min = n.kind == Kind::Min;
                 // sign > 0: a ≥ b.
-                return build(sw0 > 0 ? (min ? n.b : n.a) : (min ? n.a : n.b));
+                return buildOrRemainder(sw0 > 0 ? (min ? n.b : n.a) : (min ? n.a : n.b));
             }
             case Kind::Sqrt:
                 if (!n.nonnegativeArgument && sw0 < 0) return LineIntegrand{};   // sqrt(max(a, 0)) = 0
                 break;
             default: break;
         }
-        auto a = build(n.a);
+        // Sqrt and Trans of a remainder are not linear in it: the node itself is
+        // then the remainder (buildOrRemainder above it), so build its operand
+        // exactly only.
+        const bool linear = n.kind == Kind::Abs || n.kind == Kind::Add || n.kind == Kind::Sub || n.kind == Kind::Mul;
+        auto a = linear ? buildOrRemainder(n.a) : build(n.a);
         if (!a) return std::nullopt;
         switch (n.kind) {
             case Kind::Abs:
@@ -2593,7 +2784,7 @@ std::optional<double> LineAlgebraicEvaluator::integral(uint32_t root, double s0,
             }
             default: break;
         }
-        auto b = build(n.b);
+        auto b = buildOrRemainder(n.b);
         if (!b) return std::nullopt;
         switch (n.kind) {
             case Kind::Add: case Kind::Sub: {
@@ -2601,94 +2792,107 @@ std::optional<double> LineAlgebraicEvaluator::integral(uint32_t root, double s0,
                 polyAdd(a->poly, b->poly, k);
                 for (auto r : b->radicals) { for (auto& c : r.poly) c *= k; a->radicals.push_back(r); }
                 for (auto w : b->waves) { for (auto& c : w.poly) c *= k; a->waves.push_back(w); }
+                for (auto r : b->remainders) {
+                    auto w = std::make_shared<LineIntegrand>(*r.weight);
+                    scaleIntegrand(*w, k);
+                    a->remainders.push_back({r.node, w});
+                }
                 return a;
             }
             case Kind::Mul: {
-                if (a->constant()) { scaleIntegrand(*b, a->constantValue()); return b; }
-                if (b->constant()) { scaleIntegrand(*a, b->constantValue()); return a; }
-                // Value-branch segmentation (2026-10-19) widened the exact products:
-                //  · (P₁ + R₁√Q)(P₂ + R₂√Q) = P₁P₂ + R₁R₂·Q + (P₁R₂ + P₂R₁)·√Q for one Q
-                //    (a squared norm such as (√Q − R)² in a torus, a shell's falloff
-                //    times a polynomial);
-                //  · products of waves by product-to-sum: sin·cos = ½[sin(u+v) + sin(u−v)],
-                //    and so on; exp·exp = exp(u + v) (a gyroid is Σ sin·cos).
-                // Still refused: two different square roots (√(Q₁Q₂) is an elliptic
-                // integral in general), a square root times a wave, exp times sin/cos.
-                const bool aWaves = !a->waves.empty(), bWaves = !b->waves.empty();
-                const bool aRoots = !a->radicals.empty(), bRoots = !b->radicals.empty();
-                if ((aRoots && bWaves) || (bRoots && aWaves))
-                    return refuse("a square root times a wave (no elementary closed form here)");
-                LineIntegrand f;
-                if (aRoots || bRoots) {
-                    const LineIntegrand::Radical* root = nullptr;
-                    auto oneRoot = [&](const LineIntegrand& g, std::vector<double>& R) {
-                        for (const auto& q : g.radicals) {
-                            if (root && (q.A != root->A || q.B != root->B || q.C != root->C)) return false;
-                            root = &q;
-                            polyAdd(R, q.poly, 1.0);
-                        }
-                        return true;
-                    };
-                    std::vector<double> R1, R2;
-                    if (!oneRoot(*a, R1) || !oneRoot(*b, R2))
-                        return refuse("a product of two different square roots (an elliptic integral in general)");
-                    const LineIntegrand::Radical q = *root;
-                    f.poly = polyTimes(a->poly, b->poly);
-                    polyAdd(f.poly, polyTimes(polyTimes(R1, R2), {q.C, q.B, q.A}), 1.0);
-                    std::vector<double> R = polyTimes(a->poly, R2);
-                    polyAdd(R, polyTimes(b->poly, R1), 1.0);
-                    if (!R.empty()) f.radicals.push_back({R, q.A, q.B, q.C});
-                    return f;
+                // (E_a + Σ w·G)(E_b): every remainder's weight times the other's exact
+                // part. Two remainders multiplied are not linear: the product is one.
+                if (!a->remainders.empty() && !b->remainders.empty())
+                    return refuse("a product of two remainders (sampled as one)");
+                const LineIntegrand& withR = a->remainders.empty() ? *b : *a;
+                const LineIntegrand& other = a->remainders.empty() ? *a : *b;
+                LineIntegrand exactPart = withR;
+                exactPart.remainders.clear();
+                auto f = multiplyExact(exactPart, other, reason);
+                if (!f) return std::nullopt;
+                for (const auto& r : withR.remainders) {
+                    auto w = multiplyExact(*r.weight, other, reason);
+                    if (!w) return std::nullopt;
+                    f->remainders.push_back({r.node, std::make_shared<LineIntegrand>(std::move(*w))});
                 }
-                f.poly = polyTimes(a->poly, b->poly);
-                for (auto w : b->waves) { w.poly = polyTimes(a->poly, w.poly); if (!w.poly.empty()) f.waves.push_back(w); }
-                for (auto w : a->waves) { w.poly = polyTimes(b->poly, w.poly); if (!w.poly.empty()) f.waves.push_back(w); }
-                using TK = TransFactor::Kind;
-                for (const auto& u : a->waves)
-                    for (const auto& v : b->waves) {
-                        const std::vector<double> P = polyTimes(u.poly, v.poly);
-                        if (P.empty()) continue;
-                        const bool uExp = u.kind == TK::Exp, vExp = v.kind == TK::Exp;
-                        if (uExp != vExp) return refuse("an exponential times a sine or cosine (not held by this algebra yet)");
-                        if (uExp) { f.waves.push_back({P, TK::Exp, u.alpha + v.alpha, u.beta + v.beta}); continue; }
-                        // g(x)·h(y) = ½[k₊·G(x + y) + k₋·G(x − y)]
-                        const double sa = u.alpha + v.alpha, sb = u.beta + v.beta;
-                        const double da = u.alpha - v.alpha, db = u.beta - v.beta;
-                        std::vector<double> half = P;
-                        for (auto& c : half) c *= 0.5;
-                        std::vector<double> neg = half;
-                        for (auto& c : neg) c = -c;
-                        if (u.kind == TK::Sin && v.kind == TK::Sin) {          // ½[cos(x−y) − cos(x+y)]
-                            f.waves.push_back({half, TK::Cos, da, db});
-                            f.waves.push_back({neg, TK::Cos, sa, sb});
-                        } else if (u.kind == TK::Cos && v.kind == TK::Cos) {   // ½[cos(x−y) + cos(x+y)]
-                            f.waves.push_back({half, TK::Cos, da, db});
-                            f.waves.push_back({half, TK::Cos, sa, sb});
-                        } else if (u.kind == TK::Sin) {                        // sin x cos y = ½[sin(x+y) + sin(x−y)]
-                            f.waves.push_back({half, TK::Sin, sa, sb});
-                            f.waves.push_back({half, TK::Sin, da, db});
-                        } else {                                               // cos x sin y = ½[sin(x+y) − sin(x−y)]
-                            f.waves.push_back({half, TK::Sin, sa, sb});
-                            f.waves.push_back({neg, TK::Sin, da, db});
-                        }
-                    }
                 return f;
             }
             default: break;
         }
         return refuse("node kind not integrable");
     };
-    const auto f = build(root);
+    const auto f = hybrid ? buildOrRemainder(root) : build(root);
     if (!f) { if (why) *why = reason; return std::nullopt; }
-    double total = integratePolynomial(f->poly, s0, s1);
-    for (const auto& r : f->radicals) {
-        const auto v = integrateRadicalPolynomial(r.poly, r.A, r.B, r.C, s0, s1, why);
-        if (!v) return std::nullopt;
-        total += *v;
+    const auto exact = integrateExact(*f, s0, s1, why);
+    if (!exact) return std::nullopt;
+    LineHybridIntegral out;
+    out.estimate = *exact;
+    out.remainderTerms = static_cast<uint32_t>(f->remainders.size());
+    // Product Simpson rule (product integration): G sampled at the `cells` + 1
+    // cell edges and interpolated by a quadratic over each pair of cells (a
+    // cubic over the last three when the count is odd, a line for one cell);
+    // ∫ w·(that interpolant) is exact, so a sharp
+    // closed-form weight costs nothing and only G's own smoothness errs — fourth
+    // order where G is smooth, against the plain midpoint sum's second.
+    // Enclosure per panel: |∫ w(G − P)| ≤ sup|w|·∫|G − P|, and with c = G at the
+    // panel's centre and Λ the interpolant's Lebesgue constant (1, 1.25, 1.6311
+    // for 2, 3, 4 equispaced nodes), |G − P| ≤ |G − c| + Λ·max|G_i − c|
+    // ≤ (1 + Λ)·min(range width, L′·half-width).
+    const double h = (s1 - s0) / double(std::max<uint32_t>(cells, 1));
+    auto edge = [&](uint32_t j) { return j == cells ? s1 : s0 + h * j; };
+    for (const auto& r : f->remainders) {
+        std::vector<double> g(cells + 1);
+        for (uint32_t j = 0; j <= cells; ++j) {
+            const auto v = value(r.node, edge(j));
+            ++out.remainderEvaluations;
+            if (!v) { if (why) *why = "the remainder is Undefined on the interval"; return std::nullopt; }
+            g[j] = *v;
+        }
+        // ∫ w·L over [a, b] for the Lagrange basis polynomial L of the given nodes,
+        // in the panel's own coordinate v = s − centre.
+        auto weighted = [&](const std::vector<double>& nodes, std::size_t i, double a, double b) -> std::optional<double> {
+            const double centre = 0.5 * (a + b);
+            std::vector<double> basis{1.0};
+            double denom = 1.0;
+            for (std::size_t k = 0; k < nodes.size(); ++k) {
+                if (k == i) continue;
+                basis = polyTimes(basis, {centre - nodes[k], 1.0});
+                denom *= nodes[i] - nodes[k];
+            }
+            for (auto& c : basis) c /= denom;
+            std::string ignored;
+            const auto wl = multiplyExact(shiftIntegrand(*r.weight, centre), LineIntegrand{basis, {}, {}, {}}, ignored);
+            if (!wl) { if (why) *why = "a remainder weight times a polynomial is not closed-form"; return std::nullopt; }
+            return integrateExact(*wl, a - centre, b - centre, why);
+        };
+        uint32_t j = 0;
+        while (j < cells) {
+            // Pairs of cells, with the last three as one cubic panel when the count
+            // is odd: a lone linear cell would be the one second-order panel.
+            const uint32_t left = cells - j;
+            const uint32_t span = left == 1 ? 1 : left == 3 ? 3 : 2;
+            const double a = edge(j), b = edge(j + span);
+            std::vector<double> nodes;
+            for (uint32_t k = 0; k <= span; ++k) nodes.push_back(edge(j + k));
+            for (uint32_t k = 0; k <= span; ++k) {
+                const auto wk = weighted(nodes, k, a, b);
+                if (!wk) return std::nullopt;
+                out.estimate += g[j + k] * *wk;
+            }
+            bool undefined = false;
+            const Interval gr = range(r.node, a, b, decided, &undefined);
+            const double width = undefined ? std::numeric_limits<double>::infinity() : double(gr.hi) - double(gr.lo);
+            const Interval dg = derivativeRange(r.node, a, b, decided);
+            const double lip = std::max(std::abs(double(dg.lo)), std::abs(double(dg.hi)));
+            const double lebesgue = span == 3 ? 1.6311 : span == 2 ? 1.25 : 1.0;   // equispaced Lebesgue constants
+            const double local = std::min(width, std::isfinite(lip) ? lip * 0.5 * (b - a) : std::numeric_limits<double>::infinity());
+            out.radius += supAbs(*r.weight, a, b) * (b - a) * (1.0 + lebesgue) * local;
+            j += span;
+        }
     }
-    for (const auto& w : f->waves) total += integrateWave(w, s0, s1);
-    if (!std::isfinite(total)) { if (why) *why = "the closed form is not finite on the interval"; return std::nullopt; }
-    return total;
+    if (!std::isfinite(out.estimate)) { if (why) *why = "the hybrid estimate is not finite"; return std::nullopt; }
+    if (!hybrid && !f->remainders.empty()) { if (why) *why = reason; return std::nullopt; }
+    return out;
 }
 
 } // namespace OntoMath

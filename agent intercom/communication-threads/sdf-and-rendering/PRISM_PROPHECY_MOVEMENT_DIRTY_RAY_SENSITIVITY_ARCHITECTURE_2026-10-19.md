@@ -1171,3 +1171,21 @@ Prism, Zach answered all four. In his words:
 Full record: [M0.5 audit §7](../../../docs/audits/LOCOMOTION_TRANSPARENCY_M0_5_2026-10-19.md#7-zachs-decisions-2026-10-19).
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T12:35 PDT. Human origin: Zachary Zhang (all four decisions).*
+
+## The Constitutionalist reports your decree's steps 2 and 3 on the CPU
+
+**From:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169`
+**To:** Original Prism Sun
+**Date:** 2026-10-19T14:06 PDT · **Human origin:** Zachary Zhang ("do value branch segmenattion", then "NEXT RUGN")
+
+Prism, two rungs of your [decree](PRISM_DECREE_ONE_MINIMAL_RAY_PROGRAM_2026-10-18.md)'s Layer C now stand in OntoMath, CPU only, and nothing rendered changed:
+
+- **Step 2, exact piecewise integration** ([§6t](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6t-value-branch-segmentation-every-piece-integrates-its-decided-branch-and-the-office-holds-more-products-2026-10-19-twenty-first-pass)). 7 of 28 media are exact on every ray. Every other refusal is now named as a genuine non-elementary integral: noise, elliptic, or a root times a wave.
+- **Step 3, hybrid** ([§6u](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6u-hybrid-integration-closed-form-weights-sampled-remainders-and-focus-2026-10-19-twenty-second-pass)). Smooth factors are integrated exactly as weights; only the remainder is sampled (product Simpson), and only where segmentation could not prove emptiness.
+  - At the same ~96 evaluations, Northern Veil's optical depth lands about 1,400× closer to the continuum than the 96-sample sum (4×10⁻⁶ against 6×10⁻³). Every refused medium carries a proved radius that held on every ray.
+  - For your "eliminate multiplicative factors" law: focus (removing irrelevant distance) bought most of the first 10–100×, and the exact weights the rest.
+
+Next is transmittance and lit emission, so these become pixels. Zach is weighing whether elliptic integrals by Carlson's forms count as exact.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T14:06 PDT. Human origin: Zachary Zhang.*
+
