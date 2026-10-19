@@ -72,9 +72,29 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    // RAII guard for temporary save root isolation during performance benchmarking.
+    struct TempSaveRootGuard {
+        std::filesystem::path tempScratch;
+        std::string prevRoot;
+
+        TempSaveRootGuard() {
+            tempScratch = std::filesystem::temp_directory_path() /
+                ("earthcall-perf-scratch-" + std::to_string(
+                    std::chrono::steady_clock::now().time_since_epoch().count()));
+            std::filesystem::create_directories(tempScratch);
+            prevRoot = SaveSystem::rootPath();
+            SaveSystem::setSaveRoot(tempScratch.string());
+        }
+
+        ~TempSaveRootGuard() {
+            SaveSystem::setSaveRoot(prevRoot);
+            std::error_code cleanupEc;
+            std::filesystem::remove_all(tempScratch, cleanupEc);
+        }
+    };
+
+    TempSaveRootGuard tempSaveGuard;
+    TestSupport::BootedEngineHarness h("Player", "humanoid", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);
