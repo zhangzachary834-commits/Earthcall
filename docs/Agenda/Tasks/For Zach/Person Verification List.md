@@ -1703,3 +1703,17 @@ The checkout WebGPU app is rebuilt with [route-aware power lowering](../../../au
 [All three tested allocation/traversal variants](../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md) preserve the finite captures but regress in measured cost, so none remains enabled. The checkout app is rebuilt with the prior renderer; the installed app and live saves were untouched. This pass adds no new visual control or promised FPS improvement to inspect. Existing Northern Veil/Sanctuary continuous appearance, usual-framebuffer movement and 30 FPS acceptance checks remain open; the rejected variants do not create a new Person verification obligation.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).
+
+## Property-only direct Screen sources (2026-10-17)
+
+Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-17T16:27:11-07:00. Zach required the pipeline to work with added Properties
+on a Singular/Object and no ShapeKind specification. [Native audit](../../../audits/SINGULAR_SCREEN_PROPERTY_PIPELINE_2026-10-17.md).
+
+- [ ] Inspect the retained [plain Object bands](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-bands.png) and [edited bands](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-edited.png): two separated gradients over blue, with their blue component changing after a Law edit. The corresponding Singular captures should match. At native resolution, [the pixel replacement](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-pixel.png) has exactly one red pixel at column 7, row 9 over blue. Confirm this property-bearer authoring route meets your intended meaning. These are isolated production captures; no demo was installed in an inhabited Zone, and automatic composition of many sources remains open.
+
+## Sanctum of Beginnings cleared of test shapes (2026-10-17)
+
+Claude Code / Claude Opus 5.5 / session `8fa01418-49d7-4bfd-8a69-22d286eb6b8b` / 2026-10-17T19:29-07:00. At Zach's request ("all of them were literally just me spamming shapes to test"), 136 shape objects and their per-object materials were removed from `zones/Sanctum of Beginnings/zone.ecform` in the data home, plus the 135 present in the stale `zone.json`. Committed in the data home. The originals are in `backups/Sanctum of Beginnings.bak.20261017/`.
+
+- [ ] Enter Sanctum of Beginnings. The pile of default shapes at the spawn point (0, 0.5, 0) should be gone, along with the trail of cubes near (−0.2…−3.3, 2.2–2.8, 5–10) and the Sonnet test cube at the origin. **Luna's First Star** (near (−0.1, 1.35, 1.25)) and the Sonnet gift spheres (near (−9.6, 5.2, −6.1)) were kept on purpose. Say if you want those gone too. Lexemes, laws and the zone's spatial root are unchanged.
