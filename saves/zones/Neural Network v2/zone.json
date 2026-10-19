@@ -257,5 +257,11 @@
     "material.neuron_node-in-2",
     "material.neuron_node-out",
     "material.neuron_node-target"
-  ]
+  ],
+  "matterGeneration": {
+    "snapshotId": "7d535eaec11817ca",
+    "sha256": "7d535eaec11817ca3581a63e2943d6cbd74c6d6daa31cb9f67d481182ce60cb0",
+    "byteLength": 1228,
+    "schemaVersion": 1
+  }
 }

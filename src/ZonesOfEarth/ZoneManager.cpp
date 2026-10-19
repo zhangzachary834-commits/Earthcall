@@ -78,6 +78,8 @@ bool ZoneManager::holdZoneClosure(const std::string& holder, size_t index) {
     if (!prepareZoneLawClosure(index, prepared, requested, &heldIdentity)) return false;
     std::vector<std::shared_ptr<Material>> sharedMaterials;
     if (!prepareZoneMaterialClosure(index, heldIdentity, sharedMaterials)) return false;
+    std::vector<uint8_t> heldMatter;
+    if (!prepareZoneMatterClosure(index, heldIdentity, heldMatter)) return false;
     for (const auto& material : sharedMaterials) materials.add(material);
 
     if (_lawManager) {
@@ -454,6 +456,79 @@ bool ZoneManager::prepareZoneMaterialClosure(size_t index, const nlohmann::json&
     return true;
 }
 
+bool ZoneManager::prepareZoneMatterClosure(size_t index, const nlohmann::json& identity,
+                                          std::vector<uint8_t>& matterBytes) {
+    matterBytes.clear();
+    if (index >= _zones.size() || !_zones[index]) return false;
+    const std::string zoneId = _zones[index]->getIdentifier();
+    if (!identity.is_object()) return true;   // no stored identity: nothing to close over
+
+    const std::string identityPath = _zones[index]->isHome()
+        ? SaveSystem::resolveHomeIdentityPath(zoneId)
+        : SaveSystem::resolveZoneIdentityPath(zoneId);
+    if (identityPath.empty()) return true;
+
+    if (identity.contains("matterGeneration")) {
+        matterBytes = readVerifiedMatterGeneration(std::filesystem::path(identityPath), identity);
+        if (matterBytes.empty()) {
+            std::cerr << "[zones] REFUSED activation of '" << zoneId
+                      << "': matter generation verification failed. Current Zone and Laws remain active.\n";
+            return false;
+        }
+    } else {
+        // Legacy compat: check for unversioned <stem>.ecmatter beside identity
+        const std::filesystem::path unversioned = std::filesystem::path(identityPath).parent_path() /
+            (std::filesystem::path(identityPath).stem().string() + ".ecmatter");
+        std::error_code ec;
+        if (std::filesystem::exists(unversioned, ec) && std::filesystem::file_size(unversioned, ec) > 0) {
+            std::ifstream in(unversioned.string(), std::ios::binary);
+            if (in.is_open()) {
+                matterBytes.assign((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+            }
+        }
+    }
+
+    if (!matterBytes.empty()) {
+        flatbuffers::Verifier verifier(matterBytes.data(), matterBytes.size());
+        if (!Earthcall::Schema::VerifySaveChunkBuffer(verifier)) {
+            matterBytes.clear();
+            std::cerr << "[zones] REFUSED activation of '" << zoneId
+                      << "': matter FlatBuffer corrupt. Current Zone and Laws remain active.\n";
+            return false;
+        }
+
+        // A content-addressed per-Zone generation is not a legacy aggregate:
+        // every entity must explicitly belong to THIS Zone and each bare id
+        // must occur exactly once.  applyMatterFlatBuffer retains permissive
+        // ownerless/unambiguous fallback for old world-level .ecmatter files,
+        // but a new generation has already crossed the migration boundary and
+        // must not be allowed to hydrate another Zone by that compatibility path.
+        if (identity.contains("matterGeneration")) {
+            const auto* chunk = Earthcall::Schema::GetSaveChunk(matterBytes.data());
+            std::unordered_set<std::string> seenIds;
+            if (!chunk || !chunk->entities()) {
+                matterBytes.clear();
+                std::cerr << "[zones] REFUSED activation of '" << zoneId
+                          << "': matter generation has no entity vector. Current Zone remains active.\n";
+                return false;
+            }
+            for (const auto* entity : *chunk->entities()) {
+                if (!entity || !entity->id() || entity->id()->size() == 0 ||
+                    !entity->owner_identifier() ||
+                    entity->owner_identifier()->str() != zoneId ||
+                    !seenIds.insert(entity->id()->str()).second) {
+                    matterBytes.clear();
+                    std::cerr << "[zones] REFUSED activation of '" << zoneId
+                              << "': content-addressed matter contains a missing/duplicate id "
+                                 "or an entity not owned by this Zone. Current Zone remains active.\n";
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
 bool ZoneManager::switchTo(size_t index)
 {
     if (index < _zones.size()) {
@@ -466,6 +541,8 @@ bool ZoneManager::switchTo(size_t index)
         if (!prepareZoneLawClosure(index, prepared, requestedLawIds, &identity)) return false;
         std::vector<std::shared_ptr<Material>> sharedMaterials;
         if (!prepareZoneMaterialClosure(index, identity, sharedMaterials)) return false;
+        std::vector<uint8_t> matterBytes;
+        if (!prepareZoneMatterClosure(index, identity, matterBytes)) return false;
         for (const auto& material : sharedMaterials) materials.add(material);
         const auto& targetZone = _zones[index];
 
@@ -526,24 +603,17 @@ bool ZoneManager::switchTo(size_t index)
             }
         }
 
-        // Zone identities hydrate before their referenced authored Laws become
-        // eligible. Relation endpoints that are Laws are therefore legitimately
-        // pending on the first pass. Legacy loadState already retries persisted
-        // Relations after authoredLaws arrive; Move to Zone must complete the
-        // same closure without requiring a conglomerate World.
+        // Resolve persisted semantic relations only after the active Zone's
+        // world has been repopulated. Relation endpoints that are objects or
+        // authored Laws are now simultaneously live.
         applyFormationRelations(*targetZone, identity);
 
-        // THE WORLD IN FRONT OF THE PERSON WAS JUST REPLACED, and nothing else
-        // says so. EngineInit's Universe providers read `active()` on every
-        // call, so this one assignment swaps every being and every relation the
-        // law engine can see — without a setter, an addObject, or a removeObject.
-        // Anything that caches a view of the world keys on this counter; the
-        // vocabulary index (FORMATION_RETE.md §8 rung 2) did, and after a switch
-        // between Zones sharing vocabulary it kept offering the previous Zone's
-        // beings, so a sweep-path law reached nobody in the room the Person had
-        // walked into. Silent. This reuses the existing "shape of the world
-        // changed" counter rather than adding a second change system.
-        // Guarded by tests/law/zone_switch_invalidation_test.cpp.
+        if (!matterBytes.empty()) {
+            applyMatterFlatBuffer(matterBytes);
+        }
+
+        // Observers see one revision for the fully assembled active Zone:
+        // objects, relations, and verified physical Matter.
         Universe::instance().bumpStructuralRevision();
 
         Core::EventBus::instance().publish(
@@ -1578,8 +1648,6 @@ nlohmann::json ZoneManager::buildSaveJson(const SaveContext& ctx) const {
 // before — this is additive, not a forced migration of any existing
 // save.
 namespace {
-constexpr int kMatterSchemaVersion = 1;
-
 // Mirrors Singularity::Storage::FileChannel::computeSha256's exact
 // OpenSSL + hex-encoding approach. Not called directly: FileChannel is a
 // Law (Singularity::Storage), and ZonesOfEarth depending on a Law just to
@@ -1601,11 +1669,12 @@ std::string sha256Hex(const std::vector<uint8_t>& data) {
     throw std::runtime_error("sha256Hex refused: no OpenSSL in WASM build");
 #endif
 }
+} // namespace
 
 // Writes `bytes` to `finalPath` via write-temp-then-atomic-rename, so a
 // crash mid-write never leaves a truncated file at `finalPath` itself.
 // Returns false (finalPath untouched) on any failure.
-bool atomicWriteFile(const std::filesystem::path& finalPath, const std::vector<uint8_t>& bytes) {
+bool ZoneManager::atomicWriteFile(const std::filesystem::path& finalPath, const std::vector<uint8_t>& bytes) {
     std::filesystem::path tmp = finalPath;
     tmp += ".tmp-" + std::to_string(reinterpret_cast<uintptr_t>(&bytes)) + "-" +
            std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
@@ -1619,19 +1688,14 @@ bool atomicWriteFile(const std::filesystem::path& finalPath, const std::vector<u
     std::error_code ec;
     std::filesystem::rename(tmp, finalPath, ec);
     if (ec) {
-        // Cross-device or other rename failure: fall back to copy+remove,
-        // still finishing with the destination fully written before any
-        // caller can observe it under its final name.
-        std::filesystem::copy_file(tmp, finalPath, std::filesystem::copy_options::overwrite_existing, ec);
-        std::filesystem::remove(tmp, ec);
-        if (ec) return false;
+        // tmp is created in finalPath's own directory, so EXDEV is not a
+        // legitimate reason to downgrade this transaction to copy+remove.
+        // A copy can expose a partially-written semantic root; refuse instead.
+        std::error_code cleanupEc;
+        std::filesystem::remove(tmp, cleanupEc);
+        return false;
     }
     return true;
-}
-
-bool atomicWriteFile(const std::filesystem::path& finalPath, const std::string& text) {
-    std::vector<uint8_t> bytes(text.begin(), text.end());
-    return atomicWriteFile(finalPath, bytes);
 }
 
 // Commits matterBytes as a new generation of ecformPath's matter
@@ -1639,9 +1703,9 @@ bool atomicWriteFile(const std::filesystem::path& finalPath, const std::string& 
 // Matter commits first under a content-addressed name. The caller commits
 // the semantic root LAST, then retires the predecessor returned here.
 // "__FAILED__" means the root must not be committed.
-std::string commitMatterGeneration(const std::filesystem::path& ecformPath,
-                                   const std::vector<uint8_t>& matterBytes,
-                                   nlohmann::json& j) {
+std::string ZoneManager::commitMatterGeneration(const std::filesystem::path& ecformPath,
+                                                const std::vector<uint8_t>& matterBytes,
+                                                nlohmann::json& j) {
     if (matterBytes.empty()) return "";
 
     const std::string hash = sha256Hex(matterBytes);
@@ -1657,7 +1721,17 @@ std::string commitMatterGeneration(const std::filesystem::path& ecformPath,
                   << matterPath << ": " << ec.message() << "\n";
         return "__FAILED__";
     }
-    if (!alreadyExists && !atomicWriteFile(matterPath, matterBytes)) {
+    if (alreadyExists) {
+        std::ifstream existingIn(matterPath.string(), std::ios::binary);
+        const std::vector<uint8_t> existingBytes(
+            (std::istreambuf_iterator<char>(existingIn)), std::istreambuf_iterator<char>());
+        if (!existingIn.is_open() || existingBytes != matterBytes) {
+            std::cerr << "[ZoneManager] commitMatterGeneration: existing content-addressed file "
+                      << matterPath << " does not equal the bytes implied by its name — "
+                         "refusing rather than overwriting a possible hash-prefix collision/corruption.\n";
+            return "__FAILED__";
+        }
+    } else if (!atomicWriteFile(matterPath, matterBytes)) {
         std::cerr << "[ZoneManager] commitMatterGeneration: failed to write "
                   << matterPath << " — prior semantic root remains authoritative.\n";
         return "__FAILED__";
@@ -1687,7 +1761,16 @@ std::string commitMatterGeneration(const std::filesystem::path& ecformPath,
     return "";
 }
 
-void cleanupPredecessorMatter(const std::string& oldMatterPathString) {
+bool ZoneManager::writeMatterCompatibilityCopy(const std::filesystem::path& semanticRootPath,
+                                               const std::vector<uint8_t>& matterBytes) {
+    if (matterBytes.empty()) return true;
+    const std::filesystem::path unversionedPath =
+        semanticRootPath.parent_path() /
+        (semanticRootPath.stem().string() + ".ecmatter");
+    return atomicWriteFile(unversionedPath, matterBytes);
+}
+
+void ZoneManager::cleanupPredecessorMatter(const std::string& oldMatterPathString) {
     if (oldMatterPathString.empty() || oldMatterPathString == "__FAILED__") return;
 
     const std::filesystem::path oldMatterPath(oldMatterPathString);
@@ -1706,25 +1789,38 @@ void cleanupPredecessorMatter(const std::string& oldMatterPathString) {
 // returns empty, mutates nothing) on any missing/mismatched/truncated/
 // future-schema sidecar — the world is never partially hydrated from a
 // generation that failed verification.
-std::vector<uint8_t> readVerifiedMatterGeneration(const std::filesystem::path& ecformPath,
-                                                   const nlohmann::json& j) {
+std::vector<uint8_t> ZoneManager::readVerifiedMatterGeneration(const std::filesystem::path& ecformPath,
+                                                               const nlohmann::json& j) {
     if (!j.contains("matterGeneration")) return {};
     const auto& gen = j["matterGeneration"];
+    if (!gen.is_object()) {
+        std::cerr << "[ZoneManager] readVerifiedMatterGeneration: '" << ecformPath
+                  << "' has a non-object matterGeneration — refusing.\n";
+        return {};
+    }
     const std::string snapshotId = gen.value("snapshotId", std::string{});
     const std::string expectedHash = gen.value("sha256", std::string{});
     const std::size_t expectedLength = gen.value("byteLength", std::size_t{0});
     const int schemaVersion = gen.value("schemaVersion", 0);
 
-    if (snapshotId.empty()) {
+    const auto isLowerHex = [](const std::string& value, std::size_t width) {
+        if (value.size() != width) return false;
+        for (char ch : value) {
+            if (!((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f'))) return false;
+        }
+        return true;
+    };
+    if (!isLowerHex(snapshotId, 16) || !isLowerHex(expectedHash, 64) ||
+        snapshotId != expectedHash.substr(0, 16) || expectedLength == 0) {
         std::cerr << "[ZoneManager] readVerifiedMatterGeneration: '" << ecformPath
-                  << "' names a matterGeneration with no snapshotId — refusing.\n";
+                  << "' has malformed/non-content-addressed generation metadata — refusing.\n";
         return {};
     }
-    if (schemaVersion > kMatterSchemaVersion) {
+    if (schemaVersion != kMatterSchemaVersion) {
         std::cerr << "[ZoneManager] readVerifiedMatterGeneration: '" << ecformPath
                   << "' names matter schema version " << schemaVersion
-                  << ", newer than this build understands (" << kMatterSchemaVersion
-                  << ") — refusing rather than misreading it.\n";
+                  << ", but this build accepts exactly " << kMatterSchemaVersion
+                  << " — refusing rather than guessing compatibility.\n";
         return {};
     }
 
@@ -1760,7 +1856,6 @@ std::vector<uint8_t> readVerifiedMatterGeneration(const std::filesystem::path& e
     }
     return bytes;
 }
-} // namespace
 
 // ------------------------------------------------------------------
 // saveState
@@ -1782,8 +1877,9 @@ void ZoneManager::saveState(const std::string& filename, SaveContext& ctx) {
     // root's own commit is the atomic rename below — never a plain
     // ofstream that a crash mid-write can leave truncated in place.
     std::string oldMatterPath;
+    std::vector<uint8_t> matter;
     if (!isBeforeLoadSnapshot(filename)) {
-        std::vector<uint8_t> matter = buildMatterFlatBuffer();
+        matter = buildMatterFlatBuffer();
         oldMatterPath = commitMatterGeneration(p, matter, j);
         if (oldMatterPath == "__FAILED__") {
             std::cerr << "[ZoneManager] saveState: matter generation failed; "
@@ -1806,6 +1902,10 @@ void ZoneManager::saveState(const std::string& filename, SaveContext& ctx) {
         return;
     }
 
+    if (!matter.empty() && !writeMatterCompatibilityCopy(p, matter)) {
+        std::cerr << "[ZoneManager] saveState: semantic root committed, but compatibility "
+                     "matter mirror could not be updated for " << p << "\n";
+    }
     cleanupPredecessorMatter(oldMatterPath);
 
     logIo("SAVE " + p.string() + ": " +
@@ -1846,10 +1946,11 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
     // will (same helper, same sanitized label/folder) so the matter file
     // lands beside it under the correct stem.
     std::string oldMatterPath;
+    std::vector<uint8_t> matterBuffer;
     const std::string ecformPath = SaveSystem::makeFilename(
         actualName, SaveSystem::SaveType::WORLD, ".ecform");
     if (!ecformPath.empty()) {
-        std::vector<uint8_t> matterBuffer = buildMatterFlatBuffer();
+        matterBuffer = buildMatterFlatBuffer();
         oldMatterPath =
             commitMatterGeneration(std::filesystem::path(ecformPath), matterBuffer, j);
         if (oldMatterPath == "__FAILED__") {
@@ -1869,6 +1970,11 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
         return;
     }
 
+    if (!matterBuffer.empty() &&
+        !writeMatterCompatibilityCopy(std::filesystem::path(ecformPath), matterBuffer)) {
+        std::cerr << "[ZoneManager] saveStateWithLog: semantic root committed, but "
+                     "compatibility matter mirror could not be updated for " << ecformPath << "\n";
+    }
     cleanupPredecessorMatter(oldMatterPath);
 
     _saveLoad.lastSaveReport = "Wrote " + path;
@@ -3012,7 +3118,10 @@ std::vector<uint8_t> ZoneManager::buildMatterFlatBuffer(
         }
     }
 
-    auto chunk_id = builder.CreateString("matter_" + SaveSystem::timestamp());
+    // This buffer is content-addressed.  Never inject wall-clock time into
+    // the bytes being hashed: identical physical state must mint identical
+    // bytes and therefore the same generation id across repeated saves.
+    auto chunk_id = builder.CreateString("matter");
     auto entities_vec = builder.CreateVector(entity_offsets);
     auto chunk = Earthcall::Schema::CreateSaveChunk(builder, chunk_id, entities_vec);
 

@@ -310,5 +310,11 @@
         "isKinematic": true
       }
     }
-  ]
+  ],
+  "matterGeneration": {
+    "snapshotId": "251f7b7c87396dfe",
+    "sha256": "251f7b7c87396dfec8100177d1b6ba34b649e334cf3894effa8fb0e891dd7c51",
+    "byteLength": 2208,
+    "schemaVersion": 1
+  }
 }
