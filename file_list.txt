@@ -1,0 +1,1097 @@
+src/:
+total 1008
+drwxrwxr-x  9 jules jules   4096 Oct 19 01:19 .
+drwxr-xr-x 26 jules root    4096 Oct 19 01:20 ..
+drwxrwxr-x  4 jules jules   4096 Oct 19 01:19 ConstructedBeing
+drwxrwxr-x  2 jules jules   4096 Oct 19 01:19 Identity
+drwxrwxr-x  7 jules jules   4096 Oct 19 01:19 Person
+drwxrwxr-x  5 jules jules   4096 Oct 19 01:19 Relation
+drwxrwxr-x 15 jules jules   4096 Oct 19 01:19 Singularity
+drwxrwxr-x  4 jules jules   4096 Oct 19 01:19 Time
+drwxrwxr-x  8 jules jules   4096 Oct 19 01:19 ZonesOfEarth
+-rw-rw-r--  1 jules jules    335 Oct 19 01:19 entry.cpp
+-rw-rw-r--  1 jules jules    587 Oct 19 01:19 globals.cpp
+-rw-rw-r--  1 jules jules 919975 Oct 19 01:19 json.hpp
+-rw-rw-r--  1 jules jules  65381 Oct 19 01:19 terminal_entry.cpp
+
+src/ConstructedBeing:
+total 36
+drwxrwxr-x 4 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 9 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 5758 Oct 19 01:19 CategoryManager.cpp
+-rw-rw-r-- 1 jules jules 1235 Oct 19 01:19 CategoryManager.hpp
+-rw-rw-r-- 1 jules jules  208 Oct 19 01:19 Form.cpp
+-rw-rw-r-- 1 jules jules 1232 Oct 19 01:19 Form.hpp
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 Material
+drwxrwxr-x 7 jules jules 4096 Oct 19 01:19 Singular
+
+src/ConstructedBeing/Material:
+total 60
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 4 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 12732 Oct 19 01:19 Material.cpp
+-rw-rw-r-- 1 jules jules  4589 Oct 19 01:19 Material.hpp
+-rw-rw-r-- 1 jules jules  2649 Oct 19 01:19 MaterialManager.cpp
+-rw-rw-r-- 1 jules jules  1901 Oct 19 01:19 MaterialManager.hpp
+-rw-rw-r-- 1 jules jules 16203 Oct 19 01:19 PaintToolSurface.cpp
+-rw-rw-r-- 1 jules jules  2248 Oct 19 01:19 PaintToolSurface.hpp
+
+src/ConstructedBeing/Singular:
+total 64
+drwxrwxr-x 7 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 4 jules jules  4096 Oct 19 01:19 ..
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 Creation
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 Lexeme
+drwxrwxr-x 6 jules jules  4096 Oct 19 01:19 Object
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 Property
+-rw-rw-r-- 1 jules jules 18020 Oct 19 01:19 Singular.cpp
+-rw-rw-r-- 1 jules jules 12297 Oct 19 01:19 Singular.hpp
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 py
+
+src/ConstructedBeing/Singular/Creation:
+total 56
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 7 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 44354 Oct 19 01:19 SingularSetToSetCreation.cpp
+-rw-rw-r-- 1 jules jules  3641 Oct 19 01:19 SingularSetToSetCreation.hpp
+
+src/ConstructedBeing/Singular/Lexeme:
+total 16
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 7 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 2301 Oct 19 01:19 Lexeme.cpp
+-rw-rw-r-- 1 jules jules 1932 Oct 19 01:19 Lexeme.hpp
+
+src/ConstructedBeing/Singular/Object:
+total 240
+drwxrwxr-x 6 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 7 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 11183 Oct 19 01:19 AngleTools.cpp
+-rw-rw-r-- 1 jules jules  5217 Oct 19 01:19 AngleTools.hpp
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 Automation
+-rw-rw-r-- 1 jules jules 14289 Oct 19 01:19 Contour.cpp
+-rw-rw-r-- 1 jules jules  7287 Oct 19 01:19 Contour.hpp
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 Creation
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 Geometry
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 Object
+-rw-rw-r-- 1 jules jules  1107 Oct 19 01:19 Object.cpp
+-rw-rw-r-- 1 jules jules 45432 Oct 19 01:19 Object.hpp
+-rw-rw-r-- 1 jules jules 36067 Oct 19 01:19 ObjectCollision.cpp
+-rw-rw-r-- 1 jules jules  7914 Oct 19 01:19 ObjectMotion.cpp
+-rw-rw-r-- 1 jules jules 17241 Oct 19 01:19 ObjectRaycast.cpp
+-rw-rw-r-- 1 jules jules 54038 Oct 19 01:19 ObjectRender.cpp
+-rw-rw-r-- 1 jules jules     0 Oct 19 01:19 Objects.txt
+
+src/ConstructedBeing/Singular/Object/Automation:
+total 24
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 6 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 5283 Oct 19 01:19 Automation.cpp
+-rw-rw-r-- 1 jules jules 3060 Oct 19 01:19 Automation.hpp
+-rw-rw-r-- 1 jules jules  722 Oct 19 01:19 AutomationEvents.hpp
+
+src/ConstructedBeing/Singular/Object/Creation:
+total 72
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 6 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 46760 Oct 19 01:19 ObjectConcept.cpp
+-rw-rw-r-- 1 jules jules 10938 Oct 19 01:19 ObjectConcept.hpp
+-rw-rw-r-- 1 jules jules  3592 Oct 19 01:19 PropertyMapping.hpp
+
+src/ConstructedBeing/Singular/Object/Geometry:
+total 224
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 6 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 17286 Oct 19 01:19 ComplexShape.cpp
+-rw-rw-r-- 1 jules jules  4651 Oct 19 01:19 ComplexShape.hpp
+-rw-rw-r-- 1 jules jules 10395 Oct 19 01:19 FieldNode.cpp
+-rw-rw-r-- 1 jules jules 19270 Oct 19 01:19 FieldNode.hpp
+-rw-rw-r-- 1 jules jules  8874 Oct 19 01:19 Patch.cpp
+-rw-rw-r-- 1 jules jules  3490 Oct 19 01:19 Patch.hpp
+-rw-rw-r-- 1 jules jules 67220 Oct 19 01:19 Sdf.cpp
+-rw-rw-r-- 1 jules jules 13178 Oct 19 01:19 Sdf.hpp
+-rw-rw-r-- 1 jules jules  3027 Oct 19 01:19 SdfJson.cpp
+-rw-rw-r-- 1 jules jules   438 Oct 19 01:19 SdfJson.hpp
+-rw-rw-r-- 1 jules jules  5220 Oct 19 01:19 SdfRangeProof.hpp
+-rw-rw-r-- 1 jules jules 20168 Oct 19 01:19 SmoothSurface.cpp
+-rw-rw-r-- 1 jules jules  6601 Oct 19 01:19 SmoothSurface.hpp
+-rw-rw-r-- 1 jules jules  7952 Oct 19 01:19 TriGrid.cpp
+-rw-rw-r-- 1 jules jules  3703 Oct 19 01:19 TriGrid.hpp
+
+src/ConstructedBeing/Singular/Object/Object:
+total 164
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 6 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  1351 Oct 19 01:19 CollisionZone.hpp
+-rw-rw-r-- 1 jules jules 15403 Oct 19 01:19 FaceTexture.cpp
+-rw-rw-r-- 1 jules jules  2525 Oct 19 01:19 FaceTexture.hpp
+-rw-rw-r-- 1 jules jules  1499 Oct 19 01:19 ObjectComposition.cpp
+-rw-rw-r-- 1 jules jules  3008 Oct 19 01:19 ObjectComposition.hpp
+-rw-rw-r-- 1 jules jules  7712 Oct 19 01:19 ObjectCore.cpp
+-rw-rw-r-- 1 jules jules  4590 Oct 19 01:19 ObjectEvents.cpp
+-rw-rw-r-- 1 jules jules  1848 Oct 19 01:19 ObjectEvents.hpp
+-rw-rw-r-- 1 jules jules  4361 Oct 19 01:19 ObjectIdentity.hpp
+-rw-rw-r-- 1 jules jules 33479 Oct 19 01:19 ObjectProperties.cpp
+-rw-rw-r-- 1 jules jules  4948 Oct 19 01:19 ObjectTypes.hpp
+-rw-rw-r-- 1 jules jules 44667 Oct 19 01:19 PolyhedronData.cpp
+-rw-rw-r-- 1 jules jules  4906 Oct 19 01:19 PolyhedronData.hpp
+
+src/ConstructedBeing/Singular/Property:
+total 80
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 7 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  2433 Oct 19 01:19 ComputedProperty.hpp
+-rw-rw-r-- 1 jules jules   897 Oct 19 01:19 DataStructure.hpp
+-rw-rw-r-- 1 jules jules     0 Oct 19 01:19 Property.cpp
+-rw-rw-r-- 1 jules jules  3210 Oct 19 01:19 Property.hpp
+-rw-rw-r-- 1 jules jules 19135 Oct 19 01:19 PropertyPath.cpp
+-rw-rw-r-- 1 jules jules  4772 Oct 19 01:19 PropertyPath.hpp
+-rw-rw-r-- 1 jules jules  3389 Oct 19 01:19 PropertyRef.hpp
+-rw-rw-r-- 1 jules jules  8680 Oct 19 01:19 PropertyValue.hpp
+-rw-rw-r-- 1 jules jules 11653 Oct 19 01:19 PropertyValueJson.cpp
+-rw-rw-r-- 1 jules jules  1061 Oct 19 01:19 PropertyValueJson.hpp
+
+src/ConstructedBeing/Singular/py:
+total 16
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 7 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  745 Oct 19 01:19 Property.py
+-rw-rw-r-- 1 jules jules 1325 Oct 19 01:19 Singular.py
+
+src/Identity:
+total 176
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 9 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  4792 Oct 19 01:19 Claim.cpp
+-rw-rw-r-- 1 jules jules  3131 Oct 19 01:19 Claim.hpp
+-rw-rw-r-- 1 jules jules 21466 Oct 19 01:19 FirstMoverRegister.cpp
+-rw-rw-r-- 1 jules jules 13995 Oct 19 01:19 FirstMoverRegister.hpp
+-rw-rw-r-- 1 jules jules 16898 Oct 19 01:19 FirstMoverTool.cpp
+-rw-rw-r-- 1 jules jules  3782 Oct 19 01:19 IdentityLedger.cpp
+-rw-rw-r-- 1 jules jules  2579 Oct 19 01:19 IdentityLedger.hpp
+-rw-rw-r-- 1 jules jules  6315 Oct 19 01:19 KeyPair.cpp
+-rw-rw-r-- 1 jules jules  2895 Oct 19 01:19 KeyPair.hpp
+-rw-rw-r-- 1 jules jules 12809 Oct 19 01:19 KeyStore.cpp
+-rw-rw-r-- 1 jules jules  2730 Oct 19 01:19 KeyStore.hpp
+-rw-rw-r-- 1 jules jules  5294 Oct 19 01:19 MigrateIdentitiesTool.cpp
+-rw-rw-r-- 1 jules jules 12762 Oct 19 01:19 PersonMigration.cpp
+-rw-rw-r-- 1 jules jules  4038 Oct 19 01:19 PersonMigration.hpp
+-rw-rw-r-- 1 jules jules  5285 Oct 19 01:19 PersonPresence.cpp
+-rw-rw-r-- 1 jules jules  2570 Oct 19 01:19 PersonPresence.hpp
+-rw-rw-r-- 1 jules jules  6011 Oct 19 01:19 SingularId.cpp
+-rw-rw-r-- 1 jules jules  4538 Oct 19 01:19 SingularId.hpp
+
+src/Person:
+total 64
+drwxrwxr-x 7 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 9 jules jules  4096 Oct 19 01:19 ..
+drwxrwxr-x 4 jules jules  4096 Oct 19 01:19 Body
+-rw-rw-r-- 1 jules jules 13878 Oct 19 01:19 Person.cpp
+-rw-rw-r-- 1 jules jules  7063 Oct 19 01:19 Person.hpp
+-rw-rw-r-- 1 jules jules  2108 Oct 19 01:19 PersonDatabase.cpp
+-rw-rw-r-- 1 jules jules   788 Oct 19 01:19 PersonDatabase.hpp
+-rw-rw-r-- 1 jules jules  2036 Oct 19 01:19 PersonEvents.hpp
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 Perspective
+drwxrwxr-x 3 jules jules  4096 Oct 19 01:19 Relationship
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 Soul
+drwxrwxr-x 3 jules jules  4096 Oct 19 01:19 Voice
+
+src/Person/Body:
+total 28
+drwxrwxr-x 4 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 7 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 8173 Oct 19 01:19 Body.cpp
+-rw-rw-r-- 1 jules jules 2273 Oct 19 01:19 Body.hpp
+drwxrwxr-x 3 jules jules 4096 Oct 19 01:19 BodyPart
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 Head
+
+src/Person/Body/BodyPart:
+total 44
+drwxrwxr-x 3 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 4 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 13068 Oct 19 01:19 BodyPart.cpp
+-rw-rw-r-- 1 jules jules  6706 Oct 19 01:19 BodyPart.hpp
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 Limb
+-rw-rw-r-- 1 jules jules   202 Oct 19 01:19 Limb.cpp
+-rw-rw-r-- 1 jules jules   370 Oct 19 01:19 Limb.hpp
+
+src/Person/Body/BodyPart/Limb:
+total 88
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 3 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  196 Oct 19 01:19 Arm.cpp
+-rw-rw-r-- 1 jules jules  131 Oct 19 01:19 Arm.hpp
+-rw-rw-r-- 1 jules jules  289 Oct 19 01:19 Finger.cpp
+-rw-rw-r-- 1 jules jules  176 Oct 19 01:19 Finger.hpp
+-rw-rw-r-- 1 jules jules  204 Oct 19 01:19 Foot.cpp
+-rw-rw-r-- 1 jules jules  133 Oct 19 01:19 Foot.hpp
+-rw-rw-r-- 1 jules jules  219 Oct 19 01:19 ForeArm.cpp
+-rw-rw-r-- 1 jules jules  139 Oct 19 01:19 ForeArm.hpp
+-rw-rw-r-- 1 jules jules  221 Oct 19 01:19 ForeLeg.cpp
+-rw-rw-r-- 1 jules jules  139 Oct 19 01:19 ForeLeg.hpp
+-rw-rw-r-- 1 jules jules  205 Oct 19 01:19 Hand.cpp
+-rw-rw-r-- 1 jules jules  133 Oct 19 01:19 Hand.hpp
+-rw-rw-r-- 1 jules jules  198 Oct 19 01:19 Leg.cpp
+-rw-rw-r-- 1 jules jules  131 Oct 19 01:19 Leg.hpp
+-rw-rw-r-- 1 jules jules  140 Oct 19 01:19 Neck.cpp
+-rw-rw-r-- 1 jules jules   87 Oct 19 01:19 Neck.hpp
+-rw-rw-r-- 1 jules jules  228 Oct 19 01:19 Shoulder.cpp
+-rw-rw-r-- 1 jules jules  141 Oct 19 01:19 Shoulder.hpp
+-rw-rw-r-- 1 jules jules  145 Oct 19 01:19 Torso.cpp
+-rw-rw-r-- 1 jules jules   89 Oct 19 01:19 Torso.hpp
+
+src/Person/Body/Head:
+total 16
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 4 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  265 Oct 19 01:19 Head.cpp
+-rw-rw-r-- 1 jules jules  103 Oct 19 01:19 Head.hpp
+
+src/Person/Perspective:
+total 36
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 7 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules    0 Oct 19 01:19 AvatarHandler.cpp
+-rw-rw-r-- 1 jules jules    0 Oct 19 01:19 AvatarHandler.hpp
+-rw-rw-r-- 1 jules jules 8918 Oct 19 01:19 PersonPerspective.cpp
+-rw-rw-r-- 1 jules jules 2813 Oct 19 01:19 PersonPerspective.hpp
+-rw-rw-r-- 1 jules jules 4557 Oct 19 01:19 PerspectiveManager.cpp
+-rw-rw-r-- 1 jules jules 1127 Oct 19 01:19 PerspectiveManager.hpp
+
+src/Person/Relationship:
+total 20
+drwxrwxr-x 3 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 7 jules jules 4096 Oct 19 01:19 ..
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 Community
+-rw-rw-r-- 1 jules jules 1141 Oct 19 01:19 Relationship.cpp
+-rw-rw-r-- 1 jules jules  780 Oct 19 01:19 Relationship.hpp
+
+src/Person/Relationship/Community:
+total 16
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 3 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 1653 Oct 19 01:19 Community.cpp
+-rw-rw-r-- 1 jules jules  598 Oct 19 01:19 Community.hpp
+
+src/Person/Soul:
+total 16
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 7 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 1326 Oct 19 01:19 Soul.cpp
+-rw-rw-r-- 1 jules jules 1066 Oct 19 01:19 Soul.hpp
+
+src/Person/Voice:
+total 20
+drwxrwxr-x 3 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 7 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 1880 Oct 19 01:19 Voice.cpp
+-rw-rw-r-- 1 jules jules 1232 Oct 19 01:19 Voice.hpp
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 VoicePart
+
+src/Person/Voice/VoicePart:
+total 16
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 3 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  124 Oct 19 01:19 VoicePart.cpp
+-rw-rw-r-- 1 jules jules  750 Oct 19 01:19 VoicePart.hpp
+
+src/Relation:
+total 88
+drwxrwxr-x 5 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 9 jules jules  4096 Oct 19 01:19 ..
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 Formation
+-rw-rw-r-- 1 jules jules 15099 Oct 19 01:19 Relation.cpp
+-rw-rw-r-- 1 jules jules 12528 Oct 19 01:19 Relation.hpp
+-rw-rw-r-- 1 jules jules 22572 Oct 19 01:19 RelationManager.cpp
+-rw-rw-r-- 1 jules jules  8860 Oct 19 01:19 RelationManager.hpp
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 Traversal
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 py
+
+src/Relation/Formation:
+total 64
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 5 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 38163 Oct 19 01:19 Formation.cpp
+-rw-rw-r-- 1 jules jules 16040 Oct 19 01:19 Formation.hpp
+
+src/Relation/Traversal:
+total 52
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 5 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  7834 Oct 19 01:19 RelevanceTraversal.cpp
+-rw-rw-r-- 1 jules jules  4902 Oct 19 01:19 RelevanceTraversal.hpp
+-rw-rw-r-- 1 jules jules 14330 Oct 19 01:19 SlowAdapter.cpp
+-rw-rw-r-- 1 jules jules  9178 Oct 19 01:19 SlowAdapter.hpp
+
+src/Relation/py:
+total 16
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 5 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  584 Oct 19 01:19 Formation.py
+-rw-rw-r-- 1 jules jules  632 Oct 19 01:19 Relation.py
+
+src/Singularity:
+total 72
+drwxrwxr-x 15 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x  9 jules jules 4096 Oct 19 01:19 ..
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 Audio
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 Core
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 Execution
+drwxrwxr-x  4 jules jules 4096 Oct 19 01:19 FirstMoverOntology
+drwxrwxr-x  9 jules jules 4096 Oct 19 01:19 Foreign
+drwxrwxr-x  6 jules jules 4096 Oct 19 01:19 Input
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 Language
+drwxrwxr-x  5 jules jules 4096 Oct 19 01:19 Network
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 OntoMath
+drwxrwxr-x  4 jules jules 4096 Oct 19 01:19 Physical
+drwxrwxr-x  4 jules jules 4096 Oct 19 01:19 Screen
+-rw-rw-r--  1 jules jules    0 Oct 19 01:19 Singularity.cpp
+-rw-rw-r--  1 jules jules 1988 Oct 19 01:19 Singularity.hpp
+drwxrwxr-x  5 jules jules 4096 Oct 19 01:19 Storage
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 Terminal
+-rw-rw-r--  1 jules jules 3994 Oct 19 01:19 TransferPolicy.cpp
+-rw-rw-r--  1 jules jules 2618 Oct 19 01:19 TransferPolicy.hpp
+
+src/Singularity/Audio:
+total 100
+drwxrwxr-x  2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 15 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r--  1 jules jules 11802 Oct 19 01:19 AudioChannel.cpp
+-rw-rw-r--  1 jules jules  3523 Oct 19 01:19 AudioChannel.hpp
+-rw-rw-r--  1 jules jules 23844 Oct 19 01:19 AudioRecorder.cpp
+-rw-rw-r--  1 jules jules  5954 Oct 19 01:19 AudioRecorder.hpp
+-rw-rw-r--  1 jules jules 35548 Oct 19 01:19 AudioSystem.cpp
+-rw-rw-r--  1 jules jules  8075 Oct 19 01:19 AudioSystem.hpp
+
+src/Singularity/Core:
+total 244
+drwxrwxr-x  2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 15 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r--  1 jules jules  1982 Oct 19 01:19 AppPaths.cpp
+-rw-rw-r--  1 jules jules  1533 Oct 19 01:19 AppPaths.hpp
+-rw-rw-r--  1 jules jules   377 Oct 19 01:19 CameraState.hpp
+-rw-rw-r--  1 jules jules 10137 Oct 19 01:19 CodecChannel.cpp
+-rw-rw-r--  1 jules jules  2600 Oct 19 01:19 CodecChannel.hpp
+-rw-rw-r--  1 jules jules 14800 Oct 19 01:19 CreationChannel.cpp
+-rw-rw-r--  1 jules jules  5224 Oct 19 01:19 CreationChannel.hpp
+-rw-rw-r--  1 jules jules 24255 Oct 19 01:19 Engine.cpp
+-rw-rw-r--  1 jules jules 10135 Oct 19 01:19 Engine.hpp
+-rw-rw-r--  1 jules jules 52720 Oct 19 01:19 EngineInit.cpp
+-rw-rw-r--  1 jules jules 23172 Oct 19 01:19 EngineRender.cpp
+-rw-rw-r--  1 jules jules 12238 Oct 19 01:19 EngineUpdate.cpp
+-rw-rw-r--  1 jules jules  7412 Oct 19 01:19 EventBus.cpp
+-rw-rw-r--  1 jules jules  9136 Oct 19 01:19 EventBus.hpp
+-rw-rw-r--  1 jules jules   850 Oct 19 01:19 EventHandler.cpp
+-rw-rw-r--  1 jules jules  3066 Oct 19 01:19 EventHandler.hpp
+-rw-rw-r--  1 jules jules 10239 Oct 19 01:19 Logger.cpp
+-rw-rw-r--  1 jules jules  3108 Oct 19 01:19 Logger.hpp
+-rw-rw-r--  1 jules jules  3711 Oct 19 01:19 SdfBuild.hpp
+-rw-rw-r--  1 jules jules  2992 Oct 19 01:19 StringId.cpp
+-rw-rw-r--  1 jules jules  4937 Oct 19 01:19 StringId.hpp
+
+src/Singularity/Execution:
+total 60
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 15 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r--  1 jules jules 3218 Oct 19 01:19 ExecutionChannel.cpp
+-rw-rw-r--  1 jules jules 2684 Oct 19 01:19 ExecutionChannel.hpp
+-rw-rw-r--  1 jules jules 1574 Oct 19 01:19 JITBridge.cpp
+-rw-rw-r--  1 jules jules 1030 Oct 19 01:19 JITBridge.hpp
+-rw-rw-r--  1 jules jules 8401 Oct 19 01:19 NativeBytecodeVM.cpp
+-rw-rw-r--  1 jules jules 2541 Oct 19 01:19 NativeBytecodeVM.hpp
+-rw-rw-r--  1 jules jules 1925 Oct 19 01:19 PropheticIndex.hpp
+-rw-rw-r--  1 jules jules 1099 Oct 19 01:19 PropheticJIT.cpp
+-rw-rw-r--  1 jules jules 1654 Oct 19 01:19 PropheticJIT.hpp
+-rw-rw-r--  1 jules jules 7213 Oct 19 01:19 PropheticJIT_LLVM.cpp
+
+src/Singularity/FirstMoverOntology:
+total 16
+drwxrwxr-x  4 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 15 jules jules 4096 Oct 19 01:19 ..
+drwxrwxr-x  4 jules jules 4096 Oct 19 01:19 FirstMoverWindowTools
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 TalkingRobotGuyAPI
+
+src/Singularity/FirstMoverOntology/FirstMoverWindowTools:
+total 216
+drwxrwxr-x 4 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 4 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 15944 Oct 19 01:19 AdvancedFacePaint.cpp
+-rw-rw-r-- 1 jules jules  4224 Oct 19 01:19 AdvancedFacePaint.hpp
+-rw-rw-r-- 1 jules jules  1901 Oct 19 01:19 Chat.cpp
+-rw-rw-r-- 1 jules jules   643 Oct 19 01:19 Chat.hpp
+-rw-rw-r-- 1 jules jules   680 Oct 19 01:19 Controls.cpp
+-rw-rw-r-- 1 jules jules   649 Oct 19 01:19 Controls.hpp
+-rw-rw-r-- 1 jules jules 13927 Oct 19 01:19 CreationTools.cpp
+-rw-rw-r-- 1 jules jules  1496 Oct 19 01:19 CreationTools.hpp
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 CreatorConsole
+-rw-rw-r-- 1 jules jules  5605 Oct 19 01:19 CursorTools.cpp
+-rw-rw-r-- 1 jules jules  1159 Oct 19 01:19 CursorTools.hpp
+-rw-rw-r-- 1 jules jules   724 Oct 19 01:19 ElementalToolHandler.cpp
+-rw-rw-r-- 1 jules jules   368 Oct 19 01:19 ElementalToolHandler.hpp
+-rw-rw-r-- 1 jules jules 43403 Oct 19 01:19 IDEDockManager.cpp
+-rw-rw-r-- 1 jules jules  5580 Oct 19 01:19 IDEDockManager.hpp
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 Menu
+-rw-rw-r-- 1 jules jules 17058 Oct 19 01:19 PerformanceMetricsWindow.cpp
+-rw-rw-r-- 1 jules jules  1859 Oct 19 01:19 PerformanceMetricsWindow.hpp
+-rw-rw-r-- 1 jules jules 36174 Oct 19 01:19 Tool.cpp
+-rw-rw-r-- 1 jules jules  6478 Oct 19 01:19 Tool.hpp
+
+src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole:
+total 160
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 4 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 15407 Oct 19 01:19 AssetsConsole.cpp
+-rw-rw-r-- 1 jules jules  8014 Oct 19 01:19 CharacterConsole.cpp
+-rw-rw-r-- 1 jules jules 24664 Oct 19 01:19 Create3DConsole.cpp
+-rw-rw-r-- 1 jules jules  1857 Oct 19 01:19 CreatorConsoleFixtureLaw.cpp
+-rw-rw-r-- 1 jules jules  1774 Oct 19 01:19 CreatorConsoleFixtureLaw.hpp
+-rw-rw-r-- 1 jules jules  5193 Oct 19 01:19 CreatorConsoleState.cpp
+-rw-rw-r-- 1 jules jules  6426 Oct 19 01:19 CreatorConsoleState.hpp
+-rw-rw-r-- 1 jules jules 11567 Oct 19 01:19 CreatorConsoleWindow.cpp
+-rw-rw-r-- 1 jules jules   967 Oct 19 01:19 CreatorConsoleWindow.hpp
+-rw-rw-r-- 1 jules jules 12992 Oct 19 01:19 PaintConsole.cpp
+-rw-rw-r-- 1 jules jules  6686 Oct 19 01:19 RelationsConsole.cpp
+-rw-rw-r-- 1 jules jules  5031 Oct 19 01:19 WorldConsole.cpp
+-rw-rw-r-- 1 jules jules 26408 Oct 19 01:19 ZonesConsole.cpp
+
+src/Singularity/FirstMoverOntology/FirstMoverWindowTools/Menu:
+total 44
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 4 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules     0 Oct 19 01:19 Field.txt
+-rw-rw-r-- 1 jules jules 16150 Oct 19 01:19 Menu.cpp
+-rw-rw-r-- 1 jules jules  1550 Oct 19 01:19 Menu.hpp
+-rw-rw-r-- 1 jules jules 12813 Oct 19 01:19 stb_easy_font.h
+
+src/Singularity/FirstMoverOntology/TalkingRobotGuyAPI:
+total 12
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 4 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  187 Oct 19 01:19 README.md
+
+src/Singularity/Foreign:
+total 60
+drwxrwxr-x  9 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 15 jules jules 4096 Oct 19 01:19 ..
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 API
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 Adapters
+-rw-rw-r--  1 jules jules 7632 Oct 19 01:19 ForeignActuationGuard.cpp
+-rw-rw-r--  1 jules jules 5476 Oct 19 01:19 ForeignActuationGuard.hpp
+-rw-rw-r--  1 jules jules 1747 Oct 19 01:19 ForeignChannel.cpp
+-rw-rw-r--  1 jules jules 1780 Oct 19 01:19 ForeignChannel.hpp
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 Shell
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 Sync
+drwxrwxr-x  3 jules jules 4096 Oct 19 01:19 Web
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 mcp
+drwxrwxr-x  7 jules jules 4096 Oct 19 01:19 py
+
+src/Singularity/Foreign/API:
+total 72
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 9 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 17984 Oct 19 01:19 EarthcallAPI.cpp
+-rw-rw-r-- 1 jules jules  4114 Oct 19 01:19 EarthcallAPI.hpp
+-rw-rw-r-- 1 jules jules 27121 Oct 19 01:19 SecurityManager.cpp
+-rw-rw-r-- 1 jules jules  6758 Oct 19 01:19 SecurityManager.hpp
+
+src/Singularity/Foreign/Adapters:
+total 16
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 9 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 1689 Oct 19 01:19 MacOSAccessibilityAdapter.cpp
+-rw-rw-r-- 1 jules jules 1454 Oct 19 01:19 MacOSAccessibilityAdapter.hpp
+
+src/Singularity/Foreign/Shell:
+total 16
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 9 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 1975 Oct 19 01:19 ShellChannel.cpp
+-rw-rw-r-- 1 jules jules  999 Oct 19 01:19 ShellChannel.hpp
+
+src/Singularity/Foreign/Sync:
+total 32
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 9 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 1128 Oct 19 01:19 AsyncStateLogger.cpp
+-rw-rw-r-- 1 jules jules  995 Oct 19 01:19 AsyncStateLogger.hpp
+-rw-rw-r-- 1 jules jules  808 Oct 19 01:19 ForeignSyncManager.cpp
+-rw-rw-r-- 1 jules jules  858 Oct 19 01:19 ForeignSyncManager.hpp
+-rw-rw-r-- 1 jules jules 1798 Oct 19 01:19 InferenceLawBridge.cpp
+-rw-rw-r-- 1 jules jules 1473 Oct 19 01:19 InferenceLawBridge.hpp
+
+src/Singularity/Foreign/Web:
+total 228
+drwxrwxr-x 3 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 9 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  6485 Oct 19 01:19 DomMirrorBridge.cpp
+-rw-rw-r-- 1 jules jules  3576 Oct 19 01:19 DomMirrorBridge.hpp
+-rw-rw-r-- 1 jules jules 19366 Oct 19 01:19 DomMirrorProtocol.cpp
+-rw-rw-r-- 1 jules jules  4596 Oct 19 01:19 DomMirrorProtocol.hpp
+-rw-rw-r-- 1 jules jules 17353 Oct 19 01:19 DomMirrorTranslator.cpp
+-rw-rw-r-- 1 jules jules  4168 Oct 19 01:19 DomMirrorTranslator.hpp
+-rw-rw-r-- 1 jules jules 25220 Oct 19 01:19 IntegrationManager.cpp
+-rw-rw-r-- 1 jules jules  2493 Oct 19 01:19 IntegrationManager.hpp
+-rw-rw-r-- 1 jules jules 44058 Oct 19 01:19 RealWebView.cpp
+-rw-rw-r-- 1 jules jules  4357 Oct 19 01:19 RealWebView.hpp
+-rw-rw-r-- 1 jules jules  1083 Oct 19 01:19 WebBindings.cpp
+-rw-rw-r-- 1 jules jules 20356 Oct 19 01:19 WebIntegration.cpp
+-rw-rw-r-- 1 jules jules  4225 Oct 19 01:19 WebIntegration.hpp
+-rw-rw-r-- 1 jules jules  8693 Oct 19 01:19 WindowManager.cpp
+-rw-rw-r-- 1 jules jules  3524 Oct 19 01:19 WindowManager.hpp
+-rw-rw-r-- 1 jules jules 13899 Oct 19 01:19 dom_mirror.js
+drwxrwxr-x 4 jules jules  4096 Oct 19 01:19 web_ui
+
+src/Singularity/Foreign/Web/web_ui:
+total 84
+drwxrwxr-x 4 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 3 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules   253 Oct 19 01:19 .gitignore
+-rw-rw-r-- 1 jules jules   231 Oct 19 01:19 .oxlintrc.json
+-rw-rw-r-- 1 jules jules  1009 Oct 19 01:19 README.md
+-rw-rw-r-- 1 jules jules   358 Oct 19 01:19 index.html
+-rw-rw-r-- 1 jules jules 44175 Oct 19 01:19 package-lock.json
+-rw-rw-r-- 1 jules jules   491 Oct 19 01:19 package.json
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 public
+drwxrwxr-x 3 jules jules  4096 Oct 19 01:19 src
+-rw-rw-r-- 1 jules jules   535 Oct 19 01:19 vite.config.js
+
+src/Singularity/Foreign/Web/web_ui/public:
+total 28
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 4 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 9522 Oct 19 01:19 favicon.svg
+-rw-rw-r-- 1 jules jules 5031 Oct 19 01:19 icons.svg
+
+src/Singularity/Foreign/Web/web_ui/src:
+total 28
+drwxrwxr-x 3 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 4 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 2891 Oct 19 01:19 App.css
+-rw-rw-r-- 1 jules jules 3498 Oct 19 01:19 App.jsx
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 assets
+-rw-rw-r-- 1 jules jules 3512 Oct 19 01:19 index.css
+-rw-rw-r-- 1 jules jules  326 Oct 19 01:19 main.jsx
+
+src/Singularity/Foreign/Web/web_ui/src/assets:
+total 44
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 3 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 13057 Oct 19 01:19 hero.png
+-rw-rw-r-- 1 jules jules  4126 Oct 19 01:19 react.svg
+-rw-rw-r-- 1 jules jules  8709 Oct 19 01:19 vite.svg
+
+src/Singularity/Foreign/mcp:
+total 60
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 9 jules jules  4096 Oct 19 01:19 ..
+-rwxrwxr-x 1 jules jules 50008 Oct 19 01:19 earthcall-mcp-server.js
+
+src/Singularity/Foreign/py:
+total 60
+drwxrwxr-x 7 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 9 jules jules  4096 Oct 19 01:19 ..
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 agent
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 api
+-rw-rw-r-- 1 jules jules  3096 Oct 19 01:19 app.py
+-rw-rw-r-- 1 jules jules 18063 Oct 19 01:19 bridge.py
+-rw-rw-r-- 1 jules jules   709 Oct 19 01:19 requirements.txt
+-rwxrwxr-x 1 jules jules   370 Oct 19 01:19 setup_env.sh
+drwxrwxr-x 5 jules jules  4096 Oct 19 01:19 static
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 templates
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 web
+
+src/Singularity/Foreign/py/agent:
+total 12
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 7 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 1888 Oct 19 01:19 earthcall_agent.py
+
+src/Singularity/Foreign/py/api:
+total 24
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 7 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  1121 Oct 19 01:19 ai_service.py
+-rw-rw-r-- 1 jules jules 10372 Oct 19 01:19 routes.py
+
+src/Singularity/Foreign/py/static:
+total 32
+drwxrwxr-x 5 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 7 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  362 Oct 19 01:19 app.js
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 css
+-rw-rw-r-- 1 jules jules 1770 Oct 19 01:19 earthcall_client.js
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 js
+-rw-rw-r-- 1 jules jules  145 Oct 19 01:19 style.css
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 ui
+
+src/Singularity/Foreign/py/static/css:
+total 44
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 5 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 34796 Oct 19 01:19 app.css
+
+src/Singularity/Foreign/py/static/js:
+total 140
+drwxrwxr-x 2 jules jules   4096 Oct 19 01:19 .
+drwxrwxr-x 5 jules jules   4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 103493 Oct 19 01:19 app.js
+-rw-rw-r-- 1 jules jules  26110 Oct 19 01:19 graph_engine.js
+
+src/Singularity/Foreign/py/static/ui:
+total 260
+drwxrwxr-x 2 jules jules   4096 Oct 19 01:19 .
+drwxrwxr-x 5 jules jules   4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules   2415 Oct 19 01:19 app.css
+-rw-rw-r-- 1 jules jules 233423 Oct 19 01:19 app.js
+-rw-rw-r-- 1 jules jules   9522 Oct 19 01:19 favicon.svg
+-rw-rw-r-- 1 jules jules   5031 Oct 19 01:19 icons.svg
+
+src/Singularity/Foreign/py/templates:
+total 76
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 7 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 68165 Oct 19 01:19 index.html
+
+src/Singularity/Foreign/py/web:
+total 12
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 7 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  330 Oct 19 01:19 routes.py
+
+src/Singularity/Input:
+total 24
+drwxrwxr-x  6 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 15 jules jules 4096 Oct 19 01:19 ..
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 Interaction
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 Keyboard
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 Locomotion
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 Mouse
+
+src/Singularity/Input/Interaction:
+total 92
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 6 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 19727 Oct 19 01:19 ControlPatterns.cpp
+-rw-rw-r-- 1 jules jules  7839 Oct 19 01:19 ControlPatterns.hpp
+-rw-rw-r-- 1 jules jules 40775 Oct 19 01:19 InteractionChannel.cpp
+-rw-rw-r-- 1 jules jules 14813 Oct 19 01:19 InteractionChannel.hpp
+
+src/Singularity/Input/Keyboard:
+total 20
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 6 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 5745 Oct 19 01:19 KeyboardHandler.cpp
+-rw-rw-r-- 1 jules jules 1633 Oct 19 01:19 KeyboardHandler.hpp
+
+src/Singularity/Input/Locomotion:
+total 28
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 6 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 13714 Oct 19 01:19 LocomotionChannel.cpp
+-rw-rw-r-- 1 jules jules  3296 Oct 19 01:19 LocomotionChannel.hpp
+
+src/Singularity/Input/Mouse:
+total 28
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 6 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 8895 Oct 19 01:19 MouseHandler.cpp
+-rw-rw-r-- 1 jules jules 4762 Oct 19 01:19 MouseHandler.hpp
+
+src/Singularity/Language:
+total 60
+drwxrwxr-x  2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 15 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r--  1 jules jules   644 Oct 19 01:19 JoyHierarchy.cpp
+-rw-rw-r--  1 jules jules   576 Oct 19 01:19 JoyHierarchy.hpp
+-rw-rw-r--  1 jules jules 13235 Oct 19 01:19 LanguageSystem.cpp
+-rw-rw-r--  1 jules jules  5101 Oct 19 01:19 LanguageSystem.hpp
+-rw-rw-r--  1 jules jules  4753 Oct 19 01:19 SyntacticParser.cpp
+-rw-rw-r--  1 jules jules   930 Oct 19 01:19 SyntacticParser.hpp
+-rw-rw-r--  1 jules jules  1590 Oct 19 01:19 Utterance.cpp
+-rw-rw-r--  1 jules jules  1375 Oct 19 01:19 Utterance.hpp
+
+src/Singularity/Network:
+total 140
+drwxrwxr-x  5 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 15 jules jules  4096 Oct 19 01:19 ..
+drwxrwxr-x  2 jules jules  4096 Oct 19 01:19 Http
+drwxrwxr-x  2 jules jules  4096 Oct 19 01:19 Osc
+-rw-rw-r--  1 jules jules  1379 Oct 19 01:19 WebSocketClient.cpp
+-rw-rw-r--  1 jules jules  1105 Oct 19 01:19 WebSocketClient.hpp
+-rw-rw-r--  1 jules jules  4196 Oct 19 01:19 WebSocketClient_wasm.cpp
+-rw-rw-r--  1 jules jules 99000 Oct 19 01:19 WebSocketServer.cpp
+-rw-rw-r--  1 jules jules  1357 Oct 19 01:19 WebSocketServer.hpp
+drwxrwxr-x  2 jules jules  4096 Oct 19 01:19 py
+
+src/Singularity/Network/Http:
+total 20
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 5 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 5314 Oct 19 01:19 HttpChannel.cpp
+-rw-rw-r-- 1 jules jules 1343 Oct 19 01:19 HttpChannel.hpp
+
+src/Singularity/Network/Osc:
+total 16
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 5 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 3341 Oct 19 01:19 OscChannel.cpp
+-rw-rw-r-- 1 jules jules 1167 Oct 19 01:19 OscChannel.hpp
+
+src/Singularity/Network/py:
+total 16
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 5 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 3679 Oct 19 01:19 engine_server.py
+-rw-rw-r-- 1 jules jules 3213 Oct 19 01:19 events.py
+
+src/Singularity/OntoMath:
+total 292
+drwxrwxr-x  2 jules jules   4096 Oct 19 01:19 .
+drwxrwxr-x 15 jules jules   4096 Oct 19 01:19 ..
+-rw-rw-r--  1 jules jules   8712 Oct 19 01:19 Affine.cpp
+-rw-rw-r--  1 jules jules   1940 Oct 19 01:19 CurveModel.cpp
+-rw-rw-r--  1 jules jules   1369 Oct 19 01:19 CurveModel.hpp
+-rw-rw-r--  1 jules jules   2694 Oct 19 01:19 Field.cpp
+-rw-rw-r--  1 jules jules   1529 Oct 19 01:19 Field.hpp
+-rw-rw-r--  1 jules jules      0 Oct 19 01:19 Function.cpp
+-rw-rw-r--  1 jules jules  14582 Oct 19 01:19 LinearAlgebra.cpp
+-rw-rw-r--  1 jules jules   7335 Oct 19 01:19 LinearAlgebra.hpp
+-rw-rw-r--  1 jules jules    895 Oct 19 01:19 Operations.cpp
+-rw-rw-r--  1 jules jules    492 Oct 19 01:19 Operations.hpp
+-rw-rw-r--  1 jules jules  20194 Oct 19 01:19 ProbabilityForm.cpp
+-rw-rw-r--  1 jules jules   2728 Oct 19 01:19 ProbabilityForm.hpp
+-rw-rw-r--  1 jules jules 160442 Oct 19 01:19 ScalarForm.cpp
+-rw-rw-r--  1 jules jules  38088 Oct 19 01:19 ScalarForm.hpp
+
+src/Singularity/Physical:
+total 24
+drwxrwxr-x  4 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 15 jules jules 4096 Oct 19 01:19 ..
+drwxrwxr-x  2 jules jules 4096 Oct 19 01:19 Adapters
+-rw-rw-r--  1 jules jules 1112 Oct 19 01:19 PhysicalChannel.cpp
+-rw-rw-r--  1 jules jules 1256 Oct 19 01:19 PhysicalChannel.hpp
+drwxrwxr-x  3 jules jules 4096 Oct 19 01:19 py
+
+src/Singularity/Physical/Adapters:
+total 16
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 4 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  435 Oct 19 01:19 SerialAdapter.cpp
+-rw-rw-r-- 1 jules jules  407 Oct 19 01:19 SerialAdapter.hpp
+
+src/Singularity/Physical/py:
+total 12
+drwxrwxr-x 3 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 4 jules jules 4096 Oct 19 01:19 ..
+drwxrwxr-x 3 jules jules 4096 Oct 19 01:19 robotics
+
+src/Singularity/Physical/py/robotics:
+total 24
+drwxrwxr-x 3 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 3 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules   88 Oct 19 01:19 __init__.py
+-rw-rw-r-- 1 jules jules  698 Oct 19 01:19 connection_registry.py
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 drivers
+-rw-rw-r-- 1 jules jules 1263 Oct 19 01:19 engine_sync.py
+
+src/Singularity/Physical/py/robotics/drivers:
+total 20
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 3 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules   72 Oct 19 01:19 __init__.py
+-rw-rw-r-- 1 jules jules  849 Oct 19 01:19 base_driver.py
+-rw-rw-r-- 1 jules jules 3603 Oct 19 01:19 jaka_driver.py
+
+src/Singularity/Screen:
+total 604
+drwxrwxr-x  4 jules jules   4096 Oct 19 01:19 .
+drwxrwxr-x 15 jules jules   4096 Oct 19 01:19 ..
+-rw-rw-r--  1 jules jules   2684 Oct 19 01:19 AuthorableLight.cpp
+-rw-rw-r--  1 jules jules   1385 Oct 19 01:19 AuthorableLight.hpp
+-rw-rw-r--  1 jules jules  26659 Oct 19 01:19 BrushSystem.cpp
+-rw-rw-r--  1 jules jules   7885 Oct 19 01:19 BrushSystem.hpp
+-rw-rw-r--  1 jules jules   1111 Oct 19 01:19 Camera.cpp
+-rw-rw-r--  1 jules jules   1312 Oct 19 01:19 Camera.hpp
+-rw-rw-r--  1 jules jules   1180 Oct 19 01:19 CardTreeLayout.cpp
+-rw-rw-r--  1 jules jules   1009 Oct 19 01:19 CardTreeLayout.hpp
+-rw-rw-r--  1 jules jules  17870 Oct 19 01:19 CreationWindow.cpp
+-rw-rw-r--  1 jules jules    787 Oct 19 01:19 CreationWindow.hpp
+-rw-rw-r--  1 jules jules   5995 Oct 19 01:19 DeveloperToolsWindow.cpp
+-rw-rw-r--  1 jules jules    935 Oct 19 01:19 DeveloperToolsWindow.hpp
+-rw-rw-r--  1 jules jules   4153 Oct 19 01:19 DrawAdapters.cpp
+-rw-rw-r--  1 jules jules      0 Oct 19 01:19 ElementalToolWindows.cpp
+-rw-rw-r--  1 jules jules    130 Oct 19 01:19 ElementalToolWindows.hpp
+drwxrwxr-x  2 jules jules   4096 Oct 19 01:19 GL
+-rw-rw-r--  1 jules jules   1674 Oct 19 01:19 HighlightSystem.cpp
+-rw-rw-r--  1 jules jules    640 Oct 19 01:19 HighlightSystem.hpp
+-rw-rw-r--  1 jules jules   3535 Oct 19 01:19 ImageCodecChannel.cpp
+-rw-rw-r--  1 jules jules    628 Oct 19 01:19 ImageCodecChannel.hpp
+-rw-rw-r--  1 jules jules 221252 Oct 19 01:19 LawGraphWindow.cpp
+-rw-rw-r--  1 jules jules   3363 Oct 19 01:19 LawGraphWindow.hpp
+-rw-rw-r--  1 jules jules  36143 Oct 19 01:19 MathEditors.cpp
+-rw-rw-r--  1 jules jules   1579 Oct 19 01:19 MathEditors.hpp
+-rw-rw-r--  1 jules jules   1411 Oct 19 01:19 RadianceSource.hpp
+-rw-rw-r--  1 jules jules  10815 Oct 19 01:19 RelationManagerWindow.cpp
+-rw-rw-r--  1 jules jules    229 Oct 19 01:19 RelationManagerWindow.hpp
+-rw-rw-r--  1 jules jules    927 Oct 19 01:19 RenderMaterial.cpp
+-rw-rw-r--  1 jules jules   3221 Oct 19 01:19 RenderMaterial.hpp
+-rw-rw-r--  1 jules jules  15930 Oct 19 01:19 RenderedFieldSemanticObserver.hpp
+-rw-rw-r--  1 jules jules   2018 Oct 19 01:19 Renderer.cpp
+-rw-rw-r--  1 jules jules  32553 Oct 19 01:19 Renderer.hpp
+-rw-rw-r--  1 jules jules  24884 Oct 19 01:19 ScreenChannel.cpp
+-rw-rw-r--  1 jules jules  11901 Oct 19 01:19 ScreenChannel.hpp
+-rw-rw-r--  1 jules jules  35137 Oct 19 01:19 ScreenRecorder.cpp
+-rw-rw-r--  1 jules jules   7838 Oct 19 01:19 ScreenRecorder.hpp
+-rw-rw-r--  1 jules jules   1276 Oct 19 01:19 ShadingSystem.cpp
+-rw-rw-r--  1 jules jules    524 Oct 19 01:19 ShadingSystem.hpp
+-rw-rw-r--  1 jules jules   8049 Oct 19 01:19 VolumeDensity.hpp
+-rw-rw-r--  1 jules jules   8708 Oct 19 01:19 VolumeZeroProof.cpp
+-rw-rw-r--  1 jules jules   4110 Oct 19 01:19 VolumeZeroProof.hpp
+drwxrwxr-x  2 jules jules   4096 Oct 19 01:19 WebGPU
+
+src/Singularity/Screen/GL:
+total 40
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 4 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  2717 Oct 19 01:19 GluCompat.cpp
+-rw-rw-r-- 1 jules jules  2199 Oct 19 01:19 GluCompat.hpp
+-rw-rw-r-- 1 jules jules 16801 Oct 19 01:19 OpenGLRenderer.cpp
+-rw-rw-r-- 1 jules jules  3346 Oct 19 01:19 OpenGLRenderer.hpp
+
+src/Singularity/Screen/WebGPU:
+total 576
+drwxrwxr-x 2 jules jules   4096 Oct 19 01:19 .
+drwxrwxr-x 4 jules jules   4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules   4887 Oct 19 01:19 GpuBufferPool.cpp
+-rw-rw-r-- 1 jules jules   3016 Oct 19 01:19 GpuBufferPool.hpp
+-rw-rw-r-- 1 jules jules   2678 Oct 19 01:19 GpuMeshCache.cpp
+-rw-rw-r-- 1 jules jules   1742 Oct 19 01:19 GpuMeshCache.hpp
+-rw-rw-r-- 1 jules jules 244406 Oct 19 01:19 SdfWgsl.cpp
+-rw-rw-r-- 1 jules jules  19407 Oct 19 01:19 SdfWgsl.hpp
+-rw-rw-r-- 1 jules jules   2113 Oct 19 01:19 WebGpuContext.hpp
+-rw-rw-r-- 1 jules jules   7129 Oct 19 01:19 WebGpuContext.mm
+-rw-rw-r-- 1 jules jules   3689 Oct 19 01:19 WebGpuContext_wasm.cpp
+-rw-rw-r-- 1 jules jules 187146 Oct 19 01:19 WebGpuRenderer.cpp
+-rw-rw-r-- 1 jules jules  38090 Oct 19 01:19 WebGpuRenderer.hpp
+-rw-rw-r-- 1 jules jules   4645 Oct 19 01:19 WgpuDevice.hpp
+-rw-rw-r-- 1 jules jules   7633 Oct 19 01:19 smoke_mesh.cpp
+-rw-rw-r-- 1 jules jules   4101 Oct 19 01:19 smoke_offscreen.cpp
+-rw-rw-r-- 1 jules jules  15982 Oct 19 01:19 smoke_renderer.cpp
+-rw-rw-r-- 1 jules jules   6926 Oct 19 01:19 smoke_window.mm
+
+src/Singularity/Storage:
+total 260
+drwxrwxr-x  5 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 15 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r--  1 jules jules  9791 Oct 19 01:19 CloudStorage.cpp
+-rw-rw-r--  1 jules jules  1888 Oct 19 01:19 CloudStorage.hpp
+-rw-rw-r--  1 jules jules  8636 Oct 19 01:19 EarthcallFmtTool.cpp
+-rw-rw-r--  1 jules jules 45864 Oct 19 01:19 FileChannel.cpp
+-rw-rw-r--  1 jules jules  6479 Oct 19 01:19 FileChannel.hpp
+-rw-rw-r--  1 jules jules  8745 Oct 19 01:19 FileWatcher.cpp
+-rw-rw-r--  1 jules jules  3853 Oct 19 01:19 FileWatcher.hpp
+drwxrwxr-x  2 jules jules  4096 Oct 19 01:19 FlatBuffers
+-rw-rw-r--  1 jules jules  5158 Oct 19 01:19 Frontier.hpp
+-rw-rw-r--  1 jules jules  2614 Oct 19 01:19 MigrateSaves.cpp
+-rw-rw-r--  1 jules jules  5744 Oct 19 01:19 MigrationFramework.cpp
+-rw-rw-r--  1 jules jules  2449 Oct 19 01:19 MigrationFramework.hpp
+-rw-rw-r--  1 jules jules 71955 Oct 19 01:19 SaveSystem.cpp
+-rw-rw-r--  1 jules jules 11500 Oct 19 01:19 SaveSystem.hpp
+drwxrwxr-x  2 jules jules  4096 Oct 19 01:19 Schema
+drwxrwxr-x  6 jules jules  4096 Oct 19 01:19 Serialization
+-rw-rw-r--  1 jules jules   301 Oct 19 01:19 Serialization.hpp
+-rw-rw-r--  1 jules jules  7956 Oct 19 01:19 StreamChannel.cpp
+-rw-rw-r--  1 jules jules  3595 Oct 19 01:19 StreamChannel.hpp
+-rw-rw-r--  1 jules jules 10506 Oct 19 01:19 VirtualFileSystem.cpp
+-rw-rw-r--  1 jules jules  3710 Oct 19 01:19 VirtualFileSystem.hpp
+
+src/Singularity/Storage/FlatBuffers:
+total 12
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 5 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  283 Oct 19 01:19 earthcall_heavy.fbs
+
+src/Singularity/Storage/Schema:
+total 68
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 5 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  3467 Oct 19 01:19 Earthcall.fbs
+-rw-rw-r-- 1 jules jules 54865 Oct 19 01:19 Earthcall_generated.h
+
+src/Singularity/Storage/Serialization:
+total 56
+drwxrwxr-x 6 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 5 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 9124 Oct 19 01:19 BinarySerializer.cpp
+-rw-rw-r-- 1 jules jules 1176 Oct 19 01:19 BinarySerializer.hpp
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 ConstructedBeing
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 Person
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 Relation
+-rw-rw-r-- 1 jules jules  270 Oct 19 01:19 Serialization.cpp
+-rw-rw-r-- 1 jules jules 2207 Oct 19 01:19 Serialization.hpp
+-rw-rw-r-- 1 jules jules 3681 Oct 19 01:19 SessionSemanticRoots.cpp
+-rw-rw-r-- 1 jules jules 1357 Oct 19 01:19 SessionSemanticRoots.hpp
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 ZonesOfEarth
+
+src/Singularity/Storage/Serialization/ConstructedBeing:
+total 36
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 6 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 22176 Oct 19 01:19 ObjectSerialization.cpp
+-rw-rw-r-- 1 jules jules   348 Oct 19 01:19 ObjectSerialization.hpp
+
+src/Singularity/Storage/Serialization/Person:
+total 44
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 6 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 10794 Oct 19 01:19 BodySerialization.cpp
+-rw-rw-r-- 1 jules jules   484 Oct 19 01:19 BodySerialization.hpp
+-rw-rw-r-- 1 jules jules 13324 Oct 19 01:19 PersonSerialization.cpp
+-rw-rw-r-- 1 jules jules   550 Oct 19 01:19 PersonSerialization.hpp
+
+src/Singularity/Storage/Serialization/Relation:
+total 32
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 6 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 5423 Oct 19 01:19 FormationSerialization.cpp
+-rw-rw-r-- 1 jules jules  590 Oct 19 01:19 FormationSerialization.hpp
+-rw-rw-r-- 1 jules jules 5961 Oct 19 01:19 RelationSerialization.cpp
+-rw-rw-r-- 1 jules jules  457 Oct 19 01:19 RelationSerialization.hpp
+
+src/Singularity/Storage/Serialization/ZonesOfEarth:
+total 52
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 6 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  1063 Oct 19 01:19 HomeSerialization.cpp
+-rw-rw-r-- 1 jules jules   270 Oct 19 01:19 HomeSerialization.hpp
+-rw-rw-r-- 1 jules jules  3513 Oct 19 01:19 OurverseSerialization.cpp
+-rw-rw-r-- 1 jules jules   851 Oct 19 01:19 OurverseSerialization.hpp
+-rw-rw-r-- 1 jules jules 24012 Oct 19 01:19 ZoneSerialization.cpp
+-rw-rw-r-- 1 jules jules  2061 Oct 19 01:19 ZoneSerialization.hpp
+
+src/Singularity/Terminal:
+total 344
+drwxrwxr-x  2 jules jules   4096 Oct 19 01:19 .
+drwxrwxr-x 15 jules jules   4096 Oct 19 01:19 ..
+-rw-rw-r--  1 jules jules 110250 Oct 19 01:19 LawSentence.cpp
+-rw-rw-r--  1 jules jules  12774 Oct 19 01:19 LawSentence.hpp
+-rw-rw-r--  1 jules jules  53460 Oct 19 01:19 LineEditor.cpp
+-rw-rw-r--  1 jules jules  10570 Oct 19 01:19 LineEditor.hpp
+-rw-rw-r--  1 jules jules 125740 Oct 19 01:19 TerminalChannel.cpp
+-rw-rw-r--  1 jules jules  17529 Oct 19 01:19 TerminalChannel.hpp
+
+src/Time:
+total 28
+drwxrwxr-x 4 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 9 jules jules 4096 Oct 19 01:19 ..
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 Event
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 Moment
+-rw-rw-r-- 1 jules jules 6865 Oct 19 01:19 timeline.cpp
+-rw-rw-r-- 1 jules jules 3303 Oct 19 01:19 timeline.hpp
+
+src/Time/Event:
+total 16
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 4 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 3503 Oct 19 01:19 Event.cpp
+-rw-rw-r-- 1 jules jules 2412 Oct 19 01:19 Event.hpp
+
+src/Time/Moment:
+total 20
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 4 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 4711 Oct 19 01:19 Moment.cpp
+-rw-rw-r-- 1 jules jules 3597 Oct 19 01:19 Moment.hpp
+
+src/ZonesOfEarth:
+total 244
+drwxrwxr-x 8 jules jules   4096 Oct 19 01:19 .
+drwxrwxr-x 9 jules jules   4096 Oct 19 01:19 ..
+drwxrwxr-x 3 jules jules   4096 Oct 19 01:19 AuthorsOfLaw
+drwxrwxr-x 2 jules jules   4096 Oct 19 01:19 HomesOfEarth
+drwxrwxr-x 2 jules jules   4096 Oct 19 01:19 Ourverse
+drwxrwxr-x 2 jules jules   4096 Oct 19 01:19 Physics
+-rw-rw-r-- 1 jules jules   1077 Oct 19 01:19 SaveContext.hpp
+drwxrwxr-x 2 jules jules   4096 Oct 19 01:19 Zone
+-rw-rw-r-- 1 jules jules  10152 Oct 19 01:19 ZoneBounds.cpp
+-rw-rw-r-- 1 jules jules   2046 Oct 19 01:19 ZoneLawMembership.cpp
+-rw-rw-r-- 1 jules jules 162584 Oct 19 01:19 ZoneManager.cpp
+-rw-rw-r-- 1 jules jules  13780 Oct 19 01:19 ZoneManager.hpp
+-rw-rw-r-- 1 jules jules  13749 Oct 19 01:19 ZoneNativePersistence.cpp
+drwxrwxr-x 2 jules jules   4096 Oct 19 01:19 py
+
+src/ZonesOfEarth/AuthorsOfLaw:
+total 628
+drwxrwxr-x 3 jules jules   4096 Oct 19 01:19 .
+drwxrwxr-x 8 jules jules   4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 107148 Oct 19 01:19 ActionModel.cpp
+-rw-rw-r-- 1 jules jules  25881 Oct 19 01:19 ActionModel.hpp
+-rw-rw-r-- 1 jules jules   9402 Oct 19 01:19 ChangeRecorder.cpp
+-rw-rw-r-- 1 jules jules   2885 Oct 19 01:19 ChangeRecorder.hpp
+-rw-rw-r-- 1 jules jules  49503 Oct 19 01:19 ConditionModel.cpp
+-rw-rw-r-- 1 jules jules  13098 Oct 19 01:19 ConditionModel.hpp
+-rw-rw-r-- 1 jules jules   1347 Oct 19 01:19 ECA.cpp
+-rw-rw-r-- 1 jules jules   1661 Oct 19 01:19 ECA.hpp
+-rw-rw-r-- 1 jules jules 165510 Oct 19 01:19 Law.cpp
+-rw-rw-r-- 1 jules jules  68677 Oct 19 01:19 Law.hpp
+-rw-rw-r-- 1 jules jules   1260 Oct 19 01:19 LawAuditLogger.hpp
+-rw-rw-r-- 1 jules jules   6612 Oct 19 01:19 LawSynthesis.cpp
+-rw-rw-r-- 1 jules jules   2103 Oct 19 01:19 LawSynthesis.hpp
+-rw-rw-r-- 1 jules jules  14025 Oct 19 01:19 MathBinding.hpp
+-rw-rw-r-- 1 jules jules   2864 Oct 19 01:19 PhysicsLawBridge.cpp
+-rw-rw-r-- 1 jules jules   1770 Oct 19 01:19 PhysicsLawBridge.hpp
+-rw-rw-r-- 1 jules jules   1723 Oct 19 01:19 PropheticIndexBridge.cpp
+-rw-rw-r-- 1 jules jules   1108 Oct 19 01:19 PropheticIndexBridge.hpp
+-rw-rw-r-- 1 jules jules  54932 Oct 19 01:19 PropheticRete.cpp
+-rw-rw-r-- 1 jules jules  17084 Oct 19 01:19 PropheticRete.hpp
+-rw-rw-r-- 1 jules jules   5078 Oct 19 01:19 SecondNatureLawAuthoring.cpp
+-rw-rw-r-- 1 jules jules    992 Oct 19 01:19 SecondNatureLawAuthoring.hpp
+-rw-rw-r-- 1 jules jules   1104 Oct 19 01:19 Universe.cpp
+-rw-rw-r-- 1 jules jules  14703 Oct 19 01:19 Universe.hpp
+drwxrwxr-x 2 jules jules   4096 Oct 19 01:19 py
+
+src/ZonesOfEarth/AuthorsOfLaw/py:
+total 12
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 3 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 1347 Oct 19 01:19 Law.py
+
+src/ZonesOfEarth/HomesOfEarth:
+total 20
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 8 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 6484 Oct 19 01:19 Home.cpp
+-rw-rw-r-- 1 jules jules 3254 Oct 19 01:19 Home.hpp
+
+src/ZonesOfEarth/Ourverse:
+total 20
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 8 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 6062 Oct 19 01:19 Ourverse.cpp
+-rw-rw-r-- 1 jules jules 2831 Oct 19 01:19 Ourverse.hpp
+
+src/ZonesOfEarth/Physics:
+total 124
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 8 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  7560 Oct 19 01:19 AuthoredPhysicsLaws.cpp
+-rw-rw-r-- 1 jules jules   767 Oct 19 01:19 AuthoredPhysicsLaws.hpp
+-rw-rw-r-- 1 jules jules 23351 Oct 19 01:19 CollisionDispatcher.cpp
+-rw-rw-r-- 1 jules jules   560 Oct 19 01:19 CollisionDispatcher.hpp
+-rw-rw-r-- 1 jules jules 13847 Oct 19 01:19 DefaultPhysicsLaws.cpp
+-rw-rw-r-- 1 jules jules   416 Oct 19 01:19 DefaultPhysicsLaws.hpp
+-rw-rw-r-- 1 jules jules 41209 Oct 19 01:19 Physics.cpp
+-rw-rw-r-- 1 jules jules 11674 Oct 19 01:19 Physics.hpp
+
+src/ZonesOfEarth/Zone:
+total 52
+drwxrwxr-x 2 jules jules  4096 Oct 19 01:19 .
+drwxrwxr-x 8 jules jules  4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules 25759 Oct 19 01:19 Zone.cpp
+-rw-rw-r-- 1 jules jules 12335 Oct 19 01:19 Zone.hpp
+
+src/ZonesOfEarth/py:
+total 12
+drwxrwxr-x 2 jules jules 4096 Oct 19 01:19 .
+drwxrwxr-x 8 jules jules 4096 Oct 19 01:19 ..
+-rw-rw-r-- 1 jules jules  559 Oct 19 01:19 Zone.py
