@@ -21,6 +21,7 @@
 
 #include <GLFW/glfw3.h>
 #include <cstdio>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <memory>
