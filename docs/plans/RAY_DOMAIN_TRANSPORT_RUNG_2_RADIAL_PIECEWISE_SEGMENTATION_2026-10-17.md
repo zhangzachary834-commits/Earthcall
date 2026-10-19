@@ -765,6 +765,41 @@ Whether this evidence justifies a tighter declared model, or the lane's default,
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T18:46 PDT. Human origin: Zachary Zhang ("Faithfulness to exact math should be the rule"). Contracts I/II are the Firmament's framing; the witness and the Noise finding are this session's.*
 
+## 6q. Where today's pixels leave the authored equation: quadrature, not arithmetic (2026-10-18, eighteenth pass)
+
+**Origin.** Zach: "keep going", under §6p's rule. This pass tried the first Rung 3a rewrite, the sample point in the medium's own frame, and then measured where faithfulness is actually lost.
+
+**1. On Metal, source-level reassociation does not control rounding.**
+- The witness evaluated each lattice point two ways at once:
+  - the marcher's `(ro + rd·t) − origin`;
+  - the medium frame `((ro − origin) + rd·t₀) + rd·(i + ½)·step`.
+- In strict IEEE f32 on the CPU (fast-math off) they differ at 91% of coordinates. On the M5 they are **bit-identical at every sample of every medium**, near and far cameras alike, and so are their densities.
+- wgpu compiles for Metal in fast-math mode, where the compiler canonicalizes algebraically equivalent forms. It almost certainly also hoists loop invariants itself.
+- **Consequences for Rung 3a.** Rewriting per-ray arithmetic in WGSL buys neither faithfulness (the compiler owns the rounding) nor, plausibly, speed (it already hoists). A faithfulness gain from arithmetic must come from values the shader cannot see, computed on the CPU in double, as the GPU clock preparation already does.
+- No production change was made. The comparison stays in `webgpu_volume_faithfulness_test` as a witness, with a "never less faithful" check.
+
+**2. The integral is where pixels leave the authored equation.** The marcher integrates optical depth as 96 midpoint samples per chord, τ ≈ Σ σ(sᵢ)·step, with σ = D > 0 ? max(σₜ, 10⁻⁶) : 0. The same witness compares that with the converged integral of the same authored σ: 8192 against 16384 subintervals in double, 16 rays per medium. Transmittance error, in 8-bit levels:
+
+| Media | Worst transmittance error against the continuum | Optical depth error |
+|---|---|---|
+| `borealis.hero.auroral-curtain` | **3.85 of 255** | 31% |
+| Borealis v1/v2 ×4 | 0.96 – 1.92 of 255 | 1.9 – 2.3% |
+| Prism wing B and summit | 0.02 – 0.22 of 255 | ≤ 0.6% |
+| Northern Veil ×4 | 0.02 – 0.17 of 255 | ≤ 1.4% |
+| Everything else | < 0.01 of 255 | — |
+
+The references converge to 2×10⁻⁴ or better. Today's per-point arithmetic is faithful to about 10⁻⁶ (§6p), so on this corpus **quadrature is the dominant departure from exact math, by three to four orders of magnitude**, and it is visible on Borealis. This is transmittance (alpha) only; in-scattered and emitted radiance share the same lattice and are expected to behave alike, which is not yet measured.
+
+**Recommendation (the Firmament's Layer C, reframed).** The faithful crossing is error-controlled integration, not arithmetic rewriting. Spend samples where the integrand varies, using what the ray-domain machinery already knows per ray: closed-form support, segments, Lipschitz bounds. Use higher-order rules where it is smooth, against an output budget measured from the continuum. `volumeOutputErrorBudget` (Codex, 2026-10-10; capped at 1/255; today against the full 96-sample lattice) is the natural seat if its reference becomes the continuum.
+
+**Zach's decisions this needs (⚑):**
+- Whether `volumeSamplesPerChord` stays the definition of the image, or becomes a floor under a continuum error budget.
+- What budget, for example ≤ ½ level against the continuum.
+
+Faster media may get slower where they are unfaithful today (the Borealis hero curtain).
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T19:08 PDT. Human origin: Zachary Zhang ("Faithfulness to exact math should be the rule"; "keep going"). Layer C is the Firmament's; the compiler finding and the quadrature measurement are this session's.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

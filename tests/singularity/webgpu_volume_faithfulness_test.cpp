@@ -381,7 +381,11 @@ int main() {
     const double clocks[] = {0.0, 0.75};
     std::mt19937 rng(20261018u);
     std::uniform_real_distribution<double> u(-1.0, 1.0);
-    uint32_t media = 0, measured = 0, refused = 0, nonFinite = 0;
+    uint32_t media = 0, measured = 0, refused = 0, nonFinite = 0, lessFaithful = 0;
+    double sumRatio[2] = {};
+    double quadratureWorst = 0.0, quadratureWorst2 = 0.0;
+    uint32_t quadratureMeasured = 0;
+    std::string quadratureWho;
     double worstNormalized = 0.0;
     std::string worstWho;
 
@@ -422,18 +426,27 @@ int main() {
             const std::string wgsl = program.wgsl + R"WGSL(
 @group(2) @binding(0) var<storage, read> fidelityRays: array<vec4<f32>>;
 @group(2) @binding(1) var<storage, read_write> fidelityOut: array<f32>;
+@group(2) @binding(2) var<storage, read_write> fidelityGap: array<f32>;
 @compute @workgroup_size(64)
 fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
-    if (id.x >= arrayLength(&fidelityOut)) { return; }
+    if (2u * id.x + 1u >= arrayLength(&fidelityOut)) { return; }
     g_instIdx = 0u;
     let inst = instances[0u];
     let ro = fidelityRays[2u * id.x].xyz;
-    let sampleT = fidelityRays[2u * id.x].w;
+    let t0 = fidelityRays[2u * id.x].w;
     let rd = fidelityRays[2u * id.x + 1u].xyz;
-    let worldP = ro + rd * sampleT;
-    let p = worldP - inst.origin.xyz;
-)WGSL" + std::string(fill ? "    volumeSharedEval(p);\n" : "") + R"WGSL(
-    fidelityOut[id.x] = volumeDensityEval(p);
+    let offset = fidelityRays[2u * id.x + 1u].w;
+    // The marcher's world-frame point, and the medium-frame (Rung 3a) one.
+    let sampleT = t0 + offset;
+    let pWorld = (ro + rd * sampleT) - inst.origin.xyz;
+    // Medium frame: once per ray at the camera's distance, then the box's own magnitude.
+    let pLocal = ((ro - inst.origin.xyz) + rd * t0) + rd * offset;
+)WGSL" + std::string(fill ? "    volumeSharedEval(pWorld);\n" : "") + R"WGSL(
+    fidelityOut[2u * id.x] = volumeDensityEval(pWorld);
+)WGSL" + std::string(fill ? "    volumeSharedEval(pLocal);\n" : "") + R"WGSL(
+    fidelityOut[2u * id.x + 1u] = volumeDensityEval(pLocal);
+    let gap = abs(pWorld - pLocal);
+    fidelityGap[id.x] = max(gap.x, max(gap.y, gap.z));
     if (id.x == 0xffffffffu) { fidelityOut[0] = P.v[0] + inst.time.x; }
 }
 )WGSL";
@@ -458,12 +471,21 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
             WGPUBuffer paramBuf = makeBuffer(gpu, paramBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
             WGPUBuffer instBuf = makeBuffer(gpu, 80, WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
             WGPUBuffer rayBuf = makeBuffer(gpu, uint64_t(n) * 2 * sizeof(glm::vec4), WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
-            WGPUBuffer outBuf = makeBuffer(gpu, uint64_t(n) * sizeof(float), WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc);
-            WGPUBuffer readBuf = makeBuffer(gpu, uint64_t(n) * sizeof(float), WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead);
+            const uint64_t outBytes = uint64_t(n) * 2 * sizeof(float);
+            WGPUBuffer outBuf = makeBuffer(gpu, outBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc);
+            WGPUBuffer readBuf = makeBuffer(gpu, outBytes, WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead);
+            const uint64_t gapBytes = uint64_t(n) * sizeof(float);
+            WGPUBuffer gapBuf = makeBuffer(gpu, gapBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc);
+            WGPUBuffer gapRead = makeBuffer(gpu, gapBytes, WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead);
+            double gapMax = 0.0;
+            uint64_t gapDiffer = 0, gapTotal = 0;
 
-            double worstAbs = 0.0, scale = 0.0, sumSq = 0.0;
-            uint64_t count = 0;
+            // [camera set][formula]: set 0 near the box (3 radii out), set 1 far
+            // (300 units out); formula 0 the marcher's world frame, 1 the medium's.
+            double worstAbs[2][2] = {}, sumSq[2][2] = {}, scale = 0.0;
+            uint64_t count[2] = {};
             Ref ref;
+            for (int set = 0; set < 2; ++set)
             for (const double t : clocks) {
                 std::vector<float> params = program.params;
                 params.resize(std::max<std::size_t>(params.size(), 4), 0.0f);
@@ -484,7 +506,8 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                     if (glm::length(dir) < 1e-3) dir = glm::dvec3(0.3, 0.2, 1.0);
                     const glm::vec3 rd = glm::normalize(glm::vec3(dir));
                     const glm::dvec3 target = half * glm::dvec3(u(rng), u(rng), u(rng));
-                    const glm::vec3 ro = glm::vec3(origin + target - glm::dvec3(rd) * (3.0 * glm::length(half) + 1.0));
+                    const double out = set == 0 ? 3.0 * glm::length(half) + 1.0 : 300.0;
+                    const glm::vec3 ro = glm::vec3(origin + target - glm::dvec3(rd) * out);
                     const glm::vec3 lo = glm::vec3(origin - half), hi = glm::vec3(origin + half);
                     float t0 = -3.0e38f, t1 = 3.0e38f;
                     for (int a = 0; a < 3; ++a) {
@@ -496,10 +519,13 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                     t0 = std::max(t0, 0.0f);
                     const float step = (t1 - t0) / float(kSamples);
                     for (int i = 0; i < kSamples; ++i) {
-                        const float sampleT = t0 + (float(i) + 0.5f) * step;
-                        rays.push_back(glm::vec4(ro, sampleT));
-                        rays.push_back(glm::vec4(rd, 0.0f));
-                        refP.push_back(glm::dvec3(ro) + glm::dvec3(rd) * double(sampleT) - glm::dvec3(glm::vec3(origin)));
+                        // The lattice point t0 + (i + ½)·step, exactly, from the f32
+                        // t0 and step the marcher holds.
+                        const float offset = (float(i) + 0.5f) * step;
+                        rays.push_back(glm::vec4(ro, t0));
+                        rays.push_back(glm::vec4(rd, offset));
+                        const double exactT = double(t0) + (double(i) + 0.5) * double(step);
+                        refP.push_back(glm::dvec3(ro) + glm::dvec3(rd) * exactT - glm::dvec3(glm::vec3(origin)));
                     }
                 }
                 wgpuQueueWriteBuffer(gpu.queue, rayBuf, 0, rays.data(), rays.size() * sizeof(glm::vec4));
@@ -521,14 +547,15 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                 groups.push_back(bind(gpu, cp, 0, {{1u, {paramBuf, paramBytes}}}));
                 groups.push_back(bind(gpu, cp, 1, {{0u, {instBuf, 80}}}));
                 groups.push_back(bind(gpu, cp, 2, {{0u, {rayBuf, uint64_t(n) * 2 * sizeof(glm::vec4)}},
-                                                   {1u, {outBuf, uint64_t(n) * sizeof(float)}}}));
+                                                   {1u, {outBuf, outBytes}}, {2u, {gapBuf, gapBytes}}}));
                 WGPUComputePassEncoder pass = wgpuCommandEncoderBeginComputePass(enc, nullptr);
                 wgpuComputePassEncoderSetPipeline(pass, cp);
                 for (uint32_t g = 0; g < 3; ++g) wgpuComputePassEncoderSetBindGroup(pass, g, groups[base + g], 0, nullptr);
                 wgpuComputePassEncoderDispatchWorkgroups(pass, (n + 63) / 64, 1, 1);
                 wgpuComputePassEncoderEnd(pass);
                 wgpuComputePassEncoderRelease(pass);
-                wgpuCommandEncoderCopyBufferToBuffer(enc, outBuf, 0, readBuf, 0, uint64_t(n) * sizeof(float));
+                wgpuCommandEncoderCopyBufferToBuffer(enc, outBuf, 0, readBuf, 0, outBytes);
+                wgpuCommandEncoderCopyBufferToBuffer(enc, gapBuf, 0, gapRead, 0, gapBytes);
                 WGPUCommandBuffer cmd = wgpuCommandEncoderFinish(enc, nullptr);
                 wgpuQueueSubmit(gpu.queue, 1, &cmd);
                 wgpuCommandBufferRelease(cmd);
@@ -538,9 +565,9 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                 mci.mode = WGPUCallbackMode_AllowProcessEvents;
                 mci.callback = onMap;
                 mci.userdata1 = &mr;
-                wgpuBufferMapAsync(readBuf, WGPUMapMode_Read, 0, uint64_t(n) * sizeof(float), mci);
+                wgpuBufferMapAsync(readBuf, WGPUMapMode_Read, 0, outBytes, mci);
                 while (!mr.done) wgpuInstanceProcessEvents(gpu.instance);
-                const auto* out = static_cast<const float*>(wgpuBufferGetConstMappedRange(readBuf, 0, uint64_t(n) * sizeof(float)));
+                const auto* out = static_cast<const float*>(wgpuBufferGetConstMappedRange(readBuf, 0, outBytes));
                 for (uint32_t i = 0; i < n; ++i) {
                     ref.p = refP[i];
                     ref.t = t;
@@ -550,33 +577,122 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                                    {OntoMath::kOmegaXVar, 0.0}, {OntoMath::kOmegaYVar, 0.0}, {OntoMath::kOmegaZVar, 1.0}};
                     const auto exact = ref.density(*b.densityExpr);
                     if (!exact) continue;
-                    const double dev = double(out[i]);
-                    if (!std::isfinite(dev)) { ++nonFinite; continue; }
-                    const double err = std::abs(dev - *exact);
-                    worstAbs = std::max(worstAbs, err);
                     scale = std::max(scale, std::abs(*exact));
-                    sumSq += err * err;
-                    ++count;
+                    ++count[set];
+                    for (int f = 0; f < 2; ++f) {
+                        const double dev = double(out[2 * i + f]);
+                        if (!std::isfinite(dev)) { ++nonFinite; continue; }
+                        const double err = std::abs(dev - *exact);
+                        worstAbs[set][f] = std::max(worstAbs[set][f], err);
+                        sumSq[set][f] += err * err;
+                    }
                 }
                 wgpuBufferUnmap(readBuf);
+                {
+                    MapR gr;
+                    WGPUBufferMapCallbackInfo gci = {};
+                    gci.mode = WGPUCallbackMode_AllowProcessEvents;
+                    gci.callback = onMap;
+                    gci.userdata1 = &gr;
+                    wgpuBufferMapAsync(gapRead, WGPUMapMode_Read, 0, gapBytes, gci);
+                    while (!gr.done) wgpuInstanceProcessEvents(gpu.instance);
+                    const auto* g = static_cast<const float*>(wgpuBufferGetConstMappedRange(gapRead, 0, gapBytes));
+                    for (uint32_t i = 0; i < n; ++i) {
+                        gapMax = std::max(gapMax, double(g[i]));
+                        gapDiffer += g[i] != 0.0f ? 1 : 0;
+                        ++gapTotal;
+                    }
+                    wgpuBufferUnmap(gapRead);
+                }
                 for (auto* g : groups) wgpuBindGroupRelease(g);
             }
-            for (auto* buf : {paramBuf, instBuf, rayBuf, outBuf, readBuf}) wgpuBufferRelease(buf);
+            for (auto* buf : {paramBuf, instBuf, rayBuf, outBuf, readBuf, gapBuf, gapRead}) wgpuBufferRelease(buf);
             wgpuComputePipelineRelease(cp);
             if (prep) wgpuComputePipelineRelease(prep);
             wgpuShaderModuleRelease(sm);
             if (prepModule) wgpuShaderModuleRelease(prepModule);
-            if (count == 0) {
+            if (count[0] == 0 || count[1] == 0) {
                 std::printf("    %s: reference refused (%s)\n", b.producerId.c_str(), ref.refusal.c_str());
                 ++refused;
                 continue;
             }
             ++measured;
-            const double normalized = scale > 0.0 ? worstAbs / scale : worstAbs;
+            {
+                // Quadrature against the continuum (CPU, double): the optical depth the
+                // marcher integrates, tau = sum sigma(s_i)·step over 96 midpoints, with
+                // sigma = D > 0 ? max(sigma_t, 1e-6) : 0 (sigma_t authored, or 0.5·D),
+                // against the converged integral of the same authored sigma.
+                auto sigmaAt = [&](const glm::dvec3& q, double t) -> std::optional<double> {
+                    ref.p = q;
+                    ref.scalars["x"] = q.x; ref.scalars["y"] = q.y; ref.scalars["z"] = q.z;
+                    ref.scalars[OntoMath::kTimeVar] = t;
+                    const auto D = ref.density(*b.densityExpr);
+                    if (!D) return std::nullopt;
+                    if (!(*D > 0.0)) return 0.0;
+                    if (!b.extinctionExpr || b.extinctionExpr->pieces.empty()) return std::max(0.5 * *D, 1e-6);
+                    const auto e = ref.density(*b.extinctionExpr);
+                    if (!e) return std::nullopt;
+                    return std::max(*e, 1e-6);
+                };
+                double worstT = 0.0, worstTau = 0.0, worstConv = 0.0;
+                bool ok = true;
+                std::mt19937 qrng(99u);
+                for (int r = 0; r < 16 && ok; ++r) {
+                    glm::dvec3 dir(u(qrng), u(qrng), u(qrng));
+                    if (glm::length(dir) < 1e-3) dir = glm::dvec3(0.3, 0.2, 1.0);
+                    dir = glm::normalize(dir);
+                    const glm::dvec3 target = half * glm::dvec3(u(qrng), u(qrng), u(qrng));
+                    const glm::dvec3 o = target - dir * (3.0 * glm::length(half) + 1.0);   // medium frame
+                    double t0 = -1e300, t1 = 1e300;
+                    for (int a = 0; a < 3; ++a) {
+                        if (std::abs(dir[a]) < 1e-12) continue;
+                        double ta = (-half[a] - o[a]) / dir[a], tb = (half[a] - o[a]) / dir[a];
+                        if (ta > tb) std::swap(ta, tb);
+                        t0 = std::max(t0, ta); t1 = std::min(t1, tb);
+                    }
+                    if (!(t1 > t0)) continue;
+                    auto midpoint = [&](int m) -> std::optional<double> {
+                        const double h = (t1 - t0) / m;
+                        double sum = 0.0;
+                        for (int i = 0; i < m; ++i) {
+                            const auto sg = sigmaAt(o + dir * (t0 + (i + 0.5) * h), clocks[1]);
+                            if (!sg) return std::nullopt;
+                            sum += *sg * h;
+                        }
+                        return sum;
+                    };
+                    const auto tau96 = midpoint(kSamples), tauA = midpoint(8192), tauB = midpoint(16384);
+                    if (!tau96 || !tauA || !tauB) { ok = false; break; }
+                    worstConv = std::max(worstConv, std::abs(std::exp(-*tauA) - std::exp(-*tauB)));
+                    worstT = std::max(worstT, std::abs(std::exp(-*tau96) - std::exp(-*tauB)));
+                    if (*tauB > 1e-9) worstTau = std::max(worstTau, std::abs(*tau96 - *tauB) / *tauB);
+                }
+                if (ok) {
+                    std::printf("    %s quadrature: 96-sample transmittance vs the continuum, max |dT| %.3g (%.2f of 255 levels), "
+                                "max relative optical-depth error %.3g; reference converged to %.1g\n",
+                                b.producerId.c_str(), worstT, 255.0 * worstT, worstTau, worstConv);
+                    quadratureWorst = std::max(quadratureWorst, worstT);
+                    if (worstT > quadratureWorst2) { quadratureWorst2 = worstT; quadratureWho = b.producerId; }
+                    ++quadratureMeasured;
+                }
+            }
+            std::printf("    %s: the two frames' points differ at %.3g%% of samples, by up to %.3g\n", b.producerId.c_str(),
+                        100.0 * double(gapDiffer) / double(std::max<uint64_t>(gapTotal, 1)), gapMax);
+            const double norm = scale > 0.0 ? scale : 1.0;
+            const double normalized = worstAbs[0][0] / norm;
             if (normalized > worstNormalized) { worstNormalized = normalized; worstWho = b.producerId; }
-            std::printf("    %s: %llu samples, max |D_device - D_exact| %.3g (rms %.3g), max |D| %.3g -> %.3g of the density scale%s\n",
-                        b.producerId.c_str(), (unsigned long long)count, worstAbs, std::sqrt(sumSq / double(count)),
-                        scale, normalized, prep ? "; clock leaves prepared on the device" : "");
+            for (int set = 0; set < 2; ++set) {
+                const double rmsW = std::sqrt(sumSq[set][0] / double(count[set]));
+                const double rmsL = std::sqrt(sumSq[set][1] / double(count[set]));
+                std::printf("    %s %s: max/rms error, world frame %.3g/%.3g, medium frame %.3g/%.3g (of scale %.3g)%s\n",
+                            b.producerId.c_str(), set == 0 ? "near" : "far ", worstAbs[set][0] / norm, rmsW / norm,
+                            worstAbs[set][1] / norm, rmsL / norm, scale,
+                            prep && set == 0 ? "; clock leaves prepared on the device" : "");
+                // Never less faithful (a few-ulp allowance for sampling the max).
+                const bool ok = worstAbs[set][1] <= worstAbs[set][0] * 1.25 + 1e-9 * norm && rmsL <= rmsW * 1.25 + 1e-10 * norm;
+                if (!ok) ++lessFaithful;
+                sumRatio[set] += (rmsW > 0.0 ? rmsL / rmsW : 1.0);
+            }
         }
     }
     std::printf("    %u media, %u measured against the double-precision authored density, %u refused; worst %.3g of "
@@ -584,6 +700,11 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                 media, measured, refused, worstNormalized, worstWho.c_str(), nonFinite);
     check(measured > 0 && measured * 10 >= media * 8, "at least 80% of real media are measured against the authored equation");
     check(nonFinite == 0, "the device density is finite at every sampled point");
+    std::printf("    medium-frame rms error / world-frame rms error, mean over media: near %.3g, far %.3g\n",
+                measured ? sumRatio[0] / measured : 0.0, measured ? sumRatio[1] / measured : 0.0);
+    std::printf("    quadrature: %u media; worst 96-sample transmittance error against the continuum %.3g (%.2f of 255 levels, %s)\n",
+                quadratureMeasured, quadratureWorst, 255.0 * quadratureWorst, quadratureWho.c_str());
+    check(lessFaithful == 0, "the medium-frame lattice point is never less faithful than the world-frame one (near and far cameras)");
     std::printf("webgpu_volume_faithfulness_test: %d/%d checks passed\n", g_checks - g_failures, g_checks);
     return g_failures == 0 ? 0 : 1;
 }

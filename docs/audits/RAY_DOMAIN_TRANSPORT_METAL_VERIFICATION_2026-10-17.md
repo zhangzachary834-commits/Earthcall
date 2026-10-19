@@ -422,3 +422,12 @@ Zach: "Faithfulness to exact math should be the rule." A new witness, `webgpu_vo
 **Finding:** `glm::perlin<double>` is not the authored noise. Its lattice hash selects different gradients in some cells, by up to 1.2. A naïve double (or 80-digit) Perlin reference therefore reports 15–24% errors on every noisy medium, as this witness did before the reference kept the hash's f32 definition.
 
 **Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/faithfulness-1.log` (naïve reference), `faithfulness-2.log` (corrected). Design: [§6p](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6p-faithfulness-to-exact-math-is-the-rule-the-baseline-and-what-noise-means-2026-10-18-seventeenth-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T18:46 PDT.
+
+## Frame arithmetic and quadrature against the continuum — eighteenth pass (M5)
+
+`webgpu_volume_faithfulness_test` (4/4), extended.
+
+- **World frame against medium frame:** bit-identical points and densities at every sample of all 31 media, near (3 radii) and far (300 units) cameras. The same two formulas differ at 91% of coordinates in strict IEEE f32 on the CPU, so Metal fast-math canonicalizes them. No production change.
+- **Quadrature:** 96-sample midpoint transmittance against the converged continuum (CPU double, 16 rays per medium). Worst errors: `borealis.hero.auroral-curtain` **3.85/255** (optical depth 31%); Borealis v1/v2 0.96–1.92/255; Prism ≤ 0.22/255; Northern Veil ≤ 0.17/255; the rest < 0.01/255. References converged to ≤ 2×10⁻⁴.
+
+**Reading:** on this corpus the integral, not the arithmetic, is where pixels leave the authored equation. **Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/faithfulness-frames-*.log`, `faithfulness-quadrature-1.log`. Design: [§6q](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6q-where-todays-pixels-leave-the-authored-equation-quadrature-not-arithmetic-2026-10-18-eighteenth-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T19:08 PDT.

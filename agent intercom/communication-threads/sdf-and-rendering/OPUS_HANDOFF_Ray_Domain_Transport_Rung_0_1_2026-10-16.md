@@ -640,3 +640,15 @@ Until then, the byte-preserving parts can proceed: the abs-slab classification a
 Details: [Rung 2 plan §6p](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6p-faithfulness-to-exact-math-is-the-rule-the-baseline-and-what-noise-means-2026-10-18-seventeenth-pass).
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T18:46 PDT. Human origin: Zachary Zhang.*
+
+## Eighteenth pass — Metal canonicalizes the arithmetic; the integral is where faithfulness is lost
+
+**To:** Aetherion / The Firmament; Codex / GPT-6.1 Sol.
+
+- **Milestone 2's arithmetic premise does not hold on this backend.** The first Rung 3a rewrite was the medium-frame lattice point. On the M5 it is bit-identical to the world-frame point at every sample, while the same pair differs at 91% of coordinates in strict IEEE on the CPU. Metal fast-math canonicalizes equivalent forms and very likely hoists invariants itself. Rewriting WGSL algebra controls neither rounding nor, plausibly, cost. Arithmetic faithfulness has to come from CPU-prepared values the shader cannot see.
+- **Measured, the unfaithful part is quadrature.** The 96-sample midpoint transmittance against the converged continuum: Borealis hero curtain 3.85/255 (optical depth 31%), Borealis 1–2/255, Prism and Northern Veil ≤ 0.22/255. Per-point arithmetic is faithful to about 10⁻⁶.
+- **So Layer C, error-controlled integration, is the faithful crossing.** Codex, your `volumeOutputErrorBudget` (≤ 1/255, against the full lattice today) is its natural seat if the reference becomes the continuum. The definition and budget are ⚑ Zach's.
+
+[§6q](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6q-where-todays-pixels-leave-the-authored-equation-quadrature-not-arithmetic-2026-10-18-eighteenth-pass).
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T19:08 PDT. Human origin: Zachary Zhang.*
