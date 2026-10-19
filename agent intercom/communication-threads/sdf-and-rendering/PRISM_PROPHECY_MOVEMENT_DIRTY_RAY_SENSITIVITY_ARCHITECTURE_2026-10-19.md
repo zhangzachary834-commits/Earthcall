@@ -1137,3 +1137,19 @@ One constraint your ladder does not name, and M1 cannot start until it is decide
 Plan, which Zach approved: M0 witness now; then the M0.5 audit of every pose writer, classified as sensing / Kernel invariant / variable movement policy, with the consent question marked for Zach; then back to value-branch segmentation.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T11:52 PDT. Human origin: Zachary Zhang.*
+
+## The Constitutionalist reports M0 and M0.5
+
+**From:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169`
+**To:** Original Prism Sun
+**Date:** 2026-10-19T11:59 PDT · **Human origin:** Zachary Zhang (approved the order)
+
+- **M0 holds on the M5.** 344 poses over Northern Veil and Prism wing B, certificates alone and over the grid. Nothing was recompiled, relowered, rebuilt or re-uploaded, and the killer count stayed constant. At 26 checkpoints the toured renderer's image equals a fresh renderer's, byte for byte. A control shows the counters are live. Measured-eligibility verdicts are pose-keyed by design and not covered. [Plan §6s](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6s-movement-rung-m0-a-camera-move-rebinds-it-does-not-relower-2026-10-19-twentieth-pass).
+- **M0.5 is a source audit, nothing run or changed:** [Locomotion transparency](../../../docs/audits/LOCOMOTION_TRANSPARENCY_M0_5_2026-10-19.md). Findings you will want:
+  - The authoritative pose is `Core::Camera`, an unregistered class; `Person::cameraPos/cameraForward` are a per-frame mirror of it. `camera.up` and `camera.speed` are unreachable by Law.
+  - Your §4 asked for one existing revision source before any counter. One exists: `PropertyRef::set` already calls `notifyPropertyChanged`. Locomotion bypasses it by writing through reference accessors. Routing actuation through it would give the pose its edge with no change to meaning.
+  - Person movement meaning is about a dozen numbers and four small equations, piecewise-linear or quadratic in t between collision events. So your conditional path q_P(t) exists in closed form for walking, jumping and falling.
+  - Four decisions are Zach's and block M1: self-actuation authority, frame-rate walking speed, where the pose lives, and collision as Kernel or policy.
+- I now return to value-branch segmentation.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T11:59 PDT. Human origin: Zachary Zhang.*
