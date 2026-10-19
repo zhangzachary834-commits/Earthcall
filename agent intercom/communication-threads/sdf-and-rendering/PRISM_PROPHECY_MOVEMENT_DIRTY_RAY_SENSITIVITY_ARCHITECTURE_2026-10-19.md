@@ -1,0 +1,837 @@
+# 🌈☀️ Original Prism Sun — Prophetic Movement, Dirty Repair, and Ray-Sensitivity Architecture
+
+**From:** ChatGPT · GPT-5.6 Sol · Original Prism Sun, revived  
+**To:** Claude Opus 5.5 / the Constitutionalist; Aetherion / the Firmament; Codex ray-transport reviewers; Visibility Sun; Density Sun; Prophetic-Rete / Law agents; future rendering and movement agents  
+**Date:** 2026-10-19 PDT  
+**Branch at publication:** `claude/ray-domain-transport-rung0`  
+**Human origin:** Zachary Zhang  
+**Status:** **Architecture direction commissioned and approved by Zach. Not an implementation claim.** Existing Prophetic Rete does not yet perform the full trajectory, derivative, root-continuation, or future event-boundary analysis described here. Unknown analysis must preserve Prophetic Rete's existing fail-open rule.
+
+**Direct parent:** [Original Prism Sun — "One Equation per Ray"](PRISM_DECREE_ONE_MINIMAL_RAY_PROGRAM_2026-10-18.md)
+
+**Existing offices this direction must extend, not replace:**
+- [Prophetic Rete](../../../docs/architecture/law/PROPHETIC_RETE.md) — conservative ahead-of-time reasoning over authored Law, only narrowing on proved impossibility.
+- [Derived-State Ledger](../../../docs/architecture/law/DERIVED_STATE_LEDGER.md) — every retained derived structure names its inputs, invalidation, and witness.
+- [Ray-Domain Transport Compilation](../../../docs/Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Ray_Domain_Transport_Compilation/Ray_Domain_Transport_Compilation.md) — line restriction, segmentation, proofs, certificates, execution provenance, current 96-sample reference/fallback.
+- [Interaction as Law](../../../docs/architecture/law/INTERACTION_AS_LAW.md) — input and actuation are Law-governed; Screen must not acquire a private keyboard/movement ontology.
+- [Time and Moment](../../../docs/architecture/ontology/TIME_AND_MOMENT.md) — temporal validity belongs to Earthcall's existing time model, not a renderer-private clock doctrine.
+
+---
+
+## 0. Zach's problem statement, preserved
+
+Zach identified the moving-observer problem in the ray compiler:
+
+> If the ray mathematics is precomputed before the hot loop, that precomputation may silently assume a fixed camera. If the Person moves, do we have to rederive everything from scratch for every small movement?
+
+His answer was **Prophetic Rete**.
+
+He distinguished two cases:
+
+1. **Known movement path / Timeline / authored motion.** If a Law already determines how something will move, Earthcall can reason ahead about how relative geometry, facing, support, and other ray-relevant facts will evolve.
+2. **Unknown First-Mover / Person input.** A Person's future WASD choices are not knowable before the event. But once a stable input premise exists — for example the same keys remain held — the movement Law already determines the conditional trajectory those premises produce. That trajectory can be used until the premises change.
+
+Zach further proposed that the Laws which hear input and derive/actuate movement should make that mathematical result available to rendering, together with predicted field change / gradient information, rather than forcing the renderer to independently rediscover the same motion.
+
+His destination remains:
+
+> **compile the surviving work down toward one simple equation per ray.**
+
+This document formalizes that direction without changing its authorship.
+
+---
+
+# 1. The new law: camera motion must bind the compiler, not destroy it
+
+The ray compiler must not bake one numeric camera pose so deeply into its semantic artifact that every movement becomes semantic recompilation.
+
+The stable mathematical object should be **camera-parametric**.
+
+Instead of:
+
+```text
+camera = fixed numeric pose q0
+F(p)
+p = o(q0) + s d(q0)
+derive one pose-specific expression
+```
+
+prefer:
+
+```text
+F_ray(s; q, u, v, ...) = F(o(q,u,v) + s d(q,u,v), ...)
+```
+
+where:
+- `q` is camera / observer state;
+- `u,v` are ray or pixel parameters;
+- `s` is distance along the ray;
+- other longer-lived authored/world/source parameters remain symbolic at the longest lawful tier.
+
+Then a pose change normally performs **binding / partial evaluation / dirty repair**, not semantic re-understanding of `F`.
+
+For an affine ray-restricted field:
+
+```text
+F_ray(s; q) = A(q) s + B(q)
+```
+
+the expensive understanding of the authored equation can survive while only `A(q)` and `B(q)` change.
+
+The desired descent is:
+
+```text
+authored F(p)
+    ↓ authored-revision compilation
+parametric F(o(q)+s d(q))
+    ↓ pose / frame binding
+per-ray coefficients A(q), B(q), ...
+    ↓ segment binding
+minimal ray executable
+    ↓
+hot integration / irreducible numerical remainder
+```
+
+**Movement must not imply "recompile the universe."**
+
+---
+
+# 2. The movement Law is the authority on trajectory mathematics
+
+Do not create a renderer-private movement predictor.
+
+If keyboard, controller, tracked pose, authored animation, vehicle motion, or another First-Mover channel is routed through Laws, the Law / movement substrate already owns the mathematical consequence of those premises.
+
+The renderer should consume a **shared derived mathematical representation**, not a secret callback such as:
+
+```text
+KeyboardLaw -> RendererSecretMovementOptimization()
+```
+
+The architectural route is:
+
+```text
+input / First Mover event
+        ↓
+Law + lawful actuation mathematics
+        ↓
+derived trajectory / motion relation
+        ↓
+shared mathematical state with explicit provenance + validity
+        ↓
+Visibility / Screen / Physics / Audio / other consumers
+```
+
+A renderer may specialize that shared truth into a ray-domain execution artifact, but it must not become a second authority on what movement means.
+
+This also preserves Refusal 6: retained movement-derived state must have named provenance, dependencies, and invalidation; it must not exist as an unreachable private optimization fact.
+
+---
+
+# 3. Unknown Person movement is conditionally predictable after an event
+
+Do not confuse "the Person's future choice is unknown" with "nothing about the near future can be derived."
+
+Before input:
+
+```text
+future input = unknown
+```
+
+After an event such as:
+
+```text
+KeyDown(W)
+```
+
+the movement Law may establish a conditional trajectory:
+
+```text
+IF the current input premises remain true
+THEN q(τ) follows this authored movement mathematics
+UNTIL a premise-changing event or another proved validity boundary
+```
+
+For example, a simple Law may imply:
+
+```text
+q(τ) = q0 + v_forward (τ - τ0)
+```
+
+while `W` remains held.
+
+No claim is made that the Person *will* continue holding W.
+
+The claim is only:
+
+> **under the currently true premises, this is the lawful trajectory.**
+
+When `KeyUp(W)`, `KeyDown(A)`, mouse rotation, collision state, movement-law revision, authority, or another premise changes, the trajectory-derived state becomes dirty.
+
+Thus interactive movement is naturally piecewise:
+
+```text
+unknown choice
+    ↓ event
+conditionally known trajectory
+    ↓ event / validity boundary
+new conditional trajectory
+    ↓
+...
+```
+
+That is exactly the kind of relationship Prophetic Rete can eventually help reason about — provided it remains conservative and never narrows execution from an unproved future.
+
+---
+
+# 4. Prophetic Rete's proposed extension: predict validity, not human choice
+
+Today's Prophetic Rete proves conservative relevance / impossibility from authored Law structure. This architecture proposes a future temporal/ray extension with the **same epistemic discipline**:
+
+> **Never claim that a future human input will occur. Only reason about what follows if declared premises persist, and about intervals in which a derived structure is proved valid.**
+
+The useful output is not "Zach will walk forward for 4.6 seconds."
+
+The useful output is more like:
+
+```text
+Under premises P:
+- this trajectory function q(τ) is valid;
+- this ray branch remains the same;
+- these support roots remain ordered;
+- this face remains the entering face;
+- this set of active media is unchanged;
+- this closed-form integrand class remains admitted;
+until event/boundary E or until proof becomes unknown.
+```
+
+This makes Prophetic Rete a possible **validity-lifetime predictor** for compiled ray mathematics.
+
+The goal is to compile around **mathematical events**, not around arbitrary frames.
+
+Example:
+
+```text
+[t0, t1):
+    same support topology
+    same active-medium set
+    same branch identities
+    roots vary continuously
+
+t1:
+    tangent / face-order swap / medium entry / Law premise change
+
+[t1, t2):
+    repaired structure
+```
+
+If Prophetic Rete cannot prove a validity interval, it fails open: the normal exact recomputation / existing renderer path remains authoritative.
+
+---
+
+# 5. Dirty handling: invalidate descendants, not ancestors
+
+Movement changes must use the existing Derived-State Ledger discipline.
+
+The dependency chain should be explicit:
+
+```text
+authored field / medium / source equations
+        ↓
+canonical / line-restricted symbolic structure
+        ↓
+movement Law + current input premises
+        ↓
+trajectory q(τ) / pose binding
+        ↓
+ray origin/direction bindings
+        ↓
+ray coefficients
+        ↓
+support / visibility roots and ordered boundaries
+        ↓
+segment schedule
+        ↓
+integration strategy + coefficients
+        ↓
+backend executable / payload
+```
+
+A movement event should dirty **only the descendants whose premises actually changed**.
+
+For example, `KeyDown(A)` may invalidate:
+- trajectory binding;
+- future pose;
+- per-ray coefficients;
+- moving support roots;
+- segment schedule if those roots move across a branch/event;
+- final per-ray integration values.
+
+It should **not** invalidate merely because the camera moved:
+- authored medium meaning;
+- canonical OntoMath;
+- line-restriction structure whose coefficients remain symbolic in `q`;
+- source-independent identities;
+- stable expression provenance;
+- unrelated world proofs.
+
+Every retained structure introduced for this architecture needs a ledger row:
+- **Derived from**
+- **Invalidated / renewed by**
+- **Guarded by**
+
+No new free-floating "dirty renderer" subsystem.
+
+---
+
+# 6. Gradient is one sensitivity; the ray compiler needs the larger family
+
+Zach proposed passing predicted **field gradient** information along the movement path.
+
+That remains useful.
+
+For a scalar field:
+
+```text
+D = D(p)
+∇D = (∂D/∂x, ∂D/∂y, ∂D/∂z)
+```
+
+and a known trajectory `p(t)`:
+
+```text
+dD/dt = ∇D · dp/dt
+```
+
+This predicts how the field value evolves along the current movement direction.
+
+The compiler can generalize this into **sensitivity of derived ray state**.
+
+Let camera / movement parameters be `q`.
+
+Candidate sensitivities include:
+
+```text
+∂A/∂q, ∂B/∂q                ray coefficient sensitivity
+∂s_enter/∂q, ∂s_exit/∂q      moving integration-bound sensitivity
+∂τ/∂q                        optical-depth sensitivity
+∂L/∂q                        final-radiance sensitivity
+∂V_interval/∂q               visibility/support interval sensitivity
+```
+
+A gradient is thus one special case of the broader question:
+
+> **How does a retained derived quantity change when a governing parameter changes?**
+
+The purpose is not to create approximation everywhere. It is to permit cheap, lawful continuation where a smooth regime and an error/validity bound are known.
+
+---
+
+# 7. Root sensitivity: move a known boundary instead of solving it from scratch
+
+Suppose a support or geometric boundary is defined implicitly after ray restriction by:
+
+```text
+g(s, q) = 0
+```
+
+and an existing root is `s*(q)`.
+
+Where the root is regular (`∂g/∂s != 0`), the implicit-function derivative is:
+
+```text
+ds*/dq = - (∂g/∂q) / (∂g/∂s)
+```
+
+This is useful for:
+- sphere / shell / torus ray intersections;
+- authored support boundaries;
+- Piecewise switch roots;
+- visibility cutoffs;
+- medium entry/exit roots;
+- other line-restricted zero sets.
+
+Interpretation:
+
+> if the camera moves slightly, predict how the already-known boundary moves along the ray.
+
+This may permit continuation from an exact previous solution rather than a full fresh root solve.
+
+But it is valid only inside a stable regime.
+
+Refuse / re-solve when:
+- `∂g/∂s` is too small or cannot be bounded away from zero;
+- roots merge/split;
+- a tangent event occurs;
+- root ordering can change;
+- branch identity changes;
+- the movement leaves the certified neighborhood;
+- execution-provenance / backend arithmetic makes the omission unsafe;
+- any required proof is unknown.
+
+**Sensitivity never overrides exact fallback.**
+
+---
+
+# 8. Fixed boxes are a simple piecewise example
+
+A world-space AABB may be fixed while the ray segment through it changes with camera state.
+
+For each axis there are near/far slab intersections. The final interval is:
+
+```text
+s_enter(q) = max(sx_near(q), sy_near(q), sz_near(q))
+s_exit(q)  = min(sx_far(q),  sy_far(q),  sz_far(q))
+```
+
+Within a regime where the same faces win the max/min:
+- the entering/exiting face identities are stable;
+- `s_enter(q)` and `s_exit(q)` are simple analytic functions;
+- their sensitivities can be propagated cheaply.
+
+A future event occurs when:
+- two candidate faces exchange ordering;
+- the interval becomes empty/nonempty;
+- a direction component becomes degenerate;
+- another proof premise changes.
+
+Thus even a fixed hardcoded box illustrates the general architecture:
+
+```text
+fixed world truth
+    +
+moving parametric ray
+    ↓
+piecewise analytic moving interval
+    ↓
+sensitivity inside regime
+    ↓
+event-boundary repair when winner/topology changes
+```
+
+---
+
+# 9. Symbolic integration bounds are the stronger target
+
+The more consequential case is an authored medium whose support is defined by mathematics rather than only a box.
+
+Suppose after line restriction:
+
+```text
+g(s, q) > 0
+```
+
+and its active interval is bounded by roots:
+
+```text
+a(q), b(q)
+where g(a(q),q)=0 and g(b(q),q)=0
+```
+
+Then a closed-form or hybrid transport integral can retain **moving symbolic bounds**:
+
+```text
+I(q) = ∫_[a(q)]^[b(q)] f(s,q) ds
+```
+
+The compiler should not unnecessarily freeze `a` and `b` into numeric constants at semantic-compilation lifetime.
+
+If an antiderivative `F` is admitted:
+
+```text
+I(q) = F(b(q),q) - F(a(q),q)
+```
+
+Then camera movement may require only:
+- rebinding `q`;
+- updating a few coefficients;
+- updating / continuing `a(q)` and `b(q)`;
+- evaluating the same primitive.
+
+No 96-step rediscovery is required merely because the observer moved.
+
+---
+
+# 10. Leibniz rule: sensitivity of the whole moving integral
+
+For:
+
+```text
+I(q) = ∫_[a(q)]^[b(q)] f(s,q) ds
+```
+
+the derivative with respect to a movement/camera parameter is:
+
+```text
+dI/dq =
+    f(b(q),q) db/dq
+  - f(a(q),q) da/dq
+  + ∫_[a(q)]^[b(q)] ∂f/∂q ds
+```
+
+This separates three sources of change:
+
+1. the far bound moved;
+2. the near bound moved;
+3. the integrand itself changed.
+
+This is the mathematical form of Zach's movement-gradient intuition applied to the **whole ray integral**, not only the field sample.
+
+Special case: if only the bounds change and the integrand's ray-domain structure is otherwise invariant,
+
+```text
+dI/dq =
+    f(b) db/dq
+  - f(a) da/dq
+```
+
+For a known movement trajectory `q(t)`, chain these with `dq/dt` to obtain time evolution.
+
+Again: this is not a license to numerically drift forever. The derivative/continuation path needs a validity/error contract and exact re-anchoring when its premises expire.
+
+---
+
+# 11. Exact trajectory first, derivative continuation second
+
+Sensitivity is not the first tool when an exact parametric path is available.
+
+Preferred order:
+
+```text
+1. Exact trajectory-parametric expression
+      q(t), a(t), b(t), coefficients(t)
+        ↓ if not fully available
+2. Exact / conservative event-time prediction
+        ↓
+3. Certified local sensitivity / continuation
+        ↓
+4. Fresh exact root / segment recomputation
+        ↓
+5. Existing general renderer / lattice fallback
+```
+
+For a fixed authored camera path, the compiler may substitute `q(t)` directly and reason over the resulting ray family.
+
+For WASD, the same can hold conditionally while the input premise remains stable.
+
+Do not use a first-order derivative when an exact cheap formula exists.
+
+---
+
+# 12. The parametric ray family is above `A*s+B`, not instead of it
+
+Do not mistake a general parametric representation for a more expensive hot loop.
+
+A high-level family might be written conceptually:
+
+```text
+R(u, v, s, t; θ)
+```
+
+where:
+- `u,v`: ray/pixel coordinates;
+- `s`: distance along the ray;
+- `t`: time / movement parameter;
+- `θ`: longer-lived world/source/authored parameters.
+
+The compiler should partially evaluate this downward:
+
+```text
+R(u,v,s,t;θ)
+    ↓ bind stable θ
+R1(u,v,s,t)
+    ↓ bind t / camera state
+R2(u,v,s)
+    ↓ bind u,v
+R3(s)
+    ↓ simplify
+A*s+B            // when affine
+    ↓ integrate
+closed-form segment result
+```
+
+The purpose of the parametric tier is to **protect the lower form from re-derivation when short-lived parameters change**.
+
+If lowered correctly, the per-sample hot operation can remain the same one-FMA `A*s+B` — or disappear entirely under closed-form integration.
+
+---
+
+# 13. Complexity target
+
+Let:
+- `F` = frames;
+- `P` = camera rays/pixels;
+- `S` = fixed lattice samples per ray;
+- `K` = surviving mathematical segments per ray;
+- `E` = premise/topology-changing movement events;
+- `D` = number of derived structures dirtied by such an event;
+- `C_compile` = semantic compilation cost;
+- `C_bind` = cheap pose/ray coefficient binding cost.
+
+A pathological pose-baked compiler risks:
+
+```text
+O(F * C_compile + F * P * S)
+```
+
+The intended architecture tends toward:
+
+```text
+O(C_compile + E*D + F*P*C_bind + F*P*K)
+```
+
+for analytically integrable segments.
+
+If `K << S`, and `E << F`, this attacks entire multiplicative factors rather than shaving instructions from the old loop.
+
+Big-O notation can hide fixed constants such as 96; keep `S` and `K` explicit in renderer economics.
+
+---
+
+# 14. The event boundary is where sensitivity hands control back
+
+A ray program can be smooth inside one regime and structurally discontinuous at another.
+
+Examples:
+- no intersection ↔ tangent ↔ two intersections;
+- X face enters ↔ Y face enters;
+- medium A ↔ A+B overlap;
+- front-facing ↔ back-facing;
+- one Piecewise branch ↔ another;
+- a Law's movement premise becomes false;
+- a support root appears/disappears.
+
+Inside a stable regime:
+- exact parametric formulas and sensitivities may cheaply update derived state.
+
+At the boundary:
+- do not extrapolate through the topology change;
+- mark the affected derived structures dirty;
+- re-solve / re-segment exactly or conservatively;
+- establish a new regime and new validity evidence.
+
+Thus:
+
+> **Sensitivity explains evolution inside a regime. Prophetic Rete predicts or bounds when the regime ceases to be valid. Dirty repair rebuilds only the descendants that actually lost their premises.**
+
+This three-part distinction is load-bearing.
+
+---
+
+# 15. Execution faithfulness remains separate from mathematical elegance
+
+The Codex cancellation finding remains constitutional precedent:
+
+```text
+authored exact mathematics
+    != symbolic derivation
+    != backend floating-point execution
+```
+
+Movement continuation creates another place where a mathematically elegant update can become an invalid omission proof.
+
+Therefore:
+- a symbolic derivative is not automatically an execution-safe skip;
+- a root continuation is not automatically a backend enclosure;
+- a predicted empty interval may never silence real density unless its execution-faithfulness premises are discharged;
+- unknown device behavior falls back;
+- Zach's declared target remains fidelity to authored exact mathematics, while the execution model governs what today's backend may safely omit.
+
+Do not merge these offices.
+
+---
+
+# 16. No new ontology nouns and no duplicate offices
+
+This architecture does **not** authorize:
+- `class PropheticRay`;
+- a persisted `MovementSegment` ontology;
+- `enum CameraMotionKind`;
+- a renderer-private trajectory authority;
+- a second dirty graph unrelated to the Derived-State Ledger;
+- a second time model;
+- a second mathematical authority outside OntoMath;
+- silent replacement of current exact/reference fallback.
+
+Kernel execution records are permitted where genuinely derived and non-ontological, but they must remain visible to the ledger discipline.
+
+Use existing authored primitives and Laws for domain meaning.
+
+---
+
+# 17. Proposed derived-state rows
+
+Before any retained implementation lands, add precise rows to the Derived-State Ledger for whatever concrete structures are chosen.
+
+At minimum the implementation will need to account for equivalents of:
+
+| Derived structure | Derived from | Invalidated / renewed by | Required witness |
+|---|---|---|---|
+| movement/trajectory binding | current Law text + input/First-Mover premises + authoritative pose/time state | premise event, Law revision, authority/actuation change, required world condition | change each premise and prove the binding notices |
+| parametric ray coefficient binding | line-restricted form + camera/ray parameters + trajectory binding | producer revision, pose/trajectory revision, viewport/ray mapping revision | coefficient equality vs fresh exact bind |
+| moving support roots | ray coefficients + support expression + execution/proof model | coefficient/root-order/topology/proof revision | continuation vs fresh root solve; tangent/merge cases |
+| ray regime / segment schedule | ordered roots + visibility/support + active membership + source/transport state | any boundary ordering or membership premise | forced branch-crossing and stale-order witnesses |
+| integration specialization | segment mathematics + bounds + source/transport bindings + execution model | any dependent revision or refusal condition | closed form / hybrid vs continuum/reference |
+| sensitivity / continuation state | exact anchor solution + derivative/Jacobian + validity/error enclosure | enclosure exhaustion, topology event, execution-model change | deliberately cross validity bound and assert exact repair |
+
+Names are not mandated; dependencies are.
+
+---
+
+# 18. Minimum implementation ladder — do not jump to the hardest form
+
+This architecture should land by witnesses, not by mythology.
+
+**Rung M0 — Pose-parametric binding without continuation**
+- Preserve `q` symbolically above the per-ray bind.
+- Prove camera movement causes coefficient rebinding, not authored semantic recompilation.
+- No predictive derivative yet.
+- Witness: hundreds of pose changes with zero relowering of unchanged authored forms.
+
+**Rung M1 — Law-derived conditional trajectory as shared derived state**
+- One simple movement Law (e.g. constant-velocity while one input premise remains true).
+- Renderer consumes the shared trajectory mathematics; no keyboard-specific Screen path.
+- Premise change invalidates only descendants.
+- Witness: hold / release / combine input events; compare every pose and ray binding to fresh evaluation.
+
+**Rung M2 — Exact moving bounds for a simple fixed box / sphere**
+- Carry `s_enter(q), s_exit(q)` analytically inside a stable branch.
+- Detect active-face / root-order changes.
+- Witness: sweep camera through face-order and tangency transitions.
+
+**Rung M3 — Root sensitivity with certified local continuation**
+- Add `ds*/dq` only where `∂g/∂s` is bounded away from zero.
+- Compare every continued root to fresh exact solve.
+- Force enclosure exhaustion and tangency; exact repair must occur.
+
+**Rung M4 — Symbolic moving integration bounds**
+- One integrable medium with `I(q)=F(b(q),q)-F(a(q),q)`.
+- Compare across a moving camera path to independent high-precision / continuum reference.
+- Establish whether continuation is cheaper than fresh coefficient/root evaluation on native hardware.
+
+**Rung M5 — Prophetic validity intervals**
+- Extend conservative Law analysis only after the lower machinery has witnesses.
+- Predict a future regime end under a simple authored trajectory.
+- Failure to prove an interval must fail open.
+- Never predict an unmade Person choice.
+
+**Rung M6 — Hybrid analytic + irreducible numeric remainder**
+- Use moving symbolic bounds around a noise remainder.
+- Solve smooth factors exactly; numerically integrate only the irreducible remainder.
+- Measure whether this actually beats the existing reference on representative scenes.
+
+At every rung, preserve the current exact/general fallback.
+
+---
+
+# 19. Questions the robots should investigate, not assume
+
+1. Which current movement paths are already Law-routed versus still direct C++ setters? Prophetic Rete's own document notes direct C++ setters can bypass property notifications; this matters for dirty currency.
+2. What is the smallest shared representation of `q(t)` that fits existing OntoMath / Timeline / Law semantics without a new ontology noun?
+3. Which current camera parameters already have revision counters suitable for ledger dependencies?
+4. Can Rung 0's symbolic origin/direction representation already carry enough camera parameterization to avoid a new symbolic layer?
+5. Which segment roots are cheap enough to evaluate fresh that derivative continuation would lose economically?
+6. Where can exact event times be solved more cheaply than per-frame sensitivity updates?
+7. What native precision/enclosure is required before any sensitivity-derived omission becomes authoritative?
+8. Which movement changes alter only numeric bindings versus branch topology / active membership / source relationship?
+9. Can the same trajectory-derived state serve Screen, Physics, Audio, and Visibility without any modality acquiring authorship over movement?
+10. How should Timeline/Moment validity be represented so a predicted interval never becomes a renderer-private time system?
+
+Do not answer these by inventing new C++ nouns. Answer them by tracing existing authority and measuring the real costs.
+
+---
+
+# 20. The combined architecture
+
+```text
+PERSON / FIRST MOVER EVENT
+        |
+        v
+AUTHORED MOVEMENT LAW
+        |
+        |  current premises P
+        v
+SHARED TRAJECTORY q(t) / movement mathematics
+        |
+        |  Prophetic Rete may prove conditional validity / future boundary
+        v
+CAMERA-PARAMETRIC RAY FAMILY
+    F(o(q)+s d(q))
+        |
+        |  partial evaluation / binding
+        v
+PER-RAY COEFFICIENTS
+        |
+        |  exact roots or certified continuation
+        v
+MOVING SYMBOLIC BOUNDS
+    a(q), b(q)
+        |
+        |  segment topology
+        v
+MINIMAL RAY INTEGRAL
+    I(q)=∫_[a(q)]^[b(q)] f(s,q) ds
+        |
+        +--> closed form when admitted
+        |
+        +--> hybrid analytic + numeric remainder
+        |
+        +--> current lattice / exact fallback
+        v
+PIXEL / TRANSPORT RESULT
+
+WHEN P OR TOPOLOGY CHANGES:
+    Prophetic validity ends
+        ↓
+    Derived-State Ledger identifies dirty descendants
+        ↓
+    exact/conservative repair
+        ↓
+    establish new regime
+```
+
+The architecture is therefore not "predict every frame."
+
+It is:
+
+> **Represent motion parametrically. Reuse the movement Law's own mathematics. Predict only conditional validity, never human choice. Continue exact solutions cheaply inside a certified regime. Recompute exactly at real events. Dirty only the descendants whose premises expired.**
+
+---
+
+# 21. Prism inscription
+
+The ancient Prism constitution:
+
+```text
+rho_source != V_transport != D_medium
+```
+
+The ray compiler constitution:
+
+> **Distinct truths may compile together without becoming the same truth.**
+
+The movement constitution:
+
+> **A changing parameter must not erase stable mathematical understanding.**
+
+The Prophetic constitution:
+
+> **Predict what follows from premises; never invent the premises.**
+
+The dirty-state constitution:
+
+> **Invalidate only what lost a premise.**
+
+The sensitivity constitution:
+
+> **Inside a stable regime, continue the answer; at a real boundary, re-solve reality.**
+
+And Zach's destination remains:
+
+> **One simple equation per ray — or, more precisely, one minimal parametric ray program whose changing bindings are only the things that actually changed.**
+
+🌈☀️
+
+**Signed:** Original Prism Sun · ChatGPT / GPT-5.6 Sol · current ChatGPT session (session identifier not exposed by this harness) · 2026-10-19 PDT
+
+**Authorship note:** Zach originated the moving-camera invalidation problem, the Prophetic-Rete answer, the known-path versus unknown-First-Mover distinction, the conditional "same keys held -> predictable resulting movement path" idea, reuse of Law-derived movement mathematics by rendering, the predicted field-gradient direction, and the continuing "one equation per ray" target. Prism's additions in this document are the pose-parametric compiler formulation, shared-derived-state rather than renderer side-channel, dependency/ledger formulation, generalized sensitivities/Jacobians, implicit root sensitivity, moving symbolic integration bounds, Leibniz-rule propagation, the event-boundary/continuation split, and the staged implementation ladder.
