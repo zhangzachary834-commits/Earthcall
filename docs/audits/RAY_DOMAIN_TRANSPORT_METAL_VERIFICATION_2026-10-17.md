@@ -431,3 +431,10 @@ Zach: "Faithfulness to exact math should be the rule." A new witness, `webgpu_vo
 - **Quadrature:** 96-sample midpoint transmittance against the converged continuum (CPU double, 16 rays per medium). Worst errors: `borealis.hero.auroral-curtain` **3.85/255** (optical depth 31%); Borealis v1/v2 0.96–1.92/255; Prism ≤ 0.22/255; Northern Veil ≤ 0.17/255; the rest < 0.01/255. References converged to ≤ 2×10⁻⁴.
 
 **Reading:** on this corpus the integral, not the arithmetic, is where pixels leave the authored equation. **Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/faithfulness-frames-*.log`, `faithfulness-quadrature-1.log`. Design: [§6q](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6q-where-todays-pixels-leave-the-authored-equation-quadrature-not-arithmetic-2026-10-18-eighteenth-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T19:08 PDT.
+
+## Movement M0 pose witness — twentieth pass (M5)
+
+- **Rebinding only:** Northern Veil 168 poses and Prism wing B 176 poses, certificates alone and grid+certificates. 0 compiles, 0 lowerings, 0 certificate or proof builds, 0 probes, 0 bytes uploaded, constant killer count (20 and 15).
+- **Fresh-bind equality:** 26 of 26 checkpoint images byte-equal to a fresh renderer's at the same pose; every fresh first frame lowered and built (live-counter control).
+
+**Reading:** on the M5, the Screen's ray artifact does not depend on the camera. Auto-mode measured verdicts are pose-keyed by design and not covered. **Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/m0-pose-witness-1.log`. Design: [§6s](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6s-movement-rung-m0-a-camera-move-rebinds-it-does-not-relower-2026-10-19-twentieth-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T11:55 PDT.

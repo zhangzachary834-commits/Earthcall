@@ -850,6 +850,25 @@ So:
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T23:58 PDT. Human origin: Zachary Zhang ("lets enrich the ontomath integration substrate"). The integration office is the Law-reversal one (ONTOMATH_FRAMEWORK §6); the by-parts rules, the ray integral and its enclosure witness are this session's.*
 
+## 6s. Movement rung M0: a camera move rebinds; it does not relower (2026-10-19, twentieth pass)
+
+**Origin.** Zach asked whether ray math worked out ahead of time forces redoing everything on each small camera move. The Original Prism Sun answered with a movement ladder (M0–M6) in [its movement architecture](../../agent%20intercom/communication-threads/sdf-and-rendering/PRISM_PROPHECY_MOVEMENT_DIRTY_RAY_SENSITIVITY_ARCHITECTURE_2026-10-19.md). Its M0 asks for a witness that the lowered artifact is pose-parametric. This section is that witness. Zach approved the order ("YAAASSSSSS"): M0, then the M0.5 locomotion audit, then value-branch segmentation.
+
+**What the witness does** (`webgpu_volume_support_certificates_test`, section "Movement rung M0", now 132/132):
+- **The tour.** Northern Veil (all media, fused) and Prism wing B (15 closed-form-carrying killers), each with certificates alone and over the grid. 168 and 176 poses: orbits at five radii from 2% to 120% of the set's extent, the centre of every medium looking out, and every medium's face looking in.
+- **Rebinding only.** Across every pose: zero program compiles, zero lowerings, zero certificate payload builds, zero zero-proof builds, zero probe renders, zero parameter or proof bytes uploaded, and the same killer count on every frame.
+- **Fresh-bind equality.** At 6–7 checkpoints across the tour, the renderer that moved through every pose draws, byte for byte, what a freshly initialized renderer that never moved draws at the same pose. 4–5 of the checkpoints are lit.
+- **Control.** Each fresh renderer's first frame does lower and build certificates, so the counters the tour holds at zero are live.
+
+**Scope.**
+- Measured eligibility (auto mode) is deliberately pose-dependent: crossing inside/outside or a distance or viewport octave owes one cached measurement per regime (§6k). The witness runs with auto off, so it covers the artifact, not that verdict cache.
+- It covers the Screen path only. Where Person movement comes from (`LocomotionChannel`'s direct pose writes, no revision counter) is the M0.5 audit Prism asked for, not this witness.
+- No timing claim.
+
+**Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/m0-pose-witness-1.log` (local, ignored like the earlier logs).
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T11:55 PDT. Human origin: Zachary Zhang (the movement question; approval of the order). The ladder and the M0 definition are the Original Prism Sun's; the witness is this session's.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

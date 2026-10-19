@@ -157,6 +157,33 @@ int main() {
     // Parity sections A/B EVERY medium (auto eligibility off); the eligibility
     // section below turns the Kernel's per-medium cost ranking back on.
     bool autoEligibility = false;
+    // Reads the target back into lastRgba; returns the lit pixel count.
+    auto sync = [&]() -> uint64_t {
+        WGPUCommandEncoder enc = wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
+        WGPUTexelCopyTextureInfo src = {}; src.texture = target; src.aspect = WGPUTextureAspect_All;
+        WGPUTexelCopyBufferInfo dst = {}; dst.buffer = readback;
+        dst.layout.bytesPerRow = stride; dst.layout.rowsPerImage = height;
+        WGPUExtent3D ext = {width, height, 1};
+        wgpuCommandEncoderCopyTextureToBuffer(enc, &src, &dst, &ext);
+        WGPUCommandBuffer cmd = wgpuCommandEncoderFinish(enc, nullptr);
+        wgpuQueueSubmit(gpu.queue, 1, &cmd);
+        wgpuCommandBufferRelease(cmd); wgpuCommandEncoderRelease(enc);
+        MapResult r; WGPUBufferMapCallbackInfo cb = {};
+        cb.mode = WGPUCallbackMode_AllowProcessEvents; cb.callback = mapped; cb.userdata1 = &r;
+        wgpuBufferMapAsync(readback, WGPUMapMode_Read, 0, bd.size, cb);
+        while (!r.done) wgpuInstanceProcessEvents(gpu.instance);
+        const auto* px = static_cast<const unsigned char*>(wgpuBufferGetConstMappedRange(readback, 0, bd.size));
+        uint64_t lit = 0;
+        for (uint32_t y = 0; y < height; ++y) {
+            std::memcpy(lastRgba.data() + size_t(y) * width * 4u, px + size_t(y) * stride, width * 4u);
+            for (uint32_t x = 0; x < width; ++x) {
+                const size_t at = size_t(y) * stride + x * 4;
+                lit += (px[at] + px[at + 1] + px[at + 2]) > 6;
+            }
+        }
+        wgpuBufferUnmap(readback);
+        return lit;
+    };
     auto render = [&](const std::vector<std::shared_ptr<geom::FieldNode>>& set, bool proofOn,
                       bool certificatesOn, double t, int timedFrames) {
         renderer.setVolumeZeroProofEnabled(proofOn);
@@ -177,32 +204,6 @@ int main() {
             renderer.beginFrameOffscreen(view, width, height, glm::vec4(0, 0, 0, 1));
             renderer.composeVolumes();
             renderer.endFrame();
-        };
-        auto sync = [&]() -> uint64_t {
-            WGPUCommandEncoder enc = wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
-            WGPUTexelCopyTextureInfo src = {}; src.texture = target; src.aspect = WGPUTextureAspect_All;
-            WGPUTexelCopyBufferInfo dst = {}; dst.buffer = readback;
-            dst.layout.bytesPerRow = stride; dst.layout.rowsPerImage = height;
-            WGPUExtent3D ext = {width, height, 1};
-            wgpuCommandEncoderCopyTextureToBuffer(enc, &src, &dst, &ext);
-            WGPUCommandBuffer cmd = wgpuCommandEncoderFinish(enc, nullptr);
-            wgpuQueueSubmit(gpu.queue, 1, &cmd);
-            wgpuCommandBufferRelease(cmd); wgpuCommandEncoderRelease(enc);
-            MapResult r; WGPUBufferMapCallbackInfo cb = {};
-            cb.mode = WGPUCallbackMode_AllowProcessEvents; cb.callback = mapped; cb.userdata1 = &r;
-            wgpuBufferMapAsync(readback, WGPUMapMode_Read, 0, bd.size, cb);
-            while (!r.done) wgpuInstanceProcessEvents(gpu.instance);
-            const auto* px = static_cast<const unsigned char*>(wgpuBufferGetConstMappedRange(readback, 0, bd.size));
-            uint64_t lit = 0;
-            for (uint32_t y = 0; y < height; ++y) {
-                std::memcpy(lastRgba.data() + size_t(y) * width * 4u, px + size_t(y) * stride, width * 4u);
-                for (uint32_t x = 0; x < width; ++x) {
-                    const size_t at = size_t(y) * stride + x * 4;
-                    lit += (px[at] + px[at + 1] + px[at + 2]) > 6;
-                }
-            }
-            wgpuBufferUnmap(readback);
-            return lit;
         };
         Frame frame;
         drawOnce();
@@ -618,6 +619,130 @@ int main() {
                 std::sort(tg.begin(), tg.end()); std::sort(tb.begin(), tb.end());
                 std::printf("TIMING Prism wing B fused (%zu media): grid median %.2f ms vs grid+certificates median %.2f ms\n",
                             wing.size(), 0.5 * (tg[1] + tg[2]), 0.5 * (tb[1] + tb[2]));
+            }
+        }
+    }
+
+    // Movement rung M0 (Prism's movement architecture; Zach's question whether a
+    // camera move forces the ray math to be redone): the lowered artifact is
+    // pose-parametric, so a tour of hundreds of poses (orbits at every radius,
+    // inside each medium, grazing its extent) must relower, recompile, rebuild
+    // and re-upload nothing; and the image after the tour must equal, byte for
+    // byte, what a fresh renderer that never moved draws at the same pose.
+    {
+        struct TourSet { std::string label; std::vector<std::shared_ptr<geom::FieldNode>> set; };
+        std::vector<TourSet> tours = {{"Northern Veil", media}};
+        if (!prismWing.empty()) tours.push_back({"Prism wing B", prismWing});
+        auto drawWith = [&](WebGpuRenderer& r, const std::vector<std::shared_ptr<geom::FieldNode>>& set) {
+            std::vector<Rendering::VolumeDensityBinding> bindings;
+            std::string identity;
+            for (const auto& f : set) {
+                Rendering::VolumeDensityBinding b;
+                if (Rendering::readVolumeDensity(*f, 0.75, 1.0 / 60.0, b)) {
+                    Rendering::appendVolumeSetIdentity(identity, b.producerId, b);
+                    bindings.push_back(b);
+                }
+            }
+            r.setVolumeDensitySources(std::move(bindings), std::hash<std::string>{}(identity));
+            r.setModel(glm::mat4(1));
+            r.beginFrameOffscreen(view, width, height, glm::vec4(0, 0, 0, 1));
+            r.composeVolumes();
+            r.endFrame();
+        };
+        auto configure = [&](WebGpuRenderer& r, bool proofOn) {
+            r.setVolumeZeroProofEnabled(proofOn);
+            r.setVolumeSupportCertificatesEnabled(true);
+            r.setVolumeSupportCertificatesAutoEligibility(false);
+        };
+        auto pose = [&](WebGpuRenderer& r, glm::vec3 at, glm::vec3 to) {
+            if (glm::length(to - at) < 1e-3f) to = at + glm::vec3(0, 0, -1);
+            r.setCamera(glm::lookAt(at, to, glm::vec3(0, 1, 0)),
+                        glm::perspectiveZO(glm::radians(60.0f), float(width) / height, 0.05f, 4000.0f), at);
+        };
+        for (const auto& tour : tours) {
+            glm::vec3 lo(3e38f), hi(-3e38f);
+            for (const auto& m : tour.set) {
+                const glm::vec3 h = glm::abs(m->scale);
+                lo = glm::min(lo, m->origin - h); hi = glm::max(hi, m->origin + h);
+            }
+            const glm::vec3 centre = 0.5f * (lo + hi);
+            const float extent = glm::length(hi - lo);
+            // The tour: orbits at five radii (deep inside the set to well outside),
+            // the centre of every medium looking out, and its face looking in.
+            std::vector<std::pair<glm::vec3, glm::vec3>> poses;
+            const float radii[] = {0.02f, 0.15f, 0.35f, 0.6f, 1.2f};
+            for (int i = 0; i < 160; ++i) {
+                const float a = 6.2831853f * float(i) / 32.0f, rad = radii[i % 5] * extent;
+                const glm::vec3 at = centre + glm::vec3(rad * std::cos(a), 0.3f * rad * std::sin(1.7f * a), rad * std::sin(a));
+                poses.push_back({at, i % 3 == 0 ? centre : at + glm::vec3(std::sin(a), 0.2f, -std::cos(a))});
+            }
+            for (const auto& m : tour.set) {
+                const glm::vec3 h = glm::abs(m->scale);
+                poses.push_back({m->origin, m->origin + glm::vec3(0.3f, 0.1f, 1.0f)});
+                poses.push_back({m->origin + glm::vec3(0, 0, 1.0001f * h.z), m->origin});
+            }
+            for (bool proofOn : {false, true}) {
+                configure(renderer, proofOn);
+                pose(renderer, poses.front().first, poses.front().second);
+                drawWith(renderer, tour.set);   // warm: the one lowering this set owes
+                drawWith(renderer, tour.set);
+                uint32_t compiles = 0, lowerings = 0, builds = 0, proofBuilds = 0, probes = 0;
+                uint32_t minKillers = ~0u, maxKillers = 0;
+                size_t parameterBytes = 0, proofBytes = 0;
+                for (const auto& [at, to] : poses) {
+                    pose(renderer, at, to);
+                    drawWith(renderer, tour.set);
+                    const auto& fs = renderer.frameStats();
+                    compiles += fs.volumeProgramCompiles; lowerings += fs.volumeLowerings;
+                    builds += fs.volumeSupportCertificateBuilds; proofBuilds += fs.volumeZeroProofBuilds;
+                    probes += fs.volumeSupportCertificateProbeRenders;
+                    parameterBytes += fs.volumeParameterBytesUploaded; proofBytes += fs.volumeProofBytesUploaded;
+                    minKillers = std::min(minKillers, fs.volumeSupportCertificateKillers);
+                    maxKillers = std::max(maxKillers, fs.volumeSupportCertificateKillers);
+                }
+                std::printf("       M0 %s%s: %zu poses; compiles %u, lowerings %u, certificate builds %u, "
+                            "proof builds %u, probes %u, parameter bytes %zu, proof bytes %zu; killers %u..%u\n",
+                            tour.label.c_str(), proofOn ? " (grid+certificates)" : " (certificates)", poses.size(),
+                            compiles, lowerings, builds, proofBuilds, probes, parameterBytes, proofBytes,
+                            minKillers, maxKillers);
+                check(compiles == 0 && lowerings == 0 && builds == 0 && proofBuilds == 0 && probes == 0 &&
+                          parameterBytes == 0 && proofBytes == 0 && minKillers == maxKillers && maxKillers > 0,
+                      "M0 " + tour.label + (proofOn ? " (grid+certificates)" : " (certificates)") + ": " +
+                          std::to_string(poses.size()) + " camera poses rebind only (nothing relowered, rebuilt or re-uploaded)");
+
+                // Fresh-bind equality at checkpoints across the tour: the renderer
+                // that moved through every pose draws what one that never moved draws.
+                uint32_t equal = 0, checked = 0, lit = 0, live = 0;
+                std::string worst;
+                for (size_t k = 0; k < poses.size(); k += poses.size() / 6) {
+                    pose(renderer, poses[k].first, poses[k].second);
+                    drawWith(renderer, tour.set);
+                    lit += sync() > 0;
+                    const std::vector<unsigned char> toured = lastRgba;
+                    WebGpuRenderer fresh;
+                    if (!fresh.init(gpu)) { check(false, "M0: a fresh renderer initializes"); break; }
+                    setCurrentRenderer(&fresh);
+                    fresh.setRadianceSources({source}, 1);
+                    fresh.setLight(source.position, source.ambientRadiance, source.diffuseRadiance, source.specularRadiance);
+                    fresh.setLightingEnabled(light.enabled);
+                    configure(fresh, proofOn);
+                    pose(fresh, poses[k].first, poses[k].second);
+                    drawWith(fresh, tour.set);
+                    // Control: the counters the tour holds at zero do fire here.
+                    live += (fresh.frameStats().volumeProgramCompiles + fresh.frameStats().volumeLowerings) > 0 &&
+                            fresh.frameStats().volumeSupportCertificateBuilds > 0;
+                    sync();
+                    setCurrentRenderer(&renderer);
+                    ++checked;
+                    if (toured == lastRgba) ++equal;
+                    else worst = byteDiff(toured, lastRgba);
+                }
+                std::printf("       M0 %s fresh-bind: %u of %u checkpoints byte-equal (%u lit; %u fresh first frames lowered "
+                            "and built certificates)%s%s\n",
+                            tour.label.c_str(), equal, checked, lit, live, worst.empty() ? "" : "; ", worst.c_str());
+                check(checked >= 6 && equal == checked && lit >= checked / 2 && live == checked,
+                      "M0 " + tour.label + (proofOn ? " (grid+certificates)" : " (certificates)") +
+                          ": after the tour, every checkpoint image equals a fresh renderer's, byte for byte");
             }
         }
     }

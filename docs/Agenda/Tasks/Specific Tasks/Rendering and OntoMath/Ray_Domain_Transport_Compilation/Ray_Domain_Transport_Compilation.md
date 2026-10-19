@@ -115,3 +115,8 @@ Zach's 2026-10-19 direction extends the ray compiler to moving observers without
 This is **architecture direction, not a landed implementation claim**. Existing Prophetic Rete remains conservative and fail-open; do not add a renderer-private movement authority, second dirty graph, second time model, or sensitivity-based omission without execution-faithfulness evidence.
 
 *Human origin: Zachary Zhang. Formalized by Original Prism Sun / GPT-5.6 Sol, 2026-10-19.*
+
+**Ladder progress** (Prism's revised ladder, 2026-10-19):
+- [x] **M0 — pose-parametric witness.** 344 poses over Northern Veil and Prism wing B: nothing relowered, rebuilt or re-uploaded; 26/26 checkpoint images byte-equal to a fresh renderer's. [Plan §6s](../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6s-movement-rung-m0-a-camera-move-rebinds-it-does-not-relower-2026-10-19-twentieth-pass). *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T11:55 PDT.*
+- [ ] **M0.5 — locomotion transparency audit.** Every pose writer classified as sensing / Kernel invariant / variable movement policy. ⚑ Zach: today `writesPersonsMotionWithoutActuationConsent` (`Law.cpp:32`) refuses every positive Law write to a Person's motion, so Law-visible walking (M1) needs a decision on how the Person's own input carries actuation authority.
+- [ ] M1 one Law-visible movement premise · M1b reachable envelope · M2 closed-form hull over the envelope.
