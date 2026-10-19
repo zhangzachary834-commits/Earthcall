@@ -18187,5 +18187,11 @@
   "formationRelations": {
     "relations": []
   },
-  "lexemes": []
+  "lexemes": [],
+  "matterGeneration": {
+    "snapshotId": "37a4fa8c285d938a",
+    "sha256": "37a4fa8c285d938a6dc8a1dfa494cd53e39c5fbc81a22c2164419ce3aea62db6",
+    "byteLength": 17140,
+    "schemaVersion": 1
+  }
 }

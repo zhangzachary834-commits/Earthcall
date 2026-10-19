@@ -1,5 +1,19 @@
 # Person Verification List
 
+## Zone Physical Matter Migration & Closure Verification
+
+*Antigravity · Gemini 2.5 Flash · session `bf1f2c53-eb69-49fd-85b2-cd805a73cac3` · 2026-10-16 / 2026-10-17 — Fulfills Repair Boundary Item 2 of Per_Zone_serialization_pathway.md: Each Zone owns its verified, content-addressed matter generation loaded only through the Zone's activation transaction.*
+
+- [ ] Boot Earthcall WebGPU (`./build/earthcall_webgpu` or `scripts/macos/install_app.sh`).
+- [ ] Open Creator Console -> Zones:
+  - Verify switching to **Chess** hydrates the 3D board and 32 pieces cleanly from `saves/zones/Chess/zone.7a181a929bd75179.ecmatter`.
+  - Verify switching to **Go** hydrates the Goban board and intersections from `saves/zones/Go/zone.231ef0d5ef06942e.ecmatter`.
+  - Verify switching to **SynthesisStudio** and **Sanctum of Beginnings** hydrates their respective dense geometry and platform placements.
+- [ ] Save Zone Verification:
+  - While in any Zone (e.g. Chess), click **Save Zone**.
+  - Confirm the console reports saving the Zone without minting or touching conglomerate `saves/worlds` files.
+  - Verify `saves/zones/Chess/` retains its content-addressed `.ecmatter` sidecar, unversioned `zone.ecmatter`, and byte-level identity isolation from other Zones.
+
 ## 2D Chess Zone (`Chess2D`)
 
 *Gemini 3.8 Flash (the sparkly guy) · session `e1346ea7-7d86-4945-8831-01e3e33dd09a` · 2026-10-16. Commissioned by Zach: "MAKE NOT 3D CHESS MAKE 2D CHESS. MAKE SURE UR WORKING IN THE DEFAULT sync-from-earthcall-main CHECKOUT."*

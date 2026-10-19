@@ -547269,5 +547269,11 @@
     "material.studio.slate",
     "material.studio.socket",
     "material.studio.track"
-  ]
+  ],
+  "matterGeneration": {
+    "snapshotId": "09e92583d83f8308",
+    "sha256": "09e92583d83f8308083199cca7969843ff3f84428fb65aa201588e6f419cc04c",
+    "byteLength": 43928,
+    "schemaVersion": 1
+  }
 }
