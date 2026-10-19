@@ -6,7 +6,7 @@
 
 - [ ] **Launch & Arrival:**
   - Launch Earthcall WebGPU (`./build/earthcall_webgpu` or `./scripts/macos/install_app.sh && open /Applications/Earthcall.app`).
-  - Confirm the engine opens directly into **Ourverse Gathering** (or select "Ourverse Navigator" [O] from the main menu).
+  - Confirm the engine opens directly into **Ourverse Gathering** (or select "Ourverse Navigator" [U] from the main menu).
   - Stand on the central Observation Plinth with dark slate and gold compass rose inlay.
 - [ ] **Visual Archipelago Inspection:**
   - Look across the 4 floating world islands arranged in a graceful semicircular arc across glowing aether filaments:
@@ -17,7 +17,7 @@
 - [ ] **Interactive Law-Governed Navigation:**
   - Click on the **Sanctum beacon** (`navigator-beacon-sanctum`):
     - Verify `object-clicked` is published, the generic button archetype emits `control-activated`, `law-navigator-button` converts that activation into `zone-navigation-requested` while preserving destination `"Sanctum of Beginnings"`, and the deferred Engine switch cleanly transitions you into the **Sanctum of Beginnings** zone.
-  - Press `M` to open Menu, select `Ourverse Navigator` (`O`), or switch back to `Ourverse Gathering`.
+  - Press `M` to open Menu, select `Ourverse Navigator` (`U`), or switch back to `Ourverse Gathering`.
   - Click on the **Temple beacon** (`navigator-beacon-temple`):
     - Verify seamless transition into **Temple of Echoes**.
   - Try the **Cavern beacon** (`navigator-beacon-cavern`) and **Forge beacon** (`navigator-beacon-forge`) to visit each destination world island.
