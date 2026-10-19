@@ -464,6 +464,9 @@ private:
     std::vector<std::string> _requiredProperties;   // derived at recompile()
     std::vector<ConditionPredicate> _compiledGates;
     bool _writesQualifiedRoots{false};
+    bool _writesMotionProperties{false};
+    bool _writesZoneCanExit{false};
+    bool _writesZoneOwner{false};
 };
 
 struct LawRegisteredEvent {

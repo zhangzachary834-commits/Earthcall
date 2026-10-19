@@ -286,6 +286,9 @@ void Law::setActionModel(ActionModel model) {
 void Law::recompile() {
     _compiledGates.clear();
     _writesQualifiedRoots = false;
+    _writesMotionProperties = false;
+    _writesZoneCanExit = false;
+    _writesZoneOwner = false;
     if (_conditionModel) {
         _conditionPredicates.clear();
         addCondition(_conditionModel->describe(), _conditionModel->compile());
@@ -309,6 +312,52 @@ void Law::recompile() {
                 break;
             }
         }
+        const std::function<void(const ActionNode&)> checkActionNode = [&](const ActionNode& node) {
+            const auto checkPath = [&](const PropertyPath& p) {
+                for (const std::string& seg : p.segments) {
+                    if (seg.empty()) continue;
+                    std::string_view unquoted = seg;
+                    if (unquoted[0] == '@') unquoted.remove_prefix(1);
+                    if (unquoted == "position" || unquoted == "velocity" || unquoted == "acceleration") {
+                        _writesMotionProperties = true;
+                    }
+                    if (unquoted == "canExit") {
+                        _writesZoneCanExit = true;
+                    }
+                    if (unquoted == "owner") {
+                        _writesZoneOwner = true;
+                    }
+                }
+            };
+
+            checkPath(node.path);
+            checkPath(node.input);
+            checkPath(node.spawnParentPath);
+            checkPath(node.spawnPlacementPath);
+            checkPath(node.spawnShapeKindPath);
+            checkPath(node.spawnColorPath);
+            checkPath(node.pixelFacePath);
+            checkPath(node.pixelUPath);
+            checkPath(node.pixelVPath);
+            checkPath(node.pixelColorPath);
+
+            if (node.kind == ActionNode::Kind::RemoveProperty || node.kind == ActionNode::Kind::AddProperty) {
+                if (node.propertyName == "position" || node.propertyName == "velocity" || node.propertyName == "acceleration") {
+                    _writesMotionProperties = true;
+                }
+                if (node.propertyName == "canExit") {
+                    _writesZoneCanExit = true;
+                }
+                if (node.propertyName == "owner") {
+                    _writesZoneOwner = true;
+                }
+            }
+
+            for (const auto& child : node.children) {
+                checkActionNode(child);
+            }
+        };
+        checkActionNode(*_actionModel);
     }
     rebuildRequiredProperties();
 }
@@ -470,32 +519,16 @@ Law::ApplicationResult Law::applyToImpl(
     const Law* targetLaw = dynamic_cast<const Law*>(&target);
     const Zone* targetZone = dynamic_cast<const Zone*>(&target);
 
-    const bool lacksPersonMotionConsent = _actionModel &&
+    const bool lacksPersonMotionConsent = _writesMotionProperties && _actionModel &&
         writesPersonsMotionWithoutActuationConsent(*_actionModel, target);
     bool violatesKernelBoundary = lacksPersonMotionConsent;
     bool personMotionRefused = false;
-    if (_actionModel) {
-        std::vector<PropertyPath> paths;
-        _actionModel->collectPaths(paths);
 
-        for (const auto& p : paths) {
-            if (p.segments.empty()) continue;
-            const std::string& root = p.segments.front();
-
-            // 3. Zone Exit Lock Rejection: Nobody can be locked in a zone against their will.
-            if (targetZone) {
-                if (root == "canExit") {
-                    violatesKernelBoundary = true;
-                    break;
-                }
-                // Local Ourverse gathering: no one may own it. Owner is
-                // already read-only on Zone; this refuses any write path
-                // that would seat a Singular over the gathering place.
-                if (targetZone->isOurverseGathering() && root == "owner") {
-                    violatesKernelBoundary = true;
-                    break;
-                }
-            }
+    if (targetZone) {
+        if (_writesZoneCanExit) {
+            violatesKernelBoundary = true;
+        } else if (_writesZoneOwner && targetZone->isOurverseGathering()) {
+            violatesKernelBoundary = true;
         }
     }
 
