@@ -311,6 +311,21 @@ bool ZoneManager::persistZone(size_t index) const {
         return false;
     }
 
+    if (!matterBytes.empty()) {
+        const std::string identityPath = dwelling
+            ? SaveSystem::resolveHomeIdentityPath(id)
+            : SaveSystem::resolveZoneIdentityPath(id);
+        const std::filesystem::path committedRoot = identityPath.empty()
+            ? (dwelling ? std::filesystem::path(SaveSystem::homeIdentityPath(id))
+                        : std::filesystem::path(SaveSystem::zoneIdentityPath(id)))
+            : std::filesystem::path(identityPath);
+        if (!writeMatterCompatibilityCopy(committedRoot, matterBytes)) {
+            std::cerr << "[zones] Save Zone '" << id
+                      << "' committed its verified generation, but the legacy .ecmatter "
+                         "compatibility mirror could not be updated.\n";
+        }
+    }
+
     cleanupPredecessorMatter(oldMatterPath);
 
     std::cout << "[zones] Saved Zone '" << id
