@@ -13,6 +13,7 @@
 // it to an independent same-thread clock.
 
 #include "support/test_harness.hpp"
+#include "support/test_save_helper.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <algorithm>
@@ -72,9 +73,10 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    // Protect the real Zone identity store by setting saveRoot to a temporary scratch directory,
+    // avoiding copying 1.6GB save tree on every execution.
+    TempSaveRoot tempSaveRoot;
+    TestSupport::BootedEngineHarness h("Player", "humanoid", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);
