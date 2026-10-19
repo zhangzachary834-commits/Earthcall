@@ -723,10 +723,11 @@ bool Engine::initLogic() {
     });
 
     _mainMenu.addOption("Ourverse Navigator", GLFW_KEY_O, [this]() {
-        const auto& zones = mgr.zones();
+        auto& zoneManager = ZoneManager::instance();
+        const auto& zones = zoneManager.zones();
         for (size_t i = 0; i < zones.size(); ++i) {
             if (zones[i] && zones[i]->isOurverseGathering()) {
-                mgr.switchTo(i);
+                zoneManager.switchTo(i);
                 break;
             }
         }
