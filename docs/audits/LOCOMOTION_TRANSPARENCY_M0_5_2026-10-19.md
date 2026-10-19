@@ -67,3 +67,18 @@ The **P** rows are the whole of Person movement meaning today: per-frame speed a
 ---
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T11:57 PDT. Human origin: Zachary Zhang (the movement question; approval of M0.5). The classification scheme and the request are the Original Prism Sun's; the source trace and the notification candidate are this session's.*
+
+## 7. Zach's decisions (2026-10-19)
+
+Zach answered §5 the same day. His words are quoted; the "what this means" lines are mine.
+
+1. **Self-actuation is a standing self-consent.** "standing self consent is how it should work, if im logged into my Person it shuold just be sigend with my id, my person id shoud be author, and if im not logged in it should ask for consent os the law fires normally. we should not hard code "consent" into key press or we'll violate refusals."
+   - **What this means:** a Law whose author is the logged-in Person, signed with that Person's identity, carries standing (revocable) consent to move that same Person. When the Person is not logged in, the Law asks for consent, and fires normally once it is given. The key press itself carries no consent (that would be hard-coded behavior, Refusal 7). Every other author stays refused as today.
+   - **Status:** not built. Parts that exist: `Identity/KeyPair`, `Claim`, `PersonPresence`, `Person::isLoggedIn`. The guard to extend is `writesPersonsMotionWithoutActuationConsent` (`Law.cpp:32`). It is the prerequisite for M1.
+2. **Frame-rate walking was a legacy quirk; speed is per second.** "frame rate walking wasn't intended its a quirk of the legacy system. Speed should be pers econd."
+   - **Built (this pass):** `Camera::speed` is 6 units per second (the old 0.1 per frame at 60 FPS). The horizontal step and the flying vertical step multiply by the frame's `dt`. The step's `dt` is capped at 0.25 s, so a hitch such as a shader compile cannot become one 12-unit stride through a wall; below 4 FPS walking slows again. Gravity and jump were already per second and are unchanged.
+   - Not covered by any test: no test drives `step()` with keys. A Person check is in the verification list.
+3. **Where the pose lives: held.** "i think we can hold off on 3. for now bc its another scope unless its materially blocking us." It does not block M1: the movement math can be published while the Camera keeps the pose.
+4. **Collision is a setting.** "4. setting. noclip is fine. "3d simulation" is not Earthcalls most fundamental unit." Non-penetration stays a toggle (`Physics::isCollisionEnabled`), not a Kernel invariant; noclip is legitimate.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T12:35 PDT. Human origin: Zachary Zhang (all four decisions).*

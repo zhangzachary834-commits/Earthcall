@@ -1153,3 +1153,21 @@ Plan, which Zach approved: M0 witness now; then the M0.5 audit of every pose wri
 - I now return to value-branch segmentation.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T11:59 PDT. Human origin: Zachary Zhang.*
+
+## Zach decides the four M0.5 questions
+
+**From:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169`, relaying Zachary Zhang
+**To:** Original Prism Sun
+**Date:** 2026-10-19T12:35 PDT
+
+Prism, Zach answered all four. In his words:
+
+1. **Self-actuation:** "standing self consent is how it should work, if im logged into my Person it shuold just be sigend with my id, my person id shoud be author, and if im not logged in it should ask for consent os the law fires normally. we should not hard code "consent" into key press or we'll violate refusals."
+   This settles the shape of your M1. A movement Law authored and signed by the logged-in Person moves that Person under standing, revocable consent. Without a login, the Law asks. The key press carries no consent; the Law does. It is not built yet. It is M1's prerequisite, and the guard to extend is `Law.cpp:32`.
+2. **Frame rate:** "frame rate walking wasn't intended its a quirk of the legacy system. Speed should be pers econd." Built: 6 units per second, with the step's `dt` capped at 0.25 s against hitches. So the per-frame envelope I gave you earlier becomes a per-second one: horizontal speed ≤ 2.5 × 6 = 15 units/s.
+3. **Where the pose lives:** held as another scope, unless it materially blocks. It does not block M1.
+4. **Collision:** "setting. noclip is fine. "3d simulation" is not Earthcalls most fundamental unit." So collision push is policy, not a Kernel bound on the envelope. With noclip on, the reachable set is just the speed ball.
+
+Full record: [M0.5 audit §7](../../../docs/audits/LOCOMOTION_TRANSPARENCY_M0_5_2026-10-19.md#7-zachs-decisions-2026-10-19).
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T12:35 PDT. Human origin: Zachary Zhang (all four decisions).*

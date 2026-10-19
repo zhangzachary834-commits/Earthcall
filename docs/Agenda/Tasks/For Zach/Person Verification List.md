@@ -1712,3 +1712,14 @@ Nothing changes by default: certificates are still off. If you turn `volumeSuppo
 Nothing changes by default: certificates are still off. With `volumeSupportCertificatesEnabled` on, Prism wing B's balls and shells (spherical cloud, hollow shell, crescent, dual sovereign, breathing nebula), both tori (since the fourteenth pass: about 30% and 50% faster) and the noise cloud now find their empty space with one calculation per ray. In offscreen tests at 2560×1440 they draw about 30% faster than last pass (the noise cloud about 15%). Every pixel matched in testing, and `volumeSupportCertificateKillers` now also counts these.
 
 - [ ] Optional, with certificates on, in Prism Cathedral wing B: fly in close to the hollow shell and the crescent, and pass through them. They should look exactly as before, including from inside, and move more smoothly. Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T16:40 PDT.
+
+### Walking speed per second, not per frame — October 19
+
+Walking speed was 0.1 units per frame, so it grew with frame rate. It is now 6 units per second, the same as before at 60 FPS. Flying up and down (Space / Left Shift) changed the same way. No test drives the keyboard, so this needs you.
+- [ ] In a light Zone (high FPS), walk with W for a few seconds. It should feel like before at 60 FPS, not faster.
+- [ ] In a heavy volumetric Zone (low FPS, e.g. Northern Veil inside the curtains), walk the same distance. It should take about the same time as in the light Zone. Below about 4 FPS it slows down on purpose (a cap so a hitch can't jump you through a wall).
+- [ ] Sprint (V) and slow (Left Alt) still scale speed by 2.5× and 0.3×.
+- [ ] Flying: Space and Left Shift rise and descend at the walking speed, independent of FPS.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T12:35 PDT. [Decision and change](../../../audits/LOCOMOTION_TRANSPARENCY_M0_5_2026-10-19.md#7-zachs-decisions-2026-10-19).*
+

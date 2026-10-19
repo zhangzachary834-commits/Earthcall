@@ -227,6 +227,9 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
     const bool groundedLast = _wasGrounded;
 
     float actualSpeed = camera.speed;
+    // A hitch (a shader compile, a save) must not become one long stride
+    // through a wall: steps are per second down to 4 FPS, then capped.
+    const float stepDt = std::min(dt, 0.25f);
     if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) actualSpeed *= 2.5f;
     if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) actualSpeed *= 0.3f;
 
@@ -243,7 +246,9 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) move -= forwardXZ;
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) move += rightXZ;
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) move -= rightXZ;
-        if (glm::length(move) > 1e-4f) camera.pos += glm::normalize(move) * actualSpeed;
+        // Speed is units per second (Zach, 2026-10-19: the per-frame step was a
+        // legacy quirk that made walking faster at higher frame rates).
+        if (glm::length(move) > 1e-4f) camera.pos += glm::normalize(move) * actualSpeed * stepDt;
     }
 
     if (collisionEnabled) {
@@ -289,7 +294,7 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
         float vy = 0.0f;
         if (jumpKeyDown) vy += actualSpeed;
         if (canMove && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) vy -= actualSpeed;
-        camera.pos.y += vy;
+        camera.pos.y += vy * stepDt;
         person.velocity().y = 0.0f;
         grounded = false;
     } else {
