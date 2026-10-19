@@ -139,8 +139,15 @@ def resolve_legacy_entity(pool, obj_id, zone_id, zone_dir):
             break
     if all_same:
         return cands[0][1]
-    # Ambiguous conflicting candidates across different zones
-    return None
+    # Ambiguous conflicting candidates across different zones.  This is a
+    # migration refusal, not "no legacy geometry": silently returning None here
+    # makes build_entity_dict fall back to authored/default geometry and can
+    # erase dense legacy matter while reporting a successful migration.
+    sources = ", ".join(sorted({src for src, _ in cands}))
+    raise RuntimeError(
+        f"ambiguous conflicting legacy matter for object '{obj_id}' in Zone "
+        f"'{zone_id}' (candidates: {sources})"
+    )
 
 
 def build_entity_dict(obj, zone_id, zone_dir, legacy_pool):
