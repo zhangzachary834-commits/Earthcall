@@ -127,7 +127,11 @@ This is **architecture direction, not a landed implementation claim**. Existing 
 - [x] **Hybrid integration (§6u):** closed-form weights × sampled remainders by product Simpson, ~96 evaluations focused on proved-dense pieces; Northern Veil optical depth ~1,400× closer to the continuum than the 96-sample sum, proved radius on every ray. *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T14:06 PDT.*
 - [x] **Transmittance by line integration (§6w):** the marcher's own σ; worst |ΔT| 3.83/255 → 0.0047/255 across 27 media, proved radius on every ray. *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T15:43 PDT.*
 - [x] **In-scattered light (§6x), unit unshadowed light:** worst |ΔL| 8.55/255 → 0.0082/255 across 27 media; proved radius on every ray. *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T16:00 PDT.*
-- [ ] Shadow visibility by line integration of the shadow ray's depth; authored phase and chroma as weights; emission.
+- [x] **Colour, no-source model, RGB (§6y):** scattering, chroma, phase and emission; worst 7.97/255 → 0.021/255; proved radius on every ray. *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T16:06 PDT.*
+- [x] Zach decided (2026-10-19): switch the GPU from 96 samples to integration once the path is ready and passes the faithfulness test.
+- [ ] Source model: light position, wᵢ-reading phase (range over a cone), authored light radiance/chroma/angular as sampled factors.
+- [ ] ⚑ Zach: should media self-shadow? The marcher has none today (§6y).
+- [ ] GPU line-integration path behind a setting, off by default, A/B against 96 for image and time.
 - [x] ⚑ Zach decided (2026-10-19, on the Sun's verdict): exact special-function reductions count as exact, as their own layer between elementary closed form and quadrature.
 - [x] **Carlson rung, witnessed (§6v):** R_F/R_D/R_J/R_C within 3.2 ulp of precision-stable references; first-kind two-quadratic reduction to 3.8×10⁻¹⁴. *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T14:53 PDT.*
 - [ ] Second- and third-kind reductions of ∫√(Q₁Q₂) (the crescent): table formulas from memory failed verification; derive by Möbius-even + Legendre + DLMF §19.25, which first needs R_J's principal value (p < 0) with its own witness (§6w).

@@ -486,3 +486,11 @@ Zach: "Faithfulness to exact math should be the rule." A new witness, `webgpu_vo
 - **Proved radius** holds on every ray.
 
 **Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/inscatter-line-1.log`. Design: [§6x](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6x-in-scattered-light-by-line-integration-t-inside-the-integral-2026-10-19-twenty-fifth-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T16:00 PDT.
+
+## Colour, no-source model, RGB — twenty-sixth pass (CPU only)
+
+- **Every authored medium factor (scattering, chroma, phase, emission), 26 media:** worst 96-sample |ΔL| 7.97/255 (Borealis hero), line-integrated 0.021/255. Proved radius on every ray.
+- **Finding:** the volume marcher has no volumetric self-shadow; its visibility is an occluder-SDF soft-shadow heuristic.
+- **Recorded:** Zach's decision to switch the GPU to integration when the path is ready.
+
+**Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/colour-line-1.log`. Design: [§6y](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6y-colour-in-rgb-with-every-authored-medium-factor-no-self-shadow-exists-to-integrate-zachs-switch-decision-2026-10-19-twenty-sixth-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T16:06 PDT.

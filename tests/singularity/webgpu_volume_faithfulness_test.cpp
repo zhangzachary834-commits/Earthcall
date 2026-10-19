@@ -31,6 +31,7 @@
 #include <webgpu/wgpu.h>
 #include <glm/gtc/noise.hpp>
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
@@ -663,7 +664,27 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                 const bool authoredScatter = b.scatteringExpr && !b.scatteringExpr->pieces.empty();
                 const auto lineS = authoredScatter ? OntoMath::restrictAlgebraicToLine(*b.scatteringExpr, false)
                                                    : OntoMath::LineAlgebraicRestriction{};
-                const bool scatterOk = lineOk && (!authoredScatter || bool(lineS));
+                // The marcher's no-source branch (no incident source bound): white
+                // incident light, phase(p, wi = 0, wo) — 0 when phase reads wi —
+                // medium chroma, and emission(p, omega), omega toward the camera.
+                auto restrictIf = [](const OntoMath::Piecewise* pw, bool vec) {
+                    return pw && !pw->pieces.empty() ? OntoMath::restrictAlgebraicToLine(*pw, vec) : OntoMath::LineAlgebraicRestriction{};
+                };
+                const bool hasChroma = b.volumeChromaExpr && !b.volumeChromaExpr->pieces.empty();
+                const bool hasPhase = b.phaseExpr && !b.phaseExpr->pieces.empty();
+                const bool hasEmission = b.emissionExpr && !b.emissionExpr->pieces.empty();
+                const auto lineC = restrictIf(b.volumeChromaExpr, true);
+                const auto lineP = restrictIf(b.phaseExpr, false);
+                const auto lineM = restrictIf(b.emissionExpr, true);
+                const bool phaseReadsWi = hasPhase && bool(lineP) &&
+                    (lineP.form->reads.count(OntoMath::kWiXVar) || lineP.form->reads.count(OntoMath::kWiYVar) ||
+                     lineP.form->reads.count(OntoMath::kWiZVar));
+                const bool scatterOk = lineOk && (!authoredScatter || bool(lineS)) && (!hasChroma || bool(lineC)) &&
+                                       (!hasPhase || bool(lineP)) && (!hasEmission || bool(lineM));
+                if (lineOk && !scatterOk)
+                    std::printf("    %s colour by line integration: not admitted (%s)\n", b.producerId.c_str(),
+                                authoredScatter && !lineS ? lineS.refusal.c_str() : hasChroma && !lineC ? lineC.refusal.c_str()
+                                : hasPhase && !lineP ? lineP.refusal.c_str() : lineM.refusal.c_str());
                 double scatter96 = 0.0, scatterLine = 0.0;
                 uint32_t scatterRays = 0, scatterMiss = 0;
                 for (int r = 0; r < 16 && ok; ++r) {
@@ -802,32 +823,45 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                     lineHybrid = std::max(lineHybrid, std::abs(std::exp(-est) - std::exp(-reference)));
                     if (std::abs(est - reference) > rad + referenceError + 1e-12) ++lineMiss;
 
-                    // ---- In-scattered light, unit light ----
+                    // ---- Colour (RGB): the marcher's no-source model, every authored factor ----
                     if (!scatterOk) continue;
-                    std::optional<OntoMath::LineAlgebraicEvaluator> evS;
+                    using Ev = OntoMath::LineAlgebraicEvaluator;
+                    std::optional<Ev> evS, evC, evP, evM;
                     if (authoredScatter) evS.emplace(*lineS.form, bind, true);
-                    if (evS && !evS->ok()) continue;
-                    const uint32_t rootS = authoredScatter ? lineS.form->roots[0] : 0;
-                    const std::vector<int8_t> openS(authoredScatter ? lineS.form->switches.size() : 0, 0);
+                    if (hasChroma) evC.emplace(*lineC.form, bind, true);
+                    if (hasPhase) evP.emplace(*lineP.form, bind, true);
+                    if (hasEmission) evM.emplace(*lineM.form, bind, true);
+                    if ((evS && !evS->ok()) || (evC && !evC->ok()) || (evP && !evP->ok()) || (evM && !evM->ok())) continue;
+                    const uint32_t rootS = authoredScatter ? lineS.form->roots[0] : 0, rootP = hasPhase ? lineP.form->roots[0] : 0;
+                    auto openOf = [](const std::optional<Ev>& ev) { return std::vector<int8_t>(ev ? ev->form().switches.size() : 0, 0); };
+                    const auto openS = openOf(evS), openC = openOf(evC), openP = openOf(evP), openM = openOf(evM);
                     auto sigmaS = [&](double s) {
                         const double D = evD.value(rootD, s).value_or(0.0);
                         if (!(D > 0.0)) return 0.0;
                         return evS ? std::max(evS->value(rootS, s).value_or(0.0), 0.0) : D;
                     };
-                    auto marcherScatter = [&](int n) {
+                    auto chromaAt = [&](int c, double s) { return evC ? evC->value(lineC.form->roots[c], s).value_or(0.0) : 1.0; };
+                    auto phaseAt = [&](double s) {
+                        if (!evP) return 1.0;
+                        if (phaseReadsWi) return 0.0;
+                        return std::max(evP->value(rootP, s).value_or(0.0), 0.0);
+                    };
+                    auto emissionAt = [&](int c, double s) { return evM ? std::max(evM->value(lineM.form->roots[c], s).value_or(0.0), 0.0) : 0.0; };
+                    auto marcherColour = [&](int n) {
                         const double hs = (t1 - t0) / n;
-                        double T = 1.0, L = 0.0;
+                        double T = 1.0;
+                        std::array<double, 3> L{0.0, 0.0, 0.0};
                         for (int i = 0; i < n; ++i) {
                             const double sm = t0 + (i + 0.5) * hs, st = sigma(sm);
                             if (!(st > 0.0)) continue;
                             const double Tn = T * std::exp(-st * hs);
-                            L += sigmaS(sm) / st * (T - Tn);
+                            const double sc = sigmaS(sm) / st * phaseAt(sm) * (T - Tn);
+                            for (int c = 0; c < 3; ++c) L[c] += chromaAt(c, sm) * sc + emissionAt(c, sm) * (T - Tn) / st;
                             T = Tn;
                         }
                         return L;
                     };
-                    const double L96 = marcherScatter(kSamples), L17 = marcherScatter(1 << 17), refL = marcherScatter(1 << 18);
-                    const double refErrL = 2.0 * std::abs(refL - L17) + double(1 << 18) * std::numeric_limits<double>::epsilon() * refL;
+                    const auto L96 = marcherColour(kSamples), L17 = marcherColour(1 << 17), refL = marcherColour(1 << 18);
                     // ∫ sigma_t over [p, q] inside a piece where D > 0 is proved, with
                     // the floor's contribution in the radius (as for transmittance).
                     auto sigmaTIntegral = [&](const OntoMath::LineSegmentationPiece& pc, double p0, double q0, uint32_t c)
@@ -853,21 +887,42 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                         if (!evE) return std::max(1e-6, 0.5 * double(evD.range(rootD, p0, q0, pc.signs[0], &u2).hi));
                         return std::max(1e-6, double(evE->range(rootE, p0, q0, openE, &u2).hi));
                     };
-                    double tau = 0.0, tauRad = 0.0, Lest = 0.0, Lrad = 0.0;
-                    bool scatterPiecesOk = true;
+                    // Proved range and slope of an optional node over [p, q] (the
+                    // constant `absent` when not authored; max(·, 0) when clamped).
+                    struct Bound { double lo, hi, slope; };
+                    auto boundOf = [&](const std::optional<Ev>& ev, const std::vector<int8_t>& open, uint32_t root, double p0, double q0,
+                                       double absent, bool clampZero) -> Bound {
+                        if (!ev) return {absent, absent, 0.0};
+                        bool u2 = false;
+                        const auto r = ev->range(root, p0, q0, open, &u2);
+                        const auto d = ev->derivativeRange(root, p0, q0, open);
+                        const double inf = std::numeric_limits<double>::infinity();
+                        Bound bd{u2 ? -inf : double(r.lo), u2 ? inf : double(r.hi),
+                                 std::max(std::abs(double(d.lo)), std::abs(double(d.hi)))};
+                        if (clampZero) { bd.lo = std::max(bd.lo, 0.0); bd.hi = std::max(bd.hi, 0.0); }
+                        return bd;
+                    };
+                    auto supAbsOf = [](const Bound& bd) { return std::max(std::abs(bd.lo), std::abs(bd.hi)); };
+                    std::array<double, 3> Lest{0, 0, 0}, Lrad{0, 0, 0};
+                    double tau = 0.0, tauRad = 0.0;
+                    bool colourOk = true;
                     for (const auto& pc : pieces) {
                         if (pc.targetSigns[0] < 0) continue;
                         const double w = pc.s1 - pc.s0;
                         bool undefined = false;
                         const auto rd = evD.range(rootD, pc.s0, pc.s1, pc.signs[0], &undefined);
-                        if (undefined) { scatterPiecesOk = false; break; }
+                        if (undefined) { colourOk = false; break; }
                         if (!pc.definite) {
-                            // A root sliver: light in [0, sup σ_s·T·w], depth in [0, sup σ_t·w].
-                            bool u2 = false;
-                            const double supS = std::max(0.0, evS ? double(evS->range(rootS, pc.s0, pc.s1, openS, &u2).hi) : double(rd.hi));
+                            // A root sliver: each channel's light in [0, sup(integrand)·T·w].
+                            const auto bS = evS ? boundOf(evS, openS, rootS, pc.s0, pc.s1, 0.0, true) : Bound{0.0, std::max(0.0, double(rd.hi)), 0.0};
+                            const auto bP = phaseReadsWi ? Bound{0, 0, 0} : boundOf(evP, openP, rootP, pc.s0, pc.s1, 1.0, true);
                             const double supT = sigmaTSup(pc, pc.s0, pc.s1);
-                            const double light = supS * std::exp(-tau + tauRad) * w;
-                            Lest += 0.5 * light; Lrad += 0.5 * light;
+                            for (int c = 0; c < 3; ++c) {
+                                const auto bC = boundOf(evC, openC, evC ? lineC.form->roots[c] : 0, pc.s0, pc.s1, 1.0, false);
+                                const auto bM = boundOf(evM, openM, evM ? lineM.form->roots[c] : 0, pc.s0, pc.s1, 0.0, true);
+                                const double light = (bS.hi * supAbsOf(bC) * bP.hi + bM.hi) * std::exp(-tau + tauRad) * w;
+                                Lest[c] += 0.5 * light; Lrad[c] += 0.5 * light;
+                            }
                             tau += 0.5 * supT * w; tauRad += 0.5 * supT * w;
                             continue;
                         }
@@ -878,40 +933,79 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                         tauAt[0] = tau; radAt[0] = tauRad;
                         for (uint32_t j = 0; j < cells; ++j) {
                             const auto seg = sigmaTIntegral(pc, edgeAt(j), edgeAt(j + 1), 2);
-                            if (!seg) { scatterPiecesOk = false; break; }
+                            if (!seg) { colourOk = false; break; }
                             tauAt[j + 1] = tauAt[j] + seg->first;
                             radAt[j + 1] = radAt[j] + seg->second;
                         }
-                        if (!scatterPiecesOk) break;
+                        if (!colourOk) break;
                         auto indexOf = [&](double sv) {
                             return uint32_t(std::clamp<long>(std::lround((sv - pc.s0) / hc), 0L, long(cells)));
                         };
-                        OntoMath::LineSampledFactor T;
-                        T.value = [&](double sv) -> std::optional<double> { return std::exp(-tauAt[indexOf(sv)]); };
-                        T.range = [&](double p0, double q0) {
-                            const uint32_t jp = indexOf(p0), jq = indexOf(q0);
-                            return std::make_pair(std::exp(-tauAt[jq] - radAt[jq]), std::exp(-tauAt[jp] + radAt[jp]));
+                        auto tRange = [&](double p0, double q0) {
+                            return std::make_pair(std::exp(-tauAt[indexOf(q0)] - radAt[indexOf(q0)]), std::exp(-tauAt[indexOf(p0)] + radAt[indexOf(p0)]));
                         };
-                        T.lipschitz = [&](double p0, double q0) {
-                            return sigmaTSup(pc, p0, q0) * std::exp(-tauAt[indexOf(p0)] + radAt[indexOf(p0)]);
-                        };
-                        const auto hs = evS ? evS->hybridIntegral(rootS, pc.s0, pc.s1, openS, cells, T)
-                                            : evD.hybridIntegral(rootD, pc.s0, pc.s1, pc.signs[0], cells, T);
-                        if (!hs) { scatterPiecesOk = false; break; }
-                        Lest += hs->estimate;
-                        // The node values carry τ's error: T within e^(±rad) of its estimate.
-                        Lrad += hs->radius + std::abs(hs->estimate) * std::expm1(radAt[cells]);
+                        auto tSlope = [&](double p0, double q0) { return sigmaTSup(pc, p0, q0) * tRange(p0, q0).second; };
+                        const double drift = std::expm1(radAt[cells]);   // node values of T carry τ's error
+                        for (int c = 0; c < 3; ++c) {
+                            const uint32_t rootC = evC ? lineC.form->roots[c] : 0, rootM = evM ? lineM.form->roots[c] : 0;
+                            // Scattered: ∫ sigma_s · (T · chroma_c · phase) ds.
+                            if (!phaseReadsWi) {
+                                OntoMath::LineSampledFactor F;
+                                F.value = [&, c](double sv) -> std::optional<double> {
+                                    return std::exp(-tauAt[indexOf(sv)]) * chromaAt(c, sv) * phaseAt(sv);
+                                };
+                                F.range = [&, rootC](double p0, double q0) {
+                                    const auto [tl, th] = tRange(p0, q0);
+                                    const auto bC = boundOf(evC, openC, rootC, p0, q0, 1.0, false);
+                                    const auto bP = boundOf(evP, openP, rootP, p0, q0, 1.0, true);
+                                    double lo = 1e300, hi = -1e300;
+                                    for (double x1 : {tl, th}) for (double x2 : {bC.lo, bC.hi}) for (double x3 : {bP.lo, bP.hi}) {
+                                        lo = std::min(lo, x1 * x2 * x3); hi = std::max(hi, x1 * x2 * x3);
+                                    }
+                                    return std::make_pair(lo, hi);
+                                };
+                                F.lipschitz = [&, rootC](double p0, double q0) {
+                                    const double tSup = tRange(p0, q0).second;
+                                    const auto bC = boundOf(evC, openC, rootC, p0, q0, 1.0, false);
+                                    const auto bP = boundOf(evP, openP, rootP, p0, q0, 1.0, true);
+                                    return tSlope(p0, q0) * supAbsOf(bC) * supAbsOf(bP) + tSup * bC.slope * supAbsOf(bP) +
+                                           tSup * supAbsOf(bC) * bP.slope;
+                                };
+                                const auto hs = evS ? evS->hybridIntegral(rootS, pc.s0, pc.s1, openS, cells, F)
+                                                    : evD.hybridIntegral(rootD, pc.s0, pc.s1, pc.signs[0], cells, F);
+                                if (!hs) { colourOk = false; break; }
+                                Lest[c] += hs->estimate;
+                                Lrad[c] += hs->radius + std::abs(hs->estimate) * drift;
+                            }
+                            // Emitted: ∫ max(e_c, 0) · T ds, when e_c ≥ 0 is proved on the piece.
+                            if (evM) {
+                                const auto bM = boundOf(evM, openM, rootM, pc.s0, pc.s1, 0.0, false);
+                                if (bM.lo < 0.0) { colourOk = false; break; }   // max(e, 0) would cut: not admitted here
+                                OntoMath::LineSampledFactor F;
+                                F.value = [&](double sv) -> std::optional<double> { return std::exp(-tauAt[indexOf(sv)]); };
+                                F.range = tRange;
+                                F.lipschitz = tSlope;
+                                const auto he = evM->hybridIntegral(rootM, pc.s0, pc.s1, openM, cells, F);
+                                if (!he) { colourOk = false; break; }
+                                Lest[c] += he->estimate;
+                                Lrad[c] += he->radius + std::abs(he->estimate) * drift;
+                            }
+                        }
+                        if (!colourOk) break;
                         tau = tauAt[cells];
                         tauRad = radAt[cells];
                     }
-                    if (!scatterPiecesOk) continue;
+                    if (!colourOk) continue;
                     ++scatterRays;
-                    scatter96 = std::max(scatter96, std::abs(L96 - refL));
-                    scatterLine = std::max(scatterLine, std::abs(Lest - refL));
-                    if (std::abs(Lest - refL) > Lrad + refErrL + 1e-12) ++scatterMiss;
+                    for (int c = 0; c < 3; ++c) {
+                        const double refErr = 2.0 * std::abs(refL[c] - L17[c]) + double(1 << 18) * std::numeric_limits<double>::epsilon() * std::abs(refL[c]);
+                        scatter96 = std::max(scatter96, std::abs(L96[c] - refL[c]));
+                        scatterLine = std::max(scatterLine, std::abs(Lest[c] - refL[c]));
+                        if (std::abs(Lest[c] - refL[c]) > Lrad[c] + refErr + 1e-12) ++scatterMiss;
+                    }
                 }
                 if (scatterRays) {
-                    std::printf("    %s in-scattered light, unit light (%u rays): 96-sample max |dL| %.3g (%.3f of 255), "
+                    std::printf("    %s colour, no-source model (%u rays, RGB): 96-sample max |dL| %.3g (%.3f of 255), "
                                 "line-integrated %.3g (%.5f of 255); %u outside the proved radius\n",
                                 b.producerId.c_str(), scatterRays, scatter96, 255.0 * scatter96, scatterLine, 255.0 * scatterLine,
                                 scatterMiss);
@@ -977,11 +1071,11 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                 lineMedia, lineWorst96, 255.0 * lineWorst96, lineWorstWho.c_str(), lineWorstHybrid, 255.0 * lineWorstHybrid,
                 lineBetter, lineMisses);
     check(lineMedia > 0 && lineMisses == 0, "line-integrated optical depth lies inside its proved radius on every ray");
-    std::printf("    in-scattered light by line integration (unit light): %u media; worst 96-sample |dL| %.3g (%.2f of 255, %s), "
+    std::printf("    colour by line integration (no-source model, RGB): %u media; worst 96-sample |dL| %.3g (%.2f of 255, %s), "
                 "worst line-integrated %.3g (%.4f of 255); at least as faithful on %u; %u rays outside the proved radius\n",
                 scatterMedia, scatterWorst96, 255.0 * scatterWorst96, scatterWorstWho.c_str(), scatterWorstLine,
                 255.0 * scatterWorstLine, scatterBetter, scatterMisses);
-    check(scatterMedia > 0 && scatterMisses == 0, "line-integrated in-scattered light lies inside its proved radius on every ray");
+    check(scatterMedia > 0 && scatterMisses == 0, "line-integrated colour (scattering and emission, RGB) lies inside its proved radius on every ray");
     check(lessFaithful == 0, "the medium-frame lattice point is never less faithful than the world-frame one (near and far cameras)");
     std::printf("webgpu_volume_faithfulness_test: %d/%d checks passed\n", g_checks - g_failures, g_checks);
     return g_failures == 0 ? 0 : 1;

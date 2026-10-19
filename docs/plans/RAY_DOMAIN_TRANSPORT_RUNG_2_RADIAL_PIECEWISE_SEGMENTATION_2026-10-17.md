@@ -1096,6 +1096,48 @@ Mean relative error of ∫max(D, 0) per ray.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T16:00 PDT. Human origin: Zachary Zhang (integration first; faithfulness to exact math; 96 stays the image for now). The marcher's step rule is the existing renderer's; the sampled-factor hybrid and this witness are this session's.*
 
+## 6y. Colour in RGB with every authored medium factor; no self-shadow exists to integrate; Zach's switch decision (2026-10-19, twenty-sixth pass)
+
+**Zach's decision.** "YAH BRO WHEN THE INFRASTRUCTURES READY WE CAN SWITCH THE GPU FROM 96 TO INTEGRATION". This is the Person approval §6q and the Prism decree asked for. The 96-sample image stays the definition until the GPU line-integration path exists, passes `webgpu_volume_faithfulness_test` and is shown to Zach; then the default switches.
+
+**Finding: the volume marcher has no volumetric self-shadow.** `volumeSourceVisibility` traces only an *occluder SDF* (a surface), with the heuristic soft-shadow estimate vis = min(vis, 16·d/t), and only when an occluder is authored and `volumeControl.y` enables it. Fog never dims the light reaching fog behind it.
+- **Consequence:** integrating the shadow ray's optical depth would add a new physical effect, not make today's image more faithful.
+- **⚑ For Zach, not decided here:** should media self-shadow? If yes, the light-side integral is the same line integration (§6w) along each shadow ray.
+- **Also recorded:** the occluder's penumbra term is a renderer heuristic, not authored mathematics; its faithful counterpart is a hard visibility of 0 or 1.
+
+**This pass: the marcher's no-source branch, exactly, in RGB.** With no incident source bound, the marcher uses:
+- white incident light;
+- phase(p, wᵢ = 0, w_o), which is 0 when the authored phase reads wᵢ;
+- medium chroma (a vector);
+- σₛ (authored, or D);
+- emission(p, ω), with ω toward the camera, added as emitted·(T_before − T_after)/σₜ, whose continuum is ∫e·T.
+
+Line integration per channel c:
+- ∫σₛ·M_c with the sampled factor M_c = T·chroma_c·max(phase, 0); its range and slope come from the evaluators by the product rule;
+- plus ∫max(e_c, 0)·T, where e_c ≥ 0 is proved on the piece.
+
+**Result** (26 media, max over RGB and 16 rays, levels of 255):
+
+| Medium | 96-sample | **Line-integrated** |
+|---|---|---|
+| Borealis hero curtain | 7.97 | 0.021 |
+| Borealis v2 emerald / violet | 3.62 / 0.76 | 0.0016 / 0.0003 |
+| Borealis v1 airy | 1.56 | 0.0004 |
+| Prism wing B | 0.05–0.43 | ≤ 0.0005 |
+
+- At least as faithful on 24 of 26.
+- Proved radius on every ray (6/6 checks).
+- `veil.forward-scatter` is not admitted: a computed exponent in its colour factors.
+
+**What this mode cannot show.** Northern Veil's four curtains and Sky-Island's two media author a phase that reads wᵢ, so their no-source colour is identically 0. Their real colour needs the **source model**:
+- the light's position;
+- phase with wᵢ = normalize(p − source), which is not a polynomial along the ray;
+- the light's authored radiance, chroma and angular falloff, functions of p − source (affine along the ray).
+
+Each becomes a sampled factor. The wᵢ-reading phase needs its range proved over the cone of directions a cell sees. That is the next rung.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T16:06 PDT. Human origin: Zachary Zhang (the switch decision; integration first). The marcher's branches are the existing renderer's; the self-shadow finding and this witness are this session's.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).
