@@ -13,7 +13,6 @@
 // it to an independent same-thread clock.
 
 #include "support/test_harness.hpp"
-#include "support/test_save_helper.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <algorithm>
@@ -45,6 +44,91 @@ struct Frame {
     double law = 0.0;
     double maintenance = 0.0;
 };
+
+struct PerfSandboxGuard {
+    std::filesystem::path sandboxPath;
+    std::string previousSaveRoot;
+
+    explicit PerfSandboxGuard(const std::string& resolvedWorldPath) {
+        sandboxPath = std::filesystem::temp_directory_path() /
+            ("earthcall-perf-sandbox-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+
+        std::error_code ec;
+        std::filesystem::create_directories(sandboxPath / "worlds", ec);
+
+        std::filesystem::path worldFile(resolvedWorldPath);
+        if (std::filesystem::exists(worldFile, ec)) {
+            std::filesystem::copy_file(
+                worldFile,
+                sandboxPath / "worlds" / worldFile.filename(),
+                std::filesystem::copy_options::overwrite_existing,
+                ec);
+        }
+
+        const std::filesystem::path realSaves = worldFile.parent_path().parent_path();
+        for (const auto& item : {"laws", "materials", "homes", "identity"}) {
+            const auto src = realSaves / item;
+            if (std::filesystem::exists(src, ec)) {
+                std::filesystem::copy(
+                    src, sandboxPath / item,
+                    std::filesystem::copy_options::recursive | std::filesystem::copy_options::copy_symlinks,
+                    ec);
+            }
+        }
+
+        // Copy only the zone(s) referenced by this world to prevent hydrating
+        // 50+ unrelated zones during performance probe execution.
+        std::unordered_set<std::string> neededZones;
+        try {
+            std::ifstream in(worldFile);
+            if (in.is_open()) {
+                nlohmann::json j;
+                in >> j;
+                if (j.contains("currentZoneId") && j["currentZoneId"].is_string()) {
+                    neededZones.insert(SaveSystem::sanitizeLabel(j["currentZoneId"].get<std::string>()));
+                }
+                if (j.contains("zones") && j["zones"].is_array()) {
+                    for (const auto& zItem : j["zones"]) {
+                        if (zItem.is_string()) {
+                            neededZones.insert(SaveSystem::sanitizeLabel(zItem.get<std::string>()));
+                        } else if (zItem.is_object() && zItem.contains("identifier") && zItem["identifier"].is_string()) {
+                            neededZones.insert(SaveSystem::sanitizeLabel(zItem["identifier"].get<std::string>()));
+                        }
+                    }
+                }
+            }
+        } catch (...) {}
+
+        const auto realZones = realSaves / "zones";
+        std::filesystem::create_directories(sandboxPath / "zones", ec);
+        if (!neededZones.empty() && std::filesystem::exists(realZones, ec)) {
+            for (const auto& zoneName : neededZones) {
+                if (zoneName.empty()) continue;
+                const auto srcZone = realZones / zoneName;
+                if (std::filesystem::exists(srcZone, ec)) {
+                    std::filesystem::copy(
+                        srcZone, sandboxPath / "zones" / zoneName,
+                        std::filesystem::copy_options::recursive | std::filesystem::copy_options::copy_symlinks,
+                        ec);
+                }
+            }
+        } else if (std::filesystem::exists(realZones, ec)) {
+            std::filesystem::copy(
+                realZones, sandboxPath / "zones",
+                std::filesystem::copy_options::recursive | std::filesystem::copy_options::copy_symlinks,
+                ec);
+        }
+
+        previousSaveRoot = SaveSystem::saveRoot();
+        SaveSystem::setSaveRoot(sandboxPath.string());
+    }
+
+    ~PerfSandboxGuard() {
+        SaveSystem::setSaveRoot(previousSaveRoot);
+        std::error_code ec;
+        std::filesystem::remove_all(sandboxPath, ec);
+    }
+};
 }
 
 int main(int argc, char** argv) {
@@ -73,13 +157,16 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Isolate SaveSystem to a temporary scratch root to prevent real save writes
-    // without copying 1.6 GB of unneeded directories on every test invocation.
-    TempSaveRoot tempSaveRoot;
+    // Protect the real Zone identity store with a lightweight sandbox
+    // that omits the 775MB saves/worlds directory.
+    PerfSandboxGuard saveGuard(world);
+    const std::filesystem::path sandboxWorld =
+        SaveSystem::rootPath() / "worlds" / std::filesystem::path(world).filename();
+
     TestSupport::BootedEngineHarness h("Player", "humanoid", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld(sandboxWorld.string());
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
