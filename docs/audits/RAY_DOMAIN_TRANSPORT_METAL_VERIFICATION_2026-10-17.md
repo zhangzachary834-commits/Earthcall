@@ -406,3 +406,19 @@ Built from `42e4195c8` plus this pass, on native M5 Metal. A new test, `webgpu_v
 **Reading.** On this adapter the declared model is about 600–1000× generous. At large clocks its conservatism, not the geometry, limits what certificates can prove. This is a sampled margin, not an enclosure proof: compute context, one device, and the density's executed switch not sampled separately. Whether to tighten the declared model, or change the lane's default, is Zach's decision (⚑).
 
 **Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/enclosure-2.log`. Design: [§6o](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6o-device-margin-witness-how-much-of-the-execution-slack-the-m5-uses-2026-10-18-sixteenth-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T18:00 PDT.
+
+## Faithfulness baseline — seventeenth pass (M5)
+
+Zach: "Faithfulness to exact math should be the rule." A new witness, `webgpu_volume_faithfulness_test`, measures each real medium's production density as the M5 executes it (its own composed program, shared fill and clock preparation) against a double-precision authored reference, at 64 rays × 96 lattice samples × 2 clocks.
+
+| Result | Value |
+|---|---|
+| Media measured | 31 of 32 (`reliquary.shaft-beam`: production program refused, emission authored as a scalar) |
+| Worst error / density scale | **1.2×10⁻⁵** (`veil.dust`, absolute 1.8×10⁻⁹); most about 10⁻⁶ |
+| Noisy media (Borealis ×5, noise cloud, Northern Veil ×4, sea-of-clouds, `veil.reflection`) | 5.6×10⁻⁷ – 6.7×10⁻⁶ of scale |
+| Reference noise vs float `glm::perlin` | 1.4×10⁻⁶ (100 000 points) |
+| Checks | 3/3 |
+
+**Finding:** `glm::perlin<double>` is not the authored noise. Its lattice hash selects different gradients in some cells, by up to 1.2. A naïve double (or 80-digit) Perlin reference therefore reports 15–24% errors on every noisy medium, as this witness did before the reference kept the hash's f32 definition.
+
+**Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/faithfulness-1.log` (naïve reference), `faithfulness-2.log` (corrected). Design: [§6p](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6p-faithfulness-to-exact-math-is-the-rule-the-baseline-and-what-noise-means-2026-10-18-seventeenth-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T18:46 PDT.

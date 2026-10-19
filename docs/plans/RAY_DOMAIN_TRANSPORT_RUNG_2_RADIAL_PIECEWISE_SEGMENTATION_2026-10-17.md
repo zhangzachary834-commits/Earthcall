@@ -740,6 +740,31 @@ Whether this evidence justifies a tighter declared model, or the lane's default,
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T18:00 PDT. Human origin: Zachary Zhang ("KEEP GOING"). The witness design is this session's; the declared model is Codex's (2026-10-12, P1 2026-10-17).*
 
+## 6p. Faithfulness to exact math is the rule: the baseline, and what Noise means (2026-10-18, seventeenth pass)
+
+**Zach's decision** (2026-10-18, answering the choice the Firmament's Milestone 2 and Codex's request raised): **"Faithfulness to exact math should be the rule."** For rewriting volume arithmetic (Rung 3a and after), byte identity with today's shader is no longer the test. Agreement with the authored equation evaluated exactly is.
+- **Unchanged:** skips and closed forms (Contract I) must still keep every sample and its value. They already do, and byte parity remains their witness.
+- **New:** a rewrite of the arithmetic (Contract II) must be at least as close to the authored equation as the arithmetic it replaces, measured below. A tolerance on final pixels, if one is wanted beyond "never less faithful", is still Zach's to set.
+
+**Witness:** `webgpu_volume_faithfulness_test`.
+- **Device side:** each real medium's own production program (`composeVolumeSet`, every channel, the shared-noise fill and the GPU clock-preparation pass). A compute entry forms each sample exactly as the marcher does (`ro + rd·t − origin` in f32) and returns `volumeDensityEval(p)`.
+- **Reference:** an independent double-precision interpreter of the authored tree with the CPU evaluator's semantics (division guard, power, clamp, union/intersection/difference, first-match Piecewise), at the point formed in double from the same f32 ray, origin and t.
+- **Samples:** 64 rays × 96 lattice samples × 2 clocks per medium, at the medium's real world origin.
+
+**Baseline (M5, density channel).**
+- 31 of 32 real media measured. Every one is within **1.2×10⁻⁵ of its density scale**, most within about 10⁻⁶. Today's shader is faithful to f32 precision.
+- The one refusal is `reliquary.shaft-beam`, whose production program does not compile: "volume emission: piece 0 must evaluate to Vector, got Scalar". It is a separate, pre-existing finding, and needs either a save fix or an emitter decision (task file).
+
+**What Noise means (a finding about the definition).** The authored `Noise` op is `glm::perlin` as the CPU evaluator runs it, on floats, and the GPU's Perlin matches that to about 10⁻⁶. But `glm::perlin<double>` is a **different function**: it differs from the float one by up to 1.2, for example at (3.1985, −3.4835, 2.0853), 0.5759 against −0.6281.
+- **Cause:** the lattice hash. `mod289`/`permute`, the ×1/7 gradient fold and `floor` select gradients through f32 rounding, so some cells get different gradients in double.
+- **Consequence:** a naïve high-precision reference, including an 80-digit one that re-implements Perlin in real arithmetic, measures a different noise and reports errors of 15–24% of the density scale on every noisy medium. This witness hit exactly that before correcting it.
+- **The reference** keeps the hash exactly as its f32 definition, from the exact lattice cell, and evaluates only the continuous part (fractional position, dots, fade, blends) in double. It agrees with float `glm::perlin` to 1.4×10⁻⁶.
+- A precision-independent Noise would need its hash stated in integer arithmetic. That would be an OntoMath definition change, recorded for the owners and not made here.
+
+**Next (Rung 3a).** Every arithmetic rewrite gets gated by this witness against today's per-medium errors, with the same rays and the same reference. It extends to the other channels as they are rewritten. Per the Firmament's caution, polynomial forms in `s` should be re-centred near the box (or kept in the closest-point form for norms), because expanding about a far camera loses exactly the accuracy this rule now protects.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T18:46 PDT. Human origin: Zachary Zhang ("Faithfulness to exact math should be the rule"). Contracts I/II are the Firmament's framing; the witness and the Noise finding are this session's.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).
