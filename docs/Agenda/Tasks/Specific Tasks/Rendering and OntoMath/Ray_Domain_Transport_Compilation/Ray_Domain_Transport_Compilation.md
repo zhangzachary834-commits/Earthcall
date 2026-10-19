@@ -93,6 +93,6 @@ The three requested witnesses pass on M5 Metal: certificates 57/57, zero-proof 7
 
 **Ninth-pass native return:** [69/69 twice, longer zero-eligible cost probe and exact Perlin baseline readbacks](../../../../../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#effective-eligibility-metal-verification--opus-ninth-pass) verify the requested per-member path and isolate the pre-existing color difference. No default or Person acceptance change.
 
-- [ ] Correct or explicitly refuse `EARTHCALL_PERLIN_TEST_MODE=D`: it currently exits 0 without executing camera cases or producing readbacks; full-mode stock coverage passes. Inspect the `runCore`/`runGateD` scopes and require observable camera execution.
+- [x] Correct or explicitly refuse `EARTHCALL_PERLIN_TEST_MODE=D`: it exited 0 without executing camera cases or producing readbacks. Fixed in `9d8079de`: a missing Gate A3 brace had nested Gate D inside the A–C block; D now runs alone and unknown modes fail (§6i).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T19:56:43-07:00 (PDT).
