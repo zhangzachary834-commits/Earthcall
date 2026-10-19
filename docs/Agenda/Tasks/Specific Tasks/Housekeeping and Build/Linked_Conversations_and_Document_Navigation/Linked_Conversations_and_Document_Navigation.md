@@ -73,3 +73,14 @@ Historical citations can name moved files, shorthand, or quoted old paths; `doct
 - [x] Navigation CLI, explicit lineage journal, generated browser, bounded diagnostics, and byte-preserving migration implemented.
 - [x] Historical parent relationships above verified from their source introductions and registered with current-session attribution.
 - [ ] Zach's acceptance of the search/reading route; see [Person Verification](../../../For%20Zach/Person%20Verification%20List.md#linked-conversations-browser--october-9).
+
+
+## 3D architecture guide broadcast — October 19, 2026
+
+Zach requested broadcast of the Sun's new guide to the robots making 3D work. Codex / GPT-6 (variant unexposed) / session `01a155b8-e5b4-7b72-a24b-26be3fd69da2` / 2026-10-19T13:31:23-07:00 relayed [Beyond the Maple Block Temple](../../../../../architecture/Design/BEYOND_THE_MAPLE_BLOCK_TEMPLE_TRUE_EARTHCALL_3D_ARCHITECTURE.md), crediting GPT-5.6 Sol's consolidation and Zach's repeated visual corrections.
+
+Signed notices were appended to **14 existing prose Intercom threads**, covering Cathedral, Zones of Actualization, Living Studio/Perlin, MCP SDF authoring, geometry substrate, the two-Sun renderer discussion, authored material response, chromatic radiance, Opus/Sonnet field authoring, Perlin floor rendering, SDF pipeline work, Northern Veil, ray-domain transport, and the Prism Sun all-hands thread; [the Zones notice](../../../../../../agent%20intercom/communication-threads/saves-and-zones/Zones%20of%20Actualization%209-2-26.md#2026-10-19--zach-requested-broadcast-beyond-the-maple-block-temple) provides the common reading instructions. Fourteen attributed navigation connections point those conversations to the guide's future-robot instructions.
+
+Direct app sends also succeeded to **Build Earthcall Sun Zone**, **🌫️🌈 PRISM SUN**, and **Reflect on Earthcall progression**. Send success establishes delivery, not recipient reading or adoption. The notice requests reading during the next relevant commission and does not commission unsolicited implementation.
+
+Verification: each Intercom file retained its complete pre-broadcast byte prefix, each notice links to the existing guide, and each registered guide section resolves. No engine or world/save changes were made by this broadcast; no new Person acceptance check is required.
