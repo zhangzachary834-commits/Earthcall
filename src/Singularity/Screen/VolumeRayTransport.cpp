@@ -1243,20 +1243,40 @@ VolumeSupportCertificates deriveVolumeSupportCertificates(const VolumeRayChannel
 
 namespace {
 // Authored operation count; a node in `slots` is read from a filled shared slot.
-double executionCost(const OntoMath::MathNode& node, const std::set<const OntoMath::MathNode*>* slots) {
+// Mirrors sdfwgsl's expensiveTimeOnly: a leaf of the clock alone with a
+// transcendental, which the production evaluator prepares once per medium and
+// frame on the GPU and reads from a slot. The certificate check's own lowering
+// does not prepare (it recomputes per check), so only the evaluator's cost
+// treats it as a read (2026-10-18: costing both alike kept the breathing
+// nebula's check, which the M5 ran 14% slower than dropping it).
+bool preparedTimeLeaf(const OntoMath::ScalarForm& form) {
+    bool expensive = false;
+    for (const auto& term : form.terms) {
+        for (const auto& [variable, exponent] : term.factors)
+            if (variable != OntoMath::kTimeVar) return false;
+        for (const auto& tr : term.trans) {
+            if (tr.variable != OntoMath::kTimeVar) return false;
+            expensive = true;
+        }
+    }
+    return expensive;
+}
+double executionCost(const OntoMath::MathNode& node, const std::set<const OntoMath::MathNode*>* slots,
+                     bool preparedTime = false) {
     if (slots && slots->count(&node)) return 1.0;
     using Op = OntoMath::MathNode::Op;
     double cost = 0.0;
     switch (node.op) {
         case Op::Noise: cost = 40.0; break;
         case Op::ScalarLeaf:
+            if (preparedTime && preparedTimeLeaf(node.scalarForm)) { cost = 1.0; break; }
             for (const auto& t : node.scalarForm.terms) cost += 1.0 + double(t.factors.size()) + 4.0 * double(t.trans.size());
             break;
         case Op::Sqrt: case Op::Length: case Op::Distance: case Op::Div: case Op::Pow: cost = 4.0; break;
         default: cost = 1.0; break;
     }
     for (const auto& c : node.children)
-        if (c) cost += executionCost(*c, slots);
+        if (c) cost += executionCost(*c, slots, preparedTime);
     return cost;
 }
 } // namespace
@@ -1271,12 +1291,12 @@ double volumeDensitySampleCost(const OntoMath::Piecewise& density, bool preludeB
     // Pieces the emitter can answer with, up to the first unbounded one.
     for (const auto& piece : density.pieces) {
         if (!piece.mathNode) continue;
-        cost += executionCost(*piece.mathNode, &slots);
+        cost += executionCost(*piece.mathNode, &slots, true);
         if (!piece.hasLo && !piece.hasHi) break;
     }
     if (preludeBeforeDensity)
         for (const auto* g : preludeGroups)
-            if (g) cost += 1.0 + volumeExecutionCost(*g);   // + the slot store
+            if (g) cost += 1.0 + executionCost(*g, nullptr, true);   // + the slot store
     return cost;
 }
 

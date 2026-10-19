@@ -705,6 +705,16 @@ These are bounds, never exact, so the per-sample check stays. A killer now carri
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T17:41 PDT. Human origin: Zachary Zhang ("KEEP GOING").*
 
+**Addendum, sixteenth pass (Zach: "KEEP GOING").**
+- **Prepared clock leaves.** The production evaluator prepares expensive clock-only leaves (`sdfwgsl` `expensiveTimeOnly`) once per frame, while the certificate check recomputes them per sample. The estimate now costs them as slot reads in the density and in fill-first prelude groups, but at full cost in a check (`preparedTimeLeaf`). No census decision changed (36/36), and the breathing nebula still keeps its check. The rest of that M5 gap is something an operation count cannot see, such as divergence and per-iteration overhead.
+- **Closed forms only on Northern Veil** (a scratch A/B, removed; y-slab half-spaces only, no per-sample checks; grid → grid + closed forms only, ms, two runs, bytes equal):
+  - Fused set of four: 1.581 → 1.622 and 1.812 → 1.805.
+  - One curtain: 0.368 → 0.345 and 0.367 → 0.348.
+
+  The fused set is what Northern Veil runs, and it is neutral there, so no closed-only eligibility path was added. Northern Veil's 30 FPS milestone is not this lane's to close.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T18:05 PDT.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).
