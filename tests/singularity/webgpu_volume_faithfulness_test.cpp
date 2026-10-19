@@ -393,6 +393,12 @@ int main() {
     double lineWorst96 = 0.0, lineWorstHybrid = 0.0;
     uint32_t lineMedia = 0, lineBetter = 0, lineMisses = 0;
     std::string lineWorstWho;
+    // In-scattered light under a unit, unshadowed white light with phase 1: the
+    // marcher's (σ_s/σ_t)(T_before − T_after) rule against ∫ σ_s·T ds by line
+    // integration, T = e^(−τ) handed to hybridIntegral as a sampled factor.
+    double scatterWorst96 = 0.0, scatterWorstLine = 0.0;
+    uint32_t scatterMedia = 0, scatterBetter = 0, scatterMisses = 0;
+    std::string scatterWorstWho;
     std::string quadratureWho;
     double worstNormalized = 0.0;
     std::string worstWho;
@@ -654,6 +660,12 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                 const bool lineOk = bool(lineD) && (!authoredSigma || bool(lineE));
                 double line96 = 0.0, lineHybrid = 0.0, lineEvals = 0.0;
                 uint32_t lineRays = 0, lineMiss = 0;
+                const bool authoredScatter = b.scatteringExpr && !b.scatteringExpr->pieces.empty();
+                const auto lineS = authoredScatter ? OntoMath::restrictAlgebraicToLine(*b.scatteringExpr, false)
+                                                   : OntoMath::LineAlgebraicRestriction{};
+                const bool scatterOk = lineOk && (!authoredScatter || bool(lineS));
+                double scatter96 = 0.0, scatterLine = 0.0;
+                uint32_t scatterRays = 0, scatterMiss = 0;
                 for (int r = 0; r < 16 && ok; ++r) {
                     glm::dvec3 dir(u(qrng), u(qrng), u(qrng));
                     if (glm::length(dir) < 1e-3) dir = glm::dvec3(0.3, 0.2, 1.0);
@@ -789,6 +801,125 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                     line96 = std::max(line96, std::abs(std::exp(-plain) - std::exp(-reference)));
                     lineHybrid = std::max(lineHybrid, std::abs(std::exp(-est) - std::exp(-reference)));
                     if (std::abs(est - reference) > rad + referenceError + 1e-12) ++lineMiss;
+
+                    // ---- In-scattered light, unit light ----
+                    if (!scatterOk) continue;
+                    std::optional<OntoMath::LineAlgebraicEvaluator> evS;
+                    if (authoredScatter) evS.emplace(*lineS.form, bind, true);
+                    if (evS && !evS->ok()) continue;
+                    const uint32_t rootS = authoredScatter ? lineS.form->roots[0] : 0;
+                    const std::vector<int8_t> openS(authoredScatter ? lineS.form->switches.size() : 0, 0);
+                    auto sigmaS = [&](double s) {
+                        const double D = evD.value(rootD, s).value_or(0.0);
+                        if (!(D > 0.0)) return 0.0;
+                        return evS ? std::max(evS->value(rootS, s).value_or(0.0), 0.0) : D;
+                    };
+                    auto marcherScatter = [&](int n) {
+                        const double hs = (t1 - t0) / n;
+                        double T = 1.0, L = 0.0;
+                        for (int i = 0; i < n; ++i) {
+                            const double sm = t0 + (i + 0.5) * hs, st = sigma(sm);
+                            if (!(st > 0.0)) continue;
+                            const double Tn = T * std::exp(-st * hs);
+                            L += sigmaS(sm) / st * (T - Tn);
+                            T = Tn;
+                        }
+                        return L;
+                    };
+                    const double L96 = marcherScatter(kSamples), L17 = marcherScatter(1 << 17), refL = marcherScatter(1 << 18);
+                    const double refErrL = 2.0 * std::abs(refL - L17) + double(1 << 18) * std::numeric_limits<double>::epsilon() * refL;
+                    // ∫ sigma_t over [p, q] inside a piece where D > 0 is proved, with
+                    // the floor's contribution in the radius (as for transmittance).
+                    auto sigmaTIntegral = [&](const OntoMath::LineSegmentationPiece& pc, double p0, double q0, uint32_t c)
+                        -> std::optional<std::pair<double, double>> {
+                        const double w2 = q0 - p0;
+                        if (!evE) {
+                            bool u2 = false;
+                            const auto rdp = evD.range(rootD, p0, q0, pc.signs[0], &u2);
+                            const auto hh = evD.hybridIntegral(rootD, p0, q0, pc.signs[0], c);
+                            if (!hh || u2) return std::nullopt;
+                            const double gap = 0.5 * double(rdp.lo) >= 1e-6 ? 0.0 : 1e-6 * w2;
+                            return std::make_pair(0.5 * hh->estimate + 0.5 * gap, 0.5 * hh->radius + 0.5 * gap);
+                        }
+                        bool u2 = false;
+                        const auto rep2 = evE->range(rootE, p0, q0, openE, &u2);
+                        const auto hh = evE->hybridIntegral(rootE, p0, q0, openE, c);
+                        if (!hh || u2) return std::nullopt;
+                        const double gap = std::max(0.0, 1e-6 - double(rep2.lo)) * w2;
+                        return std::make_pair(hh->estimate + 0.5 * gap, hh->radius + 0.5 * gap);
+                    };
+                    auto sigmaTSup = [&](const OntoMath::LineSegmentationPiece& pc, double p0, double q0) {
+                        bool u2 = false;
+                        if (!evE) return std::max(1e-6, 0.5 * double(evD.range(rootD, p0, q0, pc.signs[0], &u2).hi));
+                        return std::max(1e-6, double(evE->range(rootE, p0, q0, openE, &u2).hi));
+                    };
+                    double tau = 0.0, tauRad = 0.0, Lest = 0.0, Lrad = 0.0;
+                    bool scatterPiecesOk = true;
+                    for (const auto& pc : pieces) {
+                        if (pc.targetSigns[0] < 0) continue;
+                        const double w = pc.s1 - pc.s0;
+                        bool undefined = false;
+                        const auto rd = evD.range(rootD, pc.s0, pc.s1, pc.signs[0], &undefined);
+                        if (undefined) { scatterPiecesOk = false; break; }
+                        if (!pc.definite) {
+                            // A root sliver: light in [0, sup σ_s·T·w], depth in [0, sup σ_t·w].
+                            bool u2 = false;
+                            const double supS = std::max(0.0, evS ? double(evS->range(rootS, pc.s0, pc.s1, openS, &u2).hi) : double(rd.hi));
+                            const double supT = sigmaTSup(pc, pc.s0, pc.s1);
+                            const double light = supS * std::exp(-tau + tauRad) * w;
+                            Lest += 0.5 * light; Lrad += 0.5 * light;
+                            tau += 0.5 * supT * w; tauRad += 0.5 * supT * w;
+                            continue;
+                        }
+                        const uint32_t cells = std::max<uint32_t>(2, uint32_t(std::lround(95.0 * w / std::max(dense, 1e-300))));
+                        const double hc = w / cells;
+                        auto edgeAt = [&](uint32_t j) { return j == cells ? pc.s1 : pc.s0 + hc * j; };
+                        std::vector<double> tauAt(cells + 1), radAt(cells + 1);
+                        tauAt[0] = tau; radAt[0] = tauRad;
+                        for (uint32_t j = 0; j < cells; ++j) {
+                            const auto seg = sigmaTIntegral(pc, edgeAt(j), edgeAt(j + 1), 2);
+                            if (!seg) { scatterPiecesOk = false; break; }
+                            tauAt[j + 1] = tauAt[j] + seg->first;
+                            radAt[j + 1] = radAt[j] + seg->second;
+                        }
+                        if (!scatterPiecesOk) break;
+                        auto indexOf = [&](double sv) {
+                            return uint32_t(std::clamp<long>(std::lround((sv - pc.s0) / hc), 0L, long(cells)));
+                        };
+                        OntoMath::LineSampledFactor T;
+                        T.value = [&](double sv) -> std::optional<double> { return std::exp(-tauAt[indexOf(sv)]); };
+                        T.range = [&](double p0, double q0) {
+                            const uint32_t jp = indexOf(p0), jq = indexOf(q0);
+                            return std::make_pair(std::exp(-tauAt[jq] - radAt[jq]), std::exp(-tauAt[jp] + radAt[jp]));
+                        };
+                        T.lipschitz = [&](double p0, double q0) {
+                            return sigmaTSup(pc, p0, q0) * std::exp(-tauAt[indexOf(p0)] + radAt[indexOf(p0)]);
+                        };
+                        const auto hs = evS ? evS->hybridIntegral(rootS, pc.s0, pc.s1, openS, cells, T)
+                                            : evD.hybridIntegral(rootD, pc.s0, pc.s1, pc.signs[0], cells, T);
+                        if (!hs) { scatterPiecesOk = false; break; }
+                        Lest += hs->estimate;
+                        // The node values carry τ's error: T within e^(±rad) of its estimate.
+                        Lrad += hs->radius + std::abs(hs->estimate) * std::expm1(radAt[cells]);
+                        tau = tauAt[cells];
+                        tauRad = radAt[cells];
+                    }
+                    if (!scatterPiecesOk) continue;
+                    ++scatterRays;
+                    scatter96 = std::max(scatter96, std::abs(L96 - refL));
+                    scatterLine = std::max(scatterLine, std::abs(Lest - refL));
+                    if (std::abs(Lest - refL) > Lrad + refErrL + 1e-12) ++scatterMiss;
+                }
+                if (scatterRays) {
+                    std::printf("    %s in-scattered light, unit light (%u rays): 96-sample max |dL| %.3g (%.3f of 255), "
+                                "line-integrated %.3g (%.5f of 255); %u outside the proved radius\n",
+                                b.producerId.c_str(), scatterRays, scatter96, 255.0 * scatter96, scatterLine, 255.0 * scatterLine,
+                                scatterMiss);
+                    ++scatterMedia;
+                    scatterBetter += scatterLine <= scatter96 ? 1 : 0;
+                    scatterMisses += scatterMiss;
+                    scatterWorstLine = std::max(scatterWorstLine, scatterLine);
+                    if (scatter96 > scatterWorst96) { scatterWorst96 = scatter96; scatterWorstWho = b.producerId; }
                 }
                 if (lineRays) {
                     std::printf("    %s transmittance by line integration (%u rays): 96-sample max |dT| %.3g (%.3f of 255 levels), "
@@ -846,6 +977,11 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                 lineMedia, lineWorst96, 255.0 * lineWorst96, lineWorstWho.c_str(), lineWorstHybrid, 255.0 * lineWorstHybrid,
                 lineBetter, lineMisses);
     check(lineMedia > 0 && lineMisses == 0, "line-integrated optical depth lies inside its proved radius on every ray");
+    std::printf("    in-scattered light by line integration (unit light): %u media; worst 96-sample |dL| %.3g (%.2f of 255, %s), "
+                "worst line-integrated %.3g (%.4f of 255); at least as faithful on %u; %u rays outside the proved radius\n",
+                scatterMedia, scatterWorst96, 255.0 * scatterWorst96, scatterWorstWho.c_str(), scatterWorstLine,
+                255.0 * scatterWorstLine, scatterBetter, scatterMisses);
+    check(scatterMedia > 0 && scatterMisses == 0, "line-integrated in-scattered light lies inside its proved radius on every ray");
     check(lessFaithful == 0, "the medium-frame lattice point is never less faithful than the world-frame one (near and far cameras)");
     std::printf("webgpu_volume_faithfulness_test: %d/%d checks passed\n", g_checks - g_failures, g_checks);
     return g_failures == 0 ? 0 : 1;

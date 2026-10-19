@@ -2665,7 +2665,7 @@ LineIntegrand shiftIntegrand(const LineIntegrand& f, double m) {
 
 std::optional<double> LineAlgebraicEvaluator::integral(uint32_t root, double s0, double s1,
                                                        const std::vector<int8_t>& signs, std::string* why) const {
-    const auto r = integrateCore(root, s0, s1, signs, 0, why);
+    const auto r = integrateCore(root, s0, s1, signs, 0, nullptr, why);
     if (!r) return std::nullopt;
     return r->estimate;
 }
@@ -2673,12 +2673,20 @@ std::optional<double> LineAlgebraicEvaluator::integral(uint32_t root, double s0,
 std::optional<LineHybridIntegral> LineAlgebraicEvaluator::hybridIntegral(uint32_t root, double s0, double s1,
                                                                          const std::vector<int8_t>& signs,
                                                                          uint32_t cells, std::string* why) const {
-    return integrateCore(root, s0, s1, signs, std::max<uint32_t>(cells, 1), why);
+    return integrateCore(root, s0, s1, signs, std::max<uint32_t>(cells, 1), nullptr, why);
+}
+
+std::optional<LineHybridIntegral> LineAlgebraicEvaluator::hybridIntegral(uint32_t root, double s0, double s1,
+                                                                         const std::vector<int8_t>& signs, uint32_t cells,
+                                                                         const LineSampledFactor& factor,
+                                                                         std::string* why) const {
+    return integrateCore(root, s0, s1, signs, std::max<uint32_t>(cells, 1), &factor, why);
 }
 
 std::optional<LineHybridIntegral> LineAlgebraicEvaluator::integrateCore(uint32_t root, double s0, double s1,
                                                                         const std::vector<int8_t>& signs,
-                                                                        uint32_t cells, std::string* why) const {
+                                                                        uint32_t cells, const LineSampledFactor* factor,
+                                                                        std::string* why) const {
     if (_boxMode) { if (why) *why = "the integral needs a concrete line, not box bindings"; return std::nullopt; }
     const bool hybrid = cells > 0;
     std::string reason;
@@ -2823,11 +2831,22 @@ std::optional<LineHybridIntegral> LineAlgebraicEvaluator::integrateCore(uint32_t
     };
     const auto f = hybrid ? buildOrRemainder(root) : build(root);
     if (!f) { if (why) *why = reason; return std::nullopt; }
-    const auto exact = integrateExact(*f, s0, s1, why);
-    if (!exact) return std::nullopt;
     LineHybridIntegral out;
-    out.estimate = *exact;
     out.remainderTerms = static_cast<uint32_t>(f->remainders.size());
+    // The terms to sample: every remainder w·G, and — with a sampled factor M —
+    // the closed-form part too, as weight E times G ≡ 1 (then each sampled
+    // function is G·M). Without a factor the closed form integrates exactly.
+    constexpr uint32_t kNoNode = std::numeric_limits<uint32_t>::max();
+    std::vector<LineIntegrand::Remainder> terms = f->remainders;
+    if (factor) {
+        auto e = std::make_shared<LineIntegrand>(*f);
+        e->remainders.clear();
+        if (!e->poly.empty() || !e->radicals.empty() || !e->waves.empty()) terms.push_back({kNoNode, e});
+    } else {
+        const auto exact = integrateExact(*f, s0, s1, why);
+        if (!exact) return std::nullopt;
+        out.estimate = *exact;
+    }
     // Product Simpson rule (product integration): G sampled at the `cells` + 1
     // cell edges and interpolated by a quadratic over each pair of cells (a
     // cubic over the last three when the count is odd, a line for one cell);
@@ -2837,16 +2856,30 @@ std::optional<LineHybridIntegral> LineAlgebraicEvaluator::integrateCore(uint32_t
     // Enclosure per panel: |∫ w(G − P)| ≤ sup|w|·∫|G − P|, and with c = G at the
     // panel's centre and Λ the interpolant's Lebesgue constant (1, 1.25, 1.6311
     // for 2, 3, 4 equispaced nodes), |G − P| ≤ |G − c| + Λ·max|G_i − c|
-    // ≤ (1 + Λ)·min(range width, L′·half-width).
+    // ≤ (1 + Λ)·min(range width, L′·half-width). With a sampled factor M, G is
+    // G·M: its range is the product's, its derivative bound |G′|·sup|M| + sup|G|·|M′|.
     const double h = (s1 - s0) / double(std::max<uint32_t>(cells, 1));
     auto edge = [&](uint32_t j) { return j == cells ? s1 : s0 + h * j; };
-    for (const auto& r : f->remainders) {
+    std::vector<double> m(cells + 1, 1.0);
+    if (factor && !terms.empty()) {
+        for (uint32_t j = 0; j <= cells; ++j) {
+            const auto v = factor->value(edge(j));
+            ++out.factorEvaluations;
+            if (!v || !std::isfinite(*v)) { if (why) *why = "the sampled factor is undefined on the interval"; return std::nullopt; }
+            m[j] = *v;
+        }
+    }
+    for (const auto& r : terms) {
         std::vector<double> g(cells + 1);
         for (uint32_t j = 0; j <= cells; ++j) {
-            const auto v = value(r.node, edge(j));
-            ++out.remainderEvaluations;
-            if (!v) { if (why) *why = "the remainder is Undefined on the interval"; return std::nullopt; }
-            g[j] = *v;
+            double v = 1.0;
+            if (r.node != kNoNode) {
+                const auto gv = value(r.node, edge(j));
+                ++out.remainderEvaluations;
+                if (!gv) { if (why) *why = "the remainder is Undefined on the interval"; return std::nullopt; }
+                v = *gv;
+            }
+            g[j] = v * m[j];
         }
         // ∫ w·L over [a, b] for the Lagrange basis polynomial L of the given nodes,
         // in the panel's own coordinate v = s − centre.
@@ -2879,11 +2912,26 @@ std::optional<LineHybridIntegral> LineAlgebraicEvaluator::integrateCore(uint32_t
                 if (!wk) return std::nullopt;
                 out.estimate += g[j + k] * *wk;
             }
-            bool undefined = false;
-            const Interval gr = range(r.node, a, b, decided, &undefined);
-            const double width = undefined ? std::numeric_limits<double>::infinity() : double(gr.hi) - double(gr.lo);
-            const Interval dg = derivativeRange(r.node, a, b, decided);
-            const double lip = std::max(std::abs(double(dg.lo)), std::abs(double(dg.hi)));
+            double gLo = 1.0, gHi = 1.0, gLip = 0.0;
+            if (r.node != kNoNode) {
+                bool undefined = false;
+                const Interval gr = range(r.node, a, b, decided, &undefined);
+                gLo = undefined ? -std::numeric_limits<double>::infinity() : double(gr.lo);
+                gHi = undefined ? std::numeric_limits<double>::infinity() : double(gr.hi);
+                const Interval dg = derivativeRange(r.node, a, b, decided);
+                gLip = std::max(std::abs(double(dg.lo)), std::abs(double(dg.hi)));
+            }
+            double lo = gLo, hi = gHi, lip = gLip;
+            if (factor) {
+                const auto [mLo, mHi] = factor->range(a, b);
+                const double mLip = factor->lipschitz(a, b);
+                const double pr[4] = {gLo * mLo, gLo * mHi, gHi * mLo, gHi * mHi};
+                lo = *std::min_element(pr, pr + 4);
+                hi = *std::max_element(pr, pr + 4);
+                const double supG = std::max(std::abs(gLo), std::abs(gHi)), supM = std::max(std::abs(mLo), std::abs(mHi));
+                lip = gLip * supM + supG * mLip;
+            }
+            const double width = std::isfinite(hi - lo) ? hi - lo : std::numeric_limits<double>::infinity();
             const double lebesgue = span == 3 ? 1.6311 : span == 2 ? 1.25 : 1.0;   // equispaced Lebesgue constants
             const double local = std::min(width, std::isfinite(lip) ? lip * 0.5 * (b - a) : std::numeric_limits<double>::infinity());
             out.radius += supAbs(*r.weight, a, b) * (b - a) * (1.0 + lebesgue) * local;

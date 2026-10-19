@@ -478,3 +478,11 @@ Zach: "Faithfulness to exact math should be the rule." A new witness, `webgpu_vo
 - 4 media not admitted.
 
 **Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/transmittance-line-1.log`. Design: [§6w](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6w-transmittance-by-line-integration-the-renderers-own-σ-in-levels-of-255-2026-10-19-twenty-fourth-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T15:43 PDT.
+
+## In-scattered light by line integration — twenty-fifth pass (CPU only)
+
+- **Unit unshadowed light, phase 1, 27 media:** worst 96-sample |ΔL| 8.55/255 (Borealis hero), line-integrated 0.0082/255.
+- At least as faithful on 25 of 27; the exceptions are under 10⁻⁴ of a level.
+- **Proved radius** holds on every ray.
+
+**Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/inscatter-line-1.log`. Design: [§6x](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6x-in-scattered-light-by-line-integration-t-inside-the-integral-2026-10-19-twenty-fifth-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T16:00 PDT.

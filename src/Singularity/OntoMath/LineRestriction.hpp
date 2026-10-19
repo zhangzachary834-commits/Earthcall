@@ -5,6 +5,7 @@
 #include <array>
 #include <map>
 #include <memory>
+#include <functional>
 #include <optional>
 #include <set>
 #include <string>
@@ -336,11 +337,22 @@ std::optional<double> literalConstant(const MathNode& node);
 // +1 g ≥ 0 (> 0 when strict), −1 g ≤ 0 (< 0 when strict).
 // What hybridIntegral answers: the estimate, a proved bound on its distance from
 // the exact integral, and how much numerical work the remainder cost.
+// A factor the caller samples (2026-10-19, for ∫ σ_s·T ds: the transmittance
+// T = e^(−τ) is a cumulative integral, not an authored node). `value` at a
+// point; `range` a proved enclosure over [a, b]; `lipschitz` a proved bound on
+// |dM/ds| over [a, b] (infinity when unknown).
+struct LineSampledFactor {
+    std::function<std::optional<double>(double)> value;
+    std::function<std::pair<double, double>(double, double)> range;
+    std::function<double(double, double)> lipschitz;
+};
+
 struct LineHybridIntegral {
     double estimate = 0.0;
     double radius = 0.0;
     uint32_t remainderTerms = 0;         // sampled w·G terms (0: closed form)
     uint32_t remainderEvaluations = 0;   // point evaluations of their G nodes
+    uint32_t factorEvaluations = 0;      // point evaluations of a sampled factor
 };
 
 class LineAlgebraicEvaluator {
@@ -425,6 +437,12 @@ public:
     std::optional<LineHybridIntegral> hybridIntegral(uint32_t node, double s0, double s1,
                                                      const std::vector<int8_t>& signs, uint32_t cells,
                                                      std::string* why = nullptr) const;
+    // ∫ node·M ds for a sampled factor M: the closed-form part of the branch
+    // becomes one more weight, every sampled function is G_k·M (or M), and each
+    // panel's radius uses the product's range and derivative bound.
+    std::optional<LineHybridIntegral> hybridIntegral(uint32_t node, double s0, double s1,
+                                                     const std::vector<int8_t>& signs, uint32_t cells,
+                                                     const LineSampledFactor& factor, std::string* why = nullptr) const;
     Interval switchDerivativeRange(std::size_t k, double s0, double s1, const std::vector<int8_t>& signs) const;
 
     // Execution slack (Codex P1, 2026-10-17). With an active model (the
@@ -448,7 +466,7 @@ public:
 private:
     std::optional<LineHybridIntegral> integrateCore(uint32_t node, double s0, double s1,
                                                     const std::vector<int8_t>& signs, uint32_t cells,
-                                                    std::string* why) const;
+                                                    const LineSampledFactor* factor, std::string* why) const;
     double magnitudeAt(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs) const;
     std::map<std::string, double> symbolMagnitudes(double s0, double s1) const;
     ExecutionModel _model;

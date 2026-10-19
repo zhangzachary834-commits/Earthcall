@@ -1048,6 +1048,54 @@ Mean relative error of ∫max(D, 0) per ray.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T15:43 PDT. Human origin: Zachary Zhang (integration operations first; faithfulness to exact math). The renderer's σ semantics are the marcher's; the line-integrated transmittance, the discontinuous-reference bound and the deferral analysis are this session's.*
 
+## 6x. In-scattered light by line integration: T inside the integral (2026-10-19, twenty-fifth pass)
+
+**Origin.** Zach: "KEEP GOINGNGNNGNG". The colour half of a pixel after §6w's transmittance.
+
+**The quantity.**
+- **The marcher** adds chroma·Lᵢ·(σₛ/σₜ)·phase·(T_before − T_after) per sample (`SdfWgsl.cpp`, single-medium marcher). That is exactly ∫σₛ·T over the step *only if* everything is constant across it.
+- **The continuum** is ∫ chroma·Lᵢ·σₛ·phase·e^(−τ(s)) ds.
+- **Default scattering** is σₛ = D (the pre-V2 compatibility law), mirrored here.
+- **Scope of this rung:** a unit, unshadowed white light with phase 1. That isolates the integration question from lighting: Lᵢ's shadow visibility is a second integral along the shadow ray (the same machinery applies there, but it is not done here), and authored phase and chroma are smooth multipliers.
+
+**What it needed in OntoMath: a sampled factor.**
+- `hybridIntegral(node, s₀, s₁, signs, cells, LineSampledFactor)` takes a factor the caller supplies at the nodes: here T = e^(−τ), a cumulative integral rather than an authored node.
+- It also takes a proved range and slope per panel.
+- The closed-form part of the branch becomes one more weight, and every sampled function becomes G·M. The radius uses the product's range and its derivative bound |G′|·sup|M| + sup|G|·|M′|.
+- **For T specifically:** σ ≥ 0 makes T monotone, so its range on a panel is exactly [T(end), T(start)], widened by τ's own proved error. |T′| = σₜ·T is bounded by σₜ's proved range.
+- **Unit witness** (`ontomath_line_segmentation_test`, 82/82): ∫₀² x·e^(−x) dx within its radius, at fourth order.
+
+**How** (`webgpu_volume_faithfulness_test`):
+1. Walk `segmentLine`'s pieces in order, carrying τ and its proved error.
+2. On each D > 0 piece, compute τ at the panel nodes cumulatively, each step an exact or hybrid integral of σₜ.
+3. Give e^(−τ) to the hybrid as the sampled factor of σₛ.
+4. Root slivers bound both the light and the depth they add.
+5. The reference is the marcher's own rule at 2¹⁸ steps. Its error bound is twice its observed 2¹⁷→2¹⁸ change, plus summation rounding.
+
+**Result** (27 media, max |ΔL| over 16 rays, in levels of 255):
+
+| Medium | 96-sample | **Line-integrated** |
+|---|---|---|
+| Borealis hero curtain | **8.55** | **0.008** |
+| Borealis v2 emerald surge / violet whisper | 3.70 / 0.83 | 0.0017 / 0.0004 |
+| Borealis v1 airy / dense | 1.56 / 0.05 | 0.0004 / 0.00002 |
+| Prism wing B (8 media) | 0.05–0.43 | ≤ 0.0005 |
+| Northern Veil curtains | 0.006–0.041 | ≤ 0.00004 |
+| Sky-Island sea of clouds, labyrinth | 0.004, 0.003 | 0.0002, 0.0002 |
+
+- **Worst case:** 8.55/255 → 0.0082/255.
+- **At least as faithful** on 25 of 27. The two exceptions (`veil.outer` 0.00001, Sunlit Mist 0.0001) are both below 10⁻⁴ of a level.
+- **Proved radius** holds on every ray.
+- **The colour error is larger than the transmittance error.** The marcher's step rule holds σₛ/σₜ and the light constant over each step; on Borealis hero that is the dominant visible error (8.55 levels against 3.83 for transmittance).
+
+**What remains for a pixel:**
+- shadow visibility (the shadow ray's own optical depth, by the same line integration);
+- authored phase and chroma as weights;
+- emission;
+- then the GPU path, gated by this test, and Zach's approval before it replaces the 96-sample image.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T16:00 PDT. Human origin: Zachary Zhang (integration first; faithfulness to exact math; 96 stays the image for now). The marcher's step rule is the existing renderer's; the sampled-factor hybrid and this witness are this session's.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

@@ -791,6 +791,26 @@ int main() {
                     check(v && std::abs(*v - ref) <= 1e-10 * std::abs(ref), "a slow wave far from the origin integrates to rounding (Taylor series, not the tabular rule)");
                 }
             }
+            // A sampled factor (the transmittance case): ∫₀² x·e^(−x) dx = 1 − 3e^(−2),
+            // x closed-form, e^(−s) supplied by the caller with its range and slope.
+            {
+                const auto xs = OntoMath::restrictAlgebraicToLine(*leaf("x"), false);
+                if (xs) {
+                    OntoMath::LineAlgebraicEvaluator ex(*xs.form, lineBindings({{0, 0.3, 0.1}, {1, 0, 0}}), true);
+                    OntoMath::LineSampledFactor decay;
+                    decay.value = [](double t) -> std::optional<double> { return std::exp(-t); };
+                    decay.range = [](double a, double b) { return std::make_pair(std::exp(-b), std::exp(-a)); };
+                    decay.lipschitz = [](double a, double) { return std::exp(-a); };
+                    const auto hx = ex.hybridIntegral(xs.form->roots[0], 0.0, 2.0, std::vector<int8_t>(xs.form->switches.size(), 0), 16, decay);
+                    const double want = 1.0 - 3.0 * std::exp(-2.0);
+                    std::cout << "    sampled factor: ∫x·e^(−x) error " << (hx ? hx->estimate - want : NAN) << " (exact " << want << ", radius "
+                              << (hx ? hx->radius : NAN) << ", " << (hx ? hx->factorEvaluations : 0u) << " factor evaluations)\n";
+                    const auto hx2 = ex.hybridIntegral(xs.form->roots[0], 0.0, 2.0, std::vector<int8_t>(xs.form->switches.size(), 0), 32, decay);
+                    const double e16 = hx ? std::abs(hx->estimate - want) : 1.0, e32 = hx2 ? std::abs(hx2->estimate - want) : 1.0;
+                    check(hx && e16 <= hx->radius && e16 < 1e-5 && hx->factorEvaluations == 17 && e32 * 12.0 < e16,
+                          "a sampled factor multiplies the closed form inside its proved radius, at fourth order (16 → 32 cells cuts the error > 12×)");
+                }
+            }
             // A fully closed-form branch: radius 0, nothing sampled.
             const auto ball = node(Op::Clamp, node(Op::Sub, num(1), node(Op::Length, leaf("p"))), num(0), num(1));
             const auto rb = OntoMath::restrictAlgebraicToLine(*ball, false);
