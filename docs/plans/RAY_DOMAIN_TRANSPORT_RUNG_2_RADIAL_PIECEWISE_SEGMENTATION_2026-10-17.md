@@ -1104,6 +1104,10 @@ Mean relative error of ∫max(D, 0) per ray.
 - **Consequence:** integrating the shadow ray's optical depth would add a new physical effect, not make today's image more faithful.
 - **⚑ For Zach, not decided here:** should media self-shadow? If yes, the light-side integral is the same line integration (§6w) along each shadow ray.
 - **Also recorded:** the occluder's penumbra term is a renderer heuristic, not authored mathematics; its faithful counterpart is a hard visibility of 0 or 1.
+- **Zach decided** (2026-10-19T16:48 PDT): "If the shadow pipeline is hardcoded, no. If its authored, yes. If its hard coded its the legacy one and shouldnt be turned into a mega dependency."
+  - No self-shadow is built.
+  - The occluder soft-shadow (hard-coded: 24 steps, penumbra constant 16) stays where it is. The line-integration path, CPU or GPU, adds no new dependency on it: media with an occluder keep the legacy marcher until visibility is authored.
+  - Self-shadowing or visibility that an author writes will be integrated like any other authored factor.
 
 **This pass: the marcher's no-source branch, exactly, in RGB.** With no incident source bound, the marcher uses:
 - white incident light;

@@ -130,7 +130,7 @@ This is **architecture direction, not a landed implementation claim**. Existing 
 - [x] **Colour, no-source model, RGB (§6y):** scattering, chroma, phase and emission; worst 7.97/255 → 0.021/255; proved radius on every ray. *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T16:06 PDT.*
 - [x] Zach decided (2026-10-19): switch the GPU from 96 samples to integration once the path is ready and passes the faithfulness test.
 - [ ] Source model: light position, wᵢ-reading phase (range over a cone), authored light radiance/chroma/angular as sampled factors.
-- [ ] ⚑ Zach: should media self-shadow? The marcher has none today (§6y).
+- [x] Zach decided (2026-10-19): self-shadow only if authored; the hard-coded occluder soft-shadow is legacy and stays isolated at its call site — the integration path adds no dependency on it.
 - [ ] GPU line-integration path behind a setting, off by default, A/B against 96 for image and time.
 - [x] ⚑ Zach decided (2026-10-19, on the Sun's verdict): exact special-function reductions count as exact, as their own layer between elementary closed form and quadrature.
 - [x] **Carlson rung, witnessed (§6v):** R_F/R_D/R_J/R_C within 3.2 ulp of precision-stable references; first-kind two-quadratic reduction to 3.8×10⁻¹⁴. *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T14:53 PDT.*
