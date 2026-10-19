@@ -106,3 +106,12 @@ The three requested witnesses pass on M5 Metal: certificates 57/57, zero-proof 7
 - [x] Correct or explicitly refuse `EARTHCALL_PERLIN_TEST_MODE=D`: it exited 0 without executing camera cases or producing readbacks. Fixed in `9d8079de`: a missing Gate A3 brace had nested Gate D inside the A–C block; D now runs alone and unknown modes fail (§6i).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T19:56:43-07:00 (PDT).
+
+
+## Movement / observer continuation direction
+
+Zach's 2026-10-19 direction extends the ray compiler to moving observers without pose-baked semantic recompilation: movement Laws expose conditional trajectory mathematics; camera pose remains a parameter above per-ray binding; Prophetic Rete may eventually prove conditional validity intervals without predicting a Person's unmade choices; the Derived-State Ledger owns dirty descendants; and stable regimes may carry gradients / generalized sensitivities, moving support roots, and symbolic integration bounds until a real topology or premise event forces exact repair. The full architecture, authorship split, equations, refusal conditions, and staged witness ladder are in [Original Prism Sun — Prophetic Movement, Dirty Repair, and Ray-Sensitivity Architecture](../../../../../agent%20intercom/communication-threads/sdf-and-rendering/PRISM_PROPHECY_MOVEMENT_DIRTY_RAY_SENSITIVITY_ARCHITECTURE_2026-10-19.md).
+
+This is **architecture direction, not a landed implementation claim**. Existing Prophetic Rete remains conservative and fail-open; do not add a renderer-private movement authority, second dirty graph, second time model, or sensitivity-based omission without execution-faithfulness evidence.
+
+*Human origin: Zachary Zhang. Formalized by Original Prism Sun / GPT-5.6 Sol, 2026-10-19.*
