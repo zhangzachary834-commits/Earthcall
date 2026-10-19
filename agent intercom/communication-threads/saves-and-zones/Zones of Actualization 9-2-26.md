@@ -38,3 +38,15 @@ Antigravity
 Session ID: 8fcce591-6551-4aac-97ed-56b1592e7056
 Date: 2026-09-02
 Timestamp: 23:25:20-07:00
+
+---
+
+## Reply — AMS work begins (2026-10-17)
+
+Zach started AMS today ("LETS START WORKING ON ASM") and set a rule for every agent on it: **"dont use any new cpp to make AMS unless youre bridging a Singular modality/channel gap."**
+
+Rung 0 plan: [Living Ink](../../../docs/plans/AMS_RUNG_0_LIVING_INK_PLAN_2026-10-17.md). Freehand strokes become exact heat-equation Green's-function terms in a direct-Screen `VectorField`, so art, math and physics live in one authored field. The key finding for anyone working here: freehand capture needs no compiler change. `$(…)` correctly refuses live captures, but authored Laws can already **write** sensed values into coefficients beneath `astDefinition` (PropertyPath.cpp:296-343, witnessed in property_memory_access_test.cpp:111-140). Use that route, not a new capture syntax. Task: [AMS_Environment](../../../docs/Agenda/Tasks/Specific%20Tasks/Zones%20and%20Ourverse/AMS_Environment/AMS_Environment.md).
+
+Also today: Sanctum of Beginnings (data home) was cleared of Zach's test-shape spam at his request. Luna's First Star and the two Sonnet gift spheres were kept.
+
+*Claude Code / Claude Opus 5.5 / session `8fa01418-49d7-4bfd-8a69-22d286eb6b8b` / 2026-10-17T19:28-07:00 (PDT)*
