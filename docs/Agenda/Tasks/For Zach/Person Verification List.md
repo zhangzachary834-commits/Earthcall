@@ -1,5 +1,41 @@
 # Person Verification List
 
+## Personal Ourverse Navigator (`Ourverse Gathering`)
+
+*Gemini · session `feb60581-5952-44ea-9dfa-5d87e8fcb273` · 2026-10-16 — Prototyping loop authorized by Zach for the Personal Ourverse Navigator specification.*
+
+- [ ] **Launch & Arrival:**
+  - Launch Earthcall WebGPU (`./build/earthcall_webgpu` or `./scripts/macos/install_app.sh && open /Applications/Earthcall.app`).
+  - Confirm the engine opens directly into **Ourverse Gathering** (or select "Ourverse Navigator" [U] from the main menu).
+  - Stand on the central Observation Plinth with dark slate and gold compass rose inlay.
+- [ ] **Visual Archipelago Inspection:**
+  - Look across the 4 floating world islands arranged in a graceful semicircular arc across glowing aether filaments:
+    - **Sanctum of Beginnings (North-West, gold):** Stepped gold spire, sunlit portal arch, and gleaming gold navigation beacon.
+    - **Temple of Echoes (North-North-West, azure):** Deep blue crags, silver colonnade, floating pediment roof, and sapphire navigation beacon.
+    - **Cavern of Light (North-North-East, emerald):** Dark obsidian base, cluster of glowing teal/cyan crystals, and vibrant emerald navigation beacon.
+    - **Character Architect Forge (North-East, ember):** Magma blocks, obsidian anvil, glowing crucible, and warm ember navigation beacon.
+- [ ] **Interactive Law-Governed Navigation:**
+  - Click on the **Sanctum beacon** (`navigator-beacon-sanctum`):
+    - Verify `object-clicked` is published, the generic button archetype emits `control-activated`, `law-navigator-button` converts that activation into `zone-navigation-requested` while preserving destination `"Sanctum of Beginnings"`, and the deferred Engine switch cleanly transitions you into the **Sanctum of Beginnings** zone.
+  - Press `M` to open Menu, select `Ourverse Navigator` (`U`), or switch back to `Ourverse Gathering`.
+  - Click on the **Temple beacon** (`navigator-beacon-temple`):
+    - Verify seamless transition into **Temple of Echoes**.
+  - Try the **Cavern beacon** (`navigator-beacon-cavern`) and **Forge beacon** (`navigator-beacon-forge`) to visit each destination world island.
+
+## Zone Physical Matter Migration & Closure Verification
+
+*Antigravity · Gemini 2.5 Flash · session `bf1f2c53-eb69-49fd-85b2-cd805a73cac3` · 2026-10-16 / 2026-10-17 — Fulfills Repair Boundary Item 2 of Per_Zone_serialization_pathway.md: Each Zone owns its verified, content-addressed matter generation loaded only through the Zone's activation transaction.*
+
+- [ ] Boot Earthcall WebGPU (`./build/earthcall_webgpu` or `scripts/macos/install_app.sh`).
+- [ ] Open Creator Console -> Zones:
+  - Verify switching to **Chess** hydrates the 3D board and 32 pieces cleanly from `saves/zones/Chess/zone.7a181a929bd75179.ecmatter`.
+  - Verify switching to **Go** hydrates the Goban board and intersections from `saves/zones/Go/zone.231ef0d5ef06942e.ecmatter`.
+  - Verify switching to **SynthesisStudio** and **Sanctum of Beginnings** hydrates their respective dense geometry and platform placements.
+- [ ] Save Zone Verification:
+  - While in any Zone (e.g. Chess), click **Save Zone**.
+  - Confirm the console reports saving the Zone without minting or touching conglomerate `saves/worlds` files.
+  - Verify `saves/zones/Chess/` retains its content-addressed `.ecmatter` sidecar, unversioned `zone.ecmatter`, and byte-level identity isolation from other Zones.
+
 ## 2D Chess Zone (`Chess2D`)
 
 *Gemini 3.8 Flash (the sparkly guy) · session `e1346ea7-7d86-4945-8831-01e3e33dd09a` · 2026-10-16. Commissioned by Zach: "MAKE NOT 3D CHESS MAKE 2D CHESS. MAKE SURE UR WORKING IN THE DEFAULT sync-from-earthcall-main CHECKOUT."*

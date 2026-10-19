@@ -125,6 +125,8 @@ int main() {
     const auto targetZoneDir = scratch.path / "zones/MTG";
     std::filesystem::create_directories(targetZoneDir);
     std::filesystem::copy_file(sourceZone, targetZoneDir / "zone.json");
+    check(TestSupport::copyZoneMatterClosure(sourceZone, targetZoneDir),
+          "MTG sandbox carries its exact physical matter generation");
 
     std::size_t copiedRoots = 0;
     for (const auto& refJson : zoneJson["lawRefs"]) {

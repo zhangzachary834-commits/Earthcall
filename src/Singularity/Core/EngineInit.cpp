@@ -314,6 +314,25 @@ bool Engine::initLogic() {
         }
     });
 
+    // Domain navigation is deliberately downstream of generic control semantics:
+    // object-clicked -> control-button-law -> control-activated ->
+    // law-navigator-button -> zone-navigation-requested.  The Engine consumes
+    // only the domain event; a random authored button with destination-like
+    // properties must not acquire navigation merely by being activated.
+    Core::EventBus::instance().subscribe<ECA::Event>([](const ECA::Event& ev) {
+        if (ev.type != "zone-navigation-requested" || !ev.subject) return;
+        PropertyValue targetVal;
+        std::string destZone;
+        if (lawGetValue(*ev.subject, PropertyPath::parse("destinationZone"), targetVal)) {
+            if (const auto* s = std::get_if<std::string>(&targetVal)) destZone = *s;
+        } else if (lawGetValue(*ev.subject, PropertyPath::parse("targetZone"), targetVal)) {
+            if (const auto* s = std::get_if<std::string>(&targetVal)) destZone = *s;
+        }
+        if (!destZone.empty()) {
+            Core::Engine::instance().requestZoneSwitch(destZone);
+        }
+    });
+
     // Register first-mover TerminalChannel: the Mac Terminal's command line
     // (the window Run Earthcall.command opened) as a modality of this world.
     // Lines become Laws only through the authored LawLine seed Laws.
@@ -547,6 +566,22 @@ bool Engine::initLogic() {
     _ourverse.ensureGatheringZone(mgr);
     if (_lawManager) _ourverse.registerMetalaws(*_lawManager);
 
+    // The Personal Ourverse Navigator in Ourverse Gathering is what a Person
+    // meets when Earthcall opens. Hydration and primary-Home admission have
+    // already completed above; refusal here never destroys the admitted Zone.
+    bool navigatorFound = false;
+    for (size_t i = 0; i < mgr.zones().size(); ++i) {
+        if (!mgr.zones()[i] || !mgr.zones()[i]->isOurverseGathering()) continue;
+        navigatorFound = true;
+        if (!mgr.switchTo(i)) {
+            std::cerr << "[Navigator] Boot entry REFUSED; current Zone remains active.\n";
+        }
+        break;
+    }
+    if (!navigatorFound) {
+        std::cerr << "[Navigator] Boot entry unavailable: Ourverse Gathering is absent.\n";
+    }
+
     // Initialize elemental tool handler with zone manager
     _elementalToolHandler = std::make_unique<ElementalToolHandler>(&mgr);
 
@@ -688,6 +723,28 @@ bool Engine::initLogic() {
                 mgr.switchTo(i);
                 break;
             }
+        }
+        _mainMenu.close();
+        _keyboardHandler->setMenuOpen(false);
+        _mouseHandler->setMenuOpen(false);
+        if (_mouseHandler->isCursorLocked()) _mouseHandler->toggleCursorLock(_window);
+    });
+
+    // U is intentionally unique here: O is already Legacy Session Import / Recovery.
+    _mainMenu.addOption("Ourverse Navigator", GLFW_KEY_U, [this]() {
+        const auto& zones = ::mgr.zones();
+        bool found = false;
+        for (size_t i = 0; i < zones.size(); ++i) {
+            if (!zones[i] || !zones[i]->isOurverseGathering()) continue;
+            found = true;
+            if (!::mgr.switchTo(i)) {
+                std::cerr << "[Navigator] REFUSED return to Ourverse Gathering; "
+                             "current Zone remains active.\n";
+            }
+            break;
+        }
+        if (!found) {
+            std::cerr << "[Navigator] REFUSED return: Ourverse Gathering is absent.\n";
         }
         _mainMenu.close();
         _keyboardHandler->setMenuOpen(false);

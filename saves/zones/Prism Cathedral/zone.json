@@ -38621,5 +38621,11 @@
   "formationRelations": {
     "relations": []
   },
-  "lexemes": []
+  "lexemes": [],
+  "matterGeneration": {
+    "snapshotId": "fc7d56101a8ea69c",
+    "sha256": "fc7d56101a8ea69c62856f8f4efedf66bc7c2d80bfda1af88ccb1a577bd8cef6",
+    "byteLength": 60748,
+    "schemaVersion": 1
+  }
 }

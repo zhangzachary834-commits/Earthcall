@@ -1757,5 +1757,11 @@
   "lexemes": [],
   "materialRefs": [
     "material.cathedral_basalt"
-  ]
+  ],
+  "matterGeneration": {
+    "snapshotId": "24126d1a3a4e5cce",
+    "sha256": "24126d1a3a4e5cce07a2ea9bc53dba6eedd7a9ee414d6abbede1f13619203d6a",
+    "byteLength": 3240,
+    "schemaVersion": 1
+  }
 }

@@ -9,6 +9,7 @@
 #include "Zone/Zone.hpp"
 #include "SaveContext.hpp"
 #include <memory>
+#include <filesystem>
 
 class Material;
 
@@ -68,6 +69,13 @@ class ZoneManager {
     // before any live state changes; a miss refuses with the old Zone intact.
     bool prepareZoneMaterialClosure(size_t index, const nlohmann::json& identity,
                                     std::vector<std::shared_ptr<Material>>& sharedRoots);
+    // The Matter half of a Zone's closure (Per-Zone serialization pathway,
+    // Repair Boundary item 2). Every physical Zone must have a verified,
+    // content-addressed matter generation (<stem>.<snapshotId>.ecmatter).
+    // Resolved before any live state changes; verification failure refuses
+    // activation with the old Zone and Laws intact.
+    bool prepareZoneMatterClosure(size_t index, const nlohmann::json& identity,
+                                  std::vector<uint8_t>& matterBytes);
     bool lawInUse(const std::string& lawId) const;
     bool heldByAnyone(const std::string& lawId, const std::string& exceptHolder = {}) const;
     // Laws retired from a Zone by an authored act, by Zone identifier.
@@ -252,4 +260,16 @@ public:
 
     std::vector<uint8_t> buildSaveChunkFlatBuffer();
     void loadSaveChunkFlatBuffer(const std::vector<uint8_t>& buffer);
+
+    // Matter generation management (content-addressed <stem>.<snapshotId>.ecmatter)
+    static constexpr int kMatterSchemaVersion = 1;
+    static std::string commitMatterGeneration(const std::filesystem::path& ecformPath,
+                                               const std::vector<uint8_t>& matterBytes,
+                                               nlohmann::json& j);
+    static bool writeMatterCompatibilityCopy(const std::filesystem::path& semanticRootPath,
+                                             const std::vector<uint8_t>& matterBytes);
+    static void cleanupPredecessorMatter(const std::string& oldMatterPathString);
+    static std::vector<uint8_t> readVerifiedMatterGeneration(const std::filesystem::path& ecformPath,
+                                                              const nlohmann::json& j);
+    static bool atomicWriteFile(const std::filesystem::path& finalPath, const std::vector<uint8_t>& bytes);
 };
