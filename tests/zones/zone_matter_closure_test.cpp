@@ -19,6 +19,10 @@
 //      cleans its predecessor, and reuses the same generation for unchanged Matter.
 //   8. Save Zone isolation: leaves other zones byte-identical and creates no conglomerate
 //      saves/worlds directory.
+//   9. The authored Zone/Home corpus is closed across BOTH JSON and ECForm roots:
+//      every effective root that names matterGeneration names a real exact sidecar
+//      with matching length/hash, a byte-identical compatibility mirror, a valid
+//      FlatBuffer, and entities owned uniquely by that root's identifier.
 
 #include "support/test_harness.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
@@ -91,6 +95,150 @@ Object* findObject(Zone& zone, const std::string& id) {
     return nullptr;
 }
 
+bool isLowerHex(const std::string& value, std::size_t width) {
+    if (value.size() != width) return false;
+    for (char ch : value) {
+        if (!((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f'))) return false;
+    }
+    return true;
+}
+
+std::vector<uint8_t> readBytes(const std::filesystem::path& path) {
+    std::ifstream in(path, std::ios::binary);
+    if (!in.is_open()) return {};
+    return std::vector<uint8_t>(
+        (std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+}
+
+std::filesystem::path effectiveIdentityRoot(const std::filesystem::path& dir,
+                                            const char* stem) {
+    for (const char* ext : {".ecsave", ".ecform", ".json"}) {
+        const auto candidate = dir / (std::string(stem) + ext);
+        std::error_code ec;
+        if (std::filesystem::is_regular_file(candidate, ec) &&
+            !ec && std::filesystem::file_size(candidate, ec) > 0 && !ec) {
+            return candidate;
+        }
+    }
+    return {};
+}
+
+void auditAuthoredMatterRoot(const std::filesystem::path& rootPath) {
+    nlohmann::json root = SaveSystem::readSaveData(rootPath.string());
+    check(root.is_object(), "authored semantic root parses: " + rootPath.string());
+    if (!root.is_object() || !root.contains("matterGeneration")) return;
+
+    const std::string id = root.value("identifier", std::string{});
+    check(!id.empty(), "matter-bearing root has identifier: " + rootPath.string());
+
+    const auto& gen = root["matterGeneration"];
+    check(gen.is_object(), "matterGeneration is an object: " + rootPath.string());
+    if (!gen.is_object()) return;
+
+    const std::string snapshotId = gen.value("snapshotId", std::string{});
+    const std::string expectedHash = gen.value("sha256", std::string{});
+    const std::size_t expectedLength = gen.value("byteLength", std::size_t{0});
+    const int schemaVersion = gen.value("schemaVersion", 0);
+
+    check(isLowerHex(snapshotId, 16),
+          "snapshotId is 16 lowercase hex: " + rootPath.string());
+    check(isLowerHex(expectedHash, 64),
+          "sha256 is 64 lowercase hex: " + rootPath.string());
+    check(expectedHash.size() >= snapshotId.size() &&
+              expectedHash.substr(0, snapshotId.size()) == snapshotId,
+          "snapshotId is sha256 prefix: " + rootPath.string());
+    check(expectedLength > 0, "matter byteLength is non-zero: " + rootPath.string());
+    check(schemaVersion == 1, "matter schemaVersion is exactly 1: " + rootPath.string());
+    if (!isLowerHex(snapshotId, 16) || !isLowerHex(expectedHash, 64) ||
+        expectedHash.substr(0, 16) != snapshotId || expectedLength == 0 ||
+        schemaVersion != 1 || id.empty()) {
+        return;
+    }
+
+    const std::string stem = rootPath.stem().string();
+    const auto exact =
+        rootPath.parent_path() / (stem + "." + snapshotId + ".ecmatter");
+    const auto compatibility =
+        rootPath.parent_path() / (stem + ".ecmatter");
+
+    check(std::filesystem::exists(exact),
+          "exact content-addressed generation exists: " + exact.string());
+    check(std::filesystem::exists(compatibility),
+          "compatibility matter mirror exists: " + compatibility.string());
+    if (!std::filesystem::exists(exact)) return;
+
+    const auto bytes = readBytes(exact);
+    check(bytes.size() == expectedLength,
+          "generation byteLength matches semantic root: " + exact.string());
+    check(!bytes.empty() && sha256Hex(bytes) == expectedHash,
+          "generation sha256 matches semantic root: " + exact.string());
+
+    if (std::filesystem::exists(compatibility)) {
+        const auto compatibilityBytes = readBytes(compatibility);
+        check(compatibilityBytes == bytes,
+              "compatibility mirror is byte-identical to authoritative generation: " +
+                  compatibility.string());
+    }
+
+    if (bytes.empty()) return;
+    flatbuffers::Verifier verifier(bytes.data(), bytes.size());
+    const bool flatbufferOk = Earthcall::Schema::VerifySaveChunkBuffer(verifier);
+    check(flatbufferOk, "generation is a valid SaveChunk FlatBuffer: " + exact.string());
+    if (!flatbufferOk) return;
+
+    const auto* chunk = Earthcall::Schema::GetSaveChunk(bytes.data());
+    check(chunk && chunk->entities(),
+          "generation contains an entity vector: " + exact.string());
+    if (!chunk || !chunk->entities()) return;
+
+    std::unordered_set<std::string> seen;
+    bool ownershipOk = true;
+    for (flatbuffers::uoffset_t i = 0; i < chunk->entities()->size(); ++i) {
+        const auto* entity = chunk->entities()->Get(i);
+        if (!entity || !entity->id() || entity->id()->size() == 0 ||
+            !entity->owner_identifier() ||
+            entity->owner_identifier()->str() != id ||
+            !seen.insert(entity->id()->str()).second) {
+            ownershipOk = false;
+            break;
+        }
+    }
+    check(ownershipOk,
+          "generation ids are unique and every entity is owned by semantic root '" +
+              id + "': " + exact.string());
+}
+
+void auditAuthoredMatterCorpus(const std::filesystem::path& saves) {
+    std::size_t effectiveRoots = 0;
+    std::size_t generatedRoots = 0;
+
+    const auto auditFamily = [&](const std::filesystem::path& family,
+                                 const char* stem) {
+        std::error_code ec;
+        if (!std::filesystem::is_directory(family, ec) || ec) return;
+        for (const auto& entry : std::filesystem::directory_iterator(family)) {
+            if (!entry.is_directory()) continue;
+            const auto root = effectiveIdentityRoot(entry.path(), stem);
+            if (root.empty()) continue;
+            ++effectiveRoots;
+            const auto parsed = SaveSystem::readSaveData(root.string());
+            if (parsed.is_object() && parsed.contains("matterGeneration")) {
+                ++generatedRoots;
+            }
+            auditAuthoredMatterRoot(root);
+        }
+    };
+
+    auditFamily(saves / "zones", "zone");
+    auditFamily(saves / "homes", "home");
+
+    check(effectiveRoots > 0, "authored corpus exposes effective Zone/Home roots");
+    check(generatedRoots > 0,
+          "authored corpus includes verified content-addressed matter generations");
+    std::cout << "  corpus: " << effectiveRoots << " effective roots, "
+              << generatedRoots << " with matterGeneration\n";
+}
+
 std::vector<uint8_t> makeTestMatterBuffer(const std::string& objId,
                                          const std::string& ownerId,
                                          float x, float y, float z) {
@@ -126,6 +274,11 @@ int main() {
     const auto templatePath = saves / "zones/visible_cube/zone.json";
     check(std::filesystem::exists(templatePath), "visible_cube template identity exists");
     if (!std::filesystem::exists(templatePath)) return 1;
+
+    // Audit the actual authored corpus BEFORE redirecting SaveSystem into the
+    // synthetic scratch root below. This walks effective .ecsave/.ecform/.json
+    // identities with the same priority as SaveSystem's identity resolver.
+    auditAuthoredMatterCorpus(std::filesystem::absolute(saves));
 
     nlohmann::json base = SaveSystem::readSaveData(std::filesystem::absolute(templatePath).string());
 
