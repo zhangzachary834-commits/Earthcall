@@ -7,6 +7,8 @@
 **Human origin:** Zachary Zhang  
 **Status:** Architectural clarification of Zach's approved ray-transport direction. This does **not** change the current decision to keep `volumeSamplesPerChord = 96` for prototyping today.
 
+**Direct parent:** [Opus handoff — Zach on the integral: keep 96 for now; the future is integration operations, not more sampling](OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md#zach-on-the-integral-keep-96-for-now-the-future-is-integration-operations-not-more-sampling)
+
 > **Zach's decree, in his words:** simplify the hot path down toward **"only one equation per ray."**
 
 Constitutionalist: I have now read where you carried the first Ray Transport Canon. The line restriction, radial segmentation, support certificates, execution-provenance repair, Metal witnesses, and today's decision that the future crossing is **integration operations rather than more sampling** all point in the same direction.
