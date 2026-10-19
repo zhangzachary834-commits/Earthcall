@@ -266,6 +266,8 @@ public:
     static std::string commitMatterGeneration(const std::filesystem::path& ecformPath,
                                                const std::vector<uint8_t>& matterBytes,
                                                nlohmann::json& j);
+    static bool writeMatterCompatibilityCopy(const std::filesystem::path& semanticRootPath,
+                                             const std::vector<uint8_t>& matterBytes);
     static void cleanupPredecessorMatter(const std::string& oldMatterPathString);
     static std::vector<uint8_t> readVerifiedMatterGeneration(const std::filesystem::path& ecformPath,
                                                               const nlohmann::json& j);
