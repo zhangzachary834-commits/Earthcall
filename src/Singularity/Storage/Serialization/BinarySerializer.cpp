@@ -1,4 +1,6 @@
 #include "Singularity/Storage/Serialization/BinarySerializer.hpp"
+#include <chrono>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 
@@ -127,10 +129,35 @@ std::vector<uint8_t> BinarySerializer::writeBinaryToBuffer(const EcformGraph& gr
 }
 
 bool BinarySerializer::writeBinary(const EcformGraph& graph, const std::string& filepath) {
+    if (filepath.empty()) return false;
     std::vector<uint8_t> buffer = writeBinaryToBuffer(graph);
-    std::ofstream out(filepath, std::ios::binary);
-    if (!out) return false;
-    out.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());
+
+    const std::filesystem::path finalPath(filepath);
+    const std::filesystem::path tempPath =
+        finalPath.string() + ".tmp-" +
+        std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+
+    std::error_code ec;
+    if (finalPath.has_parent_path()) {
+        std::filesystem::create_directories(finalPath.parent_path(), ec);
+    }
+
+    {
+        std::ofstream out(tempPath, std::ios::binary | std::ios::out | std::ios::trunc);
+        if (!out) return false;
+        out.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());
+        out.flush();
+        if (!out) {
+            std::filesystem::remove(tempPath, ec);
+            return false;
+        }
+    }
+
+    std::filesystem::rename(tempPath, finalPath, ec);
+    if (ec) {
+        std::filesystem::remove(tempPath, ec);
+        return false;
+    }
     return true;
 }
 

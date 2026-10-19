@@ -2,6 +2,7 @@
 
 #include "json.hpp"
 
+#include <chrono>
 #include <fstream>
 #include <iostream>
 
@@ -54,25 +55,45 @@ bool IdentityLedger::load() {
 bool IdentityLedger::save() const {
     std::error_code ec;
     std::filesystem::create_directories(_path.parent_path(), ec);
+    ec.clear();
 
     nlohmann::json entries = nlohmann::json::object();
     for (const auto& [name, id] : _byName) entries[name] = id.toString();
 
     nlohmann::json j = {{"version", kFormatVersion}, {"entries", entries}};
 
-    std::ofstream out(_path, std::ios::trunc);
-    if (!out.is_open()) {
-        std::cerr << "[IdentityLedger] cannot write " << _path << "\n";
-        return false;
+    const std::filesystem::path tempPath =
+        _path.string() + ".tmp-" +
+        std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+
+    {
+        std::ofstream out(tempPath, std::ios::out | std::ios::trunc);
+        if (!out.is_open()) {
+            std::cerr << "[IdentityLedger] cannot open temporary file " << tempPath << "\n";
+            return false;
+        }
+        out << j.dump(2) << "\n";
+        out.flush();
+        if (!out) {
+            std::filesystem::remove(tempPath, ec);
+            std::cerr << "[IdentityLedger] write failed for " << tempPath << "\n";
+            return false;
+        }
     }
-    out << j.dump(2) << "\n";
-    out.close();
 
 #if !defined(_WIN32)
     // Not secret -- it holds only public ids -- but it decides which identity a
     // name resolves to, so it is not world-writable either.
-    ::chmod(_path.c_str(), 0600);
+    ::chmod(tempPath.c_str(), 0600);
 #endif
+
+    std::filesystem::rename(tempPath, _path, ec);
+    if (ec) {
+        std::filesystem::remove(tempPath, ec);
+        std::cerr << "[IdentityLedger] failed to rename temporary ledger to " << _path << ": " << ec.message() << "\n";
+        return false;
+    }
+
     return true;
 }
 

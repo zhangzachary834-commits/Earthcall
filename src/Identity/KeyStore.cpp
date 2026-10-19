@@ -6,6 +6,7 @@
 #include <openssl/rand.h>
 #endif
 
+#include <chrono>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -240,21 +241,42 @@ bool KeyStore::store(const PrivateKey& key, const std::string& passphrase) {
     file["tag"] = hexEncode(tag);
 
     const std::filesystem::path path = pathFor(id);
+    const std::filesystem::path tempPath =
+        path.string() + ".tmp-" +
+        std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+
+    ec.clear();
+    if (path.has_parent_path()) {
+        std::filesystem::create_directories(path.parent_path(), ec);
+    }
 
     // Create with 0600 from the outset rather than widening then narrowing:
     // between the two there would be a window where the sealed key is
     // world-readable.
     {
-        std::ofstream out(path, std::ios::binary | std::ios::trunc);
+        std::ofstream out(tempPath, std::ios::binary | std::ios::out | std::ios::trunc);
         if (!out.is_open()) {
-            std::cerr << "[KeyStore] cannot write " << path << "\n";
+            std::cerr << "[KeyStore] cannot open temporary file " << tempPath << "\n";
             return false;
         }
         out << file.dump(2) << "\n";
+        out.flush();
+        if (!out) {
+            std::filesystem::remove(tempPath, ec);
+            std::cerr << "[KeyStore] write failed for " << tempPath << "\n";
+            return false;
+        }
     }
 #if !defined(_WIN32)
-    ::chmod(path.c_str(), 0600);
+    ::chmod(tempPath.c_str(), 0600);
 #endif
+
+    std::filesystem::rename(tempPath, path, ec);
+    if (ec) {
+        std::filesystem::remove(tempPath, ec);
+        std::cerr << "[KeyStore] failed to rename temporary key file to " << path << ": " << ec.message() << "\n";
+        return false;
+    }
 
     return true;
 #else
