@@ -13,9 +13,9 @@ The Personal Ourverse Navigator is authored as a floating archipelago inside **O
   3. **Cavern of Light (North-North-East, emerald):** Obsidian cavern base, cluster of glowing teal/cyan crystals (`island-cavern-crys-1..3`), and emerald navigation beacon (`navigator-beacon-cavern`).
   4. **Character Architect Forge (North-East, ember):** Magma blocks, obsidian anvil, glowing crucible, and ember navigation beacon (`navigator-beacon-forge`).
 - **Interactive Law-Governed Navigation (`law-navigator-button`):**
-  - Authored Law `law-navigator-button` (`saves/laws/law-navigator-button/law.json`) watches for `object-clicked` where subject is related via `instance-of` to `category.control.button`.
-  - Publishes `control-activated` and `zone-navigation-requested`.
-  - Engine reads `destinationZone` property ("Sanctum of Beginnings", "Temple of Echoes", etc.) and transitions active zone via `Core::Engine::instance().requestZoneSwitch`.
+  - The existing authored button archetype owns generic control meaning: `object-clicked` on a subject related via `instance-of` to `category.control.button` publishes `control-activated`.
+  - Authored Law `law-navigator-button` (`saves/laws/law-navigator-button/law.json`) hears `control-activated` for a button and publishes only the domain event `zone-navigation-requested`.
+  - Engine consumes only `zone-navigation-requested`, reads the subject's `destinationZone` property ("Sanctum of Beginnings", "Temple of Echoes", etc.), and defers the active-zone transition via `Core::Engine::instance().requestZoneSwitch`. Generic button activation alone never acquires navigation semantics.
   - In `ZoneManager::switchTo`, `applyFormationRelations` is sequenced after world object repopulation so formation relations and category memberships bind cleanly to live objects without dangling pointers across transitions.
 
 ## Verification & Visual Witnesses
