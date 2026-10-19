@@ -87,7 +87,6 @@ public:
     template<typename T> void begin2DToolDrag(T type, glm::vec2 pos) { _is2DToolDragging = true; _dragStart = pos; _dragCurrent = pos; }
     void end2DToolDrag() { _is2DToolDragging = false; }
     template<typename T> bool is2DToolDragging(T type) const { return _is2DToolDragging; }
-    bool getUseLegacy2DTools() const { return _useLegacy2DTools; }
     
     Ourverse& getOurverse() { return _ourverse; }
     Ourverse& getWorld() { return getOurverse(); }
@@ -157,7 +156,6 @@ private:
     bool _is2DToolDragging = false;
     glm::vec2 _dragStart = {0,0};
     glm::vec2 _dragCurrent = {0,0};
-    bool _useLegacy2DTools = false;
     
         // Callbacks
     GLFWcursorposfun       _prevCursorPosCallback       = nullptr;
