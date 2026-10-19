@@ -564,11 +564,6 @@ private:
     // present() so an overlay pass can run between them.
     WGPUTexture     _surfaceTex  = nullptr;
     WGPUTextureView _surfaceView = nullptr;
-    WGPUTexture     _fallbackTex = nullptr;
-    WGPUTextureView _fallbackView = nullptr;
-    uint32_t        _fallbackW = 0;
-    uint32_t        _fallbackH = 0;
-    void ensureOffscreenFallback(uint32_t w, uint32_t h);
     WGPUBuffer      _readbackBuffer = nullptr;
     uint64_t        _readbackBufferSize = 0;
 
