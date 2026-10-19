@@ -11,11 +11,13 @@
 //      activation, leaving the Person in the prior Zone intact.
 //   4. A named generation cannot fall back to an unversioned compatibility sidecar;
 //      the exact <stem>.<snapshotId>.ecmatter pointer must exist.
-//   5. Pure-symbolic Zone without matterGeneration switches cleanly without error.
-//   6. persistZone writes a content-addressed snapshot sidecar (<stem>.<snapshotId>.ecmatter),
-//      writes unversioned <stem>.ecmatter, updates matterGeneration metadata (snapshotId,
-//      sha256, byteLength, schemaVersion: 1), and cleans up predecessor generations.
-//   7. Save Zone isolation: leaves other zones byte-identical and creates no conglomerate
+//   5. Malformed content-address metadata, stale schema versions, and wrong-owner
+//      entities REFUSE before activation.
+//   6. Pure-symbolic Zone without matterGeneration switches cleanly without error.
+//   7. persistZone refuses a pre-existing conflicting generation file, then writes a
+//      content-addressed snapshot + post-commit compatibility mirror, updates metadata,
+//      cleans its predecessor, and reuses the same generation for unchanged Matter.
+//   8. Save Zone isolation: leaves other zones byte-identical and creates no conglomerate
 //      saves/worlds directory.
 
 #include "support/test_harness.hpp"
@@ -33,6 +35,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace {
@@ -247,6 +250,89 @@ int main() {
         std::ofstream(dir / "zone.json") << j.dump(2);
     }
 
+    // ZtBadMetadata: snapshotId must be the prefix of the declared full hash.
+    {
+        const std::string zoneId = "ZtBadMetadata";
+        const auto dir = scratch.path / "zones" / zoneId;
+        std::filesystem::create_directories(dir);
+
+        const auto matterBytes =
+            makeTestMatterBuffer("bad-metadata-obj", zoneId, 2.0f, 3.0f, 4.0f);
+        const std::string hash = sha256Hex(matterBytes);
+        std::string badSnap = hash.substr(0, 16);
+        badSnap[0] = badSnap[0] == '0' ? '1' : '0';
+        std::ofstream(dir / ("zone." + badSnap + ".ecmatter"), std::ios::binary).write(
+            reinterpret_cast<const char*>(matterBytes.data()), matterBytes.size());
+
+        nlohmann::json j = base;
+        j["identifier"] = zoneId;
+        j["name"] = zoneId;
+        j.erase("materials");
+        j["world"]["objects"][0]["objectID"] = "bad-metadata-obj";
+        j["matterGeneration"] = {
+            {"snapshotId", badSnap},
+            {"sha256", hash},
+            {"byteLength", matterBytes.size()},
+            {"schemaVersion", 1}
+        };
+        std::ofstream(dir / "zone.json") << j.dump(2);
+    }
+
+    // ZtOldSchema: generation schema compatibility is explicit, not guessed.
+    {
+        const std::string zoneId = "ZtOldSchema";
+        const auto dir = scratch.path / "zones" / zoneId;
+        std::filesystem::create_directories(dir);
+
+        const auto matterBytes =
+            makeTestMatterBuffer("old-schema-obj", zoneId, 3.0f, 4.0f, 5.0f);
+        const std::string hash = sha256Hex(matterBytes);
+        const std::string snapId = hash.substr(0, 16);
+        std::ofstream(dir / ("zone." + snapId + ".ecmatter"), std::ios::binary).write(
+            reinterpret_cast<const char*>(matterBytes.data()), matterBytes.size());
+
+        nlohmann::json j = base;
+        j["identifier"] = zoneId;
+        j["name"] = zoneId;
+        j.erase("materials");
+        j["world"]["objects"][0]["objectID"] = "old-schema-obj";
+        j["matterGeneration"] = {
+            {"snapshotId", snapId},
+            {"sha256", hash},
+            {"byteLength", matterBytes.size()},
+            {"schemaVersion", 0}
+        };
+        std::ofstream(dir / "zone.json") << j.dump(2);
+    }
+
+    // ZtWrongOwner: new per-Zone generations may not use the legacy
+    // unambiguous-bare-id fallback to hydrate matter authored for another Zone.
+    {
+        const std::string zoneId = "ZtWrongOwner";
+        const auto dir = scratch.path / "zones" / zoneId;
+        std::filesystem::create_directories(dir);
+
+        const auto matterBytes =
+            makeTestMatterBuffer("wrong-owner-obj", "SomeOtherZone", 4.0f, 5.0f, 6.0f);
+        const std::string hash = sha256Hex(matterBytes);
+        const std::string snapId = hash.substr(0, 16);
+        std::ofstream(dir / ("zone." + snapId + ".ecmatter"), std::ios::binary).write(
+            reinterpret_cast<const char*>(matterBytes.data()), matterBytes.size());
+
+        nlohmann::json j = base;
+        j["identifier"] = zoneId;
+        j["name"] = zoneId;
+        j.erase("materials");
+        j["world"]["objects"][0]["objectID"] = "wrong-owner-obj";
+        j["matterGeneration"] = {
+            {"snapshotId", snapId},
+            {"sha256", hash},
+            {"byteLength", matterBytes.size()},
+            {"schemaVersion", 1}
+        };
+        std::ofstream(dir / "zone.json") << j.dump(2);
+    }
+
     // ZtPure
     {
         const std::string zoneId = "ZtPure";
@@ -273,15 +359,20 @@ int main() {
         const std::size_t corrupt = indexOf(zm, "ZtCorrupt");
         const std::size_t missing = indexOf(zm, "ZtMissing");
         const std::size_t fallbackOnly = indexOf(zm, "ZtFallbackOnly");
+        const std::size_t badMetadata = indexOf(zm, "ZtBadMetadata");
+        const std::size_t oldSchema = indexOf(zm, "ZtOldSchema");
+        const std::size_t wrongOwner = indexOf(zm, "ZtWrongOwner");
         const std::size_t pure = indexOf(zm, "ZtPure");
 
         check(alpha < zm.zones().size() && corrupt < zm.zones().size() &&
               missing < zm.zones().size() && fallbackOnly < zm.zones().size() &&
-              pure < zm.zones().size(),
-              "fresh boot discovers all five Zones from saves/zones alone");
+              badMetadata < zm.zones().size() && oldSchema < zm.zones().size() &&
+              wrongOwner < zm.zones().size() && pure < zm.zones().size(),
+              "fresh boot discovers all eight Zones from saves/zones alone");
         if (alpha >= zm.zones().size() || corrupt >= zm.zones().size() ||
             missing >= zm.zones().size() || fallbackOnly >= zm.zones().size() ||
-            pure >= zm.zones().size()) return 1;
+            badMetadata >= zm.zones().size() || oldSchema >= zm.zones().size() ||
+            wrongOwner >= zm.zones().size() || pure >= zm.zones().size()) return 1;
 
         // (1) Move to ZtAlpha: valid matter generation commits and hydrates
         check(zm.switchTo(alpha), "Move to ZtAlpha commits with valid matter generation");
@@ -311,7 +402,21 @@ int main() {
         check(zm.currentIndex() == alpha,
               "Person remains safely in ZtAlpha after generation-pointer refusal");
 
-        // (5) Move to ZtPure: pure symbolic zone without matter switches cleanly
+        // (5) Strict generation metadata and ownership are part of admission.
+        check(!zm.switchTo(badMetadata),
+              "Move to ZtBadMetadata REFUSES snapshot/hash identity mismatch");
+        check(zm.currentIndex() == alpha,
+              "Person remains in ZtAlpha after malformed generation metadata");
+        check(!zm.switchTo(oldSchema),
+              "Move to ZtOldSchema REFUSES unsupported schema version");
+        check(zm.currentIndex() == alpha,
+              "Person remains in ZtAlpha after schema refusal");
+        check(!zm.switchTo(wrongOwner),
+              "Move to ZtWrongOwner REFUSES matter owned by another Zone");
+        check(zm.currentIndex() == alpha,
+              "Person remains in ZtAlpha after wrong-owner refusal");
+
+        // (6) Move to ZtPure: pure symbolic zone without matter switches cleanly
         check(zm.switchTo(pure), "Move to ZtPure succeeds cleanly without matter sidecar");
         check(zm.currentIndex() == pure, "active zone is ZtPure");
 
@@ -336,7 +441,29 @@ int main() {
         const auto priorMatterFile = scratch.path / "zones/ZtAlpha" / ("zone." + priorSnapId + ".ecmatter");
         check(std::filesystem::exists(priorMatterFile), "prior matter snapshot exists before save");
 
-        // (6) Save Zone commits new matter snapshot and retires predecessor
+        // (7a) A pre-existing file under the would-be content address must
+        // never be overwritten if its bytes disagree.  Because Matter bytes
+        // are deterministic, we can predict the exact generation path here.
+        const auto intendedMatter =
+            zm.buildMatterFlatBuffer(std::unordered_set<std::string>{"ZtAlpha"});
+        const std::string intendedHash = sha256Hex(intendedMatter);
+        const std::string intendedSnapId = intendedHash.substr(0, 16);
+        const auto conflictingMatterFile =
+            scratch.path / "zones/ZtAlpha" / ("zone." + intendedSnapId + ".ecmatter");
+        const std::string identityBeforeCollision = slurp(alphaZoneJsonPath);
+        {
+            std::ofstream poison(conflictingMatterFile, std::ios::binary);
+            poison << "not-the-addressed-content";
+        }
+        check(!zm.persistZone(alpha),
+              "persistZone REFUSES a conflicting pre-existing content-addressed filename");
+        check(slurp(alphaZoneJsonPath) == identityBeforeCollision,
+              "collision refusal leaves semantic Zone identity byte-identical");
+        check(slurp(conflictingMatterFile) == "not-the-addressed-content",
+              "collision refusal does not overwrite the conflicting generation");
+        std::filesystem::remove(conflictingMatterFile);
+
+        // (7b) Save Zone commits the new generation and retires predecessor.
         check(zm.persistZone(alpha), "persistZone commits ZtAlpha");
 
         nlohmann::json newDoc = SaveSystem::readSaveData(alphaZoneJsonPath.string());
@@ -359,9 +486,16 @@ int main() {
 
         // Verify unversioned file matches new content-addressed file
         check(slurp(newMatterFile) == slurp(unversionedMatter),
-              "unversioned zone.ecmatter content matches new generation snapshot");
+              "post-commit unversioned zone.ecmatter mirrors the authoritative generation");
 
-        // (7) Isolation: ZtPure is byte-identical and no worlds/ directory was created
+        // Content-addressing means unchanged physical state reuses the same
+        // generation rather than minting a clock-derived pseudo-generation.
+        check(zm.persistZone(alpha), "persistZone can save unchanged Matter again");
+        nlohmann::json repeatedDoc = SaveSystem::readSaveData(alphaZoneJsonPath.string());
+        check(repeatedDoc["matterGeneration"].value("snapshotId", std::string{}) == newSnapId,
+              "unchanged Matter reuses exactly the same content-addressed generation");
+
+        // (8) Isolation: ZtPure is byte-identical and no worlds/ directory was created
         check(slurp(pureZoneJsonPath) == pureBefore, "ZtPure remains byte-identical");
         check(!std::filesystem::exists(scratch.path / "worlds"),
               "persistZone created no conglomerate worlds/ directory");
