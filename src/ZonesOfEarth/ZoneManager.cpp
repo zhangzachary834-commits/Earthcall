@@ -496,6 +496,35 @@ bool ZoneManager::prepareZoneMatterClosure(size_t index, const nlohmann::json& i
                       << "': matter FlatBuffer corrupt. Current Zone and Laws remain active.\n";
             return false;
         }
+
+        // A content-addressed per-Zone generation is not a legacy aggregate:
+        // every entity must explicitly belong to THIS Zone and each bare id
+        // must occur exactly once.  applyMatterFlatBuffer retains permissive
+        // ownerless/unambiguous fallback for old world-level .ecmatter files,
+        // but a new generation has already crossed the migration boundary and
+        // must not be allowed to hydrate another Zone by that compatibility path.
+        if (identity.contains("matterGeneration")) {
+            const auto* chunk = Earthcall::Schema::GetSaveChunk(matterBytes.data());
+            std::unordered_set<std::string> seenIds;
+            if (!chunk || !chunk->entities()) {
+                matterBytes.clear();
+                std::cerr << "[zones] REFUSED activation of '" << zoneId
+                          << "': matter generation has no entity vector. Current Zone remains active.\n";
+                return false;
+            }
+            for (const auto* entity : *chunk->entities()) {
+                if (!entity || !entity->id() || entity->id()->size() == 0 ||
+                    !entity->owner_identifier() ||
+                    entity->owner_identifier()->str() != zoneId ||
+                    !seenIds.insert(entity->id()->str()).second) {
+                    matterBytes.clear();
+                    std::cerr << "[zones] REFUSED activation of '" << zoneId
+                              << "': content-addressed matter contains a missing/duplicate id "
+                                 "or an entity not owned by this Zone. Current Zone remains active.\n";
+                    return false;
+                }
+            }
+        }
     }
     return true;
 }
@@ -1702,16 +1731,21 @@ std::string ZoneManager::commitMatterGeneration(const std::filesystem::path& ecf
                   << matterPath << ": " << ec.message() << "\n";
         return "__FAILED__";
     }
-    if (!alreadyExists && !atomicWriteFile(matterPath, matterBytes)) {
+    if (alreadyExists) {
+        std::ifstream existingIn(matterPath.string(), std::ios::binary);
+        const std::vector<uint8_t> existingBytes(
+            (std::istreambuf_iterator<char>(existingIn)), std::istreambuf_iterator<char>());
+        if (!existingIn.eof() || existingBytes != matterBytes) {
+            std::cerr << "[ZoneManager] commitMatterGeneration: existing content-addressed file "
+                      << matterPath << " does not equal the bytes implied by its name — "
+                         "refusing rather than overwriting a possible hash-prefix collision/corruption.\n";
+            return "__FAILED__";
+        }
+    } else if (!atomicWriteFile(matterPath, matterBytes)) {
         std::cerr << "[ZoneManager] commitMatterGeneration: failed to write "
                   << matterPath << " — prior semantic root remains authoritative.\n";
         return "__FAILED__";
     }
-
-    // Also write unversioned <stem>.ecmatter beside it for legacy tools
-    const std::filesystem::path unversionedPath =
-        ecformPath.parent_path() / (stem + ".ecmatter");
-    atomicWriteFile(unversionedPath, matterBytes);
 
     std::string previousGenerationId;
     std::error_code rootEc;
@@ -1737,6 +1771,15 @@ std::string ZoneManager::commitMatterGeneration(const std::filesystem::path& ecf
     return "";
 }
 
+bool ZoneManager::writeMatterCompatibilityCopy(const std::filesystem::path& semanticRootPath,
+                                               const std::vector<uint8_t>& matterBytes) {
+    if (matterBytes.empty()) return true;
+    const std::filesystem::path unversionedPath =
+        semanticRootPath.parent_path() /
+        (semanticRootPath.stem().string() + ".ecmatter");
+    return atomicWriteFile(unversionedPath, matterBytes);
+}
+
 void ZoneManager::cleanupPredecessorMatter(const std::string& oldMatterPathString) {
     if (oldMatterPathString.empty() || oldMatterPathString == "__FAILED__") return;
 
@@ -1760,21 +1803,34 @@ std::vector<uint8_t> ZoneManager::readVerifiedMatterGeneration(const std::filesy
                                                                const nlohmann::json& j) {
     if (!j.contains("matterGeneration")) return {};
     const auto& gen = j["matterGeneration"];
+    if (!gen.is_object()) {
+        std::cerr << "[ZoneManager] readVerifiedMatterGeneration: '" << ecformPath
+                  << "' has a non-object matterGeneration — refusing.\n";
+        return {};
+    }
     const std::string snapshotId = gen.value("snapshotId", std::string{});
     const std::string expectedHash = gen.value("sha256", std::string{});
     const std::size_t expectedLength = gen.value("byteLength", std::size_t{0});
     const int schemaVersion = gen.value("schemaVersion", 0);
 
-    if (snapshotId.empty()) {
+    const auto isLowerHex = [](const std::string& value, std::size_t width) {
+        if (value.size() != width) return false;
+        for (char ch : value) {
+            if (!((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f'))) return false;
+        }
+        return true;
+    };
+    if (!isLowerHex(snapshotId, 16) || !isLowerHex(expectedHash, 64) ||
+        snapshotId != expectedHash.substr(0, 16) || expectedLength == 0) {
         std::cerr << "[ZoneManager] readVerifiedMatterGeneration: '" << ecformPath
-                  << "' names a matterGeneration with no snapshotId — refusing.\n";
+                  << "' has malformed/non-content-addressed generation metadata — refusing.\n";
         return {};
     }
-    if (schemaVersion > kMatterSchemaVersion) {
+    if (schemaVersion != kMatterSchemaVersion) {
         std::cerr << "[ZoneManager] readVerifiedMatterGeneration: '" << ecformPath
                   << "' names matter schema version " << schemaVersion
-                  << ", newer than this build understands (" << kMatterSchemaVersion
-                  << ") — refusing rather than misreading it.\n";
+                  << ", but this build accepts exactly " << kMatterSchemaVersion
+                  << " — refusing rather than guessing compatibility.\n";
         return {};
     }
 
@@ -1831,8 +1887,9 @@ void ZoneManager::saveState(const std::string& filename, SaveContext& ctx) {
     // root's own commit is the atomic rename below — never a plain
     // ofstream that a crash mid-write can leave truncated in place.
     std::string oldMatterPath;
+    std::vector<uint8_t> matter;
     if (!isBeforeLoadSnapshot(filename)) {
-        std::vector<uint8_t> matter = buildMatterFlatBuffer();
+        matter = buildMatterFlatBuffer();
         oldMatterPath = commitMatterGeneration(p, matter, j);
         if (oldMatterPath == "__FAILED__") {
             std::cerr << "[ZoneManager] saveState: matter generation failed; "
@@ -1855,6 +1912,10 @@ void ZoneManager::saveState(const std::string& filename, SaveContext& ctx) {
         return;
     }
 
+    if (!matter.empty() && !writeMatterCompatibilityCopy(p, matter)) {
+        std::cerr << "[ZoneManager] saveState: semantic root committed, but compatibility "
+                     "matter mirror could not be updated for " << p << "\n";
+    }
     cleanupPredecessorMatter(oldMatterPath);
 
     logIo("SAVE " + p.string() + ": " +
@@ -1895,10 +1956,11 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
     // will (same helper, same sanitized label/folder) so the matter file
     // lands beside it under the correct stem.
     std::string oldMatterPath;
+    std::vector<uint8_t> matterBuffer;
     const std::string ecformPath = SaveSystem::makeFilename(
         actualName, SaveSystem::SaveType::WORLD, ".ecform");
     if (!ecformPath.empty()) {
-        std::vector<uint8_t> matterBuffer = buildMatterFlatBuffer();
+        matterBuffer = buildMatterFlatBuffer();
         oldMatterPath =
             commitMatterGeneration(std::filesystem::path(ecformPath), matterBuffer, j);
         if (oldMatterPath == "__FAILED__") {
@@ -1918,6 +1980,11 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
         return;
     }
 
+    if (!matterBuffer.empty() &&
+        !writeMatterCompatibilityCopy(std::filesystem::path(ecformPath), matterBuffer)) {
+        std::cerr << "[ZoneManager] saveStateWithLog: semantic root committed, but "
+                     "compatibility matter mirror could not be updated for " << ecformPath << "\n";
+    }
     cleanupPredecessorMatter(oldMatterPath);
 
     _saveLoad.lastSaveReport = "Wrote " + path;
