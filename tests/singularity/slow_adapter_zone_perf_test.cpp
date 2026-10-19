@@ -44,6 +44,25 @@ struct Frame {
     double law = 0.0;
     double maintenance = 0.0;
 };
+
+struct ScratchSaveRoot {
+    std::filesystem::path path;
+    std::string previousRoot;
+    ScratchSaveRoot() {
+        previousRoot = SaveSystem::saveRoot();
+        path = std::filesystem::temp_directory_path() /
+            ("earthcall-perf-scratch-" + std::to_string(
+                std::chrono::steady_clock::now().time_since_epoch().count()));
+        std::error_code ec;
+        std::filesystem::create_directories(path, ec);
+        SaveSystem::setSaveRoot(path.string());
+    }
+    ~ScratchSaveRoot() {
+        SaveSystem::setSaveRoot(previousRoot);
+        std::error_code ec;
+        std::filesystem::remove_all(path, ec);
+    }
+};
 }
 
 int main(int argc, char** argv) {
@@ -72,9 +91,9 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    // Protect the real Zone identity store with an isolated scratch save root.
+    ScratchSaveRoot scratchRoot;
+    TestSupport::BootedEngineHarness h("Player", "humanoid", /*hydrateAllZones=*/false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);
