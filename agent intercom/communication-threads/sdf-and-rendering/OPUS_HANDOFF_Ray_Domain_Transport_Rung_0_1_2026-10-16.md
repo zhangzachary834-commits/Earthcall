@@ -402,3 +402,13 @@ Zach: "KEEP GOING". Nothing new on this thread from the Firmament or the Sun. Th
 - **Open:** annulus holes, more than one hole per member, measured false negatives, device enclosure and Person feel.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T16:51 PDT.*
+
+## Fifteenth pass (local Mac) — a bounded closed form may drop its per-sample check
+
+Zach: "KEEP GOING". Nothing new on this thread from the Firmament or the Sun. To the cloud session that closed the Perlin D-mode and tori agenda lines: this branch is fast-forwarded onto your `6da67683e`.
+
+- **Measured, not assumed.** Is the check behind a residual or bounded closed form worth keeping? On the M5, within one run at 2560×1440, bytes equal: dropping it makes the torus 19% faster, the breathing nebula 14% and the proxy-proof torus 7%. Keeping it makes the noise cloud 4–7% faster.
+- **Rule.** `perSampleCheck` is decided per killer by the estimate after the greedy subset. It matches the M5 on the tori and the noise cloud, and misses on the breathing nebula, which is recorded in [§6n](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6n-whether-a-bounded-closed-form-keeps-its-per-sample-check-2026-10-18-fifteenth-pass).
+- **Auto torus** 3.48 → 2.8–2.9 ms, proxy-proof-torus 0.61 → 0.56 ms (2560×1440).
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T17:41 PDT.*

@@ -417,7 +417,7 @@ int main() {
                         uint64_t closedRadial = 0, closedHalfSpace = 0, closedResidual = 0, closedMismatch = 0,
                                  closedSkipped = 0, closedViolations = 0; };
         Totals all;
-        int admitted = 0, media = 0, eligibleMedia = 0, preludeMedia = 0, preludeFlips = 0, preludeDemotions = 0, closedMedia = 0;
+        int admitted = 0, media = 0, eligibleMedia = 0, preludeMedia = 0, preludeFlips = 0, preludeDemotions = 0, closedMedia = 0, checksDropped = 0;
         int allKillersEligible = 0, subsetMedia = 0, subsetWorse = 0;
         std::mt19937 rng(1017u);
         std::uniform_real_distribution<double> u(-1.0, 1.0);
@@ -686,7 +686,13 @@ int main() {
                             for (const auto& c : certs.killers) std::cout << " " << c.switchIndex;
                             std::cout << "); " << (sel.eligible ? "ELIGIBLE" : "not eligible") << ", cost with "
                                       << sel.costWith << " (ratio " << (sel.costWithout > 0 ? sel.costWith / sel.costWithout : 0.0)
-                                      << "), certified " << sel.certifiedSamples << ", checks " << sel.checks << " vs " << est.checks << "\n";
+                                      << "), certified " << sel.certifiedSamples << ", checks " << sel.checks << " vs " << est.checks;
+                            for (const auto& c : chosen.killers)
+                                if (!c.closedForms.empty() && !c.closedExact && !c.perSampleCheck) {
+                                    std::cout << "; closed form only for switch " << c.switchIndex;
+                                    ++checksDropped;
+                                }
+                            std::cout << "\n";
                             subsetMedia += chosen.killers.size() < certs.killers.size() ? 1 : 0;
                             subsetWorse += sel.costWith > est.costWith ? 1 : 0;
                         }
@@ -735,7 +741,8 @@ int main() {
                   << " half-space killers on " << closedMedia << " media; they certify "
                   << (100.0 * all.closedSkipped / std::max<uint64_t>(all.samples, 1)) << "% of samples without a check\n";
         check(all.closedRadial + all.closedHalfSpace > 0, "the census finds closed-form killers on real media");
-        std::cout << "    closed forms with a bounded residual: " << all.closedResidual << "\n";
+        std::cout << "    closed forms with a bounded residual: " << all.closedResidual << "; the greedy subset drops the per-sample check of "
+                  << checksDropped << " such killer(s)\n";
         check(all.closedMismatch == 0, "every closed form's claim is backed by its authored switch at random box points and clocks");
         check(all.closedViolations == 0, "no sample a closed form certifies has positive density (exact arithmetic)");
         std::cout << "    shared prelude: " << preludeMedia << " admitted media fill it before density; counting it promotes "

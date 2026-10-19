@@ -316,6 +316,13 @@ struct VolumeSupportCertificate {
     // runs inside the band the forms leave open.
     std::vector<VolumeSupportClosedForm> closedForms;
     bool closedExact = false;
+    // Whether the shader also runs the per-sample check (volumeSupportReach):
+    // always without closed forms, never with exact ones; for a residual or a
+    // bound, kept unless selectVolumeSupportCertificateKillers estimates it
+    // costs more than it skips (the M5, 2026-10-18: dropping it ran the torus
+    // 19% and the breathing nebula 14% faster, keeping it ran the noise cloud
+    // 4–7% faster).
+    bool perSampleCheck = true;
 };
 // Where a closed-form killer certifies along the line o + s·d (p space, exact
 // arithmetic, δ as the margin): the density may be nonzero only on

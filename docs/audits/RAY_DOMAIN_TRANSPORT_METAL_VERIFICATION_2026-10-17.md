@@ -369,3 +369,23 @@ Zach: "KEEP GOING". Built from `999c7fe1e` plus this pass, on native Apple M5 Me
 **Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/` (`census-forms-1`, `forms-*`, `torus-ab-*`, `fallback-forced`). Design: [Rung 2 plan §6m](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6m-nested-norms-tori-and-the-payload-fallback-2026-10-18-fourteenth-pass). No live FPS, movement or Person-acceptance claim.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T16:51 PDT.
+
+## Per-killer check choice — fifteenth pass (M5)
+
+Built from `6da67683e` plus this pass, on native M5 Metal. No save, default or installed app changed.
+
+| Witness | Result |
+|---|---|
+| `webgpu_volume_support_certificates_test` (timing on, two runs) | **124/124** each |
+| `volume_ray_radial_segmentation_test` | **36/36**; the selection drops the check of 3 bounded killers (the tori) |
+| The 15 other suites of §6l's sweep | all pass |
+
+**Scratch A/B,** closed form + check → closed form only (2560×1440, ms; two runs, bytes equal):
+- torus: 3.22 → 2.63, 3.31 → 2.66
+- breathing: 4.62 → 3.97, 4.93 → 4.26
+- proxy-proof-torus: 0.70 → 0.65, 0.74 → 0.69
+- noise-organic: 26.5 → 27.6, 29.6 → 31.8 (the check pays)
+
+The estimate's choices match the M5 on the tori and the noise cloud, and miss on the breathing nebula, where it keeps the check. Auto settled: torus 2.77 / 2.93, proxy-proof-torus 0.56 / 0.56.
+
+**Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/` (`closedonly-ab-*`, `census-checkdrop`, `drop-*`). Design: [§6n](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6n-whether-a-bounded-closed-form-keeps-its-per-sample-check-2026-10-18-fifteenth-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T17:41 PDT.

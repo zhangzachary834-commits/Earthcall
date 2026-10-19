@@ -683,6 +683,28 @@ These are bounds, never exact, so the per-sample check stays. A killer now carri
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T16:51 PDT. Human origin: Zachary Zhang ("KEEP GOING"). The norm lower bound and the fallback repair are this session's.*
 
+## 6n. Whether a bounded closed form keeps its per-sample check (2026-10-18, fifteenth pass)
+
+**Origin.** Zach: "KEEP GOING". There were no new messages for this thread. A cloud Claude session (`01HvZSR6…`) had tidied two agenda lines on this branch, and this pass fast-forwarded onto them.
+
+**Question.** A closed form with a residual or a lower bound (noise, the clock, a torus) used to keep the killer's per-sample check for the band it leaves open. Does that check pay? A scratch A/B (removed) at 2560×1440, within one run, bytes equal (ms; two runs):
+
+| Medium | Closed form + check | Closed form only |
+|---|---|---|
+| torus-medium | 3.22 / 3.31 | 2.63 / 2.66 |
+| time-breathing-nebula | 4.62 / 4.93 | 3.97 / 4.26 |
+| proxy-proof-torus | 0.70 / 0.74 | 0.65 / 0.69 |
+| noise-organic-cloud | 26.5 / 29.6 | 27.6 / 31.8 |
+
+**Rule.** `VolumeSupportCertificate::perSampleCheck` is always on without closed forms and off for exact ones. For a bounded form, `selectVolumeSupportCertificateKillers` drops the check after the greedy subset when the estimate says it costs more than it skips.
+- The census drops it for the three tori (the M5 agrees) and keeps it for the noise cloud (the M5 agrees).
+- It keeps it for the breathing nebula, where the M5 measured dropping it 14% faster. That miss is recorded, not patched. The likely cause is that its clock term is a GPU-prepared slot the operation count overcharges.
+- The hidden probe cannot decide this cheaply: flipping a killer's check changes the compiled switches, so each timing pair would recompile.
+
+**Auto mode, 2560×1440,** settled (ms; two runs): torus 2.77 / 2.93 (§6m: 3.48), proxy-proof-torus 0.56 / 0.56 (0.61). Bytes equal: auto parity at 321×181 covers the closed-only path, and `webgpu_volume_support_certificates_test` passes 124/124.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T17:41 PDT. Human origin: Zachary Zhang ("KEEP GOING").*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

@@ -2677,7 +2677,7 @@ bool WebGpuRenderer::volumeSupportCertificatesActive(const Rendering::VolumeDens
             std::vector<const Rendering::VolumeSupportCertificate*> reach, closed;
             for (const auto& c : enabledSet.killers) {
                 if (!c.closedForms.empty()) closed.push_back(&c);
-                if (c.closedForms.empty() || !c.closedExact) reach.push_back(&c);
+                if (c.perSampleCheck) reach.push_back(&c);
             }
             for (const auto* c : reach) memo.switches.push_back(static_cast<uint32_t>(c->switchIndex));
             const auto killers = sdfwgsl::lowerVolumeSupportKillers(medium.densityExpr, &memo.switches);

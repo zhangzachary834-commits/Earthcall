@@ -1233,6 +1233,7 @@ VolumeSupportCertificates deriveVolumeSupportCertificates(const VolumeRayChannel
             c.offset = sw.role == 2 ? node.lo : (sw.role == 3 ? node.hi : 0.0);
             c.deviceSlack = kVolumeSupportDeviceTolerance + 2.0 * gSlack;
             classifyClosedForm(ClosedContext{form, ev, zeros}, c);
+            c.perSampleCheck = c.closedForms.empty() || !c.closedExact;
             out.killers.push_back(c);
         }
     }
@@ -1305,7 +1306,7 @@ VolumeSupportCertificateEstimate estimateVolumeSupportCertificateGain(const Volu
     for (std::size_t k = 0; k < enabled.killers.size(); ++k) {
         const auto& c = enabled.killers[k];
         if (!c.closedForms.empty()) closedKillers.push_back(k);
-        if (c.closedForms.empty() || !c.closedExact) reachKillers.push_back(k);
+        if (c.perSampleCheck) reachKillers.push_back(k);
     }
     constexpr double kLookup = 2.0;   // one proof-cell or support lookup
     constexpr double kClosedCost = 40.0;   // one closed-form killer solved per ray (a quadratic, padded)
@@ -1496,6 +1497,18 @@ VolumeSupportCertificateEstimate selectVolumeSupportCertificateKillers(const Vol
     best.eligible = true;
     best.reason = "estimated cheaper with certificates";
     chosen = subset(n);
+    // A closed form with a residual or a bound keeps its per-sample check by
+    // default; drop it where the estimate says it costs more than it skips.
+    for (auto& c : chosen.killers) {
+        if (c.closedForms.empty() || !c.perSampleCheck) continue;
+        c.perSampleCheck = false;
+        auto e = estimateVolumeSupportCertificateGain(forms, chosen, proof, halfExtent,
+                                                      samplesPerChord, clock, densitySampleCost);
+        if (e.rays > 0 && e.costWith < best.costWith) best = std::move(e);
+        else c.perSampleCheck = true;
+    }
+    best.eligible = true;
+    best.reason = "estimated cheaper with certificates";
     return best;
 }
 
