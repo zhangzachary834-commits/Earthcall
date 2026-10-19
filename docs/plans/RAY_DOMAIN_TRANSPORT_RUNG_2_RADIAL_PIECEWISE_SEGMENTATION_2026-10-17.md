@@ -713,7 +713,32 @@ These are bounds, never exact, so the per-sample check stays. A killer now carri
 
   The fused set is what Northern Veil runs, and it is neutral there, so no closed-only eligibility path was added. Northern Veil's 30 FPS milestone is not this lane's to close.
 
-*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T18:05 PDT.*
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T17:55 PDT.*
+
+## 6o. Device margin witness: how much of the execution slack the M5 uses (2026-10-18, sixteenth pass)
+
+**Origin.** Zach: "KEEP GOING". Every certificate skip and every closed form rests on the declared execution model (`kVolumeExecutionModel`: 2⁻¹⁶ of magnitude per operation, literal and coordinate read; 2⁻¹⁰ per transcendental or noise). A killer certifies where `sign·g − δ > 0` with `δ = τ + 2·slack(g)`, so the claim needs the device's `g` within `slack(g)` of the exact `g`. Metal Fast-mode's complete enclosure has been open since `VOLUME_SUPPORT_NATIVE_PROFILE_2026-10-12`. Pixel parity shows only that nothing changed on the views tried.
+
+**Witness:** `webgpu_volume_support_enclosure_test`.
+- **Method.** For every certified killer of every real medium in `saves/zones`, it takes that killer's own production program (`composeVolumeSet` with only its switch compiled) and adds a compute entry point that calls `volumeSupportReach` at 4096 random box points. This is the same lowered code the marcher calls, in a compute rather than fragment context.
+- **Exact readback.** With the header `{±1, δ = 0, 1/L = 1}`, the function returns `sign·g` exactly. Sign −1 recovers `g ≤ −1`.
+- **Reference.** The authored operands evaluated on the CPU at the same f32 points: double scalars and f32 vector operations, which contribute under 2⁻⁸ of `slack(g)` here.
+- **Coverage.** Clocks 0, 0.375B, −0.75B and B for buckets B = 1 and 1024, with slack re-derived per bucket as the renderer does.
+
+**Result (M5).**
+- 160 killer–bucket pairs (80 killers × 2), all compiled and measured. The worst device error is **0.16% of `slack(g)`** (proxy-proof torus, |t| ≤ 1), the median 0.08%. No evaluation strays beyond δ. Passes 4/4.
+- Noise killers use 0.01%. The device's Perlin agrees with the CPU's within about 10⁻⁶.
+- **Clock-dependent killers at |t| ≤ 1024.** The breathing nebula's real error grows to 1.6×10⁻⁴ (f32 rounding of `t` inside `sin(1.8t)`). The model gives it `slack(g)` 0.18 and δ 0.37, about 1000× what this device needs. That conservatism, not the geometry, is what weakens certification at large clocks.
+
+**What this is and is not.** It is a measured device margin, about 600–1000× under the declared model on this adapter and at these sampled points. It is not an enclosure proof:
+- Sampled points, not every point.
+- A compute rather than fragment compilation context.
+- One adapter.
+- The density's own executed switch is not separately sampled.
+
+Whether this evidence justifies a tighter declared model, or the lane's default, is Zach's decision (⚑). Nothing here changes either.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T18:00 PDT. Human origin: Zachary Zhang ("KEEP GOING"). The witness design is this session's; the declared model is Codex's (2026-10-12, P1 2026-10-17).*
 
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 

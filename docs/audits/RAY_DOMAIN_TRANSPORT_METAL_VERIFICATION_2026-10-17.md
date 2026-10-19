@@ -389,3 +389,20 @@ Built from `6da67683e` plus this pass, on native M5 Metal. No save, default or i
 The estimate's choices match the M5 on the tori and the noise cloud, and miss on the breathing nebula, where it keeps the check. Auto settled: torus 2.77 / 2.93, proxy-proof-torus 0.56 / 0.56.
 
 **Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/` (`closedonly-ab-*`, `census-checkdrop`, `drop-*`). Design: [§6n](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6n-whether-a-bounded-closed-form-keeps-its-per-sample-check-2026-10-18-fifteenth-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T17:41 PDT.
+
+## Device margin witness — sixteenth pass (M5)
+
+Built from `42e4195c8` plus this pass, on native M5 Metal. A new test, `webgpu_volume_support_enclosure_test`: every certified killer of the corpus, run by its own lowered production code at 4096 random box points × 4 clocks, in buckets |t| ≤ 1 and ≤ 1024, against CPU evaluation of the authored operands.
+
+| Result | Value |
+|---|---|
+| Killer–bucket pairs measured | 160 of 160 |
+| Worst device error / `slack(g)` | **0.0016** (proxy-proof torus, |t| ≤ 1) |
+| Median | 0.0008 |
+| Noise killers | about 0.0001 (device Perlin within about 10⁻⁶ of the CPU) |
+| Breathing nebula, |t| ≤ 1024 | error 1.6×10⁻⁴ against `slack(g)` 0.18 and δ 0.37 |
+| Checks | 4/4 (no evaluation beyond δ; every killer within its slack) |
+
+**Reading.** On this adapter the declared model is about 600–1000× generous. At large clocks its conservatism, not the geometry, limits what certificates can prove. This is a sampled margin, not an enclosure proof: compute context, one device, and the density's executed switch not sampled separately. Whether to tighten the declared model, or change the lane's default, is Zach's decision (⚑).
+
+**Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/enclosure-2.log`. Design: [§6o](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6o-device-margin-witness-how-much-of-the-execution-slack-the-m5-uses-2026-10-18-sixteenth-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T18:00 PDT.
