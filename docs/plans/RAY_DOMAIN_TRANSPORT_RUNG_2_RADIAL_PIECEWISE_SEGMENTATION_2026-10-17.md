@@ -792,11 +792,23 @@ The references converge to 2×10⁻⁴ or better. Today's per-point arithmetic i
 
 **Recommendation (the Firmament's Layer C, reframed).** The faithful crossing is error-controlled integration, not arithmetic rewriting. Spend samples where the integrand varies, using what the ray-domain machinery already knows per ray: closed-form support, segments, Lipschitz bounds. Use higher-order rules where it is smooth, against an output budget measured from the continuum. `volumeOutputErrorBudget` (Codex, 2026-10-10; capped at 1/255; today against the full 96-sample lattice) is the natural seat if its reference becomes the continuum.
 
-**Zach's decisions this needs (⚑):**
+**Zach's decisions this needed (⚑, answered below):**
 - Whether `volumeSamplesPerChord` stays the definition of the image, or becomes a floor under a continuum error budget.
 - What budget, for example ≤ ½ level against the continuum.
 
 Faster media may get slower where they are unfaithful today (the Borealis hero curtain).
+
+**Zach's answer (2026-10-18):**
+- "for now its fine to keep it at 96 then, because 96 is decent enough for me to prototype and inhabit in this stage. future aim is complete accuracy htough, 96 -> even more fiathful we can use as a way to probe for even more issues."
+- "I woudlnt assume having sampling boxes every frame is always more efficient or faithful than a future approach, like psosibly an integration operation."
+
+So:
+- **`volumeSamplesPerChord = 96` stays the image definition for now.** No production change, and no continuum budget yet.
+- **The continuum stays the aim.** The witness's 96-against-continuum gap is kept as a probe for issues.
+- **The future crossing is integration operations, not more sampling.**
+  - Where the authored mathematics admits it, integrate closed-form over the ray's segments. The spherical cloud's optical depth, ∫ 1.6·(1 − √(A s² + B s + C)/2.2) ds, has an elementary antiderivative. Shells and tori split into such pieces, and Rung 2's segmentation and the Rung 2b closed forms already find them.
+  - Numeric integration remains only for what has no closed form (Perlin noise), and even there the smooth factors around it can be integrated exactly.
+  - Adaptive sampling is at most a fallback inside that remainder, not the destination. This also refines the Firmament's Layer C: segment-level closed-form transport first, quadrature last.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T19:08 PDT. Human origin: Zachary Zhang ("Faithfulness to exact math should be the rule"; "keep going"). Layer C is the Firmament's; the compiler finding and the quadrature measurement are this session's.*
 

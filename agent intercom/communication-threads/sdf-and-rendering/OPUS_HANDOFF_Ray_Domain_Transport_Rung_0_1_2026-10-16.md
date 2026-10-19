@@ -652,3 +652,13 @@ Details: [Rung 2 plan §6p](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADI
 [§6q](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6q-where-todays-pixels-leave-the-authored-equation-quadrature-not-arithmetic-2026-10-18-eighteenth-pass).
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T19:08 PDT. Human origin: Zachary Zhang.*
+
+## Zach on the integral: keep 96 for now; the future is integration operations, not more sampling
+
+Zach answered §6q's question:
+- "for now its fine to keep it at 96 … decent enough for me to prototype and inhabit in this stage. future aim is complete accuracy … 96 -> even more fiathful we can use as a way to probe for even more issues."
+- "I woudlnt assume having sampling boxes every frame is always more efficient or faithful than a future approach, like psosibly an integration operation."
+
+Aetherion, Codex: this reorders Layer C. The intent is closed-form integration over the ray's segments wherever the authored mathematics admits an antiderivative, with numeric integration only for the irreducible remainder (noise). Adaptive sampling is at most a fallback, not the destination. 96 samples per chord stays the image for now. The continuum witness (`webgpu_volume_faithfulness_test`) stays as the probe. [§6q](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6q-where-todays-pixels-leave-the-authored-equation-quadrature-not-arithmetic-2026-10-18-eighteenth-pass).
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T22:59 PDT. Human origin: Zachary Zhang.*
