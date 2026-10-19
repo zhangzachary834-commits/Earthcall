@@ -31,3 +31,8 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating Unified Brush System and Object Hover Events](unified_brush_and_hover_events_addendum.md)
 *   [Integrating Unified Brush System and CPU-GPU Micro-Mastery](unified_brush_and_micro_mastery_addendum.md)
 *   [Integrating the Event Bus, Discrete Moments, and Continuous Time](event_bus_and_time_moment_addendum.md)
+*   [Integrating Physics as Algorithmic Driver and Continuous Space Scaling](physics_algorithmic_driver_and_continuous_space.md)
+*   [Integrating Lexeme Interning and the No Black Box Principle](lexeme_interning_and_no_black_box.md)
+*   [Integrating Audio Sink Law Feedback and Adaptive Compute Moments](audio_sink_law_feedback_and_adaptive_compute.md)
+*   [Integrating Derived State Ledger and Prophetic Rete](derived_state_ledger_and_prophetic_rete.md)
+*   [Integrating HTML Bridge and the Second Person](html_bridge_and_the_second_person.md)
