@@ -314,20 +314,22 @@ bool Engine::initLogic() {
         }
     });
 
-    // In-world zone navigation requested via Law or Control
+    // Domain navigation is deliberately downstream of generic control semantics:
+    // object-clicked -> control-button-law -> control-activated ->
+    // law-navigator-button -> zone-navigation-requested.  The Engine consumes
+    // only the domain event; a random authored button with destination-like
+    // properties must not acquire navigation merely by being activated.
     Core::EventBus::instance().subscribe<ECA::Event>([](const ECA::Event& ev) {
-        if (ev.type == "zone-navigation-requested" || ev.type == "control-activated") {
-            if (!ev.subject) return;
-            PropertyValue targetVal;
-            std::string destZone;
-            if (lawGetValue(*ev.subject, PropertyPath::parse("destinationZone"), targetVal)) {
-                if (const auto* s = std::get_if<std::string>(&targetVal)) destZone = *s;
-            } else if (lawGetValue(*ev.subject, PropertyPath::parse("targetZone"), targetVal)) {
-                if (const auto* s = std::get_if<std::string>(&targetVal)) destZone = *s;
-            }
-            if (!destZone.empty()) {
-                Core::Engine::instance().requestZoneSwitch(destZone);
-            }
+        if (ev.type != "zone-navigation-requested" || !ev.subject) return;
+        PropertyValue targetVal;
+        std::string destZone;
+        if (lawGetValue(*ev.subject, PropertyPath::parse("destinationZone"), targetVal)) {
+            if (const auto* s = std::get_if<std::string>(&targetVal)) destZone = *s;
+        } else if (lawGetValue(*ev.subject, PropertyPath::parse("targetZone"), targetVal)) {
+            if (const auto* s = std::get_if<std::string>(&targetVal)) destZone = *s;
+        }
+        if (!destZone.empty()) {
+            Core::Engine::instance().requestZoneSwitch(destZone);
         }
     });
 
