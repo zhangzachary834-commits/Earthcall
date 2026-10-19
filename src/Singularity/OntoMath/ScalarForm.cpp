@@ -491,8 +491,17 @@ std::optional<ScalarForm> ScalarForm::antiderivative(const std::string& var) con
     //   c·cos(ax+b)·R     ->  (c/a)·sin(ax+b)·R
     //   c·exp(ax+b)·R     ->  (c/a)·exp(ax+b)·R
     //   c·ln(ax)·R        ->  c·x·ln(ax)·R − c·x·R
-    //   powers AND transcendentals of var together, or several
-    //   transcendentals of var -> nullopt (by parts; not yet held)
+    // By parts (2026-10-18; Zach: "lets enrich the ontomath integration
+    // substrate"), still exact and still inside this term algebra:
+    //   c·x^n·g(ax+b)·R, n a whole number > 0, g ∈ {sin, cos, exp}
+    //       -> Σ_j (−1)^j·n!/(n−j)!·x^(n−j)·G_(j+1)(ax+b)·R   (tabular)
+    //     where G_m is g's m-th antiderivative: exp/a^m, and sin/cos rotated by
+    //     m quarter turns (sin u → −cos u → −sin u → cos u), so no π is rounded
+    //   c·x^n·ln(ax)·R, n ≠ −1 -> c·x^(n+1)·(ln(ax)/(n+1) − 1/(n+1)²)·R
+    //   c·x^-1·ln(ax)·R        -> (c/2)·ln(ax)²·R
+    //   still nullopt: a negative or fractional power times sin/cos/exp
+    //   (Si, Ci, Ei, Fresnel: no elementary antiderivative), or several
+    //   transcendentals of var in one term
     ScalarForm out;
     for (const auto& term : terms) {
         std::vector<std::size_t> transOnVar;
@@ -517,11 +526,68 @@ std::optional<ScalarForm> ScalarForm::antiderivative(const std::string& var) con
             }
             continue;
         }
-        if (transOnVar.size() > 1 || n != 0.0) return std::nullopt;   // by parts
+        if (transOnVar.size() > 1) return std::nullopt;   // several transcendentals of var
 
         const std::size_t k = transOnVar.front();
         const TransFactor tf = term.trans[k];
         if (tf.scale == 0.0) return std::nullopt;   // degenerate: not a function of var
+        if (n != 0.0) {
+            if (tf.kind == TransFactor::Kind::Ln) {
+                if (n == -1.0) {
+                    // ∫ c·ln(ax)/x dx = (c/2)·ln(ax)²
+                    Term squared = term;
+                    squared.factors.erase(var);
+                    squared.coefficient *= 0.5;
+                    squared.addTrans(tf);
+                    std::sort(squared.trans.begin(), squared.trans.end());
+                    out.terms.push_back(std::move(squared));
+                } else {
+                    // ∫ c·x^n·ln(ax) dx = c·x^(n+1)·ln(ax)/(n+1) − c·x^(n+1)/(n+1)²
+                    Term first = term;
+                    first.factors[var] = n + 1.0;
+                    first.coefficient /= (n + 1.0);
+                    Term second = term;
+                    second.trans.erase(second.trans.begin() + static_cast<long>(k));
+                    second.factors[var] = n + 1.0;
+                    second.coefficient = -second.coefficient / ((n + 1.0) * (n + 1.0));
+                    if (first.factors[var] == 0.0) first.factors.erase(var);
+                    if (second.factors[var] == 0.0) second.factors.erase(var);
+                    out.terms.push_back(std::move(first));
+                    out.terms.push_back(std::move(second));
+                }
+                continue;
+            }
+            // Tabular integration needs a whole positive power; anything else here
+            // (sin(x)/x, √x·eˣ, ...) has no elementary antiderivative.
+            if (!(n > 0.0) || std::floor(n) != n || n > 64.0) return std::nullopt;
+            const int N = static_cast<int>(n);
+            double falling = 1.0;   // n!/(n−j)!
+            for (int j = 0; j <= N; ++j) {
+                if (j > 0) falling *= static_cast<double>(N - j + 1);
+                const int m = j + 1;   // G_m, the m-th antiderivative of g
+                Term part = term;
+                double coefficient = (j % 2 ? -1.0 : 1.0) * falling / std::pow(tf.scale, m);
+                if (tf.kind != TransFactor::Kind::Exp) {
+                    // sin(u − m·π/2) and cos(u − m·π/2) by quarter turns, exactly.
+                    const bool sine = tf.kind == TransFactor::Kind::Sin;
+                    static constexpr TransFactor::Kind kSinTurn[4] = {TransFactor::Kind::Sin, TransFactor::Kind::Cos,
+                                                                      TransFactor::Kind::Sin, TransFactor::Kind::Cos};
+                    static constexpr TransFactor::Kind kCosTurn[4] = {TransFactor::Kind::Cos, TransFactor::Kind::Sin,
+                                                                      TransFactor::Kind::Cos, TransFactor::Kind::Sin};
+                    static constexpr double kSinSign[4] = {1.0, -1.0, -1.0, 1.0};
+                    static constexpr double kCosSign[4] = {1.0, 1.0, -1.0, -1.0};
+                    const int q = m % 4;
+                    part.trans[k].kind = sine ? kSinTurn[q] : kCosTurn[q];
+                    coefficient *= sine ? kSinSign[q] : kCosSign[q];
+                }
+                part.coefficient *= coefficient;
+                if (N - j == 0) part.factors.erase(var);
+                else part.factors[var] = static_cast<double>(N - j);
+                std::sort(part.trans.begin(), part.trans.end());
+                out.terms.push_back(std::move(part));
+            }
+            continue;
+        }
         Term integrated = term;
         switch (tf.kind) {
             case TransFactor::Kind::Sin:
@@ -3323,7 +3389,8 @@ std::optional<ScalarForm> antiderivative(const MathNode& node, const std::string
     auto integrated = form->antiderivative(var);
     if (!integrated) {
         say(why, "∫" + form->print() + " d" + var +
-                     " needs integration by parts: not held in this algebra");
+                     " has no elementary antiderivative in this algebra (a negative or fractional power"
+                     " times sin/cos/exp, or several transcendentals of " + var + " in one term)");
         return std::nullopt;
     }
     return integrated;

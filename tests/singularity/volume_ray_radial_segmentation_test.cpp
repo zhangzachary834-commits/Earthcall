@@ -417,7 +417,8 @@ int main() {
                         uint64_t closedRadial = 0, closedHalfSpace = 0, closedResidual = 0, closedMismatch = 0,
                                  closedSkipped = 0, closedViolations = 0; };
         Totals all;
-        int admitted = 0, media = 0, eligibleMedia = 0, preludeMedia = 0, preludeFlips = 0, preludeDemotions = 0, closedMedia = 0, checksDropped = 0;
+        int admitted = 0, media = 0, eligibleMedia = 0, preludeMedia = 0, preludeFlips = 0, preludeDemotions = 0, closedMedia = 0, checksDropped = 0, integralMedia = 0;
+        double integralWorst = 0.0, integralBoundWorst = 0.0, integralEnclosureMiss = 0.0;
         int allKillersEligible = 0, subsetMedia = 0, subsetWorse = 0;
         std::mt19937 rng(1017u);
         std::uniform_real_distribution<double> u(-1.0, 1.0);
@@ -645,6 +646,117 @@ int main() {
                         std::cout << "        closed forms: " << t.closedRadial << " radial, " << t.closedHalfSpace
                                   << " half-space (" << t.closedResidual << " with a bounded residual); certify " << (100.0 * t.closedSkipped / std::max<uint64_t>(t.samples, 1))
                                   << "% of samples without a check; " << t.closedMismatch << " identity mismatches\n";
+                    {
+                        // The integration operation on the ray (2026-10-18; Zach: "lets enrich the
+                        // ontomath integration substrate"): ∫ max(D, 0) ds over the chord, exactly,
+                        // piece by definite piece, against a converged midpoint sum of the same D.
+                        const auto& form = *f.density.algebraic.form;
+                        int exactRays = 0, rays = 0, slivers = 0;
+                        double worstBound = 0.0, enclosureMiss = 0.0;
+                        std::string lastWhy;
+                        double worstRel = 0.0;
+                        std::string refusal;
+                        std::mt19937 irng(4242u);
+                        for (int r = 0; r < 24; ++r) {
+                            glm::dvec3 dir(u(irng), u(irng), u(irng));
+                            if (glm::length(dir) < 1e-3) continue;
+                            dir /= glm::length(dir);
+                            const glm::dvec3 o = half * glm::dvec3(u(irng), u(irng), u(irng)) - dir * (3.0 * glm::length(half) + 1.0);
+                            double c0 = -1e300, c1 = 1e300;
+                            for (int a = 0; a < 3; ++a) {
+                                if (std::abs(dir[a]) < 1e-12) continue;
+                                double ta = (-half[a] - o[a]) / dir[a], tb = (half[a] - o[a]) / dir[a];
+                                if (ta > tb) std::swap(ta, tb);
+                                c0 = std::max(c0, ta); c1 = std::min(c1, tb);
+                            }
+                            if (!(c1 > c0)) continue;
+                            ++rays;
+                            std::map<std::string, double> bind;
+                            for (int a = 0; a < 3; ++a) {
+                                bind[OntoMath::kLineOriginVars[a]] = o[a];
+                                bind[OntoMath::kLineDirectionVars[a]] = dir[a];
+                            }
+                            bind[OntoMath::kTimeVar] = 0.0;
+                            for (const char* v : {OntoMath::kWiXVar, OntoMath::kWiYVar, OntoMath::kWiZVar}) bind[v] = 0.0;
+                            bind[OntoMath::kWoXVar] = -dir.x; bind[OntoMath::kWoYVar] = -dir.y; bind[OntoMath::kWoZVar] = -dir.z;
+                            bind[OntoMath::kOmegaXVar] = -dir.x; bind[OntoMath::kOmegaYVar] = -dir.y; bind[OntoMath::kOmegaZVar] = -dir.z;
+                            OntoMath::LineAlgebraicEvaluator ev(form, bind, true);
+                            if (!ev.ok()) { if (refusal.empty()) refusal = ev.refusal(); continue; }
+                            const std::vector<std::pair<std::size_t, uint32_t>> target{{0, form.roots[0]}};
+                            const double resolution = 1e-7 * (c1 - c0);
+                            const auto pieces = OntoMath::segmentLine({&ev}, c0, c1, resolution, nullptr, 1u << 16, true,
+                                                                      nullptr, &target);
+                            double exact = 0.0, bound = 0.0;
+                            bool ok = !pieces.empty();
+                            for (const auto& piece : pieces) {
+                                // max(D, 0): the piece's signs fix D's branch; its proved
+                                // range says which side of zero it is on. A piece ending at a
+                                // zero of D is fine (D ≥ 0 up to it); D crossing zero inside
+                                // one is not.
+                                if (!piece.targetSigns.empty() && piece.targetSigns[0] < 0) continue;
+                                bool undefinedD = false;
+                                const auto rd = ev.range(form.roots[0], piece.s0, piece.s1, piece.signs[0], &undefinedD);
+                                if (!undefinedD && double(rd.hi) <= 0.0) continue;
+                                std::string why;
+                                const auto v = undefinedD ? std::nullopt
+                                                          : ev.integral(form.roots[0], piece.s0, piece.s1, piece.signs[0], &why);
+                                if (v) {
+                                    // ∫ max(F, 0) ∈ [∫F, ∫F + w·max(0, −F_lo)]: exact where F is proved
+                                    // ≥ 0, a proved enclosure where its range only grazes zero.
+                                    const double gap = (piece.s1 - piece.s0) * std::max(0.0, -double(rd.lo));
+                                    exact += *v + 0.5 * gap;
+                                    bound += 0.5 * gap;
+                                    continue;
+                                }
+                                // Interval arithmetic cannot decide a switch on the sliver it
+                                // leaves at a root (a few resolutions wide): bound max(D, 0)
+                                // there instead, 0 ≤ ∫ ≤ hi·w, at any width; the reported
+                                // enclosure (checked tight below) says what that cost.
+                                const double w = piece.s1 - piece.s0;
+                                if (!undefinedD) {
+                                    const double hi = std::max(0.0, double(rd.hi)) * w;
+                                    exact += 0.5 * hi;
+                                    bound += 0.5 * hi;
+                                    ++slivers;
+                                    if (!why.empty()) lastWhy = why;
+                                    continue;
+                                }
+                                ok = false;
+                                if (refusal.empty()) refusal = why.empty() ? "density changes sign inside a piece" : why;
+                                break;
+                            }
+                            if (!ok) continue;
+                            auto midpoint = [&](int m) {
+                                const double h = (c1 - c0) / m;
+                                double sum = 0.0;
+                                for (int i = 0; i < m; ++i) sum += std::max(0.0, ev.value(form.roots[0], c0 + (i + 0.5) * h).value_or(0.0)) * h;
+                                return sum;
+                            };
+                            const double fine = midpoint(32768), coarse = midpoint(16384);
+                            const double reference = fine + (fine - coarse) / 3.0;   // Richardson (midpoint is O(h²))
+                            if (!(reference > 1e-9)) { --rays; continue; }   // the ray meets no density: no evidence
+                            // Agreement outside the proved enclosure, always; "closed form"
+                            // only when that enclosure is tight (root slivers, grazing zeros).
+                            enclosureMiss = std::max(enclosureMiss, std::max(0.0, std::abs(exact - reference) - bound) / reference);
+                            if (bound > 1e-4 * reference) {
+                                if (refusal.empty()) refusal = lastWhy.empty() ? "an undecided piece is not small" : lastWhy;
+                                continue;
+                            }
+                            worstRel = std::max(worstRel, std::max(0.0, std::abs(exact - reference) - bound) / reference);
+                            worstBound = std::max(worstBound, bound / reference);
+                            ++exactRays;
+                        }
+                        std::cout << "        exact optical depth: " << exactRays << " of " << rays
+                                  << " rays integrated in closed form";
+                        if (exactRays) std::cout << ", max relative difference from the converged sum " << worstRel
+                                                 << " beyond a proved sliver bound of at most " << worstBound << " (" << slivers << " slivers)";
+                        if (exactRays < rays) std::cout << "; refused: " << refusal;
+                        std::cout << "\n";
+                        integralMedia += (rays > 0 && exactRays == rays) ? 1 : 0;
+                        integralEnclosureMiss = std::max(integralEnclosureMiss, enclosureMiss);
+                        integralWorst = std::max(integralWorst, exactRays ? worstRel : 0.0);
+                        integralBoundWorst = std::max(integralBoundWorst, exactRays ? worstBound : 0.0);
+                    }
                     std::cout << "        certificates: " << certs.killers.size() << " killers"
                               << (certs.killers.empty() ? " (" + certs.refusal + ")" : "")
                               << "; certified-only trace " << (100.0 * t.certTraced / std::max<uint64_t>(t.samples, 1))
@@ -743,6 +855,14 @@ int main() {
         check(all.closedRadial + all.closedHalfSpace > 0, "the census finds closed-form killers on real media");
         std::cout << "    closed forms with a bounded residual: " << all.closedResidual << "; the greedy subset drops the per-sample check of "
                   << checksDropped << " such killer(s)\n";
+        std::cout << "    integration operation: " << integralMedia << " of " << admitted
+                  << " admitted media integrate max(D, 0) along every ray in closed form; worst relative difference "
+                  << integralWorst << " from the converged midpoint sum beyond a proved enclosure of at most "
+                  << integralBoundWorst << "\n";
+        check(integralMedia >= 6, "the exact line integral covers the noise-free balls and shells on every ray");
+        check(integralEnclosureMiss < 1e-6, "on every ray, closed form or not, the converged sum lies inside the proved enclosure");
+        check(integralWorst < 1e-6, "every closed-form optical depth agrees with the converged sum (beyond its proved bound)");
+        check(integralBoundWorst < 1e-4, "the proved enclosure around each closed form stays tight (under 1e-4 relative)");
         check(all.closedMismatch == 0, "every closed form's claim is backed by its authored switch at random box points and clocks");
         check(all.closedViolations == 0, "no sample a closed form certifies has positive density (exact arithmetic)");
         std::cout << "    shared prelude: " << preludeMedia << " admitted media fill it before density; counting it promotes "

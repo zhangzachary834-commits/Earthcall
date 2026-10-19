@@ -812,6 +812,44 @@ So:
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T19:08 PDT. Human origin: Zachary Zhang ("Faithfulness to exact math should be the rule"; "keep going"). Layer C is the Firmament's; the compiler finding and the quadrature measurement are this session's.*
 
+## 6r. The integration operation: OntoMath integrates along a ray (2026-10-18, nineteenth pass)
+
+**Origin.** Zach, after §6q: "does ontomath have integration", then "good yes lets enrich the ontomath integration substrate". OntoMath's one integration office (`ScalarForm::antiderivative`, `antiderivative(MathNode)`, `integrable`, `definiteIntegral`; built for reading Laws backwards, ONTOMATH_FRAMEWORK §6) is extended, not duplicated in the renderer. It keeps the office's rule: exact, or `nullopt` with the reason, never an approximation.
+
+**1. Integration by parts** (`ScalarForm::antiderivative`), still inside the term algebra:
+- **xⁿ·g(ax + b)** for a whole n > 0 and g ∈ {sin, cos, exp}, by the tabular rule. sin and cos rotate by quarter turns, so no π is ever rounded.
+- **xᵃ·ln(cx)** for any a, including ½·ln(cx)² at a = −1.
+- **Still refused:** what has no elementary antiderivative, such as sin x/x (the sine integral), √x·eˣ, or several transcendentals of x in one term.
+- **Consequence for Laws:** a Flow whose rate is t·sin t now reverses exactly. `law_reversal_test` pins ∫₀^π t·sin t dt = π, and keeps sin(t)/t as the honest refusal. `ontomath_test` differentiates every new form back to its integrand.
+- ONTOMATH_FRAMEWORK §6, LAW_AND_CREATION_SYSTEM and ALGORITHMS_AS_LAW were updated where they said by parts is refused.
+
+**2. Exact integrals along a ray:** `LineAlgebraicEvaluator::integral(node, s₀, s₁, signs)`.
+- **What it integrates.** On a decided branch of a ray-restricted form, the integrand is P(s) + Σ c·√Q(s) + Σ Pₖ(s)·g(αₖs + βₖ):
+  - polynomials, about the interval midpoint (no cancellation against a far origin);
+  - √Q, in closed form (asinh, log or asin by the sign of its discriminant);
+  - Pₖ·g, by the tabular rule.
+- **Branch decisions.** Switches the caller left open are decided by their proved range over the interval (strict for Select bounds). One that changes sign inside is refused with "split at its root".
+- **Products.** (k₁ + c₁√Q)(k₂ + c₂√Q) is expanded exactly.
+- **Refused:** noise, an undecided branch, √ of a non-quadratic (a torus's nested norm: an elliptic integral), a radical times a non-constant, Undefined.
+
+**3. Witness on real media** (`volume_ray_radial_segmentation_test`, now 40/40).
+- **Method.** Along 24 rays per medium, `segmentLine` splits at density's sign. ∫max(D, 0) ds is then the closed form on each decided piece, plus a **proved enclosure** for what interval arithmetic cannot decide: the root slivers a few resolutions wide, and pieces whose range only grazes zero (∫max(F, 0) ∈ [∫F, ∫F + w·max(0, −F_lo)]). It is compared with a Richardson-extrapolated 32768-point midpoint sum.
+- **Exact on every ray** (enclosure ≤ 5×10⁻⁶ relative, agreement 2×10⁻⁸–5.5×10⁻⁷, which is the reference's own error): spherical cloud, hollow shell, breathing nebula, dual sovereign, `veil.forward-scatter`, the Sunlit Mist volume. That is **6 of 28 admitted media**; the crescent is exact on 3 of 9 rays.
+- **Honest refusals:**
+  - noise (Borealis ×5, the noise cloud, nimbus, `veil.outer`);
+  - √ of a non-quadratic (the three tori);
+  - a branch flipping inside a piece (Northern Veil, Sky-Island, Borealis hero);
+  - products the algebra cannot hold (the labyrinth, `shaft-beam`).
+- On every ray, closed form or not, the converged sum lies inside the proved enclosure.
+
+**Next.**
+- A segmentation that also splits where a value branch, not only density's sign, changes. That covers the crescent and the curtains' non-noise factors.
+- Extinction and emission channels: the same operation on σₜ, then transmittance.
+- The GPU emission of these closed forms, gated by `webgpu_volume_faithfulness_test` against the continuum.
+- Noise and lit transport remain the numeric remainder (§6q, Zach: integration operations first).
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T23:58 PDT. Human origin: Zachary Zhang ("lets enrich the ontomath integration substrate"). The integration office is the Law-reversal one (ONTOMATH_FRAMEWORK §6); the by-parts rules, the ray integral and its enclosure witness are this session's.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

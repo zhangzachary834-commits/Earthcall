@@ -383,6 +383,22 @@ public:
     // that hull bounds every difference quotient); sqrt near 0 and an undecided
     // Select (a jump) answer the unbounded interval — no false Lipschitz claim.
     Interval derivativeRange(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs) const;
+    // Exact ∫[s0, s1] of a node along this line, under signs decided over the
+    // whole interval (a definite segmentLine piece): the integration operation
+    // on the ray (2026-10-18; Zach: "lets enrich the ontomath integration
+    // substrate"). The branch the signs select must reduce to
+    //   P(s) + Σ c·√Q(s) + Σ P_k(s)·g_k(α_k s + β_k),   g ∈ {sin, cos, exp},
+    // P, P_k polynomials and Q of degree ≤ 2 — every ball, ellipsoid, cylinder
+    // and abs shell restricted to a ray is of this form. Polynomials are
+    // integrated about the interval's midpoint (no cancellation against a far
+    // origin), √Q by its closed form (asinh / log / asin by the sign of its
+    // discriminant) and P·g by the tabular rule ScalarForm::antiderivative uses.
+    // Anything else answers nullopt with the reason, never an approximation:
+    // noise (no closed-form integral), an undecided branch, a root of a
+    // non-quadratic (a torus's nested norm), a radical times a non-constant,
+    // or Undefined. Exact-arithmetic semantics; not available in box mode.
+    std::optional<double> integral(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs,
+                                   std::string* why = nullptr) const;
     Interval switchDerivativeRange(std::size_t k, double s0, double s1, const std::vector<int8_t>& signs) const;
 
     // Execution slack (Codex P1, 2026-10-17). With an active model (the

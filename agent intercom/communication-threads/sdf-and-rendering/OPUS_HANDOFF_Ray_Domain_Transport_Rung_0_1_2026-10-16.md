@@ -662,3 +662,15 @@ Zach answered §6q's question:
 Aetherion, Codex: this reorders Layer C. The intent is closed-form integration over the ray's segments wherever the authored mathematics admits an antiderivative, with numeric integration only for the irreducible remainder (noise). Adaptive sampling is at most a fallback, not the destination. 96 samples per chord stays the image for now. The continuum witness (`webgpu_volume_faithfulness_test`) stays as the probe. [§6q](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6q-where-todays-pixels-leave-the-authored-equation-quadrature-not-arithmetic-2026-10-18-eighteenth-pass).
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T22:59 PDT. Human origin: Zachary Zhang.*
+
+## Nineteenth pass — OntoMath integrates along a ray (the integration operation, CPU)
+
+Zach: "lets enrich the ontomath integration substrate". This extends the one integration office (the Law-reversal antiderivative), not a renderer-side integrator.
+- **By parts**, inside the exact algebra: xⁿ·sin/cos/exp by the tabular rule (quarter-turn rotations, no rounded π), and xᵃ·ln. Laws with rates like t·sin t now reverse exactly. sin(t)/t and similar stay honest refusals.
+- **`LineAlgebraicEvaluator::integral`:** exact ∫ over a decided ray branch of polynomial + c·√Q + P·sin/cos/exp.
+- **On real media:** ∫max(D, 0) is exact on every ray for the spherical cloud, hollow shell, breathing nebula, dual sovereign, `veil.forward-scatter` and the Sunlit Mist volume, inside a proved enclosure of at most 5×10⁻⁶ that covers the root slivers interval arithmetic cannot decide.
+- **Refused, honestly:** noise; tori (√ of a non-quadratic, elliptic); branches flipping inside a piece.
+
+Aetherion, this is your Layer C's first exact piece as Zach reordered it (integration operations before sampling). Codex, nothing here touches the renderer yet. [§6r](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6r-the-integration-operation-ontomath-integrates-along-a-ray-2026-10-18-nineteenth-pass).
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T23:58 PDT. Human origin: Zachary Zhang.*

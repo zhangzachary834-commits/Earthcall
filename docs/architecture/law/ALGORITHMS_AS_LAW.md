@@ -88,7 +88,7 @@ Everything an algorithm needs, and what provides it. Enum values are from
 |---|---|---|
 | polynomial / multivariate arithmetic | `ScalarForm` — sum of `Term`s (`coefficient · Π varᵉ`) | exact; `normalized()` gives canonical form |
 | sin, cos, exp, ln | `TransFactor` | `kind(scale·var + shift)`; `Ln` forces `shift = 0` so `d/dx` stays in the algebra |
-| derivative / antiderivative | `ScalarForm::derivative`, `::antiderivative` | **exact**. Integration by parts is honestly `nullopt`, never approximated |
+| derivative / antiderivative | `ScalarForm::derivative`, `::antiderivative` | **exact**, including integration by parts for xⁿ·sin/cos/exp and xᵃ·ln (2026-10-18). No elementary antiderivative (sin x/x, several transcendentals of x in a term) is honestly `nullopt`, never approximated |
 | a named, reusable function | `FunctionDef` in `FunctionRegistry` | pure; composable; **recursive** |
 | calling one | `FunctionCall{function, args}` | args are full expressions of the *caller's* variables |
 | reading world state into math | `MathBinding` | binds a variable to a `PropertyPath` |
@@ -508,7 +508,7 @@ possible will produce something that silently does not work.
 | arbitrary pointer chasing | no raw references | `Relation` — first-class, weighted, with an event timeline |
 | `goto`, early `return` from a `Sequence` | none exist | guards on the pieces; or split into laws chained by `Publish` |
 | in-place comparison sort | no random-access swap primitive, no bounded-loop sort | rank via `Fold(Count)` over a comparison condition — *O(n²)* but exact, parallel-shaped, and inspectable. For large *n*, sorting probably belongs to a first mover (§8) |
-| integration by parts | `antiderivative` returns `nullopt` | honest by design; supply the closed form as a `FunctionDef` |
+| a non-elementary integral (sin x/x, √x·eˣ) | `antiderivative` returns `nullopt` | honest by design; supply the closed form as a `FunctionDef` (whole powers × sin/cos/exp/ln now integrate by parts, 2026-10-18) |
 | `ln` of a non-positive argument | undefined, `nullopt` | guard the domain with `whereLEZero` |
 
 ### On Turing-completeness

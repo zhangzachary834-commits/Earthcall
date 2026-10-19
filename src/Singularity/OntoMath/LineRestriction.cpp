@@ -2344,4 +2344,272 @@ std::vector<LineSegmentationPiece> segmentLine(const std::vector<const LineAlgeb
     return seg.pieces;
 }
 
+namespace {
+// One branch of a line form, as the integration operation holds it.
+struct LineIntegrand {
+    std::vector<double> poly;                     // Σ a_k s^k
+    struct Radical { double c, A, B, C; };        // c·√(A s² + B s + C)
+    std::vector<Radical> radicals;
+    struct Wave { std::vector<double> poly; TransFactor::Kind kind; double alpha, beta; };   // P(s)·g(αs + β)
+    std::vector<Wave> waves;
+    bool constant() const {
+        return radicals.empty() && waves.empty() && poly.size() <= 1;
+    }
+    double constantValue() const { return poly.empty() ? 0.0 : poly[0]; }
+};
+
+std::vector<double> polyTimes(const std::vector<double>& a, const std::vector<double>& b) {
+    if (a.empty() || b.empty()) return {};
+    std::vector<double> out(a.size() + b.size() - 1, 0.0);
+    for (std::size_t i = 0; i < a.size(); ++i)
+        for (std::size_t j = 0; j < b.size(); ++j) out[i + j] += a[i] * b[j];
+    return out;
+}
+void polyAdd(std::vector<double>& a, const std::vector<double>& b, double k) {
+    if (a.size() < b.size()) a.resize(b.size(), 0.0);
+    for (std::size_t i = 0; i < b.size(); ++i) a[i] += k * b[i];
+}
+void scaleIntegrand(LineIntegrand& f, double k) {
+    for (auto& a : f.poly) a *= k;
+    for (auto& r : f.radicals) r.c *= k;
+    for (auto& w : f.waves) for (auto& a : w.poly) a *= k;
+}
+
+// ∫[s0, s1] P(s) ds about the midpoint: P(m + u) = Σ b_k u^k, odd powers cancel.
+double integratePolynomial(const std::vector<double>& a, double s0, double s1) {
+    if (a.empty()) return 0.0;
+    const double m = 0.5 * (s0 + s1), h = 0.5 * (s1 - s0);
+    std::vector<double> b(a.size(), 0.0);
+    for (std::size_t j = 0; j < a.size(); ++j) {
+        double binom = 1.0, mpow = 1.0;   // C(j, k)·m^(j−k), k descending from j
+        for (std::size_t k = j + 1; k-- > 0;) {
+            b[k] += a[j] * binom * mpow;
+            binom = binom * double(k) / double(j - k + 1);
+            mpow *= m;
+        }
+    }
+    double sum = 0.0, hp = h;
+    for (std::size_t k = 0; k < b.size(); ++k, hp *= h)
+        if (k % 2 == 0) sum += 2.0 * b[k] * hp / double(k + 1);
+    return sum;
+}
+
+// ∫[s0, s1] √(A s² + B s + C) ds, the branch having decided Q ≥ 0 there.
+std::optional<double> integrateRadical(double A, double B, double C, double s0, double s1, std::string* why) {
+    auto Q = [&](double s) { return std::max(0.0, (A * s + B) * s + C); };
+    if (A == 0.0) {
+        if (B == 0.0) return std::sqrt(std::max(0.0, C)) * (s1 - s0);
+        auto F = [&](double s) { return 2.0 / (3.0 * B) * std::pow(Q(s), 1.5); };
+        return F(s1) - F(s0);
+    }
+    // u = s + B/(2A): Q = A u² + D.
+    const double shift = B / (2.0 * A), D = C - B * shift / 2.0;
+    const double u0 = s0 + shift, u1 = s1 + shift;
+    if (A > 0.0) {
+        const double rA = std::sqrt(A);
+        auto F = [&](double u, double s) {
+            const double r = std::sqrt(Q(s));
+            if (D > 0.0) return 0.5 * u * r + D / (2.0 * rA) * std::asinh(u * std::sqrt(A / D));
+            if (D == 0.0) return 0.5 * rA * u * std::abs(u);
+            const double arg = std::abs(rA * u + r);   // D < 0: Q ≥ 0 only for |u| ≥ √(−D/A)
+            if (!(arg > 0.0)) return std::numeric_limits<double>::quiet_NaN();
+            return 0.5 * u * r + D / (2.0 * rA) * std::log(arg);
+        };
+        const double v = F(u1, s1) - F(u0, s0);
+        if (!std::isfinite(v)) { if (why) *why = "radical integral crosses its branch point"; return std::nullopt; }
+        return v;
+    }
+    // A < 0: Q ≥ 0 only between its roots, where D > 0.
+    if (!(D > 0.0)) { if (why) *why = "radical of a quadratic negative on the interval"; return std::nullopt; }
+    const double rA = std::sqrt(-A);
+    auto F = [&](double u, double s) {
+        const double x = std::clamp(u * std::sqrt(-A / D), -1.0, 1.0);
+        return 0.5 * u * std::sqrt(Q(s)) + D / (2.0 * rA) * std::asin(x);
+    };
+    return F(u1, s1) - F(u0, s0);
+}
+
+// ∫[s0, s1] P(s)·g(αs + β) ds by the tabular rule: Σ_j (−1)^j P^(j) G_(j+1).
+double integrateWave(const LineIntegrand::Wave& w, double s0, double s1) {
+    if (w.alpha == 0.0) {
+        const double g = TransFactor(w.kind, "u").evaluate(w.beta).value_or(0.0);
+        return g * integratePolynomial(w.poly, s0, s1);
+    }
+    auto antiderivativeAt = [&](double s) {
+        const double u = w.alpha * s + w.beta;
+        double total = 0.0;
+        std::vector<double> d = w.poly;   // P^(j)
+        for (int j = 0; !d.empty(); ++j) {
+            const int m = j + 1;
+            double G = 0.0;
+            if (w.kind == TransFactor::Kind::Exp) G = std::exp(u);
+            else {
+                // m-th antiderivative of sin/cos: rotate by m quarter turns.
+                const double sn = std::sin(u), cs = std::cos(u);
+                const int q = m % 4;
+                if (w.kind == TransFactor::Kind::Sin) G = q == 0 ? sn : q == 1 ? -cs : q == 2 ? -sn : cs;
+                else G = q == 0 ? cs : q == 1 ? sn : q == 2 ? -cs : -sn;
+            }
+            G /= std::pow(w.alpha, m);
+            total += (j % 2 ? -1.0 : 1.0) * horner(d, s) * G;
+            std::vector<double> next;   // derivative
+            for (std::size_t k = 1; k < d.size(); ++k) next.push_back(d[k] * double(k));
+            d = std::move(next);
+        }
+        return total;
+    };
+    return antiderivativeAt(s1) - antiderivativeAt(s0);
+}
+} // namespace
+
+std::optional<double> LineAlgebraicEvaluator::integral(uint32_t root, double s0, double s1,
+                                                       const std::vector<int8_t>& signs, std::string* why) const {
+    if (_boxMode) { if (why) *why = "the integral needs a concrete line, not box bindings"; return std::nullopt; }
+    std::string reason;
+    // A switch the caller's signs leave open is decided here when its proved
+    // range over [s0, s1] is one-sided (continuous branches agree at zero, so
+    // ≤/≥ suffice; a Select bound is STRICT). One that changes sign inside the
+    // interval is refused: the caller must split there.
+    std::vector<int8_t> decided = signs;
+    auto decide = [&](uint32_t k) -> int8_t {
+        if (decided[k] != 0) return decided[k];
+        bool undefined = false;
+        const Interval r = switchRange(k, s0, s1, decided, &undefined);
+        if (undefined) return 0;
+        const bool strict = _form->switches[k].strict;
+        if (strict ? double(r.hi) < 0.0 : double(r.hi) <= 0.0) return decided[k] = -1;
+        if (strict ? double(r.lo) > 0.0 : double(r.lo) >= 0.0) return decided[k] = 1;
+        return 0;
+    };
+    std::function<std::optional<LineIntegrand>(uint32_t)> build = [&](uint32_t node) -> std::optional<LineIntegrand> {
+        const auto& n = _form->nodes[node];
+        auto refuse = [&](const std::string& r) -> std::optional<LineIntegrand> {
+            if (reason.empty()) reason = r;
+            return std::nullopt;
+        };
+        for (uint32_t k = n.switchBegin; k < n.switchBegin + n.switchCount; ++k) decide(k);
+        const int8_t sw0 = n.switchCount > 0 ? decided[n.switchBegin] : 0;
+        const int8_t sw1 = n.switchCount > 1 ? decided[n.switchBegin + 1] : 0;
+        switch (n.kind) {
+            case Kind::Polynomial: { LineIntegrand f; f.poly = _coefficients[node]; return f; }
+            case Kind::Undefined:
+                if (_undefinedAsZero) return LineIntegrand{};
+                return refuse("Undefined on the interval");
+            case Kind::Noise: return refuse("Perlin noise has no closed-form integral");
+            case Kind::Select:
+                for (uint32_t p = 0; p < n.pieces.size(); ++p) {
+                    const int st = pieceState(n, p, decided);
+                    if (st < 0) continue;
+                    if (st == 0) return refuse("a Select piece changes inside the interval (split at its bound)");
+                    return build(n.pieces[p].value);
+                }
+                if (_undefinedAsZero) return LineIntegrand{};
+                return refuse("no Select piece applies (Undefined)");
+            default: break;
+        }
+        auto a = build(n.a);
+        if (!a) return std::nullopt;
+        switch (n.kind) {
+            case Kind::Abs:
+                if (sw0 == 0) return refuse("abs changes branch inside the interval (split at its root)");
+                if (sw0 < 0) scaleIntegrand(*a, -1.0);
+                return a;
+            case Kind::Clamp: {
+                if (sw0 < 0) { LineIntegrand f; f.poly = {n.lo}; return f; }
+                if (sw1 > 0) { LineIntegrand f; f.poly = {n.hi}; return f; }
+                if (sw0 > 0 && sw1 < 0) return a;
+                return refuse("clamp changes branch inside the interval (split at its root)");
+            }
+            case Kind::Sqrt: {
+                if (!n.nonnegativeArgument && sw0 < 0) return LineIntegrand{};
+                if (!a->radicals.empty() || !a->waves.empty() || a->poly.size() > 3)
+                    return refuse("square root of a non-quadratic (e.g. a torus's nested norm)");
+                std::vector<double> q = a->poly;
+                q.resize(3, 0.0);
+                LineIntegrand f;
+                f.radicals.push_back({1.0, q[2], q[1], q[0]});
+                return f;
+            }
+            case Kind::Trans: {
+                if (!a->radicals.empty() || !a->waves.empty() || a->poly.size() > 2)
+                    return refuse("transcendental of a non-affine argument");
+                std::vector<double> arg = a->poly;
+                arg.resize(2, 0.0);
+                LineIntegrand f;
+                f.waves.push_back({{1.0}, n.transKind, arg[1], arg[0]});
+                return f;
+            }
+            default: break;
+        }
+        auto b = build(n.b);
+        if (!b) return std::nullopt;
+        switch (n.kind) {
+            case Kind::Add: case Kind::Sub: {
+                const double k = n.kind == Kind::Add ? 1.0 : -1.0;
+                polyAdd(a->poly, b->poly, k);
+                for (auto r : b->radicals) { r.c *= k; a->radicals.push_back(r); }
+                for (auto w : b->waves) { for (auto& c : w.poly) c *= k; a->waves.push_back(w); }
+                return a;
+            }
+            case Kind::Min: case Kind::Max: {
+                if (sw0 == 0) return refuse("min/max changes branch inside the interval (split at its root)");
+                const bool min = n.kind == Kind::Min;
+                // sign > 0: a ≥ b.
+                return sw0 > 0 ? (min ? b : a) : (min ? a : b);
+            }
+            case Kind::Mul: {
+                if (a->constant()) { scaleIntegrand(*b, a->constantValue()); return b; }
+                if (b->constant()) { scaleIntegrand(*a, b->constantValue()); return a; }
+                // (k₁ + c₁√Q)(k₂ + c₂√Q) = k₁k₂ + c₁c₂·Q + (k₁c₂ + k₂c₁)·√Q, exactly
+                // (a squared norm, e.g. (√Q − R)² inside a torus).
+                auto sameRoot = [](const LineIntegrand& f, const LineIntegrand::Radical*& r, double& k, double& c) {
+                    if (!f.waves.empty() || f.poly.size() > 1) return false;
+                    k = f.constantValue();
+                    c = 0.0;
+                    for (const auto& q : f.radicals) {
+                        if (r && (q.A != r->A || q.B != r->B || q.C != r->C)) return false;
+                        r = &q;
+                        c += q.c;
+                    }
+                    return true;
+                };
+                {
+                    const LineIntegrand::Radical* root = nullptr;
+                    double k1 = 0.0, c1 = 0.0, k2 = 0.0, c2 = 0.0;
+                    if (sameRoot(*a, root, k1, c1) && sameRoot(*b, root, k2, c2) && root) {
+                        const LineIntegrand::Radical q = *root;
+                        LineIntegrand f;
+                        f.poly = {k1 * k2 + c1 * c2 * q.C, c1 * c2 * q.B, c1 * c2 * q.A};
+                        if (k1 * c2 + k2 * c1 != 0.0) f.radicals.push_back({k1 * c2 + k2 * c1, q.A, q.B, q.C});
+                        return f;
+                    }
+                }
+                auto polyOnly = [](const LineIntegrand& f) { return f.radicals.empty() && f.waves.empty(); };
+                const LineIntegrand* p = polyOnly(*a) ? &*a : polyOnly(*b) ? &*b : nullptr;
+                if (!p) return refuse("product of two non-polynomial branches");
+                const LineIntegrand& other = p == &*a ? *b : *a;
+                if (!other.radicals.empty()) return refuse("a radical times a non-constant");
+                LineIntegrand f;
+                f.poly = polyTimes(p->poly, other.poly);
+                for (auto w : other.waves) { w.poly = polyTimes(p->poly, w.poly); f.waves.push_back(w); }
+                return f;
+            }
+            default: break;
+        }
+        return refuse("node kind not integrable");
+    };
+    const auto f = build(root);
+    if (!f) { if (why) *why = reason; return std::nullopt; }
+    double total = integratePolynomial(f->poly, s0, s1);
+    for (const auto& r : f->radicals) {
+        if (r.c == 0.0) continue;
+        const auto v = integrateRadical(r.A, r.B, r.C, s0, s1, why);
+        if (!v) return std::nullopt;
+        total += r.c * *v;
+    }
+    for (const auto& w : f->waves) total += integrateWave(w, s0, s1);
+    if (!std::isfinite(total)) { if (why) *why = "the closed form is not finite on the interval"; return std::nullopt; }
+    return total;
+}
+
 } // namespace OntoMath

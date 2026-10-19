@@ -107,7 +107,7 @@ approximating:
 |---|---|
 | `Set` | the value it overwrote is not in the law text |
 | `Add` / `Scale` / `Lerp` | invertible per firing, but the text does not record how many times it fired |
-| a rate needing integration by parts | the algebra does not hold it, and will not guess |
+| a rate with no elementary antiderivative (a negative or fractional power times sin/cos/exp, e.g. sin(t)/t; several transcendentals of t in one term) | the algebra does not hold it, and will not guess. Since 2026-10-18 it does hold integration by parts for a whole power times one sin/cos/exp/ln (tabular), so a rate like t·sin t reverses exactly |
 | a piece carrying a **world guard** | answering whether it applied then needs the past being computed |
 | a piece whose value is a **fold** or a **function call** | reads world state whose past is not in the text |
 | a rate that reads what it writes | that is a differential equation, not a quadrature |

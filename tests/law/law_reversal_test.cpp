@@ -107,15 +107,25 @@ int main() {
     // 3. The honest refusals of the algebra itself.
     // =====================================================================
     {
-        // t·sin(t) needs integration by parts. The algebra does not hold it,
-        // and says so instead of approximating.
+        // t·sin(t) integrates by parts, exactly (2026-10-18): ∫₀^π t·sin t dt = π.
+        // A rate like it now reverses in closed form.
         OntoMath::Term byParts(1.0, {{"t", 1.0}});
         byParts.addTrans(OntoMath::TransFactor(OntoMath::TransFactor::Kind::Sin, "t"));
         OntoMath::ScalarForm product;
         product.terms.push_back(byParts);
         std::string why;
-        assert(!OntoMath::integrable(everywhere(product), "t", &why));
-        assert(why.find("by parts") != std::string::npos);
+        assert(OntoMath::integrable(everywhere(product), "t", &why));
+        const auto pi = OntoMath::definiteIntegral(everywhere(product), "t", 0.0, M_PI, {}, &why);
+        assert(pi && near(*pi, M_PI));
+        // sin(t)/t has no elementary antiderivative (the sine integral). The
+        // algebra does not hold it, and says so instead of approximating.
+        OntoMath::Term sineIntegral(1.0, {{"t", -1.0}});
+        sineIntegral.addTrans(OntoMath::TransFactor(OntoMath::TransFactor::Kind::Sin, "t"));
+        OntoMath::ScalarForm quotient;
+        quotient.terms.push_back(sineIntegral);
+        why.clear();
+        assert(!OntoMath::integrable(everywhere(quotient), "t", &why));
+        assert(why.find("no elementary antiderivative") != std::string::npos);
 
         // A piece gated on a WORLD guard cannot be integrated over the past:
         // answering whether it applied then needs the past being computed.
@@ -183,16 +193,22 @@ int main() {
         assert(mentions(placeless.reversibility().obstacles, "not a function of time"));
 
         // Map needs only to be re-evaluable at the past time — a weaker
-        // demand than Flow's, and t·sin(t) meets it though its integral does
-        // not exist in this algebra.
+        // demand than Flow's, and sin(t)/t meets it though its integral does
+        // not exist in this algebra. t·sin(t) now reverses under both.
+        OntoMath::Term sineIntegral(1.0, {{"t", -1.0}});
+        sineIntegral.addTrans(OntoMath::TransFactor(OntoMath::TransFactor::Kind::Sin, "t"));
+        OntoMath::ScalarForm quotient;
+        quotient.terms.push_back(sineIntegral);
+        assert(ActionNode::map("position.y", everywhere(quotient), clockBinding)
+                   .reversibility().exact);
+        assert(!ActionNode::flow("position.y", everywhere(quotient), clockBinding)
+                    .reversibility().exact);
         OntoMath::Term byParts(1.0, {{"t", 1.0}});
         byParts.addTrans(OntoMath::TransFactor(OntoMath::TransFactor::Kind::Sin, "t"));
         OntoMath::ScalarForm product;
         product.terms.push_back(byParts);
-        assert(ActionNode::map("position.y", everywhere(product), clockBinding)
+        assert(ActionNode::flow("position.y", everywhere(product), clockBinding)
                    .reversibility().exact);
-        assert(!ActionNode::flow("position.y", everywhere(product), clockBinding)
-                    .reversibility().exact);
 
         // Drive's CurveModel is symbolic, so it reverses — when its input is
         // the clock. Driven by anything else, the input's own past is the
