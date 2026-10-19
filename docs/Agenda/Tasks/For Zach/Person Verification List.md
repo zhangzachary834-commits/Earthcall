@@ -16,7 +16,7 @@
     - **Character Architect Forge (North-East, ember):** Magma blocks, obsidian anvil, glowing crucible, and warm ember navigation beacon.
 - [ ] **Interactive Law-Governed Navigation:**
   - Click on the **Sanctum beacon** (`navigator-beacon-sanctum`):
-    - Verify `object-clicked` is published, matches `category.control.button` via `law-navigator-button`, emits `control-activated` with destination `"Sanctum of Beginnings"`, and cleanly transitions you into the **Sanctum of Beginnings** zone.
+    - Verify `object-clicked` is published, the generic button archetype emits `control-activated`, `law-navigator-button` converts that activation into `zone-navigation-requested` while preserving destination `"Sanctum of Beginnings"`, and the deferred Engine switch cleanly transitions you into the **Sanctum of Beginnings** zone.
   - Press `M` to open Menu, select `Ourverse Navigator` (`O`), or switch back to `Ourverse Gathering`.
   - Click on the **Temple beacon** (`navigator-beacon-temple`):
     - Verify seamless transition into **Temple of Echoes**.
