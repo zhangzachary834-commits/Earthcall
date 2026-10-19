@@ -457,3 +457,12 @@ Zach: "Faithfulness to exact math should be the rule." A new witness, `webgpu_vo
 - **Two numerical repairs,** each with a failing-without witness: wave integrals re-centred on their interval, and slow waves (|α|h ≤ 1) integrated by Taylor series.
 
 **Not run:** the same two pre-existing failures as the twenty-first pass. Evidence: `scratch/verification/ray-domain-twelfth-pass-2026-10-18/hybrid-integration-1.log`. Design: [§6u](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6u-hybrid-integration-closed-form-weights-sampled-remainders-and-focus-2026-10-19-twenty-second-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T14:06 PDT.
+
+## Carlson special functions — twenty-third pass (CPU only)
+
+- **Worst error against precision-stable references:** R_F 2.9 ulp, R_D 2.0, R_J 3.1, R_C 1.3, complex R_F 3.0. Legendre's relation holds to 2.5 ulp.
+- **The first-kind two-quadratic reduction:** within 3.8×10⁻¹⁴ on 50 intervals.
+- **Found and repaired:** the conjugate-pair branch condition (sweep < π); three R_J cancellation and overflow paths; and two wrong reference sources (mpmath's `elliprj` at 40 digits, and a plain quadrature on a spike).
+- No medium is wired to it yet.
+
+**Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/carlson-witness-1.log`. Design: [§6v](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6v-the-carlson-rung-exact-special-function-reduction-witnessed-before-it-is-trusted-2026-10-19-twenty-third-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T14:53 PDT.

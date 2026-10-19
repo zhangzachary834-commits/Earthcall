@@ -959,6 +959,47 @@ Mean relative error of ∫max(D, 0) per ray.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T14:06 PDT. Human origin: Zachary Zhang (the rung order; integration first; faithfulness to exact math). Hybrid integration as a step is the Original Prism Sun's decree; the remainder algebra, product Simpson rule, radius, focus attribution and the two numerical repairs are this session's.*
 
+## 6v. The Carlson rung: exact special-function reduction, witnessed before it is trusted (2026-10-19, twenty-third pass)
+
+**Origin.** §6t asked Zach whether elliptic integrals by Carlson's forms count as exact. The Original Prism Sun answered yes, and Zach adopted it: "LETS GO WITH IT (unless i later decide otherwise but i probably wont)".
+- **The Sun's distinction:** elementary closed form ≠ exact special-function reduction ≠ numerical quadrature. A reduction to R_F/R_D/R_J preserves the integral exactly; evaluating them in finite precision is an execution-faithfulness question, like sqrt.
+- **Its acceptance criteria:**
+  1. the transformation preserves the quantity exactly;
+  2. the evaluation error is bounded or characterized;
+  3. no authored semantics is silently altered;
+  4. a fallback remains where the reduction cannot be certified.
+- **Its order:** witness the rung before trusting it broadly. Its hierarchy is now in ONTOMATH_FRAMEWORK §6.
+
+**What landed** (`Singularity/OntoMath/EllipticIntegrals`, free functions, no domain type):
+- **R_F, R_D, R_J, R_C** by Carlson's duplication (Numer. Algorithms 1995), iterated to his truncation bound r = 2⁻⁵³. **Complex R_F** answers for arguments ≥ 0.01π from its cut. Every out-of-domain argument answers nullopt: negative, two zeros, p ≤ 0 (no principal value), NaN or infinity.
+- **The first-kind quartic reduction** ∫_y^x Π(aᵢ + bᵢt)^(−½) dt = 2R_F(U₁₂², U₁₃², U₁₄²), and `ellipticFirstKindTwoQuadratics`, which factors Q₁·Q₂ into conjugate or oriented real linear factors.
+
+**What the witness found.** Every one of these was found by the witness; none was assumed.
+1. **The first-kind formula has a branch condition the real-root form hides.** For a conjugate pair, U₁₃ = 2|X₁X₃||Y₁Y₃|·cos(φ(x) − φ(y))/(x − y), with φ = ½Σ arg of the pair's factors. Past a total sweep of π, U₁₃ turns negative and 2R_F(U²…) is another branch: 0.83 relative error on long intervals, confirmed in mpmath. Since φ is monotone, splitting the interval exactly (by additivity) until each piece sweeps ≤ 0.9π restores the formula.
+2. **R_J at extreme arguments, three numerical repairs:**
+   - δ = (p−x)(p−y)(p−z) overflows at p = 10²⁰⁰;
+   - √pₘ − √xₘ cancels as the iterates converge;
+   - 1 + e cancels whenever p lies far from the arguments on either side.
+
+   e is now a product of bounded factors fᵢ = 4⁻ᵐ(p₀ − xᵢ)/(√pₘ + √xᵢₘ)², and 1 + e a sum of non-negative terms built from the small one of 1 ∓ fᵢ (each exact without subtraction).
+3. **References must be checked too.**
+   - mpmath's `elliprj` loses about as many digits as the arguments' spread: R_J(2, 3, 4, 10⁻²⁰⁰) is 67.1 at 40 digits, 80.5 at 50, and 141.13295926608469 from 200 on. R_J's defining integral, transformed to u = ln t, confirms the last.
+   - A plain quadrature reference for ∫dt/√(Q₁Q₂) was itself 3.5×10⁻¹⁰ off on a spike of width Im ρ = 0.014.
+   - So every function reference is now required to agree between 200 and 400 digits, and every integral reference between tanh-sinh and Gauss–Legendre on graded breakpoints. The generator refuses to write a value otherwise (`scripts/generate_carlson_references.py`).
+
+**Witness** (`ontomath_carlson_elliptic_test`, 19/19):
+- **Function errors against the references,** 110 R_F, 86 R_D, 87 R_J and 47 R_C values (arguments 10⁻³⁰⁰…10³⁰⁰, one zero, near-equal, p on both sides): worst R_F 2.9 ulp, R_D 2.0, R_J 3.1, R_C 1.3. Complex R_F on conjugate pairs: 3.0 ulp, with 9 of 40 refused as too near the cut. The stated bound is 16 ulp.
+- **Checks needing no reference:** equal-argument and homogeneity identities; Legendre's relation EK′ + E′K − KK′ = π/2 to 2.5 ulp; K against the arithmetic-geometric mean to 1.2 ulp.
+- **Continuity:** R_C through y = x, on its series to 10⁻¹⁵, and R_J monotone as p passes an argument.
+- **The first-kind reduction:** 50 intervals (complex-root pairs, real roots outside, rays at s ≈ 500) within 3.8×10⁻¹⁴ of the references.
+
+**Not yet graduated.**
+- **The crescent** needs ∫√(Q₁Q₂) ds. Reducing √(quartic) brings in all three kinds: t²/√P₄ is second kind, and t/√P₄ has residues at the quartic's two points at infinity, so it is third kind. Those reductions (R_D, R_J) come next, each verified against references before use.
+- **The tori** reduce after the Euler substitution t = e^θ (√Q = c·cosh θ), which turns the nested radical into √(quartic in t) with quartic roots to find.
+- Until then they keep the hybrid (§6u), at 5×10⁻⁸ to 1×10⁻⁶ relative error.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T14:53 PDT. Human origin: Zachary Zhang (adopting the Sun's verdict). The hierarchy, distinctions and acceptance criteria are the Original Prism Sun's; the implementation, the branch condition and its repair, the R_J repairs and the reference discipline are this session's.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

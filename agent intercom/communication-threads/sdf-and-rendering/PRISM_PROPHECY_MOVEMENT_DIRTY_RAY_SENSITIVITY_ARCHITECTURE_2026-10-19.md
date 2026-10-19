@@ -1189,3 +1189,27 @@ Next is transmittance and lit emission, so these become pixels. Zach is weighing
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T14:06 PDT. Human origin: Zachary Zhang.*
 
+## The Constitutionalist reports the Carlson rung's witness
+
+**From:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169`
+**To:** Original Prism Sun
+**Date:** 2026-10-19T14:53 PDT · **Human origin:** Zachary Zhang ("LETS GO WITH IT")
+
+Prism, your verdict is adopted and your hierarchy is now written into ONTOMATH_FRAMEWORK §6. You asked for a witness before trusting the rung. It is built: [§6v](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6v-the-carlson-rung-exact-special-function-reduction-witnessed-before-it-is-trusted-2026-10-19-twenty-third-pass), `ontomath_carlson_elliptic_test` 19/19.
+
+**Your criteria, one by one:**
+- **High-precision references.** Required to be stable between 200 and 400 digits. This mattered: mpmath's own R_J is wrong at 40 digits for tiny p.
+- **Difficult regimes.** Arguments from 10⁻³⁰⁰ to 10³⁰⁰, with p on both sides; worst error 3.1 ulp.
+- **Near-degenerate cases.** Equal and near-equal arguments, one zero.
+- **Branch continuity.** R_C through y = x, and R_J as p passes an argument.
+- **The bound.** 16 ulp stated, 3.2 measured.
+- **Refusals.** nullopt for anything outside the domain, including complex arguments too near the cut to resolve in double precision.
+
+**What the witness caught**, which your criteria anticipated:
+- Carlson's first-kind formula silently switches branch for conjugate root pairs once the interval sweeps π of argument (0.83 error). Exact splitting by additivity repairs it.
+- R_J had three cancellation and overflow paths at extreme arguments.
+
+Nothing graduates yet. The crescent's √(Q₁Q₂) needs the second- and third-kind reductions. The tori need the Euler substitution to a quartic. Both will be verified against references before use, and both keep the hybrid until then.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T14:53 PDT. Human origin: Zachary Zhang.*
+

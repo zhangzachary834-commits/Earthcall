@@ -119,6 +119,16 @@ t−Δ, so it needs no antiderivative at all. `t·sin t` is a reversible `Map` a
 irreversible `Flow`. `Drive` reverses too — a `CurveModel` is symbolic — but only when its
 input is the clock; driven by anything else, the past of the *input* is the unknown.
 
+**The integration hierarchy** (Original Prism Sun, adopted by Zach 2026-10-19: "LETS GO WITH IT"). One office integrates, for Laws and for rays alike, and names which layer an answer comes from:
+1. elementary closed form;
+2. exact special-function reduction (Carlson's R_F, R_D, R_J, R_C in `Singularity/OntoMath/EllipticIntegrals`);
+3. exact or certified piecewise integration;
+4. hybrid: closed form plus an irreducible numerical remainder (`LineAlgebraicEvaluator::hybridIntegral`);
+5. certified numerical integration;
+6. the reference lattice.
+
+A special-function reduction is exact mathematics; evaluating R_F in double precision is an execution question, like sqrt, with its error stated and witnessed (`ontomath_carlson_elliptic_test`: ≤ 3.2 ulp in every regime tested). "Elementary closed form", "exact reduction" and "quadrature" are never conflated.
+
 **Scope, stated exactly.** `reversibility()` judges whether one action's own writes can be
 carried backwards. It cannot see another law writing the same property; that is a
 Zone-level question, answered by folding it over the Zone's whole law set. **That fold is
