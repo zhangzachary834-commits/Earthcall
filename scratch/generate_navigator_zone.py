@@ -333,21 +333,10 @@ def build_navigator_law():
         "injected_by": "Gemini 3.8 Flash (High) - Personal Ourverse Navigator Prototyping Loop authorized by Zach, 2026-10-16",
         "law": {
             "actionModel": {
-                "children": [
-                    {
-                        "eventType": "control-activated",
-                        "kind": 10,
-                        "publishSubject": "",
-                        "publishObject": ""
-                    },
-                    {
-                        "eventType": "zone-navigation-requested",
-                        "kind": 10,
-                        "publishSubject": "",
-                        "publishObject": ""
-                    }
-                ],
-                "kind": 5
+                "eventType": "zone-navigation-requested",
+                "kind": 10,
+                "publishSubject": "",
+                "publishObject": ""
             },
             "activation": 0,
             "applicationLog": [],
@@ -365,7 +354,7 @@ def build_navigator_law():
             "drives": False,
             "enabled": True,
             "id": "law-navigator-button",
-            "name": "Ourverse Navigator: Button Click to Zone Navigation",
+            "name": "Ourverse Navigator: Button Activation to Zone Navigation",
             "provenance": [
                 {
                     "directed": True,
@@ -387,7 +376,7 @@ def build_navigator_law():
             "targets": []
         },
         "triggers": [
-            "object-clicked"
+            "control-activated"
         ]
     }
 
