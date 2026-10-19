@@ -839,6 +839,7 @@ So:
   - noise (Borealis ×5, the noise cloud, nimbus, `veil.outer`);
   - √ of a non-quadratic (the three tori);
   - a branch flipping inside a piece (Northern Veil, Sky-Island, Borealis hero);
+    *Corrected in §6t: these three were misattributed. The witness reported the last root sliver's reason, not the definite pieces'. Their real limits are noise (Northern Veil, Borealis hero, Sky-Island's sea of clouds) and a square root times a wave (Sky-Island's halo mist).*
   - products the algebra cannot hold (the labyrinth, `shaft-beam`).
 - On every ray, closed form or not, the converged sum lies inside the proved enclosure.
 
@@ -868,6 +869,51 @@ So:
 **Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/m0-pose-witness-1.log` (local, ignored like the earlier logs).
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T11:55 PDT. Human origin: Zachary Zhang (the movement question; approval of the order). The ladder and the M0 definition are the Original Prism Sun's; the witness is this session's.*
+
+## 6t. Value-branch segmentation: every piece integrates its decided branch, and the office holds more products (2026-10-19, twenty-first pass)
+
+**Origin.** Zach approved the order M0 → M0.5 → value-branch segmentation, and then: "YASSSSSSS (do value branch segmenattion)". §6r named the rung: split where a value branch, not only density's sign, changes, so the crescent and the curtains' non-noise factors integrate.
+
+**What the diagnosis found first.**
+- `segmentLine` already decides every switch the value reads (`relevantUndecided`), so a definite piece is already a value-branch piece. The rung's real gaps were in `integral()` and in the witness.
+- **`integral()` read operands its branch does not use.** A clamp proved saturated still built its argument, and a min/max built *both* sides before choosing. A saturated clamp over noise, or the unchosen side of a CSG min holding noise or an open switch, refused although the decided branch is exact.
+- **The witness misreported refusals.** It kept the *last* refusal on a ray, which is usually a root sliver (expected to be undecided). That hid the definite pieces' real reasons, so §6r's "branch flipping" for Northern Veil, Sky-Island and Borealis hero was wrong.
+
+**What changed.**
+1. **Branch nodes build only the decided branch** (`LineRestriction.cpp`, `integral`): Clamp saturated low or high is its bound; Min/Max builds only the chosen side; a sqrt proved of a negative is 0. This mirrors `relevantUndecided` exactly.
+2. **Polynomial times square root, R(s)·√Q(s).** Radicals now carry a polynomial coefficient. The moments Iₙ = ∫uⁿ√Q du come from differentiating u^(n−1)·Q^(3/2): (n+2)·A·Iₙ = [u^(n−1)Q^(3/2)] − (n+½)·B′·Iₙ₋₁ − (n−1)·C′·Iₙ₋₂, about the interval midpoint, with I₀ the existing closed form (a linear Q has its own recurrence).
+3. **Same-root products with polynomial coefficients:** (P₁ + R₁√Q)(P₂ + R₂√Q) = P₁P₂ + R₁R₂·Q + (P₁R₂ + P₂R₁)·√Q.
+4. **Wave products by product-to-sum** (sin·cos = ½[sin(u+v) + sin(u−v)], and so on); exp·exp = exp(u+v).
+5. **Refusals now name the mathematics:** two different square roots multiplied ("an elliptic integral in general"); a square root times a wave; exp times sin/cos (exact, but not held by this algebra yet).
+6. **The witness reports a definite piece's refusal before a sliver's**, and its floor rises from 6 to 7 media.
+
+**Witnesses.**
+- `ontomath_line_segmentation_test` (70/70, 6 new), each against its analytic antiderivative to 1e-12, not against quadrature:
+  - ∫(1 + x + x²)·|p|;
+  - ∫₀^π sin x·cos 2x = −2/3;
+  - a saturated clamp over noise;
+  - a min whose unchosen side is noise;
+  - the elliptic and root-times-wave refusals.
+- **Mutation check.** All six fail against the previous `LineRestriction.cpp` and pass against this one.
+- `volume_ray_radial_segmentation_test` (40/40). The corrected census of the 28 admitted media:
+
+| Outcome | Media |
+|---|---|
+| **Exact on every ray (7, was 6)** | `veil.forward-scatter`, Sunlit Mist, **`reliquary.shaft-beam` (new, 24/24)**, spherical cloud, hollow shell, breathing nebula, dual sovereign; enclosure ≤ 9.6×10⁻⁶, agreement with the converged sum ≤ 5.5×10⁻⁷ |
+| Partly exact | crescent, 3 of 9 rays; the rest are two different shells multiplied (elliptic) |
+| **Noise (13)** | `veil.outer`, nimbus, Sky-Island sea of clouds, Borealis ×5, Northern Veil ×4, noise-organic |
+| Elliptic (3) | the three tori (√ of a non-quadratic) |
+| Square root × wave (2) | gyroid labyrinth (a gyroid times a radial falloff), Sky-Island halo mist |
+| No density on the sampled rays (2) | `veil.pillar-rims`, `reliquary.iris-halo` |
+
+**Reading.** On this corpus the elementary closed form has nearly reached its limit: every remaining non-noise refusal is a genuine non-elementary integral (elliptic, or a Fresnel-type root times a wave). The next gains are therefore:
+- **Hybrid integration** (Prism decree, step 3). Noise is the numerical remainder, multiplied by smooth factors that are now exactly integrable. On the curtains, quadrature should then sample only the noise factor.
+- **Exact transmittance:** the same operation on σₜ.
+- **Elliptic integrals** by Carlson's symmetric forms (R_F, R_D, R_J) for the tori and the crescent. These are exact special functions with known, convergent duplication algorithms, so they would not be quadrature. This is a ⚑ for Zach: does "exact" admit a special function computed to machine precision by a convergent algorithm, as `asinh` already is?
+
+**Not changed.** No GPU path; the 96-sample image stays the definition (Zach, §6q).
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T13:17 PDT. Human origin: Zachary Zhang (the rung and the order; "integration operations first"). The diagnosis, the moment recurrence, the product rules and the census correction are this session's; "hybrid integration" is the Original Prism Sun's decree step 3.*
 
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 

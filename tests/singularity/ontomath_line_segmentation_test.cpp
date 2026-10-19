@@ -654,6 +654,68 @@ int main() {
         check(double(huge.lo) <= 1e300 && 1e300 <= double(huge.hi), "a constant beyond float range still encloses itself");
     }
 
+    // ---- Value-branch segmentation (2026-10-19): what integral() now holds ----
+    // Each against its analytic antiderivative, never against quadrature.
+    {
+        using TK = OntoMath::TransFactor::Kind;
+        auto scalar = [](ScalarForm f) {
+            auto n = std::make_unique<MathNode>();
+            n->op = Op::ScalarLeaf;
+            n->scalarForm = std::move(f);
+            return n;
+        };
+        auto integrate = [&](const MathNode& m, const Ray& ray, double s0, double s1, std::string* why) -> std::optional<double> {
+            const auto r = OntoMath::restrictAlgebraicToLine(m, false);
+            if (!r) { if (why) *why = "not admitted: " + r.refusal; return std::nullopt; }
+            OntoMath::LineAlgebraicEvaluator ev(*r.form, lineBindings(ray), true);
+            return ev.integral(r.form->roots[0], s0, s1, std::vector<int8_t>(r.form->switches.size(), 0), why);
+        };
+        auto close = [](std::optional<double> v, double want) { return v && std::abs(*v - want) <= 1e-12 * std::max(1.0, std::abs(want)); };
+        // ∫√(x²+1), ∫x√(x²+1), ∫x²√(x²+1) dx in closed form.
+        auto F0 = [](double x) { return 0.5 * (x * std::sqrt(x * x + 1) + std::asinh(x)); };
+        auto F1 = [](double x) { return std::pow(x * x + 1, 1.5) / 3.0; };
+        auto F2 = [](double x) { return (x * (2 * x * x + 1) * std::sqrt(x * x + 1) - std::asinh(x)) / 8.0; };
+
+        // (1 + x + x²)·|p| along y = 1: a polynomial times a square root.
+        auto poly = scalar(ScalarForm::constant(1).plus(ScalarForm::variable("x")).plus(ScalarForm::variable("x", 2.0)));
+        const auto radialPoly = node(Op::Scale, std::move(poly), node(Op::Length, leaf("p")));
+        std::string why;
+        const auto v1 = integrate(*radialPoly, {{-3, 1, 0}, {1, 0, 0}}, 0.0, 5.0, &why);
+        const double want1 = (F0(2) - F0(-3)) + (F1(2) - F1(-3)) + (F2(2) - F2(-3));
+        std::cout << "    ∫(1 + x + x²)|p| = " << (v1 ? *v1 : NAN) << " (closed form " << want1 << ")" << (why.empty() ? "" : " — " + why) << "\n";
+        check(close(v1, want1), "a polynomial times a square root integrates exactly (moment recurrence)");
+
+        // sin(x)·cos(2x) over [0, π] = −2/3 (product-to-sum).
+        const auto waves = node(Op::Scale, scalar(ScalarForm::transcendental(TK::Sin, "x")),
+                                scalar(ScalarForm::transcendental(TK::Cos, "x", 2.0)));
+        why.clear();
+        const auto v2 = integrate(*waves, {{0, 0, 0}, {1, 0, 0}}, 0.0, M_PI, &why);
+        check(close(v2, -2.0 / 3.0), "sin·cos integrates exactly by product-to-sum" + (why.empty() ? "" : " — " + why));
+
+        // clamp(10 + noise(p), 0, 1) is saturated: the noise beneath it is never read.
+        const auto saturated = node(Op::Clamp, node(Op::Add, num(10), node(Op::Noise, leaf("p"))), num(0), num(1));
+        why.clear();
+        const auto v3 = integrate(*saturated, {{0.3, 0.2, 0.1}, {1, 0, 0}}, 0.0, 5.0, &why);
+        check(close(v3, 5.0), "a saturated clamp integrates its bound without reading the noise beneath" + (why.empty() ? "" : " — " + why));
+
+        // min(|p|, 20 + noise(p)) picks |p| ≤ √5 throughout (with margin for the proved noise
+        // range over a 4-unit box, which is wider than ±1): the unchosen side holds noise.
+        const auto unchosen = node(Op::Union, node(Op::Length, leaf("p")), node(Op::Add, num(20), node(Op::Noise, leaf("p"))));
+        why.clear();
+        const auto v4 = integrate(*unchosen, {{-2, 1, 0}, {1, 0, 0}}, 0.0, 4.0, &why);
+        check(close(v4, F0(2) - F0(-2)), "min reads only its decided side (noise on the other is never integrated)" + (why.empty() ? "" : " — " + why));
+
+        // Honest refusals: two different roots (elliptic), a root times a wave.
+        const auto twoRoots = node(Op::Scale, node(Op::Length, leaf("p")), node(Op::Distance, leaf("p"), vec(1.2, 0, 0)));
+        why.clear();
+        const auto v5 = integrate(*twoRoots, {{-3, 1, 0}, {1, 0, 0}}, 0.0, 5.0, &why);
+        check(!v5 && why.find("elliptic") != std::string::npos, "two different square roots multiplied refuse as elliptic: " + why);
+        const auto rootWave = node(Op::Scale, node(Op::Length, leaf("p")), scalar(ScalarForm::transcendental(TK::Sin, "x")));
+        why.clear();
+        const auto v6 = integrate(*rootWave, {{-3, 1, 0}, {1, 0, 0}}, 0.0, 5.0, &why);
+        check(!v6 && why.find("square root times a wave") != std::string::npos, "a square root times a wave refuses: " + why);
+    }
+
     std::cout << "ontomath_line_segmentation_test: " << (g_checks - g_failures) << "/" << g_checks
               << " checks passed\n";
     return g_failures == 0 ? 0 : 1;

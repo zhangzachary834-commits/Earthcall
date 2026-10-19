@@ -654,6 +654,10 @@ int main() {
                         int exactRays = 0, rays = 0, slivers = 0;
                         double worstBound = 0.0, enclosureMiss = 0.0;
                         std::string lastWhy;
+                        // A definite piece's refusal is the medium's real limit; a root
+                        // sliver's (interval arithmetic cannot decide a switch a few
+                        // resolutions wide) is not, so it is reported only failing that.
+                        std::string definiteWhy;
                         double worstRel = 0.0;
                         std::string refusal;
                         std::mt19937 irng(4242u);
@@ -718,7 +722,7 @@ int main() {
                                     exact += 0.5 * hi;
                                     bound += 0.5 * hi;
                                     ++slivers;
-                                    if (!why.empty()) lastWhy = why;
+                                    if (!why.empty()) (piece.definite ? definiteWhy : lastWhy) = why;
                                     continue;
                                 }
                                 ok = false;
@@ -739,7 +743,8 @@ int main() {
                             // only when that enclosure is tight (root slivers, grazing zeros).
                             enclosureMiss = std::max(enclosureMiss, std::max(0.0, std::abs(exact - reference) - bound) / reference);
                             if (bound > 1e-4 * reference) {
-                                if (refusal.empty()) refusal = lastWhy.empty() ? "an undecided piece is not small" : lastWhy;
+                                if (refusal.empty())
+                                    refusal = !definiteWhy.empty() ? definiteWhy : lastWhy.empty() ? "an undecided piece is not small" : lastWhy;
                                 continue;
                             }
                             worstRel = std::max(worstRel, std::max(0.0, std::abs(exact - reference) - bound) / reference);
@@ -859,7 +864,7 @@ int main() {
                   << " admitted media integrate max(D, 0) along every ray in closed form; worst relative difference "
                   << integralWorst << " from the converged midpoint sum beyond a proved enclosure of at most "
                   << integralBoundWorst << "\n";
-        check(integralMedia >= 6, "the exact line integral covers the noise-free balls and shells on every ray");
+        check(integralMedia >= 7, "the exact line integral covers the noise-free balls, shells and the shaft beam on every ray");
         check(integralEnclosureMiss < 1e-6, "on every ray, closed form or not, the converged sum lies inside the proved enclosure");
         check(integralWorst < 1e-6, "every closed-form optical depth agrees with the converged sum (beyond its proved bound)");
         check(integralBoundWorst < 1e-4, "the proved enclosure around each closed form stays tight (under 1e-4 relative)");

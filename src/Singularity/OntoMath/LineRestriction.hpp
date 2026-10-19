@@ -387,16 +387,20 @@ public:
     // whole interval (a definite segmentLine piece): the integration operation
     // on the ray (2026-10-18; Zach: "lets enrich the ontomath integration
     // substrate"). The branch the signs select must reduce to
-    //   P(s) + Σ c·√Q(s) + Σ P_k(s)·g_k(α_k s + β_k),   g ∈ {sin, cos, exp},
-    // P, P_k polynomials and Q of degree ≤ 2 — every ball, ellipsoid, cylinder
-    // and abs shell restricted to a ray is of this form. Polynomials are
-    // integrated about the interval's midpoint (no cancellation against a far
-    // origin), √Q by its closed form (asinh / log / asin by the sign of its
-    // discriminant) and P·g by the tabular rule ScalarForm::antiderivative uses.
-    // Anything else answers nullopt with the reason, never an approximation:
-    // noise (no closed-form integral), an undecided branch, a root of a
-    // non-quadratic (a torus's nested norm), a radical times a non-constant,
-    // or Undefined. Exact-arithmetic semantics; not available in box mode.
+    //   P(s) + Σ R(s)·√Q(s) + Σ P_k(s)·g_k(α_k s + β_k),   g ∈ {sin, cos, exp},
+    // P, R, P_k polynomials and Q of degree ≤ 2 — every ball, ellipsoid,
+    // cylinder and abs shell restricted to a ray, times any polynomial falloff,
+    // and every product of waves (product-to-sum: a gyroid) is of this form.
+    // Polynomials are integrated about the interval's midpoint (no cancellation
+    // against a far origin), R·√Q by a moment recurrence on the closed form of
+    // √Q (asinh / log / asin by the sign of its discriminant), P·g by the
+    // tabular rule ScalarForm::antiderivative uses. Branch nodes read only the
+    // operand their decided branch selects (2026-10-19). Anything else answers
+    // nullopt with the reason, never an approximation: noise (no closed-form
+    // integral), an undecided branch, a root of a non-quadratic (a torus's
+    // nested norm), two different square roots multiplied (elliptic), a square
+    // root times a wave, exp times sin/cos, or Undefined. Exact-arithmetic
+    // semantics; not available in box mode.
     std::optional<double> integral(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs,
                                    std::string* why = nullptr) const;
     Interval switchDerivativeRange(std::size_t k, double s0, double s1, const std::vector<int8_t>& signs) const;

@@ -438,3 +438,11 @@ Zach: "Faithfulness to exact math should be the rule." A new witness, `webgpu_vo
 - **Fresh-bind equality:** 26 of 26 checkpoint images byte-equal to a fresh renderer's at the same pose; every fresh first frame lowered and built (live-counter control).
 
 **Reading:** on the M5, the Screen's ray artifact does not depend on the camera. Auto-mode measured verdicts are pose-keyed by design and not covered. **Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/m0-pose-witness-1.log`. Design: [§6s](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6s-movement-rung-m0-a-camera-move-rebinds-it-does-not-relower-2026-10-19-twentieth-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T11:55 PDT.
+
+## Value-branch segmentation — twenty-first pass (CPU only)
+
+- **Exact optical depth on every ray:** 7 of 28 admitted media (was 6). `reliquary.shaft-beam` becomes exact through polynomial × √Q.
+- **Corrected attribution:** Northern Veil, Borealis hero and Sky-Island refuse on noise or on root × wave, not on "branch flipping" as the eighteenth-pass entry implied.
+- `ontomath_line_segmentation_test` 70/70: six new analytic checks, all failing against the previous code.
+
+**Not run:** `ontomath_two_direction_witness_test` segfaults at `main` (null active Zone from the booted harness), independent of this diff. `sky_island_sanctuary_test` fails to link (missing WebGPU objects in its target). Neither touches the line algebra. Design: [§6t](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6t-value-branch-segmentation-every-piece-integrates-its-decided-branch-and-the-office-holds-more-products-2026-10-19-twenty-first-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T13:17 PDT.
