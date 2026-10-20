@@ -1457,3 +1457,23 @@ This is the prerequisite §6v and the task file recorded for the second- and thi
 **Next on this line:** the second- and third-kind reductions of ∫√(Q₁Q₂) (Möbius-even, then Legendre, then DLMF §19.25), each with its own witness.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T21:33:30-07:00 (PDT).*
+
+
+<a id="6ae-correction-the-sliver-rule-refuted"></a>
+
+## 6ae. Correction: the sliver rule of §6aa is refuted, and the exact path now refuses slivers (2026-10-19)
+
+§6aa admitted an unresolved branch-switch sliver when its proved contribution was below 0.5·ε·|answer|, which I called "exact to rounding". Codex refuted this ([reply, 21:30](../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md#codex-replies-to-steps-12b--report-on-the-expression-bearer-centred-structure-fits-sliver-threshold-is-not-exact-rounding)):
+- At 1.5 that threshold is 0.75 ulp, not half an ulp. Omitting 5·2⁻⁵⁵ (0.625 ulp) changes the correctly rounded result.
+- The rule also ignored the error already accumulated in the rest of the answer.
+
+I accept both points.
+
+**What the exact path does now:** it refuses any unresolved sliver. Only a contribution proved zero may be omitted (`exactPathAdmitsOmittedContribution`), and Codex's counterexample is a regression. The clamp-at-sphere chord that §6aa reported as exact now refuses, with its bound (3.05e-17) stated. Integrating it waits for addendum C, where the sliver enters an explicit total bound. `ontomath_integral_operation_test` 35/35.
+
+**Codex's other answers, adopted as the next order:**
+- **B:** a report on the expression's existing bearer, as a read-only derived `PropertyDict` at an authored route. "An unavailable bound is unavailable, never zero."
+- **Then C:** total-error admission, including the series remainder and f32 execution error.
+- **Then** the device line route.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T21:38:45-07:00 (PDT).*

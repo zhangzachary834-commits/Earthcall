@@ -191,8 +191,17 @@ int main() {
         const auto got = run(*ball, {}, &why);
         const double reference = 1.157446231052560720971848;
         std::cout << "    ball chord: " << (got ? std::to_string(*got) : "refused (" + why + ")") << "\n";
-        check(got && std::abs(*got - reference) <= kBound,
-              "a branched field (clamp at a sphere) is exact: proved pieces, slivers proved below rounding");
+        // The sphere's switch leaves an unresolved sliver: the exact path refuses
+        // rather than omitting it (Codex, 2026-10-19 21:30).
+        check(!got && why.find("omitting them is an approximation") != std::string::npos,
+              "a branched field whose switch leaves an unresolved sliver refuses in the exact path: " + why);
+        // Codex's counterexample to the refuted "below half an ulp" rule: at 1.5,
+        // 0.5·ε·|1.5| is 0.75 ulp, and omitting 5·2⁻⁵⁵ (0.625 ulp) changes the
+        // correctly rounded answer. No positive bound is admitted.
+        check(!OntoMath::exactPathAdmitsOmittedContribution(1.5, 5.0 * std::ldexp(1.0, -55)) &&
+                  OntoMath::exactPathAdmitsOmittedContribution(1.5, 0.0),
+              "an omitted contribution is admitted only when proved zero (1.5 / 0.625-ulp regression)");
+        (void)reference;
         // A JUMP at the switch (a Piecewise-like step) leaves a sliver whose
         // contribution is not below rounding: that refuses rather than approximating.
         auto step = node(Op::Clamp, node(Op::Scale, constant(1e12), node(Op::Sub, constant(1.0), node(Op::Dot, named("p"), named("p")))),
@@ -202,7 +211,7 @@ int main() {
         auto steep = integral("s", node(Op::SDF, std::move(step), std::move(q2)), constant(0.0), constant(4.0));
         const auto steepGot = run(*steep, {}, &why);
         std::cout << "    near-step chord: " << (steepGot ? std::to_string(*steepGot) : "refused (" + why + ")") << "\n";
-        check(!steepGot && why.find("above the rounding") != std::string::npos,
+        check(!steepGot && why.find("omitting them is an approximation") != std::string::npos,
               "a near-discontinuous switch whose sliver is visible refuses (never approximates)");
     }
 

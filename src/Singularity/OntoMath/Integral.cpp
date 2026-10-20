@@ -17,12 +17,14 @@
 //      segmented by f's value branches (|·|, min/max, clamp, √, Piecewise),
 //      and each proved piece is integrated through the same office.
 // Anything else answers nullopt with the reason: no quadrature, no sampling.
-// "Exact" means exact up to the rounding of the answer, the standard Carlson's
-// R_F is evaluated to. A branch switch the segmentation could not place exactly
-// leaves a sliver ~1e-9 wide. It is admitted only when its PROVED contribution
-// (width × proved sup |f|) is below half an ulp of the result. Anything larger
-// is an approximation, and approximations wait for an authored error contract
-// (the integration hierarchy, ONTOMATH_FRAMEWORK.md §6, levels 4–5).
+// A branch switch the segmentation could not place exactly leaves a sliver about
+// 1e-9 wide, and the exact path REFUSES it. Omitting a nonzero contribution is
+// an approximation, and approximations wait for an authored error contract
+// (the integration hierarchy, ONTOMATH_FRAMEWORK.md §6, levels 4–5). An earlier
+// rule here admitted slivers proved below 0.5·ε·|answer| as "exact to rounding".
+// Codex refuted it (2026-10-19 21:30): at 1.5 that threshold is 0.75 ulp, and an
+// omitted 5·2⁻⁵⁵ (0.625 ulp) changes the correctly rounded result; nor did it
+// count the error already in the rest of the answer.
 //
 // Nothing here names a camera, a medium, a pixel or a shader.
 // Claude Code · Claude Opus 5.5 · session f3af84cf-bfe3-429d-b417-2d533119f169 · 2026-10-19.
@@ -167,21 +169,23 @@ std::optional<double> integrateAlongLine(const MathNode& f, const AffineVector& 
         if (!v) return std::nullopt;
         total += *v;
     }
-    // Exact up to the rounding of the answer, the standard Carlson's R_F is
-    // evaluated to: the slivers' proved contribution must fall below half an
-    // ulp of the result, where double cannot see it. Anything larger is an
-    // approximation, and approximations wait for an authored error contract.
-    if (sliverBound > 0.5 * std::numeric_limits<double>::epsilon() * std::abs(total)) {
+    if (!exactPathAdmitsOmittedContribution(total, sliverBound)) {
         char bound[64];
-        std::snprintf(bound, sizeof(bound), "%.3g (answer %.17g)", sliverBound, total);
+        std::snprintf(bound, sizeof(bound), "%.3g (answer without them %.17g)", sliverBound, total);
         say(why, std::string("unresolved value-branch slivers could contribute up to ") + bound +
-                     ", above the rounding of the answer: not exact, and no error contract is authored");
+                     ": omitting them is an approximation, and no error contract is authored");
         return std::nullopt;
     }
     return lo <= hi ? total : -total;
 }
 
 } // namespace
+
+bool exactPathAdmitsOmittedContribution(double /*answer*/, double provedBound) {
+    // Only a contribution PROVED zero may be omitted. A positive bound refuses
+    // however small, until the error contract (addendum C) carries it in a total.
+    return provedBound == 0.0;
+}
 
 std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std::string, PropertyValue>& vars,
                                        const Singular* subject, std::string* why) {

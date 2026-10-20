@@ -790,6 +790,10 @@ std::optional<ScalarForm> substitute(const ScalarForm& form, const std::string& 
 // (Integral.cpp). MathNode::evaluate answers through this.
 std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std::string, PropertyValue>& vars,
                                        const Singular* subject, std::string* why = nullptr);
+// The exact path's rule for a contribution it would leave out (an unresolved
+// sliver): admitted only when proved zero. Exposed so the refuted "below half an
+// ulp" heuristic stays refuted by a regression (Codex's 1.5 / 5·2⁻⁵⁵ case).
+bool exactPathAdmitsOmittedContribution(double answer, double provedBound);
 
 // Σ c_k var^k as a form (coefficients low to high), and the Taylor shift: the
 // coefficients of P(m + u) from those of P(x).
