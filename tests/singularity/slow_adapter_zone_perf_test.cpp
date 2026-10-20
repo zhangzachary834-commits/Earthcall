@@ -72,16 +72,85 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Point SaveSystem to the save root containing worlds/ without copying 1.6GB saves tree on every probe.
-    const auto absWorldPath = std::filesystem::absolute(world);
-    if (absWorldPath.parent_path().filename() == "worlds" &&
-        absWorldPath.parent_path().parent_path().filename() == "saves") {
-        SaveSystem::setSaveRoot(absWorldPath.parent_path().parent_path().string());
-    }
+    struct PerfScratchGuard {
+        std::filesystem::path scratchPath;
+        std::string prevSaveRoot;
+
+        PerfScratchGuard(const std::string& worldPath) {
+            prevSaveRoot = SaveSystem::saveRoot();
+            const auto absWorldPath = std::filesystem::absolute(worldPath);
+            const auto realSavesRoot = absWorldPath.parent_path().parent_path();
+
+            scratchPath = std::filesystem::temp_directory_path() /
+                ("earthcall-perf-scratch-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+
+            std::error_code ec;
+            std::filesystem::create_directories(scratchPath / "worlds", ec);
+            std::filesystem::create_directories(scratchPath / "zones", ec);
+            std::filesystem::create_directories(scratchPath / "homes", ec);
+            std::filesystem::create_directories(scratchPath / "laws", ec);
+
+            std::filesystem::copy_file(absWorldPath, scratchPath / "worlds" / absWorldPath.filename(),
+                                       std::filesystem::copy_options::overwrite_existing, ec);
+
+            std::ifstream worldFile(absWorldPath);
+            if (worldFile.is_open()) {
+                try {
+                    nlohmann::json wj;
+                    worldFile >> wj;
+                    std::vector<std::string> zoneIds;
+                    std::string currentId = wj.value("currentZoneId", "");
+                    if (!currentId.empty()) zoneIds.push_back(currentId);
+
+                    if (wj.contains("zoneRefs") && wj["zoneRefs"].is_array()) {
+                        for (const auto& zr : wj["zoneRefs"]) {
+                            std::string refId = zr.is_string() ? zr.get<std::string>() : zr.value("identifier", "");
+                            if (!refId.empty() && std::find(zoneIds.begin(), zoneIds.end(), refId) == zoneIds.end()) {
+                                zoneIds.push_back(refId);
+                            }
+                        }
+                    }
+
+                    for (const auto& zid : zoneIds) {
+                        if (std::filesystem::exists(realSavesRoot / "zones" / zid)) {
+                            std::filesystem::copy(realSavesRoot / "zones" / zid, scratchPath / "zones" / zid,
+                                                  std::filesystem::copy_options::recursive, ec);
+                        }
+                        if (std::filesystem::exists(realSavesRoot / "homes" / zid)) {
+                            std::filesystem::copy(realSavesRoot / "homes" / zid, scratchPath / "homes" / zid,
+                                                  std::filesystem::copy_options::recursive, ec);
+                        }
+                    }
+                } catch (...) {}
+            }
+
+            if (std::filesystem::exists(realSavesRoot / "laws")) {
+                std::filesystem::copy(realSavesRoot / "laws", scratchPath / "laws",
+                                      std::filesystem::copy_options::recursive, ec);
+            }
+
+            SaveSystem::setSaveRoot(scratchPath.string());
+        }
+
+        std::string isolatedWorldPath(const std::string& originalWorldPath) const {
+            const auto absWorldPath = std::filesystem::absolute(originalWorldPath);
+            return (scratchPath / "worlds" / absWorldPath.filename()).string();
+        }
+
+        ~PerfScratchGuard() {
+            SaveSystem::setSaveRoot(prevSaveRoot);
+            std::error_code ec;
+            std::filesystem::remove_all(scratchPath, ec);
+        }
+    };
+
+    PerfScratchGuard scratchGuard(world);
+    const std::string isolatedWorld = scratchGuard.isolatedWorldPath(world);
+
     TestSupport::BootedEngineHarness h("Player", "humanoid", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld(isolatedWorld);
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
