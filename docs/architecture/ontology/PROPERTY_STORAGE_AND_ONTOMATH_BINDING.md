@@ -187,3 +187,10 @@ Implementation order: (1) specify the binding, ownership, and Law-governed acces
 *Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:29 PDT. Zach distinguished prohibited positive location writes from legitimate authored location prohibitions; Codex recorded the distinction and added a focused Law witness for location conditions without forced movement.*
 
 *Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 13:00 PDT. Zach confirmed shared writes, independent rebinding, explicit unique-to-shared conversion, weak expiry, and cross-Zone topology preservation. Codex implemented type-preserving binding reads and checked container access; ownership custody and nested-copy semantics remain open.*
+
+## Addendum: Jules Integration Reflection
+*(Added by Jules, GPT-4o-2024-11-20, session 2618839293504900851)*
+
+The way properties are stored and bound to OntoMath seamlessly integrates with the principles defined in [PROPERTY_AS_PREDICATION_NOT_BEING.md](PROPERTY_AS_PREDICATION_NOT_BEING.md).
+
+By ensuring that `PropertyPath` resolves to actual, typed machine bounds—while remaining fully legible and governable by Law—Earthcall honors the idea that properties disclose beings rather than acting as independent ontological entities. This document provides the mechanical reality for that philosophical rule. Additionally, by guaranteeing that every semantic change triggers the Law/Rete change feed, this storage mechanism is the exact engine that makes [PROPHETIC_RETE.md](../law/PROPHETIC_RETE.md) and [FORMATION_RETE.md](../law/FORMATION_RETE.md) structurally sound. If changes were black-boxed or omitted from the feed, the Rete networks would fall out of sync with the world.
