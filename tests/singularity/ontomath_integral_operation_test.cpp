@@ -488,14 +488,48 @@ int main() {
         const double want = eps * (1.0 - std::exp(-k * S)) / k;
         std::printf("    homogeneous transport: %.17g (want %.17g)\n", L.value_or(NAN), want);
         check(L && std::abs(*L - want) <= 1e-15 * want, "∫ exp(−∫ k) ε, written with Let, integrates exactly: ε(1 − e^(−kS))/k");
-        // An approximate inner value under an outer Integral: no composed bound yet, so it refuses.
-        auto noisyDepth = integralTol("u", node(Op::SDF, node(Op::Noise, named("p")),
-                                                node(Op::Add, node(Op::VectorConstruct, constant(0.3), constant(0.1), constant(0.2)),
-                                                     node(Op::Scale, named("u"), node(Op::VectorConstruct, constant(1.0), constant(0.5), constant(0.25))))),
-                                      constant(0.0), named("s"), constant(5e-2));
-        auto noisyRadiance = integralTol("s", let("tau", std::move(noisyDepth), leaf(trans(K::Exp, "tau", -1.0))), constant(0.0), constant(1.0), constant(1e-1));
-        const auto nL = run(*noisyRadiance, {}, &why);
-        check(!nL, "an outer Integral over an approximate inner one refuses, legibly: " + why);
+        // Heterogeneous transport (plan §6ao): L = ∫₀¹ exp(−∫₀ˢ σ(u) du)·ε ds, σ = noise(q(u)) + 4
+        // along a line, the inner integral approximate (±2e-2), the outer through the
+        // sampled-body route: bounded samples, a derivative enclosure per panel
+        // (τ′ = σ by the fundamental theorem), first-order radius.
+        auto rayAt = [](const char* var) {
+            return node(Op::Add, node(Op::VectorConstruct, constant(0.3), constant(0.1), constant(0.2)),
+                        node(Op::Scale, named(var), node(Op::VectorConstruct, constant(1.0), constant(0.5), constant(0.25))));
+        };
+        auto sigma = node(Op::SDF, node(Op::Add, node(Op::Noise, named("p")), constant(4.0)), rayAt("u"));
+        auto noisyDepth = integralTol("u", std::move(sigma), constant(0.0), named("s"), constant(2e-2));
+        auto noisyRadiance = integralTol("s", let("tau", std::move(noisyDepth), leaf(trans(K::Exp, "tau", -1.0).scaled(1.3))),
+                                         constant(0.0), constant(1.0), constant(1e-1));
+        // Independent reference: cumulative long-double Simpson of τ on a fine grid, then of L.
+        auto noiseNode = node(Op::Noise, named("p"));
+        auto sig = [&](long double u) {
+            const auto v = noiseNode->evaluate({{"p", PropertyValue(glm::vec3(float(0.3 + u), float(0.1 + 0.5 * u), float(0.2 + 0.25 * u)))}});
+            double d = NAN; if (v) propertyValueToNumber(*v, d); return (long double)d + 4.0L;
+        };
+        const int M = 20000;   // even
+        std::vector<long double> tau(M + 1, 0.0L);
+        const long double hh = 1.0L / M;
+        for (int i = 2; i <= M; i += 2) tau[i] = tau[i - 2] + hh / 3.0L * (sig((i - 2) * hh) + 4.0L * sig((i - 1) * hh) + sig(i * hh));
+        for (int i = 1; i < M; i += 2) tau[i] = tau[i - 1] + hh / 24.0L * (9.0L * sig((i - 1) * hh) + 19.0L * sig(i * hh) - 5.0L * sig((i + 1) * hh) + sig((i + 2) * hh));
+        long double Lsum = 0.0L;
+        for (int i = 0; i <= M; ++i) Lsum += (i == 0 || i == M ? 1.0L : (i % 2 ? 4.0L : 2.0L)) * 1.3L * std::exp(-tau[i]);
+        const double Lref = double(Lsum * hh / 3.0L);
+        OntoMath::IntegralBounds tb;
+        const auto t0 = std::chrono::steady_clock::now();
+        const auto Lv = OntoMath::evaluateIntegral(*noisyRadiance, {}, nullptr, &why, &tb);
+        const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+        std::printf("    heterogeneous transport: %.10g (reference %.10g, |error| %.3g), mathematical %.3g, execution %.3g, %llu samples, %.0f ms, %s\n",
+                    Lv.value_or(NAN), Lref, Lv ? std::abs(*Lv - Lref) : NAN, tb.mathematical, tb.execution,
+                    (unsigned long long)tb.samples, ms, Lv ? tb.route.c_str() : why.c_str());
+        check(Lv && tb.route.find("sampled body") == 0 && tb.total() <= 1e-1 && std::abs(*Lv - Lref) <= tb.total(),
+              "∫ exp(−∫ (noise + 4)) · ε through noise is admitted at ±0.1, the independent reference inside its bound");
+        // The same at a tolerance its first-order radius cannot reach refuses, naming its best.
+        auto tightRadiance = integralTol("s", let("tau", integralTol("u", node(Op::SDF, node(Op::Add, node(Op::Noise, named("p")), constant(4.0)), rayAt("u")),
+                                                               constant(0.0), named("s"), constant(2e-2)),
+                                                  leaf(trans(K::Exp, "tau", -1.0).scaled(1.3))),
+                                         constant(0.0), constant(1.0), constant(1e-3));
+        check(!run(*tightRadiance, {}, &why) && why.find("exceeds the tolerance") != std::string::npos,
+              "at ±1e-3 (below the inner integrals' own bounds) it refuses, naming its best: " + why.substr(0, 160));
     }
 
     std::cout << "ontomath_integral_operation_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";

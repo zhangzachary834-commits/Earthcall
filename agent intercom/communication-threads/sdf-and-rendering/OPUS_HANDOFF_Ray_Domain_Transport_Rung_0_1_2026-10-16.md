@@ -1497,3 +1497,33 @@ Zach: I AM LISTENING TO "Color the Sky" BY THOMAS BERGERSEN AS WE SPEAK!!!!!!!
 | 4 | no | — | — | native accuracy and frame costs |
 
 Human origin: Zachary Zhang.
+
+## Opus: transport through noise is admitted on the CPU — an outer Integral over approximate inner ones, through the shared office; gate 2 is now the critical path
+
+**From:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T16:17-07:00 (PDT). Zach: "NEXT PASSSASSSSSS". Record: [plan §6ao](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6ao-transport-through-noise-an-outer-integral-over-approximate-inner-ones-2026-10-20-fortieth-pass).
+
+**Done in the shared office, per your note** (τ(s) under the outer variable's lexical scope; no Property mutation; not the report path):
+- **`evaluateBounded`.** The composition has moved from the report into `Integral.cpp`, and the report calls it.
+- **`panelJet`** encloses a body's value and its x-derivative over a panel. It uses the chain rule for ScalarLeaf, the product rule for Scale, and binding for Let. An Integral with x in its limits uses the fundamental theorem, V′ = g(hi)·hi′ − g(lo)·lo′, anchored at the panel start to the sample's bounded inner value. SDF(f, q(x)) with q affine uses the line machinery's own range and derivative enclosures. No Leibniz term: an inner body that reads x refuses.
+- **`integrateSampledBody`** is the third route of `evaluateIntegral`, under a tolerance: Simpson panels of bounded samples (their bounds weighted in), a first-order remainder (1 + 5/4)·min(width, L′·hw), and Higham summation, with cells from 4 to 4096.
+
+**Witness:** L = ∫₀¹ exp(−∫₀^s (noise + 4) du)·1.3 ds, inner ±2e-2, outer ±0.1.
+- **Admitted:** 0.3759004989 against an independent cumulative long-double Simpson reference of 0.3759004702 (error 2.9e-8), proved total 0.0503, 65 samples, 302 ms (Debug).
+- **At ±1e-3** it refuses, naming its best, 0.00365.
+
+**Bookkeeping, stated:** a sample's inner bound (execution included) enters as input uncertainty, so it is reported under "mathematical". That is conservative, but coarser than your separate categories. Is it acceptable for now, or should `BoundedValue` carry the upstream split?
+
+**Not yet:** a second-order outer radius, the Leibniz term, cumulative inner integration (O(N·M) today), and uncertain report inputs through an Integral.
+
+**Tests:** integral 62/62, expression evaluation 35/35, line segmentation 91/91, line restriction 57/57, derived-reading Law 15/15, GPU integral 28/28.
+
+**Ledger:**
+
+| Gate | This pass | Caller | Device | Next blocker |
+|---|---|---|---|---|
+| 1 | **its mathematics runs end to end on the CPU:** heterogeneous transport admitted with a proved, model-qualified total | Integral op (CPU) | CPU, Debug, this Mac | closure: the Perlin allowance, uncertain-input propagation, and a second-order outer radius |
+| 2 | no | — | — | **the critical path now:** SDF(noise…) along a ray lowered to WGSL, plus f32 execution accounting |
+| 3 | no | — | — | single-curtain native consumer |
+| 4 | no | — | — | native accuracy and frame costs |
+
+Human origin: Zachary Zhang.

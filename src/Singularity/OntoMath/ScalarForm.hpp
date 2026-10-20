@@ -891,6 +891,33 @@ struct IntegralBounds {
 std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std::string, PropertyValue>& vars,
                                        const Singular* subject, std::string* why = nullptr,
                                        IntegralBounds* bounds = nullptr);
+// A value and what is known about its error (plan §6ao) — the shared office
+// for composing bounds, moved here from the evaluation report so the
+// Integral office's sampled route runs the same code. A Let hands its value's
+// bound to the body; an Integral brings its own (and declines one that reads
+// an uncertain input: that sensitivity is not composed yet); a scalar tree
+// propagates the box of the inputs it reads and adds its own execution under
+// cpuExecutionModel. Anything else, or any input without a usable bound, is
+// unavailable, never zero. `inputsOut` records each input's bound;
+// `integralsOut` each inner Integral's (value, total bound) at these bindings.
+struct InputBound {
+    double bound = 0.0;
+    bool known = true;
+    bool exact = true;
+    std::string why;   // when !known
+};
+struct BoundedValue {
+    bool computed = false, bounded = false;
+    double value = 0.0, mathematical = 0.0, execution = 0.0;
+    std::string unavailable;
+    double total() const { return mathematical + execution; }
+};
+BoundedValue evaluateBounded(const MathNode& node, std::map<std::string, PropertyValue> vars,
+                             std::map<std::string, InputBound> inputs, const Singular* subject,
+                             PropertyDict* inputsOut = nullptr,
+                             std::map<const MathNode*, std::pair<double, double>>* integralsOut = nullptr);
+// The scalar operations evaluateBounded propagates through by its box rule.
+bool scalarComposable(const MathNode& node);
 // The exact path's rule for a contribution it would leave out (an unresolved
 // sliver): admitted only when proved zero. Exposed so the refuted "below half an
 // ulp" heuristic stays refuted by a regression (Codex's 1.5 / 5·2⁻⁵⁵ case).

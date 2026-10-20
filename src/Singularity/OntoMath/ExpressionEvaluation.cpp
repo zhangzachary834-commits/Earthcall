@@ -102,21 +102,6 @@ bool readBinding(Singular& bearer, const std::string& path, PropertyValue& value
     return lawGetValue(bearer, PropertyPath::parse(path), value);
 }
 
-// The scalar operations a composite bound is propagated through: no Integral
-// (a nested approximate integral stays unavailable), nothing vector-valued
-// (the CPU carries vectors in binary32, which this model does not price).
-bool scalarComposable(const MathNode& n) {
-    using Op = MathNode::Op;
-    switch (n.op) {
-        case Op::ScalarLeaf: case Op::ValueLeaf: case Op::Add: case Op::Sub: case Op::Div:
-        case Op::Pow: case Op::Abs: case Op::Clamp: case Op::Sqrt: break;
-        default: return false;
-    }
-    for (const auto& c : n.children)
-        if (!c || !scalarComposable(*c)) return false;
-    return true;
-}
-
 // Re-entering a report already being computed on this thread (a binding that
 // reads its own evaluation, directly or through others) would recurse forever.
 thread_local std::vector<std::pair<const Singular*, std::string>> t_reportsInProgress;
@@ -129,108 +114,6 @@ struct ReportGuard {
     }
     ~ReportGuard() { if (!cyclic) t_reportsInProgress.pop_back(); }
 };
-
-// A composite's bounds (plan §6am/§6an). A Let evaluates its value with its
-// bound and hands both to the body as one more input; an Integral brings its
-// own bounds; a scalar tree propagates its inputs' box and adds its own
-// execution. Anything else, or any input without a bound, is unavailable.
-struct Composite {
-    bool computed = false, bounded = false;
-    double value = 0.0, mathematical = 0.0, execution = 0.0;
-    std::string unavailable;
-};
-Composite compose(const MathNode& n, std::map<std::string, PropertyValue> vars,
-                  std::map<std::string, InputUncertainty> unc, Singular& bearer, PropertyDict& inputs) {
-    Composite out;
-    if (n.op == MathNode::Op::Let) {
-        if (n.children.size() != 2 || !n.children[0] || !n.children[1]) return out;
-        const Composite value = compose(*n.children[0], vars, unc, bearer, inputs);
-        if (!value.computed) return value;
-        vars[n.variableName] = value.value;
-        InputUncertainty u;
-        u.exact = false;
-        u.known = value.bounded;
-        u.bound = value.bounded ? value.mathematical + value.execution : 0.0;
-        unc[n.variableName] = u;
-        inputs.elements[n.variableName] = value.bounded ? PropertyValue(u.bound) : PropertyValue(std::string("unavailable"));
-        Composite body = compose(*n.children[1], vars, unc, bearer, inputs);
-        if (body.computed && !value.bounded && body.unavailable.empty())
-            body.unavailable = "the Let value '" + n.variableName + "' carries no bound" +
-                               (value.unavailable.empty() ? std::string() : " (" + value.unavailable + ")");
-        if (!value.bounded) body.bounded = false;
-        return body;
-    }
-    if (n.op == MathNode::Op::Integral) {
-        IntegralBounds b;
-        std::string why;
-        const auto v = evaluateIntegral(n, vars, &bearer, &why, &b);
-        if (!v) return out;
-        out.computed = out.bounded = true;
-        out.value = *v;
-        out.mathematical = b.mathematical;
-        out.execution = b.execution;
-        // An Integral that READS an uncertain input took it as exact: its
-        // sensitivity to that input is not composed yet.
-        std::set<std::string> deps;
-        n.collectDependencies(deps);
-        for (const auto& name : deps) {
-            const auto it = unc.find(name);
-            if (it != unc.end() && !it->second.exact) {
-                out.bounded = false;
-                out.unavailable = "an Integral reading the uncertain input '" + name + "' (not composed yet)";
-            }
-        }
-        return out;
-    }
-    const auto v = n.evaluate(vars, &bearer);
-    double number = 0.0;
-    if (!v || !propertyValueToNumber(*v, number)) return out;
-    out.computed = true;
-    out.value = number;
-    if (!scalarComposable(n)) {
-        out.unavailable = std::string(mathOpName(n.op)) + " does not compose bounds yet";
-        return out;
-    }
-    std::map<std::string, double> magnitudes;
-    SignedRanges signedRanges;
-    std::map<std::string, MathNode::RangeValue> box;
-    bool uncertain = false;
-    std::set<std::string> deps;
-    n.collectDependencies(deps);
-    for (const auto& [name, value] : vars) {
-        if (!deps.count(name)) continue;   // only what this subtree reads
-        double x = 0.0;
-        if (!propertyValueToNumber(value, x) || !std::isfinite(x)) { out.unavailable = "the input '" + name + "' is not a finite scalar"; return out; }
-        const auto it = unc.find(name);
-        const InputUncertainty u = it == unc.end() ? InputUncertainty{} : it->second;
-        if (!u.known) { out.unavailable = "the input '" + name + "' carries no usable bound (" + u.why + ")"; return out; }
-        if (!inputs.elements.count(name))
-            inputs.elements[name] = u.exact ? PropertyValue(std::string("exact")) : PropertyValue(u.bound);
-        uncertain = uncertain || u.bound > 0.0;
-        magnitudes[name] = std::abs(x) + u.bound;
-        signedRanges[name] = {x - u.bound, x + u.bound};
-        // The box, rounded outward into the float interval arithmetic.
-        float lo = static_cast<float>(x - u.bound), hi = static_cast<float>(x + u.bound);
-        if (double(lo) > x - u.bound) lo = std::nextafter(lo, -INFINITY);
-        if (double(hi) < x + u.bound) hi = std::nextafter(hi, INFINITY);
-        box[name] = MathNode::RangeValue::makeScalar(Interval(std::nextafter(lo, -INFINITY), std::nextafter(hi, INFINITY)));
-    }
-    const auto exec = executionBound(n, magnitudes, cpuExecutionModel(), -1, kAmbientPointVar, &signedRanges);
-    if (!exec || !std::isfinite(exec->slack)) { out.unavailable = "the composite's execution could not be bounded"; return out; }
-    out.execution = exec->slack;
-    if (uncertain) {
-        const auto range = n.evalRange(box);
-        if (!range || range->kind != ValueKind::Scalar || !range->scalar.bounded()) {
-            out.unavailable = "the composite's range over its inputs could not be bounded";
-            return out;
-        }
-        // |f(x_true) − f(x_used)| ≤ max(hi − f(x_used), f(x_used) − lo), and the
-        // computed value is within the execution slack of f(x_used).
-        out.mathematical = std::max(double(range->scalar.hi) - number, number - double(range->scalar.lo)) + exec->slack;
-    }
-    out.bounded = true;
-    return out;
-}
 
 // A copy through the typed codec, so the report never shares canonical storage.
 PropertyValue detached(const PropertyValue& v) {
@@ -356,7 +239,9 @@ std::shared_ptr<PropertyDict> evaluationReport(Singular& bearer, const std::stri
              (pieces[0].mathNode->op == MathNode::Op::Let || scalarComposable(*pieces[0].mathNode))) {
         r["route"] = std::string("composition");
         auto inputs = std::make_shared<PropertyDict>();
-        const Composite c = compose(*pieces[0].mathNode, vars, uncertainty, bearer, *inputs);
+        std::map<std::string, InputBound> bounds;
+        for (const auto& [name, u] : uncertainty) bounds[name] = InputBound{u.bound, u.known, u.exact, u.why};
+        const BoundedValue c = evaluateBounded(*pieces[0].mathNode, vars, bounds, &bearer, inputs.get());
         r["inputBounds"] = inputs;
         auto lineage = std::make_shared<PropertyDict>();
         for (const auto& [name, u] : uncertainty)

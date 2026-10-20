@@ -36,6 +36,9 @@
 #include <cmath>
 #include <cstdio>
 #include <limits>
+#include <map>
+#include <memory>
+#include <set>
 #include <glm/glm.hpp>
 
 namespace OntoMath {
@@ -245,12 +248,401 @@ std::optional<double> integrateAlongLine(const MathNode& f, const AffineVector& 
     return std::nullopt;
 }
 
+// ---- The sampled-body route (plan §6ao) ------------------------------------
+// ∫ body dx where the body holds what no closed form or line segmentation
+// integrates — transport's exp(−∫₀ˣ σ) · ε(x), say. Each sample is a BOUNDED
+// value (evaluateBounded: inner integrals bring their own bounds); each panel's
+// remainder is bounded by an enclosure of the body's derivative in x.
+
+Interval outwardInterval(double lo, double hi) {
+    float l = static_cast<float>(lo), h = static_cast<float>(hi);
+    if (double(l) > lo) l = std::nextafter(l, -INFINITY);
+    if (double(h) < hi) h = std::nextafter(h, INFINITY);
+    return Interval(l, h);
+}
+double magnitudeOf(const Interval& i) { return std::max(std::abs(double(i.lo)), std::abs(double(i.hi))); }
+
+struct PanelJet { Interval value, derivative; };   // enclosures over x ∈ [a, b]
+
+struct CachedLine {
+    LineAlgebraicRestriction restriction;
+    std::unique_ptr<LineAlgebraicEvaluator> evaluator;
+};
+
+struct JetContext {
+    std::string x;
+    double a = 0.0, b = 0.0;
+    const std::map<std::string, PropertyValue>* constants = nullptr;   // enclosing scope, exact
+    std::map<std::string, double> numeric;
+    const Singular* subject = nullptr;
+    // Inner Integrals' bounded values at x = a (from the sample there): anchors.
+    const std::map<const MathNode*, std::pair<double, double>>* anchors = nullptr;
+    std::map<const MathNode*, std::unique_ptr<CachedLine>>* lines = nullptr;
+};
+
+void scalarVariables(const ScalarForm& f, std::set<std::string>& out) {
+    for (const auto& t : f.terms) {
+        for (const auto& [v, e] : t.factors) out.insert(v);
+        for (const auto& tf : t.trans) out.insert(tf.variable);
+    }
+}
+
+std::optional<PanelJet> panelJet(const MathNode& n, const std::map<std::string, PanelJet>& env, JetContext& c,
+                                 std::string* why) {
+    using Op = MathNode::Op;
+    auto child = [&](std::size_t i) -> std::optional<PanelJet> {
+        if (i >= n.children.size() || !n.children[i]) { say(why, std::string(mathOpName(n.op)) + " is missing a child"); return std::nullopt; }
+        return panelJet(*n.children[i], env, c, why);
+    };
+    auto scalarConstant = [&](const std::string& name) -> std::optional<double> {
+        if (!c.constants) return std::nullopt;
+        const auto it = c.constants->find(name);
+        double d = 0.0;
+        if (it == c.constants->end() || !propertyValueToNumber(it->second, d) || !std::isfinite(d)) return std::nullopt;
+        return d;
+    };
+    switch (n.op) {
+        case Op::ScalarLeaf: {
+            std::set<std::string> names;
+            scalarVariables(n.scalarForm, names);
+            std::map<std::string, Interval> ranges;
+            for (const auto& name : names) {
+                if (const auto it = env.find(name); it != env.end()) ranges[name] = it->second.value;
+                else if (const auto k = scalarConstant(name)) ranges[name] = outwardInterval(*k, *k);
+                else { say(why, "'" + name + "' has no value on the panel"); return std::nullopt; }
+            }
+            PanelJet j{n.scalarForm.evalRange(ranges), Interval(0.0f)};
+            for (const auto& name : names) {
+                const auto it = env.find(name);
+                if (it == env.end() || it->second.derivative.exactZero()) continue;
+                j.derivative = j.derivative + n.scalarForm.derivative(name).evalRange(ranges) * it->second.derivative;
+            }
+            return j;
+        }
+        case Op::ValueLeaf: {
+            if (const auto it = env.find(n.variableName); it != env.end()) return it->second;
+            if (const auto k = scalarConstant(n.variableName)) return PanelJet{outwardInterval(*k, *k), Interval(0.0f)};
+            say(why, "'" + n.variableName + "' is not a scalar with a value on the panel");
+            return std::nullopt;
+        }
+        case Op::Add: case Op::Sub: {
+            const auto l = child(0);
+            const auto r = l ? child(1) : std::nullopt;
+            if (!r) return std::nullopt;
+            return n.op == Op::Add ? PanelJet{l->value + r->value, l->derivative + r->derivative}
+                                   : PanelJet{l->value - r->value, l->derivative - r->derivative};
+        }
+        case Op::Scale: {
+            const auto l = child(0);
+            const auto r = l ? child(1) : std::nullopt;
+            if (!r) return std::nullopt;
+            return PanelJet{l->value * r->value, l->derivative * r->value + l->value * r->derivative};
+        }
+        case Op::Let: {
+            const auto value = child(0);
+            if (!value || n.children.size() != 2 || !n.children[1]) return std::nullopt;
+            auto inner = env;
+            inner[n.variableName] = *value;
+            return panelJet(*n.children[1], inner, c, why);
+        }
+        case Op::Integral: {
+            // V(x) = ∫_{lo(x)}^{hi(x)} g(u) du, g not depending on x (no Leibniz
+            // term yet): V′ = g(hi)·hi′ − g(lo)·lo′, the fundamental theorem.
+            if (n.children.size() < 3 || !n.children[0] || !n.children[1] || !n.children[2]) return std::nullopt;
+            const MathNode& g = *n.children[0];
+            std::set<std::string> gDeps;
+            g.collectDependencies(gDeps);
+            gDeps.erase(n.variableName);
+            for (const auto& d : gDeps)
+                if (d == c.x || env.count(d)) { say(why, "an inner Integral whose body reads '" + d + "' (needs a Leibniz term)"); return std::nullopt; }
+            const auto lo = child(1);
+            const auto hi = lo ? child(2) : std::nullopt;
+            if (!hi) return std::nullopt;
+            auto gRange = [&](const Interval& U) -> std::optional<Interval> {
+                if (!U.bounded()) return std::nullopt;
+                JetContext inner = c;
+                inner.x = n.variableName;
+                inner.a = double(U.lo);
+                inner.b = double(U.hi);
+                inner.anchors = nullptr;
+                std::map<std::string, PanelJet> e;
+                e[n.variableName] = PanelJet{U, Interval(1.0f)};
+                const auto j = panelJet(g, e, inner, why);
+                if (!j || !j->value.bounded()) return std::nullopt;
+                return j->value;
+            };
+            PanelJet out;
+            // The limits at x = a, where the anchor (if any) was taken.
+            std::map<std::string, PropertyValue> atA = c.constants ? *c.constants : std::map<std::string, PropertyValue>{};
+            atA[c.x] = c.a;
+            const auto loA = n.children[1]->evaluate(atA, c.subject);
+            const auto hiA = n.children[2]->evaluate(atA, c.subject);
+            double la = 0.0, ha = 0.0;
+            const bool limitsAtA = loA && hiA && propertyValueToNumber(*loA, la) && propertyValueToNumber(*hiA, ha);
+            const std::pair<double, double>* anchor = nullptr;
+            if (c.anchors) {
+                const auto it = c.anchors->find(&n);
+                if (it != c.anchors->end()) anchor = &it->second;
+            }
+            if (anchor && limitsAtA) {
+                // V(x) = V(a) + ∫_{hi(a)}^{hi(x)} g − ∫_{lo(a)}^{lo(x)} g.
+                const Interval hiHull = outwardInterval(ha, ha).joined(hi->value);
+                const Interval loHull = outwardInterval(la, la).joined(lo->value);
+                const auto gh = gRange(hiHull);
+                const auto gl = gh ? gRange(loHull) : std::nullopt;
+                if (!gl) { say(why, "the inner Integral's body has no range on the panel"); return std::nullopt; }
+                const Interval base = outwardInterval(anchor->first - anchor->second, anchor->first + anchor->second);
+                out.value = base + (hi->value - outwardInterval(ha, ha)) * *gh - (lo->value - outwardInterval(la, la)) * *gl;
+                out.derivative = *gh * hi->derivative - *gl * lo->derivative;
+            } else {
+                const auto gs = gRange(lo->value.joined(hi->value));
+                const auto gh = gs ? gRange(hi->value) : std::nullopt;
+                const auto gl = gh ? gRange(lo->value) : std::nullopt;
+                if (!gl) { say(why, "the inner Integral's body has no range on the panel"); return std::nullopt; }
+                out.value = (hi->value - lo->value) * *gs;
+                out.derivative = *gh * hi->derivative - *gl * lo->derivative;
+            }
+            return out;
+        }
+        case Op::SDF: {
+            // f(q(x)) with q affine in x: the line machinery's own range and
+            // derivative enclosures (noise, polynomials, branches hulled).
+            if (n.children.size() != 2 || !n.children[0] || !n.children[1] || !c.lines) return std::nullopt;
+            auto& slot = (*c.lines)[&n];
+            if (!slot) {
+                std::map<std::string, PropertyValue> outer = c.constants ? *c.constants : std::map<std::string, PropertyValue>{};
+                outer.erase(c.x);
+                const auto q = affineVector(*n.children[1], c.x, outer, c.numeric, c.subject, why);
+                if (!q) return std::nullopt;
+                auto cached = std::make_unique<CachedLine>();
+                cached->restriction = restrictAlgebraicToLine(*n.children[0], /*vectorValued=*/false);
+                if (!cached->restriction) { say(why, "the field does not restrict to a line: " + cached->restriction.refusal); return std::nullopt; }
+                std::map<std::string, double> bindings = c.numeric;
+                for (int i = 0; i < 3; ++i) {
+                    bindings[kLineOriginVars[i]] = q->c0[i];
+                    bindings[kLineDirectionVars[i]] = q->c1[i];
+                }
+                cached->evaluator = std::make_unique<LineAlgebraicEvaluator>(*cached->restriction.form, bindings);
+                if (!cached->evaluator->ok()) { say(why, "the line form does not bind: " + cached->evaluator->refusal()); return std::nullopt; }
+                slot = std::move(cached);
+            }
+            const auto& ev = *slot->evaluator;
+            const uint32_t root = slot->restriction.form->roots[0];
+            const std::vector<int8_t> undecided(slot->restriction.form->switches.size(), 0);
+            bool undefined = false;
+            const Interval value = ev.range(root, c.a, c.b, undecided, &undefined);
+            if (undefined) { say(why, "the field may be undefined on the panel"); return std::nullopt; }
+            return PanelJet{value, ev.derivativeRange(root, c.a, c.b, undecided)};
+        }
+        default:
+            say(why, std::string(mathOpName(n.op)) + " has no derivative enclosure in the sampled route yet");
+            return std::nullopt;
+    }
+}
+
+std::optional<double> integrateSampledBody(const MathNode& body, const std::string& v, double lo, double hi,
+                                           const std::map<std::string, PropertyValue>& vars,
+                                           const std::map<std::string, double>& numeric, const Singular* subject,
+                                           double tolerance, IntegralBounds& bounds, std::string* why) {
+    const double a0 = std::min(lo, hi), b0 = std::max(lo, hi);
+    struct Sample {
+        BoundedValue value;
+        std::map<const MathNode*, std::pair<double, double>> integrals;
+    };
+    std::map<double, Sample> samples;   // reused across refinements (the nodes nest)
+    std::map<const MathNode*, std::unique_ptr<CachedLine>> lines;
+    std::map<std::string, PropertyValue> scope = vars;
+    scope.erase(v);
+    auto sampleAt = [&](double x) -> const Sample* {
+        auto it = samples.find(x);
+        if (it != samples.end()) return &it->second;
+        Sample s;
+        auto at = scope;
+        at[v] = x;
+        s.value = evaluateBounded(body, at, {}, subject, nullptr, &s.integrals);
+        if (!s.value.computed) {
+            say(why, "the body is undefined at " + v + " = " + std::to_string(x) + (s.value.unavailable.empty() ? "" : ": " + s.value.unavailable));
+            return nullptr;
+        }
+        if (!s.value.bounded) {
+            say(why, "the body's value at " + v + " = " + std::to_string(x) + " carries no bound: " + s.value.unavailable);
+            return nullptr;
+        }
+        return &samples.emplace(x, std::move(s)).first->second;
+    };
+    double best = std::numeric_limits<double>::infinity();
+    std::string panelWhy;
+    for (uint32_t cells = 4; cells <= 4096; cells *= 2) {
+        auto node = [&](uint32_t k) { return k == cells ? b0 : a0 + (b0 - a0) * double(k) / double(cells); };
+        double estimate = 0.0, sampleMath = 0.0, sampleExec = 0.0, radius = 0.0, magnitude = 0.0;
+        for (uint32_t j = 0; j + 2 <= cells; j += 2) {
+            const double xa = node(j), xm = node(j + 1), xb = node(j + 2);
+            const Sample* s0 = sampleAt(xa);
+            const Sample* s1 = s0 ? sampleAt(xm) : nullptr;
+            const Sample* s2 = s1 ? sampleAt(xb) : nullptr;
+            if (!s2) return std::nullopt;
+            // Simpson on the panel: the quadratic interpolant's exact integral.
+            const double w[3] = {(xb - xa) / 6.0, 4.0 * (xb - xa) / 6.0, (xb - xa) / 6.0};
+            const Sample* ss[3] = {s0, s1, s2};
+            for (int k = 0; k < 3; ++k) {
+                estimate += w[k] * ss[k]->value.value;
+                magnitude += std::abs(w[k] * ss[k]->value.value);
+                sampleMath += w[k] * ss[k]->value.mathematical;
+                sampleExec += w[k] * ss[k]->value.execution;
+            }
+            // First-order remainder: |G − P| ≤ (1 + Λ)·min(range width, L′·hw), Λ = 5/4.
+            JetContext ctx;
+            ctx.x = v; ctx.a = xa; ctx.b = xb; ctx.constants = &scope; ctx.numeric = numeric;
+            ctx.subject = subject; ctx.anchors = &s0->integrals; ctx.lines = &lines;
+            std::map<std::string, PanelJet> env;
+            env[v] = PanelJet{outwardInterval(xa, xb), Interval(1.0f)};
+            const auto jet = panelJet(body, env, ctx, &panelWhy);
+            if (!jet || !jet->value.bounded()) {
+                say(why, "the body has no derivative enclosure on a panel: " + panelWhy);
+                return std::nullopt;
+            }
+            const double width = double(jet->value.hi) - double(jet->value.lo);
+            const double lip = jet->derivative.bounded() ? magnitudeOf(jet->derivative) : std::numeric_limits<double>::infinity();
+            radius += (xb - xa) * (1.0 + 1.25) * std::min(width, lip * 0.5 * (xb - xa));
+        }
+        // Summation of the weighted samples (Higham), on top of each sample's own.
+        const double u = std::ldexp(1.0, -53), n = 3.0 * double(cells) + 8.0;
+        const double execution = sampleExec + n * u / (1.0 - n * u) * magnitude;
+        const double mathematical = radius + sampleMath;
+        best = std::min(best, mathematical + execution);
+        if (mathematical + execution <= tolerance) {
+            bounds.mathematical = mathematical;
+            bounds.execution = execution;
+            bounds.approximate = true;
+            bounds.samples = samples.size();
+            bounds.route = "sampled body (first-order radius; bounded samples)";
+            return lo <= hi ? estimate : -estimate;
+        }
+    }
+    char text[200];
+    std::snprintf(text, sizeof(text), "the best justified total bound %.3g exceeds the tolerance %.3g", best, tolerance);
+    say(why, std::string(text) + " (work cap: 4096 cells; the body's samples and their panel enclosures)");
+    return std::nullopt;
+}
+
 } // namespace
 
 bool exactPathAdmitsOmittedContribution(double /*answer*/, double provedBound) {
     // Only a contribution PROVED zero may be omitted. A positive bound refuses
     // however small, until the error contract (addendum C) carries it in a total.
     return provedBound == 0.0;
+}
+
+bool scalarComposable(const MathNode& n) {
+    using Op = MathNode::Op;
+    switch (n.op) {
+        case Op::ScalarLeaf: case Op::ValueLeaf: case Op::Add: case Op::Sub: case Op::Div:
+        case Op::Pow: case Op::Abs: case Op::Clamp: case Op::Sqrt: break;
+        default: return false;
+    }
+    for (const auto& c : n.children)
+        if (!c || !scalarComposable(*c)) return false;
+    return true;
+}
+
+BoundedValue evaluateBounded(const MathNode& n, std::map<std::string, PropertyValue> vars,
+                             std::map<std::string, InputBound> unc, const Singular* subject,
+                             PropertyDict* inputs, std::map<const MathNode*, std::pair<double, double>>* integrals) {
+    BoundedValue out;
+    if (n.op == MathNode::Op::Let) {
+        if (n.children.size() != 2 || !n.children[0] || !n.children[1]) return out;
+        const BoundedValue value = evaluateBounded(*n.children[0], vars, unc, subject, inputs, integrals);
+        if (!value.computed) return value;
+        vars[n.variableName] = value.value;
+        InputBound u;
+        u.exact = false;
+        u.known = value.bounded;
+        u.bound = value.bounded ? value.total() : 0.0;
+        u.why = value.unavailable;
+        unc[n.variableName] = u;
+        if (inputs)
+            inputs->elements[n.variableName] = value.bounded ? PropertyValue(u.bound) : PropertyValue(std::string("unavailable"));
+        BoundedValue body = evaluateBounded(*n.children[1], vars, unc, subject, inputs, integrals);
+        if (body.computed && !value.bounded && body.unavailable.empty())
+            body.unavailable = "the Let value '" + n.variableName + "' carries no bound" +
+                               (value.unavailable.empty() ? std::string() : " (" + value.unavailable + ")");
+        if (!value.bounded) body.bounded = false;
+        return body;
+    }
+    if (n.op == MathNode::Op::Integral) {
+        IntegralBounds b;
+        std::string why;
+        const auto v = evaluateIntegral(n, vars, subject, &why, &b);
+        if (!v) { out.unavailable = why; return out; }
+        out.computed = out.bounded = true;
+        out.value = *v;
+        out.mathematical = b.mathematical;
+        out.execution = b.execution;
+        // An Integral that READS an uncertain input took it as exact: its
+        // sensitivity to that input is not composed yet.
+        std::set<std::string> deps;
+        n.collectDependencies(deps);
+        for (const auto& name : deps) {
+            const auto it = unc.find(name);
+            if (it != unc.end() && !it->second.exact) {
+                out.bounded = false;
+                out.unavailable = "an Integral reading the uncertain input '" + name + "' (not composed yet)";
+            }
+        }
+        if (integrals && out.bounded) (*integrals)[&n] = {out.value, out.total()};
+        return out;
+    }
+    const auto v = n.evaluate(vars, subject);
+    double number = 0.0;
+    if (!v || !propertyValueToNumber(*v, number)) return out;
+    out.computed = true;
+    out.value = number;
+    if (!scalarComposable(n)) {
+        out.unavailable = std::string(mathOpName(n.op)) + " does not compose bounds yet";
+        return out;
+    }
+    std::map<std::string, double> magnitudes;
+    SignedRanges signedRanges;
+    std::map<std::string, MathNode::RangeValue> box;
+    bool uncertain = false;
+    std::set<std::string> deps;
+    n.collectDependencies(deps);
+    for (const auto& [name, value] : vars) {
+        if (!deps.count(name)) continue;   // only what this subtree reads
+        double x = 0.0;
+        if (!propertyValueToNumber(value, x) || !std::isfinite(x)) { out.unavailable = "the input '" + name + "' is not a finite scalar"; return out; }
+        const auto it = unc.find(name);
+        const InputBound u = it == unc.end() ? InputBound{} : it->second;
+        if (!u.known) {
+            out.unavailable = "the input '" + name + "' carries no usable bound" + (u.why.empty() ? std::string() : " (" + u.why + ")");
+            return out;
+        }
+        if (inputs && !inputs->elements.count(name))
+            inputs->elements[name] = u.exact ? PropertyValue(std::string("exact")) : PropertyValue(u.bound);
+        uncertain = uncertain || u.bound > 0.0;
+        magnitudes[name] = std::abs(x) + u.bound;
+        signedRanges[name] = {x - u.bound, x + u.bound};
+        // The box, rounded outward into the float interval arithmetic.
+        float lo = static_cast<float>(x - u.bound), hi = static_cast<float>(x + u.bound);
+        if (double(lo) > x - u.bound) lo = std::nextafter(lo, -INFINITY);
+        if (double(hi) < x + u.bound) hi = std::nextafter(hi, INFINITY);
+        box[name] = MathNode::RangeValue::makeScalar(Interval(std::nextafter(lo, -INFINITY), std::nextafter(hi, INFINITY)));
+    }
+    const auto exec = executionBound(n, magnitudes, cpuExecutionModel(), -1, kAmbientPointVar, &signedRanges);
+    if (!exec || !std::isfinite(exec->slack)) { out.unavailable = "the composite's execution could not be bounded"; return out; }
+    out.execution = exec->slack;
+    if (uncertain) {
+        const auto range = n.evalRange(box);
+        if (!range || range->kind != ValueKind::Scalar || !range->scalar.bounded()) {
+            out.unavailable = "the composite's range over its inputs could not be bounded";
+            return out;
+        }
+        // |f(x_true) − f(x_used)| ≤ max(hi − f(x_used), f(x_used) − lo), and the
+        // computed value is within the execution slack of f(x_used).
+        out.mathematical = std::max(double(range->scalar.hi) - number, number - double(range->scalar.lo)) + exec->slack;
+    }
+    out.bounded = true;
+    return out;
 }
 
 std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std::string, PropertyValue>& vars,
@@ -323,6 +715,16 @@ std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std:
         const auto q = affineVector(*body.children[1], v, outer, numeric, subject, why);
         if (!q) return std::nullopt;
         return integrateAlongLine(*body.children[0], *q, lo, hi, numeric, tolerance, bounds, why);
+    }
+    // Approximation permitted, and the body is neither closed-form nor a field
+    // along a line: sample it as a bounded value (plan §6ao) — transport's
+    // exp(−∫₀ˣ σ)·ε(x), an outer Integral over approximate inner ones.
+    if (tolerance > 0.0) {
+        std::string sampledWhy;
+        const auto value = integrateSampledBody(body, v, lo, hi, vars, numeric, subject, tolerance, bounds, &sampledWhy);
+        if (value) return value;
+        say(why, "the body has no exact integral here (" + termWhy + "), and the sampled route refuses: " + sampledWhy);
+        return std::nullopt;
     }
     say(why, "the body has no exact integral here: " + termWhy +
                  " (admitted: the term algebra, or SDF(field, point) with the point affine in " + v + ")");

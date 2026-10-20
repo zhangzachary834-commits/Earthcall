@@ -1815,3 +1815,46 @@ Expression evaluation is now 35/35.
 | 4. Shipping benefit on Metal | no | — | — | native accuracy and frame costs |
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*
+
+## 6ao. Transport through noise: an outer Integral over approximate inner ones (2026-10-20, fortieth pass)
+
+**Human origin.** Zach: "NEXT PASSSASSSSSS". The last gate-1 mathematics: L = ∫₀^S exp(−∫₀^s σ(u) du)·ε ds with σ a noise field, written with Let (§6an). Codex (2026-10-20T15:54): τ(s) under the outer variable's lexical scope; the shared office, not Property mutation or the report path; keep the qualification.
+
+**Built** (`Integral.cpp`, the shared office):
+- **`evaluateBounded`.** The composition of §6am/§6an has moved here from the report, and the report now calls it. A Let hands its value's bound to the body, an Integral brings its own, and a scalar tree propagates its box and adds its execution. It can record each inner Integral's (value, bound) at the bindings it saw.
+- **`panelJet`,** an enclosure of a body's value and its derivative in x over a panel:
+  - ScalarLeaf by the chain rule through `ScalarForm::derivative`; Add, Sub and Scale by sums and the product rule; Let by binding its value's jet.
+  - An **Integral** with limits in x by the fundamental theorem, V′ = g(hi)·hi′ − g(lo)·lo′. Its value is anchored at the panel start to the sample's bounded inner value, then extended by the limits' movement times g's range. A Leibniz term is not built: an inner body that reads x refuses.
+  - **SDF(f, q(x))** with q affine in x by the line machinery's own `range` and `derivativeRange` (noise via its Lipschitz bound, branches hulled), cached per node.
+- **`integrateSampledBody`,** the third route of `evaluateIntegral`, used when there is a tolerance and the body is neither closed-form nor a field along a line:
+  - Simpson panels whose samples are bounded values, with the samples' own bounds weighted in;
+  - a first-order remainder per panel, (1 + 5/4)·min(range width, L′·hw), with L′ from `panelJet`, plus the summation's Higham bound;
+  - cells double from 4 to 4096, reusing nested samples.
+
+**Witness** (`ontomath_integral_operation_test`, 62/62):
+
+| | |
+|---|---|
+| L = ∫₀¹ exp(−∫₀^s (noise(q(u)) + 4) du)·1.3 ds, inner ±2e-2, outer ±0.1 | **admitted**: 0.3759004989, against an independent cumulative long-double Simpson reference of 0.3759004702 (error 2.9e-8); proved total 0.0503; 65 samples; 302 ms (Debug) |
+| the same at ±1e-3 | refused, naming its best proved total, 0.00365 |
+
+**The bookkeeping, stated.** A sample's inner-integral bound enters the composite as input uncertainty, so its execution share is reported under "mathematical". That is conservative, but coarser than separate categories.
+
+**Not yet:**
+- a second-order outer radius (it needs second-derivative jets);
+- the Leibniz term (an inner body reading x);
+- cumulative inner integration (each sample integrates [0, s] afresh: O(N·M));
+- propagation of uncertain report inputs through an Integral (still unavailable, §6an).
+
+Also passing: expression evaluation 35/35, line segmentation 91/91, line restriction 57/57, derived-reading Law 15/15, GPU integral 28/28.
+
+### Shipping ledger
+
+| Gate | Changed this pass? | Consumer now calling the code | Measured, on which device | Next blocker |
+|---|---|---|---|---|
+| 1. Transport error contract | **Its mathematics now runs end to end on the CPU:** heterogeneous transport through noise is admitted with a proved, model-qualified total | the Integral op (CPU) | CPU, Debug, this Mac | closure items: the Perlin allowance derivation, uncertain-input propagation through an Integral, and a tighter (second-order) outer radius for practical tolerances |
+| 2. GPU fields along rays | no | — | — | field-on-line lowering of SDF(noise…) along a ray, plus f32 execution accounting. **This is now the critical path.** |
+| 3. Native volume consumer | no | — | — | single-curtain native consumer |
+| 4. Shipping benefit on Metal | no | — | — | native accuracy and frame costs |
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*

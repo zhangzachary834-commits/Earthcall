@@ -133,7 +133,7 @@ input is the clock; driven by anything else, the past of the *input* is the unkn
 - **Exact algebra** substitutes the value into the body (`substitute`). So homogeneous transport, ∫₀^S exp(−∫₀^s k du)·ε ds, integrates in closed form to ε(1 − e^(−kS))/k, on the CPU and through the WGSL lowering alike.
 - **WGSL** binds the name to the value's expression.
 - **The evaluation report** composes the value's bound into the body's (plan §6an).
-- **Not yet admitted:** an outer Integral over an approximate inner one (transport through noise).
+- **An outer Integral over approximate inner ones** (transport through noise) is admitted under a tolerance through the sampled-body route: bounded samples, derivative enclosures (τ′ = σ) and a first-order radius (plan §6ao).
 
 Before this, the power rule and the tabular rule were each written twice. The office now also holds:
 - `productToSum`, the one copy of sin·cos and exp·exp;
