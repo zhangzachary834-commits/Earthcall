@@ -89,10 +89,10 @@ src/
   Relation/       Relation · Formation — a first-class being, not an edge in someone's array
   ZonesOfEarth/   Zone · HomesOfEarth/Home · Physics · AuthorsOfLaw (Law lives here) · Ourverse
   Singularity/    Core · Audio · Language · Network · Physical · OntoMath · Foreign · Input · Screen · Storage · Terminal · Execution
-                  FirstMoverOntology/ (FirstMoverWindowTools · Legacy · TalkingRobotGuyAPI)
+                  FirstMoverOntology/ (FirstMoverWindowTools · TalkingRobotGuyAPI)
   Identity/       First Mover register, identity ledger, keys
   Time/           Timeline · Moment · Event (distinguished Moment) — temporal ownership is relational; Universe may borrow a Timeline
-docs/ tests/ examples/ scripts/ saves/ scratch/     the workshop (saves/ = frozen snapshot + fixtures; live data is the data home)
+docs/ tests/ examples/ scripts/ saves/ scratch/ web_ui/     the workshop (saves/ = frozen snapshot + fixtures; live data is the data home)
 third_party/ local_deps/ imgui/                     the foreign
 ```
 
