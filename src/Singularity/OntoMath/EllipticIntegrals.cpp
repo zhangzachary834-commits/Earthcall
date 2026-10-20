@@ -153,6 +153,28 @@ std::optional<double> carlsonRJ(double x, double y, double z, double p) {
     return scale * series / (a * std::sqrt(a)) + 6.0 * sum;
 }
 
+std::optional<double> carlsonRJPrincipalValue(double x, double y, double z, double p) {
+    if (!(p < 0.0) || !std::isfinite(p) || !std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return std::nullopt;
+    std::array<double, 3> v{x, y, z};
+    std::sort(v.begin(), v.end());
+    const double lo = v[0], mid = v[1], hi = v[2];
+    if (lo < 0.0 || !(mid > 0.0)) return std::nullopt;   // R_F's domain: at most one zero
+    // DLMF 19.20.14 with 19.20.16, p' = w·y + (1 − w)·z, w = (z − x)/(z + q),
+    // so p' − z = w·(y − z) is formed without cancelling z(x + y + q) − xy.
+    const double q = -p;
+    const double w = (hi - lo) / (hi + q), oneMinusW = (lo + q) / (hi + q);   // never 1 − w: it rounds to 0
+    const double pp = w * mid + oneMinusW * hi;
+    const double xy = lo * mid, pq = pp * q;
+    const auto rj = carlsonRJ(lo, mid, hi, pp);
+    const auto rf = carlsonRF(lo, mid, hi);
+    const auto rc = carlsonRC(xy + pq, pq);
+    if (!rj || !rf || !rc) return std::nullopt;
+    const double root = std::sqrt(lo) * std::sqrt(mid) * std::sqrt(hi) / std::sqrt(xy + pq);
+    const double value = (w * (mid - hi) * *rj - 3.0 * *rf + 3.0 * root * *rc) / (q + hi);
+    if (!std::isfinite(value)) return std::nullopt;
+    return value;
+}
+
 namespace {
 // One interval of the first-kind reduction, valid while the complex factors
 // sweep less than π of argument in total (see ellipticFirstKindQuartic).

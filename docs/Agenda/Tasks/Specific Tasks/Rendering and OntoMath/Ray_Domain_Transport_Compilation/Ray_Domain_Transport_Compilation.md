@@ -134,7 +134,7 @@ This is **architecture direction, not a landed implementation claim**. Existing 
 - [ ] GPU line-integration path behind a setting, off by default, A/B against 96 for image and time.
 - [x] ⚑ Zach decided (2026-10-19, on the Sun's verdict): exact special-function reductions count as exact, as their own layer between elementary closed form and quadrature.
 - [x] **Carlson rung, witnessed (§6v):** R_F/R_D/R_J/R_C within 3.2 ulp of precision-stable references; first-kind two-quadratic reduction to 3.8×10⁻¹⁴. *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T14:53 PDT.*
-- [ ] Second- and third-kind reductions of ∫√(Q₁Q₂) (the crescent): table formulas from memory failed verification; derive by Möbius-even + Legendre + DLMF §19.25, which first needs R_J's principal value (p < 0) with its own witness (§6w).
+- [ ] Second- and third-kind reductions of ∫√(Q₁Q₂) (the crescent): table formulas from memory failed verification; derive by Möbius-even + Legendre + DLMF §19.25, whose prerequisite, R_J's principal value, is now witnessed (§6ad: 72 three-way references, worst 2.6 ulp of the terms' magnitude).
 - [ ] The tori: Euler substitution to √(quartic), quartic roots, then the same reductions.
 - [ ] GPU emission gated by `webgpu_volume_faithfulness_test`.
 

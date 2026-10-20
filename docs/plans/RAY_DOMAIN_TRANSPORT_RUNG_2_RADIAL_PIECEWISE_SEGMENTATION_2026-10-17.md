@@ -1433,3 +1433,27 @@ The emitter forms m and h as exact forms (hi ± lo)/2, so hi − lo cancels symb
 **Not claimed:** an f32 execution enclosure (addendum C); the line route on the device; a report at a Property route (B).
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T21:06:42-07:00 (PDT).*
+
+
+<a id="6ad-rj-principal-value-witnessed"></a>
+
+## 6ad. R_J's principal value, witnessed (2026-10-19, same pass)
+
+This is the prerequisite §6v and the task file recorded for the second- and third-kind reductions (the crescent). `carlsonRJPrincipalValue(x, y, z, p < 0)` implements DLMF 19.20.14 with 19.20.16. It is a separate name, so `carlsonRJ` still refuses p ≤ 0.
+
+**Verified, not recalled.** My remembered form, with y and z exchanged, was off by up to 2.4e-2 against a direct principal-value quadrature, so I fetched the published equation. That one agrees with the quadrature to about 1e-41, ties included.
+
+**References** (`scripts/generate_carlson_references.py`, 72 of them): each is precision-stable between 200 and 400 digits.
+- **Where the arguments are compact** (all positive, spread ≤ 1e6), each also equals the real part of mpmath's own R_J at negative p, a different algorithm, to 1e-35.
+- **Where marked**, each also equals a direct principal-value quadrature to 1e-30.
+- **mpmath's complex R_J stalls on wide or zero arguments** (51 s at 200 digits for 1e-30..1e30, and no answer at all with an argument of exactly 0). Those cases rest on the reduction, whose positive-argument R_J, R_F and R_C are themselves precision-checked references.
+- **The existing references are byte-identical**: the generator added 75 lines and removed none.
+
+**Double implementation:**
+- **Accuracy:** worst 2.6 ulp of the terms' magnitude, and 8.3 ulp relative. The bound is 64 ulp of the terms' magnitude, because a principal value is a sum of three terms of either sign.
+- **One fix on the way:** p' needs 1 − w, which rounds to 0 when z dominates. That made spread cases wrong by orders of magnitude, so 1 − w is now formed exactly as (x + q)/(z + q).
+- **Result:** `ontomath_carlson_elliptic_test` 21/21.
+
+**Next on this line:** the second- and third-kind reductions of ∫√(Q₁Q₂) (Möbius-even, then Legendre, then DLMF §19.25), each with its own witness.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T21:33:30-07:00 (PDT).*

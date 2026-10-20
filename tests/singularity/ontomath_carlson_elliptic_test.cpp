@@ -13,7 +13,9 @@
 
 #include "Singularity/OntoMath/EllipticIntegrals.hpp"
 
+#include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <iostream>
 #include <limits>
 #include <string>
@@ -77,6 +79,36 @@ int main() {
             if (e > worst) { worst = e; where = r.regime; }
         }
         report("R_J", worst, where, int(std::size(kRJ)), refused);
+    }
+    {
+        // The principal value (p < 0) is a SUM of three terms of either sign, so
+        // its error is stated against the terms' magnitude, not the result's:
+        // |error| ≤ 64 ulp × (|(p'−z)R_J| + 3R_F + 3√·R_C)/(q + z). A result near
+        // zero by cancellation is reported, never hidden behind a relative figure.
+        double worstRel = 0.0, worstCond = 0.0; const char* where = ""; int refused = 0;
+        for (const auto& r : kRJPrincipal) {
+            const auto v = carlsonRJPrincipalValue(r.x, r.y, r.z, r.p);
+            if (!v) { ++refused; continue; }
+            double a[3] = {r.x, r.y, r.z};
+            std::sort(a, a + 3);
+            const double q = -r.p, w = (a[2] - a[0]) / (a[2] + q), pp = w * a[1] + (a[0] + q) / (a[2] + q) * a[2];
+            const double terms = (std::abs(w * (a[1] - a[2]) * carlsonRJ(a[0], a[1], a[2], pp).value_or(0.0)) +
+                                  3.0 * carlsonRF(a[0], a[1], a[2]).value_or(0.0) +
+                                  3.0 * std::sqrt(a[0]) * std::sqrt(a[1]) * std::sqrt(a[2]) / std::sqrt(a[0] * a[1] + pp * q) *
+                                      carlsonRC(a[0] * a[1] + pp * q, pp * q).value_or(0.0)) / (q + a[2]);
+            const double cond = std::abs(*v - r.value) / terms;
+            if (cond > 64.0 * kUlp)
+                std::printf("      off: x=%.3g y=%.3g z=%.3g p=%.3g got %.17g want %.17g terms %.3g\n", r.x, r.y, r.z, r.p, *v, r.value, terms);
+            if (cond > worstCond) { worstCond = cond; where = r.regime; }
+            worstRel = std::max(worstRel, relative(*v, r.value));
+        }
+        std::cout << "    R_J principal value: " << std::size(kRJPrincipal) << " references, worst error " << worstCond / kUlp
+                  << " ulp of the terms' magnitude (" << where << "), worst relative " << worstRel / kUlp << " ulp"
+                  << (refused ? ", " + std::to_string(refused) + " refused" : "") << "\n";
+        check(refused == 0 && worstCond <= 64.0 * kUlp,
+              "R_J's principal value agrees with three-way references within 64 ulp of its terms' magnitude");
+        check(!carlsonRJPrincipalValue(1.0, 2.0, 3.0, 0.5) && !carlsonRJPrincipalValue(0.0, 0.0, 3.0, -1.0),
+              "the principal value refuses p ≥ 0 (that is carlsonRJ) and two zeros");
     }
     {
         double worst = 0.0; const char* where = ""; int refused = 0;

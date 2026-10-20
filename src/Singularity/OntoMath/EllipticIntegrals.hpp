@@ -44,6 +44,17 @@ std::optional<double> carlsonRF(double x, double y, double z);
 std::optional<double> carlsonRD(double x, double y, double z);
 std::optional<double> carlsonRJ(double x, double y, double z, double p);
 std::optional<double> carlsonRC(double x, double y);
+// R_J's Cauchy principal value for p < 0 (x, y, z ≥ 0, at most one zero), by
+// DLMF 19.20.14: with x ≤ y ≤ z, q = −p, w = (z − x)/(z + q), p' = w·y + (1 − w)·z,
+//   (q + z)·PV R_J(x, y, z, −q) = (p' − z)·R_J(x, y, z, p') − 3·R_F(x, y, z)
+//                                + 3·√(xyz/(xy + p'q))·R_C(xy + p'q, p'q).
+// VERIFIED, not recalled: a remembered form with y and z exchanged was off by
+// 1e-2. The references agree three ways (the reduction, mpmath's own R_J at
+// negative p, and a direct principal-value quadrature) before the double
+// implementation is measured. A separate name from carlsonRJ, which still
+// refuses p ≤ 0: a principal value is a different object, chosen explicitly.
+// Needed by the second- and third-kind reductions (the crescent; plan §6v).
+std::optional<double> carlsonRJPrincipalValue(double x, double y, double z, double p);
 std::optional<std::complex<double>> carlsonRF(std::complex<double> x, std::complex<double> y, std::complex<double> z);
 
 // The first-kind reduction, Carlson's quartic case (his tables of elliptic
