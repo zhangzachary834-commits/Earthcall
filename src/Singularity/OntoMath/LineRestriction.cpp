@@ -2130,6 +2130,92 @@ Interval LineAlgebraicEvaluator::derivativeRange(uint32_t node, double sa, doubl
     return Interval::infinite();
 }
 
+Interval LineAlgebraicEvaluator::secondDerivativeRange(uint32_t node, double sa, double sb,
+                                                       const std::vector<int8_t>& signs) const {
+    const auto& n = _form->nodes[node];
+    const int8_t s0 = n.switchCount > 0 ? signs[n.switchBegin] : 0;
+    const int8_t s1 = n.switchCount > 1 ? signs[n.switchBegin + 1] : 0;
+    auto D2 = [&](uint32_t c) { return secondDerivativeRange(c, sa, sb, signs); };
+    auto D = [&](uint32_t c) { return derivativeRange(c, sa, sb, signs); };
+    auto R = [&](uint32_t c) { return rangeAt(c, sa, sb, signs, nullptr); };
+    auto mag = [](const Interval& x) { return std::max(std::abs(x.lo), std::abs(x.hi)); };
+    switch (n.kind) {
+        case Kind::Polynomial: {
+            const auto& a = _coefficients[node];
+            const auto& e = _errors[node];
+            if (a.size() < 3) return Interval(0.0f);
+            std::vector<double> dda(a.size() - 2), dde(a.size() - 2);
+            constexpr double kEps = std::numeric_limits<double>::epsilon();
+            for (std::size_t k = 2; k < a.size(); ++k) {
+                const double f = double(k) * double(k - 1);
+                dda[k - 2] = f * a[k];
+                dde[k - 2] = f * e[k] + 2 * kEps * std::abs(dda[k - 2]);
+            }
+            return centeredPolynomialRange(dda, dde, sa, sb);
+        }
+        case Kind::Undefined: return _undefinedAsZero ? Interval(0.0f) : Interval::infinite();
+        case Kind::Add: return D2(n.a) + D2(n.b);
+        case Kind::Sub: return D2(n.a) - D2(n.b);
+        case Kind::Mul: return D2(n.a) * R(n.b) + D(n.a) * D(n.b) * 2.0f + R(n.a) * D2(n.b);
+        case Kind::Sqrt: {
+            if (!n.nonnegativeArgument && s0 < 0) return Interval(0.0f);   // executes √0 throughout
+            // (√a)″ = a″/(2√a) − a′²/(4·a^{3/2}), bounded only away from 0.
+            const Interval r = R(n.a);
+            if (!(r.lo > 0.0f)) return Interval::infinite();
+            const Interval root = sqrtOf(r), da = D(n.a);
+            return D2(n.a) / (root * 2.0f) - (da * da) / (r * root * 4.0f);
+        }
+        case Kind::Abs:
+            if (s0 > 0) return D2(n.a);
+            if (s0 < 0) return -D2(n.a);
+            return Interval::infinite();   // a possible kink
+        case Kind::Min: case Kind::Max: {
+            const bool min = n.kind == Kind::Min;
+            if (s0 > 0) return D2(min ? n.b : n.a);
+            if (s0 < 0) return D2(min ? n.a : n.b);
+            return Interval::infinite();
+        }
+        case Kind::Clamp:
+            if (s0 < 0 || s1 > 0) return Interval(0.0f);
+            if (s0 > 0 && s1 < 0) return D2(n.a);
+            return Interval::infinite();
+        case Kind::Trans: {
+            const Interval arg = R(n.a), da = D(n.a), dda = D2(n.a);
+            using TK = TransFactor::Kind;
+            const Interval sinA = TransFactor(TK::Sin, "u", 1.0, 0.0).evalRange(arg);
+            const Interval cosA = TransFactor(TK::Cos, "u", 1.0, 0.0).evalRange(arg);
+            if (n.transKind == TK::Sin) return -(sinA * da * da) + cosA * dda;
+            if (n.transKind == TK::Cos) return -(cosA * da * da) - sinA * dda;
+            if (n.transKind == TK::Exp) return TransFactor(TK::Exp, "u", 1.0, 0.0).evalRange(arg) * (da * da + dda);
+            return Interval::infinite();
+        }
+        case Kind::Noise: {
+            // d²/ds² noise(q(s)) = q′ᵀ∇²n q′ + ∇n·q″ ≤ H·|q′|² + L·|q″|.
+            float d1 = 0.0f, d2 = 0.0f;
+            for (uint32_t arg : {n.a, n.b, n.c}) {
+                const Interval d = D(arg), dd = D2(arg);
+                if (!d.bounded() || !dd.bounded()) return Interval::infinite();
+                d1 += mag(d) * mag(d);
+                d2 += mag(dd) * mag(dd);
+            }
+            const float bound = Interval::roundUp(
+                Interval::roundUp(kClassicPerlin3HessianBound * Interval::roundUp(d1)) +
+                Interval::roundUp(kClassicPerlin3LipschitzBound * Interval::roundUp(std::sqrt(d2))));
+            return Interval(-bound, bound);
+        }
+        case Kind::Select: {
+            for (uint32_t p = 0; p < n.pieces.size(); ++p) {
+                const int st = pieceState(n, p, signs);
+                if (st < 0) continue;
+                if (st == 0) return Interval::infinite();
+                return D2(n.pieces[p].value);
+            }
+            return _undefinedAsZero ? Interval(0.0f) : Interval::infinite();
+        }
+    }
+    return Interval::infinite();
+}
+
 Interval LineAlgebraicEvaluator::switchDerivativeRange(std::size_t k, double sa, double sb,
                                                        const std::vector<int8_t>& signs) const {
     const auto& sw = _form->switches[k];
@@ -2818,7 +2904,7 @@ std::optional<LineHybridIntegral> LineAlgebraicEvaluator::integrateCore(uint32_t
                     accounting->pointwise += accounting->scale * weightMass * sg;
                 }
             }
-            double gLo = 1.0, gHi = 1.0, gLip = 0.0;
+            double gLo = 1.0, gHi = 1.0, gLip = 0.0, gCurv = 0.0;
             if (r.node != kNoNode) {
                 bool undefined = false;
                 const Interval gr = range(r.node, a, b, decided, &undefined);
@@ -2826,6 +2912,9 @@ std::optional<LineHybridIntegral> LineAlgebraicEvaluator::integrateCore(uint32_t
                 gHi = undefined ? std::numeric_limits<double>::infinity() : double(gr.hi);
                 const Interval dg = derivativeRange(r.node, a, b, decided);
                 gLip = std::max(std::abs(double(dg.lo)), std::abs(double(dg.hi)));
+                const Interval ddg = secondDerivativeRange(r.node, a, b, decided);
+                gCurv = ddg.bounded() ? std::max(std::abs(double(ddg.lo)), std::abs(double(ddg.hi)))
+                                      : std::numeric_limits<double>::infinity();
             }
             double lo = gLo, hi = gHi, lip = gLip;
             if (factor) {
@@ -2839,7 +2928,18 @@ std::optional<LineHybridIntegral> LineAlgebraicEvaluator::integrateCore(uint32_t
             }
             const double width = std::isfinite(hi - lo) ? hi - lo : std::numeric_limits<double>::infinity();
             const double lebesgue = span == 3 ? 1.6311 : span == 2 ? 1.25 : 1.0;   // equispaced Lebesgue constants
-            const double local = std::min(width, std::isfinite(lip) ? lip * 0.5 * (b - a) : std::numeric_limits<double>::infinity());
+            // First order: |G − c| ≤ min(range width, L′·half-width).
+            double local = std::min(width, std::isfinite(lip) ? lip * 0.5 * (b - a) : std::numeric_limits<double>::infinity());
+            // Second order (plan §6ak): the interpolant reproduces G's linear
+            // Taylor part about the centre exactly, so G − P = R − I(R) with
+            // |R| ≤ M₂·hw²/2 and |I(R)| ≤ Λ·max|R(nodes)|: the (1 + Λ) factor
+            // below then bounds |G − P| by M₂·hw²/2 each. Needs G′ Lipschitz on
+            // the panel (secondDerivativeRange is unbounded wherever it is not).
+            // Not yet with a sampled factor (no second derivative for M).
+            if (!factor && std::isfinite(gCurv)) {
+                const double hw = 0.5 * (b - a);
+                local = std::min(local, gCurv * hw * hw * 0.5);
+            }
             out.radius += supAbs(*r.weight, a, b) * (b - a) * (1.0 + lebesgue) * local;
             j += span;
         }

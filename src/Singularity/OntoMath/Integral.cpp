@@ -204,6 +204,7 @@ std::optional<double> integrateAlongLine(const MathNode& f, const AffineVector& 
         IntegralAccountingScope scope(accounting);
         double estimate = 0.0, mathematical = 0.0;
         bool sampled = false;
+        std::uint64_t samples = 0;
         for (const auto& piece : executedPieces) {
             const double width = piece.s1 - piece.s0;
             bool undefined = false;
@@ -223,6 +224,7 @@ std::optional<double> integrateAlongLine(const MathNode& f, const AffineVector& 
             recordSummand(h->estimate);
             mathematical += h->radius;
             sampled = sampled || h->remainderEvaluations > 0;
+            samples += h->remainderEvaluations;
         }
         const double execution = accounting.executionBound();
         bestTotal = std::min(bestTotal, mathematical + execution);
@@ -230,6 +232,7 @@ std::optional<double> integrateAlongLine(const MathNode& f, const AffineVector& 
             bounds.mathematical = mathematical;
             bounds.execution = execution;
             bounds.approximate = mathematical > 0.0;
+            bounds.samples = samples;
             bounds.route = sampled ? "line segmentation, hybrid (sampled remainder)" : "line segmentation";
             return lo <= hi ? estimate : -estimate;
         }

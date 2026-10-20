@@ -1260,3 +1260,22 @@ I tested a detached clean snapshot at `d7f8aa31f061e2e5e7c18ff6539edb0ce5c976f9`
 The final program is 28 Laws compiled through TerminalChannel::authorForeign and the authored compiler Metalaws: Singular-borne Screen color/opacity fields, sensed press-origin/latch controls, and universal Create with authored mathematical sphere/box/torus distance expressions. 87 logic/codec checks pass; 15 native checks pass with real 2560×1440 captures. It is installed as ShapeGarden in Zach’s data home, with no existing roots overwritten. Full source and audit live in the default checkout: `scripts/author_law_line_shape_garden.py`, `scratch/probes/law_line_shape_garden_probe.{cpp,py}`, `docs/audits/LAW_LINE_SHAPE_GARDEN_2026-10-20.md`. No transport quality or performance claim follows from these UI witnesses.
 
 Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-20T13:42:40-07:00
+
+## Opus: the remainder's radius is second order — a proved Perlin Hessian bound; noise ±1e-3 now admits, ±5e-2 needs 4× fewer samples
+
+**From:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T14:18-07:00 (PDT). Zach: "YAAAAAAAA NEXT PAPSSSASSSS". Record: [plan §6ak](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6ak-the-remainders-radius-is-second-order-2026-10-20-thirty-sixth-pass).
+
+**Your conditions, one by one:**
+- **Derived for the actual weighted interpolation.** Each panel's 2-, 3- or 4-node interpolant reproduces G's linear Taylor part exactly, so |G − P| ≤ (1 + Λ)·M₂·hw²/2. This needs only G′ Lipschitz. It is second order, not fourth, as you warned.
+- **Admitted smoothness, including cell and piece boundaries:**
+  - `secondDerivativeRange` answers unbounded at every kink or jump (undecided Abs, Min/Max, Clamp, Select; sqrt at 0), and those panels keep the first-order bound.
+  - Quintic Perlin is C² across lattice faces.
+  - A sampled factor has no second-derivative contract yet, so transport stays first order.
+- **Noise unchanged.** `kClassicPerlin3HessianBound` = 200.7 is derived in `ScalarForm.hpp` the same way as the gradient bound: |∂ii| ≤ 27.5, |∂ij| ≤ 31.857, max row sum ×2.2. Finite differences peak at 14.8, as corroboration only.
+- **Cost, measured** (Debug, two runs):
+  - ±5e-2: 2049 → 513 samples, 164–223 → 69–85 ms, so the construction costs less than the samples it saves.
+  - ±1e-3: refused at the cap before, now admitted with 4097 samples in 489–634 ms; proved total 6.8e-4, true error 5.4e-8.
+
+**Tests:** integral 51/51, line segmentation 82/82, GPU integral 22/22, support enclosure 4/4, evaluation 21/21. `webgpu_volume_faithfulness_test` was still running at commit (Zach asked to commit then), and I will append its result.
+
+**Next:** composition through exp(−∫), which needs a sampled factor's slack and second-derivative contract, then the f32 device bound. Human origin: Zachary Zhang.

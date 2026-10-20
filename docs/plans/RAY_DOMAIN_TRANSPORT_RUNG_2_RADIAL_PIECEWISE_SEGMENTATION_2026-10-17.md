@@ -1653,3 +1653,33 @@ Also passing: `ontomath_line_segmentation_test` 82/82, `webgpu_volume_support_en
 The model identity is now `ontomath-cpu/2`, and it stays model-qualified because of the glm::perlin allowance.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*
+
+## 6ak. The remainder's radius is second order (2026-10-20, thirty-sixth pass)
+
+**Human origin.** Zach: "YAAAAAAAA NEXT PAPSSSASSSS". Codex (2026-10-20T11:10) on tightening: *"A second-derivative enclosure may tighten the present Lipschitz radius, but it does not automatically prove a fourth-order final error bound. Derive the bound for the actual weighted interpolation and its admitted smoothness, including piece/cell boundaries; keep the authored Noise definition unchanged. Measure the extra bound-construction cost as well as the reduction in evaluations."*
+
+**The bound, for the interpolation actually used.** Each panel interpolates G at 2, 3 or 4 equispaced nodes (Lebesgue constant Λ = 1, 1.25, 1.6311). Every one of those interpolants reproduces G's linear Taylor part about the panel centre exactly. So G − P = R − I(R) with |R(s)| ≤ M₂·hw²/2, where M₂ = sup|G″| on the panel and hw is the half-width, and |G − P| ≤ (1 + Λ)·M₂·hw²/2. This needs only G′ Lipschitz on the panel, not G‴. The panel takes min(range width, first-order Lipschitz bound, this). The result is second order, not fourth, as Codex warned. The estimate still converges faster than the bound proves.
+
+**What makes it sound:**
+- **`secondDerivativeRange`** (`LineAlgebraicEvaluator`) is an interval enclosure of d²/ds² per node.
+  - Polynomials use their coefficient enclosures.
+  - Sums, products, sqrt (only bounded away from 0), sin/cos/exp and decided branches follow their own rules.
+  - Every kink or jump answers unbounded: an undecided Abs, Min/Max, Clamp or Select, or sqrt at 0. That panel keeps its first-order bound.
+  - A sampled factor (transport's exp(−∫)) has no second-derivative contract yet, so it stays first order.
+- **A proved Perlin Hessian bound,** `kClassicPerlin3HessianBound` = 200.7, derived in `ScalarForm.hpp` the same way as the gradient bound (|∂ii| ≤ 27.5, |∂ij| ≤ 31.857, max row sum 91.214, ×2.2). Quintic Perlin is C² across lattice faces, so cell boundaries need no special case.
+- **Corroboration,** not relied on: finite differences of glm's float hash with double interpolation peak at 14.8 over 2·10^6 unit directions. The gradient's sampled peak is 3.47 against its proved 28.561.
+
+**Measured** (`ontomath_integral_operation_test`, 51/51, Debug build, two runs):
+
+| Noise along a line, length 3 | First order (§6aj) | Second order |
+|---|---|---|
+| best proved total at the 4096-cell cap | 0.024 | 6.8e-4 |
+| ±5e-2: samples / time | 2049 / 164–223 ms | **513 / 69–85 ms** |
+| ±5e-2: mathematical bound | 0.0479 | 0.0305 |
+| ±1e-3 | refused at the cap (345–720 ms) | **admitted**: 4097 samples, 489–634 ms; proved total 6.8e-4, true error 5.4e-8 |
+
+The extra construction (one second-derivative enclosure per panel) costs less than the samples it saves, so ±5e-2 runs about 2.5× faster. Below about 7e-4 the noise case still refuses at the work cap, now limited by the 2^-14 glm::perlin allowance (execution 2e-4) as much as by the radius.
+
+Also passing: line segmentation 82/82, GPU integral 22/22, support enclosure 4/4, evaluation 21/21. `webgpu_volume_faithfulness_test`, which checks that line-integrated values lie inside the proved radius on every ray, was still running at commit (Zach asked to commit then). Its result follows in the intercom thread.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*

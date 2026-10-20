@@ -16,6 +16,7 @@
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/Screen/MathEditors.hpp"
 
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <glm/glm.hpp>
@@ -309,15 +310,15 @@ int main() {
         auto tight = integralTol("s", node(Op::SDF, node(Op::Noise, named("p")), noiseLine()), constant(0.0), constant(3.0), constant(1e-12));
         check(!run(*tight, {}, &why) && why.find("exceeds the tolerance") != std::string::npos,
               "noise at 1e-12 refuses at the work cap, legibly: " + why);
-        // The remainder's proved radius is first order (a Lipschitz bound per panel),
-        // so it shrinks only linearly with the cells, though the estimate itself is
-        // fourth order: at the 4096-cell cap it proves 0.024 here. 1e-3 therefore
-        // refuses honestly; a second-derivative enclosure is the next tightening.
+        // The remainder's proved radius was first order (a Lipschitz bound per
+        // panel) through plan §6aj: 0.024 at the 4096-cell cap, so 1e-3 refused.
+        // Plan §6ak makes it second order (the proved Perlin Hessian bound), and
+        // 1e-3 is now admitted; the reference check is below, with the samples.
         auto medium = integralTol("s", node(Op::SDF, node(Op::Noise, named("p")), noiseLine()), constant(0.0), constant(3.0), constant(1e-3));
-        check(!run(*medium, {}, &why) && why.find("exceeds the tolerance") != std::string::npos,
-              "noise at 1e-3 refuses: the first-order proved radius cannot certify it within the work cap");
         auto loose = integralTol("s", node(Op::SDF, node(Op::Noise, named("p")), noiseLine()), constant(0.0), constant(3.0), constant(5e-2));
+        const auto looseStart = std::chrono::steady_clock::now();
         const auto noiseValue = OntoMath::evaluateIntegral(*loose, {}, nullptr, &why, &bounds);
+        const double looseMs = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - looseStart).count();
         // Independent reference: long-double Simpson of the authored Noise, evaluated by
         // MathNode::evaluate at 200 001 points (not the hybrid's samples or weights).
         auto noiseAt = node(Op::Noise, named("p"));
@@ -332,12 +333,25 @@ int main() {
         const long double hh = 3.0L / N;
         for (int i = 1; i < N; ++i) sum += f(double(i * hh)) * (i % 2 ? 4.0L : 2.0L);
         const double noiseReference = double(sum * hh / 3.0L);
-        std::printf("    noise ±5e-2: %.10g (%s), mathematical %.3g, execution %.3g, |error vs reference| %.3g\n",
+        std::printf("    noise ±5e-2: %.10g (%s), mathematical %.3g, execution %.3g, |error vs reference| %.3g, %llu samples, %.1f ms\n",
                     noiseValue.value_or(NAN), bounds.route.c_str(), bounds.mathematical, bounds.execution,
-                    noiseValue ? std::abs(*noiseValue - noiseReference) : NAN);
+                    noiseValue ? std::abs(*noiseValue - noiseReference) : NAN, (unsigned long long)bounds.samples, looseMs);
         check(noiseValue && bounds.approximate && bounds.total() <= 5e-2 &&
                   bounds.route.find("hybrid") != std::string::npos && std::abs(*noiseValue - noiseReference) <= bounds.total(),
               "noise at 5e-2 is admitted through the hybrid route and the independent reference lies within its total bound");
+        const std::uint64_t looseSamples = bounds.samples;
+        {
+            const auto t0 = std::chrono::steady_clock::now();
+            OntoMath::IntegralBounds mb;
+            const auto mediumValue = OntoMath::evaluateIntegral(*medium, {}, nullptr, &why, &mb);
+            const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+            std::printf("    noise ±1e-3: %.10g, mathematical %.3g, execution %.3g, |error vs reference| %.3g, %llu samples (±5e-2 took %llu), %.1f ms\n",
+                        mediumValue.value_or(NAN), mb.mathematical, mb.execution,
+                        mediumValue ? std::abs(*mediumValue - noiseReference) : NAN,
+                        (unsigned long long)mb.samples, (unsigned long long)looseSamples, ms);
+            check(mediumValue && mb.total() <= 1e-3 && std::abs(*mediumValue - noiseReference) <= mb.total(),
+                  "noise at 1e-3, refused under the first-order radius, is admitted under the second-order one, the reference inside");
+        }
 
         // Codex, 2026-10-20: a case where the POINTWISE evaluation is the weak
         // link though the final sum is benign. glm::perlin's float lattice hash

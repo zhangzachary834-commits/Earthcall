@@ -74,6 +74,22 @@ extern std::atomic<uint32_t> g_astEvaluationsTotal;
 // bounds may replace it only with an equally conservative derivation.
 inline constexpr float kClassicPerlin3ValueBound = 3.810512f;
 inline constexpr float kClassicPerlin3LipschitzBound = 28.561f;
+//
+// HESSIAN (2026-10-20, plan §6ak; same structure as GRADIENT). Inside a cell,
+// n = Σ_c W_c·d_c with d_c = g_c·(p − c) (|g_c| ≤ 1, |d_c| ≤ √3, ∇²d_c = 0)
+// and W_c a product of fades (|f′| ≤ 1.875, |f″| ≤ 10/√3, f‴ = 0 at
+// t = (3 ± √3)/6). Differentiating twice:
+//   ∂ii n = f″(t_i)·(B − A) + 2·f′(t_i)·(ĝ_i on face 1 − on face 0)
+//         ≤ (10/√3)(2√3) + 2·1.875·2 = 20 + 7.5 = 27.5,
+//   ∂ij n = f′f′·(a double difference of four convex blends of d) + the two
+//           cross gradient terms ≤ 1.875²·4√3 + 2·1.875·2 = 24.357 + 7.5.
+// The spectral norm is ≤ the largest row sum, 27.5 + 2·31.857 = 91.214, and
+// cnoise3/glm::perlin scale by 2.2: ‖∇²noise‖ ≤ 200.67, rounded out. The
+// quintic fade makes the noise C² across every lattice face (f′ = f″ = 0 at
+// 0 and 1), so the bound holds on whole segments, not only inside cells.
+// Corroborated, not relied on: finite differences of glm's float hash with
+// double interpolation peak at 14.8 over 2·10^6 random unit directions.
+inline constexpr float kClassicPerlin3HessianBound = 200.7f;
 
 // Interval arithmetic for conservative range evaluation
 struct Interval {
@@ -862,6 +878,7 @@ struct IntegralBounds {
     std::string route;
     std::string executionModel = kIntegralExecutionModel;
     bool certified = false;
+    std::uint64_t samples = 0;   // remainder evaluations in the admitted refinement
     double total() const { return mathematical + execution; }
 };
 std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std::string, PropertyValue>& vars,

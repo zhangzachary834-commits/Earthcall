@@ -429,6 +429,12 @@ public:
     // that hull bounds every difference quotient); sqrt near 0 and an undecided
     // Select (a jump) answer the unbounded interval — no false Lipschitz claim.
     Interval derivativeRange(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs) const;
+    // An enclosure of the SECOND derivative along s (2026-10-20, plan §6ak), for
+    // the hybrid's second-order remainder bound. Sound only where the node is
+    // C¹ with a Lipschitz derivative: every kink or jump (an undecided Abs,
+    // Min/Max, Clamp or Select; sqrt near 0) answers the unbounded interval,
+    // and the caller keeps its first-order bound there.
+    Interval secondDerivativeRange(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs) const;
     // Exact ∫[s0, s1] of a node along this line, under signs decided over the
     // whole interval (a definite segmentLine piece): the integration operation
     // on the ray (2026-10-18; Zach: "lets enrich the ontomath integration
