@@ -590,6 +590,7 @@ std::optional<double> lipschitzBoundOverBox(const LineAlgebraicForm& form, std::
 struct LineQuadratureBand {
     double cap = 0.0, lipschitz = 0.0, width = 0.0, sup = 0.0, execution = 0.0;
     double hessian = std::numeric_limits<double>::infinity();
+    double low = 0.0, high = 0.0;   // the band's signed range of f
 };
 struct LineQuadratureCertificate {
     std::vector<LineQuadratureBand> bands;   // increasing cap
@@ -607,6 +608,28 @@ struct LineQuadraturePlan {
 std::optional<LineQuadraturePlan> planLineQuadrature(const LineQuadratureCertificate& cert, const double o[3],
                                                      const double d[3], double lo, double hi, double tolerance,
                                                      double maxCells);
+
+// ---- Transport along a line (plan §6aq) ----
+// L = ∫_lo^hi exp(−τ(s))·ε(q(s)) ds, τ(s) = ∫_lo^s σ(q(u)) du, with σ and ε
+// each certified (above). The device marches ONCE: depth accumulates by the
+// same Simpson panels (the midpoint by the quadratic's exact partial
+// integral), so the work is O(cells), not O(cells²). The bound is a priori,
+// from the two certificates on the ray's band, and needs σ ≥ 0 PROVED there
+// (so exp(−τ) ≤ 1, τ nondecreasing, |e^−a − e^−b| ≤ |a − b|):
+//   depth error   δτ ≤ (S + 2h)·[(1+Λ)·local_σ(h) + σ's device error + rounding]
+//   sample error  δτ·ε_max + ε's device error + exp's device error
+//   outer radius  (1+Λ)·min(width_g, |g′|·hw, |g″|·hw²/2), g = e^−τ·ε,
+//                 |g′| ≤ |ε′| + σ_max|ε|, |g″| ≤ |ε″| + 2σ|ε′| + |σ′||ε| + σ²|ε|
+// The cells are the smallest power of two whose total fits the tolerance.
+struct LineTransportPlan {
+    int sigmaBand = -1, emissionBand = -1;
+    double cells = 0.0, depthError = 0.0, mathematical = 0.0, execution = 0.0;
+    double total() const { return mathematical + execution; }
+};
+std::optional<LineTransportPlan> planLineTransport(const LineQuadratureCertificate& sigma,
+                                                   const LineQuadratureCertificate& emission, const double o[3],
+                                                   const double d[3], double lo, double hi, double tolerance,
+                                                   double maxCells, std::string* why = nullptr);
 
 struct LineSegmentationPiece {
     double s0 = 0.0, s1 = 0.0;

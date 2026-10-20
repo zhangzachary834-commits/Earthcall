@@ -65,7 +65,8 @@ template <class... Kids> Node node(Op op, Kids... kids) {
 struct Ray { double o[3], d[3], lo, hi, tol; };
 
 // One lineIntegral per ray; nullopt when the device path fails.
-std::optional<std::vector<float>> runOnDevice(wgpu::Device& gpu, const sdfwgsl::Program& prog, const std::vector<Ray>& rays) {
+std::optional<std::vector<float>> runOnDevice(wgpu::Device& gpu, const sdfwgsl::Program& prog, const std::vector<Ray>& rays,
+                                              const std::string& function = "lineIntegral") {
     std::vector<float> params = prog.params;
     params.push_back(0.0f);
     std::vector<float> in;
@@ -102,7 +103,7 @@ std::optional<std::vector<float>> runOnDevice(wgpu::Device& gpu, const sdfwgsl::
         "    let b = rays[3u * i + 1u];\n"
         "    let c = rays[3u * i + 2u];\n"
         "    screenPoint = a.xyz;\n"
-        "    results[i] = lineIntegral(a.xyz, b.xyz, a.w, b.w, c.x) + vec4<f32>(0.0 * (screen.size.x + P.v[0]));\n"
+        "    results[i] = " + function + "(a.xyz, b.xyz, a.w, b.w, c.x) + vec4<f32>(0.0 * (screen.size.x + P.v[0]));\n"
         "}\n";
     wgpuDevicePushErrorScope(gpu.device, WGPUErrorFilter_Validation);
     WGPUShaderSourceWGSL src = {};
@@ -280,6 +281,108 @@ int main() {
         check(inside == admitted, F.name + ": every admitted ray's true error lies inside its device-reported total, which fits the tolerance");
         check((*out)[4 * in + 1] == 0.0f, F.name + ": a ray beyond every magnitude band refuses");
         check((*out)[4 * (in + 1) + 1] == 0.0f, F.name + ": a tolerance below the fixed error refuses");
+    }
+    // ---- Transport on the device (plan §6aq): L = ∫ exp(−∫σ)·ε ds, one march ----
+    {
+        std::cout << "  -- transport: L = ∫ exp(−∫ σ) ε ds, σ = 0.25·noise(p) + 1, ε = 0.25·noise(p + 5) + 1 --\n";
+        auto scaled = [](Node inner) { return node(Op::Add, node(Op::Scale, constant(0.25), std::move(inner)), constant(1.0)); };
+        auto sigma = scaled(node(Op::Noise, named("p")));
+        auto emission = scaled(node(Op::Noise, node(Op::Add, named("p"), node(Op::VectorConstruct, constant(5.0), constant(5.0), constant(5.0)))));
+        std::string why;
+        const auto sc = OntoMath::certifyLineQuadrature(*sigma, Rendering::kVolumeExecutionModel, 20, &why);
+        const auto ec = sc ? OntoMath::certifyLineQuadrature(*emission, Rendering::kVolumeExecutionModel, 20, &why) : std::nullopt;
+        check(sc && ec && sc->bands[2].low >= 0.0, "σ and ε are certified, σ proved nonnegative (band low " +
+                                                   std::to_string(sc ? sc->bands[2].low : NAN) + ")" + (ec ? "" : " — " + why));
+        if (sc && ec) {
+            const auto prog = sdfwgsl::compileLineTransport(*sigma, *emission, *sc, *ec, 4096);
+            check(prog.ok, "the transport program compiles" + (prog.ok ? "" : " — " + prog.error));
+            std::mt19937_64 rng(77);
+            std::uniform_real_distribution<double> uo(-2.5, 2.5), ud(-1.0, 1.0), ul(0.5, 2.5);
+            std::vector<Ray> rays;
+            for (int i = 0; i < 48; ++i) {
+                Ray r{};
+                double n2 = 0.0;
+                for (int k = 0; k < 3; ++k) { r.o[k] = uo(rng); r.d[k] = ud(rng); n2 += r.d[k] * r.d[k]; }
+                for (int k = 0; k < 3; ++k) r.d[k] /= std::sqrt(n2);
+                // ±0.1: at ±0.05 one 2.3-unit ray refuses on the DEVICE MODEL's
+                // execution floor (2^-10 per noise and per exp, compounding
+                // through the depth: 0.073 at 8192 cells), not on its radius.
+                r.lo = 0.0; r.hi = ul(rng); r.tol = 1e-1;
+                rays.push_back(r);
+            }
+            Ray backwards = rays[0];
+            std::swap(backwards.lo, backwards.hi);   // hi < lo: transport is not antisymmetric
+            rays.push_back(backwards);
+            const auto out = prog.ok ? runOnDevice(gpu, prog, rays, "lineTransport") : std::nullopt;
+            check(out.has_value(), "the device ran the transport program without validation errors");
+            auto at = [&](const MathNode& f, const Ray& r, long double s) {
+                const glm::vec3 p(float(r.o[0] + s * r.d[0]), float(r.o[1] + s * r.d[1]), float(r.o[2] + s * r.d[2]));
+                const auto v = f.evaluate({{"p", PropertyValue(p)}});
+                double dd = NAN; if (v) propertyValueToNumber(*v, dd); return (long double)dd;
+            };
+            // Independent reference: cumulative long-double Simpson (fine), then L.
+            auto referenceL = [&](const Ray& r) {
+                const int M = 4000;
+                const long double h = ((long double)r.hi - r.lo) / M;
+                std::vector<long double> tau(M + 1, 0.0L);
+                for (int i = 2; i <= M; i += 2)
+                    tau[i] = tau[i - 2] + h / 3.0L * (at(*sigma, r, r.lo + (i - 2) * h) + 4.0L * at(*sigma, r, r.lo + (i - 1) * h) + at(*sigma, r, r.lo + i * h));
+                for (int i = 1; i < M; i += 2)
+                    tau[i] = tau[i - 1] + h * (5.0L * at(*sigma, r, r.lo + (i - 1) * h) + 8.0L * at(*sigma, r, r.lo + i * h) - at(*sigma, r, r.lo + (i + 1) * h)) / 12.0L;
+                long double sum = 0.0L;
+                for (int i = 0; i <= M; ++i) sum += (i == 0 || i == M ? 1.0L : (i % 2 ? 4.0L : 2.0L)) * std::exp(-tau[i]) * at(*emission, r, r.lo + i * h);
+                return double(sum * h / 3.0L);
+            };
+            // The device's march, in double, with the plan's cells: its distance from the
+            // reference isolates the MATHEMATICAL part (quadrature of depth and of L).
+            auto marchL = [&](const Ray& r, int n) {
+                const double h = (r.hi - r.lo) / n;
+                double tauA = 0.0, sigA = double(at(*sigma, r, r.lo)), gA = double(at(*emission, r, r.lo)), L = 0.0;
+                for (int j = 0; j < n; j += 2) {
+                    const double sm = r.lo + (j + 1) * h, sb = r.lo + (j + 2) * h;
+                    const double sigM = double(at(*sigma, r, sm)), sigB = double(at(*sigma, r, sb));
+                    const double tauM = tauA + h * (5.0 * sigA + 8.0 * sigM - sigB) / 12.0, tauB = tauA + h / 3.0 * (sigA + 4.0 * sigM + sigB);
+                    const double gM = std::exp(-tauM) * double(at(*emission, r, sm)), gB = std::exp(-tauB) * double(at(*emission, r, sb));
+                    L += h / 3.0 * (gA + 4.0 * gM + gB);
+                    tauA = tauB; sigA = sigB; gA = gB;
+                }
+                return L;
+            };
+            if (out) {
+                int admitted = 0, inside = 0, agree = 0, mathInside = 0;
+                double worst = 0.0, worstRatio = 0.0, meanCells = 0.0;
+                for (std::size_t i = 0; i + 1 < rays.size(); ++i) {
+                    const float L = (*out)[4 * i], status = (*out)[4 * i + 1], cells = (*out)[4 * i + 2], total = (*out)[4 * i + 3];
+                    std::string planWhy;
+                    const auto plan = OntoMath::planLineTransport(*sc, *ec, rays[i].o, rays[i].d, rays[i].lo, rays[i].hi, rays[i].tol, 4096, &planWhy);
+                    if (status != 1.0f || !plan) {
+                        continue;
+                    }
+                    ++admitted;
+                    meanCells += cells;
+                    agree += double(cells) == plan->cells;
+                    const double ref = referenceL(rays[i]);
+                    const double err = std::abs(double(L) - ref);
+                    worst = std::max(worst, err);
+                    worstRatio = std::max(worstRatio, err / double(total));
+                    inside += err <= double(total) && double(total) <= rays[i].tol;
+                    mathInside += std::abs(marchL(rays[i], int(plan->cells)) - ref) <= plan->mathematical;
+                }
+                std::printf("    %d/48 admitted, mean %.0f cells (ONE march: depth accumulates); worst |device − reference| %.3g, worst error/total %.4f\n",
+                            admitted, admitted ? meanCells / admitted : 0.0, worst, worstRatio);
+                check(admitted == 48, "every in-domain ray's transport is admitted at ±0.1");
+                check(agree == admitted, "the device's cell count equals the CPU mirror's on every ray");
+                check(inside == admitted, "every admitted ray's true transport error lies inside its device-reported total");
+                check(mathInside == admitted, "the double march with the plan's cells lies inside the mathematical part alone (depth and L quadrature)");
+                check((*out)[4 * 48 + 1] == 0.0f, "transport with hi < lo refuses (light runs one way; not a reversed integral)");
+            }
+            // An extinction that can go negative (bare noise) is refused: exp(−τ) ≤ 1 is unproved.
+            auto signedSigma = node(Op::Noise, named("p"));
+            const auto nc = OntoMath::certifyLineQuadrature(*signedSigma, Rendering::kVolumeExecutionModel, 20, &why);
+            const double o[3] = {0.1, 0.2, 0.3}, dd[3] = {1.0, 0.0, 0.0};
+            check(nc && !OntoMath::planLineTransport(*nc, *ec, o, dd, 0.0, 1.0, 5e-2, 4096, &why) && why.find("nonnegative") != std::string::npos,
+                  "an extinction not proved nonnegative refuses: " + why);
+        }
     }
     std::cout << "webgpu_line_quadrature_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";
     return g_failures == 0 ? 0 : 1;

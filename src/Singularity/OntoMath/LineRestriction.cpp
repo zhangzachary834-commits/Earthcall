@@ -2304,6 +2304,8 @@ std::optional<LineQuadratureCertificate> certifyLineQuadrature(const MathNode& f
             if (undefined || !r.bounded()) continue;
             band.width = double(r.hi) - double(r.lo);
             band.sup = std::max(std::abs(double(r.lo)), std::abs(double(r.hi)));
+            band.low = double(r.lo);
+            band.high = double(r.hi);
         }
         // Lipschitz: √(Σ sup|∂_i f|²), each partial a box-mode derivative along e_i.
         double sum = 0.0;
@@ -2409,6 +2411,68 @@ std::optional<LineQuadraturePlan> planLineQuadrature(const LineQuadratureCertifi
     plan.execution = fixed + gamma * S * band->sup;
     if (plan.total() > tolerance) return std::nullopt;
     return plan;
+}
+
+std::optional<LineTransportPlan> planLineTransport(const LineQuadratureCertificate& sigma,
+                                                   const LineQuadratureCertificate& emission, const double o[3],
+                                                   const double d[3], double lo, double hi, double tolerance,
+                                                   double maxCells, std::string* why) {
+    // Mirrors SdfWgsl's lineTransport exactly (in double).
+    auto refuse = [&](const char* text) { if (why) *why = text; return std::nullopt; };
+    // Light travels from lo to hi: transport is not antisymmetric in its limits.
+    if (!(hi >= lo)) return refuse("transport runs from lo to hi; hi < lo is not a reversed integral");
+    const double a = lo, b = hi, S = b - a;
+    double M = 0.0, dn2 = 0.0;
+    for (int i = 0; i < 3; ++i) {
+        M = std::max({M, std::abs(o[i] + a * d[i]), std::abs(o[i] + b * d[i])});
+        dn2 += d[i] * d[i];
+    }
+    const double dn = std::sqrt(dn2);
+    auto pick = [&](const LineQuadratureCertificate& c, int& index) -> const LineQuadratureBand* {
+        for (std::size_t j = 0; j < c.bands.size(); ++j)
+            if (M <= c.bands[j].cap) { index = int(j); return &c.bands[j]; }
+        return nullptr;
+    };
+    LineTransportPlan plan;
+    const LineQuadratureBand* sg = pick(sigma, plan.sigmaBand);
+    const LineQuadratureBand* em = pick(emission, plan.emissionBand);
+    if (!sg || !em) return refuse("the ray leaves every certified magnitude band");
+    if (!(sg->low >= 0.0)) return refuse("the extinction is not proved nonnegative on the ray's band");
+    const double u = std::ldexp(1.0, -23), lambda = 1.25;
+    const double ds = 4.0 * u * (std::abs(a) + S);
+    const double sMax = sg->high, eMax = em->sup;
+    const double Ls = sg->lipschitz * dn, Le = em->lipschitz * dn;
+    const double Hs = sg->hessian * dn * dn, He = em->hessian * dn * dn;
+    // The exponential's device error, relative to e^−τ ≤ 1, under the model.
+    const double expError = emission.model.transcendental + 4.0 * u;
+    auto local = [&](double width, double L1, double H2, double hw) {
+        double l = std::min(width, L1 * hw);
+        if (std::isfinite(H2)) l = std::min(l, H2 * hw * hw * 0.5);
+        return l;
+    };
+    const double gWidth = std::max(em->high, 0.0) - std::min(em->low, 0.0);
+    const double gPrime = Le + sMax * eMax;
+    const double gSecond = He + 2.0 * sMax * Le + Ls * eMax + sMax * sMax * eMax;
+    for (double n = 2.0; n <= maxCells; n *= 2.0) {
+        const double h = S / n, span = S + 2.0 * h;
+        const double gamma = (n + 8.0) * u / (1.0 - (n + 8.0) * u);
+        // Depth: its quadrature radius (mathematical) and its device error
+        // (execution: σ's per-sample error, node rounding, f32 summation).
+        const double depthMath = span * (1.0 + lambda) * local(sg->width, Ls, Hs, h);
+        const double depthExec = 1.2 * span * (sg->execution + Ls * ds) + gamma * 1.2 * span * sg->sup;
+        const double radius = S * (1.0 + lambda) * local(gWidth, gPrime, gSecond, h);
+        const double mathematical = radius + S * depthMath * eMax;
+        const double execution = S * (depthExec * eMax + em->execution + Le * ds + expError * eMax) +
+                                  gamma * S * eMax + 4.0 * u * S * eMax;
+        if (mathematical + execution <= tolerance) {
+            plan.cells = n;
+            plan.depthError = depthMath + depthExec;
+            plan.mathematical = mathematical;
+            plan.execution = execution;
+            return plan;
+        }
+    }
+    return refuse("no cell count up to the cap fits the tolerance");
 }
 
 namespace {

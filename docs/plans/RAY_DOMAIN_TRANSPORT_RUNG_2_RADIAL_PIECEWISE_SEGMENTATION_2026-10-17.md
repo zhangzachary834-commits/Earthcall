@@ -1914,3 +1914,42 @@ Integral 66/66, expression evaluation 36/36, line segmentation 91/91, line restr
 | 4. Shipping benefit on Metal | no | — | — | native accuracy and like-for-like frame costs against the current 96-sample marcher |
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*
+
+## 6aq. Transport on the device: exp(−∫σ)·ε in one march, certified a priori (2026-10-20, forty-second pass)
+
+**Human origin.** Zach: "YASSASSSA EKEEP GOINGGNGNNGGN". This is the next gate-2 item from §6ap. Codex's step 2 (2026-10-20T16:23): *"Reuse cumulative inner integrals across ordered outer sites … depth increments/prefixes, with propagated uncertainty, instead of restarting the entire inner integral per site."*
+
+**The march** (`sdfwgsl::compileLineTransport`, `lineTransport(o, d, lo, hi, tol) → (L, status, cells, total)`). For L = ∫_lo^hi exp(−τ(s))·ε(q(s)) ds with τ(s) = ∫_lo^s σ, each Simpson panel [s_a, s_a + 2h] does:
+- τ_b = τ_a + (h/3)(σ_a + 4σ_m + σ_b);
+- τ_m = τ_a + h(5σ_a + 8σ_m − σ_b)/12, the quadratic's exact partial integral;
+- L += (h/3)(g_a + 4g_m + g_b), with g = e^(−τ)·ε.
+
+The depth accumulates in **one march**, so the work is O(cells): your prefix structure, on the device, rather than the CPU's O(N·M) restart.
+
+**The bound** (`OntoMath::planLineTransport`, mirrored exactly on the device) is a priori, from the σ and ε certificates on the ray's band:
+- It requires **σ ≥ 0 proved** on the band, so e^(−τ) ≤ 1, τ never decreases, and |e^(−a) − e^(−b)| ≤ |a − b|.
+- **Depth error** at every node: (S + 2h)·[(1 + Λ)·local_σ(h)] (mathematical), plus σ's device error, node rounding and f32 summation (execution).
+- **Each g sample:** depth error × ε_max, plus ε's and exp's device errors.
+- **Outer radius:** (1 + Λ)·min(width_g, |g′|·hw, |g″|·hw²/2), with |g′| ≤ |ε′| + σ_max|ε| and |g″| ≤ |ε″| + 2σ|ε′| + |σ′||ε| + σ²|ε|.
+- Mathematical and execution parts are kept apart. The cells are the smallest power of two that fits.
+- **It refuses** beyond every band, when σ is not proved nonnegative, when hi < lo (light runs one way; this is not a reversed integral), or when nothing up to 4096 cells fits.
+
+**Witness** (`webgpu_line_quadrature_test`, now 27/27 on this Mac's GPU). σ = 0.25·noise(p) + 1 (proved ≥ 0.0474) and ε = 0.25·noise(p + 5) + 1, over 48 random rays:
+- **48/48 admitted at ±0.1,** mean 315 cells, worst |device − reference| 4.7e-7, against a cumulative long-double reference.
+- The device's cell count equals the CPU mirror's on every ray, and every true error lies inside its device total.
+- **The sharp check:** the same march in double, at the plan's cells, lies inside the mathematical part alone.
+- hi < lo refuses, and bare noise as an extinction refuses ("not proved nonnegative").
+- **At ±0.05, one 2.3-unit ray refuses on the declared device model's execution floor:** 2^-10 per noise and per exp evaluation, compounding through the depth, gives 0.073 at 8192 cells. That is the price of Metal fast-math's unproved enclosure, measured.
+
+Line segmentation 91/91, line restriction 57/57, integral 66/66, GPU integral 28/28, support enclosure 4/4.
+
+### Shipping ledger
+
+| Gate | Changed this pass? | Consumer now calling the code | Measured, on which device | Next blocker |
+|---|---|---|---|---|
+| 1. Transport error contract | the device's a-priori transport bound (σ ≥ 0 proved; depth error propagated; categories kept apart) | `planLineTransport` | CPU mirror | the CPU sampled route's own cumulative depth; the Perlin allowance; a tighter device model (it now sets the floor) |
+| 2. GPU fields along rays | **Yes: full emission–absorption transport runs on the device in one march,** certified, with refusals | `lineTransport` WGSL, called by a compute witness | this Mac's GPU | — this slice is in place; colour (RGB ε) and in-scattering are extensions |
+| 3. Native volume consumer | no | — | — | **now the critical path:** a Northern Veil curtain's authored σ and ε read by the volume shader through `lineTransport`, per pixel, with the camera ray (awaiting Codex on in-shader versus a separate pass) |
+| 4. Shipping benefit on Metal | no | — | — | like-for-like native frame cost and accuracy against the current 96-sample marcher |
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*

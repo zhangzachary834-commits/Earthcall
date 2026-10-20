@@ -2919,6 +2919,131 @@ var<private> screenPoint: vec3<f32>;
     return prog;
 }
 
+Program compileLineTransport(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
+                             const OntoMath::LineQuadratureCertificate& sigmaCert,
+                             const OntoMath::LineQuadratureCertificate& emissionCert, uint32_t maxCells) {
+    Program prog;
+    Emit e;
+    e.parameterOffset = "0u";
+    for (const auto* f : {&sigma, &emission}) {
+        std::string why;
+        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
+        if (!f->checkTypes({{"p", OntoMath::ValueKind::Vector}}, why, &kind, false) || kind != OntoMath::ValueKind::Scalar) {
+            prog.ok = false;
+            prog.error = "a transport field must be a Scalar of p: " + why;
+            return prog;
+        }
+    }
+    if (sigmaCert.bands.empty() || emissionCert.bands.empty() || maxCells < 2) {
+        prog.ok = false;
+        prog.error = "transport needs certificates with at least one band each, and at least 2 cells";
+        return prog;
+    }
+    const std::string sigmaValue = emitMathNode(sigma, e, "p");
+    const std::string sigmaBody = e.body;
+    e.body.clear();
+    const std::string emissionValue = emitMathNode(emission, e, "p");
+    const std::string emissionBody = e.body;
+    e.body.clear();
+    auto bands = [&](const OntoMath::LineQuadratureCertificate& cert, const std::string& tag) {
+        std::string out;
+        for (std::size_t j = 0; j < cert.bands.size(); ++j) {
+            const auto& b = cert.bands[j];
+            const auto up = [&](double v) { return e.param(float(v * (1.0 + 1e-6))); };
+            out += std::string(j == 0 ? "    if" : "    else if") + " (M <= " + e.param(float(b.cap)) + ") { " +
+                   tag + "L = " + up(b.lipschitz) + "; " + tag + "W = " + up(b.width) + "; " + tag + "SUP = " + up(b.sup) +
+                   "; " + tag + "EPS = " + up(b.execution) + "; " + tag + "H = " +
+                   (std::isfinite(b.hessian) ? up(b.hessian) : std::string("-1.0")) + "; " + tag + "LOW = " +
+                   e.param(float(b.low)) + "; " + tag + "HIGH = " + up(b.high) + "; " + tag + "OK = true; }\n";
+        }
+        return out;
+    };
+    const std::string sigmaBands = bands(sigmaCert, "s");
+    const std::string emissionBands = bands(emissionCert, "e");
+    const std::string expError = e.param(float((emissionCert.model.transcendental + 4.0 * std::ldexp(1.0, -23)) * (1.0 + 1e-6)));
+    for (float number : e.params)
+        if (!std::isfinite(number)) e.refuse("a transport constant is not finite float32");
+    prog.ok = !e.refused;
+    prog.error = e.refusal;
+    prog.params = std::move(e.params);
+    if (!prog.ok) return prog;
+    const std::string nmax = std::to_string(maxCells) + ".0";
+    prog.wgsl = R"WGSL(
+struct ScreenCoordinates { size: vec4<f32>, time: vec4<f32> };
+struct Parameters { v: array<f32> };
+@group(0) @binding(0) var<uniform> screen: ScreenCoordinates;
+@group(0) @binding(1) var<storage, read> P: Parameters;
+var<private> screenPoint: vec3<f32>;
+)WGSL";
+    prog.wgsl += kPrimitives;
+    prog.wgsl += "fn lineSigma(p: vec3<f32>) -> f32 {\n" + sigmaBody + "    return " + sigmaValue + ";\n}\n";
+    prog.wgsl += "fn lineEmission(p: vec3<f32>) -> f32 {\n" + emissionBody + "    return " + emissionValue + ";\n}\n";
+    prog.wgsl += "fn panelLocal(width: f32, L1: f32, H2: f32, hw: f32) -> f32 {\n"
+                 "    var l = min(width, L1 * hw);\n"
+                 "    if (H2 >= 0.0) { l = min(l, H2 * hw * hw * 0.5); }\n"
+                 "    return l;\n"
+                 "}\n";
+    prog.wgsl += "fn lineTransport(o: vec3<f32>, d: vec3<f32>, lo: f32, hi: f32, tol: f32) -> vec4<f32> {\n"
+                 "    if (!(hi >= lo)) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }\n"
+                 "    let a = lo;\n"
+                 "    let b = hi;\n"
+                 "    let S = b - a;\n"
+                 "    let p0 = abs(o + a * d);\n"
+                 "    let p1 = abs(o + b * d);\n"
+                 "    let M = max(max(max(p0.x, p0.y), p0.z), max(max(p1.x, p1.y), p1.z));\n"
+                 "    let dn = length(d);\n"
+                 "    var sL = 0.0; var sW = 0.0; var sSUP = 0.0; var sEPS = 0.0; var sH = -1.0; var sLOW = 0.0; var sHIGH = 0.0; var sOK = false;\n"
+                 "    var eL = 0.0; var eW = 0.0; var eSUP = 0.0; var eEPS = 0.0; var eH = -1.0; var eLOW = 0.0; var eHIGH = 0.0; var eOK = false;\n" +
+                 sigmaBands + emissionBands +
+                 "    if (!sOK || !eOK || !(sLOW >= 0.0)) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }\n"
+                 "    let u = 1.1920929e-7;\n"
+                 "    let lambda = 1.25;\n"
+                 "    let ds = 4.0 * u * (abs(a) + S);\n"
+                 "    let Ls = sL * dn; let Le = eL * dn;\n"
+                 "    var Hs = -1.0; if (sH >= 0.0) { Hs = sH * dn * dn; }\n"
+                 "    var gSecond = -1.0; if (eH >= 0.0) { gSecond = eH * dn * dn + 2.0 * sHIGH * Le + Ls * eSUP + sHIGH * sHIGH * eSUP; }\n"
+                 "    let gWidth = max(eHIGH, 0.0) - min(eLOW, 0.0);\n"
+                 "    let gPrime = Le + sHIGH * eSUP;\n"
+                 "    var n = 2.0;\n"
+                 "    var total = 1e30;\n"
+                 "    loop {\n"
+                 "        if (n > " + nmax + ") { break; }\n"
+                 "        let h = S / n;\n"
+                 "        let span = S + 2.0 * h;\n"
+                 "        let gamma = (n + 8.0) * u / (1.0 - (n + 8.0) * u);\n"
+                 "        let depthMath = span * (1.0 + lambda) * panelLocal(sW, Ls, Hs, h);\n"
+                 "        let depthExec = 1.2 * span * (sEPS + Ls * ds) + gamma * 1.2 * span * sSUP;\n"
+                 "        let radius = S * (1.0 + lambda) * panelLocal(gWidth, gPrime, gSecond, h);\n"
+                 "        let mathematical = radius + S * depthMath * eSUP;\n"
+                 "        let execution = S * (depthExec * eSUP + eEPS + Le * ds + " + expError + " * eSUP) + gamma * S * eSUP + 4.0 * u * S * eSUP;\n"
+                 "        total = (mathematical + execution) * 1.001;\n"
+                 "        if (total <= tol) { break; }\n"
+                 "        n = n * 2.0;\n"
+                 "    }\n"
+                 "    if (n > " + nmax + ") { return vec4<f32>(0.0, 0.0, n, total); }\n"
+                 "    let h = S / n;\n"
+                 "    let N = u32(n);\n"
+                 "    var tauA = 0.0;\n"
+                 "    var sigA = lineSigma(o + a * d);\n"
+                 "    var gA = lineEmission(o + a * d);\n"
+                 "    var L = 0.0;\n"
+                 "    for (var j = 0u; j < N; j = j + 2u) {\n"
+                 "        let sm = a + S * (f32(j + 1u) / n);\n"
+                 "        let sb = a + S * (f32(j + 2u) / n);\n"
+                 "        let sigM = lineSigma(o + sm * d);\n"
+                 "        let sigB = lineSigma(o + sb * d);\n"
+                 "        let tauM = tauA + h * (5.0 * sigA + 8.0 * sigM - sigB) / 12.0;\n"
+                 "        let tauB = tauA + (h / 3.0) * (sigA + 4.0 * sigM + sigB);\n"
+                 "        let gM = exp(-tauM) * lineEmission(o + sm * d);\n"
+                 "        let gB = exp(-tauB) * lineEmission(o + sb * d);\n"
+                 "        L = L + (h / 3.0) * (gA + 4.0 * gM + gB);\n"
+                 "        tauA = tauB; sigA = sigB; gA = gB;\n"
+                 "    }\n"
+                 "    return vec4<f32>(L, 1.0, n, total);\n"
+                 "}\n";
+    return prog;
+}
+
 ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
                                                bool bindTime) {
     Emit e;

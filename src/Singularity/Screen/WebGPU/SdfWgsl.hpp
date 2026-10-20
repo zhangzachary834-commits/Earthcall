@@ -175,6 +175,13 @@ struct Program {
 // witness today, the volume renderer later) calls lineIntegral.
 Program compileLineQuadrature(const OntoMath::MathNode& field, const OntoMath::LineQuadratureCertificate& cert,
                               uint32_t maxCells);
+// Transport along a line on the DEVICE (plan §6aq): fn lineTransport(o, d, lo,
+// hi, tol) -> vec4<f32>(L, status, cells, total) for L = ∫ exp(−∫σ)·ε ds, the
+// depth accumulated along ONE march (O(cells)), the cells and the a-priori
+// total chosen exactly as OntoMath::planLineTransport chooses them.
+Program compileLineTransport(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
+                             const OntoMath::LineQuadratureCertificate& sigmaCert,
+                             const OntoMath::LineQuadratureCertificate& emissionCert, uint32_t maxCells);
 
 // Compile a field into a raymarching shader plus its parameter block.
 // `colorFormatIsSrgb` is unused for now; kept out of the signature deliberately —
