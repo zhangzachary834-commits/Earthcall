@@ -682,3 +682,24 @@ And the governing asymmetry:
 > **Ontology may choose geometry. Geometry must never secretly choose ontology.**
 
 That is how Earthcall can remain open-ended for Persons while becoming increasingly efficient, portable, and cleanly compilable all the way down to WGSL.
+
+## Addendum: Property Binding and Geometry Substrate
+
+**How typed property paths acting as the source of truth for OntoMath bindings directly supports the Geometry Execution Substrate.**
+
+The "Geometry Execution Substrate Manifesto" establishes a core doctrine: Earthcall must distinguish what a being *is* (authored meaning) from how its form is *represented and executed* (the geometry execution substrate). The substrate handles the low-level rendering, raycasting, and compilation (e.g., compiling OntoMath to WGSL), but it must never originate meaning. The meaning comes from the `OntoMath` AST.
+
+However, an AST requires inputs—variables and parameters that dictate its shape over time. If these variables were hardcoded or opaque, the AST would become a black box.
+
+This is where "Property Storage and OntoMath Binding" completes the architecture. It defines how typed `PropertyPath`s (like a color or a coordinate) serve as the live, legible, Law-governed inputs to those `OntoMath` bindings.
+
+When a Person authors a relationship—for example, binding a building's mathematical height to a specific object's property—the `OntoMath` AST points to that `PropertyPath`.
+
+### Thoughts on Integration
+
+Because properties are strictly managed, typed, and governable by Law, the inputs to the geometry execution substrate are fully ontological. The substrate evaluates the math, but the values driving that math flow directly from the authored, legible state of the world.
+
+This prevents the execution substrate from "drifting" or creating its own hidden state. By ensuring that all dynamic parameters driving the Geometry Execution Substrate originate from `PropertyPath` bindings, Earthcall ensures that rendering and physical manifestation remain entirely subservient to the authored, Law-governed ontology of the Ourverse.
+
+---
+*Originating connection by: Jules / default harness / Session ID: 13284209740648546535*
