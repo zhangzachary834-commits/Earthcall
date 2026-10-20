@@ -919,11 +919,26 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
                      "authors. It evaluates to nullopt on the CPU, so the shader "
                      "declines rather than answering a number the CPU would not.");
             return "0.0";
-        case Op::Integral:
-            e.refuse("Integral has no WGSL lowering yet (the next step of the ray-domain "
-                     "thread, 2026-10-19). The CPU evaluates it exactly or refuses, so the "
-                     "shader declines rather than answering a number the CPU would not.");
-            return "0.0";
+        case Op::Integral: {
+            // Lowered by the one antiderivative office, not by a WGSL rule:
+            // toScalarForm turns the node into its closed form F(hi) − F(lo) in
+            // the enclosing variables (nested integrals by exact substitution),
+            // and that form is emitted like any authored ScalarForm. The shader
+            // holds no antiderivative of its own (Zach, 2026-10-19: no "two
+            // competing antiderivative code"). The line route, SDF(f, q) through
+            // value-branch segmentation, needs segmentation on the device and is
+            // refused here; the CPU still evaluates it. f32 execution error is
+            // measured by webgpu_integral_operation_test, not enclosed.
+            std::string why;
+            const auto form = OntoMath::toScalarForm(node, &why);
+            if (!form) {
+                e.refuse("Integral does not lower to WGSL: " + why +
+                         " (only an integral the term algebra holds in closed form lowers; a field "
+                         "along a line needs device segmentation, not yet built)");
+                return "0.0";
+            }
+            return "(" + emitScalarForm(*form, e, pt) + ")";
+        }
         case Op::LineIntegral:
             e.refuse("LineIntegral has no implementation on either path: it needs a "
                      "curve parameterization and a quadrature rule that nothing in "

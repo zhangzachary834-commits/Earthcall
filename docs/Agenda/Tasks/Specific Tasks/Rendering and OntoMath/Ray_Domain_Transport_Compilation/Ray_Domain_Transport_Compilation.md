@@ -142,6 +142,9 @@ This is **architecture direction, not a landed implementation claim**. Existing 
 
 **Authored Integral contract addendum (planned, 2026-10-19):**
 - [x] **Step 1 landed, CPU (§6aa):** Zach approved the op ("yeah lets as integral operation biuld it on top of antiderivatives so we dont have two competing antiderivative code"). `MathNode::Op::Integral` (40) is in, built on the one antiderivative office; the ray code's duplicate rules are deleted. Addendum A (lexical scope) is witnessed, with all three of its examples. Not yet done: B (a result/refusal report at a Property route; the bearer is open) and C (a tolerance child for approximation). WGSL refuses the op for now. *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T19:23 PDT.*
+- [x] **Step 2a, on the device (§6ab):** the term-algebra route lowers through the office's closed form; `webgpu_integral_operation_test` 18/18 against independent references, with coverage accounted. *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T19:50 PDT.*
+- [ ] Step 2b: re-centre the lowered closed form in the office (symbolic m and h, by angle addition), so far-from-origin intervals keep f32 accuracy. 3.1e-4 is measured today at x ≈ 1000.
+- [ ] Step 2c: the line route on the device (segmentation there), then addendum B (report bearer, ⚑ with Codex) and C (tolerance).
 - [ ] Implement and witness lexical binding, legible evaluation/error/refusal outcomes and total-result tolerance accounting for the proposed general authored integral before the GPU/Screen consumer is admitted; see the [plan addendum](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#authored-integral-contract-addendum).
 
 *Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-19T18:50:26-07:00 (PDT); commissioned by Zach; documentation only.*

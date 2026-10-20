@@ -1367,3 +1367,36 @@ Also checked:
 - **The steps after this one:** step 2 (WGSL lowering outside the volume path) and step 3 (the spherical cloud's transport as an authored tree, which needs Zach's word on who authors the default law).
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T19:23:10-07:00 (PDT).*
+
+
+<a id="6ab-the-integral-op-on-the-device-through-the-same-office"></a>
+
+## 6ab. The Integral op on the device, through the same office (2026-10-19, twenty-ninth pass)
+
+**Human origin.** Zach: "NEXT PASSSSSSS". This is step 2 of the reconciled order: lowering the same mathematics, outside the volume path. Codex has not yet answered on the report bearer (addendum B), so this pass takes the slice that needs no new authority.
+
+**Lowering.** `SdfWgsl`'s `Op::Integral` case asks the office for the closed form. `toScalarForm` turns the node into F(hi) − F(lo) in the enclosing variables (nested integrals by exact substitution), and the existing ScalarForm emitter writes it. No antiderivative is written in WGSL, so there is still one office. The line route (SDF(f, q) through value-branch segmentation) and anything without a closed form refuse with the office's reason.
+
+**Witness: `webgpu_integral_operation_test`, 18/18 on the M5.** The program is `compileScreenForm`'s generic authored-math emitter. A compute entry calls its `screenColor(p)` at 21 chosen points per case and reads f32 values back, so nothing is drawn and no medium, ray or camera is involved. References are independent of the office: analytic antiderivatives written out in the test, or long-double composite Simpson. The CPU evaluates the same authored tree through `MathNode::evaluate`. Coverage is 7 cases attempted: 5 lowered and executed on the device, 2 negative controls refused with the Integral's reason (the line route and noise).
+
+| Case | Worst GPU error, relative to the case's scale (measured, not enclosed) |
+|---|---|
+| ∫₀ˣ cos 3u du | 4.3e-8 |
+| ∫₀ˣ u·e^(−u/2)·sin 2u du (exp·sin) | 1.2e-7 |
+| ∫₀ˣ ∫₀ˢ (u²+1) du ds (cumulative) | 1.3e-7 |
+| ∫ᵧˣ sin 2u·cos 5u du (two coordinates) | 3.9e-8 |
+| ∫ₓ^(x+½) u·e^(0.001u)·cos(0.002u+0.1) du, x ≈ 1000 | **3.1e-4** (0.21 absolute of 691), reported, not asserted |
+
+**Finding.** Far from the origin, F(hi) − F(lo) cancels in f32. The CPU avoids this by re-centring, but the lowered closed form is not re-centred. The fix belongs in the office, not in WGSL. With m = (lo + hi)/2 and h = (hi − lo)/2, the same integral is a form in m and h: angle addition turns g(ω(m+v)+φ) into products of factors of m and of v, which the term algebra holds. The small-h differences (sin ωh, sinh αh) then compute accurately in f32. That is the next lowering step, and its witness is already in this test, as the case to tighten from "reported" to asserted.
+
+**Regressions:** `webgpu_sdf_parity_test`, `webgpu_object_test` and `ontomath_authoring_reachability_test` exit 0; `webgpu_volume_support_certificates_test` 132/132; `ontomath_integral_operation_test` 33/33.
+
+**Not claimed:**
+- the line route on the device;
+- an execution-error enclosure (addendum C);
+- a report at a Property route (addendum B);
+- any Screen consumer of an integral (step 3).
+
+Nothing renders differently: no saved medium contains the op.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T19:50:39-07:00 (PDT).*
