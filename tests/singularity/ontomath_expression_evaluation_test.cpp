@@ -233,6 +233,20 @@ int main() {
         check(text(at("qualification")) == "model-qualified" && number(read(medium, "transmittance.evaluation.inputBounds.tau")) == delta,
               "it is model-qualified, and names τ's bound as its input's");
 
+        // The same transmittance in ONE tree, with Let (Op 41): let tau = ∫(noise + 4) in exp(−tau).
+        {
+            auto innerDepth = node(Op::Integral, node(Op::SDF, node(Op::Add, node(Op::Noise, named("p")), constant(4.0)), line()),
+                                   constant(0.0), constant(3.0), constant(5e-2));
+            innerDepth->variableName = "s";
+            auto single = node(Op::Let, std::move(innerDepth), leaf(ScalarForm::transcendental(TK::Exp, "tau", -1.0, 0.0)));
+            single->variableName = "tau";
+            medium.setDynamicProperty("single.expression", field(std::move(single)));
+            const double Ts = number(read(medium, "single.evaluation.value")), totals = number(read(medium, "single.evaluation.totalBound"));
+            check(text(read(medium, "single.evaluation.route")) == "composition" && Ts == T && std::abs(totals - total) <= 1e-6 * total &&
+                      number(read(medium, "single.evaluation.inputBounds.tau")) == delta,
+                  "written as one tree with Let, the transmittance and its bound match the two-property composition");
+        }
+
         // An unknown constituent: τ from a composite whose bounds are unavailable.
         medium.setDynamicProperty("shifted.expression",
             field(node(Op::Add, constant(1.0), integral("u", leaf(ScalarForm::variable("u")), constant(0.0), constant(1.0)))));
@@ -265,6 +279,45 @@ int main() {
         const double T5 = number(read(medium, "t5.evaluation.value")), e5 = number(read(medium, "t5.evaluation.totalBound"));
         check(std::abs(T5 - std::exp(-50.0)) <= 1e-15 * T5 && e5 > 0.0 && e5 <= 1e-12 * T5,
               "exp(−50)'s execution bound is relative to e^-50 (" + std::to_string(e5 / T5) + " of it), not e^+50");
+
+        // Codex's two reproductions (2026-10-20 15:54), now regressions: an Integral
+        // reading a REPORT-derived value took it as exact, publishing 8e-14 for an
+        // input uncertain by 0.0307, and promoted an unknown input to model-qualified.
+        {
+            auto outer = integral("u", named("x"), constant(0.0), constant(1.0));
+            medium.setDynamicProperty("outer.expression", field(std::move(outer)));
+            auto ob = std::make_shared<PropertyDict>();
+            ob->elements["x"] = std::string("depth.evaluation.value");
+            medium.setDynamicProperty("outer.bindings", PropertyValue(ob));
+            check(text(read(medium, "outer.evaluation.status")) == "admitted" &&
+                      text(read(medium, "outer.evaluation.totalBound")) == "unavailable" &&
+                      text(read(medium, "outer.evaluation.qualification")) == "none" &&
+                      text(read(medium, "outer.evaluation.boundsUnavailable")).find("'x'") != std::string::npos,
+                  "∫₀¹ x du with x from an uncertain report: bound unavailable, naming x (was 8e-14, model-qualified)");
+            ob->elements["x"] = std::string("shifted.evaluation.value");
+            medium.setDynamicProperty("outer.bindings", PropertyValue(ob));
+            check(text(read(medium, "outer.evaluation.qualification")) == "none" &&
+                      text(read(medium, "outer.evaluation.totalBound")) == "unavailable",
+                  "the same with x from a report WITHOUT a bound: unknown stays unknown (was promoted to model-qualified)");
+        }
+        // Lineage: a report-like record under another execution model is not relabelled as ours.
+        {
+            auto foreign = std::make_shared<PropertyDict>();
+            foreign->elements["value"] = 2.0;
+            foreign->elements["totalBound"] = 1e-3;
+            foreign->elements["qualification"] = std::string("model-qualified");
+            foreign->elements["executionModel"] = std::string("some-other-device/1");
+            medium.setDynamicProperty("foreignReport", PropertyValue(foreign));
+            medium.setDynamicProperty("t6.expression", field(leaf(ScalarForm::transcendental(TK::Exp, "tau", -1.0, 0.0))));
+            auto b6 = std::make_shared<PropertyDict>();
+            b6->elements["tau"] = std::string("foreignReport.value");
+            medium.setDynamicProperty("t6.bindings", PropertyValue(b6));
+            check(text(read(medium, "t6.evaluation.totalBound")) == "unavailable" &&
+                      text(read(medium, "t6.evaluation.boundsUnavailable")).find("some-other-device/1") != std::string::npos,
+                  "an input under a different execution model is declined, naming it: " + text(read(medium, "t6.evaluation.boundsUnavailable")));
+            check(text(read(medium, "transmittance.evaluation.inputLineage.tau")).find("model-qualified under ontomath-cpu/2") == 0,
+                  "a composed input's lineage is recorded: " + text(read(medium, "transmittance.evaluation.inputLineage.tau")));
+        }
 
         // A binding that reads its own evaluation is a cycle, refused legibly.
         medium.setDynamicProperty("loop.expression", field(leaf(ScalarForm::variable("x"))));

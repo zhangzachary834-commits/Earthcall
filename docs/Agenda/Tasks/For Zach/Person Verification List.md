@@ -1749,6 +1749,7 @@ The root's scalar field looks like a legacy field, now read as radiance, rather 
 
 Earthcall can now author integrals as mathematics (`MathNode::Op::Integral`; [plan §6aa](../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6aa-the-authored-integral-op-on-one-antiderivative-office)). Nothing renders differently.
 - [ ] In any OntoMath expression editor, search the operation list for **Integral (body, lo, hi)**. Choosing it should give three children and an **Integration variable** field set to `s`. In a ValueLeaf inside the first child (the body), the variable picker should offer `s`.
+- [ ] In the same editor, search for **Let (name = value in body)** (your choice, 2026-10-20). It should give two children and a **Name (bound in the body)** field set to `tau`. A ValueLeaf inside the second child (the body) should offer `tau` in its variable picker; one inside the first child should not. Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.
 - [ ] Optional: author ∫₀¹ s ds (body = Variable Leaf `s`, lo = 0, hi = 1) wherever an expression's value is displayed. It should read 0.5.
 
 *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T19:23 PDT.*

@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -48,6 +49,8 @@ struct InputUncertainty {
     double bound = 0.0;
     bool known = true;
     bool exact = true;
+    std::string qualification;   // the upstream report's, when not exact
+    std::string why;             // when not known: why the bound is unusable
 };
 
 // Reads one binding. A path ending ".value" whose parent is a report-like
@@ -73,9 +76,23 @@ bool readBinding(Singular& bearer, const std::string& path, PropertyValue& value
                 if (v != e.end() && tb != e.end()) {
                     value = v->second;
                     u.exact = false;
-                    double b = 0.0;
+                    // Lineage (Codex, 2026-10-20 15:54): only a recognized
+                    // qualification under THIS execution model composes; a
+                    // missing, unknown or different model is not silently
+                    // relabelled as ours — the bound becomes unusable instead.
                     const auto* qs = q != e.end() ? std::get_if<std::string>(&q->second) : nullptr;
-                    u.known = propertyValueToNumber(tb->second, b) && std::isfinite(b) && b >= 0.0 && qs && *qs != "none";
+                    const auto m = e.find("executionModel");
+                    const auto* model = m != e.end() ? std::get_if<std::string>(&m->second) : nullptr;
+                    double b = 0.0;
+                    u.qualification = qs ? *qs : std::string("none");
+                    if (!propertyValueToNumber(tb->second, b) || !std::isfinite(b) || b < 0.0)
+                        u.why = "its report has no bound";
+                    else if (!qs || (*qs != "model-qualified" && *qs != "certified"))
+                        u.why = "its report's qualification is '" + u.qualification + "'";
+                    else if (!model || *model != kIntegralExecutionModel)
+                        u.why = "its report names " + (model ? "the execution model '" + *model + "'" : std::string("no execution model")) +
+                                ", not this one";
+                    u.known = u.why.empty();
                     u.bound = u.known ? b : 0.0;
                     return true;
                 }
@@ -112,6 +129,108 @@ struct ReportGuard {
     }
     ~ReportGuard() { if (!cyclic) t_reportsInProgress.pop_back(); }
 };
+
+// A composite's bounds (plan §6am/§6an). A Let evaluates its value with its
+// bound and hands both to the body as one more input; an Integral brings its
+// own bounds; a scalar tree propagates its inputs' box and adds its own
+// execution. Anything else, or any input without a bound, is unavailable.
+struct Composite {
+    bool computed = false, bounded = false;
+    double value = 0.0, mathematical = 0.0, execution = 0.0;
+    std::string unavailable;
+};
+Composite compose(const MathNode& n, std::map<std::string, PropertyValue> vars,
+                  std::map<std::string, InputUncertainty> unc, Singular& bearer, PropertyDict& inputs) {
+    Composite out;
+    if (n.op == MathNode::Op::Let) {
+        if (n.children.size() != 2 || !n.children[0] || !n.children[1]) return out;
+        const Composite value = compose(*n.children[0], vars, unc, bearer, inputs);
+        if (!value.computed) return value;
+        vars[n.variableName] = value.value;
+        InputUncertainty u;
+        u.exact = false;
+        u.known = value.bounded;
+        u.bound = value.bounded ? value.mathematical + value.execution : 0.0;
+        unc[n.variableName] = u;
+        inputs.elements[n.variableName] = value.bounded ? PropertyValue(u.bound) : PropertyValue(std::string("unavailable"));
+        Composite body = compose(*n.children[1], vars, unc, bearer, inputs);
+        if (body.computed && !value.bounded && body.unavailable.empty())
+            body.unavailable = "the Let value '" + n.variableName + "' carries no bound" +
+                               (value.unavailable.empty() ? std::string() : " (" + value.unavailable + ")");
+        if (!value.bounded) body.bounded = false;
+        return body;
+    }
+    if (n.op == MathNode::Op::Integral) {
+        IntegralBounds b;
+        std::string why;
+        const auto v = evaluateIntegral(n, vars, &bearer, &why, &b);
+        if (!v) return out;
+        out.computed = out.bounded = true;
+        out.value = *v;
+        out.mathematical = b.mathematical;
+        out.execution = b.execution;
+        // An Integral that READS an uncertain input took it as exact: its
+        // sensitivity to that input is not composed yet.
+        std::set<std::string> deps;
+        n.collectDependencies(deps);
+        for (const auto& name : deps) {
+            const auto it = unc.find(name);
+            if (it != unc.end() && !it->second.exact) {
+                out.bounded = false;
+                out.unavailable = "an Integral reading the uncertain input '" + name + "' (not composed yet)";
+            }
+        }
+        return out;
+    }
+    const auto v = n.evaluate(vars, &bearer);
+    double number = 0.0;
+    if (!v || !propertyValueToNumber(*v, number)) return out;
+    out.computed = true;
+    out.value = number;
+    if (!scalarComposable(n)) {
+        out.unavailable = std::string(mathOpName(n.op)) + " does not compose bounds yet";
+        return out;
+    }
+    std::map<std::string, double> magnitudes;
+    SignedRanges signedRanges;
+    std::map<std::string, MathNode::RangeValue> box;
+    bool uncertain = false;
+    std::set<std::string> deps;
+    n.collectDependencies(deps);
+    for (const auto& [name, value] : vars) {
+        if (!deps.count(name)) continue;   // only what this subtree reads
+        double x = 0.0;
+        if (!propertyValueToNumber(value, x) || !std::isfinite(x)) { out.unavailable = "the input '" + name + "' is not a finite scalar"; return out; }
+        const auto it = unc.find(name);
+        const InputUncertainty u = it == unc.end() ? InputUncertainty{} : it->second;
+        if (!u.known) { out.unavailable = "the input '" + name + "' carries no usable bound (" + u.why + ")"; return out; }
+        if (!inputs.elements.count(name))
+            inputs.elements[name] = u.exact ? PropertyValue(std::string("exact")) : PropertyValue(u.bound);
+        uncertain = uncertain || u.bound > 0.0;
+        magnitudes[name] = std::abs(x) + u.bound;
+        signedRanges[name] = {x - u.bound, x + u.bound};
+        // The box, rounded outward into the float interval arithmetic.
+        float lo = static_cast<float>(x - u.bound), hi = static_cast<float>(x + u.bound);
+        if (double(lo) > x - u.bound) lo = std::nextafter(lo, -INFINITY);
+        if (double(hi) < x + u.bound) hi = std::nextafter(hi, INFINITY);
+        box[name] = MathNode::RangeValue::makeScalar(Interval(std::nextafter(lo, -INFINITY), std::nextafter(hi, INFINITY)));
+    }
+    const auto exec = executionBound(n, magnitudes, cpuExecutionModel(), -1, kAmbientPointVar, &signedRanges);
+    if (!exec || !std::isfinite(exec->slack)) { out.unavailable = "the composite's execution could not be bounded"; return out; }
+    out.execution = exec->slack;
+    if (uncertain) {
+        const auto range = n.evalRange(box);
+        if (!range || range->kind != ValueKind::Scalar || !range->scalar.bounded()) {
+            out.unavailable = "the composite's range over its inputs could not be bounded";
+            return out;
+        }
+        // |f(x_true) − f(x_used)| ≤ max(hi − f(x_used), f(x_used) − lo), and the
+        // computed value is within the execution slack of f(x_used).
+        out.mathematical = std::max(double(range->scalar.hi) - number, number - double(range->scalar.lo)) + exec->slack;
+    }
+    out.bounded = true;
+    return out;
+}
 
 // A copy through the typed codec, so the report never shares canonical storage.
 PropertyValue detached(const PropertyValue& v) {
@@ -186,7 +305,27 @@ std::shared_ptr<PropertyDict> evaluationReport(Singular& bearer, const std::stri
     // reported in the result's units. A composite expression around integrals
     // does not propagate them yet, so its bounds stay "unavailable".
     const auto& pieces = (*field)->astDefinition.pieces;
+    // An Integral reading a value that carries ANOTHER evaluation's uncertainty
+    // took it as exact: its own bounds would silently drop that input's
+    // (Codex reproduced it, 2026-10-20 15:54: input ±0.0307, reported 8e-14).
+    // Until that sensitivity is propagated, the bound is unavailable, naming it.
+    std::string uncertainIntegralInput;
     if (pieces.size() == 1 && pieces[0].mathNode && pieces[0].mathNode->op == MathNode::Op::Integral) {
+        std::set<std::string> deps;
+        pieces[0].mathNode->collectDependencies(deps);
+        for (const auto& name : deps) {
+            const auto it = uncertainty.find(name);
+            if (it != uncertainty.end() && !it->second.exact) { uncertainIntegralInput = name; break; }
+        }
+        if (!uncertainIntegralInput.empty()) {
+            r["route"] = std::string("integral over an uncertain input");
+            r["boundsUnavailable"] = "the Integral reads '" + uncertainIntegralInput +
+                                     "', a value carrying another evaluation's uncertainty; propagating it through an "
+                                     "Integral (body, limits) is not built yet";
+        }
+    }
+    if (uncertainIntegralInput.empty() && pieces.size() == 1 && pieces[0].mathNode &&
+        pieces[0].mathNode->op == MathNode::Op::Integral) {
         IntegralBounds bounds;
         if (evaluateIntegral(*pieces[0].mathNode, vars, &bearer, nullptr, &bounds)) {
             // "within tolerance" alone reads as a guarantee; it is one only under
@@ -207,60 +346,36 @@ std::shared_ptr<PropertyDict> evaluationReport(Singular& bearer, const std::stri
                 "is taken within 2^-14, corroborated by measurement, not proved");
         }
     }
-    // Plan §6am: a SCALAR composite whose inputs carry bounds (another
-    // report's total) or are exact authored data. Codex (2026-10-20 13:38):
-    // carry value enclosures, model identity and qualification together; an
-    // unknown constituent leaves the composite unavailable; a fully accounted
-    // one is model-qualified, never certified by nesting. For exp(−τ) the
-    // interval evaluation over [τ − δ, τ + δ] is exactly his monotone
-    // [exp(−(τ+δ)), exp(−(τ−δ))].
-    else if (pieces.size() == 1 && pieces[0].mathNode && scalarComposable(*pieces[0].mathNode)) {
-        const MathNode& root = *pieces[0].mathNode;
+    // Plan §6am/§6an: a composite — a scalar tree whose inputs carry bounds,
+    // or a Let chain (let tau = Integral(…) in exp(−tau)). Codex (2026-10-20
+    // 13:38): carry value enclosures, model identity and qualification
+    // together; an unknown constituent leaves the composite unavailable; a
+    // fully accounted one is model-qualified, never certified by nesting. For
+    // exp(−τ), the box [τ − δ, τ + δ] gives exactly his monotone interval.
+    else if (pieces.size() == 1 && pieces[0].mathNode &&
+             (pieces[0].mathNode->op == MathNode::Op::Let || scalarComposable(*pieces[0].mathNode))) {
         r["route"] = std::string("composition");
         auto inputs = std::make_shared<PropertyDict>();
-        std::map<std::string, double> magnitudes;
-        SignedRanges signedRanges;
-        std::map<std::string, MathNode::RangeValue> box;
-        bool known = true, uncertain = false;
-        std::string unknownInput;
-        for (const auto& [name, v] : vars) {
-            double x = 0.0;
-            if (!propertyValueToNumber(v, x) || !std::isfinite(x)) { known = false; unknownInput = name + " (not a finite scalar)"; break; }
-            const auto& u = uncertainty[name];
-            if (!u.known) { known = false; unknownInput = name; break; }
-            inputs->elements[name] = u.exact ? PropertyValue(std::string("exact")) : PropertyValue(u.bound);
-            uncertain = uncertain || u.bound > 0.0;
-            magnitudes[name] = std::abs(x) + u.bound;
-            signedRanges[name] = {x - u.bound, x + u.bound};
-            // The box, rounded outward into the float interval arithmetic.
-            float lo = static_cast<float>(x - u.bound), hi = static_cast<float>(x + u.bound);
-            if (double(lo) > x - u.bound) lo = std::nextafter(lo, -INFINITY);
-            if (double(hi) < x + u.bound) hi = std::nextafter(hi, INFINITY);
-            box[name] = MathNode::RangeValue::makeScalar(Interval(std::nextafter(lo, -INFINITY), std::nextafter(hi, INFINITY)));
-        }
+        const Composite c = compose(*pieces[0].mathNode, vars, uncertainty, bearer, *inputs);
         r["inputBounds"] = inputs;
-        const auto exec = known ? executionBound(root, magnitudes, cpuExecutionModel(), -1, kAmbientPointVar, &signedRanges)
-                                : std::nullopt;
-        double mathematical = 0.0;
-        bool bounded = known && exec && std::isfinite(exec->slack);
-        if (bounded && uncertain) {
-            const auto range = root.evalRange(box);
-            bounded = range && range->kind == ValueKind::Scalar && range->scalar.bounded();
-            // |f(x_true) − f(x_used)| ≤ max(hi − f(x_used), f(x_used) − lo), and the
-            // computed value is within the execution slack of f(x_used).
-            if (bounded)
-                mathematical = std::max(double(range->scalar.hi) - number, number - double(range->scalar.lo)) + exec->slack;
-        }
-        if (bounded) {
+        auto lineage = std::make_shared<PropertyDict>();
+        for (const auto& [name, u] : uncertainty)
+            if (!u.exact) {
+                const std::string model(kIntegralExecutionModel);
+                lineage->elements[name] = u.qualification + (u.known ? " under " + model.substr(0, model.find(':'))
+                                                                      : " (unusable: " + u.why + ")");
+            }
+        r["inputLineage"] = lineage;
+        if (c.computed && c.bounded) {
+            const bool uncertain = c.mathematical > 0.0;
             r["admission"] = std::string(uncertain ? "propagated from its inputs under the execution model" : "exact");
             r["qualification"] = std::string("model-qualified");
             r["executionModel"] = std::string(kIntegralExecutionModel);
-            r["mathematicalBound"] = mathematical;
-            r["executionBound"] = exec->slack;
-            r["totalBound"] = mathematical + exec->slack;
+            r["mathematicalBound"] = c.mathematical;
+            r["executionBound"] = c.execution;
+            r["totalBound"] = c.mathematical + c.execution;
         } else {
-            r["boundsUnavailable"] = std::string(!known ? "the input '" + unknownInput + "' carries no bound"
-                                                        : "the composite's range or execution could not be bounded");
+            r["boundsUnavailable"] = c.unavailable.empty() ? std::string("the composite could not be bounded") : c.unavailable;
         }
     }
     return report;

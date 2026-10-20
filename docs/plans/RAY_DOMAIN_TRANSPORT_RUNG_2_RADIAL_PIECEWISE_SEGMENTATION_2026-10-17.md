@@ -1764,3 +1764,54 @@ Also passing: integral 51/51, line segmentation 91/91, derived-reading Law 15/15
 | 4. Shipping benefit on Metal | no | — | — | native accuracy and frame costs |
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*
+
+## 6an. Let (Op 41): one tree can say exp(−∫σ) inside an integrand (2026-10-20, thirty-ninth pass)
+
+**Human origin.** Zach: "NEXT PASSSSSSSSS". Transport's outer integral needs exp(−τ(s)) inside the integrand, and a binding cannot vary per sample. MathNode had no way for a formula to use a computed value, so I asked. Zach chose **Let**: *"Let(name, value, body): binds a computed value to a name for its body, lexically scoped like Integral's variable."* It is append-only Op 41. It is a mathematical primitive (lexical binding), not a kind of thing.
+
+**Wired everywhere Integral is:**
+- name, known-op, type and evaluation;
+- print (`let a = … in …`), JSON (`var`) and dependencies (value ∪ body − name);
+- `toScalarForm` (exact substitution) and range evaluation (the value's range bound to the name);
+- `Sdf` (conservative), the math editor (a name field, defaulting to `tau`, scoped to the body);
+- the WGSL emitter.
+
+**What the GPU test caught.** The first WGSL version emitted a `let` statement. Screen forms keep only the returned expression, so the statement was dropped and its name undefined, and wgpu rejected the pipeline (`webgpu_integral_operation_test`). The name is now bound to the value's parenthesized expression, which works in every emitter context.
+
+**Witnesses:**
+
+| | |
+|---|---|
+| `ontomath_integral_operation_test` 61/61 | evaluation; lexical shadowing; the name bound in the body only; dependencies; a type error without a name; JSON round trip; print; range |
+| homogeneous transport, exact | ∫₀^2.5 exp(−∫₀^s 0.7 du)·1.3 ds = 1.5344198193063161 against 1.3(1 − e^(−1.75))/0.7 = 1.5344198193063163 |
+| an outer ∫ over an approximate inner one | refuses, legibly (next pass's work) |
+| `webgpu_integral_operation_test` 28/28 | `let a = x·y in a² + a` and the homogeneous transport both run on the device within 8.6e-8 of scale. Coverage 8 executed, 3 refused |
+| `ontomath_expression_evaluation_test` 31/31 | `let tau = ∫(noise + 4) in exp(−tau)` as one tree gives the same value and bound as the two-property composition of §6am |
+
+**The report composes recursively (`compose`).**
+- A Let hands its value's bound to the body as an input.
+- An Integral brings its own bounds. It is refused if it reads an uncertain input, since that sensitivity is not composed yet.
+- A scalar tree propagates only the inputs it reads.
+
+All 21 OntoMath/SDF CPU tests pass, run one at a time. `ontomath_two_direction_witness_test`, which segfaulted at session start, now passes; that is not attributed to this pass. Faithfulness was not rerun: no volume scene contains a Let, and the device path is unchanged for every existing op.
+
+**Codex's review of §6am** (2026-10-20T15:54), closed in the same pass:
+- **Reproduced:** a root Integral reading a report-derived value took it as exact. ∫₀¹ x du with x from τ's report (±0.0307) reported 8e-14, model-qualified. With x from a report with no bound, it still claimed model-qualified. Now the bound is unavailable, naming the input, until propagation through an Integral's body and limits is built. Both cases are regressions; with the guard disabled, the test fails exactly those two (33/35).
+- **Lineage:** an input composes only with a recognized qualification ("model-qualified" or "certified") under this execution model. A record naming another model is declined, naming it. The composite records `inputLineage`.
+- **His device-exp lead,** recorded as a bounded follow-up: `VolumeRayTransport::channelSlack` and the original-DAG provenance slack call `executionBound` without `SignedRanges`. Tighten them only under the device's own model, with a fallback.
+- **His architecture note,** honoured by Let: the outer integral needs τ(s) under the outer variable's lexical scope. That means a general binding seam in the shared office, not per-sample Property mutation and not the report path as an execution mechanism.
+
+Expression evaluation is now 35/35.
+
+**Person check:** the Let entry in the math editor (Person Verification List).
+
+### Shipping ledger
+
+| Gate | Changed this pass? | Consumer now calling the code | Measured, on which device | Next blocker |
+|---|---|---|---|---|
+| 1. Transport error contract | **Yes:** transport is now **expressible** in one authored tree, and exact for a homogeneous medium (CPU and GPU) | the Integral op (CPU), the WGSL screen-form emitter (GPU) and the report | CPU, and this Mac's GPU via the compute harness | an outer ∫ over an approximate inner ∫ (heterogeneous media): a uniform bound on τ(s) and its derivative τ′ = σ, then the sampled factor exp(−τ) with a pointwise contract |
+| 2. GPU fields along rays | partly: closed-form transport now lowers | the GPU harness | this Mac | `SdfWgsl` field-on-line, plus f32 accounting |
+| 3. Native volume consumer | no | — | — | single-curtain native consumer |
+| 4. Shipping benefit on Metal | no | — | — | native accuracy and frame costs |
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*

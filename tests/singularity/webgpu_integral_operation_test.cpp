@@ -221,6 +221,25 @@ int main() {
                      integral("s", integral("u", leaf(var("u").times(var("u")).plus(ScalarForm::constant(1.0))), constant(0.0), named("s")),
                               constant(0.0), named("x")),
                      [](double x, double) { return x * x * x * x / 12.0 + x * x / 2.0; }, true, false, grid(-2.5, 2.5, -1.0)});
+    // Let (Op 41, plan §6an): the name bound to its value's expression for the body.
+    {
+        auto product = leaf(var("x").times(var("y")));
+        auto body = leaf(var("a").times(var("a")).plus(var("a")));
+        auto letNode = node(Op::Let, std::move(product), std::move(body));
+        letNode->variableName = "a";
+        cases.push_back({"let a = x·y in a² + a (the name bound to its value's expression)", std::move(letNode),
+                         [](double x, double y) { const double a = x * y; return a * a + a; }, true, false, grid(-2.0, 2.0, -1.0)});
+    }
+    // Homogeneous transport, exact through the office's Let substitution:
+    // ∫_0^x exp(−∫_0^s 0.7 du)·1.3 ds = 1.3(1 − e^(−0.7x))/0.7.
+    {
+        auto depth = integral("u", constant(0.7), constant(0.0), named("s"));
+        auto attenuated = node(Op::Let, std::move(depth), leaf(trans(K::Exp, "tau", -1.0).scaled(1.3)));
+        attenuated->variableName = "tau";
+        cases.push_back({"∫_0^x exp(−∫_0^s 0.7 du)·1.3 ds (transport, homogeneous, with Let)",
+                         integral("s", std::move(attenuated), constant(0.0), named("x")),
+                         [](double x, double) { return 1.3 * (1.0 - std::exp(-0.7 * x)) / 0.7; }, true, false, grid(0.1, 2.5, -1.0)});
+    }
     cases.push_back({"∫_y^x sin 2u·cos 5u du (product-to-sum, two coordinates)",
                      integral("u", leaf(trans(K::Sin, "u", 2.0).times(trans(K::Cos, "u", 5.0))), named("y"), named("x")),
                      [](double x, double y) {
@@ -302,7 +321,7 @@ int main() {
         }
     }
     std::printf("    coverage: %d attempted, %d lowered, %d refused, %d executed on the device\n", attempted, admitted, refused, executed);
-    check(expectedRefusedWrongly == 0 && executed == 6 && refused == 3,
+    check(expectedRefusedWrongly == 0 && executed == 8 && refused == 3,   // 6, + the two Let cases (plan §6an)
           "every expected-supported case lowered and ran on the device; all three negative controls refused");
 
     std::cout << "webgpu_integral_operation_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";

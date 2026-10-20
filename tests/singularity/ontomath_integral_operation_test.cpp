@@ -18,6 +18,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <set>
 #include <cstdio>
 #include <glm/glm.hpp>
 #include <iostream>
@@ -443,6 +444,58 @@ int main() {
         }
         std::cout << "    d/dx ∫ x²·e^(−0.7x+0.2)·sin(2.5x+1): worst relative difference " << worst << "\n";
         check(F && worst < 1e-13, "the exp·sin antiderivative differentiates back to its integrand");
+    }
+
+    // ---- Let (Op 41, Zach's choice, 2026-10-20; plan §6an) ----
+    {
+        std::cout << "  -- Let: name = value in body --\n";
+        auto let = [](const std::string& name, Node value, Node body) {
+            auto n = node(Op::Let, std::move(value), std::move(body));
+            n->variableName = name;
+            return n;
+        };
+        auto num = [](const std::optional<PropertyValue>& v) { double d = NAN; if (v) propertyValueToNumber(*v, d); return d; };
+        // Evaluation and lexical scope.
+        const auto square = let("a", constant(2.0), leaf(var("a").times(var("a")).plus(ScalarForm::constant(1.0))));
+        check(num(square->evaluate({})) == 5.0, "let a = 2 in a² + 1 = 5");
+        const auto shadow = let("a", constant(2.0), let("a", leaf(var("a").plus(ScalarForm::constant(1.0))), named("a")));
+        check(num(shadow->evaluate({})) == 3.0, "an inner Let shadows an outer one (let a = 2 in let a = a + 1 in a = 3)");
+        const auto outside = node(Op::Add, let("a", constant(2.0), named("a")), named("a"));
+        check(num(outside->evaluate({{"a", PropertyValue(10.0)}})) == 12.0, "the name is bound in the body only: (let a = 2 in a) + a = 12 at a = 10");
+        // Dependencies, types, JSON, print.
+        const auto deps = let("a", named("b"), leaf(var("a").plus(var("c"))));
+        std::set<std::string> d;
+        deps->collectDependencies(d);
+        check(d == std::set<std::string>{"b", "c"}, "dependencies are the value's plus the body's minus the name");
+        std::string typeError;
+        auto unnamed = node(Op::Let, constant(1.0), constant(2.0));
+        check(!unnamed->checkTypes({}, typeError), "a Let without a name is a type error: " + typeError);
+        const auto restored = MathNode::fromJson(deps->toJson());
+        check(restored && restored->op == Op::Let && restored->variableName == "a" && restored->toJson() == deps->toJson(),
+              "a Let round-trips through JSON with its name");
+        std::cout << "    print: " << deps->print() << "\n";
+        check(deps->print().find("let a = ") == 0, "it prints as let a = … in …");
+        // Range: the value's range bound to the name.
+        const auto ranged = let("a", named("x"), leaf(var("a").times(var("a"))));
+        const auto rr = ranged->evalRange({{"x", MathNode::RangeValue::makeScalar(OntoMath::Interval(1.0f, 2.0f))}});
+        check(rr && rr->scalar.lo <= 1.0f && rr->scalar.hi >= 4.0f && rr->scalar.hi <= 4.001f, "range: let a = x in a², x ∈ [1, 2] → ⊇ [1, 4]");
+        // Transport through a homogeneous medium, EXACT: L = ∫₀^S exp(−∫₀^s k du)·ε ds = ε(1 − e^(−kS))/k.
+        const double k = 0.7, eps = 1.3, S = 2.5;
+        auto depth = integral("u", constant(k), constant(0.0), named("s"));
+        auto radiance = integral("s", let("tau", std::move(depth), leaf(trans(K::Exp, "tau", -1.0).scaled(eps))), constant(0.0), constant(S));
+        std::string why;
+        const auto L = run(*radiance, {}, &why);
+        const double want = eps * (1.0 - std::exp(-k * S)) / k;
+        std::printf("    homogeneous transport: %.17g (want %.17g)\n", L.value_or(NAN), want);
+        check(L && std::abs(*L - want) <= 1e-15 * want, "∫ exp(−∫ k) ε, written with Let, integrates exactly: ε(1 − e^(−kS))/k");
+        // An approximate inner value under an outer Integral: no composed bound yet, so it refuses.
+        auto noisyDepth = integralTol("u", node(Op::SDF, node(Op::Noise, named("p")),
+                                                node(Op::Add, node(Op::VectorConstruct, constant(0.3), constant(0.1), constant(0.2)),
+                                                     node(Op::Scale, named("u"), node(Op::VectorConstruct, constant(1.0), constant(0.5), constant(0.25))))),
+                                      constant(0.0), named("s"), constant(5e-2));
+        auto noisyRadiance = integralTol("s", let("tau", std::move(noisyDepth), leaf(trans(K::Exp, "tau", -1.0))), constant(0.0), constant(1.0), constant(1e-1));
+        const auto nL = run(*noisyRadiance, {}, &why);
+        check(!nL, "an outer Integral over an approximate inner one refuses, legibly: " + why);
     }
 
     std::cout << "ontomath_integral_operation_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";

@@ -547,6 +547,13 @@ struct MathNode {
         // ONTOMATH_FRAMEWORK.md §6). LineIntegral (19) stays declared for a
         // vector line integral along an authored curve; this does not redefine it.
         Integral = 40,
+        // let <variableName> = children[0] in children[1] (2026-10-20, Zach's
+        // choice). The value is computed once, in the enclosing scope, and the
+        // name is visible in the body only — lexical, like Integral's variable.
+        // What lets one tree say exp(−∫σ) inside an integrand: the body is an
+        // ordinary ScalarLeaf exp(−tau). Exact algebra substitutes; the report
+        // composes the value's bound into the body's (plan §6an).
+        Let = 41,
 
         // Not a kind an author picks — the landing place for an op THIS BUILD
         // does not know: a save written by another version. It never

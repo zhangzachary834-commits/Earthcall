@@ -983,6 +983,30 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
             }
             return sum.empty() ? "0.0" : "(" + sum + ")";
         }
+        case Op::Let: {
+            // let name = value in body (2026-10-20): the name bound to the value's
+            // expression for the body, through the same boundNames
+            // pointComponent consults first — restored afterwards, so the
+            // binding is lexical as on the CPU. An expression, not a WGSL `let`
+            // statement: screen forms keep only the returned expression, and a
+            // statement there was silently dropped (an undefined identifier;
+            // webgpu_integral_operation_test). The compiler eliminates the
+            // repeated subexpression. Binding the point itself would be
+            // shadowed by the shader's point read, so it refuses.
+            if (node.variableName.empty() || node.variableName == OntoMath::kAmbientPointVar) {
+                e.refuse("Let must name a variable other than the point '" + std::string(OntoMath::kAmbientPointVar) + "'");
+                return "0.0";
+            }
+            const std::string name = "(" + arg(0) + ")";
+            const auto previous = e.boundNames.find(node.variableName);
+            const bool shadowing = previous != e.boundNames.end();
+            const std::string saved = shadowing ? previous->second : std::string();
+            e.boundNames[node.variableName] = name;
+            const std::string body = arg(1);
+            if (shadowing) e.boundNames[node.variableName] = saved;
+            else e.boundNames.erase(node.variableName);
+            return body;
+        }
         case Op::LineIntegral:
             e.refuse("LineIntegral has no implementation on either path: it needs a "
                      "curve parameterization and a quadrature rule that nothing in "

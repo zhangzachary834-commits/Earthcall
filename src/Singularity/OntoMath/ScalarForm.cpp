@@ -1083,6 +1083,15 @@ bool Piecewise::Piece::contains(double x) const {
 
 
 void MathNode::collectDependencies(std::set<std::string>& outDeps) const {
+    if (op == Op::Let) {
+        // The value is read in the enclosing scope; the name is bound in the body.
+        if (!children.empty() && children[0]) children[0]->collectDependencies(outDeps);
+        std::set<std::string> inner;
+        if (children.size() > 1 && children[1]) children[1]->collectDependencies(inner);
+        inner.erase(variableName);
+        outDeps.insert(inner.begin(), inner.end());
+        return;
+    }
     if (op == Op::Integral) {
         // v is bound inside the body, so it is not a dependency of the whole;
         // the limits are read in the enclosing scope.
@@ -1147,6 +1156,7 @@ const char* mathOpName(MathNode::Op op) {
         case MathNode::Op::Gradient:        return "Gradient";
         case MathNode::Op::LineIntegral:    return "LineIntegral";
         case MathNode::Op::Integral:        return "Integral";
+        case MathNode::Op::Let:             return "Let";
         case MathNode::Op::Union:           return "Union";
         case MathNode::Op::Intersection:    return "Intersection";
         case MathNode::Op::Difference:      return "Difference";
@@ -1219,6 +1229,7 @@ bool isKnownMathOp(int raw) {
         case MathNode::Op::MatrixDeterminant:
         case MathNode::Op::MatrixInverse:
         case MathNode::Op::Integral:
+        case MathNode::Op::Let:
             return true;
         // Unsupported is where unknown ops LAND; it is never a stored value an
         // author picked, so it does not read back as known.
@@ -1319,7 +1330,7 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
     // matrix operations below may consume Matrix children; legacy Add/Scale/etc.
     // still refuse them. A Matrix ValueLeaf carries its dimensions forward.
     // Integral types its own children: its body in the scope that binds v.
-    if (op != Op::ValueLeaf && op != Op::Integral && !isMatrixOperation(op)) {
+    if (op != Op::ValueLeaf && op != Op::Integral && op != Op::Let && !isMatrixOperation(op)) {
         for (std::size_t i = 0; i < children.size(); ++i) {
             auto childType = sub(i);
             if (!childType) return childType;
@@ -1504,6 +1515,15 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
             if (!body) return body;
             if (!scalarLike(*body)) return mismatch(path, op, 0, "Scalar", *body);
             return TypeResult::ok(ValueKind::Scalar);
+        }
+        case Op::Let: {
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            if (variableName.empty()) return TypeResult::error(TypeDiagnostic{path, "Let names no variable"});
+            auto value = sub(0);
+            if (!value) return value;
+            TypeEnv inner = env;
+            inner[variableName] = *value;   // lexical: shadows an outer binding
+            return children[1]->typeOf(inner, path + ".Let[1]", allowUnbound);
         }
         case Op::LineIntegral: {
             if (children.size() != 2) return arity(path, op, children.size(), 2);
@@ -2307,6 +2327,15 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
             return PropertyValue(*value);
         }
 
+        case Op::Let: {
+            if (children.size() != 2 || !children[0] || !children[1] || variableName.empty()) return std::nullopt;
+            const auto value = children[0]->evaluate(vars, subject);
+            if (!value) return std::nullopt;
+            auto inner = vars;
+            inner[variableName] = *value;
+            return children[1]->evaluate(inner, subject);
+        }
+
         // An op this build does not know: preserved verbatim, never evaluated.
         case Op::Unsupported:
             return std::nullopt;
@@ -2389,6 +2418,7 @@ std::string MathNode::print() const {
         case Op::LineIntegral: return "lineIntegral(" + arg(0) + ", " + arg(1) + ") [not implemented]";
         case Op::Integral:     return "integral(" + arg(0) + " d" + variableName + ", " + arg(1) + ", " + arg(2) +
                                       (children.size() == 4 ? ", ±" + arg(3) : std::string()) + ")";
+        case Op::Let:          return "let " + variableName + " = " + arg(0) + " in " + arg(1);
         // An op this build does not know: the original JSON rides along in
         // `unsupported` (see fromJson) — show that verbatim, never a stand-in.
         case Op::Unsupported:
@@ -2649,6 +2679,15 @@ static std::optional<MathNode::RangeValue> evalMathRange(
                 if (rv.kind == ValueKind::Scalar) scalars.emplace(name, rv.scalar);
             }
             return RangeValue::makeScalar(scalarForm.evalRange(scalars));
+        }
+        case Op::Let: {
+            // The value's range, bound to the name for the body.
+            if (children.size() != 2 || !children[0] || !children[1]) return std::nullopt;
+            const auto value = evalMathRange(*children[0], vars, euclidean);
+            if (!value) return std::nullopt;
+            auto inner = vars;
+            inner[variableName] = *value;
+            return evalMathRange(*children[1], inner, euclidean);
         }
         case Op::ValueLeaf: {
             auto it = vars.find(variableName);
@@ -2964,8 +3003,8 @@ nlohmann::json MathNode::toJson() const {
     j["op"] = static_cast<int>(op);
     if (op == Op::ScalarLeaf) {
         j["scalarForm"] = scalarForm.toJson();
-    } else if (op == Op::ValueLeaf || op == Op::Integral) {
-        j["var"] = variableName;   // an Integral's bound variable
+    } else if (op == Op::ValueLeaf || op == Op::Integral || op == Op::Let) {
+        j["var"] = variableName;   // an Integral's or a Let's bound variable
     } else if (op == Op::Component || op == Op::Map) {
         j["arg"] = stringArg;
     } else if (op == Op::MatrixConstruct || op == Op::MatrixIdentity) {
@@ -3512,6 +3551,19 @@ std::optional<ScalarForm> toScalarForm(const MathNode& node, std::string* why) {
         // ∫_lo^hi body d(v) as a form in the enclosing variables (2026-10-19):
         // the body's antiderivative F, then F(hi) − F(lo) by exact substitution,
         // so an inner integral whose hi is an outer variable stays symbolic.
+        case MathNode::Op::Let: {
+            // The value substituted into the body, exactly (substitute's own
+            // rules: whole powers expand, a transcendental needs an affine value).
+            if (node.children.size() != 2 || !node.children[0] || !node.children[1] || node.variableName.empty()) {
+                say(why, "Let needs a name, a value and a body");
+                return std::nullopt;
+            }
+            const auto value = toScalarForm(*node.children[0], why);
+            if (!value) return std::nullopt;
+            const auto body = toScalarForm(*node.children[1], why);
+            if (!body) return std::nullopt;
+            return substitute(*body, node.variableName, *value, why);
+        }
         case MathNode::Op::Integral: {
             // A tolerance (fourth child) permits approximation; it never forbids
             // the exact closed form, so the symbolic path ignores it.

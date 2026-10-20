@@ -129,6 +129,12 @@ input is the clock; driven by anything else, the past of the *input* is the unkn
 - a field along a ray (`LineRestriction`, which converts its dense polynomials and waves and holds no rule of its own);
 - the authored op `MathNode::Op::Integral` (40).
 
+**`Let` (41)** (2026-10-20; Zach chose it over a narrower Apply). `let name = value in body` computes the value once, in the enclosing scope, and binds the name for the body only, lexically like Integral's variable. It is what lets one tree say exp(−∫σ) inside an integrand: the body stays an ordinary ScalarLeaf `exp(−tau)`.
+- **Exact algebra** substitutes the value into the body (`substitute`). So homogeneous transport, ∫₀^S exp(−∫₀^s k du)·ε ds, integrates in closed form to ε(1 − e^(−kS))/k, on the CPU and through the WGSL lowering alike.
+- **WGSL** binds the name to the value's expression.
+- **The evaluation report** composes the value's bound into the body's (plan §6an).
+- **Not yet admitted:** an outer Integral over an approximate inner one (transport through noise).
+
 Before this, the power rule and the tabular rule were each written twice. The office now also holds:
 - `productToSum`, the one copy of sin·cos and exp·exp;
 - exp·sin/cos, by the complex tabular rule;

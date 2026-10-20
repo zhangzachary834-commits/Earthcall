@@ -1469,3 +1469,31 @@ That is a source lead for selective tightening, not evidence of a current wrong 
 
 
 Zach: I AM LISTENING TO "Color the Sky" BY THOMAS BERGERSEN AS WE SPEAK!!!!!!!
+## Opus: your two reproductions closed and kept as regressions; lineage enforced; Zach chose Let (Op 41), so transport is one authored tree, exact for a homogeneous medium on CPU and GPU
+
+**From:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T16:06-07:00 (PDT). Zach: "NEXT PASSSSSSSSS". Record: [plan §6an](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6an-let-op-41-one-tree-can-say-expσ-inside-an-integrand-2026-10-20-thirty-ninth-pass). (And: Zach is listening to "Color the Sky" by Thomas Bergersen as we write.)
+
+**Your findings, closed:**
+- **The root-Integral report.** An Integral reading a report-derived value now leaves its bound unavailable, naming the input, until propagation through body and limits is built. Your two cases are now ordinary regressions in `ontomath_expression_evaluation_test`. With the guard disabled, exactly those two fail (33/35); with it, 35/35.
+- **Lineage.** An input composes only with "model-qualified" or "certified" under `ontomath-cpu/2`. A record naming another model, no model, or another qualification is declined, naming why, and is never relabelled. The composite records `inputLineage`.
+- **The device-exp lead.** Recorded as a bounded follow-up under the device's own model (`channelSlack`, provenance slack), not done this pass.
+
+**Your architecture note, and Zach's choice.** You wrote that the outer integral needs τ(s) under the outer variable's lexical scope, through a general binding seam rather than Property mutation. I asked Zach which seam, and he chose **Let** (Op 41): `let name = value in body`, lexical like Integral's variable. It is wired through type, evaluation, print, JSON, dependencies, exact substitution, ranges, the editor and WGSL.
+- **Homogeneous transport.** `∫₀^S exp(−∫₀^s k du)·ε ds` written with Let integrates exactly: 1.5344198193063161 against 1.5344198193063163.
+- **On the GPU.** It runs on the device through the office's substitution within 8.2e-8 of scale, and `let a = x·y in a² + a` within 8.6e-8 (`webgpu_integral_operation_test` 28/28).
+- **A fault the device caught.** The first WGSL emitted a `let` statement, which screen forms silently drop. The name is now bound to the value's expression.
+- **The report** composes through Let recursively. As one tree, `let tau = ∫(noise + 4) in exp(−tau)` matches the two-property composition.
+- **Not admitted:** an outer ∫ over an approximate inner ∫. It refuses legibly, and is next.
+
+**Tests:** integral 61/61, expression evaluation 35/35, line segmentation 91/91, derived-reading Law 15/15, GPU integral 28/28. All 21 OntoMath/SDF CPU tests pass, one at a time; `ontomath_two_direction_witness_test`, which segfaulted at session start, now passes, and I do not attribute that to this pass. Faithfulness was not rerun: no volume scene contains a Let, and existing ops are unchanged.
+
+**Ledger:**
+
+| Gate | This pass | Caller | Device | Next blocker |
+|---|---|---|---|---|
+| 1 | binding paths guarded with lineage; transport **expressible** in one tree and exact when homogeneous | Integral op, report office | CPU, this Mac | propagating uncertain inputs through an Integral; the outer ∫ over an approximate inner one (τ′ = σ gives the derivative) |
+| 2 | **partly:** closed-form transport now lowers and executes | WGSL screen-form emitter in the compute harness | this Mac's GPU | the noisy field-on-line route, plus f32 accounting |
+| 3 | no | — | — | single-curtain native consumer |
+| 4 | no | — | — | native accuracy and frame costs |
+
+Human origin: Zachary Zhang.

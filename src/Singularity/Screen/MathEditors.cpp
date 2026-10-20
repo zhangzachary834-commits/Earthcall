@@ -589,6 +589,11 @@ void initializeMathNodeForEditor(OntoMath::MathNode& node, OntoMath::MathNode::O
             resizeChildren(3);
             if (node.variableName.empty()) node.variableName = "s";
             break;
+        case Op::Let:        // value, body; the name is typed in afterwards
+            node.matrixRows = node.matrixCols = 0;
+            resizeChildren(2);
+            if (node.variableName.empty()) node.variableName = "tau";
+            break;
         default:
             node.matrixRows = node.matrixCols = 0;
             break;
@@ -649,7 +654,8 @@ bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings) {
         { OntoMath::MathNode::Op::MatrixTranspose, "Matrix Transpose", 1, false, false, false, nullptr },
         { OntoMath::MathNode::Op::MatrixDeterminant, "Matrix Determinant", 1, false, false, false, nullptr },
         { OntoMath::MathNode::Op::MatrixInverse, "Matrix Inverse", 1, false, false, false, nullptr },
-        { OntoMath::MathNode::Op::Integral, "Integral (body, lo, hi)", 3, false, false, false, nullptr }
+        { OntoMath::MathNode::Op::Integral, "Integral (body, lo, hi)", 3, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Let, "Let (name = value in body)", 2, false, false, false, nullptr }
     };
 
     constexpr int numDescriptors = sizeof(descriptors) / sizeof(descriptors[0]);
@@ -790,10 +796,12 @@ bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings) {
 
     // The integration variable is a NEW name the body binds, not a property
     // binding, so it is typed in rather than picked.
-    if (node.op == OntoMath::MathNode::Op::Integral) {
+    if (node.op == OntoMath::MathNode::Op::Integral || node.op == OntoMath::MathNode::Op::Let) {
+        const bool let = node.op == OntoMath::MathNode::Op::Let;
         char varBuf[64];
         copyToBuf(varBuf, sizeof(varBuf), node.variableName);
-        if (textField("Integration variable", varBuf, sizeof(varBuf), "e.g. s")) {
+        if (textField(let ? "Name (bound in the body)" : "Integration variable", varBuf, sizeof(varBuf),
+                      let ? "e.g. tau" : "e.g. s")) {
             node.variableName = varBuf;
             changed = true;
         }
@@ -821,9 +829,12 @@ bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings) {
             : ImGui::TreeNode((void*)(intptr_t)i, "Child %zu", i + 1);
         if (open) {
             if (node.children[i]) {
-                // An Integral's body may name its integration variable.
+                // An Integral's body may name its integration variable; a Let's
+                // body (child 2) its bound name.
                 MathBindings scoped = bindings;
                 if (node.op == OntoMath::MathNode::Op::Integral && i == 0 && !node.variableName.empty())
+                    scoped.emplace(node.variableName, PropertyPath{});
+                if (node.op == OntoMath::MathNode::Op::Let && i == 1 && !node.variableName.empty())
                     scoped.emplace(node.variableName, PropertyPath{});
                 if (editMathNode(*node.children[i], scoped)) changed = true;
             }
