@@ -3789,7 +3789,7 @@ double IntegralAccounting::executionBound() const {
     const double u = std::ldexp(1.0, -53);
     const double n = 2.0 * double(summands) + 64.0;
     const double gamma = n * u / (1.0 - n * u);
-    return gamma * magnitude + seriesTail;
+    return gamma * magnitude + seriesTail + pointwise;
 }
 
 namespace {

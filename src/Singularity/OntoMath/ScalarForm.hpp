@@ -789,6 +789,10 @@ std::optional<std::vector<std::pair<double, TransFactor>>> productToSum(const Tr
 struct IntegralAccounting {
     double magnitude = 0.0;
     double seriesTail = 0.0;
+    // Σ |weight| × the sampled value's executed-vs-exact slack under the CPU
+    // execution model (cpuExecutionModel): what the samples themselves may be
+    // wrong by, e.g. Noise at binary32 positions (2026-10-20, plan §6aj).
+    double pointwise = 0.0;
     std::uint64_t summands = 0;
     double scale = 1.0;
     double executionBound() const;
@@ -838,16 +842,18 @@ std::optional<ScalarForm> substitute(const ScalarForm& form, const std::string& 
 // body is evaluated through libm's pow. A consumer that requires a certified
 // bound must decline a model-qualified one.
 //
-// The model's premises are not all true everywhere, and one is witnessed false:
-// vector values are carried in binary32 (glm::vec3), so a sampled field far
-// from the origin is evaluated at the wrong points. ontomath_integral_operation_test
-// admits noise shifted by 289·32768 with a proved total of 0.162 and a true
-// error of 0.264. The next discharge is the hybrid's bound on that position
-// rounding; until then, model-qualified means exactly what this string says.
+// One premise was witnessed false and is now priced instead (plan §6ai → §6aj):
+// a sampled field reads its position as binary32, so far from the origin it is
+// evaluated at the wrong point. Every hybrid sample now carries its proved
+// executed-vs-exact slack under the CPU line model (LineRestriction.hpp,
+// cpuExecutionModel): Noise as 28.561 × the binary32 rounding of each
+// coordinate plus an allowance for glm::perlin's own float arithmetic. That
+// allowance (2^-14) is the one premise left in the sampled part, corroborated
+// by measurement (worst 2.9e-6 in 4·10^6 points), not proved.
 inline constexpr const char* kIntegralExecutionModel =
-    "ontomath-cpu/1: binary64 round-to-nearest scalar arithmetic; vectors carried in binary32 (glm::vec3); "
-    "libm (exp, sin, cos, pow, log) within one ulp; the authored field's pointwise value assumed accurate, "
-    "which binary32 positions far from the origin violate";
+    "ontomath-cpu/2: binary64 round-to-nearest scalar arithmetic; libm (exp, sin, cos, pow, log) within one ulp; "
+    "sampled values priced by their proved slack, with binary32 noise positions; glm::perlin's own float "
+    "arithmetic within 2^-14 (corroborated, not proved)";
 struct IntegralBounds {
     double tolerance = 0.0;      // authored; 0 means exact only (a mode, not a claim of zero rounding)
     bool approximate = false;    // something was omitted or sampled

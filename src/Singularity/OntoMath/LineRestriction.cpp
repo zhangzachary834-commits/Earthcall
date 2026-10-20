@@ -1099,6 +1099,16 @@ LineAlgebraicRestriction restrictAlgebraicToLine(const Piecewise& model, bool ve
 }
 
 // ---- Execution provenance (Codex review P1, 2026-10-17) --------------------
+ExecutionModel cpuExecutionModel() {
+    ExecutionModel m;
+    m.relative = std::ldexp(1.0, -52);
+    m.transcendental = std::ldexp(1.0, -52);
+    m.vector = std::ldexp(1.0, -24);
+    m.noise = std::ldexp(1.0, -14);
+    m.restrictedForm = true;
+    return m;
+}
+
 std::optional<double> literalConstant(const MathNode& node) {
     if (node.op != MathNode::Op::ScalarLeaf || node.scalarForm.terms.size() > 1) return std::nullopt;
     if (node.scalarForm.terms.empty()) return 0.0;
@@ -1430,7 +1440,10 @@ LineAlgebraicEvaluator::LineAlgebraicEvaluator(const LineAlgebraicForm& form,
 
 // ---- Execution slack (Codex review P1, 2026-10-17) -------------------------
 void LineAlgebraicEvaluator::setExecutionModel(const ExecutionModel& model, std::map<std::string, double> magnitudeOverrides) {
-    _model = {std::max(model.relative, 0.0), std::max(model.transcendental, 0.0)};
+    _model = model;
+    _model.relative = std::max(model.relative, 0.0);
+    _model.transcendental = std::max(model.transcendental, 0.0);
+    _model.vector = std::max(model.vector, 0.0);
     _magnitudeOverrides = std::move(magnitudeOverrides);
     _slackMemoS1 = _slackMemoS0 - 1.0;
 }
@@ -1476,7 +1489,7 @@ double LineAlgebraicEvaluator::slack(uint32_t node, double s0, double s1, const 
     const auto& form = *_form;
     const auto& n = form.nodes[node];
     const double e = _model.relative, tr = _model.transcendental;
-    if (n.provenance || n.provenanceForm) {
+    if (!_model.restrictedForm && (n.provenance || n.provenanceForm)) {
         // Switch-free authored subtree: its slack is monotone in the region, so
         // a memo over an enclosing interval is a sound answer for [s0, s1].
         if (!(_slackMemoS0 <= s0 && s1 <= _slackMemoS1) || _slackMemo.size() != form.nodes.size()) {
@@ -1512,7 +1525,23 @@ double LineAlgebraicEvaluator::slack(uint32_t node, double s0, double s1, const 
         return 0;
     };
     switch (n.kind) {
-        case Kind::Polynomial: return inf;   // no authored provenance: never silently exact
+        case Kind::Polynomial: {
+            if (!_model.restrictedForm) return inf;   // no authored provenance: never silently exact
+            // value() runs Horner in binary64 on these coefficients: their proved
+            // construction errors, plus Higham's γ_2d·Σ|c_k||s|^k (§5.1).
+            const auto& c = _coefficients[node];
+            const auto& err = _errors[node];
+            const double sMax = std::max(std::abs(s0), std::abs(s1));
+            const double d = c.empty() ? 0.0 : double(c.size() - 1);
+            const double u = std::ldexp(1.0, -53), gamma = 2.0 * d * u / (1.0 - 2.0 * d * u);
+            double power = 1.0, magnitude = 0.0, construction = 0.0;
+            for (std::size_t k = 0; k < c.size(); ++k) {
+                magnitude += std::abs(c[k]) * power;
+                construction += (k < err.size() ? err[k] : inf) * power;
+                power *= sMax;
+            }
+            return construction + gamma * magnitude;
+        }
         case Kind::Undefined: return _undefinedAsZero ? 0.0 : inf;
         case Kind::Add:
         case Kind::Sub:
@@ -1595,10 +1624,23 @@ double LineAlgebraicEvaluator::slack(uint32_t node, double s0, double s1, const 
             }
             return sa + tr;
         }
-        case Kind::Noise:
-            return double(kClassicPerlin3LipschitzBound) *
-                       (slack(n.a, s0, s1, signs) + slack(n.b, s0, s1, signs) + slack(n.c, s0, s1, signs)) +
-                   tr;
+        case Kind::Noise: {
+            // Each argument is computed (slack) and then rounded to binary32 by
+            // ≤ vector × |computed| before glm::perlin reads it; the noise is
+            // L-Lipschitz in its argument and its own arithmetic errs by the
+            // allowance.
+            // (The magnitude is asked only when there is a rounding to price: a
+            // device model takes the old path exactly, and segmentLine calls
+            // this on its hot loop — an unconditional range here made the
+            // faithfulness suite > 15× slower.)
+            const double v = _model.vector;
+            double moved = 0.0;
+            for (uint32_t arg : {n.a, n.b, n.c}) {
+                const double sa = slack(arg, s0, s1, signs);
+                moved += v > 0.0 ? sa + v * (magnitudeAt(arg, s0, s1, signs) + sa) : sa;
+            }
+            return double(kClassicPerlin3LipschitzBound) * moved + (_model.noise >= 0.0 ? _model.noise : tr);
+        }
     }
     return inf;
 }
@@ -2751,6 +2793,7 @@ std::optional<LineHybridIntegral> LineAlgebraicEvaluator::integrateCore(uint32_t
             const double a = edge(j), b = edge(j + span);
             std::vector<double> nodes;
             for (uint32_t k = 0; k <= span; ++k) nodes.push_back(edge(j + k));
+            double weightMass = 0.0;   // Σ|w_k| over this panel's samples
             for (uint32_t k = 0; k <= span; ++k) {
                 // Addendum C accounting: the weight's own summands err in
                 // proportion to the sample that multiplies them.
@@ -2762,6 +2805,18 @@ std::optional<LineHybridIntegral> LineAlgebraicEvaluator::integrateCore(uint32_t
                 if (!wk) return std::nullopt;
                 recordSummand(g[j + k] * *wk);
                 out.estimate += g[j + k] * *wk;
+                weightMass += std::abs(*wk);
+            }
+            // The samples are EXECUTED values, not exact ones. Under an active
+            // model (the CPU's, from the Integral line route), each may be off by
+            // the node's proved slack over this panel, and the estimate by
+            // Σ|w_k| × that. A sampled factor carries no slack contract yet, so
+            // with one the charge is unbounded and the caller refuses.
+            if (_model.active() && r.node != kNoNode) {
+                if (auto* accounting = activeIntegralAccounting()) {
+                    const double sg = factor ? std::numeric_limits<double>::infinity() : slack(r.node, a, b, decided);
+                    accounting->pointwise += accounting->scale * weightMass * sg;
+                }
             }
             double gLo = 1.0, gHi = 1.0, gLip = 0.0;
             if (r.node != kNoNode) {

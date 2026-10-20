@@ -120,9 +120,9 @@ std::shared_ptr<PropertyDict> evaluationReport(Singular& bearer, const std::stri
             r["route"] = bounds.route;
             r["executionPremise"] = std::string(
                 "Higham summation bound over every summand the office added, plus proved series tails; "
-                "assumes each summand within γ of itself (libm within one ulp, the field's pointwise value "
-                "accurate), which is not enclosed. Vectors are binary32: a sampled field far from the origin "
-                "breaks the pointwise premise, and its bound with it");
+                "assumes each summand within γ of itself (libm within one ulp). Sampled values carry their proved "
+                "executed-vs-exact slack (binary32 noise positions included); glm::perlin's own float arithmetic "
+                "is taken within 2^-14, corroborated by measurement, not proved");
         }
     }
     return report;

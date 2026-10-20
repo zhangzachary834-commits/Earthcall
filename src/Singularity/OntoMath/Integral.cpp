@@ -154,10 +154,12 @@ std::optional<double> integrateAlongLine(const MathNode& f, const AffineVector& 
     const double a = std::min(lo, hi), b = std::max(lo, hi);
     const double resolution = std::max(1e-12, (b - a) * 1e-9);
     const uint32_t root = restricted.form->roots[0];
-    const auto pieces = segmentLine({&ev}, a, b, resolution);
     bounds.route = "line segmentation";
 
     if (tolerance == 0.0) {
+        // Exact mode integrates the mathematics, so its branches are decided
+        // under exact semantics; nothing is sampled.
+        const auto pieces = segmentLine({&ev}, a, b, resolution);
         IntegralAccounting accounting;
         IntegralAccountingScope scope(accounting);
         double total = 0.0, sliverBound = 0.0;
@@ -188,18 +190,25 @@ std::optional<double> integrateAlongLine(const MathNode& f, const AffineVector& 
         return lo <= hi ? total : -total;
     }
 
-    // Approximation permitted: refine until the whole bound fits.
+    // Approximation permitted: refine until the whole bound fits. The samples
+    // are executed values, so this route runs under the CPU's declared
+    // execution model (binary64 scalars, binary32 vectors, the glm::perlin
+    // premise): segmentation decides a branch only beyond what execution could
+    // blur, and every sample's slack enters the execution bound (plan §6aj).
+    LineAlgebraicEvaluator executed(*restricted.form, bindings);
+    executed.setExecutionModel(cpuExecutionModel());
+    const auto executedPieces = segmentLine({&executed}, a, b, resolution);
     double bestTotal = std::numeric_limits<double>::infinity();
     for (uint32_t density = 8; density <= 4096; density *= 2) {
         IntegralAccounting accounting;
         IntegralAccountingScope scope(accounting);
         double estimate = 0.0, mathematical = 0.0;
         bool sampled = false;
-        for (const auto& piece : pieces) {
+        for (const auto& piece : executedPieces) {
             const double width = piece.s1 - piece.s0;
             bool undefined = false;
             if (!piece.definite) {
-                const Interval r = ev.range(root, piece.s0, piece.s1, piece.signs[0], &undefined);
+                const Interval r = executed.range(root, piece.s0, piece.s1, piece.signs[0], &undefined);
                 if (undefined || !r.bounded()) {
                     say(why, "the field may be undefined or unbounded in an unresolved sliver at v ≈ " + std::to_string(piece.s0));
                     return std::nullopt;
@@ -208,7 +217,7 @@ std::optional<double> integrateAlongLine(const MathNode& f, const AffineVector& 
                 continue;
             }
             const uint32_t cells = std::max<uint32_t>(2, uint32_t(std::ceil(double(density) * width / (b - a))));
-            const auto h = ev.hybridIntegral(root, piece.s0, piece.s1, piece.signs[0], cells, why);
+            const auto h = executed.hybridIntegral(root, piece.s0, piece.s1, piece.signs[0], cells, why);
             if (!h) return std::nullopt;
             estimate += h->estimate;
             recordSummand(h->estimate);

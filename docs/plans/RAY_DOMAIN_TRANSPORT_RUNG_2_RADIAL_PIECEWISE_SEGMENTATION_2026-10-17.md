@@ -1617,3 +1617,39 @@ The pointwise premise is false there, and the bound fails with it. That is exact
 **Next discharge:** the hybrid's samples need a bound on binary32 position rounding, a spatial Lipschitz enclosure of the sampled node times |q − fl32(q)|. The current derivative machinery is along s only, and a perpendicular rounding needs the spatial one. Until then, the far case is the regression that must turn into a refusal or a containing bound.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*
+
+## 6aj. The samples are priced: binary32 positions enter the bound, and the far-out case refuses (2026-10-20, thirty-fifth pass)
+
+**Human origin.** Zach: "MEXT PASSSSSS". §6ai left a regression that had to turn into a refusal or a containing bound: noise shifted by 289·32768 was admitted at ±0.2 with a stated total of 0.162 and a true error of 0.264. Codex's counsel (2026-10-20T11:10) applies: derive the bound for what actually executes, keep the authored Noise unchanged, and keep sampled validation distinct from enclosure.
+
+**What actually executes.** `LineAlgebraicEvaluator::value()` does not run the authored tree. It evaluates the restricted polynomials in binary64 by Horner on coefficients that carry a proved error enclosure (`_errors`), and rounds to binary32 in exactly one place: the argument of glm::perlin. My first attempt priced the authored tree with float vector operations (`MathNode::evaluate`'s semantics). That is the wrong execution: it charged the sphere chord's `dot(p,p)` at 2^-24 and refused a case that is exact to 1e-16. I reverted it.
+
+**Built** (`LineRestriction`; Codex's 2026-10-17 slack machinery, extended rather than duplicated):
+- **`ExecutionModel` gains three fields:** `restrictedForm` (price `value()`'s execution, not the authored tree's), `vector` (binary32 rounding of a Noise argument) and `noise` (one glm::perlin call's own arithmetic). A device model leaves all three at their defaults, and its rules are unchanged.
+- **`slack()` in restricted form:**
+  - a polynomial costs its coefficient errors plus Higham's γ_2d·Σ|c_k||s|^k;
+  - Noise costs 28.561 × Σ(argument slack + 2^-24·(|argument| + slack)) + the allowance;
+  - every other node keeps its structural rule.
+- **`cpuExecutionModel()`:** binary64 at 2^-52 per operation, libm within one ulp, binary32 Noise arguments, and a glm::perlin allowance of 2^-14.
+- **The hybrid** adds Σ|w_k| × the sampled node's slack, per panel, to a new `IntegralAccounting::pointwise` term. A sampled factor has no slack contract yet, so it is charged without bound and refuses.
+- **The Integral's approximate route** segments and integrates under the CPU model, so a branch is decided only beyond what execution could blur. The exact route keeps exact semantics.
+
+**Two facts measured first** (scratch programs against glm itself):
+- **glm's float and double Perlin are different functions.** They disagree by up to 1.2 at about 19% of points, because the lattice hash rounds differently by precision. So the engine's Noise is the float hash table (shared with the GPU's `cnoise3`), interpolated at the real point. The float hash is exactly 289-periodic, bit-identical at 289·k for k up to 32768, so the §6ai reference stands.
+- **Against a reference with glm's own float hash and gradients but double interpolation,** float glm::perlin's own error is at most 2.9e-6 over 4·10^6 points at |p| up to 9.5e6. The largest normalized gradient is 0.99863, under the Lipschitz contract's 1. The allowance 2^-14 (about 20× the worst observed) is the one premise left in the sampled part: corroborated, not proved. A Higham-style derivation of glm::perlin's interpolation error would discharge it.
+
+**Witnesses** (`ontomath_integral_operation_test`, 51/51):
+
+| Case | Before | Now |
+|---|---|---|
+| sphere chord ±1e-12 | admitted, 3.95e-13 | unchanged |
+| noise ±5e-2 | execution 1.8e-11 | execution 2.0e-4 (the allowance); admitted, reference inside |
+| noise shifted 289·32 ±0.2 | total 0.127 | execution 0.047 (positions priced), total 0.175; error 1.0e-4 inside |
+| noise shifted 289·32768 ±0.2 | **admitted, error 0.264 outside 0.162** | **refused: best bound 48.5** |
+| same, ±1e3 | — | admitted; error inside |
+
+Also passing: `ontomath_line_segmentation_test` 82/82, `webgpu_volume_support_enclosure_test` 4/4, `webgpu_integral_operation_test` 22/22, evaluation 21/21, derived-reading Law 15/15. `webgpu_volume_faithfulness_test` passes 6/6 with output identical to the previous run. It took 2096 s in this Debug build against a logged 144 s whose build I cannot confirm. A stack sample puts the time in the test's own reference loop (`value()` → glm::perlin), which this pass does not touch, so the timing is recorded as unexplained rather than attributed. A first version of the Noise slack rule asked an argument's range on every call, even under the device model. It now does so only when `vector > 0`.
+
+The model identity is now `ontomath-cpu/2`, and it stays model-qualified because of the glm::perlin allowance.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*

@@ -340,20 +340,19 @@ int main() {
               "noise at 5e-2 is admitted through the hybrid route and the independent reference lies within its total bound");
 
         // Codex, 2026-10-20: a case where the POINTWISE evaluation is the weak
-        // link though the final sum is benign. glm::perlin is exactly periodic
-        // with period 289, so the same noise line shifted by 289·k has the SAME
-        // integral, mathematically. But OntoMath carries vectors as binary32
-        // (glm::vec3): at 289·32768 ≈ 9.5e6 a position's ulp is 1, the samples
-        // are noise at the wrong points, and the premise "the field's pointwise
-        // value is accurate" is false. The result is still admitted at ±0.2 with
-        // a proved total of 0.162, and the true error is 0.264, OUTSIDE it. That
-        // is exactly why the bound is reported model-qualified, never certified.
-        // (Two earlier attempts at this witness found no cancellation at all:
-        // (noise + c) − c and |noise + c| − c are both cancelled by the exact
-        // line restriction before any sample is taken.)
-        // FOR FUTURE AGENTS: when the hybrid learns to bound binary32 position
-        // rounding (a spatial Lipschitz enclosure × |q − fl32(q)|), this case
-        // must turn into a refusal or a containing bound. Update it then.
+        // link though the final sum is benign. glm::perlin's float lattice hash
+        // is exactly 289-periodic (bit-identical at 289·k for k up to 32768,
+        // checked), so the same noise line shifted by 289·k has the SAME
+        // integral. But the samples read glm::vec3: at 289·32768 ≈ 9.5e6 a
+        // position's ulp is 1, the samples are noise at the wrong points, and
+        // the executed integral is off by 0.264.
+        // Before plan §6aj this was ADMITTED at ±0.2 with a stated total of
+        // 0.162, the true error outside it: the bound rested on a premise the
+        // samples broke. Now every sample carries its executed-vs-exact slack
+        // under the CPU line model (28.561 × the binary32 rounding of each
+        // coordinate, plus the glm::perlin allowance), so the far case
+        // REFUSES, naming the bound, and the moderate shift is admitted with
+        // its error inside a bound that now prices its positions.
         auto shiftedNoise = [&](double cells, double tolerance, OntoMath::IntegralBounds& b) {
             const double shift = 289.0 * cells;
             auto farLine = node(Op::Add, node(Op::VectorConstruct, constant(0.3 + shift), constant(0.1), constant(0.2)),
@@ -363,16 +362,17 @@ int main() {
         };
         OntoMath::IntegralBounds nearB, farB;
         const auto nearV = shiftedNoise(32.0, 0.2, nearB);
+        std::printf("    noise shifted 289·32: %.10g, mathematical %.3g, execution %.3g, |error| %.3g\n",
+                    nearV.value_or(NAN), nearB.mathematical, nearB.execution, nearV ? std::abs(*nearV - noiseReference) : NAN);
+        check(nearV && nearB.execution > 1e-4 && std::abs(*nearV - noiseReference) <= nearB.total(),
+              "a moderate period shift (289·32) is admitted, its positions priced, and the periodic reference lies inside its bound");
         const auto farV = shiftedNoise(32768.0, 0.2, farB);
-        std::printf("    noise shifted 289·32: %.10g, total %.3g, |error| %.3g; shifted 289·32768: %.10g, total %.3g, |error| %.3g\n",
-                    nearV.value_or(NAN), nearB.total(), nearV ? std::abs(*nearV - noiseReference) : NAN,
-                    farV.value_or(NAN), farB.total(), farV ? std::abs(*farV - noiseReference) : NAN);
-        check(nearV && std::abs(*nearV - noiseReference) <= nearB.total(),
-              "a moderate period shift (289·32) is admitted and the periodic reference lies inside its bound");
-        check(farV && !farB.certified && farB.executionModel.find("binary32") != std::string::npos &&
-                  std::abs(*farV - noiseReference) > farB.total(),
-              "far out (289·32768) the binary32 positions break the pointwise premise: admitted, its true error OUTSIDE "
-              "the stated bound, and labelled model-qualified (never certified) naming binary32 vectors in its model");
+        std::printf("    noise shifted 289·32768: %s\n", farV ? "ADMITTED" : why.c_str());
+        check(!farV && why.find("exceeds the tolerance") != std::string::npos,
+              "far out (289·32768) the binary32 positions are priced: the integral refuses rather than state a bound it breaks");
+        const auto farLoose = shiftedNoise(32768.0, 1e3, farB);
+        check(farLoose && std::abs(*farLoose - noiseReference) <= farB.total(),
+              "at a tolerance the far case can honestly meet, it is admitted and the true error lies inside the bound");
         // A mathematically exact integral whose EXECUTION bound exceeds the tolerance refuses.
         auto large = integralTol("x", leaf(trans(K::Cos, "x", 1.0).scaled(1e12)), constant(0.0), constant(1.0), constant(1e-6));
         check(!run(*large, {}, &why) && why.find("execution bound") != std::string::npos,

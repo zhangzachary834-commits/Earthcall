@@ -306,11 +306,36 @@ LineAlgebraicRestriction restrictAlgebraicToLine(const Piecewise& model, bool ve
 // "x"/"y"/"z". An unknown symbol, an operation outside the line-admitted
 // class, or a non-literal divisor, exponent or clamp bound answers nullopt:
 // the caller must refuse its claim.
+//
+// Three fields the device never needs and the CPU line evaluator does
+// (2026-10-20, plan §6aj). LineAlgebraicEvaluator::value() does not execute the
+// authored tree: it evaluates the RESTRICTED polynomials in binary64 (Horner,
+// on coefficients carrying a proved error enclosure) and rounds to binary32 in
+// one place only, the argument of glm::perlin.
+//   restrictedForm  slack() bounds that execution: a polynomial by its
+//                   coefficient errors plus Horner's γ_2n·Σ|c_k||s|^k, every
+//                   other node by its structural rule; authored provenance is
+//                   not consulted (it describes a different execution).
+//   vector          a Noise argument is rounded by ≤ this × its magnitude
+//                   (2^-24 for glm::vec3); 0 = no such rounding.
+//   noise           the absolute allowance for one Noise evaluation's own
+//                   arithmetic; negative = use transcendental.
 struct ExecutionModel {
     double relative = 0.0;
     double transcendental = 0.0;
-    bool active() const { return relative > 0.0 || transcendental > 0.0; }
+    double vector = 0.0;
+    double noise = -1.0;
+    bool restrictedForm = false;
+    bool active() const { return relative > 0.0 || transcendental > 0.0 || vector > 0.0 || noise > 0.0; }
 };
+// The CPU line evaluator's declared model: restricted form, binary64 (2^-52
+// per operation, libm within one ulp), binary32 Noise arguments, and one
+// glm::perlin call's float interpolation within 2^-14 absolute. That last
+// number is a PREMISE, corroborated not proved: against a reference with glm's
+// own float lattice hash and gradients but double interpolation, the worst over
+// 4·10^6 points (|p| up to 9.5e6) was 2.9e-6, and the largest normalized
+// gradient 0.99863 (the Lipschitz contract assumes ≤ 1). See plan §6aj.
+ExecutionModel cpuExecutionModel();
 struct ExecutionBound {
     double magnitude = 0.0;
     double slack = 0.0;
