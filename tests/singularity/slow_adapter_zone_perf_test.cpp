@@ -72,12 +72,37 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    // Isolate save root to a lightweight scratch directory so we don't copy
+    // the multi-gigabyte save tree or hydrate inactive store zones on CI.
+    const auto tempDir = std::filesystem::temp_directory_path() /
+        ("earthcall-perf-scratch-" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()));
+    const auto worldFilename = std::filesystem::path(world).filename();
+    const auto scratchWorldPath = tempDir / "worlds" / worldFilename;
+
+    std::filesystem::create_directories(tempDir / "worlds");
+    std::filesystem::copy_file(world, scratchWorldPath, std::filesystem::copy_options::overwrite_existing);
+
+    // Also copy real saves/zones/ if present so zone identities resolve
+    const auto realSavesPath = std::filesystem::path(world).parent_path().parent_path();
+    if (std::filesystem::exists(realSavesPath / "zones")) {
+        std::error_code ec;
+        std::filesystem::copy(realSavesPath / "zones", tempDir / "zones",
+                              std::filesystem::copy_options::recursive, ec);
+    }
+    if (std::filesystem::exists(realSavesPath / "homes")) {
+        std::error_code ec;
+        std::filesystem::copy(realSavesPath / "homes", tempDir / "homes",
+                              std::filesystem::copy_options::recursive, ec);
+    }
+
+    const std::string prevRoot = SaveSystem::saveRoot();
+    SaveSystem::setSaveRoot(tempDir.string());
+
+    TestSupport::BootedEngineHarness h("Player", "humanoid", /*hydrateAllZones=*/false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld(scratchWorldPath.string());
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
@@ -164,6 +189,10 @@ int main(int argc, char** argv) {
         static_cast<unsigned long long>(h.lawManager.slowAdapterMaintenanceRuns()),
         h.lawManager.slowAdapter().roadsKnown(), h.lawManager.slowAdapter().roadsPending(),
         tierDirect, tierAdapter, tierVocabulary, tierSweep);
+
+    SaveSystem::setSaveRoot(prevRoot);
+    std::error_code rmEc;
+    std::filesystem::remove_all(tempDir, rmEc);
 
     return 0;
 }
