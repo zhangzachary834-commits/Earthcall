@@ -427,7 +427,7 @@ Use the todo system to track progress:
   - Updated `Game.hpp` to include `Singularity/Screen/Camera.hpp` instead of `CameraState.hpp`
   - Changed `_camera` member type from `CameraState` to `Camera`
   - All Game*.cpp files use direct member access which works with both types
-  - CameraState.hpp still exists but is no longer included anywhere
+  - CameraState.hpp has been completely deleted (`src/Singularity/Core/CameraState.hpp`)
 
 - **[Rung 3] Migrate Player Movement State** ✅
   - **Phase 1 (Shadow) - COMPLETED:**
@@ -514,7 +514,6 @@ ctest is **35/35**. Five test executables previously failed to compile and did n
 
 ### Files To Delete (After Rung 6)
 
-- `src/Singularity/Core/CameraState.hpp` - Replaced by Singularity/Screen/Camera
 - All `Game*.cpp` and `Game.hpp` files
 
 ---
