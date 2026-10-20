@@ -603,8 +603,10 @@ ZoneManager* ZoneManager::live() { return g_liveZones; }
 
 namespace {
 constexpr const char* kOwnedByRelation = "owned-by";
+}
 
-bool legacyOwnerNamesPerson(const Zone& zone, const Person& person) {
+namespace detail {
+bool legacyOwnerNamesPerson(const Zone& zone, const Person& person, std::optional<std::filesystem::path> ledgerPathOverride) {
     if (!zone.propOwnerKind().empty() && zone.propOwnerKind() != Zone::kOwnerKindPerson) {
         return false;
     }
@@ -615,12 +617,14 @@ bool legacyOwnerNamesPerson(const Zone& zone, const Person& person) {
     // The ONE legitimate bridge from an old owner string to a keyed Person is
     // the migration ledger: it records the explicit trust-on-first-migration
     // act that this legacy spelling was signed over to this exact SingularId.
-    Identity::IdentityLedger ledger;
+    Identity::IdentityLedger ledger(ledgerPathOverride.value_or(Identity::IdentityLedger::defaultPath()));
     if (!ledger.load()) return false;
     const auto migrated = ledger.find(zone.owner());
     return migrated.has_value() && *migrated == person.personId();
 }
+}
 
+namespace {
 bool zoneNamesPersonOwner(const Zone& zone, const Person& person) {
     const std::string personId = person.getIdentifier();
     bool hasOwnedBy = false;
@@ -638,7 +642,7 @@ bool zoneNamesPersonOwner(const Zone& zone, const Person& person) {
     // string is never allowed to overrule it. The cache is consulted only for
     // legacy Homes that have no owned-by Relation yet.
     if (hasOwnedBy) return false;
-    return legacyOwnerNamesPerson(zone, person);
+    return detail::legacyOwnerNamesPerson(zone, person, std::nullopt);
 }
 
 std::vector<const Zone*> primaryHomesForPerson(const ZoneManager& manager,

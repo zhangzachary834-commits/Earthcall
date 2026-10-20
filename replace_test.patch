@@ -1,0 +1,79 @@
+--- tests/zones/zone_manager_test.cpp
++++ tests/zones/zone_manager_test.cpp
+@@ -1,6 +1,11 @@
+ #include "ZonesOfEarth/ZoneManager.hpp"
+ #include "ZonesOfEarth/Zone/Zone.hpp"
+ #include "Singularity/Storage/SaveSystem.hpp"
++#include "Person/Person.hpp"
++#include "Person/Soul/Soul.hpp"
++#include "Person/Body/Body.hpp"
++#include "Identity/IdentityLedger.hpp"
++#include "Identity/PrivateKey.hpp"
+ #include <iostream>
+ #include <filesystem>
+ #include <memory>
+@@ -18,6 +23,15 @@
+     }
+     std::cout << "  ok: " << description << std::endl;
+ }
++
++Person createDummyPerson(const std::string& name) {
++    Soul soul(name);
++    Body body("Humanoid", "Voxel");
++    Person person(soul, std::move(body), "");
++    person.setDisplayName(name);
++    person.soul().bindPerson(&person);
++    return person;
++}
+ } // namespace
+
+ int main() {
+@@ -107,6 +121,47 @@
+         mgr.unbindLive();
+         check(ZoneManager::live() == nullptr, "unbindLive clears binding owned by manager");
+     }
++
++    {
++        std::cout << "\n[6] Testing legacyOwnerNamesPerson...\n";
++
++        Zone zone("test_zone", "strict");
++        Person person = createDummyPerson("test_person");
++
++        zone.setOwner("Alice");
++        std::filesystem::path ledgerPath = sandbox / "migration-ledger.json";
++
++        person.setDisplayName("Alice");
++        check(detail::legacyOwnerNamesPerson(zone, person, ledgerPath), "Matches when person has no identity and display name matches zone owner");
++
++        person.setDisplayName("Bob");
++        check(!detail::legacyOwnerNamesPerson(zone, person, ledgerPath), "Fails when person has no identity and display name does not match");
++
++        zone.setQuality("ownerKind", "not-a-person");
++        check(!detail::legacyOwnerNamesPerson(zone, person, ledgerPath), "Fails when zone ownerKind is not 'Person'");
++
++        zone.setQuality("ownerKind", "");
++
++        Identity::PrivateKey key = Identity::PrivateKey::generate();
++        person.setPersonId(key.id());
++        person.setDisplayName("Alice");
++        check(!detail::legacyOwnerNamesPerson(zone, person, ledgerPath), "Fails when person has identity but ledger does not link legacy owner to identity, even if display name matches");
++
++        zone.setOwner(person.getIdentifier());
++        check(detail::legacyOwnerNamesPerson(zone, person, ledgerPath), "Matches when zone owner exactly matches person's identifier");
++
++        zone.setOwner("Alice");
++
++        Identity::IdentityLedger ledger(ledgerPath);
++        ledger.record("Alice", key.id());
++        ledger.save();
++
++        check(detail::legacyOwnerNamesPerson(zone, person, ledgerPath), "Matches when person has identity and ledger maps legacy owner to this identity");
++
++        Identity::PrivateKey key2 = Identity::PrivateKey::generate();
++        ledger.record("Alice", key2.id());
++        ledger.save();
++
++        check(!detail::legacyOwnerNamesPerson(zone, person, ledgerPath), "Fails when ledger maps legacy owner to a different identity");
++    }
+
+     std::filesystem::remove_all(sandbox);
