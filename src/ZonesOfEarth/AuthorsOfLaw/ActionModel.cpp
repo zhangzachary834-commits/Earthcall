@@ -86,11 +86,10 @@ namespace {
         constexpr std::size_t kMaxMemoEntries = 512;
         auto key = std::make_tuple(target.getIdentifier(), actionName, res, path.toString());
         std::time_t now = std::time(nullptr);
-        if (now - lastFailureTime[key] > 2) {
+        auto it = lastFailureTime.find(key);
+        if (it == lastFailureTime.end() || (now - it->second) > 2) {
             if (lastFailureTime.size() > kMaxMemoEntries) {
-                const std::time_t saved = lastFailureTime[key];
                 lastFailureTime.clear();
-                lastFailureTime[key] = saved;
             }
             lastFailureTime[key] = now;
             std::cerr << "[Law Error] " << actionName << " failed on " << target.getIdentifier()
