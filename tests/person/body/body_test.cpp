@@ -56,12 +56,38 @@ void testBasicAvatarCreation() {
     }
 }
 
+void testDistinctIdentitiesSharingSpelling() {
+    Body body("Humanoid", "Voxel");
+    auto* part1 = new BodyPart("Wing", BodyPart::Type::Arm);
+    auto* part2 = new BodyPart("Wing", BodyPart::Type::Arm);
+
+    part1->setIdentifier("left-wing-id-101");
+    part2->setIdentifier("right-wing-id-102");
+
+    check(part1->getName() == part2->getName(), "Both parts share the same spelling/name");
+    check(part1->getIdentifier() != part2->getIdentifier(), "Parts have distinct identifiers");
+
+    body.addPart(part1);
+    body.addPart(part2);
+
+    check(body.getBodyPart("left-wing-id-101") == part1, "Retrieved part1 by distinct identifier");
+    check(body.getBodyPart("right-wing-id-102") == part2, "Retrieved part2 by distinct identifier");
+
+    body.removeBodyPart("left-wing-id-101");
+    check(body.getBodyPart("left-wing-id-101") == nullptr, "Part1 removed by identifier");
+    check(body.getBodyPart("right-wing-id-102") == part2, "Part2 remains after part1 removed by identifier");
+
+    delete part1;
+    delete part2;
+}
+
 int main() {
     std::cout << "Running body_test...\n";
     testBodyCreation();
     testAddAndGetBodyPart();
     testRemoveBodyPart();
     testBasicAvatarCreation();
+    testDistinctIdentitiesSharingSpelling();
     std::cout << "All body_test assertions passed.\n";
     return 0;
 }
