@@ -13,7 +13,6 @@
 // it to an independent same-thread clock.
 
 #include "support/test_harness.hpp"
-#include "support/test_save_helper.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <algorithm>
@@ -45,6 +44,45 @@ struct Frame {
     double law = 0.0;
     double maintenance = 0.0;
 };
+
+struct SymlinkSaveTreeGuard {
+    std::filesystem::path tempPath;
+    std::string previousSaveRoot;
+
+    SymlinkSaveTreeGuard() {
+        tempPath = std::filesystem::temp_directory_path() /
+            ("earthcall-perf-scratch-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+        std::filesystem::create_directories(tempPath);
+
+        std::filesystem::path realSaves = std::filesystem::absolute("saves");
+        if (!std::filesystem::exists(realSaves)) {
+            realSaves = std::filesystem::absolute("../saves");
+        }
+
+        std::error_code ec;
+        if (std::filesystem::exists(realSaves, ec)) {
+            for (auto it = std::filesystem::directory_iterator(realSaves, ec);
+                 it != std::filesystem::directory_iterator(); it.increment(ec)) {
+                if (ec) break;
+                const auto target = it->path();
+                const auto link = tempPath / target.filename();
+                std::filesystem::create_directory_symlink(target, link, ec);
+                if (ec) {
+                    std::filesystem::copy(target, link, std::filesystem::copy_options::recursive, ec);
+                }
+            }
+        }
+
+        previousSaveRoot = SaveSystem::saveRoot();
+        SaveSystem::setSaveRoot(tempPath.string());
+    }
+
+    ~SymlinkSaveTreeGuard() {
+        SaveSystem::setSaveRoot(previousSaveRoot);
+        std::error_code ignored;
+        std::filesystem::remove_all(tempPath, ignored);
+    }
+};
 }
 
 int main(int argc, char** argv) {
@@ -73,7 +111,7 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    TempSaveRoot tempSaveRoot;
+    SymlinkSaveTreeGuard saveGuard;
     TestSupport::BootedEngineHarness h("Player", "humanoid", /*hydrateAllZones=*/false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
