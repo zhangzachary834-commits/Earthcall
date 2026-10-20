@@ -1374,3 +1374,30 @@ Integral 51/51, evaluation 21/21, GPU integral 22/22, support enclosure 4/4. Fai
 | 4. Shipping benefit on Metal | unchanged | — | — | native accuracy and like-for-like frame costs |
 
 We are still before the GPU crossing. **Next:** the first bounded composition, exp(−Integral(...)) as an authored expression, admitted only with every constituent's contract. Human origin: Zachary Zhang.
+
+## Opus: the first bounded composition — authored transmittance exp(−τ) reads an authored optical depth; Codex's monotone interval to rounding; exp made sign-aware
+
+**From:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T15:33-07:00 (PDT). Zach: "YAAASSSS NEXT PASSSSSSS". Record: [plan §6am](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6am-the-first-bounded-composition-transmittance--expτ-authored-across-two-properties-2026-10-20-thirty-eighth-pass).
+
+**§6al's faithfulness:** 6/6, 59 "0 outside the proved radius", 2085 s.
+
+**The composition, under your rules.** There is no new operation: MathNode cannot apply exp to a computed value, and the binding route is already Earthcall's composition. `transmittance.expression` = exp(−tau), with `tau → depth.evaluation.value`, and `depth` is the authored Integral of a nonnegative density (noise + 4).
+- **Snapshot read.** The binding reads τ's report once, as a snapshot (value, totalBound and qualification together).
+- **Bound.** Interval evaluation over [τ−δ, τ+δ] gives your monotone interval. Measured at 1.000079× it, inside the float interval's own rounding, plus exp's execution under `cpuExecutionModel`.
+- **Result.** T = 2.0779e-5 ± 6.48e-7, model-qualified; the independent long-double reference is off by 1.3e-12.
+- **Unknown and cyclic inputs.** An input whose report has no bound leaves the composite "unavailable" (not zero), naming the input. A self-binding refuses, naming the cycle.
+
+**A finding on the way: exp's execution bound lost its sign.** Magnitude arithmetic bounds exp(a·x + b) by e^(|a||x|+|b|). That charged exp(−10.8) as if it were e^(+10.8), and would have charged exp(−50) about 5e21. `executionBound` now takes optional `SignedRanges`; the device passes none and is unchanged. Opaque τ = 50 now gets ≤ 1e-12 × e^-50. Does the device emitter's own exp bound (`SdfWgsl`/support certificates) have the same magnitude-only weakness? I have not looked.
+
+Tests: expression evaluation 30/30, integral 51/51, line segmentation 91/91, derived-reading Law 15/15, GPU integral 22/22, support enclosure 4/4.
+
+**Ledger:**
+
+| Gate | This pass | Consumer | Measured | Next blocker |
+|---|---|---|---|---|
+| 1 | **exp(−∫) composes**, bounded and model-qualified | the evaluation report (an authored transmittance reading an authored depth) | CPU, Debug, this Mac | the outer ∫ (an Integral whose integrand holds an approximate inner Integral) |
+| 2 | no | — | — | `SdfWgsl` field-on-line, plus f32 accounting |
+| 3 | no | — | — | single-curtain native consumer |
+| 4 | no | — | — | native accuracy and frame costs |
+
+Human origin: Zachary Zhang.

@@ -1147,7 +1147,7 @@ ExecutionBound execMul(const ExecutionBound& a, const ExecutionBound& b, double 
 }
 
 std::optional<ExecutionBound> execScalarForm(const ScalarForm& form, const std::map<std::string, double>& mags,
-                                             const ExecutionModel& model) {
+                                             const ExecutionModel& model, const SignedRanges* signedRanges = nullptr) {
     const double e = model.relative, tr = model.transcendental;
     ExecutionBound sum;
     bool first = true;
@@ -1175,8 +1175,18 @@ std::optional<ExecutionBound> execScalarForm(const ScalarForm& form, const std::
             if (tf.kind == TransFactor::Kind::Sin || tf.kind == TransFactor::Kind::Cos) {
                 f = {1.0, arg.slack + tr};
             } else if (tf.kind == TransFactor::Kind::Exp) {
-                const double m = std::exp(arg.magnitude + arg.slack);
-                f = {std::exp(arg.magnitude), m * (arg.slack + tr)};
+                // The argument's signed maximum when x's sign is known (scale·x +
+                // shift is linear, so an endpoint); otherwise its magnitude.
+                double top = arg.magnitude;
+                if (signedRanges) {
+                    const auto it = signedRanges->find(tf.variable);
+                    if (it != signedRanges->end()) {
+                        const double a0 = tf.scale * it->second.first, a1 = tf.scale * it->second.second;
+                        top = std::min(top, std::max(a0, a1) + tf.shift);
+                    }
+                }
+                const double m = std::exp(top + arg.slack);
+                f = {std::exp(top), m * (arg.slack + tr)};
             } else {
                 return std::nullopt;   // Ln: the CPU and emitter disagree at ≤ 0
             }
@@ -1191,12 +1201,13 @@ std::optional<ExecutionBound> execScalarForm(const ScalarForm& form, const std::
 }
 
 std::optional<ExecValue> execNode(const MathNode& n, const std::map<std::string, double>& mags,
-                                  const ExecutionModel& model, const std::string& pointVariable) {
+                                  const ExecutionModel& model, const std::string& pointVariable,
+                                  const SignedRanges* signedRanges = nullptr) {
     using Op = MathNode::Op;
     const double e = model.relative, tr = model.transcendental;
     auto child = [&](std::size_t i) -> std::optional<ExecValue> {
         if (i >= n.children.size() || !n.children[i]) return std::nullopt;
-        return execNode(*n.children[i], mags, model, pointVariable);
+        return execNode(*n.children[i], mags, model, pointVariable, signedRanges);
     };
     auto scalar = [](const ExecutionBound& b) { ExecValue v; v.c[0] = b; return v; };
     auto pointwise = [&](const ExecValue& a, const ExecValue& b, auto&& f) -> std::optional<ExecValue> {
@@ -1208,7 +1219,7 @@ std::optional<ExecValue> execNode(const MathNode& n, const std::map<std::string,
     };
     switch (n.op) {
         case Op::ScalarLeaf: {
-            const auto b = execScalarForm(n.scalarForm, mags, model);
+            const auto b = execScalarForm(n.scalarForm, mags, model, signedRanges);
             if (!b) return std::nullopt;
             return scalar(*b);
         }
@@ -1351,13 +1362,14 @@ std::optional<ExecValue> execNode(const MathNode& n, const std::map<std::string,
 } // namespace
 
 std::optional<ExecutionBound> executionBound(const ScalarForm& form, const std::map<std::string, double>& magnitudes,
-                                             const ExecutionModel& model) {
-    return execScalarForm(form, magnitudes, model);
+                                             const ExecutionModel& model, const SignedRanges* signedRanges) {
+    return execScalarForm(form, magnitudes, model, signedRanges);
 }
 
 std::optional<ExecutionBound> executionBound(const MathNode& node, const std::map<std::string, double>& magnitudes,
-                                             const ExecutionModel& model, int component, const std::string& pointVariable) {
-    const auto v = execNode(node, magnitudes, model, pointVariable);
+                                             const ExecutionModel& model, int component, const std::string& pointVariable,
+                                             const SignedRanges* signedRanges) {
+    const auto v = execNode(node, magnitudes, model, pointVariable, signedRanges);
     if (!v) return std::nullopt;
     if (v->vector != (component >= 0) || component > 2) return std::nullopt;
     const auto& b = v->c[component >= 0 ? component : 0];

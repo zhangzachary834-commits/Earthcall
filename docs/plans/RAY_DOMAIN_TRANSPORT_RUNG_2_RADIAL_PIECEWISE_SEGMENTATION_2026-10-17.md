@@ -1721,3 +1721,46 @@ Also: integral 51/51, evaluation 21/21, GPU integral 22/22, support enclosure 4/
 | 4. Shipping benefit on Metal | No | — | — | Native accuracy and like-for-like frame costs. |
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*
+
+## 6am. The first bounded composition: transmittance = exp(−τ), authored across two properties (2026-10-20, thirty-eighth pass)
+
+**Human origin.** Zach: "YAAASSSS NEXT PASSSSSSS". Codex (2026-10-20T13:38, 14:37): compose under the declared model. Carry value enclosures, model identity and qualification together. For an enclosed optical depth, the mathematical transmittance is [exp(−τhi), exp(−τlo)], and the executed exponential has its own obligation. An unknown constituent leaves the composite unavailable, and nothing becomes certified by nesting. *"Transmittance is an authored composition of Integral and exp, not a special renderer-only factor meaning."*
+
+**No new operation.** MathNode has no exp of a computed value: `Map` is vector Round/Floor only, and transcendentals live inside ScalarForm terms. Earthcall already composes through bindings. `depth.expression` is the authored Integral of a density along the ray. `transmittance.expression` is the authored ScalarLeaf exp(−tau), with `tau → depth.evaluation.value`. The report office composes the bounds; nothing renderer-side is involved.
+
+**Built** (`ExpressionEvaluation`, `LineRestriction`):
+- **One snapshot per input.** A binding path ending `.value`, whose parent is a report-like record (it has `value` and `totalBound`), is read once as that record. Value, bound and qualification therefore come from the same evaluation, per Codex's snapshot rule.
+- **Composite bounds** for scalar trees (leaves; Add, Sub, Div, Pow, Abs, Clamp, Sqrt):
+  - the mathematical bound comes from interval evaluation over the box of input uncertainties;
+  - the execution bound comes from the existing `executionBound` office under `cpuExecutionModel()`;
+  - total = max(hi − v, v − lo) + 2·execution.
+- **Sign-aware exp.** `executionBound` takes optional `SignedRanges`. Magnitude arithmetic alone bounds exp(a·x + b) by e^(|a||x|+|b|), so exp(−10.8) was charged as if it were e^(+10.8), and exp(−50) would have been charged about 5e21. With τ's signed range, exp's argument is bounded by its signed maximum. The device passes none and is unchanged.
+- **Unknown inputs.** An input whose report has no bound leaves the composite "unavailable", with `boundsUnavailable` naming the input.
+- **Cycles.** A binding that reads its own report refuses, naming the cycle; the upstream refusal reason is passed through.
+- **Not yet composed:** nested Integrals (the outer ∫ of transport) and vector-valued trees.
+
+**Witnesses** (`ontomath_expression_evaluation_test`, 30/30, all through the Property route):
+
+| | |
+|---|---|
+| τ = ∫₀³ (noise + 4) ds at ±5e-2 | 10.78156 ± 0.0307 |
+| T = exp(−τ) | 2.0779e-5, total bound 6.48e-7; the independent long-double reference exp(−τ_ref) is off by 1.3e-12, inside |
+| tightness | 1.000079 × the monotone interval, inside the float interval's own rounding (4 ulps of τ, 8 of T) |
+| qualification | model-qualified; `inputBounds.tau` = τ's total |
+| τ from a composite with no bound | T admitted, bound "unavailable", qualification "none" |
+| τ exact (authored 0.7) | execution only, < 1e-14 |
+| opaque τ = 50 | execution bound ≤ 1e-12 × e^-50 (was about 5e21 with magnitude arithmetic alone) |
+| a report bound to itself | refused: "… depends on itself through its bindings (a cycle)" |
+
+Also passing: integral 51/51, line segmentation 91/91, derived-reading Law 15/15, GPU integral 22/22, support enclosure 4/4. §6al's faithfulness run: 6/6, 59 "0 outside the proved radius", 2085 s.
+
+### Shipping ledger
+
+| Gate | Changed this pass? | Consumer now calling the code | Measured, on which device | Next blocker |
+|---|---|---|---|---|
+| 1. Transport error contract | **Yes: exp(−∫) composes with a proved, model-qualified bound** | the evaluation report: an authored transmittance reading an authored optical depth | CPU, Debug, this Mac (the witnesses above) | the **outer ∫** of transport (∫ exp(−∫₀^s σ)·emission ds): an Integral whose integrand contains an approximate inner Integral, and so needs a uniform inner bound and a factor contract for it |
+| 2. GPU fields along rays | no | — | — | `SdfWgsl` field-on-line lowering, plus f32 accounting |
+| 3. Native volume consumer | no | — | — | single-curtain native consumer |
+| 4. Shipping benefit on Metal | no | — | — | native accuracy and frame costs |
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*

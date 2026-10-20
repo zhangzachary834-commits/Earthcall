@@ -21,6 +21,8 @@
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 
 #include <cmath>
+#include <cstdio>
+#include <glm/glm.hpp>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -175,6 +177,104 @@ int main() {
     bearer.setDynamicProperty("plain.expression", field(constant(1.0)));
     bearer.setDynamicProperty("plain.evaluation", PropertyValue(std::string("authored")));
     check(text(read(bearer, "plain.evaluation")) == "authored", "an authored property named evaluation is never shadowed");
+
+    // ---- Plan §6am: the first bounded composition, transmittance = exp(−τ) ----
+    // τ is an authored Integral (noise along a line, ±5e-2) on one property; the
+    // transmittance is an authored ScalarLeaf exp(−tau) on another, its binding
+    // reading τ's evaluation. No renderer meaning: an authored composition.
+    {
+        using TK = OntoMath::TransFactor::Kind;
+        Object medium;
+        medium.setObjectID("medium");
+        auto line = [] {
+            return node(Op::Add, node(Op::VectorConstruct, constant(0.3), constant(0.1), constant(0.2)),
+                        node(Op::Scale, named("s"), node(Op::VectorConstruct, constant(1.0), constant(0.5), constant(0.25))));
+        };
+        // A nonnegative density, noise + 4 (|noise| ≤ 3.81), so τ is an optical depth.
+        auto depth = node(Op::Integral, node(Op::SDF, node(Op::Add, node(Op::Noise, named("p")), constant(4.0)), line()),
+                          constant(0.0), constant(3.0), constant(5e-2));
+        depth->variableName = "s";
+        medium.setDynamicProperty("depth.expression", field(std::move(depth)));
+        medium.setDynamicProperty("transmittance.expression", field(leaf(ScalarForm::transcendental(TK::Exp, "tau", -1.0, 0.0))));
+        auto tb = std::make_shared<PropertyDict>();
+        tb->elements["tau"] = std::string("depth.evaluation.value");
+        medium.setDynamicProperty("transmittance.bindings", PropertyValue(tb));
+
+        // Independent reference for τ: long-double Simpson of the authored Noise (200 001 points).
+        auto noiseAt = node(Op::Noise, named("p"));
+        auto f = [&](double s) {
+            const auto v = noiseAt->evaluate({{"p", PropertyValue(glm::vec3(float(0.3 + s), float(0.1 + 0.5 * s), float(0.2 + 0.25 * s)))}});
+            double d = NAN; if (v) propertyValueToNumber(*v, d); return (long double)d;
+        };
+        long double sum = f(0.0) + f(3.0);
+        const int N = 200000; const long double hh = 3.0L / N;
+        for (int i = 1; i < N; ++i) sum += f(double(i * hh)) * (i % 2 ? 4.0L : 2.0L);
+        const double tauRef = double(sum * hh / 3.0L) + 12.0;   // ∫₀³ 4 ds = 12
+
+        const auto report = std::get<std::shared_ptr<PropertyDict>>(read(medium, "transmittance.evaluation"));
+        auto at = [&](const char* k) { const auto it = report->elements.find(k); return it == report->elements.end() ? PropertyValue{} : it->second; };
+        const double tau = number(read(medium, "depth.evaluation.value")), delta = number(read(medium, "depth.evaluation.totalBound"));
+        const double T = number(at("value")), total = number(at("totalBound"));
+        std::printf("    transmittance exp(−τ): %.12g, total bound %.3g (τ = %.10g ± %.3g; |T − exp(−τ_ref)| = %.3g)\n",
+                    T, total, tau, delta, std::abs(T - std::exp(-tauRef)));
+        check(text(at("status")) == "admitted" && std::abs(T - std::exp(-tau)) <= 1e-15 * T && text(at("route")) == "composition",
+              "transmittance = exp(−τ) is admitted through the composition route, its value exp of τ's");
+        check(std::isfinite(total) && std::abs(T - std::exp(-tauRef)) <= total,
+              "the independent reference exp(−τ_ref) lies inside the propagated bound");
+        // The box enters float interval arithmetic widened by ≤ 4 float ulps of τ, and
+        // exp's interval is rounded outward: "to rounding" means exactly that much.
+        auto ulp32 = [](double v) { const float f = float(std::abs(v)); return double(std::nextafter(f, INFINITY) - f); };
+        const double monotone = std::max(std::exp(-(tau - delta)) - T, T - std::exp(-(tau + delta)));
+        const double dw = delta + 4.0 * ulp32(tau + delta);
+        const double widened = std::max(std::exp(-(tau - dw)) - T, T - std::exp(-(tau + dw))) + 8.0 * ulp32(std::exp(-(tau - dw)));
+        std::printf("    monotone %.6g, reported %.6g (ratio %.6f), allowed to %.6g by float rounding\n", monotone, total, total / monotone, widened);
+        check(total >= monotone && total <= widened,
+              "the bound is Codex's monotone [exp(−(τ+δ)), exp(−(τ−δ))]: no tighter, and no looser than the float interval's rounding");
+        check(text(at("qualification")) == "model-qualified" && number(read(medium, "transmittance.evaluation.inputBounds.tau")) == delta,
+              "it is model-qualified, and names τ's bound as its input's");
+
+        // An unknown constituent: τ from a composite whose bounds are unavailable.
+        medium.setDynamicProperty("shifted.expression",
+            field(node(Op::Add, constant(1.0), integral("u", leaf(ScalarForm::variable("u")), constant(0.0), constant(1.0)))));
+        medium.setDynamicProperty("t2.expression", field(leaf(ScalarForm::transcendental(TK::Exp, "tau", -1.0, 0.0))));
+        auto b2 = std::make_shared<PropertyDict>();
+        b2->elements["tau"] = std::string("shifted.evaluation.value");
+        medium.setDynamicProperty("t2.bindings", PropertyValue(b2));
+        check(text(read(medium, "t2.evaluation.status")) == "admitted" && text(read(medium, "t2.evaluation.totalBound")) == "unavailable" &&
+                  text(read(medium, "t2.evaluation.qualification")) == "none",
+              "a constituent without a bound leaves the composite's bound unavailable, never zero: " + text(read(medium, "t2.evaluation.boundsUnavailable")));
+
+        // Exact authored input: only the composite's own execution is charged.
+        medium.setDynamicProperty("thickness", PropertyValue(0.7));
+        medium.setDynamicProperty("t3.expression", field(leaf(ScalarForm::transcendental(TK::Exp, "tau", -1.0, 0.0))));
+        auto b3 = std::make_shared<PropertyDict>();
+        b3->elements["tau"] = std::string("thickness");
+        medium.setDynamicProperty("t3.bindings", PropertyValue(b3));
+        const double e3 = number(read(medium, "t3.evaluation.totalBound"));
+        check(number(read(medium, "t3.evaluation.mathematicalBound")) == 0.0 && e3 > 0.0 && e3 < 1e-14 &&
+                  text(read(medium, "t3.evaluation.inputBounds.tau")) == "exact",
+              "exp of exact authored data carries only its execution bound (" + std::to_string(e3) + ")");
+
+        // An opaque medium, τ = 50: magnitude arithmetic alone would charge exp(−50)'s
+        // execution as if it were e^(+50) ≈ 5e21. With τ's signed range it is relative.
+        medium.setDynamicProperty("opaque", PropertyValue(50.0));
+        medium.setDynamicProperty("t5.expression", field(leaf(ScalarForm::transcendental(TK::Exp, "tau", -1.0, 0.0))));
+        auto b5 = std::make_shared<PropertyDict>();
+        b5->elements["tau"] = std::string("opaque");
+        medium.setDynamicProperty("t5.bindings", PropertyValue(b5));
+        const double T5 = number(read(medium, "t5.evaluation.value")), e5 = number(read(medium, "t5.evaluation.totalBound"));
+        check(std::abs(T5 - std::exp(-50.0)) <= 1e-15 * T5 && e5 > 0.0 && e5 <= 1e-12 * T5,
+              "exp(−50)'s execution bound is relative to e^-50 (" + std::to_string(e5 / T5) + " of it), not e^+50");
+
+        // A binding that reads its own evaluation is a cycle, refused legibly.
+        medium.setDynamicProperty("loop.expression", field(leaf(ScalarForm::variable("x"))));
+        auto b4 = std::make_shared<PropertyDict>();
+        b4->elements["x"] = std::string("loop.evaluation.value");
+        medium.setDynamicProperty("loop.bindings", PropertyValue(b4));
+        check(text(read(medium, "loop.evaluation.status")) == "refused",
+              "a report bound to its own value refuses instead of recursing: " + text(read(medium, "loop.evaluation.reason")));
+        check(text(read(medium, "loop.evaluation.reason")).find("cycle") != std::string::npos, "and the refusal names the cycle");
+    }
 
     std::cout << "ontomath_expression_evaluation_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";
     return g_failures == 0 ? 0 : 1;

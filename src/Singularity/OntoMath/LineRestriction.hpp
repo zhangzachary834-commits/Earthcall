@@ -340,11 +340,18 @@ struct ExecutionBound {
     double magnitude = 0.0;
     double slack = 0.0;
 };
+// `signedRanges` (optional, 2026-10-20 plan §6am): [lo, hi] for symbols whose
+// SIGN is known. Magnitude arithmetic alone must bound exp(a·x + b) by
+// e^(|a|·|x| + |b|), which for an optical depth charges exp(−τ) as if it were
+// e^(+τ) — useless for an opaque medium. With x's signed range, exp's argument
+// is bounded by its true signed maximum. Absent (the device's call), unchanged.
+using SignedRanges = std::map<std::string, std::pair<double, double>>;
 std::optional<ExecutionBound> executionBound(const MathNode& node, const std::map<std::string, double>& magnitudes,
                                              const ExecutionModel& model, int component = -1,
-                                             const std::string& pointVariable = kAmbientPointVar);
+                                             const std::string& pointVariable = kAmbientPointVar,
+                                             const SignedRanges* signedRanges = nullptr);
 std::optional<ExecutionBound> executionBound(const ScalarForm& form, const std::map<std::string, double>& magnitudes,
-                                             const ExecutionModel& model);
+                                             const ExecutionModel& model, const SignedRanges* signedRanges = nullptr);
 // Every piece the emitter can answer with (through the first unbounded one).
 std::optional<ExecutionBound> executionBound(const Piecewise& piecewise, const std::map<std::string, double>& magnitudes,
                                              const ExecutionModel& model, int component = -1,

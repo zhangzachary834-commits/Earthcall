@@ -27,6 +27,18 @@
 //                       executionPremise). Otherwise "unavailable": an
 //                       unavailable bound is unavailable, never zero (Codex).
 //   route, executionPremise   (with the bounds)
+//   COMPOSITION (2026-10-20, plan §6am): a scalar expression whose bindings
+//   read other reports composes their bounds. A binding path ending ".value"
+//   whose parent is a report-like record (value + totalBound) is read once as
+//   that record: value, bound and qualification from one evaluation. The
+//   expression is evaluated over the box of input uncertainties (monotone
+//   exp(−τ) gives [exp(−(τ+δ)), exp(−(τ−δ))]) plus its own execution under
+//   cpuExecutionModel, with τ's signed range so exp(−τ) is never charged as
+//   e^(+τ). Then: route "composition", inputBounds {var: bound | "exact"},
+//   qualification "model-qualified" — or, when any input carries no bound,
+//   the bounds stay "unavailable" with boundsUnavailable naming it. Nested
+//   Integrals and vectors are not composed yet. A binding that reads its own
+//   report is a cycle and refuses, naming it.
 //   expressionDigest    FNV-1a 64 of the expression's JSON: evidence identity
 //   bindings            the bound values this evaluation read (a copy)
 //   backend             what executed it
