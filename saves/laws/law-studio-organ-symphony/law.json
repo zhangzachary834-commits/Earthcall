@@ -1,0 +1,209 @@
+{
+  "authors": [
+    "studio.author.codex"
+  ],
+  "identifier": "law-studio-organ-symphony",
+  "injected_by": "Gemini 4 Argon (The Firmament \u00b7 Gemini Spark), session c_d03bb5a87bbfab74, 2026-10-19T13:50:00-07:00",
+  "law": {
+    "id": "law-studio-organ-symphony",
+    "name": "Studio: Cathedral organ pipes surge and glow with each played note",
+    "enabled": true,
+    "authority": 0,
+    "activation": 1,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "studio.author.codex"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 0,
+      "path": "isOrganPipe",
+      "op": 0,
+      "operand": {
+        "t": "bool",
+        "v": true
+      }
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "position.y",
+          "bindings": {
+            "y": "pipeBaseY",
+            "e": "resonanceEnergy",
+            "t": "time"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "y": 1.0
+                      }
+                    },
+                    {
+                      "c": 0.38,
+                      "factors": {
+                        "e": 1.0
+                      }
+                    },
+                    {
+                      "c": 0.04,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "t",
+                          "scale": 1.5,
+                          "shift": 0.0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "color.r",
+          "bindings": {
+            "p": "pigmentR",
+            "e": "resonanceEnergy"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "p": 1.0
+                      }
+                    },
+                    {
+                      "c": 0.25,
+                      "factors": {
+                        "e": 1.0
+                      }
+                    },
+                    {
+                      "c": -0.25,
+                      "factors": {
+                        "p": 1.0,
+                        "e": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "color.g",
+          "bindings": {
+            "p": "pigmentG",
+            "e": "resonanceEnergy"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "p": 1.0
+                      }
+                    },
+                    {
+                      "c": 0.25,
+                      "factors": {
+                        "e": 1.0
+                      }
+                    },
+                    {
+                      "c": -0.25,
+                      "factors": {
+                        "p": 1.0,
+                        "e": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "color.b",
+          "bindings": {
+            "p": "pigmentB",
+            "e": "resonanceEnergy"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "p": 1.0
+                      }
+                    },
+                    {
+                      "c": 0.25,
+                      "factors": {
+                        "e": 1.0
+                      }
+                    },
+                    {
+                      "c": -0.25,
+                      "factors": {
+                        "p": 1.0,
+                        "e": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "entityA": "law-studio-organ-symphony",
+        "entityB": "studio.author.codex",
+        "type": "authored-by",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1792440000
+          }
+        ]
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": []
+}

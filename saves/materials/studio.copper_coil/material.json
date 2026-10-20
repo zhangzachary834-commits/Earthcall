@@ -1,0 +1,109 @@
+{
+  "identifier": "material.studio.copper_coil",
+  "material": {
+    "id": "material.studio.copper_coil",
+    "name": "studio.copper_coil",
+    "baseColor": [
+      0.78,
+      0.44,
+      0.24
+    ],
+    "opacity": 1.0,
+    "ambient": 0.19,
+    "diffuse": 0.74,
+    "specular": 0.78,
+    "shininess": 86.0,
+    "textureResolution": 16,
+    "colorExpr": {
+      "input": "y",
+      "pieces": [
+        {
+          "hasLo": false,
+          "hasHi": false,
+          "mathNode": {
+            "op": 2,
+            "children": [
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.78,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.05,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "y",
+                          "scale": 4.2,
+                          "shift": 0.0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.44,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.04,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "y",
+                          "scale": 4.2,
+                          "shift": 0.5
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.24,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.03,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 1,
+                          "var": "x",
+                          "scale": 2.2,
+                          "shift": 0.9
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": {
+    "agent": "Gemini 4 Argon (The Firmament \u00b7 Gemini Spark), session c_d03bb5a87bbfab74",
+    "date": "2026-10-19",
+    "scope": "Synthesis Studio 3D procedural material upgrade"
+  }
+}
