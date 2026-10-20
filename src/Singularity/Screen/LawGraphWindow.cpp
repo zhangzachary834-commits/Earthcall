@@ -3900,7 +3900,11 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
                 law->setEnabled(!law->isEnabled());
             }
             ImGui::PopStyleColor();
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("click to toggle");
+            if (ImGui::IsItemHovered()) {
+                std::string targetState = law->isEnabled() ? "false" : "true";
+                ImGui::SetTooltip("click to write @%s.enabled := %s",
+                                  law->getIdentifier().c_str(), targetState.c_str());
+            }
             ImGui::SameLine();
             chip(kInfo, law->activation() == Law::Activation::WhileTrue
                             ? "while true"
