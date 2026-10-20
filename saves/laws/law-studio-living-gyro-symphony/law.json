@@ -1,0 +1,89 @@
+{
+  "authors": [
+    "studio.author.astra"
+  ],
+  "identifier": "law-studio-living-gyro-symphony",
+  "injected_by": "Gemini 4 Argon (The Firmament \u00b7 Gemini Spark), session c_d03bb5a87bbfab74, 2026-10-19T13:50:00-07:00",
+  "law": {
+    "id": "law-studio-living-gyro-symphony",
+    "name": "Studio: Cymatic gyro-spheres and overtone prisms levitate with pulseRate",
+    "enabled": true,
+    "authority": 0,
+    "activation": 1,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "studio.author.astra"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 0,
+      "path": "isCymaticGyro",
+      "op": 0,
+      "operand": {
+        "t": "bool",
+        "v": true
+      }
+    },
+    "actionModel": {
+      "kind": 8,
+      "path": "position.y",
+      "bindings": {
+        "y": "gyroBaseY",
+        "r": "@state.studio.pulseRate",
+        "t": "time"
+      },
+      "function": {
+        "pieces": [
+          {
+            "expr": {
+              "terms": [
+                {
+                  "c": 1.0,
+                  "factors": {
+                    "y": 1.0
+                  }
+                },
+                {
+                  "c": 0.08,
+                  "factors": {
+                    "r": 1.0
+                  },
+                  "trans": [
+                    {
+                      "kind": 0,
+                      "var": "t",
+                      "scale": 1.8,
+                      "shift": 0.0
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "provenance": [
+      {
+        "entityA": "law-studio-living-gyro-symphony",
+        "entityB": "studio.author.astra",
+        "type": "authored-by",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1792440000
+          }
+        ]
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": []
+}

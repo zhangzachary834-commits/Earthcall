@@ -3318,3 +3318,22 @@ Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
 on a Singular/Object and no ShapeKind specification. [Native audit](../../../audits/SINGULAR_SCREEN_PROPERTY_PIPELINE_2026-10-17.md).
 
 - [ ] Inspect the retained [plain Object bands](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-bands.png) and [edited bands](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-edited.png): two separated gradients over blue, with their blue component changing after a Law edit. The corresponding Singular captures should match. At native resolution, [the pixel replacement](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-pixel.png) has exactly one red pixel at column 7, row 9 over blue. Confirm this property-bearer authoring route meets your intended meaning. These are isolated production captures; no demo was installed in an inhabited Zone, and automatic composition of many sources remains open.
+
+## Sanctum of Beginnings cleared of test shapes (2026-10-17)
+
+Claude Code / Claude Opus 5.5 / session `8fa01418-49d7-4bfd-8a69-22d286eb6b8b` / 2026-10-17T19:29-07:00. At Zach's request ("all of them were literally just me spamming shapes to test"), 136 shape objects and their per-object materials were removed from `zones/Sanctum of Beginnings/zone.ecform` in the data home, plus the 135 present in the stale `zone.json`. Committed in the data home. The originals are in `backups/Sanctum of Beginnings.bak.20261017/`.
+
+- [ ] Enter Sanctum of Beginnings. The pile of default shapes at the spawn point (0, 0.5, 0) should be gone, along with the trail of cubes near (−0.2…−3.3, 2.2–2.8, 5–10) and the Sonnet test cube at the origin. **Luna's First Star** (near (−0.1, 1.35, 1.25)) and the Sonnet gift spheres (near (−9.6, 5.2, −6.1)) were kept on purpose. Say if you want those gone too. Lexemes, laws and the zone's spatial root are unchanged.
+
+
+## Shape Garden — Law Line 2D sidebar / 3D generator (2026-10-20)
+
+Zach commissioned this independent authored interface with no legacy 3D generator. [Guide and evidence](../Specific%20Tasks/Interaction%20and%20Interface/Law_Line_Shape_Garden/Law_Line_Shape_Garden.md).
+
+- [ ] Unlock as Zach if requested, select **Shape Garden** in Zones, and release the cursor with Escape. Confirm the sidebar appears over the 3D scene without opening the legacy creation window.
+- [ ] Choose sphere/box/torus, adjust size, choose a color, and click CREATE. Confirm one visible solid per press, correct color/form/size, and no repeated births while held.
+- [ ] Move/turn, resize and test the normal/Retina display: controls should stay aligned with the pointer. Foreign panels that capture the mouse should prevent births.
+- [ ] Close X, then reopen with the guide's Law Line sentence: existing objects should remain. Close before leaving for another Zone; automatic Screen ownership/exit restoration is not implemented.
+- [ ] Save Zone after creating objects; restart the ordinary app and reenter Shape Garden. Confirm the generated forms and chosen controller state persist. Initial/native fixture codec checks do not replace this inhabited acceptance.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-20T13:44:21-07:00*

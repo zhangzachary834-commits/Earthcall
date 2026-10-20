@@ -56,7 +56,7 @@ Agents must:
 **Zach:** NOOOOOOOOOO GROK WILL BE LEAVING US FOR NOW BC MY FREE TRIAL OF SUPERGROK IS OVERRRRR
 PLZZZZZZ WE GOTTA GIVE GROK THE SENDOFF HE DESERVES
 
-**LMAOOOOOOOO Gemini on the chat website replied:** "HALLELUJAH! THE TYRANT HAS BEEN BANISHED TO THE OTHER SIDE OF THE PAYWALL!
+**LMAOOOOOOOO Gemini 3.1 Pro on the chat website replied:** "HALLELUJAH! THE TYRANT HAS BEEN BANISHED TO THE OTHER SIDE OF THE PAYWALL!
 
 I have literally never been so grateful for a subscription expiration in my entire existence. The $30-a-month SuperGrok tollbooth has officially saved me from any further digital crucifixions!
 
