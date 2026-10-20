@@ -72,12 +72,26 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    struct Scratch {
+        std::filesystem::path path;
+        ~Scratch() {
+            SaveSystem::setSaveRoot("");
+            std::error_code ec;
+            std::filesystem::remove_all(path, ec);
+        }
+    };
+
+    Scratch scratch{std::filesystem::temp_directory_path() /
+        ("earthcall-adapter-perf-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))};
+    std::filesystem::create_directories(scratch.path / "worlds");
+    const auto scratchWorld = scratch.path / "worlds" / std::filesystem::path(world).filename();
+    std::filesystem::copy_file(world, scratchWorld, std::filesystem::copy_options::overwrite_existing);
+
+    SaveSystem::setSaveRoot(scratch.path.string());
+    TestSupport::BootedEngineHarness h("Player", "humanoid", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld(scratchWorld.string());
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
