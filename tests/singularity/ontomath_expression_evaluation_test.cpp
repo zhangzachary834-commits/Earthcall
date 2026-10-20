@@ -95,14 +95,20 @@ int main() {
               number(read(bearer, "growth.evaluation.totalBound")) >= std::abs(number(read(bearer, "growth.evaluation.value")) - 6.0) &&
               text(read(bearer, "growth.evaluation.route")) == "term algebra",
           "an Integral's report carries its bounds: mathematical 0, execution positive (premised), route named");
+    // Codex, 2026-10-20: the bound is conditional on a named execution model and
+    // says so; nothing is certified yet.
+    check(text(read(bearer, "growth.evaluation.qualification")) == "model-qualified" &&
+              text(read(bearer, "growth.evaluation.executionModel")).find("binary64") != std::string::npos,
+          "the bound is reported as model-qualified, naming its execution model");
     {
         // A composite around an integral does not propagate bounds: unavailable, never zero.
         Object composite;
         composite.setDynamicProperty("sum.expression",
             field(node(Op::Add, constant(1.0), integral("s", leaf(ScalarForm::variable("s")), constant(0.0), constant(1.0)))));
         check(text(read(composite, "sum.evaluation.status")) == "admitted" && number(read(composite, "sum.evaluation.value")) == 1.5 &&
-                  text(read(composite, "sum.evaluation.totalBound")) == "unavailable",
-              "a composite's bounds are reported as unavailable, never as zero");
+                  text(read(composite, "sum.evaluation.totalBound")) == "unavailable" &&
+                  text(read(composite, "sum.evaluation.qualification")) == "none",
+              "a composite's bounds are reported as unavailable, never as zero, and it claims no qualification");
     }
     check(number(read(bearer, "growth.evaluation.bindings.k")) == 3.0 && number(read(bearer, "growth.evaluation.bindings.t")) == 2.0,
           "the report carries the bindings it read");

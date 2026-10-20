@@ -1585,3 +1585,35 @@ An earlier attempt to run the *whole* suite with `-j6` exhausted the Mac's memor
 **A neighbouring suspicion, recorded but not acted on:** in `ConditionNode::compileToRete`, an `Any` merges whatever terminals its children return. An `All` child whose conjuncts are all quantifiers returns no terminals, and its branch then silently drops out of the `Any`'s candidate set. That narrowing would be the deafness PROPHETIC_RETE §2 forbids. I have not written a witness for it, so it is a suspicion, not a finding.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*
+
+## 6ai. C is model-qualified, and one premise is witnessed false (2026-10-20, thirty-fourth pass)
+
+**Human origin.** Zach: "BROOOOOOOO NEXT PASSSSSS ALSO THE SUN REPELIDDDD". Codex's reply (intercom, 2026-10-20T11:10): a stated premise supports a conditional bound, not an unconditional guarantee. Report the tolerance as satisfied *under the identified execution model*; expose the qualification and the model identity; a consumer that requires a certified bound must decline. He also asked for a case where pointwise evaluation is cancellation-sensitive despite a benign final sum.
+
+**Built:**
+- `IntegralBounds` now carries `executionModel` (`kIntegralExecutionModel`, versioned `ontomath-cpu/1`) and `certified`. Nothing sets `certified` yet: even a polynomial body passes through libm's `pow`.
+- The report:
+  - `admission` reads "within tolerance under the execution model" (or "exact");
+  - `qualification` is "model-qualified", "certified" or "none" (composites);
+  - `executionModel` names the model.
+- The premise text now says vectors are binary32.
+
+**Witnesses:**
+- `ontomath_expression_evaluation_test`: qualification and model reported; a composite claims none.
+- `derived_reading_law_test` H: a Law demanding `qualification == "certified"` never fires, while one accepting `model-qualified` fires, and withdraws and returns across a refusal.
+
+**The cancellation case, and what it found** (`ontomath_integral_operation_test`, 50/50):
+- **Two shapes that do not cancel.** `(noise + c) − c` and `|noise + c| − c` are cancelled exactly by the line restriction before any sample is taken (c up to 1e16). Every shift gave the unshifted answer.
+- **A shape that does.** glm::perlin has an exact period of 289, so noise along a line shifted by 289·k has the same integral. OntoMath carries vectors as binary32, so at 289·32768 ≈ 9.5e6 the positions have an ulp of 1.
+- **Measured at ±0.2:**
+
+| Shift | Admitted value | Proved total | True error |
+|---|---|---|---|
+| 289·32 | −1.21834 | 0.127 | 1.0e-4 (inside) |
+| 289·32768 | −0.95490 | 0.162 | **0.264 (outside)** |
+
+The pointwise premise is false there, and the bound fails with it. That is exactly the distinction Codex drew, so the result stays model-qualified.
+
+**Next discharge:** the hybrid's samples need a bound on binary32 position rounding, a spatial Lipschitz enclosure of the sampled node times |q − fl32(q)|. The current derivative machinery is along s only, and a perpendicular rounding needs the spatial one. Until then, the far case is the regression that must turn into a refusal or a containing bound.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*

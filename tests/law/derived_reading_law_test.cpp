@@ -21,6 +21,8 @@
 //   E  remapping a binding to another bearer, whose own edit then wakes it
 //   F  a status law hears the refusal itself
 //   G  a reading registered after the law compiled makes it re-decide
+//   H  a consumer demanding a CERTIFIED bound declines a model-qualified one,
+//      while one that accepts the named model is served (Codex, 2026-10-20)
 // Selective dirtying (an unrelated edit costing nothing) is a separate,
 // later optimization claim and is NOT made here.
 // Claude Code · Claude Opus 5.5 · session f3af84cf-bfe3-429d-b417-2d533119f169 · 2026-10-20.
@@ -102,6 +104,8 @@ int main() {
         setNum(bearer, "horizon", 2.0);
         setNum(bearer, "hits", 0.0);
         setNum(bearer, "refusals", 0.0);
+        setNum(bearer, "certifiedUses", 0.0);
+        setNum(bearer, "qualifiedUses", 0.0);
         setNum(other, "rate", 1.0);
         setNum(control, "x", 0.0);
         setNum(control, "hits", 0.0);
@@ -138,8 +142,19 @@ int main() {
         auto statusLaw = edgeLaw("growth-refused",
             ConditionNode::compare("growth.evaluation.status", ConditionNode::Op::Eq, PropertyValue(std::string("refused"))),
             "refusals", bearer);
+        auto certifiedLaw = edgeLaw("needs-certified",
+            ConditionNode::all({
+                ConditionNode::compare("growth.evaluation.status", ConditionNode::Op::Eq, PropertyValue(std::string("admitted"))),
+                ConditionNode::compare("growth.evaluation.qualification", ConditionNode::Op::Eq, PropertyValue(std::string("certified")))}),
+            "certifiedUses", bearer);
+        auto qualifiedLaw = edgeLaw("accepts-model",
+            ConditionNode::compare("growth.evaluation.qualification", ConditionNode::Op::Eq, PropertyValue(std::string("model-qualified"))),
+            "qualifiedUses", bearer);
+        (void)certifiedLaw; (void)qualifiedLaw;
         const auto ticks = [&](int n) { for (int i = 0; i < n; ++i) mgr.tick(); };
         ticks(2);
+        check(number(bearer, "qualifiedUses") == 1.0 && number(bearer, "certifiedUses") == 0.0,
+              "H: the model-accepting consumer is served; the certified-demanding one declines");
 
         // ---- A: the declared fallback -----------------------------------------
         check(mgr.terminalCountOf(valueLaw->getIdentifier()) == 0 && mgr.terminalCountOf(statusLaw->getIdentifier()) == 0,
@@ -187,6 +202,8 @@ int main() {
         ticks(1);
         check(number(bearer, "hits") == 5.0, "E: an edit on the other bearer wakes this one's law");
         check(number(bearer, "refusals") == 1.0, "F: no spurious refusal edges along the way");
+        check(number(bearer, "qualifiedUses") == 2.0 && number(bearer, "certifiedUses") == 0.0,
+              "H: the refusal withdrew the qualification and recovery restored it (2 edges); certified never held");
     }
 
     glfwDestroyWindow(window);

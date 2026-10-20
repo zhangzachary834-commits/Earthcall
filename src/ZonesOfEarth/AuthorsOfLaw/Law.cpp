@@ -2475,14 +2475,24 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                                   ? holds
                                   : (holds && !wasHolding);
             if (!fire) continue;
+            // The condition was decided just above, on this subject, with
+            // nothing in between: deciding it again inside applyTo doubled the
+            // sweep's cost (442 vs 233 ms/tick for a bare ForAll at 320 beings,
+            // quantifier_scaling_test, once quantifiers stopped carrying an
+            // unsound alpha — disjunction_candidate_test). The reactive path
+            // already applies exactly once per candidate; this is the same rule.
+            // A restarted drive session is the one intervening step, so then
+            // the condition is re-checked as before.
+            bool decided = true;
             if (law->drives() &&
                 hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
                 if (law->retrigger() == Law::Retrigger::Absorb) {
                     continue;
                 }
                 restartDriveSession(*law, subject->getIdentifier());
+                decided = usedDirect;
             }
-            applyAndMaybeDrive(*law, *subject, records, usedDirect);
+            applyAndMaybeDrive(*law, *subject, records, decided);
         }
     }
     auto T3 = glfwGetTime();

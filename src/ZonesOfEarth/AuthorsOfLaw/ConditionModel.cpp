@@ -594,6 +594,21 @@ static bool isQuantifier(const ConditionNode& node) {
            node.kind == ConditionNode::Kind::ForAll;
 }
 
+// A leaf whose truth can change while every fact about the SUBJECT stays put:
+// a quantifier, or a Not over one. Its alpha would admit whichever being's fact
+// happened to change (the lamp that lit), never the subject the law is about,
+// so it is no candidate filter at all (disjunction_candidate_test, 2026-10-20).
+static bool containsQuantifier(const ConditionNode& node) {
+    if (isQuantifier(node)) return true;
+    for (const auto& child : node.children)
+        if (containsQuantifier(child)) return true;
+    return false;
+}
+static bool isSubjectIndependentLeaf(const ConditionNode& node) {
+    return node.kind != ConditionNode::Kind::All && node.kind != ConditionNode::Kind::Any &&
+           containsQuantifier(node);
+}
+
 std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
                                                       const std::string& lawId,
                                                       std::size_t leftId,
@@ -626,7 +641,7 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
             // reading law like art-stroke-draw-law does sixty times a second.
             //
             // Widen where uncertain, never narrow. PROPHETIC_RETE.md §2.
-            if (child.readsQualifiedRoot() || isQuantifier(child)) continue;
+            if (child.readsQualifiedRoot() || isSubjectIndependentLeaf(child)) continue;
 
             std::vector<std::size_t> next;
             for (std::size_t left : currents) {
@@ -659,16 +674,21 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
         for (const auto& child : children) {
             if (child.readsQualifiedRoot()) return {};
         }
-        // A quantifier disjunct is deliberately NOT dropped here. It cannot be
-        // skipped the way a conjunct can — "local OR world-wide" is satisfiable
-        // with the local half false, so indexing on the local half alone would
-        // narrow — and refusing the whole Any an index is worse still: it sends
-        // the law to the sweep, which evaluates the condition twice per subject.
-        // Measured on the bare-quantifier shape, that trade cost 413 -> 718 ms
-        // at 320 beings. Keeping the node is the cheaper honest option.
+        // EVERY alternative must carry a sound filter, or the Any has none. An
+        // alternative that yields no terminals — an All of quantifiers only, an
+        // empty (vacuously true) All, a quantifier — is "I cannot index this",
+        // never "this cannot hold": an empty terminal vector is not proof of
+        // impossibility (Codex, 2026-10-20). Concatenating the others' terminals
+        // left the subject unproposed exactly when that alternative was the true
+        // one. This used to keep a quantifier disjunct's alpha as "the cheaper
+        // honest option" (413 -> 718 ms at 320 beings on the sweep), but that
+        // alpha proposes the being whose fact changed, not the subject:
+        // disjunction_candidate_test cases A, B and C were deaf. Correctness
+        // first; the sweep's cost is the price PROPHETIC_RETE §2 names.
         std::vector<std::size_t> allTerminals;
         for (const auto& child : children) {
             auto t = child.compileToRete(rete, lawId, leftId, leftIsBeta);
+            if (t.empty()) return {};
             allTerminals.insert(allTerminals.end(), t.begin(), t.end());
         }
         return allTerminals;
@@ -696,15 +716,17 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
     // correct here, and the compiled predicate below still decides the truth.
     if (readsQualifiedRoot()) return {};
 
-    // A BARE quantifier still gets its (useless) alpha, and that is a measured
-    // choice, not an oversight. Returning {} here leaves the law with no
-    // terminals, which sends it to the sweep — and the sweep evaluates the
-    // condition TWICE per subject: once in tick()'s continuous loop and again
-    // inside applyTo, which re-checks before firing. Dropping the node made a
-    // bare ForAll law go from 411 ms to 718 ms at 320 beings (k 1.82 -> 1.90).
-    // Keeping the reactive path is the cheaper of the two bad options until a
-    // quantifier's answer can be memoized; see FORMATION_RETE.md §8 rung 1b
-    // for why that memo is blocked rather than merely unwritten.
+    // A BARE quantifier (or a Not over one) gets no alpha. It used to keep one
+    // as a measured performance choice — the sweep evaluates the condition
+    // twice per subject, and dropping the node made a bare ForAll law go from
+    // 411 ms to 718 ms at 320 beings — but that alpha was not merely useless,
+    // it was unsound: its predicate ignores the subject, so it admitted the
+    // being whose fact had just changed (the lamp that lit) and never the
+    // subject the law is about. A targeted ForAny law never fired
+    // (disjunction_candidate_test E). Deafness is not a cost trade-off. The
+    // sweep is right; memoizing the quantifier's answer per tick is the fix for
+    // its cost (FORMATION_RETE.md §8 rung 1b).
+    if (isSubjectIndependentLeaf(*this)) return {};
 
     std::string targetAttr = "";
     if (kind == Kind::Compare) targetAttr = path.segments.empty() ? "" : path.segments.front();

@@ -58,6 +58,7 @@ std::shared_ptr<PropertyDict> evaluationReport(Singular& bearer, const std::stri
     r["mathematicalBound"] = std::string("unavailable");
     r["executionBound"] = std::string("unavailable");
     r["totalBound"] = std::string("unavailable");
+    r["qualification"] = std::string("none");
     r["backend"] = std::string("cpu: OntoMath Piecewise::evaluate");
     auto refuse = [&](const std::string& why) {
         r["status"] = std::string("refused");
@@ -106,7 +107,12 @@ std::shared_ptr<PropertyDict> evaluationReport(Singular& bearer, const std::stri
     if (pieces.size() == 1 && pieces[0].mathNode && pieces[0].mathNode->op == MathNode::Op::Integral) {
         IntegralBounds bounds;
         if (evaluateIntegral(*pieces[0].mathNode, vars, &bearer, nullptr, &bounds)) {
-            r["admission"] = std::string(bounds.approximate ? "within tolerance" : "exact");
+            // "within tolerance" alone reads as a guarantee; it is one only under
+            // the named model, so the admission says so and `qualification`
+            // lets a consumer that needs more decline (Codex, 2026-10-20).
+            r["admission"] = std::string(bounds.approximate ? "within tolerance under the execution model" : "exact");
+            r["qualification"] = std::string(bounds.certified ? "certified" : "model-qualified");
+            r["executionModel"] = bounds.executionModel;
             if (bounds.tolerance > 0.0) r["requestedTolerance"] = bounds.tolerance;
             r["mathematicalBound"] = bounds.mathematical;
             r["executionBound"] = bounds.execution;
@@ -114,8 +120,9 @@ std::shared_ptr<PropertyDict> evaluationReport(Singular& bearer, const std::stri
             r["route"] = bounds.route;
             r["executionPremise"] = std::string(
                 "Higham summation bound over every summand the office added, plus proved series tails; "
-                "assumes each summand within γ of itself (libm within one ulp, the field's pointwise value in "
-                "double forward-accurate), which is not enclosed");
+                "assumes each summand within γ of itself (libm within one ulp, the field's pointwise value "
+                "accurate), which is not enclosed. Vectors are binary32: a sampled field far from the origin "
+                "breaks the pointwise premise, and its bound with it");
         }
     }
     return report;

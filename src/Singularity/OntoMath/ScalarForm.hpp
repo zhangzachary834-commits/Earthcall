@@ -829,12 +829,33 @@ std::optional<ScalarForm> substitute(const ScalarForm& form, const std::string& 
 // slivers' proved bound plus the hybrid remainder's proved radius);
 // `execution` is IntegralAccounting::executionBound(), premised as stated
 // there. Admission under a tolerance requires mathematical + execution ≤ it.
+//
+// The bound is CONDITIONAL on the execution model named below (Codex,
+// 2026-10-20: "a stated premise supports a conditional bound, not an
+// unconditional guarantee"). `certified` would mean every premise discharged —
+// input and coefficient construction, the field's pointwise evaluation, library
+// calls and summation — and no route discharges them yet: even a polynomial
+// body is evaluated through libm's pow. A consumer that requires a certified
+// bound must decline a model-qualified one.
+//
+// The model's premises are not all true everywhere, and one is witnessed false:
+// vector values are carried in binary32 (glm::vec3), so a sampled field far
+// from the origin is evaluated at the wrong points. ontomath_integral_operation_test
+// admits noise shifted by 289·32768 with a proved total of 0.162 and a true
+// error of 0.264. The next discharge is the hybrid's bound on that position
+// rounding; until then, model-qualified means exactly what this string says.
+inline constexpr const char* kIntegralExecutionModel =
+    "ontomath-cpu/1: binary64 round-to-nearest scalar arithmetic; vectors carried in binary32 (glm::vec3); "
+    "libm (exp, sin, cos, pow, log) within one ulp; the authored field's pointwise value assumed accurate, "
+    "which binary32 positions far from the origin violate";
 struct IntegralBounds {
-    double tolerance = 0.0;      // authored; 0 means exact only
+    double tolerance = 0.0;      // authored; 0 means exact only (a mode, not a claim of zero rounding)
     bool approximate = false;    // something was omitted or sampled
     double mathematical = 0.0;
     double execution = 0.0;
     std::string route;
+    std::string executionModel = kIntegralExecutionModel;
+    bool certified = false;
     double total() const { return mathematical + execution; }
 };
 std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std::string, PropertyValue>& vars,
