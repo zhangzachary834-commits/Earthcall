@@ -72,9 +72,13 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    const auto absWorld = std::filesystem::absolute(world);
+    if (absWorld.parent_path().filename() == "worlds" &&
+        absWorld.parent_path().parent_path().filename() == "saves") {
+        SaveSystem::setSaveRoot(absWorld.parent_path().parent_path().string());
+    }
+
+    TestSupport::BootedEngineHarness h("Player", "humanoid", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);
