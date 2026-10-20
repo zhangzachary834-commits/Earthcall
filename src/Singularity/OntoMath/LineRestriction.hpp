@@ -3,6 +3,7 @@
 #include "Singularity/OntoMath/ScalarForm.hpp"
 
 #include <array>
+#include <limits>
 #include <map>
 #include <memory>
 #include <functional>
@@ -570,6 +571,42 @@ std::optional<double> lipschitzBoundOverBox(const LineAlgebraicForm& form, std::
                                             const Interval box[3],
                                             const std::map<std::string, Interval>& others,
                                             bool undefinedAsZero = true);
+
+// ---- A line-quadrature certificate for a DEVICE (2026-10-20, plan §6ap) ----
+// For a scalar field f(p), and each magnitude band [−cap, cap]³ (cap = 2^j),
+// what one f32 device quadrature of f along ANY line inside the band needs:
+//   lipschitz  sup |∇f| over the band (box-mode partials, Cauchy–Schwarz);
+//   width, sup the band's range of f (its width and largest magnitude);
+//   execution  |device f(p) − f(p)| for one evaluation, under the DEVICE's
+//              own declared model (kVolumeExecutionModel), coordinates ≤ cap.
+// Magnitude arithmetic is monotone, so a ray whose endpoints lie in a band is
+// covered by it. A band with an unbounded quantity is left out; a ray beyond
+// every band refuses. This is the host half of step 2c: the device picks the
+// band and the cell count per ray from these constants (SdfWgsl
+// compileLineQuadrature); nothing per-ray is proved on the host.
+//   hessian    sup ‖∇²f‖ over the band (Frobenius of box-mode second partials,
+//              mixed ones from e_i + e_j); infinite where f is not C¹ with a
+//              Lipschitz gradient there — then only the first-order radius.
+struct LineQuadratureBand {
+    double cap = 0.0, lipschitz = 0.0, width = 0.0, sup = 0.0, execution = 0.0;
+    double hessian = std::numeric_limits<double>::infinity();
+};
+struct LineQuadratureCertificate {
+    std::vector<LineQuadratureBand> bands;   // increasing cap
+    ExecutionModel model;
+};
+std::optional<LineQuadratureCertificate> certifyLineQuadrature(const MathNode& field, const ExecutionModel& deviceModel,
+                                                               int maxBand = 20, std::string* why = nullptr);
+// The CPU mirror of the device's per-ray plan (same arithmetic, in double):
+// the band, the even cell count n, and the proved total for f32 execution.
+struct LineQuadraturePlan {
+    int band = -1;
+    double cells = 0.0, mathematical = 0.0, execution = 0.0;
+    double total() const { return mathematical + execution; }
+};
+std::optional<LineQuadraturePlan> planLineQuadrature(const LineQuadratureCertificate& cert, const double o[3],
+                                                     const double d[3], double lo, double hi, double tolerance,
+                                                     double maxCells);
 
 struct LineSegmentationPiece {
     double s0 = 0.0, s1 = 0.0;

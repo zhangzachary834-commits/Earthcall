@@ -26,6 +26,7 @@
 #include "Singularity/Screen/RadianceSource.hpp"
 
 namespace geom { struct SdfNode; class FieldNode; }
+namespace OntoMath { struct LineQuadratureCertificate; }
 
 namespace sdfwgsl {
 
@@ -160,6 +161,20 @@ struct Program {
     bool        ok = true;
     std::string error;   // one line, naming the op and why
 };
+
+// Step 2c, first slice (2026-10-20, plan §6ap): a DEVICE quadrature of an
+// authored scalar field f(p) along a line, certified by the host. The program
+// defines fn lineField(p) (f, lowered by the production emitter) and
+//   fn lineIntegral(o, d, lo, hi, tol) -> vec4<f32>(value, status, cells, total)
+// which picks the certificate's magnitude band from the segment's endpoints,
+// the even cell count its first-order Simpson radius needs, runs that many
+// cells in f32, and reports the proved total (mathematical + device execution
+// under the certificate's model, inflated for the bound's own f32 arithmetic).
+// status 0 is a refusal: beyond every band, or more cells than maxCells. It
+// mirrors OntoMath::planLineQuadrature. No entry point: a consumer (a compute
+// witness today, the volume renderer later) calls lineIntegral.
+Program compileLineQuadrature(const OntoMath::MathNode& field, const OntoMath::LineQuadratureCertificate& cert,
+                              uint32_t maxCells);
 
 // Compile a field into a raymarching shader plus its parameter block.
 // `colorFormatIsSrgb` is unused for now; kept out of the signature deliberately —

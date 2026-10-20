@@ -2279,6 +2279,138 @@ std::optional<double> lipschitzBoundOverBox(const LineAlgebraicForm& form, std::
     return std::sqrt(sum) * (1.0 + 1e-12);
 }
 
+std::optional<LineQuadratureCertificate> certifyLineQuadrature(const MathNode& field, const ExecutionModel& deviceModel,
+                                                               int maxBand, std::string* why) {
+    auto say = [&](const std::string& text) { if (why) *why = text; return std::nullopt; };
+    const auto restricted = restrictAlgebraicToLine(field, /*vectorValued=*/false);
+    if (!restricted) return say("the field does not restrict to a line: " + restricted.refusal);
+    const LineAlgebraicForm& form = *restricted.form;
+    const uint32_t root = form.roots[0];
+    LineQuadratureCertificate cert;
+    cert.model = deviceModel;
+    for (int j = 0; j <= maxBand; ++j) {
+        const double cap = std::ldexp(1.0, j);
+        const Interval box(-float(cap), float(cap));
+        LineQuadratureBand band;
+        band.cap = cap;
+        // Range over the band: the origin is the whole box, the direction 0.
+        {
+            std::map<std::string, Interval> b;
+            for (int i = 0; i < 3; ++i) { b[kLineOriginVars[i]] = box; b[kLineDirectionVars[i]] = Interval(0.0f); }
+            LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
+            if (!ev.ok()) continue;
+            bool undefined = false;
+            const Interval r = ev.range(root, 0.0, 0.0, std::vector<int8_t>(form.switches.size(), 0), &undefined);
+            if (undefined || !r.bounded()) continue;
+            band.width = double(r.hi) - double(r.lo);
+            band.sup = std::max(std::abs(double(r.lo)), std::abs(double(r.hi)));
+        }
+        // Lipschitz: √(Σ sup|∂_i f|²), each partial a box-mode derivative along e_i.
+        double sum = 0.0;
+        bool bounded = true;
+        for (int axis = 0; axis < 3 && bounded; ++axis) {
+            std::map<std::string, Interval> b;
+            for (int i = 0; i < 3; ++i) { b[kLineOriginVars[i]] = box; b[kLineDirectionVars[i]] = Interval(i == axis ? 1.0f : 0.0f); }
+            LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
+            if (!ev.ok()) { bounded = false; break; }
+            const Interval dr = ev.derivativeRange(root, 0.0, 0.0, std::vector<int8_t>(form.switches.size(), 0));
+            if (!dr.bounded()) { bounded = false; break; }
+            const double m = std::max(std::abs(double(dr.lo)), std::abs(double(dr.hi)));
+            sum += m * m;
+        }
+        if (!bounded) continue;
+        band.lipschitz = std::sqrt(sum) * (1.0 + 1e-12);
+        // Hessian: d²/ds² f(o + s·u) = uᵀ∇²f u, so ∂ii from u = e_i and
+        // ∂ij = (D²(e_i + e_j) − D²(e_i) − D²(e_j))/2, as intervals.
+        {
+            auto second = [&](int i, int k) -> std::optional<Interval> {
+                std::map<std::string, Interval> b;
+                for (int m = 0; m < 3; ++m) {
+                    b[kLineOriginVars[m]] = box;
+                    b[kLineDirectionVars[m]] = Interval((m == i || m == k) ? 1.0f : 0.0f);
+                }
+                LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
+                if (!ev.ok()) return std::nullopt;
+                const Interval r = ev.secondDerivativeRange(root, 0.0, 0.0, std::vector<int8_t>(form.switches.size(), 0));
+                if (!r.bounded()) return std::nullopt;
+                return r;
+            };
+            std::optional<Interval> pure[3];
+            bool ok = true;
+            for (int i = 0; i < 3 && ok; ++i) { pure[i] = second(i, i); ok = bool(pure[i]); }
+            double frob = 0.0;
+            for (int i = 0; i < 3 && ok; ++i) {
+                const double m = std::max(std::abs(double(pure[i]->lo)), std::abs(double(pure[i]->hi)));
+                frob += m * m;
+                for (int k = i + 1; k < 3 && ok; ++k) {
+                    const auto mixed2 = second(i, k);
+                    if (!mixed2) { ok = false; break; }
+                    const Interval mixed = (*mixed2 - *pure[i] - *pure[k]) * 0.5f;
+                    const double mm = std::max(std::abs(double(mixed.lo)), std::abs(double(mixed.hi)));
+                    frob += 2.0 * mm * mm;
+                }
+            }
+            if (ok) band.hessian = std::sqrt(frob) * (1.0 + 1e-12);
+        }
+        // One device evaluation, under the device's declared model.
+        const auto exec = executionBound(field, {{"x", cap}, {"y", cap}, {"z", cap}}, deviceModel);
+        if (!exec || !std::isfinite(exec->slack)) continue;
+        band.execution = exec->slack;
+        cert.bands.push_back(band);
+    }
+    if (cert.bands.empty()) return say("no magnitude band has a bounded range, slope and device execution");
+    return cert;
+}
+
+std::optional<LineQuadraturePlan> planLineQuadrature(const LineQuadratureCertificate& cert, const double o[3],
+                                                     const double d[3], double lo, double hi, double tolerance,
+                                                     double maxCells) {
+    // Mirrors SdfWgsl's lineIntegral exactly (in double; the device inflates
+    // its own f32 total). Endpoints bound |p|∞ along the segment (convexity).
+    const double a = std::min(lo, hi), b = std::max(lo, hi), S = b - a;
+    double M = 0.0, dn2 = 0.0;
+    for (int i = 0; i < 3; ++i) {
+        M = std::max({M, std::abs(o[i] + a * d[i]), std::abs(o[i] + b * d[i])});
+        dn2 += d[i] * d[i];
+    }
+    const double dn = std::sqrt(dn2);
+    LineQuadraturePlan plan;
+    const LineQuadratureBand* band = nullptr;
+    for (std::size_t j = 0; j < cert.bands.size(); ++j)
+        if (M <= cert.bands[j].cap) { band = &cert.bands[j]; plan.band = int(j); break; }
+    if (!band) return std::nullopt;
+    const double u = std::ldexp(1.0, -23);   // f32 unit roundoff, doubled for safety
+    const double ds = 4.0 * u * (std::abs(a) + S);
+    // Per-sample device error, node-position rounding and weight rounding; the
+    // f32 summation is charged at the ray's ACTUAL cell count below, from a
+    // reserved tenth of the budget (charging maxCells refused cheap rays).
+    const double fixed = S * band->execution + S * band->lipschitz * dn * ds + 4.0 * u * S * band->sup;
+    const double budget = 0.9 * (tolerance - fixed);
+    if (!(budget > 0.0)) return std::nullopt;
+    // The fewest cells meeting the budget under the best of three panel bounds:
+    // the range width, first order (L·|d|·hw) and second order (H·|d|²·hw²/2,
+    // the interpolant reproducing the linear Taylor part; plan §6ak).
+    double n = 2.0;
+    if (S * 2.25 * band->width > budget) {
+        const double first = std::ceil(S * S * 2.25 * band->lipschitz * dn / budget);
+        const double second = std::isfinite(band->hessian)
+                                  ? std::ceil(S * std::sqrt(2.25 * band->hessian * dn * dn * S / (2.0 * budget)))
+                                  : std::numeric_limits<double>::infinity();
+        n = std::min(first, second);
+        n = std::max(2.0, 2.0 * std::ceil(0.5 * n));
+    }
+    if (!(n <= maxCells)) return std::nullopt;
+    plan.cells = n;
+    const double hw = S / n;
+    double local = std::min(band->width, band->lipschitz * dn * hw);
+    if (std::isfinite(band->hessian)) local = std::min(local, band->hessian * dn * dn * hw * hw * 0.5);
+    plan.mathematical = S * 2.25 * local;
+    const double nn = n + 8.0, gamma = nn * u / (1.0 - nn * u);   // the running sum: n/2 panels, ≤ 6 ops each
+    plan.execution = fixed + gamma * S * band->sup;
+    if (plan.total() > tolerance) return std::nullopt;
+    return plan;
+}
+
 namespace {
 // Real roots of a·s² + b·s + c in (s0, s1), numerically stable form; a nearly
 // tangent pair (tiny negative discriminant) proposes the vertex.

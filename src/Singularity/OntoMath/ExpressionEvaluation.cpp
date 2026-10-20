@@ -130,13 +130,21 @@ std::shared_ptr<PropertyDict> evaluationReport(Singular& bearer, const std::stri
     auto report = std::make_shared<PropertyDict>();
     auto& r = report->elements;
     r["admission"] = std::string("exact");
-    r["evaluation"] = std::string("double precision: closed forms, Carlson and proved-piecewise integrals; "
-                                  "slow waves by a truncated Taylor series; no quadrature, no sampling");
+    r["evaluation"] = std::string("double precision: closed forms, Carlson and proved-piecewise integrals, slow waves by a "
+                                  "truncated Taylor series; under an authored tolerance also sampled quadrature (line "
+                                  "segmentation's hybrid, or bounded samples of a body) with proved radii");
     r["requestedTolerance"] = std::string("none");
     r["mathematicalBound"] = std::string("unavailable");
     r["executionBound"] = std::string("unavailable");
     r["totalBound"] = std::string("unavailable");
+    r["propagatedInputBound"] = std::string("unavailable");
     r["qualification"] = std::string("none");
+    // Codex (2026-10-20 16:23): say what each bound means. Local error and
+    // propagated upstream error are kept apart; an upstream input's own
+    // mathematical and execution error travel together, conservatively.
+    r["boundCategories"] = std::string("mathematicalBound and executionBound are this expression's own; "
+                                       "propagatedInputBound is its inputs' and samples' upstream error (their mathematical "
+                                       "and execution parts together); totalBound is the sum");
     r["backend"] = std::string("cpu: OntoMath Piecewise::evaluate");
     auto refuse = [&](const std::string& why) {
         r["status"] = std::string("refused");
@@ -220,6 +228,7 @@ std::shared_ptr<PropertyDict> evaluationReport(Singular& bearer, const std::stri
             if (bounds.tolerance > 0.0) r["requestedTolerance"] = bounds.tolerance;
             r["mathematicalBound"] = bounds.mathematical;
             r["executionBound"] = bounds.execution;
+            r["propagatedInputBound"] = bounds.propagated;
             r["totalBound"] = bounds.total();
             r["route"] = bounds.route;
             r["executionPremise"] = std::string(
@@ -252,13 +261,14 @@ std::shared_ptr<PropertyDict> evaluationReport(Singular& bearer, const std::stri
             }
         r["inputLineage"] = lineage;
         if (c.computed && c.bounded) {
-            const bool uncertain = c.mathematical > 0.0;
+            const bool uncertain = c.propagated > 0.0;
             r["admission"] = std::string(uncertain ? "propagated from its inputs under the execution model" : "exact");
             r["qualification"] = std::string("model-qualified");
             r["executionModel"] = std::string(kIntegralExecutionModel);
             r["mathematicalBound"] = c.mathematical;
             r["executionBound"] = c.execution;
-            r["totalBound"] = c.mathematical + c.execution;
+            r["propagatedInputBound"] = c.propagated;
+            r["totalBound"] = c.total();
         } else {
             r["boundsUnavailable"] = c.unavailable.empty() ? std::string("the composite could not be bounded") : c.unavailable;
         }

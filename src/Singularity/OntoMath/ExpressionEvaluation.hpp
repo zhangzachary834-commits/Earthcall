@@ -26,6 +26,10 @@
 //                       IS one Integral (addendum C; see IntegralBounds and
 //                       executionPremise). Otherwise "unavailable": an
 //                       unavailable bound is unavailable, never zero (Codex).
+//   propagatedInputBound, boundCategories (2026-10-20, Codex): the first two
+//                       bounds are this expression's own; propagatedInputBound
+//                       carries its inputs' and samples' upstream error (their
+//                       mathematical and execution parts together, conservatively)
 //   route, executionPremise   (with the bounds)
 //   COMPOSITION (2026-10-20, plan §6am): a scalar expression whose bindings
 //   read other reports composes their bounds. A binding path ending ".value"

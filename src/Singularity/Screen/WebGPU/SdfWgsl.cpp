@@ -2829,6 +2829,96 @@ var<private> screenPoint: vec3<f32>;
     return prog;
 }
 
+Program compileLineQuadrature(const OntoMath::MathNode& field, const OntoMath::LineQuadratureCertificate& cert,
+                              uint32_t maxCells) {
+    Program prog;
+    Emit e;
+    e.parameterOffset = "0u";
+    std::string why;
+    OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
+    if (!field.checkTypes({{"p", OntoMath::ValueKind::Vector}}, why, &kind, false) || kind != OntoMath::ValueKind::Scalar) {
+        prog.ok = false;
+        prog.error = "a line-quadrature field must be a Scalar of p: " + why;
+        return prog;
+    }
+    if (cert.bands.empty() || maxCells < 2) {
+        prog.ok = false;
+        prog.error = "a line quadrature needs a certificate with at least one band, and at least 2 cells";
+        return prog;
+    }
+    // The field's own statements stay inside lineField: statements outside a
+    // function body are dropped (the Let finding, plan §6an).
+    const std::string value = emitMathNode(field, e, "p");
+    const std::string fieldBody = e.body;
+    e.body.clear();
+    // The certificate's bands, as chained ifs on the segment's |p|∞.
+    std::string select;
+    for (std::size_t j = 0; j < cert.bands.size(); ++j) {
+        const auto& b = cert.bands[j];
+        select += std::string(j == 0 ? "    if" : "    else if") + " (M <= " + e.param(float(b.cap)) + ") { L = " +
+                  e.param(float(b.lipschitz * (1.0 + 1e-6))) + "; W = " + e.param(float(b.width * (1.0 + 1e-6))) +
+                  "; SUP = " + e.param(float(b.sup * (1.0 + 1e-6))) + "; EPS = " + e.param(float(b.execution * (1.0 + 1e-6))) +
+                  "; H = " + (std::isfinite(b.hessian) ? e.param(float(b.hessian * (1.0 + 1e-6))) : std::string("-1.0")) + "; }\n";
+    }
+    for (float number : e.params)
+        if (!std::isfinite(number)) e.refuse("a line-quadrature constant is not finite float32");
+    prog.ok = !e.refused;
+    prog.error = e.refusal;
+    prog.params = std::move(e.params);
+    if (!prog.ok) return prog;
+    const std::string nmax = std::to_string(maxCells) + ".0";
+    prog.wgsl = R"WGSL(
+struct ScreenCoordinates { size: vec4<f32>, time: vec4<f32> };
+struct Parameters { v: array<f32> };
+@group(0) @binding(0) var<uniform> screen: ScreenCoordinates;
+@group(0) @binding(1) var<storage, read> P: Parameters;
+var<private> screenPoint: vec3<f32>;
+)WGSL";
+    prog.wgsl += kPrimitives;
+    prog.wgsl += "fn lineField(p: vec3<f32>) -> f32 {\n" + fieldBody + "    return " + value + ";\n}\n";
+    prog.wgsl += "fn lineIntegral(o: vec3<f32>, d: vec3<f32>, lo: f32, hi: f32, tol: f32) -> vec4<f32> {\n"
+                 "    let a = min(lo, hi);\n"
+                 "    let b = max(lo, hi);\n"
+                 "    let S = b - a;\n"
+                 "    let p0 = abs(o + a * d);\n"
+                 "    let p1 = abs(o + b * d);\n"
+                 "    let M = max(max(max(p0.x, p0.y), p0.z), max(max(p1.x, p1.y), p1.z));\n"
+                 "    let dn = length(d);\n"
+                 "    var L = -1.0; var W = 0.0; var SUP = 0.0; var EPS = 0.0; var H = -1.0;\n" + select +
+                 "    if (L < 0.0) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }\n"
+                 "    let u = 1.1920929e-7;\n"
+                 "    let ds = 4.0 * u * (abs(a) + S);\n"
+                 "    let fixedErr = S * EPS + S * L * dn * ds + 4.0 * u * S * SUP;\n"
+                 "    let budget = 0.9 * (tol - fixedErr);\n"
+                 "    if (!(budget > 0.0)) { return vec4<f32>(0.0, 0.0, 0.0, fixedErr); }\n"
+                 "    var n = 2.0;\n"
+                 "    if (S * 2.25 * W > budget) {\n"
+                 "        n = ceil(S * S * 2.25 * L * dn / budget);\n"
+                 "        if (H >= 0.0) { n = min(n, ceil(S * sqrt(2.25 * H * dn * dn * S / (2.0 * budget)))); }\n"
+                 "        n = max(2.0, 2.0 * ceil(0.5 * n));\n"
+                 "    }\n"
+                 "    if (n > " + nmax + ") { return vec4<f32>(0.0, 0.0, n, 0.0); }\n"
+                 "    let h = S / n;\n"
+                 "    let N = u32(n);\n"
+                 "    var acc = 0.0;\n"
+                 "    for (var j = 0u; j < N; j = j + 2u) {\n"
+                 "        let sa = a + S * (f32(j) / n);\n"
+                 "        let sm = a + S * (f32(j + 1u) / n);\n"
+                 "        let sb = a + S * (f32(j + 2u) / n);\n"
+                 "        acc = acc + (h / 3.0) * (lineField(o + sa * d) + 4.0 * lineField(o + sm * d) + lineField(o + sb * d));\n"
+                 "    }\n"
+                 "    var local = min(W, L * dn * h);\n"
+                 "    if (H >= 0.0) { local = min(local, H * dn * dn * h * h * 0.5); }\n"
+                 "    let mathematical = S * 2.25 * local;\n"
+                 "    let nn = n + 8.0;\n"
+                 "    let gamma = nn * u / (1.0 - nn * u);\n"
+                 "    let total = (mathematical + fixedErr + gamma * S * SUP) * 1.001;\n"
+                 "    if (total > tol) { return vec4<f32>(0.0, 0.0, n, total); }\n"
+                 "    return vec4<f32>(select(acc, -acc, hi < lo), 1.0, n, total);\n"
+                 "}\n";
+    return prog;
+}
+
 ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
                                                bool bindTime) {
     Emit e;

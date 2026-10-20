@@ -518,9 +518,12 @@ int main() {
         const auto t0 = std::chrono::steady_clock::now();
         const auto Lv = OntoMath::evaluateIntegral(*noisyRadiance, {}, nullptr, &why, &tb);
         const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
-        std::printf("    heterogeneous transport: %.10g (reference %.10g, |error| %.3g), mathematical %.3g, execution %.3g, %llu samples, %.0f ms, %s\n",
-                    Lv.value_or(NAN), Lref, Lv ? std::abs(*Lv - Lref) : NAN, tb.mathematical, tb.execution,
-                    (unsigned long long)tb.samples, ms, Lv ? tb.route.c_str() : why.c_str());
+        std::printf("    heterogeneous transport: %.10g (reference %.10g, |error| %.3g), mathematical %.3g, execution %.3g, propagated %.3g, "
+                    "%llu outer sites, %llu inner samples, %.0f ms, %s\n",
+                    Lv.value_or(NAN), Lref, Lv ? std::abs(*Lv - Lref) : NAN, tb.mathematical, tb.execution, tb.propagated,
+                    (unsigned long long)tb.samples, (unsigned long long)tb.innerSamples, ms, Lv ? tb.route.c_str() : why.c_str());
+        check(Lv && tb.propagated > 0.0 && tb.innerSamples > tb.samples,
+              "its bound names the samples' propagated (inner) error separately, and the inner work is counted (sites vs inner samples)");
         check(Lv && tb.route.find("sampled body") == 0 && tb.total() <= 1e-1 && std::abs(*Lv - Lref) <= tb.total(),
               "∫ exp(−∫ (noise + 4)) · ε through noise is admitted at ±0.1, the independent reference inside its bound");
         // The same at a tolerance its first-order radius cannot reach refuses, naming its best.
@@ -530,6 +533,26 @@ int main() {
                                          constant(0.0), constant(1.0), constant(1e-3));
         check(!run(*tightRadiance, {}, &why) && why.find("exceeds the tolerance") != std::string::npos,
               "at ±1e-3 (below the inner integrals' own bounds) it refuses, naming its best: " + why.substr(0, 160));
+        // Codex's computed-limit reproduction (2026-10-20 16:23): limits evaluated in
+        // binary64 before any accounting turned (2^54 + 1) − 2^54 into 0, and
+        // ∫₀¹ 1 ds was admitted as 0 with a total bound of 0.
+        const double A = std::ldexp(1.0, 54);
+        auto lost = [&](Node tol) {
+            auto hiNode = node(Op::Sub, node(Op::Add, constant(A), constant(1.0)), constant(A));
+            return tol ? integralTol("s", constant(1.0), constant(0.0), std::move(hiNode), std::move(tol))
+                       : integral("s", constant(1.0), constant(0.0), std::move(hiNode));
+        };
+        OntoMath::IntegralBounds lb;
+        const auto lostTol = OntoMath::evaluateIntegral(*lost(constant(1e-6)), {}, nullptr, &why, &lb);
+        check(!lostTol && why.find("computed limits") != std::string::npos,
+              "∫₀^((2⁵⁴+1)−2⁵⁴) 1 ds at ±1e-6 refuses instead of admitting 0 with bound 0: " + why.substr(0, 120));
+        const auto lostExact = OntoMath::evaluateIntegral(*lost(nullptr), {}, nullptr, &why, &lb);
+        check(lostExact && std::abs(*lostExact - 1.0) <= lb.total(),
+              "in exact mode its value comes with an execution bound that covers the lost unit (" + std::to_string(lb.total()) + ")");
+        auto benign = integralTol("s", constant(1.0), constant(0.0), node(Op::Add, named("x"), constant(0.5)), constant(1e-9));
+        const auto bv = OntoMath::evaluateIntegral(*benign, {{"x", PropertyValue(1000.3)}}, nullptr, &why, &lb);
+        check(bv && std::abs(*bv - 1000.8) <= 1e-9 && lb.execution < 1e-9,
+              "a benign computed limit (x + ½, x = 1000.3) is still admitted, its rounding charged (" + std::to_string(lb.execution) + ")");
     }
 
     std::cout << "ontomath_integral_operation_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";

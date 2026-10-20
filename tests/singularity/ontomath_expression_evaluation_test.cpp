@@ -232,6 +232,9 @@ int main() {
               "the bound is Codex's monotone [exp(−(τ+δ)), exp(−(τ−δ))]: no tighter, and no looser than the float interval's rounding");
         check(text(at("qualification")) == "model-qualified" && number(read(medium, "transmittance.evaluation.inputBounds.tau")) == delta,
               "it is model-qualified, and names τ's bound as its input's");
+        check(number(at("propagatedInputBound")) > 0.0 && number(at("mathematicalBound")) == 0.0 && number(at("executionBound")) < 1e-12 &&
+                  std::abs(number(at("totalBound")) - number(at("propagatedInputBound")) - number(at("executionBound"))) <= 1e-18,
+              "its categories say what they mean: τ's error is PROPAGATED, exp's own execution is local, the total their sum");
 
         // The same transmittance in ONE tree, with Let (Op 41): let tau = ∫(noise + 4) in exp(−tau).
         {

@@ -474,7 +474,7 @@ std::optional<double> integrateSampledBody(const MathNode& body, const std::stri
     std::string panelWhy;
     for (uint32_t cells = 4; cells <= 4096; cells *= 2) {
         auto node = [&](uint32_t k) { return k == cells ? b0 : a0 + (b0 - a0) * double(k) / double(cells); };
-        double estimate = 0.0, sampleMath = 0.0, sampleExec = 0.0, radius = 0.0, magnitude = 0.0;
+        double estimate = 0.0, sampleMath = 0.0, sampleExec = 0.0, sampleProp = 0.0, radius = 0.0, magnitude = 0.0;
         for (uint32_t j = 0; j + 2 <= cells; j += 2) {
             const double xa = node(j), xm = node(j + 1), xb = node(j + 2);
             const Sample* s0 = sampleAt(xa);
@@ -489,6 +489,7 @@ std::optional<double> integrateSampledBody(const MathNode& body, const std::stri
                 magnitude += std::abs(w[k] * ss[k]->value.value);
                 sampleMath += w[k] * ss[k]->value.mathematical;
                 sampleExec += w[k] * ss[k]->value.execution;
+                sampleProp += w[k] * ss[k]->value.propagated;
             }
             // First-order remainder: |G − P| ≤ (1 + Λ)·min(range width, L′·hw), Λ = 5/4.
             JetContext ctx;
@@ -509,12 +510,15 @@ std::optional<double> integrateSampledBody(const MathNode& body, const std::stri
         const double u = std::ldexp(1.0, -53), n = 3.0 * double(cells) + 8.0;
         const double execution = sampleExec + n * u / (1.0 - n * u) * magnitude;
         const double mathematical = radius + sampleMath;
-        best = std::min(best, mathematical + execution);
-        if (mathematical + execution <= tolerance) {
+        best = std::min(best, mathematical + execution + sampleProp);
+        if (mathematical + execution + sampleProp <= tolerance) {
             bounds.mathematical = mathematical;
             bounds.execution = execution;
+            bounds.propagated = sampleProp;
             bounds.approximate = true;
             bounds.samples = samples.size();
+            bounds.innerSamples = 0;
+            for (const auto& [x, sample] : samples) bounds.innerSamples += sample.value.work;
             bounds.route = "sampled body (first-order radius; bounded samples)";
             return lo <= hi ? estimate : -estimate;
         }
@@ -567,6 +571,7 @@ BoundedValue evaluateBounded(const MathNode& n, std::map<std::string, PropertyVa
             body.unavailable = "the Let value '" + n.variableName + "' carries no bound" +
                                (value.unavailable.empty() ? std::string() : " (" + value.unavailable + ")");
         if (!value.bounded) body.bounded = false;
+        body.work += value.work;
         return body;
     }
     if (n.op == MathNode::Op::Integral) {
@@ -578,6 +583,8 @@ BoundedValue evaluateBounded(const MathNode& n, std::map<std::string, PropertyVa
         out.value = *v;
         out.mathematical = b.mathematical;
         out.execution = b.execution;
+        out.propagated = b.propagated;
+        out.work = b.samples + b.innerSamples;
         // An Integral that READS an uncertain input took it as exact: its
         // sensitivity to that input is not composed yet.
         std::set<std::string> deps;
@@ -638,11 +645,62 @@ BoundedValue evaluateBounded(const MathNode& n, std::map<std::string, PropertyVa
             return out;
         }
         // |f(x_true) − f(x_used)| ≤ max(hi − f(x_used), f(x_used) − lo), and the
-        // computed value is within the execution slack of f(x_used).
-        out.mathematical = std::max(double(range->scalar.hi) - number, number - double(range->scalar.lo)) + exec->slack;
+        // computed value is within the execution slack of f(x_used): what the
+        // inputs' errors do to this value — propagated, not its own.
+        out.propagated = std::max(double(range->scalar.hi) - number, number - double(range->scalar.lo)) + exec->slack;
     }
     out.bounded = true;
     return out;
+}
+
+// The three routes, after the common entry has read the limits and the
+// tolerance (and priced computed limits). `tolerance` here is what remains for
+// the route: the authored one minus the limits' and tolerance's own error.
+std::optional<double> integralRoutes(const MathNode& node, const std::map<std::string, PropertyValue>& vars,
+                                     const Singular* subject, std::string* why, IntegralBounds& bounds,
+                                     double lo, double hi, double tolerance, const std::map<std::string, double>& numeric) {
+    const std::string& v = node.variableName;
+    const MathNode& body = *node.children[0];
+    std::string termWhy;
+    if (const auto form = toScalarForm(body, &termWhy)) {
+        IntegralAccounting accounting;
+        IntegralAccountingScope scope(accounting);
+        const auto value = definiteIntegral(*form, v, lo, hi, numeric, why);
+        if (!value) return std::nullopt;
+        bounds.route = "term algebra";
+        bounds.execution = accounting.executionBound();
+        // A closed form satisfies any tolerance mathematically; its execution
+        // must still fit one that was asked for.
+        if (tolerance > 0.0 && bounds.execution > tolerance) {
+            char text[160];
+            std::snprintf(text, sizeof(text), "the execution bound %.3g exceeds the tolerance %.3g (the mathematics is exact)",
+                          bounds.execution, tolerance);
+            say(why, text);
+            return std::nullopt;
+        }
+        return value;
+    }
+
+    if (body.op == MathNode::Op::SDF && body.children.size() == 2 && body.children[0] && body.children[1]) {
+        std::map<std::string, PropertyValue> outer = vars;
+        outer.erase(v);
+        const auto q = affineVector(*body.children[1], v, outer, numeric, subject, why);
+        if (!q) return std::nullopt;
+        return integrateAlongLine(*body.children[0], *q, lo, hi, numeric, tolerance, bounds, why);
+    }
+    // Approximation permitted, and the body is neither closed-form nor a field
+    // along a line: sample it as a bounded value (plan §6ao) — transport's
+    // exp(−∫₀ˣ σ)·ε(x), an outer Integral over approximate inner ones.
+    if (tolerance > 0.0) {
+        std::string sampledWhy;
+        const auto value = integrateSampledBody(body, v, lo, hi, vars, numeric, subject, tolerance, bounds, &sampledWhy);
+        if (value) return value;
+        say(why, "the body has no exact integral here (" + termWhy + "), and the sampled route refuses: " + sampledWhy);
+        return std::nullopt;
+    }
+    say(why, "the body has no exact integral here: " + termWhy +
+                 " (admitted: the term algebra, or SDF(field, point) with the point affine in " + v + ")");
+    return std::nullopt;
 }
 
 std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std::string, PropertyValue>& vars,
@@ -688,47 +746,59 @@ std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std:
     }
     numeric.erase(v);
 
-    const MathNode& body = *node.children[0];
-    std::string termWhy;
-    if (const auto form = toScalarForm(body, &termWhy)) {
-        IntegralAccounting accounting;
-        IntegralAccountingScope scope(accounting);
-        const auto value = definiteIntegral(*form, v, lo, hi, numeric, why);
-        if (!value) return std::nullopt;
-        bounds.route = "term algebra";
-        bounds.execution = accounting.executionBound();
-        // A closed form satisfies any tolerance mathematically; its execution
-        // must still fit one that was asked for.
-        if (tolerance > 0.0 && bounds.execution > tolerance) {
-            char text[160];
-            std::snprintf(text, sizeof(text), "the execution bound %.3g exceeds the tolerance %.3g (the mathematics is exact)",
-                          bounds.execution, tolerance);
+    // Computed limits (Codex reproduced it, 2026-10-20 16:23): a limit tree is
+    // evaluated in binary64 BEFORE any accounting, so (2^54 + 1) − 2^54 became
+    // 0 and ∫₀¹ 1 ds was admitted as 0 with a total bound of 0. A literal or a
+    // read variable is exact; anything else is priced by its execution bound δ
+    // under the CPU model, and moving an endpoint by δ changes the integral by
+    // ≤ δ·sup|body| near it. That is execution error, charged as such, and
+    // taken out of the tolerance before the route sees it. A computed
+    // tolerance is likewise reduced by its own δ. Unboundable: refused under a
+    // tolerance; infinite execution bound in exact mode.
+    auto computedSlack = [&](const MathNode& tree) -> double {
+        if (tree.op == MathNode::Op::ValueLeaf || literalConstant(tree)) return 0.0;
+        std::map<std::string, double> magnitudes;
+        for (const auto& [name, value] : numeric) magnitudes[name] = std::abs(value);
+        const auto b = executionBound(tree, magnitudes, cpuExecutionModel());
+        return b && std::isfinite(b->slack) ? b->slack : std::numeric_limits<double>::infinity();
+    };
+    auto supNear = [&](double x, double delta) -> double {
+        if (delta == 0.0) return 0.0;
+        if (!std::isfinite(delta)) return std::numeric_limits<double>::infinity();
+        std::map<std::string, PropertyValue> scope = vars;
+        scope.erase(v);
+        std::map<const MathNode*, std::unique_ptr<CachedLine>> lines;
+        JetContext ctx;
+        ctx.x = v; ctx.a = x - delta; ctx.b = x + delta; ctx.constants = &scope; ctx.numeric = numeric;
+        ctx.subject = subject; ctx.lines = &lines;
+        std::map<std::string, PanelJet> env;
+        env[v] = PanelJet{outwardInterval(x - delta, x + delta), Interval(1.0f)};
+        std::string ignored;
+        const auto j = panelJet(*node.children[0], env, ctx, &ignored);
+        return j && j->value.bounded() ? magnitudeOf(j->value) : std::numeric_limits<double>::infinity();
+    };
+    const double loSlack = computedSlack(*node.children[1]), hiSlack = computedSlack(*node.children[2]);
+    const double tolSlack = node.children.size() == 4 ? computedSlack(*node.children[3]) : 0.0;
+    const double endpoint = (loSlack > 0.0 ? loSlack * supNear(lo, loSlack) : 0.0) +
+                            (hiSlack > 0.0 ? hiSlack * supNear(hi, hiSlack) : 0.0);
+    double routeTolerance = tolerance;
+    if (tolerance > 0.0) {
+        routeTolerance = tolerance - tolSlack - endpoint;
+        if (!(routeTolerance > 0.0)) {
+            char text[200];
+            std::snprintf(text, sizeof(text),
+                          "the computed limits and tolerance err by up to %.3g in the result (limits evaluated in binary64), "
+                          "which leaves nothing of the tolerance %.3g", tolSlack + endpoint, tolerance);
             say(why, text);
             return std::nullopt;
         }
-        return value;
     }
-
-    if (body.op == MathNode::Op::SDF && body.children.size() == 2 && body.children[0] && body.children[1]) {
-        std::map<std::string, PropertyValue> outer = vars;
-        outer.erase(v);
-        const auto q = affineVector(*body.children[1], v, outer, numeric, subject, why);
-        if (!q) return std::nullopt;
-        return integrateAlongLine(*body.children[0], *q, lo, hi, numeric, tolerance, bounds, why);
-    }
-    // Approximation permitted, and the body is neither closed-form nor a field
-    // along a line: sample it as a bounded value (plan §6ao) — transport's
-    // exp(−∫₀ˣ σ)·ε(x), an outer Integral over approximate inner ones.
-    if (tolerance > 0.0) {
-        std::string sampledWhy;
-        const auto value = integrateSampledBody(body, v, lo, hi, vars, numeric, subject, tolerance, bounds, &sampledWhy);
-        if (value) return value;
-        say(why, "the body has no exact integral here (" + termWhy + "), and the sampled route refuses: " + sampledWhy);
-        return std::nullopt;
-    }
-    say(why, "the body has no exact integral here: " + termWhy +
-                 " (admitted: the term algebra, or SDF(field, point) with the point affine in " + v + ")");
-    return std::nullopt;
+    const auto value = integralRoutes(node, vars, subject, why, bounds, lo, hi, routeTolerance, numeric);
+    if (!value) return std::nullopt;
+    bounds.tolerance = tolerance;
+    bounds.execution += endpoint;
+    return value;
 }
+
 
 } // namespace OntoMath

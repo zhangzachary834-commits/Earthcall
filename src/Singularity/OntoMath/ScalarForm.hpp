@@ -885,8 +885,14 @@ struct IntegralBounds {
     std::string route;
     std::string executionModel = kIntegralExecutionModel;
     bool certified = false;
-    std::uint64_t samples = 0;   // remainder evaluations in the admitted refinement
-    double total() const { return mathematical + execution; }
+    std::uint64_t samples = 0;   // remainder evaluations / sample sites in the admitted refinement
+    // Plan §6ap (Codex, 2026-10-20 16:23: the names must say what they mean).
+    // `mathematical` and `execution` are THIS integral's own; `propagated` is
+    // its samples' or limits' upstream errors, mathematical and execution
+    // together, carried conservatively (the split upstream is not kept).
+    double propagated = 0.0;
+    std::uint64_t innerSamples = 0;   // inner integrals' work behind the samples
+    double total() const { return mathematical + execution + propagated; }
 };
 std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std::string, PropertyValue>& vars,
                                        const Singular* subject, std::string* why = nullptr,
@@ -908,9 +914,13 @@ struct InputBound {
 };
 struct BoundedValue {
     bool computed = false, bounded = false;
-    double value = 0.0, mathematical = 0.0, execution = 0.0;
+    // mathematical, execution: this value's own; propagated: its inputs'
+    // errors (each input's mathematical and execution together) carried
+    // through it. The total is conservative; the upstream split is not kept.
+    double value = 0.0, mathematical = 0.0, execution = 0.0, propagated = 0.0;
+    std::uint64_t work = 0;   // inner integrals' samples behind this value
     std::string unavailable;
-    double total() const { return mathematical + execution; }
+    double total() const { return mathematical + execution + propagated; }
 };
 BoundedValue evaluateBounded(const MathNode& node, std::map<std::string, PropertyValue> vars,
                              std::map<std::string, InputBound> inputs, const Singular* subject,

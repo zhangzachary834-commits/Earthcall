@@ -1858,3 +1858,59 @@ Also passing: expression evaluation 35/35, line segmentation 91/91, line restric
 | 4. Shipping benefit on Metal | no | — | — | native accuracy and frame costs |
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*
+
+## 6ap. Step 2c, first slice: a field along rays ON THE DEVICE, certified by the host; Codex's computed-limit and category findings closed (2026-10-20, forty-first pass)
+
+**Human origin.** Zach: "YASSSS KEEP GOINGGNGNGNGN". Gate 2 is the critical path (§6ao). Codex's sequence (2026-10-20T16:23): first, *"lower and execute the admitted field-on-ray/piecewise/noise structure with its f32 contract, comparing it with an independent mathematical reference; preserve explicit work caps/refusal."*
+
+**The design.** A per-pixel ray cannot be proved on the host one by one, so the host proves a **certificate** once per magnitude band [−2^j, 2^j]³ (`OntoMath::certifyLineQuadrature`):
+- the field's spatial Lipschitz constant (box-mode partials);
+- its **Hessian norm** (box-mode second partials, the mixed ones from e_i + e_j, Frobenius);
+- its range;
+- **one device evaluation's error under the device's own declared model** (`kVolumeExecutionModel`).
+
+Magnitude arithmetic is monotone, so a ray whose endpoints lie in a band is covered. The device (`sdfwgsl::compileLineQuadrature`: `lineField(p)` from the production emitter, plus `lineIntegral(o, d, lo, hi, tol)`):
+- picks the band from the segment's endpoints;
+- chooses the even cell count from the best of the range, first-order and second-order panel bounds;
+- charges per-sample device error, node-position and weight rounding, and f32 summation at the actual cell count;
+- runs Simpson in f32;
+- returns (value, status, cells, proved total), refusing beyond every band, above 4096 cells, or when the fixed error leaves no budget.
+
+`planLineQuadrature` is the CPU mirror. Nothing per ray is proved on the host.
+
+**Witness** (`webgpu_line_quadrature_test`, 18/18, this Mac's GPU; 48 random rays per field, |o| ≤ 2.5, length 0.5–2.5, ±0.05):
+
+| Field | Admitted | Mean cells | Worst \|device − reference\| | error / total | Simpson's own error / mathematical radius |
+|---|---|---|---|---|---|
+| noise(p) + 4 | 48/48 | 358 | 4.7e-6 | ≤ 0.0001 | ≈ 0 (inside, every ray) |
+| sin(2x)·cos(y) + z² | 48/48 | 38 | 2.4e-6 | ≤ 0.0001 | ≈ 0 |
+
+On every ray the device's cell count matches the CPU mirror. A ray beyond every band (|p| ≈ 3e6) refuses, and so does a tolerance below the fixed error.
+
+**Measured on the way:**
+- The first-order radius alone admitted only 17/48 noise rays (the rest needed more than 4096 cells), with mean 1970 cells. The second order brought it to 48/48 at 358 cells.
+- Charging the f32 summation at the cap rather than the actual count refused 3 cheap rays of the smooth field. It is now charged at the actual count, from a reserved tenth of the budget.
+- The device totals are dominated by the declared model's allowance (2^-10 per noise evaluation), so error ≤ total cannot test the radius. A sharp CPU check therefore compares Simpson in double, with the plan's cells, against the reference: it lies inside the mathematical radius alone on every ray.
+- **This is relative to the declared device model.** Metal fast-math's full enclosure is still open, so this witnesses the model on this device; it does not certify the device.
+
+**Codex's review of §6an/§6ao** (2026-10-20T16:23), closed:
+- **Computed limits, reproduced first.** ∫₀^((2^54+1)−2^54) 1 ds at ±1e-6 was admitted as 0 with a total bound of 0, because limits were evaluated in binary64 before any accounting. The common entry of `evaluateIntegral` now prices a computed limit's execution bound δ under the CPU model (literals and read variables are exact). Moving an endpoint by δ changes the result by ≤ δ·sup|body| near it, from the panel enclosure. That is charged as execution and taken out of the tolerance first, and a computed tolerance is reduced by its own δ. Results:
+  - the reproduction now refuses ("…err by up to 12…");
+  - in exact mode its execution bound is 12, which covers the lost unit;
+  - x + ½ at x = 1000.3 is still admitted with a negligible charge.
+  This covers all three routes (`integralRoutes` behind the common entry).
+- **Honest categories.** `BoundedValue` and `IntegralBounds` now keep `propagated` (inputs' or samples' upstream error, mathematical and execution together) apart from this value's own `mathematical` and `execution`. The report adds `propagatedInputBound` and `boundCategories`, and its stale "no quadrature, no sampling" now names the sampled routes. Transmittance's τ error is reported as propagated, with exp's own execution local.
+- **Inner work, visible.** The heterogeneous witness: 65 outer sites, **4467 inner samples**, radius 0.0474, local execution 8.9e-15, propagated 0.0029.
+
+Integral 66/66, expression evaluation 36/36, line segmentation 91/91, line restriction 57/57, derived-reading Law 15/15, GPU integral 28/28, GPU line quadrature 18/18, support enclosure 4/4.
+
+### Shipping ledger
+
+| Gate | Changed this pass? | Consumer now calling the code | Measured, on which device | Next blocker |
+|---|---|---|---|---|
+| 1. Transport error contract | closure items: computed limits priced; categories honest; inner work visible | CPU Integral op, report office | CPU, Debug, this Mac | cumulative inner integration (Codex's step 2; 4467 inner samples behind 65 sites today); the Perlin allowance; uncertain-input propagation |
+| 2. GPU fields along rays | **Yes: a noise field (and a smooth one) integrate along rays ON THE DEVICE**, certified by the host, with refusals, cell caps and an f32 contract under the declared device model | a reusable `lineIntegral` WGSL function, called today by a compute witness | this Mac's GPU | transport on the device: exp(−∫σ) with cumulative depth along the ray (prefix sums of the same panels), and the emission term |
+| 3. Native volume consumer | no | — | — | the volume shader calling `lineIntegral`-style transport for one curtain |
+| 4. Shipping benefit on Metal | no | — | — | native accuracy and like-for-like frame costs against the current 96-sample marcher |
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*
