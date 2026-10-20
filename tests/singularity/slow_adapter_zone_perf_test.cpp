@@ -72,9 +72,23 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    // Isolate SaveSystem root to a temporary scratch directory to prevent heavy 1.6GB
+    // disk copy overhead from RealSaveTreeGuard, and avoid hydrating all unneeded zones.
+    const auto tempScratch = std::filesystem::temp_directory_path() /
+        ("earthcall-perf-scratch-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    std::filesystem::create_directories(tempScratch);
+    SaveSystem::setSaveRoot(tempScratch.string());
+
+    struct ScratchGuard {
+        std::filesystem::path path;
+        ~ScratchGuard() {
+            SaveSystem::setSaveRoot("");
+            std::error_code ignored;
+            std::filesystem::remove_all(path, ignored);
+        }
+    } scratchGuard{tempScratch};
+
+    TestSupport::BootedEngineHarness h("Player", "humanoid", /*hydrateAllZones=*/false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);
