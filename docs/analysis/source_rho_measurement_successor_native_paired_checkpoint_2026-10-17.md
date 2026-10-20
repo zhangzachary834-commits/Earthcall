@@ -84,3 +84,21 @@ The second run directly **fails to reproduce** the first run's large apparent ec
 **Bounded economic disposition:** correctness and actual work-elision remain supported, but **a reliable material economic gain has not been demonstrated and the large gain has failed a same-code independent replication**. Retain the predecessor's **economic rejection / do not ship or merge** disposition. This does **not** prove the GPU optimization intrinsically has zero benefit. It means the present measurement cannot earn promotion.
 
 The SourceRho native step passed in run #39021012172; the later shared CPU-SDF proof step failed, as did the unrelated Focused CPU and Slow Adapter lanes. Their causes are not assigned to SourceRho. A targeted SDF job rerun was attempted for further replication but blocked by the repository tool safety gate; no rerun was launched and no bypass attempted.
+
+---
+
+## Third independent native measurement — repeated near-zero economics
+
+**Date:** 2026-10-20 checkpoint. **Native run:** [#39032315751](https://github.com/zhangzachary834-commits/Earthcall/actions/runs/39032315751), exact measurement-branch head `8927ba1863cfb75e8c0ee909ee8bff6aaf8c50bd`. The SDF range-proxy macOS job `117395103015` completed; step **Verify SourceRho zero-authority native pixel A/B: SUCCESS**, followed by **Run CPU SDF proof witnesses: FAILURE**. The SourceRho success and shared-job failure must be reported separately. Artifact `webgpu-object-parity-log` #12101226261 was archived. The benchmark source blob remains `9b08e6c44717d00f96ccf0f8967547a43a918705`, unchanged from the two earlier runs.
+
+The third native measurement reported exact and authority completed-frame wall medians **9.421917 ms** and **9.415000 ms**: a reduction of **0.0734%** by independent arm medians. The median *paired* difference (exact minus authority) was **+0.078292 ms**, paired MAD **0.780896 ms**, and **6/12** pairs favored authority. The exact-arm CPU record/submit median was **0.260792 ms** versus **0.274938 ms** for authority; device-poll medians were effectively identical. No valid GPU execution timestamps were recorded. Poll duration is not a GPU timestamp.
+
+The dedicated witness again reported **5,624,857** eliminated executed shadow-loop SDF steps for the proven-zero source and unchanged **6,778,135** steps for the independent live source, with its existing framebuffer, occlusion-boundary, diagnostic/ordinary, and hostile-lifetime checks passing. This is fixture-bounded correctness evidence, not proof for arbitrary worlds.
+
+| Independent native run | Reduction by arm wall medians | Median paired delta | Paired MAD | Positive pairs |
+| --- | ---: | ---: | ---: | ---: |
+| #39010536979 | 28.57% | +2.530042 ms | 2.699041 ms | 10/12 |
+| #39021012172 | 0.32% | -0.002375 ms | 0.911979 ms | 6/12 |
+| #39032315751 | **0.0734%** | **+0.078292 ms** | **0.780896 ms** | **6/12** |
+
+**Economic conclusion strengthened:** two independent same-benchmark-code native replications did not reproduce the large first-run gain. GPU work elimination is deterministic in this fixture, but a repeatable material completed-frame improvement is **not demonstrated**. Do not infer zero GPU cost from unavailable timestamps. Do not ship or merge PR #482 on this evidence. This closes the bounded economic decision without forbidding a separately commissioned GPU-timestamp/adapter-controlled investigation. The shared CPU-SDF failure remains unclassified rather than attributed to SourceRho.
