@@ -2453,9 +2453,15 @@ std::optional<LineIntegrand> multiplyExact(const LineIntegrand& a, const LineInt
 // definiteIntegralTimesRadical. Nothing here knows an antiderivative.
 std::optional<double> integrateExact(const LineIntegrand& f, double s0, double s1, std::string* why) {
     static const std::string kS = "s";
+    // Terms are appended and normalized once by the office, not per wave.
     ScalarForm form = polynomialForm(f.poly, kS);
     for (const auto& w : f.waves)
-        form = form.plus(polynomialForm(w.poly, kS).times(ScalarForm::transcendental(w.kind, kS, w.alpha, w.beta)));
+        for (std::size_t k = 0; k < w.poly.size(); ++k) {
+            if (w.poly[k] == 0.0) continue;
+            Term t = k == 0 ? Term(w.poly[k]) : Term(w.poly[k], {{kS, double(k)}});
+            t.addTrans(TransFactor(w.kind, kS, w.alpha, w.beta));
+            form.terms.push_back(std::move(t));
+        }
     const auto closed = definiteIntegral(form, kS, s0, s1, {}, why);
     if (!closed) return std::nullopt;
     double total = *closed;

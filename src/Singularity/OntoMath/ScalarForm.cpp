@@ -423,13 +423,22 @@ ScalarForm ScalarForm::normalized() const {
     combined.erase(std::remove_if(combined.begin(), combined.end(),
                                   [](const Term& t) { return t.coefficient == 0.0; }),
                    combined.end());
-    std::sort(combined.begin(), combined.end(), [](const Term& a, const Term& b) {
-        const double da = totalDegree(a), db = totalDegree(b);
-        if (da != db) return da > db;
-        return factorSignature(a) < factorSignature(b);
+    // The same order as before, with each term's signature built ONCE: the
+    // comparator used to print every factor on every comparison, which made
+    // normalization the hot spot once all integration went through this
+    // office (2026-10-19, measured with `sample` on the ray witnesses).
+    struct Keyed { double degree; std::string signature; std::size_t index; };
+    std::vector<Keyed> keys;
+    keys.reserve(combined.size());
+    for (std::size_t i = 0; i < combined.size(); ++i)
+        keys.push_back({totalDegree(combined[i]), factorSignature(combined[i]), i});
+    std::sort(keys.begin(), keys.end(), [](const Keyed& a, const Keyed& b) {
+        if (a.degree != b.degree) return a.degree > b.degree;
+        return a.signature < b.signature;
     });
     ScalarForm out;
-    out.terms = std::move(combined);
+    out.terms.reserve(combined.size());
+    for (const auto& k : keys) out.terms.push_back(std::move(combined[k.index]));
     return out;
 }
 
