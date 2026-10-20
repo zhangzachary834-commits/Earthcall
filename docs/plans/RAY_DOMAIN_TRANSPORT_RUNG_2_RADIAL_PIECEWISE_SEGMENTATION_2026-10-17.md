@@ -1309,3 +1309,61 @@ Do not add fake implementations, failing placeholder suites, or tests that bless
 **Validation this pass:** scope-comment and documentation checks only; no new executable tests, builds or native performance runs. No assertions, tolerances, saves, defaults or installed app changed.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-19T18:58:46-07:00 (PDT). Human origin: Zachary Zhang.
+
+
+<a id="6aa-the-authored-integral-op-on-one-antiderivative-office"></a>
+
+## 6aa. The authored `Integral` op, on one antiderivative office (2026-10-19, twenty-eighth pass)
+
+**Human origin.** Zach, answering the ownership correction he commissioned from Codex: "yeah lets as integral operation biuld it on top of antiderivatives so we dont have two competing antiderivative code." That message approves the permanent op value. The contract tightenings are Codex's [addendum](#authored-integral-contract-addendum), which Zach also commissioned. The implementation choices below are mine.
+
+**One office.** The antiderivative office is `ScalarForm::antiderivative`, plus the free functions under "One office for every exact integral" in `ScalarForm.hpp`. It now holds everything both sides need:
+- `productToSum`, the one copy of the identities;
+- products of transcendentals, reduced before integration;
+- exp·sin/cos, by the complex tabular rule (Σ (−1)^j n!/(n−j)! x^(n−j) e^(αx+β) g(ωx+φ−(j+1)θ)/r^(j+1));
+- the stable definite evaluator, which re-centres every term and integrates slow waves by their Taylor series;
+- the √Q moment rule;
+- exact `substitute`.
+
+`LineRestriction` no longer integrates anything itself: `integratePolynomial`, `integrateWave`, `integrateRadical`, `integrateRadicalPolynomial` and its `shiftPolynomial` are deleted. It converts its dense forms into the term algebra and calls the office. The Laws' piecewise `definiteIntegral` now evaluates through the same stable path, so a Law read far from t = 0 gains the re-centring the rays needed.
+
+**The op.** `Integral(body, lo, hi)` over the variable named in `variableName`.
+- **Scope:** lexical. The body sees the variable; the limits are read in the enclosing scope. JSON (the only codec that carries ASTs: `.ecform` is JSON) keeps the variable. The type checker types the body in the extended environment, and the variable does not leak.
+- **Evaluation** is exact, by one of two routes:
+  1. the term algebra, with nested integrals as F(hi) − F(lo) by exact substitution;
+  2. `SDF(f, q)` with q *proved* affine in v (structurally, in double), through `restrictAlgebraicToLine`, `segmentLine` and the office.
+- **Slivers:** an unresolved branch switch is admitted only when its proved contribution (width × proved sup|f|, the float enclosure inflated) is below half an ulp of the answer. A near-step switch whose sliver is visible refuses.
+- **No tolerance child:** approximation waits for addendum C.
+- **Other consumers:** `SdfWgsl` refuses the op; `dependsOnAmbientY` treats it conservatively; the math editor offers it with an "Integration variable" field.
+
+**Witness: `ontomath_integral_operation_test`, 33/33, no renderer in the evaluation path.** References are mpmath 1.3.0 `quad`, agreeing to 40 digits between 50- and 80-digit runs (generator in the session scratchpad). Every closed form is within 1e-13 relative, and most are within 1 ulp:
+
+| Case | Relative error |
+|---|---|
+| exp·cos (new) | 1.3e-16 |
+| x²·sin·cos (product-to-sum) | 2.2e-16 |
+| slow wave at x ≈ 1000 | 6.6e-16 |
+| exp·exp | 8.9e-16 |
+| sin³ | 8.3e-17 |
+| a field along a line | 1.3e-16 |
+
+Also checked:
+- **Nested integrals:** 10/3 and (1 − cos 3)/9. The addendum's 1/6 holds both with distinct names and with the inner variable also named s; its 2 shows the inner binding doesn't leak. Alpha-renaming and JSON preserve meaning, and a free-variable edit changes the result.
+- **The clamp-at-sphere chord** is exact (proved pieces, slivers below rounding).
+- **Refusals, each with its reason:** sin x/x, a curved point, noise, an infinite limit, an unbound variable, a near-step sliver.
+- **Elsewhere:** the op works inside a Piecewise, and the editor shape is right.
+- **The office:** the exp·sin antiderivative differentiates back to within 4.2e-15.
+
+**Regressions, all green, same printed accuracy:**
+- line segmentation 82/82; radial 41/41; faithfulness 6/6 (every worst-case number identical); support certificates 132/132; Carlson 19/19;
+- law reversal, ontomath, sounding, infrasound, geometry ontomath, authoring reachability and SDF parity all exit 0.
+
+**Cost, stated:** CPU witness time rose. Line segmentation went 0.23 → 0.66 s, radial 9.3 → 13.3 s, faithfulness 82 → 144 s, because the office's term algebra is map-based. That is test time, not render time. If it matters, the fix belongs inside the office (for example, caching an antiderivative per term shape), not in a second copy.
+
+**Still open, against Codex's addendum and witness matrix:**
+- **B:** a legible result and refusal report readable through an actual Property route. The bearer and representation are open. Today the reason is available through `evaluateIntegral(…, why)`, a helper and not a Property.
+- **C:** a tolerance child with whole-result error accounting, including execution error. The exact route does not claim zero floating-point error; its double rounding is not yet enclosed.
+- **The sliver rule:** "below half an ulp of the answer" is my reading of "exact" (the standard R_F is evaluated to). Codex may read any sliver as approximation that needs permission, so I flag it for review rather than settle it.
+- **The steps after this one:** step 2 (WGSL lowering outside the volume path) and step 3 (the spherical cloud's transport as an authored tree, which needs Zach's word on who authors the default law).
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T19:23:10-07:00 (PDT).*

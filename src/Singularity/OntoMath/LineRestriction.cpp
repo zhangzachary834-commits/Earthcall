@@ -2381,166 +2381,6 @@ void scaleIntegrand(LineIntegrand& f, double k) {
     for (auto& w : f.waves) for (auto& a : w.poly) a *= k;
 }
 
-// P(m + u) = Σ b_k u^k: re-centred so an interval far from the origin does not
-// cancel against it.
-std::vector<double> shiftPolynomial(const std::vector<double>& a, double m) {
-    std::vector<double> b(a.size(), 0.0);
-    for (std::size_t j = 0; j < a.size(); ++j) {
-        double binom = 1.0, mpow = 1.0;   // C(j, k)·m^(j−k), k descending from j
-        for (std::size_t k = j + 1; k-- > 0;) {
-            b[k] += a[j] * binom * mpow;
-            binom = binom * double(k) / double(j - k + 1);
-            mpow *= m;
-        }
-    }
-    return b;
-}
-
-// ∫[s0, s1] P(s) ds about the midpoint: P(m + u) = Σ b_k u^k, odd powers cancel.
-double integratePolynomial(const std::vector<double>& a, double s0, double s1) {
-    if (a.empty()) return 0.0;
-    const double m = 0.5 * (s0 + s1), h = 0.5 * (s1 - s0);
-    const std::vector<double> b = shiftPolynomial(a, m);
-    double sum = 0.0, hp = h;
-    for (std::size_t k = 0; k < b.size(); ++k, hp *= h)
-        if (k % 2 == 0) sum += 2.0 * b[k] * hp / double(k + 1);
-    return sum;
-}
-
-// ∫[s0, s1] √(A s² + B s + C) ds, the branch having decided Q ≥ 0 there.
-std::optional<double> integrateRadical(double A, double B, double C, double s0, double s1, std::string* why) {
-    auto Q = [&](double s) { return std::max(0.0, (A * s + B) * s + C); };
-    if (A == 0.0) {
-        if (B == 0.0) return std::sqrt(std::max(0.0, C)) * (s1 - s0);
-        auto F = [&](double s) { return 2.0 / (3.0 * B) * std::pow(Q(s), 1.5); };
-        return F(s1) - F(s0);
-    }
-    // u = s + B/(2A): Q = A u² + D.
-    const double shift = B / (2.0 * A), D = C - B * shift / 2.0;
-    const double u0 = s0 + shift, u1 = s1 + shift;
-    if (A > 0.0) {
-        const double rA = std::sqrt(A);
-        auto F = [&](double u, double s) {
-            const double r = std::sqrt(Q(s));
-            if (D > 0.0) return 0.5 * u * r + D / (2.0 * rA) * std::asinh(u * std::sqrt(A / D));
-            if (D == 0.0) return 0.5 * rA * u * std::abs(u);
-            const double arg = std::abs(rA * u + r);   // D < 0: Q ≥ 0 only for |u| ≥ √(−D/A)
-            if (!(arg > 0.0)) return std::numeric_limits<double>::quiet_NaN();
-            return 0.5 * u * r + D / (2.0 * rA) * std::log(arg);
-        };
-        const double v = F(u1, s1) - F(u0, s0);
-        if (!std::isfinite(v)) { if (why) *why = "radical integral crosses its branch point"; return std::nullopt; }
-        return v;
-    }
-    // A < 0: Q ≥ 0 only between its roots, where D > 0.
-    if (!(D > 0.0)) { if (why) *why = "radical of a quadratic negative on the interval"; return std::nullopt; }
-    const double rA = std::sqrt(-A);
-    auto F = [&](double u, double s) {
-        const double x = std::clamp(u * std::sqrt(-A / D), -1.0, 1.0);
-        return 0.5 * u * std::sqrt(Q(s)) + D / (2.0 * rA) * std::asin(x);
-    };
-    return F(u1, s1) - F(u0, s0);
-}
-
-// ∫[s0, s1] R(s)·√Q(s) ds (2026-10-19, value-branch segmentation), about the
-// midpoint u = s − m so Q = A u² + B' u + C' and R = Σ r_k u^k. The moments
-// I_n = ∫ u^n √Q du follow from differentiating u^(n−1)·Q^(3/2):
-//   (n + 2)·A·I_n = [u^(n−1) Q^(3/2)] − (n + ½)·B'·I_(n−1) − (n − 1)·C'·I_(n−2)
-// (and, for a linear Q, (n + 3/2)·B'·I_n = [u^n Q^(3/2)] − n·C'·I_(n−1)),
-// with I_0 the closed form above. Exact; no quadrature.
-std::optional<double> integrateRadicalPolynomial(const std::vector<double>& r, double A, double B, double C,
-                                                 double s0, double s1, std::string* why) {
-    if (r.empty()) return 0.0;
-    const double m = 0.5 * (s0 + s1), h = 0.5 * (s1 - s0);
-    const std::vector<double> rk = shiftPolynomial(r, m);
-    const double Bu = 2.0 * A * m + B, Cu = (A * m + B) * m + C;
-    if (A == 0.0 && Bu == 0.0) return std::sqrt(std::max(0.0, Cu)) * integratePolynomial(rk, -h, h);
-    const auto I0 = integrateRadical(A, Bu, Cu, -h, h, why);
-    if (!I0) return std::nullopt;
-    auto Q32 = [&](double u) { return std::pow(std::max(0.0, (A * u + Bu) * u + Cu), 1.5); };
-    std::vector<double> I{*I0};
-    for (std::size_t n = 1; n < rk.size(); ++n) {
-        const double nd = double(n);
-        double v;
-        if (A != 0.0) {
-            const double edge = std::pow(h, nd - 1.0) * Q32(h) - std::pow(-h, nd - 1.0) * Q32(-h);
-            v = (edge - (nd + 0.5) * Bu * I[n - 1] - (n >= 2 ? (nd - 1.0) * Cu * I[n - 2] : 0.0)) / ((nd + 2.0) * A);
-        } else {
-            const double edge = std::pow(h, nd) * Q32(h) - std::pow(-h, nd) * Q32(-h);
-            v = (edge - nd * Cu * I[n - 1]) / ((nd + 1.5) * Bu);
-        }
-        I.push_back(v);
-    }
-    double total = 0.0;
-    for (std::size_t n = 0; n < rk.size(); ++n) total += rk[n] * I[n];
-    return total;
-}
-
-// ∫[s0, s1] P(s)·g(αs + β) ds by the tabular rule: Σ_j (−1)^j P^(j) G_(j+1).
-double integrateWave(const LineIntegrand::Wave& w, double s0, double s1) {
-    if (w.alpha == 0.0) {
-        const double g = TransFactor(w.kind, "u").evaluate(w.beta).value_or(0.0);
-        return g * integratePolynomial(w.poly, s0, s1);
-    }
-    // About the midpoint (2026-10-19): P(m + v)·g(αv + αm + β) over v ∈ [−h, h],
-    // so a ray far from its origin (s ≈ 500 in Northern Veil) does not cancel
-    // P(s)·G terms of size s^deg against each other.
-    const double m = 0.5 * (s0 + s1), h = 0.5 * (s1 - s0);
-    const std::vector<double> local = shiftPolynomial(w.poly, m);
-    const double beta = w.alpha * m + w.beta;
-    if (std::abs(w.alpha) * h <= 1.0) {
-        // A slow wave over the interval (a ray nearly perpendicular to the wave's
-        // axis): the tabular rule divides by α^(j+1) and cancels. Integrate the
-        // Taylor series of g(αv + β) instead, g^(k)(β)·(αv)^k/k!, term by term;
-        // with |αh| ≤ 1 it converges geometrically to rounding.
-        double total = 0.0, ck = 1.0, prev = 0.0;   // ck = (α^k / k!)
-        for (int k = 0; k < 60; ++k) {
-            double gk;
-            if (w.kind == TransFactor::Kind::Exp) gk = std::exp(beta);
-            else {
-                const int q = k % 4;
-                const double sn = std::sin(beta), cs = std::cos(beta);
-                gk = w.kind == TransFactor::Kind::Sin ? (q == 0 ? sn : q == 1 ? cs : q == 2 ? -sn : -cs)
-                                                     : (q == 0 ? cs : q == 1 ? -sn : q == 2 ? -cs : sn);
-            }
-            double term = 0.0;
-            for (std::size_t j = 0; j < local.size(); ++j) {
-                const std::size_t n = j + std::size_t(k);
-                if (n % 2 == 0) term += local[j] * 2.0 * std::pow(h, double(n + 1)) / double(n + 1);
-            }
-            term *= gk * ck;
-            total += term;
-            if (std::size_t(k) > local.size() + 2 && std::abs(term) <= 1e-18 * std::abs(total) && std::abs(prev) <= 1e-18 * std::abs(total)) break;
-            prev = term;
-            ck *= w.alpha / double(k + 1);
-        }
-        return total;
-    }
-    auto antiderivativeAt = [&](double s) {
-        const double u = w.alpha * s + beta;
-        double total = 0.0;
-        std::vector<double> d = local;   // P^(j)
-        for (int j = 0; !d.empty(); ++j) {
-            const int m = j + 1;
-            double G = 0.0;
-            if (w.kind == TransFactor::Kind::Exp) G = std::exp(u);
-            else {
-                // m-th antiderivative of sin/cos: rotate by m quarter turns.
-                const double sn = std::sin(u), cs = std::cos(u);
-                const int q = m % 4;
-                if (w.kind == TransFactor::Kind::Sin) G = q == 0 ? sn : q == 1 ? -cs : q == 2 ? -sn : cs;
-                else G = q == 0 ? cs : q == 1 ? sn : q == 2 ? -cs : -sn;
-            }
-            G /= std::pow(w.alpha, m);
-            total += (j % 2 ? -1.0 : 1.0) * horner(d, s) * G;   // s is the local v here
-            std::vector<double> next;   // derivative
-            for (std::size_t k = 1; k < d.size(); ++k) next.push_back(d[k] * double(k));
-            d = std::move(next);
-        }
-        return total;
-    };
-    return antiderivativeAt(h) - antiderivativeAt(-h);
-}
 } // namespace
 
 namespace {
@@ -2591,41 +2431,39 @@ std::optional<LineIntegrand> multiplyExact(const LineIntegrand& a, const LineInt
             const std::vector<double> P = polyTimes(u.poly, v.poly);
             if (P.empty()) continue;
             const bool uExp = u.kind == TK::Exp, vExp = v.kind == TK::Exp;
-            if (uExp != vExp) { reason = "an exponential times a sine or cosine (not held by this algebra yet)"; return std::nullopt; };
-            if (uExp) { f.waves.push_back({P, TK::Exp, u.alpha + v.alpha, u.beta + v.beta}); continue; }
-            // g(x)·h(y) = ½[k₊·G(x + y) + k₋·G(x − y)]
-            const double sa = u.alpha + v.alpha, sb = u.beta + v.beta;
-            const double da = u.alpha - v.alpha, db = u.beta - v.beta;
-            std::vector<double> half = P;
-            for (auto& c : half) c *= 0.5;
-            std::vector<double> neg = half;
-            for (auto& c : neg) c = -c;
-            if (u.kind == TK::Sin && v.kind == TK::Sin) {          // ½[cos(x−y) − cos(x+y)]
-                f.waves.push_back({half, TK::Cos, da, db});
-                f.waves.push_back({neg, TK::Cos, sa, sb});
-            } else if (u.kind == TK::Cos && v.kind == TK::Cos) {   // ½[cos(x−y) + cos(x+y)]
-                f.waves.push_back({half, TK::Cos, da, db});
-                f.waves.push_back({half, TK::Cos, sa, sb});
-            } else if (u.kind == TK::Sin) {                        // sin x cos y = ½[sin(x+y) + sin(x−y)]
-                f.waves.push_back({half, TK::Sin, sa, sb});
-                f.waves.push_back({half, TK::Sin, da, db});
-            } else {                                               // cos x sin y = ½[sin(x+y) − sin(x−y)]
-                f.waves.push_back({half, TK::Sin, sa, sb});
-                f.waves.push_back({neg, TK::Sin, da, db});
+            // The office integrates exp·sin/cos; a Wave cannot carry both factors yet.
+            if (uExp != vExp) { reason = "an exponential times a sine or cosine (a line Wave carries one factor)"; return std::nullopt; };
+            // g(x)·h(y) = Σ c·G: the identities live once, in the office.
+            const auto sum = productToSum(TransFactor(u.kind, "s", u.alpha, u.beta), TransFactor(v.kind, "s", v.alpha, v.beta));
+            if (!sum) { reason = "a product of waves the office has no identity for"; return std::nullopt; }
+            for (const auto& [c, g] : *sum) {
+                std::vector<double> scaled = P;
+                for (auto& x : scaled) x *= c;
+                f.waves.push_back({scaled, g.kind, g.scale, g.shift});
             }
         }
     return f;
 }
 
 // ∫[s0, s1] of the closed-form part of f (its remainders are the caller's).
+// The rules are the one office's (ScalarForm.hpp, 2026-10-19; Zach: "build it on
+// top of antiderivatives so we dont have two competing antiderivative code"):
+// the polynomial and waves convert to a ScalarForm in s and integrate through
+// ScalarForm::antiderivative, evaluated stably; the radicals through
+// definiteIntegralTimesRadical. Nothing here knows an antiderivative.
 std::optional<double> integrateExact(const LineIntegrand& f, double s0, double s1, std::string* why) {
-    double total = integratePolynomial(f.poly, s0, s1);
+    static const std::string kS = "s";
+    ScalarForm form = polynomialForm(f.poly, kS);
+    for (const auto& w : f.waves)
+        form = form.plus(polynomialForm(w.poly, kS).times(ScalarForm::transcendental(w.kind, kS, w.alpha, w.beta)));
+    const auto closed = definiteIntegral(form, kS, s0, s1, {}, why);
+    if (!closed) return std::nullopt;
+    double total = *closed;
     for (const auto& r : f.radicals) {
-        const auto v = integrateRadicalPolynomial(r.poly, r.A, r.B, r.C, s0, s1, why);
+        const auto v = definiteIntegralTimesRadical(r.poly, r.A, r.B, r.C, s0, s1, why);
         if (!v) return std::nullopt;
         total += *v;
     }
-    for (const auto& w : f.waves) total += integrateWave(w, s0, s1);
     if (!std::isfinite(total)) { if (why) *why = "the closed form is not finite on the interval"; return std::nullopt; }
     return total;
 }

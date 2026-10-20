@@ -515,6 +515,22 @@ struct MathNode {
         MatrixDeterminant = 38,     // square Matrix -> Scalar
         MatrixInverse = 39,         // invertible square Matrix -> same shape
 
+        // Integral(body, lo, hi) — ∫_lo^hi body d(v), v named by variableName
+        // (2026-10-19; Zach: "yeah lets as integral operation biuld it on top
+        // of antiderivatives so we dont have two competing antiderivative code").
+        // v is bound LEXICALLY inside body and shadows any outer v; lo and hi
+        // are read in the enclosing scope, so an inner hi may be an outer
+        // integration variable (a cumulative integral). With SDF(f, q) it says
+        // "a field along a curve" without naming a camera, a medium or a pixel.
+        // Evaluation is EXACT OR NOTHING: through the one antiderivative office
+        // (definiteIntegral), or, for SDF(f, q) with q affine in v, the line
+        // restriction's value-branch segmentation and the same office. No
+        // quadrature, no tolerance child yet: an approximated answer needs an
+        // authored error contract first (the integration hierarchy,
+        // ONTOMATH_FRAMEWORK.md §6). LineIntegral (19) stays declared for a
+        // vector line integral along an authored curve; this does not redefine it.
+        Integral = 40,
+
         // Not a kind an author picks — the landing place for an op THIS BUILD
         // does not know: a save written by another version. It never
         // evaluates (nullopt), never type-checks, and refuses to compile to
@@ -737,6 +753,76 @@ std::optional<double> definiteIntegral(const Piecewise& model, const std::string
                                        double a, double b,
                                        const std::map<std::string, double>& vars,
                                        std::string* why = nullptr);
+
+// --- One office for every exact integral (2026-10-19) -----------------------
+// Zach: "build it on top of antiderivatives so we dont have two competing
+// antiderivative code". A Law's rate read backwards, a field along a ray
+// (LineRestriction) and an authored MathNode::Op::Integral all integrate
+// through ScalarForm::antiderivative and the functions below. LineRestriction
+// keeps its own representation (dense polynomials in s, for speed and proved
+// ranges) and CONVERTS into this algebra. It holds no integration rule of its
+// own. Before this, the tabular rule and the power rule were written twice.
+
+// The product of two transcendental factors of ONE variable as Σ c·g:
+//   sin·sin = ½[cos(u−v) − cos(u+v)]   cos·cos = ½[cos(u−v) + cos(u+v)]
+//   sin·cos = ½[sin(u+v) + sin(u−v)]   exp·exp = exp(u+v)
+// nullopt for any other pair (exp·sin is integrated as it stands; ln·anything
+// has no rule here). The one copy of these identities: the antiderivative's
+// reduction and LineRestriction's wave products both read it.
+std::optional<std::vector<std::pair<double, TransFactor>>> productToSum(const TransFactor& a,
+                                                                       const TransFactor& b);
+
+// `form` with every variable except `keep` replaced by its value from `vars`
+// (a partial evaluation, exact up to the rounding of those values). nullopt
+// naming the first unbound variable, or ln outside its domain.
+std::optional<ScalarForm> bindAllBut(const ScalarForm& form, const std::string& keep,
+                                     const std::map<std::string, double>& vars,
+                                     std::string* why = nullptr);
+
+// `form` with `var` replaced by `replacement`, exactly: a whole non-negative
+// power expands, a transcendental of var needs the replacement affine in at
+// most one variable (ln: no constant term). nullopt with the reason otherwise.
+// How an Integral's F(hi) − F(lo) stays a form when hi is an outer variable.
+std::optional<ScalarForm> substitute(const ScalarForm& form, const std::string& var,
+                                     const ScalarForm& replacement, std::string* why = nullptr);
+
+// MathNode::Op::Integral evaluated, with the reason when it refuses
+// (Integral.cpp). MathNode::evaluate answers through this.
+std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std::string, PropertyValue>& vars,
+                                       const Singular* subject, std::string* why = nullptr);
+
+// Σ c_k var^k as a form (coefficients low to high), and the Taylor shift: the
+// coefficients of P(m + u) from those of P(x).
+ScalarForm polynomialForm(const std::vector<double>& coefficients, const std::string& var);
+std::vector<double> shiftPolynomial(const std::vector<double>& coefficients, double m);
+
+// ∫[a, b] form d(var), every other variable bound from `vars`. The exact
+// definite integral through ScalarForm::antiderivative, EVALUATED STABLY:
+//  · each term is re-centred on the interval's midpoint (an exact shift), so
+//    an interval far from the origin does not cancel terms of size |x|^deg
+//    against each other (found on Northern Veil rays at s ≈ 500);
+//  · a slow wave (|z|·h ≤ 1, z the term's complex rate α + iω) is integrated by
+//    its Taylor series, which converges geometrically to rounding, instead of
+//    F(h) − F(−h), whose 1/z^(j+1) terms cancel catastrophically.
+// Terms the shift cannot hold (ln, a negative or fractional power) take
+// F(b) − F(a) directly. nullopt with the reason when the algebra has no
+// antiderivative or the value is not finite. b < a integrates backwards.
+std::optional<double> definiteIntegral(const ScalarForm& form, const std::string& var,
+                                       double a, double b,
+                                       const std::map<std::string, double>& vars,
+                                       std::string* why = nullptr);
+
+// ∫[a, b] R(x)·√(A x² + B x + C) dx, R = Σ r_k x^k, the caller having proved
+// Q ≥ 0 on [a, b]. The radical class this term algebra cannot hold yet (√ of a
+// quadratic is not a TransFactor), so its rule lives here as a definite rule:
+// about the midpoint u, the moments I_n = ∫ u^n √Q du follow from
+// differentiating u^(n−1)·Q^(3/2):
+//   (n + 2)·A·I_n = [u^(n−1) Q^(3/2)] − (n + ½)·B'·I_(n−1) − (n − 1)·C'·I_(n−2)
+// (for a linear Q, (n + 3/2)·B'·I_n = [u^n Q^(3/2)] − n·C'·I_(n−1)), with I_0
+// in closed form (asinh / log / asin by the sign of A and the discriminant).
+std::optional<double> definiteIntegralTimesRadical(const std::vector<double>& r, double A, double B,
+                                                   double C, double a, double b,
+                                                   std::string* why = nullptr);
 
 // ============================================================================
 // FunctionRegistry — the words of mathematics. A Person names a function

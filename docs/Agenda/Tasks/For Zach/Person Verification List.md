@@ -1736,3 +1736,12 @@ The root's scalar field looks like a legacy field, now read as radiance, rather 
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T17:16 PDT. [Finding](../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6z-colour-with-the-incident-source-emission-by-its-own-sign-a-light-radiance-finding-2026-10-19-twenty-seventh-pass).*
 
+
+
+## Authored Integral in the math editor — October 19
+
+Earthcall can now author integrals as mathematics (`MathNode::Op::Integral`; [plan §6aa](../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6aa-the-authored-integral-op-on-one-antiderivative-office)). Nothing renders differently.
+- [ ] In any OntoMath expression editor, search the operation list for **Integral (body, lo, hi)**. Choosing it should give three children and an **Integration variable** field set to `s`. In a ValueLeaf inside the first child (the body), the variable picker should offer `s`.
+- [ ] Optional: author ∫₀¹ s ds (body = Variable Leaf `s`, lo = 0, hi = 1) wherever an expression's value is displayed. It should read 0.5.
+
+*Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T19:23 PDT.*

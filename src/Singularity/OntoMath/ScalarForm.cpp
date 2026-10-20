@@ -12,6 +12,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <complex>
 #include <cstdio>
 #include <sstream>
 #include <glm/gtc/noise.hpp>
@@ -482,6 +483,52 @@ ScalarForm ScalarForm::derivative(const std::string& var) const {
     return out.normalized();
 }
 
+namespace {
+bool isTrig(TransFactor::Kind k) { return k == TransFactor::Kind::Sin || k == TransFactor::Kind::Cos; }
+
+// A term's transcendentals of `var` brought to at most one exp and one sin/cos
+// by productToSum, a constant factor (scale 0) folded into the coefficient.
+// nullopt for ln(0), undefined everywhere. Ln is left alone (the rules refuse
+// it beside another transcendental).
+std::optional<std::vector<Term>> reduceTranscendentals(const Term& term, const std::string& var) {
+    std::vector<Term> done, work{term};
+    while (!work.empty()) {
+        Term t = std::move(work.back());
+        work.pop_back();
+        bool folded = false;
+        for (std::size_t k = 0; k < t.trans.size() && !folded; ++k) {
+            if (t.trans[k].variable != var || t.trans[k].scale != 0.0) continue;
+            const auto v = t.trans[k].evaluate(0.0);
+            if (!v) return std::nullopt;
+            t.coefficient *= *v;
+            t.trans.erase(t.trans.begin() + static_cast<long>(k));
+            folded = true;
+        }
+        if (folded) { work.push_back(std::move(t)); continue; }
+        std::size_t first = t.trans.size(), second = t.trans.size();
+        for (std::size_t k = 0; k < t.trans.size() && second == t.trans.size(); ++k)
+            for (std::size_t l = k + 1; l < t.trans.size(); ++l) {
+                const TransFactor &u = t.trans[k], &v = t.trans[l];
+                if (u.variable != var || v.variable != var) continue;
+                const bool bothExp = u.kind == TransFactor::Kind::Exp && v.kind == TransFactor::Kind::Exp;
+                if (bothExp || (isTrig(u.kind) && isTrig(v.kind))) { first = k; second = l; break; }
+            }
+        if (second == t.trans.size()) { done.push_back(std::move(t)); continue; }
+        const auto parts = productToSum(t.trans[first], t.trans[second]);
+        if (!parts) return std::nullopt;
+        for (const auto& [c, g] : *parts) {
+            Term p = t;
+            p.trans.erase(p.trans.begin() + static_cast<long>(second));
+            p.trans.erase(p.trans.begin() + static_cast<long>(first));
+            p.coefficient *= c;
+            p.addTrans(g);
+            work.push_back(std::move(p));
+        }
+    }
+    return done;
+}
+} // namespace
+
 std::optional<ScalarForm> ScalarForm::antiderivative(const std::string& var) const {
     // Exact where the algebra can hold the answer; honest nullopt where it
     // would take integration by parts. Per term (R = factors free of var):
@@ -499,11 +546,25 @@ std::optional<ScalarForm> ScalarForm::antiderivative(const std::string& var) con
     //     m quarter turns (sin u → −cos u → −sin u → cos u), so no π is rounded
     //   c·x^n·ln(ax)·R, n ≠ −1 -> c·x^(n+1)·(ln(ax)/(n+1) − 1/(n+1)²)·R
     //   c·x^-1·ln(ax)·R        -> (c/2)·ln(ax)²·R
+    // Products (2026-10-19, the one office: Zach, "build it on top of
+    // antiderivatives so we dont have two competing antiderivative code"):
+    //   several sin/cos, or several exp, of var are first reduced by
+    //   productToSum, so a term carries at most one of each;
+    //   c·x^n·exp(αx+β)·g(ωx+φ)·R, n whole ≥ 0, g ∈ {sin, cos}: the real or
+    //   imaginary part of e^(β+iφ)·x^n·e^(zx), z = α + iω = r·e^(iθ), so the
+    //   tabular rule holds with 1/z^m = r^(−m)·e^(−imθ):
+    //       -> Σ_j (−1)^j·n!/(n−j)!·x^(n−j)·exp(αx+β)·g(ωx + φ − (j+1)θ)/r^(j+1)·R
     //   still nullopt: a negative or fractional power times sin/cos/exp
-    //   (Si, Ci, Ei, Fresnel: no elementary antiderivative), or several
-    //   transcendentals of var in one term
-    ScalarForm out;
+    //   (Si, Ci, Ei, Fresnel: no elementary antiderivative), or ln beside
+    //   another transcendental of var
+    std::vector<Term> reduced;
     for (const auto& term : terms) {
+        auto parts = reduceTranscendentals(term, var);
+        if (!parts) return std::nullopt;
+        reduced.insert(reduced.end(), parts->begin(), parts->end());
+    }
+    ScalarForm out;
+    for (const auto& term : reduced) {
         std::vector<std::size_t> transOnVar;
         for (std::size_t k = 0; k < term.trans.size(); ++k) {
             if (term.trans[k].variable == var) transOnVar.push_back(k);
@@ -526,7 +587,30 @@ std::optional<ScalarForm> ScalarForm::antiderivative(const std::string& var) con
             }
             continue;
         }
-        if (transOnVar.size() > 1) return std::nullopt;   // several transcendentals of var
+        if (transOnVar.size() > 1) {
+            // After the reduction, exactly exp·sin or exp·cos (ln beside another
+            // transcendental has no rule here).
+            if (transOnVar.size() != 2) return std::nullopt;
+            std::size_t e = transOnVar[0], g = transOnVar[1];
+            if (term.trans[e].kind != TransFactor::Kind::Exp) std::swap(e, g);
+            if (term.trans[e].kind != TransFactor::Kind::Exp || !isTrig(term.trans[g].kind)) return std::nullopt;
+            if (n < 0.0 || std::floor(n) != n || n > 64.0) return std::nullopt;
+            const double alpha = term.trans[e].scale, omega = term.trans[g].scale;
+            const double r = std::hypot(alpha, omega), theta = std::atan2(omega, alpha);
+            const int N = static_cast<int>(n);
+            double falling = 1.0;   // n!/(n−j)!
+            for (int j = 0; j <= N; ++j) {
+                if (j > 0) falling *= static_cast<double>(N - j + 1);
+                Term part = term;
+                part.coefficient *= (j % 2 ? -1.0 : 1.0) * falling / std::pow(r, j + 1);
+                part.trans[g].shift -= static_cast<double>(j + 1) * theta;
+                if (N - j == 0) part.factors.erase(var);
+                else part.factors[var] = static_cast<double>(N - j);
+                std::sort(part.trans.begin(), part.trans.end());
+                out.terms.push_back(std::move(part));
+            }
+            continue;
+        }
 
         const std::size_t k = transOnVar.front();
         const TransFactor tf = term.trans[k];
@@ -990,6 +1074,17 @@ bool Piecewise::Piece::contains(double x) const {
 
 
 void MathNode::collectDependencies(std::set<std::string>& outDeps) const {
+    if (op == Op::Integral) {
+        // v is bound inside the body, so it is not a dependency of the whole;
+        // the limits are read in the enclosing scope.
+        std::set<std::string> inner;
+        if (!children.empty() && children[0]) children[0]->collectDependencies(inner);
+        inner.erase(variableName);
+        outDeps.insert(inner.begin(), inner.end());
+        for (std::size_t i = 1; i < children.size(); ++i)
+            if (children[i]) children[i]->collectDependencies(outDeps);
+        return;
+    }
     if (op == Op::ValueLeaf) {
         outDeps.insert(variableName);
     } else if (op == Op::ScalarLeaf) {
@@ -1042,6 +1137,7 @@ const char* mathOpName(MathNode::Op op) {
         case MathNode::Op::SDF:             return "SDF";
         case MathNode::Op::Gradient:        return "Gradient";
         case MathNode::Op::LineIntegral:    return "LineIntegral";
+        case MathNode::Op::Integral:        return "Integral";
         case MathNode::Op::Union:           return "Union";
         case MathNode::Op::Intersection:    return "Intersection";
         case MathNode::Op::Difference:      return "Difference";
@@ -1113,6 +1209,7 @@ bool isKnownMathOp(int raw) {
         case MathNode::Op::MatrixTranspose:
         case MathNode::Op::MatrixDeterminant:
         case MathNode::Op::MatrixInverse:
+        case MathNode::Op::Integral:
             return true;
         // Unsupported is where unknown ops LAND; it is never a stored value an
         // author picked, so it does not read back as known.
@@ -1212,7 +1309,8 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
     // do not acquire matrix meaning by accident. Only the dedicated Rung 2
     // matrix operations below may consume Matrix children; legacy Add/Scale/etc.
     // still refuse them. A Matrix ValueLeaf carries its dimensions forward.
-    if (op != Op::ValueLeaf && !isMatrixOperation(op)) {
+    // Integral types its own children: its body in the scope that binds v.
+    if (op != Op::ValueLeaf && op != Op::Integral && !isMatrixOperation(op)) {
         for (std::size_t i = 0; i < children.size(); ++i) {
             auto childType = sub(i);
             if (!childType) return childType;
@@ -1380,6 +1478,22 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
             if (!scalarLike(*t0)) return mismatch(path, op, 0, "ScalarField", *t0);
             if (!kindIs(*t1, ValueKind::Vector)) return mismatch(path, op, 1, "Vector", *t1);
             return TypeResult::ok(ValueKind::Vector);
+        }
+        case Op::Integral: {
+            if (children.size() != 3) return arity(path, op, children.size(), 3);
+            if (variableName.empty())
+                return TypeResult::error(TypeDiagnostic{path, "Integral names no integration variable"});
+            for (std::size_t i = 1; i < 3; ++i) {
+                auto t = sub(i);
+                if (!t) return t;
+                if (!kindIs(*t, ValueKind::Scalar)) return mismatch(path, op, static_cast<int>(i), "Scalar", *t);
+            }
+            TypeEnv inner = env;
+            inner[variableName] = MathType(ValueKind::Scalar);   // lexical: shadows an outer binding
+            auto body = children[0]->typeOf(inner, path + ".Integral[0]", allowUnbound);
+            if (!body) return body;
+            if (!scalarLike(*body)) return mismatch(path, op, 0, "Scalar", *body);
+            return TypeResult::ok(ValueKind::Scalar);
         }
         case Op::LineIntegral: {
             if (children.size() != 2) return arity(path, op, children.size(), 2);
@@ -2176,6 +2290,13 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
         case Op::LineIntegral:
             return std::nullopt;
 
+        // Exact or nothing, through the one antiderivative office (Integral.cpp).
+        case Op::Integral: {
+            const auto value = evaluateIntegral(*this, vars, subject);
+            if (!value) return std::nullopt;
+            return PropertyValue(*value);
+        }
+
         // An op this build does not know: preserved verbatim, never evaluated.
         case Op::Unsupported:
             return std::nullopt;
@@ -2256,6 +2377,7 @@ std::string MathNode::print() const {
         // say so plainly rather than printing a formula that never runs.
         case Op::Raycast:      return "raycast(" + arg(0) + ", " + arg(1) + ") [not implemented]";
         case Op::LineIntegral: return "lineIntegral(" + arg(0) + ", " + arg(1) + ") [not implemented]";
+        case Op::Integral:     return "integral(" + arg(0) + " d" + variableName + ", " + arg(1) + ", " + arg(2) + ")";
         // An op this build does not know: the original JSON rides along in
         // `unsupported` (see fromJson) — show that verbatim, never a stand-in.
         case Op::Unsupported:
@@ -2831,8 +2953,8 @@ nlohmann::json MathNode::toJson() const {
     j["op"] = static_cast<int>(op);
     if (op == Op::ScalarLeaf) {
         j["scalarForm"] = scalarForm.toJson();
-    } else if (op == Op::ValueLeaf) {
-        j["var"] = variableName;
+    } else if (op == Op::ValueLeaf || op == Op::Integral) {
+        j["var"] = variableName;   // an Integral's bound variable
     } else if (op == Op::Component || op == Op::Map) {
         j["arg"] = stringArg;
     } else if (op == Op::MatrixConstruct || op == Op::MatrixIdentity) {
@@ -3376,6 +3498,32 @@ std::optional<ScalarForm> toScalarForm(const MathNode& node, std::string* why) {
             return lhs->times(*rhs).normalized();
         }
 
+        // ∫_lo^hi body d(v) as a form in the enclosing variables (2026-10-19):
+        // the body's antiderivative F, then F(hi) − F(lo) by exact substitution,
+        // so an inner integral whose hi is an outer variable stays symbolic.
+        case MathNode::Op::Integral: {
+            if (node.children.size() != 3 || !node.children[0] || !node.children[1] || !node.children[2]) {
+                say(why, "Integral needs a body, lo and hi");
+                return std::nullopt;
+            }
+            if (node.variableName.empty()) { say(why, "Integral names no integration variable"); return std::nullopt; }
+            const auto body = toScalarForm(*node.children[0], why);
+            if (!body) return std::nullopt;
+            const auto F = body->antiderivative(node.variableName);
+            if (!F) {
+                say(why, "∫" + body->print() + " d" + node.variableName +
+                             " has no elementary antiderivative in this algebra");
+                return std::nullopt;
+            }
+            const auto lo = toScalarForm(*node.children[1], why);
+            const auto hi = lo ? toScalarForm(*node.children[2], why) : std::nullopt;
+            if (!hi) return std::nullopt;
+            const auto upper = substitute(*F, node.variableName, *hi, why);
+            const auto lower = upper ? substitute(*F, node.variableName, *lo, why) : std::nullopt;
+            if (!lower) return std::nullopt;
+            return upper->plus(lower->scaled(-1.0)).normalized();
+        }
+
         default:
             say(why, std::string("no scalar closed form for ") + mathOpName(node.op));
             return std::nullopt;
@@ -3390,7 +3538,7 @@ std::optional<ScalarForm> antiderivative(const MathNode& node, const std::string
     if (!integrated) {
         say(why, "∫" + form->print() + " d" + var +
                      " has no elementary antiderivative in this algebra (a negative or fractional power"
-                     " times sin/cos/exp, or several transcendentals of " + var + " in one term)");
+                     " times sin/cos/exp, or ln beside another transcendental of " + var + ")");
         return std::nullopt;
     }
     return integrated;
@@ -3479,21 +3627,333 @@ std::optional<double> definiteIntegral(const Piecewise& model, const std::string
             return std::nullopt;
         }
 
-        const auto F = antiderivative(*governing->mathNode, var, why);
-        if (!F) return std::nullopt;
+        // The one office, evaluated stably (re-centred; slow waves by series).
+        const auto form = toScalarForm(*governing->mathNode, why);
+        if (!form) return std::nullopt;
+        const auto stretch = definiteIntegral(*form, var, lo, hi, vars, why);
+        if (!stretch) return std::nullopt;
+        total += *stretch;
+    }
+    return total;
+}
 
-        std::map<std::string, double> at = vars;
-        at[var] = hi;
-        const auto upper = F->evaluate(at);
-        at[var] = lo;
-        const auto lower = F->evaluate(at);
-        if (!upper || !lower) {
-            say(why, "the antiderivative does not evaluate at the interval's ends "
-                     "(an unbound variable, or outside its domain)");
-            return std::nullopt;
+std::optional<std::vector<std::pair<double, TransFactor>>> productToSum(const TransFactor& a,
+                                                                       const TransFactor& b) {
+    using K = TransFactor::Kind;
+    using Sum = std::vector<std::pair<double, TransFactor>>;
+    if (a.variable != b.variable) return std::nullopt;
+    const std::string& v = a.variable;
+    const double sa = a.scale + b.scale, sb = a.shift + b.shift;
+    const double da = a.scale - b.scale, db = a.shift - b.shift;
+    if (a.kind == K::Exp && b.kind == K::Exp) return Sum{{1.0, TransFactor(K::Exp, v, sa, sb)}};
+    if (!isTrig(a.kind) || !isTrig(b.kind)) return std::nullopt;
+    if (a.kind == K::Sin && b.kind == K::Sin)
+        return Sum{{0.5, TransFactor(K::Cos, v, da, db)}, {-0.5, TransFactor(K::Cos, v, sa, sb)}};
+    if (a.kind == K::Cos && b.kind == K::Cos)
+        return Sum{{0.5, TransFactor(K::Cos, v, da, db)}, {0.5, TransFactor(K::Cos, v, sa, sb)}};
+    if (a.kind == K::Sin)   // sin u·cos v = ½[sin(u+v) + sin(u−v)]
+        return Sum{{0.5, TransFactor(K::Sin, v, sa, sb)}, {0.5, TransFactor(K::Sin, v, da, db)}};
+    // cos u·sin v = ½[sin(u+v) − sin(u−v)]
+    return Sum{{0.5, TransFactor(K::Sin, v, sa, sb)}, {-0.5, TransFactor(K::Sin, v, da, db)}};
+}
+
+std::optional<ScalarForm> bindAllBut(const ScalarForm& form, const std::string& keep,
+                                     const std::map<std::string, double>& vars, std::string* why) {
+    ScalarForm out;
+    for (const auto& term : form.terms) {
+        Term t(term.coefficient);
+        for (const auto& [name, exponent] : term.factors) {
+            if (name == keep) { t.factors[name] = exponent; continue; }
+            const auto it = vars.find(name);
+            if (it == vars.end()) { say(why, "'" + name + "' is not bound"); return std::nullopt; }
+            t.coefficient *= std::pow(it->second, exponent);
         }
+        for (const auto& tf : term.trans) {
+            if (tf.variable == keep) { t.trans.push_back(tf); continue; }
+            const auto it = vars.find(tf.variable);
+            if (it == vars.end()) { say(why, "'" + tf.variable + "' is not bound"); return std::nullopt; }
+            const auto value = tf.evaluate(it->second);
+            if (!value) { say(why, "ln outside its domain at the value of '" + tf.variable + "'"); return std::nullopt; }
+            t.coefficient *= *value;
+        }
+        out.terms.push_back(std::move(t));
+    }
+    return out.normalized();
+}
+
+ScalarForm polynomialForm(const std::vector<double>& coefficients, const std::string& var) {
+    ScalarForm out;
+    for (std::size_t k = 0; k < coefficients.size(); ++k) {
+        if (coefficients[k] == 0.0) continue;
+        out.terms.push_back(k == 0 ? Term(coefficients[k]) : Term(coefficients[k], {{var, double(k)}}));
+    }
+    return out.normalized();
+}
+
+// P(m + u) = Σ b_k u^k: re-centred so an interval far from the origin does not
+// cancel against it.
+std::vector<double> shiftPolynomial(const std::vector<double>& a, double m) {
+    std::vector<double> b(a.size(), 0.0);
+    for (std::size_t j = 0; j < a.size(); ++j) {
+        double binom = 1.0, mpow = 1.0;   // C(j, k)·m^(j−k), k descending from j
+        for (std::size_t k = j + 1; k-- > 0;) {
+            b[k] += a[j] * binom * mpow;
+            binom = binom * double(k) / double(j - k + 1);
+            mpow *= m;
+        }
+    }
+    return b;
+}
+
+std::optional<ScalarForm> substitute(const ScalarForm& form, const std::string& var,
+                                     const ScalarForm& replacement, std::string* why) {
+    // The replacement as c0 + c1·w when it is affine in at most one variable.
+    double c0 = 0.0, c1 = 0.0;
+    std::string w;
+    bool affine = true;
+    for (const auto& t : replacement.terms) {
+        if (!t.trans.empty()) { affine = false; break; }
+        if (t.factors.empty()) { c0 += t.coefficient; continue; }
+        const auto& [name, exponent] = *t.factors.begin();
+        if (t.factors.size() == 1 && exponent == 1.0 && (w.empty() || w == name)) { w = name; c1 += t.coefficient; continue; }
+        affine = false;
+        break;
+    }
+    ScalarForm out;
+    for (const auto& term : form.terms) {
+        Term carrier(term.coefficient, term.factors);
+        carrier.factors.erase(var);
+        for (const auto& tf : term.trans) {
+            if (tf.variable != var) { carrier.addTrans(tf); continue; }
+            if (!affine) {
+                say(why, "a transcendental of " + var + " composed with " + replacement.print() +
+                             ", which is not affine in one variable");
+                return std::nullopt;
+            }
+            if (c1 == 0.0 || w.empty()) {
+                const auto value = tf.evaluate(c0);
+                if (!value) { say(why, "ln outside its domain at " + var + " = " + std::to_string(c0)); return std::nullopt; }
+                carrier.coefficient *= *value;
+                continue;
+            }
+            if (tf.kind == TransFactor::Kind::Ln && c0 != 0.0) {
+                say(why, "ln of an affine argument with a constant term is outside this algebra");
+                return std::nullopt;
+            }
+            carrier.addTrans(TransFactor(tf.kind, w, tf.scale * c1, tf.scale * c0 + tf.shift));
+        }
+        ScalarForm piece;
+        piece.terms.push_back(std::move(carrier));
+        const auto power = term.factors.find(var);
+        if (power != term.factors.end()) {
+            const double n = power->second;
+            if (!(n >= 0.0 && std::floor(n) == n && n <= 64.0)) {
+                say(why, var + "^" + std::to_string(n) + " composed with " + replacement.print() +
+                             " is outside this algebra (a whole, non-negative power composes exactly)");
+                return std::nullopt;
+            }
+            for (int k = 0; k < static_cast<int>(n); ++k) piece = piece.times(replacement);
+        }
+        out = out.plus(piece);
+    }
+    return out.normalized();
+}
+
+namespace {
+// Σ over F's terms of t(hi) − t(lo), term by term, so the odd powers of a
+// centred interval cancel exactly instead of inside two rounded sums.
+std::optional<double> differenceAt(const ScalarForm& F, const std::string& var, double hi, double lo) {
+    double total = 0.0;
+    for (const auto& term : F.terms) {
+        const auto upper = term.evaluate({{var, hi}});
+        const auto lower = term.evaluate({{var, lo}});
+        if (!upper || !lower) return std::nullopt;
         total += *upper - *lower;
     }
+    return total;
+}
+
+// ∫[m − h, m + h] of one reduced term (var to a whole power, at most one exp
+// and one sin/cos of var, every other variable already bound), re-centred:
+// x = m + u, an exact shift of the power and of each transcendental's phase.
+std::optional<double> integrateCentred(const Term& term, const std::string& var, double m, double h,
+                                       std::string* why) {
+    const auto power = term.factors.find(var);
+    const std::size_t n = power == term.factors.end() ? 0 : static_cast<std::size_t>(power->second);
+    std::vector<double> unit(n + 1, 0.0);
+    unit[n] = 1.0;
+    const std::vector<double> poly = shiftPolynomial(unit, m);   // (m + u)^n in u
+    Term base = term;
+    base.factors.erase(var);
+    double alpha = 0.0, omega = 0.0, beta = 0.0, phi = 0.0;
+    bool sine = false, trig = false;
+    for (auto& tf : base.trans) {
+        if (tf.variable != var) continue;
+        tf.shift += tf.scale * m;
+        if (tf.kind == TransFactor::Kind::Exp) { alpha = tf.scale; beta = tf.shift; }
+        else { omega = tf.scale; phi = tf.shift; trig = true; sine = tf.kind == TransFactor::Kind::Sin; }
+    }
+    std::sort(base.trans.begin(), base.trans.end());
+    const double rate = std::hypot(alpha, omega);
+    if (rate != 0.0 && rate * h <= 1.0) {
+        // A slow wave: Re or Im of W·e^(zu), W = c·e^(β + iφ), by its Taylor
+        // series Σ W z^k/k! ∫ u^(j+k) du, convergent geometrically with |z|h ≤ 1.
+        const std::complex<double> z(alpha, omega);
+        const std::complex<double> W = base.coefficient * std::exp(beta) *
+                                       (trig ? std::polar(1.0, phi) : std::complex<double>(1.0, 0.0));
+        std::complex<double> zk(1.0, 0.0);
+        double factorial = 1.0, total = 0.0, previous = 0.0;
+        for (int k = 0; k < 96; ++k) {
+            if (k > 0) { zk *= z; factorial *= double(k); }
+            const std::complex<double> c = W * zk / factorial;
+            double moments = 0.0;
+            for (std::size_t j = 0; j < poly.size(); ++j) {
+                const std::size_t p = j + std::size_t(k);
+                if (p % 2 == 0) moments += poly[j] * 2.0 * std::pow(h, double(p + 1)) / double(p + 1);
+            }
+            const double part = (sine ? c.imag() : c.real()) * moments;
+            total += part;
+            if (std::size_t(k) > n + 2 && std::abs(part) <= 1e-18 * std::abs(total) &&
+                std::abs(previous) <= 1e-18 * std::abs(total))
+                break;
+            previous = part;
+        }
+        return total;
+    }
+    ScalarForm local;
+    for (std::size_t j = 0; j < poly.size(); ++j) {
+        if (poly[j] == 0.0) continue;
+        Term t = base;
+        t.coefficient *= poly[j];
+        if (j > 0) t.factors[var] = double(j);
+        local.terms.push_back(std::move(t));
+    }
+    const auto F = local.antiderivative(var);
+    if (!F) {
+        say(why, "∫" + local.print() + " d" + var + " has no elementary antiderivative in this algebra");
+        return std::nullopt;
+    }
+    const auto v = differenceAt(*F, var, h, -h);
+    if (!v) say(why, "the antiderivative does not evaluate on the interval");
+    return v;
+}
+} // namespace
+
+std::optional<double> definiteIntegral(const ScalarForm& form, const std::string& var, double a, double b,
+                                       const std::map<std::string, double>& vars, std::string* why) {
+    if (a == b) return 0.0;
+    if (b < a) {
+        const auto forward = definiteIntegral(form, var, b, a, vars, why);
+        if (!forward) return std::nullopt;
+        return -*forward;
+    }
+    if (!std::isfinite(a) || !std::isfinite(b)) {
+        say(why, "an infinite limit: improper integrals are not admitted");
+        return std::nullopt;
+    }
+    const auto bound = bindAllBut(form, var, vars, why);
+    if (!bound) return std::nullopt;
+    const double m = 0.5 * a + 0.5 * b, h = 0.5 * b - 0.5 * a;
+    double total = 0.0;
+    for (const auto& term : bound->terms) {
+        const auto parts = reduceTranscendentals(term, var);
+        if (!parts) { say(why, "ln(0) of " + var + ": undefined everywhere"); return std::nullopt; }
+        for (const auto& t : *parts) {
+            const auto power = t.factors.find(var);
+            bool centrable = power == t.factors.end() ||
+                             (power->second >= 0.0 && std::floor(power->second) == power->second && power->second <= 64.0);
+            for (const auto& tf : t.trans)
+                if (tf.variable == var && tf.kind == TransFactor::Kind::Ln) centrable = false;
+            std::optional<double> v;
+            if (centrable) {
+                v = integrateCentred(t, var, m, h, why);
+            } else {
+                ScalarForm one;
+                one.terms.push_back(t);
+                const auto F = one.antiderivative(var);
+                if (!F) {
+                    say(why, "∫" + one.print() + " d" + var + " has no elementary antiderivative in this algebra"
+                             " (a negative or fractional power times sin/cos/exp, or ln beside another"
+                             " transcendental of " + var + ")");
+                    return std::nullopt;
+                }
+                v = differenceAt(*F, var, b, a);
+                if (!v) say(why, "the antiderivative does not evaluate at the interval's ends (outside its domain)");
+            }
+            if (!v) return std::nullopt;
+            total += *v;
+        }
+    }
+    if (!std::isfinite(total)) { say(why, "the closed form is not finite on the interval"); return std::nullopt; }
+    return total;
+}
+
+namespace {
+// ∫[s0, s1] √(A s² + B s + C) ds, the branch having decided Q ≥ 0 there.
+std::optional<double> integrateRadical(double A, double B, double C, double s0, double s1, std::string* why) {
+    auto Q = [&](double s) { return std::max(0.0, (A * s + B) * s + C); };
+    if (A == 0.0) {
+        if (B == 0.0) return std::sqrt(std::max(0.0, C)) * (s1 - s0);
+        auto F = [&](double s) { return 2.0 / (3.0 * B) * std::pow(Q(s), 1.5); };
+        return F(s1) - F(s0);
+    }
+    // u = s + B/(2A): Q = A u² + D.
+    const double shift = B / (2.0 * A), D = C - B * shift / 2.0;
+    const double u0 = s0 + shift, u1 = s1 + shift;
+    if (A > 0.0) {
+        const double rA = std::sqrt(A);
+        auto F = [&](double u, double s) {
+            const double r = std::sqrt(Q(s));
+            if (D > 0.0) return 0.5 * u * r + D / (2.0 * rA) * std::asinh(u * std::sqrt(A / D));
+            if (D == 0.0) return 0.5 * rA * u * std::abs(u);
+            const double arg = std::abs(rA * u + r);   // D < 0: Q ≥ 0 only for |u| ≥ √(−D/A)
+            if (!(arg > 0.0)) return std::numeric_limits<double>::quiet_NaN();
+            return 0.5 * u * r + D / (2.0 * rA) * std::log(arg);
+        };
+        const double v = F(u1, s1) - F(u0, s0);
+        if (!std::isfinite(v)) { say(why, "radical integral crosses its branch point"); return std::nullopt; }
+        return v;
+    }
+    // A < 0: Q ≥ 0 only between its roots, where D > 0.
+    if (!(D > 0.0)) { say(why, "radical of a quadratic negative on the interval"); return std::nullopt; }
+    const double rA = std::sqrt(-A);
+    auto F = [&](double u, double s) {
+        const double x = std::clamp(u * std::sqrt(-A / D), -1.0, 1.0);
+        return 0.5 * u * std::sqrt(Q(s)) + D / (2.0 * rA) * std::asin(x);
+    };
+    return F(u1, s1) - F(u0, s0);
+}
+} // namespace
+
+std::optional<double> definiteIntegralTimesRadical(const std::vector<double>& r, double A, double B, double C,
+                                                   double s0, double s1, std::string* why) {
+    if (r.empty()) return 0.0;
+    const double m = 0.5 * (s0 + s1), h = 0.5 * (s1 - s0);
+    const std::vector<double> rk = shiftPolynomial(r, m);
+    const double Bu = 2.0 * A * m + B, Cu = (A * m + B) * m + C;
+    if (A == 0.0 && Bu == 0.0) {
+        const auto P = definiteIntegral(polynomialForm(rk, "u"), "u", -h, h, {}, why);
+        if (!P) return std::nullopt;
+        return std::sqrt(std::max(0.0, Cu)) * *P;
+    }
+    const auto I0 = integrateRadical(A, Bu, Cu, -h, h, why);
+    if (!I0) return std::nullopt;
+    auto Q32 = [&](double u) { return std::pow(std::max(0.0, (A * u + Bu) * u + Cu), 1.5); };
+    std::vector<double> I{*I0};
+    for (std::size_t n = 1; n < rk.size(); ++n) {
+        const double nd = double(n);
+        double v;
+        if (A != 0.0) {
+            const double edge = std::pow(h, nd - 1.0) * Q32(h) - std::pow(-h, nd - 1.0) * Q32(-h);
+            v = (edge - (nd + 0.5) * Bu * I[n - 1] - (n >= 2 ? (nd - 1.0) * Cu * I[n - 2] : 0.0)) / ((nd + 2.0) * A);
+        } else {
+            const double edge = std::pow(h, nd) * Q32(h) - std::pow(-h, nd) * Q32(-h);
+            v = (edge - nd * Cu * I[n - 1]) / ((nd + 1.5) * Bu);
+        }
+        I.push_back(v);
+    }
+    double total = 0.0;
+    for (std::size_t n = 0; n < rk.size(); ++n) total += rk[n] * I[n];
     return total;
 }
 

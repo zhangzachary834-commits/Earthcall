@@ -919,6 +919,11 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
                      "authors. It evaluates to nullopt on the CPU, so the shader "
                      "declines rather than answering a number the CPU would not.");
             return "0.0";
+        case Op::Integral:
+            e.refuse("Integral has no WGSL lowering yet (the next step of the ray-domain "
+                     "thread, 2026-10-19). The CPU evaluates it exactly or refuses, so the "
+                     "shader declines rather than answering a number the CPU would not.");
+            return "0.0";
         case Op::LineIntegral:
             e.refuse("LineIntegral has no implementation on either path: it needs a "
                      "curve parameterization and a quadrature rule that nothing in "

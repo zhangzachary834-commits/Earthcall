@@ -983,7 +983,8 @@ bool dependsOnAmbientY(const OntoMath::MathNode& n) {
     }
 
     if (n.op == Op::Unsupported || n.op == Op::Stochastic ||
-        n.op == Op::Raycast || n.op == Op::LineIntegral) {
+        n.op == Op::Raycast || n.op == Op::LineIntegral ||
+        n.op == Op::Integral) {   // conservative: its body rebinds names
         return true;
     }
 

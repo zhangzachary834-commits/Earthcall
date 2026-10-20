@@ -74,6 +74,11 @@ evaluate to `nullopt` on the CPU and **refuse to compile** to WGSL rather than e
 something that merely looks like an answer. The enum values are spent and stay spent;
 implementing them later needs no renumbering.
 
+`LineIntegral` (19) stays declared and refusing: its signature names no curve, limits or
+measure, so it would have to be *defined*, not implemented. Its natural future is the vector
+line integral ∫F·dr along an authored curve. The scalar definite integral is a separate,
+appended op, `Integral` (40), implemented in §6 (Zach, 2026-10-19).
+
 ## 6. Exact integration, and reading the world backwards
 
 `ScalarForm::derivative` had no counterpart above the term level: `antiderivative` existed
@@ -118,6 +123,29 @@ approximating:
 t−Δ, so it needs no antiderivative at all. `t·sin t` is a reversible `Map` and an
 irreversible `Flow`. `Drive` reverses too — a `CurveModel` is symbolic — but only when its
 input is the clock; driven by anything else, the past of the *input* is the unknown.
+
+**One office, and the authored `Integral` op** (2026-10-19; Zach: "yeah lets as integral operation biuld it on top of antiderivatives so we dont have two competing antiderivative code"). Every exact integral in OntoMath goes through `ScalarForm::antiderivative`:
+- a Law's rate read backwards;
+- a field along a ray (`LineRestriction`, which converts its dense polynomials and waves and holds no rule of its own);
+- the authored op `MathNode::Op::Integral` (40).
+
+Before this, the power rule and the tabular rule were each written twice. The office now also holds:
+- `productToSum`, the one copy of sin·cos and exp·exp;
+- exp·sin/cos, by the complex tabular rule;
+- the stable definite evaluator `definiteIntegral(ScalarForm, …)`, which re-centres on the interval and integrates slow waves by their Taylor series. The Laws' piecewise integral now uses it too;
+- the √Q moment rule, `definiteIntegralTimesRadical`;
+- exact `substitute`.
+
+The op itself:
+- **Form:** `Integral(body, lo, hi)` integrates over the variable named in `variableName`.
+- **Scope:** the variable is bound lexically in the body and shadows any outer name. The limits are read in the enclosing scope, so an inner `hi` may be the outer variable (a cumulative integral). JSON keeps the variable.
+- **Routes:** evaluation is exact, by one of two routes:
+  - the term algebra, nested integrals included, through `definiteIntegral`;
+  - `SDF(f, q)` with q proved affine in v, through line restriction, value-branch segmentation and the same office.
+- **Slivers:** a branch switch the segmentation cannot place exactly is admitted only when its proved contribution (width × proved sup|f|) is below half an ulp of the answer. Otherwise it refuses.
+- **No tolerance child yet:** approximation (levels 4–5) waits for an authored error contract (Codex's addendum in the ray-domain plan).
+- **WGSL:** refuses it for now.
+- **Code and witness:** `Singularity/OntoMath/Integral.cpp`, witnessed by `ontomath_integral_operation_test`, which uses no renderer.
 
 **The integration hierarchy** (Original Prism Sun, adopted by Zach 2026-10-19: "LETS GO WITH IT"). One office integrates, for Laws and for rays alike, and names which layer an answer comes from:
 1. elementary closed form;

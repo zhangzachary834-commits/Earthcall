@@ -35,7 +35,7 @@
 //   Pow with a pure-constant non-negative integer exponent.
 // Everything else REFUSES with the op's name: Abs, Clamp, Map, Sqrt, Length,
 // Normalize, Noise, SDF, Gradient, Tan, Union/Intersection/Difference, matrix
-// ops, Stochastic, Raycast, LineIntegral, Unsupported. A Piecewise is admitted
+// ops, Stochastic, Raycast, LineIntegral, Integral, Unsupported. A Piecewise is admitted
 // only when its first piece answers unconditionally with a plain MathNode (no
 // interval bounds, guard, pure guard, call or fold): Piecewise ray segmentation
 // is a later rung, and guards/calls are not emitted identically by every
