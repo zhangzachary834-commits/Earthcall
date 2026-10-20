@@ -3,6 +3,7 @@
 #include "PropertyValue.hpp"
 #include "Singularity/Core/StringId.hpp"
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -106,3 +107,29 @@ public:
     PathResult getValue(Singular& root, PropertyValue& out, std::size_t startIndex = 0) const;
     PathResult setValue(Singular& root, const PropertyValue& v, std::size_t startIndex = 0) const;
 };
+
+// ============================================================================
+// DERIVED READINGS (2026-10-19). A read-only observation that an authored
+// route carries WITHOUT storing it: `<prefix>.<name>` (and any path into its
+// result, `<prefix>.<name>.<key>…`) is answered by the registered reading,
+// from the being's own authored properties under `<prefix>`.
+//
+// Codex placed the authored Integral's evaluation report on the expression's
+// existing bearer as a read-only derived PropertyDict, not as a new kind or a
+// fixed field on every Singular (2026-10-19 21:30). This is the seam that lets
+// an authored route carry one. The rules:
+//  · It is consulted only where resolution finds NO stored property, so it
+//    never shadows authored or registered state and costs nothing on a hit.
+//  · Writes to the route refuse with ReadOnly: an observation is not a dial.
+//  · Each read computes afresh, so a refusal replaces a success and no stale
+//    report survives a changed input. The result is a fresh value, never
+//    shared canonical storage.
+//  · It is registered by a modality channel (OntoMath registers "evaluation"),
+//    like world readings. Nothing is registered by default.
+// Known gap, stated: a derived reading publishes no change facts, so a Rete
+// alpha condition does not wake when it changes. A sweep-path law reads it
+// fresh.
+// ============================================================================
+using DerivedReading = std::function<bool(Singular& root, const std::string& prefix, PropertyValue& out)>;
+void registerDerivedReading(const std::string& name, DerivedReading reading);
+bool hasDerivedReading(const std::string& name);

@@ -143,6 +143,11 @@ The op itself:
   - the term algebra, nested integrals included, through `definiteIntegral`;
   - `SDF(f, q)` with q proved affine in v, through line restriction, value-branch segmentation and the same office.
 - **Slivers:** a branch switch the segmentation cannot place exactly leaves a sliver, which the exact path refuses. Leaving out a nonzero contribution is an approximation, which needs the error contract. (An earlier rule admitted slivers bounded below 0.5·ε·|answer|. Codex refuted it on 2026-10-19 with a 0.625-ulp counterexample at 1.5, which is now a regression.)
+- **Report** (addendum B; plan §6af): any being carrying `<prefix>.expression` (an authored ScalarField) and optional `<prefix>.bindings` (variable → path) answers `<prefix>.evaluation`. It is a read-only derived dictionary with these fields:
+  - status, value (when admitted) and reason (when refused);
+  - admission ("exact"), tolerance ("none");
+  - mathematical, execution and total bounds, each "unavailable" (never zero) until C;
+  - the expression digest, a bindings snapshot, and the backend.
 - **No tolerance child yet:** approximation (levels 4–5) waits for an authored error contract (Codex's addendum in the ray-domain plan).
 - **WGSL** (since the same day, plan §6ab): the term-algebra route lowers through the same office. `toScalarForm` gives F(hi) − F(lo), and the emitter writes it like any ScalarForm, so the shader has no antiderivative of its own. The line route refuses there until device segmentation exists. Its f32 error is measured by `webgpu_integral_operation_test`, not enclosed. Since step 2b (plan §6ac) the lowering is the office's centred decomposition, `centredIntegral`: binomial and angle addition about the interval's centre m, with moments in the half-width h given in two exact forms, tabular and Taylor series, selected by |z|·|h| ≤ 1 as on the CPU. Far-from-origin intervals keep f32 accuracy.
 - **Code and witness:** `Singularity/OntoMath/Integral.cpp`, witnessed by `ontomath_integral_operation_test`, which uses no renderer.

@@ -1477,3 +1477,42 @@ I accept both points.
 - **Then** the device line route.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T21:38:45-07:00 (PDT).*
+
+
+<a id="6af-addendum-b-the-evaluation-report-on-the-expressions-bearer"></a>
+
+## 6af. Addendum B: the evaluation report on the expression's bearer (2026-10-19, thirty-first pass)
+
+**Human origin.** Zach: "KEEP GOIGNGNGNGNNGGG". Codex placed the report ([reply, 21:30](../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md#codex-replies-to-steps-12b--report-on-the-expression-bearer-centred-structure-fits-sliver-threshold-is-not-exact-rounding)) on the expression's existing bearer, as a read-only derived `PropertyDict` at an authored route. The seam and the code are mine.
+
+**The seam Codex anticipated** ("if the generic expression-to-report adapter exposes a further admission gap, name that seam"): an authored route had no way to carry a derived, read-only value. `PropertyPath` now has derived readings (`registerDerivedReading`):
+- consulted only where resolution finds nothing stored, so a hit costs nothing extra and authored state is never shadowed;
+- writes into the route, at any depth, return ReadOnly;
+- every read computes afresh and returns a fresh value.
+
+**The report.** OntoMath registers `evaluation` at engine init (`ExpressionEvaluation.cpp`). A being carrying `<prefix>.expression` (a ScalarField with an authored AST) and optionally `<prefix>.bindings` (a dictionary variable → path, read through `lawGetValue`) answers `<prefix>.evaluation` with:
+- `status`; `value` (admitted only); `reason` (refused only, naming the Integral's refusal);
+- `admission` "exact"; `evaluation` (how the number was produced); `requestedTolerance` "none";
+- `mathematicalBound`, `executionBound`, `totalBound` all "unavailable", never zero;
+- `expressionDigest` (FNV-1a 64 of the expression's JSON); `bindings` (a copied snapshot); `backend`.
+
+**Witness: `ontomath_expression_evaluation_test`, 19/19**, on an ordinary Object, through `PropertyPath` and `lawGetValue`:
+- **Reads:** nested reads work; the evaluated value 3·2²/2 = 6 is admitted.
+- **Binding edits:** editing `rate` refreshes the value to 10, and the expression digest is unchanged.
+- **Refusals replace success:** a noise integral, an approximation-requiring sphere chord and an unreadable binding each refuse with their reason, and the old value is gone.
+- **Writes:** writes at the report and inside it are ReadOnly.
+- **Copies:** mutating a returned report changes neither the next read nor the bearer.
+- **Routes:** no expression means no route, and an authored `plain.evaluation` is never shadowed.
+
+**Regression for the `PropertyPath` change:** 99 property, Law, Zone, Relation, Rete and OntoMath tests, run one at a time with GPU, volume and perf tests excluded. 96 pass. The 3 failures are pre-existing:
+- `second_nature_law_forge_zone_test` fails identically at the session-start commit;
+- `ontomath_two_direction_witness_test` segfaults (the known one);
+- `zone_home_ontology_test` fails on the Home save location (`saves/homes/` vs `saves/zones/`), and is on the October 7 known-failing list.
+
+An earlier attempt to run the *whole* suite with `-j6` exhausted the Mac's memory and forced a restart. Never again: see the standing rule in session memory.
+
+**Known gap:** a derived reading publishes no change facts, so a Rete alpha condition on `<prefix>.evaluation` does not wake when its inputs change. A sweep-path law reads it fresh. It is recorded on the To-do list against `PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md` §6 item 3.
+
+**Not done:** C (tolerance and total-error admission), the device line route, and a Person-facing way to author `<prefix>.expression` in the app.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T23:14:32-07:00 (PDT).*

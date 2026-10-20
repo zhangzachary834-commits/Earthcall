@@ -14,6 +14,7 @@
 #include <charconv>
 #include <cmath>
 #include <glm/glm.hpp>
+#include <unordered_map>
 #include <utility>
 #include <variant>
 
@@ -242,6 +243,64 @@ PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t sta
     return {};
 }
 
+namespace {
+std::unordered_map<std::string, DerivedReading>& derivedReadings() {
+    static std::unordered_map<std::string, DerivedReading> readings;
+    return readings;
+}
+
+// The first segment k > startIndex naming a registered derived reading, or
+// segments.size() when none does.
+std::size_t derivedReadingIndex(const std::vector<std::string>& segments, std::size_t startIndex) {
+    const auto& readings = derivedReadings();
+    if (readings.empty()) return segments.size();
+    for (std::size_t k = startIndex + 1; k < segments.size(); ++k)
+        if (readings.count(segments[k])) return k;
+    return segments.size();
+}
+
+// Answer a path through a derived reading: compute it for the prefix, then
+// descend any remaining segments through its dictionaries and lists.
+bool readDerived(Singular& root, const std::vector<std::string>& segments, std::size_t startIndex,
+                 std::size_t k, PropertyValue& out) {
+    std::string prefix = segments[startIndex];
+    for (std::size_t i = startIndex + 1; i < k; ++i) prefix += "." + segments[i];
+    PropertyValue value;
+    if (!derivedReadings().at(segments[k])(root, prefix, value)) return false;
+    for (std::size_t i = k + 1; i < segments.size(); ++i) {
+        PropertyValue next;
+        if (auto dict = std::get_if<std::shared_ptr<PropertyDict>>(&value); dict && *dict) {
+            const auto found = (*dict)->elements.find(segments[i]);
+            if (found == (*dict)->elements.end()) return false;
+            next = found->second;
+        } else if (auto list = std::get_if<std::shared_ptr<PropertyList>>(&value); list && *list) {
+            std::size_t index = 0;
+            const std::string& text = segments[i];
+            const auto parsed = std::from_chars(text.data(), text.data() + text.size(), index);
+            if (text.empty() || parsed.ec != std::errc() || parsed.ptr != text.data() + text.size() ||
+                index >= (*list)->elements.size()) return false;
+            next = (*list)->elements[index];
+        } else {
+            return false;
+        }
+        value = std::move(next);
+    }
+    out = std::move(value);
+    return !std::holds_alternative<std::monostate>(out);
+}
+} // namespace
+
+void registerDerivedReading(const std::string& name, DerivedReading reading) {
+    if (name.empty() || name.find('.') != std::string::npos) return;   // one segment
+    if (!reading) {
+        derivedReadings().erase(name);
+        return;
+    }
+    derivedReadings()[name] = std::move(reading);
+}
+
+bool hasDerivedReading(const std::string& name) { return derivedReadings().count(name) > 0; }
+
 PropertyPath::PathResult PropertyPath::getValue(Singular& root, PropertyValue& out, std::size_t startIndex) const {
     if (startIndex >= segments.size()) {
         out = PropertyValue{};
@@ -253,6 +312,9 @@ PropertyPath::PathResult PropertyPath::getValue(Singular& root, PropertyValue& o
         if (segments.size() - startIndex == 1) {
             if (root.getDynamicProperty(segments[startIndex], out)) return PathResult::Ok;
         }
+        // Nothing stored here: a derived reading may answer (see the header).
+        const std::size_t k = derivedReadingIndex(segments, startIndex);
+        if (k < segments.size() && readDerived(root, segments, startIndex, k, out)) return PathResult::Ok;
         out = PropertyValue{};
         return PathResult::NoSuchProperty;
     }
@@ -278,6 +340,13 @@ PropertyPath::PathResult PropertyPath::getValue(Singular& root, PropertyValue& o
 PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyValue& v, std::size_t startIndex) const {
     if (startIndex >= segments.size()) return PathResult::NoSuchProperty;
     ResolvedSlot slot = resolve(root, startIndex);
+    // A derived reading is an observation, not a dial: a write into one refuses,
+    // and never creates a stored property that would shadow it.
+    if (!slot.prop && !slot.dynamicSlot) {
+        const std::size_t k = derivedReadingIndex(segments, startIndex);
+        PropertyValue probe;
+        if (k < segments.size() && readDerived(root, segments, startIndex, k, probe)) return PathResult::ReadOnly;
+    }
 
     // A read-only wrapper refuses even when the proposed value is identical.
     // Equality is a value comparison, not authority to attempt a write.

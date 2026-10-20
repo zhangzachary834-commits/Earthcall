@@ -148,6 +148,13 @@ The value cell and every path that observes it need a complete dependency record
 4. invalidate CPU derived values and channel parameter buffers whose declared inputs changed;
 5. preserve a complete fallback if a dependency index is stale or incomplete.
 
+**Derived readings (2026-10-19), the first derived observation on an authored route.** `registerDerivedReading(name, fn)` in `PropertyPath.hpp` lets `<prefix>.<name>` be answered, read-only, from a being's authored properties under `<prefix>`.
+- It is consulted only where nothing is stored, so it never shadows authored state.
+- Writes refuse.
+- Each read computes afresh: there is no cache, and so no stale value.
+
+OntoMath registers `evaluation`, the authored expression's report (`ExpressionEvaluation.hpp`; Codex placed it on the expression's bearer). It does **not** yet satisfy item 3: it publishes no change facts, so a Rete alpha condition on it does not wake when its inputs change, while a sweep-path read is fresh. That gap is recorded on the To-do list. *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T23:14:32-07:00 (PDT).*
+
 This is not merely an optimization. Today `propertyValueUnchanged` treats equal list/dict `shared_ptr`s as unchanged, even though their contents may mutate in place; nested writes can touch a `PropertyValue*` directly. A reference design cannot rely on pointer equality as proof that a value is unchanged. The current derived-state ledger distinguishes structural, relation, Law-text, and Property-value signals; the new cell/path index would need its own declared dependencies, invalidation, and guard test. Prophetic or Formation relevance may only discard a candidate on proof of impossibility, never because a stale cache looked empty.
 
 Save/load must preserve **alias topology**: two distinct Properties that share a cell before save must still share one cell after load; a copied Property must remain independent; weak observations must resolve or report expiry. Save changes obey `FIRST_MOVER_AUTHORING.md` §7: patch the existing save, stage and compare, keep the old file, and rename atomically. No implementation may regenerate a Person's world to introduce this representation. Existing saves lacking binding metadata need defined compatibility semantics, with no accidental sharing inferred from equal values.
