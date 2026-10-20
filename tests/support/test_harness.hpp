@@ -71,6 +71,7 @@ struct BootedEngineHarness {
 
         // Exercise the exact authored-law registration path used by Engine::initLogic.
         Physics::registerAuthoredRotationalLaws(lawManager, player);
+        Physics::setupPhysicsEventListeners();
 
         // 2. Wire Universe providers matching real app boot (EngineInit.cpp)
         Universe::instance().setProvider([this](std::vector<Singular*>& beings) {

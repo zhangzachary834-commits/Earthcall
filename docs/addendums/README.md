@@ -31,3 +31,6 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating Unified Brush System and Object Hover Events](unified_brush_and_hover_events_addendum.md)
 *   [Integrating Unified Brush System and CPU-GPU Micro-Mastery](unified_brush_and_micro_mastery_addendum.md)
 *   [Integrating the Event Bus, Discrete Moments, and Continuous Time](event_bus_and_time_moment_addendum.md)
+*   [Integrating Law Manager Tick and Audit Logging Deferral](law_manager_tick_and_audit_logging_deferral_addendum.md)
+*   [Integrating Atomic Persistence and Test Sandboxing](atomic_persistence_and_test_sandboxing_addendum.md)
+*   [Integrating Physics Collision and Event Bus Recording](physics_collision_and_event_bus_recording_addendum.md)
