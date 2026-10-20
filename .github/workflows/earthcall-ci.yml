@@ -69,6 +69,7 @@ jobs:
         chess_zone_native_boot_test
         synthesis_studio_full_store_boot_test
         second_nature_law_authoring_test
+        second_nature_law_authoring_ambiguity_test
         second_nature_law_forge_zone_test
         prophetic_rete_test
         home_identity_continuity_test
