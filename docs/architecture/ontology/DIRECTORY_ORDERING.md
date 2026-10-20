@@ -163,7 +163,7 @@ Earthcall/
           Person/
           Relation/
           ZonesOfEarth/
-      Terminal/            the Terminal modality (TerminalChannel, LineEditor, LawSentence)
+      Terminal/            the Terminal modality (TerminalChannel, LineEditor, LawSentence [legacy name: TerminalLine])
     Time/                  Timeline · Moment · Event
       Event/               (the distinguished Moment: occurrence in time)
       Moment/              (instant or interval)
@@ -184,6 +184,8 @@ Earthcall/
 ```
 
 ---\
+
+> **TerminalLine naming decree (2026-10-20):** the source symbol `LawSentence` under `Singularity/Terminal/` is a legacy implementation name for the Terminal modality's line parser, conceptually **`TerminalLine`**. Its placement under Terminal is substantive: it must not be promoted into a universal language abstraction. See the [addendum](../../addendums/terminal_line_naming_and_modality_scope_addendum.md).
 
 ## 3. Where language goes
 
