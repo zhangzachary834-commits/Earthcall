@@ -9,21 +9,25 @@ EventHandler& EventHandler::instance() {
 }
 
 void EventHandler::removeHandler(const std::string& handlerName) {
-    auto it = _handlers.find(handlerName);
-    if (it != _handlers.end()) {
-        _handlers.erase(it);
+    auto it = _subscriptions.find(handlerName);
+    if (it != _subscriptions.end()) {
+        EventBus::instance().unsubscribe(it->second);
+        _subscriptions.erase(it);
     }
 }
 
 void EventHandler::clearAllHandlers() {
-    _handlers.clear();
+    for (const auto& [name, token] : _subscriptions) {
+        EventBus::instance().unsubscribe(token);
+    }
+    _subscriptions.clear();
 }
 
 std::vector<std::string> EventHandler::getRegisteredHandlers() const {
     std::vector<std::string> handlerNames;
-    handlerNames.reserve(_handlers.size());
+    handlerNames.reserve(_subscriptions.size());
     
-    for (const auto& [name, _] : _handlers) {
+    for (const auto& [name, _] : _subscriptions) {
         handlerNames.push_back(name);
     }
     
@@ -31,7 +35,7 @@ std::vector<std::string> EventHandler::getRegisteredHandlers() const {
 }
 
 bool EventHandler::hasHandler(const std::string& handlerName) const {
-    return _handlers.find(handlerName) != _handlers.end();
+    return _subscriptions.find(handlerName) != _subscriptions.end();
 }
 
 } // namespace Core 

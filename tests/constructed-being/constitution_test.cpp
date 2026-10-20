@@ -15,10 +15,6 @@
 #include <cmath>
 #include <cstdio>
 
-namespace {
-bool nearf(float a, float b, float eps = 1e-4f) { return std::fabs(a - b) < eps; }
-}
-
 int main() {
     if (!glfwInit()) {
         std::fprintf(stderr, "constitution_test: glfwInit failed\n");
