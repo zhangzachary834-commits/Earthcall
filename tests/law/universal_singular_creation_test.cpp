@@ -176,10 +176,23 @@ int main() {
     // A container appearing before its separately stored Relation must still
     // resolve the actual canonical bond, not mint another same-ID individual.
     std::reverse(snapshot["storedSingulars"].begin(), snapshot["storedSingulars"].end());
+    // A second Zone naming an already-live canonical word must not replay
+    // its stored properties or redirect its references into that Zone.
+    const auto wordSnapshot = storedToJson(*born);
+    born->setDynamicProperty("appearance.glyph", std::string("unsaved-word"));
+    {
+        Zone shared("shared-lexeme-reference", "Christ");
+        restoreStored(shared, nlohmann::json::array({wordSnapshot}), true, false);
+        PropertyValue liveGlyph;
+        assert(born->getDynamicProperty("appearance.glyph", liveGlyph) &&
+               liveGlyph == PropertyValue(std::string("unsaved-word")));
+        assert(born->getDynamicProperty("focus", focus) && std::get<Object*>(focus) == a.get());
+    }
     // The old root is no longer the visible world during hydration. References
     // to its Objects must bind to the restored root's actual Object instances.
     visible = nullptr;
-    auto restored = makeZoneFromJson(snapshot);
+    // This witness intentionally replaces the old graph, like Restore unsaved.
+    auto restored = makeZoneFromJson(snapshot, /*restoreExistingLexemes=*/true);
     assert(restored);
     visible = restored.get();
     auto* restoredBorn = dynamic_cast<Singularity::Language::Lexeme*>(find(*restored, "lexeme.authored-hope"));

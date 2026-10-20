@@ -1,0 +1,328 @@
+# Codex / GPT-6.1 Sol / session 01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca / 2026-10-15T12:12:33.022575-07:00
+# Experimental rendering trial; not production admission.
+# Baseline: 40b43c4ba114249a1d86ce7e0796c746533429f8; see VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md.
+--- a/src/Singularity/Screen/VolumeZeroProof.cpp
++++ b/src/Singularity/Screen/VolumeZeroProof.cpp
+@@ -46,7 +46,7 @@
+ 
+ struct Builder {
+     const OntoMath::Piecewise& density;
+-    glm::vec3 halfExtent;
++    glm::vec3 gridMin;
+     glm::vec3 cellSize;
+     glm::vec3 margin;
+     VolumeZeroProof& out;
+@@ -67,8 +67,8 @@
+     // Prove the cell block [a, b); split it along its longest axis if the
+     // whole block cannot be proved, down to single cells.
+     void prove(glm::uvec3 a, glm::uvec3 b) {
+-        const glm::vec3 lo = -halfExtent + glm::vec3(a) * cellSize - margin;
+-        const glm::vec3 hi = -halfExtent + glm::vec3(b) * cellSize + margin;
++        const glm::vec3 lo = gridMin + glm::vec3(a) * cellSize - margin;
++        const glm::vec3 hi = gridMin + glm::vec3(b) * cellSize + margin;
+         if (densityProvenNonPositive(density, lo, hi, &out.rangeEvaluations)) {
+             mark(a, b);
+             return;
+@@ -89,12 +89,13 @@
+ 
+ } // namespace
+ 
+-VolumeZeroProof buildVolumeZeroProof(const OntoMath::Piecewise& density,
+-                                     const glm::vec3& halfExtent,
++static VolumeZeroProof buildProofOnGrid(const OntoMath::Piecewise& density,
++                                     const glm::vec3& gridMin, const glm::vec3& gridMax,
+                                      uint32_t targetCells,
+                                      float marginFraction) {
+     VolumeZeroProof proof;
+-    const glm::vec3 extent = 2.0f * glm::abs(halfExtent);
++    proof.gridMin = gridMin; proof.gridMax = gridMax;
++    const glm::vec3 extent = gridMax - gridMin;
+     if (!(extent.x > 0.0f && extent.y > 0.0f && extent.z > 0.0f) ||
+         !std::isfinite(extent.x + extent.y + extent.z) || targetCells == 0u) {
+         return proof;
+@@ -115,7 +116,7 @@
+         0.0f);
+ 
+     const glm::vec3 cellSize = extent / glm::vec3(proof.dims);
+-    Builder builder{density, glm::abs(halfExtent), cellSize,
++    Builder builder{density, gridMin, cellSize,
+                     cellSize * marginFraction, proof};
+     builder.prove(glm::uvec3(0u), proof.dims);
+ 
+@@ -151,8 +152,8 @@
+     proof.supportMax = glm::vec3(-1.0f);
+     if (occupied) {
+         const glm::vec3 margin = cellSize * marginFraction;
+-        proof.supportMin = -glm::abs(halfExtent) + glm::vec3(first) * cellSize - margin;
+-        proof.supportMax = -glm::abs(halfExtent) + glm::vec3(last) * cellSize + margin;
++        proof.supportMin = gridMin + glm::vec3(first) * cellSize - margin;
++        proof.supportMax = gridMin + glm::vec3(last) * cellSize + margin;
+     }
+     // The bounds follow whatever authored support the interval proofs admit.
+     // Unknown cells MUST be included. Ranking affects only traversal cost.
+@@ -176,12 +177,12 @@
+         // outward as well. The GPU adds world/local arithmetic padding.
+         const auto lower = [&](uint32_t k, uint32_t n) {
+             const double roundoff = 8.0 * std::numeric_limits<float>::epsilon() * extent[k];
+-            return std::nextafter(float(-double(std::abs(halfExtent[k])) + double(n) * cellSize[k] -
++            return std::nextafter(float(double(gridMin[k]) + double(n) * cellSize[k] -
+                                        builder.margin[k] - roundoff), -INFINITY);
+         };
+         const auto upper = [&](uint32_t k, uint32_t n) {
+             const double roundoff = 8.0 * std::numeric_limits<float>::epsilon() * extent[k];
+-            return std::nextafter(float(-double(std::abs(halfExtent[k])) + double(n) * cellSize[k] +
++            return std::nextafter(float(double(gridMin[k]) + double(n) * cellSize[k] +
+                                        builder.margin[k] + roundoff), INFINITY);
+         };
+         proof.supportBands[i] = {lower(a, lo.x), lower(b, lo.y),
+@@ -190,4 +191,27 @@
+     return proof;
+ }
+ 
++VolumeZeroProof buildVolumeZeroProof(const OntoMath::Piecewise& density,
++                                     const glm::vec3& halfExtent,
++                                     uint32_t targetCells, float marginFraction) {
++    const auto half = glm::abs(halfExtent);
++    auto pilot = buildProofOnGrid(density, -half, half, targetCells, marginFraction);
++    if (!pilot.any() || pilot.provenCells == pilot.totalCells) return pilot;
++    // Reallocate only inside the conservative envelope of the EXISTING proof.
++    // This is no new expression theorem, pilot-invariance assumption or new
++    // traversal strategy. The complement is covered by pilot zero bits; the
++    // GPU nevertheless evaluates outside-grid samples exactly (parallel rays
++    // can still reach them). Both proofs depend on density revision + extent.
++    const auto lo = glm::max(-half, pilot.supportMin);
++    const auto hi = glm::min(half, pilot.supportMax);
++    const auto span = hi - lo;
++    if (lo == -half && hi == half) return pilot;
++    if (!(span.x > 1e-30f && span.y > 1e-30f && span.z > 1e-30f) ||
++        !std::isfinite(span.x + span.y + span.z)) return pilot;
++    auto focused = buildProofOnGrid(density, lo, hi, targetCells, marginFraction);
++    if (!focused.any()) return pilot;
++    focused.rangeEvaluations += pilot.rangeEvaluations;
++    return focused;
++}
++
+ } // namespace Rendering
+--- a/src/Singularity/Screen/VolumeZeroProof.hpp
++++ b/src/Singularity/Screen/VolumeZeroProof.hpp
+@@ -30,6 +30,12 @@
+     // Cells along local x, y, z, tiling [-halfExtent, +halfExtent]. Each axis
+     // is at most kMaxAxisCells so the shader can unpack it from 10 bits.
+     glm::uvec3 dims{0u};
++    // Kernel bitmap-coordinate domain, distinct from the padded unknown-cell
++    // envelope below. buildVolumeZeroProof writes these; the CPU proof, band
++    // builder and WebGPU bitmap/index/exit readers consume the same domain.
++    // Full-box pilot proofs justify allocation inside their support envelope;
++    // points outside the new grid retain exact evaluation (not a clamped bit).
++    glm::vec3 gridMin{0.0f}, gridMax{0.0f};
+     // One bit per cell, x fastest, then y, then z: set = D <= 0 everywhere in
+     // that cell (slightly enlarged, see buildVolumeZeroProof). Packed 24 bits
+     // per float so every word is an exact f32 integer in the params buffer.
+--- a/src/Singularity/Screen/WebGPU/SdfWgsl.cpp
++++ b/src/Singularity/Screen/WebGPU/SdfWgsl.cpp
+@@ -4113,6 +4113,14 @@
+     return h.xyz / h.w;
+ }
+ 
++// Kernel bitmap domain follows six padded support bounds. Do not normalize
++// with those support bounds: their padding/envelope is not the certified grid.
++// Writer: attachVolumeZeroProof; CPU builder: buildProofOnGrid; bands at +12.
++fn volumeGridBounds(inst: VolumeInstanceData, dims: vec3<u32>, upper: bool) -> vec3<f32> {
++    let at = inst.zeroProofOffset + (dims.x*dims.y*dims.z + 23u)/24u + 6u + select(0u,3u,upper);
++    return vec3<f32>(P.v[at],P.v[at+1u],P.v[at+2u]);
++}
++
+ // True only where the CPU proved this medium's authored density <= 0 for the
+ // whole cell holding local point p, so evaluating D there cannot add anything.
+ // Absent proof, a point outside the box, or a clear bit: evaluate exactly.
+@@ -4122,7 +4130,9 @@
+     let dims = vec3<u32>(inst.zeroProofDims & 1023u,
+                          (inst.zeroProofDims >> 10u) & 1023u,
+                          (inst.zeroProofDims >> 20u) & 1023u);
+-    let local = (p + inst.halfExtent.xyz) / (2.0 * inst.halfExtent.xyz);
++    let gridLo = volumeGridBounds(inst, dims, false);
++    let gridHi = volumeGridBounds(inst, dims, true);
++    let local = (p - gridLo) / (gridHi - gridLo);
+     if (any(local < vec3<f32>(0.0)) || any(local >= vec3<f32>(1.0))) { return vec4<u32>(0u); }
+     let cell = min(vec3<u32>(local * vec3<f32>(dims)), dims - vec3<u32>(1u));
+     let index = cell.x + dims.x * (cell.y + dims.y * cell.z);
+@@ -4167,7 +4177,8 @@
+     let dims = vec3<u32>(inst.zeroProofDims & 1023u,
+                          (inst.zeroProofDims >> 10u) & 1023u,
+                          (inst.zeroProofDims >> 20u) & 1023u);
+-    let rate = abs(rd) / (2.0 * inst.halfExtent.xyz / vec3<f32>(dims));
++    let span = volumeGridBounds(inst,dims,true) - volumeGridBounds(inst,dims,false);
++    let rate = abs(rd) / (span / vec3<f32>(dims));
+     let axis = axisCode - 1u;
+     return rate[axis] <= 0.5 * max(rate[(axis + 1u) % 3u], rate[(axis + 2u) % 3u]);
+ }
+@@ -4186,8 +4197,9 @@
+     let dims = vec3<u32>(inst.zeroProofDims & 1023u,
+                          (inst.zeroProofDims >> 10u) & 1023u,
+                          (inst.zeroProofDims >> 20u) & 1023u);
+-    let cellSize = 2.0 * inst.halfExtent.xyz / vec3<f32>(dims);
+-    let cellMin = inst.origin.xyz - inst.halfExtent.xyz + vec3<f32>(cell.xyz) * cellSize;
++    let gridLo = volumeGridBounds(inst,dims,false);
++    let cellSize = (volumeGridBounds(inst,dims,true) - gridLo) / vec3<f32>(dims);
++    let cellMin = inst.origin.xyz + gridLo + vec3<f32>(cell.xyz) * cellSize;
+ )WGSL";
+     // Use the existing camera specialization: measured inside work regresses.
+     // Outside, consult bands only when the ray crosses at least two leaf cells
+@@ -4202,7 +4214,7 @@
+         let a = (axis + 1u) % 3u;
+         let b = (axis + 2u) % 3u;
+         let at = inst.zeroProofOffset + (dims.x * dims.y * dims.z + 23u) / 24u +
+-                 6u + 4u * cell[axis];
++                 12u + 4u * cell[axis];
+         let band = vec4<f32>(P.v[at], P.v[at + 1u], P.v[at + 2u], P.v[at + 3u]);
+         let pad = (abs(inst.origin.xyz) + abs(ro) + inst.halfExtent.xyz) * 1e-6;
+         let end = select(cellMin[axis], cellMin[axis] + cellSize[axis], rd[axis] > 0.0);
+--- a/src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
++++ b/src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
+@@ -2558,6 +2558,11 @@
+     const auto& lo = memo.proof.supportMin;
+     const auto& hi = memo.proof.supportMax;
+     params.insert(params.end(), {lo.x, lo.y, lo.z, hi.x, hi.y, hi.z});
++    // Kernel bitmap domain is NOT this padded support envelope. Readers:
++    // volumeZeroProofCell, volumeZeroCellExit and volumeColumnsWorthWalking;
++    // bands start at +12, countUpload below includes both sets of six floats.
++    const auto& gridLo = memo.proof.gridMin; const auto& gridHi = memo.proof.gridMax;
++    params.insert(params.end(), {gridLo.x, gridLo.y, gridLo.z, gridHi.x, gridHi.y, gridHi.z});
+     if (trimProofSupport)
+         for (const auto& band : memo.proof.supportBands)
+             params.insert(params.end(), {band.x, band.y, band.z, band.w});
+@@ -3286,7 +3291,7 @@
+                 const size_t lo = instance.zeroProofOffset;
+                 const uint32_t bandAxis = instance.zeroProofPresent >> 1u;
+                 const uint32_t bandCount = bandAxis ? glm::uvec3(dx, dy, dz)[bandAxis - 1u] : 0u;
+-                const size_t hi = lo + (dx * dy * dz + 23u) / 24u + 6u + 4u * bandCount;
++                const size_t hi = lo + (dx * dy * dz + 23u) / 24u + 12u + 4u * bandCount;
+                 if (std::max(begin, lo) < std::min(end, hi))
+                     proofFloats += std::min(end, hi) - std::max(begin, lo);
+             }
+--- a/src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp
++++ b/src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp
+@@ -445,7 +445,8 @@
+         uint32_t paramOffset = 0;
+         // Zero-density proof location in the params batch (see
+         // volumeZeroProven/volumeSupportInterval in SdfWgsl's volume prefix).
+-        // attachVolumeZeroProof writes bit words followed by six bounds in both lanes;
++        // attachVolumeZeroProof writes bit words, six support bounds, six grid bounds,
++        // then optional bands in both lanes; see its writer and countUpload.
+         // 0 present = none. All are Kernel-derived data, never authored bounds.
+         uint32_t zeroProofOffset = 0;
+         uint32_t zeroProofDims = 0;
+--- a/tests/singularity/volume_zero_proof_test.cpp
++++ b/tests/singularity/volume_zero_proof_test.cpp
+@@ -58,15 +58,15 @@
+ bool bandsContainUnknown(const Rendering::VolumeZeroProof& proof, const glm::vec3& half) {
+     if (proof.supportAxis > 2 || proof.supportBands.size() != proof.dims[proof.supportAxis]) return false;
+     const auto axis = proof.supportAxis, a = (axis + 1) % 3, b = (axis + 2) % 3;
+-    const glm::vec3 size = 2.0f * glm::abs(half) / glm::vec3(proof.dims);
++    const glm::vec3 size = (proof.gridMax - proof.gridMin) / glm::vec3(proof.dims);
+     for (uint32_t z = 0; z < proof.dims.z; ++z)
+     for (uint32_t y = 0; y < proof.dims.y; ++y)
+     for (uint32_t x = 0; x < proof.dims.x; ++x) {
+         if (proof.proven(x, y, z)) continue;
+         const glm::uvec3 c(x, y, z);
+         const auto band = proof.supportBands[c[axis]];
+-        const auto lo = -glm::abs(half) + glm::vec3(c) * size - size * .01f;
+-        const auto hi = -glm::abs(half) + glm::vec3(c + glm::uvec3(1u)) * size + size * .01f;
++        const auto lo = proof.gridMin + glm::vec3(c) * size - size * .01f;
++        const auto hi = proof.gridMin + glm::vec3(c + glm::uvec3(1u)) * size + size * .01f;
+         if (!(band.x <= lo[a] && band.y <= lo[b] && band.z >= hi[a] && band.w >= hi[b])) return false;
+     }
+     return true;
+@@ -85,12 +85,12 @@
+            const glm::vec3& halfExtent, const std::string& label, uint32_t samples) {
+     std::mt19937 rng(20261009u);
+     std::uniform_real_distribution<float> unit(0.0f, 1.0f);
+-    const glm::vec3 cell = 2.0f * halfExtent / glm::vec3(proof.dims);
++    const glm::vec3 cell = (proof.gridMax - proof.gridMin) / glm::vec3(proof.dims);
+     uint32_t tested = 0, positive = 0;
+     for (uint32_t i = 0; i < samples * 8 && tested < samples; ++i) {
+         const glm::uvec3 c(rng() % proof.dims.x, rng() % proof.dims.y, rng() % proof.dims.z);
+         if (!proof.proven(c.x, c.y, c.z)) continue;
+-        const glm::vec3 p = -halfExtent +
++        const glm::vec3 p = proof.gridMin +
+             (glm::vec3(c) + glm::vec3(unit(rng), unit(rng), unit(rng))) * cell;
+         ++tested;
+         if (valueAt(pw, p) > 0.0) ++positive;
+@@ -194,6 +194,10 @@
+                       << proof.totalCells << " cells proven empty, " << proof.rangeEvaluations
+                       << " range evaluations\n";
+             check(proof.any(), node->getIdentifier() + " has provably empty cells");
++            check(glm::all(glm::greaterThanEqual(proof.gridMin,-half)) &&
++                  glm::all(glm::lessThanEqual(proof.gridMax,half)) &&
++                  glm::any(glm::lessThan(proof.gridMax-proof.gridMin,2.0f*half)),
++                  node->getIdentifier() + ": proof allocation is inside its own explicit cropped domain");
+             check(bandsContainUnknown(proof, half), node->getIdentifier() + ": columns enclose EVERY unknown cell");
+             std::cout << "       column axis=" << proof.supportAxis << " count=" << proof.supportBands.size() << '\n';
+             sweep(*node->volumeDensity, proof, half, node->getIdentifier(), 4000);
+--- a/tests/singularity/webgpu_volume_zero_proof_test.cpp
++++ b/tests/singularity/webgpu_volume_zero_proof_test.cpp
+@@ -11,6 +11,7 @@
+ #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
+ #include "Singularity/Screen/AuthorableLight.hpp"
+ #include "Singularity/Screen/VolumeDensity.hpp"
++#include "Singularity/Screen/VolumeZeroProof.hpp"
+ #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
+ #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
+ #include "support/test_harness.hpp"
+@@ -51,6 +52,8 @@
+     uint64_t lit = 0;
+     double ms = 0.0;
+     uint32_t proven = 0;
++    double firstPrepareMs = 0;
++    size_t firstParameterBytes = 0, firstProofBytes = 0;
+     uint32_t firstCompiles = 0;
+     uint32_t firstProofBuilds = 0;   // zero-density proofs built by the first frame after a change
+     uint32_t warmCompiles = 0;
+@@ -171,7 +174,11 @@
+             return {hash, lit};
+         };
+         Frame frame;
++        const auto firstStart=std::chrono::steady_clock::now();
+         drawOnce();
++        frame.firstPrepareMs=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-firstStart).count();
++        frame.firstParameterBytes=renderer.frameStats().volumeParameterBytesUploaded;
++        frame.firstProofBytes=renderer.frameStats().volumeProofBytesUploaded;
+         frame.firstCompiles = renderer.frameStats().volumeProgramCompiles;
+         frame.firstProofBuilds = renderer.frameStats().volumeZeroProofBuilds;
+         sync();   // warm: compile, build proofs
+@@ -261,6 +268,25 @@
+         }
+     }
+ 
++    // Cropped bitmap coordinates are local to each translated medium, not
++    // world coordinates and not padded support bounds. Odd-sized images also
++    // include exact axis-parallel centre rays, which must retain the box path.
++    for (const auto shift : {glm::vec3(100,-50,200),glm::vec3(-1024,32,-512)}) {
++        auto translated=geom::FieldNode::fromJson(zone.at("spatialFields").front());
++        translated->origin+=shift;
++        const auto grid=Rendering::buildVolumeZeroProof(*translated->volumeDensity,glm::abs(translated->scale));
++        const glm::vec3 eyes[]={shift+glm::vec3(0,50,0),translated->origin+grid.gridMin-glm::vec3(.0001f)};
++        const glm::vec3 looks[]={shift+glm::vec3(0,50,100),translated->origin};
++        for(int edge=0;edge<2;++edge) {
++            renderer.setCamera(glm::lookAt(eyes[edge],looks[edge],glm::vec3(0,1,0)),
++                glm::perspectiveZO(glm::radians(60.0f),float(width)/height,.1f,10000.0f),eyes[edge]);
++            const auto exact=render({translated},false,7.25,1);
++            const auto candidate=render({translated},true,7.25,1);
++            check(exact.lit>0 && candidate.proven>0 && exact.rgba==candidate.rgba,
++                  "translated medium/parallel-or-grid-edge sample retains every byte");
++        }
++    }
++
+     // Keep the Piecewise address while changing all-empty density to positive.
+     // Render proof-on first after the edit: an intervening proof-off frame
+     // would evict the old memo and conceal a stale empty-envelope regression.
+@@ -316,6 +342,9 @@
+               "density accepts another medium's density tree");
+         const Frame afterDensity = render({edited}, true, 7.25, 1);
+         const Frame afterDensityExact = render({edited}, false, 7.25, 1);
++        std::printf("EDIT density cpu_ms=%.9f compiles=%u proof_builds=%u parameter_bytes=%zu proof_bytes=%zu\n",
++            afterDensity.firstPrepareMs,afterDensity.firstCompiles,afterDensity.firstProofBuilds,
++            afterDensity.firstParameterBytes,afterDensity.firstProofBytes);
+         check(afterDensity.firstProofBuilds == 1 && afterDensity.rgba == afterDensityExact.rgba,
+               "a density edit rebuilds exactly one proof and stays byte-identical to exact");
+     }

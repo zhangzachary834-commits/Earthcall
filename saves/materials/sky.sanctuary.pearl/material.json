@@ -4,14 +4,14 @@
     "id": "material.sky.sanctuary.pearl",
     "name": "sky.sanctuary.pearl",
     "baseColor": [
-      0.78,
-      0.75,
-      0.7
+      0.82,
+      0.79,
+      0.74
     ],
     "opacity": 1.0,
-    "ambient": 0.11,
-    "diffuse": 0.62,
-    "specular": 0.62,
+    "ambient": 0.18,
+    "diffuse": 0.74,
+    "specular": 0.64,
     "shininess": 88.0,
     "textureResolution": 16
   },

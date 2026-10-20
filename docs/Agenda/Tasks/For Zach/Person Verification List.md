@@ -1,5 +1,25 @@
 # Person Verification List
 
+## 2D Chess Zone (`Chess2D`)
+
+*Gemini 3.8 Flash (the sparkly guy) · session `e1346ea7-7d86-4945-8831-01e3e33dd09a` · 2026-10-16. Commissioned by Zach: "MAKE NOT 3D CHESS MAKE 2D CHESS. MAKE SURE UR WORKING IN THE DEFAULT sync-from-earthcall-main CHECKOUT."*
+
+- [ ] Launch Earthcall WebGPU (`./build/earthcall_webgpu`) and switch to the **`Chess 2D`** Zone (`Chess2D`).
+- [ ] **Visual Layout & Aesthetics:**
+  - Verify the 504×504 rich dark mahogany board frame (`object.chess2d.frame`) with ivory border.
+  - Verify the 64 board squares in alternating warm ivory (`material.chess2d.light_square`) and dark walnut (`material.chess2d.dark_square`).
+  - Verify the 32 pieces centered on their starting ranks: White pieces with ivory finish, Black pieces with dark slate finish, each displaying clear typography glyph labels (`P`, `R`, `N`, `B`, `Q`, `K`).
+  - Verify the capture trays flanking the board: White side tray on the left, Black side tray on the right.
+  - Verify top UI banners: Title banner ("EARTHCALL 2D CHESS") and dynamic Turn HUD banner ("TURN: WHITE").
+- [ ] **Interactive Gameplay & Rule Verification:**
+  - **Selection:** Click White e2 pawn (`piece-white-pawn-4-1`). Verify it highlights and lifts to $zOrder2D=20$.
+  - **Deselection & Switching:** Click another friendly piece (e.g. White b1 knight). Verify knight selects and pawn automatically deselects. Click the knight again to verify it deselects completely.
+  - **Move 1 (White e2-e4):** Click e2 pawn, then click e4 square (`square-4-3`). Verify pawn moves to e4, turn banner changes to "TURN: BLACK".
+  - **Move 2 (Black e7-e5):** Click Black e7 pawn, then click e5 square (`square-4-4`). Verify pawn moves to e5, turn banner flips back to "TURN: WHITE".
+  - **Move 3 (White d2-d4):** Click White d2 pawn, then click d4 square (`square-3-3`). Verify pawn moves to d4, turn banner flips to "TURN: BLACK".
+  - **Move 4 (Capture - Black exd4):** Click Black e5 pawn, then click White d4 pawn. Verify Black pawn advances to d4, and White pawn is captured onto the left capture tray (`x2D=70`), with `onBoard=false`.
+  - **Illegal Move Refusal:** Try moving White a2 pawn forward 3 squares to a5. Verify the move is refused (pawn remains at a2, turn does not advance).
+
 ## 3D Sky-Island Sanctuary (`Sky-Island Sanctuary`)
 
 *Gemini 4 Argon (Spark) · session `argon-sky-island-sanctuary-20261013` · 2026-10-13 — Commissioned from the Sun's prompt: "Create a beautiful 3D sky-island sanctuary inside Earthcall. Make it feel wondrous, peaceful, and architecturally intentional. I want it to feel like a real place a person would want to enter and linger in. That's it."*
@@ -38,6 +58,8 @@
   - Advance to Combat phase and click `card.grizzly_bears_1`: verify it taps ($90^\circ$ rotation), steps forward across the centerline into combat, and deals 2 damage to opponent life (reducing life from 20 to 18).
   - Play Mountain, tap for red mana, cast Lightning Bolt to the stack, and click Resolve: verify Bolt deals 3 damage to opponent (life down to 15) and goes to graveyard.
   - Verify automated state-based actions: lethal damage sends creatures to graveyard, and reducing opponent life to 0 triggers game over.
+
+*Grok 4.7 (Grok Build), session `01a108eb-bfc1-7162-8064-96c491afeb5d`, 2026-10-17 13:24 PDT.* `./build/mtg_zone_native_test` passed 113/113 against this zone: the scripted clicks, the stack, the bolt, and both state-based actions. That does not check the look. What remains for a Person is whether the table, the four cards, the tap, and the stack read as a game under the pointer. The slice is these four cards. The Draw step does not draw, and no second player takes a turn. The arithmetic is witnessed; the feel is not.
 
 ## One-paste Law Line pixel-art editor
 
@@ -1338,6 +1360,25 @@ Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-0
 - [ ] While present, with your body in LawLine, speak `called "Define Click" when clicked then add property @LawLine.meaning.object-clicked to "a Person pressed and released on a being"`, then click anything once so it fires. Next, type `on object-cl` and press Tab: the menu line for `object-clicked` shows your meaning.
 - [ ] Save Zone, restart, and Tab again: the meaning is still there. (Before today, any property added to a Zone vanished at Save Zone.)
 
+## Law Line: authored appearance (2026-10-14)
+
+*Claude Code · Claude Opus 5.5 · session `016Yb6bNBaKzNFWs41sMyMjx` · 2026-10-14. [Record](../Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md#authored-appearance-2026-10-14) · [plan with the proposed theme](../../../plans/LAW_LINE_BEAUTIFUL_TERMINAL_APPEARANCE_2026-10-14.md)*
+
+Nothing is themed yet: you chose to author it yourself. Be present, with your body in LawLine.
+
+- [ ] Speak `called "Gilded Actions" when clicked then add property @LawLine.appearance.role.action.color to gold`, then click the cube. Type `when clicked then s`: the menu's `set`/`scale` and the typed `set` are now gold. In iTerm2/kitty/WezTerm/VS Code it is exact; in Apple Terminal it is the nearest 256-colour gold.
+- [ ] Speak `called "Star Mark" when clicked then add property @LawLine.appearance.chrome.selected.glyph to "❧"` and click. The menu's selection mark is `❧` instead of `▸`.
+- [ ] Speak `called "Sign Gt" when clicked then add property @lexeme.law-line.greater-than.op-gt.appearance.glyph to ">"` and click. Type `when clicked if hp gre`: the menu shows `> greater than`, with the sign in its own column and the rows still aligned.
+- [ ] Save Zone, restart, and type again: all three looks are still there. Before today a Lexeme's look was lost on restart.
+- [ ] Judge it: is it more beautiful, still legible, and coherent? Do you want the "Illuminated Manuscript" theme from the plan patched in, all or in part?
+
+Review-fix acceptance (Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-14):
+
+- [ ] In the rebuilt checkout app's terminal, narrow the window and use emoji/combining glyphs in a test Zone's appearance: menu/help rows should stay aligned, with no split emoji, stray rows or damaged redraw after closing the menu; check color and `NO_COLOR` modes in your usual terminal/font.
+- [ ] In a test Zone, save a Lexeme appearance, change or remove it without saving, then load the older ordinary session: the newer live edit/removal should remain. Explicit Restore unsaved should restore the before-load snapshot's values and absences. Restart durability remains the separate existing check above.
+
+No optional theme was installed by the correction pass. The [audit](../../../audits/LAW_LINE_APPEARANCE_REVIEW_2026-10-14.md) distinguishes rendered-frame/session tests from these native-terminal and Person checks.
+
 ## Creator Console: Zone First Mover Workbench (2026-10-05)
 
 *Gemini · session `c02f9271-25d2-430c-99b6-2a1144eb9c68` · 2026-10-05.*
@@ -1594,3 +1635,63 @@ In the dev build (`earthcall_webgpu`), open the Creator Console → Character ta
 4. **Picking (pre-existing, please judge).** Click just *outside* a visibly thin limb, inside where a 1×1×1 cube would be. If it still selects the limb, the unscaled-raycast seam is real. See [task §Still open 3](../Specific%20Tasks/Architecture%20and%20Ontology/BodyPart_Constitution_As_Explicit_Relation/BodyPart_Constitution_As_Explicit_Relation.md).
 
 **Signed:** Claude Code / Claude Opus 5.5 / session `6ba58694-54b8-4b8f-9788-9a6efec3c7df` / 2026-10-13T18:20-07:00 (PDT).
+
+
+## Separate performance-analysis executable — October 14
+
+Zach requested this outside Earthcall. No scene appearance or movement change is expected. Run `./scripts/earthcall-analyze demo --output /private/tmp/<new-directory>` and open `<new-directory>/analysis/report.html`; the input data must visibly say **SYNTHETIC DEMONSTRATION**, with timings, trace spans, complexity estimates and gaps kept separate.
+
+- [ ] Check whether the report’s search box (try `wait_surface`), context disclosure and separate evidence sections make it easy to see what is known and which measurement is missing. This is tool usefulness review; the synthetic timings are not your FPS and the historical imports are not new captures.
+
+[Usage and remaining live-capture work](../Specific%20Tasks/Performance%20and%20Runtime/Standalone_Performance_Analysis/Standalone_Performance_Analysis.md); [implementation verification](../../../audits/STANDALONE_PERFORMANCE_ANALYSIS_2026-10-14.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-14T22:37:18.690115-07:00 (PDT).
+
+
+### Planned demand/support stages — October 15
+
+The [implementation plan](../../../plans/VOLUME_DEMAND_AND_SUPPORT_IMPLEMENTATION_2026-10-15.md) changes no renderer behavior today. Earlier AD-30–36 await your verdicts; no later decision is pre-approved. After a relevant stage passes native correctness and is retained:
+
+- [ ] In Sky-Island Sanctuary, confirm the cloud sea and halo keep their intended continuous color, glow and boundaries while moving through them; the first demand candidate targets this workload and does not establish an aurora gain.
+- [ ] Repeat the existing Northern Veil usual-window movement/appearance check on the exact retained build: no new jaggedness, flicker or disappearing curtains, with recorded physical framebuffer and warmed movement p95 <=33.3 ms before claiming the 30 FPS milestone. If you approve semantic changes, compare against their explicitly selected intent/reference.
+
+These are future acceptance checks, not claims that a new candidate is ready to run. Existing checks and prior observations remain intact.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T03:21:44.030398-07:00 (PDT).
+
+### Power correction after rejected volume trials — October 15
+
+The checkout WebGPU app is rebuilt with [route-aware power lowering](../../../audits/VOLUME_POWER_AND_OPTIMIZATION_TRIALS_2026-10-15.md); none of the three failed performance candidates remains. No app installation or save edit was performed, and this pass promises no new FPS gain.
+
+- [ ] When next running the rebuilt checkout app, revisit Northern Veil and Sky-Island Sanctuary at your usual framebuffer. Confirm the auroras/clouds keep continuous appearance while moving, with no new jaggedness, flicker or disappearing regions. Existing movement/p95 acceptance stays open; fixed-view captures do not establish it.
+- [ ] If you use authored powers with tiny bases, negative exponents or negative noninteger bases, confirm the result reflects your intended existing route: MathNode negative/noninteger returns zero, while Term/RPN preserve their distinct domain behavior. CPU-double/native and subnormal equality is not promised by this repair.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T05:56:25.134858-07:00 (PDT).
+
+
+### Euclidean host analysis rung — October 15
+
+[This mathematical analysis implementation](../../../audits/VOLUME_EUCLIDEAN_RANGE_2026-10-15.md) adds no new visible app behavior and claims no FPS gain. Existing Northern Veil/Sanctuary appearance, movement and usual-framebuffer acceptance checks remain open; there is no additional control to click or new performance benefit for Zach to verify from this API alone. Native proof consumers retain their prior behavior.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T10:45:48.355899-07:00 (PDT).
+
+
+### Support-allocation pass — retained renderer restored
+
+[All three tested allocation/traversal variants](../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md) preserve the finite captures but regress in measured cost, so none remains enabled. The checkout app is rebuilt with the prior renderer; the installed app and live saves were untouched. This pass adds no new visual control or promised FPS improvement to inspect. Existing Northern Veil/Sanctuary continuous appearance, usual-framebuffer movement and 30 FPS acceptance checks remain open; the rejected variants do not create a new Person verification obligation.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).
+
+## Property-only direct Screen sources (2026-10-17)
+
+Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-17T16:27:11-07:00. Zach required the pipeline to work with added Properties
+on a Singular/Object and no ShapeKind specification. [Native audit](../../../audits/SINGULAR_SCREEN_PROPERTY_PIPELINE_2026-10-17.md).
+
+- [ ] Inspect the retained [plain Object bands](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-bands.png) and [edited bands](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-edited.png): two separated gradients over blue, with their blue component changing after a Law edit. The corresponding Singular captures should match. At native resolution, [the pixel replacement](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-pixel.png) has exactly one red pixel at column 7, row 9 over blue. Confirm this property-bearer authoring route meets your intended meaning. These are isolated production captures; no demo was installed in an inhabited Zone, and automatic composition of many sources remains open.
+
+## Sanctum of Beginnings cleared of test shapes (2026-10-17)
+
+Claude Code / Claude Opus 5.5 / session `8fa01418-49d7-4bfd-8a69-22d286eb6b8b` / 2026-10-17T19:29-07:00. At Zach's request ("all of them were literally just me spamming shapes to test"), 136 shape objects and their per-object materials were removed from `zones/Sanctum of Beginnings/zone.ecform` in the data home, plus the 135 present in the stale `zone.json`. Committed in the data home. The originals are in `backups/Sanctum of Beginnings.bak.20261017/`.
+
+- [ ] Enter Sanctum of Beginnings. The pile of default shapes at the spawn point (0, 0.5, 0) should be gone, along with the trail of cubes near (−0.2…−3.3, 2.2–2.8, 5–10) and the Sonnet test cube at the origin. **Luna's First Star** (near (−0.1, 1.35, 1.25)) and the Sonnet gift spheres (near (−9.6, 5.2, −6.1)) were kept on purpose. Say if you want those gone too. Lexemes, laws and the zone's spatial root are unchanged.

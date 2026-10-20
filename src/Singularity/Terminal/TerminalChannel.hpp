@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <deque>
+#include <map>
 #include <optional>
 #include <functional>
 #include <string>
@@ -275,6 +276,10 @@ private:
     bool _color = true;
     bool _hints = true;
     bool _relayLogs = true;
+    // How many colours this terminal shows: "truecolor" or "256" (sensed from
+    // COLORTERM at birth; writable, for a terminal that lies). Authored
+    // `appearance.color` values are lowered to whichever this says.
+    std::string _colorDepth = "256";
 
     // Below the Kernel — machine mechanism, not world state (named per
     // NO_BLACK_BOX §5): the queue between libedit's callback and the frame,
@@ -308,6 +313,19 @@ private:
     std::vector<std::string> _pendingTargets;
     std::string _deletingId;
     std::string _deletingName;
+    // Derived cache (DERIVED_STATE_LEDGER), not world state: every authored
+    // `appearance.*` property of the Lexemes and of the line's and body's
+    // Zones, lowered to SGR at `_colorDepth`, keyed as LineEditor::look asks
+    // ("lexeme.<id>", "role.<role>", "chrome.<element>"). Its sources are
+    // registered properties; it is re-derived once per frame (and on a depth
+    // change), and a changed result redraws -- so a Law writing a Lexeme's
+    // look is seen on the next frame without a keystroke.
+    std::map<std::string, LineEditor::Look> _looks;
+    std::uint64_t _looksFrame = 0;
+    std::string _looksDepth;
+    bool _looksChanged = false;
+    bool refreshLooks();
+    LineEditor::Look lookFor(const std::string& key) const;
 };
 
 } // namespace Terminal

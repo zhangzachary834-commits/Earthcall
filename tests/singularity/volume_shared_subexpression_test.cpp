@@ -204,11 +204,44 @@ void scopeWitnesses() {
 
 }
 
+void powerRouteWitnesses() {
+    auto power = std::make_shared<OntoMath::MathNode>();
+    power->op = OntoMath::MathNode::Op::Pow;
+    power->children.push_back(variable("x")); power->children.push_back(variable("y"));
+    const auto math = power->evaluate({{"x",-2.0},{"y",double(float(2.00005))}});
+    check(math && std::get<double>(*math) == 0,
+          "CPU MathNode negative noninteger power has its existing zero rule");
+    OntoMath::Term term(1); term.factors["x"] = double(float(2.00005));
+    const auto raw = term.evaluate({{"x",-2.0}});
+    auto rpn = geom::makeImplicit("x^y");
+    rpn.mathNode.reset(); rpn.piecewise.reset(); rpn.rpn = geom::compileExpr("x^y");
+    check(raw && std::isnan(*raw) && std::isnan(geom::evalSdf(rpn,glm::vec3(-2,float(2.00005),0))),
+          "CPU Term and RPN preserve their distinct std::pow domain behavior");
+    const auto pw = expression(power);
+    const auto mathProgram = sdfwgsl::compileVolume(&pw);
+    const auto rpnProgram = sdfwgsl::compile(rpn);
+    const auto leaf = std::make_shared<OntoMath::MathNode>();
+    leaf->op = OntoMath::MathNode::Op::ScalarLeaf; leaf->scalarForm.terms.push_back(term);
+    const auto termProgram = sdfwgsl::compile(geom::makeImplicit(leaf));
+    check(mathProgram.ok && rpnProgram.ok && termProgram.ok &&
+          function(mathProgram.wgsl,"volumeDensityEval").find("ontoPow(") != std::string::npos &&
+          function(rpnProgram.wgsl,"sdfEval").find("ontoRawPow(") != std::string::npos &&
+          function(termProgram.wgsl,"sdfEval").find("ontoRawPow(") != std::string::npos,
+          "production codegen routes MathNode and Term/RPN to their own power contract");
+    const auto tiny = power->evaluate({{"x",double(float(1e-13))},{"y",-1.0}});
+    check(tiny && std::get<double>(*tiny) > 1e12,
+          "CPU tiny nonzero base is evaluated rather than epsilon-clamped");
+    auto missing = std::make_shared<OntoMath::MathNode>(); missing->op = OntoMath::MathNode::Op::Pow;
+    const auto malformed = expression(missing);
+    check(!sdfwgsl::compileVolume(&malformed).ok,
+          "malformed power refuses admission without dereferencing missing children");
+}
 } // namespace
 
 int main() {
     std::cout << "Starting volume_shared_subexpression_test...\n";
     scopeWitnesses();
+    powerRouteWitnesses();
     const std::string path = TestSupport::resolveRealWorldPath("saves/zones/Northern Veil/zone.ecform");
     if (!std::filesystem::exists(path)) {
         std::cout << "SKIP: Northern Veil save not present\n";

@@ -2410,7 +2410,21 @@ std::optional<Interval> classicPerlin3LatticeRange(
 
 } // namespace
 
-std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::string, RangeValue>& vars) const {
+// Kernel analysis context is invocation-local and never persisted. Keep the
+// legacy consumer entrypoint separate: adding a host theorem must not silently
+// grant the renderer permission to omit work. See VOLUME_EUCLIDEAN_RANGE_2026-10-15.
+static std::optional<MathNode::RangeValue> evalMathRange(
+    const MathNode& node, const std::map<std::string, MathNode::RangeValue>& vars,
+    bool euclidean) {
+    using RangeValue = MathNode::RangeValue;
+    using Op = MathNode::Op;
+    const auto op = node.op;
+    const auto& children = node.children;
+    const auto& scalarForm = node.scalarForm;
+    const auto& variableName = node.variableName;
+    const auto& stringArg = node.stringArg;
+    if (euclidean && std::any_of(children.begin(), children.end(),
+                                [](const auto& child) { return !child; })) return std::nullopt;
     auto retInf = []() { return RangeValue::makeScalar(Interval::infinite()); };
     auto retVecInf = []() { return RangeValue::makeVector(Interval::infinite(), Interval::infinite(), Interval::infinite()); };
     
@@ -2434,9 +2448,9 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::VectorConstruct: {
             if (children.size() != 3) return std::nullopt;
-            auto x = children[0]->evalRange(vars);
-            auto y = children[1]->evalRange(vars);
-            auto z = children[2]->evalRange(vars);
+            auto x = evalMathRange(*children[0], vars, euclidean);
+            auto y = evalMathRange(*children[1], vars, euclidean);
+            auto z = evalMathRange(*children[2], vars, euclidean);
             if (!x || !y || !z) return std::nullopt;
             // Runtime VectorConstruct coerces three SCALARS. Reading the
             // default scalar slot of a vector RangeValue would fabricate a
@@ -2452,7 +2466,7 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::Component: {
             if (children.size() != 1) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
             if (!a || a->kind != ValueKind::Vector) return std::nullopt;
             if (stringArg == "x") return RangeValue::makeScalar(a->vec[0]);
             if (stringArg == "y") return RangeValue::makeScalar(a->vec[1]);
@@ -2461,8 +2475,8 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::Add: {
             if (children.size() != 2) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
-            auto b = children[1]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
+            auto b = evalMathRange(*children[1], vars, euclidean);
             if (!a || !b) return std::nullopt;
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) return RangeValue::makeScalar(a->scalar + b->scalar);
             if (a->kind == ValueKind::Vector && b->kind == ValueKind::Vector) return RangeValue::makeVector(a->vec[0] + b->vec[0], a->vec[1] + b->vec[1], a->vec[2] + b->vec[2]);
@@ -2470,8 +2484,8 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::Sub: {
             if (children.size() != 2) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
-            auto b = children[1]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
+            auto b = evalMathRange(*children[1], vars, euclidean);
             if (!a || !b) return std::nullopt;
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) return RangeValue::makeScalar(a->scalar - b->scalar);
             if (a->kind == ValueKind::Vector && b->kind == ValueKind::Vector) return RangeValue::makeVector(a->vec[0] - b->vec[0], a->vec[1] - b->vec[1], a->vec[2] - b->vec[2]);
@@ -2479,8 +2493,8 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::Scale: {
             if (children.size() != 2) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
-            auto b = children[1]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
+            auto b = evalMathRange(*children[1], vars, euclidean);
             if (!a || !b) return std::nullopt;
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) return RangeValue::makeScalar(a->scalar * b->scalar);
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Vector) return RangeValue::makeVector(a->scalar * b->vec[0], a->scalar * b->vec[1], a->scalar * b->vec[2]);
@@ -2489,8 +2503,8 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::Div: {
             if (children.size() != 2) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
-            auto b = children[1]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
+            auto b = evalMathRange(*children[1], vars, euclidean);
             if (!a || !b) return std::nullopt;
             if (b->kind != ValueKind::Scalar) return std::nullopt;
 
@@ -2515,9 +2529,53 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
                                               a->vec[2] / b->scalar);
             return std::nullopt;
         }
+        case Op::Length:
+        case Op::Distance: {
+            // Only the explicit analysis entrypoint admits these new rules.
+            // Scalar overloads are not invented: runtime requires vec3 inputs.
+            if (!euclidean) return retInf();
+            const size_t arity = op == Op::Length ? 1 : 2;
+            if (children.size() != arity) return std::nullopt;
+            auto a = evalMathRange(*children[0], vars, true);
+            if (!a || a->kind != ValueKind::Vector) return std::nullopt;
+            auto valid = [](Interval i) { return i.bounded() && !i.empty(); };
+            Interval components[3] = {a->vec[0], a->vec[1], a->vec[2]};
+            if (op == Op::Distance) {
+                auto b = evalMathRange(*children[1], vars, true);
+                if (!b || b->kind != ValueKind::Vector) return std::nullopt;
+                for (int i = 0; i < 3; ++i) {
+                    if (!valid(components[i]) || !valid(b->vec[i])) return std::nullopt;
+                    components[i] = components[i] - b->vec[i];
+                }
+            }
+            Interval sum(0.0f);
+            for (const auto component : components) {
+                if (!valid(component)) return std::nullopt;
+                const float lower = component.lo <= 0.0f && component.hi >= 0.0f
+                    ? 0.0f : std::min(std::abs(component.lo), std::abs(component.hi));
+                const float upper = std::max(std::abs(component.lo), std::abs(component.hi));
+                // Squaring one variable is dependency-aware: [-1,1]^2 is
+                // [0,1], not [-1,1]. Widen EACH multiplication and addition,
+                // not just the final sqrt. This encloses host float dot/length
+                // as well as the ideal norm of already-enclosed components.
+                const auto square = upper == 0.0f ? Interval(0.0f)
+                    : Interval::outward(lower * lower, upper * upper);
+                if (!valid(square)) return std::nullopt;
+                sum = sum + Interval(std::max(0.0f, square.lo), square.hi);
+                sum.lo = std::max(0.0f, sum.lo);
+                // A finite mathematical norm does not license an overflowing
+                // host dot product. Refuse instead of excluding CPU infinity.
+                if (!valid(sum)) return std::nullopt;
+            }
+            if (sum.exactZero()) return RangeValue::makeScalar(sum);
+            auto norm = Interval::outward(std::sqrt(sum.lo), std::sqrt(sum.hi));
+            norm.lo = std::max(0.0f, norm.lo);
+            if (!valid(norm)) return std::nullopt;
+            return RangeValue::makeScalar(norm);
+        }
         case Op::Abs: {
             if (children.size() != 1) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
             if (!a) return std::nullopt;
             auto absInt = [](Interval i) {
                 float minAbs = (i.lo <= 0.0f && i.hi >= 0.0f) ? 0.0f : std::min(std::abs(i.lo), std::abs(i.hi));
@@ -2530,8 +2588,8 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::Union: {
             if (children.size() != 2) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
-            auto b = children[1]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
+            auto b = evalMathRange(*children[1], vars, euclidean);
             if (!a || !b) return std::nullopt;
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) {
                 return RangeValue::makeScalar(Interval(std::min(a->scalar.lo, b->scalar.lo), std::min(a->scalar.hi, b->scalar.hi)));
@@ -2540,8 +2598,8 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::Intersection: {
             if (children.size() != 2) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
-            auto b = children[1]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
+            auto b = evalMathRange(*children[1], vars, euclidean);
             if (!a || !b) return std::nullopt;
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) {
                 return RangeValue::makeScalar(Interval(std::max(a->scalar.lo, b->scalar.lo), std::max(a->scalar.hi, b->scalar.hi)));
@@ -2550,8 +2608,8 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::Difference: {
             if (children.size() != 2) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
-            auto b = children[1]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
+            auto b = evalMathRange(*children[1], vars, euclidean);
             if (!a || !b) return std::nullopt;
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) {
                 return RangeValue::makeScalar(Interval(std::max(a->scalar.lo, -b->scalar.hi), std::max(a->scalar.hi, -b->scalar.lo)));
@@ -2581,9 +2639,9 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
             // Without this case every clamped envelope bounded to [-inf, inf],
             // and no zero-set proof could see through one.
             if (children.size() != 3) return std::nullopt;
-            auto v = children[0]->evalRange(vars);
-            auto l = children[1]->evalRange(vars);
-            auto h = children[2]->evalRange(vars);
+            auto v = evalMathRange(*children[0], vars, euclidean);
+            auto l = evalMathRange(*children[1], vars, euclidean);
+            auto h = evalMathRange(*children[2], vars, euclidean);
             if (!v || !l || !h) return std::nullopt;
             auto component = [](const RangeValue& r, int axis) {
                 return r.kind == ValueKind::Vector ? r.vec[axis] : r.scalar;
@@ -2620,7 +2678,7 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
             if (children.size() != 1 || !children[0]) {
                 return RangeValue::makeScalar(global);
             }
-            auto arg = children[0]->evalRange(vars);
+            auto arg = evalMathRange(*children[0], vars, euclidean);
             if (!arg || arg->kind != ValueKind::Vector) {
                 return RangeValue::makeScalar(global);
             }
@@ -2671,6 +2729,16 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         default:
             return retInf();
     }
+}
+
+std::optional<MathNode::RangeValue> MathNode::evalRange(
+    const std::map<std::string, RangeValue>& vars) const {
+    return evalMathRange(*this, vars, false);
+}
+
+std::optional<MathNode::RangeValue> MathNode::evalMathematicalRange(
+    const std::map<std::string, RangeValue>& vars) const {
+    return evalMathRange(*this, vars, true);
 }
 
 nlohmann::json MathNode::toJson() const {

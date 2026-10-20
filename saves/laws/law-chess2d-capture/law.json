@@ -1,0 +1,267 @@
+{
+    "authors": [
+        "Zach",
+        "Gemini"
+    ],
+    "identifier": "law-chess2d-capture",
+    "injected_by": "Gemini 3.8 Flash, 2026-10-16 2D Chess Zone authoring",
+    "law": {
+        "id": "law-chess2d-capture",
+        "name": "capture-enemy-piece",
+        "enabled": true,
+        "activation": 0,
+        "scope": 1,
+        "authority": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+            "Zach",
+            "Gemini"
+        ],
+        "conditionModel": {
+            "kind": 3,
+            "children": [
+                {
+                    "kind": 2,
+                    "relationType": "instance-of",
+                    "otherId": "category.chess2d.piece"
+                },
+                {
+                    "kind": 0,
+                    "path": "onBoard",
+                    "op": 0,
+                    "operand": {
+                        "t": "bool",
+                        "v": true
+                    }
+                },
+                {
+                    "kind": 0,
+                    "path": "gridX",
+                    "op": 0,
+                    "operandPath": "@state.chess2d.targetX"
+                },
+                {
+                    "kind": 0,
+                    "path": "gridY",
+                    "op": 0,
+                    "operandPath": "@state.chess2d.targetY"
+                },
+                {
+                    "kind": 0,
+                    "path": "chessColor",
+                    "op": 1,
+                    "operandPath": "@event.subject.chessColor"
+                }
+            ]
+        },
+        "actionModel": {
+            "kind": 5,
+            "children": [
+                {
+                    "kind": 0,
+                    "path": "onBoard",
+                    "operand": {
+                        "t": "bool",
+                        "v": false
+                    }
+                },
+                {
+                    "kind": 0,
+                    "path": "gridX",
+                    "operand": {
+                        "t": "int",
+                        "v": -1
+                    }
+                },
+                {
+                    "kind": 0,
+                    "path": "gridY",
+                    "operand": {
+                        "t": "int",
+                        "v": -1
+                    }
+                },
+                {
+                    "kind": 0,
+                    "path": "zOrder2D",
+                    "operand": {
+                        "t": "int",
+                        "v": 5
+                    }
+                },
+                {
+                    "kind": 0,
+                    "path": "shape.width2D",
+                    "operand": {
+                        "t": "float",
+                        "v": 36.0
+                    }
+                },
+                {
+                    "kind": 0,
+                    "path": "shape.height2D",
+                    "operand": {
+                        "t": "float",
+                        "v": 36.0
+                    }
+                },
+                {
+                    "kind": 8,
+                    "path": "x2D",
+                    "bindings": {
+                        "c": "chessColor"
+                    },
+                    "function": {
+                        "input": "x",
+                        "pieces": [
+                            {
+                                "mathNode": {
+                                    "op": 0,
+                                    "scalarForm": {
+                                        "terms": [
+                                            {
+                                                "c": 70.0,
+                                                "factors": {}
+                                            },
+                                            {
+                                                "c": 584.0,
+                                                "factors": {
+                                                    "c": 1.0
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "kind": 8,
+                    "path": "y2D",
+                    "bindings": {
+                        "c": "chessColor",
+                        "sw": "@state.chess2d.nextWhiteCapturedSlot",
+                        "sb": "@state.chess2d.nextBlackCapturedSlot"
+                    },
+                    "function": {
+                        "input": "x",
+                        "pieces": [
+                            {
+                                "mathNode": {
+                                    "op": 0,
+                                    "scalarForm": {
+                                        "terms": [
+                                            {
+                                                "c": 110.0,
+                                                "factors": {}
+                                            },
+                                            {
+                                                "c": 26.0,
+                                                "factors": {
+                                                    "sw": 1.0
+                                                }
+                                            },
+                                            {
+                                                "c": -26.0,
+                                                "factors": {
+                                                    "c": 1.0,
+                                                    "sw": 1.0
+                                                }
+                                            },
+                                            {
+                                                "c": 26.0,
+                                                "factors": {
+                                                    "c": 1.0,
+                                                    "sb": 1.0
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "kind": 8,
+                    "path": "@state.chess2d.nextWhiteCapturedSlot",
+                    "bindings": {
+                        "sw": "@state.chess2d.nextWhiteCapturedSlot",
+                        "c": "chessColor"
+                    },
+                    "function": {
+                        "input": "x",
+                        "pieces": [
+                            {
+                                "mathNode": {
+                                    "op": 0,
+                                    "scalarForm": {
+                                        "terms": [
+                                            {
+                                                "c": 1.0,
+                                                "factors": {
+                                                    "sw": 1.0
+                                                }
+                                            },
+                                            {
+                                                "c": 1.0,
+                                                "factors": {}
+                                            },
+                                            {
+                                                "c": -1.0,
+                                                "factors": {
+                                                    "c": 1.0
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "kind": 8,
+                    "path": "@state.chess2d.nextBlackCapturedSlot",
+                    "bindings": {
+                        "sb": "@state.chess2d.nextBlackCapturedSlot",
+                        "c": "chessColor"
+                    },
+                    "function": {
+                        "input": "x",
+                        "pieces": [
+                            {
+                                "mathNode": {
+                                    "op": 0,
+                                    "scalarForm": {
+                                        "terms": [
+                                            {
+                                                "c": 1.0,
+                                                "factors": {
+                                                    "sb": 1.0
+                                                }
+                                            },
+                                            {
+                                                "c": 1.0,
+                                                "factors": {
+                                                    "c": 1.0
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "targets": []
+    },
+    "triggers": [
+        "enemy-captured"
+    ]
+}

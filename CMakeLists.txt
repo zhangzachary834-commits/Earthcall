@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 if(APPLE)
-    project(Earthcall VERSION 1.0 LANGUAGES CXX OBJCXX)
+    project(Earthcall VERSION 1.0 LANGUAGES C CXX OBJCXX)
 else()
-    project(Earthcall VERSION 1.0 LANGUAGES CXX)
+    project(Earthcall VERSION 1.0 LANGUAGES C CXX)
 endif()
 
 set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/local_deps" CACHE PATH "" FORCE)
@@ -191,8 +191,20 @@ if(APPLE)
     set_source_files_properties(src/Singularity/Foreign/Web/DomMirrorBridge.cpp PROPERTIES LANGUAGE OBJCXX)
 endif()
 
+# Unicode decoding/segmentation at the terminal modality boundary. Pinned,
+# vendored source keeps builds offline and independent of platform locales.
+add_library(earthcall_utf8proc STATIC third_party/utf8proc/utf8proc.c)
+target_include_directories(earthcall_utf8proc PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party/utf8proc)
+target_compile_definitions(earthcall_utf8proc PRIVATE UTF8PROC_STATIC)
+set_property(SOURCE src/Singularity/Terminal/LineEditor.cpp APPEND PROPERTY
+    INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/third_party/utf8proc)
+set_property(SOURCE src/Singularity/Terminal/LineEditor.cpp APPEND PROPERTY
+    COMPILE_DEFINITIONS UTF8PROC_STATIC)
+set_target_properties(earthcall_utf8proc PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED YES)
+
 # Object library for shared code
 add_library(earthcall_core OBJECT ${SRC_FILES} ${IMGUI_SOURCES})
+target_link_libraries(earthcall_core PUBLIC earthcall_utf8proc)
 if(NOT EMSCRIPTEN AND OpenGL_FOUND)
     target_link_libraries(earthcall_core PUBLIC OpenGL::GL)
 else()
@@ -276,6 +288,7 @@ if(NOT EMSCRIPTEN)
     endif()
 
     add_executable(earthcall_webgpu src/entry.cpp ${WEBGPU_APP_SOURCES} ${IMGUI_WEBGPU_SOURCES})
+    target_link_libraries(earthcall_webgpu PRIVATE earthcall_utf8proc)
     target_include_directories(earthcall_webgpu PRIVATE ${WGPU_NATIVE_DIR}/include)
     target_compile_definitions(earthcall_webgpu PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU GLFW_INCLUDE_NONE)
 
@@ -366,7 +379,8 @@ if(NOT EMSCRIPTEN)
                  ${TEST_NAME} STREQUAL "veiled_hour_test" OR
             ${TEST_NAME} STREQUAL "sky_island_sanctuary_test" OR
                  ${TEST_NAME} STREQUAL "mcp_authoring_surfaces_test" OR
-                 ${TEST_NAME} STREQUAL "volume_shared_subexpression_test")
+                 ${TEST_NAME} STREQUAL "volume_shared_subexpression_test" OR
+                 ${TEST_NAME} STREQUAL "ams_living_ink_substrate_test")
             # Pure codegen witness: it exercises SdfWgsl::compile/collectParams
             # but never creates a WebGPU device. Link only the compiler source so
             # the test stays runnable on CPU-only CI instead of masquerading as

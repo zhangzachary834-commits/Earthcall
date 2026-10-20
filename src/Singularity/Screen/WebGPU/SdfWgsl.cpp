@@ -85,8 +85,48 @@ struct SdfInstanceData {
 var<private> g_instIdx: u32;
 )WGSL";
 
+// Kernel mathematical lowering shared by every shader prefix. MathNode Pow's
+// negative/noninteger zero rule differs from Term and legacy RPN std::pow.
+// Preserve those existing routes; no epsilon domain or finite infinity sentinel.
+// Codex / GPT-6.1 Sol / 01a122d7 / 2026-10-15; Power_Lowering_Parity task.
+const char* kPowerFunctions = R"WGSL(
+fn ontoRawPow(base: f32, exp: f32) -> f32 {
+    let baseBits = bitcast<u32>(base);
+    let baseAbsBits = baseBits & 0x7fffffffu;
+    let expBits = bitcast<u32>(exp);
+    let expAbsBits = expBits & 0x7fffffffu;
+    if (expAbsBits == 0u || baseBits == 0x3f800000u) { return 1.0; }
+    if (expAbsBits > 0x7f800000u) { return bitcast<f32>(0x7fc00000u); }
+    if (expAbsBits == 0x7f800000u) {
+        if (baseAbsBits == 0x3f800000u) { return 1.0; }
+        if (baseAbsBits > 0x7f800000u) { return bitcast<f32>(0x7fc00000u); }
+        let grows = (baseAbsBits > 0x3f800000u) == ((expBits & 0x80000000u) == 0u);
+        return bitcast<f32>(select(0u, 0x7f800000u, grows));
+    }
+    if (baseAbsBits > 0x7f800000u) { return bitcast<f32>(0x7fc00000u); }
+    let integral = floor(exp) == exp;
+    let odd = integral && floor(exp * 0.5) != exp * 0.5;
+    let sign = select(0u, 0x80000000u, (baseBits & 0x80000000u) != 0u && odd);
+    if (baseAbsBits == 0u || baseAbsBits == 0x7f800000u) {
+        let infinite = (baseAbsBits == 0u) == (exp < 0.0);
+        return bitcast<f32>(select(0u, 0x7f800000u, infinite) | sign);
+    }
+    if ((baseBits & 0x80000000u) != 0u && !integral) { return bitcast<f32>(0x7fc00000u); }
+    let magnitude = pow(abs(base), exp);
+    return bitcast<f32>(bitcast<u32>(magnitude) | sign);
+}
+fn ontoPow(base: f32, exp: f32) -> f32 {
+    // Matches CPU MathNode::Op::Pow, including its exact integrality predicate.
+    if (base < 0.0 && floor(exp) != exp) { return 0.0; }
+    return ontoRawPow(base, exp);
+}
+fn ontoPow3(base: vec3<f32>, exp: f32) -> vec3<f32> {
+    return vec3<f32>(ontoPow(base.x, exp), ontoPow(base.y, exp), ontoPow(base.z, exp));
+}
+)WGSL";
+
 // Pure mathematical library shared by surface and direct Screen compilation.
-const char* kPrimitives = R"WGSL(
+const std::string kPrimitives = std::string(kPowerFunctions) + R"WGSL(
 fn dot2(v: vec2<f32>) -> f32 { return dot(v, v); }
 
 fn sdSphere(p: vec3<f32>, r: f32) -> f32 { return length(p) - r; }
@@ -425,7 +465,7 @@ std::string emitRpn(const std::vector<geom::SdfToken>& rpn, Emit& e,
             case K::Sub: { auto b = pop(); auto a = pop(); st.push_back("((" + a + ") - (" + b + "))"); break; }
             case K::Mul: { auto b = pop(); auto a = pop(); st.push_back("((" + a + ") * (" + b + "))"); break; }
             case K::Div: { auto b = pop(); auto a = pop(); st.push_back("((" + a + ") / (" + b + "))"); break; }
-            case K::Pow: { auto b = pop(); auto a = pop(); st.push_back("pow((" + a + "), (" + b + "))"); break; }
+            case K::Pow: { auto b = pop(); auto a = pop(); st.push_back("ontoRawPow((" + a + "), (" + b + "))"); break; }
             case K::Sin:  { auto a = pop(); st.push_back("sin("  + a + ")"); break; }
             case K::Cos:  { auto a = pop(); st.push_back("cos("  + a + ")"); break; }
             case K::Tan:  { auto a = pop(); st.push_back("tan("  + a + ")"); break; }
@@ -523,7 +563,7 @@ std::string emitScalarForm(const OntoMath::ScalarForm& sf, Emit& e, const std::s
         for (const auto& [var, exp] : term.factors) {
             std::string wgslVar = pointComponent(var, e, pt);
             if (exp == 1.0) termStr += " * " + wgslVar;
-            else termStr += " * pow(" + wgslVar + ", " + e.param(exp) + ")";
+            else termStr += " * ontoRawPow(" + wgslVar + ", " + e.param(exp) + ")";
         }
         for (const auto& tr : term.trans) {
             std::string wgslVar = pointComponent(tr.variable, e, pt);
@@ -711,7 +751,26 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
             const std::string b = arg(1);
             return "select(0.0, ((" + arg(0) + ") / (" + b + ")), abs(" + b + ") >= " + wgslLiteral(OntoMath::kDegenerateDivisor) + ")";
         }
-        case Op::Pow:   return "pow((" + arg(0) + "), (" + arg(1) + "))";
+        case Op::Pow: {
+            if (node.children.size() != 2 || !node.children[0] || !node.children[1]) {
+                e.refuse("Pow is missing an argument");
+                return "0.0";
+            }
+            // Type admission already checks the operands. Vector MathNode Pow
+            // is componentwise on CPU; WGSL user functions cannot overload.
+            OntoMath::TypeEnv env;
+            std::set<std::string> deps;
+            node.children[0]->collectDependencies(deps);
+            for (const auto& name : deps) {
+                const bool vector = name == "p" || name == "wi" || name == "wo" ||
+                                    name == "omega" || name == "n";
+                env[name] = vector ? OntoMath::ValueKind::Vector : OntoMath::ValueKind::Scalar;
+            }
+            const auto type = node.children[0]->typeOf(env, "pow.base", false);
+            const std::string fn = type.success && type.kind == OntoMath::ValueKind::Vector
+                ? "ontoPow3" : "ontoPow";
+            return fn + "((" + arg(0) + "), (" + arg(1) + "))";
+        }
         case Op::Abs:   return "abs(" + arg(0) + ")";
         case Op::Clamp: return "clamp((" + arg(0) + "), (" + arg(1) + "), (" + arg(2) + "))";
         case Op::Sqrt:  return "sqrt(max((" + arg(0) + "), 0.0))";
@@ -3895,8 +3954,9 @@ fn cnoise3(P: vec3<f32>) -> f32 {
 }
 )WGSL";
 
-const char* kSdfPrimitivesMath = R"WGSL(
+const std::string kSdfPrimitivesMath = std::string(kPowerFunctions) + R"WGSL(
 fn dot2(v: vec2<f32>) -> f32 { return dot(v, v); }
+
 
 fn sdSphere(p: vec3<f32>, r: f32) -> f32 { return length(p) - r; }
 
