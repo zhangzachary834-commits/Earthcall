@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
 
     // Warm foreground state without measuring it. The adapter's own timeline
     // advances too when ON, just as it would in a live 60 Hz session.
-    for (int i = 0; i < 30; ++i) {
+    for (int i = 0; i < 15; ++i) {
         zone->update(dt);
         zone->applyFormationRelations();
         h.worldTime += dt;
