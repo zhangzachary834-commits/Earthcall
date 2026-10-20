@@ -835,6 +835,20 @@ bool ConditionNode::readsQualifiedRoot() const {
     return false;
 }
 
+bool ConditionNode::readsUntrackedDerivedReading() const {
+    // Every path the node carries, quantifier interiors included: an instance
+    // read through a reading is just as unannounced as the subject's own.
+    if (pathReadsUntrackedDerivedReading(path) || pathReadsUntrackedDerivedReading(operandPath) ||
+        pathReadsUntrackedDerivedReading(probe)) return true;
+    for (const auto& binding : bindings) {
+        if (pathReadsUntrackedDerivedReading(binding.second)) return true;
+    }
+    for (const auto& child : children) {
+        if (child.readsUntrackedDerivedReading()) return true;
+    }
+    return false;
+}
+
 void ConditionNode::collectPaths(std::vector<PropertyPath>& out) const {
     const auto add = [&out](const PropertyPath& p) {
         if (!p.empty()) out.push_back(p);

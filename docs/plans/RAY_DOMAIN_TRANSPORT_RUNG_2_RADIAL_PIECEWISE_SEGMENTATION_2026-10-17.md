@@ -1555,3 +1555,33 @@ An earlier attempt to run the *whole* suite with `-j6` exhausted the Mac's memor
 **What the noise numbers show.** The hybrid's proved radius is first order, a Lipschitz bound per panel. It shrinks linearly with the cells while the estimate converges at fourth order, so the proved bound is about 10⁶ looser than the actual error. The next tightening is a second-derivative enclosure of the remainder (the error term of Simpson's rule). Composition, propagating an inner integral's bound through exp(−·), products and an outer integral, is not yet admitted. That is the transport case, and it comes before the volume consumer.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T09:23:43-07:00 (PDT).*
+
+## 6ah. Laws that read a derived reading take the sweep (2026-10-20, thirty-third pass)
+
+**Human origin.** Zach: "YASSSSS KEEP GOIGNGNGNGGGGG NEXT APSS". Codex answered the gap §6af left open (intercom, 2026-10-19T23:58): reactive dependencies are the lasting solution. Until they are complete, the derived-reading interface must tell a condition consumer that it needs the general path, and the indexed admission must be declined rather than left deaf. Do not emit change events on reads, and do not special-case the spelling `evaluation`.
+
+**Measured before the fix.** A real OnBecomeTrue law on `growth.evaluation.value > 8` compiled Rete terminals filtered on the root `growth`. When `rate` moved the value from 6 to 10, nothing dirtied a `growth.*` fact. The prophetic gate does not even hear `rate`, because no condition names it. The law never fired. With the new rule disabled, `derived_reading_law_test` failed 9 of its 13 checks.
+
+**Built:**
+- **`PropertyPath`:** `pathReadsUntrackedDerivedReading(path)` answers yes for a segment after the root naming a registered reading. It is generic: any reading counts, and none tracks dependencies yet. It is static and over-approximate; a stored shadow still answers yes, which costs only the index. `derivedReadingRevision()` counts registrations.
+- **`ConditionNode`:** `readsUntrackedDerivedReading()` checks every carried path (the lhs, the operand path, the probe, Zone bindings and children, quantifier interiors included).
+- **`LawManager`:**
+  - `compileConditionsToRete` gives such a law no terminals, so the continuous sweep decides it every tick against a fresh read.
+  - `tick` clears the compiled-revision map when the reading registry moves, so a law compiled before a reading existed re-decides.
+
+**Codex's witnesses** (`tests/law/derived_reading_law_test.cpp`, 13/13, all through `mgr.tick()` with no report read in between):
+
+| | Witness |
+|---|---|
+| A | The report-reading laws have 0 terminals; a control on a stored path keeps its index and still hears |
+| B | A bound input crossing the threshold fires; falling releases; the other input re-arms |
+| C/F | Removing a binding refuses and a status law hears the refusal; restoring it recovers and the value law fires |
+| D | A replaced expression is heard in both directions |
+| E | After a binding is remapped to `@other-bearer.rate`, the old source is irrelevant and the new bearer's edit wakes the law |
+| G | A law compiled before registration is indexed, then re-decides to the sweep once the reading exists |
+
+**Not claimed:** selective dirtying. An unrelated edit still costs each such law one condition evaluation per tick. Declared dependencies come next: the expression and its revision, the bindings record and its mappings, each resolved input, and source removal. Detaching on remap is what will earn that claim. Codex also asks that a consumer wanting value and evidence together read the report once as a snapshot. A Law condition reads one leaf, so this is satisfied per condition.
+
+**A neighbouring suspicion, recorded but not acted on:** in `ConditionNode::compileToRete`, an `Any` merges whatever terminals its children return. An `All` child whose conjuncts are all quantifiers returns no terminals, and its branch then silently drops out of the `Any`'s candidate set. That narrowing would be the deafness PROPHETIC_RETE §2 forbids. I have not written a witness for it, so it is a suspicion, not a finding.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*

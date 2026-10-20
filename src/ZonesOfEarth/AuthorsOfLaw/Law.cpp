@@ -2208,7 +2208,12 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     auto T0 = glfwGetTime();
 
     syncProphetic();
-
+    // A derived reading registered or removed since the terminals were built
+    // changes which conditions may be indexed at all: every law re-decides.
+    if (_compiledDerivedReadingRevision != derivedReadingRevision()) {
+        _compiledDerivedReadingRevision = derivedReadingRevision();
+        _compiledConditionRevision.clear();
+    }
     for (const auto& law : _laws) {
         if (law) syncReteCompilation(*law);
     }
@@ -3510,6 +3515,16 @@ void LawManager::compileConditionsToRete(Law& law) {
 
     if (!law.conditionModel()) return;
     const ConditionModel& model = *law.conditionModel();
+
+    // A condition reading through a derived reading (`growth.evaluation.value`)
+    // reads something no change fact announces: the report moves when a BOUND
+    // INPUT does, and nothing dirties the subject's facts then. Terminals
+    // would admit the subject only on the edits that happen to touch its
+    // `growth.*` facts, and the law would go deaf to the rest. No index; the
+    // continuous sweep decides it every tick against the live reading.
+    // Codex's admission rule, 2026-10-19 23:58; witnessed by
+    // tests/law/derived_reading_law_test.cpp.
+    if (model.readsUntrackedDerivedReading()) return;
 
     // Compile the tree into the rete network, getting terminal node IDs.
     std::vector<std::size_t> terminals = model.compileToRete(_rete, lawId);

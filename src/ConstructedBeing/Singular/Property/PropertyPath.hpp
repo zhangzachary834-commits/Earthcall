@@ -4,6 +4,7 @@
 #include "Singularity/Core/StringId.hpp"
 
 #include <functional>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -126,10 +127,26 @@ public:
 //    shared canonical storage.
 //  · It is registered by a modality channel (OntoMath registers "evaluation"),
 //    like world readings. Nothing is registered by default.
-// Known gap, stated: a derived reading publishes no change facts, so a Rete
-// alpha condition does not wake when it changes. A sweep-path law reads it
-// fresh.
+//  · No reading declares its dependencies yet, so none publishes change
+//    facts: nothing tells the Rete that `<prefix>.evaluation.value` moved when
+//    a bound input did. A consumer that indexes on change facts must
+//    therefore ask pathReadsUntrackedDerivedReading() and take its general,
+//    re-evaluating path when the answer is yes (Codex, 2026-10-19 23:58:
+//    "decline the indexed admission loudly" until dependencies are complete).
+//    LawManager does: such a law gets no Rete terminals and is decided on the
+//    continuous sweep every tick. Lasting fix, open: declared dependencies
+//    (expression, bindings record and mappings, each resolved input) that
+//    dirty the reader selectively.
 // ============================================================================
 using DerivedReading = std::function<bool(Singular& root, const std::string& prefix, PropertyValue& out)>;
 void registerDerivedReading(const std::string& name, DerivedReading reading);
 bool hasDerivedReading(const std::string& name);
+// Bumped by every registration or removal, so an index compiled against the
+// set of readings can tell the set moved and re-decide.
+std::uint64_t derivedReadingRevision();
+// True when a segment after the root names a registered reading whose
+// dependencies are not tracked (today: every reading). Static and
+// over-approximate on purpose: a stored property of the same spelling would
+// shadow the reading at run time, and this still answers yes. Yes only costs
+// the indexed path; a wrong no would make a reader deaf (PROPHETIC_RETE §2).
+bool pathReadsUntrackedDerivedReading(const PropertyPath& path);

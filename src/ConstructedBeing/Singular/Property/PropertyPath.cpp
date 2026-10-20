@@ -248,6 +248,7 @@ std::unordered_map<std::string, DerivedReading>& derivedReadings() {
     static std::unordered_map<std::string, DerivedReading> readings;
     return readings;
 }
+std::uint64_t s_derivedReadingRevision = 0;
 
 // The first segment k > startIndex naming a registered derived reading, or
 // segments.size() when none does.
@@ -292,6 +293,7 @@ bool readDerived(Singular& root, const std::vector<std::string>& segments, std::
 
 void registerDerivedReading(const std::string& name, DerivedReading reading) {
     if (name.empty() || name.find('.') != std::string::npos) return;   // one segment
+    ++s_derivedReadingRevision;
     if (!reading) {
         derivedReadings().erase(name);
         return;
@@ -300,6 +302,12 @@ void registerDerivedReading(const std::string& name, DerivedReading reading) {
 }
 
 bool hasDerivedReading(const std::string& name) { return derivedReadings().count(name) > 0; }
+
+std::uint64_t derivedReadingRevision() { return s_derivedReadingRevision; }
+
+bool pathReadsUntrackedDerivedReading(const PropertyPath& path) {
+    return derivedReadingIndex(path.segments, 0) < path.segments.size();
+}
 
 PropertyPath::PathResult PropertyPath::getValue(Singular& root, PropertyValue& out, std::size_t startIndex) const {
     if (startIndex >= segments.size()) {
