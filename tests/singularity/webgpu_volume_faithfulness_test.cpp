@@ -23,6 +23,7 @@
 // 2026-10-18. Harness pattern: webgpu_volume_support_enclosure_test.
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/OntoMath/LineRestriction.hpp"
+#include "Singularity/Screen/AuthorableLight.hpp"
 #include "Singularity/Screen/VolumeDensity.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
@@ -400,6 +401,8 @@ int main() {
     double scatterWorst96 = 0.0, scatterWorstLine = 0.0;
     uint32_t scatterMedia = 0, scatterBetter = 0, scatterMisses = 0;
     std::string scatterWorstWho;
+    uint32_t counterMedia = 0;
+    double counterWorst96 = 0.0, counterWorstLine = 0.0;
     std::string quadratureWho;
     double worstNormalized = 0.0;
     std::string worstWho;
@@ -417,6 +420,60 @@ int main() {
             } else continue;
         } catch (...) { continue; }
         if (!zone.is_object() || !zone.contains("spatialFields")) continue;
+        // The marcher's incident source: exactly one enabled source in the zone
+        // (WebGpuRenderer: "a wi-reading Phi can consume one and only one enabled
+        // admitted direct source"); otherwise its no-source branch.
+        struct IncidentSource {
+            std::shared_ptr<geom::FieldNode> node;
+            glm::dvec3 position{0.0};
+            // The radiance expression is the constant 0 (Northern Veil's and
+            // Borealis's roots carry such a scalar field): every medium then
+            // receives no incident light, so the colour witness also runs a
+            // labelled counterfactual with that placeholder removed.
+            bool placeholderRadiance = false;
+            const OntoMath::Piecewise* radiance = nullptr;
+            const OntoMath::Piecewise* chroma = nullptr;
+            const OntoMath::Piecewise* angular = nullptr;
+        };
+        std::optional<IncidentSource> incident;
+        {
+            std::vector<std::shared_ptr<geom::FieldNode>> nodes;
+            if (zone.contains("spatialRoot")) nodes.push_back(geom::FieldNode::fromJson(zone.at("spatialRoot")));
+            for (const auto& lj : zone.at("spatialFields")) nodes.push_back(geom::FieldNode::fromJson(lj));
+            int enabledSources = 0;
+            for (const auto& node : nodes) {
+                Rendering::AuthorableLightState light;
+                if (!node || !Rendering::readAuthorableLight(*node, light) || !light.enabled) continue;
+                if (++enabledSources > 1) continue;
+                IncidentSource src;
+                src.node = node;
+                src.position = glm::dvec3(light.position);
+                if (node->field && node->field->mode == OntoMath::ScalarField::EvaluationMode::AST &&
+                    !node->field->astDefinition.pieces.empty()) {
+                    src.radiance = &node->field->astDefinition;
+                    const auto lr = OntoMath::restrictAlgebraicToLine(*src.radiance, false);
+                    if (lr) {
+                        bool zero = true;
+                        for (const glm::dvec3 lo : {glm::dvec3(0.3, -1.2, 2.1), glm::dvec3(-7.0, 4.0, 0.5)}) {
+                            std::map<std::string, double> lb;
+                            for (int a = 0; a < 3; ++a) {
+                                lb[OntoMath::kLineOriginVars[a]] = lo[a];
+                                lb[OntoMath::kLineDirectionVars[a]] = a == 1 ? 0.0 : 0.70710678118654752;
+                            }
+                            lb[OntoMath::kTimeVar] = clocks[1];
+                            OntoMath::LineAlgebraicEvaluator le(*lr.form, lb, true);
+                            const std::vector<int8_t> none(lr.form->switches.size(), 0);
+                            zero &= le.ok() && le.constantUnder(lr.form->roots[0], none) && le.value(lr.form->roots[0], 0.0).value_or(1.0) == 0.0;
+                        }
+                        src.placeholderRadiance = zero;
+                    }
+                }
+                if (node->lightChroma && !node->lightChroma->pieces.empty()) src.chroma = node->lightChroma.get();
+                if (node->lightAngular && !node->lightAngular->pieces.empty()) src.angular = node->lightAngular.get();
+                incident = src;
+            }
+            if (enabledSources != 1) incident.reset();
+        }
         for (const auto& fj : zone.at("spatialFields")) {
             auto field = geom::FieldNode::fromJson(fj);
             Rendering::VolumeDensityBinding b;
@@ -679,14 +736,27 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                 const bool phaseReadsWi = hasPhase && bool(lineP) &&
                     (lineP.form->reads.count(OntoMath::kWiXVar) || lineP.form->reads.count(OntoMath::kWiYVar) ||
                      lineP.form->reads.count(OntoMath::kWiZVar));
-                const bool scatterOk = lineOk && (!authoredScatter || bool(lineS)) && (!hasChroma || bool(lineC)) &&
+                // The source's own authored expressions read Δ = p − source (affine
+                // along a ray); the angular one also reads omega = −Δ/|Δ|.
+                const auto lineLR = incident ? restrictIf(incident->radiance, false) : OntoMath::LineAlgebraicRestriction{};
+                const auto lineLC = incident ? restrictIf(incident->chroma, true) : OntoMath::LineAlgebraicRestriction{};
+                const auto lineLA = incident ? restrictIf(incident->angular, false) : OntoMath::LineAlgebraicRestriction{};
+                const bool lightOk = !incident || ((!incident->radiance || bool(lineLR)) && (!incident->chroma || bool(lineLC)) &&
+                                                   (!incident->angular || bool(lineLA)));
+                // Zach (2026-10-19): the hard-coded occluder soft-shadow is legacy and
+                // must not become a dependency; media with an occluder stay on it.
+                const bool occluded = b.occluderSdf && geom::isSdfActive(b.occluderSdf);
+                const bool scatterOk = lineOk && !occluded && lightOk && (!authoredScatter || bool(lineS)) && (!hasChroma || bool(lineC)) &&
                                        (!hasPhase || bool(lineP)) && (!hasEmission || bool(lineM));
                 if (lineOk && !scatterOk)
                     std::printf("    %s colour by line integration: not admitted (%s)\n", b.producerId.c_str(),
-                                authoredScatter && !lineS ? lineS.refusal.c_str() : hasChroma && !lineC ? lineC.refusal.c_str()
+                                occluded ? "occluder soft-shadow is legacy (Zach)" : !lightOk ? "a light expression is not line-restrictable"
+                                : authoredScatter && !lineS ? lineS.refusal.c_str() : hasChroma && !lineC ? lineC.refusal.c_str()
                                 : hasPhase && !lineP ? lineP.refusal.c_str() : lineM.refusal.c_str());
-                double scatter96 = 0.0, scatterLine = 0.0;
-                uint32_t scatterRays = 0, scatterMiss = 0;
+                double scatter96[2] = {0.0, 0.0}, scatterLine[2] = {0.0, 0.0};
+                uint32_t scatterRays[2] = {0, 0}, scatterMiss[2] = {0, 0}, scatterRefused[2] = {0, 0};
+                std::string scatterWhy[2];
+                const int colourVariants = incident && incident->placeholderRadiance ? 2 : 1;
                 for (int r = 0; r < 16 && ok; ++r) {
                     glm::dvec3 dir(u(qrng), u(qrng), u(qrng));
                     if (glm::length(dir) < 1e-3) dir = glm::dvec3(0.3, 0.2, 1.0);
@@ -823,6 +893,10 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                     lineHybrid = std::max(lineHybrid, std::abs(std::exp(-est) - std::exp(-reference)));
                     if (std::abs(est - reference) > rad + referenceError + 1e-12) ++lineMiss;
 
+                    // Variant 1 (when present): the counterfactual with the source's
+                    // constant-0 placeholder radiance removed.
+                    for (int variant = 0; variant < colourVariants; ++variant) {
+                    const OntoMath::Piecewise* radianceExpr = incident && variant == 0 ? incident->radiance : nullptr;
                     // ---- Colour (RGB): the marcher's no-source model, every authored factor ----
                     if (!scatterOk) continue;
                     using Ev = OntoMath::LineAlgebraicEvaluator;
@@ -841,10 +915,109 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                         return evS ? std::max(evS->value(rootS, s).value_or(0.0), 0.0) : D;
                     };
                     auto chromaAt = [&](int c, double s) { return evC ? evC->value(lineC.form->roots[c], s).value_or(0.0) : 1.0; };
+                    // ---- The incident light and the phase, with proved bounds per panel ----
+                    const glm::dvec3 mediumOrigin = glm::dvec3(field->origin);
+                    const glm::dvec3 delta0 = incident ? o + mediumOrigin - incident->position : glm::dvec3(0.0);
+                    std::map<std::string, double> lightBind;
+                    for (int a = 0; a < 3; ++a) {
+                        lightBind[OntoMath::kLineOriginVars[a]] = delta0[a];
+                        lightBind[OntoMath::kLineDirectionVars[a]] = dir[a];
+                    }
+                    lightBind[OntoMath::kTimeVar] = clocks[1];
+                    std::optional<Ev> evLR, evLC;
+                    if (radianceExpr) evLR.emplace(*lineLR.form, lightBind, true);
+                    if (incident && incident->chroma) evLC.emplace(*lineLC.form, lightBind, true);
+                    const bool angularReadsOmega = incident && incident->angular &&
+                        (lineLA.form->reads.count(OntoMath::kOmegaXVar) || lineLA.form->reads.count(OntoMath::kOmegaYVar) ||
+                         lineLA.form->reads.count(OntoMath::kOmegaZVar));
+                    std::optional<Ev> evLA;
+                    if (incident && incident->angular && !angularReadsOmega) evLA.emplace(*lineLA.form, lightBind, true);
+                    // Δ̂(s) = (Δ₀ + s·d)/|Δ₀ + s·d|; each component's derivative has a
+                    // numerator linear in s, so its exact range on [a, b] is the
+                    // endpoints and at most one interior extremum.
+                    auto unitDelta = [&](double sv) { const glm::dvec3 dl = delta0 + sv * dir; return dl / std::max(glm::length(dl), 1e-300); };
+                    auto unitDeltaRange = [&](double a0, double b0) {
+                        std::array<std::pair<double, double>, 3> r;
+                        const double dd = glm::dot(delta0, dir), d2 = glm::dot(delta0, delta0);
+                        for (int k = 0; k < 3; ++k) {
+                            double lo = std::min(unitDelta(a0)[k], unitDelta(b0)[k]), hi = std::max(unitDelta(a0)[k], unitDelta(b0)[k]);
+                            const double A = dir[k] * d2 - delta0[k] * dd, B = dir[k] * dd - delta0[k];
+                            if (B != 0.0) {
+                                const double sk = -A / B;
+                                if (sk > a0 && sk < b0) { lo = std::min(lo, unitDelta(sk)[k]); hi = std::max(hi, unitDelta(sk)[k]); }
+                            }
+                            r[k] = {lo - 1e-12, hi + 1e-12};
+                        }
+                        return r;
+                    };
+                    auto outward = [](double lo, double hi) {
+                        return OntoMath::Interval(std::nextafter(float(lo), -std::numeric_limits<float>::infinity()),
+                                                  std::nextafter(float(hi), std::numeric_limits<float>::infinity()));
+                    };
+                    // A box-mode range of a form whose direction symbols (prefix) range over Δ̂·sign.
+                    auto directionalRange = [&](const OntoMath::LineAlgebraicForm& form, uint32_t root, const glm::dvec3& lineOrigin,
+                                                const char* const dirVars[3], double sign, double a0, double b0) -> std::pair<double, double> {
+                        std::map<std::string, OntoMath::Interval> box;
+                        for (int a = 0; a < 3; ++a) {
+                            box[OntoMath::kLineOriginVars[a]] = outward(lineOrigin[a], lineOrigin[a]);
+                            box[OntoMath::kLineDirectionVars[a]] = outward(dir[a], dir[a]);
+                        }
+                        box[OntoMath::kTimeVar] = outward(clocks[1], clocks[1]);
+                        const char* wo[3] = {OntoMath::kWoXVar, OntoMath::kWoYVar, OntoMath::kWoZVar};
+                        const char* om[3] = {OntoMath::kOmegaXVar, OntoMath::kOmegaYVar, OntoMath::kOmegaZVar};
+                        const char* wi[3] = {OntoMath::kWiXVar, OntoMath::kWiYVar, OntoMath::kWiZVar};
+                        for (int k = 0; k < 3; ++k) {
+                            box[wo[k]] = outward(-dir[k], -dir[k]);
+                            box[om[k]] = outward(-dir[k], -dir[k]);
+                            box[wi[k]] = OntoMath::Interval(0.0f);
+                        }
+                        const auto ur = unitDeltaRange(a0, b0);
+                        for (int k = 0; k < 3; ++k)
+                            box[dirVars[k]] = sign > 0 ? outward(ur[k].first, ur[k].second) : outward(-ur[k].second, -ur[k].first);
+                        OntoMath::LineAlgebraicEvaluator ev(form, box, true);
+                        bool u2 = false;
+                        const auto r = ev.range(root, a0, b0, std::vector<int8_t>(form.switches.size(), 0), &u2);
+                        if (u2 || !ev.ok()) return {-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()};
+                        return {double(r.lo), double(r.hi)};
+                    };
+                    const char* wiVars[3] = {OntoMath::kWiXVar, OntoMath::kWiYVar, OntoMath::kWiZVar};
+                    const char* omegaVars[3] = {OntoMath::kOmegaXVar, OntoMath::kOmegaYVar, OntoMath::kOmegaZVar};
+                    // Point values of direction-reading expressions, by the reference interpreter.
+                    auto directionalValue = [&](const OntoMath::Piecewise& pw, const glm::dvec3& point, const char* const dirVars[3],
+                                                const glm::dvec3& dirValue) {
+                        Ref r2;
+                        r2.p = point; r2.t = clocks[1];
+                        r2.scalars["x"] = point.x; r2.scalars["y"] = point.y; r2.scalars["z"] = point.z;
+                        r2.scalars[OntoMath::kTimeVar] = clocks[1];
+                        for (int k = 0; k < 3; ++k) {
+                            r2.scalars[wiVars[k]] = 0.0;
+                            r2.scalars[(std::string("wo.") + "xyz"[k])] = -dir[k];
+                            r2.scalars[omegaVars[k]] = -dir[k];
+                        }
+                        for (int k = 0; k < 3; ++k) r2.scalars[dirVars[k]] = dirValue[k];
+                        return r2.density(pw).value_or(0.0);
+                    };
+                    // Incident light per channel (1 without a source), as the marcher forms it.
+                    auto lightAt = [&](int c, double sv) {
+                        if (!incident) return 1.0;
+                        const double rad = evLR ? std::max(evLR->value(lineLR.form->roots[0], sv).value_or(0.0), 0.0) : 1.0;
+                        if (rad == 0.0) return 0.0;
+                        // Unauthored light chroma is white in both marchers (the incidentColor
+                        // body sits behind HAS_AUTHORED_LIGHT_CHROMA and is never reached).
+                        const double chroma = evLC ? std::max(evLC->value(lineLC.form->roots[c], sv).value_or(0.0), 0.0) : 1.0;
+                        double angular = 1.0;
+                        if (evLA) angular = std::max(evLA->value(lineLA.form->roots[0], sv).value_or(0.0), 0.0);
+                        else if (angularReadsOmega) angular = std::max(directionalValue(*incident->angular, delta0 + sv * dir, omegaVars, -unitDelta(sv)), 0.0);
+                        return chroma * rad * angular;
+                    };
                     auto phaseAt = [&](double s) {
                         if (!evP) return 1.0;
-                        if (phaseReadsWi) return 0.0;
-                        return std::max(evP->value(rootP, s).value_or(0.0), 0.0);
+                        if (!incident) {
+                            if (phaseReadsWi) return 0.0;
+                            return std::max(evP->value(rootP, s).value_or(0.0), 0.0);
+                        }
+                        if (!phaseReadsWi) return std::max(evP->value(rootP, s).value_or(0.0), 0.0);
+                        return std::max(directionalValue(*b.phaseExpr, o + s * dir, wiVars, unitDelta(s)), 0.0);
                     };
                     auto emissionAt = [&](int c, double s) { return evM ? std::max(evM->value(lineM.form->roots[c], s).value_or(0.0), 0.0) : 0.0; };
                     auto marcherColour = [&](int n) {
@@ -856,7 +1029,7 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                             if (!(st > 0.0)) continue;
                             const double Tn = T * std::exp(-st * hs);
                             const double sc = sigmaS(sm) / st * phaseAt(sm) * (T - Tn);
-                            for (int c = 0; c < 3; ++c) L[c] += chromaAt(c, sm) * sc + emissionAt(c, sm) * (T - Tn) / st;
+                            for (int c = 0; c < 3; ++c) L[c] += chromaAt(c, sm) * lightAt(c, sm) * sc + emissionAt(c, sm) * (T - Tn) / st;
                             T = Tn;
                         }
                         return L;
@@ -903,24 +1076,50 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                         return bd;
                     };
                     auto supAbsOf = [](const Bound& bd) { return std::max(std::abs(bd.lo), std::abs(bd.hi)); };
+                    const double inf = std::numeric_limits<double>::infinity();
+                    // The phase's bound: line-algebra when it reads no direction, box
+                    // mode over Δ̂'s exact component ranges when it reads wi (slope
+                    // then unproved: the radius falls back to the range).
+                    auto phaseBound = [&](double p0, double q0) -> Bound {
+                        if (!evP) return {1.0, 1.0, 0.0};
+                        if (!phaseReadsWi) return boundOf(evP, openP, rootP, p0, q0, 1.0, true);
+                        if (!incident) return {0.0, 0.0, 0.0};
+                        const auto [lo, hi] = directionalRange(*lineP.form, rootP, o, wiVars, 1.0, p0, q0);
+                        return {std::max(lo, 0.0), std::max(hi, 0.0), inf};
+                    };
+                    const auto openLR = openOf(evLR), openLC = openOf(evLC), openLA = openOf(evLA);
+                    auto lightBound = [&](int c, double p0, double q0) -> Bound {
+                        if (!incident) return {1.0, 1.0, 0.0};
+                        const auto bR = boundOf(evLR, openLR, evLR ? lineLR.form->roots[0] : 0, p0, q0, 1.0, true);
+                        const auto bC = boundOf(evLC, openLC, evLC ? lineLC.form->roots[c] : 0, p0, q0, 1.0, true);
+                        Bound bA{1.0, 1.0, 0.0};
+                        if (evLA) bA = boundOf(evLA, openLA, lineLA.form->roots[0], p0, q0, 1.0, true);
+                        else if (angularReadsOmega) {
+                            const auto [lo, hi] = directionalRange(*lineLA.form, lineLA.form->roots[0], delta0, omegaVars, -1.0, p0, q0);
+                            bA = {std::max(lo, 0.0), std::max(hi, 0.0), inf};
+                        }
+                        return {bR.lo * bC.lo * bA.lo, bR.hi * bC.hi * bA.hi,
+                                bR.slope * bC.hi * bA.hi + bR.hi * bC.slope * bA.hi + bR.hi * bC.hi * bA.slope};
+                    };
                     std::array<double, 3> Lest{0, 0, 0}, Lrad{0, 0, 0};
                     double tau = 0.0, tauRad = 0.0;
                     bool colourOk = true;
+                    std::string colourWhy;
                     for (const auto& pc : pieces) {
                         if (pc.targetSigns[0] < 0) continue;
                         const double w = pc.s1 - pc.s0;
                         bool undefined = false;
                         const auto rd = evD.range(rootD, pc.s0, pc.s1, pc.signs[0], &undefined);
-                        if (undefined) { colourOk = false; break; }
+                        if (undefined) { colourOk = false; colourWhy = "density undefined on a piece"; break; }
                         if (!pc.definite) {
                             // A root sliver: each channel's light in [0, sup(integrand)·T·w].
                             const auto bS = evS ? boundOf(evS, openS, rootS, pc.s0, pc.s1, 0.0, true) : Bound{0.0, std::max(0.0, double(rd.hi)), 0.0};
-                            const auto bP = phaseReadsWi ? Bound{0, 0, 0} : boundOf(evP, openP, rootP, pc.s0, pc.s1, 1.0, true);
+                            const auto bP = phaseBound(pc.s0, pc.s1);
                             const double supT = sigmaTSup(pc, pc.s0, pc.s1);
                             for (int c = 0; c < 3; ++c) {
                                 const auto bC = boundOf(evC, openC, evC ? lineC.form->roots[c] : 0, pc.s0, pc.s1, 1.0, false);
                                 const auto bM = boundOf(evM, openM, evM ? lineM.form->roots[c] : 0, pc.s0, pc.s1, 0.0, true);
-                                const double light = (bS.hi * supAbsOf(bC) * bP.hi + bM.hi) * std::exp(-tau + tauRad) * w;
+                                const double light = (bS.hi * supAbsOf(bC) * lightBound(c, pc.s0, pc.s1).hi * bP.hi + bM.hi) * std::exp(-tau + tauRad) * w;
                                 Lest[c] += 0.5 * light; Lrad[c] += 0.5 * light;
                             }
                             tau += 0.5 * supT * w; tauRad += 0.5 * supT * w;
@@ -933,7 +1132,7 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                         tauAt[0] = tau; radAt[0] = tauRad;
                         for (uint32_t j = 0; j < cells; ++j) {
                             const auto seg = sigmaTIntegral(pc, edgeAt(j), edgeAt(j + 1), 2);
-                            if (!seg) { colourOk = false; break; }
+                            if (!seg) { colourOk = false; colourWhy = "sigma_t not integrable on a cell"; break; }
                             tauAt[j + 1] = tauAt[j] + seg->first;
                             radAt[j + 1] = radAt[j] + seg->second;
                         }
@@ -948,72 +1147,135 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                         const double drift = std::expm1(radAt[cells]);   // node values of T carry τ's error
                         for (int c = 0; c < 3; ++c) {
                             const uint32_t rootC = evC ? lineC.form->roots[c] : 0, rootM = evM ? lineM.form->roots[c] : 0;
-                            // Scattered: ∫ sigma_s · (T · chroma_c · phase) ds.
-                            if (!phaseReadsWi) {
+                            // Scattered: ∫ sigma_s · (T · chroma_c · light_c · phase) ds (zero
+                            // when no source and the phase reads wi).
+                            if (incident || !phaseReadsWi) {
                                 OntoMath::LineSampledFactor F;
                                 F.value = [&, c](double sv) -> std::optional<double> {
-                                    return std::exp(-tauAt[indexOf(sv)]) * chromaAt(c, sv) * phaseAt(sv);
+                                    return std::exp(-tauAt[indexOf(sv)]) * chromaAt(c, sv) * lightAt(c, sv) * phaseAt(sv);
                                 };
-                                F.range = [&, rootC](double p0, double q0) {
+                                F.range = [&, rootC, c](double p0, double q0) {
                                     const auto [tl, th] = tRange(p0, q0);
                                     const auto bC = boundOf(evC, openC, rootC, p0, q0, 1.0, false);
-                                    const auto bP = boundOf(evP, openP, rootP, p0, q0, 1.0, true);
+                                    const auto bL = lightBound(c, p0, q0);
+                                    const auto bP = phaseBound(p0, q0);
                                     double lo = 1e300, hi = -1e300;
-                                    for (double x1 : {tl, th}) for (double x2 : {bC.lo, bC.hi}) for (double x3 : {bP.lo, bP.hi}) {
-                                        lo = std::min(lo, x1 * x2 * x3); hi = std::max(hi, x1 * x2 * x3);
-                                    }
+                                    for (double x1 : {tl, th}) for (double x2 : {bC.lo, bC.hi}) for (double x3 : {bP.lo, bP.hi})
+                                        for (double x4 : {bL.lo, bL.hi}) {
+                                            const double v = x1 * x2 * x3 * x4;
+                                            lo = std::min(lo, v); hi = std::max(hi, v);
+                                        }
                                     return std::make_pair(lo, hi);
                                 };
-                                F.lipschitz = [&, rootC](double p0, double q0) {
+                                F.lipschitz = [&, rootC, c](double p0, double q0) {
                                     const double tSup = tRange(p0, q0).second;
                                     const auto bC = boundOf(evC, openC, rootC, p0, q0, 1.0, false);
-                                    const auto bP = boundOf(evP, openP, rootP, p0, q0, 1.0, true);
-                                    return tSlope(p0, q0) * supAbsOf(bC) * supAbsOf(bP) + tSup * bC.slope * supAbsOf(bP) +
-                                           tSup * supAbsOf(bC) * bP.slope;
+                                    const auto bL = lightBound(c, p0, q0);
+                                    const auto bP = phaseBound(p0, q0);
+                                    const double sC = supAbsOf(bC), sL = supAbsOf(bL), sP = supAbsOf(bP);
+                                    return tSlope(p0, q0) * sC * sL * sP + tSup * bC.slope * sL * sP + tSup * sC * bL.slope * sP +
+                                           tSup * sC * sL * bP.slope;
                                 };
-                                const auto hs = evS ? evS->hybridIntegral(rootS, pc.s0, pc.s1, openS, cells, F)
-                                                    : evD.hybridIntegral(rootD, pc.s0, pc.s1, pc.signs[0], cells, F);
-                                if (!hs) { colourOk = false; break; }
+                                std::string hw;
+                                const auto hs = evS ? evS->hybridIntegral(rootS, pc.s0, pc.s1, openS, cells, F, &hw)
+                                                    : evD.hybridIntegral(rootD, pc.s0, pc.s1, pc.signs[0], cells, F, &hw);
+                                if (!hs) { colourOk = false; colourWhy = "scatter: " + hw; break; }
                                 Lest[c] += hs->estimate;
                                 Lrad[c] += hs->radius + std::abs(hs->estimate) * drift;
                             }
-                            // Emitted: ∫ max(e_c, 0) · T ds, when e_c ≥ 0 is proved on the piece.
+                            // Emitted: ∫ max(e_c, 0) · T ds. Where e_c may be negative, the
+                            // clamp is a branch like density's sign: segment by e_c's sign,
+                            // integrate where e_c > 0 is proved, bound the root slivers.
                             if (evM) {
-                                const auto bM = boundOf(evM, openM, rootM, pc.s0, pc.s1, 0.0, false);
-                                if (bM.lo < 0.0) { colourOk = false; break; }   // max(e, 0) would cut: not admitted here
+                                // T at any point of the piece: exact at the cell nodes, and
+                                // by one more σ_t integral between them.
+                                auto tauPoint = [&](double sv) -> std::pair<double, double> {
+                                    const long j = std::clamp<long>(long(std::floor((sv - pc.s0) / hc)), 0L, long(cells));
+                                    if (sv <= edgeAt(uint32_t(j)) || j == long(cells)) return {tauAt[j], radAt[j]};
+                                    const auto seg = sigmaTIntegral(pc, edgeAt(uint32_t(j)), sv, 2);
+                                    if (!seg) return {tauAt[j], radAt[j] + 1e300};
+                                    return {tauAt[j] + seg->first, radAt[j] + seg->second};
+                                };
                                 OntoMath::LineSampledFactor F;
-                                F.value = [&](double sv) -> std::optional<double> { return std::exp(-tauAt[indexOf(sv)]); };
-                                F.range = tRange;
-                                F.lipschitz = tSlope;
-                                const auto he = evM->hybridIntegral(rootM, pc.s0, pc.s1, openM, cells, F);
-                                if (!he) { colourOk = false; break; }
-                                Lest[c] += he->estimate;
-                                Lrad[c] += he->radius + std::abs(he->estimate) * drift;
+                                F.value = [&](double sv) -> std::optional<double> { return std::exp(-tauPoint(sv).first); };
+                                F.range = [&](double p0, double q0) {
+                                    const auto a2 = tauPoint(p0), b2 = tauPoint(q0);
+                                    return std::make_pair(std::exp(-b2.first - b2.second), std::exp(-a2.first + a2.second));
+                                };
+                                F.lipschitz = [&](double p0, double q0) {
+                                    const auto a2 = tauPoint(p0);
+                                    return sigmaTSup(pc, p0, q0) * std::exp(-a2.first + a2.second);
+                                };
+                                const auto bM = boundOf(evM, openM, rootM, pc.s0, pc.s1, 0.0, false);
+                                std::vector<OntoMath::LineSegmentationPiece> subs;
+                                if (bM.lo >= 0.0) {
+                                    subs.push_back({pc.s0, pc.s1, true, {openM}, {int8_t(1)}});
+                                } else {
+                                    const std::vector<std::pair<std::size_t, uint32_t>> eTarget{{0, rootM}};
+                                    subs = OntoMath::segmentLine({&*evM}, pc.s0, pc.s1, 1e-7 * (t1 - t0), nullptr, 1u << 16, true, nullptr, &eTarget);
+                                }
+                                for (const auto& sub : subs) {
+                                    if (sub.targetSigns[0] < 0) continue;   // e_c ≤ 0 proved: max(e_c, 0) = 0
+                                    const double w2 = sub.s1 - sub.s0;
+                                    if (!sub.definite) {
+                                        bool u2 = false;
+                                        const double hiE = std::max(0.0, double(evM->range(rootM, sub.s0, sub.s1, sub.signs[0], &u2).hi));
+                                        const double light = (u2 ? 1e300 : hiE) * F.range(sub.s0, sub.s1).second * w2;
+                                        Lest[c] += 0.5 * light; Lrad[c] += 0.5 * light;
+                                        continue;
+                                    }
+                                    const uint32_t cells2 = std::max<uint32_t>(2, uint32_t(std::lround(double(cells) * w2 / w)));
+                                    std::string hw;
+                                    const auto he = evM->hybridIntegral(rootM, sub.s0, sub.s1, sub.signs[0], cells2, F, &hw);
+                                    if (!he) { colourOk = false; colourWhy = "emission: " + hw; break; }
+                                    Lest[c] += he->estimate;
+                                    Lrad[c] += he->radius + std::abs(he->estimate) * drift;
+                                }
+                                if (!colourOk) break;
                             }
                         }
                         if (!colourOk) break;
                         tau = tauAt[cells];
                         tauRad = radAt[cells];
                     }
-                    if (!colourOk) continue;
-                    ++scatterRays;
+                    if (!colourOk) {
+                        // Not silently dropped: a ray the line integration could not
+                        // take is counted and its reason kept.
+                        ++scatterRefused[variant];
+                        if (scatterWhy[variant].empty()) scatterWhy[variant] = colourWhy;
+                        continue;
+                    }
+                    ++scatterRays[variant];
                     for (int c = 0; c < 3; ++c) {
                         const double refErr = 2.0 * std::abs(refL[c] - L17[c]) + double(1 << 18) * std::numeric_limits<double>::epsilon() * std::abs(refL[c]);
-                        scatter96 = std::max(scatter96, std::abs(L96[c] - refL[c]));
-                        scatterLine = std::max(scatterLine, std::abs(Lest[c] - refL[c]));
-                        if (std::abs(Lest[c] - refL[c]) > Lrad[c] + refErr + 1e-12) ++scatterMiss;
+                        scatter96[variant] = std::max(scatter96[variant], std::abs(L96[c] - refL[c]));
+                        scatterLine[variant] = std::max(scatterLine[variant], std::abs(Lest[c] - refL[c]));
+                        if (std::abs(Lest[c] - refL[c]) > Lrad[c] + refErr + 1e-12) ++scatterMiss[variant];
                     }
+                    }   // variant
                 }
-                if (scatterRays) {
-                    std::printf("    %s colour, no-source model (%u rays, RGB): 96-sample max |dL| %.3g (%.3f of 255), "
-                                "line-integrated %.3g (%.5f of 255); %u outside the proved radius\n",
-                                b.producerId.c_str(), scatterRays, scatter96, 255.0 * scatter96, scatterLine, 255.0 * scatterLine,
-                                scatterMiss);
-                    ++scatterMedia;
-                    scatterBetter += scatterLine <= scatter96 ? 1 : 0;
-                    scatterMisses += scatterMiss;
-                    scatterWorstLine = std::max(scatterWorstLine, scatterLine);
-                    if (scatter96 > scatterWorst96) { scatterWorst96 = scatter96; scatterWorstWho = b.producerId; }
+                for (int variant = 0; variant < colourVariants; ++variant) {
+                    if (scatterRefused[variant])
+                        std::printf("    %s colour (%s): %u rays not line-integrated (%s)\n", b.producerId.c_str(),
+                                    variant == 0 ? "as rendered" : "counterfactual", scatterRefused[variant], scatterWhy[variant].c_str());
+                    if (!scatterRays[variant]) continue;
+                    std::printf("    %s colour, %s (%u rays, RGB): 96-sample max |dL| %.3g (%.3g of 255), "
+                                "line-integrated %.3g (%.3g of 255); %u outside the proved radius\n",
+                                b.producerId.c_str(),
+                                !incident ? "no source" : variant == 0 ? "incident source" : "COUNTERFACTUAL source without its placeholder radiance",
+                                scatterRays[variant], scatter96[variant], 255.0 * scatter96[variant], scatterLine[variant],
+                                255.0 * scatterLine[variant], scatterMiss[variant]);
+                    scatterMisses += scatterMiss[variant];
+                    if (variant == 0) {
+                        ++scatterMedia;
+                        scatterBetter += scatterLine[0] <= scatter96[0] ? 1 : 0;
+                        scatterWorstLine = std::max(scatterWorstLine, scatterLine[0]);
+                        if (scatter96[0] > scatterWorst96) { scatterWorst96 = scatter96[0]; scatterWorstWho = b.producerId; }
+                    } else {
+                        ++counterMedia;
+                        counterWorst96 = std::max(counterWorst96, scatter96[1]);
+                        counterWorstLine = std::max(counterWorstLine, scatterLine[1]);
+                    }
                 }
                 if (lineRays) {
                     std::printf("    %s transmittance by line integration (%u rays): 96-sample max |dT| %.3g (%.3f of 255 levels), "
@@ -1071,10 +1333,13 @@ fn fidelityMain(@builtin(global_invocation_id) id: vec3<u32>) {
                 lineMedia, lineWorst96, 255.0 * lineWorst96, lineWorstWho.c_str(), lineWorstHybrid, 255.0 * lineWorstHybrid,
                 lineBetter, lineMisses);
     check(lineMedia > 0 && lineMisses == 0, "line-integrated optical depth lies inside its proved radius on every ray");
-    std::printf("    colour by line integration (no-source model, RGB): %u media; worst 96-sample |dL| %.3g (%.2f of 255, %s), "
+    std::printf("    colour by line integration (the marcher's source or no-source model, RGB): %u media; worst 96-sample |dL| %.3g (%.2f of 255, %s), "
                 "worst line-integrated %.3g (%.4f of 255); at least as faithful on %u; %u rays outside the proved radius\n",
                 scatterMedia, scatterWorst96, 255.0 * scatterWorst96, scatterWorstWho.c_str(), scatterWorstLine,
                 255.0 * scatterWorstLine, scatterBetter, scatterMisses);
+    std::printf("    counterfactual (a source's constant-0 placeholder radiance removed): %u media; worst 96-sample |dL| %.3g "
+                "(%.2f of 255), worst line-integrated %.3g (%.4f of 255)\n",
+                counterMedia, counterWorst96, 255.0 * counterWorst96, counterWorstLine, 255.0 * counterWorstLine);
     check(scatterMedia > 0 && scatterMisses == 0, "line-integrated colour (scattering and emission, RGB) lies inside its proved radius on every ray");
     check(lessFaithful == 0, "the medium-frame lattice point is never less faithful than the world-frame one (near and far cameras)");
     std::printf("webgpu_volume_faithfulness_test: %d/%d checks passed\n", g_checks - g_failures, g_checks);

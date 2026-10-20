@@ -129,7 +129,7 @@ This is **architecture direction, not a landed implementation claim**. Existing 
 - [x] **In-scattered light (§6x), unit unshadowed light:** worst |ΔL| 8.55/255 → 0.0082/255 across 27 media; proved radius on every ray. *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T16:00 PDT.*
 - [x] **Colour, no-source model, RGB (§6y):** scattering, chroma, phase and emission; worst 7.97/255 → 0.021/255; proved radius on every ray. *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T16:06 PDT.*
 - [x] Zach decided (2026-10-19): switch the GPU from 96 samples to integration once the path is ready and passes the faithfulness test.
-- [ ] Source model: light position, wᵢ-reading phase (range over a cone), authored light radiance/chroma/angular as sampled factors.
+- [x] **Source model (§6z):** incident light, wᵢ-reading phase over exact cone bounds, emission segmented by its sign; occluder media excluded (legacy). Finding: Northern Veil/Borealis receive zero incident radiance (constant-0 root field read as radiance). *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T17:16 PDT.*
 - [x] Zach decided (2026-10-19): self-shadow only if authored; the hard-coded occluder soft-shadow is legacy and stays isolated at its call site — the integration path adds no dependency on it.
 - [ ] GPU line-integration path behind a setting, off by default, A/B against 96 for image and time.
 - [x] ⚑ Zach decided (2026-10-19, on the Sun's verdict): exact special-function reductions count as exact, as their own layer between elementary closed form and quadrature.

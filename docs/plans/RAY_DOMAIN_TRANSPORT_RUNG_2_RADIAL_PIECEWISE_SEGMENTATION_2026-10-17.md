@@ -1142,6 +1142,49 @@ Each becomes a sampled factor. The wᵢ-reading phase needs its range proved ove
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T16:06 PDT. Human origin: Zachary Zhang (the switch decision; integration first). The marcher's branches are the existing renderer's; the self-shadow finding and this witness are this session's.*
 
+## 6z. Colour with the incident source; emission by its own sign; a light-radiance finding (2026-10-19, twenty-seventh pass)
+
+**Origin.** Zach: "NEXT PASSSSSSS". Per his shadow decision, the hard-coded occluder soft-shadow is legacy: media with an occluder are excluded and stay on it (`sky.sanctuary.sunlit-halo-mist`, the Sunlit Mist volume, `reliquary.labyrinth-medium`).
+
+**The marcher's source model, reproduced** (both marchers form it identically per medium; `SdfWgsl.cpp`):
+- An incident source exists only when **exactly one** enabled source is in the zone (`WebGpuRenderer.cpp`). Otherwise the no-source branch of §6y applies.
+- Lᵢ = chroma(Δ)·max(radiance(Δ), 0)·max(angular(Δ, ω), 0)·visibility, with Δ = p − source and ω = −Δ/|Δ|.
+- Unauthored chroma is **white**. The `incidentColor` body sits behind `HAS_AUTHORED_LIGHT_CHROMA` and is never reached.
+- An unauthored radiance is 1. Visibility is 1 without an occluder.
+- The phase reads wᵢ = Δ/|Δ| and w_o = −d.
+
+**Bounds for the direction-reading factors.**
+- Δ is affine along a ray, so the light's own expressions restrict exactly, with origin Δ₀.
+- wᵢ = Δ̂ is not polynomial. Each component's derivative has a numerator *linear* in s, so its exact range on a cell is its endpoints plus at most one interior extremum, in closed form.
+- A wᵢ-reading phase (or ω-reading angular) is then ranged in box mode with those intervals. Its slope is left unproved, so the radius falls back to the range.
+
+**Emission by its own sign.** Northern Veil's curtains are *emissive*: their colour is their glow. The authored emission can dip below 0, where the marcher clamps it (max(e, 0)). That clamp is a branch exactly like density's sign:
+- segment by e_c's sign;
+- integrate exactly where e_c > 0 is proved, by the hybrid with T as the sampled factor, now available at any point of a piece through one extra σₜ integral;
+- bound the slivers.
+
+**The witness counts what it cannot take.** A ray the line integration refuses is now counted with its reason, never dropped. The first run of this pass silently dropped every dense Northern Veil ray, and only the count exposed it. This pass ends with none refused.
+
+**Result** (as rendered, from the checkout snapshot of each save):
+- **Northern Veil curtains:** 96-sample 0.019–0.14/255 → line-integrated 10⁻⁵–1.1×10⁻⁴/255.
+- **Sky-Island sea of clouds:** 0.0042 → 0.0014/255.
+- **Prism wing B:** unchanged from §6y.
+- **Overall (23 media):** worst line-integrated 0.0014/255; at least as faithful on 22; proved radius on every ray (6/6).
+
+**Finding: Northern Veil's and Borealis's media receive no incident light.**
+- **What makes it zero.** Both zones' only light is the root, whose scalar-field expression is the constant 0, so `HAS_AUTHORED_LIGHT_RADIANCE` reads it as radiance 0. The root's light colour is (0, 0, 0), though that colour is not used for volume light. This is true of the live data home too, checked read-only.
+- **Northern Veil** still shows colour, because its curtains emit.
+- **Borealis's** five media author no emission, so by the renderer's rules they only darken what is behind them.
+- **Possible cause, not established.** The root's scalar field is plausibly a legacy field now *read as* light radiance, rather than an authored "this light is dark".
+- **Not changed.** It is Zach's to look at and to decide (Person Verification List).
+
+**A labelled counterfactual exercises the source path.** Where a source's radiance is that constant-0 placeholder, the witness also integrates as if it were absent, reported separately and never as the image:
+- Borealis hero curtain: 7.97 → 0.021/255;
+- Northern Veil (wᵢ-reading phase, cone bounds): 0.02–0.17 → ≤ 1.6×10⁻⁴/255;
+- all inside the proved radius.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T17:16 PDT. Human origin: Zachary Zhang (the shadow decision; integration first). The source model is the existing renderer's; the cone bounds, emission segmentation, refusal counting and the radiance finding are this session's.*
+
 ## 7. Handoff answers (deltas from Rung 0/1 §8)
 
 - **Lowerable subset now:** polynomials plus sqrt/abs/min/max/clamp and bounded Piecewise over them, including Length/Distance of polynomial vectors (§2).

@@ -494,3 +494,11 @@ Zach: "Faithfulness to exact math should be the rule." A new witness, `webgpu_vo
 - **Recorded:** Zach's decision to switch the GPU to integration when the path is ready.
 
 **Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/colour-line-1.log`. Design: [§6y](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6y-colour-in-rgb-with-every-authored-medium-factor-no-self-shadow-exists-to-integrate-zachs-switch-decision-2026-10-19-twenty-sixth-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T16:06 PDT.
+
+## Colour with the incident source — twenty-seventh pass (CPU only)
+
+- **As rendered, 23 media:** worst line-integrated 0.0014/255; Northern Veil 0.14 → 1.1×10⁻⁴/255. Emission segmented by its own sign; no ray refused; proved radius on every ray.
+- **Excluded per Zach:** occluder media (legacy soft-shadow).
+- **Finding:** Northern Veil and Borealis have zero incident radiance (constant-0 root scalar field read as light radiance). Borealis authors no emission, so it only darkens. Recorded for Zach, not changed.
+
+**Evidence:** `scratch/verification/ray-domain-twelfth-pass-2026-10-18/colour-source-1.log`. Design: [§6z](../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6z-colour-with-the-incident-source-emission-by-its-own-sign-a-light-radiance-finding-2026-10-19-twenty-seventh-pass). **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T17:16 PDT.

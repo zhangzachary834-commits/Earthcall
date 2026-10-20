@@ -1723,3 +1723,16 @@ Walking speed was 0.1 units per frame, so it grew with frame rate. It is now 6 u
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T12:35 PDT. [Decision and change](../../../audits/LOCOMOTION_TRANSPARENCY_M0_5_2026-10-19.md#7-zachs-decisions-2026-10-19).*
 
+### Do Borealis's clouds and curtain show colour, or only darken? — October 19
+
+**Why this needs your eyes.** Line-integrating the renderer's own colour model found that Northern Veil and Borealis Sanctuary each have one light, the zone root, whose scalar-field expression is the constant 0. The volume renderer reads that expression as the light's radiance, so the fog in both zones receives **no light at all**:
+- Northern Veil's curtains still glow, because they author emission.
+- Borealis's five media author no emission, so by the renderer's rules they can only darken what is behind them.
+
+The root's scalar field looks like a legacy field, now read as radiance, rather than a deliberate "dark light". Nothing was changed. The fix, if wanted, is an authoring decision.
+- [ ] Open Borealis Sanctuary. Do the clouds and the hero curtain show colour (emerald, cyan, violet), or only dark silhouettes against the sky?
+- [ ] Open Northern Veil. The curtains should glow in their colours; that glow is emission and does not depend on the light.
+- [ ] If Borealis looks only dark and you meant it to be lit, say so: the root's constant-0 field would need to stop acting as the light's radiance, or carry the radiance you intend.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T17:16 PDT. [Finding](../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6z-colour-with-the-incident-source-emission-by-its-own-sign-a-light-radiance-finding-2026-10-19-twenty-seventh-pass).*
+
