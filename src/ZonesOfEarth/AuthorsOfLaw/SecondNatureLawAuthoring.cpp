@@ -2,6 +2,8 @@
 
 #include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
 #include "ConstructedBeing/Singular/Property/Property.hpp"
+#include "Identity/PersonPresence.hpp"
+#include "Person/Person.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -34,10 +36,20 @@ void writeString(Singular& being, const char* property, const std::string& value
 
 Singular* findBeing(const std::string& id) {
     if (id.empty()) return nullptr;
+    Person* answeredPerson = nullptr;
+    std::size_t answerCount = 0;
+
     for (Singular* being : Universe::instance().beings()) {
-        if (being && being->getIdentifier() == id) return being;
+        if (!being) continue;
+        if (being->getIdentifier() == id) return being;
+        if (auto* person = dynamic_cast<Person*>(being)) {
+            if (Identity::personAnswersTo(*person, id)) {
+                answeredPerson = person;
+                ++answerCount;
+            }
+        }
     }
-    return nullptr;
+    return answerCount == 1 ? answeredPerson : nullptr;
 }
 
 Law* resolvePrototype(const ECA::Event& event, LawManager& laws, Singular*& request) {

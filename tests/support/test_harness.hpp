@@ -286,9 +286,17 @@ struct RealSaveTreeGuard {
     }
 
     explicit RealSaveTreeGuard(GuardCurrentRootTag) {
-        const std::string root = SaveSystem::saveRoot();
-        beginGuarding(std::filesystem::absolute(
-            root.empty() ? std::filesystem::path("saves") : std::filesystem::path(root)));
+        std::filesystem::path root = SaveSystem::saveRoot();
+        if (root.empty() || !std::filesystem::exists(root / "zones" / "SynthesisStudio.LivingInstrument")) {
+            std::filesystem::path repoRoot = std::filesystem::current_path();
+            while (!std::filesystem::exists(repoRoot / "saves" / "zones" / "SynthesisStudio.LivingInstrument") && repoRoot.has_parent_path()) {
+                auto parent = repoRoot.parent_path();
+                if (parent == repoRoot) break;
+                repoRoot = parent;
+            }
+            root = repoRoot / "saves";
+        }
+        beginGuarding(std::filesystem::absolute(root));
     }
 
     ~RealSaveTreeGuard() {
