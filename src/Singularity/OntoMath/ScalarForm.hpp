@@ -824,6 +824,42 @@ std::optional<double> definiteIntegralTimesRadical(const std::vector<double>& r,
                                                    double C, double a, double b,
                                                    std::string* why = nullptr);
 
+// ∫ over [m − h, m + h] of body d(v), decomposed for a backend that binds the
+// interval's centre m and half-width h only at run time (2026-10-19, step 2b).
+// Lowering F(hi) − F(lo) as written cancels in f32 far from the origin; it was
+// measured at 3e-4 relative at x ≈ 1000. The CPU avoids that by re-centring.
+// This gives a backend the same structure as exact forms, so it needs no rule
+// of its own. With v = m + u, every reduced term
+//   c·(m+u)^n·e^(α(m+u)+β)·g(ω(m+u)+φ)
+// becomes, by the binomial theorem and angle addition, Σ outer(m, …)·moment(h).
+// Each moment is ∫_{−h}^{h} u^k e^(αu)·{cos ωu, sin ωu, 1} du, and comes in two
+// exact forms in h:
+//  · `tabular`: F(h) − F(−h), F from ScalarForm::antiderivative. Accurate when
+//    |α + iω|·|h| > 1.
+//  · `series`: its Taylor series (24 terms; the remainder is below 2⁻⁶⁰ of the
+//    leading term while |α + iω|·|h| ≤ 1). Accurate exactly where the tabular
+//    form's 1/z^(j+1) terms cancel.
+// The backend selects between them by the same rule the CPU uses. Terms the
+// shift cannot hold (ln, negative or fractional powers) are returned as an
+// antiderivative to evaluate as F(hi) − F(lo).
+struct CentredIntegralPart {
+    ScalarForm outer;     // in the enclosing variables and m
+    ScalarForm tabular;   // in h
+    ScalarForm series;    // in h
+    double rate = 0.0;    // |α + iω|; 0 is a polynomial moment (the forms agree)
+};
+struct CentredIntegral {
+    std::vector<CentredIntegralPart> parts;
+    ScalarForm uncentred;
+};
+std::optional<CentredIntegral> centredIntegral(const ScalarForm& body, const std::string& v,
+                                               const std::string& m, const std::string& h,
+                                               std::string* why = nullptr);
+// Its value, with lo/hi giving m and h, and every other variable bound.
+std::optional<double> evaluateCentredIntegral(const CentredIntegral& centred, const std::string& v,
+                                              const std::string& m, const std::string& h, double lo,
+                                              double hi, const std::map<std::string, double>& vars);
+
 // ============================================================================
 // FunctionRegistry — the words of mathematics. A Person names a function
 // once (parameters + a piecewise body, guards and calls included) and every

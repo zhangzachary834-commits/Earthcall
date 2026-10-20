@@ -16,6 +16,9 @@
 //  · references are INDEPENDENT of the office: analytic antiderivatives written
 //    out here, or long-double composite Simpson;
 //  · the f32 error is MEASURED at the sampled points, not enclosed;
+//  · step 2b: the lowering is the office's CENTRED decomposition (centre m and
+//    half-width h as exact forms; each moment's tabular or series form chosen at
+//    run time), so intervals far from the origin are asserted like the rest;
 //  · the line route (SDF(f, q) through segmentation) is not lowered; its
 //    refusal is a negative control;
 //  · coverage is accounted: every attempted case is admitted and executed, or
@@ -231,7 +234,13 @@ int main() {
                      [](double x, double) {
                          return simpson([](long double u) { return u * std::exp(0.001L * u) * std::cos(0.002L * u + 0.1L); }, x, x + 0.5);
                      },
-                     true, true, grid(999.0, 1001.0, 0.0)});
+                     true, false, grid(999.0, 1001.0, 0.0)});
+    cases.push_back({"a fast wave far from the origin: ∫_x^(x+3) u·cos 5u du, x ≈ 1000",
+                     integral("u", leaf(var("u").times(trans(K::Cos, "u", 5.0))), named("x"), leaf(var("x").plus(ScalarForm::constant(3.0)))),
+                     [](double x, double) {
+                         return simpson([](long double u) { return u * std::cos(5.0L * u); }, x, x + 3.0);
+                     },
+                     true, false, grid(999.0, 1001.0, 0.0)});
     // Negative controls: admitted on the CPU (the line route) or not at all, never lowered.
     cases.push_back({"a field along a line (SDF route): CPU only", integral("s", node(Op::SDF, leaf(var("x").times(var("y"))),
                          node(Op::VectorConstruct, named("s"), constant(1.0), constant(0.0))), constant(0.0), named("x")),
@@ -287,7 +296,7 @@ int main() {
         }
     }
     std::printf("    coverage: %d attempted, %d lowered, %d refused, %d executed on the device\n", attempted, admitted, refused, executed);
-    check(expectedRefusedWrongly == 0 && executed == 5 && refused == 2,
+    check(expectedRefusedWrongly == 0 && executed == 6 && refused == 2,
           "every expected-supported case lowered and ran on the device; both negative controls refused");
 
     std::cout << "webgpu_integral_operation_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";

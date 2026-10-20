@@ -253,6 +253,25 @@ int main() {
         check(authored.children.size() == 3 && authored.variableName == "s", "the math editor authors body, lo, hi and a variable");
     }
 
+    // ---- The centred decomposition backends lower (step 2b) equals the office's own definite value
+    {
+        const ScalarForm body = var("u").times(var("u")).times(trans(K::Exp, "u", 0.001, 0.2)).times(trans(K::Cos, "u", 0.002, 0.1))
+                                    .plus(var("u").times(trans(K::Sin, "u", 5.0, -1.0)))
+                                    .plus(ScalarForm::variable("u", -1.0).scaled(0.5))   // uncentred (ln)
+                                    .plus(var("k").times(var("u")).times(var("u")).times(var("u")));
+        const auto centred = OntoMath::centredIntegral(body, "u", "\x01m", "\x01h");
+        double worst = 0.0;
+        bool ok = centred.has_value();
+        for (const auto& [lo, hi] : std::vector<std::pair<double, double>>{{1.0, 2.0}, {999.0, 1000.5}, {1e3, 1.05e3}, {0.25, 0.2501}, {3.0, 40.0}}) {
+            const auto a = centred ? OntoMath::evaluateCentredIntegral(*centred, "u", "\x01m", "\x01h", lo, hi, {{"k", 0.3}}) : std::nullopt;
+            const auto b = OntoMath::definiteIntegral(body, "u", lo, hi, {{"k", 0.3}});
+            ok = ok && a && b;
+            if (a && b) worst = std::max(worst, std::abs(*a - *b) / std::max(1.0, std::abs(*b)));
+        }
+        std::cout << "    centred decomposition vs the office's definite value: worst relative " << worst << "\n";
+        check(ok && worst < 1e-12, "the centred decomposition (what backends lower) equals the office's definite integral");
+    }
+
     // ---- The office itself: exp·cos differentiates back -----------------------------
     {
         const ScalarForm f = var("x").times(var("x")).times(trans(K::Exp, "x", -0.7, 0.2)).times(trans(K::Sin, "x", 2.5, 1.0));

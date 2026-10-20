@@ -415,6 +415,9 @@ struct Emit {
     // retain their existing evaluator. Recipes preserve their own time binding.
     bool prepareVolumeTime = false;
     std::vector<KernelVolumeTimeSlot> timeSlots;
+    // Names an Integral binds while its office decomposition is emitted (the
+    // interval's centre and half-width): internal, never authored names.
+    std::map<std::string, std::string> boundNames;
 
     // The refusal (see Program::ok). Once set it is never overwritten: the
     // FIRST thing the compiler could not honour is the one worth reporting;
@@ -483,6 +486,7 @@ std::string emitRpn(const std::vector<geom::SdfToken>& rpn, Emit& e,
 // name but this compiler cannot bind is a REFUSAL, not "0.0": substituting zero
 // silently reinterprets f(t) as f(0), which is a different field.
 std::string pointComponent(const std::string& var, Emit& e, const std::string& pt) {
+    if (const auto bound = e.boundNames.find(var); bound != e.boundNames.end()) return bound->second;
     if (e.bindScreen) {
         // SDF/Gradient rebind only p/x/y/z on the CPU. Other admitted scalars
         // retain their original bindings, including normalized coordinates.
@@ -929,15 +933,53 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
             // value-branch segmentation, needs segmentation on the device and is
             // refused here; the CPU still evaluates it. f32 execution error is
             // measured by webgpu_integral_operation_test, not enclosed.
+            // Step 2b (same day): the office's CENTRED decomposition, so an
+            // interval far from the origin keeps f32 accuracy (F(hi) − F(lo)
+            // measured 3e-4 relative at x ≈ 1000). m and h are formed as exact
+            // forms, (hi ± lo)/2, so hi − lo cancels symbolically before f32
+            // sees it. Each moment selects its tabular or series form by the
+            // same |z|·|h| ≤ 1 rule the CPU uses. Both forms come from the office.
             std::string why;
-            const auto form = OntoMath::toScalarForm(node, &why);
-            if (!form) {
+            const auto refuse = [&] {
                 e.refuse("Integral does not lower to WGSL: " + why +
                          " (only an integral the term algebra holds in closed form lowers; a field "
                          "along a line needs device segmentation, not yet built)");
-                return "0.0";
+                return std::string("0.0");
+            };
+            if (node.children.size() != 3 || !node.children[0] || !node.children[1] || !node.children[2]) {
+                why = "Integral needs a body, lo and hi";
+                return refuse();
             }
-            return "(" + emitScalarForm(*form, e, pt) + ")";
+            const auto body = OntoMath::toScalarForm(*node.children[0], &why);
+            const auto lo = body ? OntoMath::toScalarForm(*node.children[1], &why) : std::nullopt;
+            const auto hi = lo ? OntoMath::toScalarForm(*node.children[2], &why) : std::nullopt;
+            if (!hi) return refuse();
+            const std::string tag = std::to_string(e.next++);
+            const std::string mName = "\x01m" + tag, hName = "\x01h" + tag;
+            const auto centred = OntoMath::centredIntegral(*body, node.variableName, mName, hName, &why);
+            if (!centred) return refuse();
+            const std::string mExpr = "(" + emitScalarForm(hi->plus(*lo).scaled(0.5), e, pt) + ")";
+            const std::string hExpr = "(" + emitScalarForm(hi->plus(lo->scaled(-1.0)).scaled(0.5), e, pt) + ")";
+            e.boundNames[mName] = mExpr;
+            e.boundNames[hName] = hExpr;
+            std::string sum;
+            for (const auto& part : centred->parts) {
+                std::string moment = emitScalarForm(part.tabular, e, pt);
+                if (part.rate > 0.0)
+                    moment = "select(" + moment + ", " + emitScalarForm(part.series, e, pt) + ", " +
+                             e.param(part.rate) + " * abs" + hExpr + " <= 1.0)";
+                sum += (sum.empty() ? "" : " + ") + std::string("(") + emitScalarForm(part.outer, e, pt) + ") * (" + moment + ")";
+            }
+            e.boundNames.erase(mName);
+            e.boundNames.erase(hName);
+            if (!centred->uncentred.empty()) {
+                const auto upper = OntoMath::substitute(centred->uncentred, node.variableName, *hi, &why);
+                const auto lower = upper ? OntoMath::substitute(centred->uncentred, node.variableName, *lo, &why) : std::nullopt;
+                if (!lower) return refuse();
+                sum += (sum.empty() ? "" : " + ") + std::string("(") + emitScalarForm(*upper, e, pt) + " - " +
+                       emitScalarForm(*lower, e, pt) + ")";
+            }
+            return sum.empty() ? "0.0" : "(" + sum + ")";
         }
         case Op::LineIntegral:
             e.refuse("LineIntegral has no implementation on either path: it needs a "

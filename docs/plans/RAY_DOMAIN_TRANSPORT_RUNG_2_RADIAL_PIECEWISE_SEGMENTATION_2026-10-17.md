@@ -1400,3 +1400,36 @@ Also checked:
 Nothing renders differently: no saved medium contains the op.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T19:50:39-07:00 (PDT).*
+
+
+<a id="6ac-step-2b-the-centred-decomposition"></a>
+
+## 6ac. Step 2b: the centred decomposition, and the office's normalization cost (2026-10-19, thirtieth pass)
+
+**Human origin.** Zach: "BROOOOOO NEXT PASS DO WUT U CAN WHILE CODEX IS STILL WRITING HIS REPLY". These items need no decision from Codex or Zach.
+
+**1. The cost my refactor introduced, removed.** A `sample` profile showed `ScalarForm::normalized()` sorting by a printed signature that it rebuilt on every comparison. Each signature is now built once per sort, and the ray conversion appends wave terms and normalizes once. Order and results are unchanged:
+- radial 13.3 → 9.2 s (it was 9.3 s before the office);
+- faithfulness 144 → 85 s (82 s before), with every printed accuracy identical.
+
+`second_nature_law_forge_zone_test` fails in the wider ctest run. I built it at `6bd248d94`, where this session started, and it fails identically there, so it predates this work. The `ontomath_two_direction_witness_test` segfault and the `sky_island_sanctuary_test` link failure are the known pre-existing ones.
+
+**2. Step 2b, the §6ab finding fixed in the office.** `centredIntegral(body, v, m, h)` writes ∫_(m−h)^(m+h) body dv as Σ outer(m, …)·moment(h):
+- the binomial theorem for (m+u)ⁿ;
+- angle addition for g(ω(m+u)+φ), about A = ωm + φ;
+- e^(α(m+u)+β) = e^(αm+β)·e^(αu).
+
+Each moment ∫_(−h)^(h) uᵏ e^(αu)·{cos ωu, sin ωu, 1} du has two exact forms in h:
+- the tabular F(h) − F(−h), through `ScalarForm::antiderivative` and `substitute`;
+- its 24-term Taylor series.
+
+The emitter forms m and h as exact forms (hi ± lo)/2, so hi − lo cancels symbolically before f32 sees it. It binds them, then picks each moment's form with WGSL `select` by the CPU's own rule, |z|·|h| ≤ 1. Terms the shift cannot hold (ln, negative powers) stay F(hi) − F(lo). The shader still holds no rule; every form comes from the office.
+
+**Witnesses:**
+- **`webgpu_integral_operation_test`, 21/21.** The far case (x ≈ 1000) went from 3.1e-4 to **5.0e-7** of scale and is now asserted. A new fast wave far from the origin, ∫_x^(x+3) u·cos 5u du, measures 9.5e-8. The near-origin cases measure 2.6e-8 to 7.9e-8. Coverage: 8 cases attempted, 6 executed on the device, 2 refused.
+- **`ontomath_integral_operation_test`, 34/34.** The decomposition backends lower equals the office's own definite value to 1.3e-16 relative. The intervals cover slow, far, short and wide cases, plus an uncentred ln term and a free variable.
+- **Regressions:** SDF parity, object test, certificates, authoring reachability, law reversal, ontomath and line segmentation all exit 0.
+
+**Not claimed:** an f32 execution enclosure (addendum C); the line route on the device; a report at a Property route (B).
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T21:06:42-07:00 (PDT).*

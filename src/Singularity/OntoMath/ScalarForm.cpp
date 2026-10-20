@@ -3898,6 +3898,141 @@ std::optional<double> definiteIntegral(const ScalarForm& form, const std::string
 }
 
 namespace {
+constexpr int kMomentSeriesTerms = 24;
+
+// ∫_{−h}^{h} u^k e^(αu)·g(ωu) du, g = cos ('c'), sin ('s') or 1 ('e'): the
+// tabular form (through the office's antiderivative) and its Taylor series.
+std::optional<std::pair<ScalarForm, ScalarForm>> momentForms(int k, double alpha, double omega, char g,
+                                                             const std::string& h, std::string* why) {
+    static const std::string U = "\x01u";   // the moment's own variable, never an authored name
+    Term t(1.0);
+    if (k > 0) t.factors[U] = double(k);
+    if (alpha != 0.0) t.addTrans(TransFactor(TransFactor::Kind::Exp, U, alpha, 0.0));
+    if (g == 'c') t.addTrans(TransFactor(TransFactor::Kind::Cos, U, omega, 0.0));
+    if (g == 's') t.addTrans(TransFactor(TransFactor::Kind::Sin, U, omega, 0.0));
+    ScalarForm integrand;
+    integrand.terms.push_back(t);
+    const auto F = integrand.antiderivative(U);
+    if (!F) { say(why, "a moment has no antiderivative in this algebra"); return std::nullopt; }
+    const auto up = substitute(*F, U, ScalarForm::variable(h), why);
+    const auto down = up ? substitute(*F, U, ScalarForm::variable(h, 1.0, -1.0), why) : std::nullopt;
+    if (!down) return std::nullopt;
+    ScalarForm series;
+    const std::complex<double> z(alpha, g == 'e' ? 0.0 : omega);
+    std::complex<double> zj(1.0, 0.0);
+    double factorial = 1.0;
+    for (int j = 0; j <= kMomentSeriesTerms; ++j) {
+        if (j > 0) { zj *= z; factorial *= double(j); }
+        if ((k + j) % 2) continue;
+        const double c = (g == 's' ? zj.imag() : zj.real()) / factorial * 2.0 / double(k + j + 1);
+        if (c != 0.0) series.terms.push_back(Term(c, {{h, double(k + j + 1)}}));
+    }
+    return std::make_pair(up->plus(down->scaled(-1.0)).normalized(), series.normalized());
+}
+} // namespace
+
+std::optional<CentredIntegral> centredIntegral(const ScalarForm& body, const std::string& v, const std::string& m,
+                                               const std::string& h, std::string* why) {
+    using TK = TransFactor::Kind;
+    CentredIntegral out;
+    for (const auto& term : body.terms) {
+        const auto reduced = reduceTranscendentals(term, v);
+        if (!reduced) { say(why, "ln(0) of " + v + ": undefined everywhere"); return std::nullopt; }
+        for (const Term& t : *reduced) {
+            const auto power = t.factors.find(v);
+            const double n = power == t.factors.end() ? 0.0 : power->second;
+            bool centrable = n >= 0.0 && std::floor(n) == n && n <= 64.0;
+            const TransFactor *ex = nullptr, *tr = nullptr;
+            for (const auto& tf : t.trans) {
+                if (tf.variable != v) continue;
+                if (tf.kind == TK::Ln) centrable = false;
+                else if (tf.kind == TK::Exp) ex = &tf;
+                else tr = &tf;
+            }
+            if (!centrable) {
+                ScalarForm one;
+                one.terms.push_back(t);
+                const auto F = one.antiderivative(v);
+                if (!F) {
+                    say(why, "∫" + one.print() + " d" + v + " has no elementary antiderivative in this algebra");
+                    return std::nullopt;
+                }
+                out.uncentred = out.uncentred.plus(*F);
+                continue;
+            }
+            Term other(t.coefficient, t.factors);
+            other.factors.erase(v);
+            for (const auto& tf : t.trans)
+                if (tf.variable != v) other.addTrans(tf);
+            const double alpha = ex ? ex->scale : 0.0, beta = ex ? ex->shift : 0.0;
+            const double omega = tr ? tr->scale : 0.0, phi = tr ? tr->shift : 0.0;
+            const double rate = std::hypot(alpha, omega);
+            const int N = static_cast<int>(n);
+            double binom = 1.0;   // C(N, k)
+            for (int k = 0; k <= N; ++k) {
+                if (k > 0) binom = binom * double(N - k + 1) / double(k);
+                Term base = other;
+                base.coefficient *= binom;
+                if (N - k > 0) base.factors[m] += double(N - k);
+                if (ex) base.addTrans(TransFactor(TK::Exp, m, alpha, beta));
+                auto add = [&](Term outer, char g) {
+                    const auto moment = momentForms(k, alpha, omega, g, h, why);
+                    if (!moment) return false;
+                    CentredIntegralPart part;
+                    part.outer.terms.push_back(std::move(outer));
+                    part.tabular = moment->first;
+                    part.series = moment->second;
+                    part.rate = rate;
+                    out.parts.push_back(std::move(part));
+                    return true;
+                };
+                if (!tr) {
+                    if (!add(base, 'e')) return std::nullopt;
+                    continue;
+                }
+                // Angle addition about A = ωm + φ.
+                Term withCos = base, withSin = base;
+                withCos.addTrans(TransFactor(TK::Cos, m, omega, phi));
+                withSin.addTrans(TransFactor(TK::Sin, m, omega, phi));
+                if (tr->kind == TK::Cos) {   // cos(A + ωu) = cos A·cos ωu − sin A·sin ωu
+                    withSin.coefficient = -withSin.coefficient;
+                    if (!add(withCos, 'c') || !add(withSin, 's')) return std::nullopt;
+                } else {                     // sin(A + ωu) = sin A·cos ωu + cos A·sin ωu
+                    if (!add(withSin, 'c') || !add(withCos, 's')) return std::nullopt;
+                }
+            }
+        }
+    }
+    out.uncentred = out.uncentred.normalized();
+    return out;
+}
+
+std::optional<double> evaluateCentredIntegral(const CentredIntegral& centred, const std::string& v,
+                                              const std::string& m, const std::string& h, double lo, double hi,
+                                              const std::map<std::string, double>& vars) {
+    std::map<std::string, double> at = vars;
+    at[m] = 0.5 * lo + 0.5 * hi;
+    at[h] = 0.5 * hi - 0.5 * lo;
+    double total = 0.0;
+    for (const auto& part : centred.parts) {
+        const auto outer = part.outer.evaluate(at);
+        const bool slow = part.rate > 0.0 && part.rate * std::abs(at[h]) <= 1.0;
+        const auto moment = (slow ? part.series : part.tabular).evaluate(at);
+        if (!outer || !moment) return std::nullopt;
+        total += *outer * *moment;
+    }
+    if (!centred.uncentred.empty()) {
+        at[v] = hi;
+        const auto upper = centred.uncentred.evaluate(at);
+        at[v] = lo;
+        const auto lower = centred.uncentred.evaluate(at);
+        if (!upper || !lower) return std::nullopt;
+        total += *upper - *lower;
+    }
+    return total;
+}
+
+namespace {
 // ∫[s0, s1] √(A s² + B s + C) ds, the branch having decided Q ≥ 0 there.
 std::optional<double> integrateRadical(double A, double B, double C, double s0, double s1, std::string* why) {
     auto Q = [&](double s) { return std::max(0.0, (A * s + B) * s + C); };
