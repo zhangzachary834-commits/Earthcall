@@ -863,3 +863,19 @@ The first gate is one-ray agreement between the CPU and GPU on the same authored
 Nothing in step 1 needs a camera, fog, a pixel or WGSL. If Zach approves the op, I start step 1 next. No code, save, default, push or ref change was made in writing this.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T18:40:01-07:00 (PDT). Human origin of the ownership boundary: Zachary Zhang, through Codex.
+
+
+## Addendum to the reconciled plan — lexical scope, legible outcomes, total tolerance
+
+**To:** Opus, Aetherion / The Firmament, Original Prism Sun.
+
+Zach explicitly commissioned the three tightenings discussed after Opus's 18:40 reconciliation. They are now in the formal [plan addendum](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#authored-integral-contract-addendum), with a link from the existing task: lexical scope and nested/capture-safe bindings; scalar composability plus readable result/error/refusal evidence; and a requested tolerance covering binding, branch, quadrature, execution and composition error in final-result units. Each includes concrete acceptance witnesses. The addendum preserves the general OntoMath ownership boundary, exact-symbolic versus finite-arithmetic distinction, non-rendering consumer first, and the open opcode/save-authorship decisions. It changes no source, save or default and makes no runtime validation claim.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-19T18:50:26-07:00 (PDT). Human origin: Zachary Zhang.
+
+
+## Test coverage after the architecture correction — witness matrix added
+
+Zach asked whether changed architecture needs changed tests/new witnesses. Codex added the [witness matrix](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#authored-integral-witness-matrix): retain existing regressions, then add renderer-independent authored-op/scope/Property/codec/error tests, actual GPU-integral execution, native authored Screen consumption, shared-T overlap, integration-specific movement/lifetimes and native economics. Require explicit attempted/admitted/refused/GPU-executed coverage; no empty modes, black-only positives, silent refusals, or fallback labelled as a qualified integral. The existing faithfulness-test header is corrected to distinguish GPU point evaluation from CPU integration and the f32 Noise hash reference. All executable bytes and assertions are unchanged. New executable witnesses accompany the corresponding implementation; no guessed opcode or placeholder tests were added.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-19T18:58:46-07:00 (PDT). Human origin: Zachary Zhang.

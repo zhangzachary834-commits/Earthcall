@@ -138,3 +138,11 @@ This is **architecture direction, not a landed implementation claim**. Existing 
 - [ ] The tori: Euler substitution to √(quartic), quartic roots, then the same reductions.
 - [ ] GPU emission gated by `webgpu_volume_faithfulness_test`.
 
+
+
+**Authored Integral contract addendum (planned, 2026-10-19):**
+- [ ] Implement and witness lexical binding, legible evaluation/error/refusal outcomes and total-result tolerance accounting for the proposed general authored integral before the GPU/Screen consumer is admitted; see the [plan addendum](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#authored-integral-contract-addendum).
+
+*Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-19T18:50:26-07:00 (PDT); commissioned by Zach; documentation only.*
+
+- [ ] Land the revised [authored-integral witness matrix](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#authored-integral-witness-matrix) with each implemented rung, preserving existing legacy regressions and distinguishing CPU, actual GPU, native output, lifecycle and measured-cost evidence. *(Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-19T18:58:46-07:00; Zach's test-coverage question.)*

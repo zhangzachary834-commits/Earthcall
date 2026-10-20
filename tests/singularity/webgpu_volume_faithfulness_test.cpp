@@ -1,26 +1,32 @@
-// Faithfulness to the authored equation (Zach, 2026-10-18: "Faithfulness to
-// exact math should be the rule"). Byte parity with today's shader is no longer
-// the test for rewriting volume arithmetic (Rung 3a, the Firmament's Milestone
-// 2): agreement with the authored mathematics is. This measures how far the
-// production density, as the device executes it, sits from the authored
-// equation evaluated in double precision at the same ray samples — the baseline
-// any rewrite must match or beat.
+// Faithfulness witnesses for Zach's authored-math rule (2026-10-18).
 //
-// Device side: each real medium's own production program (sdfwgsl::composeVolumeSet,
-// every channel, the shared-noise fill and the GPU clock preparation pass) plus a
-// compute entry that forms each sample exactly as the marcher does
-// (worldP = ro + rd·t; p = worldP − origin, f32) and returns volumeDensityEval(p).
-// Reference: an independent double-precision interpreter of the authored MathNode
-// tree with the CPU evaluator's semantics (guards, clamp, first-match Piecewise;
-// Noise is glm::perlin instantiated in double), at p formed in double from the
-// same f32 ray, origin and sample t. Double carries ~9 more digits than f32, so
-// it is a sound reference for f32 error (not an 80-digit or interval theorem).
+// Evidence scopes are distinct:
+// 1. GPU POINT EVALUATION: production composeVolumeSet channel code, shared fill
+//    and clock preparation run on the device. The compute entry forms f32 ray
+//    sample positions as the marcher does and returns volumeDensityEval(p).
+//    World-frame and medium-frame arithmetic are compared against the authored
+//    reference at near/far cameras.
+// 2. CPU LINE INTEGRATION: host-side LineAlgebraicEvaluator/segmentLine integrals
+//    compute optical depth and RGB, including admitted incident-source factors,
+//    against the reference and the 96-sample estimator. These integrate ONE
+//    medium at a time. Labelled counterfactual source cases are not the rendered
+//    scene. This file does NOT yet execute an authored Integral on the GPU or
+//    qualify integrated overlapping-media transport.
 //
-// Evidence class: one adapter, sampled rays. Report-only until a rewrite exists
-// to compare: the checks are coverage and finiteness.
+// Reference semantics: guards, clamp and first-match Piecewise are interpreted
+// independently in double. Noise preserves the authored f32 lattice hash and
+// gradient construction; only its continuous interpolation runs in double
+// (perlinReference below). glm::perlin<double> alone is a DIFFERENT function.
+// The sampled reference comparisons and CPU integration radii are not a complete
+// enclosure of GPU integration arithmetic or proof of a requested output budget.
 //
-// Claude Code · Claude Opus 5.5 · session f3af84cf-bfe3-429d-b417-2d533119f169 ·
-// 2026-10-18. Harness pattern: webgpu_volume_support_enclosure_test.
+// Keep the existing assertions scoped to those paths. The future authored-op,
+// non-rendering GPU-integral, native-consumer, overlap and lifetime witnesses
+// are specified in the ray-domain plan's authored-integral-witness-matrix.
+//
+// Original: Claude Code / Claude Opus 5.5 / f3af84cf-bfe3-429d-b417-2d533119f169 /
+// 2026-10-18. Scope correction: Codex / GPT-6.1 Sol /
+// 01a148a7-bd85-7550-a416-0e859a729c1a / 2026-10-19T18:58:46-07:00 (PDT).
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/OntoMath/LineRestriction.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"

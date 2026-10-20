@@ -1201,3 +1201,111 @@ Each becomes a sampled factor. The wᵢ-reading phase needs its range proved ove
 ---
 
 *Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17. Commissioned by Zach ("LETS GOOO do NEXT RUNG radial piecewise segmentation").*
+
+
+<a id="authored-integral-contract-addendum"></a>
+
+## Addendum — authored Integral: lexical scope, legible outcomes, and total error (2026-10-19)
+
+**Status:** implementation-plan requirements and proposed contract details, not implemented or validated behavior.
+
+**Human commission:** Zach: “GO ADD UR TIGHTENINGS AS ADDENDUM TO THE PLAN.” This qualifies [Opus's reconciled implementation order](../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md#opus-reconciles-the-first-gpu-slice-with-the-ownership-correction--the-integral-becomes-authored-mathematics-first-the-screen-is-its-second-consumer), signed 2026-10-19T18:40:01-07:00: authored general integral and non-rendering consumer first, lowering of the same mathematics second, Screen consumer third. Zach originated the ownership objection; these three contract tightenings are Codex's elaboration, commissioned for this addendum. The permanent opcode choice and authorship of any legacy default transport law remain open decisions; this documentation does not approve an opcode or authorize save edits.
+
+### A. Lexical binding and nested integrals
+
+The integration variable binds occurrences in the body only. Lower/upper limits and an optional tolerance are evaluated in the enclosing scope, before introducing that binder. An inner binder may shadow an outer name; equal spellings must not conflate distinct bindings. An inner upper limit may still depend on the outer integration variable, as cumulative integration requires.
+
+Free-variable discovery, substitution, lowering, common-subexpression sharing and cache identities must preserve binding identity. Substitution must avoid capture; a consistent renaming of a bound variable must preserve meaning. A global name-to-value map overwritten by an inner integral is insufficient unless lexical environment behavior is explicitly implemented. Serialization must retain enough structure to reconstruct the same scopes. The public spelling/name field is not itself proof of lexical correctness.
+
+**Required witnesses, with ordinary authored trees and no renderer dependency:**
+- A nested integral with different names, integral from s=0 to 1 of (integral from u=0 to s of u du) ds, equals 1/6.
+- The same result with the inner variable also named s: its upper limit sees the outer s, and its body sees the inner s.
+- integral from s=0 to 1 of (integral from s=0 to 2 of s ds) ds equals 2; the inner binding does not leak into outer evaluation.
+- Bound-variable renaming, a free-variable edit and JSON round-trip preserve the intended behavior; the free-variable edit invalidates the dependent result, while mere spelling coincidence never grants sharing.
+
+### B. Scalar mathematics with legible evaluation outcomes
+
+Keep the mathematical result composable with ordinary scalar expressions. Error evidence need not change every integral into a dictionary-valued expression or allocate a new Singular. Provide a generic evaluation/report route on the relevant existing bearer or observation that exposes the meaningful result and its qualification; compiled callbacks and scratch stay derived execution mechanism.
+
+Before admitting the first consumer, specify how the generic result/report exposes:
+- the estimate and its absolute error bound or enclosing interval;
+- exact symbolic admission versus numerical approximation (an exact antiderivative does not imply zero floating-point error);
+- the requested tolerance, achieved total bound, and admission/refusal status;
+- enough expression/binding/backend provenance to avoid attaching evidence to a stale value;
+- a legible reason for unsupported expressions, unresolved branches, invalid tolerances, exhausted work, or unavailable bounds.
+
+Use the existing Property/observation and authority machinery. A read-only derived report is appropriate; its representation must not introduce renderer nouns into OntoMath. A property containing only an opaque callback is not the mathematical expression. A refused or unqualified estimate must never masquerade as an admitted value, silently become zero, or reuse an older successful report. Consumers may explicitly choose a fallback, but its result retains its actual qualification.
+
+**Required witnesses:** an ordinary Singular can expose a successful outcome and a refusal; a free binding edit refreshes or invalidates the evidence; removing approximation permission refuses an expression requiring it. Tests inspect the report through the actual Property route rather than only a private helper.
+
+### C. Requested tolerance covers the complete returned result
+
+**Proposed initial tolerance shape:** a finite positive absolute tolerance in the units of the integral's result. Record that interpretation before implementation; do not infer a relative tolerance or a pixel/LSB budget. Negative/nonfinite inputs refuse. Zero must have an explicitly defined policy before admission, rather than acquiring one by accident. Omitting tolerance permits only the admitted exact mathematical routes, as Opus proposes; it does not assert that a floating-point result has zero execution error.
+
+A budget claim refers to the declared authored mathematical function under its supplied bindings. Preserve defined function semantics (including the existing Noise hash) rather than changing the function to obtain a cleaner reference.
+
+For a numerical admission, bound every relevant contribution in final-result units: unresolved branch/root slivers, residual quadrature, input/coefficient binding, floating-point/library execution, accumulation, and nested composition. Conservative sums are acceptable after propagation into the same units; intermediate error terms in different units cannot simply be added. CPU double and GPU f32 both need their own execution accounting. A sampled device margin is not a universal execution enclosure.
+
+For example, the absolute error radius for an integral used inside exp(-integral) must be propagated through exp, then through any products and outer integral. Giving each child the whole parent tolerance does not certify the parent. Retain dependencies and shared subresults where valid, without double-spending an error budget or treating an approximate inner value as exact. The generic contract must cover cumulative/nested integrals before transport consumes them.
+
+**Admission condition:** a justified total bound must fit the authored tolerance. A quadrature-only radius that fits while GPU rounding does not fit is a refusal, not success. If the total bound is unknown or too large, refine within the explicit work limit, select another admitted evaluation, or refuse; do not weaken the requested tolerance. An explicitly selected legacy fallback cannot be reported as satisfying a continuum budget it has not established.
+
+**Required witnesses:**
+- An estimate with a small quadrature radius but an excessive execution bound is refused.
+- Nested integral/exponential/product composition is checked against a reference with independently controlled uncertainty; the final bound holds, rather than only each local mathematical radius.
+- A tolerance below the backend's justified capability refuses; a looser achievable tolerance can succeed. Reaching the work cap yields a legible outcome.
+- CPU/GPU execute the same authored expression and bindings against the reference, with separate execution bounds. Unsupported GPU capability may refuse without changing the expression's meaning.
+
+### Placement in the existing ladder
+
+Settle and witness A and B with the renderer-independent authored integral, carry C into its CPU numerical admission and GPU lowering, then use the spherical cloud as the second consumer. Continue the existing one-ray/full-frame, overlap, mutation/clock/pose/device/fallback and native economic gates. Symbolic expression structure stays above concrete ray binding, following Prism's pose-parametric direction. These requirements add no predictive-motion prerequisite and do not claim the certificate movement witness validates the new integrator.
+
+No implementation tests were run for this documentation addendum. No source, save, default or native output changed.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-19T18:50:26-07:00 (PDT). Human origin: Zachary Zhang.
+
+
+<a id="authored-integral-witness-matrix"></a>
+
+## Witness matrix — revised authored-integral architecture (2026-10-19)
+
+**Status:** source-inspected coverage map and planned acceptance witnesses; not an implemented or passing new test suite. Zach asked whether the architecture change requires changed tests and new witnesses. This extends the [contract addendum](#authored-integral-contract-addendum) and Opus's renderer-independent-first order. The proposed Integral operation is not implemented at inspected HEAD `d98aaaae6`; its opcode and missing semantics are not selected by writing this matrix.
+
+### Preserve existing answers; add evidence for the new claims
+
+Keep line-restriction, segmentation, exact/hybrid integral and Carlson tests as mathematical regressions. Keep zero-proof/certificate byte-parity, residency, and legacy unified-quadrature tests on their existing lanes. They protect existing behavior and do not qualify the new authored operator or GPU integrator. Do not change an oracle or loosen a threshold merely to make the new path pass.
+
+`webgpu_volume_faithfulness_test` currently combines GPU production POINT evaluation with host-side LINE integration. Its one-medium CPU integration comparisons do not prove GPU integration or fused overlap. Its header is corrected in this pass, including the authored f32 Noise hash definition. No assertion or executable behavior was changed. The new GPU path should have its own explicit execution/coverage summary, even if it reuses harness code.
+
+| Claim to establish | Required witness / independent check | Existing coverage and planned change |
+| --- | --- | --- |
+| The world can author the integral without the renderer | An ordinary Singular carries a typed expression at a Property route; Law/Property binding, JSON plus an existing binary codec round-trip, independent CPU reference, readable result/refusal evidence; renderer-free consumer/target | Line helper tests remain; add authored-operation tests when the vocabulary is defined. A private helper call is insufficient. |
+| Nested variables have lexical scope | The contract addendum's 1/6 and 2 examples, same-name shadowing, capture-safe substitution, alpha-renaming, free-variable mutation and round-trip | Add to the authored-operation tests; exercise public expression evaluation and lowering, not just scope utilities. |
+| Exact admission, approximation permission and total tolerance are distinct | Exact class admits without approximation permission; unsupported exact class refuses; numerical admission checks final-result error including nested composition and execution error; invalid tolerance/work-cap/unknown-bound outcomes are legible | Extend mathematical/error tests; retain independent references with their own uncertainty. A loose radius containing the answer is not a useful-budget pass. |
+| The GPU actually integrates the authored expression | Dispatch the same generic authored tree outside the volume path; read scalar/result evidence from the device; require the expected nonzero invocation/readback corpus and coverage for supported cases | New GPU-integral witness. Upload inputs, not CPU-integrated answers. Compare against independent values, not merely the same plan evaluated twice. |
+| Screen consumes the authored mathematics | A real single-medium frame uses the generic authored transport expression; changing an authored factor changes output; reference compares both float T/RGB and final pixels | New native consumer witness after generic GPU admission. A constant/black image alone cannot qualify it; preserve the 96-sample comparison as a baseline with a separately labelled continuum oracle. |
+| Overlapping media share one attenuation | Synthetic constant overlapping media with analytic combined T and RGB, followed by nonconstant authored cases; coherent fallback for an unsupported member | Existing unified-quadrature test remains on the legacy lane; add integration-on cases. Independent per-medium compositing must fail the positive overlap control. Do not silently decide the open null-member sampling question. |
+| Motion changes bindings without recompiling meaning | Move/rotate/teleport/resize through inside, grazing and boundary-order cases; compare the retained renderer to fresh binding and the authored reference; assert counters with a structural-edit control | Certificate M0 is retained; repeat for the new integrator. Require zero unnecessary semantic relowering/recompilation, not zero legitimate numeric binding writes. |
+| Edits and teardown cannot preserve stale evidence | Change integrand, bound, tolerance, source/medium clocks independently; alter membership and opaque depth; replace device; force work exhaustion/unsupported mixed set, then recover | Extend actual new-consumer lifetime tests; compare with a fresh instance. Refusal cannot display stale admitted output or count fallback as budget-qualified integration. |
+| Improvements pay on native hardware | Repeated warmed ABBA, fixed view/clock/framebuffer and identical authored input; separate correctness readbacks, first-use compilation/preparation, steady frames and movement | Keep existing benchmark evidence scoped to its lane. Measure the new integration lane; fewer remainder evaluations and CPU timing are not GPU speedup evidence. |
+
+### Prevent empty or misleading green runs
+
+Each new acceptance group declares the expected fixtures and coverage for the rung it claims. Report attempted, admitted, refused, exhausted and actually GPU-executed cases distinctly; account for every attempted case. An expected supported fixture silently refusing must fail. Include nonblack/nonzero positive cases and deliberately unsupported negative controls. Device acquisition or unavailable fixtures produce an explicit unavailable/skip result, not a GPU pass. A configured mode that executes no intended cases must fail its coverage gate. Merely asserting that one medium ran does not qualify a named corpus.
+
+Separate these four comparisons in the output: legacy-lane regression; generic CPU mathematics; generic GPU evaluation; native integrated image. CPU and GPU agreement can share a bug, so retain analytic/high-precision reference cases whose evaluation does not reuse the integration implementation under test. Preserve the authored function's semantics in the reference, especially Noise's f32-defined discrete hash.
+
+A non-rendering consumer proves mathematical availability, not the whole authored Screen process. That consumer's result must be connected through the actual admitted native manifestation route before the architecture is claimed end-to-end. General Act/provenance questions not traced remain explicitly unproved rather than inferred from green pixels.
+
+### Landing order and evidence limits
+
+1. Generic authored-operation, lexical-scope, serialization/Property and numerical-contract witnesses accompany the corresponding implemented CPU capability.
+2. A distinct GPU-integral execution witness accompanies lowering of that same capability.
+3. The single-medium native transport witness follows, then overlap and integration-specific lifecycle/movement coverage before their respective promotion.
+4. Native economics and the existing Person image/movement acceptance follow actual runnable changes. Existing Person checks remain open; this documentation creates no new visible effect.
+
+Do not add fake implementations, failing placeholder suites, or tests that bless guessed opcode/binding semantics while the vocabulary is still open. Proposed test names, source files and CMake targets should be chosen with the implementation; reconfigure CMake when new sources land. This matrix is linked from the existing task and active Intercom so the implementer owns the new tests alongside the feature.
+
+**Validation this pass:** scope-comment and documentation checks only; no new executable tests, builds or native performance runs. No assertions, tolerances, saves, defaults or installed app changed.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-19T18:58:46-07:00 (PDT). Human origin: Zachary Zhang.
