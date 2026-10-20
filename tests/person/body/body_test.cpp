@@ -77,6 +77,9 @@ void testDistinctIdentitiesSharingSpelling() {
     check(body.getBodyPart("left-wing-id-101") == nullptr, "Part1 removed by identifier");
     check(body.getBodyPart("right-wing-id-102") == part2, "Part2 remains after part1 removed by identifier");
 
+    body.removeBodyPart("right-wing-id-102");
+    check(body.getBodyPart("right-wing-id-102") == nullptr, "Part2 removed by identifier");
+
     delete part1;
     delete part2;
 }
