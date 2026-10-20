@@ -1701,6 +1701,14 @@ Nothing changes by default: `volumeSupportCertificatesEnabled` is still off. If 
 
 **Ninth-pass Metal evidence (October 17):** `4c17e915` passes 69/69 twice and reuses baseline shader code for zero-eligible Northern Veil. Longer batches no longer reproduce the prior 18–23% penalty (−2.62% to +0.16%); selected Prism individual views retain gains. These are offscreen observations, not a movement/smoothness verdict. The optional old-mirror/current Perlin comparison has identical raw images across versions, including the pre-existing 27 diagnostic color-byte difference at 45°. [Detailed limits](../../../audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md#effective-eligibility-metal-verification--opus-ninth-pass). Existing Person boxes remain unchecked; no new visual effect, FPS promise, default, save or installed-app change. **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T19:56:43-07:00 (PDT).
 
+## Ray-domain transport, walking and the authored Integral — Claude Code session `f3af84cf` (October 18–19)
+
+Everything this session left for you to check, in one place. None of it is urgent, and nothing changes by default except walking speed.
+1. **Walking speed**: per second now, not per frame.
+2. **Borealis colour**: do its clouds show colour, or only darken?
+3. **Integral in the math editor**: does the new op appear with its variable field?
+4. **Optional, certificates on**: Prism wing B smoothness, and hitches at distance octaves.
+
 ### Measured certificate eligibility (hidden render) — October 18
 
 Nothing changes by default: certificates are still off. If you turn `volumeSupportCertificatesEnabled` on, auto mode now also times each admitted medium on your Mac and drops certificates where they don't actually help. It does this once per camera distance octave, using a hidden render, and keeps the verdict. `volumeSupportCertificateMeasuredVetoes` shows how many media were dropped. `volumeSupportCertificateProbeRenders` is nonzero only on the frames where a measurement is running.
@@ -1737,8 +1745,7 @@ The root's scalar field looks like a legacy field, now read as radiance, rather 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T17:16 PDT. [Finding](../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6z-colour-with-the-incident-source-emission-by-its-own-sign-a-light-radiance-finding-2026-10-19-twenty-seventh-pass).*
 
 
-
-## Authored Integral in the math editor — October 19
+### Authored Integral in the math editor — October 19
 
 Earthcall can now author integrals as mathematics (`MathNode::Op::Integral`; [plan §6aa](../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6aa-the-authored-integral-op-on-one-antiderivative-office)). Nothing renders differently.
 - [ ] In any OntoMath expression editor, search the operation list for **Integral (body, lo, hi)**. Choosing it should give three children and an **Integration variable** field set to `s`. In a ValueLeaf inside the first child (the body), the variable picker should offer `s`.
