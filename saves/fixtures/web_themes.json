@@ -1,0 +1,37 @@
+{
+  "authors": ["Zach"],
+  "themes": {
+    "modern-dark": {
+      "theme.backgroundColor": "#0b0f19",
+      "theme.surfaceColor": "#131c2e",
+      "theme.cardColor": "#182338",
+      "theme.subtleColor": "#0f172a",
+      "theme.textColor": "#f8fafc",
+      "theme.textMutedColor": "#94a3b8",
+      "theme.primaryColor": "#38bdf8",
+      "theme.accentColor": "#818cf8",
+      "theme.radius": "0.75rem",
+      "theme.heroBackground": "radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 70%)",
+      "theme.heroPadding": "4rem 1.5rem",
+      "theme.cardBorder": "rgba(56, 189, 248, 0.15)",
+      "theme.cardPadding": "1.75rem",
+      "theme.cardHoverBorder": "#38bdf8",
+      "theme.quoteBorder": "#38bdf8",
+      "theme.quoteBackground": "#0f172a",
+      "theme.quotePadding": "1.5rem 2rem",
+      "theme.actionPadding": "0.75rem 1.75rem",
+      "theme.actionFontSize": "0.95rem"
+    },
+    "neutral-light": {
+      "theme.backgroundColor": "#ffffff",
+      "theme.surfaceColor": "#f8fafc",
+      "theme.cardColor": "#f1f5f9",
+      "theme.subtleColor": "#e2e8f0",
+      "theme.textColor": "#0f172a",
+      "theme.textMutedColor": "#64748b",
+      "theme.primaryColor": "#2563eb",
+      "theme.accentColor": "#4f46e5",
+      "theme.radius": "0.5rem"
+    }
+  }
+}

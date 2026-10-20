@@ -1,432 +1,1736 @@
 {
-  "author": "Zach",
-  "vocabulary": [
+  "authors": [
+    "Zach"
+  ],
+  "laws": [
     {
-      "symbol": "page",
-      "lexemeId": "lexeme.web.page",
-      "lawId": "law.concept.role.page",
-      "actions": [
-        {"path": "role", "value": "page"}
-      ]
+      "id": "law.concept.role.page",
+      "name": "law.concept.role.page",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "page"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "page"
+          }
+        ]
+      }
     },
     {
-      "symbol": "section",
-      "lexemeId": "lexeme.web.section",
-      "lawId": "law.concept.role.section",
-      "actions": [
-        {"path": "role", "value": "section"}
-      ]
+      "id": "law.concept.role.section",
+      "name": "law.concept.role.section",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "section"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "section"
+          }
+        ]
+      }
     },
     {
-      "symbol": "navigation",
-      "lexemeId": "lexeme.web.navigation",
-      "lawId": "law.concept.role.navigation",
-      "actions": [
-        {"path": "role", "value": "navigation"}
-      ]
+      "id": "law.concept.role.navigation",
+      "name": "law.concept.role.navigation",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "navigation"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "navigation"
+          }
+        ]
+      }
     },
     {
-      "symbol": "nav",
-      "lexemeId": "lexeme.web.nav",
-      "lawId": "law.concept.role.navigation",
-      "actions": [
-        {"path": "role", "value": "navigation"}
-      ]
+      "id": "law.concept.role.heading",
+      "name": "law.concept.role.heading",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "heading"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "heading"
+          },
+          {
+            "kind": 0,
+            "path": "level",
+            "operand": 2.0
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.level",
+            "operand": 2.0
+          }
+        ]
+      }
     },
     {
-      "symbol": "heading",
-      "lexemeId": "lexeme.web.heading",
-      "lawId": "law.concept.role.heading",
-      "actions": [
-        {"path": "role", "value": "heading"},
-        {"path": "level", "value": 2.0}
-      ]
+      "id": "law.concept.role.title",
+      "name": "law.concept.role.title",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "heading"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "heading"
+          },
+          {
+            "kind": 0,
+            "path": "level",
+            "operand": 1.0
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.level",
+            "operand": 1.0
+          }
+        ]
+      }
     },
     {
-      "symbol": "title",
-      "lexemeId": "lexeme.web.title",
-      "lawId": "law.concept.role.title",
-      "actions": [
-        {"path": "role", "value": "heading"},
-        {"path": "level", "value": 1.0}
-      ]
+      "id": "law.concept.role.subtitle",
+      "name": "law.concept.role.subtitle",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "heading"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "heading"
+          },
+          {
+            "kind": 0,
+            "path": "level",
+            "operand": 3.0
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.level",
+            "operand": 3.0
+          }
+        ]
+      }
     },
     {
-      "symbol": "subtitle",
-      "lexemeId": "lexeme.web.subtitle",
-      "lawId": "law.concept.role.subtitle",
-      "actions": [
-        {"path": "role", "value": "heading"},
-        {"path": "level", "value": 3.0}
-      ]
+      "id": "law.concept.role.paragraph",
+      "name": "law.concept.role.paragraph",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "paragraph"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "paragraph"
+          }
+        ]
+      }
     },
     {
-      "symbol": "paragraph",
-      "lexemeId": "lexeme.web.paragraph",
-      "lawId": "law.concept.role.paragraph",
-      "actions": [
-        {"path": "role", "value": "paragraph"}
-      ]
+      "id": "law.concept.role.action",
+      "name": "law.concept.role.action",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "action"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "action"
+          }
+        ]
+      }
     },
     {
-      "symbol": "text",
-      "lexemeId": "lexeme.web.text",
-      "lawId": "law.concept.role.paragraph",
-      "actions": [
-        {"path": "role", "value": "paragraph"}
-      ]
+      "id": "law.concept.role.link",
+      "name": "law.concept.role.link",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "action"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "action"
+          }
+        ]
+      }
     },
     {
-      "symbol": "button",
-      "lexemeId": "lexeme.web.button",
-      "lawId": "law.concept.role.action",
-      "actions": [
-        {"path": "role", "value": "action"}
-      ]
+      "id": "law.concept.role.container",
+      "name": "law.concept.role.container",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "container"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "container"
+          }
+        ]
+      }
     },
     {
-      "symbol": "btn",
-      "lexemeId": "lexeme.web.btn",
-      "lawId": "law.concept.role.action",
-      "actions": [
-        {"path": "role", "value": "action"}
-      ]
+      "id": "law.concept.variant.card",
+      "name": "law.concept.variant.card",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.variant",
+            "operand": "card"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.variant",
+            "operand": "card"
+          }
+        ]
+      }
     },
     {
-      "symbol": "action",
-      "lexemeId": "lexeme.web.action",
-      "lawId": "law.concept.role.action",
-      "actions": [
-        {"path": "role", "value": "action"}
-      ]
+      "id": "law.concept.role.list",
+      "name": "law.concept.role.list",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "list"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "list"
+          }
+        ]
+      }
     },
     {
-      "symbol": "link",
-      "lexemeId": "lexeme.web.link",
-      "lawId": "law.concept.role.link",
-      "actions": [
-        {"path": "role", "value": "action"}
-      ]
+      "id": "law.concept.role.item",
+      "name": "law.concept.role.item",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "item"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "item"
+          }
+        ]
+      }
     },
     {
-      "symbol": "container",
-      "lexemeId": "lexeme.web.container",
-      "lawId": "law.concept.role.container",
-      "actions": [
-        {"path": "role", "value": "container"}
-      ]
+      "id": "law.concept.role.media",
+      "name": "law.concept.role.media",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "media"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "media"
+          }
+        ]
+      }
     },
     {
-      "symbol": "card",
-      "lexemeId": "lexeme.web.card",
-      "lawId": "law.concept.variant.card",
-      "actions": [
-        {"path": "surface.variant", "value": "card"}
-      ]
+      "id": "law.concept.role.quote",
+      "name": "law.concept.role.quote",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "quote"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "quote"
+          }
+        ]
+      }
     },
     {
-      "symbol": "list",
-      "lexemeId": "lexeme.web.list",
-      "lawId": "law.concept.role.list",
-      "actions": [
-        {"path": "role", "value": "list"}
-      ]
+      "id": "law.concept.role.divider",
+      "name": "law.concept.role.divider",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "divider"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "divider"
+          }
+        ]
+      }
     },
     {
-      "symbol": "item",
-      "lexemeId": "lexeme.web.item",
-      "lawId": "law.concept.role.item",
-      "actions": [
-        {"path": "role", "value": "item"}
-      ]
+      "id": "law.concept.layout.horizontal",
+      "name": "law.concept.layout.horizontal",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.flow",
+            "operand": "horizontal"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.flow",
+            "operand": "horizontal"
+          }
+        ]
+      }
     },
     {
-      "symbol": "media",
-      "lexemeId": "lexeme.web.media",
-      "lawId": "law.concept.role.media",
-      "actions": [
-        {"path": "role", "value": "media"}
-      ]
+      "id": "law.concept.layout.vertical",
+      "name": "law.concept.layout.vertical",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.flow",
+            "operand": "vertical"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.flow",
+            "operand": "vertical"
+          }
+        ]
+      }
     },
     {
-      "symbol": "image",
-      "lexemeId": "lexeme.web.image",
-      "lawId": "law.concept.role.media",
-      "actions": [
-        {"path": "role", "value": "media"}
-      ]
+      "id": "law.concept.layout.grid",
+      "name": "law.concept.layout.grid",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.flow",
+            "operand": "grid"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.flow",
+            "operand": "grid"
+          }
+        ]
+      }
     },
     {
-      "symbol": "quote",
-      "lexemeId": "lexeme.web.quote",
-      "lawId": "law.concept.role.quote",
-      "actions": [
-        {"path": "role", "value": "quote"}
-      ]
+      "id": "law.concept.align.center",
+      "name": "law.concept.align.center",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.align",
+            "operand": "center"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.align",
+            "operand": "center"
+          }
+        ]
+      }
     },
     {
-      "symbol": "divider",
-      "lexemeId": "lexeme.web.divider",
-      "lawId": "law.concept.role.divider",
-      "actions": [
-        {"path": "role", "value": "divider"}
-      ]
+      "id": "law.concept.align.start",
+      "name": "law.concept.align.start",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.align",
+            "operand": "start"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.align",
+            "operand": "start"
+          }
+        ]
+      }
     },
     {
-      "symbol": "horizontal",
-      "lexemeId": "lexeme.web.horizontal",
-      "lawId": "law.concept.layout.horizontal",
-      "actions": [
-        {"path": "layout.flow", "value": "horizontal"}
-      ]
+      "id": "law.concept.align.end",
+      "name": "law.concept.align.end",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.align",
+            "operand": "end"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.align",
+            "operand": "end"
+          }
+        ]
+      }
     },
     {
-      "symbol": "vertical",
-      "lexemeId": "lexeme.web.vertical",
-      "lawId": "law.concept.layout.vertical",
-      "actions": [
-        {"path": "layout.flow", "value": "vertical"}
-      ]
+      "id": "law.concept.justify.between",
+      "name": "law.concept.justify.between",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.justify",
+            "operand": "between"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.justify",
+            "operand": "between"
+          }
+        ]
+      }
     },
     {
-      "symbol": "grid",
-      "lexemeId": "lexeme.web.grid",
-      "lawId": "law.concept.layout.grid",
-      "actions": [
-        {"path": "layout.flow", "value": "grid"}
-      ]
+      "id": "law.concept.spacing.tight",
+      "name": "law.concept.spacing.tight",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.spacing",
+            "operand": "tight"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.spacing",
+            "operand": "tight"
+          }
+        ]
+      }
     },
     {
-      "symbol": "centered",
-      "lexemeId": "lexeme.web.centered",
-      "lawId": "law.concept.align.center",
-      "actions": [
-        {"path": "layout.align", "value": "center"}
-      ]
+      "id": "law.concept.spacing.normal",
+      "name": "law.concept.spacing.normal",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.spacing",
+            "operand": "normal"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.spacing",
+            "operand": "normal"
+          }
+        ]
+      }
     },
     {
-      "symbol": "center",
-      "lexemeId": "lexeme.web.center",
-      "lawId": "law.concept.align.center",
-      "actions": [
-        {"path": "layout.align", "value": "center"}
-      ]
+      "id": "law.concept.spacing.relaxed",
+      "name": "law.concept.spacing.relaxed",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.spacing",
+            "operand": "relaxed"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.spacing",
+            "operand": "relaxed"
+          }
+        ]
+      }
     },
     {
-      "symbol": "start",
-      "lexemeId": "lexeme.web.start",
-      "lawId": "law.concept.align.start",
-      "actions": [
-        {"path": "layout.align", "value": "start"}
-      ]
+      "id": "law.concept.spacing.generous",
+      "name": "law.concept.spacing.generous",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.spacing",
+            "operand": "generous"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.spacing",
+            "operand": "generous"
+          }
+        ]
+      }
     },
     {
-      "symbol": "end",
-      "lexemeId": "lexeme.web.end",
-      "lawId": "law.concept.align.end",
-      "actions": [
-        {"path": "layout.align", "value": "end"}
-      ]
+      "id": "law.concept.size.small",
+      "name": "law.concept.size.small",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "scale",
+            "operand": "small"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.scale",
+            "operand": "small"
+          }
+        ]
+      }
     },
     {
-      "symbol": "between",
-      "lexemeId": "lexeme.web.between",
-      "lawId": "law.concept.justify.between",
-      "actions": [
-        {"path": "layout.justify", "value": "between"}
-      ]
+      "id": "law.concept.size.large",
+      "name": "law.concept.size.large",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "scale",
+            "operand": "large"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.scale",
+            "operand": "large"
+          }
+        ]
+      }
     },
     {
-      "symbol": "tight",
-      "lexemeId": "lexeme.web.tight",
-      "lawId": "law.concept.spacing.tight",
-      "actions": [
-        {"path": "layout.spacing", "value": "tight"}
-      ]
+      "id": "law.concept.size.huge",
+      "name": "law.concept.size.huge",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "scale",
+            "operand": "huge"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.scale",
+            "operand": "huge"
+          }
+        ]
+      }
     },
     {
-      "symbol": "normal",
-      "lexemeId": "lexeme.web.normal",
-      "lawId": "law.concept.spacing.normal",
-      "actions": [
-        {"path": "layout.spacing", "value": "normal"}
-      ]
+      "id": "law.concept.weight.bold",
+      "name": "law.concept.weight.bold",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "typography.weight",
+            "operand": "bold"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.typography.weight",
+            "operand": "bold"
+          }
+        ]
+      }
     },
     {
-      "symbol": "relaxed",
-      "lexemeId": "lexeme.web.relaxed",
-      "lawId": "law.concept.spacing.relaxed",
-      "actions": [
-        {"path": "layout.spacing", "value": "relaxed"}
-      ]
+      "id": "law.concept.weight.light",
+      "name": "law.concept.weight.light",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "typography.weight",
+            "operand": "light"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.typography.weight",
+            "operand": "light"
+          }
+        ]
+      }
     },
     {
-      "symbol": "generous",
-      "lexemeId": "lexeme.web.generous",
-      "lawId": "law.concept.spacing.generous",
-      "actions": [
-        {"path": "layout.spacing", "value": "generous"}
-      ]
+      "id": "law.concept.tone.muted",
+      "name": "law.concept.tone.muted",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "typography.tone",
+            "operand": "muted"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.typography.tone",
+            "operand": "muted"
+          }
+        ]
+      }
     },
     {
-      "symbol": "small",
-      "lexemeId": "lexeme.web.small",
-      "lawId": "law.concept.size.small",
-      "actions": [
-        {"path": "scale", "value": "small"}
-      ]
+      "id": "law.concept.tone.prominent",
+      "name": "law.concept.tone.prominent",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "scale",
+            "operand": "large"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.scale",
+            "operand": "large"
+          },
+          {
+            "kind": 0,
+            "path": "typography.tone",
+            "operand": "prominent"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.typography.tone",
+            "operand": "prominent"
+          }
+        ]
+      }
     },
     {
-      "symbol": "large",
-      "lexemeId": "lexeme.web.large",
-      "lawId": "law.concept.size.large",
-      "actions": [
-        {"path": "scale", "value": "large"}
-      ]
+      "id": "law.concept.shape.rounded",
+      "name": "law.concept.shape.rounded",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.shape",
+            "operand": "rounded"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.shape",
+            "operand": "rounded"
+          }
+        ]
+      }
     },
     {
-      "symbol": "huge",
-      "lexemeId": "lexeme.web.huge",
-      "lawId": "law.concept.size.huge",
-      "actions": [
-        {"path": "scale", "value": "huge"}
-      ]
+      "id": "law.concept.shape.pill",
+      "name": "law.concept.shape.pill",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.shape",
+            "operand": "pill"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.shape",
+            "operand": "pill"
+          }
+        ]
+      }
     },
     {
-      "symbol": "bold",
-      "lexemeId": "lexeme.web.bold",
-      "lawId": "law.concept.weight.bold",
-      "actions": [
-        {"path": "typography.weight", "value": "bold"}
-      ]
+      "id": "law.concept.shape.sharp",
+      "name": "law.concept.shape.sharp",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.shape",
+            "operand": "sharp"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.shape",
+            "operand": "sharp"
+          }
+        ]
+      }
     },
     {
-      "symbol": "light",
-      "lexemeId": "lexeme.web.light",
-      "lawId": "law.concept.weight.light",
-      "actions": [
-        {"path": "typography.weight", "value": "light"}
-      ]
+      "id": "law.concept.variant.primary",
+      "name": "law.concept.variant.primary",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.variant",
+            "operand": "primary"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.variant",
+            "operand": "primary"
+          }
+        ]
+      }
     },
     {
-      "symbol": "muted",
-      "lexemeId": "lexeme.web.muted",
-      "lawId": "law.concept.tone.muted",
-      "actions": [
-        {"path": "typography.tone", "value": "muted"}
-      ]
+      "id": "law.concept.variant.secondary",
+      "name": "law.concept.variant.secondary",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.variant",
+            "operand": "secondary"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.variant",
+            "operand": "secondary"
+          }
+        ]
+      }
     },
     {
-      "symbol": "lead",
-      "lexemeId": "lexeme.web.lead",
-      "lawId": "law.concept.tone.prominent",
-      "actions": [
-        {"path": "scale", "value": "large"},
-        {"path": "typography.tone", "value": "prominent"}
-      ]
+      "id": "law.concept.variant.hero",
+      "name": "law.concept.variant.hero",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.variant",
+            "operand": "hero"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.variant",
+            "operand": "hero"
+          }
+        ]
+      }
     },
     {
-      "symbol": "rounded",
-      "lexemeId": "lexeme.web.rounded",
-      "lawId": "law.concept.shape.rounded",
-      "actions": [
-        {"path": "surface.shape", "value": "rounded"}
-      ]
+      "id": "law.concept.variant.outline",
+      "name": "law.concept.variant.outline",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.variant",
+            "operand": "outline"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.variant",
+            "operand": "outline"
+          }
+        ]
+      }
     },
     {
-      "symbol": "pill",
-      "lexemeId": "lexeme.web.pill",
-      "lawId": "law.concept.shape.pill",
-      "actions": [
-        {"path": "surface.shape", "value": "pill"}
-      ]
+      "id": "law.concept.elevation.subtle",
+      "name": "law.concept.elevation.subtle",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.elevation",
+            "operand": "subtle"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.elevation",
+            "operand": "subtle"
+          }
+        ]
+      }
     },
     {
-      "symbol": "sharp",
-      "lexemeId": "lexeme.web.sharp",
-      "lawId": "law.concept.shape.sharp",
-      "actions": [
-        {"path": "surface.shape", "value": "sharp"}
-      ]
+      "id": "law.concept.elevation.raised",
+      "name": "law.concept.elevation.raised",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.elevation",
+            "operand": "raised"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.elevation",
+            "operand": "raised"
+          }
+        ]
+      }
     },
     {
-      "symbol": "primary",
-      "lexemeId": "lexeme.web.primary",
-      "lawId": "law.concept.variant.primary",
-      "actions": [
-        {"path": "surface.variant", "value": "primary"}
-      ]
+      "id": "law.concept.rel.subordinate",
+      "name": "law.concept.rel.subordinate",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "subordinate",
+            "operand": true
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.subordinate",
+            "operand": true
+          }
+        ]
+      }
     },
     {
-      "symbol": "secondary",
-      "lexemeId": "lexeme.web.secondary",
-      "lawId": "law.concept.variant.secondary",
-      "actions": [
-        {"path": "surface.variant", "value": "secondary"}
-      ]
+      "id": "law.concept.rel.prominent",
+      "name": "law.concept.rel.prominent",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "prominence",
+            "operand": "prominent"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.prominence",
+            "operand": "prominent"
+          }
+        ]
+      }
     },
     {
-      "symbol": "hero",
-      "lexemeId": "lexeme.web.hero",
-      "lawId": "law.concept.variant.hero",
-      "actions": [
-        {"path": "surface.variant", "value": "hero"}
-      ]
+      "id": "law.concept.rel.quiet",
+      "name": "law.concept.rel.quiet",
+      "authors": [
+        "Zach"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "prominence",
+            "operand": "quiet"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.prominence",
+            "operand": "quiet"
+          }
+        ]
+      }
+    }
+  ],
+  "lexemes": [
+    {
+      "id": "lexeme.web.page",
+      "symbol": "page"
     },
     {
-      "symbol": "outline",
-      "lexemeId": "lexeme.web.outline",
-      "lawId": "law.concept.variant.outline",
-      "actions": [
-        {"path": "surface.variant", "value": "outline"}
-      ]
+      "id": "lexeme.web.section",
+      "symbol": "section"
     },
     {
-      "symbol": "subtle",
-      "lexemeId": "lexeme.web.subtle",
-      "lawId": "law.concept.elevation.subtle",
-      "actions": [
-        {"path": "surface.elevation", "value": "subtle"}
-      ]
+      "id": "lexeme.web.navigation",
+      "symbol": "navigation"
     },
     {
-      "symbol": "elevated",
-      "lexemeId": "lexeme.web.elevated",
-      "lawId": "law.concept.elevation.raised",
-      "actions": [
-        {"path": "surface.elevation", "value": "raised"}
-      ]
+      "id": "lexeme.web.nav",
+      "symbol": "nav"
     },
     {
-      "symbol": "subordinate",
-      "lexemeId": "lexeme.web.subordinate",
-      "lawId": "law.concept.rel.subordinate",
-      "actions": [
-        {"path": "subordinate", "value": true}
-      ]
+      "id": "lexeme.web.heading",
+      "symbol": "heading"
     },
     {
-      "symbol": "prominent",
-      "lexemeId": "lexeme.web.prominent",
-      "lawId": "law.concept.rel.prominent",
-      "actions": [
-        {"path": "prominence", "value": "prominent"}
-      ]
+      "id": "lexeme.web.title",
+      "symbol": "title"
     },
     {
-      "symbol": "quiet",
-      "lexemeId": "lexeme.web.quiet",
-      "lawId": "law.concept.rel.quiet",
-      "actions": [
-        {"path": "prominence", "value": "quiet"}
-      ]
+      "id": "lexeme.web.subtitle",
+      "symbol": "subtitle"
+    },
+    {
+      "id": "lexeme.web.paragraph",
+      "symbol": "paragraph"
+    },
+    {
+      "id": "lexeme.web.text",
+      "symbol": "text"
+    },
+    {
+      "id": "lexeme.web.button",
+      "symbol": "button"
+    },
+    {
+      "id": "lexeme.web.btn",
+      "symbol": "btn"
+    },
+    {
+      "id": "lexeme.web.action",
+      "symbol": "action"
+    },
+    {
+      "id": "lexeme.web.link",
+      "symbol": "link"
+    },
+    {
+      "id": "lexeme.web.container",
+      "symbol": "container"
+    },
+    {
+      "id": "lexeme.web.card",
+      "symbol": "card"
+    },
+    {
+      "id": "lexeme.web.list",
+      "symbol": "list"
+    },
+    {
+      "id": "lexeme.web.item",
+      "symbol": "item"
+    },
+    {
+      "id": "lexeme.web.media",
+      "symbol": "media"
+    },
+    {
+      "id": "lexeme.web.image",
+      "symbol": "image"
+    },
+    {
+      "id": "lexeme.web.quote",
+      "symbol": "quote"
+    },
+    {
+      "id": "lexeme.web.divider",
+      "symbol": "divider"
+    },
+    {
+      "id": "lexeme.web.horizontal",
+      "symbol": "horizontal"
+    },
+    {
+      "id": "lexeme.web.vertical",
+      "symbol": "vertical"
+    },
+    {
+      "id": "lexeme.web.grid",
+      "symbol": "grid"
+    },
+    {
+      "id": "lexeme.web.centered",
+      "symbol": "centered"
+    },
+    {
+      "id": "lexeme.web.center",
+      "symbol": "center"
+    },
+    {
+      "id": "lexeme.web.start",
+      "symbol": "start"
+    },
+    {
+      "id": "lexeme.web.end",
+      "symbol": "end"
+    },
+    {
+      "id": "lexeme.web.between",
+      "symbol": "between"
+    },
+    {
+      "id": "lexeme.web.tight",
+      "symbol": "tight"
+    },
+    {
+      "id": "lexeme.web.normal",
+      "symbol": "normal"
+    },
+    {
+      "id": "lexeme.web.relaxed",
+      "symbol": "relaxed"
+    },
+    {
+      "id": "lexeme.web.generous",
+      "symbol": "generous"
+    },
+    {
+      "id": "lexeme.web.small",
+      "symbol": "small"
+    },
+    {
+      "id": "lexeme.web.large",
+      "symbol": "large"
+    },
+    {
+      "id": "lexeme.web.huge",
+      "symbol": "huge"
+    },
+    {
+      "id": "lexeme.web.bold",
+      "symbol": "bold"
+    },
+    {
+      "id": "lexeme.web.light",
+      "symbol": "light"
+    },
+    {
+      "id": "lexeme.web.muted",
+      "symbol": "muted"
+    },
+    {
+      "id": "lexeme.web.lead",
+      "symbol": "lead"
+    },
+    {
+      "id": "lexeme.web.rounded",
+      "symbol": "rounded"
+    },
+    {
+      "id": "lexeme.web.pill",
+      "symbol": "pill"
+    },
+    {
+      "id": "lexeme.web.sharp",
+      "symbol": "sharp"
+    },
+    {
+      "id": "lexeme.web.primary",
+      "symbol": "primary"
+    },
+    {
+      "id": "lexeme.web.secondary",
+      "symbol": "secondary"
+    },
+    {
+      "id": "lexeme.web.hero",
+      "symbol": "hero"
+    },
+    {
+      "id": "lexeme.web.outline",
+      "symbol": "outline"
+    },
+    {
+      "id": "lexeme.web.subtle",
+      "symbol": "subtle"
+    },
+    {
+      "id": "lexeme.web.elevated",
+      "symbol": "elevated"
+    },
+    {
+      "id": "lexeme.web.subordinate",
+      "symbol": "subordinate"
+    },
+    {
+      "id": "lexeme.web.prominent",
+      "symbol": "prominent"
+    },
+    {
+      "id": "lexeme.web.quiet",
+      "symbol": "quiet"
+    }
+  ],
+  "relations": [
+    {
+      "type": "denotes",
+      "source": "lexeme.web.page",
+      "target": "law.concept.role.page",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.section",
+      "target": "law.concept.role.section",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.navigation",
+      "target": "law.concept.role.navigation",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.nav",
+      "target": "law.concept.role.navigation",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.heading",
+      "target": "law.concept.role.heading",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.title",
+      "target": "law.concept.role.title",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.subtitle",
+      "target": "law.concept.role.subtitle",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.paragraph",
+      "target": "law.concept.role.paragraph",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.text",
+      "target": "law.concept.role.paragraph",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.button",
+      "target": "law.concept.role.action",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.btn",
+      "target": "law.concept.role.action",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.action",
+      "target": "law.concept.role.action",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.link",
+      "target": "law.concept.role.link",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.container",
+      "target": "law.concept.role.container",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.card",
+      "target": "law.concept.variant.card",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.list",
+      "target": "law.concept.role.list",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.item",
+      "target": "law.concept.role.item",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.media",
+      "target": "law.concept.role.media",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.image",
+      "target": "law.concept.role.media",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.quote",
+      "target": "law.concept.role.quote",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.divider",
+      "target": "law.concept.role.divider",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.horizontal",
+      "target": "law.concept.layout.horizontal",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.vertical",
+      "target": "law.concept.layout.vertical",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.grid",
+      "target": "law.concept.layout.grid",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.centered",
+      "target": "law.concept.align.center",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.center",
+      "target": "law.concept.align.center",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.start",
+      "target": "law.concept.align.start",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.end",
+      "target": "law.concept.align.end",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.between",
+      "target": "law.concept.justify.between",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.tight",
+      "target": "law.concept.spacing.tight",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.normal",
+      "target": "law.concept.spacing.normal",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.relaxed",
+      "target": "law.concept.spacing.relaxed",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.generous",
+      "target": "law.concept.spacing.generous",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.small",
+      "target": "law.concept.size.small",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.large",
+      "target": "law.concept.size.large",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.huge",
+      "target": "law.concept.size.huge",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.bold",
+      "target": "law.concept.weight.bold",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.light",
+      "target": "law.concept.weight.light",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.muted",
+      "target": "law.concept.tone.muted",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.lead",
+      "target": "law.concept.tone.prominent",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.rounded",
+      "target": "law.concept.shape.rounded",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.pill",
+      "target": "law.concept.shape.pill",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.sharp",
+      "target": "law.concept.shape.sharp",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.primary",
+      "target": "law.concept.variant.primary",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.secondary",
+      "target": "law.concept.variant.secondary",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.hero",
+      "target": "law.concept.variant.hero",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.outline",
+      "target": "law.concept.variant.outline",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.subtle",
+      "target": "law.concept.elevation.subtle",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.elevated",
+      "target": "law.concept.elevation.raised",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.subordinate",
+      "target": "law.concept.rel.subordinate",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.prominent",
+      "target": "law.concept.rel.prominent",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.quiet",
+      "target": "law.concept.rel.quiet",
+      "directed": true,
+      "weight": 1.0
     }
   ],
   "injectedBy": {
     "mover": "Antigravity",
     "onBehalfOf": "Zach",
     "at": 1787452800,
-    "sections": ["vocabulary"],
+    "sections": [
+      "vocabulary"
+    ],
     "attestation": "Authored web vocabulary fixture defining Lexemes, Laws, and denotes Relations as in-world data rather than C++ hardcoding."
   }
 }

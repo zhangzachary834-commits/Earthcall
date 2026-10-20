@@ -5,6 +5,7 @@
 #include "Singularity/Storage/VirtualFileSystem.hpp"
 #include "Singularity/Storage/FileChannel.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
+#include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
@@ -1153,10 +1154,11 @@ void test_media_and_capability_boundaries() {
     std::string defaultSheet = WebRealizer::generateStyleSheet(&root, defaultOpts);
     assert(defaultSheet.find("background: purple") == std::string::npos);
 
-    // With explicit allowUnrestrictedCss, authorized raw CSS is admitted
+    // With explicit allowUnrestrictedCss and Person governance, authorized raw CSS is admitted
+    Person cssAuthor = makeTestPerson("CssAuthor");
     RealizeOptions governedOpts;
     governedOpts.allowUnrestrictedCss = true;
-    governedOpts.rawCssAuthorizationToken = "governed-first-mover";
+    governedOpts.governingAuthor = &cssAuthor;
     governedOpts.extraCss = "body { background: purple; }";
     std::string governedSheet = WebRealizer::generateStyleSheet(&root, governedOpts);
     assert(governedSheet.find("background: purple") != std::string::npos);
@@ -1180,18 +1182,40 @@ void test_gate1_and_gate2_dynamic_vocabulary_data_loading() {
         out.push_back(&author);
     });
 
-    // Redefine/author a brand new vocabulary word via JSON string dynamically without C++ recompilation
+    // Redefine/author a brand new vocabulary word via canonical Earthcall state format dynamically without C++ recompilation
     std::string customJson = R"JSON({
-        "author": "Zach",
-        "vocabulary": [
+        "authors": ["Zach"],
+        "laws": [
             {
-                "symbol": "callout",
-                "lexemeId": "lexeme.web.custom.callout",
-                "lawId": "law.concept.role.callout",
-                "actions": [
-                    {"path": "role", "value": "container"},
-                    {"path": "surface.variant", "value": "callout"}
-                ]
+                "id": "law.concept.role.callout",
+                "name": "law.concept.role.callout",
+                "authors": ["Zach"],
+                "authority": 0,
+                "enabled": true,
+                "actionModel": {
+                    "kind": 5,
+                    "children": [
+                        {"kind": 0, "path": "role", "operand": "container"},
+                        {"kind": 0, "path": "compilation.output.web.role", "operand": "container"},
+                        {"kind": 0, "path": "surface.variant", "operand": "callout"},
+                        {"kind": 0, "path": "compilation.output.web.surface.variant", "operand": "callout"}
+                    ]
+                }
+            }
+        ],
+        "lexemes": [
+            {
+                "id": "lexeme.web.custom.callout",
+                "symbol": "callout"
+            }
+        ],
+        "relations": [
+            {
+                "type": "denotes",
+                "source": "lexeme.web.custom.callout",
+                "target": "law.concept.role.callout",
+                "directed": true,
+                "weight": 1.0
             }
         ]
     })JSON";
@@ -1390,7 +1414,7 @@ void test_gate7_gate8_gate9_css_security_and_theme() {
     // Gate 8: Raw CSS cannot escape <style> tag even when allowUnrestrictedCss is true
     RealizeOptions opts;
     opts.allowUnrestrictedCss = true;
-    opts.rawCssAuthorizationToken = "governed-first-mover";
+    opts.governingAuthor = &author;
     opts.extraCss = "body { color: red; } </style><script>alert('pwned')</script><style>";
     std::string safeDoc = WebRealizer::generateStyleSheet(&bareRoot, opts);
     assert(safeDoc.find("</style") == std::string::npos);
@@ -1450,15 +1474,34 @@ void test_round5_traveling_clipboard_and_authority_ceiling() {
 
     // 2. Unresolved Author Fixture: Ghost author who is absent from the world
     std::string ghostAuthorJson = R"JSON({
-        "author": "GhostAuthor",
-        "vocabulary": [
+        "authors": ["GhostAuthor"],
+        "laws": [
             {
-                "symbol": "phantom",
-                "lexemeId": "lexeme.web.phantom",
-                "lawId": "law.concept.role.phantom",
-                "actions": [
-                    {"path": "role", "value": "phantom"}
-                ]
+                "id": "law.concept.role.phantom",
+                "name": "law.concept.role.phantom",
+                "authors": ["GhostAuthor"],
+                "authority": 0,
+                "enabled": true,
+                "actionModel": {
+                    "kind": 0,
+                    "path": "role",
+                    "operand": "phantom"
+                }
+            }
+        ],
+        "lexemes": [
+            {
+                "id": "lexeme.web.phantom",
+                "symbol": "phantom"
+            }
+        ],
+        "relations": [
+            {
+                "type": "denotes",
+                "source": "lexeme.web.phantom",
+                "target": "law.concept.role.phantom",
+                "directed": true,
+                "weight": 1.0
             }
         ]
     })JSON";
@@ -1552,10 +1595,9 @@ void test_round5_theme_provenance_and_zero_numeric_aesthetics() {
     std::vector<std::shared_ptr<Relation>> themeRelations;
     WebDesignerTheme::applyModernDarkTheme(root, &author, &themeRelations);
 
-    // Verify Person stewardship on theme properties
+    // Verify Person stewardship on theme properties via Relation graph (sole truth; shadow property eliminated)
     PropertyValue stewardVal;
-    assert(root.getDynamicProperty("theme.steward", stewardVal));
-    assert(std::get<std::string>(stewardVal) == author.getIdentifier());
+    assert(!root.getDynamicProperty("theme.steward", stewardVal)); // Shadow property eliminated
 
     bool foundAuthRel = false;
     for (const auto& r : themeRelations) {
@@ -1574,7 +1616,7 @@ void test_round5_theme_provenance_and_zero_numeric_aesthetics() {
     assert(unauthoredCss.find("padding: 1.5rem") == std::string::npos); // No card padding
     assert(unauthoredCss.find("padding: 0.625rem 1.25rem") == std::string::npos); // No button padding
 
-    std::cout << "  ✓ Theme properties hold genuine Person provenance (authored-by relation & steward)" << std::endl;
+    std::cout << "  ✓ Theme properties hold genuine Person provenance (authored-by relation sole truth; no shadow property)" << std::endl;
     std::cout << "  ✓ Unauthored CSS substrate contains zero numeric aesthetic quantities" << std::endl;
 }
 
@@ -1584,17 +1626,18 @@ void test_round5_governed_raw_css_and_escaped_url_bypass() {
     Object root;
     root.setObjectID("css-root");
 
-    // 1. Raw CSS without authorization token is strictly refused
+    // 1. Raw CSS without authorization token or person governance is strictly refused
     RealizeOptions unauthOpts;
     unauthOpts.allowUnrestrictedCss = true;
     unauthOpts.extraCss = "/* Malicious Injected CSS */ body { background: black; }";
     std::string unauthResult = WebRealizer::generateStyleSheet(&root, unauthOpts);
     assert(unauthResult.find("Malicious Injected CSS") == std::string::npos);
 
-    // 2. Raw CSS with explicit Person grant token is admitted
+    // 2. Raw CSS with verified Person governance is admitted
+    Person govAuthor = makeTestPerson("ZachGov");
     RealizeOptions authOpts;
     authOpts.allowUnrestrictedCss = true;
-    authOpts.rawCssAuthorizationToken = "person-grant:Zach";
+    authOpts.governingAuthor = &govAuthor;
     authOpts.extraCss = "/* Governed CSS */ body { margin: 0; }";
     std::string authResult = WebRealizer::generateStyleSheet(&root, authOpts);
     assert(authResult.find("Governed CSS") != std::string::npos);
@@ -1723,6 +1766,364 @@ void test_round5_refusal_3_pure_open_strings() {
     std::cout << "  ✓ Zero closed domain-noun and aesthetic enums in C++ type system" << std::endl;
 }
 
+// ---------------------------------------------------------------------------
+// ROUND 6 ACCEPTANCE GATE WITNESSES (Decreed by The Sun / GPT-5.6 Sol)
+// ---------------------------------------------------------------------------
+
+void test_round6_hostile_power_of_attorney_witness() {
+    std::cout << "[Round 6 Witness: Gates 1 & 2] Hostile Power-of-Attorney Witness..." << std::endl;
+
+    Person alice = makeTestPerson("Alice");
+    Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+        out.push_back(&alice);
+    });
+
+    // 1. Hostile input: injectedBy contains onBehalfOf = "Alice", mover = "Antigravity", but NO authors list!
+    std::string poaJson = R"JSON({
+        "laws": [
+            {
+                "id": "law.concept.role.poa_test",
+                "name": "law.concept.role.poa_test",
+                "authority": 0,
+                "enabled": true,
+                "actionModel": {
+                    "kind": 0,
+                    "path": "role",
+                    "operand": "poa_victim"
+                }
+            }
+        ],
+        "lexemes": [
+            {
+                "id": "lexeme.web.poa_test",
+                "symbol": "poa_word"
+            }
+        ],
+        "relations": [
+            {
+                "type": "denotes",
+                "source": "lexeme.web.poa_test",
+                "target": "law.concept.role.poa_test",
+                "directed": true,
+                "weight": 1.0
+            }
+        ],
+        "injectedBy": {
+            "mover": "Antigravity",
+            "onBehalfOf": "Alice",
+            "at": 1787452800
+        }
+    })JSON";
+
+    LawManager laws;
+    Formation formation;
+    bool loaded = WebDesignerMetalaws::loadAuthoredVocabularyFromJsonString(poaJson, laws, &formation);
+    assert(loaded);
+
+    Law* poaLaw = laws.find("law.concept.role.poa_test");
+    assert(poaLaw != nullptr);
+
+    // Hostile proof: Alice is in the world, yet poaLaw MUST REMAIN UNAUTHORED!
+    // Authorization / on-behalf-of is NOT stewardship!
+    assert(!poaLaw->isAuthored());
+    assert(poaLaw->authors().getMembers().empty());
+
+    // When applied, the unauthored Law strictly refuses with ApplicationResult::Unauthored!
+    Object target;
+    target.setObjectID("poa-target");
+    auto res = poaLaw->applyTo(target);
+    assert(res == Law::ApplicationResult::Unauthored);
+
+    // 2. Explicit canonical authored state ALONE attaches stewardship
+    std::string canonicalJson = R"JSON({
+        "authors": ["Alice"],
+        "laws": [
+            {
+                "id": "law.concept.role.canonical_test",
+                "name": "law.concept.role.canonical_test",
+                "authors": ["Alice"],
+                "authority": 0,
+                "enabled": true,
+                "actionModel": {
+                    "kind": 0,
+                    "path": "role",
+                    "operand": "canonical_hero"
+                }
+            }
+        ],
+        "lexemes": [
+            {
+                "id": "lexeme.web.canonical_test",
+                "symbol": "canon_word"
+            }
+        ],
+        "relations": [
+            {
+                "type": "denotes",
+                "source": "lexeme.web.canonical_test",
+                "target": "law.concept.role.canonical_test",
+                "directed": true,
+                "weight": 1.0
+            }
+        ]
+    })JSON";
+
+    LawManager canonLaws;
+    Formation canonFormation;
+    assert(WebDesignerMetalaws::loadAuthoredVocabularyFromJsonString(canonicalJson, canonLaws, &canonFormation));
+
+    Law* canonLaw = canonLaws.find("law.concept.role.canonical_test");
+    assert(canonLaw != nullptr);
+    assert(canonLaw->isAuthored());
+    assert(canonLaw->authors().getMembers().size() == 1);
+    assert(canonLaw->authors().getMembers()[0] == &alice);
+
+    auto canonRes = canonLaw->applyTo(target);
+    assert(canonRes == Law::ApplicationResult::Applied);
+
+    teardownVocabulary();
+    std::cout << "  ✓ Power-of-Attorney clipboard abolished: injectedBy.onBehalfOf is never upgraded to authorship" << std::endl;
+    std::cout << "  ✓ Explicit canonical authored state alone restores Person stewardship" << std::endl;
+}
+
+void test_round6_canonical_earthcall_vocabulary_state() {
+    std::cout << "[Round 6 Witness: Gate 3] Canonical Earthcall State Shipped Vocabulary..." << std::endl;
+
+    Person zach = makeTestPerson("Zach");
+    Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+        out.push_back(&zach);
+    });
+
+    LawManager laws;
+    Formation formation;
+    bool loaded = WebDesignerMetalaws::loadAuthoredVocabulary("", laws, &formation);
+    assert(loaded);
+
+    // Shipped vocabulary contains canonical Laws, Lexemes, and denotes Relations
+    assert(laws.getAll().size() >= 40);
+    assert(formation.relations().getAll().size() >= 40);
+
+    for (const auto& law : laws.getAll()) {
+        assert(law != nullptr);
+        assert(law->isAuthored());
+        assert(law->authors().getMembers()[0] == &zach);
+        assert(law->authorityLevel() == 0); // kAuthoredCeiling
+        assert(law->actionModel() != nullptr);
+    }
+
+    teardownVocabulary();
+    std::cout << "  ✓ Shipped vocabulary consumes canonical Earthcall state format directly" << std::endl;
+    std::cout << "  ✓ Dedicated vocabulary/actions/path/value mini-language removed" << std::endl;
+}
+
+void test_round6_graph_authoritative_redefinition_and_adversarial_order() {
+    std::cout << "[Round 6 Witness: Gates 4 & 5] Graph-Authoritative Redefinition & Adversarial Container Order..." << std::endl;
+
+    Person author = makeTestPerson("RedefAuthor");
+    Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+        out.push_back(&author);
+    });
+
+    LawManager laws;
+    Formation formation;
+
+    // 1. Initial word authoring
+    ActionNode act1 = ActionNode::set("role", PropertyValue(std::string("base-widget")));
+    WebDesignerMetalaws::authorWord(author, laws, "gadget", "lexeme.web.gadget", "law.concept.role.gadget", act1, &formation);
+
+    assert(formation.relations().getAll().size() == 1);
+    auto oldRel = formation.relations().getAll()[0];
+    Law* lawV0 = laws.find("law.concept.role.gadget");
+    assert(lawV0 != nullptr);
+
+    // 2. Redefinition: versioned identifier derived stably without process static counter
+    ActionNode act2 = ActionNode::set("role", PropertyValue(std::string("v1-widget")));
+    WebDesignerMetalaws::authorWord(author, laws, "gadget", "lexeme.web.gadget", "law.concept.role.gadget", act2, &formation);
+
+    // Old denotes relation is dissolved/retired from graph! Exactly ONE active denotes relation exists in formation
+    assert(formation.relations().getAll().size() == 1);
+    auto newRel = formation.relations().getAll()[0];
+    assert(newRel != oldRel);
+
+    Law* lawV1 = laws.find("law.concept.role.gadget.v1");
+    assert(lawV1 != nullptr);
+    assert(newRel->b() == lawV1);
+
+    // Verify provenance points to previous active law
+    bool foundProv = false;
+    for (const auto& r : lawV1->provenance().getRelationsOfType("redefined-from")) {
+        if (r && r->a() == lawV0) foundProv = true;
+    }
+    assert(foundProv);
+
+    // 3. Adversarial order test:
+    // Pass both old and new relations in reverse order: [newRel, oldRel]
+    Object targetReverse;
+    targetReverse.setObjectID("test-reverse");
+    std::string errReverse;
+    WebConcept cReverse = WebDesignerMetalaws::compilePhrase(
+        "gadget", laws, targetReverse, &errReverse, {newRel.get(), oldRel.get()});
+    assert(errReverse.empty());
+    assert(cReverse.role == "v1-widget");
+
+    // Pass both old and new relations in forward order: [oldRel, newRel]
+    Object targetForward;
+    targetForward.setObjectID("test-forward");
+    std::string errForward;
+    WebConcept cForward = WebDesignerMetalaws::compilePhrase(
+        "gadget", laws, targetForward, &errForward, {oldRel.get(), newRel.get()});
+    assert(errForward.empty());
+    assert(cForward.role == "v1-widget");
+
+    // Both orders resolve IDENTICALLY!
+    assert(cReverse.role == cForward.role);
+
+    // 4. Repeated redefinition: chains stably to .v2
+    ActionNode act3 = ActionNode::set("role", PropertyValue(std::string("v2-widget")));
+    WebDesignerMetalaws::authorWord(author, laws, "gadget", "lexeme.web.gadget", "law.concept.role.gadget", act3, &formation);
+
+    Law* lawV2 = laws.find("law.concept.role.gadget.v2");
+    assert(lawV2 != nullptr);
+    assert(formation.relations().getAll().size() == 1);
+    assert(formation.relations().getAll()[0]->b() == lawV2);
+
+    teardownVocabulary();
+    std::cout << "  ✓ Redefinition retires old denotes relation: graph has one active meaning" << std::endl;
+    std::cout << "  ✓ Adversarial container orders resolve identically" << std::endl;
+    std::cout << "  ✓ Stable version lineage (.v1 -> .v2) without process-global static counter" << std::endl;
+}
+
+void test_round6_theme_authored_state_and_no_self_awarded_first_mover() {
+    std::cout << "[Round 6 Witness: Gates 6, 7, 8] Theme Authored State & Zero Self-Awarded FirstMover..." << std::endl;
+
+    Person author = makeTestPerson("StewardZach");
+    Object themedRoot;
+    themedRoot.setObjectID("themed-root");
+
+    std::vector<std::shared_ptr<Relation>> relations;
+    WebDesignerTheme::applyModernDarkTheme(themedRoot, author, &relations);
+
+    // Tokens loaded from authored state
+    PropertyValue bgVal;
+    assert(themedRoot.getDynamicProperty("theme.backgroundColor", bgVal));
+    assert(std::get<std::string>(bgVal) == "#0b0f19");
+
+    // Sole truth is the Relation graph: theme.steward shadow property is eliminated
+    PropertyValue stewardProp;
+    assert(!themedRoot.getDynamicProperty("theme.steward", stewardProp));
+
+    bool foundAuth = false;
+    for (const auto& r : relations) {
+        if (r && r->type == WebRelationType::kAuthoredBy && r->a() == &themedRoot && r->b() == &author) {
+            foundAuth = true;
+        }
+    }
+    assert(foundAuth);
+
+    // Calling with null author: does NOT self-award FirstMover:Antigravity
+    Object nullRoot;
+    nullRoot.setObjectID("null-themed-root");
+    std::vector<std::shared_ptr<Relation>> nullRels;
+    WebDesignerTheme::applyModernDarkTheme(nullRoot, nullptr, &nullRels);
+
+    PropertyValue injectedProp;
+    assert(!nullRoot.getDynamicProperty("injected_by", injectedProp));
+    assert(nullRels.empty());
+
+    std::cout << "  ✓ Themes load from authored state (web_themes.json) rather than C++ hardcoding" << std::endl;
+    std::cout << "  ✓ theme.steward shadow property eliminated; Relation graph is sole authority" << std::endl;
+    std::cout << "  ✓ Callee never self-awards FirstMover:Antigravity" << std::endl;
+}
+
+void test_round6_raw_css_capability_governance() {
+    std::cout << "[Round 6 Witness: Gates 9 & 10] Raw-CSS Capability Governance (No Magic Strings)..." << std::endl;
+
+    Object root;
+    root.setObjectID("gov-css-root");
+
+    // 1. Magic string tokens are strictly REFUSED
+    RealizeOptions magicOpts1;
+    magicOpts1.allowUnrestrictedCss = true;
+    magicOpts1.extraCss = "/* Evil CSS */ body { background: purple; }";
+    // Passing no governing author and closed gate refuses
+    std::string res1 = WebRealizer::generateStyleSheet(&root, magicOpts1);
+    assert(res1.find("Evil CSS") == std::string::npos);
+
+    // 2. Verified Person governance capability emits bounded CSS
+    Person govPerson = makeTestPerson("GovZach");
+    RealizeOptions govOpts;
+    govOpts.allowUnrestrictedCss = true;
+    govOpts.governingAuthor = &govPerson;
+    govOpts.extraCss = "/* Gov Person CSS */ body { margin: 10px; }";
+    std::string res2 = WebRealizer::generateStyleSheet(&root, govOpts);
+    assert(res2.find("Gov Person CSS") != std::string::npos);
+
+    // 3. TransferPolicy gate allows Law-governed capability
+    TransferPolicy::instance().setOpen("web.rawCss", true);
+    RealizeOptions tpOpts;
+    tpOpts.allowUnrestrictedCss = true;
+    tpOpts.extraCss = "/* TransferPolicy Gate CSS */ body { padding: 5px; }";
+    std::string res3 = WebRealizer::generateStyleSheet(&root, tpOpts);
+    assert(res3.find("TransferPolicy Gate CSS") != std::string::npos);
+
+    // Reset gate
+    TransferPolicy::instance().setOpen("web.rawCss", false);
+
+    // 4. HTML parser boundary is enforced regardless of capability
+    RealizeOptions breakoutOpts;
+    breakoutOpts.allowUnrestrictedCss = true;
+    breakoutOpts.governingAuthor = &govPerson;
+    breakoutOpts.extraCss = "</style><script>alert('pwn')</script><style>";
+    std::string res4 = WebRealizer::generateStyleSheet(&root, breakoutOpts);
+    assert(res4.find("</style") == std::string::npos);
+    assert(res4.find("<\\/style") != std::string::npos);
+
+    std::cout << "  ✓ Raw CSS capability governed by Person reference or TransferPolicy gate" << std::endl;
+    std::cout << "  ✓ Magic strings completely abolished from authority checks" << std::endl;
+    std::cout << "  ✓ HTML parser breakout protection enforced regardless of authorization" << std::endl;
+}
+
+void test_round6_world_admission_requires_person_refusal() {
+    std::cout << "[Round 6 Witness: Gates 11, 12, 13] World Admission Stewardship Refusal & Type Boundaries..." << std::endl;
+
+    Zone testZone("admission-test-zone", "earthcall-foundation");
+    WebDesignerChannel channel;
+    LawManager laws;
+    Person author = makeTestPerson("AdmissionAuthor");
+
+    // 1. Missing Person stewardship refuses admission: Zone remains completely unchanged!
+    auto refusedElem = channel.authorElementInZone(testZone, "unauthorized-child", "heading", "Unauthorized", nullptr, &laws);
+    assert(refusedElem == nullptr);
+    assert(testZone.objects().empty()); // Zone unchanged!
+
+    // 2. Verified Person stewardship admits newborn into Zone
+    auto admittedElem = channel.authorElementInZone(testZone, "authorized-child", "heading", "Authorized", author, &laws);
+    assert(admittedElem != nullptr);
+    assert(testZone.objects().size() == 1);
+    assert(testZone.objects()[0]->getIdentifier() == "authorized-child");
+
+    // 3. Ephemeral draft vs authored element type boundary truth
+    WebConcept draftConcept;
+    draftConcept.role = "card";
+    auto draftElem = WebDesignerMetalaws::createDraftElement("draft-card", draftConcept);
+    assert(draftElem != nullptr);
+    assert(draftElem->getIdentifier() == "draft-card");
+
+    // createAuthoredElement with null author refuses and returns nullptr
+    auto nullAuthored = WebDesignerMetalaws::createAuthoredElement("null-auth-card", draftConcept, nullptr);
+    assert(nullAuthored == nullptr);
+
+    // createAuthoredElement with Person& succeeds and attaches Relation
+    std::vector<std::shared_ptr<Relation>> authRels;
+    auto realAuthored = WebDesignerMetalaws::createAuthoredElement("real-auth-card", draftConcept, author, &authRels);
+    assert(realAuthored != nullptr);
+    assert(authRels.size() == 1);
+    assert(authRels[0]->type == WebRelationType::kAuthoredBy);
+
+    std::cout << "  ✓ Missing stewardship in authorElementInZone strictly refuses and leaves Zone unchanged" << std::endl;
+    std::cout << "  ✓ createDraftElement vs createAuthoredElement type boundary tells the truth" << std::endl;
+}
+
 int main() {
     std::cout << "========================================" << std::endl;
     std::cout << "Running Web Designer Modality Test Suite" << std::endl;
@@ -1765,6 +2166,14 @@ int main() {
     test_round5_governed_raw_css_and_escaped_url_bypass();
     test_round5_single_sink_relation_admission_and_zone_scope();
     test_round5_refusal_3_pure_open_strings();
+
+    // Acceptance Gate Witnesses (Round 6 Decreed by The Sun)
+    test_round6_hostile_power_of_attorney_witness();
+    test_round6_canonical_earthcall_vocabulary_state();
+    test_round6_graph_authoritative_redefinition_and_adversarial_order();
+    test_round6_theme_authored_state_and_no_self_awarded_first_mover();
+    test_round6_raw_css_capability_governance();
+    test_round6_world_admission_requires_person_refusal();
 
     std::cout << "========================================" << std::endl;
     std::cout << "ALL WEB DESIGNER MODALITY TESTS PASSED!" << std::endl;

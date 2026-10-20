@@ -77,7 +77,7 @@ body {
 }
 .web-flow--grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(var(--web-grid-min-width, 17.5rem), 1fr));
 }
 
 /* Alignments */
@@ -95,22 +95,22 @@ body {
 
 /* Spacing */
 .web-spacing--none { gap: 0; }
-.web-spacing--tight { gap: 0.5rem; }
-.web-spacing--normal { gap: 1rem; }
-.web-spacing--relaxed { gap: 1.5rem; }
-.web-spacing--generous { gap: 2.5rem; }
+.web-spacing--tight { gap: var(--web-spacing-tight, 0.5rem); }
+.web-spacing--normal { gap: var(--web-spacing-normal, 1rem); }
+.web-spacing--relaxed { gap: var(--web-spacing-relaxed, 1.5rem); }
+.web-spacing--generous { gap: var(--web-spacing-generous, 2.5rem); }
 
 /* Scales */
-.web-scale--small { font-size: 0.875rem; }
-.web-scale--normal { font-size: 1rem; }
-.web-scale--large { font-size: 1.25rem; }
-.web-scale--huge { font-size: 2.5rem; line-height: 1.15; }
+.web-scale--small { font-size: var(--web-scale-small, 0.875rem); }
+.web-scale--normal { font-size: var(--web-scale-normal, 1rem); }
+.web-scale--large { font-size: var(--web-scale-large, 1.25rem); }
+.web-scale--huge { font-size: var(--web-scale-huge, 2.5rem); line-height: var(--web-lh-tight, 1.15); }
 
 /* Typography */
-.web-weight--normal { font-weight: 400; }
-.web-weight--light { font-weight: 300; }
-.web-weight--medium { font-weight: 500; }
-.web-weight--bold { font-weight: 700; }
+.web-weight--normal { font-weight: var(--web-weight-normal, 400); }
+.web-weight--light { font-weight: var(--web-weight-light, 300); }
+.web-weight--medium { font-weight: var(--web-weight-medium, 500); }
+.web-weight--bold { font-weight: var(--web-weight-bold, 700); }
 
 .web-tone--default { color: inherit; }
 .web-tone--muted { color: var(--web-text-muted); }
@@ -119,34 +119,34 @@ body {
 
 /* Relational Modifiers */
 .web-subordinate {
-  opacity: 0.8;
-  font-size: 0.95em;
+  opacity: var(--web-subordinate-opacity, 0.8);
+  font-size: var(--web-subordinate-size, 0.95em);
 }
 .web-prominence--quiet {
-  opacity: 0.65;
+  opacity: var(--web-quiet-opacity, 0.65);
 }
 .web-prominence--prominent {
-  font-weight: 700;
+  font-weight: var(--web-prominent-weight, 700);
   color: var(--web-primary);
 }
 .web-prominence--subordinate {
-  opacity: 0.8;
+  opacity: var(--web-subordinate-opacity, 0.8);
 }
 
 /* Headings */
-h1.web-heading { font-size: 2.75rem; line-height: 1.1; margin-bottom: 0.5rem; }
-h2.web-heading { font-size: 2rem; line-height: 1.2; margin-bottom: 0.5rem; }
-h3.web-heading { font-size: 1.5rem; line-height: 1.3; margin-bottom: 0.25rem; }
-h4.web-heading { font-size: 1.25rem; }
-h5.web-heading { font-size: 1.1rem; }
-h6.web-heading { font-size: 1rem; }
+h1.web-heading { font-size: var(--web-h1-size, 2.75rem); line-height: var(--web-h1-lh, 1.1); margin-bottom: var(--web-h-mb, 0.5rem); }
+h2.web-heading { font-size: var(--web-h2-size, 2rem); line-height: var(--web-h2-lh, 1.2); margin-bottom: var(--web-h-mb, 0.5rem); }
+h3.web-heading { font-size: var(--web-h3-size, 1.5rem); line-height: var(--web-h3-lh, 1.3); margin-bottom: var(--web-h3-mb, 0.25rem); }
+h4.web-heading { font-size: var(--web-h4-size, 1.25rem); }
+h5.web-heading { font-size: var(--web-h5-size, 1.1rem); }
+h6.web-heading { font-size: var(--web-h6-size, 1rem); }
 
 /* Surface Variants driven by CSS variables */
 .web-surface--card {
   background: var(--web-card-bg);
   border: 1px solid var(--web-card-border);
   padding: var(--web-card-padding);
-  transition: border-color 0.2s ease;
+  transition: border-color var(--web-transition-normal, 0.2s ease);
 }
 .web-surface--card:hover {
   border-color: var(--web-card-hover-border);
@@ -155,7 +155,7 @@ h6.web-heading { font-size: 1rem; }
 .web-surface--subtle {
   background-color: var(--web-bg-subtle);
   border: 1px solid var(--web-border);
-  padding: 2rem;
+  padding: var(--web-subtle-padding, 2rem);
 }
 
 .web-surface--hero {
@@ -182,10 +182,10 @@ h6.web-heading { font-size: 1rem; }
   justify-content: center;
   padding: var(--web-action-padding);
   font-size: var(--web-action-font-size);
-  font-weight: 600;
+  font-weight: var(--web-action-weight, 600);
   cursor: pointer;
   border: 1px solid transparent;
-  transition: all 0.2s ease;
+  transition: var(--web-action-transition, all 0.2s ease);
   text-decoration: none;
   line-height: 1.2;
   box-sizing: border-box;

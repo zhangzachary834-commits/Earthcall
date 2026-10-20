@@ -107,13 +107,33 @@ std::shared_ptr<Singular> WebDesignerChannel::authorElementFromPhrase(
     Zone* targetZone = explicitZone ? explicitZone : _activeZone;
     Formation* targetFormation = explicitFormation ? explicitFormation : _activeFormation;
 
-    if (targetZone) {
-        targetZone->addObject(elem);
-    }
-    if (targetFormation) {
-        targetFormation->addMember(elem.get());
+    // Sun Round 6 Gate 11: World admission requires Person stewardship!
+    // Detached / authorless calls do not admit into Zone or Formation.
+    if (author) {
+        if (targetZone) {
+            targetZone->addObject(elem);
+        }
+        if (targetFormation) {
+            targetFormation->addMember(elem.get());
+        }
     }
 
+    _elementCache[identifier] = elem;
+    return elem;
+}
+
+std::shared_ptr<Singular> WebDesignerChannel::authorElementInZone(
+    Zone& zone,
+    const std::string& identifier,
+    const std::string& phrase,
+    const std::string& text,
+    Person& author,
+    LawManager* laws) {
+
+    auto elem = std::make_shared<Object>();
+    elem->setObjectID(identifier);
+    authorElementFromPhrase(*elem, phrase, text, &author, laws, &zone, nullptr);
+    zone.addObject(elem);
     _elementCache[identifier] = elem;
     return elem;
 }
@@ -126,11 +146,23 @@ std::shared_ptr<Singular> WebDesignerChannel::authorElementInZone(
     Person* author,
     LawManager* laws) {
 
+    if (!author) {
+        // Sun Round 6 Gate 11: Missing stewardship refuses admission; Zone remains unchanged!
+        return nullptr;
+    }
+    return authorElementInZone(zone, identifier, phrase, text, *author, laws);
+}
+
+std::shared_ptr<Singular> WebDesignerChannel::draftElementFromPhrase(
+    const std::string& identifier,
+    const std::string& phrase,
+    const std::string& text,
+    LawManager* laws) {
+
     auto elem = std::make_shared<Object>();
     elem->setObjectID(identifier);
-    // Sun Gate 11: Explicitly scope both being and provenance to the supplied Zone!
-    authorElementFromPhrase(*elem, phrase, text, author, laws, &zone, nullptr);
-    zone.addObject(elem);
+    // Draft compilation: does NOT admit into Zone or Formation
+    authorElementFromPhrase(*elem, phrase, text, nullptr, laws, nullptr, nullptr);
     _elementCache[identifier] = elem;
     return elem;
 }

@@ -88,13 +88,29 @@ public:
     Zone* getAuthoringZone() const { return _activeZone; }
     Formation* getAuthoringFormation() const { return _activeFormation; }
 
-    // Canonical production authoring directly into a Zone
+    // Canonical production authoring directly into a Zone with Person stewardship
+    std::shared_ptr<Singular> authorElementInZone(
+        Zone& zone,
+        const std::string& identifier,
+        const std::string& phrase,
+        const std::string& text,
+        Person& author,
+        LawManager* laws = nullptr);
+
+    // Overload taking Person* author: if author is null, refuses admission and leaves Zone unchanged!
     std::shared_ptr<Singular> authorElementInZone(
         Zone& zone,
         const std::string& identifier,
         const std::string& phrase,
         const std::string& text = "",
         Person* author = nullptr,
+        LawManager* laws = nullptr);
+
+    // Ephemeral / detached draft creation: no Person required; does NOT admit into Zone or Formation!
+    std::shared_ptr<Singular> draftElementFromPhrase(
+        const std::string& identifier,
+        const std::string& phrase,
+        const std::string& text = "",
         LawManager* laws = nullptr);
 
     // Access uncommitted draft relations (ephemeral authoring scratchpad).

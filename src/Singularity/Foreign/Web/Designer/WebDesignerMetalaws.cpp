@@ -51,33 +51,91 @@ void WebDesignerMetalaws::authorWord(Person& author,
     // Retain Lexeme canonically in LanguageSystem so relation endpoint never dangles
     auto lexeme = Singularity::Language::LanguageSystem::instance().intern(symbol, stableLexemeId);
 
-    Law* targetLaw = laws.find(lawId);
-    if (!targetLaw) {
+    // Sun Round 6 Gate 3 & 4: Graph-authoritative redefinition and stable history without process counters!
+    Law* previousLaw = nullptr;
+    if (formation) {
+        for (const auto& r : formation->relations().getAll()) {
+            if (r && r->type == "denotes" && r->a() == lexeme.get()) {
+                previousLaw = dynamic_cast<Law*>(r->b());
+                break;
+            }
+        }
+    }
+    if (!previousLaw && outRelations) {
+        for (const auto& r : *outRelations) {
+            if (r && r->type == "denotes" && r->a() == lexeme.get()) {
+                previousLaw = dynamic_cast<Law*>(r->b());
+                break;
+            }
+        }
+    }
+    if (!previousLaw) {
+        for (const auto* r : Universe::instance().relations()) {
+            if (r && r->type == "denotes" && r->a() == lexeme.get()) {
+                previousLaw = dynamic_cast<Law*>(r->b());
+                break;
+            }
+        }
+    }
+    if (!previousLaw) {
+        previousLaw = laws.find(lawId);
+    }
+
+    Law* targetLaw = nullptr;
+    if (!previousLaw) {
+        // First definition of this semantic word
         auto law = std::make_shared<Law>(lawId, std::vector<Singular*>{&author});
         law->setLawIdentifier(lawId);
-        // Sun Gate 2/3: Ordinary authored Laws use clamped authority level (0), never grantAuthority!
         law->setAuthorityLevel(0);
         law->setEnabled(true);
         law->setActionModel(std::move(action));
         laws.add(law);
         targetLaw = law.get();
     } else {
-        // Sun Gate 5: Real Semantic Redefinition!
-        // Author an updated Law version under Person stewardship, recording provenance
-        static int s_redefCounter = 1;
-        std::string versionedId = lawId + ".v" + std::to_string(s_redefCounter++);
+        // Redefinition: derive stable version identity from the actual previous active law!
+        std::string prevId = previousLaw->getIdentifier();
+        std::string base = prevId;
+        int nextVersion = 1;
+        auto vPos = prevId.rfind(".v");
+        if (vPos != std::string::npos && vPos + 2 < prevId.size()) {
+            bool allDigits = true;
+            for (size_t i = vPos + 2; i < prevId.size(); ++i) {
+                if (!std::isdigit(static_cast<unsigned char>(prevId[i]))) {
+                    allDigits = false;
+                    break;
+                }
+            }
+            if (allDigits) {
+                nextVersion = std::stoi(prevId.substr(vPos + 2)) + 1;
+                base = prevId.substr(0, vPos);
+            }
+        }
+        std::string versionedId = base + ".v" + std::to_string(nextVersion);
+
         auto newLaw = std::make_shared<Law>(versionedId, std::vector<Singular*>{&author});
         newLaw->setLawIdentifier(versionedId);
         newLaw->setAuthorityLevel(0);
         newLaw->setEnabled(true);
         newLaw->setActionModel(std::move(action));
-        newLaw->recordProvenance("redefined-from", *targetLaw, author);
+        newLaw->recordProvenance("redefined-from", *previousLaw, author);
         laws.add(newLaw);
         targetLaw = newLaw.get();
+
+        // Canonically retire/dissolve the previous denotes relation so graph has ONE active meaning
+        if (formation) {
+            formation->relations().removeBetween(*lexeme, *previousLaw, "denotes");
+        }
+        if (outRelations) {
+            outRelations->erase(
+                std::remove_if(outRelations->begin(), outRelations->end(),
+                    [&](const std::shared_ptr<Relation>& r) {
+                        return r && r->type == "denotes" && r->a() == lexeme.get() && r->b() == previousLaw;
+                    }),
+                outRelations->end());
+        }
     }
 
     auto rel = std::make_shared<Relation>("denotes", *lexeme, *targetLaw, true, 1.0f);
-    // Sun Gate 10: Single sink admission
     if (formation) {
         formation->relations().add(rel);
     } else if (Universe::instance().hasRelationRegistrar()) {
@@ -96,12 +154,15 @@ bool WebDesignerMetalaws::loadAuthoredVocabularyFromJsonString(
     try {
         nlohmann::json root = nlohmann::json::parse(jsonString);
 
-        // Sun Gate 1 & 2: Provenance is restored from data; the importer is NOT the author!
-        std::string defaultAuthorName;
-        if (root.contains("author") && root["author"].is_string()) {
-            defaultAuthorName = root["author"].get<std::string>();
-        } else if (root.contains("injectedBy") && root["injectedBy"].contains("onBehalfOf")) {
-            defaultAuthorName = root["injectedBy"]["onBehalfOf"].get<std::string>();
+        // Sun Round 6 Gate 1 & 2: Provenance is restored from canonical authored state alone.
+        // The importer is NOT the author; and injectedBy.onBehalfOf is delegation context, NEVER authorship!
+        std::vector<std::string> defaultAuthorNames;
+        if (root.contains("authors") && root["authors"].is_array()) {
+            for (const auto& a : root["authors"]) {
+                if (a.is_string()) defaultAuthorNames.push_back(a.get<std::string>());
+            }
+        } else if (root.contains("author") && root["author"].is_string()) {
+            defaultAuthorNames.push_back(root["author"].get<std::string>());
         }
 
         auto resolvePerson = [](const std::string& name) -> Person* {
@@ -117,24 +178,30 @@ bool WebDesignerMetalaws::loadAuthoredVocabularyFromJsonString(
             return nullptr;
         };
 
-        // 1. Canonical Earthcall Laws loading (if root contains "laws" array)
+        // 1. Canonical Earthcall Laws loading
         if (root.contains("laws") && root["laws"].is_array()) {
             for (const auto& lj : root["laws"]) {
                 auto law = Law::fromJson(lj);
                 if (!law) continue;
-                // Reattach authors from recorded authors array
+
+                // Canonical authorship attachment:
+                std::vector<std::string> lawAuthors;
                 if (lj.contains("authors") && lj["authors"].is_array()) {
                     for (const auto& authVal : lj["authors"]) {
-                        std::string authName = authVal.is_string() ? authVal.get<std::string>() : "";
-                        if (Person* p = resolvePerson(authName)) {
-                            law->addAuthor(*p);
-                        }
+                        if (authVal.is_string()) lawAuthors.push_back(authVal.get<std::string>());
                     }
-                } else if (!defaultAuthorName.empty()) {
-                    if (Person* p = resolvePerson(defaultAuthorName)) {
+                } else if (lj.contains("author") && lj["author"].is_string()) {
+                    lawAuthors.push_back(lj["author"].get<std::string>());
+                } else {
+                    lawAuthors = defaultAuthorNames;
+                }
+
+                for (const auto& authName : lawAuthors) {
+                    if (Person* p = resolvePerson(authName)) {
                         law->addAuthor(*p);
                     }
                 }
+
                 // Authored authority is clamped to kAuthoredCeiling (0)
                 law->setAuthorityLevel(lj.value("authority", 0));
                 laws.add(law);
@@ -165,6 +232,13 @@ bool WebDesignerMetalaws::loadAuthoredVocabularyFromJsonString(
                     if (b->getIdentifier() == srcId) src = b;
                     if (b->getIdentifier() == tgtId) tgt = b;
                 }
+                if (!src) {
+                    if (auto lx = Singularity::Language::LanguageSystem::instance().findById(srcId)) {
+                        src = lx.get();
+                    } else if (auto lxSym = Singularity::Language::LanguageSystem::instance().findBySymbol(srcId)) {
+                        src = lxSym.get();
+                    }
+                }
                 if (!tgt) {
                     tgt = laws.find(tgtId);
                 }
@@ -177,74 +251,6 @@ bool WebDesignerMetalaws::loadAuthoredVocabularyFromJsonString(
             }
         }
 
-        // 4. Vocabulary items format
-        if (root.contains("vocabulary") && root["vocabulary"].is_array()) {
-            for (const auto& item : root["vocabulary"]) {
-                std::string symbol = item.value("symbol", "");
-                std::string lexemeId = item.value("lexemeId", "");
-                std::string lawId = item.value("lawId", "");
-                if (symbol.empty() || lawId.empty()) continue;
-                if (lexemeId.empty()) {
-                    lexemeId = "lexeme.web." + symbol;
-                }
-
-                std::string itemAuthor = item.value("author", defaultAuthorName);
-                Person* steward = resolvePerson(itemAuthor);
-
-                std::vector<ActionNode> subActions;
-                if (item.contains("actions") && item["actions"].is_array()) {
-                    for (const auto& act : item["actions"]) {
-                        std::string path = act.value("path", "");
-                        if (path.empty()) continue;
-
-                        PropertyValue val;
-                        if (act.contains("value")) {
-                            const auto& v = act["value"];
-                            if (v.is_boolean()) {
-                                val = PropertyValue(v.get<bool>());
-                            } else if (v.is_number()) {
-                                val = PropertyValue(v.get<double>());
-                            } else if (v.is_string()) {
-                                val = PropertyValue(v.get<std::string>());
-                            }
-                        }
-
-                        subActions.push_back(ActionNode::set(path, val));
-                        subActions.push_back(ActionNode::set("compilation.output.web." + path, val));
-                    }
-                }
-
-                ActionNode action = subActions.size() == 1 ? subActions[0] : ActionNode::sequence(subActions);
-
-                auto lexeme = Singularity::Language::LanguageSystem::instance().intern(symbol, lexemeId);
-                Law* targetLaw = laws.find(lawId);
-                if (!targetLaw) {
-                    std::vector<Singular*> authorList;
-                    if (steward) {
-                        authorList.push_back(steward);
-                    }
-                    // If steward is not found in the world, authorList is empty -> Law remains Unauthored!
-                    auto law = std::make_shared<Law>(lawId, authorList);
-                    law->setLawIdentifier(lawId);
-                    // Authority clamped to kAuthoredCeiling (0)
-                    law->setAuthorityLevel(0);
-                    law->setEnabled(true);
-                    law->setActionModel(std::move(action));
-                    laws.add(law);
-                    targetLaw = law.get();
-                }
-
-                auto rel = std::make_shared<Relation>("denotes", *lexeme, *targetLaw, true, 1.0f);
-                if (formation) {
-                    formation->relations().add(rel);
-                } else if (Universe::instance().hasRelationRegistrar()) {
-                    Universe::instance().addRelation(rel);
-                }
-                if (outRelations) {
-                    outRelations->push_back(rel);
-                }
-            }
-        }
         return true;
     } catch (...) {
         return false;
@@ -316,13 +322,58 @@ WebConcept WebDesignerMetalaws::compilePhrase(const std::string& phrase,
     collectFrom(extraRelations);
     collectFrom(Universe::instance().relations());
 
-    // For identical symbols, the most recently added denotes relation takes precedence (repointing)
-    std::unordered_map<std::string, Law*> latestMapping;
+    // Sun Round 6 Gate 3 & 4: Unambiguous graph-authoritative active mapping independent of iteration order!
+    auto isNewerDefinition = [](Law* candidate, Law* current) -> bool {
+        if (!candidate || !current) return false;
+        if (candidate == current) return false;
+
+        // 1. Check direct provenance: does candidate have "redefined-from" relation involving current?
+        for (const auto& r : candidate->provenance().getRelationsOfType("redefined-from")) {
+            if (r && r->a() == current) return true;
+        }
+
+        // 2. Parse version numbers if IDs share the same base
+        auto parseIdVersion = [](const std::string& id) -> std::pair<std::string, int> {
+            auto vPos = id.rfind(".v");
+            if (vPos != std::string::npos && vPos + 2 < id.size()) {
+                bool digits = true;
+                for (size_t i = vPos + 2; i < id.size(); ++i) {
+                    if (!std::isdigit(static_cast<unsigned char>(id[i]))) {
+                        digits = false;
+                        break;
+                    }
+                }
+                if (digits) {
+                    return {id.substr(0, vPos), std::stoi(id.substr(vPos + 2))};
+                }
+            }
+            return {id, 0};
+        };
+
+        auto [candBase, candVer] = parseIdVersion(candidate->getIdentifier());
+        auto [currBase, currVer] = parseIdVersion(current->getIdentifier());
+
+        if (candBase == currBase) {
+            return candVer > currVer;
+        }
+
+        // 3. Deterministic order-independent tie-breaker
+        return candidate->getIdentifier() > current->getIdentifier();
+    };
+
+    std::unordered_map<std::string, Law*> activeMapping;
     for (const auto& m : mappings) {
-        latestMapping[m.symbol] = m.law;
+        auto it = activeMapping.find(m.symbol);
+        if (it == activeMapping.end()) {
+            activeMapping[m.symbol] = m.law;
+        } else {
+            if (isNewerDefinition(m.law, it->second)) {
+                activeMapping[m.symbol] = m.law;
+            }
+        }
     }
     mappings.clear();
-    for (const auto& [sym, law] : latestMapping) {
+    for (const auto& [sym, law] : activeMapping) {
         mappings.push_back({sym, law});
     }
 
@@ -424,23 +475,47 @@ WebConcept WebDesignerMetalaws::compileTokens(const std::vector<std::string>& to
 Singular& WebDesignerMetalaws::applyAuthoredConcept(
     Singular& bearer,
     const WebConcept& concept,
-    Person* author,
+    Person& author,
     std::vector<std::shared_ptr<Relation>>* outRelations) {
 
-    if (author) {
-        // Form first-class Earthcall provenance Relation connecting to the actual author Person.
-        // The Relation is the SOLE source of truth — NO shadow string property!
-        auto authRel = std::make_shared<Relation>(WebRelationType::kAuthoredBy, bearer, *author, true, 1.0f);
-        if (outRelations) {
-            outRelations->push_back(authRel);
-        }
-        if (Universe::instance().hasRelationRegistrar()) {
-            Universe::instance().addRelation(authRel);
-        }
+    // Form first-class Earthcall provenance Relation connecting to the actual author Person.
+    // The Relation is the SOLE source of truth — NO shadow string property!
+    auto authRel = std::make_shared<Relation>(WebRelationType::kAuthoredBy, bearer, author, true, 1.0f);
+    if (outRelations) {
+        outRelations->push_back(authRel);
+    }
+    if (Universe::instance().hasRelationRegistrar()) {
+        Universe::instance().addRelation(authRel);
     }
 
     concept.applyToSingular(bearer);
     return bearer;
+}
+
+Singular& WebDesignerMetalaws::applyAuthoredConcept(
+    Singular& bearer,
+    const WebConcept& concept,
+    Person* author,
+    std::vector<std::shared_ptr<Relation>>* outRelations) {
+
+    if (!author) {
+        // Missing stewardship leaves bearer without author Relation
+        concept.applyToSingular(bearer);
+        return bearer;
+    }
+    return applyAuthoredConcept(bearer, concept, *author, outRelations);
+}
+
+std::shared_ptr<Singular> WebDesignerMetalaws::createAuthoredElement(
+    const std::string& identifier,
+    const WebConcept& concept,
+    Person& author,
+    std::vector<std::shared_ptr<Relation>>* outRelations) {
+
+    auto obj = std::make_shared<Object>();
+    obj->setObjectID(identifier);
+    applyAuthoredConcept(*obj, concept, author, outRelations);
+    return obj;
 }
 
 std::shared_ptr<Singular> WebDesignerMetalaws::createAuthoredElement(
@@ -449,9 +524,26 @@ std::shared_ptr<Singular> WebDesignerMetalaws::createAuthoredElement(
     Person* author,
     std::vector<std::shared_ptr<Relation>>* outRelations) {
 
+    if (!author) {
+        // Refusal: creating an AUTHORED element requires Person stewardship!
+        return nullptr;
+    }
+    return createAuthoredElement(identifier, concept, *author, outRelations);
+}
+
+Singular& WebDesignerMetalaws::applyDraftConcept(
+    Singular& bearer,
+    const WebConcept& concept) {
+    concept.applyToSingular(bearer);
+    return bearer;
+}
+
+std::shared_ptr<Singular> WebDesignerMetalaws::createDraftElement(
+    const std::string& identifier,
+    const WebConcept& concept) {
     auto obj = std::make_shared<Object>();
     obj->setObjectID(identifier);
-    applyAuthoredConcept(*obj, concept, author, outRelations);
+    concept.applyToSingular(*obj);
     return obj;
 }
 

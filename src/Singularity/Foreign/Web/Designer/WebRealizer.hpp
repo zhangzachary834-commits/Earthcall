@@ -24,8 +24,8 @@ struct RealizeOptions {
     bool includeInteractiveScript;
     bool minify;
     std::string extraCss;
-    std::string rawCssAuthorizationToken; // Explicit Person governance or First-Mover authorization token
-    bool allowUnrestrictedCss; // Requires explicit Person governance token or TransferPolicy gate
+    const Person* governingAuthor; // Explicit Person governance reference for raw CSS capability
+    bool allowUnrestrictedCss; // Requires explicit Person governance or TransferPolicy gate
 
     RealizeOptions()
         : title("Earthcall Web Designer"),
@@ -33,7 +33,7 @@ struct RealizeOptions {
           includeInteractiveScript(true),
           minify(false),
           extraCss(""),
-          rawCssAuthorizationToken(""),
+          governingAuthor(nullptr),
           allowUnrestrictedCss(false) {}
 };
 
@@ -114,22 +114,43 @@ public:
 // ---------------------------------------------------------------------------
 class WebDesignerTheme {
 public:
-    // Authors full modern dark theme design tokens onto site/page root with Person stewardship
-    static void applyModernDarkTheme(Singular& root,
-                                     Person* author = nullptr,
-                                     std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+    // Loads theme tokens from authored data fixture (saves/fixtures/web_themes.json)
+    static bool loadThemeTokens(const std::string& themeName,
+                                std::unordered_map<std::string, std::string>& outTokens,
+                                const std::string& fixturePath = "");
 
-    // Authors clean neutral light theme design tokens onto site/page root with Person stewardship
-    static void applyNeutralLightTheme(Singular& root,
-                                       Person* author = nullptr,
-                                       std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
-
-    // Authors custom design system tokens with explicit Person stewardship
+    // Authors custom design system tokens with explicit Person stewardship.
+    // The Relation(WebRelationType::kAuthoredBy) is the sole source of truth; no shadow property is written.
     static void authorThemeTokens(Singular& root,
                                   Person& author,
                                   const std::unordered_map<std::string, std::string>& tokens,
                                   Formation* formation = nullptr,
                                   std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    // Overload taking Person* author: if author is null, applies tokens without claiming stewardship or self-awarding FirstMover
+    static void authorThemeTokens(Singular& root,
+                                  Person* author,
+                                  const std::unordered_map<std::string, std::string>& tokens,
+                                  Formation* formation = nullptr,
+                                  std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    // Authors full modern dark theme design tokens loading from authored fixture web_themes.json
+    static void applyModernDarkTheme(Singular& root,
+                                     Person& author,
+                                     std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    static void applyModernDarkTheme(Singular& root,
+                                     Person* author = nullptr,
+                                     std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    // Authors clean neutral light theme design tokens loading from authored fixture web_themes.json
+    static void applyNeutralLightTheme(Singular& root,
+                                       Person& author,
+                                       std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    static void applyNeutralLightTheme(Singular& root,
+                                       Person* author = nullptr,
+                                       std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 };
 
 } // namespace Web

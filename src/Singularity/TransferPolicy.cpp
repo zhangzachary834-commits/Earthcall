@@ -26,6 +26,7 @@ TransferPolicy::TransferPolicy() {
     _tiers["type"] = Tier::Gated;
     _tiers["weight"] = Tier::Gated;
     _tiers["directed"] = Tier::Gated;
+    _tiers["web.rawCss"] = Tier::Gated;
 
     for (const auto& entry : _tiers) {
         _open[entry.first] = entry.second != Tier::Gated;

@@ -118,7 +118,14 @@ public:
     static std::shared_ptr<Singular> createAuthoredElement(
         const std::string& identifier,
         const WebConcept& concept,
-        Person* author = nullptr,
+        Person& author,
+        std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    // Overload taking Person* author: if author is null, refuses creation of authored element.
+    static std::shared_ptr<Singular> createAuthoredElement(
+        const std::string& identifier,
+        const WebConcept& concept,
+        Person* author,
         std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 
     // Authors concept onto any existing Singular bearer (Object, Formation, Lexeme, etc.).
@@ -126,8 +133,23 @@ public:
     static Singular& applyAuthoredConcept(
         Singular& bearer,
         const WebConcept& concept,
-        Person* author = nullptr,
+        Person& author,
         std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    static Singular& applyAuthoredConcept(
+        Singular& bearer,
+        const WebConcept& concept,
+        Person* author,
+        std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    // Ephemeral / detached draft creation and application without world admission or authorship
+    static std::shared_ptr<Singular> createDraftElement(
+        const std::string& identifier,
+        const WebConcept& concept);
+
+    static Singular& applyDraftConcept(
+        Singular& bearer,
+        const WebConcept& concept);
 };
 
 } // namespace Web
