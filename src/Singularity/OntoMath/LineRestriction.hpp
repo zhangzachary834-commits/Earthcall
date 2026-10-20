@@ -596,8 +596,12 @@ struct LineQuadratureCertificate {
     std::vector<LineQuadratureBand> bands;   // increasing cap
     ExecutionModel model;
 };
+// `symbols` binds every non-point symbol to an interval [lo, hi]: a frame's
+// clock t as a point, a view direction ω as [−1, 1]³ so one certificate covers
+// every pixel's direction (box mode ranges over them).
 std::optional<LineQuadratureCertificate> certifyLineQuadrature(const MathNode& field, const ExecutionModel& deviceModel,
-                                                               int maxBand = 20, std::string* why = nullptr);
+                                                               int maxBand = 20, std::string* why = nullptr,
+                                                               const std::map<std::string, std::pair<double, double>>& symbols = {});
 // The CPU mirror of the device's per-ray plan (same arithmetic, in double):
 // the band, the even cell count n, and the proved total for f32 execution.
 struct LineQuadraturePlan {
@@ -614,8 +618,9 @@ std::optional<LineQuadraturePlan> planLineQuadrature(const LineQuadratureCertifi
 // each certified (above). The device marches ONCE: depth accumulates by the
 // same Simpson panels (the midpoint by the quadratic's exact partial
 // integral), so the work is O(cells), not O(cells²). The bound is a priori,
-// from the two certificates on the ray's band, and needs σ ≥ 0 PROVED there
-// (so exp(−τ) ≤ 1, τ nondecreasing, |e^−a − e^−b| ≤ |a − b|):
+// from the two certificates on the ray's band. With σ ≥ σ_low there, e^−τ ≤
+// T_max = e^(max(0,−σ_low)·S); every factor below is scaled by it (= 1 when
+// σ ≥ 0 is proved), and |e^−a − e^−b| ≤ F·|a − b| with F = T_max·e^δτ:
 //   depth error   δτ ≤ (S + 2h)·[(1+Λ)·local_σ(h) + σ's device error + rounding]
 //   sample error  δτ·ε_max + ε's device error + exp's device error
 //   outer radius  (1+Λ)·min(width_g, |g′|·hw, |g″|·hw²/2), g = e^−τ·ε,

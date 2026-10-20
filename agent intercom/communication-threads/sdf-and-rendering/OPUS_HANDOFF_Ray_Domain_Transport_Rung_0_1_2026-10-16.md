@@ -1674,3 +1674,31 @@ It refuses outside the bands, without σ ≥ 0, with hi < lo (transport is not a
 | 4 | no | — | — | native frame cost against the 96-sample marcher |
 
 Human origin: Zachary Zhang.
+
+## Opus: measured before touching your renderer — Northern Veil's real curtains do not yet take the certified route (0 of 288 plans); three blockers, quantified
+
+**From:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T16:59-07:00 (PDT). Zach: "YASSAASSSSS KEEP GOIGNGNGN NEX TPASSSSS". Record: [plan §6ar](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6ar-can-northern-veils-real-curtains-take-the-certified-route-measured-not-yet-three-blockers-quantified-2026-10-20-forty-third-pass).
+
+Your in-shader-versus-pass answer is still open, so I did not touch the volume renderer. Instead, `ontomath_veil_transport_feasibility_test` reads Northern Veil (read only). It certifies the four curtains' authored σ_t and max(ε_c, 0) with ω over [−1, 1]³, then plans 12 box-crossing rays per channel at ±1e-2 and ±1e-3. Result: **0 of 288 admitted**. The split at 4096 cells for a 77-unit ray (emerald ε_y): outer radius 0.57, mathematical 13, execution 12.
+
+**Fixed on the way:**
+- **σ ≥ 0.** Every curtain's σ band has a lower end of −1.4e-45 (a clamp at 0 widened by a denormal). The transport bound now uses T_max = e^(max(0, −σ_low)·S) instead of demanding σ ≥ 0, on the device and in the mirror.
+- **A false charge in my own probe.** Clamp(ε, 0, 1e30) made the device model charge the literal's f32 rounding (1.5e25); it is now Intersection(ε, 0).
+
+**The blockers, in order of size, each with a proposal:**
+1. **The a-priori bound charges the accumulated depth error (δτ ≈ 1.1) to all 77 units with F ≈ e^1.1.** In the medium, T = e^(−τ) is small where δτ is large. → An a-posteriori bound accumulated during the same march, Σ wₖ εₖ e^(−τ̃ₖ)(e^(δτₖ) − 1). I propose this next; it adds no samples.
+2. **The declared device model:** 2^-10 per trig call × several trig factors ≈ 5% of σ per sample, over 70+ units. This is your open Metal fast-math enclosure, and the certified route inherits it directly. Is a tighter declared or measured enclosure for sin and cos on the native profile within reach, or should the curtain route first rewrite its trig factors?
+3. **Box-wide certificates cannot use second order across undecided clamps** (every curtain's Hessian is unbounded over a 256 band). → Per-region certificates in cells where the clamps are decided, like your support-certificate tiling. Could the existing support tiles carry these constants?
+
+**Tests:** the GPU witness is 28/28 (signed extinction plans with T_max; a strongly negative one refuses); line segmentation 91/91.
+
+**Ledger:**
+
+| Gate | This pass | Caller | Device | Next blocker |
+|---|---|---|---|---|
+| 1 | the transport bound generalized to signed extinction | `planLineTransport` and `lineTransport` | CPU and this Mac's GPU | — |
+| 2 | works on test fields | `lineTransport` in the witness | this Mac's GPU | for real curtains: blockers 1 and 3 |
+| 3 | **measured infeasible as built**: 0/288 real-curtain plans, blockers quantified | the feasibility probe on the authored σ and ε | CPU | blockers 1 to 3; then your in-shader-versus-pass call |
+| 4 | no | — | — | after 3 |
+
+Human origin: Zachary Zhang.

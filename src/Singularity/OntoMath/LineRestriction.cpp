@@ -2280,7 +2280,8 @@ std::optional<double> lipschitzBoundOverBox(const LineAlgebraicForm& form, std::
 }
 
 std::optional<LineQuadratureCertificate> certifyLineQuadrature(const MathNode& field, const ExecutionModel& deviceModel,
-                                                               int maxBand, std::string* why) {
+                                                               int maxBand, std::string* why,
+                                                               const std::map<std::string, std::pair<double, double>>& symbols) {
     auto say = [&](const std::string& text) { if (why) *why = text; return std::nullopt; };
     const auto restricted = restrictAlgebraicToLine(field, /*vectorValued=*/false);
     if (!restricted) return say("the field does not restrict to a line: " + restricted.refusal);
@@ -2288,6 +2289,15 @@ std::optional<LineQuadratureCertificate> certifyLineQuadrature(const MathNode& f
     const uint32_t root = form.roots[0];
     LineQuadratureCertificate cert;
     cert.model = deviceModel;
+    std::map<std::string, Interval> symbolBox;
+    std::map<std::string, double> symbolMagnitudes;
+    for (const auto& [name, range] : symbols) {
+        float l = float(range.first), h = float(range.second);
+        if (double(l) > range.first) l = std::nextafter(l, -INFINITY);
+        if (double(h) < range.second) h = std::nextafter(h, INFINITY);
+        symbolBox[name] = Interval(l, h);
+        symbolMagnitudes[name] = std::max(std::abs(range.first), std::abs(range.second));
+    }
     for (int j = 0; j <= maxBand; ++j) {
         const double cap = std::ldexp(1.0, j);
         const Interval box(-float(cap), float(cap));
@@ -2295,7 +2305,7 @@ std::optional<LineQuadratureCertificate> certifyLineQuadrature(const MathNode& f
         band.cap = cap;
         // Range over the band: the origin is the whole box, the direction 0.
         {
-            std::map<std::string, Interval> b;
+            std::map<std::string, Interval> b = symbolBox;
             for (int i = 0; i < 3; ++i) { b[kLineOriginVars[i]] = box; b[kLineDirectionVars[i]] = Interval(0.0f); }
             LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
             if (!ev.ok()) continue;
@@ -2311,7 +2321,7 @@ std::optional<LineQuadratureCertificate> certifyLineQuadrature(const MathNode& f
         double sum = 0.0;
         bool bounded = true;
         for (int axis = 0; axis < 3 && bounded; ++axis) {
-            std::map<std::string, Interval> b;
+            std::map<std::string, Interval> b = symbolBox;
             for (int i = 0; i < 3; ++i) { b[kLineOriginVars[i]] = box; b[kLineDirectionVars[i]] = Interval(i == axis ? 1.0f : 0.0f); }
             LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
             if (!ev.ok()) { bounded = false; break; }
@@ -2326,7 +2336,7 @@ std::optional<LineQuadratureCertificate> certifyLineQuadrature(const MathNode& f
         // ∂ij = (D²(e_i + e_j) − D²(e_i) − D²(e_j))/2, as intervals.
         {
             auto second = [&](int i, int k) -> std::optional<Interval> {
-                std::map<std::string, Interval> b;
+                std::map<std::string, Interval> b = symbolBox;
                 for (int m = 0; m < 3; ++m) {
                     b[kLineOriginVars[m]] = box;
                     b[kLineDirectionVars[m]] = Interval((m == i || m == k) ? 1.0f : 0.0f);
@@ -2355,7 +2365,9 @@ std::optional<LineQuadratureCertificate> certifyLineQuadrature(const MathNode& f
             if (ok) band.hessian = std::sqrt(frob) * (1.0 + 1e-12);
         }
         // One device evaluation, under the device's declared model.
-        const auto exec = executionBound(field, {{"x", cap}, {"y", cap}, {"z", cap}}, deviceModel);
+        std::map<std::string, double> magnitudes = symbolMagnitudes;
+        magnitudes["x"] = magnitudes["y"] = magnitudes["z"] = cap;
+        const auto exec = executionBound(field, magnitudes, deviceModel);
         if (!exec || !std::isfinite(exec->slack)) continue;
         band.execution = exec->slack;
         cert.bands.push_back(band);
@@ -2418,7 +2430,7 @@ std::optional<LineTransportPlan> planLineTransport(const LineQuadratureCertifica
                                                    const double d[3], double lo, double hi, double tolerance,
                                                    double maxCells, std::string* why) {
     // Mirrors SdfWgsl's lineTransport exactly (in double).
-    auto refuse = [&](const char* text) { if (why) *why = text; return std::nullopt; };
+    auto refuse = [&](const std::string& text) { if (why) *why = text; return std::nullopt; };
     // Light travels from lo to hi: transport is not antisymmetric in its limits.
     if (!(hi >= lo)) return refuse("transport runs from lo to hi; hi < lo is not a reversed integral");
     const double a = lo, b = hi, S = b - a;
@@ -2437,10 +2449,14 @@ std::optional<LineTransportPlan> planLineTransport(const LineQuadratureCertifica
     const LineQuadratureBand* sg = pick(sigma, plan.sigmaBand);
     const LineQuadratureBand* em = pick(emission, plan.emissionBand);
     if (!sg || !em) return refuse("the ray leaves every certified magnitude band");
-    if (!(sg->low >= 0.0)) return refuse("the extinction is not proved nonnegative on the ray's band");
+    // σ ≥ σ_low on the band, so τ ≥ −max(0, −σ_low)·S and e^−τ ≤ T_max. A
+    // clamp at 0 rounds outward to −1.4e-45 (Northern Veil, plan §6ar), so
+    // "proved ≥ 0" is replaced by this factor rather than demanded exactly.
+    const double Tmax = std::exp(std::max(0.0, -sg->low) * S);
+    if (!(Tmax <= 1e6)) return refuse("the extinction may be so negative on the ray's band that e^-tau is unbounded");
     const double u = std::ldexp(1.0, -23), lambda = 1.25;
     const double ds = 4.0 * u * (std::abs(a) + S);
-    const double sMax = sg->high, eMax = em->sup;
+    const double sMax = sg->sup, eMax = em->sup;
     const double Ls = sg->lipschitz * dn, Le = em->lipschitz * dn;
     const double Hs = sg->hessian * dn * dn, He = em->hessian * dn * dn;
     // The exponential's device error, relative to e^−τ ≤ 1, under the model.
@@ -2450,9 +2466,10 @@ std::optional<LineTransportPlan> planLineTransport(const LineQuadratureCertifica
         if (std::isfinite(H2)) l = std::min(l, H2 * hw * hw * 0.5);
         return l;
     };
-    const double gWidth = std::max(em->high, 0.0) - std::min(em->low, 0.0);
-    const double gPrime = Le + sMax * eMax;
-    const double gSecond = He + 2.0 * sMax * Le + Ls * eMax + sMax * sMax * eMax;
+    const double gWidth = Tmax * (std::max(em->high, 0.0) - std::min(em->low, 0.0));
+    const double gPrime = Tmax * (Le + sMax * eMax);
+    const double gSecond = Tmax * (He + 2.0 * sMax * Le + Ls * eMax + sMax * sMax * eMax);
+    double lastRadius = 0.0, lastExecution = 0.0, lastMath = 0.0;
     for (double n = 2.0; n <= maxCells; n *= 2.0) {
         const double h = S / n, span = S + 2.0 * h;
         const double gamma = (n + 8.0) * u / (1.0 - (n + 8.0) * u);
@@ -2460,10 +2477,13 @@ std::optional<LineTransportPlan> planLineTransport(const LineQuadratureCertifica
         // (execution: σ's per-sample error, node rounding, f32 summation).
         const double depthMath = span * (1.0 + lambda) * local(sg->width, Ls, Hs, h);
         const double depthExec = 1.2 * span * (sg->execution + Ls * ds) + gamma * 1.2 * span * sg->sup;
+        // |e^−τ̃ − e^−τ| ≤ e^−min(τ, τ̃)·|τ̃ − τ| ≤ F·δτ, F = T_max·e^δτ.
+        const double F = Tmax * std::exp(depthMath + depthExec);
         const double radius = S * (1.0 + lambda) * local(gWidth, gPrime, gSecond, h);
-        const double mathematical = radius + S * depthMath * eMax;
-        const double execution = S * (depthExec * eMax + em->execution + Le * ds + expError * eMax) +
-                                  gamma * S * eMax + 4.0 * u * S * eMax;
+        const double mathematical = radius + S * F * depthMath * eMax;
+        const double execution = S * (F * depthExec * eMax + F * (em->execution + Le * ds) + expError * F * eMax) +
+                                  gamma * S * F * eMax + 4.0 * u * S * F * eMax;
+        lastRadius = radius; lastMath = mathematical; lastExecution = execution;
         if (mathematical + execution <= tolerance) {
             plan.cells = n;
             plan.depthError = depthMath + depthExec;
@@ -2472,7 +2492,11 @@ std::optional<LineTransportPlan> planLineTransport(const LineQuadratureCertifica
             return plan;
         }
     }
-    return refuse("no cell count up to the cap fits the tolerance");
+    char text[220];
+    std::snprintf(text, sizeof(text),
+                  "no cell count up to the cap fits: at %g cells, S = %.3g, outer radius %.3g, mathematical %.3g, execution %.3g",
+                  maxCells, S, lastRadius, lastMath, lastExecution);
+    return refuse(text);
 }
 
 namespace {

@@ -376,12 +376,18 @@ int main() {
                 check(mathInside == admitted, "the double march with the plan's cells lies inside the mathematical part alone (depth and L quadrature)");
                 check((*out)[4 * 48 + 1] == 0.0f, "transport with hi < lo refuses (light runs one way; not a reversed integral)");
             }
-            // An extinction that can go negative (bare noise) is refused: exp(−τ) ≤ 1 is unproved.
+            // An extinction that may go negative is priced, not refused outright: e^−τ ≤
+            // T_max = e^(max(0, −σ_low)·S) scales every factor (plan §6ar). Bare noise
+            // over one unit plans; noise − 10 over two units (T_max ≈ e^27.6) refuses.
+            const double o[3] = {0.1, 0.2, 0.3}, dd[3] = {1.0, 0.0, 0.0};
             auto signedSigma = node(Op::Noise, named("p"));
             const auto nc = OntoMath::certifyLineQuadrature(*signedSigma, Rendering::kVolumeExecutionModel, 20, &why);
-            const double o[3] = {0.1, 0.2, 0.3}, dd[3] = {1.0, 0.0, 0.0};
-            check(nc && !OntoMath::planLineTransport(*nc, *ec, o, dd, 0.0, 1.0, 5e-2, 4096, &why) && why.find("nonnegative") != std::string::npos,
-                  "an extinction not proved nonnegative refuses: " + why);
+            check(nc && OntoMath::planLineTransport(*nc, *ec, o, dd, 0.0, 1.0, 1.0, 4096, &why).has_value(),
+                  "a signed extinction (bare noise) plans, its bound scaled by T_max");
+            auto negativeSigma = node(Op::Add, node(Op::Noise, named("p")), constant(-10.0));
+            const auto mc = OntoMath::certifyLineQuadrature(*negativeSigma, Rendering::kVolumeExecutionModel, 20, &why);
+            check(mc && !OntoMath::planLineTransport(*mc, *ec, o, dd, 0.0, 2.0, 1.0, 4096, &why) && why.find("unbounded") != std::string::npos,
+                  "an extinction negative enough that e^-tau is unbounded refuses: " + why);
         }
     }
     std::cout << "webgpu_line_quadrature_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";

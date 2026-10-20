@@ -1953,3 +1953,43 @@ Line segmentation 91/91, line restriction 57/57, integral 66/66, GPU integral 28
 | 4. Shipping benefit on Metal | no | — | — | like-for-like native frame cost and accuracy against the current 96-sample marcher |
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*
+
+## 6ar. Can Northern Veil's real curtains take the certified route? Measured: not yet. Three blockers, quantified (2026-10-20, forty-third pass)
+
+**Human origin.** Zach: "YASSAASSSSS KEEP GOIGNGNGN NEX TPASSSSS". Gate 3 (the native curtain) is the critical path, and the in-shader-versus-separate-pass question awaits Codex. So before wiring anything into his renderer, this pass measures whether the **real** curtains certify at all. `ontomath_veil_transport_feasibility_test` reads `saves/zones/Northern Veil` (read only) at t = 0:
+- σ_t is the authored extinction, or 0.5·D;
+- ε_c = max(emission_c, 0), the marcher's own clamp, with ω certified over [−1, 1]³ so one certificate covers every pixel's direction (certificates now take symbol intervals);
+- 12 rays cross each curtain's authored box, entry to exit.
+
+**What the curtains are.** For example, the primary emerald curtain's σ = 0.1 × an envelope of clamps (|x|/75, a y-band, and a z-ribbon displaced by three x-waves) × (0.68 + two x-cosines) × clamp(0.7 + 0.3·noise(0.08p)). Its ε is the same body times an RGB cos(0.32t) pulse. There is no exponential. The boxes span about 320 × 72 × 92 units.
+
+**Two fixes found on the way:**
+- **σ ≥ 0 was "not proved" by a rounding artifact.** Every curtain's σ range has a lower end of −1.4e-45: a clamp at 0, widened by one float denormal. The transport bound no longer demands σ ≥ 0. With σ ≥ σ_low on the band, e^(−τ) ≤ T_max = e^(max(0, −σ_low)·S) scales every factor, and |e^(−a) − e^(−b)| ≤ F·|a − b| with F = T_max·e^(δτ). It refuses only when T_max exceeds 1e6. Device and mirror are changed alike; bare noise now plans, and noise − 10 over 2 units refuses ("unbounded").
+- **My own probe charged 1.5e25.** max(ε, 0) written as Clamp(ε, 0, 1e30) made the device model charge the inexact literal's f32 rounding, 2^-16 × 1e30. It is now Intersection(ε, 0), and the device error is a realistic 3e-4 to 5e-3.
+
+**The measurement: 0 admitted plans** (4 curtains × 3 channels × 12 rays, at ±1e-2 and ±1e-3). Here is the split at the 4096-cell cap for a 77-unit ray:
+
+| Curtain, channel | outer radius | mathematical | execution |
+|---|---|---|---|
+| primary emerald, ε_y (sup 0.092) | 0.569 | 13 | 12.1 |
+| secondary cyan, ε_y (sup 0.07) | 0.463 | 9.28 | 8.76 |
+| accent violet, ε_y (sup 0.01) | 0.052 | 0.696 | 0.627 |
+| deep crimson, ε_y (sup 0.012) | 0.075 | 1.11 | 1.01 |
+
+**The three blockers, in order of size:**
+1. **An a-priori bound charges the depth error to the whole ray at full strength.** δτ ≈ 1.1 accumulates over 77 units: about 0.5 from σ's per-sample device error (0.0055, roughly 5% of σ's sup) and about 0.6 from σ's first-order radius. It is then charged to every unit of path with F ≈ e^1.1. In the medium, T = e^(−τ) is small where τ is large, and the depth error grows from 0. **Remedy:** an *a-posteriori* bound accumulated during the march, Σ wₖ·εₖ·e^(−τ̃ₖ)·(e^(δτₖ) − 1), with δτₖ growing along the ray. It costs no extra samples.
+2. **The declared device model is coarse.** Its 2^-10 per trig call times several trig factors gives about 5% per sample, over 70+ units of path. That is Codex's open Metal fast-math enclosure, and the certified route inherits it. A tighter declared or measured enclosure would act directly here.
+3. **Box-wide certificates cannot use second order across clamp kinks.** Every curtain's Hessian is unbounded, because the clamps are undecided over a 256-wide band. **Remedy:** per-region certificates (cells in which the clamps are decided, as the support certificates already tile), giving a second-order radius and smaller L and magnitudes per region.
+
+**Asserted:** only soundness. Every plan admitted in the GPU witness (28/28) still lies inside its proved total, and the real curtains are refused honestly, naming the split.
+
+### Shipping ledger
+
+| Gate | Changed this pass? | Consumer now calling the code | Measured, on which device | Next blocker |
+|---|---|---|---|---|
+| 1. Transport error contract | the transport bound generalized to signed extinction (T_max) | `planLineTransport` (CPU mirror) and `lineTransport` (device) | CPU, and this Mac's GPU (28/28) | — |
+| 2. GPU fields along rays | unchanged (works on test fields) | `lineTransport` in the compute witness | this Mac's GPU | **for real curtains:** the a-posteriori march bound (1), per-region certificates (3) |
+| 3. Native volume consumer | **measured infeasible as built:** 0 of 288 real-curtain plans | the feasibility probe on Northern Veil's authored σ and ε | CPU | blockers 1 to 3 above, then the in-shader-versus-pass decision (Codex) |
+| 4. Shipping benefit on Metal | no | — | — | after 3 |
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*
