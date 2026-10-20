@@ -1489,10 +1489,11 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
             return TypeResult::ok(ValueKind::Vector);
         }
         case Op::Integral: {
-            if (children.size() != 3) return arity(path, op, children.size(), 3);
+            // body, lo, hi, and optionally a tolerance (addendum C)
+            if (children.size() != 3 && children.size() != 4) return arity(path, op, children.size(), 3);
             if (variableName.empty())
                 return TypeResult::error(TypeDiagnostic{path, "Integral names no integration variable"});
-            for (std::size_t i = 1; i < 3; ++i) {
+            for (std::size_t i = 1; i < children.size(); ++i) {
                 auto t = sub(i);
                 if (!t) return t;
                 if (!kindIs(*t, ValueKind::Scalar)) return mismatch(path, op, static_cast<int>(i), "Scalar", *t);
@@ -2386,7 +2387,8 @@ std::string MathNode::print() const {
         // say so plainly rather than printing a formula that never runs.
         case Op::Raycast:      return "raycast(" + arg(0) + ", " + arg(1) + ") [not implemented]";
         case Op::LineIntegral: return "lineIntegral(" + arg(0) + ", " + arg(1) + ") [not implemented]";
-        case Op::Integral:     return "integral(" + arg(0) + " d" + variableName + ", " + arg(1) + ", " + arg(2) + ")";
+        case Op::Integral:     return "integral(" + arg(0) + " d" + variableName + ", " + arg(1) + ", " + arg(2) +
+                                      (children.size() == 4 ? ", ±" + arg(3) : std::string()) + ")";
         // An op this build does not know: the original JSON rides along in
         // `unsupported` (see fromJson) — show that verbatim, never a stand-in.
         case Op::Unsupported:
@@ -3511,7 +3513,10 @@ std::optional<ScalarForm> toScalarForm(const MathNode& node, std::string* why) {
         // the body's antiderivative F, then F(hi) − F(lo) by exact substitution,
         // so an inner integral whose hi is an outer variable stays symbolic.
         case MathNode::Op::Integral: {
-            if (node.children.size() != 3 || !node.children[0] || !node.children[1] || !node.children[2]) {
+            // A tolerance (fourth child) permits approximation; it never forbids
+            // the exact closed form, so the symbolic path ignores it.
+            if ((node.children.size() != 3 && node.children.size() != 4) || !node.children[0] ||
+                !node.children[1] || !node.children[2]) {
                 say(why, "Integral needs a body, lo and hi");
                 return std::nullopt;
             }
@@ -3769,6 +3774,25 @@ std::optional<ScalarForm> substitute(const ScalarForm& form, const std::string& 
 }
 
 namespace {
+thread_local IntegralAccounting* t_accounting = nullptr;
+} // namespace
+
+IntegralAccountingScope::IntegralAccountingScope(IntegralAccounting& accounting) : _previous(t_accounting) {
+    t_accounting = &accounting;
+}
+IntegralAccountingScope::~IntegralAccountingScope() { t_accounting = _previous; }
+IntegralAccounting* activeIntegralAccounting() { return t_accounting; }
+
+double IntegralAccounting::executionBound() const {
+    // Higham, Accuracy and Stability of Numerical Algorithms, §4.2: a computed
+    // sum of terms each within γ of itself is within γ_n·Σ|terms|.
+    const double u = std::ldexp(1.0, -53);
+    const double n = 2.0 * double(summands) + 64.0;
+    const double gamma = n * u / (1.0 - n * u);
+    return gamma * magnitude + seriesTail;
+}
+
+namespace {
 // Σ over F's terms of t(hi) − t(lo), term by term, so the odd powers of a
 // centred interval cancel exactly instead of inside two rounded sums.
 std::optional<double> differenceAt(const ScalarForm& F, const std::string& var, double hi, double lo) {
@@ -3777,6 +3801,8 @@ std::optional<double> differenceAt(const ScalarForm& F, const std::string& var, 
         const auto upper = term.evaluate({{var, hi}});
         const auto lower = term.evaluate({{var, lo}});
         if (!upper || !lower) return std::nullopt;
+        recordSummand(*upper);
+        recordSummand(*lower);
         total += *upper - *lower;
     }
     return total;
@@ -3812,7 +3838,9 @@ std::optional<double> integrateCentred(const Term& term, const std::string& var,
                                        (trig ? std::polar(1.0, phi) : std::complex<double>(1.0, 0.0));
         std::complex<double> zk(1.0, 0.0);
         double factorial = 1.0, total = 0.0, previous = 0.0;
+        int last = 0;
         for (int k = 0; k < 96; ++k) {
+            last = k;
             if (k > 0) { zk *= z; factorial *= double(k); }
             const std::complex<double> c = W * zk / factorial;
             double moments = 0.0;
@@ -3821,11 +3849,22 @@ std::optional<double> integrateCentred(const Term& term, const std::string& var,
                 if (p % 2 == 0) moments += poly[j] * 2.0 * std::pow(h, double(p + 1)) / double(p + 1);
             }
             const double part = (sine ? c.imag() : c.real()) * moments;
+            recordSummand(part);
             total += part;
             if (std::size_t(k) > n + 2 && std::abs(part) <= 1e-18 * std::abs(total) &&
                 std::abs(previous) <= 1e-18 * std::abs(total))
                 break;
             previous = part;
+        }
+        if (auto* accounting = activeIntegralAccounting()) {
+            // The proved tail of the truncated series (see IntegralAccounting).
+            double A = 0.0;
+            for (std::size_t j = 0; j < poly.size(); ++j) A += std::abs(poly[j]) * 2.0 * std::pow(h, double(j + 1));
+            A *= std::abs(W);
+            const double x = rate * h;
+            double tail = A;
+            for (int k = 1; k <= last + 1; ++k) tail *= x / double(k);   // A·x^(K+1)/(K+1)!
+            accounting->seriesTail += accounting->scale * tail / (1.0 - x / double(last + 2));
         }
         return total;
     }
@@ -4097,7 +4136,10 @@ std::optional<double> definiteIntegralTimesRadical(const std::vector<double>& r,
         I.push_back(v);
     }
     double total = 0.0;
-    for (std::size_t n = 0; n < rk.size(); ++n) total += rk[n] * I[n];
+    for (std::size_t n = 0; n < rk.size(); ++n) {
+        recordSummand(rk[n] * I[n]);
+        total += rk[n] * I[n];
+    }
     return total;
 }
 

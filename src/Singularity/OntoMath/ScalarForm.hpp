@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <functional>
 #include <limits>
 #include <map>
@@ -772,6 +773,41 @@ std::optional<double> definiteIntegral(const Piecewise& model, const std::string
 std::optional<std::vector<std::pair<double, TransFactor>>> productToSum(const TransFactor& a,
                                                                        const TransFactor& b);
 
+// Error accounting for one evaluation (addendum C, 2026-10-20). While an
+// IntegralAccountingScope lives on this thread, the office records:
+//  · `magnitude`, Σ |summand| over every term it adds (a difference of
+//    antiderivative values, a series part, a radical moment), each scaled by
+//    whatever later multiplies it (`scale`, which the hybrid sets to |sample|);
+//  · `summands`, how many;
+//  · `seriesTail`, the proved bound on every truncated Taylor series it stopped:
+//    A·x^(K+1)/(K+1)!·1/(1 − x/(K+2)), x = |z|·h ≤ 1, A = |W|·Σ|p_j|·2h^(j+1).
+// executionBound() turns these into Higham's summation bound γ_n·magnitude,
+// n = 2·summands + 64, plus the series tails. Its PREMISE, stated rather than
+// hidden: every summand is itself computed to within γ of its magnitude (libm
+// sin/cos/exp/pow within one ulp, and the authored field's pointwise value in
+// double forward-accurate). That premise is not enclosed here.
+struct IntegralAccounting {
+    double magnitude = 0.0;
+    double seriesTail = 0.0;
+    std::uint64_t summands = 0;
+    double scale = 1.0;
+    double executionBound() const;
+};
+class IntegralAccountingScope {
+public:
+    explicit IntegralAccountingScope(IntegralAccounting& accounting);
+    ~IntegralAccountingScope();
+    IntegralAccountingScope(const IntegralAccountingScope&) = delete;
+    IntegralAccountingScope& operator=(const IntegralAccountingScope&) = delete;
+private:
+    IntegralAccounting* _previous;
+};
+// The accounting active on this thread, or nullptr.
+IntegralAccounting* activeIntegralAccounting();
+inline void recordSummand(double value) {
+    if (auto* a = activeIntegralAccounting()) { a->magnitude += std::abs(value) * a->scale; ++a->summands; }
+}
+
 // `form` with every variable except `keep` replaced by its value from `vars`
 // (a partial evaluation, exact up to the rounding of those values). nullopt
 // naming the first unbound variable, or ln outside its domain.
@@ -788,8 +824,22 @@ std::optional<ScalarForm> substitute(const ScalarForm& form, const std::string& 
 
 // MathNode::Op::Integral evaluated, with the reason when it refuses
 // (Integral.cpp). MathNode::evaluate answers through this.
+// What an Integral's evaluation established (addendum C, 2026-10-20). In the
+// result's units: `mathematical` is what was left out or sampled (omitted
+// slivers' proved bound plus the hybrid remainder's proved radius);
+// `execution` is IntegralAccounting::executionBound(), premised as stated
+// there. Admission under a tolerance requires mathematical + execution ≤ it.
+struct IntegralBounds {
+    double tolerance = 0.0;      // authored; 0 means exact only
+    bool approximate = false;    // something was omitted or sampled
+    double mathematical = 0.0;
+    double execution = 0.0;
+    std::string route;
+    double total() const { return mathematical + execution; }
+};
 std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std::string, PropertyValue>& vars,
-                                       const Singular* subject, std::string* why = nullptr);
+                                       const Singular* subject, std::string* why = nullptr,
+                                       IntegralBounds* bounds = nullptr);
 // The exact path's rule for a contribution it would leave out (an unresolved
 // sliver): admitted only when proved zero. Exposed so the refuted "below half an
 // ulp" heuristic stays refuted by a regression (Codex's 1.5 / 5·2⁻⁵⁵ case).

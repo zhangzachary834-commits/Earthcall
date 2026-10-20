@@ -245,6 +245,12 @@ int main() {
     cases.push_back({"a field along a line (SDF route): CPU only", integral("s", node(Op::SDF, leaf(var("x").times(var("y"))),
                          node(Op::VectorConstruct, named("s"), constant(1.0), constant(0.0))), constant(0.0), named("x")),
                      nullptr, false, false, {}});
+    {
+        // A tolerance asks for an f32 execution bound the device path cannot give yet.
+        auto tolerant = node(Op::Integral, leaf(trans(K::Cos, "u", 3.0)), constant(0.0), named("x"), constant(1e-3));
+        tolerant->variableName = "u";
+        cases.push_back({"a tolerance-bearing integral: no device execution bound yet", std::move(tolerant), nullptr, false, false, {}});
+    }
     cases.push_back({"noise: no closed form", integral("s", node(Op::Noise, node(Op::VectorConstruct, named("s"), constant(0.0), constant(0.0))),
                                                        constant(0.0), named("x")),
                      nullptr, false, false, {}});
@@ -296,8 +302,8 @@ int main() {
         }
     }
     std::printf("    coverage: %d attempted, %d lowered, %d refused, %d executed on the device\n", attempted, admitted, refused, executed);
-    check(expectedRefusedWrongly == 0 && executed == 6 && refused == 2,
-          "every expected-supported case lowered and ran on the device; both negative controls refused");
+    check(expectedRefusedWrongly == 0 && executed == 6 && refused == 3,
+          "every expected-supported case lowered and ran on the device; all three negative controls refused");
 
     std::cout << "webgpu_integral_operation_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";
     return g_failures == 0 ? 0 : 1;

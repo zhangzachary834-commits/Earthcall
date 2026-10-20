@@ -89,10 +89,21 @@ int main() {
     check(text(read(bearer, "growth.evaluation.admission")) == "exact" &&
               text(read(bearer, "growth.evaluation.requestedTolerance")) == "none",
           "the admission is exact and no tolerance is authored");
-    check(text(read(bearer, "growth.evaluation.executionBound")) == "unavailable" &&
-              text(read(bearer, "growth.evaluation.totalBound")) == "unavailable" &&
-              text(read(bearer, "growth.evaluation.mathematicalBound")) == "unavailable",
-          "unavailable bounds are reported as unavailable, never as zero");
+    // Addendum C: an expression that IS one Integral reports numeric bounds.
+    check(number(read(bearer, "growth.evaluation.mathematicalBound")) == 0.0 &&
+              number(read(bearer, "growth.evaluation.executionBound")) > 0.0 &&
+              number(read(bearer, "growth.evaluation.totalBound")) >= std::abs(number(read(bearer, "growth.evaluation.value")) - 6.0) &&
+              text(read(bearer, "growth.evaluation.route")) == "term algebra",
+          "an Integral's report carries its bounds: mathematical 0, execution positive (premised), route named");
+    {
+        // A composite around an integral does not propagate bounds: unavailable, never zero.
+        Object composite;
+        composite.setDynamicProperty("sum.expression",
+            field(node(Op::Add, constant(1.0), integral("s", leaf(ScalarForm::variable("s")), constant(0.0), constant(1.0)))));
+        check(text(read(composite, "sum.evaluation.status")) == "admitted" && number(read(composite, "sum.evaluation.value")) == 1.5 &&
+                  text(read(composite, "sum.evaluation.totalBound")) == "unavailable",
+              "a composite's bounds are reported as unavailable, never as zero");
+    }
     check(number(read(bearer, "growth.evaluation.bindings.k")) == 3.0 && number(read(bearer, "growth.evaluation.bindings.t")) == 2.0,
           "the report carries the bindings it read");
     PropertyValue viaLaw;

@@ -148,7 +148,11 @@ The op itself:
   - admission ("exact"), tolerance ("none");
   - mathematical, execution and total bounds, each "unavailable" (never zero) until C;
   - the expression digest, a bindings snapshot, and the backend.
-- **No tolerance child yet:** approximation (levels 4–5) waits for an authored error contract (Codex's addendum in the ray-domain plan).
+- **Tolerance** (addendum C; plan §6ag): an optional fourth child, absolute, in the result's units, read in the enclosing scope.
+  - Absent or 0 means exact only. Negative or non-finite refuses.
+  - Under a tolerance, the result is admitted only when its mathematical bound (omitted slivers plus the hybrid remainder's proved radius) plus its execution bound fits.
+  - The execution bound is Higham's γₙ·Σ|summand| over every summand the office added, plus proved series tails. It rests on a stated premise: libm within one ulp, and the field's pointwise value forward-accurate.
+- **No tolerance child yet** (superseded the same week by the tolerance item above): approximation (levels 4–5) waits for an authored error contract (Codex's addendum in the ray-domain plan).
 - **WGSL** (since the same day, plan §6ab): the term-algebra route lowers through the same office. `toScalarForm` gives F(hi) − F(lo), and the emitter writes it like any ScalarForm, so the shader has no antiderivative of its own. The line route refuses there until device segmentation exists. Its f32 error is measured by `webgpu_integral_operation_test`, not enclosed. Since step 2b (plan §6ac) the lowering is the office's centred decomposition, `centredIntegral`: binomial and angle addition about the interval's centre m, with moments in the half-width h given in two exact forms, tabular and Taylor series, selected by |z|·|h| ≤ 1 as on the CPU. Far-from-origin intervals keep f32 accuracy.
 - **Code and witness:** `Singularity/OntoMath/Integral.cpp`, witnessed by `ontomath_integral_operation_test`, which uses no renderer.
 

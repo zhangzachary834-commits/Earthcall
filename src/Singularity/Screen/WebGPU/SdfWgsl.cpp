@@ -947,7 +947,9 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
                 return std::string("0.0");
             };
             if (node.children.size() != 3 || !node.children[0] || !node.children[1] || !node.children[2]) {
-                why = "Integral needs a body, lo and hi";
+                why = node.children.size() == 4
+                    ? "an authored tolerance asks for an f32 execution bound this device path cannot yet give"
+                    : "Integral needs a body, lo and hi";
                 return refuse();
             }
             const auto body = OntoMath::toScalarForm(*node.children[0], &why);

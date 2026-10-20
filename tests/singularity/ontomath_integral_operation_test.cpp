@@ -17,6 +17,8 @@
 #include "Singularity/Screen/MathEditors.hpp"
 
 #include <cmath>
+#include <cstdio>
+#include <glm/glm.hpp>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -58,6 +60,11 @@ Node node(Op op, Kids... kids) {
 }
 Node integral(const std::string& v, Node body, Node lo, Node hi) {
     auto n = node(Op::Integral, std::move(body), std::move(lo), std::move(hi));
+    n->variableName = v;
+    return n;
+}
+Node integralTol(const std::string& v, Node body, Node lo, Node hi, Node tolerance) {
+    auto n = node(Op::Integral, std::move(body), std::move(lo), std::move(hi), std::move(tolerance));
     n->variableName = v;
     return n;
 }
@@ -260,6 +267,99 @@ int main() {
         MathNode authored;
         Rendering::MathEd::initializeMathNodeForEditor(authored, Op::Integral);
         check(authored.children.size() == 3 && authored.variableName == "s", "the math editor authors body, lo, hi and a variable");
+    }
+
+    // ---- Addendum C: an authored tolerance and whole-result error admission -------
+    {
+        auto ballField = [] {
+            return node(Op::Clamp, node(Op::Sub, constant(1.0), node(Op::Dot, named("p"), named("p"))), constant(0.0), constant(1.0));
+        };
+        auto ballLine = [] {
+            return node(Op::Add, node(Op::VectorConstruct, constant(-2.0), constant(0.3), constant(0.0)),
+                        node(Op::Scale, named("s"), node(Op::VectorConstruct, constant(1.0), constant(0.0), constant(0.0))));
+        };
+        std::string why;
+        // Invalid tolerances refuse; 0 means exact only.
+        for (double bad : {-1.0, double(NAN), double(INFINITY)}) {
+            auto n = integralTol("s", node(Op::SDF, ballField(), ballLine()), constant(0.0), constant(4.0), constant(bad));
+            check(!run(*n, {}, &why) && why.find("tolerance must be") != std::string::npos,
+                  "tolerance " + std::to_string(bad) + " refuses: " + why);
+        }
+        auto exactOnly = integralTol("s", node(Op::SDF, ballField(), ballLine()), constant(0.0), constant(4.0), constant(0.0));
+        check(!run(*exactOnly, {}, &why) && why.find("omitting them") != std::string::npos,
+              "tolerance 0 means exact only: the sphere's sliver still refuses");
+
+        // The sphere chord under a tolerance: admitted, within its own total.
+        const double ballReference = 1.157446231052560720971848;
+        auto ball = integralTol("s", node(Op::SDF, ballField(), ballLine()), constant(0.0), constant(4.0), constant(1e-12));
+        OntoMath::IntegralBounds bounds;
+        const auto ballValue = OntoMath::evaluateIntegral(*ball, {}, nullptr, &why, &bounds);
+        std::printf("    sphere chord ±1e-12: %.17g, mathematical %.3g, execution %.3g, total %.3g, |error| %.3g\n",
+                    ballValue.value_or(NAN), bounds.mathematical, bounds.execution, bounds.total(),
+                    ballValue ? std::abs(*ballValue - ballReference) : NAN);
+        check(ballValue && bounds.approximate && bounds.mathematical > 0.0 && bounds.total() <= 1e-12 &&
+                  std::abs(*ballValue - ballReference) <= bounds.total(),
+              "with a tolerance the sphere chord is admitted, its omitted sliver bounded, and the reference lies within the total");
+
+        // Noise along a line: refused at an unreachable tolerance, admitted at a reachable one.
+        auto noiseLine = [] {
+            return node(Op::Add, node(Op::VectorConstruct, constant(0.3), constant(0.1), constant(0.2)),
+                        node(Op::Scale, named("s"), node(Op::VectorConstruct, constant(1.0), constant(0.5), constant(0.25))));
+        };
+        auto tight = integralTol("s", node(Op::SDF, node(Op::Noise, named("p")), noiseLine()), constant(0.0), constant(3.0), constant(1e-12));
+        check(!run(*tight, {}, &why) && why.find("exceeds the tolerance") != std::string::npos,
+              "noise at 1e-12 refuses at the work cap, legibly: " + why);
+        // The remainder's proved radius is first order (a Lipschitz bound per panel),
+        // so it shrinks only linearly with the cells, though the estimate itself is
+        // fourth order: at the 4096-cell cap it proves 0.024 here. 1e-3 therefore
+        // refuses honestly; a second-derivative enclosure is the next tightening.
+        auto medium = integralTol("s", node(Op::SDF, node(Op::Noise, named("p")), noiseLine()), constant(0.0), constant(3.0), constant(1e-3));
+        check(!run(*medium, {}, &why) && why.find("exceeds the tolerance") != std::string::npos,
+              "noise at 1e-3 refuses: the first-order proved radius cannot certify it within the work cap");
+        auto loose = integralTol("s", node(Op::SDF, node(Op::Noise, named("p")), noiseLine()), constant(0.0), constant(3.0), constant(5e-2));
+        const auto noiseValue = OntoMath::evaluateIntegral(*loose, {}, nullptr, &why, &bounds);
+        // Independent reference: long-double Simpson of the authored Noise, evaluated by
+        // MathNode::evaluate at 200 001 points (not the hybrid's samples or weights).
+        auto noiseAt = node(Op::Noise, named("p"));
+        auto f = [&](double s) {
+            const auto v = noiseAt->evaluate({{"p", PropertyValue(glm::vec3(float(0.3 + s), float(0.1 + 0.5 * s), float(0.2 + 0.25 * s)))}});
+            double d = NAN;
+            if (v) propertyValueToNumber(*v, d);
+            return (long double)d;
+        };
+        long double sum = f(0.0) + f(3.0);
+        const int N = 200000;
+        const long double hh = 3.0L / N;
+        for (int i = 1; i < N; ++i) sum += f(double(i * hh)) * (i % 2 ? 4.0L : 2.0L);
+        const double noiseReference = double(sum * hh / 3.0L);
+        std::printf("    noise ±5e-2: %.10g (%s), mathematical %.3g, execution %.3g, |error vs reference| %.3g\n",
+                    noiseValue.value_or(NAN), bounds.route.c_str(), bounds.mathematical, bounds.execution,
+                    noiseValue ? std::abs(*noiseValue - noiseReference) : NAN);
+        check(noiseValue && bounds.approximate && bounds.total() <= 5e-2 &&
+                  bounds.route.find("hybrid") != std::string::npos && std::abs(*noiseValue - noiseReference) <= bounds.total(),
+              "noise at 5e-2 is admitted through the hybrid route and the independent reference lies within its total bound");
+
+        // A mathematically exact integral whose EXECUTION bound exceeds the tolerance refuses.
+        auto large = integralTol("x", leaf(trans(K::Cos, "x", 1.0).scaled(1e12)), constant(0.0), constant(1.0), constant(1e-6));
+        check(!run(*large, {}, &why) && why.find("execution bound") != std::string::npos,
+              "an exact result whose execution bound exceeds the tolerance refuses: " + why);
+        auto largeOk = integralTol("x", leaf(trans(K::Cos, "x", 1.0).scaled(1e12)), constant(0.0), constant(1.0), constant(1.0));
+        const auto largeValue = OntoMath::evaluateIntegral(*largeOk, {}, nullptr, &why, &bounds);
+        check(largeValue && !bounds.approximate && bounds.mathematical == 0.0 && std::abs(*largeValue - 1e12 * std::sin(1.0)) <= bounds.total(),
+              "the same integral at a tolerance its execution bound fits is admitted as exact mathematics");
+
+        // An approximate inner integral does not compose into an outer one (no propagated bound yet).
+        auto inner = integralTol("u", node(Op::SDF, node(Op::Noise, named("p")), noiseLine()), constant(0.0), named("s"), constant(1e-3));
+        auto outer = integralTol("s", std::move(inner), constant(0.0), constant(1.0), constant(1e-2));
+        check(!run(*outer, {}, &why), "an approximate inner integral is not composed into an outer one: " + why);
+
+        // The tolerance is read in the enclosing scope.
+        auto scoped = integralTol("s", node(Op::SDF, ballField(), ballLine()), constant(0.0), constant(4.0), named("eps"));
+        const auto scopedValue = run(*scoped, {{"eps", PropertyValue(1e-9)}}, &why);
+        check(scopedValue && std::abs(*scopedValue - ballReference) <= 1e-9, "a tolerance bound in the enclosing scope is honoured");
+        // JSON keeps the tolerance child.
+        const auto restored = MathNode::fromJson(ball->toJson());
+        check(restored && restored->children.size() == 4, "JSON keeps the tolerance child");
     }
 
     // ---- The centred decomposition backends lower (step 2b) equals the office's own definite value

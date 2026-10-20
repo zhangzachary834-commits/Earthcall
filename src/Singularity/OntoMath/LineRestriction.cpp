@@ -2752,8 +2752,15 @@ std::optional<LineHybridIntegral> LineAlgebraicEvaluator::integrateCore(uint32_t
             std::vector<double> nodes;
             for (uint32_t k = 0; k <= span; ++k) nodes.push_back(edge(j + k));
             for (uint32_t k = 0; k <= span; ++k) {
+                // Addendum C accounting: the weight's own summands err in
+                // proportion to the sample that multiplies them.
+                auto* accounting = activeIntegralAccounting();
+                const double outerScale = accounting ? accounting->scale : 1.0;
+                if (accounting) accounting->scale = outerScale * std::abs(g[j + k]);
                 const auto wk = weighted(nodes, k, a, b);
+                if (accounting) accounting->scale = outerScale;
                 if (!wk) return std::nullopt;
+                recordSummand(g[j + k] * *wk);
                 out.estimate += g[j + k] * *wk;
             }
             double gLo = 1.0, gHi = 1.0, gLip = 0.0;

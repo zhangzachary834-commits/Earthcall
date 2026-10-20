@@ -22,8 +22,11 @@
 //   evaluation          how the number was produced
 //   requestedTolerance  "none" (no error contract is authored yet: addendum C)
 //   mathematicalBound, executionBound, totalBound
-//                       "unavailable". An unavailable bound is unavailable,
-//                       never zero (Codex), until C encloses them.
+//                       numbers, in the result's units, when the expression
+//                       IS one Integral (addendum C; see IntegralBounds and
+//                       executionPremise). Otherwise "unavailable": an
+//                       unavailable bound is unavailable, never zero (Codex).
+//   route, executionPremise   (with the bounds)
 //   expressionDigest    FNV-1a 64 of the expression's JSON: evidence identity
 //   bindings            the bound values this evaluation read (a copy)
 //   backend             what executed it

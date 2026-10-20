@@ -1516,3 +1516,42 @@ An earlier attempt to run the *whole* suite with `-j6` exhausted the Mac's memor
 **Not done:** C (tolerance and total-error admission), the device line route, and a Person-facing way to author `<prefix>.expression` in the app.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T23:14:32-07:00 (PDT).*
+
+
+<a id="6ag-addendum-c-the-authored-tolerance-and-whole-result-admission"></a>
+
+## 6ag. Addendum C: the authored tolerance and whole-result admission, CPU (2026-10-20, thirty-second pass)
+
+**Human origin.** Zach: "YAAASSSS NEXT PAASSSSS". Codex's addendum C, which Zach commissioned, sets the contract: the tolerance is a finite positive absolute value in the result's units; every contribution is bounded in final-result units; the total must fit or the result refuses. I am implementing that shape as Codex proposed it.
+
+**Semantics** (recorded before the code, as the addendum asks):
+- `Integral(body, lo, hi[, tolerance])`; the tolerance is evaluated in the enclosing scope.
+- Absent or 0 means exact only (unchanged).
+- Negative, NaN or infinite refuses.
+- A positive tolerance permits approximation, but never forbids the exact closed form.
+
+**Accounting** (`IntegralAccounting`, in the office):
+- **Mathematical bound:** omitted slivers (width × proved sup |f|, inflated past float rounding) plus the hybrid remainder's proved radius.
+- **Execution bound:** Higham's γₙ·Σ|summand|, n = 2·summands + 64, over every summand the office added. Each summand is scaled by whatever multiplies it: the hybrid sets the scale to |sample| while it computes that sample's weight. Proved Taylor-series tails are added on top.
+- **Premise, stated in the report:** each summand is within γ of itself (libm within one ulp; the authored field's pointwise value forward-accurate in double). This premise is not enclosed.
+- **The line route under a tolerance:** cells double from 8 to 4096 over the interval until the total fits. Otherwise it refuses, naming the best bound.
+- **The report** (`<prefix>.evaluation`, when the expression IS one Integral): numeric bounds, `route`, `admission` ("exact" or "within tolerance") and `executionPremise`. A composite expression stays "unavailable".
+- **WGSL** refuses a tolerance-bearing Integral; there is no f32 execution bound yet.
+
+**Witnesses:** `ontomath_integral_operation_test` 48/48, `ontomath_expression_evaluation_test` 20/20, `webgpu_integral_operation_test` (a third negative control).
+
+| Case | Result |
+|---|---|
+| tolerance −1, NaN or ∞ | refused, legibly |
+| tolerance 0 on the sphere chord | refused (exact only) |
+| sphere chord ±1e-12 | admitted. Mathematical 3.05e-17, execution 3.95e-13; the actual error 6.7e-16 is inside the total |
+| noise along a line ±1e-12 and ±1e-3 | refused at the work cap. The best proved total is 0.024 |
+| noise ±5e-2 | admitted through the hybrid route. Bound 0.048; actual error against an independent 200 001-point long-double Simpson reference: 6.3e-8 |
+| ∫₀¹ 10¹²·cos x ±1e-6 | refused: exact mathematics, but an execution bound of 9.95e-3 |
+| the same ±1 | admitted, exact |
+| an approximate inner integral in an outer one | refused, no propagated bound |
+| tolerance from the enclosing scope; JSON | honoured; the child is kept |
+
+**What the noise numbers show.** The hybrid's proved radius is first order, a Lipschitz bound per panel. It shrinks linearly with the cells while the estimate converges at fourth order, so the proved bound is about 10⁶ looser than the actual error. The next tightening is a second-derivative enclosure of the remainder (the error term of Simpson's rule). Composition, propagating an inner integral's bound through exp(−·), products and an outer integral, is not yet admitted. That is the transport case, and it comes before the volume consumer.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T09:23:43-07:00 (PDT).*

@@ -134,9 +134,14 @@ std::optional<AffineVector> affineVector(const MathNode& node, const std::string
 }
 
 // ∫_lo^hi f(q0 + v·q1) dv: f restricted to the line, segmented by its value
-// branches, each proved piece integrated through the office.
+// branches. With no tolerance every proved piece integrates exactly and an
+// unresolved sliver refuses. With a tolerance (addendum C) each piece goes
+// through the hybrid integrator (closed form plus a sampled remainder with a
+// proved radius), slivers are omitted with their proved bound, and the cells
+// double until mathematical + execution bound ≤ tolerance or the work cap.
 std::optional<double> integrateAlongLine(const MathNode& f, const AffineVector& q, double lo, double hi,
-                                         const std::map<std::string, double>& numeric, std::string* why) {
+                                         const std::map<std::string, double>& numeric, double tolerance,
+                                         IntegralBounds& bounds, std::string* why) {
     const auto restricted = restrictAlgebraicToLine(f, /*vectorValued=*/false);
     if (!restricted) { say(why, "the field does not restrict to a line: " + restricted.refusal); return std::nullopt; }
     std::map<std::string, double> bindings = numeric;
@@ -149,34 +154,83 @@ std::optional<double> integrateAlongLine(const MathNode& f, const AffineVector& 
     const double a = std::min(lo, hi), b = std::max(lo, hi);
     const double resolution = std::max(1e-12, (b - a) * 1e-9);
     const uint32_t root = restricted.form->roots[0];
-    double total = 0.0, sliverBound = 0.0;
-    for (const auto& piece : segmentLine({&ev}, a, b, resolution)) {
-        if (!piece.definite) {
-            // A switch the segmentation could not place exactly: the sliver is
-            // counted as 0 and its PROVED contribution, width·sup|f| (the float
-            // enclosure inflated past its rounding), is carried as a bound.
-            bool undefined = false;
-            const Interval r = ev.range(root, piece.s0, piece.s1, piece.signs[0], &undefined);
-            if (undefined || !r.bounded()) {
-                say(why, "the field may be undefined or unbounded in an unresolved sliver at v ≈ " + std::to_string(piece.s0));
-                return std::nullopt;
+    const auto pieces = segmentLine({&ev}, a, b, resolution);
+    bounds.route = "line segmentation";
+
+    if (tolerance == 0.0) {
+        IntegralAccounting accounting;
+        IntegralAccountingScope scope(accounting);
+        double total = 0.0, sliverBound = 0.0;
+        for (const auto& piece : pieces) {
+            if (!piece.definite) {
+                bool undefined = false;
+                const Interval r = ev.range(root, piece.s0, piece.s1, piece.signs[0], &undefined);
+                if (undefined || !r.bounded()) {
+                    say(why, "the field may be undefined or unbounded in an unresolved sliver at v ≈ " + std::to_string(piece.s0));
+                    return std::nullopt;
+                }
+                const double sup = std::max(std::abs(double(r.lo)), std::abs(double(r.hi)));
+                sliverBound += (piece.s1 - piece.s0) * (sup * (1.0 + 1e-6) + 1e-30);
+                continue;
             }
-            const double sup = std::max(std::abs(double(r.lo)), std::abs(double(r.hi)));
-            sliverBound += (piece.s1 - piece.s0) * (sup * (1.0 + 1e-6) + 1e-30);
-            continue;
+            const auto v = ev.integral(root, piece.s0, piece.s1, piece.signs[0], why);
+            if (!v) return std::nullopt;
+            total += *v;
         }
-        const auto v = ev.integral(root, piece.s0, piece.s1, piece.signs[0], why);
-        if (!v) return std::nullopt;
-        total += *v;
+        if (!exactPathAdmitsOmittedContribution(total, sliverBound)) {
+            char bound[64];
+            std::snprintf(bound, sizeof(bound), "%.3g (answer without them %.17g)", sliverBound, total);
+            say(why, std::string("unresolved value-branch slivers could contribute up to ") + bound +
+                         ": omitting them is an approximation, and no error contract is authored");
+            return std::nullopt;
+        }
+        bounds.execution = accounting.executionBound();
+        return lo <= hi ? total : -total;
     }
-    if (!exactPathAdmitsOmittedContribution(total, sliverBound)) {
-        char bound[64];
-        std::snprintf(bound, sizeof(bound), "%.3g (answer without them %.17g)", sliverBound, total);
-        say(why, std::string("unresolved value-branch slivers could contribute up to ") + bound +
-                     ": omitting them is an approximation, and no error contract is authored");
-        return std::nullopt;
+
+    // Approximation permitted: refine until the whole bound fits.
+    double bestTotal = std::numeric_limits<double>::infinity();
+    for (uint32_t density = 8; density <= 4096; density *= 2) {
+        IntegralAccounting accounting;
+        IntegralAccountingScope scope(accounting);
+        double estimate = 0.0, mathematical = 0.0;
+        bool sampled = false;
+        for (const auto& piece : pieces) {
+            const double width = piece.s1 - piece.s0;
+            bool undefined = false;
+            if (!piece.definite) {
+                const Interval r = ev.range(root, piece.s0, piece.s1, piece.signs[0], &undefined);
+                if (undefined || !r.bounded()) {
+                    say(why, "the field may be undefined or unbounded in an unresolved sliver at v ≈ " + std::to_string(piece.s0));
+                    return std::nullopt;
+                }
+                mathematical += width * (std::max(std::abs(double(r.lo)), std::abs(double(r.hi))) * (1.0 + 1e-6) + 1e-30);
+                continue;
+            }
+            const uint32_t cells = std::max<uint32_t>(2, uint32_t(std::ceil(double(density) * width / (b - a))));
+            const auto h = ev.hybridIntegral(root, piece.s0, piece.s1, piece.signs[0], cells, why);
+            if (!h) return std::nullopt;
+            estimate += h->estimate;
+            recordSummand(h->estimate);
+            mathematical += h->radius;
+            sampled = sampled || h->remainderEvaluations > 0;
+        }
+        const double execution = accounting.executionBound();
+        bestTotal = std::min(bestTotal, mathematical + execution);
+        if (mathematical + execution <= tolerance) {
+            bounds.mathematical = mathematical;
+            bounds.execution = execution;
+            bounds.approximate = mathematical > 0.0;
+            bounds.route = sampled ? "line segmentation, hybrid (sampled remainder)" : "line segmentation";
+            return lo <= hi ? estimate : -estimate;
+        }
+        // Only sampling refines; omitted slivers and execution do not shrink with cells.
+        if (!sampled) break;
     }
-    return lo <= hi ? total : -total;
+    char text[160];
+    std::snprintf(text, sizeof(text), "the best justified total bound %.3g exceeds the tolerance %.3g", bestTotal, tolerance);
+    say(why, std::string(text) + " (work cap: 4096 cells over the interval; or a bound that refinement cannot reduce)");
+    return std::nullopt;
 }
 
 } // namespace
@@ -188,10 +242,14 @@ bool exactPathAdmitsOmittedContribution(double /*answer*/, double provedBound) {
 }
 
 std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std::string, PropertyValue>& vars,
-                                       const Singular* subject, std::string* why) {
-    if (node.op != MathNode::Op::Integral || node.children.size() != 3 || !node.children[0] ||
-        !node.children[1] || !node.children[2]) {
-        say(why, "Integral needs a body, lo and hi");
+                                       const Singular* subject, std::string* why, IntegralBounds* boundsOut) {
+    IntegralBounds scratch;
+    IntegralBounds& bounds = boundsOut ? *boundsOut : scratch;
+    bounds = IntegralBounds{};
+    if (node.op != MathNode::Op::Integral || (node.children.size() != 3 && node.children.size() != 4) ||
+        !node.children[0] || !node.children[1] || !node.children[2] ||
+        (node.children.size() == 4 && !node.children[3])) {
+        say(why, "Integral needs a body, lo and hi (and optionally a tolerance)");
         return std::nullopt;
     }
     const std::string& v = node.variableName;
@@ -204,6 +262,18 @@ std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std:
         say(why, "a limit is undefined, not a number, or infinite");
         return std::nullopt;
     }
+    // The authored tolerance (addendum C): absolute, in the result's units, read
+    // in the enclosing scope. Absent or 0: exact only. Negative, NaN or
+    // infinite: refused, never reinterpreted.
+    double tolerance = 0.0;
+    if (node.children.size() == 4) {
+        const auto t = node.children[3]->evaluate(vars, subject);
+        if (!t || !propertyValueToNumber(*t, tolerance) || !std::isfinite(tolerance) || tolerance < 0.0) {
+            say(why, "the tolerance must be a finite number ≥ 0 (absolute, in the integral's units; 0 means exact only)");
+            return std::nullopt;
+        }
+    }
+    bounds.tolerance = tolerance;
     // Scalars only: a vector binding never enters the term algebra, and v is
     // shadowed inside the body.
     std::map<std::string, double> numeric;
@@ -216,14 +286,31 @@ std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std:
 
     const MathNode& body = *node.children[0];
     std::string termWhy;
-    if (const auto form = toScalarForm(body, &termWhy)) return definiteIntegral(*form, v, lo, hi, numeric, why);
+    if (const auto form = toScalarForm(body, &termWhy)) {
+        IntegralAccounting accounting;
+        IntegralAccountingScope scope(accounting);
+        const auto value = definiteIntegral(*form, v, lo, hi, numeric, why);
+        if (!value) return std::nullopt;
+        bounds.route = "term algebra";
+        bounds.execution = accounting.executionBound();
+        // A closed form satisfies any tolerance mathematically; its execution
+        // must still fit one that was asked for.
+        if (tolerance > 0.0 && bounds.execution > tolerance) {
+            char text[160];
+            std::snprintf(text, sizeof(text), "the execution bound %.3g exceeds the tolerance %.3g (the mathematics is exact)",
+                          bounds.execution, tolerance);
+            say(why, text);
+            return std::nullopt;
+        }
+        return value;
+    }
 
     if (body.op == MathNode::Op::SDF && body.children.size() == 2 && body.children[0] && body.children[1]) {
         std::map<std::string, PropertyValue> outer = vars;
         outer.erase(v);
         const auto q = affineVector(*body.children[1], v, outer, numeric, subject, why);
         if (!q) return std::nullopt;
-        return integrateAlongLine(*body.children[0], *q, lo, hi, numeric, why);
+        return integrateAlongLine(*body.children[0], *q, lo, hi, numeric, tolerance, bounds, why);
     }
     say(why, "the body has no exact integral here: " + termWhy +
                  " (admitted: the term algebra, or SDF(field, point) with the point affine in " + v + ")");

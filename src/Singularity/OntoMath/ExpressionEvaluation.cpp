@@ -99,6 +99,25 @@ std::shared_ptr<PropertyDict> evaluationReport(Singular& bearer, const std::stri
     }
     r["status"] = std::string("admitted");
     r["value"] = number;
+    // Addendum C: when the expression IS one Integral, its bounds are known and
+    // reported in the result's units. A composite expression around integrals
+    // does not propagate them yet, so its bounds stay "unavailable".
+    const auto& pieces = (*field)->astDefinition.pieces;
+    if (pieces.size() == 1 && pieces[0].mathNode && pieces[0].mathNode->op == MathNode::Op::Integral) {
+        IntegralBounds bounds;
+        if (evaluateIntegral(*pieces[0].mathNode, vars, &bearer, nullptr, &bounds)) {
+            r["admission"] = std::string(bounds.approximate ? "within tolerance" : "exact");
+            if (bounds.tolerance > 0.0) r["requestedTolerance"] = bounds.tolerance;
+            r["mathematicalBound"] = bounds.mathematical;
+            r["executionBound"] = bounds.execution;
+            r["totalBound"] = bounds.total();
+            r["route"] = bounds.route;
+            r["executionPremise"] = std::string(
+                "Higham summation bound over every summand the office added, plus proved series tails; "
+                "assumes each summand within γ of itself (libm within one ulp, the field's pointwise value in "
+                "double forward-accurate), which is not enclosed");
+        }
+    }
     return report;
 }
 
