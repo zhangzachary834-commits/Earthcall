@@ -370,6 +370,10 @@ struct LineSampledFactor {
     std::function<std::optional<double>(double)> value;
     std::function<std::pair<double, double>(double, double)> range;
     std::function<double(double, double)> lipschitz;
+    // Optional pointwise contract (2026-10-20): sup |value(s) − exact M(s)| over
+    // [a, b]. Without it, an integral under an active execution model charges
+    // this factor's samples without bound and refuses — it never assumes 0.
+    std::function<double(double, double)> slack;
 };
 
 struct LineHybridIntegral {

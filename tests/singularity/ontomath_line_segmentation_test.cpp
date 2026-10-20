@@ -834,6 +834,130 @@ int main() {
         }
     }
 
+    // ---- Plan §6al (Codex's review, 2026-10-20): second-derivative enclosures
+    // against independent analytic and finite-difference references, their
+    // refusals, the odd (cubic) panel, and the sampled-factor execution charge.
+    {
+        std::cout << "  -- second derivatives, the cubic panel, the sampled-factor charge (plan §6al) --\n";
+        using TK = OntoMath::TransFactor::Kind;
+        auto sl = [](ScalarForm f) { auto n = std::make_unique<MathNode>(); n->op = Op::ScalarLeaf; n->scalarForm = std::move(f); return n; };
+        auto zeros = [](const OntoMath::LineAlgebraicForm& f) { return std::vector<int8_t>(f.switches.size(), 0); };
+        // (a) Analytic: G = x³ on x = 0.3 + s, s ∈ [0.2, 0.7]: G″ = 6x ∈ [3, 6].
+        if (const auto rc = OntoMath::restrictAlgebraicToLine(*sl(ScalarForm::variable("x", 3.0)), false)) {
+            OntoMath::LineAlgebraicEvaluator ec(*rc.form, lineBindings({{0.3, 0.1, 0.0}, {1, 0, 0}}));
+            const auto enc = ec.secondDerivativeRange(rc.form->roots[0], 0.2, 0.7, zeros(*rc.form));
+            check(enc.bounded() && enc.lo <= 3.0f && enc.hi >= 6.0f && enc.lo >= 2.999f && enc.hi <= 6.001f,
+                  "x³'s second derivative along the line is enclosed tightly: [" + std::to_string(enc.lo) + ", " + std::to_string(enc.hi) + "] ⊇ [3, 6]");
+        }
+        // (b) Analytic: G = sin(3x): G″ = −9·sin(3x), sampled on a fine grid as the reference range.
+        if (const auto rs = OntoMath::restrictAlgebraicToLine(*sl(ScalarForm::transcendental(TK::Sin, "x", 3.0, 0.0)), false)) {
+            OntoMath::LineAlgebraicEvaluator es(*rs.form, lineBindings({{0.3, 0.1, 0.0}, {1, 0, 0}}));
+            const auto enc = es.secondDerivativeRange(rs.form->roots[0], 0.0, 0.5, zeros(*rs.form));
+            double lo = INFINITY, hi = -INFINITY;
+            for (int i = 0; i <= 10000; ++i) { const double x = 0.3 + 0.5 * i / 10000.0, v = -9.0 * std::sin(3.0 * x); lo = std::min(lo, v); hi = std::max(hi, v); }
+            check(enc.bounded() && enc.lo <= lo && enc.hi >= hi, "sin(3x)'s second derivative is enclosed: [" + std::to_string(enc.lo) + ", " +
+                  std::to_string(enc.hi) + "] ⊇ [" + std::to_string(lo) + ", " + std::to_string(hi) + "]");
+        }
+        // (c) Noise with a NONLINEAR argument (q″ ≠ 0) across lattice faces: noise(x², y, z) on
+        // x = 0.3 + s, s ∈ [0, 1.5] (x² crosses 1, 2 and 3). For a C² function the central
+        // difference IS G″(ξ) for some ξ within ±h, so on each panel every difference must lie
+        // inside that panel's enclosure, up to the float rounding of the samples' positions
+        // and glm::perlin's own arithmetic (4·(L·2^-24·Σ|arg| + 3e-6)/h²).
+        {
+            auto arg = node(Op::VectorConstruct, sl(ScalarForm::variable("x", 2.0)), leaf("y"), leaf("z"));
+            const auto rn = OntoMath::restrictAlgebraicToLine(*node(Op::Noise, std::move(arg)), false);
+            check(bool(rn), "noise(x², y, z) restricts to the line" + (rn ? std::string() : " — " + rn.refusal));
+            if (rn) {
+                OntoMath::LineAlgebraicEvaluator en(*rn.form, lineBindings({{0.3, 0.2, 0.4}, {1, 0.5, 0.25}}));
+                const uint32_t root = rn.form->roots[0];
+                const double h = 5e-3;
+                int panels = 0, inside = 0, crossing = 0;
+                double worstRatio = 0.0;
+                for (double a = 0.0; a < 1.5 - 1e-9; a += 0.1) {
+                    const double b = a + 0.1;
+                    const auto enc = en.secondDerivativeRange(root, a, b, zeros(*rn.form));
+                    if (!enc.bounded()) continue;
+                    ++panels;
+                    const double x0 = 0.3 + a, x1 = 0.3 + b;
+                    if (std::floor(x0 * x0) != std::floor(x1 * x1)) ++crossing;
+                    const double sumArg = x1 * x1 + 0.2 + 0.5 * b + 0.4 + 0.25 * b;
+                    const double tol = 4.0 * (28.561 * std::ldexp(1.0, -24) * sumArg + 3e-6) / (h * h);
+                    bool ok = true;
+                    for (int i = 0; i <= 40; ++i) {
+                        const double s = a + h + (b - a - 2 * h) * i / 40.0;
+                        const auto v0 = en.value(root, s - h), v1 = en.value(root, s), v2 = en.value(root, s + h);
+                        if (!v0 || !v1 || !v2) { ok = false; break; }
+                        const double fd = (*v0 - 2.0 * *v1 + *v2) / (h * h);
+                        worstRatio = std::max(worstRatio, std::abs(fd) / std::max(std::abs(double(enc.lo)), std::abs(double(enc.hi))));
+                        if (fd < enc.lo - tol || fd > enc.hi + tol) ok = false;
+                    }
+                    inside += ok;
+                }
+                std::cout << "    noise(x², y, z): " << inside << "/" << panels << " panels contain every central difference ("
+                          << crossing << " cross a lattice face); worst |difference| / enclosure " << worstRatio << "\n";
+                check(panels == 15 && inside == panels && crossing >= 3,
+                      "a nonlinear noise argument's second derivative is enclosed on every panel, lattice-face crossings included");
+            }
+        }
+        // (d) Refusals that keep the first-order route: an undecided kink and sqrt touching 0.
+        if (const auto rk = OntoMath::restrictAlgebraicToLine(*node(Op::Abs, sl(ScalarForm::variable("x").plus(ScalarForm::constant(-0.5)))), false)) {
+            OntoMath::LineAlgebraicEvaluator ek(*rk.form, lineBindings({{0.3, 0.1, 0.0}, {1, 0, 0}}));
+            const auto d2 = ek.secondDerivativeRange(rk.form->roots[0], 0.0, 0.5, zeros(*rk.form));
+            const auto d1 = ek.derivativeRange(rk.form->roots[0], 0.0, 0.5, zeros(*rk.form));
+            check(!d2.bounded() && d1.bounded(), "|x − 0.5| across its kink (undecided): no curvature claim, the first-order slope bound remains");
+        }
+        if (const auto rq = OntoMath::restrictAlgebraicToLine(*node(Op::Sqrt, leaf("x")), false)) {
+            OntoMath::LineAlgebraicEvaluator eq(*rq.form, lineBindings({{0.0, 0.1, 0.0}, {1, 0, 0}}));
+            const auto d2 = eq.secondDerivativeRange(rq.form->roots[0], 0.0, 1.0, zeros(*rq.form));
+            check(!d2.bounded(), "√x on an interval touching 0: no curvature claim");
+        }
+        // (e) The odd (cubic, four-node) panel: 3 and 5 cells force span-3 panels, which
+        // use Λ = 1.632 (was the inward 1.6311). Each radius must contain the error against
+        // a converged midpoint reference of the same executed integrand.
+        if (const auto rp = OntoMath::restrictAlgebraicToLine(*node(Op::Noise, leaf("p")), false)) {
+            OntoMath::LineAlgebraicEvaluator ep(*rp.form, lineBindings({{0.3, 0.2, 0.4}, {1, 0.5, 0.25}}));
+            const uint32_t root = rp.form->roots[0];
+            auto mid = [&](int n) { double sum = 0.0; for (int i = 0; i < n; ++i) sum += ep.value(root, (i + 0.5) / n).value_or(0.0) / n; return sum; };
+            const double fine = mid(1 << 16), ref = fine + (fine - mid(1 << 15)) / 3.0;
+            bool all = true;
+            for (uint32_t cells : {3u, 5u, 7u}) {
+                const auto hp = ep.hybridIntegral(root, 0.0, 1.0, zeros(*rp.form), cells);
+                const double err = hp ? std::abs(hp->estimate - ref) : INFINITY;
+                std::cout << "    " << cells << " cells (a cubic panel): |error| " << err << ", radius " << (hp ? hp->radius : NAN) << "\n";
+                all = all && hp && err <= hp->radius;
+            }
+            check(all, "odd cell counts run the cubic panel, and its radius (Λ = 1.632) contains the error each time");
+        }
+        // (f) The sampled-factor charge (Codex's source finding): x · e^(−x), the closed-form
+        // weight x times a SAMPLED factor (r.node == kNoNode), under an active CPU model.
+        if (const auto xs = OntoMath::restrictAlgebraicToLine(*leaf("x"), false)) {
+            OntoMath::LineAlgebraicEvaluator ex(*xs.form, lineBindings({{0, 0.3, 0.1}, {1, 0, 0}}), true);
+            ex.setExecutionModel(OntoMath::cpuExecutionModel());
+            OntoMath::LineSampledFactor decay;
+            decay.value = [](double t) -> std::optional<double> { return std::exp(-t); };
+            decay.range = [](double a, double b) { return std::make_pair(std::exp(-b), std::exp(-a)); };
+            decay.lipschitz = [](double a, double) { return std::exp(-a); };
+            {
+                OntoMath::IntegralAccounting acc;
+                OntoMath::IntegralAccountingScope scope(acc);
+                const auto hx = ex.hybridIntegral(xs.form->roots[0], 0.0, 2.0, zeros(*xs.form), 16, decay);
+                check(hx && !std::isfinite(acc.executionBound()),
+                      "a closed-form weight times a sampled factor WITHOUT a pointwise contract is charged without bound (was silently 0)");
+            }
+            // Positive control: std::exp within one ulp, so |value − e^(−s)| ≤ 2^-52·e^(−a) on [a, b].
+            decay.slack = [](double a, double) { return std::ldexp(1.0, -52) * std::exp(-a); };
+            {
+                OntoMath::IntegralAccounting acc;
+                OntoMath::IntegralAccountingScope scope(acc);
+                const auto hx = ex.hybridIntegral(xs.form->roots[0], 0.0, 2.0, zeros(*xs.form), 16, decay);
+                const double want = 1.0 - 3.0 * std::exp(-2.0);
+                check(hx && std::isfinite(acc.executionBound()) && acc.pointwise > 0.0 &&
+                          std::abs(hx->estimate - want) <= hx->radius + acc.executionBound(),
+                      "with a pointwise contract the same factor is priced (finite, non-zero) and the truth lies inside radius + execution");
+            }
+        }
+    }
+
     std::cout << "ontomath_line_segmentation_test: " << (g_checks - g_failures) << "/" << g_checks
               << " checks passed\n";
     return g_failures == 0 ? 0 : 1;

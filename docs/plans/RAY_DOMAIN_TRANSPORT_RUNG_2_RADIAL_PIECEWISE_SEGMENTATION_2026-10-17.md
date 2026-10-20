@@ -1658,7 +1658,7 @@ The model identity is now `ontomath-cpu/2`, and it stays model-qualified because
 
 **Human origin.** Zach: "YAAAAAAAA NEXT PAPSSSASSSS". Codex (2026-10-20T11:10) on tightening: *"A second-derivative enclosure may tighten the present Lipschitz radius, but it does not automatically prove a fourth-order final error bound. Derive the bound for the actual weighted interpolation and its admitted smoothness, including piece/cell boundaries; keep the authored Noise definition unchanged. Measure the extra bound-construction cost as well as the reduction in evaluations."*
 
-**The bound, for the interpolation actually used.** Each panel interpolates G at 2, 3 or 4 equispaced nodes (Lebesgue constant Λ = 1, 1.25, 1.6311). Every one of those interpolants reproduces G's linear Taylor part about the panel centre exactly. So G − P = R − I(R) with |R(s)| ≤ M₂·hw²/2, where M₂ = sup|G″| on the panel and hw is the half-width, and |G − P| ≤ (1 + Λ)·M₂·hw²/2. This needs only G′ Lipschitz on the panel, not G‴. The panel takes min(range width, first-order Lipschitz bound, this). The result is second order, not fourth, as Codex warned. The estimate still converges faster than the bound proves.
+**The bound, for the interpolation actually used.** Each panel interpolates G at 2, 3 or 4 equispaced nodes (Lebesgue constant Λ = 1, 1.25, 1.6311 — the last rounded inward; corrected to 1.632 in §6al). Every one of those interpolants reproduces G's linear Taylor part about the panel centre exactly. So G − P = R − I(R) with |R(s)| ≤ M₂·hw²/2, where M₂ = sup|G″| on the panel and hw is the half-width, and |G − P| ≤ (1 + Λ)·M₂·hw²/2. This needs only G′ Lipschitz on the panel, not G‴. The panel takes min(range width, first-order Lipschitz bound, this). The result is second order, not fourth, as Codex warned. The estimate still converges faster than the bound proves.
 
 **What makes it sound:**
 - **`secondDerivativeRange`** (`LineAlgebraicEvaluator`) is an interval enclosure of d²/ds² per node.
@@ -1681,5 +1681,43 @@ The model identity is now `ontomath-cpu/2`, and it stays model-qualified because
 The extra construction (one second-derivative enclosure per panel) costs less than the samples it saves, so ±5e-2 runs about 2.5× faster. Below about 7e-4 the noise case still refuses at the work cap, now limited by the 2^-14 glm::perlin allowance (execution 2e-4) as much as by the radius.
 
 Also passing: line segmentation 82/82, GPU integral 22/22, support enclosure 4/4, evaluation 21/21. `webgpu_volume_faithfulness_test`, which checks that line-integrated values lie inside the proved radius on every ray, was still running at commit (Zach asked to commit then). Its result follows in the intercom thread.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*
+
+## 6al. Codex's review closed: the cubic constant, the factor charge, outward curvature, focused witnesses (2026-10-20, thirty-seventh pass)
+
+**Human origin.** Zach: "THE SUN REPLIEDDDDD". Codex's review (2026-10-20T14:37) of §6ak raised three source findings and asked for focused witnesses. Zach also asked both agents to keep a visible account of how far this is from shipped GPU performance. Codex's ledger is carried below.
+
+**1. The cubic Lebesgue constant was rounded inward.** For four equispaced nodes, Σ|L_i(t)| peaks at t = (4 − √7)/3 with 1.6311303094408988…, above the 1.6311 used since §6h. Confirmed independently with 50-digit decimal arithmetic (grid maximum 1.631130308744). It is now **1.632**. Λ₂ = 1 and Λ₃ = 1.25 were confirmed exact. No admitted integral is known to have been wrong because of it, but every cubic panel's radius was 6e-6 relatively short.
+
+**2. The sampled-factor charge had a hole.**
+- **The hole:** a closed-form weight times a sampled factor (`r.node == kNoNode`) skipped the pointwise charge. **Reproduced:** with the old guard, 89/91, and the factor's charge silently 0.
+- **The fix:** every term that samples anything is charged |G|·εM + εG·|M| + εG·εM. `LineSampledFactor` gains an optional pointwise `slack` contract. Without it the charge is unbounded and the caller refuses; with it (std::exp within one ulp) the charge is finite and non-zero, and the truth lies inside radius + execution.
+- **Scope:** nothing on today's Integral route used this path. Transport's exp(−∫) will.
+
+**3. Curvature is built only where it is used:** never with a sampled factor, which has no second-derivative contract. The Noise curvature sums are accumulated in binary64 from the float magnitudes, widened by 16u twice, and only then rounded up. That makes them outward through every operation, not only at the end.
+
+**Focused witnesses** (`ontomath_line_segmentation_test`, 91/91; independent references, not the implementation's constants):
+
+| Witness | Result |
+|---|---|
+| x³ on x = 0.3 + s, analytic G″ ∈ [3, 6] | enclosure [2.999999, 6.000001] |
+| sin(3x), reference range of −9·sin(3x) | [−9.000007, −6.079160] ⊇ [−9.000000, −6.079169] |
+| noise(x², y, z): q″ ≠ 0, crossing lattice faces | 15/15 panels contain every central difference (3 cross a face); worst difference/enclosure 0.023 |
+| \|x − 0.5\| across its kink, √x touching 0 | no curvature claim; the first-order slope bound remains |
+| 3, 5 and 7 cells (cubic panels, Λ = 1.632) | each radius contains the error against a converged reference |
+| closed-form weight × sampled factor without a contract | execution bound unbounded (was 0) |
+| the same with a pointwise contract | finite, non-zero; truth inside radius + execution |
+
+Also: integral 51/51, evaluation 21/21, GPU integral 22/22, support enclosure 4/4. Faithfulness was running at commit; its result follows in the intercom.
+
+### Shipping ledger (Codex's gates, carried forward each handoff)
+
+| Gate | Changed this pass? | Consumer now calling the code | Measured, on which device | Next blocker |
+|---|---|---|---|---|
+| 1. Transport error contract (Addendum C) | **Yes, a prerequisite closed.** A sampled factor (transport's exp(−∫)) is now charged honestly or refused. The cubic constant is sound. | The CPU Integral op, and the hybrid's sampled-factor overload as exercised by the witness. No transport composite admits yet. | CPU only (Apple M-series host, Debug build): witnesses above. | Compose through exp(−∫), products and an outer ∫ in final-result units, with qualification carried. A factor's pointwise contract for an authored exp(−Integral) still has to be derived. |
+| 2. Fields along rays on the GPU (Step 2c) | No | — | — | `SdfWgsl` still refuses the field-on-line route; f32 execution accounting is needed. |
+| 3. Native volume consumes it | No | — | — | A single-curtain native consumer. |
+| 4. Shipping benefit on Metal | No | — | — | Native accuracy and like-for-like frame costs. |
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*

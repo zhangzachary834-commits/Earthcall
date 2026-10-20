@@ -2191,17 +2191,22 @@ Interval LineAlgebraicEvaluator::secondDerivativeRange(uint32_t node, double sa,
         }
         case Kind::Noise: {
             // d²/ds² noise(q(s)) = q′ᵀ∇²n q′ + ∇n·q″ ≤ H·|q′|² + L·|q″|.
-            float d1 = 0.0f, d2 = 0.0f;
+            // Accumulated in binary64 from the float magnitudes (each product and
+            // sum of three is then within 8u of exact), widened by that relative
+            // margin, and only then rounded up to float: outward through every
+            // operation, not merely at the end (Codex, 2026-10-20).
+            double d1 = 0.0, d2 = 0.0;
             for (uint32_t arg : {n.a, n.b, n.c}) {
                 const Interval d = D(arg), dd = D2(arg);
                 if (!d.bounded() || !dd.bounded()) return Interval::infinite();
-                d1 += mag(d) * mag(d);
-                d2 += mag(dd) * mag(dd);
+                d1 += double(mag(d)) * double(mag(d));
+                d2 += double(mag(dd)) * double(mag(dd));
             }
-            const float bound = Interval::roundUp(
-                Interval::roundUp(kClassicPerlin3HessianBound * Interval::roundUp(d1)) +
-                Interval::roundUp(kClassicPerlin3LipschitzBound * Interval::roundUp(std::sqrt(d2))));
-            return Interval(-bound, bound);
+            constexpr double widen = 1.0 + 16.0 * std::numeric_limits<double>::epsilon();
+            const double bound = (double(kClassicPerlin3HessianBound) * d1 +
+                                  double(kClassicPerlin3LipschitzBound) * std::sqrt(d2)) * widen * widen;
+            const float b = Interval::roundUp(static_cast<float>(bound));
+            return Interval(-b, b);
         }
         case Kind::Select: {
             for (uint32_t p = 0; p < n.pieces.size(); ++p) {
@@ -2826,7 +2831,7 @@ std::optional<LineHybridIntegral> LineAlgebraicEvaluator::integrateCore(uint32_t
     // closed-form weight costs nothing and only G's own smoothness errs — fourth
     // order where G is smooth, against the plain midpoint sum's second.
     // Enclosure per panel: |∫ w(G − P)| ≤ sup|w|·∫|G − P|, and with c = G at the
-    // panel's centre and Λ the interpolant's Lebesgue constant (1, 1.25, 1.6311
+    // panel's centre and Λ the interpolant's Lebesgue constant (1, 1.25, 1.632
     // for 2, 3, 4 equispaced nodes), |G − P| ≤ |G − c| + Λ·max|G_i − c|
     // ≤ (1 + Λ)·min(range width, L′·half-width). With a sampled factor M, G is
     // G·M: its range is the product's, its derivative bound |G′|·sup|M| + sup|G|·|M′|.
@@ -2893,17 +2898,6 @@ std::optional<LineHybridIntegral> LineAlgebraicEvaluator::integrateCore(uint32_t
                 out.estimate += g[j + k] * *wk;
                 weightMass += std::abs(*wk);
             }
-            // The samples are EXECUTED values, not exact ones. Under an active
-            // model (the CPU's, from the Integral line route), each may be off by
-            // the node's proved slack over this panel, and the estimate by
-            // Σ|w_k| × that. A sampled factor carries no slack contract yet, so
-            // with one the charge is unbounded and the caller refuses.
-            if (_model.active() && r.node != kNoNode) {
-                if (auto* accounting = activeIntegralAccounting()) {
-                    const double sg = factor ? std::numeric_limits<double>::infinity() : slack(r.node, a, b, decided);
-                    accounting->pointwise += accounting->scale * weightMass * sg;
-                }
-            }
             double gLo = 1.0, gHi = 1.0, gLip = 0.0, gCurv = 0.0;
             if (r.node != kNoNode) {
                 bool undefined = false;
@@ -2912,9 +2906,16 @@ std::optional<LineHybridIntegral> LineAlgebraicEvaluator::integrateCore(uint32_t
                 gHi = undefined ? std::numeric_limits<double>::infinity() : double(gr.hi);
                 const Interval dg = derivativeRange(r.node, a, b, decided);
                 gLip = std::max(std::abs(double(dg.lo)), std::abs(double(dg.hi)));
-                const Interval ddg = secondDerivativeRange(r.node, a, b, decided);
-                gCurv = ddg.bounded() ? std::max(std::abs(double(ddg.lo)), std::abs(double(ddg.hi)))
-                                      : std::numeric_limits<double>::infinity();
+                // Built only where the second-order bound can be used: a sampled
+                // factor has no curvature contract yet (Codex, 2026-10-20: the
+                // recursive construction was running for nothing there).
+                if (!factor) {
+                    const Interval ddg = secondDerivativeRange(r.node, a, b, decided);
+                    gCurv = ddg.bounded() ? std::max(std::abs(double(ddg.lo)), std::abs(double(ddg.hi)))
+                                          : std::numeric_limits<double>::infinity();
+                } else {
+                    gCurv = std::numeric_limits<double>::infinity();
+                }
             }
             double lo = gLo, hi = gHi, lip = gLip;
             if (factor) {
@@ -2927,7 +2928,35 @@ std::optional<LineHybridIntegral> LineAlgebraicEvaluator::integrateCore(uint32_t
                 lip = gLip * supM + supG * mLip;
             }
             const double width = std::isfinite(hi - lo) ? hi - lo : std::numeric_limits<double>::infinity();
-            const double lebesgue = span == 3 ? 1.6311 : span == 2 ? 1.25 : 1.0;   // equispaced Lebesgue constants
+            // Equispaced Lebesgue constants, rounded OUTWARD: 1, 5/4, and for four
+            // nodes 1.63113030944… at t = (4 − √7)/3 — so 1.632, not the 1.6311
+            // that stood here until Codex's 60-digit check (2026-10-20) showed it
+            // inward (independently confirmed: plan §6al).
+            const double lebesgue = span == 3 ? 1.632 : span == 2 ? 1.25 : 1.0;
+            // The samples are EXECUTED values, not exact ones. Under an active
+            // model (the CPU's, from the Integral line route), each sampled value
+            // G·M may be off by |G|·εM + εG·|M| + εG·εM over this panel, and the
+            // estimate by Σ|w_k| × that. Every term that samples anything is
+            // charged — including a closed-form weight times a sampled factor
+            // (r.node == kNoNode, G ≡ 1), which an earlier guard skipped (Codex,
+            // 2026-10-20; reproduced in ontomath_line_segmentation_test). A
+            // factor without a pointwise contract (`slack`) is charged without
+            // bound, so the caller refuses.
+            if (_model.active() && (r.node != kNoNode || factor)) {
+                if (auto* accounting = activeIntegralAccounting()) {
+                    constexpr double unbounded = std::numeric_limits<double>::infinity();
+                    const double eG = r.node != kNoNode ? slack(r.node, a, b, decided) : 0.0;
+                    const double supG = r.node != kNoNode ? std::max(std::abs(gLo), std::abs(gHi)) : 1.0;
+                    double charge = eG;
+                    if (factor) {
+                        const double eM = factor->slack ? factor->slack(a, b) : unbounded;
+                        const auto [mLo, mHi] = factor->range(a, b);
+                        const double supM = std::max(std::abs(mLo), std::abs(mHi));
+                        charge = supG * eM + eG * supM + eG * eM;
+                    }
+                    accounting->pointwise += accounting->scale * weightMass * charge;
+                }
+            }
             // First order: |G − c| ≤ min(range width, L′·half-width).
             double local = std::min(width, std::isfinite(lip) ? lip * 0.5 * (b - a) : std::numeric_limits<double>::infinity());
             // Second order (plan §6ak): the interpolant reproduces G's linear
