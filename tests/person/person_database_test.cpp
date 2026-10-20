@@ -1,8 +1,21 @@
+// WITNESS DOCUMENTATION:
+// What the old test proved:
+//   That PersonDatabase::savePerson wrote a serialized profile to disk and
+//   PersonDatabase::loadPerson (a standalone helper in PersonDatabase) could read it back.
+//
+// What the old test COULD NOT prove:
+//   That PersonDatabase::savePerson produced a profile that the actual production
+//   app boot sequence (EngineInit.cpp via SaveSystem::listWorlds(SaveSystem::SaveType::PERSON)
+//   and personFromJson) discovers, parses, and restores into the active Person.
+//   PersonDatabase::loadPerson is never called on any real application runtime path.
+
 #include "Person/PersonDatabase.hpp"
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
 #include "Person/Body/Body.hpp"
+#include "Identity/PersonPresence.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
+#include "Singularity/Storage/Serialization/Person/PersonSerialization.hpp"
 
 #include <cassert>
 #include <filesystem>
@@ -297,6 +310,42 @@ static void testLoadPersonLegacyJsonFormat() {
     std::cout << "  loadPerson legacy .json format resolution OK\n";
 }
 
+static void testProductionAppBootPersonRestorationPath() {
+    TestEnvironment env;
+    PersonDatabase& db = PersonDatabase::getInstance();
+
+    Person original = createDummyPerson("Zach");
+    original.position() = glm::vec3(12.0f, 3.0f, 4.0f);
+    original.velocity() = glm::vec3(1.0f, 0.0f, -0.5f);
+
+    db.savePerson(original);
+
+    // Exercise the exact production boot restoration sequence from EngineInit.cpp
+    std::vector<nlohmann::json> candidates;
+    for (const auto& info : SaveSystem::listWorlds(SaveSystem::SaveType::PERSON)) {
+        nlohmann::json profile = SaveSystem::readSaveData(info.path);
+        if (!profile.is_object()) continue;
+        if (!profile.contains("personId") &&
+            Identity::legacyProfileSuperseded(profile.value("displayName", std::string{}))) {
+            continue;
+        }
+        candidates.push_back(std::move(profile));
+    }
+
+    assert(candidates.size() == 1);
+    Person bootedPerson = createDummyPerson("Temp");
+    personFromJson(candidates.front(), bootedPerson);
+
+    assert(bootedPerson.getDisplayName() == "Zach");
+    assert(bootedPerson.position().x == 12.0f);
+    assert(bootedPerson.position().y == 3.0f);
+    assert(bootedPerson.position().z == 4.0f);
+    assert(bootedPerson.velocity().x == 1.0f);
+    assert(bootedPerson.velocity().z == -0.5f);
+
+    std::cout << "  real production app boot Person restoration path OK\n";
+}
+
 int main() {
     std::cout << "person_database_test:\n";
     testGetInstanceSingleton();
@@ -313,6 +362,7 @@ int main() {
     testLoadPersonDeserializationFailure();
     testSaveAndLoadDistinctPersonsSameDisplayName();
     testLoadPersonLegacyJsonFormat();
+    testProductionAppBootPersonRestorationPath();
     std::cout << "person_database_test: ALL OK\n";
     return 0;
 }
