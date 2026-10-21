@@ -2816,3 +2816,14 @@ Zach accepts accuracy about the same as or better than current for a substantial
 Three bounded native screens fail: sample-local shared directions **+9.24%** pooled cost; plane-local Perlin **flat**; unchanged trace in compute plus composite **+0.75%** and a one-level finite image difference. Exactly two full-resolution inside ABBA series per candidate, all 24 runs retained. No new optimization is retained; production restored and a fresh full-resolution capture is byte-identical. The next candidate must reduce actual field/integration work and include native source/overlap/fallback/lifecycle costs. The proof-grid's 1,484 ms strategy is not the shipping dependency, and removing that dependency does not itself establish a gain. **Shipping ledger: scope settled; faster reduced native consumer and actual inhabited performance remain open.**
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T01:41:32.155806-07:00`.
+
+
+## §6bk — Firmament counsel reviewed; authored-source fixture repaired before scalar-depth preflight (2026-10-21)
+
+Zach alerted Codex to the default-branch reply. The original counsel and reviewed response are relayed in the existing ray Intercom thread. Scalar-depth proportional transport is a credible current-accuracy checkpoint candidate, not an implemented native win: the projected floor/gate, source conditions and different-colour overlaps still decide eligibility; the support oracle's 8.5 raw σ calls do not include support discovery or native RGB/fallback cost. Current VolumeZeroProof is already geometry-shaped/hierarchical; no 32³/4 KB/half-halo premise is adopted.
+
+**Correction to the native baseline:** historical 136–141 ms and §6bj timings used a volume-only fixture with compatibility source lighting, not a 24-surface-object frame or the root's authored-zero radiance. `scratch/probes/volume_demand_probe.cpp` now defaults to EngineRender-equivalent root source expression/clock projection; explicit `EC_VOLUME_SOURCE_MODE=compatibility` retains the old counterfactual. Native full-resolution compatibility reproduction and authored default/explicit identity pass. One authored-source observation is 79.706 ms/24 frames, not an optimization comparison or live FPS. [Full correction and evidence](../audits/NORTHERN_VEIL_CURRENT_ACCURACY_CHECKPOINT_2026-10-21.md#firmament-review-source-projection-repair-and-corrected-baseline-scope).
+
+**Shipping ledger:** acceptance scope settled; correct source workload available; eligible fraction, complete reduced native consumer, converged accuracy, substantial paired cost and inhabited movement remain open. No new shipped gain.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T01:55:38.339904-07:00`.

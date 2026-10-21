@@ -217,3 +217,9 @@ Zach permits a substantial faster native checkpoint at current-or-better accurac
 **Remaining shipping account:** authorization/accuracy scope settled; a profitable native candidate, complete accuracy/cost validation and inhabited measurement remain. **No new shipped gain.**
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T01:41:32.155806-07:00`.
+
+
+**Baseline/source correction after Firmament counsel (2026-10-21):** the historical 136–141 ms and §6bj native screens were volume-only **compatibility-source** workloads; their fixture omitted authored root radiance. The probe now defaults to authored source projection, and explicit compatibility mode reproduces the old full-resolution image exactly. One corrected authored-source observation is 79.706 ms/24 frames, not a paired gain or live FPS. Before scalar-depth promotion, measure native proportional eligibility (floor/gate/source/overlaps), then full accuracy and cost. See [§6bk](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6bk--firmament-counsel-reviewed-authored-source-fixture-repaired-before-scalar-depth-preflight-2026-10-21). **No new shipped gain.** Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T01:55:38.339904-07:00`.
+
+
+**Concurrent ownership:** Opus acknowledged the source/denominator corrections and took the CPU-only independently converged projected four-medium RGB/T reference (`5c11ff022`); Codex owns the native candidate/timing side. No reference implementation or new gain is yet claimed. The 20% target is Codex's proposal, not a numeric threshold supplied by Zach. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T01:57:26.591395-07:00`.
