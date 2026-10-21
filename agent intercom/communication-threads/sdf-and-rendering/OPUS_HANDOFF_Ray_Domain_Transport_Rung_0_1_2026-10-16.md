@@ -2079,3 +2079,46 @@ The endpoint payload is **9 scalars/panel**. Coefficient parameters follow a dyn
 **Next:** improve directional proof/work discovery and establish the native projected-source admission contract. Do not substitute a CPU plan per pixel, drop the 1e-6 extinction-floor residual, independently composite different-ratio overlaps, or reinterpret the accepted-lattice `volumeOutputErrorBudget` as a continuum budget. T error also weights background/remaining contributions before becoming a final-pixel budget. Full continuation and pitfalls: plan **§6ay** and the updated ray-domain task.
 
 **Signed:** Codex / GPT-6.1 Sol / `2026-10-20T20:45:49-07:00` / `01a148a7-bd85-7550-a416-0e859a729c1a`.
+
+
+## Codex continuation — direction-qualified proofs cut transverse-crease work (`1efa661af`)
+
+Zach commissioned the next implementation pass. His authored-equation criterion and OntoMath ownership correction remain controlling. Implementation/tests/docs are committed locally as **`1efa661af`**, on **`claude/ray-domain-transport-rung0`** in `/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/ourverse_navigator_prototype_loop`; nothing pushed. This continues the preceding §6ay handoff in the same thread; detailed continuation is plan **§6az** and the linked ray-domain task.
+
+### Implemented and independently controlled
+
+OntoMath’s `RegionCertificate::alongOver` retains the whole spatial box proof and derives separate first/second derivatives for the exact raw direction. Exact singleton bindings can prove a defined transverse abs/clamp subtree constant along the ray. Interval centres, epsilon directions and sampled coincidences cannot. Crossed/nearly crossed creases stay conservative; undefined domains refuse. Direction scaling is explicit. Original-DAG cancellation keeps its execution uncertainty even when mathematical derivatives vanish.
+
+Both scheduled GPU kernels consume this evidence for quadrature only. **Full isotropic Lipschitz bounds still price spatial position error**, and original field/exp/accumulation/coefficient error remains. A rotated plan cannot reuse the packet. The new transient payload is **11 scalars/depth panel and 20/general panel**, superseding the previous 9/16; dynamic coefficient offsets and shader-text reuse are witnessed. No native retained cache or per-pixel consumer was added.
+
+A controlled `sigma=(1-abs(x))*(1+0.5*z)` z-ray at x=0 uses identical shader text, three field sites, values, budgets and global/execution/position evidence. Adding directional evidence admits the identical T that isotropic-only evidence cannot justify at that work. RGB/T contain the independent analytic reference exp(-1.25). This isolates the proof improvement without changing integration or loosening tolerances.
+
+### Actual authored-curtain result
+
+The same four raw authored curtains, two full-box rays x=0/2,y=0 and clocks 0/3 in qualified [0,3], still admit **16 occupied vector records / 64 outputs** at RGB ±0.01 per channel, T ±0.006 (host T ±0.004). All contain the independent 4000/8000-cell cumulative Simpson references, agreeing below 1e-5; these remain numerical witnesses with CPU f32 vector/Perlin semantics, not exact-real certification. Zero source-field calls per dispatch remain.
+
+| Medium | x=0 sigma calls: previous → now | x=0 panels | x=2 calls / panels |
+|---|---|---|---|
+| Emerald | 3832 → **150** | 84 | 82 / 48 |
+| Cyan | 3924 → **140** | 81 | 72 / 48 |
+| Violet | 3228 → **94** | 55 | 94 / 54 |
+| Crimson | 2186 → **94** | 54 | 88 / 51 |
+
+The hard-ray reduction is about **23–34 times fewer extinction evaluations**, not FPS. Existing general non-axis occupied emerald rays also fall from 176/88/62/390 to 84/48/44/108 calls per field, preserving references/budgets. Debug host preparation diagnostics still observe **93–142 ms/ray**, 85–160 unique host sigma evaluations: far too expensive for per-pixel native planning. This is an uncontrolled test diagnostic, not a frame-cost benchmark. Reusable qualified spatial evidence or device-side work discovery remains required.
+
+### Final actual verification
+
+Sequential named-target runs: **121/121** segmentation, **57/57** restriction, **85/85** Integral, **36/36** expression/report, **41/41** radial (172032 census samples; no proved-empty sample has positive emitter density), **32/32 Metal** ordinary Integral, **155/155 Metal** scheduled line/general/reduced transport, **132/132 Metal** native support certificates including full 2560×1440 RGBA parity. `earthcall_webgpu` builds; no app installation/launch. Logs `/private/tmp/earthcall-ray-direction-{cpu,restriction,integral,expression,radial,integral-gpu,gpu,native}-verified.txt`; build `/private/tmp/earthcall-ray-direction-build-final.txt`. The native certificate tour’s existing timings do not measure the new continuum path. Existing model premises remain qualified, not hardware-certified. No save/data-home, lighting, tolerance, default activation or installed app changed; existing Person visual/movement checks remain open.
+
+### Shipping ledger — still required before claiming Northern Veil is shipped faster
+
+| Gate | Landed | Remaining |
+|---|---|---|
+| **1. Mathematical/error contract** | Directional derivatives with exact constancy and full spatial/execution charges. | Conditional device/noise premises and unsupported-case refusals remain. |
+| **2. GPU execution and affordable discovery** | Actual raw RGB/T shares bounded depth; hard rays now 94–150 sigma calls. | Reusable/device-side discovery and broad view/direction/cost evidence; no per-pixel CPU search. |
+| **3. Native renderer** | Still unconnected. | Projected gate/clamp/1e-6-floor/scattering admission, local frame/clock/clipping, coherent shared attenuation across overlaps and native source/payload/device lifecycle. |
+| **4. Shipped performance** | No new frame-time or inhabited-motion claim. | Authored-reference accuracy and repeated end-to-end Metal cost including cold preparation/uploads/occupancy/fallback, then Person evidence. |
+
+**Next agent:** start with affordable reusable/device-side work discovery and the native projected-source admission contract, not a host planner in the pixel loop. Keep T’s weighting of background/remaining light in the final-pixel bound. Do not repurpose the accepted-lattice `volumeOutputErrorBudget`, silently drop floor/scattering, independently composite different-ratio overlaps, or equate operation counts with speed. Source/model/direction/box/domain/schema changes need fresh evidence; a future cache must also handle device generation. Read plan §6az and the Derived-State Ledger before building retention.
+
+**Signed:** Codex / GPT-6.1 Sol / `2026-10-20T21:16:31-07:00` / `01a148a7-bd85-7550-a416-0e859a729c1a`.
