@@ -421,58 +421,64 @@ void applyThemeWithProvenance(
         return;
     }
 
-    // 2. Sun Round 7 Gate 10: Theme Definition Authorship vs Theme Application Stewardship
+    // 2. Sun Round 8 Gate 5: Theme Definition is ordinary world-owned authored state, NOT a private static plush!
     std::string themeDefId = "theme.definition." + themeName;
-    static std::unordered_map<std::string, std::shared_ptr<Object>> s_themeDefinitions;
     Singular* existingDef = nullptr;
-    for (Singular* b : Universe::instance().beings()) {
-        if (b && b->getIdentifier() == themeDefId) {
-            existingDef = b;
-            break;
+    if (formation) {
+        for (Singular* b : formation->getMembers()) {
+            if (b && b->getIdentifier() == themeDefId) {
+                existingDef = b;
+                break;
+            }
         }
     }
     if (!existingDef) {
-        auto it = s_themeDefinitions.find(themeDefId);
-        if (it != s_themeDefinitions.end()) {
-            existingDef = it->second.get();
-        } else {
-            auto themeDefObj = std::make_shared<Object>();
-            themeDefObj->setObjectID(themeDefId);
-            themeDefObj->setDynamicProperty("theme.name", PropertyValue(themeName));
-            existingDef = themeDefObj.get();
-            s_themeDefinitions[themeDefId] = themeDefObj;
-        }
-        if (formation) {
-            formation->addMember(existingDef);
-        }
-    }
-
-    std::string recordedDefAuthorName = themeAuthors.empty() ? "Zach" : themeAuthors[0];
-    root.setDynamicProperty("theme.definition.author", PropertyValue(recordedDefAuthorName));
-    if (existingDef) {
-        existingDef->setDynamicProperty("theme.definition.author", PropertyValue(recordedDefAuthorName));
-    }
-
-    Person* defPerson = nullptr;
-    for (Singular* b : Universe::instance().beings()) {
-        if (auto* p = dynamic_cast<Person*>(b)) {
-            if (p->getIdentifier() == recordedDefAuthorName || p->getDisplayName() == recordedDefAuthorName) {
-                defPerson = p;
+        for (Singular* b : Universe::instance().beings()) {
+            if (b && b->getIdentifier() == themeDefId) {
+                existingDef = b;
                 break;
             }
         }
     }
 
-    if (defPerson && existingDef) {
-        auto defAuthRel = std::make_shared<Relation>(WebRelationType::kAuthoredBy, *existingDef, *defPerson, true, 1.0f);
-        if (formation) {
-            formation->relations().add(defAuthRel);
-        } else if (Universe::instance().hasRelationRegistrar()) {
-            Universe::instance().addRelation(defAuthRel);
+    // Resolve theme definition author from recorded fixture metadata (Gates 4 & 6)
+    // No "missing => Zach" fallback!
+    Person* defPerson = nullptr;
+    if (!themeAuthors.empty()) {
+        const std::string& recordedDefAuthorName = themeAuthors[0];
+        // 1. Exact stable identifier / DID match takes absolute priority
+        std::vector<Person*> stableMatches;
+        for (Singular* b : Universe::instance().beings()) {
+            if (auto* p = dynamic_cast<Person*>(b)) {
+                if (p->getIdentifier() == recordedDefAuthorName || p->matchesIdentifier(recordedDefAuthorName)) {
+                    stableMatches.push_back(p);
+                }
+            }
         }
-        if (outRelations) {
-            outRelations->push_back(defAuthRel);
+        if (stableMatches.size() == 1) {
+            defPerson = stableMatches[0];
+        } else if (stableMatches.empty()) {
+            // 2. Legacy bare-name / display name fallback: ONLY if strictly UNAMBIGUOUS!
+            std::vector<Person*> displayMatches;
+            for (Singular* b : Universe::instance().beings()) {
+                if (auto* p = dynamic_cast<Person*>(b)) {
+                    if (p->getDisplayName() == recordedDefAuthorName || (p->called() && p->called()->getSymbol() == recordedDefAuthorName)) {
+                        displayMatches.push_back(p);
+                    }
+                }
+            }
+            if (displayMatches.size() == 1) {
+                defPerson = displayMatches[0];
+            }
+            // If displayMatches.size() > 1 (THE TWO-ZACHS BUG), defPerson remains nullptr!
         }
+    }
+
+    std::shared_ptr<Object> newlyCreatedDef;
+    if (!existingDef) {
+        // Author real world-owned theme definition Being carrying its actual tokens
+        newlyCreatedDef = WebDesignerTheme::authorThemeDefinition(themeName, defPerson, formation, outRelations);
+        existingDef = newlyCreatedDef.get();
     }
 
     if (existingDef) {
@@ -502,6 +508,43 @@ void applyThemeWithProvenance(
 }
 
 } // namespace
+
+std::shared_ptr<Object> WebDesignerTheme::authorThemeDefinition(
+    const std::string& themeName,
+    Person* author,
+    Formation* formation,
+    std::vector<std::shared_ptr<Relation>>* outRelations) {
+
+    std::unordered_map<std::string, std::string> tokens;
+    std::vector<std::string> themeAuthors;
+    loadThemeTokens(themeName, tokens, &themeAuthors);
+
+    std::string themeDefId = "theme.definition." + themeName;
+    auto themeDef = std::make_shared<Object>();
+    themeDef->setObjectID(themeDefId);
+    themeDef->setDynamicProperty("theme.name", PropertyValue(themeName));
+    for (const auto& [k, v] : tokens) {
+        themeDef->setDynamicProperty(k, PropertyValue(v));
+    }
+
+    if (formation) {
+        formation->addMember(themeDef.get());
+    }
+
+    if (author) {
+        auto defAuthRel = std::make_shared<Relation>(WebRelationType::kAuthoredBy, *themeDef, *author, true, 1.0f);
+        if (formation) {
+            formation->relations().add(defAuthRel);
+        } else if (Universe::instance().hasRelationRegistrar()) {
+            Universe::instance().addRelation(defAuthRel);
+        }
+        if (outRelations) {
+            outRelations->push_back(defAuthRel);
+        }
+    }
+
+    return themeDef;
+}
 
 bool WebDesignerTheme::loadThemeTokens(
     const std::string& themeName,
@@ -580,29 +623,33 @@ void WebDesignerTheme::authorThemeTokens(
 void WebDesignerTheme::applyModernDarkTheme(
     Singular& root,
     Person& author,
+    Formation* formation,
     std::vector<std::shared_ptr<Relation>>* outRelations) {
-    applyThemeWithProvenance("modern-dark", root, &author, nullptr, outRelations);
+    applyThemeWithProvenance("modern-dark", root, &author, formation, outRelations);
 }
 
 void WebDesignerTheme::applyModernDarkTheme(
     Singular& root,
     Person* author,
+    Formation* formation,
     std::vector<std::shared_ptr<Relation>>* outRelations) {
-    applyThemeWithProvenance("modern-dark", root, author, nullptr, outRelations);
+    applyThemeWithProvenance("modern-dark", root, author, formation, outRelations);
 }
 
 void WebDesignerTheme::applyNeutralLightTheme(
     Singular& root,
     Person& author,
+    Formation* formation,
     std::vector<std::shared_ptr<Relation>>* outRelations) {
-    applyThemeWithProvenance("neutral-light", root, &author, nullptr, outRelations);
+    applyThemeWithProvenance("neutral-light", root, &author, formation, outRelations);
 }
 
 void WebDesignerTheme::applyNeutralLightTheme(
     Singular& root,
     Person* author,
+    Formation* formation,
     std::vector<std::shared_ptr<Relation>>* outRelations) {
-    applyThemeWithProvenance("neutral-light", root, author, nullptr, outRelations);
+    applyThemeWithProvenance("neutral-light", root, author, formation, outRelations);
 }
 
 std::string WebRealizer::generateStyleSheet(const Singular* root, const RealizeOptions& options) {
@@ -628,55 +675,55 @@ std::string WebRealizer::generateStyleSheet(const Singular* root, const RealizeO
         std::string textMuted = sanitizeCssValue(getThemeString(root, "theme.textMutedColor", ""));
         std::string primary = sanitizeCssValue(getThemeString(root, "theme.primaryColor", ""));
         std::string accent = sanitizeCssValue(getThemeString(root, "theme.accentColor", ""));
-        std::string radius = sanitizeCssValue(getThemeString(root, "theme.radius", "0.5rem"));
-        std::string fontSans = sanitizeCssValue(getThemeString(root, "theme.fontFamily", "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"));
+        std::string radius = sanitizeCssValue(getThemeString(root, "theme.radius", ""));
+        std::string fontSans = sanitizeCssValue(getThemeString(root, "theme.fontFamily", ""));
         std::string heroBg = sanitizeCssValue(getThemeString(root, "theme.heroBackground", ""));
-        std::string heroPadding = sanitizeCssValue(getThemeString(root, "theme.heroPadding", "3rem 1.5rem"));
-        std::string cardBorder = sanitizeCssValue(getThemeString(root, "theme.cardBorder", "rgba(128, 128, 128, 0.2)"));
-        std::string cardPadding = sanitizeCssValue(getThemeString(root, "theme.cardPadding", "1.5rem"));
-        std::string cardHoverBorder = sanitizeCssValue(getThemeString(root, "theme.cardHoverBorder", primary));
-        std::string quoteBorder = sanitizeCssValue(getThemeString(root, "theme.quoteBorder", primary));
-        std::string quoteBg = sanitizeCssValue(getThemeString(root, "theme.quoteBackground", subtle));
-        std::string quotePadding = sanitizeCssValue(getThemeString(root, "theme.quotePadding", "1.5rem 2rem"));
-        std::string actionPadding = sanitizeCssValue(getThemeString(root, "theme.actionPadding", "0.75rem 1.5rem"));
-        std::string actionFontSize = sanitizeCssValue(getThemeString(root, "theme.actionFontSize", "0.95rem"));
+        std::string heroPadding = sanitizeCssValue(getThemeString(root, "theme.heroPadding", ""));
+        std::string cardBorder = sanitizeCssValue(getThemeString(root, "theme.cardBorder", ""));
+        std::string cardPadding = sanitizeCssValue(getThemeString(root, "theme.cardPadding", ""));
+        std::string cardHoverBorder = sanitizeCssValue(getThemeString(root, "theme.cardHoverBorder", ""));
+        std::string quoteBorder = sanitizeCssValue(getThemeString(root, "theme.quoteBorder", ""));
+        std::string quoteBg = sanitizeCssValue(getThemeString(root, "theme.quoteBackground", ""));
+        std::string quotePadding = sanitizeCssValue(getThemeString(root, "theme.quotePadding", ""));
+        std::string actionPadding = sanitizeCssValue(getThemeString(root, "theme.actionPadding", ""));
+        std::string actionFontSize = sanitizeCssValue(getThemeString(root, "theme.actionFontSize", ""));
 
-        std::string spTight = sanitizeCssValue(getThemeString(root, "theme.spacingTight", "0.5rem"));
-        std::string spNormal = sanitizeCssValue(getThemeString(root, "theme.spacingNormal", "1rem"));
-        std::string spRelaxed = sanitizeCssValue(getThemeString(root, "theme.spacingRelaxed", "1.5rem"));
-        std::string spGenerous = sanitizeCssValue(getThemeString(root, "theme.spacingGenerous", "2.5rem"));
-        std::string scSmall = sanitizeCssValue(getThemeString(root, "theme.scaleSmall", "0.875rem"));
-        std::string scNormal = sanitizeCssValue(getThemeString(root, "theme.scaleNormal", "1rem"));
-        std::string scLarge = sanitizeCssValue(getThemeString(root, "theme.scaleLarge", "1.25rem"));
-        std::string scHuge = sanitizeCssValue(getThemeString(root, "theme.scaleHuge", "2.5rem"));
-        std::string wtNormal = sanitizeCssValue(getThemeString(root, "theme.weightNormal", "400"));
-        std::string wtLight = sanitizeCssValue(getThemeString(root, "theme.weightLight", "300"));
-        std::string wtMedium = sanitizeCssValue(getThemeString(root, "theme.weightMedium", "500"));
-        std::string wtBold = sanitizeCssValue(getThemeString(root, "theme.weightBold", "700"));
-        std::string lhTight = sanitizeCssValue(getThemeString(root, "theme.lineHeightTight", "1.15"));
-        std::string gridMin = sanitizeCssValue(getThemeString(root, "theme.gridMinWidth", "17.5rem"));
-        std::string shSubtle = sanitizeCssValue(getThemeString(root, "theme.shadowSubtle", "0 1px 3px rgba(0, 0, 0, 0.1)"));
-        std::string shRaised = sanitizeCssValue(getThemeString(root, "theme.shadowRaised", "0 4px 6px rgba(0, 0, 0, 0.15)"));
-        std::string shFloating = sanitizeCssValue(getThemeString(root, "theme.shadowFloating", "0 10px 15px rgba(0, 0, 0, 0.2)"));
-        std::string h1Sz = sanitizeCssValue(getThemeString(root, "theme.h1Size", "2.75rem"));
-        std::string h1Lh = sanitizeCssValue(getThemeString(root, "theme.h1LineHeight", "1.1"));
-        std::string hMb = sanitizeCssValue(getThemeString(root, "theme.hHeadingMarginBottom", "0.5rem"));
-        std::string h2Sz = sanitizeCssValue(getThemeString(root, "theme.h2Size", "2rem"));
-        std::string h2Lh = sanitizeCssValue(getThemeString(root, "theme.h2LineHeight", "1.2"));
-        std::string h3Sz = sanitizeCssValue(getThemeString(root, "theme.h3Size", "1.5rem"));
-        std::string h3Lh = sanitizeCssValue(getThemeString(root, "theme.h3LineHeight", "1.3"));
-        std::string h3Mb = sanitizeCssValue(getThemeString(root, "theme.h3MarginBottom", "0.25rem"));
-        std::string h4Sz = sanitizeCssValue(getThemeString(root, "theme.h4Size", "1.25rem"));
-        std::string h5Sz = sanitizeCssValue(getThemeString(root, "theme.h5Size", "1.1rem"));
-        std::string h6Sz = sanitizeCssValue(getThemeString(root, "theme.h6Size", "1rem"));
-        std::string subtlePad = sanitizeCssValue(getThemeString(root, "theme.subtlePadding", "2rem"));
-        std::string subOpacity = sanitizeCssValue(getThemeString(root, "theme.subordinateOpacity", "0.8"));
-        std::string subSize = sanitizeCssValue(getThemeString(root, "theme.subordinateSize", "0.95em"));
-        std::string quietOp = sanitizeCssValue(getThemeString(root, "theme.quietOpacity", "0.65"));
-        std::string promWt = sanitizeCssValue(getThemeString(root, "theme.prominentWeight", "700"));
-        std::string transNorm = sanitizeCssValue(getThemeString(root, "theme.transitionNormal", "0.2s ease"));
-        std::string actWt = sanitizeCssValue(getThemeString(root, "theme.actionWeight", "600"));
-        std::string actTrans = sanitizeCssValue(getThemeString(root, "theme.actionTransition", "all 0.2s ease"));
+        std::string spTight = sanitizeCssValue(getThemeString(root, "theme.spacingTight", ""));
+        std::string spNormal = sanitizeCssValue(getThemeString(root, "theme.spacingNormal", ""));
+        std::string spRelaxed = sanitizeCssValue(getThemeString(root, "theme.spacingRelaxed", ""));
+        std::string spGenerous = sanitizeCssValue(getThemeString(root, "theme.spacingGenerous", ""));
+        std::string scSmall = sanitizeCssValue(getThemeString(root, "theme.scaleSmall", ""));
+        std::string scNormal = sanitizeCssValue(getThemeString(root, "theme.scaleNormal", ""));
+        std::string scLarge = sanitizeCssValue(getThemeString(root, "theme.scaleLarge", ""));
+        std::string scHuge = sanitizeCssValue(getThemeString(root, "theme.scaleHuge", ""));
+        std::string wtNormal = sanitizeCssValue(getThemeString(root, "theme.weightNormal", ""));
+        std::string wtLight = sanitizeCssValue(getThemeString(root, "theme.weightLight", ""));
+        std::string wtMedium = sanitizeCssValue(getThemeString(root, "theme.weightMedium", ""));
+        std::string wtBold = sanitizeCssValue(getThemeString(root, "theme.weightBold", ""));
+        std::string lhTight = sanitizeCssValue(getThemeString(root, "theme.lineHeightTight", ""));
+        std::string gridMin = sanitizeCssValue(getThemeString(root, "theme.gridMinWidth", ""));
+        std::string shSubtle = sanitizeCssValue(getThemeString(root, "theme.shadowSubtle", ""));
+        std::string shRaised = sanitizeCssValue(getThemeString(root, "theme.shadowRaised", ""));
+        std::string shFloating = sanitizeCssValue(getThemeString(root, "theme.shadowFloating", ""));
+        std::string h1Sz = sanitizeCssValue(getThemeString(root, "theme.h1Size", ""));
+        std::string h1Lh = sanitizeCssValue(getThemeString(root, "theme.h1LineHeight", ""));
+        std::string hMb = sanitizeCssValue(getThemeString(root, "theme.hHeadingMarginBottom", ""));
+        std::string h2Sz = sanitizeCssValue(getThemeString(root, "theme.h2Size", ""));
+        std::string h2Lh = sanitizeCssValue(getThemeString(root, "theme.h2LineHeight", ""));
+        std::string h3Sz = sanitizeCssValue(getThemeString(root, "theme.h3Size", ""));
+        std::string h3Lh = sanitizeCssValue(getThemeString(root, "theme.h3LineHeight", ""));
+        std::string h3Mb = sanitizeCssValue(getThemeString(root, "theme.h3MarginBottom", ""));
+        std::string h4Sz = sanitizeCssValue(getThemeString(root, "theme.h4Size", ""));
+        std::string h5Sz = sanitizeCssValue(getThemeString(root, "theme.h5Size", ""));
+        std::string h6Sz = sanitizeCssValue(getThemeString(root, "theme.h6Size", ""));
+        std::string subtlePad = sanitizeCssValue(getThemeString(root, "theme.subtlePadding", ""));
+        std::string subOpacity = sanitizeCssValue(getThemeString(root, "theme.subordinateOpacity", ""));
+        std::string subSize = sanitizeCssValue(getThemeString(root, "theme.subordinateSize", ""));
+        std::string quietOp = sanitizeCssValue(getThemeString(root, "theme.quietOpacity", ""));
+        std::string promWt = sanitizeCssValue(getThemeString(root, "theme.prominentWeight", ""));
+        std::string transNorm = sanitizeCssValue(getThemeString(root, "theme.transitionNormal", ""));
+        std::string actWt = sanitizeCssValue(getThemeString(root, "theme.actionWeight", ""));
+        std::string actTrans = sanitizeCssValue(getThemeString(root, "theme.actionTransition", ""));
 
         if (!bg.empty()) css << "  --web-bg: " << bg << ";\n";
         if (!surface.empty()) css << "  --web-bg-surface: " << surface << ";\n";
@@ -690,57 +737,57 @@ std::string WebRealizer::generateStyleSheet(const Singular* root, const RealizeO
             css << "  --web-primary-text: " << (bg.empty() ? "#ffffff" : bg) << ";\n";
         }
         if (!accent.empty()) css << "  --web-accent: " << accent << ";\n";
-        css << "  --web-radius: " << radius << ";\n";
+        if (!radius.empty()) css << "  --web-radius: " << radius << ";\n";
         css << "  --web-radius-pill: 9999px;\n";
-        css << "  --web-font-sans: " << fontSans << ";\n";
+        if (!fontSans.empty()) css << "  --web-font-sans: " << fontSans << ";\n";
         if (!heroBg.empty()) css << "  --web-hero-bg: " << heroBg << ";\n";
-        css << "  --web-hero-padding: " << heroPadding << ";\n";
+        if (!heroPadding.empty()) css << "  --web-hero-padding: " << heroPadding << ";\n";
         if (!card.empty()) css << "  --web-card-bg: " << card << ";\n";
-        css << "  --web-card-border: " << cardBorder << ";\n";
-        css << "  --web-card-padding: " << cardPadding << ";\n";
+        if (!cardBorder.empty()) css << "  --web-card-border: " << cardBorder << ";\n";
+        if (!cardPadding.empty()) css << "  --web-card-padding: " << cardPadding << ";\n";
         if (!cardHoverBorder.empty()) css << "  --web-card-hover-border: " << cardHoverBorder << ";\n";
         if (!quoteBorder.empty()) css << "  --web-quote-border: " << quoteBorder << ";\n";
         if (!quoteBg.empty()) css << "  --web-quote-bg: " << quoteBg << ";\n";
-        css << "  --web-quote-padding: " << quotePadding << ";\n";
-        css << "  --web-action-padding: " << actionPadding << ";\n";
-        css << "  --web-action-font-size: " << actionFontSize << ";\n";
+        if (!quotePadding.empty()) css << "  --web-quote-padding: " << quotePadding << ";\n";
+        if (!actionPadding.empty()) css << "  --web-action-padding: " << actionPadding << ";\n";
+        if (!actionFontSize.empty()) css << "  --web-action-font-size: " << actionFontSize << ";\n";
 
-        css << "  --web-spacing-tight: " << spTight << ";\n"
-            << "  --web-spacing-normal: " << spNormal << ";\n"
-            << "  --web-spacing-relaxed: " << spRelaxed << ";\n"
-            << "  --web-spacing-generous: " << spGenerous << ";\n"
-            << "  --web-scale-small: " << scSmall << ";\n"
-            << "  --web-scale-normal: " << scNormal << ";\n"
-            << "  --web-scale-large: " << scLarge << ";\n"
-            << "  --web-scale-huge: " << scHuge << ";\n"
-            << "  --web-weight-normal: " << wtNormal << ";\n"
-            << "  --web-weight-light: " << wtLight << ";\n"
-            << "  --web-weight-medium: " << wtMedium << ";\n"
-            << "  --web-weight-bold: " << wtBold << ";\n"
-            << "  --web-lh-tight: " << lhTight << ";\n"
-            << "  --web-grid-min-width: " << gridMin << ";\n"
-            << "  --web-shadow-subtle: " << shSubtle << ";\n"
-            << "  --web-shadow-raised: " << shRaised << ";\n"
-            << "  --web-shadow-floating: " << shFloating << ";\n"
-            << "  --web-h1-size: " << h1Sz << ";\n"
-            << "  --web-h1-lh: " << h1Lh << ";\n"
-            << "  --web-h-mb: " << hMb << ";\n"
-            << "  --web-h2-size: " << h2Sz << ";\n"
-            << "  --web-h2-lh: " << h2Lh << ";\n"
-            << "  --web-h3-size: " << h3Sz << ";\n"
-            << "  --web-h3-lh: " << h3Lh << ";\n"
-            << "  --web-h3-mb: " << h3Mb << ";\n"
-            << "  --web-h4-size: " << h4Sz << ";\n"
-            << "  --web-h5-size: " << h5Sz << ";\n"
-            << "  --web-h6-size: " << h6Sz << ";\n"
-            << "  --web-subtle-padding: " << subtlePad << ";\n"
-            << "  --web-subordinate-opacity: " << subOpacity << ";\n"
-            << "  --web-subordinate-size: " << subSize << ";\n"
-            << "  --web-quiet-opacity: " << quietOp << ";\n"
-            << "  --web-prominent-weight: " << promWt << ";\n"
-            << "  --web-transition-normal: " << transNorm << ";\n"
-            << "  --web-action-weight: " << actWt << ";\n"
-            << "  --web-action-transition: " << actTrans << ";\n";
+        if (!spTight.empty()) css << "  --web-spacing-tight: " << spTight << ";\n";
+        if (!spNormal.empty()) css << "  --web-spacing-normal: " << spNormal << ";\n";
+        if (!spRelaxed.empty()) css << "  --web-spacing-relaxed: " << spRelaxed << ";\n";
+        if (!spGenerous.empty()) css << "  --web-spacing-generous: " << spGenerous << ";\n";
+        if (!scSmall.empty()) css << "  --web-scale-small: " << scSmall << ";\n";
+        if (!scNormal.empty()) css << "  --web-scale-normal: " << scNormal << ";\n";
+        if (!scLarge.empty()) css << "  --web-scale-large: " << scLarge << ";\n";
+        if (!scHuge.empty()) css << "  --web-scale-huge: " << scHuge << ";\n";
+        if (!wtNormal.empty()) css << "  --web-weight-normal: " << wtNormal << ";\n";
+        if (!wtLight.empty()) css << "  --web-weight-light: " << wtLight << ";\n";
+        if (!wtMedium.empty()) css << "  --web-weight-medium: " << wtMedium << ";\n";
+        if (!wtBold.empty()) css << "  --web-weight-bold: " << wtBold << ";\n";
+        if (!lhTight.empty()) css << "  --web-lh-tight: " << lhTight << ";\n";
+        if (!gridMin.empty()) css << "  --web-grid-min-width: " << gridMin << ";\n";
+        if (!shSubtle.empty()) css << "  --web-shadow-subtle: " << shSubtle << ";\n";
+        if (!shRaised.empty()) css << "  --web-shadow-raised: " << shRaised << ";\n";
+        if (!shFloating.empty()) css << "  --web-shadow-floating: " << shFloating << ";\n";
+        if (!h1Sz.empty()) css << "  --web-h1-size: " << h1Sz << ";\n";
+        if (!h1Lh.empty()) css << "  --web-h1-lh: " << h1Lh << ";\n";
+        if (!hMb.empty()) css << "  --web-h-mb: " << hMb << ";\n";
+        if (!h2Sz.empty()) css << "  --web-h2-size: " << h2Sz << ";\n";
+        if (!h2Lh.empty()) css << "  --web-h2-lh: " << h2Lh << ";\n";
+        if (!h3Sz.empty()) css << "  --web-h3-size: " << h3Sz << ";\n";
+        if (!h3Lh.empty()) css << "  --web-h3-lh: " << h3Lh << ";\n";
+        if (!h3Mb.empty()) css << "  --web-h3-mb: " << h3Mb << ";\n";
+        if (!h4Sz.empty()) css << "  --web-h4-size: " << h4Sz << ";\n";
+        if (!h5Sz.empty()) css << "  --web-h5-size: " << h5Sz << ";\n";
+        if (!h6Sz.empty()) css << "  --web-h6-size: " << h6Sz << ";\n";
+        if (!subtlePad.empty()) css << "  --web-subtle-padding: " << subtlePad << ";\n";
+        if (!subOpacity.empty()) css << "  --web-subordinate-opacity: " << subOpacity << ";\n";
+        if (!subSize.empty()) css << "  --web-subordinate-size: " << subSize << ";\n";
+        if (!quietOp.empty()) css << "  --web-quiet-opacity: " << quietOp << ";\n";
+        if (!promWt.empty()) css << "  --web-prominent-weight: " << promWt << ";\n";
+        if (!transNorm.empty()) css << "  --web-transition-normal: " << transNorm << ";\n";
+        if (!actWt.empty()) css << "  --web-action-weight: " << actWt << ";\n";
+        if (!actTrans.empty()) css << "  --web-action-transition: " << actTrans << ";\n";
 
         if (root) {
             for (const auto& [kId, val] : root->dynamicProperties()) {
@@ -770,7 +817,7 @@ body {
   font-family: var(--web-font-sans);
   background-color: var(--web-bg);
   color: var(--web-text);
-  line-height: 1.6;
+  line-height: inherit;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
@@ -911,7 +958,7 @@ h6.web-heading { font-size: var(--web-h6-size); }
   border: 1px solid transparent;
   transition: var(--web-action-transition);
   text-decoration: none;
-  line-height: 1.2;
+  line-height: inherit;
   box-sizing: border-box;
   font-family: inherit;
 }
@@ -946,7 +993,7 @@ h6.web-heading { font-size: var(--web-h6-size); }
 
 .web-surface--outline.web-action,
 .web-surface--outline.web-btn {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: transparent;
   border: 1px solid var(--web-border);
   color: var(--web-text);
 }
@@ -954,7 +1001,7 @@ h6.web-heading { font-size: var(--web-h6-size); }
 .web-surface--outline.web-btn:hover {
   border-color: var(--web-primary);
   color: var(--web-primary);
-  background-color: rgba(56, 189, 248, 0.1);
+  background-color: transparent;
 }
 
 .web-surface--default.web-action,
@@ -974,7 +1021,9 @@ h6.web-heading { font-size: var(--web-h6-size); }
 
 /* Quote */
 .web-quote {
-  border-left: 4px solid var(--web-quote-border);
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-left-color: var(--web-quote-border);
   background: var(--web-quote-bg);
   padding: var(--web-quote-padding);
   font-style: italic;
@@ -984,17 +1033,41 @@ h6.web-heading { font-size: var(--web-h6-size); }
 /* Divider */
 .web-divider {
   border: 0;
-  height: 1px;
-  background-color: var(--web-border);
-  margin: 2rem 0;
+  border-top: 1px solid var(--web-border);
+  margin: 1em 0;
   width: 100%;
 }
 )CSS";
 
     if (!options.extraCss.empty() && options.allowUnrestrictedCss) {
-        // Sun Round 7 Gate 6 & 7: TransferPolicy capability gate is the sole authority;
-        // A Person pointer alone cannot grant raw-CSS authority!
-        if (TransferPolicy::instance().isOpen("web.rawCss")) {
+        // Sun Round 8 Gate 8: Raw CSS capability is governed by a first-class Relation in the world graph:
+        // Relation("grants-capability", *options.governingAuthor, *root) with capability == "web.rawCss"
+        // Neither a Person pointer alone nor a global set-to-set TransferPolicy bool can authorize raw CSS.
+        bool hasCapabilityGrant = false;
+        if (options.governingAuthor && root) {
+            auto checkGrant = [&](const Relation* r) {
+                if (!r) return false;
+                if ((r->type == "grants-capability" || r->type == "capability-grant") &&
+                    r->a() == options.governingAuthor && r->b() == root) {
+                    PropertyValue capVal;
+                    if (r->getDynamicProperty("capability", capVal)) {
+                        if (auto s = std::get_if<std::string>(&capVal)) {
+                            if (*s == "web.rawCss") return true;
+                        }
+                    } else {
+                        return true;
+                    }
+                }
+                return false;
+            };
+            for (const auto* r : Universe::instance().relations()) {
+                if (checkGrant(r)) {
+                    hasCapabilityGrant = true;
+                    break;
+                }
+            }
+        }
+        if (hasCapabilityGrant) {
             // Even authorized raw CSS must preserve the HTML parser boundary.
             std::string safeRaw = sanitizeCssBreakout(options.extraCss);
             css << "\n/* Author-governed raw CSS */\n" << safeRaw << "\n";

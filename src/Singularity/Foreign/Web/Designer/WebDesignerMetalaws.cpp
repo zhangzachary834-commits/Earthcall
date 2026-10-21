@@ -75,15 +75,19 @@ bool isSameLineage(const Law* candidate, const std::string& targetLawId) {
     return false;
 }
 
-bool isRelationActive(const Relation* r) {
+bool isRelationActive(const Relation* r, Formation* formation = nullptr, const std::vector<Relation*>& extraRels = {}) {
     if (!r) return false;
-    PropertyValue val;
-    if (r->getDynamicProperty("active", val)) {
-        if (auto b = std::get_if<bool>(&val)) {
-            if (!*b) return false;
+    // Canonical world-level graph check: is r the source endpoint of any superseded-by relation?
+    if (formation && formation->relations().isSuperseded(*r)) {
+        return false;
+    }
+    const std::string rId = r->getIdentifier();
+    for (const Relation* er : extraRels) {
+        if (er && er->type == "superseded-by" && ((er->a() == r) || (er->aId() == rId))) {
+            return false;
         }
     }
-    if (r->getDynamicProperty("superseded_by", val)) {
+    if (Universe::instance().isRelationSuperseded(*r)) {
         return false;
     }
     return true;
@@ -110,12 +114,19 @@ void WebDesignerMetalaws::authorWord(Person& author,
     // Retain Lexeme canonically in LanguageSystem so relation endpoint never dangles
     auto lexeme = Singularity::Language::LanguageSystem::instance().intern(symbol, stableLexemeId);
 
+    std::vector<Relation*> extraList;
+    if (outRelations) {
+        for (const auto& sr : *outRelations) {
+            if (sr) extraList.push_back(sr.get());
+        }
+    }
+
     // Sun Round 7 Gate 3: Target exact requested Law lineage, not whichever relation appears first!
     Law* previousLaw = nullptr;
 
     auto checkCandidate = [&](Relation* r) -> bool {
         if (!r || r->type != "denotes" || r->a() != lexeme.get()) return false;
-        if (!isRelationActive(r)) return false;
+        if (!isRelationActive(r, formation, extraList)) return false;
         auto* l = dynamic_cast<Law*>(r->b());
         if (l && isSameLineage(l, lawId)) {
             previousLaw = l;
@@ -153,6 +164,16 @@ void WebDesignerMetalaws::authorWord(Person& author,
         law->setActionModel(std::move(action));
         laws.add(law);
         targetLaw = law.get();
+
+        auto targetRel = std::make_shared<Relation>("denotes", *lexeme, *targetLaw, true, 1.0f);
+        if (formation) {
+            formation->relations().add(targetRel);
+        } else if (Universe::instance().hasRelationRegistrar()) {
+            Universe::instance().addRelation(targetRel);
+        }
+        if (outRelations) {
+            outRelations->push_back(targetRel);
+        }
     } else {
         // Redefinition: derive stable version identity from the actual previous active law in this lineage!
         std::string prevId = previousLaw->getIdentifier();
@@ -174,43 +195,64 @@ void WebDesignerMetalaws::authorWord(Person& author,
         laws.add(newLaw);
         targetLaw = newLaw.get();
 
-        // Sun Round 7 Gate 4, 5 & 12: Preserve historical relation truth without erasure (no removeBetween)!
-        // Mark previous relation(s) in this lineage as historical (active = false, superseded_by = versionedId)
-        auto markSuperseded = [&](Relation* r) {
-            if (r && r->type == "denotes" && r->a() == lexeme.get()) {
+        // Target new denotes relation
+        auto targetRel = std::make_shared<Relation>("denotes", *lexeme, *targetLaw, true, 1.0f);
+        if (formation) {
+            formation->relations().add(targetRel);
+        } else if (Universe::instance().hasRelationRegistrar()) {
+            Universe::instance().addRelation(targetRel);
+        }
+        if (outRelations) {
+            outRelations->push_back(targetRel);
+        }
+
+        // Sun Round 8 Gate 1 & 2: Supersession as First-Class Relation, not shadow string!
+        // Link all previous active denotes Relations in this lineage to targetRel with "superseded-by"
+        std::vector<Relation*> oldRelations;
+        auto collectOld = [&](Relation* r) {
+            if (r && r != targetRel.get() && r->type == "denotes" && r->a() == lexeme.get()) {
                 if (auto* l = dynamic_cast<Law*>(r->b())) {
-                    if (isSameLineage(l, lawId) && isRelationActive(r)) {
-                        r->setDynamicProperty("active", PropertyValue(false));
-                        r->setDynamicProperty("superseded_by", PropertyValue(versionedId));
+                    if (isSameLineage(l, lawId) && isRelationActive(r, formation, extraList)) {
+                        oldRelations.push_back(r);
                     }
                 }
             }
         };
-
         if (formation) {
             for (const auto& r : formation->relations().getAll()) {
-                markSuperseded(r.get());
+                collectOld(r.get());
             }
         }
         if (outRelations) {
             for (const auto& r : *outRelations) {
-                markSuperseded(r.get());
+                collectOld(r.get());
             }
         }
         for (const auto* r : Universe::instance().relations()) {
-            markSuperseded(const_cast<Relation*>(r));
+            collectOld(const_cast<Relation*>(r));
         }
-    }
 
-    auto rel = std::make_shared<Relation>("denotes", *lexeme, *targetLaw, true, 1.0f);
-    rel->setDynamicProperty("active", PropertyValue(true));
-    if (formation) {
-        formation->relations().add(rel);
-    } else if (Universe::instance().hasRelationRegistrar()) {
-        Universe::instance().addRelation(rel);
-    }
-    if (outRelations) {
-        outRelations->push_back(rel);
+        for (Relation* oldRel : oldRelations) {
+            auto subRel = std::make_shared<Relation>("superseded-by", *oldRel, *targetRel, true, 1.0f);
+            if (formation) {
+                formation->relations().add(subRel);
+            } else if (Universe::instance().hasRelationRegistrar()) {
+                Universe::instance().addRelation(subRel);
+            }
+            if (outRelations) {
+                outRelations->push_back(subRel);
+            }
+        }
+
+        auto lawSupersedesRel = std::make_shared<Relation>("supersedes", *targetLaw, *previousLaw, true, 1.0f);
+        if (formation) {
+            formation->relations().add(lawSupersedesRel);
+        } else if (Universe::instance().hasRelationRegistrar()) {
+            Universe::instance().addRelation(lawSupersedesRel);
+        }
+        if (outRelations) {
+            outRelations->push_back(lawSupersedesRel);
+        }
     }
 }
 
@@ -235,14 +277,31 @@ bool WebDesignerMetalaws::loadAuthoredVocabularyFromJsonString(
 
         auto resolvePerson = [](const std::string& name) -> Person* {
             if (name.empty()) return nullptr;
+
+            // 1. Exact stable identifier / DID match takes absolute priority
+            std::vector<Person*> stableMatches;
             for (Singular* b : Universe::instance().beings()) {
                 if (auto* p = dynamic_cast<Person*>(b)) {
-                    if (p->matchesIdentifier(name) || p->getIdentifier() == name || p->getDisplayName() == name ||
-                        (p->called() && p->called()->getSymbol() == name)) {
-                        return p;
+                    if (p->getIdentifier() == name || p->matchesIdentifier(name)) {
+                        stableMatches.push_back(p);
                     }
                 }
             }
+            if (stableMatches.size() == 1) return stableMatches[0];
+            if (stableMatches.size() > 1) return nullptr; // Ambiguous stable identities refuse!
+
+            // 2. Legacy bare-name / display name fallback: ONLY if strictly UNAMBIGUOUS!
+            std::vector<Person*> displayMatches;
+            for (Singular* b : Universe::instance().beings()) {
+                if (auto* p = dynamic_cast<Person*>(b)) {
+                    if (p->getDisplayName() == name || (p->called() && p->called()->getSymbol() == name)) {
+                        displayMatches.push_back(p);
+                    }
+                }
+            }
+            if (displayMatches.size() == 1) return displayMatches[0];
+            // Sun Round 8 Gate 4: THE ACTUAL TWO-ZACHS BUG!
+            // If multiple Persons share the display name, strictly REFUSE/quarantine, never guess first!
             return nullptr;
         };
 
@@ -380,7 +439,7 @@ WebConcept WebDesignerMetalaws::compilePhrase(const std::string& phrase,
     auto collectFrom = [&](const std::vector<Relation*>& rels) {
         for (const auto* rel : rels) {
             if (!rel || rel->type != "denotes") continue;
-            if (!isRelationActive(rel)) continue;
+            if (!isRelationActive(rel, nullptr, extraRelations)) continue;
             auto* lex = dynamic_cast<Singularity::Language::Lexeme*>(rel->a());
             auto* law = dynamic_cast<Law*>(rel->b());
             if (lex && law) {
@@ -477,35 +536,19 @@ WebConcept WebDesignerMetalaws::compilePhrase(const std::string& phrase,
                         if (entry.candidates.size() == 1) {
                             chosenLaw = entry.candidates[0];
                         } else if (entry.candidates.size() > 1) {
-                            // Check authored context / resolution on channelTarget
-                            PropertyValue resVal;
-                            if (channelTarget.getDynamicProperty("web.resolve." + entry.symbol, resVal) ||
-                                channelTarget.getDynamicProperty("context." + entry.symbol, resVal) ||
-                                channelTarget.getDynamicProperty("web.context", resVal)) {
-                                std::string targetId;
-                                if (auto s = std::get_if<std::string>(&resVal)) targetId = *s;
-                                for (Law* c : entry.candidates) {
-                                    if (c && (c->getIdentifier() == targetId || isSameLineage(c, targetId))) {
-                                        chosenLaw = c;
-                                        break;
-                                    }
-                                }
+                            // Sun Round 7 & 8 Gate 3: Kill the Alphabetical Oracle and magic compiler-slot properties!
+                            // Unrelated ambiguity strictly refuses!
+                            std::string candidateIds;
+                            for (size_t ci = 0; ci < entry.candidates.size(); ++ci) {
+                                if (ci > 0) candidateIds += ", ";
+                                candidateIds += entry.candidates[ci]->getIdentifier();
                             }
-                            if (!chosenLaw) {
-                                // Sun Round 7 Gate 1 & 2: Kill the Alphabetical Oracle!
-                                // Strictly REFUSE! No alphabetical tie-breaking!
-                                std::string candidateIds;
-                                for (size_t ci = 0; ci < entry.candidates.size(); ++ci) {
-                                    if (ci > 0) candidateIds += ", ";
-                                    candidateIds += entry.candidates[ci]->getIdentifier();
-                                }
-                                if (outError) {
-                                    *outError = "Ambiguous denotation for '" + entry.symbol +
-                                                "': multiple unrelated Laws denoted (" + candidateIds +
-                                                "); requires authored context or Metalaw resolution";
-                                }
-                                return WebConcept();
+                            if (outError) {
+                                *outError = "Ambiguous denotation for '" + entry.symbol +
+                                            "': multiple unrelated Laws denoted (" + candidateIds +
+                                            "); author resolution required";
                             }
+                            return WebConcept();
                         }
 
                         if (chosenLaw) {
@@ -583,11 +626,13 @@ Singular& WebDesignerMetalaws::applyAuthoredConcept(
 
     // Form first-class Earthcall provenance Relation connecting to the actual author Person.
     // The Relation is the SOLE source of truth — NO shadow string property!
+    // Sun Round 8 Gate 7: Canonical single-sink admission.
+    // If outRelations is provided, pass the relation to the caller's sink;
+    // only if outRelations is null do we fall back to Universe registrar.
     auto authRel = std::make_shared<Relation>(WebRelationType::kAuthoredBy, bearer, author, true, 1.0f);
     if (outRelations) {
         outRelations->push_back(authRel);
-    }
-    if (Universe::instance().hasRelationRegistrar()) {
+    } else if (Universe::instance().hasRelationRegistrar()) {
         Universe::instance().addRelation(authRel);
     }
 

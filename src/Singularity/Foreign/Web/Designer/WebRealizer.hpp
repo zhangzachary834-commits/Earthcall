@@ -97,9 +97,10 @@ public:
     // Even unrestricted raw CSS must preserve the HTML parser boundary.
     static std::string sanitizeCssBreakout(const std::string& css);
 
-    // Sanitizes a single CSS property value: unescapes CSS escape sequences, neutralizes </style>,
+    // Truthfully labeled conservative CSS-value filter: unescapes CSS escape sequences, neutralizes </style>,
     // strips semicolons and curly braces to prevent smuggling additional declarations,
-    // and blocks network url(...) unless permitted.
+    // and blocks network url(...), @import, and expression(...) unless permitted.
+    // (Note: This is a conservative declaration/breakout sanitizer, not a typed CSS grammar validator).
     static std::string sanitizeCssValue(const std::string& value, bool allowNetworkUrl = false);
 };
 
@@ -135,23 +136,59 @@ public:
                                   Formation* formation = nullptr,
                                   std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 
+    // Authors a real world-owned theme definition Being carrying its design tokens
+    // with explicit Person stewardship. (Sun Round 8 Gate 5: No static plush!)
+    static std::shared_ptr<Object> authorThemeDefinition(
+        const std::string& themeName,
+        Person* author = nullptr,
+        Formation* formation = nullptr,
+        std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
     // Authors full modern dark theme design tokens loading from authored fixture web_themes.json
     static void applyModernDarkTheme(Singular& root,
                                      Person& author,
+                                     Formation* formation = nullptr,
                                      std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 
     static void applyModernDarkTheme(Singular& root,
                                      Person* author = nullptr,
+                                     Formation* formation = nullptr,
                                      std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    static void applyModernDarkTheme(Singular& root,
+                                     Person& author,
+                                     std::vector<std::shared_ptr<Relation>>* outRelations) {
+        applyModernDarkTheme(root, author, nullptr, outRelations);
+    }
+
+    static void applyModernDarkTheme(Singular& root,
+                                     Person* author,
+                                     std::vector<std::shared_ptr<Relation>>* outRelations) {
+        applyModernDarkTheme(root, author, nullptr, outRelations);
+    }
 
     // Authors clean neutral light theme design tokens loading from authored fixture web_themes.json
     static void applyNeutralLightTheme(Singular& root,
                                        Person& author,
+                                       Formation* formation = nullptr,
                                        std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 
     static void applyNeutralLightTheme(Singular& root,
                                        Person* author = nullptr,
+                                       Formation* formation = nullptr,
                                        std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    static void applyNeutralLightTheme(Singular& root,
+                                       Person& author,
+                                       std::vector<std::shared_ptr<Relation>>* outRelations) {
+        applyNeutralLightTheme(root, author, nullptr, outRelations);
+    }
+
+    static void applyNeutralLightTheme(Singular& root,
+                                       Person* author,
+                                       std::vector<std::shared_ptr<Relation>>* outRelations) {
+        applyNeutralLightTheme(root, author, nullptr, outRelations);
+    }
 };
 
 } // namespace Web

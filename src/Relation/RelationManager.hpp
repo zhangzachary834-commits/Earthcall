@@ -85,6 +85,12 @@ public:
     std::vector<std::shared_ptr<Relation>> getRelationsBetween(const std::string& a, const std::string& b) const;
     std::vector<std::shared_ptr<Relation>> getRelationsOfType(const std::string& type) const;
 
+    // Canonical world-level supersession queries:
+    // A relation is superseded if another relation in this graph declares
+    // `superseded-by` with this relation as its source endpoint (a).
+    bool isSuperseded(const Relation& r) const;
+    bool isCurrent(const Relation& r) const;
+
     std::vector<std::string> findAdjacentEntities(const std::string& entityId, const std::string& relationType = "") const;
 
     bool wouldFormCycle(const Singular* start, const Singular* target, const std::string& relationType) const;

@@ -129,6 +129,12 @@ public:
         return out;
     }
 
+    // World-level canonical supersession query:
+    // A relation is superseded if another relation in the world graph declares
+    // `superseded-by` with this relation as its source endpoint (a).
+    bool isRelationSuperseded(const Relation& r) const;
+    bool isRelationCurrent(const Relation& r) const;
+
     // Registering a NEW relation into the world's graph — the write side.
     // The engine wires this to the active zone's Formation; concept
     // instantiation uses it so a captured set's inter-member relations are

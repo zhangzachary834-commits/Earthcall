@@ -62,29 +62,33 @@ Singular& WebDesignerChannel::authorElementFromPhrase(
     Formation* explicitFormation) {
 
     WebConcept concept;
-    Object compileSlot;
-    compileSlot.setObjectID("web-compiler-" + target.getIdentifier());
     std::vector<Relation*> extraRels;
     for (const auto& r : _draftRelations) {
         if (r) extraRels.push_back(r.get());
     }
+    // Sun Round 8 Gate 3: Compile directly against the actual target being, never an ephemeral dummy slot
     if (laws) {
-        concept = WebDesignerMetalaws::compilePhrase(phrase, *laws, compileSlot, nullptr, extraRels);
+        concept = WebDesignerMetalaws::compilePhrase(phrase, *laws, target, nullptr, extraRels);
     } else {
         LawManager tempManager;
         WebDesignerMetalaws::syncRegister(tempManager);
-        concept = WebDesignerMetalaws::compilePhrase(phrase, tempManager, compileSlot, nullptr, extraRels);
+        concept = WebDesignerMetalaws::compilePhrase(phrase, tempManager, target, nullptr, extraRels);
     }
 
     if (!text.empty()) {
         concept.text = text;
     }
 
-    WebDesignerMetalaws::applyAuthoredConcept(target, concept, author);
+    // Sun Round 8 Gate 7: Canonical single-sink admission.
+    // applyAuthoredConcept creates the single authored-by relation;
+    // authorElementFromPhrase admits it to the explicit sink.
+    std::vector<std::shared_ptr<Relation>> producedRelations;
+    WebDesignerMetalaws::applyAuthoredConcept(target, concept, author, &producedRelations);
 
-    auto authRel = std::make_shared<Relation>(WebRelationType::kAuthoredBy, target, author, true, 1.0f);
-    _draftRelations.push_back(authRel);
-    admitRelation(authRel, explicitZone, explicitFormation);
+    for (const auto& rel : producedRelations) {
+        _draftRelations.push_back(rel);
+        admitRelation(rel, explicitZone, explicitFormation);
+    }
 
     return target;
 }
@@ -188,15 +192,14 @@ std::shared_ptr<Singular> WebDesignerChannel::draftElementFromPhrase(
 
     auto elem = std::make_shared<Object>();
     elem->setObjectID(identifier);
-    Object compileSlot;
-    compileSlot.setObjectID("web-compiler-" + identifier);
     WebConcept concept;
+    // Sun Round 8 Gate 3: Compile directly against the actual element, not an ephemeral dummy slot
     if (laws) {
-        concept = WebDesignerMetalaws::compilePhrase(phrase, *laws, compileSlot);
+        concept = WebDesignerMetalaws::compilePhrase(phrase, *laws, *elem);
     } else {
         LawManager tempManager;
         WebDesignerMetalaws::syncRegister(tempManager);
-        concept = WebDesignerMetalaws::compilePhrase(phrase, tempManager, compileSlot);
+        concept = WebDesignerMetalaws::compilePhrase(phrase, tempManager, *elem);
     }
     if (!text.empty()) {
         concept.text = text;

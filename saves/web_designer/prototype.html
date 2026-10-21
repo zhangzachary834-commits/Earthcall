@@ -19,7 +19,6 @@
   --web-accent: #818cf8;
   --web-radius: 0.75rem;
   --web-radius-pill: 9999px;
-  --web-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --web-hero-bg: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 70%);
   --web-hero-padding: 4rem 1.5rem;
   --web-card-bg: #182338;
@@ -79,7 +78,7 @@ body {
   font-family: var(--web-font-sans);
   background-color: var(--web-bg);
   color: var(--web-text);
-  line-height: 1.6;
+  line-height: inherit;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
@@ -220,7 +219,7 @@ h6.web-heading { font-size: var(--web-h6-size); }
   border: 1px solid transparent;
   transition: var(--web-action-transition);
   text-decoration: none;
-  line-height: 1.2;
+  line-height: inherit;
   box-sizing: border-box;
   font-family: inherit;
 }
@@ -255,7 +254,7 @@ h6.web-heading { font-size: var(--web-h6-size); }
 
 .web-surface--outline.web-action,
 .web-surface--outline.web-btn {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: transparent;
   border: 1px solid var(--web-border);
   color: var(--web-text);
 }
@@ -263,7 +262,7 @@ h6.web-heading { font-size: var(--web-h6-size); }
 .web-surface--outline.web-btn:hover {
   border-color: var(--web-primary);
   color: var(--web-primary);
-  background-color: rgba(56, 189, 248, 0.1);
+  background-color: transparent;
 }
 
 .web-surface--default.web-action,
@@ -283,7 +282,9 @@ h6.web-heading { font-size: var(--web-h6-size); }
 
 /* Quote */
 .web-quote {
-  border-left: 4px solid var(--web-quote-border);
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-left-color: var(--web-quote-border);
   background: var(--web-quote-bg);
   padding: var(--web-quote-padding);
   font-style: italic;
@@ -293,9 +294,8 @@ h6.web-heading { font-size: var(--web-h6-size); }
 /* Divider */
 .web-divider {
   border: 0;
-  height: 1px;
-  background-color: var(--web-border);
-  margin: 2rem 0;
+  border-top: 1px solid var(--web-border);
+  margin: 1em 0;
   width: 100%;
 }
   </style>
