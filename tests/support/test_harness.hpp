@@ -62,6 +62,11 @@ struct BootedEngineHarness {
         // same runtime graph as the app.
         Physics::setLawManager(&lawManager);
 
+        // Collisions feed the relation graph (recordCollision). Mirror EngineInit:
+        // wire physics event listeners so PhysicsCollisionEvent on EventBus reaches
+        // Physics::registry().
+        Physics::setupPhysicsEventListeners();
+
         // 1. Sync register standard channels like InteractionChannel
         Singularity::Input::InteractionChannel::syncRegister(lawManager);
         interaction = Singularity::Input::InteractionChannel::find(lawManager);
