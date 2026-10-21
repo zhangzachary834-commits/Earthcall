@@ -2598,3 +2598,54 @@ A cell holding a kink has no Hessian, so its bound is first-order (∝ L·W²/m)
 - No save, data home, default, tolerance, lighting, installed app or native timestamp changed. No new visible behavior, so no Person check.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T23:12-07:00. Human origin: Zach's instruction above. Codex originated the per-panel depth arithmetic, the a-posteriori region march and the native gates. The dilated grid, the device DDA, its containment check and the kink diagnosis are mine.
+
+
+## 6bf. Kink-aware device panels: occupied admission 4/42 → 24/42; the declared execution model is now the blocker (2026-10-20)
+
+**Human origin.** Zach: "BROOOOOO YAYAYASSS NEXT PASSSSSSSS". This is step 4 of the [distance account](../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Ray_Domain_Transport_Compilation/Ray_Domain_Transport_Compilation.md#distance-to-a-faster-northern-veil). It brings this plan's own Rung 2 idea (split a ray where a switch changes sign) onto the grid march.
+
+**Correction to §6be.** Its "22/64 admitted" counted the 22 rays that never touch a curtain. Measured on the same code with kink evidence off, the occupied figure is **4/42**. The test now reports occupied admission separately.
+
+**Host (`proveGrid(…, margin, conditionalSwitches)`).** For each occupied cell, `conditionalEvidence` records:
+- its relevant undecided switches (`relevantUndecided` under the cell signature, at most the cap; Select pieces and switches without an authored operand are excluded);
+- each switch function's sup|∇g| (`lipschitzBoundOverBox`) and device error (`switchSlack` under the device model, plus the f32 rounding of a clamp threshold);
+- one `certifyBox` per sign assignment, with **forced** starting signs.
+
+A forced certificate bounds the branch expression over the whole cell, which equals σ only where those signs hold; the device must prove that first. Execution slack is never forced.
+
+Census (Release, h=4, cap 6, emerald): 1,118/1,230 cells carry evidence. **Every conditional certificate has a finite Hessian** (23,470/23,470), and 73% are exactly zero. Cost 1.3 s (cap 8: 1,223 cells, 2.2 s).
+
+**Device (`lineGridDepthCore`).**
+- At a point a, switch g cannot change sign within (|g(a)| − e_g − L_g·halo)/(L_g·|d|). All arithmetic is outward-rounded: the numerator down, the rate up, the step end down.
+- Runs of constant signs are extended by such steps. Each run uses the certificate for its signs, and a run whose certificate is exactly [0, 0] is skipped without evaluating σ. That is sound: there σ ≡ 0, so nothing is computed and nothing is wrong.
+- Near a crossing, slivers under the cell's unconditional constants double in width until the signs are proved again.
+- Switch functions are lowered from their authored operands with the production emitter, as Codex's support killers do.
+- Work choice per run: the cheaper of the first- and second-order panel counts for the run's budget share, but never driving the mathematical part below a quarter of the run's own execution bound.
+
+**Metal (`webgpu_line_quadrature_test` 201/201, same 16 rays × 4 curtains, 8 directions, two clocks):**
+
+| | occupied admitted (T tol 0.006) | σ calls/ray | switch evals/ray | refused rays' depth bound, math / exec |
+|---|---|---|---|---|
+| kink evidence off | **4/42** | 529–658 | 0 | 0.034–0.052 / 0.006–0.012 |
+| kink evidence on | **24/42** | 364–500 | 334–564 | 0.0017–0.0078 / 0.006–0.012 |
+
+- All 64 rays remain sound against the independent reference.
+- Empty rays still carry the device exp allowance's 2⁻¹⁰ ≈ 0.000977 floor.
+- Batches with kink evidence take longer (88–119 ms vs 56–71 ms for 32×16 rays), because switch evaluations and branch divergence are added. These are small compute dispatches, not frame time.
+
+**What blocks the other 18/42.** On every refused ray, the execution part of the depth bound *alone* (0.006–0.012) exceeds the whole 0.006 budget. It scales with occupied path length × the per-sample device error, which the declared model's 2⁻¹⁰ allowance per trig/exp call dominates. That is §6at/§6au's old finding, now isolated. The remedy is a tighter **declared** device model (Codex's open Metal profile work; the declared execution model is Zach's ⚑ decision), or authoring that charges fewer trig calls (a Let-shared wave value). It is never a silent tolerance change.
+
+**Also open:**
+- Kink-evidence cost: prune sign assignments the cell proves infeasible.
+- Total budget is allocated across the whole ray span, including its empty part.
+- RGB through the shared depth reduction (step 5).
+- Then the cost A/B (step 6).
+
+**Shipping ledger:**
+- Mathematical/error contract: unchanged and exact; sound on every ray in every direction.
+- Economical execution: occupied admission is 24/42; execution-model-bound; proving is ~1.3 s per curtain per clock window (Release).
+- Native renderer integration: unconnected.
+- Shipped performance: no claim.
+- No save, data home, default, tolerance, lighting, installed app or native timestamp changed. No visible behavior, so no Person check.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T23:45-07:00. Human origin: Zach's instruction above. Codex originated the switch-operand lowering pattern (support killers), the switch slack office and the device model. The forced-sign certificates, root-free run stepping, doubling slivers and execution-balanced work choice are mine.

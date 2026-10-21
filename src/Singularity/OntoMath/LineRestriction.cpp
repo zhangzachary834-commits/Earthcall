@@ -2343,16 +2343,21 @@ namespace {
 // One certificate over an axis-aligned box (plan §6ar/§6at): range, Lipschitz,
 // Hessian and one device evaluation's error. Shared by the magnitude bands and
 // the per-region grid.
+// `forced` (plan §6bf): start the MATHEMATICAL classification from these signs.
+// The result then bounds the branch expression they select over the whole box,
+// which equals the field only where those signs hold; the caller must prove
+// that before use. Execution slack is never forced.
 std::optional<LineQuadratureBand> certifyBox(const LineAlgebraicForm& form, uint32_t root,
                                              const ExecutionModel& deviceModel, const Interval box[3],
                                              const std::map<std::string, Interval>& symbolBox,
-                                             const std::map<std::string, double>& symbolMagnitudes) {
+                                             const std::map<std::string, double>& symbolMagnitudes,
+                                             const std::vector<int8_t>* forced = nullptr) {
     LineQuadratureBand band;
     // Mathematical signs are proved over the whole box. Execution signs
     // additionally need the device's margin: never reuse the former as the
     // latter. Classification is the segmenter's shared invariant office.
-    auto signsFor = [&](const LineAlgebraicEvaluator& ev) {
-        std::vector<int8_t> signs(form.switches.size(), 0);
+    auto signsFor = [&](const LineAlgebraicEvaluator& ev, const std::vector<int8_t>* start = nullptr) {
+        std::vector<int8_t> signs = start ? *start : std::vector<int8_t>(form.switches.size(), 0);
         bool progress;
         do {
             progress = false;
@@ -2379,7 +2384,7 @@ std::optional<LineQuadratureBand> certifyBox(const LineAlgebraicForm& form, uint
         // query, it is the fresh evaluator a second construction would build.
         executed.emplace(ev);
         bool undefined = false;
-        band.branchSignature = signsFor(ev);
+        band.branchSignature = signsFor(ev, forced);
         const Interval r = ev.range(root, 0.0, 0.0, band.branchSignature, &undefined);
         if (undefined || !r.bounded()) return std::nullopt;
         band.width = double(r.hi) - double(r.lo);
@@ -2451,6 +2456,68 @@ std::optional<LineQuadratureBand> certifyBox(const LineAlgebraicForm& form, uint
     band.execution = executed->slack(root, 0.0, 0.0, signsFor(*executed));
     if (!std::isfinite(band.execution)) return std::nullopt;
     return band;
+}
+// Plan §6bf: what a device needs to split a ray segment inside this cell at its
+// kinks. The relevant undecided switches of the cell's certificate, each switch
+// function's gradient bound and device evaluation error over the box, and one
+// certificate per sign assignment of those switches. nullopt when the cell has
+// none, more than `cap`, or one the device cannot evaluate (Select pieces, or no
+// authored operand); the cell then keeps its unconditional certificate alone.
+std::optional<RegionProofGrid::Conditional> conditionalEvidence(
+        const LineAlgebraicForm& form, uint32_t root, const ExecutionModel& deviceModel, const Interval box[3],
+        const std::map<std::string, Interval>& symbolBox, const std::map<std::string, double>& symbolMagnitudes,
+        const LineQuadratureBand& cell, std::size_t cap) {
+    if (cap == 0) return std::nullopt;
+    std::map<std::string, Interval> b = symbolBox;
+    for (int i = 0; i < 3; ++i) { b[kLineOriginVars[i]] = box[i]; b[kLineDirectionVars[i]] = Interval(0.0f); }
+    LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
+    if (!ev.ok()) return std::nullopt;
+    std::vector<uint32_t> open;
+    ev.relevantUndecided(root, cell.branchSignature, open);
+    std::sort(open.begin(), open.end());
+    open.erase(std::unique(open.begin(), open.end()), open.end());
+    if (open.empty() || open.size() > cap) return std::nullopt;
+    for (uint32_t k : open) {
+        const auto& sw = form.switches[k];
+        const auto& node = form.nodes[sw.node];
+        if (sw.role > 3 || !node.sourceA || (sw.role == 1 && !node.sourceB)) return std::nullopt;
+    }
+    std::map<std::string, double> magnitudes = symbolMagnitudes;
+    magnitudes["x"] = std::max(std::abs(double(box[0].lo)), std::abs(double(box[0].hi)));
+    magnitudes["y"] = std::max(std::abs(double(box[1].lo)), std::abs(double(box[1].hi)));
+    magnitudes["z"] = std::max(std::abs(double(box[2].lo)), std::abs(double(box[2].hi)));
+    LineAlgebraicEvaluator executed(form, b, /*undefinedAsZero=*/false);
+    executed.setExecutionModel(deviceModel, magnitudes);
+    std::vector<int8_t> executedSigns(form.switches.size(), 0);
+    for (bool progress = true; progress;) {
+        progress = false;
+        for (std::size_t k = 0; k < executedSigns.size(); ++k) {
+            if (executedSigns[k] != 0) continue;
+            const int8_t sign = executed.classifySwitch(k, 0.0, 0.0, executedSigns);
+            if (sign != 0) { executedSigns[k] = sign; progress = true; }
+        }
+    }
+    RegionProofGrid::Conditional out;
+    out.switches = open;
+    for (uint32_t k : open) {
+        const auto gradient = lipschitzBoundOverBox(form, k, box, symbolBox, /*undefinedAsZero=*/false);
+        const double slack = executed.switchSlack(k, 0.0, 0.0, executedSigns);
+        if (!gradient || !std::isfinite(*gradient) || !std::isfinite(slack)) return std::nullopt;
+        // A clamp threshold reaches the device as an f32 literal: charge its rounding.
+        const auto& sw = form.switches[k];
+        const auto& node = form.nodes[sw.node];
+        double threshold = 0.0;
+        if (sw.role == 2) threshold = std::abs(node.lo - double(float(node.lo)));
+        if (sw.role == 3) threshold = std::abs(node.hi - double(float(node.hi)));
+        out.gradient.push_back(*gradient);
+        out.execution.push_back(slack + threshold);
+    }
+    for (uint32_t mask = 0; mask < (1u << open.size()); ++mask) {
+        std::vector<int8_t> forced = cell.branchSignature;
+        for (std::size_t q = 0; q < open.size(); ++q) forced[open[q]] = (mask >> q) & 1u ? 1 : -1;
+        out.bands.push_back(certifyBox(form, root, deviceModel, box, symbolBox, symbolMagnitudes, &forced));
+    }
+    return out;
 }
 } // namespace
 
@@ -2834,7 +2901,7 @@ void RegionCertificate::indexBox(const long long first[3], const long long last[
 
 std::optional<RegionProofGrid> RegionCertificate::proveGrid(const double lo[3], const double hi[3],
                                                             std::size_t maxProofs, std::string* why,
-                                                            double margin) const {
+                                                            double margin, std::size_t conditionalSwitches) const {
     auto refuse = [&](const char* text) -> std::optional<RegionProofGrid> {
         if (why) *why = text;
         return std::nullopt;
@@ -2874,6 +2941,11 @@ std::optional<RegionProofGrid> RegionCertificate::proveGrid(const double lo[3], 
         if (single) {
             if (!c) { complete = false; break; }
             if (margin == 0.0) _cache.emplace(a, c);   // only undilated leaves are over()'s cells
+            if (auto evidence = conditionalEvidence(form, root, _model, box, _symbolBox, _symbolMagnitudes, *c,
+                                                    conditionalSwitches)) {
+                grid.proofs += evidence->bands.size();
+                grid.conditional.emplace(a, std::move(*evidence));
+            }
             grid.occupied.emplace(a, std::move(*c));
             continue;
         }

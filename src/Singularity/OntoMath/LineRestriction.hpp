@@ -722,6 +722,17 @@ struct RegionProofGrid {
     std::array<long long, 3> first{}, last{};
     std::vector<ZeroBlock> zero;
     std::map<std::array<long long, 3>, LineQuadratureBand> occupied;
+    // Plan §6bf, kink evidence for some occupied cells: their relevant undecided
+    // switches (each a function g a device can evaluate), sup|∇g| over the
+    // dilated cell, the device's error evaluating g there, and one certificate
+    // per sign assignment (bit q set: switch q proved > 0). A certificate bounds
+    // the field only on points where its signs hold; nullopt: none proved.
+    struct Conditional {
+        std::vector<uint32_t> switches;
+        std::vector<double> gradient, execution;
+        std::vector<std::optional<LineQuadratureBand>> bands;
+    };
+    std::map<std::array<long long, 3>, Conditional> conditional;
     std::size_t proofs = 0;   // certifyBox calls made (host work, not device work)
 };
 
@@ -755,8 +766,11 @@ public:
     // cell cannot be certified, the grid is incomplete and nullopt returns.
     // Occupied leaves also fill over()'s cache (they are the same answers).
     std::optional<RegionProofGrid> proveGrid(const double lo[3], const double hi[3], std::size_t maxProofs,
-                                             std::string* why = nullptr, double margin = 0.0) const;
+                                             std::string* why = nullptr, double margin = 0.0,
+                                             std::size_t conditionalSwitches = 0) const;
     double cell() const { return _cell; }
+    // The lowered source a device emitter needs to evaluate switch functions.
+    const LineAlgebraicForm* form() const { return _restriction ? &*_restriction.form : nullptr; }
     const ExecutionModel& model() const { return _model; }
     const std::string& sourceExpression() const { return _sourceExpression; }
     const std::map<std::string, std::pair<double, double>>& symbols() const { return _symbols; }

@@ -3173,18 +3173,24 @@ fn lineScheduledWorkAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,clock:f32,o
     return out;
 }
 
-// Plan §6be: σ depth and transmittance along ANY ray through a camera-independent
-// RegionProofGrid. Each ray walks the grid's cells (DDA). A cell a containing
-// proof shows ≡ 0 contributes exactly nothing and is never evaluated. An occupied
-// cell's segment uses that cell's own constants in the same per-panel bound
-// arithmetic as lowerScheduledTransport's depth program. Before a panel uses a
-// cell, the device checks that the panel's swept box, positional halo included,
-// lies inside that cell dilated by the grid margin, which the host proved;
-// otherwise the ray refuses. Sub-panel counts are a work choice; only the
-// accumulated bound admits. Claude Code / Claude Opus 5.5 / f3af84cf / 2026-10-20.
+// Plan §6be/§6bf: σ depth and transmittance along ANY ray through a camera-
+// independent RegionProofGrid. Each ray walks the grid's cells (DDA). A cell a
+// containing proof shows ≡ 0 contributes exactly nothing and is never evaluated.
+// An occupied cell's segment uses that cell's constants in the same per-panel
+// bound arithmetic as lowerScheduledTransport's depth program. Where the host
+// supplied kink evidence (§6bf), the segment is first split into runs on which
+// every undecided switch keeps a sign the device has proved: a switch g cannot
+// change sign within (|g(a)| − its device error − L·halo)/(L·|d|) of a point a.
+// A run uses the certificate for its signs, which has a finite Hessian, and is
+// skipped outright when that certificate is exactly zero. Near a crossing a
+// short sliver keeps the cell's unconditional bound. Before a panel uses a cell,
+// the device checks that the panel's swept box, positional halo included, lies
+// inside that cell dilated by the grid margin; otherwise the ray refuses.
+// Sub-panel counts are a work choice; only the accumulated bound admits.
+// Claude Code / Claude Opus 5.5 / f3af84cf / 2026-10-20.
 static Program lowerGridDepth(Emit& e, std::string prelude, const std::string& domain,
                               const OntoMath::RegionProofGrid& grid, const OntoMath::ExecutionModel& model,
-                              uint32_t maxPanels) {
+                              uint32_t maxPanels, const OntoMath::LineAlgebraicForm* form) {
     Program out;
     auto up = [&](double x) {
         float f = float(x);
@@ -3208,15 +3214,45 @@ static Program lowerGridDepth(Emit& e, std::string prelude, const std::string& d
     if (cells > (1LL << 22)) e.refuse("grid transport index exceeds 2^22 cells");
     if (double(reach) * grid.cell / std::max(grid.margin, 1e-300) >= 0x1p22) e.refuse("grid faces ± margin are not exact f32 values");
     if (maxPanels < 1 || maxPanels > 65536) e.refuse("grid transport needs 1..65536 panels");
+    if (!grid.conditional.empty() && !form) e.refuse("kink evidence needs the certificate's lowered form");
     const double a = model.exponentialAbsolute(), r = model.expRelative;
     if (!(std::isfinite(a) && a >= 0 && std::isfinite(r) && r >= 0 && r < 1) || !(up(r) < 1.0f)) e.refuse("invalid grid exponential model");
     const std::string h = e.param(float(grid.cell)), margin = e.param(float(grid.margin));
+    const std::string sliver = e.param(float(std::ldexp(grid.cell, -10)));
     const std::string fx = e.param(float(grid.first[0])), fy = e.param(float(grid.first[1])), fz = e.param(float(grid.first[2]));
     const std::string nx = e.param(float(dims[0])), ny = e.param(float(dims[1])), nz = e.param(float(dims[2]));
     const std::string expA = e.param(up(a)), expR = e.param(up(r)), expRound = e.param(up(r + 4.0 * std::ldexp(1.0, -23)));
-    // Dense cell → slot index (-1: inside a zero block), then 7 constants per slot.
+    // Every switch any cell may split on, lowered from its authored operand with
+    // the production emitter (as the support killers do).
+    std::set<uint32_t> used;
+    for (const auto& [c, k] : grid.conditional) used.insert(k.switches.begin(), k.switches.end());
+    std::string switchFn = "fn lineSwitchAt(k:u32,p:vec3<f32>,clock:f32,omega:vec3<f32>)->f32 {\n";
+    for (uint32_t k : used) {
+        if (e.refused || !form || k >= form->switches.size()) { e.refuse("kink evidence names an unknown switch"); break; }
+        const auto& sw = form->switches[k];
+        const auto& node = form->nodes[sw.node];
+        if (sw.role > 3 || !node.sourceA || (sw.role == 1 && !node.sourceB)) { e.refuse("a kink switch has no device operand"); break; }
+        const std::string saved = std::move(e.body);
+        e.body.clear();
+        const std::string av = emitMathNode(*node.sourceA, e, "p");
+        const std::string bv = sw.role == 1 ? emitMathNode(*node.sourceB, e, "p") : std::string();
+        const std::string g = sw.role == 0 ? av : sw.role == 1 ? "(" + av + ") - (" + bv + ")"
+                            : "(" + av + ") - " + e.param(float(sw.role == 2 ? node.lo : node.hi));
+        switchFn += " if(k==" + std::to_string(k) + "u){\n" + e.body + "  return " + g + ";\n }\n";
+        e.body = saved;
+    }
+    switchFn += " return bitcast<f32>(0x7fc00000u);\n}\n";
+    // Dense cell → record offset (-1: inside a zero block). A record is the
+    // cell's 7 constants, its kink-switch count n, (switch, sup|∇g|, g error)×n,
+    // then 7 constants per sign assignment.
     std::vector<float> index(std::size_t(e.refused ? 0 : cells), -1.0f);
-    std::vector<float> slots;
+    std::vector<float> records;
+    auto constants = [&](const OntoMath::LineQuadratureBand& b) {
+        if (!(std::isfinite(b.low) && std::isfinite(b.high) && b.hessian >= 0.0)) e.refuse("invalid occupied cell certificate");
+        for (double v : {b.lipschitz, b.width, b.sup, b.execution}) records.push_back(up(v));
+        records.push_back(std::isfinite(b.hessian) ? up(b.hessian) : -1.0f);
+        records.push_back(lower(b.low)); records.push_back(upper(b.high));
+    };
     if (!e.refused) {
         for (const auto& [c, b] : grid.occupied) {
             long long k = 0;
@@ -3225,11 +3261,22 @@ static Program lowerGridDepth(Emit& e, std::string prelude, const std::string& d
                 k = k * dims[i] + (c[i] - grid.first[i]);
             }
             if (e.refused) break;
-            if (!(std::isfinite(b.low) && std::isfinite(b.high) && b.hessian >= 0.0)) e.refuse("invalid occupied cell certificate");
-            index[std::size_t(k)] = float(slots.size() / 7);
-            for (double v : {b.lipschitz, b.width, b.sup, b.execution}) slots.push_back(up(v));
-            slots.push_back(std::isfinite(b.hessian) ? up(b.hessian) : -1.0f);
-            slots.push_back(lower(b.low)); slots.push_back(upper(b.high));
+            index[std::size_t(k)] = float(records.size());
+            constants(b);
+            const auto it = grid.conditional.find(c);
+            if (it == grid.conditional.end()) { records.push_back(0.0f); continue; }
+            const auto& kinks = it->second;
+            const std::size_t n = kinks.switches.size();
+            if (n == 0 || n > 8 || kinks.gradient.size() != n || kinks.execution.size() != n || kinks.bands.size() != (std::size_t(1) << n)) {
+                e.refuse("malformed kink evidence"); break;
+            }
+            records.push_back(float(n));
+            for (std::size_t q = 0; q < n; ++q) {
+                records.push_back(float(kinks.switches[q]));
+                records.push_back(up(kinks.gradient[q])); records.push_back(up(kinks.execution[q]));
+            }
+            // An unproved assignment keeps the cell's own (unconditional) constants.
+            for (const auto& band : kinks.bands) constants(band ? *band : b);
         }
         long long zeros = 0;
         for (const auto& z : grid.zero) {
@@ -3238,24 +3285,72 @@ static Program lowerGridDepth(Emit& e, std::string prelude, const std::string& d
             zeros += n;
         }
         if (zeros + (long long)grid.occupied.size() != cells) e.refuse("grid is not a complete partition of its cells");
-        if (slots.size() / 7 >= (1u << 24)) e.refuse("too many occupied cells for exact f32 slot indices");
+        if (records.size() >= (1u << 24)) e.refuse("grid records exceed exact f32 offsets");
     }
     const std::size_t indexBase = e.params.size();
     e.params.insert(e.params.end(), index.begin(), index.end());
-    const std::size_t slotBase = e.params.size();
-    e.params.insert(e.params.end(), slots.begin(), slots.end());
+    const std::size_t recordBase = e.params.size();
+    e.params.insert(e.params.end(), records.begin(), records.end());
     for (float v : e.params) if (!std::isfinite(v)) e.refuse("grid parameter is not finite f32");
     out.ok = !e.refused; out.error = e.refusal; out.params = std::move(e.params);
     if (!out.ok) return out;
     out.wgsl = std::move(prelude);
     out.wgsl += kRayProofArithmetic;
     out.wgsl += "fn rayProofExp(x:f32)->f32 { let y=max(exp(x),0.0); let denominator=bitcast<f32>(bitcast<u32>(1.0-"+expR+")-1u); return rayProofUp(rayProofAdd(y,"+expA+")/denominator); }\n";
-    out.wgsl += "fn rayProofDown(x:f32)->f32 { return -rayProofSignedUp(-x); }\n";
-    out.wgsl += "fn lineGridDepthAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tTol:f32,clock:f32,omega:vec3<f32>)->ScheduledTransport {\n"
-        " var out=ScheduledTransport(0.0,0.0,rayProofInfinity(),rayProofInfinity(),0.0,vec2<f32>(0.0),0.0);\n"
+    out.wgsl += switchFn;
+    out.wgsl += R"WGSL(
+// Downward rounding by one ulp for either sign (zero steps below zero).
+fn rayProofDown(x:f32)->f32 { if(x==0.0){return -1.17549435e-38;} return -rayProofSignedUp(-x); }
+struct GridDepth { transmittance: f32, error: f32, status: f32, calls: f32, switchEvaluations: f32, skipped: f32, panels: f32,
+                   mathematical: f32, execution: f32, expFloor: f32 };
+var<private> gTau: f32; var<private> gDm: f32; var<private> gDe: f32; var<private> gSigA: f32;
+var<private> gFresh: bool; var<private> gOk: bool; var<private> gCalls: f32; var<private> gPanels: u32;
+// One run [sa0, sb0] under the 7 constants at k: exactly zero is skipped,
+// otherwise Simpson sub-panels with the scheduled depth arithmetic.
+fn gridRun(o:vec3<f32>,d:vec3<f32>,clock:f32,omega:vec3<f32>,sa0:f32,sb0:f32,k:u32,dn:f32,pointError:f32,gamma:f32,budget:f32,span:f32,maxPanels:u32){
+    if(!(sb0>sa0)){return;}
+    let l=P.v[k];let w=P.v[k+1u];let sup=P.v[k+2u];let e=P.v[k+3u];let hh=P.v[k+4u];let low=P.v[k+5u];let high=P.v[k+6u];
+    if(low==0.0 && high==0.0){gFresh=true;return;}
+    let W=sb0-sa0;
+    let constant=e==0.0 && low==high;
+    let ls=rayProofMul(l,dn);var hs=-1.0;if(hh>=0.0){hs=rayProofMul(rayProofMul(hh,dn),dn);}
+    // Work choice: the run's share of the budget, but never below the run's own
+    // execution bound (a quarter of it); shrinking the mathematical part further buys little.
+    let execution=rayProofMul(rayProofMul(1.2,rayProofUp(W)),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup)));
+    let allowed=max(max(budget*W/span,0.25*execution),1e-30);
+    var m=1.0;
+    if(!constant && rayProofMul(rayProofMul(2.25,W),w)>allowed){
+        // Either the first- or the second-order term may meet the share; take the cheaper.
+        m=ceil(2.25*ls*W*W/(2.0*allowed));
+        if(hs>=0.0){m=min(m,ceil(sqrt(2.25*hs*W*W*W/(8.0*allowed))));}
+        m=clamp(m,1.0,64.0);
+    }
+    let n=u32(m);
+    if(gPanels+n>maxPanels){gOk=false;return;}
+    gPanels=gPanels+n;
+    if(constant){
+        gTau=gTau+low*W;gSigA=low;gFresh=false;
+        gDe=rayProofAdd(gDe,rayProofMul(rayProofMul(1.2,rayProofUp(W)),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup))));
+        return;
+    }
+    if(gFresh){gSigA=lineSigma(o+sa0*d,clock,omega);gCalls=gCalls+1.0;gFresh=false;}
+    for(var j=0u;j<n;j=j+1u){
+        let sa=sa0+W*f32(j)/m;var sb=sa0+W*f32(j+1u)/m;if(j+1u==n){sb=sb0;}
+        let halfStep=(sb-sa)*0.5;let sm=sa+halfStep;
+        let width=rayProofUp(sb-sa);let hw=rayProofMul(width,0.5);
+        let sigM=lineSigma(o+sm*d,clock,omega);let sigB=lineSigma(o+sb*d,clock,omega);gCalls=gCalls+2.0;
+        gTau=gTau+(halfStep/3.0)*(gSigA+4.0*sigM+sigB);
+        gDm=rayProofAdd(gDm,rayProofMul(rayProofMul(width,2.25),rayProofLocal(w,ls,hs,hw)));
+        gDe=rayProofAdd(gDe,rayProofMul(rayProofMul(1.2,width),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup))));
+        gSigA=sigB;
+    }
+}
+)WGSL";
+    out.wgsl += "fn lineGridDepthCore(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tTol:f32,clock:f32,omega:vec3<f32>)->GridDepth {\n"
+        " var out=GridDepth(0.0,rayProofInfinity(),0.0,0.0,0.0,0.0,0.0,rayProofInfinity(),rayProofInfinity(),0.0);\n"
         " if(!("+domain+") || !(all(abs(o)<=vec3<f32>(3.4e38)) && all(abs(d)<=vec3<f32>(3.4e38)) && hi>lo && abs(lo)<=3.4e38 && abs(hi)<=3.4e38 && tTol>0.0 && tTol<=3.402823466e38)){return out;}\n"
-        " let h="+h+"; let margin="+margin+"; let first=vec3<f32>("+fx+","+fy+","+fz+"); let dims=vec3<f32>("+nx+","+ny+","+nz+");\n"
-        " let indexBase="+std::to_string(indexBase)+"u; let slotBase="+std::to_string(slotBase)+"u; let maxPanels="+std::to_string(maxPanels)+"u;\n"
+        " let h="+h+"; let margin="+margin+"; let sliver="+sliver+"; let first=vec3<f32>("+fx+","+fy+","+fz+"); let dims=vec3<f32>("+nx+","+ny+","+nz+");\n"
+        " let indexBase="+std::to_string(indexBase)+"u; let recordBase="+std::to_string(recordBase)+"u; let maxPanels="+std::to_string(maxPanels)+"u;\n"
         " let expA="+expA+"; let expRound="+expRound+";\n";
     out.wgsl += R"WGSL(
     let u=1.1920928955078125e-7;
@@ -3268,14 +3363,14 @@ static Program lowerGridDepth(Emit& e, std::string prelude, const std::string& d
     let pointError=rayProofMul(rayProofMul(8.0,u),rayProofAdd(on,rayProofMul(rayProofAdd(abs(lo),rayProofUp(hi-lo)),dl1)));
     let halo=rayProofMul(2.0,pointError);
     if(!(halo<margin)){return out;}
-    var tau=0.0;var dm=0.0;var de=0.0;var sigA=0.0;var fresh=true;var calls=0.0;var skipped=0.0;var panels=0u;
+    gTau=0.0;gDm=0.0;gDe=0.0;gSigA=0.0;gFresh=true;gOk=true;gCalls=0.0;gPanels=0u;
+    var switchEvaluations=0.0;var skipped=0.0;
     var s=lo;
-    let p0=o+lo*d;
-    var c=floor(p0/h);
+    var c=floor((o+lo*d)/h);
     let budget=tTol*0.5;let span=hi-lo;
     let maxSteps=u32(dims.x+dims.y+dims.z)+8u;
     for(var step=0u;step<maxSteps;step=step+1u){
-        if(!(s<hi)){break;}
+        if(!(s<hi) || !gOk){break;}
         // Exit parameter of cell c along each axis; ties advance together.
         var sExit=hi;
         for(var i=0;i<3;i=i+1){
@@ -3286,43 +3381,67 @@ static Program lowerGridDepth(Emit& e, std::string prelude, const std::string& d
         let rel=c-first;
         if(any(rel<vec3<f32>(0.0)) || any(rel>=dims)){return out;}
         if(sExit>s){
-            // The proved region is this cell dilated by margin; the panel and its halo must stay inside it.
+            // The proved region is this cell dilated by margin; the segment and its halo must stay inside it.
             let pa=o+s*d;let pb=o+sExit*d;
             let boxLo=min(pa,pb);let boxHi=max(pa,pb);
             for(var i=0;i<3;i=i+1){
                 if(!(rayProofDown(boxLo[i]-halo)>=c[i]*h-margin && rayProofSignedUp(boxHi[i]+halo)<=(c[i]+1.0)*h+margin)){return out;}
             }
             let slot=P.v[indexBase+u32((rel.x*dims.y+rel.y)*dims.z+rel.z)];
-            if(slot<0.0){skipped=skipped+1.0;fresh=true;}
+            if(slot<0.0){skipped=skipped+1.0;gFresh=true;}
             else{
-                let k=slotBase+7u*u32(slot);
-                let l=P.v[k];let w=P.v[k+1u];let sup=P.v[k+2u];let e=P.v[k+3u];let hh=P.v[k+4u];let low=P.v[k+5u];let high=P.v[k+6u];
-                let constant=e==0.0 && low==high;
-                let ls=rayProofMul(l,dn);var hs=-1.0;if(hh>=0.0){hs=rayProofMul(rayProofMul(hh,dn),dn);}
-                let W=sExit-s;let allowed=max(budget*W/span,1e-30);
-                var m=1.0;
-                if(!constant && rayProofMul(rayProofMul(2.25,W),w)>allowed){
-                    if(hs>=0.0){m=ceil(sqrt(2.25*hs*W*W*W/(8.0*allowed)));}else{m=ceil(2.25*ls*W*W/(2.0*allowed));}
-                    m=clamp(m,1.0,64.0);
-                }
-                let n=u32(m);
-                if(panels+n>maxPanels){return out;}
-                if(constant){
-                    tau=tau+low*W;sigA=low;fresh=false;panels=panels+1u;
-                    de=rayProofAdd(de,rayProofMul(rayProofMul(1.2,rayProofUp(W)),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup))));
-                }else{
-                    if(fresh){sigA=lineSigma(o+s*d,clock,omega);calls=calls+1.0;fresh=false;}
-                    for(var j=0u;j<n;j=j+1u){
-                        let sa=s+W*f32(j)/m;var sb=s+W*f32(j+1u)/m;if(j+1u==n){sb=sExit;}
-                        let halfStep=(sb-sa)*0.5;let sm=sa+halfStep;
-                        let width=rayProofUp(sb-sa);let hw=rayProofMul(width,0.5);
-                        let sigM=lineSigma(o+sm*d,clock,omega);let sigB=lineSigma(o+sb*d,clock,omega);calls=calls+2.0;
-                        tau=tau+(halfStep/3.0)*(sigA+4.0*sigM+sigB);
-                        dm=rayProofAdd(dm,rayProofMul(rayProofMul(width,2.25),rayProofLocal(w,ls,hs,hw)));
-                        de=rayProofAdd(de,rayProofMul(rayProofMul(1.2,width),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup))));
-                        sigA=sigB;
+                let k0=recordBase+u32(slot);
+                let nu=u32(P.v[k0+7u]);
+                if(nu==0u){gridRun(o,d,clock,omega,s,sExit,k0,dn,pointError,gamma,budget,span,maxPanels);}
+                else{
+                    let bands=k0+8u+3u*nu;
+                    var a=s;var guard=0u;var width=sliver;
+                    loop{
+                        if(!(a<sExit) || !gOk){break;}
+                        if(guard>=256u){gridRun(o,d,clock,omega,a,sExit,k0,dn,pointError,gamma,budget,span,maxPanels);break;}
+                        // Signs at a, and how far every switch provably keeps its sign.
+                        var mask=0u;var reachLen=rayProofInfinity();var known=true;
+                        for(var q=0u;q<nu;q=q+1u){
+                            let kq=u32(P.v[k0+8u+3u*q]);let lq=P.v[k0+9u+3u*q];let eq=P.v[k0+10u+3u*q];
+                            let g=lineSwitchAt(kq,o+a*d,clock,omega);switchEvaluations=switchEvaluations+1.0;guard=guard+1u;
+                            let room=rayProofDown(abs(g)-rayProofAdd(eq,rayProofMul(lq,pointError)));
+                            if(!(room>0.0)){known=false;}
+                            else{
+                                let rate=rayProofMul(lq,dn);
+                                if(rate>0.0){reachLen=min(reachLen,rayProofDown(room/rate));}
+                                if(g>0.0){mask=mask|(1u<<q);}
+                            }
+                        }
+                        var b=sExit;
+                        if(known){b=min(rayProofDown(a+reachLen),sExit);}
+                        if(!known || !(b>a)){
+                            // Near a crossing: a sliver under the cell's unconditional constants,
+                            // doubling while the signs stay unproved (its bound is first-order in its width).
+                            let e2=min(a+width,sExit);
+                            gridRun(o,d,clock,omega,a,e2,k0,dn,pointError,gamma,budget,span,maxPanels);
+                            a=e2;width=width*2.0;continue;
+                        }
+                        width=sliver;
+                        // Extend the run while every switch provably keeps the same sign.
+                        loop{
+                            if(!(b<sExit) || guard>=256u){break;}
+                            var same=true;var more=rayProofInfinity();
+                            for(var q=0u;q<nu;q=q+1u){
+                                let kq=u32(P.v[k0+8u+3u*q]);let lq=P.v[k0+9u+3u*q];let eq=P.v[k0+10u+3u*q];
+                                let g=lineSwitchAt(kq,o+b*d,clock,omega);switchEvaluations=switchEvaluations+1.0;guard=guard+1u;
+                                let room=rayProofDown(abs(g)-rayProofAdd(eq,rayProofMul(lq,pointError)));
+                                let positive=((mask>>q)&1u)==1u;
+                                if(!(room>0.0) || (g>0.0)!=positive){same=false;}
+                                else{let rate=rayProofMul(lq,dn);if(rate>0.0){more=min(more,rayProofDown(room/rate));}}
+                            }
+                            if(!same){break;}
+                            let nb=min(rayProofDown(b+more),sExit);
+                            if(!(nb>b)){break;}
+                            b=nb;
+                        }
+                        gridRun(o,d,clock,omega,a,b,bands+7u*mask,dn,pointError,gamma,budget,span,maxPanels);
+                        a=b;
                     }
-                    panels=panels+n;
                 }
             }
         }
@@ -3336,13 +3455,28 @@ static Program lowerGridDepth(Emit& e, std::string prelude, const std::string& d
         s=max(s,sExit);
         if(!moved && s<hi){return out;}
     }
-    if(s<hi){return out;}
-    let tUpper=rayProofExp(rayProofSignedUp(-tau+rayProofAdd(dm,de)));
-    let tError=rayProofAdd(rayProofMul(tUpper,rayProofAdd(dm,de)),rayProofAdd(expA,rayProofMul(expRound,tUpper)));
-    out.transmittance=exp(-tau);out.transmittanceError=tError;
-    out.samples=vec2<f32>(calls,skipped);out.panels=f32(panels);
+    if(s<hi || !gOk){return out;}
+    let tUpper=rayProofExp(rayProofSignedUp(-gTau+rayProofAdd(gDm,gDe)));
+    let tError=rayProofAdd(rayProofMul(tUpper,rayProofAdd(gDm,gDe)),rayProofAdd(expA,rayProofMul(expRound,tUpper)));
+    out.transmittance=exp(-gTau);out.error=tError;
+    out.calls=gCalls;out.switchEvaluations=switchEvaluations;out.skipped=skipped;out.panels=f32(gPanels);
+    out.mathematical=gDm;out.execution=gDe;out.expFloor=expA;
     if(abs(out.transmittance)<=3.402823466e38 && tError<=tTol){out.status=1.0;}
     return out;
+}
+fn lineGridDepthAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tTol:f32,clock:f32,omega:vec3<f32>)->ScheduledTransport {
+    let r=lineGridDepthCore(o,d,lo,hi,tTol,clock,omega);
+    return ScheduledTransport(0.0,r.transmittance,rayProofInfinity(),r.error,r.status,vec2<f32>(r.calls,r.skipped),r.panels);
+}
+// Bound decomposition: (mathematical depth bound, execution depth bound, exp model floor, status).
+fn lineGridBoundsAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tTol:f32,clock:f32,omega:vec3<f32>)->vec4<f32> {
+    let r=lineGridDepthCore(o,d,lo,hi,tTol,clock,omega);
+    return vec4<f32>(r.mathematical,r.execution,r.expFloor,r.status);
+}
+// Work diagnostics: (σ calls, switch evaluations, skipped zero cells, panels).
+fn lineGridWorkAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tTol:f32,clock:f32,omega:vec3<f32>)->vec4<f32> {
+    let r=lineGridDepthCore(o,d,lo,hi,tTol,clock,omega);
+    return vec4<f32>(r.calls,r.switchEvaluations,r.skipped,r.panels);
 }
 )WGSL";
     return out;
@@ -3352,7 +3486,8 @@ static Program compileLineTransportImpl(const OntoMath::MathNode& sigma, const O
                              const OntoMath::LineQuadratureCertificate& sigmaCert,
                              const OntoMath::LineQuadratureCertificate& emissionCert, uint32_t maxCells,
                                         const OntoMath::LineTransportSchedule* schedule, bool depthOnly = false,
-                                        const OntoMath::RegionProofGrid* grid = nullptr, uint32_t gridPanels = 0) {
+                                        const OntoMath::RegionProofGrid* grid = nullptr, uint32_t gridPanels = 0,
+                                        const OntoMath::LineAlgebraicForm* gridForm = nullptr) {
     Program prog;
     Emit e;
     e.parameterOffset = "0u";
@@ -3424,7 +3559,7 @@ var<private> screenPoint: vec3<f32>;
     prelude += kPrimitives;
     prelude += "fn lineSigma(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + sigmaBody + "    return " + sigmaValue + ";\n}\n";
     if(!depthOnly) prelude += "fn lineEmission(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + emissionBody + "    return " + emissionValue + ";\n}\n";
-    if (grid) return lowerGridDepth(e, std::move(prelude), domainPredicate, *grid, sigmaCert.model, gridPanels);
+    if (grid) return lowerGridDepth(e, std::move(prelude), domainPredicate, *grid, sigmaCert.model, gridPanels, gridForm);
     if (schedule) return lowerScheduledTransport(e, std::move(prelude), domainPredicate, *schedule, depthOnly);
     auto bands = [&](const OntoMath::LineQuadratureCertificate& cert, const std::string& tag) {
         std::string out;
@@ -3555,7 +3690,7 @@ Program compileGridDepthTransport(const OntoMath::MathNode& sigma, const OntoMat
     if (certificate.model().restrictedForm || !(certificate.cell() == grid.cell)) {
         Program p; p.ok = false; p.error = "grid transport needs the original-DAG model and its own certificate's grid"; return p;
     }
-    return compileLineTransportImpl(sigma, zero, sc, ec, 2, nullptr, true, &grid, maxPanels);
+    return compileLineTransportImpl(sigma, zero, sc, ec, 2, nullptr, true, &grid, maxPanels, certificate.form());
 }
 
 Program compileScheduledProportionalIntegral(const OntoMath::MathNode& sigma,

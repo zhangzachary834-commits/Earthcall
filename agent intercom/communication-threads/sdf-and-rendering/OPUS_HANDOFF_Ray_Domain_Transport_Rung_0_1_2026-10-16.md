@@ -2285,3 +2285,35 @@ No save/data home, default, tolerance, lighting, installed app or native timesta
 Also opened Zach's separate generality mission (`Proof_Grid_Generality_Witness`). No save/data home, default, tolerance, lighting, installed app or native timestamp changed; no visible behavior; Person checks unchanged.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T23:12-07:00.
+
+
+## Claude Opus 5.5 — kink-aware grid panels: occupied admission 4/42 → 24/42; your device model is now the blocker
+
+[Plan §6bf](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6bf-kink-aware-device-panels-occupied-admission-442--2442-the-declared-execution-model-is-now-the-blocker-2026-10-20). Zach: "NEXT PASS".
+
+**Correction first:** my §6be "22/64" counted the 22 rays that miss every curtain. Occupied admission there was **4/42**. The test now reports it separately.
+
+**Landed.**
+- Per occupied cell: its relevant undecided switches, each switch's sup|∇g| and device slack, and one forced-sign `certifyBox` per sign assignment (all 23,470 have finite H; 73% exactly zero).
+- On the device, root-free stepping (|g| − slack − L·halo)/(L·|d|) builds runs of proved signs. Exactly-zero runs are skipped unevaluated. Unproved slivers keep unconditional constants and double in width.
+- Switch functions are lowered from authored operands the way your support killers do.
+
+| | occupied admitted | σ calls/ray | refused rays: depth math / exec |
+|---|---|---|---|
+| without kinks | 4/42 | 529–658 | 0.034–0.052 / 0.006–0.012 |
+| with kinks | **24/42** | 364–500 | 0.0017–0.0078 / **0.006–0.012** |
+
+**Sun:** on every still-refused ray, execution alone exceeds the 0.006 budget. That's the declared 2⁻¹⁰ per-trig/exp allowance accumulated over occupied length, the same remainder §6at/§6au found. Your native-profile enclosure work, or Zach's declared-model decision, is now step 4b of the account. I won't touch tolerances or the model.
+
+| Distance to a faster Veil | State |
+|---|---|
+| 1–4 contract, host grid, device march, kink panels | ✅ (24/42 occupied admitted) |
+| 4b tighter declared execution model | ☐ blocker for 18/42 (⚑ model decision) |
+| 5 RGB on the grid march | ☐ |
+| 6 cost A/B vs current marcher (baseline ~136–141 ms aurora/inside 2560×1440 offscreen) | ☐ decides |
+| 7 native integration + off-frame rebuilds (kink proving ~1.3 s/curtain Release, unpruned) | ☐ |
+| 8 live timing + Zach's movement check | ☐ |
+
+Metal 201/201, segmentation 141/141, integral 85/85; the family-preparation digest is still byte-identical. No save/data home, default, tolerance, lighting, installed app or native timestamp changed; nothing visible; Person checks unchanged.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T23:45-07:00.

@@ -179,7 +179,7 @@ This is **architecture direction, not a landed implementation claim**. Existing 
 
 ## Distance to a faster Northern Veil
 
-*Standing account Zach asked for on 2026-10-20 ("keep the account of how much is left until the ray transport work buys more faster Northern Veil than before"). Every pass updates it.*
+*Standing account Zach asked for on 2026-10-20; last updated §6bf, 2026-10-20 23:45 ("keep the account of how much is left until the ray transport work buys more faster Northern Veil than before"). Every pass updates it.*
 
 **Baseline to beat.**
 - Codex's 2026-10-15 controlled offscreen series, aurora/inside at 2560×1440: **~136–141 ms per frame** (24-frame readback-free batches; not live FPS). The existing renderer's aurora proof construction is ~239 ms at admission ([audit](../../../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md)).
@@ -190,11 +190,12 @@ This is **architecture direction, not a landed implementation claim**. Existing 
 |---|---|---|
 | 1 | Exact error contract; bounded device transport | ✅ §6ar–§6ba |
 | 2 | Camera-independent proof grid (host) | ✅ §6bd: 10–19× cheaper than flat, exact |
-| 3 | Device grid march, any direction | ◐ §6be: sound on 64/64 rays, **admits 22/64**; ~530–660 σ calls/ray, cap-bound |
-| 4 | Kink-aware device panels (split at switch crossings, per-branch constants) | ☐ **next**; the step that should make admission common and cut σ calls |
+| 3 | Device grid march, any direction | ✅ §6be: sound on 64/64 rays in every direction |
+| 4 | Kink-aware device panels (split at switch crossings, per-branch constants) | ✅ §6bf: **occupied rays admitted 4/42 → 24/42**, σ calls 529–658 → 364–500 per ray; on every still-refused ray the mathematical remainder is below the execution remainder |
+| 4b | Execution remainder: a tighter *declared* device model (the 2⁻¹⁰ per-trig/exp allowance) or fewer charged trig calls | ☐ **now the blocker for the other 18/42**: execution alone is 0.006–0.012 of the 0.006 budget; the model is ⚑ Zach's/Codex's declared-model decision, never a silent tolerance change |
 | 5 | RGB through the shared depth reduction on the grid march | ☐ |
 | 6 | Cost A/B against the current marcher on identical views (Codex's ABBA protocol) | ☐ **the first point where "faster" can be claimed or refuted** |
 | 7 | Native integration: projected gates/clamps, 1e-6 floor, scattering, overlaps, frames/clocks/clipping, fallback for refused rays; grid rebuilds off the frame path per clock window | ☐ |
 | 8 | Live frame timing, then Zach's movement check | ☐ |
 
-**Remaining:** 3 implementation steps (4, 5, 7; step 3 completes when 4 lands) and 2 decisive measurements (6, 8). **No evidence yet that the result will be faster;** step 6 decides. If step 6 loses, the account says so and the work is not activated.
+**Remaining:** 1 decision-gated step (4b), 2 implementation steps (5, 7) and 2 decisive measurements (6, 8). Proving cost is also open: kink evidence costs ~1.3 s per curtain in Release (cap 6) and has not been pruned of infeasible sign combinations. **No evidence yet that the result will be faster;** step 6 decides. If step 6 loses, the account says so and the work is not activated.

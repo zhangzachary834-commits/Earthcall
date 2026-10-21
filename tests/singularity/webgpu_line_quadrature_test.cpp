@@ -115,10 +115,11 @@ std::optional<std::vector<float>> runOnDevice(wgpu::Device& gpu, const sdfwgsl::
         if(function=="scheduledL") invocation+="    results[i]=vec4<f32>(r.radiance,r.status,r.panels,r.radianceError);\n";
         else if(function=="scheduledT") invocation+="    results[i]=vec4<f32>(r.transmittance,r.status,r.panels,r.transmittanceError);\n";
         else invocation+="    results[i]=vec4<f32>(r.samples,r.panels,r.status);\n";
-    } else if(function=="gridT" || function=="gridWork") {
-        invocation="    let r=lineGridDepthAt(a.xyz,b.xyz,a.w,b.w,c.y,context.w,context.xyz);\n";
-        if(function=="gridT") invocation+="    results[i]=vec4<f32>(r.transmittance,r.status,r.panels,r.transmittanceError);\n";
-        else invocation+="    results[i]=vec4<f32>(r.samples,r.panels,r.status);\n";
+    } else if(function=="gridT" || function=="gridWork" || function=="gridBounds") {
+        if(function=="gridT") invocation="    let r=lineGridDepthAt(a.xyz,b.xyz,a.w,b.w,c.y,context.w,context.xyz);\n"
+            "    results[i]=vec4<f32>(r.transmittance,r.status,r.panels,r.transmittanceError);\n";
+        else if(function=="gridBounds") invocation="    results[i]=lineGridBoundsAt(a.xyz,b.xyz,a.w,b.w,c.y,context.w,context.xyz);\n";
+        else invocation="    results[i]=lineGridWorkAt(a.xyz,b.xyz,a.w,b.w,c.y,context.w,context.xyz);\n";
     } else if(function=="reducedRGB" || function=="reducedErrors" || function=="reducedWork") {
         invocation="    let r=lineReducedIntegralAt(a.xyz,b.xyz,a.w,b.w,c.x,c.y,context.w,context.xyz);\n";
         if(function=="reducedRGB")invocation+="    results[i]=vec4<f32>(r.value,r.transmittance);\n";
@@ -982,7 +983,7 @@ int main() {
             if(fs::exists(dir/"zone.json")){std::ifstream in(dir/"zone.json");zone=nlohmann::json::parse(in);}
             else{std::ifstream in(dir/"zone.ecform",std::ios::binary);std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)),{});
                 zone=nlohmann::json::parse(nlohmann::json::from_msgpack(bytes).at("MigrationRoot").get<std::string>());}
-            int curtains=0,admittedAll=0,occupiedAll=0,raysAll=0;
+            int curtains=0,admittedAll=0,occupiedAll=0,raysAll=0,admittedOccupiedAll=0;
             for(const auto& json:zone.at("spatialFields")) {
                 auto field=geom::FieldNode::fromJson(json);Rendering::VolumeDensityBinding b;
                 if(!field || !Rendering::readVolumeDensity(*field,0,0,b) || !b.extinctionExpr || b.extinctionExpr->pieces.size()!=1)continue;
@@ -994,7 +995,9 @@ int main() {
                 const double half[3]={std::abs(b.scale.x),std::abs(b.scale.y),std::abs(b.scale.z)},boxLo[3]={-half[0],-half[1],-half[2]};
                 std::string why;
                 const auto provedAt=std::chrono::steady_clock::now();
-                const auto grid=sc.proveGrid(boxLo,half,std::size_t(1)<<22,&why,1.0/256.0);
+                // Kink evidence (plan §6bf) for cells with up to 6 relevant undecided switches.
+                const std::size_t kinkSwitches=std::getenv("EC_GRID_KINKS")?std::size_t(std::atoi(std::getenv("EC_GRID_KINKS"))):6;
+                const auto grid=sc.proveGrid(boxLo,half,std::size_t(1)<<22,&why,1.0/256.0,kinkSwitches);
                 const double proveMs=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-provedAt).count();
                 const auto program=grid?sdfwgsl::compileGridDepthTransport(*sigma,sc,*grid,4096):sdfwgsl::Program{};
                 check(grid && program.ok,"a dilated camera-independent proof grid compiles for the real curtain: "+b.producerId+": "+why+program.error);
@@ -1012,7 +1015,7 @@ int main() {
                     float flo=float(t0),fhi=float(t1);if(double(flo)<t0)flo=std::nextafter(flo,INFINITY);if(double(fhi)>t1)fhi=std::nextafter(fhi,-INFINITY);
                     r.lo=flo;r.hi=fhi;r.clock=clock;r.tTolerance=0.006;r.omega[2]=-1;rays.push_back(r);
                 }
-                const auto values=runOnDevice(gpu,program,rays,"gridT"),work=runOnDevice(gpu,program,rays,"gridWork");
+                const auto values=runOnDevice(gpu,program,rays,"gridT"),work=runOnDevice(gpu,program,rays,"gridWork"),parts=runOnDevice(gpu,program,rays,"gridBounds");
                 auto reference=[&](const Ray& r,int n){
                     auto at=[&](long double t){const glm::vec3 q(float(r.o[0]+t*r.d[0]),float(r.o[1]+t*r.d[1]),float(r.o[2]+t*r.d[2]));
                         const std::map<std::string,PropertyValue> vars{{"p",PropertyValue(q)},{"x",PropertyValue(double(q.x))},{"y",PropertyValue(double(q.y))},{"z",PropertyValue(double(q.z))},
@@ -1024,7 +1027,8 @@ int main() {
                 // Soundness is asserted on every ray; admission (bound <= tolerance) is
                 // MEASURED. Every occupied 4-unit cell holds a clamp/abs kink, so its
                 // Hessian is unbounded and the bound is first-order (plan §6be).
-                bool sound=values && work,converged=true;int occupied=0,admitted=0;double calls=0,skipped=0,panels=0,worst=0;
+                bool sound=values && work && parts,converged=true;int occupied=0,admitted=0,admittedOccupied=0;double calls=0,switchEvaluations=0,skipped=0,panels=0,worst=0;
+                double failedMath=0,failedExecution=0;int failed=0;
                 for(std::size_t j=0;j<rays.size() && values && work;++j){
                     const double coarse=reference(rays[j],6000),fine=reference(rays[j],12000);
                     // Uniform Simpson converges only first-order across kinks: charge the
@@ -1033,26 +1037,30 @@ int main() {
                     converged=converged && spread<=1e-5;
                     if(std::getenv("EC_GRID_RAYS"))std::printf("    GRID-REF %s #%zu: coarse %.10g fine %.10g\n",b.producerId.c_str(),j,coarse,fine);
                     occupied+=fine<0.999;
-                    const bool ok=(*work)[4*j+3]==1;admitted+=ok;
+                    const bool ok=(*values)[4*j+1]==1;admitted+=ok;admittedOccupied+=ok && fine<0.999;
+                    if(!ok){++failed;failedMath+=(*parts)[4*j];failedExecution+=(*parts)[4*j+1];}
                     sound=sound && std::isfinite((*values)[4*j+3]) && std::abs((*values)[4*j]-fine)+spread<=(*values)[4*j+3] &&
                         (!ok || (*values)[4*j+3]<=0.006);
-                    calls+=(*work)[4*j];skipped+=(*work)[4*j+1];panels+=(*work)[4*j+2];worst=std::max(worst,double((*values)[4*j+3]));
+                    calls+=(*work)[4*j];switchEvaluations+=(*work)[4*j+1];skipped+=(*work)[4*j+2];panels+=(*work)[4*j+3];worst=std::max(worst,double((*values)[4*j+3]));
                     if(std::getenv("EC_GRID_RAYS") || std::abs((*values)[4*j]-fine)>(*values)[4*j+3])
-                        std::printf("    GRID-RAY %s #%zu: T %.8g ref %.8g bound %.4g status %.0f calls %.0f skipped %.0f panels %.0f\n",b.producerId.c_str(),j,
-                            (*values)[4*j],fine,(*values)[4*j+3],(*work)[4*j+3],(*work)[4*j],(*work)[4*j+1],(*work)[4*j+2]);
+                        std::printf("    GRID-RAY %s #%zu: T %.8g ref %.8g bound %.4g (depth math %.3g, exec %.3g, exp floor %.3g) status %.0f calls %.0f switch evals %.0f skipped %.0f panels %.0f\n",b.producerId.c_str(),j,
+                            (*values)[4*j],fine,(*values)[4*j+3],(*parts)[4*j],(*parts)[4*j+1],(*parts)[4*j+2],(*values)[4*j+1],(*work)[4*j],(*work)[4*j+1],(*work)[4*j+2],(*work)[4*j+3]);
                 }
                 DeviceRunCost cost;
                 runOnDevice(gpu,program,rays,"gridT",32,&cost);
-                std::printf("    GRID %s: proved %.1f ms (%zu proofs, %zu occupied cells, %zu zero blocks); %zu params; 16 rays: %d/16 admitted, %d occupied, mean %.1f σ calls, %.1f skipped zero cells, %.1f panels; worst T bound %.3g; 32-dispatch batch %.3f ms\n",
-                    b.producerId.c_str(),proveMs,grid->proofs,grid->occupied.size(),grid->zero.size(),program.params.size(),admitted,occupied,
-                    calls/16,skipped/16,panels/16,worst,cost.batchMs);
+                std::printf("    GRID %s: proved %.1f ms (%zu proofs, %zu occupied cells, %zu with kink evidence, %zu zero blocks); %zu params; 16 rays: %d/16 admitted, %d occupied, mean %.1f σ calls, %.1f switch evaluations, %.1f skipped zero cells, %.1f panels; worst T bound %.3g; 32-dispatch batch %.3f ms\n",
+                    b.producerId.c_str(),proveMs,grid->proofs,grid->occupied.size(),grid->conditional.size(),grid->zero.size(),program.params.size(),admitted,occupied,
+                    calls/16,switchEvaluations/16,skipped/16,panels/16,worst,cost.batchMs);
+                std::printf("    GRID %s: occupied admitted %d/%d; refused rays' mean depth bound: mathematical %.3g, execution %.3g\n",b.producerId.c_str(),
+                    admittedOccupied,occupied,failed?failedMath/failed:0.0,failed?failedExecution/failed:0.0);
                 check(sound && converged && occupied>=4,"every direction, transverse and oblique included, runs from the one grid with a finite bound containing an independent reference ("+
                     std::to_string(occupied)+" occupied, "+std::to_string(admitted)+" admitted at 0.006, of 16): "+b.producerId);
-                admittedAll+=admitted;occupiedAll+=occupied;raysAll+=16;
+                admittedAll+=admitted;occupiedAll+=occupied;raysAll+=16;admittedOccupiedAll+=admittedOccupied;
                 auto outside=rays[0];outside.clock=4;
                 auto escaped=rays[0];escaped.lo=-2.0*half[2];
                 const auto refusedClock=runOnDevice(gpu,program,{outside},"gridWork"),refusedBox=runOnDevice(gpu,program,{escaped},"gridWork");
-                check(refusedClock && (*refusedClock)[3]==0 && refusedBox && (*refusedBox)[3]==0,
+                const auto refusedClockT=runOnDevice(gpu,program,{outside},"gridT"),refusedBoxT=runOnDevice(gpu,program,{escaped},"gridT");
+                check(refusedClock && refusedClockT && (*refusedClockT)[1]==0 && refusedBox && refusedBoxT && (*refusedBoxT)[1]==0,
                     "the grid refuses a clock outside its proved window and a ray leaving its proved box: "+b.producerId);
                 auto edited=MathNode::fromJson(sigma->toJson());
                 auto bumped=node(Op::Add,std::move(edited),constant(0.25));
@@ -1060,8 +1068,8 @@ int main() {
                 auto undilated=*grid;undilated.margin=0;
                 check(!sdfwgsl::compileGridDepthTransport(*sigma,sc,undilated,4096).ok,"a grid without a dilation margin cannot serve device panels: "+b.producerId);
             }
-            check(curtains==4 && admittedAll>0,"all four curtains run the grid march; admission measured: "+std::to_string(admittedAll)+"/"+std::to_string(raysAll)+
-                " at T tolerance 0.006 ("+std::to_string(occupiedAll)+" occupied)");
+            check(curtains==4 && admittedOccupiedAll>0,"all four curtains run the grid march; admission measured at T tolerance 0.006: "+std::to_string(admittedAll)+"/"+std::to_string(raysAll)+
+                " rays, of which occupied "+std::to_string(admittedOccupiedAll)+"/"+std::to_string(occupiedAll));
         }
     }
     std::cout << "webgpu_line_quadrature_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";
