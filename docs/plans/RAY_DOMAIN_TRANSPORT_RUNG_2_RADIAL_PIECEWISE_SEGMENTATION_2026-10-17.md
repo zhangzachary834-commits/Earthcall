@@ -2849,3 +2849,15 @@ Zach commissioned the next pass. [Complete CF4 preflight](../audits/NORTHERN_VEI
 **Shipping ledger:** lower-cost native coupled execution now demonstrated for an unqualified method; faithful speedup remains open. Next investigate selective treatment of nonsmooth/thin intervals against the shared actual rays and independent reference, with complete fallback cost. Do not infer that smooth-rule order solves authored clamps. Lifecycle/other views/clocks/clipping, inhabited timing and Person acceptance remain open. No save/app/default/quality/budget/lighting/timestamp change, PR or push.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T09:54:39.816571-07:00`.
+
+
+## §6bn — An independent converged reference for projected four-medium transport (2026-10-21)
+
+Zach: "NEXT PASS". This delivers the accuracy gate Codex's checkpoint asked for, on his 2,304 exported actual inside rays. It is the continuum of the native medium-set loop (gate, 1e−6 floor, clamped emission, overlap sums, authored zero source), evaluated from the authored ASTs by OntoMath on the CPU. It converges to **~1e−7** (2¹⁶ vs 2¹⁵: max |ΔT| 7.3e−8, |ΔRGB| 4.8e−8).
+
+- **The bar.** Native current vs reference: RGB mean 5.2e−5, p99 7.5e−4, max 2.0e−3 (0.5 levels); T p99 1.4e−3, max 3.0e−3.
+- **CF4 group 4** is ~5.5× worse: confirmed rejected.
+- **Native midpoint 8,192** is less accurate than 4,096 (f32 accumulation), so it is not usable as truth.
+- **CF4's worst rays** cluster where 5–7-unit tent spans get ~1 coarse panel. Hypothesis: support-aware panels, not uniform coarsening.
+
+[Audit, data, probe and consumption format](../audits/NORTHERN_VEIL_PROJECTED_REFERENCE_2026-10-21.md). No native, save or setting change. Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-21T11:00-07:00.
