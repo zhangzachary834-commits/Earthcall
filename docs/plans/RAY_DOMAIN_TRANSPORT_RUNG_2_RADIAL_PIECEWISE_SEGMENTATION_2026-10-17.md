@@ -2414,3 +2414,14 @@ Named targets built and ran sequentially. Logs `/private/tmp/earthcall-ray-famil
 **Next:** establish the native projected-source admission contract and an economical retained/device execution strategy for these families. Do not turn a 200 ms family preparation into a per-frame-per-pixel loop. Different-ratio overlapping media still require coherent shared attenuation; T uncertainty must weight background/remaining light before forming a final-pixel budget. The accepted-lattice `volumeOutputErrorBudget` is not silently a continuum budget. No save/data home, lighting, authored tolerance, installed app, default switch or native activation changed. No new visible native behavior needs a new Person check; existing visual/movement checks remain open.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-20T21:45:35-07:00`. Human origin: Zachary Zhang’s “NEXT PASS” continuation, his authored-equation faithfulness criterion and OntoMath ownership correction.
+
+
+## 6bb. Preparation-cost objection, rejected memo trial and resident replay handoff (2026-10-20)
+
+Zach correctly objected that ~200 ms every frame would destroy the roughly 20 FPS baseline he reports, then asked to wrap up and preserve the handoff. **No preparation reduction or native FPS gain is claimed.** The box-proof memo trial did not measurably reduce cold cost and was removed. Production mathematics/rendering remains the §6ba implementation.
+
+The retained test adds 32-dispatch resident replay with unchanged pipeline/proof/ray buffers, a final RGB/T bit comparison, and separate setup versus completion/readback batch wall time. Final restored-source Metal result: **180/180**. Cold preparation remains 203–207 ms; the resident batch is 15.67–16.02 ms for 32 dispatches of eight records, not a native-frame measurement. These eight-record compute batches are not full-image/native frame timing. A bounded profiler identified repeated Perlin lattice-range work as the next investigation; remedies are unimplemented. [Exact checkout, evidence, rejected patch, probe/rebuild instructions and next-agent pitfalls](../audits/RAY_FAMILY_PREPARATION_COST_HANDOFF_2026-10-20.md).
+
+**Shipping ledger:** mathematical/error contract and shared GPU execution remain as §6ba; economical preparation/retention and broader directions remain open; native projected-source/overlap/lifecycle integration remains unconnected; end-to-end native timing and inhabited movement remain open. No save, default, tolerance, lighting, installed app or native timestamp changed. Existing Person checks remain open.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-20T21:59:22-07:00`

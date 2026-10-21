@@ -70,9 +70,18 @@ template <class... Kids> Node node(Op op, Kids... kids) {
 
 struct Ray { double o[3], d[3], lo, hi, tol; double clock = 0.0; double omega[3] = {0.0, 0.0, 1.0}; double tTolerance = 0.0; };
 
+// Test-only wall-clock decomposition. Batch time includes CPU command encoding,
+// GPU completion and ONE final readback; it is not a timestamp/kernel-only or
+// native-frame measurement. The same pipeline, proof/ray buffers and bind group
+// remain resident across all repeated dispatches.
+struct DeviceRunCost { double setupMs=0, batchMs=0; uint32_t dispatches=1; };
+
 // One lineIntegral per ray; nullopt when the device path fails.
 std::optional<std::vector<float>> runOnDevice(wgpu::Device& gpu, const sdfwgsl::Program& prog, const std::vector<Ray>& rays,
-                                              const std::string& function = "lineIntegral") {
+                                              const std::string& function = "lineIntegral", uint32_t dispatches=1,
+                                              DeviceRunCost* cost=nullptr) {
+    if(dispatches<1 || dispatches>256)return std::nullopt;
+    const auto setupAt=std::chrono::steady_clock::now();
     std::vector<float> params = prog.params;
     params.push_back(0.0f);
     std::vector<float> in;
@@ -160,13 +169,17 @@ std::optional<std::vector<float>> runOnDevice(wgpu::Device& gpu, const sdfwgsl::
         bgd.entryCount = 4;
         bgd.entries = entries;
         WGPUBindGroup bg = wgpuDeviceCreateBindGroup(gpu.device, &bgd);
+        const auto batchAt=std::chrono::steady_clock::now();
+        if(cost){cost->setupMs=std::chrono::duration<double,std::milli>(batchAt-setupAt).count();cost->dispatches=dispatches;}
         WGPUCommandEncoder enc = wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
+        for(uint32_t frame=0;frame<dispatches;++frame){
         WGPUComputePassEncoder pass = wgpuCommandEncoderBeginComputePass(enc, nullptr);
         wgpuComputePassEncoderSetPipeline(pass, cp);
         wgpuComputePassEncoderSetBindGroup(pass, 0, bg, 0, nullptr);
         wgpuComputePassEncoderDispatchWorkgroups(pass, uint32_t(rays.size()), 1, 1);
         wgpuComputePassEncoderEnd(pass);
         wgpuComputePassEncoderRelease(pass);
+        }
         wgpuCommandEncoderCopyBufferToBuffer(enc, outBuf, 0, readBuf, 0, outBytes);
         WGPUCommandBuffer cmd = wgpuCommandEncoderFinish(enc, nullptr);
         wgpuQueueSubmit(gpu.queue, 1, &cmd);
@@ -182,6 +195,7 @@ std::optional<std::vector<float>> runOnDevice(wgpu::Device& gpu, const sdfwgsl::
         const auto* values = static_cast<const float*>(wgpuBufferGetConstMappedRange(readBuf, 0, outBytes));
         out = std::vector<float>(values, values + rays.size() * 4);
         wgpuBufferUnmap(readBuf);
+        if(cost)cost->batchMs=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-batchAt).count();
         wgpuBindGroupRelease(bg);
         wgpuBindGroupLayoutRelease(bgl);
     }
@@ -848,6 +862,13 @@ int main() {
                             r.d[2]=(j&1)?domain.directionHi[2]:domain.directionLo[2];rays.push_back(r);
                         }
                         const auto values=runOnDevice(gpu,program,rays,"reducedRGB"),errors=runOnDevice(gpu,program,rays,"reducedErrors"),work=runOnDevice(gpu,program,rays,"reducedWork");
+                        DeviceRunCost residentCost;
+                        const auto replay=runOnDevice(gpu,program,rays,"reducedRGB",32,&residentCost);
+                        bool replayMatches=replay && values && replay->size()==values->size();
+                        if(replayMatches)for(std::size_t j=0;j<replay->size();++j)replayMatches=replayMatches && (*replay)[j]==(*values)[j];
+                        check(replayMatches,"32 resident dispatches reuse one pipeline/proof payload without CPU repreparation and keep every RGB/T bit: "+b.producerId);
+                        std::printf("    RESIDENT %s: setup %.3f ms; 32-dispatch completion/readback batch %.3f ms; %.6f ms/dispatch amortized; %zu rays/dispatch\n",
+                            b.producerId.c_str(),residentCost.setupMs,residentCost.batchMs,residentCost.batchMs/32,rays.size());
                         const auto depth=runOnDevice(gpu,program,rays,"scheduledT");
                         if(depth){double maximum=0;for(std::size_t j=0;j<rays.size();++j)maximum=std::max(maximum,double((*depth)[4*j+3]));
                             std::printf("    FAMILY-DEPTH %s: max T bound %.8g; first status %.0f\n",b.producerId.c_str(),maximum,(*depth)[1]);}
