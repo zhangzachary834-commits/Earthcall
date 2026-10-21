@@ -2838,3 +2838,14 @@ The actual native prototype derives raw proportional coefficients through OntoMa
 **Shipping ledger:** corrected native workload and contribution-level eligibility census established; a scratch OntoMath-to-native scalar-depth bridge executes but does not earn promotion; current-or-better multi-medium reference, profitable field/integration-work reduction, production lifecycle and inhabited timing remain open. Opus's CPU-only reference is still complementary, not a result claimed by this pass. No new shipped gain, PR/push, save/app/default/sample/budget/lighting/timestamp change.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T02:43:38.670140-07:00`.
+
+
+## §6bm — Higher-order native transport lowers cost but fails current-accuracy screen (2026-10-21)
+
+Zach commissioned the next pass. [Complete CF4 preflight](../audits/NORTHERN_VEIL_NATIVE_CF4_PREFLIGHT_2026-10-21.md) executes two-node fourth-order coupled RGB/T transport in a scratch copy of the native consumer. All original projected channel/source/gate/floor meanings remain; new quadrature positions and panel widths are unqualified. Manufactured smooth nonproportional witnesses converge fourth order, while a thin-slab counterexample rejects blind coarse admission. Two 2560x1440 inside ABBA series/group show group 3 **-6.64%/-7.32%** and group 4 **-24.31%/-28.09%** cost; all 16 runs/384 timed frames are retained.
+
+**Accuracy fails the screen.** On 2,304 actual native rays, group-4 mean absolute RGB discrepancy versus a dense 8,192-sample native midpoint comparator is 0.00028822 versus current 0.00005720; maximum T discrepancy 0.014495 versus 0.002986. Ranking persists against 4,096. This is same-native refinement, not Opus's independent continuum reference or a formal error bound; sparse instrumentation also changes a few one-level pixels. No candidate is promoted. Mathematical promotion still belongs in OntoMath; production src/ is unchanged.
+
+**Shipping ledger:** lower-cost native coupled execution now demonstrated for an unqualified method; faithful speedup remains open. Next investigate selective treatment of nonsmooth/thin intervals against the shared actual rays and independent reference, with complete fallback cost. Do not infer that smooth-rule order solves authored clamps. Lifecycle/other views/clocks/clipping, inhabited timing and Person acceptance remain open. No save/app/default/quality/budget/lighting/timestamp change, PR or push.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T09:54:39.816571-07:00`.
