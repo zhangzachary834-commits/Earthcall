@@ -1702,3 +1702,59 @@ Your in-shader-versus-pass answer is still open, so I did not touch the volume r
 | 4 | no | — | — | after 3 |
 
 Human origin: Zachary Zhang.
+
+## HANDOFF — Opus to Codex: take the ray-transport lane from here (my usage is nearly spent)
+
+**From:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T17:04-07:00 (PDT).
+**To:** Codex / GPT-6.1 Sol.
+**Human authorization:** Zach: "U HAVE 15% USAGE SO WRITE HANDOFF FOR THE SUN IN TEH THREAD HELL TAKE IT FROm WHERE U ELFT OFF IF U RUN OUT".
+
+If I stop mid-pass, this is the whole state. Start from the last commit on `claude/ray-domain-transport-rung0` in worktree `/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/ourverse_navigator_prototype_loop` (`3e373451d` when this was written). Zach pushes; nothing is pushed by agents.
+
+### Where everything lives
+
+| Piece | File, symbols | Witness |
+|---|---|---|
+| Authored ops | `ScalarForm.hpp/.cpp`: `Op::Integral` (40); `Op::Let` (41, Zach's choice), wired through type, eval, print, JSON, deps, toScalarForm (substitution), evalMathRange, MathEditors and SdfWgsl | `ontomath_integral_operation_test` 66/66 |
+| Integral office | `Integral.cpp`: `evaluateIntegral` = common entry (limits, tolerance, **computed-limit pricing**) → `integralRoutes` (term algebra / SDF line route / **sampled-body route** `integrateSampledBody` + `panelJet`); `evaluateBounded` (composition, moved from the report); `IntegralBounds` / `BoundedValue` carry mathematical / execution / **propagated** + work counts | same; `ontomath_expression_evaluation_test` 36/36 |
+| Line machinery | `LineRestriction.cpp`: `slack` (CPU `restrictedForm` model, `cpuExecutionModel()`), `secondDerivativeRange`, the hybrid's second-order radius; **`certifyLineQuadrature`** (bands, L, Hessian, range low/high, device-model execution; symbol intervals); **`planLineQuadrature`**, **`planLineTransport`** (CPU mirrors) | `ontomath_line_segmentation_test` 91/91 |
+| Device | `SdfWgsl.cpp`: **`compileLineQuadrature`** (`lineIntegral`), **`compileLineTransport`** (`lineTransport`: one march, depth by panel prefix, a-priori bound, T_max for signed σ) | `webgpu_line_quadrature_test` 28/28 on this Mac |
+| Report | `ExpressionEvaluation.cpp`: `<prefix>.evaluation`, lineage, `propagatedInputBound`, `boundCategories`; Rete fallback for derived readings in `Law.cpp` / `ConditionModel.cpp` | `derived_reading_law_test` 15/15, `disjunction_candidate_test` 8/8 |
+| Real-curtain probe | `tests/singularity/ontomath_veil_transport_feasibility_test.cpp` (CPU, about 35 s; reads Northern Veil read only; `EC_PRINT_VEIL=1` prints σ and ε) | 0/288 plans admitted, blockers quantified (plan §6ar) |
+
+Records: plan `docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md` §6aa–§6ar (latest first: §6ar, §6aq, §6ap); task `docs/Agenda/Tasks/Specific Tasks/Rendering and OntoMath/Ray_Domain_Transport_Compilation/Ray_Domain_Transport_Compilation.md`.
+
+### The next pass I was about to do: the a-posteriori transport bound (blocker 1 of §6ar)
+
+`planLineTransport` and `lineTransport` bound L a priori: the depth error δτ is taken at its maximum (≈ 1.1 for a 77-unit curtain ray) and charged to every unit of path with F = T_max·e^(δτ). That is why the real curtains need mathematical ≈ 13 and execution ≈ 12 at 4096 cells.
+
+**Do this instead:**
+1. Keep the cell choice a priori (or start from n = 2^k), but **accumulate the bound during the same march**. At node k:
+   - δτ_k = Σ over the panels so far of [2h·(1 + Λ)·local_σ + 1.2·2h·(σ's device error + Lσ·|d|·ds)] + summation rounding. It grows from 0, so use the running value, not the final one.
+   - Sample error_k ≤ ε̃_k⁺ · e^(−τ̃_k) · (e^(δτ_k) − 1) + e^(−τ̃_k)·(ε's device error + Lε|d|ds) + exp's device error · e^(−τ̃_k)·ε_max. Use ε̃_k⁺ = |ε̃_k| + ε's device error so the sample's own error is covered.
+   - Outer: Σ_k w_k · error_k, plus the outer radius computed with T_max replaced, per panel, by e^(−τ̃_a + δτ_a) (the transmittance at the panel start bounds T over the panel when σ ≥ σ_low ≥ 0; with σ_low < 0 multiply by e^(max(0, −σ_low)·2h)).
+2. Return that total. If it exceeds tol, double n and re-march (with a work cap), or return status 0. The device and `planLineTransport` can no longer agree on the total a priori; compare the device total against a CPU replay of the same march in double (the witness already has `marchL`).
+3. Re-run `ontomath_veil_transport_feasibility_test` and report how many of the 288 plans admit at ±1e-2 and ±1e-3. Expect blocker 2 (the declared 2^-10 per trig call) and blocker 3 (no Hessian across undecided clamps) to remain.
+
+### Open questions addressed to you (from my last notes)
+- **Gate 3:** in-shader `lineTransport` versus a separate compute pass writing per-pixel T and L.
+- **Blocker 2:** a tighter sin/cos enclosure for the native profile, or rewriting the curtains' trig factors.
+- **Blocker 3:** can your support tiles carry per-region certificate constants (decided clamps, giving second order)?
+- **Bookkeeping:** you accepted the coarse propagated category; it is now explicit (`propagatedInputBound`).
+
+### Standing rules in this lane (Zach's)
+- **Never run the full ctest in parallel** (it took about 60 GB and restarted his Mac). Run named targets one at a time. `webgpu_volume_faithfulness_test` takes about 35–41 min in this Debug build; run it alone in the background. Its runtime against the logged 144 s is unexplained.
+- **Saves are read only.** The chess tests rewrite `saves/worlds/chess_app.ecform` and rotate `.ecmatter` sidecars in the checkout running them. Restore the tracked files from HEAD and delete the sidecars that run created.
+- **Known failures that predate this lane** (confirmed at `6bd248d94` or with these changes off): four chess tests, `second_nature_law_forge_zone_test`, and `synthesis_studio_app_test` (17 pad-note checks; Zach suspects the chess promotion laws — see the Legacy_Test_Store_Isolation task).
+- **Commits.** Commit others' intercom text as written, in its own commit. Sign records with harness, model, session and time. Keep the shipping ledger (gates 1–4: changed?, caller, device, next blocker) in every handoff, as you asked.
+
+### Ledger at handoff
+
+| Gate | State | Next blocker |
+|---|---|---|
+| 1. Transport error contract | CPU end to end (heterogeneous transport admitted); computed limits priced; categories honest; Let | the Perlin 2^-14 allowance; uncertain-input propagation through an Integral; the CPU route's cumulative depth |
+| 2. GPU fields along rays | `lineIntegral` and `lineTransport` run on the device under host certificates (test fields, 28/28) | the a-posteriori march bound; per-region certificates for real curtains |
+| 3. Native volume consumer | measured infeasible as built (0/288) | blockers 1–3, then your architecture call |
+| 4. Shipping benefit on Metal | not started | after gate 3 |
+
+Human origin: Zachary Zhang.
