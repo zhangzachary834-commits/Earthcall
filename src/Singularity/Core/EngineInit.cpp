@@ -1,6 +1,7 @@
 #include <unordered_set>
 #include "Person/Person.hpp"
 #include "Person/PersonDatabase.hpp"
+#include "Person/PersonBootRestoration.hpp"
 #include "Identity/IdentityLedger.hpp"
 #include "Identity/KeyStore.hpp"
 #include "Identity/FirstMoverRegister.hpp"
@@ -182,27 +183,15 @@ bool Engine::initLogic() {
         // (found 2026-09-30, the first time Zach keyed: boot saw Zach.ecform
         // AND did_earthcall_....ecform, refused to guess, and every Law
         // authored "Zach" stopped resolving).
-        std::vector<nlohmann::json> candidates;
-        for (const auto& info : SaveSystem::listWorlds(SaveSystem::SaveType::PERSON)) {
-            nlohmann::json profile = SaveSystem::readSaveData(info.path);
-            if (!profile.is_object()) continue;
-            if (!profile.contains("personId") &&
-                Identity::legacyProfileSuperseded(profile.value("displayName", std::string{}))) {
-                continue;
-            }
-            candidates.push_back(std::move(profile));
-        }
-        if (candidates.size() == 1) {
-            // The profile says who is at the machine (name, body, place). It
-            // does NOT make them present: a keyed Person is trusted only when
-            // their key unlocks (EARTHCALL_KEY_PASSPHRASE or `enter Identity`).
-            personFromJson(candidates.front(), *_person);
+        const auto restoreResult = restoreUnambiguousPersonProfileForBoot(*_person);
+        if (restoreResult == PersonBootRestorationResult::Restored) {
+            // A profile restores authored data, never authenticated presence.
             std::cout << "[Init] Restored Person profile '" << _person->getDisplayName() << "'"
                       << (_person->hasIdentity() ? " (" + _person->personId().abbreviated() +
                                                    "; not present until their key unlocks)"
                                                  : " (not logged in)")
                       << ".\n";
-        } else if (candidates.size() > 1) {
+        } else if (restoreResult == PersonBootRestorationResult::Ambiguous) {
             std::cerr << "[Init] Multiple Person profiles exist; refusing to guess which "
                          "Person is present.\n";
         }
