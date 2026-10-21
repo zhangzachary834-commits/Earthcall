@@ -270,9 +270,18 @@ Zach permits a substantial faster native checkpoint at current-or-better accurac
 
 - [x] Trace the mathematical/GPU campaign through §6bp, distinguish witness-only integration from production transport, and review source, clocks, residency and the published numerical/native evidence.
 - [x] Recover the October 11 immutable-noise-table rejection so it is not repeated as a new candidate.
-- [ ] Screen the proposed fixed-cell affine-ray noise polynomial at existing sample nodes, including preparation, actual affine-binding reuse, state, boundary/fallback cost and f32 error; coordinate the native lane first.
+- [x] Screen the proposed cell-local affine-ray polynomial: near-current finite numerical outputs, but mixed paired native cost (+5.09%/−2.93%), so this implementation is rejected.
 - [ ] If the small screen passes, qualify broader source/overlap/view/clock/edit/device behavior and actual inhabited frame cost before promotion and Person acceptance.
 
 [§6bq](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6bq--astra-architectural-review-value-side-ray-compilation-before-another-scheduling-campaign-2026-10-21) routes to the substantive review and exact experiment contract. This is a proposal, not an implementation or a new speedup. The review's 20% native screen is an engineering proposal, not a numeric requirement from Zach. Current-or-better accuracy remains the user-authorized checkpoint; full certification is a separate longer-term workstream. No new Person check is introduced because this pass changes documentation only; existing appearance/movement acceptance remains outstanding.
 
 **Signed:** Codex / GPT-6 (Astra review role; exact variant not exposed) / session `01a15fcb-90ec-7812-868f-22a0f6283113` / `2026-10-21T12:01:40-07:00`.
+
+
+### Astra polynomial experiment completed and rejected on cost — 2026-10-21
+
+- [x] Derive/check the 17-coefficient recipe and measure actual native reuse with the full affine-binding/cell key.
+- [x] Compare actual noise values, raw RGB/T against the independent reference, complete images and two clean native ABBA series; preserve every run and stop the unprofitable implementation.
+- [ ] Isolate occupied-program execution costs and choose a materially different economical consumer before broader lifetime/source/view qualification and inhabited acceptance.
+
+[§6br](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6br--cell-local-noise-polynomial-executes-at-current-accuracy-scale-but-fails-native-cost-2026-10-21) and [complete audit](../../../../../audits/NORTHERN_VEIL_CELL_POLYNOMIAL_PREFLIGHT_2026-10-21.md) carry the results. Current-scale finite accuracy is not broader numerical admission; no new shipped gain or visible change. The existing current-or-better accuracy and substantial native gain checkpoint remains open. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T13:32:16.064075-07:00`.

@@ -2900,3 +2900,14 @@ Zach commissioned an independent review of the complete campaign, with no subage
 **Shipping status:** unchanged. The independent finite-fixture comparator exists; a faithful profitable production consumer remains missing. All mechanisms in §§6bl–6bp retain their recorded rejection status. No build/test/native run, runtime/source/save/app/default/budget change or new visible behavior in this review. Coordinate with the native-testing Sun before any proposed GPU experiment. The task and compass route here; the full review carries the checkpoint and longer-term roadmaps.
 
 **Signed:** Codex / GPT-6 (Astra review role; exact variant not exposed) / session `01a15fcb-90ec-7812-868f-22a0f6283113` / `2026-10-21T12:01:40-07:00`.
+
+
+## §6br — Cell-local noise polynomial executes at current accuracy scale but fails native cost (2026-10-21)
+
+Zach commissioned Astra's §6bq experiment. [Complete derivation, native captures, all eight cost runs and candidate rows](../audits/NORTHERN_VEIL_CELL_POLYNOMIAL_PREFLIGHT_2026-10-21.md) implement a generic degree≤16 cell-local affine-ray noise recipe in scratch. An independent direct-interpolation witness passes 8,704 points (double discrepancy≤2.254e−14). The 17-coefficient construction has 517 scalar DAG operations plus original gradients, 16 corner dots and domain work. Actual native affine-binding/cell reuse is 59,929/67,184 (89.20%), 7,255 preparations, 9.26 calls/preparation; no zero/support or sample positions change.
+
+This is a numerical rewrite, not a bit cache. Separate actual-call max noise error is 3.579e−5. Raw T/RGB mean/p99/max stay at current scale against Opus's reference (tiny mean regressions below observed refinement spread, p99 better, maxima unchanged); full uninstrumented image changes 10 bytes by one level. These are finite witnesses, not certification or new author permission. **Native cost rejects it:** clean ABBA +5.09%/−2.93%, pooled +0.85% (92.621→93.409 ms), all 192 timed frames retained, warm uploads/lowerings/compiles zero. No additional mechanism or tuning is promoted.
+
+**Shipping account:** the proposed value-side recipe now executes, but a faithful profitable consumer is still missing. Stop this implementation before broader qualification; preparation/state/parallel execution costs require evidence before another rewrite. Mathematical promotion still belongs in OntoMath. Production source/saves/app/defaults/quality/budgets remain unchanged; no new shipped gain or Person-visible behavior. Broader view/clock/source/overlap/clipping/lifetime, inhabited cost/p95 and Person acceptance remain open. Native lane released after completed runs.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T13:32:16.064075-07:00`.
