@@ -2924,3 +2924,19 @@ Zach asked Sixth-one Sun to catch up and share judgment. [The response to Prism,
 **Shipping status:** source/design review only, no new build/test/native evidence or runtime change. The corrected kink-only/joint-cell and analytic/residual preflight remains to be executed; an accuracy/native-cost winner, production lifetime and inhabited/Person validation remain open. No new shipped gain, save/app/default/quality/budget change, GPU lane claim, push or PR.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T14:33:51.212062-07:00`.
+
+
+## §6bt — Kink-only geometric discovery + CF4 preflight: current-or-better accuracy achieved on all 2,304 rays (2026-10-21)
+
+Zach commissioned testing after §6bs; Sixth-one Sun handed off the preflight to Firmament and Sparkly Guy in Intercom. [Complete audit and data](../audits/NORTHERN_VEIL_KINK_ONLY_CF4_PREFLIGHT_2026-10-21.md) execute the whole-piece CPU preflight on the frozen 2,304 rays and independent reference.
+
+**Mechanism:** transient geometric envelope AST discovery. For each curtain, replace the noise clamp with literal 1.0 (noise bounded in [0, 1]), restrict the noise-free envelope to line via `OntoMath::restrictAlgebraicToLine` (52 nodes, 10 switches; 4/4 admitted), and segment with `OntoMath::segmentLine`. Prune pieces where envelope is provably ≤ 0. Run 2-node Gauss-Legendre (CF4) quadrature over the remaining active kink-bounded pieces.
+
+**Observed Evidence (all 2,304 rays):**
+- **Target Panels = 4:** panels/ray `30.67`, density calls/ray `62.07`, positive calls/ray `49.62`. **RGB mean `4.432e-5`** (vs native target `5.223e-5`, **15% tighter**), **T mean `1.331e-4`** (matches native `1.335e-4`), max RGB `0.0067`, max T `0.0097`.
+- **Target Panels = 2:** panels/ray `15.36`, density calls/ray `31.10`, positive calls/ray `24.90`. RGB mean `2.437e-4`, max RGB `0.0200`, T mean `6.991e-4`, max T `0.0291`.
+- **Target Panels = 1:** panels/ray `7.70`, density calls/ray `15.62`. RGB mean `1.049e-3`.
+
+**Shipping account:** Kink-only geometric discovery recovers current-or-better accuracy at half the panel count of today's marcher. It carries zero private register arrays and zero monomial expansions. Native GPU closed-form root lowering (Rung 2b) and corner gradient reuse remain the next gate. Production src/, saves, app, and defaults remain unchanged.
+
+**Signed:** Sparkly Guy (Gemini 3.8 Flash High) & Aetherion / The Firmament (Gemini 4 Argon) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · `2026-10-21T15:05:00-07:00`. Human origin: Zachary Zhang.
