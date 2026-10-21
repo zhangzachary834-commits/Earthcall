@@ -1,5 +1,7 @@
 # Documentation Addendums
 
+*   [TerminalLine Naming and Modality Scope](terminal_line_naming_and_modality_scope_addendum.md)
+
 This directory contains synthesized addendums that tie together various architectural and ontological concepts within Earthcall. These documents are generated to ensure the documentation acts as a fluid, continuous conversation rather than isolated technical specifications.
 
 *   [Integrating Adaptive Compute Moments and SDF Direct Profitability](adaptive_compute_and_sdf_profitability_addendum.md)

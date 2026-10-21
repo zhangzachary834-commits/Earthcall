@@ -631,11 +631,15 @@ on a quiet machine) so the tripwire tightens behind the fix.
 *(Sorted into their sections on 2026-09-25 by Claude Opus 5.5 at Zach's request; add new unsorted notes here.)*
 *(Sorted again on 2026-10-01 by Claude Fable 5.1 / Mythos; Zach's collision notes are verbatim in [Prophetic_Collision_As_Law](Specific%20Tasks/Law%20and%20Reasoning/Prophetic_Collision_As_Law/Prophetic_Collision_As_Law.md); add new unsorted notes here.)*
 
-- CPU MULTITHREADING BROOOOO WHEN R WE GONNA DO THIS?!?!?!? And yes we do it in Timeline/Moment/Event ontology
-- ALSO MAKE SURE EVENTS ARE MOMENTS WITH SPECIAL RELATIONS TO SINGULARS, (what about pointers?), OR PROPERTIES
-
 **(These notes are now also `docs/architecture/law/B-time Rete.md`; the foundations are built — see `docs/architecture/law/PROPHETIC_RETE.md` and the ✅ entries under R&D. What remains unbuilt is listed there in §5, including the ⚑ AUTHOR decisions.)**
 - [x] Phase 1 Immediate Triage (Stop the Bleeding): Strip whitespace, duplicate zone bloat, and cap stakeholders to 20 for save files (completed, 100% tests passing).
 - [x] Initial Migration Framework: Create intermediate `EcformGraph` structure and `MigrationFramework` hook in `SaveSystem` to transparently map legacy JSON to Graph nodes (completed, 100% tests passing).
 - [x] Phase 3: Lexeme-Relation Graph Format Specification (Created `.ecform v2` serializers for binary graph and round-trip tests).
 - [ ] Phase 4: `earthcall-fmt` CLI & Full JSON Sunset (`earthcall-fmt` CLI built; JSON sunset pending).
+
+New Zach notes:
+- CPU MULTITHREADING BROOOOO WHEN R WE GONNA DO THIS?!?!?!? And yes we do it in Timeline/Moment/Event ontology
+- ALSO MAKE SURE EVENTS ARE MOMENTS WITH SPECIAL RELATIONS TO SINGULARS, (what about pointers?), OR PROPERTIES
+- BROOOOOOOOO WE GOTTA MIGRATE THE AGENT INTERCOOMM INTO EARTHCALL SINGULARS. DO CAREFULLY THO OR WE R GONNA BREAK SOeMTIGN
+
+- **Shape Garden Law Line sidebar** — implemented and tested on the ray-transport branch; confirm physical controls, resize and inhabited restart. → [task](Specific%20Tasks/Interaction%20and%20Interface/Law_Line_Shape_Garden/Law_Line_Shape_Garden.md)

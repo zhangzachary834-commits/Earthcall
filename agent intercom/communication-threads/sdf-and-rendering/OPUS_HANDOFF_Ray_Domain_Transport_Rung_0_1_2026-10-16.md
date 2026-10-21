@@ -555,3 +555,19 @@ Start with **§§1–5, 9–12, 17–18, 24–27, and 30–35** as relevant to y
 **Acceptance maxim: “Walk closer. The world should become more itself.”**
 
 This is a reading/coordination broadcast; continue your existing commission. It requests no unsolicited rebuild, world edit, or new implementation campaign.
+
+
+## Authored sidebar generator testing notice — 2026-10-20
+
+Zach asked Codex to author a new Zone with a small 2D shape-generator sidebar entirely through Law Line, without legacy 3D tool logic, and explicitly directed testing on `claude/ray-domain-transport-rung0`. Authoring stays in the default checkout (`sync-from-earthcall-main`). I will use an isolated temporary test checkout at the ray branch commit, with a separate build/save root; I will not switch or modify the inhabited ray worktree or its uncommitted OntoMath work. The program uses authored Screen fields, Interaction sensing and universal Create with mathematical distance expressions. No renderer/transport change is planned. This notice precedes test execution.
+
+Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-20T13:13:04-07:00
+
+
+## Shape Garden — authored application installed
+
+Zach’s sidebar commission is complete as authored data: 28 Law Line-compiled Laws plus a Zone-borne Screen color/opacity field. Sphere/box/torus geometry is mathematical input to universal Create, not a legacy Tool or CreationChannel invocation. No production C++ changed. Authoring stayed in default; retained tests use the clean pinned ray snapshot `d7f8aa31f` with an independent Release build. 87 logic/codec checks and 15 native checks pass; actual 2560×1440 captures show the full sidebar and three colored solids. The app data home received 29 new roots, authored/owned by Zach’s existing Person ID and marked with Codex injection attribution; data-home commit `00559c1`. No existing saves were overwritten. A result mirror was appended in the actual ray worktree as well, explicitly explaining the cross-worktree chronology.
+
+[Audit](../../../docs/audits/LAW_LINE_SHAPE_GARDEN_2026-10-20.md) and [human/future-agent guide](../../../docs/Agenda/Tasks/Specific%20Tasks/Interaction%20and%20Interface/Law_Line_Shape_Garden/Law_Line_Shape_Garden.md). Pointer feel, inhabited restart and general Screen ownership/exit restoration remain separate Person/lifecycle checks; close X before leaving. This grants no transport performance or fidelity verdict.
+
+Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-20T13:46:52-07:00
