@@ -545,6 +545,21 @@ std::shared_ptr<Object> WebDesignerTheme::authorThemeDefinition(
     std::vector<std::shared_ptr<Relation>>* outRelations,
     Zone* zone) {
 
+    // Sun Round 10: Sealing the Maintenance Hatch!
+    // A safe wrapper around an unsafe primitive is not an ownership invariant.
+    // Persistent authored theme-definition creation strictly requires an owning Zone (explicit or live).
+    // If no owning Zone can be resolved, strictly refuse and do NOT mutate the Formation!
+    Zone* targetZone = zone;
+    if (!targetZone && ZoneManager::live()) {
+        try {
+            targetZone = &ZoneManager::live()->active();
+        } catch (...) {}
+    }
+
+    if (!targetZone) {
+        return nullptr;
+    }
+
     std::unordered_map<std::string, std::string> tokens;
     std::vector<std::string> themeAuthors;
     loadThemeTokens(themeName, tokens, &themeAuthors);
@@ -557,14 +572,7 @@ std::shared_ptr<Object> WebDesignerTheme::authorThemeDefinition(
         themeDef->setDynamicProperty(k, PropertyValue(v));
     }
 
-    // Sun Round 9 Gate 1: Genuine Zone custody prevents Theme Ghost!
-    if (zone) {
-        zone->addObject(themeDef);
-    } else if (ZoneManager::live()) {
-        try {
-            ZoneManager::live()->active().addObject(themeDef);
-        } catch (...) {}
-    }
+    targetZone->addObject(themeDef);
 
     if (formation) {
         formation->addMember(themeDef.get());
@@ -583,6 +591,24 @@ std::shared_ptr<Object> WebDesignerTheme::authorThemeDefinition(
     }
 
     return themeDef;
+}
+
+std::shared_ptr<Object> WebDesignerTheme::authorThemeDefinition(
+    const std::string& themeName,
+    Person& author,
+    Zone& zone,
+    Formation* formation,
+    std::vector<std::shared_ptr<Relation>>* outRelations) {
+    return authorThemeDefinition(themeName, &author, formation, outRelations, &zone);
+}
+
+std::shared_ptr<Object> WebDesignerTheme::authorThemeDefinition(
+    const std::string& themeName,
+    Person* author,
+    Zone& zone,
+    Formation* formation,
+    std::vector<std::shared_ptr<Relation>>* outRelations) {
+    return authorThemeDefinition(themeName, author, formation, outRelations, &zone);
 }
 
 bool WebDesignerTheme::loadThemeTokens(

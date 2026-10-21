@@ -2568,6 +2568,7 @@ void test_round7_theme_definition_vs_application_two_author_provenance() {
         out.push_back(&alice);
     });
 
+    Zone siteZone("zone.alice", "Alice Zone");
     Object siteRoot;
     siteRoot.setObjectID("site-root-alice");
 
@@ -2575,8 +2576,8 @@ void test_round7_theme_definition_vs_application_two_author_provenance() {
     siteFormation.addMember(&siteRoot);
 
     std::vector<std::shared_ptr<Relation>> outRelations;
-    // Sun Round 8 Gate 5: Theme definition is a real world-owned Being carrying its tokens
-    auto themeDef = WebDesignerTheme::authorThemeDefinition("modern-dark", &zach, &siteFormation, &outRelations);
+    // Sun Round 8 & 10: Theme definition is a real world-owned Being carrying its tokens in Zone custody
+    auto themeDef = WebDesignerTheme::authorThemeDefinition("modern-dark", &zach, &siteFormation, &outRelations, &siteZone);
     siteFormation.addMember(themeDef.get());
 
     Universe::instance().setProvider([&](std::vector<Singular*>& out) {
@@ -2585,7 +2586,7 @@ void test_round7_theme_definition_vs_application_two_author_provenance() {
         out.push_back(themeDef.get());
     });
 
-    WebDesignerTheme::applyModernDarkTheme(siteRoot, alice, &siteFormation, &outRelations);
+    WebDesignerTheme::applyModernDarkTheme(siteRoot, alice, siteZone, &siteFormation, &outRelations);
 
     // Verify relations exist in provenance graph:
     // 1. Relation(kAuthoredBy, themeDef, Zach) - Zach is theme definition author
@@ -2949,11 +2950,12 @@ void test_round8_single_sink_authorship_admission() {
 void test_round8_theme_plush_abolished_and_no_shadow_provenance() {
     std::cout << "[Round 8 Witness: Gates 5 & 6] Theme Plush Abolished & Shadow Provenance Killed..." << std::endl;
 
+    Zone zone("test-theme-zone", "Theme Zone");
     Person steward = makeTestPerson("ThemeSteward");
     Formation formation;
 
-    // 1. Author theme definition: creates a real world-owned Being carrying design tokens
-    auto themeDef = WebDesignerTheme::authorThemeDefinition("modern-dark", &steward, &formation);
+    // 1. Author theme definition: creates a real world-owned Being carrying design tokens in Zone custody
+    auto themeDef = WebDesignerTheme::authorThemeDefinition("modern-dark", &steward, zone, &formation);
     assert(themeDef != nullptr);
     assert(themeDef->getIdentifier() == "theme.definition.modern-dark");
 
@@ -2984,11 +2986,11 @@ void test_round8_theme_plush_abolished_and_no_shadow_provenance() {
     // 2. Applying theme to Page 1 and Page 2 discovers the existing world-owned definition
     Object page1;
     page1.setObjectID("page-1");
-    WebDesignerTheme::applyModernDarkTheme(page1, &steward, &formation);
+    WebDesignerTheme::applyModernDarkTheme(page1, &steward, zone, &formation);
 
     Object page2;
     page2.setObjectID("page-2");
-    WebDesignerTheme::applyModernDarkTheme(page2, &steward, &formation);
+    WebDesignerTheme::applyModernDarkTheme(page2, &steward, zone, &formation);
 
     // Both pages point to the same existingDef via uses-theme Relation:
     auto usesThemeRels = formation.relations().getRelationsOfType("uses-theme");
@@ -3005,7 +3007,7 @@ void test_round8_theme_plush_abolished_and_no_shadow_provenance() {
     Object pageRoot;
     pageRoot.setObjectID("page-root-8");
     std::vector<std::shared_ptr<Relation>> pageRels;
-    WebDesignerTheme::applyModernDarkTheme(pageRoot, &steward, &formation, &pageRels);
+    WebDesignerTheme::applyModernDarkTheme(pageRoot, &steward, zone, &formation, &pageRels);
 
     assert(!pageRoot.getDynamicProperty("theme.definition.author", shadowProp));
 
@@ -3156,7 +3158,29 @@ void test_round9_theme_definition_zone_custody_and_no_theme_ghost() {
     std::cout << "  ✓ Ghost Door sealed: legacy no-Zone overload refuses to admit dangling theme definition into Formation" << std::endl;
 
     // -----------------------------------------------------------------------
-    // Part 2: Explicit Zone& Custody Witness
+    // Part 2: Exact Sun Hostile Witness (The Maintenance Hatch is Sealed)
+    // Run with NO live ZoneManager and authorThemeDefinition primitive directly
+    // -----------------------------------------------------------------------
+    Formation fMaint;
+    Person pMaint = makeTestPerson("Zach");
+    {
+        auto ignored = WebDesignerTheme::authorThemeDefinition("modern-dark", &pMaint, &fMaint);
+        // Primitive strictly refuses when no owning Zone can be resolved:
+        assert(ignored == nullptr);
+    }
+    // Assert fMaint contains no theme definition (no dangling raw pointer):
+    bool foundInMaintFormation = false;
+    for (const auto* m : fMaint.getMembers()) {
+        if (m && m->getIdentifier() == "theme.definition.modern-dark") {
+            foundInMaintFormation = true;
+            break;
+        }
+    }
+    assert(!foundInMaintFormation);
+    std::cout << "  ✓ Maintenance Hatch sealed: authorThemeDefinition strictly refuses without owning Zone" << std::endl;
+
+    // -----------------------------------------------------------------------
+    // Part 3: Explicit Zone& Custody Witness
     // -----------------------------------------------------------------------
     Zone siteZone("zone.site.custody", "Theme Custody Zone");
     Person author = makeTestPerson("Zach");

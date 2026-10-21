@@ -137,14 +137,43 @@ public:
                                   Formation* formation = nullptr,
                                   std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 
+    // -----------------------------------------------------------------------
+    // Theming API Contract (Sun Round 10: Sealing the Maintenance Hatch):
+    // 1. Persistent World Theming:
+    //    Requires an owning Zone (explicit Zone& or active ZoneManager::live()).
+    //    Authors/discovers a durable theme definition Being in Zone custody, connects
+    //    the target root to it via Relation("uses-theme", root, themeDef), and establishes
+    //    applicant stewardship via Relation(kAuthoredBy, root, applicant).
+    // 2. Detached / Draft Application (no Zone):
+    //    When no owning Zone exists, applies theme aesthetic properties directly to root
+    //    as an ephemeral draft/detached style without creating a dangling world being
+    //    or admitting an unowned raw pointer into a non-owning Formation.
+    // -----------------------------------------------------------------------
+
     // Authors a real world-owned theme definition Being carrying its design tokens
-    // with explicit Person stewardship. (Sun Round 8 Gate 5 & Round 9 Gate 1: Held in Zone custody!)
+    // with explicit Person stewardship in genuine Zone custody.
+    // If no owning Zone can be resolved, strictly REFUSES (returns nullptr) and leaves formation untouched!
     static std::shared_ptr<Object> authorThemeDefinition(
         const std::string& themeName,
         Person* author = nullptr,
         Formation* formation = nullptr,
         std::vector<std::shared_ptr<Relation>>* outRelations = nullptr,
         Zone* zone = nullptr);
+
+    // Preferred type-safe overload requiring an explicit owning Zone&
+    static std::shared_ptr<Object> authorThemeDefinition(
+        const std::string& themeName,
+        Person& author,
+        Zone& zone,
+        Formation* formation = nullptr,
+        std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    static std::shared_ptr<Object> authorThemeDefinition(
+        const std::string& themeName,
+        Person* author,
+        Zone& zone,
+        Formation* formation = nullptr,
+        std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 
     // Authors full modern dark theme design tokens loading from authored fixture web_themes.json
     static void applyModernDarkTheme(Singular& root,
