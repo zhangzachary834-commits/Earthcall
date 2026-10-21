@@ -88,6 +88,8 @@ int main() {
     const int mediumCount = limit("EC_VEIL_MEDIA", 4);
     std::printf("  scope: up to %d media, %d channels, %d rays/channel; fixed t=0, medium-local frame\n", mediumCount, channelCount, rayCount);
     const bool adaptiveOnly = std::getenv("EC_VEIL_ADAPTIVE_ONLY");
+    const bool reductionOnly = std::getenv("EC_VEIL_REDUCTION_ONLY");
+    int reductions = 0;
     const int selectedChannel = std::getenv("EC_VEIL_CHANNEL") ? std::atoi(std::getenv("EC_VEIL_CHANNEL")) : -1;
     int media = 0, soundRays = 0, admittedRays = 0;
     int scalarRays = 0, activeScalarRays = 0, regionTotal[2] = {0, 0}, regionActiveTotal[2] = {0, 0};
@@ -110,6 +112,56 @@ int main() {
         if (std::getenv("EC_PRINT_VEIL")) std::printf("     σ: %s\n     ε: %s\n", (ext ? ext : den)->print().c_str(), emi->print().c_str());
         Node sigma = ext ? clone(*ext) : node(Op::Scale, constant(0.5), clone(*den));
         std::string why;
+        if (reductionOnly) {
+            // Raw authored extinction and component projection only. Native
+            // density gates, floors, emission clamps and scattering remain
+            // separate admission obligations; this mode claims no frame gain.
+            auto named = [](const char* v) { auto n = std::make_unique<MathNode>(); n->op = Op::ValueLeaf; n->variableName = v; return n; };
+            auto at = [&](const char* v) { return node(Op::VectorConstruct, named(v), constant(0.0), constant(0.0)); };
+            const char* axes[] = {"x", "y", "z"};
+            for (int c = 0; c < channelCount; ++c) {
+                auto component = node(Op::Component, clone(*emi)); component->stringArg = axes[c];
+                auto depth = node(Op::Integral, node(Op::SDF, clone(*sigma), at("u")), constant(0.0), named("s"));
+                depth->variableName = "u";
+                auto exponential = std::make_unique<MathNode>();
+                exponential->scalarForm = ScalarForm::transcendental(OntoMath::TransFactor::Kind::Exp, "tau", -1.0);
+                auto let = node(Op::Let, std::move(depth), node(Op::Scale, std::move(exponential), node(Op::SDF, std::move(component), at("s"))));
+                let->variableName = "tau";
+                auto integral = node(Op::Integral, std::move(let), constant(0.0), constant(1.0)); integral->variableName = "s";
+                const auto reduced = OntoMath::deriveExponentialIntegral(*integral, &why);
+                check(bool(reduced), b.producerId + "." + axes[c] + " raw authored pair derives a shared endpoint: " + why);
+                if (!reduced) continue;
+                ++reductions;
+                const auto& coefficient = *reduced->children[1]->children[0];
+                std::set<std::string> deps; coefficient.collectDependencies(deps);
+                bool agrees = !deps.count("s") && !deps.count("u") && !deps.count("tau");
+                const auto sigmaAt = node(Op::SDF, clone(*sigma), named("q"));
+                auto emittedComponent = node(Op::Component, clone(*emi)); emittedComponent->stringArg = axes[c];
+                const auto emissionAt = node(Op::SDF, std::move(emittedComponent), named("q"));
+                for (double clock : {0.0, 3.0}) {
+                    double k = NAN;
+                    const auto kv = coefficient.evaluate({{OntoMath::kTimeVar, PropertyValue(clock)}});
+                    if (kv) propertyValueToNumber(*kv, k);
+                    bool occupied = false;
+                    for (int z = -20; z <= 20; z += 2) {
+                        const std::map<std::string, PropertyValue> scope{{OntoMath::kTimeVar, PropertyValue(clock)},
+                            {"q", PropertyValue(glm::vec3(0.0f, 0.0f, float(z)))}};
+                        double extinction = NAN;
+                        const auto sv = sigmaAt->evaluate(scope), ev = emissionAt->evaluate(scope);
+                        if (sv) propertyValueToNumber(*sv, extinction);
+                        double emission = NAN;
+                        if (extinction > 1e-4 && ev && propertyValueToNumber(*ev, emission)) {
+                            const double reference = emission / extinction;
+                            agrees = agrees && std::isfinite(k) && std::abs(k - reference) < 1e-6;
+                            occupied = true;
+                        }
+                    }
+                    agrees = agrees && occupied;
+                }
+                check(agrees, b.producerId + "." + axes[c] + " coefficient is independent of integration and agrees with original evaluations at two clocks");
+            }
+            continue;
+        }
         const auto sc = OntoMath::certifyLineQuadrature(*sigma, model, 20, &why, symbols);
         if (!sc) { std::printf("     σ_t does not certify: %s\n", why.c_str()); continue; }
         // The band covering the curtain's box.
@@ -330,7 +382,8 @@ int main() {
                     regionTotal[0], scalarRays, regionActiveTotal[0], activeScalarRays,
                     regionTotal[1], scalarRays, regionActiveTotal[1], activeScalarRays);
     check(media > 0, "Northern Veil's media were read");
-    check(soundRays == admittedRays, "on every admitted record, the reference lies within its asserted route bound (" +
+    if (reductionOnly) check(reductions == media * channelCount, "every attempted raw authored channel has the structural reduction");
+    if (!reductionOnly) check(soundRays == admittedRays, "on every admitted record, the reference lies within its asserted route bound (" +
                                          std::to_string(soundRays) + "/" + std::to_string(admittedRays) + ")");
     std::cout << "ontomath_veil_transport_feasibility_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";
     return g_failures == 0 ? 0 : 1;

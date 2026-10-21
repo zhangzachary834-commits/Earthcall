@@ -894,6 +894,11 @@ struct IntegralBounds {
     std::uint64_t innerSamples = 0;   // inner integrals' work behind the samples
     double total() const { return mathematical + execution + propagated; }
 };
+// Prove integral_a^b exp(-integral_a^x g) * k*g dx = k*(1-exp(-integral_a^b g)).
+// Returns an ordinary Let/Integral expression; exact structural factors only,
+// k independent of x, lexical bindings checked. Unknown shapes return nullptr.
+// This derives mathematics only; consumers still account for execution error.
+std::unique_ptr<MathNode> deriveExponentialIntegral(const MathNode& node, std::string* why = nullptr);
 std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std::string, PropertyValue>& vars,
                                        const Singular* subject, std::string* why = nullptr,
                                        IntegralBounds* bounds = nullptr);

@@ -555,6 +555,110 @@ int main() {
               "a benign computed limit (x + ½, x = 1000.3) is still admitted, its rounding charged (" + std::to_string(lb.execution) + ")");
     }
 
+    // Exact derivative substitution is authored mathematics, independent of
+    // Screen. A polynomial inside exp(integral g) is outside the term algebra;
+    // a narrow tent additionally crosses genuine value branches.
+    {
+        auto make = [&](Node gInner, Node gOuter, Node coefficient, double lo, double hi, double tol = 0.0) {
+            auto depth = integralTol("u", std::move(gInner), constant(lo), named("s"), constant(tol * 0.1));
+            auto body = node(Op::Let, std::move(depth),
+                node(Op::Scale, leaf(trans(K::Exp, "tau", -1.0)),
+                     node(Op::Scale, std::move(coefficient), std::move(gOuter))));
+            body->variableName = "tau";
+            return integralTol("s", std::move(body), constant(lo), constant(hi), constant(tol));
+        };
+        auto polynomial = [&](const char* v) { return leaf(var(v).times(var(v)).plus(ScalarForm::constant(1.0))); };
+        auto exact = make(polynomial("u"), polynomial("s"), named("k"), 0.0, 2.0);
+        OntoMath::IntegralBounds b; std::string why;
+        const auto v = OntoMath::evaluateIntegral(*exact, {{"k", PropertyValue(0.3)}}, nullptr, &why, &b);
+        const double want = 0.3 * (1.0 - std::exp(-14.0 / 3.0));
+        check(v && b.route == "exponential derivative substitution" && !b.approximate && b.samples == 0 &&
+              std::abs(*v - want) <= b.total(), "a varying quadratic derivative eliminates the outer integral and prices endpoint execution");
+        const auto reduced = OntoMath::deriveExponentialIntegral(*exact, &why);
+        std::cout << "    substitution diagnostic: " << (reduced ? reduced->print() : why) << ", route " << b.route << ", value " << v.value_or(NAN) << " bound " << b.total() << "\n";
+        const auto round = reduced ? MathNode::fromJson(reduced->toJson()) : nullptr;
+        double result = NAN;
+        const auto rv = round ? round->evaluate({{"k", PropertyValue(0.3)}}) : std::nullopt;
+        if (rv) propertyValueToNumber(*rv, result);
+        check(round && std::abs(result - want) < 1e-14, "the reusable derivation is an ordinary serialized Let/Integral tree");
+        auto shadowed = std::make_unique<MathNode>(*exact);
+        auto& sameNameDepth = *shadowed->children[0]->children[0];
+        sameNameDepth.variableName = "s";
+        sameNameDepth.children[0] = polynomial("s");
+        const auto sv = OntoMath::evaluateIntegral(*shadowed, {{"k", PropertyValue(0.3)}, {"s", PropertyValue(100.0)}}, nullptr, &why, &b);
+        check(sv && b.route == "exponential derivative substitution" && std::abs(*sv - want) <= b.total(),
+              "the same inner and outer name keeps the cumulative endpoint in outer scope and the derivative in inner scope");
+        auto reverse = make(polynomial("u"), polynomial("s"), constant(-0.2), 2.0, 0.0);
+        const auto r = OntoMath::evaluateIntegral(*reverse, {}, nullptr, &why, &b);
+        check(r && b.route == "exponential derivative substitution" &&
+              std::abs(*r - (-0.2 * (1.0 - std::exp(14.0 / 3.0)))) <= b.total(), "signed coefficients and reversed endpoints preserve the exact identity");
+        auto changing = make(polynomial("u"), polynomial("s"), named("s"), 0.0, 2.0);
+        check(!OntoMath::deriveExponentialIntegral(*changing, &why), "a varying proportional coefficient cannot use endpoint substitution");
+        auto mismatch = make(polynomial("u"), node(Op::Add, polynomial("s"), constant(0.01)), constant(0.3), 0.0, 2.0);
+        check(!OntoMath::deriveExponentialIntegral(*mismatch, &why), "a nearby but unequal source cannot masquerade as the derivative");
+        auto capture = make(node(Op::Add, polynomial("u"), named("s")), polynomial("s"), constant(0.3), 0.0, 2.0);
+        check(!OntoMath::deriveExponentialIntegral(*capture, &why), "an inner body reading the changing outer binding needs a Leibniz term and declines");
+        auto wrongBase = std::make_unique<MathNode>(*exact);
+        wrongBase->children[0]->children[0]->children[1] = constant(-1.0);
+        check(!OntoMath::deriveExponentialIntegral(*wrongBase, &why), "a different cumulative base cannot assume a zero lower endpoint");
+        auto fromOuterTau = make(polynomial("u"), polynomial("s"), named("tau"), 0.0, 2.0);
+        check(!OntoMath::deriveExponentialIntegral(*fromOuterTau, &why), "a coefficient reading the cumulative binding is not a ray-independent ratio");
+        auto field = [&] {
+            return node(Op::Clamp, node(Op::Sub, constant(1.0), node(Op::Abs,
+                node(Op::Sub, node(Op::Component, named("p")), constant(0.5)))), constant(0.0), constant(1.0));
+        };
+        auto sample = [&](const char* x, double a) {
+            auto f = field(); f->children[0]->children[1]->children[0]->children[0]->stringArg = "x";
+            return node(Op::SDF, node(Op::Scale, constant(a), std::move(f)),
+                node(Op::VectorConstruct, named(x), constant(0.0), constant(0.0)));
+        };
+        auto tent = make(sample("u", 0.5), sample("s", 0.25), constant(1.0), 0.0, 1.0, 1e-5);
+        const auto tv = OntoMath::evaluateIntegral(*tent, {}, nullptr, &why, &b);
+        std::cout << "    piecewise substitution: " << tv.value_or(NAN) << ", route " << b.route << " bound " << b.total() << "\n";
+        check(tv && b.route == "exponential derivative substitution" && b.samples == 0 &&
+              std::abs(*tv - 0.5 * (1.0 - std::exp(-0.375))) <= b.total(),
+              "identical piecewise fields at the same point share one endpoint depth, with distinct literal multipliers");
+        auto pole = make(leaf(ScalarForm::variable("u", -2.0)), leaf(ScalarForm::variable("s", -2.0)), constant(1.0), -1.0, 1.0);
+        check(!OntoMath::deriveExponentialIntegral(*pole, &why), "finite endpoint formulas cannot conceal an interior pole in the derivative");
+        auto foreignPoint = std::make_unique<MathNode>(*tent);
+        // An independent SDF factor at an undefined point would disappear if
+        // lifted carelessly. Its domain is not witnessed by the retained g.
+        auto badPoint = node(Op::VectorConstruct, node(Op::Div, constant(1.0), constant(0.0)), constant(0.0), constant(0.0));
+        foreignPoint->children[0]->children[1]->children[1]->children[0] = node(Op::SDF, constant(1.0), std::move(badPoint));
+        check(!OntoMath::deriveExponentialIntegral(*foreignPoint, &why), "lifting an independent field factor cannot erase a different undefined point");
+        auto noiseSample = [&](const char* x, double a) {
+            return node(Op::SDF, node(Op::Scale, constant(a), node(Op::Add, node(Op::Noise, named("p")), constant(4.0))),
+                node(Op::VectorConstruct, named(x), constant(0.1), constant(0.2)));
+        };
+        auto noisy = make(noiseSample("u", 0.5), noiseSample("s", 0.25), constant(1.0), 0.0, 1.0, 0.02);
+        const auto nv = OntoMath::evaluateIntegral(*noisy, {}, nullptr, &why, &b);
+        // Independent fine Simpson of the actual f32/Perlin field; this is a
+        // numerical witness, not an exact-real noise oracle.
+        auto noiseNode = node(Op::Noise, named("p"));
+        long double sum = 0.0L;
+        for (int i = 0; i <= 8000; ++i) {
+            const auto z = noiseNode->evaluate({{"p", PropertyValue(glm::vec3(float(i/8000.0), 0.1f, 0.2f))}});
+            double y = NAN; if (z) propertyValueToNumber(*z, y);
+            sum += (i == 0 || i == 8000 ? 1 : i % 2 ? 4 : 2) * (4.0L + y) * 0.5L;
+        }
+        const double noisyWant = 0.5 * (1.0 - std::exp(-double(sum / 24000.0L)));
+        check(nv && b.route == "exponential derivative substitution" && b.approximate && b.samples == 0 && b.innerSamples > 0 &&
+              b.propagated > 0 && b.total() <= 0.02 && std::abs(*nv - noisyWant) <= b.total(),
+              "a noisy common derivative executes one bounded inner integral and no outer samples");
+        auto exactNoisy = std::make_unique<MathNode>(*noisy);
+        exactNoisy->children[3] = constant(0.0);
+        check(!run(*exactNoisy, {}, &why), "an approximate inner endpoint cannot turn an exact-only outer request into an approximate answer");
+        auto aliasRatio = make(sample("u", 0.5), sample("s", 0.25), constant(1.0), 0.0, 1.0);
+        auto& aliasSource = aliasRatio->children[0]->children[1]->children[1]->children[1];
+        aliasSource->children[0] = node(Op::Scale, std::move(aliasSource->children[0]), named("x"));
+        check(!OntoMath::deriveExponentialIntegral(*aliasRatio, &why), "an SDF x/y/z alias cannot escape as a constant proportional factor");
+        auto zeroDivisor = make(sample("u", 0.0), sample("s", 0.25), constant(1.0), 0.0, 1.0);
+        check(!OntoMath::deriveExponentialIntegral(*zeroDivisor, &why), "zero extinction coefficient never divides out a shared field");
+        auto cancelled = node(Op::Sub, node(Op::Add, constant(std::ldexp(1.0, 54)), named("s")), constant(std::ldexp(1.0, 54)));
+        auto cancelledRatio = make(polynomial("u"), polynomial("s"), std::move(cancelled), 0.0, 2.0);
+        check(!OntoMath::deriveExponentialIntegral(*cancelledRatio, &why), "authored spatial dependence cannot disappear through algebraic cancellation");
+    }
+
     std::cout << "ontomath_integral_operation_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";
     return g_failures == 0 ? 0 : 1;
 }

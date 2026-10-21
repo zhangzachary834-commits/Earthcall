@@ -2207,3 +2207,46 @@ Focused targets passed: line segmentation **113/113**, line restriction **57/57*
 This pass adds no visible default behavior or manual control. Existing authored-fidelity, live movement and Person acceptance checks remain open. The precise next optimization is the generic source-proportional reduction in the authored mathematical derivation, followed by device-side/reusable schedule discovery and the eligible native consumer; preserve the native semantic conditions recorded above.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-20T19:38:33-07:00; commissioned by Zachary Zhang.
+
+
+## 6ax. Exact exponential-derivative substitution in authored mathematics (2026-10-20)
+
+Zach’s “YAAASSSSSS” continues the takeover; his earlier “gift shop” correction fixes ownership. The source-proportional observation in §6aw is now an ordinary mathematical derivation in OntoMath, not a rendering policy:
+
+`G(x) = Integral(g(u), u=a..x)` and `k` independent of `x` imply `Integral(exp(-G(x))*k*g(x), x=a..b) = k*(1-exp(-G(b)))`.
+
+**Implemented:** `deriveExponentialIntegral` returns an ordinary Let/Integral/ScalarForm tree. It recognizes exact structural scalar factors, nondegenerate literal multipliers, linear component projection through vector products, and same-point field products. The original cumulative body is copied intact into the endpoint Integral: no division by a possibly zero field, approximate equality, or simplification of canceled operations establishes the identity. Bound names may differ or be the same; a cumulative body reading the changing outer variable declines. Untouched subtrees stay untouched during alpha-renaming.
+
+The derivative must lie in a structurally finite, continuous fragment (polynomials, supported trigonometric/exponential forms, constant nonzero division, abs/min/max/clamp and noise fields). An interior pole cannot be hidden by finite endpoint antiderivatives. Nested binders, logarithmic/fractional domain conditions and field-coordinate integration names remain conservative refusals. Field projection preserves the complete p/x/y/z binding. All field points must coincide with the one retained by the cumulative integral; an independent factor at a different undefined point cannot disappear. Extra source factors reading the integration variable or cumulative binding decline. Negative coefficients and reversed intervals remain valid mathematics; this identity itself needs no nonnegativity assumption.
+
+**CPU execution:** `evaluateIntegral` tries this derivation before outer quadrature. The inner Integral retains its own authored tolerance and existing mathematical/execution accounting. Its complete bound propagates through the coefficient, exp and subtraction under `ontomath-cpu/3`; only the resulting total admits under the outer tolerance. An approximate endpoint cannot satisfy an exact-only outer request. The report names `exponential derivative substitution`, zero outer sample sites, and the remaining inner work. This is model-qualified evidence, not hardware certification. General scalar Scale now composes through the existing bounded-value office.
+
+**GPU execution:** the ordinary Integral emitter asks OntoMath for the same returned expression, then emits it through its existing Let/Integral lowering. A varying quadratic derivative with a proportional source runs on Metal and matches an independent analytic reference. The ordinary emitter’s tolerance guard still refuses positive/explicit tolerances because that path has no device enclosure. Unsupported inner field integrals still refuse; this pass does not wire the noise endpoint into the scheduled kernel or evaluate the twelve curtain channels on the GPU through the new reduction. The previously witnessed scheduled L/T kernel remains the available device mechanism for those fields.
+
+**Actual authored equations:** `EC_VEIL_REDUCTION_ONLY=1 ./build/ontomath_veil_transport_feasibility_test` derives all **12/12** raw authored extinction/emission-channel pairs from the four tracked Northern Veil media. Derived coefficients contain no integration/cumulative binding and agree within 1e-6 with original scalar SDF/component evaluations at occupied points at clocks 0 and 3. This is structural recognition plus coefficient checking, not an RGB frame admission. No native density gate, extinction floor, emission clamp or scattering term is silently removed.
+
+**Focused verification (targets run individually):**
+
+| Witness | Observed result |
+|---|---|
+| `ontomath_integral_operation_test` | **83/83**, including exact/reversed/same-name cases, piecewise and noisy common derivatives, retained inner uncertainty, and negative controls for poles, changed bases, varying coefficients, unequal fields, zero divisors, canceled dependence and coordinate/domain escape |
+| `ontomath_veil_transport_feasibility_test`, reduction mode | **26/26**, all 12 raw channel pairs and two-clock coefficients |
+| `ontomath_expression_evaluation_test` | **36/36**, existing report/input lineage preserved |
+| `webgpu_integral_operation_test` | **32/32 Metal**, 9 supported cases dispatched; 4 expected refusals include a reducible but tolerance-bearing Integral |
+| `webgpu_line_quadrature_test` | **81/81 Metal**, including existing four occupied-curtain scheduled L/T references and shader-text reuse |
+| `earthcall_webgpu` | Builds; not installed or launched |
+
+Logs: `/private/tmp/earthcall-ray-substitution-{cpu,curtains,expression,gpu,line-gpu}-verified.txt`; build `/private/tmp/earthcall-ray-substitution-build-verified.txt`. No broad suite, native certificate tour, or long faithfulness test was repeated for this unconnected mathematical/emitter change. Existing native results in §6aw remain dated evidence. No save, live data, installed app, authored tolerance, lighting or default setting changed; existing Person visual/movement checks remain open.
+
+### Shipping ledger after this pass
+
+| Gate | What is landed | Remaining closure |
+|---|---|---|
+| **1. Mathematical/error contract** | Exact derivative substitution, retained inner bounds, scope/domain refusals; real raw curtain equations recognized. | Existing execution-model premises remain conditional; unsupported domains decline. |
+| **2. GPU execution** | Same mathematical derivation executes for supported closed forms; noisy scheduled L/T mechanism remains verified. | Consume one bounded noisy depth for shared RGB/T, including coefficient/endpoint device rounding and full projected-source admission; reusable/device-side work discovery rather than host-per-pixel search. |
+| **3. Native consumer** | Still unconnected. | Preserve density gate, 1e-6 extinction floor (prove inactive or bound residual), emission clamp, scattering/occlusion, per-medium frame/clock, clipping and coherent overlap fallback. Different per-medium ratios do not justify independent compositing under shared attenuation. Rebuild after edits/device changes; all-ineligible shader identity remains unchanged. |
+| **4. Shipped performance** | No new native speed or live-movement claim. | Paired authored-reference accuracy and repeated end-to-end Metal costs including preparation/uploads/occupancy/fallback, then inhabited motion and Person evidence. |
+
+**Next:** connect the reduced endpoint to the bounded device execution plan and share it across RGB/T; complete the source/domain/floor admission proof before native use. Do not reinterpret the existing accepted-lattice `volumeOutputErrorBudget` as a continuum tolerance without an explicit contract. A T error also weights the background/remaining contribution before it becomes a final-pixel budget. This pass implements no new allocation policy or activation rule.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-20T20:17:46-07:00`. Human origin: Zachary Zhang’s continuation of the implementation takeover and his requirement that mathematical meaning belong to OntoMath.

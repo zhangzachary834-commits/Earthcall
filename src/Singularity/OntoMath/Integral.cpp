@@ -1,5 +1,5 @@
 // ============================================================================
-// MathNode::Op::Integral — ∫_lo^hi body d(v), evaluated EXACTLY OR NOT AT ALL.
+// MathNode::Op::Integral — exact derivation or authored bounded approximation.
 //
 // Human origin: Zachary Zhang, 2026-10-19 — "yeah lets as integral operation
 // biuld it on top of antiderivatives so we dont have two competing
@@ -7,24 +7,19 @@
 // from Codex (an integral the renderer alone could ask for is a gift shop; the
 // world must be able to express the mathematics without the renderer).
 //
-// Two routes, ONE office (ScalarForm.hpp, "One office for every exact
-// integral"):
-//   1. The body is in the term algebra (toScalarForm, nested Integrals
-//      included): definiteIntegral, i.e. ScalarForm::antiderivative evaluated
-//      stably.
-//   2. The body is SDF(f, q) with q affine in v — a field along a straight
-//      line. f is restricted to the line (LineRestriction), the line is
-//      segmented by f's value branches (|·|, min/max, clamp, √, Piecewise),
-//      and each proved piece is integrated through the same office.
-// Anything else answers nullopt with the reason: no quadrature, no sampling.
-// A branch switch the segmentation could not place exactly leaves a sliver about
-// 1e-9 wide, and the exact path REFUSES it. Omitting a nonzero contribution is
-// an approximation, and approximations wait for an authored error contract
-// (the integration hierarchy, ONTOMATH_FRAMEWORK.md §6, levels 4–5). An earlier
-// rule here admitted slivers proved below 0.5·ε·|answer| as "exact to rounding".
-// Codex refuted it (2026-10-19 21:30): at 1.5 that threshold is 0.75 ulp, and an
-// omitted 5·2⁻⁵⁵ (0.625 ulp) changes the correctly rounded result; nor did it
-// count the error already in the rest of the answer.
+// Four routes, one mathematical office:
+//   1. Term algebra: ScalarForm's antiderivative evaluated stably.
+//   2. SDF(field, affine point): line restriction and value-branch integration.
+//   3. A proved exponential-derivative substitution: an ordinary endpoint
+//      Let/Integral expression, reusing those same inner routes.
+//   4. An explicitly positive authored tolerance permits bounded sampled bodies
+//      (including nested integrals) and line remainders. The complete result's
+//      mathematical, execution and propagated errors must fit that tolerance.
+// Unknown shapes or unbounded error refuse. Absent/zero tolerance means exact
+// mathematics; even a tiny nonzero unresolved branch sliver then refuses.
+// Historical half-ulp omission was refuted by Codex (2026-10-19): at 1.5,
+// 5*2^-55 is only 0.625 ulp but still changes the correctly rounded result.
+// Exact algebra does not claim zero execution error or hardware certification.
 //
 // Nothing here names a camera, a medium, a pixel or a shader.
 // Claude Code · Claude Opus 5.5 · session f3af84cf-bfe3-429d-b417-2d533119f169 · 2026-10-19.
@@ -33,6 +28,7 @@
 #include "Singularity/OntoMath/LineRestriction.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <limits>
@@ -541,7 +537,7 @@ bool scalarComposable(const MathNode& n) {
     using Op = MathNode::Op;
     switch (n.op) {
         case Op::ScalarLeaf: case Op::ValueLeaf: case Op::Add: case Op::Sub: case Op::Div:
-        case Op::Pow: case Op::Abs: case Op::Clamp: case Op::Sqrt: break;
+        case Op::Pow: case Op::Abs: case Op::Clamp: case Op::Sqrt: case Op::Scale: break;
         default: return false;
     }
     for (const auto& c : n.children)
@@ -653,6 +649,220 @@ BoundedValue evaluateBounded(const MathNode& n, std::map<std::string, PropertyVa
     return out;
 }
 
+// Exact substitution office. Zach's shared-source observation is an instance
+// of d exp(-G)/dx = -g exp(-G), G(x)=integral_a^x g. The returned ordinary
+// Integral/Let tree is reusable by any execution channel. No device, field
+// name, rendering policy or approximate equality participates in recognition.
+namespace {
+using NodePtr = std::unique_ptr<MathNode>;
+NodePtr scalarNode(double x) {
+    auto n = std::make_unique<MathNode>();
+    n->scalarForm = ScalarForm::constant(x);
+    return n;
+}
+NodePtr binaryNode(MathNode::Op op, NodePtr a, NodePtr b) {
+    auto n = std::make_unique<MathNode>(); n->op = op;
+    n->children.push_back(std::move(a)); n->children.push_back(std::move(b));
+    return n;
+}
+bool reads(const MathNode& n, const std::string& name) {
+    std::set<std::string> deps; n.collectDependencies(deps);
+    return deps.count(name);
+}
+// Alpha-renaming for the derivative comparison. Nested binders deliberately
+// decline until capture-avoiding substitution for them is exposed here. SDF
+// binds p/x/y/z in its field child; field-coordinate integration names
+// decline below rather than risking capture. Untouched subtrees stay intact.
+bool renameUnbound(MathNode& n, const std::string& from, const std::string& to) {
+    if (n.op == MathNode::Op::Let || n.op == MathNode::Op::Integral) return false;
+    if (n.op == MathNode::Op::ValueLeaf && n.variableName == from) n.variableName = to;
+    if (n.op == MathNode::Op::ScalarLeaf && reads(n, from)) {
+        const auto f = substitute(n.scalarForm, from, ScalarForm::variable(to));
+        if (!f) return false;
+        n.scalarForm = *f;
+    }
+    for (auto& c : n.children) if (!c || !renameUnbound(*c, from, to)) return false;
+    return true;
+}
+// A finite, continuous g makes the fundamental-theorem substitution valid.
+// In particular, endpoint antiderivatives alone must not hide an interior
+// pole (e.g. integral_-1^1 1/x^2). This structural fragment is deliberately
+// conservative; extending it requires a domain proof, not numerical probes.
+bool totalContinuous(const MathNode& n) {
+    using Op = MathNode::Op;
+    switch (n.op) {
+        case Op::ScalarLeaf:
+            for (const auto& t : n.scalarForm.terms) {
+                if (!std::isfinite(t.coefficient)) return false;
+                for (const auto& [v, power] : t.factors)
+                    if (!std::isfinite(power) || power < 0 || std::floor(power) != power) return false;
+                for (const auto& f : t.trans)
+                    if (f.kind == TransFactor::Kind::Ln || !std::isfinite(f.scale) || !std::isfinite(f.shift)) return false;
+            }
+            return true;
+        case Op::ValueLeaf: break;
+        case Op::Add: case Op::Sub: case Op::Scale: case Op::Abs:
+        case Op::VectorConstruct: case Op::Component: case Op::SDF: case Op::Noise:
+        case Op::Union: case Op::Intersection: case Op::Length: case Op::Distance: break;
+        case Op::Div: case Op::Pow: {
+            if (n.children.size() != 2 || !n.children[1]) return false;
+            const auto x = literalConstant(*n.children[1]);
+            if (!x || !std::isfinite(*x)) return false;
+            if (n.op == Op::Div ? std::abs(*x) < 1e-6 : (*x < 0 || std::floor(*x) != *x)) return false;
+            break;
+        }
+        case Op::Clamp: {
+            if (n.children.size() != 3 || !n.children[1] || !n.children[2]) return false;
+            const auto a = literalConstant(*n.children[1]), b = literalConstant(*n.children[2]);
+            if (!a || !b || !std::isfinite(*a) || !std::isfinite(*b) || *a > *b) return false;
+            break;
+        }
+        default: return false;
+    }
+    for (const auto& c : n.children) if (!c || !totalContinuous(*c)) return false;
+    return true;
+}
+// Project only a structurally known vector constructor/product. The original
+// tree's type judgement already proves Scale is scalar-vector here. This is
+// linear projection, not a special RGB or rendering operation.
+NodePtr productComponent(const MathNode& n, std::size_t component) {
+    using Op = MathNode::Op;
+    if (n.op == Op::VectorConstruct && n.children.size() == 3 && n.children[component])
+        return std::make_unique<MathNode>(*n.children[component]);
+    if (n.op != Op::Scale || n.children.size() != 2 || !n.children[0] || !n.children[1]) return nullptr;
+    for (int i = 0; i != 2; ++i)
+        if (auto projected = productComponent(*n.children[i], component))
+            return binaryNode(Op::Scale, std::make_unique<MathNode>(*n.children[1-i]), std::move(projected));
+    return nullptr;
+}
+// Flatten scalar products only. Through SDF, a scalar field product remains
+// the same product at the same point. Independent field factors can be lifted
+// without changing their clock/direction bindings. Original g itself is kept
+// verbatim in the endpoint Integral, including its execution provenance.
+void productFactors(const MathNode& n, std::vector<NodePtr>& factors) {
+    using Op = MathNode::Op;
+    if (n.op == Op::Component && n.children.size() == 1 && n.children[0] &&
+        (n.stringArg == "x" || n.stringArg == "y" || n.stringArg == "z")) {
+        const std::size_t c = n.stringArg == "x" ? 0 : n.stringArg == "y" ? 1 : 2;
+        if (auto projected = productComponent(*n.children[0], c)) {
+            productFactors(*projected, factors);
+            return;
+        }
+    }
+    if (n.op == Op::Scale && n.children.size() == 2 && n.children[0] && n.children[1]) {
+        productFactors(*n.children[0], factors); productFactors(*n.children[1], factors);
+    } else if (n.op == Op::SDF && n.children.size() == 2 && n.children[0] && n.children[1]) {
+        std::vector<NodePtr> field;
+        productFactors(*n.children[0], field);
+        for (auto& f : field) {
+            if (!reads(*f, kAmbientPointVar) && !reads(*f, "x") && !reads(*f, "y") && !reads(*f, "z"))
+                factors.push_back(std::move(f));
+            else factors.push_back(binaryNode(Op::SDF, std::move(f), std::make_unique<MathNode>(*n.children[1])));
+        }
+    } else factors.push_back(std::make_unique<MathNode>(n));
+}
+}
+
+std::unique_ptr<MathNode> deriveExponentialIntegral(const MathNode& n, std::string* why) {
+    using Op = MathNode::Op;
+    if (why) why->clear();
+    auto refuse = [&](const char* reason) -> NodePtr { say(why, reason); return nullptr; };
+    if (n.op != Op::Integral || n.children.size() < 3 || !n.children[0] || !n.children[1] || !n.children[2])
+        return refuse("substitution needs an Integral");
+    const MathNode& let = *n.children[0];
+    if (let.op != Op::Let || let.children.size() != 2 || !let.children[0] || !let.children[1] ||
+        let.variableName.empty() || let.variableName == n.variableName)
+        return refuse("substitution needs a distinct Let-bound cumulative integral");
+    const auto type = n.typeOf({}, "substitution", true);
+    if (!type || type.kind != ValueKind::Scalar) return refuse("substitution needs a scalar, well-typed integral");
+    const MathNode& depth = *let.children[0];
+    if (depth.op != Op::Integral || depth.children.size() < 3 || !depth.children[0] || !depth.children[1] || !depth.children[2] ||
+        depth.variableName.empty() || n.variableName.empty() || depth.variableName == kAmbientPointVar || n.variableName == kAmbientPointVar)
+        return refuse("substitution needs a scalar cumulative integration variable");
+    if (depth.children[2]->op != Op::ValueLeaf || depth.children[2]->variableName != n.variableName ||
+        depth.children[1]->toJson() != n.children[1]->toJson() || reads(*n.children[1], n.variableName))
+        return refuse("the cumulative limits must be the same lower endpoint and the outer variable");
+    if (reads(depth, let.variableName) ||
+        (depth.variableName != n.variableName && reads(*depth.children[0], n.variableName)) ||
+        (depth.children.size() == 4 && (!depth.children[3] || reads(*depth.children[3], n.variableName))))
+        return refuse("the cumulative integral reads a changing outer binding");
+    if (!totalContinuous(*depth.children[0]))
+        return refuse("the derivative is not proved finite and continuous on its input domain");
+    auto g = std::make_unique<MathNode>(*depth.children[0]);
+    if (!renameUnbound(*g, depth.variableName, n.variableName))
+        return refuse("the derivative contains a nested binder not handled by this substitution");
+    // Lifting a constant out of SDF also removes evaluation of its point.
+    // Require every such point to be the very same one retained by g, so the
+    // endpoint integral proves its domain. Otherwise an undefined, unused
+    // source point could disappear from the authored expression.
+    std::vector<nlohmann::json> points;
+    auto visitPoints = [&](auto&& self, const MathNode& x, bool inField) -> bool {
+        if (x.op == Op::SDF) {
+            if (inField || x.children.size() != 2 || !x.children[0] || !x.children[1]) return false;
+            points.push_back(x.children[1]->toJson());
+            return self(self, *x.children[0], true) && self(self, *x.children[1], false);
+        }
+        for (const auto& c : x.children) if (!c || !self(self, *c, inField)) return false;
+        return true;
+    };
+    if (!visitPoints(visitPoints, *g, false)) return refuse("nested field points need a separate domain proof");
+    if (!points.empty() && (depth.variableName == "x" || depth.variableName == "y" || depth.variableName == "z" ||
+                            n.variableName == "x" || n.variableName == "y" || n.variableName == "z"))
+        return refuse("field-coordinate aliases need capture-avoiding substitution before using them as integration names");
+    const auto derivativePoints = points.size();
+    if (!visitPoints(visitPoints, *let.children[1], false)) return refuse("nested field points need a separate domain proof");
+    if ((!derivativePoints && !points.empty()) ||
+        std::any_of(points.begin(), points.end(), [&](const auto& point) { return point != points.front(); }))
+        return refuse("field factors need the identical point retained by the cumulative integral");
+    std::vector<NodePtr> source, derivative;
+    productFactors(*let.children[1], source);
+    productFactors(*g, derivative);
+    bool exponential = false;
+    for (auto it = source.begin(); it != source.end(); ++it) {
+        const auto& x = **it;
+        if (x.op != Op::ScalarLeaf || x.scalarForm.terms.size() != 1) continue;
+        const auto& t = x.scalarForm.terms.front();
+        if (t.coefficient != 1.0 || !t.factors.empty() || t.trans.size() != 1) continue;
+        const auto& e = t.trans.front();
+        if (e.kind == TransFactor::Kind::Exp && e.variable == let.variableName && e.scale == -1.0 && e.shift == 0.0) {
+            exponential = true; source.erase(it); break;
+        }
+    }
+    if (!exponential) return refuse("the product needs a plain exp(-cumulative) factor");
+    auto coefficient = scalarNode(1.0);
+    bool variableFactor = false;
+    for (const auto& f : derivative) {
+        // A literal coefficient can be divided out without dividing by g(x).
+        // The existing execution office requires a nondegenerate literal
+        // divisor; zero/computed/tiny divisors are never silently normalized.
+        if (const auto a = literalConstant(*f); a && std::isfinite(*a) && std::abs(*a) >= 1e-6) {
+            coefficient = binaryNode(Op::Div, std::move(coefficient), std::make_unique<MathNode>(*f));
+            continue;
+        }
+        const auto json = f->toJson();
+        auto found = std::find_if(source.begin(), source.end(), [&](const auto& x) { return x->toJson() == json; });
+        if (found == source.end()) return refuse("the source does not contain the identical derivative factors");
+        variableFactor = variableFactor || reads(*f, n.variableName);
+        source.erase(found);
+    }
+    if (!variableFactor) return refuse("this substitution requires a varying shared derivative");
+    for (auto& f : source) {
+        if (reads(*f, n.variableName) || reads(*f, let.variableName))
+            return refuse("the proportional coefficient depends on the integration variable or cumulative binding");
+        coefficient = binaryNode(Op::Scale, std::move(coefficient), std::move(f));
+    }
+    // Preserve the Let name and lexical scope: the coefficient has been proved
+    // independent of it; endpoint expressions still evaluate in outer scope.
+    auto endpoint = std::make_unique<MathNode>(depth);
+    endpoint->children[2] = std::make_unique<MathNode>(*n.children[2]);
+    auto exp = std::make_unique<MathNode>();
+    exp->scalarForm = ScalarForm::transcendental(TransFactor::Kind::Exp, let.variableName, -1.0);
+    auto body = binaryNode(Op::Scale, std::move(coefficient), binaryNode(Op::Sub, scalarNode(1.0), std::move(exp)));
+    auto out = binaryNode(Op::Let, std::move(endpoint), std::move(body));
+    out->variableName = let.variableName;
+    return out;
+}
+
 // The three routes, after the common entry has read the limits and the
 // tolerance (and priced computed limits). `tolerance` here is what remains for
 // the route: the authored one minus the limits' and tolerance's own error.
@@ -661,6 +871,29 @@ std::optional<double> integralRoutes(const MathNode& node, const std::map<std::s
                                      double lo, double hi, double tolerance, const std::map<std::string, double>& numeric) {
     const std::string& v = node.variableName;
     const MathNode& body = *node.children[0];
+    // A proved derivative identity eliminates the outer numerical integration.
+    // Only the endpoint cumulative Integral remains approximate. Its whole
+    // bound is propagated through the emitted ordinary expression, rather than
+    // treating the algebraic identity as a zero-error executed answer.
+    if (auto reduced = deriveExponentialIntegral(node)) {
+        IntegralBounds inner;
+        std::string reductionWhy;
+        const auto depth = evaluateIntegral(*reduced->children[0], vars, subject, &reductionWhy, &inner);
+        if (depth && (tolerance > 0.0 || !inner.approximate)) {
+            auto scope = vars; scope[reduced->variableName] = *depth;
+            InputBound input; input.exact = false; input.bound = inner.total();
+            const auto result = evaluateBounded(*reduced->children[1], scope, {{reduced->variableName, input}}, subject);
+            if (result.computed && result.bounded && std::isfinite(result.value) && std::isfinite(result.total()) &&
+                (tolerance == 0.0 || result.total() <= tolerance)) {
+                bounds.route = "exponential derivative substitution";
+                bounds.approximate = inner.approximate;
+                bounds.execution = result.execution;
+                bounds.propagated = result.propagated;
+                bounds.innerSamples = inner.samples + inner.innerSamples;
+                return result.value;
+            }
+        }
+    }
     std::string termWhy;
     if (const auto form = toScalarForm(body, &termWhy)) {
         IntegralAccounting accounting;

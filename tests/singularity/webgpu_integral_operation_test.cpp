@@ -260,6 +260,20 @@ int main() {
                          return simpson([](long double u) { return u * std::cos(5.0L * u); }, x, x + 3.0);
                      },
                      true, false, grid(999.0, 1001.0, 0.0)});
+    {
+        auto polynomial = [&](const char* v) { return leaf(var(v).times(var(v)).plus(ScalarForm::constant(1.0))); };
+        auto depth = integral("u", polynomial("u"), constant(0.0), named("s"));
+        auto body = node(Op::Let, std::move(depth), node(Op::Scale, leaf(trans(K::Exp, "tau", -1.0)),
+                          node(Op::Scale, constant(0.3), polynomial("s"))));
+        body->variableName = "tau";
+        auto exact = integral("s", std::move(body), constant(0.0), named("x"));
+        auto tolerant = std::make_unique<MathNode>(*exact); tolerant->children.push_back(constant(1e-3));
+        cases.push_back({"a reducible integral still needs device error accounting under a tolerance", std::move(tolerant), nullptr, false, false, {}});
+        cases.push_back({"varying proportional source: exact derivative substitution shared with CPU",
+                         std::move(exact),
+                         [](double x, double) { return 0.3 * (1.0 - std::exp(-x - x*x*x/3.0)); },
+                         true, false, grid(0.1, 2.5, -1.0)});
+    }
     // Negative controls: admitted on the CPU (the line route) or not at all, never lowered.
     cases.push_back({"a field along a line (SDF route): CPU only", integral("s", node(Op::SDF, leaf(var("x").times(var("y"))),
                          node(Op::VectorConstruct, named("s"), constant(1.0), constant(0.0))), constant(0.0), named("x")),
@@ -321,8 +335,8 @@ int main() {
         }
     }
     std::printf("    coverage: %d attempted, %d lowered, %d refused, %d executed on the device\n", attempted, admitted, refused, executed);
-    check(expectedRefusedWrongly == 0 && executed == 8 && refused == 3,   // 6, + the two Let cases (plan §6an)
-          "every expected-supported case lowered and ran on the device; all three negative controls refused");
+    check(expectedRefusedWrongly == 0 && executed == 9 && refused == 4,   // Includes the shared derivative reduction and its tolerance refusal.
+          "every expected-supported case lowered and ran on the device; all four negative controls refused");
 
     std::cout << "webgpu_integral_operation_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";
     return g_failures == 0 ? 0 : 1;

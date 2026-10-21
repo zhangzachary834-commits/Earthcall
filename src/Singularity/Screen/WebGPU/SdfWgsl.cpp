@@ -952,6 +952,12 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
                     : "Integral needs a body, lo and hi";
                 return refuse();
             }
+            // The same authored substitution used by CPU evaluation. Screen
+            // emits the returned ordinary tree; it owns no calculus rule.
+            // The existing tolerance guard above still applies, and unsupported
+            // inner field integrals still decline through this very office.
+            if (auto reduced = OntoMath::deriveExponentialIntegral(node))
+                return emitMathNode(*reduced, e, pt);
             const auto body = OntoMath::toScalarForm(*node.children[0], &why);
             const auto lo = body ? OntoMath::toScalarForm(*node.children[1], &why) : std::nullopt;
             const auto hi = lo ? OntoMath::toScalarForm(*node.children[2], &why) : std::nullopt;
