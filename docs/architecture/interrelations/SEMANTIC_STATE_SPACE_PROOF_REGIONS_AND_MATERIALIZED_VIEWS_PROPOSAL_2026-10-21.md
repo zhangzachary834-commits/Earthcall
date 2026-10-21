@@ -362,7 +362,8 @@ The proposed stronger direction is:
 [
 oxed{
 	ext{derive mathematical regimes first}
-ightarrow
+
+ightarrow
 	ext{materialize them for a consumer second}
 }
 ]
@@ -394,15 +395,20 @@ A possible economic ladder is:
 
 [
 	ext{interval / box}
-ightarrow
+
+ightarrow
 	ext{affine form or zonotope}
-ightarrow
+
+ightarrow
 	ext{octagonal / relational domain}
-ightarrow
+
+ightarrow
 	ext{polyhedral refinement}
-ightarrow
+
+ightarrow
 	ext{nonlinear certified relaxation}
-ightarrow
+
+ightarrow
 	ext{exact / fallback evaluation}.
 ]
 
@@ -448,7 +454,8 @@ where:
 If time changes from
 
 [
-t=12.0 ightarrow 12.1
+t=12.0 
+ightarrow 12.1
 ]
 
 and the region was proved valid for
@@ -465,11 +472,14 @@ The desired chain is:
 
 [
 	ext{premise change}
-ightarrow
+
+ightarrow
 	ext{affected proof-region repair}
-ightarrow
+
+ightarrow
 	ext{affected projection repair}
-ightarrow
+
+ightarrow
 	ext{affected runtime-node patch}.
 ]
 
@@ -550,13 +560,17 @@ The target architecture remains:
 
 [
 	ext{authored rich mathematics}
-ightarrow
+
+ightarrow
 	ext{semantic specialization}
-ightarrow
+
+ightarrow
 	ext{exact pieces / solved support / shared invariants}
-ightarrow
+
+ightarrow
 	ext{small numerical residual}
-ightarrow
+
+ightarrow
 	ext{fallback only where necessary}.
 ]
 
@@ -602,11 +616,14 @@ Possible materialization:
 
 [
 	ext{proof facts}
-ightarrow
+
+ightarrow
 	ext{spatial hierarchy}
-ightarrow
+
+ightarrow
 	ext{ray intervals}
-ightarrow
+
+ightarrow
 	ext{GPU program}.
 ]
 
@@ -620,7 +637,8 @@ Possible materialization:
 
 [
 	ext{proof facts}
-ightarrow
+
+ightarrow
 	ext{reachable-state envelope}.
 ]
 
@@ -634,7 +652,8 @@ Possible materialization:
 
 [
 	ext{proof facts}
-ightarrow
+
+ightarrow
 	ext{time/frequency execution partition}.
 ]
 
@@ -845,7 +864,8 @@ The purpose would be to test the architectural reversal:
 
 [
 	ext{math-first proof}
-ightarrow
+
+ightarrow
 	ext{box materialization}
 ]
 
@@ -853,7 +873,8 @@ against:
 
 [
 	ext{box-first proof}
-ightarrow
+
+ightarrow
 	ext{math inside each box}.
 ]
 
@@ -931,13 +952,17 @@ with the lawful descent:
 [
 oxed{
 	ext{rich authored mathematics}
-ightarrow
+
+ightarrow
 	ext{adaptive proof knowledge}
-ightarrow
+
+ightarrow
 	ext{consumer materialization}
-ightarrow
+
+ightarrow
 	ext{dimensional specialization}
-ightarrow
+
+ightarrow
 	ext{minimal execution}
 }
 ]
@@ -967,3 +992,551 @@ eq 	ext{Execution Representation});
 - the proposed small witness and open questions above.
 
 This attribution is intentionally explicit so later implementation does not erase the human origin of the architecture or over-credit the formalization.
+
+---
+
+# Addendum A — Unknown movement, backward compilation, and ray-family validity cells
+
+**Status:** active extension of the proposal, authored in the same Zach + Original Prism design session; still **not broadcast** and not yet an implementation directive.
+
+## A.1 Zach's refinement
+
+Zach sharpened the proposal by identifying the setting in which the extra-dimensional validity region may matter most:
+
+> **unknown movement.**
+
+The important object is not merely a rich proof region around a field in abstract state space. It may be a validity region over a **family of possible future camera / Person movement states and the rays generated from them**.
+
+Zach's intuition was:
+
+- mathematically meaningful kinks or branch boundaries can be converted into angular/query-space structure around the field;
+- an extra-dimensional polyhedral or otherwise correlated validity region can bound the set of movement + ray states for which the same conclusions hold;
+- those conclusions can then apply to **all rays represented by that set**;
+- compilation should run partly **backwards from semantic relevance**, in a Magic-Set-like fashion, rather than making every ray rediscover the same semantic facts independently.
+
+This addendum treats that as the stronger current version of the proposal.
+
+## A.2 From world-space boundary to query-space preimage
+
+Let a semantically meaningful boundary be
+
+\[
+K = \{p \mid g(p)=0\}.
+\]
+
+Examples include a support boundary, a Clamp/Abs/Min/Max/Select regime boundary, or another surface at which a premise used by a compiled expression changes.
+
+Let the ray generator be
+
+\[
+r(m,u,s)=o(m)+s\,d(m,u),
+\]
+
+where:
+
+- \(m\) is unresolved movement / camera state;
+- \(u\) is a pixel, angular coordinate, or other ray-family coordinate;
+- \(s\) is distance along the generated ray.
+
+Instead of waiting for each concrete pixel ray to discover whether it crosses \(K\), analyze the pulled-back condition
+
+\[
+g(r(m,u,s)) = 0.
+\]
+
+The semantic boundary is thereby mapped into a boundary in **query space**.
+
+Define its relevant preimage as
+
+\[
+Q_K
+=
+\{(m,u,s)\mid g(r(m,u,s))=0\}.
+\]
+
+A conservative proof region around \(Q_K\) may then carry statements such as:
+
+\[
+Q_i \Rightarrow g>0,
+\]
+
+\[
+Q_j \Rightarrow g<0,
+\]
+
+\[
+Q_k \Rightarrow
+\text{exactly one crossing occurs in }[s_a,s_b],
+\]
+
+or, for multiple semantic boundaries,
+
+\[
+Q_\ell \Rightarrow K_1 \prec K_2 \prec K_3
+\]
+
+where \(\prec\) means ray-intersection order.
+
+The important shift is:
+
+> **Do not only compile the field into space. Compile semantic relevance into the space of queries that can observe it.**
+
+## A.3 Unknown movement is not noise to be eliminated; it is a dimension of validity
+
+A frame-specific specialization fixes the current pose \(m_0\) and can be very tight, but may become stale on the next movement.
+
+Instead, reason over a movement envelope
+
+\[
+m \in M.
+\]
+
+A compiled ray-family answer may then declare:
+
+\[
+M \times U_i
+\Rightarrow
+F_i
+\]
+
+where \(U_i\) is a correlated ray/angular region and \(F_i\) is a packet of reusable semantic conclusions.
+
+The product notation above is schematic: the representation must retain correlations when movement and direction are not independent.
+
+Within the validity region, camera motion:
+
+\[
+m_0 \rightarrow m_1 \rightarrow m_2 \rightarrow \cdots
+\]
+
+does not require semantic recompilation while
+
+\[
+m_j\in M.
+\]
+
+Crossing a validity facet triggers repair:
+
+\[
+m_j\notin M
+\Rightarrow
+\text{invalidate only dependent ray-family conclusions}.
+\]
+
+This is the movement doctrine applied to rendering:
+
+> **Inside a stable regime, continue the answer. At a real validity boundary, re-solve only what lost a premise.**
+
+## A.4 Local kink geometry may become angular structure
+
+Suppose \(c\) is a point on a semantic kink surface:
+
+\[
+g(c)=0.
+\]
+
+Locally,
+
+\[
+g(c+\delta)
+\approx
+\nabla g(c)\cdot\delta
++
+\frac12\delta^T H(c)\delta+\cdots.
+\]
+
+The gradient gives a first-order normal direction; curvature information qualifies how far that local model remains useful.
+
+For a bounded set of possible camera origins \(O\), a local semantic patch subtends a bounded angular family
+
+\[
+\Omega_K.
+\]
+
+A conservative result may therefore prove:
+
+\[
+u\notin\Omega_K
+\Rightarrow
+\text{kink impossible for this movement regime}.
+\]
+
+Inside \(\Omega_K\), a tighter result may bound intersection depth, branch sequence, or support intervals.
+
+The proposal is **not** that every nonlinear semantic boundary must literally become one polyhedral angular cone. The claim is that semantic geometry may be transformed into whatever correlated query-space bound is cheapest and sound enough to eliminate repeated ray work.
+
+## A.5 Backward compilation / Magic-Set-style demand propagation
+
+The forward rendering question is:
+
+\[
+(\text{movement state},\text{pixel/ray})
+\longmapsto
+\text{radiance}.
+\]
+
+A naive implementation repeatedly traverses world mathematics for every concrete query.
+
+The proposed compiler may also reason in the reverse direction:
+
+\[
+\text{semantic feature}
+\longmapsto
+\text{set of queries for which it can matter}.
+\]
+
+This resembles the spirit of Magic Sets:
+
+- start from demanded outputs / bound query variables;
+- propagate relevance backward;
+- specialize the reachable computation;
+- refuse to spend work on derivations that cannot contribute to the query family.
+
+The analogy is architectural, not a claim that the existing Earthcall compiler is a Datalog Magic-Set implementation.
+
+A candidate pipeline is:
+
+\[
+\text{authored field mathematics}
+\]
+
+\[
+\downarrow
+\]
+
+\[
+\text{semantic boundaries / support / branch conditions}
+\]
+
+\[
+\downarrow
+\]
+
+\[
+\text{pull back through }r(m,u,s)
+\]
+
+\[
+\downarrow
+\]
+
+\[
+\text{query-space validity regions }Q_i
+\]
+
+\[
+\downarrow
+\]
+
+\[
+Q_i
+\Rightarrow
+\{
+\text{branch signature},
+\text{support},
+\text{intersection order},
+\text{bounds},
+\text{integrator choice}
+\}
+\]
+
+\[
+\downarrow
+\]
+
+\[
+\text{runtime query lookup / specialization}
+\]
+
+\[
+\downarrow
+\]
+
+\[
+\text{tiny ray program}.
+\]
+
+This is stronger than merely using a better spatial partition.
+
+## A.6 Ray space itself may be the natural intermediate domain
+
+A family of rays is not fundamentally a set of points in \(\mathbb R^3\).
+
+A 3D oriented ray / line has its own lower-dimensional geometric structure: direction plus transverse placement, with additional origin/range information for half-rays and camera-generated queries.
+
+The architecture should therefore remain open to the possibility that some semantic relevance facts are most naturally represented in a **space of rays or camera queries** rather than first projected into 3D spatial cells.
+
+Conceptually, for a semantic feature \(K\),
+
+\[
+\mathcal R_K
+=
+\{r : r\cap K\neq\varnothing\}.
+\]
+
+Unknown movement induces another admissible ray family
+
+\[
+\mathcal R_M.
+\]
+
+Only
+
+\[
+\mathcal R_K\cap\mathcal R_M
+\]
+
+is relevant to the current movement regime.
+
+This does **not** commit Earthcall to a particular line-coordinate representation such as Plücker coordinates. It records the architectural point that point-space is not automatically the best reasoning space for a ray query.
+
+## A.7 The materialized 3D hierarchy becomes optional
+
+The original proposal emphasized:
+
+\[
+\text{semantic proof}
+\rightarrow
+\text{3D hierarchy}
+\rightarrow
+\text{ray}.
+\]
+
+The unknown-movement refinement adds a second lawful route:
+
+\[
+\text{semantic proof}
+\rightarrow
+\text{query/ray-family validity}
+\rightarrow
+\text{ray specialization}.
+\]
+
+Therefore Screen may choose among:
+
+\[
+\text{semantic proof}
+\rightarrow
+\begin{cases}
+\text{shared spatial materialization}\rightarrow\text{rays}\\
+\text{direct ray-family specialization}\\
+\text{ordinary exact/fallback evaluation}
+\end{cases}
+\]
+
+according to measured economics.
+
+A 3D grid or BVH remains useful when it amortizes well across many queries. It is no longer a mandatory waypoint.
+
+## A.8 Why the polyhedral/correlated region matters most here
+
+The strongest role for the polyhedron is now more precise.
+
+It is not primarily:
+
+> a better geometric hull around the field.
+
+It is:
+
+> **a finite correlated description of the unresolved movement + query states over which the same backward-compiled semantic answer remains valid.**
+
+Its facets may therefore represent:
+
+- movement limits;
+- angular limits;
+- semantic branch transitions;
+- support entry/exit regime changes;
+- ordering changes between semantic surfaces;
+- expiry of a derivative / curvature / integration premise.
+
+A vertex is an extreme feasible **query-state configuration**, not necessarily an extreme point in world space.
+
+This is exactly the sort of structure for which preserving correlations can matter more than independent axis-aligned intervals.
+
+## A.9 Economic objective: choose the validity envelope, not merely the cell size
+
+Let \(M\) denote the chosen movement/query validity regime.
+
+Define:
+
+- \(A(M)\): cost to analyze / compile the regime;
+- \(N(M)\): useful number of frames or query batches for which it remains valid;
+- \(R(M)\): resulting runtime cost per frame / batch.
+
+Then the architectural tuning problem is approximately:
+
+\[
+\boxed{
+\min_M
+\left[
+\frac{A(M)}{N(M)}
++
+R(M)
+\right]
+}
+\]
+
+subject to soundness and the declared faithfulness model.
+
+A wider validity region often gives:
+
+\[
+N(M)\uparrow
+\]
+
+but can make bounds looser:
+
+\[
+R(M)\uparrow.
+\]
+
+A narrower region often gives tighter specialization:
+
+\[
+R(M)\downarrow
+\]
+
+but invalidates more frequently:
+
+\[
+N(M)\downarrow.
+\]
+
+The correct regime is therefore not "as large as possible" or "as tight as possible." It is the region with the best **amortized lawful economics**.
+
+This is the unknown-movement analogue of the earlier rule:
+
+> Cache derived truth at its longest valid and economically useful lifetime.
+
+## A.10 Performance hypothesis
+
+The performance bet is not that high-dimensional reasoning is intrinsically cheap.
+
+The bet is that expensive semantic reasoning can be performed once for a family of future queries and thereby remove repeated work from millions of concrete rays.
+
+Old style:
+
+\[
+\text{pixel}
+\rightarrow
+\text{march}
+\rightarrow
+\text{rediscover support}
+\rightarrow
+\text{rediscover kinks}
+\rightarrow
+\text{evaluate branches}
+\rightarrow
+\text{evaluate field repeatedly}.
+\]
+
+Target style:
+
+\[
+\text{pixel}
+\rightarrow
+\text{query-regime lookup}
+\rightarrow
+\text{instantiate already-decided ray structure}
+\rightarrow
+\text{execute small piecewise residual}.
+\]
+
+The extra dimensions are therefore justified only when they let execution know **less**.
+
+> **Add dimensions to reasoning only when doing so removes more dimensions or repeated work from execution.**
+
+## A.11 Falsification witness
+
+Before building a general query-space compiler:
+
+1. choose one Northern Veil semantic kink / switch family that currently causes substantial repeated work;
+2. identify the movement variables and ray/angular variables on which its relevance actually depends;
+3. pull its boundary backward through the camera ray generator;
+4. construct the cheapest sound correlated validity regions that distinguish "cannot hit", "can hit", and, where possible, intersection order/depth regimes;
+5. reuse those regions over a bounded movement envelope;
+6. compare against the current box-first / per-ray rediscovery route.
+
+Measure:
+
+- analysis cost \(A(M)\);
+- validity lifetime \(N(M)\);
+- number and complexity of query regions;
+- invalidation frequency;
+- query-region lookup cost;
+- switch evaluations removed per ray;
+- field evaluations removed per ray;
+- ray-program size;
+- total GPU time;
+- total amortized frame cost;
+- exact/certified parity.
+
+Kill the approach if the query-space representation explodes, invalidates too frequently, or saves less per-ray work than it costs to consult.
+
+## A.12 Updated authority distinction
+
+This refinement adds another separation to the canon:
+
+\[
+\boxed{
+\text{world-space geometry}
+\neq
+\text{semantic validity space}
+\neq
+\text{ray/query space}
+}
+\]
+
+The compiler may lawfully transfer **derived knowledge** between them while preserving authored meaning.
+
+The strongest current descent is therefore:
+
+\[
+\boxed{
+\text{authored Zone / OntoMath meaning}
+\rightarrow
+\text{semantic validity analysis}
+\rightarrow
+\text{backward query-space specialization}
+\rightarrow
+\text{optional consumer materialization}
+\rightarrow
+\text{minimal ray executable}
+}
+\]
+
+---
+
+## Addendum attribution correction
+
+This refinement is deliberately explicit about origination.
+
+**Zach originated in this design session:**
+
+- the challenge "why a grid?";
+- the challenge "why assume \(x,y,z\) are the only or most fundamental dimensions?";
+- the proposal to reason with richer polyhedral/correlated structure and then compile that knowledge down to hierarchical 3D boxes;
+- the realization that the extra-dimensional validity region may matter most for **unknown movement**;
+- the idea that relevant mathematical kinks can be transformed into angular/query-space structure;
+- the idea that one higher-dimensional set-space region can make conclusions apply to **all rays hitting / represented by that region**;
+- the explicitly **backwards-compilation / Magic-Set-style** framing.
+
+**Original Prism Sun formalized / extended those ideas into:**
+
+- the state-space / proof-space / execution-space separation;
+- the preimage formulation \(g(r(m,u,s))=0\);
+- the notation and role of query-space validity regions \(Q_i\);
+- the ray-space intersection framing \(\mathcal R_K\cap\mathcal R_M\);
+- the interpretation of the validity region as a reusable compiled answer over future movement;
+- the direct query-space path that may bypass 3D materialization;
+- the amortized regime-selection objective
+  \[
+  \min_M[A(M)/N(M)+R(M)];
+  \]
+- the falsification witness and economic kill conditions.
+
+The collaboration pattern is therefore:
+
+> **Zach changes the space in which the problem should be asked. Original Prism turns that reframing into explicit mathematics, compiler boundaries, invalidation rules, and measurable economic hypotheses.**
+
+Neither role should be collapsed into the other in future documentation.
