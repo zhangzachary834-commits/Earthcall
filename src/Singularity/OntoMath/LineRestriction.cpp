@@ -2279,6 +2279,88 @@ std::optional<double> lipschitzBoundOverBox(const LineAlgebraicForm& form, std::
     return std::sqrt(sum) * (1.0 + 1e-12);
 }
 
+namespace {
+// One certificate over an axis-aligned box (plan §6ar/§6at): range, Lipschitz,
+// Hessian and one device evaluation's error. Shared by the magnitude bands and
+// the per-region grid.
+std::optional<LineQuadratureBand> certifyBox(const LineAlgebraicForm& form, uint32_t root, const MathNode& field,
+                                             const ExecutionModel& deviceModel, const Interval box[3],
+                                             const std::map<std::string, Interval>& symbolBox,
+                                             const std::map<std::string, double>& symbolMagnitudes) {
+    LineQuadratureBand band;
+        // Range over the band: the origin is the whole box, the direction 0.
+    {
+        std::map<std::string, Interval> b = symbolBox;
+        for (int i = 0; i < 3; ++i) { b[kLineOriginVars[i]] = box[i]; b[kLineDirectionVars[i]] = Interval(0.0f); }
+        LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
+        if (!ev.ok()) return std::nullopt;
+        bool undefined = false;
+        const Interval r = ev.range(root, 0.0, 0.0, std::vector<int8_t>(form.switches.size(), 0), &undefined);
+        if (undefined || !r.bounded()) return std::nullopt;
+        band.width = double(r.hi) - double(r.lo);
+        band.sup = std::max(std::abs(double(r.lo)), std::abs(double(r.hi)));
+        band.low = double(r.lo);
+        band.high = double(r.hi);
+    }
+    // Lipschitz: √(Σ sup|∂_i f|²), each partial a box-mode derivative along e_i.
+    double sum = 0.0;
+    bool bounded = true;
+    for (int axis = 0; axis < 3 && bounded; ++axis) {
+        std::map<std::string, Interval> b = symbolBox;
+        for (int i = 0; i < 3; ++i) { b[kLineOriginVars[i]] = box[i]; b[kLineDirectionVars[i]] = Interval(i == axis ? 1.0f : 0.0f); }
+        LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
+        if (!ev.ok()) { bounded = false; break; }
+        const Interval dr = ev.derivativeRange(root, 0.0, 0.0, std::vector<int8_t>(form.switches.size(), 0));
+        if (!dr.bounded()) { bounded = false; break; }
+        const double m = std::max(std::abs(double(dr.lo)), std::abs(double(dr.hi)));
+        sum += m * m;
+    }
+    if (!bounded) return std::nullopt;
+    band.lipschitz = std::sqrt(sum) * (1.0 + 1e-12);
+    // Hessian: d²/ds² f(o + s·u) = uᵀ∇²f u, so ∂ii from u = e_i and
+    // ∂ij = (D²(e_i + e_j) − D²(e_i) − D²(e_j))/2, as intervals.
+    {
+        auto second = [&](int i, int k) -> std::optional<Interval> {
+            std::map<std::string, Interval> b = symbolBox;
+            for (int m = 0; m < 3; ++m) {
+                b[kLineOriginVars[m]] = box[m];
+                b[kLineDirectionVars[m]] = Interval((m == i || m == k) ? 1.0f : 0.0f);
+            }
+            LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
+            if (!ev.ok()) return std::nullopt;
+            const Interval r = ev.secondDerivativeRange(root, 0.0, 0.0, std::vector<int8_t>(form.switches.size(), 0));
+            if (!r.bounded()) return std::nullopt;
+            return r;
+        };
+        std::optional<Interval> pure[3];
+        bool ok = true;
+        for (int i = 0; i < 3 && ok; ++i) { pure[i] = second(i, i); ok = bool(pure[i]); }
+        double frob = 0.0;
+        for (int i = 0; i < 3 && ok; ++i) {
+            const double m = std::max(std::abs(double(pure[i]->lo)), std::abs(double(pure[i]->hi)));
+            frob += m * m;
+            for (int k = i + 1; k < 3 && ok; ++k) {
+                const auto mixed2 = second(i, k);
+                if (!mixed2) { ok = false; break; }
+                const Interval mixed = (*mixed2 - *pure[i] - *pure[k]) * 0.5f;
+                const double mm = std::max(std::abs(double(mixed.lo)), std::abs(double(mixed.hi)));
+                frob += 2.0 * mm * mm;
+            }
+        }
+        if (ok) band.hessian = std::sqrt(frob) * (1.0 + 1e-12);
+    }
+    // One device evaluation, under the device's declared model.
+    std::map<std::string, double> magnitudes = symbolMagnitudes;
+    magnitudes["x"] = std::max(std::abs(double(box[0].lo)), std::abs(double(box[0].hi)));
+    magnitudes["y"] = std::max(std::abs(double(box[1].lo)), std::abs(double(box[1].hi)));
+    magnitudes["z"] = std::max(std::abs(double(box[2].lo)), std::abs(double(box[2].hi)));
+    const auto exec = executionBound(field, magnitudes, deviceModel);
+    if (!exec || !std::isfinite(exec->slack)) return std::nullopt;
+    band.execution = exec->slack;
+    return band;
+}
+} // namespace
+
 std::optional<LineQuadratureCertificate> certifyLineQuadrature(const MathNode& field, const ExecutionModel& deviceModel,
                                                                int maxBand, std::string* why,
                                                                const std::map<std::string, std::pair<double, double>>& symbols) {
@@ -2300,77 +2382,12 @@ std::optional<LineQuadratureCertificate> certifyLineQuadrature(const MathNode& f
     }
     for (int j = 0; j <= maxBand; ++j) {
         const double cap = std::ldexp(1.0, j);
-        const Interval box(-float(cap), float(cap));
-        LineQuadratureBand band;
-        band.cap = cap;
-        // Range over the band: the origin is the whole box, the direction 0.
-        {
-            std::map<std::string, Interval> b = symbolBox;
-            for (int i = 0; i < 3; ++i) { b[kLineOriginVars[i]] = box; b[kLineDirectionVars[i]] = Interval(0.0f); }
-            LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
-            if (!ev.ok()) continue;
-            bool undefined = false;
-            const Interval r = ev.range(root, 0.0, 0.0, std::vector<int8_t>(form.switches.size(), 0), &undefined);
-            if (undefined || !r.bounded()) continue;
-            band.width = double(r.hi) - double(r.lo);
-            band.sup = std::max(std::abs(double(r.lo)), std::abs(double(r.hi)));
-            band.low = double(r.lo);
-            band.high = double(r.hi);
-        }
-        // Lipschitz: √(Σ sup|∂_i f|²), each partial a box-mode derivative along e_i.
-        double sum = 0.0;
-        bool bounded = true;
-        for (int axis = 0; axis < 3 && bounded; ++axis) {
-            std::map<std::string, Interval> b = symbolBox;
-            for (int i = 0; i < 3; ++i) { b[kLineOriginVars[i]] = box; b[kLineDirectionVars[i]] = Interval(i == axis ? 1.0f : 0.0f); }
-            LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
-            if (!ev.ok()) { bounded = false; break; }
-            const Interval dr = ev.derivativeRange(root, 0.0, 0.0, std::vector<int8_t>(form.switches.size(), 0));
-            if (!dr.bounded()) { bounded = false; break; }
-            const double m = std::max(std::abs(double(dr.lo)), std::abs(double(dr.hi)));
-            sum += m * m;
-        }
-        if (!bounded) continue;
-        band.lipschitz = std::sqrt(sum) * (1.0 + 1e-12);
-        // Hessian: d²/ds² f(o + s·u) = uᵀ∇²f u, so ∂ii from u = e_i and
-        // ∂ij = (D²(e_i + e_j) − D²(e_i) − D²(e_j))/2, as intervals.
-        {
-            auto second = [&](int i, int k) -> std::optional<Interval> {
-                std::map<std::string, Interval> b = symbolBox;
-                for (int m = 0; m < 3; ++m) {
-                    b[kLineOriginVars[m]] = box;
-                    b[kLineDirectionVars[m]] = Interval((m == i || m == k) ? 1.0f : 0.0f);
-                }
-                LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
-                if (!ev.ok()) return std::nullopt;
-                const Interval r = ev.secondDerivativeRange(root, 0.0, 0.0, std::vector<int8_t>(form.switches.size(), 0));
-                if (!r.bounded()) return std::nullopt;
-                return r;
-            };
-            std::optional<Interval> pure[3];
-            bool ok = true;
-            for (int i = 0; i < 3 && ok; ++i) { pure[i] = second(i, i); ok = bool(pure[i]); }
-            double frob = 0.0;
-            for (int i = 0; i < 3 && ok; ++i) {
-                const double m = std::max(std::abs(double(pure[i]->lo)), std::abs(double(pure[i]->hi)));
-                frob += m * m;
-                for (int k = i + 1; k < 3 && ok; ++k) {
-                    const auto mixed2 = second(i, k);
-                    if (!mixed2) { ok = false; break; }
-                    const Interval mixed = (*mixed2 - *pure[i] - *pure[k]) * 0.5f;
-                    const double mm = std::max(std::abs(double(mixed.lo)), std::abs(double(mixed.hi)));
-                    frob += 2.0 * mm * mm;
-                }
-            }
-            if (ok) band.hessian = std::sqrt(frob) * (1.0 + 1e-12);
-        }
-        // One device evaluation, under the device's declared model.
-        std::map<std::string, double> magnitudes = symbolMagnitudes;
-        magnitudes["x"] = magnitudes["y"] = magnitudes["z"] = cap;
-        const auto exec = executionBound(field, magnitudes, deviceModel);
-        if (!exec || !std::isfinite(exec->slack)) continue;
-        band.execution = exec->slack;
-        cert.bands.push_back(band);
+        const Interval axis(-float(cap), float(cap));
+        const Interval box[3] = {axis, axis, axis};
+        auto band = certifyBox(form, root, field, deviceModel, box, symbolBox, symbolMagnitudes);
+        if (!band) continue;
+        band->cap = cap;
+        cert.bands.push_back(*band);
     }
     if (cert.bands.empty()) return say("no magnitude band has a bounded range, slope and device execution");
     return cert;
@@ -2499,60 +2516,52 @@ std::optional<LineTransportPlan> planLineTransport(const LineQuadratureCertifica
     return refuse(text);
 }
 
-std::optional<LineTransportMarch> marchLineTransport(const LineQuadratureCertificate& sigma,
-                                                     const LineQuadratureCertificate& emission,
-                                                     const std::function<double(double)>& sigmaAt,
-                                                     const std::function<double(double)>& emissionAt, const double o[3],
-                                                     const double d[3], double lo, double hi, double cells,
-                                                     std::string* why) {
+namespace {
+using PanelBands = std::function<std::optional<std::pair<LineQuadratureBand, LineQuadratureBand>>(double, double)>;
+// The march and its accumulated bound (plan §6as), each panel's constants from
+// `bandsFor(sa, sb)` — one band pair for the whole ray, or the region grid.
+std::optional<LineTransportMarch> marchCore(const PanelBands& bandsFor, double transcendental,
+                                            const std::function<double(double)>& sigmaAt,
+                                            const std::function<double(double)>& emissionAt, const double o[3],
+                                            const double d[3], double lo, double hi, double cells, std::string* why) {
     auto refuse = [&](const std::string& text) { if (why) *why = text; return std::nullopt; };
     if (!(hi >= lo)) return refuse("transport runs from lo to hi");
     const double S = hi - lo;
-    double M = 0.0, dn2 = 0.0;
-    for (int i = 0; i < 3; ++i) {
-        M = std::max({M, std::abs(o[i] + lo * d[i]), std::abs(o[i] + hi * d[i])});
-        dn2 += d[i] * d[i];
-    }
+    double dn2 = 0.0;
+    for (int i = 0; i < 3; ++i) dn2 += d[i] * d[i];
     const double dn = std::sqrt(dn2);
-    auto pick = [&](const LineQuadratureCertificate& c) -> const LineQuadratureBand* {
-        for (const auto& b : c.bands) if (M <= b.cap) return &b;
-        return nullptr;
-    };
-    const LineQuadratureBand* sg = pick(sigma);
-    const LineQuadratureBand* em = pick(emission);
-    if (!sg || !em) return refuse("the ray leaves every certified magnitude band");
     const int n = int(cells);
     if (n < 2 || n % 2) return refuse("an even cell count of at least 2 is needed");
     const double u = std::ldexp(1.0, -23), lambda = 1.25, h = S / n;
     const double ds = 4.0 * u * (std::abs(lo) + S);
-    const double Ls = sg->lipschitz * dn, Le = em->lipschitz * dn;
-    const double Hs = sg->hessian * dn * dn, He = em->hessian * dn * dn;
     const double gamma = (n + 8.0) * u / (1.0 - (n + 8.0) * u);
-    const double expError = emission.model.transcendental + 4.0 * u;
-    const double grow = std::exp(std::max(0.0, -sg->low) * 2.0 * h);   // T may grow by this over a panel
+    const double expError = transcendental + 4.0 * u;
     auto local = [&](double width, double L1, double H2, double hw) {
         double l = std::min(width, L1 * hw);
         if (std::isfinite(H2)) l = std::min(l, H2 * hw * hw * 0.5);
         return l;
     };
-    const double localSigma = local(sg->width, Ls, Hs, h);
-    const double panelDepthMath = 2.0 * h * (1.0 + lambda) * localSigma;
-    const double panelDepthExec = 1.2 * 2.0 * h * (sg->execution + Ls * ds + gamma * sg->sup);
-    const double eWidth = std::max(em->high, 0.0) - std::min(em->low, 0.0);
     LineTransportMarch out;
-    // Sample error at a node: depth error weighted by the computed transmittance,
-    // split into its mathematical and execution shares, plus ε's and exp's own.
-    auto sampleError = [&](double tau, double dMath, double dExec, double eps, double& math, double& exec) {
-        const double T = std::exp(-tau), epsMax = std::abs(eps) + em->execution;
-        const double depth = T * (std::exp(dMath + dExec) - 1.0) * epsMax;
-        const double share = dMath + dExec > 0.0 ? dMath / (dMath + dExec) : 0.0;
-        math = depth * share;
-        exec = depth * (1.0 - share) + T * std::exp(dMath + dExec) * (em->execution + Le * ds + expError * epsMax);
-    };
     double tauA = 0.0, mathA = 0.0, execA = 0.0;
     double sigA = sigmaAt(lo), epsA = emissionAt(lo), L = 0.0, magnitude = 0.0;
     for (int j = 0; j < n; j += 2) {
-        const double sm = lo + S * (double(j + 1) / n), sb = lo + S * (double(j + 2) / n);
+        const double sa = lo + S * (double(j) / n), sm = lo + S * (double(j + 1) / n), sb = lo + S * (double(j + 2) / n);
+        const auto bands = bandsFor(sa, sb);
+        if (!bands) return refuse("a panel leaves every certified region");
+        const LineQuadratureBand& sg = bands->first;
+        const LineQuadratureBand& em = bands->second;
+        const double Ls = sg.lipschitz * dn, Le = em.lipschitz * dn;
+        const double Hs = sg.hessian * dn * dn, He = em.hessian * dn * dn;
+        const double grow = std::exp(std::max(0.0, -sg.low) * 2.0 * h);
+        const double panelDepthMath = 2.0 * h * (1.0 + lambda) * local(sg.width, Ls, Hs, h);
+        const double panelDepthExec = 1.2 * 2.0 * h * (sg.execution + Ls * ds + gamma * sg.sup);
+        auto sampleError = [&](double tau, double dMath, double dExec, double eps, double& math, double& exec) {
+            const double T = std::exp(-tau), epsMax = std::abs(eps) + em.execution;
+            const double depth = T * (std::exp(dMath + dExec) - 1.0) * epsMax;
+            const double share = dMath + dExec > 0.0 ? dMath / (dMath + dExec) : 0.0;
+            math = depth * share;
+            exec = depth * (1.0 - share) + T * std::exp(dMath + dExec) * (em.execution + Le * ds + expError * epsMax);
+        };
         const double sigM = sigmaAt(sm), sigB = sigmaAt(sb), epsM = emissionAt(sm), epsB = emissionAt(sb);
         const double tauM = tauA + h * (5.0 * sigA + 8.0 * sigM - sigB) / 12.0;
         const double tauB = tauA + (h / 3.0) * (sigA + 4.0 * sigM + sigB);
@@ -2568,14 +2577,105 @@ std::optional<LineTransportMarch> marchLineTransport(const LineQuadratureCertifi
         out.execution += (h / 3.0) * (e0 + 4.0 * e1 + e2);
         // The outer radius on this panel, with T ≤ e^(−τ̃_a + δτ_a)·grow there.
         const double T = std::exp(-tauA + mathA + execA) * grow;
-        const double gPrime = T * (Le + sg->sup * em->sup);
-        const double gSecond = T * (He + 2.0 * sg->sup * Le + Ls * em->sup + sg->sup * sg->sup * em->sup);
+        const double eWidth = std::max(em.high, 0.0) - std::min(em.low, 0.0);
+        const double gPrime = T * (Le + sg.sup * em.sup);
+        const double gSecond = T * (He + 2.0 * sg.sup * Le + Ls * em.sup + sg.sup * sg.sup * em.sup);
         out.mathematical += 2.0 * h * (1.0 + lambda) * local(T * eWidth, gPrime, gSecond, h);
         tauA = tauB; mathA = mathB; execA = execB; sigA = sigB; epsA = epsB;
     }
     out.execution += gamma * magnitude + 4.0 * u * magnitude;
     out.value = L;
     return out;
+}
+} // namespace
+
+std::optional<LineTransportMarch> marchLineTransport(const LineQuadratureCertificate& sigma,
+                                                     const LineQuadratureCertificate& emission,
+                                                     const std::function<double(double)>& sigmaAt,
+                                                     const std::function<double(double)>& emissionAt, const double o[3],
+                                                     const double d[3], double lo, double hi, double cells,
+                                                     std::string* why) {
+    double M = 0.0;
+    for (int i = 0; i < 3; ++i) M = std::max({M, std::abs(o[i] + lo * d[i]), std::abs(o[i] + hi * d[i])});
+    const LineQuadratureBand* sg = nullptr;
+    const LineQuadratureBand* em = nullptr;
+    for (const auto& b : sigma.bands) if (M <= b.cap) { sg = &b; break; }
+    for (const auto& b : emission.bands) if (M <= b.cap) { em = &b; break; }
+    if (!sg || !em) { if (why) *why = "the ray leaves every certified magnitude band"; return std::nullopt; }
+    const auto pair = std::make_pair(*sg, *em);
+    return marchCore([&](double, double) { return std::optional(pair); }, emission.model.transcendental,
+                     sigmaAt, emissionAt, o, d, lo, hi, cells, why);
+}
+
+RegionCertificate::RegionCertificate(const MathNode& field, const ExecutionModel& model, double cell,
+                                     const std::map<std::string, std::pair<double, double>>& symbols)
+    : _field(&field), _restriction(restrictAlgebraicToLine(field, /*vectorValued=*/false)), _model(model), _cell(cell) {
+    for (const auto& [name, range] : symbols) {
+        float l = float(range.first), h = float(range.second);
+        if (double(l) > range.first) l = std::nextafter(l, -INFINITY);
+        if (double(h) < range.second) h = std::nextafter(h, INFINITY);
+        _symbolBox[name] = Interval(l, h);
+        _symbolMagnitudes[name] = std::max(std::abs(range.first), std::abs(range.second));
+    }
+}
+
+std::optional<LineQuadratureBand> RegionCertificate::over(const double lo[3], const double hi[3]) const {
+    if (!_restriction) return std::nullopt;
+    long long first[3], last[3];
+    for (int i = 0; i < 3; ++i) {
+        first[i] = (long long)std::floor(std::min(lo[i], hi[i]) / _cell);
+        last[i] = (long long)std::floor(std::max(lo[i], hi[i]) / _cell);
+        if (last[i] - first[i] > 64) return std::nullopt;   // a work cap: no huge box through the grid
+    }
+    std::optional<LineQuadratureBand> worst;
+    for (long long x = first[0]; x <= last[0]; ++x)
+        for (long long y = first[1]; y <= last[1]; ++y)
+            for (long long z = first[2]; z <= last[2]; ++z) {
+                const std::array<long long, 3> key{x, y, z};
+                auto it = _cache.find(key);
+                if (it == _cache.end()) {
+                    Interval box[3];
+                    const long long idx[3] = {x, y, z};
+                    for (int i = 0; i < 3; ++i) {
+                        const double a = double(idx[i]) * _cell, b = double(idx[i] + 1) * _cell;
+                        float fa = float(a), fb = float(b);
+                        if (double(fa) > a) fa = std::nextafter(fa, -INFINITY);
+                        if (double(fb) < b) fb = std::nextafter(fb, INFINITY);
+                        box[i] = Interval(fa, fb);
+                    }
+                    it = _cache.emplace(key, certifyBox(*_restriction.form, _restriction.form->roots[0], *_field, _model,
+                                                        box, _symbolBox, _symbolMagnitudes)).first;
+                }
+                if (!it->second) return std::nullopt;
+                const auto& c = *it->second;
+                if (!worst) { worst = c; continue; }
+                worst->lipschitz = std::max(worst->lipschitz, c.lipschitz);
+                worst->hessian = std::max(worst->hessian, c.hessian);
+                worst->sup = std::max(worst->sup, c.sup);
+                worst->execution = std::max(worst->execution, c.execution);
+                worst->low = std::min(worst->low, c.low);
+                worst->high = std::max(worst->high, c.high);
+            }
+    if (worst) worst->width = worst->high - worst->low;
+    return worst;
+}
+
+std::optional<LineTransportMarch> marchLineTransport(const RegionCertificate& sigma, const RegionCertificate& emission,
+                                                     const std::function<double(double)>& sigmaAt,
+                                                     const std::function<double(double)>& emissionAt, const double o[3],
+                                                     const double d[3], double lo, double hi, double cells,
+                                                     std::string* why) {
+    // Each panel: the cells its segment's bounding box touches.
+    return marchCore(
+        [&](double sa, double sb) -> std::optional<std::pair<LineQuadratureBand, LineQuadratureBand>> {
+            double a[3], b[3];
+            for (int i = 0; i < 3; ++i) { a[i] = o[i] + sa * d[i]; b[i] = o[i] + sb * d[i]; }
+            const auto s = sigma.over(a, b);
+            const auto e = s ? emission.over(a, b) : std::nullopt;
+            if (!e) return std::nullopt;
+            return std::make_pair(*s, *e);
+        },
+        emission.model().transcendental, sigmaAt, emissionAt, o, d, lo, hi, cells, why);
 }
 
 namespace {

@@ -649,6 +649,34 @@ std::optional<LineTransportMarch> marchLineTransport(const LineQuadratureCertifi
                                                      const std::function<double(double)>& emissionAt, const double o[3],
                                                      const double d[3], double lo, double hi, double cells,
                                                      std::string* why = nullptr);
+// Per-region certificates (plan §6at): a lazily filled grid of cubic cells of
+// side `cell`. over(lo, hi) answers the worst constants over every cell the box
+// touches (largest L, H, sup and device error; smallest low, largest high).
+// Small cells decide a field's clamps, so its Hessian is finite where a
+// band-wide one is not, and its L and magnitudes are local. On a device this is
+// a buffer of cell constants; nothing per ray is proved on the host.
+class RegionCertificate {
+public:
+    RegionCertificate(const MathNode& field, const ExecutionModel& model, double cell,
+                      const std::map<std::string, std::pair<double, double>>& symbols = {});
+    bool ok() const { return bool(_restriction); }
+    std::optional<LineQuadratureBand> over(const double lo[3], const double hi[3]) const;
+    const ExecutionModel& model() const { return _model; }
+private:
+    const MathNode* _field;
+    LineAlgebraicRestriction _restriction;
+    ExecutionModel _model;
+    double _cell;
+    std::map<std::string, Interval> _symbolBox;
+    std::map<std::string, double> _symbolMagnitudes;
+    mutable std::map<std::array<long long, 3>, std::optional<LineQuadratureBand>> _cache;
+};
+// The a-posteriori march with each panel's constants from the region grid.
+std::optional<LineTransportMarch> marchLineTransport(const RegionCertificate& sigma, const RegionCertificate& emission,
+                                                     const std::function<double(double)>& sigmaAt,
+                                                     const std::function<double(double)>& emissionAt, const double o[3],
+                                                     const double d[3], double lo, double hi, double cells,
+                                                     std::string* why = nullptr);
 std::optional<LineTransportPlan> planLineTransport(const LineQuadratureCertificate& sigma,
                                                    const LineQuadratureCertificate& emission, const double o[3],
                                                    const double d[3], double lo, double hi, double tolerance,

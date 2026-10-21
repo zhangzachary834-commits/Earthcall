@@ -2018,3 +2018,32 @@ Not yet ported to WGSL.
 It is about 18× tighter than a priori on the worst channel, but **0 plans are admitted at ±1e-2**. What remains is §6ar's blockers 2 (the declared device model's 2^-10 per trig call) and 3 (first order only, since the Hessian is unbounded across undecided clamps over a 256 band). Both are named in the handoff for Codex. The probe's soundness assertion still holds: no admitted plan, no violation.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*
+
+## 6at. Per-region certificates: the mathematical part vanishes on the real curtains; the declared device model is now the whole remaining bound (2026-10-20, forty-fifth pass)
+
+**Human origin.** Zach: "I THINK U CAN KEEP GOING CAUSE U STILL HAVE 11% UPDATE HTE HANDOFF AS U GO".
+
+**The split at 4096 cells (§6as's march, band certificates)** is about ⅔ mathematical and ⅓ execution on every channel; for emerald ε_y it is 0.96 and 0.40. So blocker 3 came first.
+
+**Built:**
+- **`certifyBox`:** the band certificate's body, refactored to certify any axis-aligned box. It is shared by the bands, and `webgpu_line_quadrature_test` still passes 28/28.
+- **`RegionCertificate`:** a lazily filled grid of cubic cells. `over(lo, hi)` gives the worst constants over the cells a box touches, with a work cap of 64 cells per axis.
+- **`marchLineTransport(RegionCertificate…)`:** the §6as march, with each panel's constants taken from the cells its segment's bounding box touches (`marchCore` with a per-panel lookup). On a device the grid would be a buffer of cell constants.
+
+**Measured** (`ontomath_veil_transport_feasibility_test` with `EC_VEIL_REGION=1`, 4-unit cells; about 8 minutes in Debug, hence opt-in). These are the **best** of 12 rays per channel at 4096 cells, not the worst:
+
+| Curtain | ε_x | ε_y | ε_z |
+|---|---|---|---|
+| primary emerald | 0.0144 | 0.159 | 0.0343 |
+| secondary cyan | **0.0097 (1/12 admitted at ±1e-2, 32 cells)** | 0.198 | 0.131 |
+| accent violet | 0.083 | 0.015 | 0.062 |
+| deep crimson | 0.046 | 0.0125 | 0.0215 |
+
+**In every one of those, the mathematical part is 0:** small cells decide the clamps, and where a cell holds only the zero side of a clamp its range is a point. **The whole remaining bound is execution,** that is, §6ar's blocker 2: the declared device model's 2^-10 per trig call, now the binding constraint. The soundness assertion holds (2/2), and the one admitted plan contains its reference.
+
+**For whoever continues:**
+1. **Print the worst ray, not only the best.** The table above is optimistic about coverage.
+2. **The device model.** A tighter declared or measured sin/cos enclosure for the native profile (Codex's open Metal work), or authoring the curtains' trig through Let-bound shared values so fewer trig calls are charged.
+3. **Port to WGSL:** the region grid as a buffer of cell constants, and the a-posteriori march in `lineTransport`.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*

@@ -106,6 +106,9 @@ int main() {
         std::printf("     σ_t band ≤ %g: range [%.3g, %.3g], L %.3g, H %s, device error %.3g → σ ≥ 0 %s\n", sb->cap, sb->low, sb->high,
                     sb->lipschitz, std::isfinite(sb->hessian) ? std::to_string(sb->hessian).c_str() : "unbounded", sb->execution,
                     sb->low >= 0.0 ? "PROVED" : "NOT proved");
+        // Per-region certificates (plan §6at): 4-unit cells, filled lazily.
+        const double cellSize = std::getenv("EC_VEIL_CELL") ? std::atof(std::getenv("EC_VEIL_CELL")) : 4.0;
+        const OntoMath::RegionCertificate sigmaRegion(*sigma, model, cellSize, symbols);
         const char* axes[3] = {"x", "y", "z"};
         for (int c = 0; c < 3; ++c) {
             auto component = node(Op::Component, clone(*emi));
@@ -119,8 +122,11 @@ int main() {
             for (const auto& band : ec->bands) if (reach <= band.cap) { eb = &band; break; }
             std::mt19937_64 rng(1000 + c);
             std::uniform_real_distribution<double> un(-1.0, 1.0);
+            const OntoMath::RegionCertificate emissionRegion(*epsilon, model, cellSize, symbols);
+            int regAdmitted[2] = {0, 0};
+            double regCells[2] = {0.0, 0.0}, regBest[2] = {INFINITY, INFINITY}, regMath = NAN, regExec = NAN;
             int admitted[2] = {0, 0}, sound = 0, postAdmitted[2] = {0, 0}, postSound = 0, postTried = 0;
-            double cells[2] = {0.0, 0.0}, postCells[2] = {0.0, 0.0}, bestPost[2] = {INFINITY, INFINITY};
+            double cells[2] = {0.0, 0.0}, postCells[2] = {0.0, 0.0}, bestPost[2] = {INFINITY, INFINITY}, bestMath = NAN, bestExec = NAN;
             std::string refusal[2];
             for (int r = 0; r < 12; ++r) {
                 double o[3], d[3], n2 = 0.0;
@@ -152,6 +158,24 @@ int main() {
                 long double sum = 0.0L;
                 for (int i = 0; i <= M; ++i) sum += (i == 0 || i == M ? 1.0L : (i % 2 ? 4.0L : 2.0L)) * std::exp(-tau[i]) * at(*epsilon, t0 + i * hh);
                 const double ref = double(sum * hh / 3.0L);
+                // The region-grid march (plan §6at): each panel's constants from its cells.
+                // About 8 minutes in Debug, so opt-in: EC_VEIL_REGION=1 (EC_VEIL_CELL sets the cell size).
+                for (int k = 0; k < 2 && std::getenv("EC_VEIL_REGION"); ++k) {
+                    const double tol = k == 0 ? 1e-2 : 1e-3;
+                    for (double n = 2.0; n <= 4096.0; n *= 2.0) {
+                        const auto m = OntoMath::marchLineTransport(sigmaRegion, emissionRegion, [&](double s) { return double(at(*sigma, s)); },
+                                                                    [&](double s) { return double(at(*epsilon, s)); }, o, d, t0, t1, n);
+                        if (!m) continue;   // a coarse panel may touch too many cells: refine
+                        if (n == 4096.0 && m->total() < regBest[k]) { regBest[k] = m->total(); regMath = m->mathematical; regExec = m->execution; }
+                        if (m->total() <= tol) {
+                            ++regAdmitted[k];
+                            regCells[k] += n;
+                            ++postTried;
+                            postSound += std::abs(m->value - ref) <= m->total();
+                            break;
+                        }
+                    }
+                }
                 // The a-posteriori march (plan §6as): the bound accumulated as it goes.
                 for (int k = 0; k < 2; ++k) {
                     const double tol = k == 0 ? 1e-2 : 1e-3;
@@ -159,7 +183,7 @@ int main() {
                         const auto m = OntoMath::marchLineTransport(*sc, *ec, [&](double s) { return double(at(*sigma, s)); },
                                                                     [&](double s) { return double(at(*epsilon, s)); }, o, d, t0, t1, n);
                         if (!m) break;
-                        if (n == 4096.0) bestPost[k] = std::min(bestPost[k], m->total());
+                        if (n == 4096.0 && m->total() < bestPost[k]) { bestPost[k] = m->total(); bestMath = m->mathematical; bestExec = m->execution; }
                         if (m->total() <= tol) {
                             ++postAdmitted[k];
                             postCells[k] += n;
@@ -194,9 +218,12 @@ int main() {
             }
             soundRays += sound + postSound;
             admittedRays += postTried;
-            std::printf("     ε_%s A-POSTERIORI: ±1e-2 %d/12 (mean %.0f cells); ±1e-3 %d/12 (mean %.0f cells); best total at 4096 cells %.3g / %.3g\n",
+            std::printf("     ε_%s REGION GRID (%.3g-unit cells): ±1e-2 %d/12 (mean %.0f cells); ±1e-3 %d/12 (mean %.0f cells); best at 4096 %.3g / %.3g (math %.3g, exec %.3g)\n",
+                        axes[c], cellSize, regAdmitted[0], regAdmitted[0] ? regCells[0] / regAdmitted[0] : 0.0, regAdmitted[1],
+                        regAdmitted[1] ? regCells[1] / regAdmitted[1] : 0.0, regBest[0], regBest[1], regMath, regExec);
+            std::printf("     ε_%s A-POSTERIORI: ±1e-2 %d/12 (mean %.0f cells); ±1e-3 %d/12 (mean %.0f cells); best total at 4096 cells %.3g / %.3g (mathematical %.3g, execution %.3g)\n",
                         axes[c], postAdmitted[0], postAdmitted[0] ? postCells[0] / postAdmitted[0] : 0.0, postAdmitted[1],
-                        postAdmitted[1] ? postCells[1] / postAdmitted[1] : 0.0, bestPost[0], bestPost[1]);
+                        postAdmitted[1] ? postCells[1] / postAdmitted[1] : 0.0, bestPost[0], bestPost[1], bestMath, bestExec);
             std::printf("     ε_%s (band sup %.3g, L %.3g, H %s, device error %.3g): ±1e-2 %d/12 (mean %.0f cells)%s; ±1e-3 %d/12 (mean %.0f cells)%s\n",
                         axes[c], eb ? eb->sup : NAN, eb ? eb->lipschitz : NAN,
                         eb && std::isfinite(eb->hessian) ? std::to_string(eb->hessian).c_str() : "unbounded", eb ? eb->execution : NAN,

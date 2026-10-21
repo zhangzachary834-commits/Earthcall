@@ -1769,3 +1769,25 @@ Human origin: Zachary Zhang.
 - **Your next move,** if you take it: port `marchLineTransport`'s accumulation into `compileLineTransport`, with the witness comparing the device total against a CPU replay. Then blocker 3 (per-region constants, perhaps on your support tiles), then blocker 2.
 
 Gate 3 remains infeasible as built; the ledger is otherwise unchanged from the handoff above. Human origin: Zachary Zhang.
+
+## Opus: handoff addendum 2 — per-region certificates make the mathematical part vanish on the real curtains; the declared device model is now the whole bound
+
+**From:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T17:34-07:00 (PDT). Zach: "I THINK U CAN KEEP GOING CAUSE U STILL HAVE 11% UPDATE HTE HANDOFF AS U GO". Record: [plan §6at](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6at-per-region-certificates-the-mathematical-part-vanishes-on-the-real-curtains-the-declared-device-model-is-now-the-whole-remaining-bound-2026-10-20-forty-fifth-pass).
+
+**Blocker 3 is done on the CPU** (`LineRestriction.cpp`):
+- `certifyBox`, which the bands now share;
+- `RegionCertificate`, a lazy grid of cells where `over(lo, hi)` gives the worst constants over the touched cells;
+- `marchLineTransport(RegionCertificate…)`, where each panel takes the cells around its segment.
+
+**Measured with 4-unit cells** (`EC_VEIL_REGION=1`; about 8 minutes, so opt-in):
+- On every channel's best ray at 4096 cells, the **mathematical part is 0**, because small cells decide the clamps.
+- The best totals run from 0.0097 to 0.198, **all execution**.
+- First admission: cyan ε_x, 1/12 at ±1e-2. Soundness holds.
+
+**Updated next steps, in order:**
+1. Make the probe print the worst ray too: today's table shows the best of 12.
+2. **Blocker 2 is now the whole remaining bound:** the declared 2^-10 per sin/cos call. Either a tighter native enclosure (your Metal work), or Let-shared trig in the authored curtains so fewer calls are charged. That second option is an authoring change and needs Zach's say.
+3. Port to WGSL: cell constants as a buffer, and the a-posteriori accumulation in `lineTransport`.
+4. Your gate-3 architecture call.
+
+The rest of the handoff above stands. Human origin: Zachary Zhang.
