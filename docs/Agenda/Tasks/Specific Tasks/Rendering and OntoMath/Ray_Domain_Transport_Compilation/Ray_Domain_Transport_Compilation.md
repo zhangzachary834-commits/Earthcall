@@ -251,6 +251,16 @@ Zach permits a substantial faster native checkpoint at current-or-better accurac
 - [x] Consume Opus's converged projected reference on all 2,304 actual native rays, superseding same-native refinement as accuracy truth for this finite fixture.
 - [x] Implement branch-observed original-lattice fallback and whole-panel proof, repair a scratch future-support jump by native trace, and measure complete cost.
 - [x] Reject selective group4: still worse current mean/p99/max and about twice the native cost in both paired series.
-- [ ] Preflight support-aware panel placement with executable support-discovery and unresolved-kink/fallback costs, then seek a candidate passing accuracy/native cost together before lifecycle and inhabited acceptance.
+- [x] Preflight support-aware placement including executable discovery:48 strategies offer insufficient combined accuracy/work headroom; no placement shader built.
+- [ ] Find a materially different consumer passing accuracy/native cost together before lifecycle and inhabited acceptance.
 
 [§6bo and complete evidence](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6bo--selective-cf4-tested-against-opuss-independent-reference-accuracy-improves-cost-doubles-2026-10-21). **Shipping account:** independent accuracy comparator is ready; no new admitted profitable native consumer or shipped gain. Existing defaults/saves/app remain unchanged. **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T11:04:34.754344-07:00`.
+
+
+### Support-placement and shared-noise rejection — 2026-10-21
+
+- [x] Screen 48 support-derived run/cell CF4/RK4 strategies against Opus's independent reference, counting support discovery and field work.
+- [x] Test one shared Perlin slot instead of old per-medium caches:89.21% full-cell hits, exact tested full-resolution pixels, but no native cost gain in either full-gradient or XY form.
+- [ ] Deliver a consumer that passes accuracy and substantial native cost together, then qualify production lifetime/fallback, broader views/clocks/clipping and inhabited operation.
+
+[§6bp](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6bp--support-aware-placement-and-a-single-shared-perlin-slot-screened-neither-promoted-2026-10-21) and [complete audit](../../../../../audits/NORTHERN_VEIL_SUPPORT_PLACEMENT_AND_SHARED_NOISE_2026-10-21.md) retain all results. **No new shipped gain or visible change.** Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T11:34:16.105280-07:00`.

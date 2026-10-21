@@ -2874,3 +2874,14 @@ Group4's complete native cost is **+98.87%/+97.65%** in two 2560x1440 inside ABB
 **Shipping account:** independent reference now delivered/consumed; a faithful profitable native method remains missing. Next preflight support-aware placement including actual support-discovery and unresolved-kink cost before another GPU implementation. Lifecycle, broader views/clocks/clipping, inhabited timing and Person acceptance remain open. Mathematical promotion belongs in OntoMath. No save/app/default/quality/budget/lighting/timestamp change, PR or push.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T11:04:34.754344-07:00`.
+
+
+## §6bp — Support-aware placement and a single shared Perlin slot screened; neither promoted (2026-10-21)
+
+Zach commissioned the next pass. [Complete audit,48 CPU strategies and every native cost run](../audits/NORTHERN_VEIL_SUPPORT_PLACEMENT_AND_SHARED_NOISE_2026-10-21.md) screen Opus's support-placement hypothesis against his independent reference. Executable leaf DDA/column discovery costs 84,549/45,687 queries over 2,304 actual rays, with all unknown leaf intervals covered by columns. Run/cell CF4 and shared-endpoint RK4 recover accuracy only near or above current field work; the accurate leaf-cell CF4 case needs 299,276 density calls versus 147,796 current. This is an optimistic CPU/count rejection, not a native speed theorem. No placement shader was built.
+
+The native follow-up changes the old per-medium cache mechanism to **one pure Perlin slot shared across all callers**. A separate native census observes 89.21% full-cell reuse. Both full-gradient and lighter XY variants keep the tested full-resolution inside image byte-exact. Neither pays: clean ABBA full +1.98%/+14.58%, XY +0.38%/+0.68%, all 16 runs/384 timed frames retained, warm caches/uploads zero. Eight preliminary CPU-build-overlapped timing runs are separately retained/excluded. No occupancy cause is asserted. All prototypes are scratch-only; src/,saves,app,defaults and authored quality stay unchanged.
+
+**Shipping account:** independent accuracy reference ready; no new faithful profitable consumer or shipped gain. Next require a materially different reduction of field/sample work with preparation/state/boundary costs screened first. Production eligibility/fallback/lifecycle, broader views/clocks/clipping and inhabited/Person acceptance remain open. High cell reuse alone does not establish Metal benefit; mathematical recipes belong in OntoMath.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T11:34:16.105280-07:00`.
