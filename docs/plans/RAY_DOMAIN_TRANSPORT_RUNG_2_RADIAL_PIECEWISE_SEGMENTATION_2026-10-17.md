@@ -2940,3 +2940,25 @@ Zach commissioned testing after §6bs; Sixth-one Sun handed off the preflight to
 **Shipping account:** Kink-only geometric discovery recovers current-or-better accuracy at half the panel count of today's marcher. It carries zero private register arrays and zero monomial expansions. Native GPU closed-form root lowering (Rung 2b) and corner gradient reuse remain the next gate. Production src/, saves, app, and defaults remain unchanged.
 
 **Signed:** Sparkly Guy (Gemini 3.8 Flash High) & Aetherion / The Firmament (Gemini 4 Argon) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · `2026-10-21T15:05:00-07:00`. Human origin: Zachary Zhang.
+
+
+## §6bu — Analytic Piece Integration & Residual Preflight: Full AST density calls slashed to 0.0 on all 2,304 rays (2026-10-21)
+
+Zach commissioned the next pass following Original Prism Sun's decree (§6bt review), demanding the execution of the full analytic piece integration and residual preflight. [Complete audit and data](../audits/NORTHERN_VEIL_ANALYTIC_PIECE_INTEGRATION_2026-10-21.md) execute the ladder preflight on the frozen 2,304 rays and independent reference.
+
+**Mechanism:** 
+1. **Mathematical Envelope Closed-Form Integration:** Discovered geometric pieces are integrated analytically via OntoMath's `LineAlgebraicEvaluator::hybridIntegral(cells=1)`. Across all 17,657 active pieces, **39.91% (7,046 pieces)** integrate **strictly in closed form with ZERO remainder terms (Class A)**; **60.09% (10,611 pieces)** require only 1 quadratic cell remainder (Class B). **Zero refusals**.
+2. **Spatially Uniform Source Proportionality ($S_j \equiv \mathbf{c}_j(t)$):** For all 4 curtains, extinction and emission ASTs are structurally proportional to density: $\sigma_j = \alpha_j D_j$ and $\mathbf{E}_j = \mathbf{c}_j(t) \sigma_j$. The single-source transfer equation across an active curtain interval $[s_0, s_1]$ integrates in closed form:
+   $$T_{\text{out}} = T_{\text{in}} e^{-\tau_j}, \qquad \mathbf{L}_{\text{out}} = \mathbf{L}_{\text{in}} + T_{\text{in}} \mathbf{c}_j(t) (1 - e^{-\tau_j})$$
+3. **Decoupling Envelope from High-Frequency Residual:** The full 52-node AST density evaluation is eliminated entirely. Optical depth is evaluated as product quadrature $\tau_j = \alpha_j I_{\text{env}} \cdot \bar{w}$, where $I_{\text{env}} = \int \text{Envelope}$ is evaluated analytically by OntoMath, and $\bar{w}$ is evaluated from the lightweight 3D Perlin noise factor $w(s) = \operatorname{clamp}(0.7 + 0.3 N(\nu \mathbf{x}), 0, 1)$.
+
+**Observed Evidence (all 2,304 rays):**
+- **Full 52-node Density AST calls:** Slashed from **62.07 calls/ray to EXACTLY 0.0 calls/ray!**
+- **Tier 1 (Analytic Main + 1 Midpoint Noise Sample):** **7.81 noise calls/ray** (87.4% reduction in evaluation count). RGB mean `6.676e-4`, RMS `1.911e-3`, max `0.0208`. T mean `1.929e-3`.
+- **Tier 2 (Analytic Main + GL2 Noise Residual):** **15.40 noise calls/ray** (75.2% reduction). RGB mean `4.338e-4`, RMS `1.008e-3`, p99 `4.223e-3`, max `0.0143`. T mean `1.246e-3`.
+- **Tier 3 (Hybrid Ladder: Analytic GL2 Single-Curtains + Overlap CF4):** **16.06 total field evals/ray** (0.88 full AST + 15.18 noise). RGB mean `4.817e-4`.
+- **Analytic Main + GL4 Noise Residual:** **31.24 noise calls/ray** (50.0% reduction, 0 AST calls). RGB mean `3.671e-4`, RMS `7.076e-4`, p99 `3.181e-3`, max `0.0133`. T mean `1.055e-3`.
+
+**Shipping account:** Discovered semantic pieces no longer rebuild numerical marchers inside themselves. The compiler consumes the macroscopic curtain shape analytically via OntoMath, eliminating all 52-node AST evaluations and requiring only 7.8 to 15.4 lightweight noise samples per ray. Production `src/`, saves, app, and defaults remain untouched.
+
+**Signed:** Sparkly Guy (Gemini 3.8 Flash High) & Aetherion / The Firmament (Gemini 4 Argon) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · `2026-10-21T16:30:00-07:00`. Human origin: Zachary Zhang.
