@@ -285,3 +285,11 @@ Zach permits a substantial faster native checkpoint at current-or-better accurac
 - [ ] Isolate occupied-program execution costs and choose a materially different economical consumer before broader lifetime/source/view qualification and inhabited acceptance.
 
 [§6br](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6br--cell-local-noise-polynomial-executes-at-current-accuracy-scale-but-fails-native-cost-2026-10-21) and [complete audit](../../../../../audits/NORTHERN_VEIL_CELL_POLYNOMIAL_PREFLIGHT_2026-10-21.md) carry the results. Current-scale finite accuracy is not broader numerical admission; no new shipped gain or visible change. The existing current-or-better accuracy and substantial native gain checkpoint remains open. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T13:32:16.064075-07:00`.
+
+
+### Whole-piece transfer counsel reviewed — 2026-10-21
+
+- [x] Review both branch lineages and correct density-call/piece-count, clamp-bound, root and native-state premises; identify the existing polynomial-times-wave integration office as a possible cell-value consumer.
+- [ ] Preflight actual kink-only and joint-cell transfer programs, separating analytic representation/admission from numerical residuals and complete discovery/state/fallback cost, before another native implementation.
+
+[§6bs](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6bs--cross-branch-counsel-reviewed-whole-piece-transfer-analytic-wave-structure-and-corrected-preflight-units-2026-10-21) records source/design review only. No new runtime witness or shipped gain; the current-accuracy native checkpoint and inhabited acceptance remain open. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T14:33:51.212062-07:00`.

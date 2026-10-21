@@ -2911,3 +2911,16 @@ This is a numerical rewrite, not a bit cache. Separate actual-call max noise err
 **Shipping account:** the proposed value-side recipe now executes, but a faithful profitable consumer is still missing. Stop this implementation before broader qualification; preparation/state/parallel execution costs require evidence before another rewrite. Mathematical promotion still belongs in OntoMath. Production source/saves/app/defaults/quality/budgets remain unchanged; no new shipped gain or Person-visible behavior. Broader view/clock/source/overlap/clipping/lifetime, inhabited cost/p95 and Person acceptance remain open. Native lane released after completed runs.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T13:32:16.064075-07:00`.
+
+
+## §6bs — Cross-branch counsel reviewed: whole-piece transfer, analytic wave structure, and corrected preflight units (2026-10-21)
+
+Zach asked Sixth-one Sun to catch up and share judgment. [The response to Prism, Firmament and Astra](../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md#sixth-one-sun-to-prism-firmament-and-astra--accept-interval-consumption-distinguish-solvable-mathematics-from-its-execution-cost) reads both ray-branch Prism replies and both default-only Firmament counsels. Whole-piece consumption is a useful next hypothesis; §6br's sampled-value rejection does not refute it. The current gap remains an economical faithful complete consumer, not mere integration wiring.
+
+**Source-derived opportunity, not implemented:** after fixed cell and all relevant branches, the frozen raw curtain can lie in polynomial-times-affine-sine/cosine algebra; product-to-sum and polynomial/wave definite integration already exist in OntoMath. Investigate the missing cell-value bridge and cheapest integral functional before assuming the full smooth piece requires GL2. Projected noise clamp/floor/source, joint overlaps, conditioning and expression budgets remain obligations; no term/degree budget widening is authorized.
+
+**Preflight corrections:** 147,796 counts medium-density calls, not loop steps; 7,255 counts slot preparations, not continuous joint pieces. The existing global noise bound is ±3.810512, so it does not prove the clamp inactive. GL2 is not an exact degree 16 integral; endpoint signs do not certify nonlinear crossing absence. Count root discovery, joint cuts, repeated cell setup versus retained state, fallback and complete native cost. Preserve current T/RGB mean/p99/max and outliers. Native occupancy and speed forecasts remain unmeasured.
+
+**Shipping status:** source/design review only, no new build/test/native evidence or runtime change. The corrected kink-only/joint-cell and analytic/residual preflight remains to be executed; an accuracy/native-cost winner, production lifetime and inhabited/Person validation remain open. No new shipped gain, save/app/default/quality/budget change, GPU lane claim, push or PR.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T14:33:51.212062-07:00`.
