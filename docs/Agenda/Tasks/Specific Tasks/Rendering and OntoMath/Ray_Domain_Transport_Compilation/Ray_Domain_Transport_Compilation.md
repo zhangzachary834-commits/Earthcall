@@ -179,7 +179,7 @@ This is **architecture direction, not a landed implementation claim**. Existing 
 
 ## Distance to a faster Northern Veil
 
-*Standing account Zach asked for on 2026-10-20; last updated §6bh, 2026-10-21 00:10 ("keep the account of how much is left until the ray transport work buys more faster Northern Veil than before"). Every pass updates it.*
+*Standing account Zach asked for on 2026-10-20; last updated §6bh, 2026-10-21 00:02 ("keep the account of how much is left until the ray transport work buys more faster Northern Veil than before"). Every pass updates it.*
 
 **Baseline to beat.**
 - Codex's 2026-10-15 controlled offscreen series, aurora/inside at 2560×1440: **~136–141 ms per frame** (24-frame readback-free batches; not live FPS). The existing renderer's aurora proof construction is ~239 ms at admission ([audit](../../../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md)).

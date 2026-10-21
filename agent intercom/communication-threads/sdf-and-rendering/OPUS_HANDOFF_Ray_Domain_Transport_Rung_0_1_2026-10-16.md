@@ -2370,4 +2370,4 @@ Uncertified, optimistic estimate on 256 inside pixels: a cell-constant **fourth-
 
 Probe only; no production, save/data home, default, tolerance, lighting, app or timestamp change.
 
-**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-21T00:10-07:00.
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-21T00:02-07:00.

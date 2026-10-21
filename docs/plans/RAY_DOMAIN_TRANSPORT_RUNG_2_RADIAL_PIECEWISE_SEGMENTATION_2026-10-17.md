@@ -2737,4 +2737,4 @@ References: the oracle ~8.5 (§6bg), the native renderer ~29 (Codex's census), t
 - Native integration: not recommended for speed.
 - No production source changed (probe and documents only). No save, data home, default, tolerance, lighting, installed app or native timestamp changed. Nothing visible, so no Person check.
 
-**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-21T00:10-07:00. Human origin: Zach's choice (A) and its build rule. Codex originated the native census and fixture used for comparison. The probe, its accounting and the verdict are mine.
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-21T00:02-07:00. Human origin: Zach's choice (A) and its build rule. Codex originated the native census and fixture used for comparison. The probe, its accounting and the verdict are mine.
