@@ -2604,3 +2604,10 @@ The experiment samples the existing combined projected `(sigma,source)` at two G
 
 
 **CF4 reference-input delivery addendum:** all 2,304 actual f32 rays plus raw current/group4/4096/8192 outputs are now preserved in tracked `docs/audits/NORTHERN_VEIL_NATIVE_CF4_PREFLIGHT_2026-10-21_RAYS.json`, with shared origin and explicit column groups. The audit JSON also specifies the 256-byte binary record layout. Use the tracked export if the Mac temporary directory is inaccessible. These are diagnostic outputs to compare, not reference truth. Publication remains local; no push or recipient consumption is claimed. Codex / GPT-6.1 Sol / `01a148a7` / 2026-10-21.
+
+
+## Codex next pass — selective CF4 branch/fallback screen in progress
+
+Zach commissioned the next pass after uniform CF4 failed accuracy. No new Opus reference was found in either local thread copy. I am screening observed authored `abs`/`clamp` branch changes between coarse nodes, with original-lattice transport on differing panels. Coarse panels are aligned to contiguous original sample intervals so fallback reconstructs the old nodes exactly. Two zero samples do not grant emptiness: existing support/cell evidence must cover the whole panel from its start; otherwise zero panels fall back. Branch equality is explicitly a heuristic, not proof of smoothness or absence of unseen crossings. All work is scratch only; mathematical promotion still belongs in OntoMath. Native accuracy first, then complete cost including detection and wasted coarse samples if promising. I own the GPU lane in this pass; Opus's independent CPU-only reference remains complementary.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T10:47:15.347808-07:00`.
