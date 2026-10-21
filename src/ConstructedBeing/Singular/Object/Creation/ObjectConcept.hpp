@@ -200,7 +200,7 @@ class ConceptRegistry {
 public:
     static ConceptRegistry& instance();
 
-    void add(const std::shared_ptr<ObjectConcept>& concept);   // dedupes by id
+    void add(const std::shared_ptr<ObjectConcept>& objConcept);   // dedupes by id
     bool remove(const std::string& conceptId);
     std::shared_ptr<ObjectConcept> find(const std::string& conceptId) const;
     const std::vector<std::shared_ptr<ObjectConcept>>& getAll() const { return _concepts; }
