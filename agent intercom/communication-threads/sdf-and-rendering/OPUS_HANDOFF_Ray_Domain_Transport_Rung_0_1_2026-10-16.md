@@ -2165,3 +2165,29 @@ Zero source-field evaluations remain. **Tradeoff:** shared bounds need 234–242
 **Next agent:** establish the native projected-source admission contract and economical retained/device family execution strategy. Do not put a 200 ms family preparation into a per-frame-per-pixel loop. Any future cache must key current source/model/schema/symbol and ray domains, interval/work layout, local-frame/clock binding and device generation; identical WGSL is not proof-payload validity. Preserve coherent overlap attenuation; different-ratio members do not independently compose. T error weights background/remaining light before final-pixel admission. Do not silently reinterpret the accepted-lattice `volumeOutputErrorBudget`, remove floor/scattering, infer perspective coverage from axial tests or promote sample counts into FPS. Read plan §6ba and the Derived-State Ledger before native retention.
 
 **Signed:** Codex / GPT-6.1 Sol / `2026-10-20T21:46:48-07:00` / `01a148a7-bd85-7550-a416-0e859a729c1a`.
+
+
+## Codex usage-limit wrap-up — preparation remains expensive; handoff `29836c9e7`
+
+**Zach’s steering:** 204–209 ms every frame would destroy his reported ~20 FPS baseline; then he requested a stop point and handoff because usage is running low. Correct: 200 ms alone caps at ~5 FPS, or ~4 FPS if serialized after a 50 ms frame. This pass has not connected the continuum path to the renderer, so that is a cost objection, not an observed native regression.
+
+**Local commit:** `29836c9e7`, branch `claude/ray-domain-transport-rung0`, worktree `/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/ourverse_navigator_prototype_loop`. Nothing pushed. Full inheritor packet: `docs/audits/RAY_FAMILY_PREPARATION_COST_HANDOFF_2026-10-20.md`, plan **§6bb**, linked ray-domain task, tracked `scratch/probes/ray_family_preparation_profile.cpp`.
+
+**Retained:** a test-only 32-dispatch resident replay. One pipeline/bind group/proof/ray payload remains resident; a final readback must preserve every RGB/T bit. Setup is separated from batch wall time. **Removed:** a box range/derivative/constancy memo with careful interval/branch/undefined controls. It passed but did not lower cold cost enough. Production OntoMath/Screen source is restored to the pre-pass implementation; the rejected patch is `/private/tmp/earthcall-ray-rejected-proof-memo.patch`.
+
+**Final restored-source check:** **180/180 Metal**, including all prior authored-reference/domain cases and four new replay checks. Build `/private/tmp/earthcall-ray-wrap-build.txt`, log `/private/tmp/earthcall-ray-wrap-gpu-verified.txt`. Cold family preparation: emerald 204.657 ms, cyan 206.638 ms, violet 204.801 ms, crimson 202.873 ms. Setup 1.479–1.564 ms; resident 32-dispatch batches 15.672–16.022 ms, about 0.49–0.50 ms/dispatch **for eight records only**. Batch includes encoding, completion and one final readback. **Do not call this full-image/frame timing or extrapolate native FPS.** It shows replay need not redo cold preparation; it does not solve that preparation cost.
+
+**Profiler:** a five-second macOS sample of the bounded 100-preparation CPU probe repeatedly enters `MathNode::evalRange` → `classicPerlin3LatticeRange` → `classicPerlin3CellRange` under spatial/derivative proof passes. Report `/private/tmp/earthcall-ray-family-profile.txt`; scratch trial took 22234.5 ms/100 preparations. This sample used the rejected memo build. Rebuild/profile the restored baseline before asserting precise percentages or gains. The handoff explains how to compile the probe using existing target flags/link objects without adding CMake targets.
+
+**Next investigation, not implemented:** reduce repeated pure Perlin range work across proof passes, potentially through a bounded exact-six-f32-endpoint memo or fixed lattice-gradient reuse. Confirm profiles and unchanged bound/parameter/work/admission results. Do not reuse another box’s result, approximate GPU noise, shrink error allowances or confuse this CPU proof idea with earlier rejected native Perlin reuse. Do not reintroduce the unsuccessful memo just because its assertions passed.
+
+| Shipping gate | State at stop |
+|---|---|
+| Mathematical/error contract | §6ba bounded families/original arithmetic guards unchanged; model premises remain conditional. |
+| GPU execution / economical preparation | Shared packets and resident replay witnessed; **~200 ms cold preparation still unresolved**, with broad perspective coverage/work allocation/retention open. |
+| Native renderer | Still unconnected; projected gate/clamp/1e-6-floor/scattering, coherent overlaps, local frames/clocks/clipping and edit/payload/device lifecycle remain. |
+| Shipped performance | No new FPS gain; repeated native end-to-end cost/accuracy and inhabited movement/Person evidence remain. |
+
+No save/data home, lighting, tolerances, switches, installed app or native timestamp changed. No new CPU/app/native-tour/full-image verification this pass; prior results remain dated evidence. Existing Person checks remain open. Preserve T’s weighting of background/remaining light and the existing accepted-lattice budget contract. **Next agent starts with the handoff and profiler, not a per-frame 200 ms preparation or an automatic activation.**
+
+**Signed:** Codex / GPT-6.1 Sol / `2026-10-20T22:00:26-07:00` / `01a148a7-bd85-7550-a416-0e859a729c1a`.
