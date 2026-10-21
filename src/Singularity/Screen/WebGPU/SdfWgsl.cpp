@@ -2971,6 +2971,13 @@ static Program lowerScheduledTransport(Emit& e, std::string prelude, const std::
             e.param(up(b->lipschitz)); e.param(up(b->width)); e.param(up(b->sup)); e.param(up(b->execution));
             e.param(std::isfinite(b->hessian)?up(b->hessian):-1.0f);
             e.param(lower(b->low)); e.param(upper(b->high));
+            const auto& along = b==&p.sigma ? p.sigmaAlong : p.emissionAlong;
+            if (along) {
+                if (along->direction != plan.direction || !(along->slope>=0.0) || !(along->curvature>=0.0))
+                    e.refuse("directional panel evidence does not qualify this ray direction");
+                e.param(std::isfinite(along->slope)?up(along->slope):-1.0f);
+                e.param(std::isfinite(along->curvature)?up(along->curvature):-1.0f);
+            } else { e.param(-1.0f);e.param(-1.0f); }
         }
     }
     if(previous!=plan.hi) e.refuse("schedule leaves an uncovered ray tail");
@@ -3005,9 +3012,9 @@ fn rayProofLocal(w: f32,l: f32,h: f32,step: f32) -> f32 {
     out.wgsl+="fn rayProofExp(x:f32)->f32 { let y=max(exp(x),0.0); let denominator=bitcast<f32>(bitcast<u32>(1.0-"+expR+")-1u); return rayProofUp(rayProofAdd(y,"+expA+")/denominator); }\n";
     if(depthOnly) {
         // Dedicated endpoint program: no idle emission/outer-integral branch
-        // remains in the called shader. Nine numeric scalars per panel; ray,
+        // remains in the called shader. Eleven numeric scalars per panel; ray,
         // count and bounds stay payload data, preserving program-text reuse.
-        out.wgsl+="fn lineScheduledTail()->u32{return "+std::to_string(base)+"u+9u*u32("+count+");}\n";
+        out.wgsl+="fn lineScheduledTail()->u32{return "+std::to_string(base)+"u+11u*u32("+count+");}\n";
         out.wgsl+="fn lineScheduledTransportAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,tTol:f32,clock:f32,omega:vec3<f32>)->ScheduledTransport {\n"
             " var out=ScheduledTransport(0.0,0.0,rayProofInfinity(),rayProofInfinity(),0.0,vec2<f32>(0.0),0.0);\n"
             " if(!("+domain+") || !all(o=="+origin+") || !all(d=="+direction+") || !(lo=="+lo+" && hi=="+hi+" && tol>0.0 && tol<=3.402823466e38 && tTol>0.0 && tTol<=3.402823466e38)){return out;}\n"
@@ -3018,7 +3025,7 @@ fn rayProofLocal(w: f32,l: f32,h: f32,step: f32) -> f32 {
     let gamma=rayProofUp(gu/(1.0-gu));
     var tau=0.0;var dm=0.0;var de=0.0;var sigA=0.0;var calls=0.0;
     for(var j=0u;j<count;j=j+1u){
-        let k=base+9u*j;
+        let k=base+11u*j;
         let sa=P.v[k];let sb=P.v[k+1u];let step=(sb-sa)*0.5;let sm=sa+(sb-sa)*0.5;
         let width=rayProofUp(sb-sa);let hw=rayProofMul(width,0.5);
         let l=P.v[k+2u];let w=P.v[k+3u];let sup=P.v[k+4u];let e=P.v[k+5u];let h=P.v[k+6u];let low=P.v[k+7u];let high=P.v[k+8u];
@@ -3028,8 +3035,11 @@ fn rayProofLocal(w: f32,l: f32,h: f32,step: f32) -> f32 {
         var sigM=low;var sigB=low;
         if(!constant){sigM=lineSigma(o+sm*d,clock,omega);sigB=lineSigma(o+sb*d,clock,omega);calls=calls+2.0;}
         tau=tau+(step/3.0)*(sigA+4.0*sigM+sigB);
-        let ls=rayProofMul(l,dn);var hs=-1.0;
+        var ls=rayProofMul(l,dn);var hs=-1.0;
         if(h>=0.0){hs=rayProofMul(rayProofMul(h,dn),dn);}
+        let alongFirst=P.v[k+9u];let alongSecond=P.v[k+10u];
+        if(alongFirst>=0.0){ls=min(ls,alongFirst);}
+        if(alongSecond>=0.0){if(hs<0.0){hs=alongSecond;}else{hs=min(hs,alongSecond);}}
         dm=rayProofAdd(dm,rayProofMul(rayProofMul(width,2.25),rayProofLocal(w,ls,hs,hw)));
         de=rayProofAdd(de,rayProofMul(rayProofMul(1.2,width),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup))));
         sigA=sigB;
@@ -3064,12 +3074,12 @@ fn rayProofLocal(w: f32,l: f32,h: f32,step: f32) -> f32 {
     var mathematical=0.0; var execution=0.0; var sigA=0.0; var epsA=0.0;
     var sCalls=0.0; var eCalls=0.0;
     for(var j=0u;j<count;j=j+1u){
-        let k=base+16u*j;
+        let k=base+20u*j;
         let sa=P.v[k]; let sb=P.v[k+1u]; let step=(sb-sa)*0.5;
         let sm=sa+(sb-sa)*0.5;
         let width=rayProofUp(sb-sa); let hw=rayProofMul(width,0.5);
         let sL=P.v[k+2u];let sW=P.v[k+3u];let sSup=P.v[k+4u];let sE=P.v[k+5u];let sH=P.v[k+6u];let sLow=P.v[k+7u];let sHigh=P.v[k+8u];
-        let eL=P.v[k+9u];let eW=P.v[k+10u];let eSup=P.v[k+11u];let eE=P.v[k+12u];let eH=P.v[k+13u];let eLow=P.v[k+14u];let eHigh=P.v[k+15u];
+        let eL=P.v[k+11u];let eW=P.v[k+12u];let eSup=P.v[k+13u];let eE=P.v[k+14u];let eH=P.v[k+15u];let eLow=P.v[k+16u];let eHigh=P.v[k+17u];
         let sConstant=sE==0.0 && sLow==sHigh; let eConstant=eE==0.0 && eLow==eHigh;
         if(sSup==0.0 && sE==0.0 && eSup==0.0 && eE==0.0){sigA=0.0;epsA=0.0;continue;}
         if(j==0u){
@@ -3081,10 +3091,14 @@ fn rayProofLocal(w: f32,l: f32,h: f32,step: f32) -> f32 {
         if(!eConstant){epsM=lineEmission(o+sm*d,clock,omega);epsB=lineEmission(o+sb*d,clock,omega);eCalls=eCalls+2.0;}
         let tauM=tau+step*(5.0*sigA+8.0*sigM-sigB)/12.0;
         let tauB=tau+(step/3.0)*(sigA+4.0*sigM+sigB);
-        let ls=rayProofMul(sL,dn);let le=rayProofMul(eL,dn);
+        var ls=rayProofMul(sL,dn);var le=rayProofMul(eL,dn);
         var hs=-1.0;var he=-1.0;
         if(sH>=0.0){hs=rayProofMul(rayProofMul(sH,dn),dn);}
         if(eH>=0.0){he=rayProofMul(rayProofMul(eH,dn),dn);}
+        let sFirst=P.v[k+9u];let sSecond=P.v[k+10u];let eFirst=P.v[k+18u];let eSecond=P.v[k+19u];
+        if(sFirst>=0.0){ls=min(ls,sFirst);}if(eFirst>=0.0){le=min(le,eFirst);}
+        if(sSecond>=0.0){if(hs<0.0){hs=sSecond;}else{hs=min(hs,sSecond);}}
+        if(eSecond>=0.0){if(he<0.0){he=eSecond;}else{he=min(he,eSecond);}}
         let sPoint=rayProofMul(sL,pointError);let ePoint=rayProofMul(eL,pointError);
         let panelMath=rayProofMul(rayProofMul(width,2.25),rayProofLocal(sW,ls,hs,hw));
         let panelExec=rayProofMul(rayProofMul(1.2,width),rayProofAdd(rayProofAdd(sE,sPoint),rayProofMul(gamma,sSup)));

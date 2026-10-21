@@ -414,7 +414,8 @@ public:
     // enclosures (centre ± radius) from ScalarForm::evalRange, widened one ulp
     // outward (its lone constants are float points). range()/derivativeRange()
     // stay sound; value()/proposeRoots() are not meaningful in this mode, and
-    // constantUnder() is conservative (no binding is exactly zero).
+    // singleton bindings remain exact for structural constancy proofs; interval
+    // origins are never replaced by their centres for that purpose.
     LineAlgebraicEvaluator(const LineAlgebraicForm& form, const std::map<std::string, Interval>& boxBindings,
                            bool undefinedAsZero);
     bool boxMode() const { return _boxMode; }
@@ -458,7 +459,9 @@ public:
     // the hybrid's second-order remainder bound. Sound only where the node is
     // C¹ with a Lipschitz derivative: every kink or jump (an undecided Abs,
     // Min/Max, Clamp or Select; sqrt near 0) answers the unbounded interval,
-    // and the caller keeps its first-order bound there.
+    // and the caller keeps its first-order bound there. A defined subtree proved
+    // constant along the direction has both derivatives zero, even at a
+    // transverse crease; that says nothing about its transverse smoothness.
     Interval secondDerivativeRange(uint32_t node, double s0, double s1, const std::vector<int8_t>& signs) const;
     // Exact ∫[s0, s1] of a node along this line, under signs decided over the
     // whole interval (a definite segmentLine piece): the integration operation
@@ -608,6 +611,15 @@ struct LineQuadratureBand {
     // prove a Hessian bound across their join; grid aggregation checks this.
     std::vector<int8_t> branchSignature;
 };
+// Transient Kernel mathematical execution evidence, not authored state.
+// Direction-qualified mathematical derivatives, per unit of the ray's own
+// parameter: slope >= |D_d f| and curvature >= |D_d^2 f|. These never replace
+// the region's isotropic Lipschitz/Hessian or price transverse position error.
+struct LineDirectionalBound {
+    std::array<double, 3> direction{};
+    double slope = std::numeric_limits<double>::infinity();
+    double curvature = std::numeric_limits<double>::infinity();
+};
 struct LineQuadratureCertificate {
     std::vector<LineQuadratureBand> bands;   // increasing cap
     ExecutionModel model;
@@ -686,6 +698,10 @@ public:
     // Exact query box, reusing the same lowered source/model office. Transient
     // host proof for schedule derivation; no CPU-per-pixel native consumer.
     std::optional<LineQuadratureBand> tightOver(const double lo[3], const double hi[3]) const;
+    // Same whole-box evidence, plus derivatives in the specified direction.
+    // No directional grid cache: the returned proof is scoped to this box/d.
+    std::optional<std::pair<LineQuadratureBand, LineDirectionalBound>> alongOver(
+        const double lo[3], const double hi[3], const double direction[3]) const;
     const ExecutionModel& model() const { return _model; }
     const std::string& sourceExpression() const { return _sourceExpression; }
     const std::map<std::string, std::pair<double, double>>& symbols() const { return _symbols; }
@@ -730,6 +746,7 @@ std::optional<ComplementProductBound> boundComplementProduct(double coefficient,
 struct LineTransportPanel {
     double lo = 0.0, hi = 0.0;
     LineQuadratureBand sigma, emission;
+    std::optional<LineDirectionalBound> sigmaAlong, emissionAlong;
 };
 struct LineTransportSchedule {
     std::array<double, 3> origin{}, direction{};

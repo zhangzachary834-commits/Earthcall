@@ -2301,3 +2301,59 @@ Logs: `/private/tmp/earthcall-ray-reduced-{cpu,expression,integral-gpu,gpu}-veri
 **Next:** address the directional proof/work-count bottleneck and reusable/device-side planning, while establishing the projected-source admission contract for the native consumer. Keep the current native lane and accepted-lattice output budget unchanged until that contract exists. Different-ratio overlapping media cannot be independently composited using this single-member identity.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-20T20:42:50-07:00`. Human origin: Zachary Zhang’s “KEEP GOING” continuation, authored-equation faithfulness criterion, and OntoMath ownership correction.
+
+
+## 6az. Direction-qualified curvature removes transverse-crease over-refinement (2026-10-20)
+
+OntoMath now distinguishes variation **along the ray** from variation over its spatial error halo. A transverse abs/clamp crease may have no finite isotropic curvature while being constant along a particular direction. `RegionCertificate::alongOver` returns the unchanged whole-box range, isotropic Lipschitz/Hessian, branch signature and original-expression execution enclosure, plus separate first/second directional derivative bounds. The direction is raw, not normalized: derivatives are per unit of the ray parameter, with quadratic scaling of curvature.
+
+Only finite exact singleton interval bindings participate in structural constancy. No interval midpoint, near-zero direction or sample value proves constancy. A subtree must also have a bounded, defined range; undefined arithmetic cannot disappear behind a constant derivative. Crossing and nearly crossing directions retain the conservative unbounded curvature. Original-DAG cancellation still carries its original execution uncertainty even when its mathematical directional derivatives vanish.
+
+CPU schedule preparation and GPU lowering consume this evidence only for the exact qualified direction. Quadrature may use tighter directional slope/curvature; **position error still uses the full isotropic Lipschitz bound**, and field execution, exp, accumulation and coefficient charges remain. Unsupported/missing directional evidence retains the isotropic path. Rotated packets refuse GPU lowering. The transient payload schema is now **11 scalars/panel** for depth and **20** for general nested transport (superseding §6ay’s 9/16); the dynamic coefficient tail follows the new stride. Numeric panel/count/coefficient changes still preserve shader text and execute through fresh payloads. No native retained cache was introduced.
+
+### Controlled proof and real authored results
+
+For `sigma=(1-abs(x))*(1+0.5*z)` along z at x=0, the controlled device test uses the **same three field sites, shader text, integration algorithm, global/execution/position evidence and budgets**. Supplying directional evidence admits the depth; stripping only that evidence refuses at the same work. Both paths produce the identical device T, and RGB/T contain the independent analytic reference T=exp(-1.25). Full spatial curvature remains unbounded. This isolates a proof improvement without changing the value or relaxing the budget.
+
+The actual four raw authored curtains retain the §6ay two full-box rays at x=0/2,y=0, clocks 0/3 in [0,3], nonzero source/attenuation, RGB ±0.01 per component and T ±0.006 (host target ±0.004). All **16 vector records / 64 scalar outputs** still contain the independent 4000/8000-cell cumulative Simpson references, agreeing below 1e-5. Those references retain CPU f32 vector/Perlin semantics and are numerical witnesses, not certified exact-real oracles. No author/device allowance was reduced.
+
+| Medium | x=0 device sigma calls: previous → now | Current x=0 panels | x=2 calls / panels |
+|---|---|---|---|
+| Emerald | 3832 → **150** | 84 | 82 / 48 |
+| Cyan | 3924 → **140** | 81 | 72 / 48 |
+| Violet | 3228 → **94** | 55 | 94 / 54 |
+| Crimson | 2186 → **94** | 54 | 88 / 51 |
+
+Each dispatch still evaluates **zero emission fields**, using the previously derived proportional identity. The hard x=0 cases need about **23–34 times fewer extinction evaluations**. The four existing non-axis occupied emerald rays in the general nested kernel also improve: sigma/emission calls 176/176 → 84/84, 88/88 → 48/48, 62/62 → 44/44 and 390/390 → 108/108, with unchanged budgets/reference checks. This grants neither whole-image coverage nor a native FPS claim.
+
+**Preparation remains a blocker:** added diagnostics observe roughly **93–142 ms per ray** in this uncontrolled Debug test, including proof/search, with 85–160 unique host sigma evaluations and 72–150 final device sites. This is not a controlled frame benchmark or a proposal to run that search per pixel. Reusable qualified spatial evidence or GPU work discovery must replace per-pixel CPU planning before native deployment. Native fused sampling already shares field work; device sample counts alone cannot establish a speedup.
+
+### Final verification
+
+Targets built and ran sequentially; `earthcall_webgpu` builds but was not installed or launched.
+
+| Witness | Observed result |
+|---|---|
+| Line segmentation | **121/121**, including transverse/crossed/nearly-crossed/direction-scale/domain/cancellation controls |
+| Line restriction | **57/57** |
+| Integral mathematics | **85/85** |
+| Expression/report | **36/36** |
+| Radial segmentation | **41/41**, census 172032 samples with no proved-empty sample having positive emitter density |
+| Ordinary GPU Integral | **32/32 Metal** |
+| GPU line/general/reduced schedules | **155/155 Metal**, including controlled same-value/same-work evidence, direction refusal and all real records above |
+| Native support certificates | **132/132 Metal**, including full 2560×1440 RGBA parity and existing eligibility/compilation regressions |
+
+Logs: `/private/tmp/earthcall-ray-direction-{cpu,restriction,integral,expression,radial,integral-gpu,gpu,native}-verified.txt`; build `/private/tmp/earthcall-ray-direction-build-final.txt`. The certificate test’s existing timing output is not a measurement of the new continuum kernels. This was a focused pass, not a whole-suite run. Existing arithmetic/noise/exp premises remain **model-qualified**, not hardware-certified.
+
+### Shipping ledger
+
+| Gate | Landed now | Remaining closure |
+|---|---|---|
+| **1. Mathematical/error contract** | Direction-qualified first/second derivatives; exact structural constancy; full position/execution charges retained. | Existing model premises remain conditional; unsupported cases decline. |
+| **2. GPU execution and affordable discovery** | Both scheduled kernels use the tighter proof; real hard-ray device work falls from thousands to 94–150 calls at unchanged budgets. | Reusable/device-side work discovery, preparation cost, and broad view/direction coverage. |
+| **3. Native renderer** | Still unconnected. | Projected gate/clamp/1e-6-floor/scattering admission, coherent shared attenuation across overlaps, clipping/local frames/clocks and native edit/payload/device lifecycle. |
+| **4. Shipped GPU performance** | No new frame-time or inhabited-motion claim. | Paired authored-reference accuracy and repeated end-to-end Metal costs including cold preparation, uploads, occupancy and fallback; then Person movement/visual acceptance. |
+
+**Next:** derive affordable reusable or device-side scheduling evidence while establishing native projected-source admission. Different-ratio overlaps cannot be independently composited. T error must weight background/remaining light before being a final-pixel bound; the accepted-lattice `volumeOutputErrorBudget` is not silently a continuum budget. No save/data home, lighting, authored tolerance, installed app, native activation or default changed. There is no new visible native behavior to ask Zach to accept; existing Person checks remain open.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-20T21:15:34-07:00`. Human origin: Zachary Zhang’s “NEXT PASS” continuation, authored-equation faithfulness criterion and requirement that mathematical meaning remain in OntoMath.

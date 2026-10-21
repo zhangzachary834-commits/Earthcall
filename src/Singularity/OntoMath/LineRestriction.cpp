@@ -1434,6 +1434,11 @@ LineAlgebraicEvaluator::LineAlgebraicEvaluator(const LineAlgebraicForm& form,
                                                bool undefinedAsZero)
     : _form(&form), _undefinedAsZero(undefinedAsZero), _boxMode(true) {
     _box = boxBindings;
+    // Structural zero coefficients may use exact singleton bindings (not a
+    // rounded interval centre). In particular d_i=0 proves that coordinate is
+    // constant along the line, including in a family of uncertain origins.
+    for (const auto& [name, value] : boxBindings)
+        if (value.bounded() && value.lo == value.hi) _bindings[name] = value.lo;
     _coefficients.resize(form.nodes.size());
     _errors.resize(form.nodes.size());
     computeSignFree();
@@ -2062,6 +2067,13 @@ void LineAlgebraicEvaluator::relevantUndecided(uint32_t node, const std::vector<
 
 Interval LineAlgebraicEvaluator::derivativeRange(uint32_t node, double sa, double sb,
                                                  const std::vector<int8_t>& signs) const {
+    // Exact directional constancy is mathematical evidence only. Preserve
+    // undefined-domain refusal and the separate original-DAG execution bound.
+    if (_boxMode && constantUnder(node, signs)) {
+        bool undefined = false;
+        const auto range = rangeAt(node, sa, sb, signs, &undefined);
+        if (!undefined && range.bounded()) return Interval(0.0f);
+    }
     const auto& n = _form->nodes[node];
     const int8_t s0 = n.switchCount > 0 ? signs[n.switchBegin] : 0;
     const int8_t s1 = n.switchCount > 1 ? signs[n.switchBegin + 1] : 0;
@@ -2151,6 +2163,13 @@ Interval LineAlgebraicEvaluator::derivativeRange(uint32_t node, double sa, doubl
 
 Interval LineAlgebraicEvaluator::secondDerivativeRange(uint32_t node, double sa, double sb,
                                                        const std::vector<int8_t>& signs) const {
+    // Exact directional constancy is mathematical evidence only. Preserve
+    // undefined-domain refusal and the separate original-DAG execution bound.
+    if (_boxMode && constantUnder(node, signs)) {
+        bool undefined = false;
+        const auto range = rangeAt(node, sa, sb, signs, &undefined);
+        if (!undefined && range.bounded()) return Interval(0.0f);
+    }
     const auto& n = _form->nodes[node];
     const int8_t s0 = n.switchCount > 0 ? signs[n.switchBegin] : 0;
     const int8_t s1 = n.switchCount > 1 ? signs[n.switchBegin + 1] : 0;
@@ -2604,8 +2623,17 @@ std::optional<LineTransportMarch> marchCore(const PanelBands& bandsFor, const Ex
         if (!bands) return refuse("a panel leaves every certified region");
         const LineQuadratureBand& sg = bands->first;
         const LineQuadratureBand& em = bands->second;
-        const double Ls = sg.lipschitz * dn, Le = em.lipschitz * dn;
-        const double Hs = sg.hessian * dn * dn, He = em.hessian * dn * dn;
+        double Ls = sg.lipschitz * dn, Le = em.lipschitz * dn;
+        double Hs = sg.hessian * dn * dn, He = em.hessian * dn * dn;
+        if (panels) {
+            const auto& panel = (*panels)[j / 2];
+            auto use = [&](const std::optional<LineDirectionalBound>& along, double& first, double& second) {
+                if (!along) return;
+                for (int i = 0; i < 3; ++i) if (along->direction[i] != d[i]) return;
+                first = std::min(first, along->slope); second = std::min(second, along->curvature);
+            };
+            use(panel.sigmaAlong, Ls, Hs); use(panel.emissionAlong, Le, He);
+        }
         const double sPoint = pointError >= 0.0 ? sg.lipschitz * pointError : Ls * ds;
         const double ePoint = pointError >= 0.0 ? em.lipschitz * pointError : Le * ds;
         auto sample = [&](const LineQuadratureBand& band, const std::function<double(double)>& at, double x) {
@@ -2769,6 +2797,37 @@ std::optional<LineQuadratureBand> RegionCertificate::tightOver(const double lo[3
     return certifyBox(*_restriction.form, _restriction.form->roots[0], _model, box, _symbolBox, _symbolMagnitudes);
 }
 
+std::optional<std::pair<LineQuadratureBand, LineDirectionalBound>> RegionCertificate::alongOver(
+    const double lo[3], const double hi[3], const double d[3]) const {
+    const auto region = tightOver(lo, hi);
+    if (!region) return std::nullopt;
+    std::map<std::string, Interval> bindings = _symbolBox;
+    LineDirectionalBound along;
+    for (int i = 0; i < 3; ++i) {
+        if (!std::isfinite(d[i])) return std::nullopt;
+        auto interval = [](double a, double b) {
+            float l = float(a), h = float(b);
+            if (double(l) > a) l = std::nextafter(l, -INFINITY);
+            if (double(h) < b) h = std::nextafter(h, INFINITY);
+            return Interval(l, h);
+        };
+        bindings[kLineOriginVars[i]] = interval(std::min(lo[i], hi[i]), std::max(lo[i], hi[i]));
+        bindings[kLineDirectionVars[i]] = interval(d[i], d[i]);
+        if (!bindings[kLineDirectionVars[i]].bounded()) return std::nullopt;
+        along.direction[i] = d[i];
+    }
+    LineAlgebraicEvaluator ev(*_restriction.form, bindings, false);
+    if (!ev.ok()) return std::nullopt;
+    auto magnitude = [](const Interval& r) {
+        return r.bounded() ? std::max(std::abs(double(r.lo)), std::abs(double(r.hi))) * (1.0 + 1e-12)
+                           : std::numeric_limits<double>::infinity();
+    };
+    const auto root = _restriction.form->roots[0];
+    along.slope = magnitude(ev.derivativeRange(root, 0.0, 0.0, region->branchSignature));
+    along.curvature = magnitude(ev.secondDerivativeRange(root, 0.0, 0.0, region->branchSignature));
+    return std::make_pair(*region, along);
+}
+
 std::optional<LineTransportMarch> marchLineTransport(const RegionCertificate& sigma, const RegionCertificate& emission,
                                                      const std::function<double(double)>& sigmaAt,
                                                      const std::function<double(double)>& emissionAt, const double o[3],
@@ -2845,9 +2904,9 @@ std::optional<LineTransportSchedule> planRegionalLineTransport(
             boxLo[i] = std::min(x, y) - out.pointError;
             boxHi[i] = std::max(x, y) + out.pointError;
         }
-        const auto sg = sigma.tightOver(boxLo, boxHi), em = emission.tightOver(boxLo, boxHi);
+        const auto sg = sigma.alongOver(boxLo, boxHi, d), em = emission.alongOver(boxLo, boxHi, d);
         if (!sg || !em) return std::nullopt;
-        return LineTransportPanel{a, b, *sg, *em};
+        return LineTransportPanel{a, b, sg->first, em->first, sg->second, em->second};
     };
     struct Pending { double lo, hi; };
     std::vector<Pending> pending{{lo, hi}};

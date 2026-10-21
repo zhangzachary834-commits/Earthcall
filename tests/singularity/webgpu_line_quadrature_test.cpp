@@ -30,6 +30,7 @@
 #include <filesystem>
 #include <fstream>
 #include <cmath>
+#include <chrono>
 #include <cstdio>
 #include <iostream>
 #include <memory>
@@ -682,6 +683,42 @@ int main() {
             check(!sdfwgsl::compileScheduledProportionalIntegral(*sigma,*tiny,*plan).ok,"unqualified subnormal coefficient amplification declines compilation");
         }
     }
+    // Controlled transverse-crease comparison: identical shader, ray, samples,
+    // field/execution/position evidence and tolerance; only the qualified
+    // directional derivatives differ. The independent integral is 5/4.
+    {
+        auto sigma=node(Op::Scale,node(Op::Sub,constant(1),node(Op::Abs,leaf(ScalarForm::variable("x")))),
+            leaf(ScalarForm::constant(1).plus(ScalarForm::variable("z").scaled(0.5))));
+        auto source=node(Op::Scale,std::make_unique<MathNode>(*sigma),node(Op::VectorConstruct,constant(0.25),constant(-0.5),constant(2)));
+        auto zero=constant(0);
+        OntoMath::RegionCertificate sc(*sigma,Rendering::kVolumeExecutionModel,4),zc(*zero,Rendering::kVolumeExecutionModel,4);
+        Ray ray{{0,0,0},{0,0,1},0,1,0.01};ray.tTolerance=0.006;std::string why;
+        const auto plan=OntoMath::planRegionalLineTransport(sc,zc,[](double z){return 1+0.5*z;},[](double){return 0;},
+            ray.o,ray.d,ray.lo,ray.hi,0.009,0.004,64,&why);
+        check(plan && plan->admitted && plan->panels.size()==1 && plan->sigmaSamples==3,
+              "the transverse-crease analytic case needs one proved panel and three sigma evaluations: "+why);
+        if(plan) {
+            auto isotropic=*plan;for(auto& p:isotropic.panels){p.sigmaAlong.reset();p.emissionAlong.reset();}
+            const auto a=sdfwgsl::compileScheduledProportionalIntegral(*sigma,*source,*plan);
+            const auto b=sdfwgsl::compileScheduledProportionalIntegral(*sigma,*source,isotropic);
+            check(a.ok && b.ok && a.wgsl==b.wgsl,"directional proof changes only payload, preserving the same shader and integration algorithm");
+            if(a.ok && b.ok){
+                const auto da=runOnDevice(gpu,a,{ray},"scheduledT"),db=runOnDevice(gpu,b,{ray},"scheduledT");
+                check(da && db && (*da)[0]==(*db)[0] && (*da)[1]==1 && (*db)[1]==0 && (*da)[3]<=0.006 && (*db)[3]>0.006,
+                      "directional evidence admits the identical depth value that isotropic evidence cannot justify at the same work and budget");
+                const auto rgb=runOnDevice(gpu,a,{ray},"reducedRGB"),errors=runOnDevice(gpu,a,{ray},"reducedErrors");
+                bool contains=rgb && errors;const double k[3]={0.25,-0.5,2};
+                if(contains)for(int c=0;c<4;++c){const double ref=c==3?std::exp(-1.25):k[c]*(1-std::exp(-1.25));contains=contains && std::abs((*rgb)[c]-ref)<=(*errors)[c];}
+                check(contains,"the reduced crease-aligned RGB/T contains its independent analytic integral");
+            }
+            auto rotated=*plan;rotated.direction={1,0,0};
+            check(!sdfwgsl::compileScheduledProportionalIntegral(*sigma,*source,rotated).ok,
+                  "a rotated ray cannot reuse another direction's panel evidence");
+            bool keepsSpatial=true;
+            for(const auto& p:plan->panels)keepsSpatial=keepsSpatial && !std::isfinite(p.sigma.hessian) && p.sigma.lipschitz>1 && p.sigma.execution>0;
+            check(keepsSpatial,"finite directional curvature never removes the full spatial crease, position or original-execution evidence");
+        }
+    }
     // Actual raw authored curtain equations: all RGB components and T from one
     // device depth. Native floor/gate/scattering admission is deliberately not
     // inferred by this mathematical execution witness.
@@ -720,9 +757,13 @@ int main() {
                     {OntoMath::kOmegaYVar,PropertyValue(0.0)},{OntoMath::kOmegaZVar,PropertyValue(-1.0)}};};
                 auto extinction=[&](double s){const auto v=sigma->evaluate(scope(s,0));double x=NAN;if(v)propertyValueToNumber(*v,x);return x;};
                 std::string why;
+                const auto preparedAt=std::chrono::steady_clock::now();
                 const auto plan=OntoMath::planRegionalLineTransport(sc,zc,extinction,[](double){return 0;},ray.o,ray.d,ray.lo,ray.hi,0.009,0.004,2048,&why);
+                const double preparationMs=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-preparedAt).count();
                 check(plan && plan->admitted,"the real curtain obtains one extinction-only schedule: "+b.producerId+": "+why);
                 if(!plan || !plan->admitted)continue;
+                std::printf("    PREPARE %s x %.0f: %.3f ms, %zu unique host sigma evaluations, %zu final device sites\n",
+                    b.producerId.c_str(),transverse,preparationMs,plan->sigmaPreparations,plan->sigmaSamples);
                 const auto program=sdfwgsl::compileScheduledProportionalIntegral(*sigma,*source,*plan);
                 check(program.ok,"all three actual authored source components reduce to the shared depth: "+b.producerId+": "+program.error);
                 if(!program.ok)continue;

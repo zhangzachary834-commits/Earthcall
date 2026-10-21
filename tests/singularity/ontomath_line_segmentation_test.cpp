@@ -1045,6 +1045,46 @@ int main() {
         check(polynomial && std::isfinite(polynomial->hessian) && polynomial->hessian>=2.0 && polynomial->hessian<2.01,
               "a genuinely smooth polynomial retains its Hessian bound across several cells");
     }
+    // A transverse crease can be constant along a direction. Its directional
+    // proof must never be mistaken for a full spatial Hessian or zero device
+    // error. Tiny nonzero direction components remain nonzero, without a cutoff.
+    {
+        auto transverse=node(Op::Scale,node(Op::Abs,leaf("x")),
+            std::make_unique<MathNode>());
+        transverse->children[1]->scalarForm=ScalarForm::transcendental(OntoMath::TransFactor::Kind::Exp,"z",1);
+        OntoMath::RegionCertificate region(*transverse,{},0.25);
+        const double lo[3]={-0.2,-0.1,-0.1},hi[3]={0.2,0.1,0.1};
+        const double axial[3]={0,0,1},doubleSpeed[3]={0,0,2},crossing[3]={1,0,1},nearParallel[3]={0x1p-20,0,1};
+        const auto along=region.alongOver(lo,hi,axial),twice=region.alongOver(lo,hi,doubleSpeed);
+        const auto across=region.alongOver(lo,hi,crossing),near=region.alongOver(lo,hi,nearParallel);
+        check(along && !std::isfinite(along->first.hessian) && along->first.lipschitz>1,
+              "a directional query retains the transverse crease's isotropic Hessian refusal and spatial Lipschitz bound");
+        check(along && along->second.curvature>=0.2*std::exp(0.1) && along->second.curvature<0.23,
+              "abs(x)*exp(z) has a finite proved second derivative along z over the whole uncertain-origin box");
+        check(twice && along && twice->second.curvature>=4*0.2*std::exp(0.1) && twice->second.curvature<4.01*along->second.curvature,
+              "directional curvature is per ray parameter and scales quadratically with direction magnitude");
+        check(across && !std::isfinite(across->second.curvature) && near && !std::isfinite(near->second.curvature),
+              "crossing or nearly crossing the crease never inherits the parallel ray's smoothness");
+        auto clamp=node(Op::Clamp,leaf("x"),num(0),num(1));
+        OntoMath::RegionCertificate clipped(*clamp,{},0.25);
+        const auto cl=clipped.alongOver(lo,hi,axial);
+        check(cl && cl->second.slope==0 && cl->second.curvature==0 && !std::isfinite(cl->first.hessian),
+              "a fixed transverse clamp is constant along the ray even when its spatial switch remains undecided");
+        const double invalid[3]={NAN,0,1};
+        check(!region.alongOver(lo,hi,invalid),"non-finite directions cannot acquire directional evidence");
+        const double A=std::ldexp(1.0,25);
+        auto canceled=node(Op::Sub,node(Op::Sub,node(Op::Add,num(A),leaf("x")),num(A)),leaf("x"));
+        const OntoMath::ExecutionModel model{0x1p-16,0x1p-10};
+        OntoMath::RegionCertificate cancellation(*canceled,model,0.25);
+        const auto cancel=cancellation.alongOver(lo,hi,axial);
+        check(cancel && cancel->second.slope==0 && cancel->second.curvature==0 && cancel->first.execution>1,
+              "exact directional constancy retains original-DAG cancellation error instead of claiming device zero");
+        auto zero=num(0);OntoMath::RegionCertificate zeroRegion(*zero,model,0.25);
+        const double origin[3]={0,0,0};std::string why;
+        const auto refused=OntoMath::planRegionalLineTransport(cancellation,zeroRegion,[](double){return 0.0;},[](double){return 0.0;},
+            origin,axial,0,1,0.01,0.01,64,&why);
+        check(!refused || !refused->admitted,"directional zero mathematics cannot admit a canceled field beyond its execution budget");
+    }
     // Nonuniform schedules are judged by analytic controls, including a dark
     // absorber BEFORE the source. Never infer no transport from zero emission.
     {
