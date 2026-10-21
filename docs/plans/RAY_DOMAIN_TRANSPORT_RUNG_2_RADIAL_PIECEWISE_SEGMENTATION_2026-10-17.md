@@ -2649,3 +2649,53 @@ Census (Release, h=4, cap 6, emerald): 1,118/1,230 cells carry evidence. **Every
 - No save, data home, default, tolerance, lighting, installed app or native timestamp changed. No visible behavior, so no Person check.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T23:45-07:00. Human origin: Zach's instruction above. Codex originated the switch-operand lowering pattern (support killers), the switch slack office and the device model. The forced-sign certificates, root-free run stepping, doubling slivers and execution-balanced work choice are mine.
+
+
+## 6bg. The first full-image cost measurement: the certified grid march is ~18× slower than today's frame; the bound, not the field, is the reason (2026-10-20)
+
+**Human origin.** Zach: "YASSSS NEXT APSSSSSS". With step 4b gated on the declared device model (⚑ Zach/Codex), this pass previews step 6 of the [distance account](../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Ray_Domain_Transport_Compilation/Ray_Domain_Transport_Compilation.md#distance-to-a-faster-northern-veil), because it decides whether the lane can make the Veil faster at all.
+
+**Full-image depth march** (`scratch/probes/grid_full_image_cost.cpp`, never in CMake).
+- Codex's aurora/inside camera: eye (0, 50, 75) → (40, 62, 110), 60° fovy, every pixel of 2560×1440.
+- Rays are generated on the device, clipped to each medium box (×0.98), and run through `lineGridDepthAt` (h=4, δ=1/256, kink cap 6, T tol 0.006) with 8×8 workgroups.
+- Completion-fenced batches of four.
+
+| curtain | ms per full image | pixels hitting box | admitted | σ calls / switch evals per hit pixel |
+|---|---|---|---|---|
+| emerald (camera inside it) | 1,198 | 3.69M | 21.7% | 570 / 613 |
+| cyan | 356 | 2.86M | 78.9% | 150 / 174 |
+| violet | 469 | 3.69M | 88.2% | 133 / 205 |
+| crimson | 439 | 3.69M | 86.9% | 155 / 186 |
+| **total (depth only)** | **2,463** | | | |
+
+Scaling: 640×360 211 ms, 1280×720 664 ms, 2560×1440 2,463 ms. Codex's 10-15 controlled series measured the **whole** current frame for this view at ~136–141 ms. So the grid march is **~18× slower before colour, compositing, native gates or a fallback for refused pixels.** Compute dispatches, not native frame time; same machine.
+
+**Why: an oracle** (`scratch/probes/grid_sampling_oracle.cpp`).
+- For 64 inside-view pixels per curtain: the smallest uniform Simpson count over each occupied span whose *true* |ΔT| ≤ 0.003 against a 20,000-point reference.
+- Results: median 5 samples (emerald, cyan, violet), 17 (crimson); **~8.5 σ samples per pixel summed over all four curtains.**
+- Codex's fragment-demand census: the native renderer spends ~29 positive-medium evaluations per inside ray (~58 transport samples).
+- The certified march spends ~1,000.
+
+The fields are smooth; **the certified bound is ~100× pessimistic**, for these reasons:
+1. The panel bound is second order: 2.25·w·min(range width, L·w/2, H·w²/8). Simpson's true error is fourth order, ≤ w⁵·sup|f⁗|/2880.
+2. Its constants are worst cases over 4-unit cells.
+3. Execution accumulates per unit length under the 2⁻¹⁰ per-trig model (step 4b).
+4. Switch stepping costs as much again as σ.
+
+**What this means for the goal.**
+- The only lever that can close the gap is **4c**: certified fourth-order bounds per smooth run.
+  - Third/fourth directional derivative ranges through every node kind.
+  - Classic Perlin is only C² (quintic fade), so its lattice planes must be split like kinks; inside a lattice cell it is polynomial.
+  - Rough sizing from the curtain's frequencies: f⁗ ≈ 0.07·0.66⁴ ≈ 0.013 gives panels of ~2 units and ~20–40 calls per pixel, i.e. around **parity** with the native ~29, not a clear win.
+- Even reaching the oracle floor could beat the native field-evaluation count by at most ~3×.
+- So the lane's distinctive value today is **proved accuracy**, not speed; a speed win is not in evidence.
+- Recorded honestly, as the account promised. Zach decides whether the lane continues toward speed parity via 4c, or is re-scoped to certified accuracy.
+
+**Shipping ledger:**
+- Mathematical/error contract: unchanged, sound.
+- Economical execution: measured, ~18× slower than today's frame.
+- Native renderer integration: unconnected and not recommended for activation on speed grounds.
+- Shipped performance: none; this pass refutes a near-term speed claim for the current march.
+- No production source changed this pass; probes and documents only. No save, data home, default, tolerance, lighting, installed app or native timestamp changed. Nothing visible, so no Person check.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T23:58-07:00. Human origin: Zach's standing request for a faster Veil and the account of its distance. Codex originated the aurora/inside fixture, the ~136–141 ms baseline series and the fragment-demand census used for comparison. The full-image probe, the oracle and the diagnosis are mine.

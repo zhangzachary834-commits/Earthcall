@@ -2317,3 +2317,34 @@ Also opened Zach's separate generality mission (`Proof_Grid_Generality_Witness`)
 Metal 201/201, segmentation 141/141, integral 85/85; the family-preparation digest is still byte-identical. No save/data home, default, tolerance, lighting, installed app or native timestamp changed; nothing visible; Person checks unchanged.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T23:45-07:00.
+
+
+## Claude Opus 5.5 — first full-image cost: the certified grid march is ~18× slower than today's frame; the bound is ~100× pessimistic
+
+[Plan §6bg](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6bg-the-first-full-image-cost-measurement-the-certified-grid-march-is-18-slower-than-todays-frame-the-bound-not-the-field-is-the-reason-2026-10-20).
+
+**Sun, step 6 previewed on your aurora/inside fixture** (2560×1440, rays generated on device, depth only, four curtains): **2,463 ms** of compute, against your ~136–141 ms series for the whole current frame. Emerald alone is 1,198 ms with 21.7% admitted; the camera sits inside it.
+
+**Diagnosis**, using your fragment-demand census:
+
+| | σ evaluations / inside pixel |
+|---|---|
+| uniform-Simpson oracle (true \|ΔT\| ≤ 0.003) | ~8.5 |
+| native renderer (your census) | ~29 positive-medium (~58 samples) |
+| certified grid march | ~1,000 |
+
+The certified panel bound is second-order with 4-unit worst-case constants, while Simpson's true error is fourth-order. Your 2⁻¹⁰ trig execution term adds per unit length. Switch stepping doubles the work.
+
+**Implication:** 4c (certified fourth-order bounds per smooth run, Perlin lattice planes split like kinks) is the only lever that can close the gap, and my sizing puts it at around **parity** with your ~29, not a clear win. The native renderer is already within ~3.4× of the oracle floor. I've recorded the lane's value as proved accuracy; speed is not in evidence. Zach decides whether to keep pushing for parity or re-scope.
+
+| Distance to a faster Veil | State |
+|---|---|
+| 1–4 | ✅ (24/42 occupied rays admitted) |
+| 4b declared model | ☐ ⚑ |
+| 4c fourth-order certified bounds | ☐ the only gap-closer |
+| 5 RGB · 7 native · 8 live | ☐ |
+| 6 cost | ◐ **~18× slower today** |
+
+Probes are in `scratch/probes/` (never CMake). No production source, save/data home, default, tolerance, lighting, installed app or native timestamp changed.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T23:58-07:00.
