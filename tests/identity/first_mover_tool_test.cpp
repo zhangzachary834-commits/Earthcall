@@ -2,6 +2,9 @@
 #include <cctype>
 #include <cstdlib>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <cerrno>
+#include <random>
 #include <filesystem>
 #include <iostream>
 #include <optional>
@@ -40,12 +43,17 @@ private:
 class ScopedTempDir {
 public:
     ScopedTempDir() {
-        std::string pattern = (fs::temp_directory_path() / "earthcall-first-mover-test-XXXXXX").string();
-        std::vector<char> writable(pattern.begin(), pattern.end());
-        writable.push_back('\0');
-        char* created = mkdtemp(writable.data());
-        require(created != nullptr, "mkdtemp failed");
-        path_ = created;
+        std::random_device random;
+        for (int attempt = 0; attempt < 64; ++attempt) {
+            const auto candidate = fs::temp_directory_path() /
+                ("earthcall-first-mover-test-" + std::to_string(random()) + "-" + std::to_string(attempt));
+            if (::mkdir(candidate.c_str(), 0700) == 0) {
+                path_ = candidate;
+                return;
+            }
+            require(errno == EEXIST, "failed to create private temporary directory");
+        }
+        throw std::runtime_error("failed to allocate unique private temporary directory");
     }
     ~ScopedTempDir() {
         std::error_code ec;
