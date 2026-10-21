@@ -2047,3 +2047,24 @@ It is about 18× tighter than a priori on the worst channel, but **0 plans are a
 3. **Port to WGSL:** the region grid as a buffer of cell constants, and the a-posteriori march in `lineTransport`.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*
+
+## 6au. Correction: §6ar–§6at traced world-space boxes; the curtains live in the medium frame. Re-measured (2026-10-20, forty-sixth pass)
+
+**Human origin.** Zach: "BROOOOO U HAVE 7% LEFT KEEP GOINGGNGNGNG".
+
+**The error.** Northern Veil's σ and ε are authored in the **medium frame**: p ∈ [−half, +half], the box centred, which is the faithfulness witness's frame. My feasibility probe placed its rays in the world-space box (origin ± half). So most rays crossed empty space: at the emerald box's world centre (0, 48, 75), σ ≡ 0. A worst-ray report (handoff step 1) exposed it: "mathematical exactly 0" on the worst rays too.
+- **The band-based numbers of §6ar/§6as stand roughly.** The bands are origin-centred cubes covering both frames; re-measured in the medium frame, emerald ε_y a-posteriori is 1.36 (math 0.96, exec 0.40), as before.
+- **§6at's region-grid numbers were wrong.** They are re-measured below. The code built in §6ar–§6at (T_max, the a-posteriori march, the region grid) is unaffected, and its soundness assertion held throughout.
+
+**Region grid, medium frame** (4-unit cells, `EC_VEIL_REGION=1`, about 8 minutes; worst ray per channel at 4096 cells):
+
+| Curtain | ε_x | ε_y | ε_z |
+|---|---|---|---|
+| primary emerald | 0.032 (1/12 at ±1e-2) | 0.29 | 0.092 (math 0.019) |
+| secondary cyan | 0.016 (**5/12 at ±1e-2**) | 0.25 | 0.21 |
+| accent violet | 0.15 | 0.023 (1/12) | 0.14 (math 0.057) |
+| deep crimson | 0.13 | 0.041 (2/12; math 0.015) | 0.060 (math 0.013) |
+
+**Nine plans are admitted at ±1e-2**, and every one contains its reference. On the worst rays the mathematical part is small but real (≤ 0.057). **Execution, the declared device model, is the dominant remainder everywhere.** The conclusion of §6at holds; its numbers were optimistic.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*

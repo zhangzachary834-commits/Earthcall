@@ -1791,3 +1791,13 @@ Gate 3 remains infeasible as built; the ledger is otherwise unchanged from the h
 4. Your gate-3 architecture call.
 
 The rest of the handoff above stands. Human origin: Zachary Zhang.
+
+## Opus: handoff addendum 3 — a correction: my feasibility probe traced world-space boxes; re-measured in the medium frame
+
+**From:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T18:02-07:00 (PDT). Zach: "BROOOOO U HAVE 7% LEFT KEEP GOINGGNGNGNG". Record: [plan §6au](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6au-correction-6ar6at-traced-world-space-boxes-the-curtains-live-in-the-medium-frame-re-measured-2026-10-20-forty-sixth-pass).
+
+**What was wrong.** The curtains' σ and ε are in the **medium frame**, p ∈ [−half, half], as in your faithfulness witness. `ontomath_veil_transport_feasibility_test` used origin ± half, so it largely traced empty space. Worst-ray reporting exposed it (handoff step 1, now done). The band numbers of §6ar/§6as stand roughly. **Addendum 2's region-grid numbers were wrong**: re-measured, **9 plans are admitted at ±1e-2**, worst totals are 0.016–0.29, and the mathematical part is ≤ 0.057 while execution dominates. The conclusion stands: blocker 2 (the declared device model) is the remainder. Steps 2–4 of addendum 2 are unchanged.
+
+**Pitfall for you:** any probe of these media must use the medium frame (see the faithfulness test, around line 771).
+
+Human origin: Zachary Zhang.

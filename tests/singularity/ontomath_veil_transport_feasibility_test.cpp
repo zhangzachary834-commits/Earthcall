@@ -98,8 +98,10 @@ int main() {
         const auto sc = OntoMath::certifyLineQuadrature(*sigma, model, 20, &why, symbols);
         if (!sc) { std::printf("     σ_t does not certify: %s\n", why.c_str()); continue; }
         // The band covering the curtain's box.
-        const double reach = std::max({std::abs(b.origin.x) + std::abs(b.scale.x), std::abs(b.origin.y) + std::abs(b.scale.y),
-                                       std::abs(b.origin.z) + std::abs(b.scale.z)});
+        // The fields are authored in the MEDIUM frame, centred on the box: p ∈
+        // [−half, +half] (the faithfulness witness's frame). Before this fix the
+        // probe traced world-space boxes, mostly empty space (plan §6au).
+        const double reach = std::max({std::abs(b.scale.x), std::abs(b.scale.y), std::abs(b.scale.z)});
         const OntoMath::LineQuadratureBand* sb = nullptr;
         for (const auto& band : sc->bands) if (reach <= band.cap) { sb = &band; break; }
         if (!sb) { std::printf("     no σ band reaches the box (|p| up to %.3g)\n", reach); continue; }
@@ -109,6 +111,12 @@ int main() {
         // Per-region certificates (plan §6at): 4-unit cells, filled lazily.
         const double cellSize = std::getenv("EC_VEIL_CELL") ? std::atof(std::getenv("EC_VEIL_CELL")) : 4.0;
         const OntoMath::RegionCertificate sigmaRegion(*sigma, model, cellSize, symbols);
+        if (std::getenv("EC_VEIL_PROBE")) {   // one core cell's constants, to check the grid
+            const double lo3[3] = {-0.5, -0.5, -0.5}, hi3[3] = {0.5, 0.5, 0.5};
+            const auto c = sigmaRegion.over(lo3, hi3);
+            if (c) std::printf("     PROBE σ core cell: low %.4g high %.4g width %.4g L %.4g H %.4g exec %.4g\n", c->low, c->high, c->width, c->lipschitz, c->hessian, c->execution);
+            else std::printf("     PROBE σ core cell: no certificate\n");
+        }
         const char* axes[3] = {"x", "y", "z"};
         for (int c = 0; c < 3; ++c) {
             auto component = node(Op::Component, clone(*emi));
@@ -124,13 +132,13 @@ int main() {
             std::uniform_real_distribution<double> un(-1.0, 1.0);
             const OntoMath::RegionCertificate emissionRegion(*epsilon, model, cellSize, symbols);
             int regAdmitted[2] = {0, 0};
-            double regCells[2] = {0.0, 0.0}, regBest[2] = {INFINITY, INFINITY}, regMath = NAN, regExec = NAN;
+            double regCells[2] = {0.0, 0.0}, regBest[2] = {INFINITY, INFINITY}, regMath = NAN, regExec = NAN, regWorst = 0.0, regWorstMath = NAN, regWorstExec = NAN;
             int admitted[2] = {0, 0}, sound = 0, postAdmitted[2] = {0, 0}, postSound = 0, postTried = 0;
             double cells[2] = {0.0, 0.0}, postCells[2] = {0.0, 0.0}, bestPost[2] = {INFINITY, INFINITY}, bestMath = NAN, bestExec = NAN;
             std::string refusal[2];
             for (int r = 0; r < 12; ++r) {
                 double o[3], d[3], n2 = 0.0;
-                const double centre[3] = {b.origin.x, b.origin.y, b.origin.z}, half[3] = {std::abs(b.scale.x), std::abs(b.scale.y), std::abs(b.scale.z)};
+                const double centre[3] = {0.0, 0.0, 0.0}, half[3] = {std::abs(b.scale.x), std::abs(b.scale.y), std::abs(b.scale.z)};
                 for (int k = 0; k < 3; ++k) { o[k] = centre[k] + half[k] * 0.9 * un(rng); d[k] = un(rng); n2 += d[k] * d[k]; }
                 for (int k = 0; k < 3; ++k) d[k] /= std::sqrt(n2);
                 double t0 = -1e300, t1 = 1e300;   // the box's entry and exit along the line
@@ -167,6 +175,7 @@ int main() {
                                                                     [&](double s) { return double(at(*epsilon, s)); }, o, d, t0, t1, n);
                         if (!m) continue;   // a coarse panel may touch too many cells: refine
                         if (n == 4096.0 && m->total() < regBest[k]) { regBest[k] = m->total(); regMath = m->mathematical; regExec = m->execution; }
+                        if (n == 4096.0 && k == 0 && m->total() > regWorst) { regWorst = m->total(); regWorstMath = m->mathematical; regWorstExec = m->execution; }
                         if (m->total() <= tol) {
                             ++regAdmitted[k];
                             regCells[k] += n;
@@ -218,9 +227,9 @@ int main() {
             }
             soundRays += sound + postSound;
             admittedRays += postTried;
-            std::printf("     ε_%s REGION GRID (%.3g-unit cells): ±1e-2 %d/12 (mean %.0f cells); ±1e-3 %d/12 (mean %.0f cells); best at 4096 %.3g / %.3g (math %.3g, exec %.3g)\n",
+            std::printf("     ε_%s REGION GRID (%.3g-unit cells): ±1e-2 %d/12 (mean %.0f cells); ±1e-3 %d/12 (mean %.0f cells); best at 4096 %.3g / %.3g (math %.3g, exec %.3g); WORST at 4096 %.3g (math %.3g, exec %.3g)\n",
                         axes[c], cellSize, regAdmitted[0], regAdmitted[0] ? regCells[0] / regAdmitted[0] : 0.0, regAdmitted[1],
-                        regAdmitted[1] ? regCells[1] / regAdmitted[1] : 0.0, regBest[0], regBest[1], regMath, regExec);
+                        regAdmitted[1] ? regCells[1] / regAdmitted[1] : 0.0, regBest[0], regBest[1], regMath, regExec, regWorst, regWorstMath, regWorstExec);
             std::printf("     ε_%s A-POSTERIORI: ±1e-2 %d/12 (mean %.0f cells); ±1e-3 %d/12 (mean %.0f cells); best total at 4096 cells %.3g / %.3g (mathematical %.3g, execution %.3g)\n",
                         axes[c], postAdmitted[0], postAdmitted[0] ? postCells[0] / postAdmitted[0] : 0.0, postAdmitted[1],
                         postAdmitted[1] ? postCells[1] / postAdmitted[1] : 0.0, bestPost[0], bestPost[1], bestMath, bestExec);
