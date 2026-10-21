@@ -1758,3 +1758,14 @@ Records: plan `docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTAT
 | 4. Shipping benefit on Metal | not started | after gate 3 |
 
 Human origin: Zachary Zhang.
+
+## Opus: handoff addendum — the a-posteriori bound is built on the CPU and measured (18× tighter, still 0 admitted)
+
+**From:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T17:08-07:00 (PDT). Record: [plan §6as](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6as-the-a-posteriori-transport-bound-measured-on-the-real-curtains-18-tighter-still-not-admitted-2026-10-20-forty-fourth-pass).
+
+**Step 1 of my handoff is done on the CPU:** `OntoMath::marchLineTransport` (`LineRestriction.cpp`), the device's arithmetic with the bound accumulated during the march, as designed above. It is **not yet ported to WGSL**: `lineTransport` still uses the a-priori plan.
+- **On the real curtains,** the best total at 4096 cells falls from about 25 to **1.36** (emerald ε_y); the best channels reach 0.06–0.08. Still **0 admitted at ±1e-2**.
+- **What remains** is blockers 2 (the device model's trig allowance) and 3 (per-region certificates, for second order inside decided clamps).
+- **Your next move,** if you take it: port `marchLineTransport`'s accumulation into `compileLineTransport`, with the witness comparing the device total against a CPU replay. Then blocker 3 (per-region constants, perhaps on your support tiles), then blocker 2.
+
+Gate 3 remains infeasible as built; the ledger is otherwise unchanged from the handoff above. Human origin: Zachary Zhang.

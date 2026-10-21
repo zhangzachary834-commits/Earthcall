@@ -119,8 +119,8 @@ int main() {
             for (const auto& band : ec->bands) if (reach <= band.cap) { eb = &band; break; }
             std::mt19937_64 rng(1000 + c);
             std::uniform_real_distribution<double> un(-1.0, 1.0);
-            int admitted[2] = {0, 0}, sound = 0;
-            double cells[2] = {0.0, 0.0};
+            int admitted[2] = {0, 0}, sound = 0, postAdmitted[2] = {0, 0}, postSound = 0, postTried = 0;
+            double cells[2] = {0.0, 0.0}, postCells[2] = {0.0, 0.0}, bestPost[2] = {INFINITY, INFINITY};
             std::string refusal[2];
             for (int r = 0; r < 12; ++r) {
                 double o[3], d[3], n2 = 0.0;
@@ -152,6 +152,23 @@ int main() {
                 long double sum = 0.0L;
                 for (int i = 0; i <= M; ++i) sum += (i == 0 || i == M ? 1.0L : (i % 2 ? 4.0L : 2.0L)) * std::exp(-tau[i]) * at(*epsilon, t0 + i * hh);
                 const double ref = double(sum * hh / 3.0L);
+                // The a-posteriori march (plan §6as): the bound accumulated as it goes.
+                for (int k = 0; k < 2; ++k) {
+                    const double tol = k == 0 ? 1e-2 : 1e-3;
+                    for (double n = 2.0; n <= 4096.0; n *= 2.0) {
+                        const auto m = OntoMath::marchLineTransport(*sc, *ec, [&](double s) { return double(at(*sigma, s)); },
+                                                                    [&](double s) { return double(at(*epsilon, s)); }, o, d, t0, t1, n);
+                        if (!m) break;
+                        if (n == 4096.0) bestPost[k] = std::min(bestPost[k], m->total());
+                        if (m->total() <= tol) {
+                            ++postAdmitted[k];
+                            postCells[k] += n;
+                            ++postTried;
+                            postSound += std::abs(m->value - ref) <= m->total();
+                            break;
+                        }
+                    }
+                }
                 for (int k = 0; k < 2; ++k) {
                     const double tol = k == 0 ? 1e-2 : 1e-3;
                     std::string pw;
@@ -175,7 +192,11 @@ int main() {
                     ++admittedRays;
                 }
             }
-            soundRays += sound;
+            soundRays += sound + postSound;
+            admittedRays += postTried;
+            std::printf("     ε_%s A-POSTERIORI: ±1e-2 %d/12 (mean %.0f cells); ±1e-3 %d/12 (mean %.0f cells); best total at 4096 cells %.3g / %.3g\n",
+                        axes[c], postAdmitted[0], postAdmitted[0] ? postCells[0] / postAdmitted[0] : 0.0, postAdmitted[1],
+                        postAdmitted[1] ? postCells[1] / postAdmitted[1] : 0.0, bestPost[0], bestPost[1]);
             std::printf("     ε_%s (band sup %.3g, L %.3g, H %s, device error %.3g): ±1e-2 %d/12 (mean %.0f cells)%s; ±1e-3 %d/12 (mean %.0f cells)%s\n",
                         axes[c], eb ? eb->sup : NAN, eb ? eb->lipschitz : NAN,
                         eb && std::isfinite(eb->hessian) ? std::to_string(eb->hessian).c_str() : "unbounded", eb ? eb->execution : NAN,

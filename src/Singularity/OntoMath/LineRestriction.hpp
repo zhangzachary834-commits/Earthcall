@@ -631,6 +631,24 @@ struct LineTransportPlan {
     double cells = 0.0, depthError = 0.0, mathematical = 0.0, execution = 0.0;
     double total() const { return mathematical + execution; }
 };
+// The A-POSTERIORI bound (plan §6as): the same march, its bound accumulated as
+// it goes — the depth error δτ_k grows from 0 along the ray, and each sample's
+// share is weighted by the transmittance actually computed there:
+//   |e^−τ − e^−τ̃| ≤ e^−τ̃·(e^δτ − 1),   the outer radius per panel with
+//   T ≤ e^(−τ̃_a + δτ_a)·e^(max(0,−σ_low)·2h).
+// The device terms are the certificates' (the declared device model), so this
+// CPU march in double bounds what the DEVICE march would compute. `sigmaAt`
+// and `emissionAt` evaluate σ and ε at the line parameter s.
+struct LineTransportMarch {
+    double value = 0.0, mathematical = 0.0, execution = 0.0;
+    double total() const { return mathematical + execution; }
+};
+std::optional<LineTransportMarch> marchLineTransport(const LineQuadratureCertificate& sigma,
+                                                     const LineQuadratureCertificate& emission,
+                                                     const std::function<double(double)>& sigmaAt,
+                                                     const std::function<double(double)>& emissionAt, const double o[3],
+                                                     const double d[3], double lo, double hi, double cells,
+                                                     std::string* why = nullptr);
 std::optional<LineTransportPlan> planLineTransport(const LineQuadratureCertificate& sigma,
                                                    const LineQuadratureCertificate& emission, const double o[3],
                                                    const double d[3], double lo, double hi, double tolerance,

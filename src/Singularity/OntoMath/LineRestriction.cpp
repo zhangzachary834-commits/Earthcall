@@ -2499,6 +2499,85 @@ std::optional<LineTransportPlan> planLineTransport(const LineQuadratureCertifica
     return refuse(text);
 }
 
+std::optional<LineTransportMarch> marchLineTransport(const LineQuadratureCertificate& sigma,
+                                                     const LineQuadratureCertificate& emission,
+                                                     const std::function<double(double)>& sigmaAt,
+                                                     const std::function<double(double)>& emissionAt, const double o[3],
+                                                     const double d[3], double lo, double hi, double cells,
+                                                     std::string* why) {
+    auto refuse = [&](const std::string& text) { if (why) *why = text; return std::nullopt; };
+    if (!(hi >= lo)) return refuse("transport runs from lo to hi");
+    const double S = hi - lo;
+    double M = 0.0, dn2 = 0.0;
+    for (int i = 0; i < 3; ++i) {
+        M = std::max({M, std::abs(o[i] + lo * d[i]), std::abs(o[i] + hi * d[i])});
+        dn2 += d[i] * d[i];
+    }
+    const double dn = std::sqrt(dn2);
+    auto pick = [&](const LineQuadratureCertificate& c) -> const LineQuadratureBand* {
+        for (const auto& b : c.bands) if (M <= b.cap) return &b;
+        return nullptr;
+    };
+    const LineQuadratureBand* sg = pick(sigma);
+    const LineQuadratureBand* em = pick(emission);
+    if (!sg || !em) return refuse("the ray leaves every certified magnitude band");
+    const int n = int(cells);
+    if (n < 2 || n % 2) return refuse("an even cell count of at least 2 is needed");
+    const double u = std::ldexp(1.0, -23), lambda = 1.25, h = S / n;
+    const double ds = 4.0 * u * (std::abs(lo) + S);
+    const double Ls = sg->lipschitz * dn, Le = em->lipschitz * dn;
+    const double Hs = sg->hessian * dn * dn, He = em->hessian * dn * dn;
+    const double gamma = (n + 8.0) * u / (1.0 - (n + 8.0) * u);
+    const double expError = emission.model.transcendental + 4.0 * u;
+    const double grow = std::exp(std::max(0.0, -sg->low) * 2.0 * h);   // T may grow by this over a panel
+    auto local = [&](double width, double L1, double H2, double hw) {
+        double l = std::min(width, L1 * hw);
+        if (std::isfinite(H2)) l = std::min(l, H2 * hw * hw * 0.5);
+        return l;
+    };
+    const double localSigma = local(sg->width, Ls, Hs, h);
+    const double panelDepthMath = 2.0 * h * (1.0 + lambda) * localSigma;
+    const double panelDepthExec = 1.2 * 2.0 * h * (sg->execution + Ls * ds + gamma * sg->sup);
+    const double eWidth = std::max(em->high, 0.0) - std::min(em->low, 0.0);
+    LineTransportMarch out;
+    // Sample error at a node: depth error weighted by the computed transmittance,
+    // split into its mathematical and execution shares, plus ε's and exp's own.
+    auto sampleError = [&](double tau, double dMath, double dExec, double eps, double& math, double& exec) {
+        const double T = std::exp(-tau), epsMax = std::abs(eps) + em->execution;
+        const double depth = T * (std::exp(dMath + dExec) - 1.0) * epsMax;
+        const double share = dMath + dExec > 0.0 ? dMath / (dMath + dExec) : 0.0;
+        math = depth * share;
+        exec = depth * (1.0 - share) + T * std::exp(dMath + dExec) * (em->execution + Le * ds + expError * epsMax);
+    };
+    double tauA = 0.0, mathA = 0.0, execA = 0.0;
+    double sigA = sigmaAt(lo), epsA = emissionAt(lo), L = 0.0, magnitude = 0.0;
+    for (int j = 0; j < n; j += 2) {
+        const double sm = lo + S * (double(j + 1) / n), sb = lo + S * (double(j + 2) / n);
+        const double sigM = sigmaAt(sm), sigB = sigmaAt(sb), epsM = emissionAt(sm), epsB = emissionAt(sb);
+        const double tauM = tauA + h * (5.0 * sigA + 8.0 * sigM - sigB) / 12.0;
+        const double tauB = tauA + (h / 3.0) * (sigA + 4.0 * sigM + sigB);
+        const double mathB = mathA + panelDepthMath, execB = execA + panelDepthExec;   // the midpoint's ≤ the end's
+        const double gA = std::exp(-tauA) * epsA, gM = std::exp(-tauM) * epsM, gB = std::exp(-tauB) * epsB;
+        L += (h / 3.0) * (gA + 4.0 * gM + gB);
+        magnitude += (h / 3.0) * (std::abs(gA) + 4.0 * std::abs(gM) + std::abs(gB));
+        double m0, e0, m1, e1, m2, e2;
+        sampleError(tauA, mathA, execA, epsA, m0, e0);
+        sampleError(tauM, mathB, execB, epsM, m1, e1);
+        sampleError(tauB, mathB, execB, epsB, m2, e2);
+        out.mathematical += (h / 3.0) * (m0 + 4.0 * m1 + m2);
+        out.execution += (h / 3.0) * (e0 + 4.0 * e1 + e2);
+        // The outer radius on this panel, with T ≤ e^(−τ̃_a + δτ_a)·grow there.
+        const double T = std::exp(-tauA + mathA + execA) * grow;
+        const double gPrime = T * (Le + sg->sup * em->sup);
+        const double gSecond = T * (He + 2.0 * sg->sup * Le + Ls * em->sup + sg->sup * sg->sup * em->sup);
+        out.mathematical += 2.0 * h * (1.0 + lambda) * local(T * eWidth, gPrime, gSecond, h);
+        tauA = tauB; mathA = mathB; execA = execB; sigA = sigB; epsA = epsB;
+    }
+    out.execution += gamma * magnitude + 4.0 * u * magnitude;
+    out.value = L;
+    return out;
+}
+
 namespace {
 // Real roots of a·s² + b·s + c in (s0, s1), numerically stable form; a nearly
 // tangent pair (tiny negative discriminant) proposes the vertex.

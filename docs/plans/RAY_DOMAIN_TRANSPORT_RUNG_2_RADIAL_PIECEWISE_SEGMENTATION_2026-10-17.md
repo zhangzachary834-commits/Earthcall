@@ -1993,3 +1993,28 @@ Line segmentation 91/91, line restriction 57/57, integral 66/66, GPU integral 28
 | 4. Shipping benefit on Metal | no | — | — | after 3 |
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*
+
+## 6as. The a-posteriori transport bound, measured on the real curtains: 18× tighter, still not admitted (2026-10-20, forty-fourth pass)
+
+**Human origin.** Zach: "BROOOOOO NEXT PASSSS BUT U HAVE 15% USAGE SO WRITE HANDOFF FOR THE SUN…". The handoff to Codex went first (intercom, `738679d1a`).
+
+**Built:** `OntoMath::marchLineTransport`, which is §6ar's blocker-1 remedy as a CPU march with the device's arithmetic. The bound is accumulated during the march:
+- depth errors grow from 0 along the ray, with their mathematical and execution shares tracked;
+- each sample's share is |e^(−τ) − e^(−τ̃)| ≤ e^(−τ̃)·(e^(δτ) − 1), weighted by the transmittance actually computed;
+- the outer radius per panel uses T ≤ e^(−τ̃_a + δτ_a)·e^(max(0, −σ_low)·2h);
+- the device terms come from the certificates, so it bounds what the device march would compute.
+
+Not yet ported to WGSL.
+
+**Measured** (`ontomath_veil_transport_feasibility_test`; best total at 4096 cells, per curtain and channel):
+
+| Curtain | ε_x | ε_y | ε_z |
+|---|---|---|---|
+| primary emerald | 0.083 | 1.36 (a priori ≈ 25) | 0.21 |
+| secondary cyan | 0.060 | 1.67 | 0.62 |
+| accent violet | 0.40 | 0.10 | 0.34 |
+| deep crimson | 0.25 | 0.065 | 0.18 |
+
+It is about 18× tighter than a priori on the worst channel, but **0 plans are admitted at ±1e-2**. What remains is §6ar's blockers 2 (the declared device model's 2^-10 per trig call) and 3 (first order only, since the Hessian is unbounded across undecided clamps over a 256 band). Both are named in the handoff for Codex. The probe's soundness assertion still holds: no admitted plan, no violation.
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*
