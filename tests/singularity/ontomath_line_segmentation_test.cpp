@@ -1031,6 +1031,71 @@ int main() {
               "the device's absolute exp contract and CPU's relative one-ulp contract stay distinct");
     }
 
+
+    {
+        auto absolute=node(Op::Abs,leaf("x"));
+        OntoMath::RegionCertificate kink(*absolute,{},0.25);
+        const double lo[3]={-0.2,0.01,0.01},hi[3]={0.2,0.02,0.02};
+        const auto across=kink.over(lo,hi);
+        check(across && !std::isfinite(across->hessian),
+              "zero curvature on affine pieces never becomes a curvature proof across their kink");
+        auto square=node(Op::Scale,leaf("x"),leaf("x"));
+        OntoMath::RegionCertificate smooth(*square,{},0.25);
+        const auto polynomial=smooth.over(lo,hi);
+        check(polynomial && std::isfinite(polynomial->hessian) && polynomial->hessian>=2.0 && polynomial->hessian<2.01,
+              "a genuinely smooth polynomial retains its Hessian bound across several cells");
+    }
+    // Nonuniform schedules are judged by analytic controls, including a dark
+    // absorber BEFORE the source. Never infer no transport from zero emission.
+    {
+        const OntoMath::ExecutionModel model{1.0 / 65536.0, 1.0 / 1024.0};
+        auto tent = [&](double centre, double half) {
+            return node(Op::Clamp, node(Op::Sub, num(1), node(Op::Div,
+                node(Op::Abs, node(Op::Sub, leaf("x"), num(centre))), num(half))), num(0), num(1));
+        };
+        auto zero = num(0), source = tent(5.0, 0.125);
+        OntoMath::RegionCertificate s0(*zero, model, 0.25), e0(*source, model, 0.25);
+        const double o[3] = {0,0,0}, d[3] = {1,0,0};
+        auto triangle = [](double x, double c, double h) { return std::max(0.0, 1.0 - std::abs(x-c)/h); };
+        std::string why;
+        const auto thin = OntoMath::planRegionalLineTransport(s0, e0, [](double) { return 0.0; },
+            [&](double x) { return triangle(x,5.0,0.125); }, o,d,0,64,0.001,0.01,1024,&why);
+        check(thin && thin->admitted, "a narrow contributing span fits without uniformly subdividing the whole ray: " + why);
+        if (thin) {
+            std::cout << "    adaptive thin source: " << thin->panels.size() << " panels, " << thin->sigmaSamples << "/"
+                      << thin->emissionSamples << " sigma/emission sites; total " << thin->result.total() << " (math " << thin->result.mathematical << ", exec " << thin->result.execution << ")\n";
+            check(std::abs(thin->result.value - 0.125) <= thin->result.total(), "the thin triangle's analytic area lies in the complete radiance bound");
+            check(thin->sigmaSamples == 0 && thin->emissionSamples < 1024,
+                  "exact regional zero bypasses sigma calls and concentrates source work (uniform would use 4097 of each)");
+            check(thin->panels.front().lo == 0 && thin->panels.back().hi == 64,
+                  "empty and active panels still cover the full authoritative interval");
+            bool connected = true;
+            for (size_t j=1;j<thin->panels.size();++j) connected &= thin->panels[j-1].hi == thin->panels[j].lo;
+            check(connected, "nonuniform execution leaves no uncertified gaps between panels");
+            check(std::abs(thin->result.transmittance - 1.0) <= thin->result.transmittanceTotal(),
+                  "transmittance has its own containing bound alongside radiance");
+        }
+        auto absorber = tent(2.0,1.0), laterSource = tent(8.0,1.0);
+        OntoMath::RegionCertificate sa(*absorber,model,0.25), ea(*laterSource,model,0.25);
+        const auto shadow = OntoMath::planRegionalLineTransport(sa,ea,
+            [&](double x){return triangle(x,2.0,1.0);},[&](double x){return triangle(x,8.0,1.0);},
+            o,d,0,16,0.01,0.01,2048,&why);
+        check(shadow && shadow->admitted, "a non-emitting absorber and later emitter admit with one shared prefix: " + why);
+        if(shadow) {
+            check(std::abs(shadow->result.value-std::exp(-1.0)) <= shadow->result.total() && shadow->result.value < 0.5,
+                  "dark absorption attenuates the later triangle by its analytic optical depth of one");
+            check(std::abs(shadow->result.transmittance-std::exp(-1.0)) <= shadow->result.transmittanceTotal(),
+                  "final transmittance preserves that same absorbing prefix");
+        }
+        const auto limited = OntoMath::planRegionalLineTransport(sa,ea,
+            [&](double x){return triangle(x,2.0,1.0);},[&](double x){return triangle(x,8.0,1.0);},
+            o,d,0,16,1e-10,1e-10,8,&why);
+        check(limited && !limited->admitted && !limited->refusal.empty() && limited->panels.back().hi==16,
+              "a work budget returns a complete but unadmitted schedule, never a silently truncated integral");
+        check(!OntoMath::planRegionalLineTransport(s0,e0,[](double){return 0.0;},[](double){return 0.0;},
+               o,d,0.1,16,0.01,0.01,32,&why) && why.find("f32")!=std::string::npos,
+              "a device schedule requires explicit f32 ray values rather than silently changing the ray");
+    }
     std::cout << "ontomath_line_segmentation_test: " << (g_checks - g_failures) << "/" << g_checks
               << " checks passed\n";
     return g_failures == 0 ? 0 : 1;

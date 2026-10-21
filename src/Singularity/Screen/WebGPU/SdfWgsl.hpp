@@ -26,7 +26,7 @@
 #include "Singularity/Screen/RadianceSource.hpp"
 
 namespace geom { struct SdfNode; class FieldNode; }
-namespace OntoMath { struct LineQuadratureCertificate; }
+namespace OntoMath { struct LineQuadratureCertificate; struct LineTransportSchedule; }
 
 namespace sdfwgsl {
 
@@ -187,6 +187,16 @@ Program compileLineQuadrature(const OntoMath::MathNode& field, const OntoMath::L
 Program compileLineTransport(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
                              const OntoMath::LineQuadratureCertificate& sigmaCert,
                              const OntoMath::LineQuadratureCertificate& emissionCert, uint32_t maxCells);
+
+// Execute a host-derived nonuniform schedule with ONE attenuation prefix and
+// separate L/T bounds. This is a device execution witness, not a production
+// per-pixel CPU planner. The shader refuses other rays, stale source snapshots,
+// inputs outside the proved symbol domains and results above either tolerance.
+// Defines lineScheduledTransportAt(...,tol,tTol,clock,omega) ->
+// ScheduledTransport; ...RadianceAt / ...TransmittanceAt / ...WorkAt expose
+// vec4 projections with the existing (o,d,lo,hi,tol,clock,omega) test interface.
+Program compileScheduledLineTransport(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
+                                      const OntoMath::LineTransportSchedule& schedule);
 
 // Compile a field into a raymarching shader plus its parameter block.
 // `colorFormatIsSrgb` is unused for now; kept out of the signature deliberately —

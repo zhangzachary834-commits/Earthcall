@@ -24,6 +24,7 @@
 #include "json.hpp"
 
 #include <cmath>
+#include <chrono>
 #include <cstdlib>
 #include <optional>
 #include <cstdio>
@@ -86,6 +87,8 @@ int main() {
     const int rayCount = limit("EC_VEIL_RAYS", 12), channelCount = limit("EC_VEIL_CHANNELS", 3);
     const int mediumCount = limit("EC_VEIL_MEDIA", 4);
     std::printf("  scope: up to %d media, %d channels, %d rays/channel; fixed t=0, medium-local frame\n", mediumCount, channelCount, rayCount);
+    const bool adaptiveOnly = std::getenv("EC_VEIL_ADAPTIVE_ONLY");
+    const int selectedChannel = std::getenv("EC_VEIL_CHANNEL") ? std::atoi(std::getenv("EC_VEIL_CHANNEL")) : -1;
     int media = 0, soundRays = 0, admittedRays = 0;
     int scalarRays = 0, activeScalarRays = 0, regionTotal[2] = {0, 0}, regionActiveTotal[2] = {0, 0};
     for (const auto& fj : zone.at("spatialFields")) {
@@ -131,6 +134,7 @@ int main() {
         }
         const char* axes[3] = {"x", "y", "z"};
         for (int c = 0; c < channelCount; ++c) {
+            if (selectedChannel >= 0 && c != selectedChannel) continue;
             auto component = node(Op::Component, clone(*emi));
             component->stringArg = axes[c];
             // max(ε_c, 0): Intersection is max for scalars (a Clamp with a huge
@@ -168,6 +172,11 @@ int main() {
                     t0 = std::max(t0, std::min(a, bb));
                     t1 = std::min(t1, std::max(a, bb));
                 }
+                if (adaptiveOnly) {
+                    // Freeze exactly the ray values consumed by the device.
+                    for (int k=0;k<3;++k) { o[k]=float(o[k]); d[k]=float(d[k]); }
+                    t0=float(t0); t1=float(t1);
+                }
                 auto at = [&](const MathNode& f, long double s) {
                     const glm::vec3 p(float(o[0] + s * d[0]), float(o[1] + s * d[1]), float(o[2] + s * d[2]));
                     const auto v = f.evaluate({{"p", PropertyValue(p)}, {"x", PropertyValue(double(p.x))}, {"y", PropertyValue(double(p.y))},
@@ -193,6 +202,34 @@ int main() {
                 const bool active = maxEmission > 0.0L;
                 if (active) ++activeRays;
                 const double ref = double(sum * hh / 3.0L);
+                if (adaptiveOnly) {
+                    const auto started = std::chrono::steady_clock::now();
+                    const std::size_t cap = std::getenv("EC_VEIL_PANELS") ? std::max(1,std::atoi(std::getenv("EC_VEIL_PANELS"))) : 1024;
+                    for (int k=0;k<2;++k) {
+                        const double tol=k==0?1e-2:1e-3;
+                        std::string reason;
+                        const auto plan=OntoMath::planRegionalLineTransport(sigmaRegion,emissionRegion,
+                            [&](double x){return double(at(*sigma,x));},[&](double x){return double(at(*epsilon,x));},
+                            o,d,t0,t1,tol,1e-2,cap,&reason);
+                        const bool fits=plan && plan->admitted;
+                        if(fits) {
+                            ++admittedRays;
+                            const double tReference=double(std::exp(-tau.back()));
+                            soundRays += std::abs(plan->result.value-ref)<=plan->result.total() &&
+                                std::abs(plan->result.transmittance-tReference)<=plan->result.transmittanceTotal();
+                        }
+                        std::printf("     ADAPTIVE ε_%s ray %d active %d L %.7g T %.7g tol %.3g: %s; panels %zu, field calls %zu/%zu, host unique %zu/%zu; L bound %.6g (math %.6g exec %.6g), T bound %.6g; %s\n",
+                            axes[c],r,int(active),plan?plan->result.value:NAN,plan?plan->result.transmittance:NAN,tol,
+                            fits?"ADMIT":"REFUSE",plan?plan->panels.size():0,plan?plan->sigmaSamples:0,plan?plan->emissionSamples:0,
+                            plan?plan->sigmaPreparations:0,plan?plan->emissionPreparations:0,
+                            plan?plan->result.total():NAN,plan?plan->result.mathematical:NAN,plan?plan->result.execution:NAN,
+                            plan?plan->result.transmittanceTotal():NAN,reason.c_str());
+                        std::fflush(stdout);
+                    }
+                    const double ms=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-started).count();
+                    std::printf("     ADAPTIVE host schedule preparation (both tolerances) %.3f ms; NOT GPU frame cost\n",ms);
+                    continue;
+                }
                 // Cap diagnostics include EVERY ray, even those admitted early.
                 // Keep each winning value together with its own decomposition.
                 std::optional<OntoMath::LineTransportMarch> regionCap;
@@ -261,6 +298,7 @@ int main() {
                     ++admittedRays;
                 }
             }
+            if(adaptiveOnly) continue;
             scalarRays += rayCount;
             activeScalarRays += activeRays;
             for (int k = 0; k < 2; ++k) { regionTotal[k] += regAdmitted[k]; regionActiveTotal[k] += regActive[k]; }
@@ -287,7 +325,7 @@ int main() {
         }
     }
     std::printf("  %d media read; %d admitted (route, ray, channel, tolerance) records\n", media, admittedRays);
-    if (std::getenv("EC_VEIL_REGION"))
+    if (!adaptiveOnly && std::getenv("EC_VEIL_REGION"))
         std::printf("  REGION totals: ±1e-2 %d/%d, active %d/%d; ±1e-3 %d/%d, active %d/%d (scalar ray/channel records, not RGB frames)\n",
                     regionTotal[0], scalarRays, regionActiveTotal[0], activeScalarRays,
                     regionTotal[1], scalarRays, regionActiveTotal[1], activeScalarRays);

@@ -16,6 +16,8 @@
 // so this witnesses the model on this device; it does not certify the device.
 // Claude Code · Claude Opus 5.5 · session f3af84cf-bfe3-429d-b417-2d533119f169 · 2026-10-20.
 
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
+#include "Singularity/Screen/VolumeDensity.hpp"
 #include "Singularity/OntoMath/LineRestriction.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/Screen/VolumeRayTransport.hpp"
@@ -24,6 +26,9 @@
 
 #include <webgpu/wgpu.h>
 
+#include "json.hpp"
+#include <filesystem>
+#include <fstream>
 #include <cmath>
 #include <cstdio>
 #include <iostream>
@@ -62,7 +67,7 @@ template <class... Kids> Node node(Op op, Kids... kids) {
     auto n = std::make_unique<MathNode>(); n->op = op; (n->children.push_back(std::move(kids)), ...); return n;
 }
 
-struct Ray { double o[3], d[3], lo, hi, tol; double clock = 0.0; double omega[3] = {0.0, 0.0, 1.0}; };
+struct Ray { double o[3], d[3], lo, hi, tol; double clock = 0.0; double omega[3] = {0.0, 0.0, 1.0}; double tTolerance = 0.0; };
 
 // One lineIntegral per ray; nullopt when the device path fails.
 std::optional<std::vector<float>> runOnDevice(wgpu::Device& gpu, const sdfwgsl::Program& prog, const std::vector<Ray>& rays,
@@ -75,7 +80,7 @@ std::optional<std::vector<float>> runOnDevice(wgpu::Device& gpu, const sdfwgsl::
         in.push_back(float(r.lo));
         for (int i = 0; i < 3; ++i) in.push_back(float(r.d[i]));
         in.push_back(float(r.hi));
-        in.push_back(float(r.tol)); in.push_back(0.0f); in.push_back(0.0f); in.push_back(0.0f);
+        in.push_back(float(r.tol)); in.push_back(float(r.tTolerance>0?r.tTolerance:r.tol)); in.push_back(0.0f); in.push_back(0.0f);
         for (int i = 0; i < 3; ++i) in.push_back(float(r.omega[i]));
         in.push_back(float(r.clock));
     }
@@ -94,6 +99,14 @@ std::optional<std::vector<float>> runOnDevice(wgpu::Device& gpu, const sdfwgsl::
     WGPUBuffer inBuf = buffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst, inBytes, in.data());
     WGPUBuffer outBuf = buffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc, outBytes, nullptr);
     WGPUBuffer readBuf = buffer(WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead, outBytes, nullptr);
+    std::string invocation;
+    if(function=="scheduledL" || function=="scheduledT" || function=="scheduledWork") {
+        invocation="    let r=lineScheduledTransportAt(a.xyz,b.xyz,a.w,b.w,c.x,c.y,context.w,context.xyz);\n";
+        if(function=="scheduledL") invocation+="    results[i]=vec4<f32>(r.radiance,r.status,r.panels,r.radianceError);\n";
+        else if(function=="scheduledT") invocation+="    results[i]=vec4<f32>(r.transmittance,r.status,r.panels,r.transmittanceError);\n";
+        else invocation+="    results[i]=vec4<f32>(r.samples,r.panels,r.status);\n";
+    } else invocation="    results[i] = " + function + "(a.xyz, b.xyz, a.w, b.w, c.x" +
+        (function == "lineTransportAt" ? ", context.w, context.xyz" : "") + ");\n";
     const std::string code = prog.wgsl +
         "\n@group(0) @binding(2) var<storage, read> rays: array<vec4<f32>>;\n"
         "@group(0) @binding(3) var<storage, read_write> results: array<vec4<f32>>;\n"
@@ -106,7 +119,7 @@ std::optional<std::vector<float>> runOnDevice(wgpu::Device& gpu, const sdfwgsl::
         "    let c = rays[4u * i + 2u];\n"
         "    let context = rays[4u * i + 3u];\n"
         "    screenPoint = a.xyz;\n"
-        "    results[i] = " + function + "(a.xyz, b.xyz, a.w, b.w, c.x" + (function == "lineTransportAt" ? ", context.w, context.xyz" : "") + ") + vec4<f32>(0.0 * (screen.size.x + P.v[0]));\n"
+        + invocation + "    results[i] = results[i] + vec4<f32>(0.0 * (screen.size.x + P.v[0]));\n"
         "}\n";
     wgpuDevicePushErrorScope(gpu.device, WGPUErrorFilter_Validation);
     WGPUShaderSourceWGSL src = {};
@@ -440,6 +453,155 @@ int main() {
             auto narrow = *sc; narrow.symbols[OntoMath::kTimeVar] = {0.1, 0.1};
             check(!sdfwgsl::compileLineTransport(*sigma, *epsilon, narrow, *ec, 4096).ok,
                   "a point domain with no exact f32 representation refuses instead of widening");
+        }
+    }
+
+    // Actual device execution of a nonuniform, complete-ray schedule. Analytic
+    // controls are independent of the plan's range/derivative construction.
+    {
+        auto tent = [](double c,double h) {
+            return node(Op::Clamp,node(Op::Sub,constant(1),node(Op::Div,
+                node(Op::Abs,node(Op::Sub,named("x"),constant(c))),constant(h))),constant(0),constant(1));
+        };
+        const double o[3]={0,0,0},d[3]={1,0,0};
+        for(int fixture=0;fixture<2;++fixture) {
+            auto sigma=fixture==0?constant(0):tent(2,1);
+            auto epsilon=fixture==0?tent(5,0.125):tent(8,1);
+            const double end=fixture==0?64:16, tolerance=fixture==0?0.001:0.01;
+            OntoMath::RegionCertificate sc(*sigma,Rendering::kVolumeExecutionModel,0.25),ec(*epsilon,Rendering::kVolumeExecutionModel,0.25);
+            auto f=[](double x,double c,double h){return std::max(0.0,1.0-std::abs(x-c)/h);};
+            std::string why;
+            const auto plan=OntoMath::planRegionalLineTransport(sc,ec,
+                [&](double x){return fixture==0?0.0:f(x,2,1);},
+                [&](double x){return fixture==0?f(x,5,0.125):f(x,8,1);},
+                o,d,0,end,tolerance*0.9,0.009,2048,&why);
+            check(plan && plan->admitted,"analytic schedule admits before device execution: "+why);
+            if(!plan || !plan->admitted)continue;
+            const auto program=sdfwgsl::compileScheduledLineTransport(*sigma,*epsilon,*plan);
+            check(program.ok,"nonuniform fields lower through the shared emitter: "+program.error);
+            if(!program.ok)continue;
+            Ray r{{0,0,0},{1,0,0},0,end,tolerance};r.tTolerance=0.01;
+            std::vector<Ray> rays{r};
+            auto moved=r;moved.o[0]=0.25;rays.push_back(moved);
+            auto cropped=r;cropped.hi=end-1;rays.push_back(cropped);
+            auto tight=r;tight.tol=1e-7;rays.push_back(tight);
+            auto tTight=r;tTight.tTolerance=1e-7;rays.push_back(tTight);
+            const auto radiance=runOnDevice(gpu,program,rays,"scheduledL");
+            const auto transmittance=runOnDevice(gpu,program,{r},"scheduledT");
+            const auto work=runOnDevice(gpu,program,{r},"scheduledWork");
+            check(radiance && transmittance && work,"the nonuniform L/T kernel and work counters execute without validation errors");
+            if(radiance && transmittance && work) {
+                const double wantL=fixture==0?0.125:std::exp(-1.0),wantT=fixture==0?1.0:std::exp(-1.0);
+                std::printf("    schedule device fixture %d: L %.8g +/- %.6g, T %.8g +/- %.6g, sigma/emission calls %.0f/%.0f, %zu panels\n",
+                    fixture,(*radiance)[0],(*radiance)[3],(*transmittance)[0],(*transmittance)[3],(*work)[0],(*work)[1],plan->panels.size());
+                check((*radiance)[1]==1 && std::abs((*radiance)[0]-wantL)<=(*radiance)[3] && (*radiance)[3]<=tolerance,
+                      "device radiance contains the independent analytic result within the requested tolerance");
+                check((*transmittance)[1]==1 && std::abs((*transmittance)[0]-wantT)<=(*transmittance)[3] && (*transmittance)[3]<=0.01,
+                      "device final transmittance contains the same complete absorbing prefix");
+                check((*work)[0]==plan->sigmaSamples && (*work)[1]==plan->emissionSamples,
+                      "executed field calls equal the nonuniform schedule's promised work");
+                bool refused=true;for(int i=1;i<5;++i)refused &= (*radiance)[4*i+1]==0.f;
+                check(refused,"a different ray, clipped interval and either tighter output budget refuse safely");
+                if(fixture==0)check((*work)[0]==0 && (*work)[1]<1024,"the GPU actually bypasses zero density and avoids thousands of empty field sites");
+                else check((*radiance)[0]<0.5 && (*work)[0]>0,"an exact dark region still executes the absorption needed by later emission");
+            }
+            auto other=constant(3);
+            check(!sdfwgsl::compileScheduledLineTransport(*sigma,*other,*plan).ok,
+                  "an edited source cannot execute under a stale schedule proof");
+            auto gap=*plan;gap.panels.front().lo+=0.125;
+            check(!sdfwgsl::compileScheduledLineTransport(*sigma,*epsilon,gap).ok,
+                  "an incomplete panel schedule is refused before shader creation");
+        }
+    }
+    // A real authored curtain, read-only, at the same seeded occupied rays as
+    // the corrected CPU census. This does NOT install a native renderer lane.
+    {
+        namespace fs=std::filesystem;
+        fs::path dir;
+        for(const char* p:{"saves/zones/Northern Veil","../saves/zones/Northern Veil"})
+            if(fs::exists(fs::path(p)/"zone.ecform") || fs::exists(fs::path(p)/"zone.json")){dir=p;break;}
+        check(!dir.empty(),"the real Northern Veil fixture is available for a device transport witness");
+        if(!dir.empty()) {
+            nlohmann::json zone;
+            if(fs::exists(dir/"zone.json")){std::ifstream in(dir/"zone.json");zone=nlohmann::json::parse(in);}
+            else{std::ifstream in(dir/"zone.ecform",std::ios::binary);std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)),{});
+                zone=nlohmann::json::parse(nlohmann::json::from_msgpack(bytes).at("MigrationRoot").get<std::string>());}
+            std::shared_ptr<geom::FieldNode> field;
+            Rendering::VolumeDensityBinding binding;
+            for(const auto& j:zone.at("spatialFields")) {
+                auto candidate=geom::FieldNode::fromJson(j);
+                Rendering::VolumeDensityBinding b;
+                if(candidate && Rendering::readVolumeDensity(*candidate,0,0,b) && b.densityExpr){field=std::move(candidate);binding=b;break;}
+            }
+            auto single=[](const OntoMath::Piecewise* p)->const MathNode*{
+                if(!p || p->pieces.size()!=1)return nullptr;const auto& x=p->pieces[0];
+                return !x.guard && !x.call && !x.fold && !x.hasLo && !x.hasHi && !x.whereLEZero?x.mathNode.get():nullptr;
+            };
+            const auto* extinction=single(binding.extinctionExpr);const auto* density=single(binding.densityExpr);const auto* emission=single(binding.emissionExpr);
+            check((extinction || density) && emission,"the actual curtain channels have their supported single-piece mathematical form");
+            if((extinction || density) && emission) {
+                auto clone=[](const MathNode& x){return MathNode::fromJson(x.toJson());};
+                auto sigma=extinction?clone(*extinction):node(Op::Scale,constant(0.5),clone(*density));
+                auto component=node(Op::Component,clone(*emission));component->stringArg="z";
+                auto epsilon=node(Op::Intersection,std::move(component),constant(0));
+                const std::map<std::string,std::pair<double,double>> symbols{{OntoMath::kTimeVar,{0,0}},
+                    {OntoMath::kOmegaXVar,{-1,1}},{OntoMath::kOmegaYVar,{-1,1}},{OntoMath::kOmegaZVar,{-1,1}}};
+                OntoMath::RegionCertificate sc(*sigma,Rendering::kVolumeExecutionModel,4,symbols),ec(*epsilon,Rendering::kVolumeExecutionModel,4,symbols);
+                std::mt19937_64 rng(1002);std::uniform_real_distribution<double> un(-1,1);
+                std::string firstCode;int admitted=0,contained=0,nonzero=0,sameProgram=0;
+                for(int index=0;index<12;++index) {
+                    Ray r{};double norm=0;const double half[3]={std::abs(binding.scale.x),std::abs(binding.scale.y),std::abs(binding.scale.z)};
+                    for(int k=0;k<3;++k){r.o[k]=half[k]*0.9*un(rng);r.d[k]=un(rng);norm+=r.d[k]*r.d[k];}
+                    for(double& x:r.d)x/=std::sqrt(norm);
+                    r.lo=-1e300;r.hi=1e300;
+                    for(int k=0;k<3;++k){const double a=(-half[k]-r.o[k])/r.d[k],b=(half[k]-r.o[k])/r.d[k];r.lo=std::max(r.lo,std::min(a,b));r.hi=std::min(r.hi,std::max(a,b));}
+                    for(int k=0;k<3;++k){r.o[k]=float(r.o[k]);r.d[k]=float(r.d[k]);r.omega[k]=-r.d[k];}r.lo=float(r.lo);r.hi=float(r.hi);r.tol=r.tTolerance=0.01;
+                    if(index!=3 && index!=4 && index!=10 && index!=11)continue;
+                    auto at=[&](const MathNode& f,long double t){glm::vec3 p(float(r.o[0]+t*r.d[0]),float(r.o[1]+t*r.d[1]),float(r.o[2]+t*r.d[2]));
+                        auto v=f.evaluate({{"p",PropertyValue(p)},{"x",PropertyValue(double(p.x))},{"y",PropertyValue(double(p.y))},{"z",PropertyValue(double(p.z))},
+                            {OntoMath::kTimeVar,PropertyValue(0.0)},
+                            {OntoMath::kOmegaXVar,PropertyValue(r.omega[0])},{OntoMath::kOmegaYVar,PropertyValue(r.omega[1])},{OntoMath::kOmegaZVar,PropertyValue(r.omega[2])}});
+                        double value=NAN;if(v)propertyValueToNumber(*v,value);return (long double)value;};
+                    std::string why;
+                    // Host preparation is tighter than final admission; the
+                    // GPU reevaluates its own bound with outward f32 arithmetic.
+                    const auto plan=OntoMath::planRegionalLineTransport(sc,ec,[&](double x){return double(at(*sigma,x));},
+                        [&](double x){return double(at(*epsilon,x));},r.o,r.d,r.lo,r.hi,0.009,0.009,2048,&why);
+                    check(plan && plan->admitted,"real occupied ray "+std::to_string(index)+" obtains a complete L/T schedule: "+why);
+                    if(!plan || !plan->admitted)continue;
+                    const auto program=sdfwgsl::compileScheduledLineTransport(*sigma,*epsilon,*plan);
+                    check(program.ok,"the real authored clock/noise/clamp channels compile into the scheduled device kernel: "+program.error);
+                    if(!program.ok)continue;
+                    if(firstCode.empty())firstCode=program.wgsl;
+                    sameProgram+=firstCode==program.wgsl;
+                    const auto L=runOnDevice(gpu,program,{r},"scheduledL"),T=runOnDevice(gpu,program,{r},"scheduledT"),W=runOnDevice(gpu,program,{r},"scheduledWork");
+                    if(!(L && T && W)){check(false,"real curtain GPU execution has no validation error");continue;}
+                    auto reference=[&](int cells){
+                        const long double h=((long double)r.hi-r.lo)/cells;long double tau=0,acc=0;
+                        long double sa=at(*sigma,r.lo),ea=at(*epsilon,r.lo),ga=ea;
+                        for(int j=0;j<cells;j+=2){const auto sm=r.lo+(j+1)*h,sb=r.lo+(j+2)*h;
+                            const auto sM=at(*sigma,sm),sB=at(*sigma,sb);
+                            const auto tm=tau+h*(5*sa+8*sM-sB)/12,tb=tau+h*(sa+4*sM+sB)/3;
+                            const auto gm=std::exp(-tm)*at(*epsilon,sm),gb=std::exp(-tb)*at(*epsilon,sb);
+                            acc+=h*(ga+4*gm+gb)/3;tau=tb;sa=sB;ga=gb;}
+                        return std::pair<double,double>{double(acc),double(std::exp(-tau))};};
+                    const auto ref=reference(4000),finer=reference(8000);
+                    nonzero+=finer.first>0 && finer.second<0.99999;
+                    const bool fits=(*L)[1]==1 && (*T)[1]==1;admitted+=fits;
+                    contained+=fits && std::abs((*L)[0]-finer.first)<=(*L)[3] && std::abs((*T)[0]-finer.second)<=(*T)[3] && (*L)[3]<=0.01 && (*T)[3]<=0.01;
+                    check(std::abs(ref.first-finer.first)<1e-5 && std::abs(ref.second-finer.second)<1e-5,
+                          "two fine real-field numerical references agree well below the requested budget");
+                    check((*W)[0]==plan->sigmaSamples && (*W)[1]==plan->emissionSamples,"real device field calls match the executable schedule");
+                    std::printf("    REAL emerald z ray %d: device L %.8g T %.8g, errors %.5g / %.5g, calls %.0f/%.0f, %zu panels\n",index,
+                        (*L)[0],(*T)[0],(*L)[3],(*T)[3],(*W)[0],(*W)[1],plan->panels.size());
+                    auto outOfTime=r;outOfTime.clock=1;
+                    const auto refused=runOnDevice(gpu,program,{outOfTime},"scheduledL");
+                    check(refused && (*refused)[1]==0,"a real curtain cannot reuse its t=0 proof at a different clock");
+                }
+                check(nonzero==4,"all four device witnesses contain actual source and attenuation (no empty-ray admission)");
+                check(admitted==4 && contained==4,"all four real-curtain L/T results admit and contain the fine numerical reference");
+                check(sameProgram==4,"different ray schedules change numeric payload only, preserving identical shader text");
+            }
         }
     }
     std::cout << "webgpu_line_quadrature_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";

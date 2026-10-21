@@ -604,6 +604,9 @@ struct LineQuadratureBand {
     double cap = 0.0, lipschitz = 0.0, width = 0.0, sup = 0.0, execution = 0.0;
     double hessian = std::numeric_limits<double>::infinity();
     double low = 0.0, high = 0.0;   // the band's signed range of f
+    // Mathematical branch proof. Equal Hessians on different branches do not
+    // prove a Hessian bound across their join; grid aggregation checks this.
+    std::vector<int8_t> branchSignature;
 };
 struct LineQuadratureCertificate {
     std::vector<LineQuadratureBand> bands;   // increasing cap
@@ -611,6 +614,7 @@ struct LineQuadratureCertificate {
     // Qualification domain, retained for device runtime binding checks. This is
     // mathematical evidence, not authored state or a cache-validity token.
     std::map<std::string, std::pair<double, double>> symbols;
+    std::string sourceExpression;  // exact source snapshot; prevents stale execution plans
 };
 // `symbols` binds every non-point symbol to an interval [lo, hi]: a frame's
 // clock t as a point, a view direction ω as [−1, 1]³ so one certificate covers
@@ -658,6 +662,8 @@ struct LineTransportPlan {
 struct LineTransportMarch {
     double value = 0.0, mathematical = 0.0, execution = 0.0;
     double total() const { return mathematical + execution; }
+    double transmittance = 1.0, transmittanceMathematical = 0.0, transmittanceExecution = 0.0;
+    double transmittanceTotal() const { return transmittanceMathematical + transmittanceExecution; }
 };
 std::optional<LineTransportMarch> marchLineTransport(const LineQuadratureCertificate& sigma,
                                                      const LineQuadratureCertificate& emission,
@@ -677,12 +683,19 @@ public:
                       const std::map<std::string, std::pair<double, double>>& symbols = {});
     bool ok() const { return bool(_restriction) && std::isfinite(_cell) && _cell > 0.0; }
     std::optional<LineQuadratureBand> over(const double lo[3], const double hi[3]) const;
+    // Exact query box, reusing the same lowered source/model office. Transient
+    // host proof for schedule derivation; no CPU-per-pixel native consumer.
+    std::optional<LineQuadratureBand> tightOver(const double lo[3], const double hi[3]) const;
     const ExecutionModel& model() const { return _model; }
+    const std::string& sourceExpression() const { return _sourceExpression; }
+    const std::map<std::string, std::pair<double, double>>& symbols() const { return _symbols; }
 private:
     // Restriction provenance borrows the immutable source tree, which must
     // outlive this transient certificate; no native retention yet.
     LineAlgebraicRestriction _restriction;
     ExecutionModel _model;
+    std::string _sourceExpression;
+    std::map<std::string, std::pair<double, double>> _symbols;
     double _cell;
     std::map<std::string, Interval> _symbolBox;
     std::map<std::string, double> _symbolMagnitudes;
@@ -698,6 +711,39 @@ std::optional<LineTransportPlan> planLineTransport(const LineQuadratureCertifica
                                                    const LineQuadratureCertificate& emission, const double o[3],
                                                    const double d[3], double lo, double hi, double tolerance,
                                                    double maxCells, std::string* why = nullptr);
+
+// A bounded executable schedule of the same nested integral, not a new
+// authored transport law. Every panel retains its regional evidence; the
+// ordered panels cover the full ray, including absorbing non-emitting spans.
+// No CPU-per-pixel production consumer: the first use is a host reference and
+// device execution witness. Native use still needs GPU schedule derivation.
+struct LineTransportPanel {
+    double lo = 0.0, hi = 0.0;
+    LineQuadratureBand sigma, emission;
+};
+struct LineTransportSchedule {
+    std::array<double, 3> origin{}, direction{};
+    double lo = 0.0, hi = 0.0, pointError = 0.0;
+    ExecutionModel model;
+    std::string sigmaExpression, emissionExpression;
+    std::map<std::string, std::pair<double, double>> sigmaSymbols, emissionSymbols;
+    std::vector<LineTransportPanel> panels;
+    LineTransportMarch result;
+    bool admitted = false;
+    std::string refusal;
+    std::size_t sigmaSamples = 0, emissionSamples = 0; // final schedule's field sites
+    std::size_t sigmaPreparations = 0, emissionPreparations = 0; // host search cost, not device work
+};
+// Refines panels using a heuristic error score; ONLY the final whole-result
+// bound admits. Budgets are Kernel work caps, never an accuracy policy. At a
+// work cap a complete, bounded best schedule may return with admitted=false.
+// Invalid inputs/incomplete certification return nullopt. Inputs are the exact
+// f32 ray values a device will consume (the caller explicitly rounds its ray).
+std::optional<LineTransportSchedule> planRegionalLineTransport(
+    const RegionCertificate& sigma, const RegionCertificate& emission,
+    const std::function<double(double)>& sigmaAt, const std::function<double(double)>& emissionAt,
+    const double o[3], const double d[3], double lo, double hi, double radianceTolerance,
+    double transmittanceTolerance, std::size_t maxPanels, std::string* why = nullptr);
 
 struct LineSegmentationPiece {
     double s0 = 0.0, s1 = 0.0;

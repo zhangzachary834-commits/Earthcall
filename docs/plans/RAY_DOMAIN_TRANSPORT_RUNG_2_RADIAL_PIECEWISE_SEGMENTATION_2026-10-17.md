@@ -2134,3 +2134,76 @@ The final focused pass passed **100/100** line-segmentation checks, **66/66** In
 The full regional census above passed **2/2**. A bounded slice verifies the later aggregate reporting without repeating the expensive full census. No new visible default behavior or manual control was introduced; the existing authored-faithfulness/live movement Person checks remain open. Next native work still must obtain paired accuracy and end-to-end cost evidence before promotion.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-20T18:36:03-07:00; commissioned by Zachary Zhang.
+
+
+## 6aw. Nonuniform complete-ray schedules execute real occupied curtains on Metal, with separate radiance and transmittance bounds (2026-10-20)
+
+**Human origin.** Zachary Zhang: “KEEP GOING.” Continuation of §6av's target: concentrate mathematically justified work around contributions, retain absorption before later sources, then carry the selected process onto the GPU. The criterion remains authored-equation faithfulness; no save, tolerance, light or default setting was changed.
+
+**The shared mathematical execution plan.** `planRegionalLineTransport` derives ordered nonuniform Simpson panels for the same nested integral. Each carries a whole-panel range/Lipschitz/Hessian/execution certificate from the existing OntoMath office. `RegionCertificate::tightOver` queries the actual panel box with a position-error halo, instead of charging an entire coarse grid cell's worst constants at every subdivision. A heuristic chooses refinements; only the accumulated whole-result bounds can admit. Dark source is not permission to drop extinction: the full τ prefix survives into later emitting panels. Only proven constant/zero fields bypass evaluation. Radiance and final transmittance have independent error totals and requested tolerances. A work cap retains the best complete schedule with an explicit refusal; it never drops a sliver. Inputs are explicitly the finite f32 ray values the device will consume.
+
+The source snapshot, exact ray, interval, point-error enclosure, symbol domains and execution model accompany the schedule. Source/domain/ray edits require new evidence. The model remains qualified, including its Perlin/native-profile premises. This is a concrete-ray host derivation and device execution witness, **not a CPU-per-pixel production planner**.
+
+**Curvature across joined cells.** Cached grid bands now retain their mathematical branch signatures. Taking max(H) from affine pieces on different branches is insufficient across a kink; a join without one branch proof keeps H infinite. Constant ranges remain constant, and smooth polynomial joins preserve finite curvature. Mathematical box signs are proved once and shared among directional derivative queries, since the box, not the derivative direction, establishes the branch. Device signs remain independent.
+
+**The device consumer of that plan.** `compileScheduledLineTransport` shares field/type/domain lowering with the existing GPU kernel and emits only the selected scheduled kernel. One ordered attenuation prefix returns both L and T and their bounds. Runtime checks refuse a different ray/interval, stale source expression, out-of-domain clock/direction, or a result over either budget. Bound arithmetic rounds outward through explicit operations/float-bit steps, adds a normal floor for flushed subnormal bounds, and preserves the declared absolute exp allowance. The basic-arithmetic/backend premise is still qualified; this does not certify Metal Fast. Numeric schedules, including their length, change the parameter buffer, not shader text.
+
+**Analytic controls:** the narrow triangle at ±0.001 uses **60 emission sites, zero σ sites, 45 panels** (the uniform comparison has 4097 sites per field); its area is enclosed. A non-emitting triangle absorber before a later triangle source preserves the analytic attenuation e⁻¹ on both L and T. The GPU executes those controls, checks its actual field-call counters, and refuses stale source/gapped plans, different rays/intervals and budgets below its bound. These controls exercise the real emitted AST, not just a CPU replay.
+
+### Real occupied-curtain GPU witness
+
+`webgpu_line_quadrature_test` passed **81/81 on this Mac's Metal device**, including four nonzero rays of the tracked/frozen primary emerald curtain, blue channel, t=0. Both L and T contain the finer CPU numerical references (4000/8000-cell references agree well below the budget). These references still use CPU f32 vectors/Perlin; they are not a certified exact continuum oracle. The host prepares at ±0.009 for each output; the device independently requires ±0.01, leaving room for its outward f32 reevaluation. This is a tighter preparation budget, not a relaxed acceptance test.
+
+| Seeded ray | Device L | Device T | Reported L / T error | σ / ε field calls | Panels |
+|---|---:|---:|---:|---:|---:|
+| 3 | 0.04286477 | 0.86604756 | 0.002035 / 0.006646 | 176 / 176 | 99 |
+| 4 | 0.0093626846 | 0.97074157 | 0.001417 / 0.005281 | 88 / 88 | 52 |
+| 10 | 0.0057574254 | 0.98200804 | 0.0013689 / 0.0050071 | 62 / 62 | 37 |
+| 11 | 0.022147443 | 0.93078917 | 0.0012415 / 0.0047391 | 390 / 390 | 206 |
+
+All four contain actual source and attenuation; none is an empty-ray admission. Executed field calls equal the plan. All four use identical shader text. A t=1 input refuses the t=0 qualification. This is the first real-curtain scheduled GPU L/T witness; it is still a compute test, not the native volume shader or inhabited scene.
+
+### Full adaptive census, CPU/model-qualified
+
+The tracked four-curtain fixture, 3 independently seeded scalar channels × 12 f32 rays each, fixed t=0, maximum 1024 panels, transmittance tolerance ±0.01:
+
+| Radiance tolerance | All cases | Reference-sampled nonzero-source cases | σ calls among admitted nonzero cases (min / median / max) |
+|---|---:|---:|---:|
+| ±0.01 | **144/144** | **23/23** | **2 / 86 / 266** |
+| ±0.001 | **141/144** | **20/23** | **2 / 191 / 718** |
+
+All **285 admitted records** contain both numerical references (**2/2** top-level checks). The three ±0.001 refusals already exceed that budget in execution alone: emerald y about 0.00290, violet z about 0.00226 and 0.00123; their mathematical parts are below 0.0001. This supersedes the coarse-grid feasibility diagnosis for the new precise-panel route; §6av remains historical evidence for that older route. These are scalar ray/channel records, not complete RGB frames, and source-zero samples are not a proof of emptiness between samples.
+
+**Cost boundary:** logs report both final device field calls and host search evaluations. Preparing both tolerances took about **6.3 ms to 4.06 s per ray, median 27.5 ms**, in this Debug diagnostic with concurrent activity. These are diagnostic preparation observations, not a controlled CPU benchmark and certainly not GPU frame cost. They make clear why this CPU search cannot be installed per pixel. Neither reduced field calls nor these compute witnesses establish a gain against the native fused 96-sample path.
+
+Reproduction: `EC_VEIL_ADAPTIVE_ONLY=1 EC_VEIL_PANELS=1024 ./build/ontomath_veil_transport_feasibility_test`; `EC_VEIL_CHANNEL=2 EC_VEIL_MEDIA=1` selects the emerald-blue cohort. Full log `/private/tmp/earthcall-ray-adaptive-full.txt`; GPU log `/private/tmp/earthcall-ray-scheduled-device.txt`. First GPU results above preceded only the later best-unadmitted-schedule bookkeeping and added join controls; the final focused checks follow below.
+
+### A better next mathematical reduction than more outer quadrature
+
+Source inspection of the actual emerald equations found
+
+`σ(p) = 0.1 F(p)` and `ε_RGB(p,t) = F(p) · (0.010, 0.092, 0.032) · [0.85 + 0.15 cos(0.32t)]`.
+
+Raw MessagePack/JSON inspection also verified exact spatial-subtree equality in **all four** authored σ/ε field pairs; the diagnostic with fixture/subtree hashes is `/private/tmp/earthcall-ray-shared-source-inspection.json`. The displayed clamps/positive modulation make F nonnegative. For a fixed ray's clock/direction, the general mathematical identity is: **if ε = κ σ with κ independent of the integration variable, then L = κ(1−T)**. Zeros of F cause no division by the field; only its nonzero constant multiplier is divided. The outer integral disappears, RGB shares one optical depth, and the source coefficient is evaluated once. This is a promising exact reduction, **not implemented or measured by this pass**. It belongs in OntoMath's authored Integral/Let derivation (or shared mathematical plan), with scoped equality/sign proofs and coefficient/execution error accounting, never a curtain-name branch or a renderer-private law. Mixed overlapping media require a compatible common ratio or the generic shared-attenuation path; independent per-medium compositing is not licensed by this identity.
+
+**Native-semantic condition:** this is an identity for the raw authored channels. The native projection's density gate, extinction floor, emission clamp, clipping and any incident source must be accounted for before applying it. In particular, do not silently erase the 1e-6 extinction floor: either prove it inactive on the analytic span, retain a fallback there, or derive a bounded residual for the difference. If a future proof establishes `0 ≤ σ_eff−σ_raw ≤ η`, its optical-depth remainder is at most η·S; that remainder must enter T and RGB error accounting. Density/support alignment and sign conditions still need proof. Native output composition also weights T error by the background/remaining contribution; separate scalar L/T budgets are not automatically the final pixel budget.
+
+### Shipping ledger
+
+| Gate | Result of this pass | Remaining closure |
+|---|---|---|
+| **1. Error contract** | Nonuniform whole-ray L/T bounds, full coverage, positional halo, safe refusal/best-plan behavior, joined-branch guard. | Existing CPU Perlin/native-profile premises stay qualified. |
+| **2. GPU execution** | **Real occupied curtain L/T schedules now execute on Metal, 81/81.** | GPU-side schedule discovery or reusable spatial evidence; shared RGB/exact proportional reduction; preserve authored-process provenance. |
+| **3. Native consumer** | No native volume-renderer call added. | Eligible inline consumer with clipping, density/floor/source/scattering semantics, per-medium clocks, coherent overlap fallback and lifecycle invalidation; all-ineligible shader unchanged. |
+| **4. Shipped benefit** | No native frame-time or live-movement gain claimed. | Paired authored-reference accuracy and measured end-to-end Metal cost, including preparation/uploads/occupancy/fallback, then inhabited motion and Person evidence. |
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-20T19:22:46-07:00.
+
+
+### §6aw focused verification completion
+
+Focused targets passed: line segmentation **113/113**, line restriction **57/57**, Integral **66/66**, expression evaluation **36/36**, radial segmentation **41/41**, scheduled/legacy GPU line execution **81/81**, and retained native support certificates **132/132** including full 2560×1440 pairs and motion/fresh-renderer checks. `earthcall_webgpu` builds. Final invalid-profile/point-representability guards were followed by a consistent app/kernel build and reruns of the changed math/device targets. The native certificate target still exercises the retained lane; its incidental timing is not a new-transport speedup. No whole-suite or long faithfulness run was performed for an unconnected native path.
+
+This pass adds no visible default behavior or manual control. Existing authored-fidelity, live movement and Person acceptance checks remain open. The precise next optimization is the generic source-proportional reduction in the authored mathematical derivation, followed by device-side/reusable schedule discovery and the eligible native consumer; preserve the native semantic conditions recorded above.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-20T19:38:33-07:00; commissioned by Zachary Zhang.

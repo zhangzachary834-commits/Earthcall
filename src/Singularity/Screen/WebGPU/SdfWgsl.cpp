@@ -2846,6 +2846,9 @@ Program compileLineQuadrature(const OntoMath::MathNode& field, const OntoMath::L
         prog.error = "a line quadrature needs a certificate with at least one band, and at least 2 cells";
         return prog;
     }
+    if (cert.sourceExpression != field.toJson().dump()) {
+        prog.ok=false; prog.error="quadrature certificate source changed; rebuild its proof"; return prog;
+    }
     // The field's own statements stay inside lineField: statements outside a
     // function body are dropped (the Let finding, plan §6an).
     const std::string value = emitMathNode(field, e, "p");
@@ -2919,15 +2922,182 @@ var<private> screenPoint: vec3<f32>;
     return prog;
 }
 
-Program compileLineTransport(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
+
+// A numeric executable plan, retained only by the compute witness today. The
+// fields/domain lowering below is shared with the ordinary line kernel; no
+// second source/attenuation law lives in this backend.
+static Program lowerScheduledTransport(Emit& e, std::string prelude, const std::string& domain,
+                                        const OntoMath::LineTransportSchedule& plan) {
+    Program out;
+    auto up = [&](double x) {
+        float f = float(x);
+        if (!(std::isfinite(x) && x >= 0.0 && std::isfinite(f))) e.refuse("non-finite schedule bound");
+        if (double(f) < x) f = std::nextafter(f, INFINITY);
+        return f;
+    };
+    auto lower = [](double x) { float f=float(x); if(double(f)>x) f=std::nextafter(f,-INFINITY); return f; };
+    auto upper = [](double x) { float f=float(x); if(double(f)<x) f=std::nextafter(f,INFINITY); return f; };
+    auto exact = [&](double x) {
+        const float f=float(x);
+        if(!(std::isfinite(x) && double(f)==x)) e.refuse("schedule ray/panel is not an exact finite f32 value");
+        return e.param(f);
+    };
+    if(plan.panels.empty() || plan.panels.size()>65536) e.refuse("invalid bounded schedule size");
+    const std::string origin="vec3<f32>("+exact(plan.origin[0])+","+exact(plan.origin[1])+","+exact(plan.origin[2])+")";
+    const std::string direction="vec3<f32>("+exact(plan.direction[0])+","+exact(plan.direction[1])+","+exact(plan.direction[2])+")";
+    const std::string lo=exact(plan.lo), hi=exact(plan.hi);
+    double dn2=0; for(double d:plan.direction) dn2+=d*d;
+    const std::string dn=e.param(up(std::sqrt(dn2)*(1.0+1e-12)));
+    const std::string pointError=e.param(up(plan.pointError));
+    const double a=plan.model.exponentialAbsolute(), r=plan.model.expRelative;
+    if(!(std::isfinite(a) && a>=0 && std::isfinite(r) && r>=0 && r<1)) e.refuse("invalid scheduled exponential model");
+    if (!(up(r) < 1.0f)) e.refuse("relative exponential allowance has no usable f32 upper bound below one");
+    const std::string expA=e.param(up(a)), expR=e.param(up(r));
+    const std::string expRound=e.param(up(r+4.0*std::ldexp(1.0,-23)));
+    const std::string count=e.param(float(plan.panels.size()));
+    const std::size_t base=e.params.size();
+    double previous=plan.lo;
+    for(const auto& p:plan.panels) {
+        if(p.lo!=previous || !(p.hi>p.lo)) e.refuse("schedule is not an ordered complete partition");
+        exact(p.lo); exact(p.hi); previous=p.hi;
+        for(const auto* b:{&p.sigma,&p.emission}) {
+            e.param(up(b->lipschitz)); e.param(up(b->width)); e.param(up(b->sup)); e.param(up(b->execution));
+            e.param(std::isfinite(b->hessian)?up(b->hessian):-1.0f);
+            e.param(lower(b->low)); e.param(upper(b->high));
+        }
+    }
+    if(previous!=plan.hi) e.refuse("schedule leaves an uncovered ray tail");
+    for(float v:e.params) if(!std::isfinite(v)) e.refuse("schedule parameter is not finite f32");
+    out.ok=!e.refused;out.error=e.refusal;out.params=std::move(e.params);
+    if(!out.ok)return out;
+    out.wgsl=std::move(prelude);
+    out.wgsl+=R"WGSL(
+struct ScheduledTransport {
+    radiance: f32, transmittance: f32, radianceError: f32, transmittanceError: f32,
+    status: f32, samples: vec2<f32>, panels: f32
+};
+fn rayProofInfinity() -> f32 { return bitcast<f32>(0x7f800000u); }
+// Outward rounding for nonnegative bound arithmetic, using observable float
+// bits between operations. A normal floor also covers flushed subnormal results.
+// Qualification still includes the backend's IEEE/basic-arithmetic premise.
+fn rayProofUp(x: f32) -> f32 {
+    if (!(x >= 0.0) || x >= 3.402823466e38) { return rayProofInfinity(); }
+    return bitcast<f32>(bitcast<u32>(max(x, bitcast<f32>(0x00800000u))) + 1u);
+}
+fn rayProofAdd(a: f32,b: f32) -> f32 { if(a==0.0 && b==0.0){return 0.0;} return rayProofUp(a+b); }
+fn rayProofMul(a: f32,b: f32) -> f32 { if(a==0.0 || b==0.0){return 0.0;} return rayProofUp(a*b); }
+fn rayProofSignedUp(x: f32) -> f32 {
+    if(x<0.0){return bitcast<f32>(bitcast<u32>(x)-1u);} return rayProofUp(x);
+}
+fn rayProofLocal(w: f32,l: f32,h: f32,step: f32) -> f32 {
+    var r=min(w,rayProofMul(l,step));
+    if(h>=0.0){r=min(r,rayProofMul(rayProofMul(rayProofMul(h,step),step),0.5));}
+    return r;
+}
+)WGSL";
+    out.wgsl+="fn rayProofExp(x:f32)->f32 { let y=max(exp(x),0.0); let denominator=bitcast<f32>(bitcast<u32>(1.0-"+expR+")-1u); return rayProofUp(rayProofAdd(y,"+expA+")/denominator); }\n";
+    out.wgsl+="fn rayProofSample(tau:f32,dm:f32,de:f32,eps:f32,ee:f32,ep:f32)->vec2<f32> {\n"
+        " let delta=rayProofAdd(dm,de); let f=rayProofExp(rayProofSignedUp(-tau+delta));\n"
+        " let magnitude=rayProofAdd(abs(eps),rayProofAdd(ee,ep));\n"
+        " let math=rayProofMul(rayProofMul(f,dm),magnitude);\n"
+        " let execution=rayProofAdd(rayProofMul(rayProofMul(f,de),magnitude),rayProofAdd(rayProofMul(f,rayProofAdd(ee,ep)),rayProofMul(rayProofAdd("+expA+",rayProofMul("+expRound+",f)),magnitude)));\n"
+        " return vec2<f32>(math,execution); }\n";
+    out.wgsl+="fn lineScheduledTransportAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,tTol:f32,clock:f32,omega:vec3<f32>)->ScheduledTransport {\n"
+        " var result=ScheduledTransport(0.0,0.0,rayProofInfinity(),rayProofInfinity(),0.0,vec2<f32>(0.0),0.0);\n"
+        " if(!("+domain+") || !all(o=="+origin+") || !all(d=="+direction+") || !(lo=="+lo+" && hi=="+hi+" && tol>0.0 && tol<=3.402823466e38 && tTol>0.0 && tTol<=3.402823466e38)){return result;}\n"
+        " let count=u32("+count+"); let base="+std::to_string(base)+"u; let dn="+dn+"; let pointError="+pointError+";\n";
+    out.wgsl+=R"WGSL(
+    let u=1.1920928955078125e-7;
+    let gu=f32(16u*count+32u)*u;
+    let gamma=rayProofUp(gu/(1.0-gu));
+    var tau=0.0; var dm=0.0; var de=0.0; var L=0.0; var magnitude=0.0;
+    var mathematical=0.0; var execution=0.0; var sigA=0.0; var epsA=0.0;
+    var sCalls=0.0; var eCalls=0.0;
+    for(var j=0u;j<count;j=j+1u){
+        let k=base+16u*j;
+        let sa=P.v[k]; let sb=P.v[k+1u]; let step=(sb-sa)*0.5;
+        let sm=sa+(sb-sa)*0.5;
+        let width=rayProofUp(sb-sa); let hw=rayProofMul(width,0.5);
+        let sL=P.v[k+2u];let sW=P.v[k+3u];let sSup=P.v[k+4u];let sE=P.v[k+5u];let sH=P.v[k+6u];let sLow=P.v[k+7u];let sHigh=P.v[k+8u];
+        let eL=P.v[k+9u];let eW=P.v[k+10u];let eSup=P.v[k+11u];let eE=P.v[k+12u];let eH=P.v[k+13u];let eLow=P.v[k+14u];let eHigh=P.v[k+15u];
+        let sConstant=sE==0.0 && sLow==sHigh; let eConstant=eE==0.0 && eLow==eHigh;
+        if(sSup==0.0 && sE==0.0 && eSup==0.0 && eE==0.0){sigA=0.0;epsA=0.0;continue;}
+        if(j==0u){
+            if(sConstant){sigA=sLow;}else{sigA=lineSigma(o+sa*d,clock,omega);sCalls=sCalls+1.0;}
+            if(eConstant){epsA=eLow;}else{epsA=lineEmission(o+sa*d,clock,omega);eCalls=eCalls+1.0;}
+        }
+        var sigM=sLow;var sigB=sLow;var epsM=eLow;var epsB=eLow;
+        if(!sConstant){sigM=lineSigma(o+sm*d,clock,omega);sigB=lineSigma(o+sb*d,clock,omega);sCalls=sCalls+2.0;}
+        if(!eConstant){epsM=lineEmission(o+sm*d,clock,omega);epsB=lineEmission(o+sb*d,clock,omega);eCalls=eCalls+2.0;}
+        let tauM=tau+step*(5.0*sigA+8.0*sigM-sigB)/12.0;
+        let tauB=tau+(step/3.0)*(sigA+4.0*sigM+sigB);
+        let ls=rayProofMul(sL,dn);let le=rayProofMul(eL,dn);
+        var hs=-1.0;var he=-1.0;
+        if(sH>=0.0){hs=rayProofMul(rayProofMul(sH,dn),dn);}
+        if(eH>=0.0){he=rayProofMul(rayProofMul(eH,dn),dn);}
+        let sPoint=rayProofMul(sL,pointError);let ePoint=rayProofMul(eL,pointError);
+        let panelMath=rayProofMul(rayProofMul(width,2.25),rayProofLocal(sW,ls,hs,hw));
+        let panelExec=rayProofMul(rayProofMul(1.2,width),rayProofAdd(rayProofAdd(sE,sPoint),rayProofMul(gamma,sSup)));
+        let mathB=rayProofAdd(dm,panelMath);let execB=rayProofAdd(de,panelExec);
+        // An exact dark source still advances extinction and both depth bounds.
+        if(eSup==0.0 && eE==0.0){tau=tauB;dm=mathB;de=execB;sigA=sigB;epsA=0.0;continue;}
+        let gA=exp(-tau)*epsA;let gM=exp(-tauM)*epsM;let gB=exp(-tauB)*epsB;
+        L=L+(step/3.0)*(gA+4.0*gM+gB);
+        magnitude=rayProofAdd(magnitude,rayProofMul(rayProofUp(width/6.0),rayProofAdd(rayProofAdd(abs(gA),rayProofMul(4.0,abs(gM))),abs(gB))));
+        let a=rayProofSample(tau,dm,de,epsA,eE,ePoint);
+        let m=rayProofSample(tauM,mathB,execB,epsM,eE,ePoint);
+        let b=rayProofSample(tauB,mathB,execB,epsB,eE,ePoint);
+        let weights=vec2<f32>(rayProofAdd(rayProofAdd(a.x,rayProofMul(4.0,m.x)),b.x),rayProofAdd(rayProofAdd(a.y,rayProofMul(4.0,m.y)),b.y));
+        mathematical=rayProofAdd(mathematical,rayProofMul(rayProofUp(width/6.0),weights.x));
+        execution=rayProofAdd(execution,rayProofMul(rayProofUp(width/6.0),weights.y));
+        let grow=rayProofMul(max(0.0,-sLow),width);
+        let tUpper=rayProofExp(rayProofSignedUp(rayProofSignedUp(-tau+rayProofAdd(dm,de))+grow));
+        let gWidth=rayProofMul(tUpper,rayProofAdd(max(eHigh,0.0),max(-eLow,0.0)));
+        let gPrime=rayProofMul(tUpper,rayProofAdd(le,rayProofMul(sSup,eSup)));
+        var gSecond=-1.0;
+        if(he>=0.0){
+            let q=rayProofAdd(rayProofAdd(he,rayProofMul(rayProofMul(2.0,sSup),le)),rayProofAdd(rayProofMul(ls,eSup),rayProofMul(rayProofMul(sSup,sSup),eSup)));
+            gSecond=rayProofMul(tUpper,q);
+        }
+        mathematical=rayProofAdd(mathematical,rayProofMul(rayProofMul(width,2.25),rayProofLocal(gWidth,gPrime,gSecond,hw)));
+        tau=tauB;dm=mathB;de=execB;sigA=sigB;epsA=epsB;
+    }
+    execution=rayProofAdd(execution,rayProofMul(rayProofAdd(gamma,4.0*u),rayProofAdd(magnitude,rayProofAdd(mathematical,execution))));
+    let tUpper=rayProofExp(rayProofSignedUp(-tau+rayProofAdd(dm,de)));
+    let tMath=rayProofMul(tUpper,dm);
+)WGSL";
+    out.wgsl+="    let tExec=rayProofAdd(rayProofMul(tUpper,de),rayProofAdd("+expA+",rayProofMul("+expRound+",tUpper)));\n";
+    out.wgsl+=R"WGSL(
+    result.radiance=L;result.transmittance=exp(-tau);
+    result.radianceError=rayProofAdd(mathematical,execution);result.transmittanceError=rayProofAdd(tMath,tExec);
+    result.samples=vec2<f32>(sCalls,eCalls);result.panels=f32(count);
+    if(abs(L)<=3.402823466e38 && abs(result.transmittance)<=3.402823466e38 && result.radianceError<=tol && result.transmittanceError<=tTol){result.status=1.0;}
+    return result;
+}
+fn lineScheduledRadianceAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,clock:f32,omega:vec3<f32>)->vec4<f32>{
+    let r=lineScheduledTransportAt(o,d,lo,hi,tol,tol,clock,omega);return vec4<f32>(r.radiance,r.status,r.panels,r.radianceError);
+}
+fn lineScheduledTransmittanceAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,clock:f32,omega:vec3<f32>)->vec4<f32>{
+    let r=lineScheduledTransportAt(o,d,lo,hi,tol,tol,clock,omega);return vec4<f32>(r.transmittance,r.status,r.panels,r.transmittanceError);
+}
+fn lineScheduledWorkAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,clock:f32,omega:vec3<f32>)->vec4<f32>{
+    let r=lineScheduledTransportAt(o,d,lo,hi,tol,tol,clock,omega);return vec4<f32>(r.samples,r.panels,r.status);
+}
+)WGSL";
+    return out;
+}
+
+static Program compileLineTransportImpl(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
                              const OntoMath::LineQuadratureCertificate& sigmaCert,
-                             const OntoMath::LineQuadratureCertificate& emissionCert, uint32_t maxCells) {
+                             const OntoMath::LineQuadratureCertificate& emissionCert, uint32_t maxCells,
+                                        const OntoMath::LineTransportSchedule* schedule) {
     Program prog;
     Emit e;
     e.parameterOffset = "0u";
     // The host certificate retains the domain it proved. Runtime inputs must
     // inhabit BOTH fields' domains; certification is not a clock/omega binding.
-    OntoMath::TypeEnv env{{"p", OntoMath::ValueKind::Vector}};
+    OntoMath::TypeEnv env{{"p", OntoMath::ValueKind::Vector}, {"x", OntoMath::ValueKind::Scalar},
+                          {"y", OntoMath::ValueKind::Scalar}, {"z", OntoMath::ValueKind::Scalar}};
     for (const auto* cert : {&sigmaCert, &emissionCert})
         for (const auto& [name, range] : cert->symbols) {
             if (name == OntoMath::kTimeVar) { e.bindTime = true; e.timeExpression = "clock"; }
@@ -2940,6 +3110,9 @@ Program compileLineTransport(const OntoMath::MathNode& sigma, const OntoMath::Ma
         const auto& cert = f == &sigma ? sigmaCert : emissionCert;
         for (const auto* name : {OntoMath::kTimeVar, OntoMath::kOmegaXVar, OntoMath::kOmegaYVar, OntoMath::kOmegaZVar})
             if (!cert.symbols.count(name)) fieldEnv.erase(name);
+        if (cert.sourceExpression != f->toJson().dump()) {
+            prog.ok = false; prog.error = "transport certificate source changed; rebuild its proof"; return prog;
+        }
         std::string why;
         OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
         if (!f->checkTypes(fieldEnv, why, &kind, false) || kind != OntoMath::ValueKind::Scalar) {
@@ -2948,7 +3121,7 @@ Program compileLineTransport(const OntoMath::MathNode& sigma, const OntoMath::Ma
             return prog;
         }
     }
-    if (sigmaCert.bands.empty() || emissionCert.bands.empty() || maxCells < 2) {
+    if (!schedule && (sigmaCert.bands.empty() || emissionCert.bands.empty() || maxCells < 2)) {
         prog.ok = false;
         prog.error = "transport needs certificates with at least one band each, and at least 2 cells";
         return prog;
@@ -2959,6 +3132,37 @@ Program compileLineTransport(const OntoMath::MathNode& sigma, const OntoMath::Ma
     const std::string emissionValue = emitMathNode(emission, e, "p");
     const std::string emissionBody = e.body;
     e.body.clear();
+    std::string domainPredicate = "true";
+    for (const auto* cert : {&sigmaCert, &emissionCert})
+        for (const auto& [name, range] : cert->symbols) {
+            std::string value;
+            if (name == OntoMath::kTimeVar) value = "clock";
+            else if (name == OntoMath::kOmegaXVar) value = "omega.x";
+            else if (name == OntoMath::kOmegaYVar) value = "omega.y";
+            else if (name == OntoMath::kOmegaZVar) value = "omega.z";
+            else { e.refuse("transport cannot bind certificate symbol: " + name); continue; }
+            // Test an inward-rounded domain so nearest f32 conversion cannot
+            // accept an input just outside the mathematical qualification.
+            float lo = float(range.first), hi = float(range.second);
+            if (double(lo) < range.first) lo = std::nextafter(lo, INFINITY);
+            if (double(hi) > range.second) hi = std::nextafter(hi, -INFINITY);
+            if (!(std::isfinite(lo) && std::isfinite(hi) && lo <= hi)) {
+                e.refuse("transport certificate has no finite f32 runtime domain for " + name);
+                continue;
+            }
+            domainPredicate += " && (" + value + " >= " + e.param(lo) + " && " + value + " <= " + e.param(hi) + ")";
+        }
+    std::string prelude = R"WGSL(
+struct ScreenCoordinates { size: vec4<f32>, time: vec4<f32> };
+struct Parameters { v: array<f32> };
+@group(0) @binding(0) var<uniform> screen: ScreenCoordinates;
+@group(0) @binding(1) var<storage, read> P: Parameters;
+var<private> screenPoint: vec3<f32>;
+)WGSL";
+    prelude += kPrimitives;
+    prelude += "fn lineSigma(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + sigmaBody + "    return " + sigmaValue + ";\n}\n";
+    prelude += "fn lineEmission(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + emissionBody + "    return " + emissionValue + ";\n}\n";
+    if (schedule) return lowerScheduledTransport(e, std::move(prelude), domainPredicate, *schedule);
     auto bands = [&](const OntoMath::LineQuadratureCertificate& cert, const std::string& tag) {
         std::string out;
         for (std::size_t j = 0; j < cert.bands.size(); ++j) {
@@ -2979,27 +3183,6 @@ Program compileLineTransport(const OntoMath::MathNode& sigma, const OntoMath::Ma
     const std::string expAbsolute = e.param(float(expA * (1.0 + 1e-6)));
     const std::string expRelative = e.param(float(expR * (1.0 + 1e-6)));
     const std::string expRoundRelative = e.param(float((expR + 4.0 * std::ldexp(1.0, -23)) * (1.0 + 1e-6)));
-    std::string domainGuard;
-    for (const auto* cert : {&sigmaCert, &emissionCert})
-        for (const auto& [name, range] : cert->symbols) {
-            std::string value;
-            if (name == OntoMath::kTimeVar) value = "clock";
-            else if (name == OntoMath::kOmegaXVar) value = "omega.x";
-            else if (name == OntoMath::kOmegaYVar) value = "omega.y";
-            else if (name == OntoMath::kOmegaZVar) value = "omega.z";
-            else { e.refuse("transport cannot bind certificate symbol: " + name); continue; }
-            // Test an inward-rounded domain so nearest f32 conversion cannot
-            // accept an input just outside the mathematical qualification.
-            float lo = float(range.first), hi = float(range.second);
-            if (double(lo) < range.first) lo = std::nextafter(lo, INFINITY);
-            if (double(hi) > range.second) hi = std::nextafter(hi, -INFINITY);
-            if (!(std::isfinite(lo) && std::isfinite(hi) && lo <= hi)) {
-                e.refuse("transport certificate has no finite f32 runtime domain for " + name);
-                continue;
-            }
-            domainGuard += "    if (!(" + value + " >= " + e.param(lo) + " && " + value + " <= " + e.param(hi) +
-                           ")) { return vec4<f32>(0.0); }\n";
-        }
     for (float number : e.params)
         if (!std::isfinite(number)) e.refuse("a transport constant is not finite float32");
     prog.ok = !e.refused;
@@ -3007,23 +3190,15 @@ Program compileLineTransport(const OntoMath::MathNode& sigma, const OntoMath::Ma
     prog.params = std::move(e.params);
     if (!prog.ok) return prog;
     const std::string nmax = std::to_string(maxCells) + ".0";
-    prog.wgsl = R"WGSL(
-struct ScreenCoordinates { size: vec4<f32>, time: vec4<f32> };
-struct Parameters { v: array<f32> };
-@group(0) @binding(0) var<uniform> screen: ScreenCoordinates;
-@group(0) @binding(1) var<storage, read> P: Parameters;
-var<private> screenPoint: vec3<f32>;
-)WGSL";
-    prog.wgsl += kPrimitives;
-    prog.wgsl += "fn lineSigma(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + sigmaBody + "    return " + sigmaValue + ";\n}\n";
-    prog.wgsl += "fn lineEmission(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + emissionBody + "    return " + emissionValue + ";\n}\n";
+    prog.wgsl = std::move(prelude);
     prog.wgsl += "fn transportUpperExp(x: f32) -> f32 { return (exp(x) + " + expAbsolute + ") / (1.0 - " + expRelative + ") * 1.000001; }\n";
     prog.wgsl += "fn panelLocal(width: f32, L1: f32, H2: f32, hw: f32) -> f32 {\n"
                  "    var l = min(width, L1 * hw);\n"
                  "    if (H2 >= 0.0) { l = min(l, H2 * hw * hw * 0.5); }\n"
                  "    return l;\n"
                  "}\n";
-    prog.wgsl += "fn lineTransportAt(o: vec3<f32>, d: vec3<f32>, lo: f32, hi: f32, tol: f32, clock: f32, omega: vec3<f32>) -> vec4<f32> {\n" + domainGuard +
+    prog.wgsl += "fn lineTransportAt(o: vec3<f32>, d: vec3<f32>, lo: f32, hi: f32, tol: f32, clock: f32, omega: vec3<f32>) -> vec4<f32> {\n"
+                 "    if (!(" + domainPredicate + ")) { return vec4<f32>(0.0); }\n" +
                  "    if (!(hi >= lo)) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }\n"
                  "    let a = lo;\n"
                  "    let b = hi;\n"
@@ -3090,6 +3265,21 @@ var<private> screenPoint: vec3<f32>;
     prog.wgsl += "fn lineTransport(o: vec3<f32>, d: vec3<f32>, lo: f32, hi: f32, tol: f32) -> vec4<f32> {\n"
                  "    return lineTransportAt(o, d, lo, hi, tol, screen.time.x, -d);\n}\n";
     return prog;
+}
+
+Program compileLineTransport(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
+                             const OntoMath::LineQuadratureCertificate& sigmaCert,
+                             const OntoMath::LineQuadratureCertificate& emissionCert, uint32_t maxCells) {
+    return compileLineTransportImpl(sigma,emission,sigmaCert,emissionCert,maxCells,nullptr);
+}
+
+Program compileScheduledLineTransport(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
+                                      const OntoMath::LineTransportSchedule& schedule) {
+    OntoMath::LineQuadratureCertificate sc,ec;
+    sc.model=ec.model=schedule.model;
+    sc.symbols=schedule.sigmaSymbols; ec.symbols=schedule.emissionSymbols;
+    sc.sourceExpression=schedule.sigmaExpression; ec.sourceExpression=schedule.emissionExpression;
+    return compileLineTransportImpl(sigma,emission,sc,ec,2,&schedule);
 }
 
 ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,

@@ -2318,7 +2318,8 @@ std::optional<LineQuadratureBand> certifyBox(const LineAlgebraicForm& form, uint
         LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
         if (!ev.ok()) return std::nullopt;
         bool undefined = false;
-        const Interval r = ev.range(root, 0.0, 0.0, signsFor(ev), &undefined);
+        band.branchSignature = signsFor(ev);
+        const Interval r = ev.range(root, 0.0, 0.0, band.branchSignature, &undefined);
         if (undefined || !r.bounded()) return std::nullopt;
         band.width = double(r.hi) - double(r.lo);
         band.sup = std::max(std::abs(double(r.lo)), std::abs(double(r.hi)));
@@ -2333,7 +2334,7 @@ std::optional<LineQuadratureBand> certifyBox(const LineAlgebraicForm& form, uint
         for (int i = 0; i < 3; ++i) { b[kLineOriginVars[i]] = box[i]; b[kLineDirectionVars[i]] = Interval(i == axis ? 1.0f : 0.0f); }
         LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
         if (!ev.ok()) { bounded = false; break; }
-        const Interval dr = ev.derivativeRange(root, 0.0, 0.0, signsFor(ev));
+        const Interval dr = ev.derivativeRange(root, 0.0, 0.0, band.branchSignature);
         if (!dr.bounded()) { bounded = false; break; }
         const double m = std::max(std::abs(double(dr.lo)), std::abs(double(dr.hi)));
         sum += m * m;
@@ -2351,7 +2352,7 @@ std::optional<LineQuadratureBand> certifyBox(const LineAlgebraicForm& form, uint
             }
             LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
             if (!ev.ok()) return std::nullopt;
-            const Interval r = ev.secondDerivativeRange(root, 0.0, 0.0, signsFor(ev));
+            const Interval r = ev.secondDerivativeRange(root, 0.0, 0.0, band.branchSignature);
             if (!r.bounded()) return std::nullopt;
             return r;
         };
@@ -2401,6 +2402,7 @@ std::optional<LineQuadratureCertificate> certifyLineQuadrature(const MathNode& f
     LineQuadratureCertificate cert;
     cert.model = deviceModel;
     cert.symbols = symbols;
+    cert.sourceExpression = field.toJson().dump();
     std::map<std::string, Interval> symbolBox;
     std::map<std::string, double> symbolMagnitudes;
     for (const auto& [name, range] : symbols) {
@@ -2560,18 +2562,22 @@ using PanelBands = std::function<std::optional<std::pair<LineQuadratureBand, Lin
 std::optional<LineTransportMarch> marchCore(const PanelBands& bandsFor, const ExecutionModel& model,
                                             const std::function<double(double)>& sigmaAt,
                                             const std::function<double(double)>& emissionAt,
-                                            const double d[3], double lo, double hi, double cells, std::string* why) {
+                                            const double d[3], double lo, double hi, double cells, std::string* why,
+                                            const std::vector<LineTransportPanel>* panels = nullptr,
+                                            std::vector<double>* scores = nullptr, double pointError = -1.0) {
     auto refuse = [&](const std::string& text) { if (why) *why = text; return std::nullopt; };
     if (!(hi >= lo)) return refuse("transport runs from lo to hi");
     const double S = hi - lo;
     double dn2 = 0.0;
     for (int i = 0; i < 3; ++i) dn2 += d[i] * d[i];
     const double dn = std::sqrt(dn2);
+    if (!std::isfinite(cells) || cells < 2 || cells > 131072) return refuse("invalid bounded cell count");
     const int n = int(cells);
-    if (n < 2 || n % 2) return refuse("an even cell count of at least 2 is needed");
-    const double u = std::ldexp(1.0, -23), lambda = 1.25, h = S / n;
+    if (double(n) != cells || n < 2 || n % 2) return refuse("an even integer cell count of at least 2 is needed");
+    const double u = std::ldexp(1.0, -23), lambda = 1.25;
     const double ds = 4.0 * u * (std::abs(lo) + S);
-    const double gamma = (n + 8.0) * u / (1.0 - (n + 8.0) * u);
+    const double operations = panels ? 8.0 * n + 32.0 : n + 8.0;
+    const double gamma = operations * u / (1.0 - operations * u);
     const double expAbsolute = model.exponentialAbsolute();
     const double expRelative = model.expRelative + 4.0 * u;
     auto local = [&](double width, double L1, double H2, double hw) {
@@ -2581,27 +2587,50 @@ std::optional<LineTransportMarch> marchCore(const PanelBands& bandsFor, const Ex
     };
     LineTransportMarch out;
     double tauA = 0.0, mathA = 0.0, execA = 0.0;
-    double sigA = sigmaAt(lo), epsA = emissionAt(lo), L = 0.0, magnitude = 0.0;
+    double sigA = 0.0, epsA = 0.0, L = 0.0, magnitude = 0.0;
+    if (!panels) { sigA = sigmaAt(lo); epsA = emissionAt(lo); }
+    if (scores) scores->assign(n / 2, 0.0);
+    // Scores only choose where to refine; they never authorize an answer.
+    double sourceMass = 0.0;
+    if (panels) for (const auto& p : *panels) sourceMass += (p.hi - p.lo) * p.emission.sup;
     for (int j = 0; j < n; j += 2) {
-        const double sa = lo + S * (double(j) / n), sm = lo + S * (double(j + 1) / n), sb = lo + S * (double(j + 2) / n);
-        const auto bands = bandsFor(sa, sb);
+        const double sa = panels ? (*panels)[j / 2].lo : lo + S * (double(j) / n);
+        const double sb = panels ? (*panels)[j / 2].hi : lo + S * (double(j + 2) / n);
+        const double sm = panels ? double(float(sa + (sb - sa) * 0.5)) : lo + S * (double(j + 1) / n);
+        const double h = (sb - sa) * 0.5;
+        // Schedule endpoints and midpoints are exact f32. A rounded midpoint
+        // can differ from the ideal one; pointError prices that displacement.
+        const auto bands = panels ? std::optional(std::make_pair((*panels)[j / 2].sigma, (*panels)[j / 2].emission)) : bandsFor(sa, sb);
         if (!bands) return refuse("a panel leaves every certified region");
         const LineQuadratureBand& sg = bands->first;
         const LineQuadratureBand& em = bands->second;
         const double Ls = sg.lipschitz * dn, Le = em.lipschitz * dn;
         const double Hs = sg.hessian * dn * dn, He = em.hessian * dn * dn;
+        const double sPoint = pointError >= 0.0 ? sg.lipschitz * pointError : Ls * ds;
+        const double ePoint = pointError >= 0.0 ? em.lipschitz * pointError : Le * ds;
+        auto sample = [&](const LineQuadratureBand& band, const std::function<double(double)>& at, double x) {
+            if (panels && band.execution == 0.0 && band.low == band.high) return band.low;
+            return at(x);
+        };
+        if (panels && j == 0) { sigA = sample(sg, sigmaAt, sa); epsA = sample(em, emissionAt, sa); }
+        if (panels && sg.sup == 0.0 && sg.execution == 0.0 && em.sup == 0.0 && em.execution == 0.0) {
+            sigA = epsA = 0.0; continue;
+        }
         const double grow = std::exp(std::max(0.0, -sg.low) * 2.0 * h);
         const double panelDepthMath = 2.0 * h * (1.0 + lambda) * local(sg.width, Ls, Hs, h);
-        const double panelDepthExec = 1.2 * 2.0 * h * (sg.execution + Ls * ds + gamma * sg.sup);
+        const double panelDepthExec = 1.2 * 2.0 * h * (sg.execution + sPoint + gamma * sg.sup);
         auto sampleError = [&](double tau, double dMath, double dExec, double eps, double& math, double& exec) {
             const double T = std::exp(-tau), epsMax = std::abs(eps) + em.execution;
             const double depth = T * std::expm1(dMath + dExec) * epsMax;
             const double share = dMath + dExec > 0.0 ? dMath / (dMath + dExec) : 0.0;
             math = depth * share;
-            exec = depth * (1.0 - share) + T * std::exp(dMath + dExec) * (em.execution + Le * ds + expRelative * epsMax) +
+            exec = depth * (1.0 - share) + T * std::exp(dMath + dExec) * (em.execution + ePoint + expRelative * epsMax) +
                    expAbsolute * epsMax;
         };
-        const double sigM = sigmaAt(sm), sigB = sigmaAt(sb), epsM = emissionAt(sm), epsB = emissionAt(sb);
+        const double sigM = sample(sg, sigmaAt, sm), sigB = sample(sg, sigmaAt, sb);
+        const double epsM = sample(em, emissionAt, sm), epsB = sample(em, emissionAt, sb);
+        if (!(std::isfinite(sigA) && std::isfinite(sigM) && std::isfinite(sigB) &&
+              std::isfinite(epsA) && std::isfinite(epsM) && std::isfinite(epsB))) return refuse("non-finite field sample");
         const double tauM = tauA + h * (5.0 * sigA + 8.0 * sigM - sigB) / 12.0;
         const double tauB = tauA + (h / 3.0) * (sigA + 4.0 * sigM + sigB);
         const double mathB = mathA + panelDepthMath, execB = execA + panelDepthExec;   // the midpoint's ≤ the end's
@@ -2619,12 +2648,23 @@ std::optional<LineTransportMarch> marchCore(const PanelBands& bandsFor, const Ex
         const double eWidth = std::max(em.high, 0.0) - std::min(em.low, 0.0);
         const double gPrime = T * (Le + sg.sup * em.sup);
         const double gSecond = T * (He + 2.0 * sg.sup * Le + Ls * em.sup + sg.sup * sg.sup * em.sup);
-        out.mathematical += 2.0 * h * (1.0 + lambda) * local(T * eWidth, gPrime, gSecond, h);
+        const double outerMath = 2.0 * h * (1.0 + lambda) * local(T * eWidth, gPrime, gSecond, h);
+        out.mathematical += outerMath;
+        if (scores) {
+            const double score = outerMath + panelDepthMath * (sourceMass + 1.0) * T;
+            (*scores)[j / 2] = std::isnan(score) ? std::numeric_limits<double>::infinity() : score;
+        }
         tauA = tauB; mathA = mathB; execA = execB; sigA = sigB; epsA = epsB;
     }
     // Include the bounded sample deviations in the device sum's magnitude.
     out.execution += (gamma + 4.0 * u) * (magnitude + out.mathematical + out.execution);
     out.value = L;
+    out.transmittance = std::exp(-tauA);
+    const double delta = mathA + execA;
+    const double tDepth = out.transmittance * std::expm1(delta);
+    const double mathShare = delta > 0.0 ? mathA / delta : 0.0;
+    out.transmittanceMathematical = tDepth * mathShare;
+    out.transmittanceExecution = tDepth * (1.0 - mathShare) + expAbsolute + expRelative * out.transmittance;
     return out;
 }
 } // namespace
@@ -2649,7 +2689,8 @@ std::optional<LineTransportMarch> marchLineTransport(const LineQuadratureCertifi
 
 RegionCertificate::RegionCertificate(const MathNode& field, const ExecutionModel& model, double cell,
                                      const std::map<std::string, std::pair<double, double>>& symbols)
-    : _restriction(restrictAlgebraicToLine(field, /*vectorValued=*/false)), _model(model), _cell(cell) {
+    : _restriction(restrictAlgebraicToLine(field, /*vectorValued=*/false)), _model(model),
+      _sourceExpression(field.toJson().dump()), _symbols(symbols), _cell(cell) {
     for (const auto& [name, range] : symbols) {
         float l = float(range.first), h = float(range.second);
         if (double(l) > range.first) l = std::nextafter(l, -INFINITY);
@@ -2696,14 +2737,36 @@ std::optional<LineQuadratureBand> RegionCertificate::over(const double lo[3], co
                 const auto& c = *it->second;
                 if (!worst) { worst = c; continue; }
                 worst->lipschitz = std::max(worst->lipschitz, c.lipschitz);
-                worst->hessian = std::max(worst->hessian, c.hessian);
+                // Local second derivatives cannot cross an unproved branch join:
+                // two affine pieces can meet at a kink with H=0 on each side.
+                worst->hessian = worst->branchSignature == c.branchSignature
+                                     ? std::max(worst->hessian, c.hessian)
+                                     : std::numeric_limits<double>::infinity();
                 worst->sup = std::max(worst->sup, c.sup);
                 worst->execution = std::max(worst->execution, c.execution);
                 worst->low = std::min(worst->low, c.low);
                 worst->high = std::max(worst->high, c.high);
             }
-    if (worst) worst->width = worst->high - worst->low;
+    if (worst) {
+        worst->width = worst->high - worst->low;
+        if (worst->width == 0.0) { worst->lipschitz = 0.0; worst->hessian = 0.0; }
+    }
     return worst;
+}
+
+std::optional<LineQuadratureBand> RegionCertificate::tightOver(const double lo[3], const double hi[3]) const {
+    if (!ok()) return std::nullopt;
+    Interval box[3];
+    for (int i = 0; i < 3; ++i) {
+        const double a = std::min(lo[i], hi[i]), b = std::max(lo[i], hi[i]);
+        if (!std::isfinite(a) || !std::isfinite(b)) return std::nullopt;
+        float fa = float(a), fb = float(b);
+        if (!std::isfinite(fa) || !std::isfinite(fb)) return std::nullopt;
+        if (double(fa) > a) fa = std::nextafter(fa, -INFINITY);
+        if (double(fb) < b) fb = std::nextafter(fb, INFINITY);
+        box[i] = Interval(fa, fb);
+    }
+    return certifyBox(*_restriction.form, _restriction.form->roots[0], _model, box, _symbolBox, _symbolMagnitudes);
 }
 
 std::optional<LineTransportMarch> marchLineTransport(const RegionCertificate& sigma, const RegionCertificate& emission,
@@ -2722,6 +2785,128 @@ std::optional<LineTransportMarch> marchLineTransport(const RegionCertificate& si
             return std::make_pair(*s, *e);
         },
         emission.model(), sigmaAt, emissionAt, d, lo, hi, cells, why);
+}
+
+std::optional<LineTransportSchedule> planRegionalLineTransport(
+    const RegionCertificate& sigma, const RegionCertificate& emission,
+    const std::function<double(double)>& sigmaAt, const std::function<double(double)>& emissionAt,
+    const double o[3], const double d[3], double lo, double hi, double tolerance,
+    double transmittanceTolerance, std::size_t maxPanels, std::string* why) {
+    auto refuse = [&](const std::string& text) -> std::optional<LineTransportSchedule> {
+        if (why) *why = text;
+        return std::nullopt;
+    };
+    auto finiteF32 = [](double x) { return std::isfinite(x) && double(float(x)) == x; };
+    if (!(finiteF32(lo) && finiteF32(hi) && hi > lo && std::isfinite(hi - lo))) return refuse("schedule needs finite f32 limits, hi > lo");
+    if (!(tolerance > 0.0 && std::isfinite(tolerance) && transmittanceTolerance > 0.0 && std::isfinite(transmittanceTolerance)))
+        return refuse("schedule needs positive finite radiance and transmittance tolerances");
+    if (!sigma.ok() || !emission.ok() || maxPanels < 1 || maxPanels > 65536) return refuse("invalid certificate or bounded panel budget");
+    const auto& m = sigma.model(); const auto& e = emission.model();
+    if (!(std::isfinite(m.relative) && m.relative >= 0.0 && std::isfinite(m.transcendental) && m.transcendental >= 0.0 &&
+          std::isfinite(m.vector) && m.vector >= 0.0 && std::isfinite(m.noise))) return refuse("invalid field execution model");
+    if (m.relative != e.relative || m.transcendental != e.transcendental || m.noise != e.noise || m.vector != e.vector ||
+        m.restrictedForm != e.restrictedForm || m.expAbsolute != e.expAbsolute || m.expRelative != e.expRelative || m.restrictedForm)
+        return refuse("schedule needs the same original-DAG execution model for both fields");
+    if (!(std::isfinite(m.exponentialAbsolute()) && m.exponentialAbsolute() >= 0.0 &&
+          std::isfinite(m.expRelative) && m.expRelative >= 0.0 && m.expRelative < 1.0)) return refuse("invalid exponential contract");
+    LineTransportSchedule out;
+    out.lo = lo; out.hi = hi; out.model = m;
+    out.sigmaExpression = sigma.sourceExpression(); out.emissionExpression = emission.sourceExpression();
+    out.sigmaSymbols = sigma.symbols(); out.emissionSymbols = emission.symbols();
+    double on2 = 0.0, dn2 = 0.0;
+    for (int i = 0; i < 3; ++i) {
+        if (!finiteF32(o[i]) || !finiteF32(d[i])) return refuse("schedule ray inputs must be explicit finite f32 values");
+        out.origin[i] = o[i]; out.direction[i] = d[i]; on2 += o[i] * o[i]; dn2 += d[i] * d[i];
+    }
+    // Bounds the f32 line-coordinate construction and midpoint rounding. The
+    // box queries below include this halo; local L/H never borrow an adjacent
+    // region's smoothness without certifying that region too.
+    out.pointError = 8.0 * std::ldexp(1.0, -23) * (std::sqrt(on2) + (std::abs(lo) + hi - lo) * std::sqrt(dn2));
+    if (!std::isfinite(float(out.pointError))) return refuse("line-coordinate uncertainty is not representable in f32");
+    auto panel = [&](double a, double b) -> std::optional<LineTransportPanel> {
+        double boxLo[3], boxHi[3];
+        for (int i = 0; i < 3; ++i) {
+            const double x = o[i] + a * d[i], y = o[i] + b * d[i];
+            boxLo[i] = std::min(x, y) - out.pointError;
+            boxHi[i] = std::max(x, y) + out.pointError;
+        }
+        const auto sg = sigma.tightOver(boxLo, boxHi), em = emission.tightOver(boxLo, boxHi);
+        if (!sg || !em) return std::nullopt;
+        return LineTransportPanel{a, b, *sg, *em};
+    };
+    struct Pending { double lo, hi; };
+    std::vector<Pending> pending{{lo, hi}};
+    // First obtain complete coverage; a wide query can exceed the grid's work
+    // cap. No uncertified sliver disappears, even when the budget is exhausted.
+    while (!pending.empty()) {
+        const auto p = pending.back(); pending.pop_back();
+        if (auto cert = panel(p.lo, p.hi)) out.panels.push_back(*cert);
+        else {
+            const double mid = float(p.lo + (p.hi - p.lo) * 0.5);
+            if (!(mid > p.lo && mid < p.hi) || pending.size() + out.panels.size() + 2 > maxPanels)
+                return refuse("panel budget cannot certify the complete ray");
+            pending.push_back({mid, p.hi}); pending.push_back({p.lo, mid});
+        }
+    }
+    std::map<double, double> sCache, eCache;
+    std::size_t sCalls = 0, eCalls = 0;
+    auto sample = [](const std::function<double(double)>& at, std::map<double, double>& cache, double x) {
+        auto it = cache.find(x);
+        if (it == cache.end()) it = cache.emplace(x, at(x)).first;
+        return it->second;
+    };
+    std::vector<double> scores;
+    std::optional<LineTransportSchedule> best;
+    double bestQuality = std::numeric_limits<double>::infinity();
+    auto finish = [&](const std::string& reason) -> std::optional<LineTransportSchedule> {
+        auto answer = best ? std::move(*best) : std::move(out);
+        answer.sigmaPreparations = sCache.size(); answer.emissionPreparations = eCache.size();
+        answer.refusal = reason;
+        if (why) *why = reason;
+        return answer;
+    };
+    for (;;) {
+        sCalls = eCalls = 0;
+        const auto result = marchCore({}, m,
+            [&](double x) { ++sCalls; return sample(sigmaAt, sCache, x); },
+            [&](double x) { ++eCalls; return sample(emissionAt, eCache, x); },
+            d, lo, hi, double(out.panels.size() * 2), why, &out.panels, &scores, out.pointError);
+        if (!result) return std::nullopt;
+        out.result = *result;
+        // An overflowing bound is unknown, never a NaN that can win a score.
+        for (double* error : {&out.result.mathematical, &out.result.execution,
+                              &out.result.transmittanceMathematical, &out.result.transmittanceExecution})
+            if (std::isnan(*error)) *error = std::numeric_limits<double>::infinity();
+        out.sigmaSamples = sCalls; out.emissionSamples = eCalls;
+        out.sigmaPreparations = sCache.size(); out.emissionPreparations = eCache.size();
+        if (std::isfinite(result->value) && std::isfinite(result->transmittance) &&
+            result->total() <= tolerance && result->transmittanceTotal() <= transmittanceTolerance) {
+            out.admitted = true; return out;
+        }
+        const double quality = std::max(out.result.total() / tolerance, out.result.transmittanceTotal() / transmittanceTolerance);
+        if (!best || quality < bestQuality) { best = out; bestQuality = quality; }
+        double maximum = 0.0;
+        for (double score : scores) if (!std::isnan(score)) maximum = std::max(maximum, score);
+        if (out.panels.size() >= maxPanels || !(maximum > 0.0)) {
+            return finish("panel budget or mathematical refinement exhausted before the whole result fits");
+        }
+        std::vector<LineTransportPanel> refined;
+        std::size_t splits = 0;
+        for (std::size_t j = 0; j < out.panels.size(); ++j) {
+            const auto& old = out.panels[j];
+            const bool important = !std::isfinite(maximum) ? !std::isfinite(scores[j]) : scores[j] >= maximum * 0.25;
+            const double mid = float(old.lo + (old.hi - old.lo) * 0.5);
+            if (important && mid > old.lo && mid < old.hi && out.panels.size() + splits < maxPanels) {
+                const auto left = panel(old.lo, mid), right = panel(mid, old.hi);
+                if (left && right) { refined.push_back(*left); refined.push_back(*right); ++splits; continue; }
+            }
+            refined.push_back(old);
+        }
+        if (splits == 0) {
+            return finish("no certified f32 panel refinement remains");
+        }
+        out.panels = std::move(refined);
+    }
 }
 
 namespace {
