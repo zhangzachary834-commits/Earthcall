@@ -2040,3 +2040,42 @@ Recognition supports scalar products, nondegenerate literal multipliers, linear 
 **Next:** feed the reduced endpoint into the bounded device execution plan and share its optical depth across RGB/T. Keep native semantics in the admission contract: prove the 1e-6 extinction floor inactive or bound its residual, retain the density gate and projected source, and do not independently composite overlapping media with different ratios. A transmittance error must also price the background/remaining contribution; the existing accepted-lattice `volumeOutputErrorBudget` is not automatically a continuum budget. No runtime allocation policy or default promotion is proposed by this commit. Full implementation/reproduction: plan **§6ax**.
 
 **Signed:** Codex / GPT-6.1 Sol / `2026-10-20T20:19:33-07:00` / `01a148a7-bd85-7550-a416-0e859a729c1a`.
+
+
+## Codex continuation — one bounded noisy GPU depth now supplies real curtain RGB/T (`64023f708`)
+
+**From:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / **2026-10-20T20:45:49-07:00**. Human origin: Zachary Zhang’s “KEEP GOING”, his authored-equation faithfulness criterion, and his instruction that OntoMath own mathematical meaning. This completes the bounded noisy shared RGB/T execution target in the preceding handoff.
+
+**Location:** `claude/ray-domain-transport-rung0`, `/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/ourverse_navigator_prototype_loop`. Source/witnesses/plan **§6ay**/task/compass/ledger are locally committed as **`64023f708`**. Not pushed; Zach publishes. This is the active checkout’s Intercom copy.
+
+### Implementation and observed evidence
+
+`deriveProportionalFieldCoefficient` asks the existing authored Integral/Let substitution office for a point-independent coefficient. `boundComplementProduct` owns the generic uncertainty arithmetic for k*(1-v), including coefficient uncertainty times subtraction rounding. Screen lowers those mathematical results. `compileScheduledProportionalIntegral` runs the actual noisy σ once per scheduled field site, obtains T, and emits RGB from the derived coefficients. Its dedicated endpoint shader contains **no emission-field evaluator or outer-integral branch**. Error propagation preserves absolute exp error and coefficient scaling; large coefficients cannot borrow an unscaled T budget. Missing/invalid domains, stale σ, unequal/nonproportional source shapes, unsupported tiny intermediates and exceeded budgets decline.
+
+The endpoint payload is **9 scalars/panel**. Coefficient parameters follow a dynamic panel-tail offset: a changed panel count and a numeric coefficient edit both **execute correctly with identical WGSL text**. Fresh numeric payloads and coefficient evidence remain required. No CPU integrated answer is uploaded, and no native retention/cache was added.
+
+**Actual Metal coverage:** four raw authored curtain σ/E_RGB pairs × two full-box axial rays at local x=0 and x=2, y=0 × clocks 0 and 3 in explicit [0,3] qualification = **16 occupied vector records / 64 scalar outputs**. All RGB/T outputs admit at RGB ±0.01 per component, T ±0.006, and contain independent 4000/8000-cell cumulative Simpson references of the original raw equations (agreement below 1e-5). These retain CPU f32-vector/Perlin semantics and are numerical witnesses, not exact-real certification. Every case has nonzero RGB and attenuation. Native floor/gate/clamp/scattering/overlap admission is still separate.
+
+| Medium | x=0 σ calls / panels | x=2 σ calls / panels | E-field calls |
+|---|---|---|---|
+| Emerald | 3832 / 1926 | 146 / 80 | 0 |
+| Cyan | 3924 / 1973 | 134 / 79 | 0 |
+| Violet | 3228 / 1622 | 164 / 89 | 0 |
+| Crimson | 2186 / 1103 | 174 / 94 | 0 |
+
+**Work-count boundary:** x=0 lies on a transverse abs crease, making the isotropic box Hessian unavailable even for the axial ray. x=2 avoids that crease; field values change too, so this does not isolate every contributor. Keep the expensive cases. Direction-qualified derivative/branch-constancy evidence is a candidate next proof improvement. Host search is still not a native per-pixel proposal. The native fused 96-sample code already shares some field work; neither zero E calls nor these counts establish a native speedup. Coefficient clock work should reuse existing native time-only preparation where bindings permit it.
+
+**Final focused verification:** **85/85** Integral math (including signed input-error corners), **36/36** expression/report, **32/32 Metal** ordinary Integral, **149/149 Metal** line quadrature/transport/reduction. Includes prior occupied schedules, signed analytic RGB/T, exp-error amplification, clock/ray/budget/stale/source/subnormal refusals, structural code omission and actual numeric payload/edit reuse. `earthcall_webgpu` builds. Final checks ran sequentially; no whole-suite/native-tour/long-faithfulness rerun is implied. Logs `/private/tmp/earthcall-ray-reduced-{cpu,expression,integral-gpu,gpu}-verified.txt`. No save/data home, installed app, lighting, authored tolerance or default activation changed; existing Person checks remain open.
+
+### Shipping ledger
+
+| Gate | State now | Remaining closure |
+|---|---|---|
+| **1. Mathematical/error contract** | Shared original-arithmetic coefficient derivation and complete RGB/T propagation. | Existing device/noise premises remain model-qualified; unknowns refuse. |
+| **2. GPU execution** | **Actual noisy RGB/T shares one bounded device depth.** | Affordable directional work bounds and reusable/device-side scheduling; coefficient preparation cost still unmeasured. |
+| **3. Native consumer** | Still unconnected. | Prove projected gate/floor/clamp/scattering conditions, clipping/local frame/clock and coherent shared attenuation for overlap; native edit/payload/device lifecycle. |
+| **4. Shipped performance** | No new frame-time/live-motion claim. | Paired authored-reference accuracy, repeated end-to-end Metal timing including preparation/uploads/occupancy/fallback, then inhabited motion/Person acceptance. |
+
+**Next:** improve directional proof/work discovery and establish the native projected-source admission contract. Do not substitute a CPU plan per pixel, drop the 1e-6 extinction-floor residual, independently composite different-ratio overlaps, or reinterpret the accepted-lattice `volumeOutputErrorBudget` as a continuum budget. T error also weights background/remaining contributions before becoming a final-pixel budget. Full continuation and pitfalls: plan **§6ay** and the updated ray-domain task.
+
+**Signed:** Codex / GPT-6.1 Sol / `2026-10-20T20:45:49-07:00` / `01a148a7-bd85-7550-a416-0e859a729c1a`.
