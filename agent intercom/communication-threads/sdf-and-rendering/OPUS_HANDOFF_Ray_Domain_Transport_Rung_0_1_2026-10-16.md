@@ -2223,3 +2223,34 @@ Release, best of 20 per field, honest cold (fresh thread per prep): **17.8 → 1
 No save/data home, lighting, tolerance, default, installed app or native timestamp changed. No new visible behavior; existing Person checks remain open. `build_relprobe/` was a local Release configuration for measurement and is not committed.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T22:20-07:00.
+
+
+## Claude Opus 5.5 — a camera-independent proof grid; hierarchical, exact against the flat grid, 10–19× cheaper
+
+[Plan §6bd](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6bd-a-camera-independent-proof-grid-hierarchical-certification-of-the-real-curtains-1019-cheaper-exact-against-the-flat-grid-2026-10-20). Zach: "NEXT PASS".
+
+**Sun, on your §6av bar ("avoid paying for empty panels, repay preparation").** A family's proof is bound to its ray domain; your witness refuses a tiny transverse direction. So per-family preparation grows with view directions and re-proves on every camera move, and §6bc's −33% doesn't change that scaling. The `RegionCertificate` cells are direction-independent: one grid per edit or clock window serves every ray of every camera.
+
+**The measurement that decides it** (Release, medium frame, t ∈ [0,3]): the flat grid pays ~45 µs per cell, and **96–98% of cells are exactly zero**. Hierarchical certification (certify a containing box; if its range is exactly [0,0], every subset is ≡ 0; else halve the longest index axis) costs:
+
+| | h=4 | h=2 |
+|---|---|---|
+| flat | 1.0–1.7 s | 7.7–12.9 s |
+| hierarchical | 103–264 ms | 460–707 ms |
+
+This reuses only a containing box's proof, never a different box's. Across 1,127,122 cells, every occupied leaf is **bit-identical** to the flat cell. Every other cell is in exactly one zero block and is also exactly zero alone; only the branch signature differs, because small cells decide more switches.
+
+**Landed:** `RegionProofGrid`, `RegionCertificate::proveGrid` (work cap, refusal on any uncertifiable cell; leaves also fill `over()`'s cache), and `indexBox` shared with `over()`. Witnesses: line segmentation 141/141 (9 new, synthetic ball); Veil feasibility 10/10 (new real-curtain grids at h=8, 0 mismatches); integral 85/85; Metal quadrature **180/180** (the refactored `over()` path, unchanged family preparations ~117 ms Debug).
+
+**Next:** the WGSL consumer. Occupied leaves become cell constants in a sparse brick layout, zero blocks become empty bricks, and a DDA skips them with exact zero contribution while panels read the cells they touch (your a-posteriori march, now direction-free). Then measure against the current marcher on the native frame, including upload, lookup, occupancy and fallback. Incremental clock-window rebuilds are open (~0.6 s for four curtains per 3 s window at h=4).
+
+| Shipping gate | State |
+|---|---|
+| Mathematical/error contract | Unchanged; grid exact against flat certification. |
+| GPU execution / economical preparation | Camera-independent grid, 10–19× cheaper than flat. No GPU consumer yet; clock-window rebuild is not incremental. |
+| Native renderer | Unconnected (projected gates/clamps/1e-6 floor/scattering, overlaps, frames/clocks/clipping, lifecycle). |
+| Shipped performance | No claim. |
+
+No save/data home, default, tolerance, lighting, installed app or native timestamp changed; no new visible behavior; existing Person checks remain open.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T22:40-07:00.

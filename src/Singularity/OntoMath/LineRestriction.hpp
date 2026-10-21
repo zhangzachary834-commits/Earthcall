@@ -697,6 +697,29 @@ std::optional<LineTransportMarch> marchLineTransport(const LineQuadratureCertifi
                                                      const std::function<double(double)>& emissionAt, const double o[3],
                                                      const double d[3], double lo, double hi, double cells,
                                                      std::string* why = nullptr);
+// A camera-independent proof grid over one box (plan §6bd). Every cell of
+// [first, last] is in exactly one of two states:
+//  * occupied: its certificate is bit-identical to RegionCertificate::over()
+//    of that single cell (the same box, the same certifyBox);
+//  * inside a zero block: ONE containing box's certificate proves the field
+//    mathematically ≡ 0 there (range exactly [0, 0]). A proof over a box holds
+//    on every subset of it, so no sub-cell is visited. A consumer may skip such
+//    a cell (zero contributes zero error) or evaluate it under the block's own
+//    certificate, which bounds device execution anywhere in the block.
+// Transient Kernel proof evidence, not authored state; source/model/symbol
+// edits require rebuilding it (it borrows the certificate's provenance).
+struct RegionProofGrid {
+    struct ZeroBlock {
+        std::array<long long, 3> first{}, last{};
+        LineQuadratureBand certificate;
+    };
+    double cell = 0.0;
+    std::array<long long, 3> first{}, last{};
+    std::vector<ZeroBlock> zero;
+    std::map<std::array<long long, 3>, LineQuadratureBand> occupied;
+    std::size_t proofs = 0;   // certifyBox calls made (host work, not device work)
+};
+
 // Per-region certificates (plan §6at): a lazily filled grid of cubic cells of
 // side `cell`. over(lo, hi) answers the worst constants over every cell the box
 // touches (largest L, H, sup and device error; smallest low, largest high).
@@ -720,6 +743,15 @@ public:
     // components may prove constancy; a nonzero-width component may not.
     std::optional<std::pair<LineQuadratureBand, LineDirectionalBound>> alongOver(
         const double lo[3], const double hi[3], const double directionLo[3], const double directionHi[3]) const;
+    // Hierarchical proof of every cell touching [lo, hi]: certify a containing
+    // box first and subdivide (longest index axis, halves) only where the field
+    // is not proved ≡ 0. Work is proportional to the occupied cells, not the
+    // volume. `maxProofs` is a Kernel work cap; at the cap, or when any single
+    // cell cannot be certified, the grid is incomplete and nullopt returns.
+    // Occupied leaves also fill over()'s cache (they are the same answers).
+    std::optional<RegionProofGrid> proveGrid(const double lo[3], const double hi[3], std::size_t maxProofs,
+                                             std::string* why = nullptr) const;
+    double cell() const { return _cell; }
     const ExecutionModel& model() const { return _model; }
     const std::string& sourceExpression() const { return _sourceExpression; }
     const std::map<std::string, std::pair<double, double>>& symbols() const { return _symbols; }
@@ -734,6 +766,9 @@ private:
     std::map<std::string, Interval> _symbolBox;
     std::map<std::string, double> _symbolMagnitudes;
     mutable std::map<std::array<long long, 3>, std::optional<LineQuadratureBand>> _cache;
+    // The outward f32 box of cells [first, last]: the one construction shared by
+    // over() and proveGrid(), so a leaf is the very box over() certifies.
+    void indexBox(const long long first[3], const long long last[3], Interval box[3]) const;
 };
 // The a-posteriori march with each panel's constants from the region grid.
 std::optional<LineTransportMarch> marchLineTransport(const RegionCertificate& sigma, const RegionCertificate& emission,

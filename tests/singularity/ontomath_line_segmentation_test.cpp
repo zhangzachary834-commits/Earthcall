@@ -17,6 +17,7 @@
 #include "Singularity/OntoMath/LineRestriction.hpp"
 
 #include <cmath>
+#include <cstring>
 #include <iostream>
 #include <map>
 #include <random>
@@ -1184,6 +1185,66 @@ int main() {
         check(!OntoMath::planRegionalLineTransport(s0,e0,[](double){return 0.0;},[](double){return 0.0;},
                o,d,0.1,16,0.01,0.01,32,&why) && why.find("f32")!=std::string::npos,
               "a device schedule requires explicit f32 ray values rather than silently changing the ray");
+    }
+    // Plan §6bd (Claude Code / Claude Opus 5.5 / f3af84cf-bfe3-429d-b417-2d533119f169 /
+    // 2026-10-20): the hierarchical proof grid partitions every cell into
+    // occupied leaves bit-identical to over() and cells a containing proof shows ≡ 0.
+    {
+        const OntoMath::ExecutionModel device{1.0 / 65536.0, 1.0 / 1024.0};
+        auto ball = radial(false);   // clamp(1.5 − |p − c|/4, 0, 1): zero beyond |p − c| = 6
+        OntoMath::RegionCertificate tree(*ball, device, 2.0), flat(*ball, device, 2.0);
+        const double lo[3] = {-16, -16, -16}, hi[3] = {15.5, 15.5, 15.5};
+        std::string why;
+        const auto grid = tree.proveGrid(lo, hi, 1 << 20, &why);
+        check(grid && why.empty(), "the proof grid completes over a 16³-cell box: " + why);
+        if (grid) {
+            const long long cells = 16LL * 16 * 16;
+            long long zeroCells = 0;
+            for (const auto& b : grid->zero) {
+                long long n = 1;
+                for (int i = 0; i < 3; ++i) n *= b.last[i] - b.first[i] + 1;
+                zeroCells += n;
+            }
+            check(zeroCells + (long long)grid->occupied.size() == cells && !grid->occupied.empty(),
+                  "zero blocks and occupied leaves cover every cell once (" + std::to_string(grid->occupied.size()) +
+                      " occupied)");
+            check(grid->proofs < (std::size_t)cells / 4,
+                  "work follows occupancy: " + std::to_string(grid->proofs) + " proofs for 4096 cells");
+            auto bits = [](double a, double b) { return std::memcmp(&a, &b, sizeof a) == 0; };
+            bool leavesExact = true, zerosAgree = true, partition = true;
+            for (long long x = -8; x < 8; ++x)
+                for (long long y = -8; y < 8; ++y)
+                    for (long long z = -8; z < 8; ++z) {
+                        const double cl[3] = {x * 2.0 + 0.5, y * 2.0 + 0.5, z * 2.0 + 0.5};
+                        const double ch[3] = {cl[0] + 1.0, cl[1] + 1.0, cl[2] + 1.0};
+                        const auto f = flat.over(cl, ch);
+                        const auto it = grid->occupied.find({x, y, z});
+                        int blocks = 0;
+                        for (const auto& b : grid->zero)
+                            blocks += x >= b.first[0] && x <= b.last[0] && y >= b.first[1] && y <= b.last[1] &&
+                                      z >= b.first[2] && z <= b.last[2];
+                        partition &= blocks + (it != grid->occupied.end()) == 1;
+                        if (it != grid->occupied.end()) {
+                            const auto& g = it->second;
+                            leavesExact &= f && bits(f->lipschitz, g.lipschitz) && bits(f->hessian, g.hessian) &&
+                                           bits(f->sup, g.sup) && bits(f->execution, g.execution) &&
+                                           bits(f->low, g.low) && bits(f->high, g.high) &&
+                                           f->branchSignature == g.branchSignature;
+                        } else {
+                            zerosAgree &= f && f->low == 0.0 && f->high == 0.0;
+                        }
+                    }
+            check(partition, "each cell lies in exactly one zero block or is one occupied leaf");
+            check(leavesExact, "every occupied leaf is bit-identical to a fresh certificate's over() of that cell");
+            check(zerosAgree, "every cell proved zero by containment is also exactly zero when certified alone");
+            const double centre[3] = {1.2, -1.8, 0.7}, centreHi[3] = {1.3, -1.7, 0.8};
+            check(grid->occupied.count({0, -1, 0}) && tree.over(centre, centreHi),
+                  "the cell at the ball's centre is occupied, and over() reuses its leaf");
+        }
+        check(!tree.proveGrid(lo, hi, 3, &why) && why.find("work cap") != std::string::npos,
+              "a proof grid that reaches its work cap refuses rather than returning an incomplete partition");
+        const double bad[3] = {NAN, 0, 0};
+        check(!tree.proveGrid(bad, hi, 100, &why), "a non-finite proof-grid box refuses");
     }
     std::cout << "ontomath_line_segmentation_test: " << (g_checks - g_failures) << "/" << g_checks
               << " checks passed\n";

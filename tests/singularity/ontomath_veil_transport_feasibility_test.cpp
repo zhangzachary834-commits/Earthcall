@@ -184,6 +184,61 @@ int main() {
             if (c) std::printf("     PROBE σ core cell: low %.4g high %.4g width %.4g L %.4g H %.4g exec %.4g\n", c->low, c->high, c->width, c->lipschitz, c->hessian, c->execution);
             else std::printf("     PROBE σ core cell: no certificate\n");
         }
+        // Plan §6bd: the hierarchical, camera-independent proof grid over the
+        // whole medium box for a 3 s clock window, against the flat grid cell by
+        // cell. EC_VEIL_GRID_CELL picks the cell (default 8: a quick witness).
+        // Claude Code / Claude Opus 5.5 / f3af84cf-bfe3-429d-b417-2d533119f169 / 2026-10-20.
+        if (!reductionOnly) {
+            auto windowed = symbols;
+            windowed[OntoMath::kTimeVar] = {0.0, 3.0};
+            const double gridCell = std::getenv("EC_VEIL_GRID_CELL") ? std::atof(std::getenv("EC_VEIL_GRID_CELL")) : 8.0;
+            const OntoMath::RegionCertificate tree(*sigma, model, gridCell, windowed), flat(*sigma, model, gridCell, windowed);
+            const double half[3] = {std::abs(b.scale.x), std::abs(b.scale.y), std::abs(b.scale.z)};
+            const double boxLo[3] = {-half[0], -half[1], -half[2]};
+            const auto t0 = std::chrono::steady_clock::now();
+            const auto grid = tree.proveGrid(boxLo, half, std::size_t(1) << 22, &why);
+            const double treeMs = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+            check(bool(grid), b.producerId + " σ proof grid completes over the whole medium box for t ∈ [0, 3]: " + why);
+            if (grid) {
+                long long cells = 1, occupiedMatch = 0, zeroMatch = 0, mismatch = 0;
+                for (int i = 0; i < 3; ++i) cells *= grid->last[i] - grid->first[i] + 1;
+                std::vector<char> zeroed;   // dense per-cell flag, for the flat comparison only
+                zeroed.assign(std::size_t(cells), 0);
+                const auto at = [&](long long x, long long y, long long z) {
+                    return std::size_t(((x - grid->first[0]) * (grid->last[1] - grid->first[1] + 1) + (y - grid->first[1])) *
+                                           (grid->last[2] - grid->first[2] + 1) + (z - grid->first[2]));
+                };
+                for (const auto& blk : grid->zero)
+                    for (long long x = blk.first[0]; x <= blk.last[0]; ++x)
+                        for (long long y = blk.first[1]; y <= blk.last[1]; ++y)
+                            for (long long z = blk.first[2]; z <= blk.last[2]; ++z) ++zeroed[at(x, y, z)];
+                const auto t1 = std::chrono::steady_clock::now();
+                for (long long x = grid->first[0]; x <= grid->last[0]; ++x)
+                    for (long long y = grid->first[1]; y <= grid->last[1]; ++y)
+                        for (long long z = grid->first[2]; z <= grid->last[2]; ++z) {
+                            const double cl[3] = {(x + 0.25) * gridCell, (y + 0.25) * gridCell, (z + 0.25) * gridCell};
+                            const double ch[3] = {(x + 0.75) * gridCell, (y + 0.75) * gridCell, (z + 0.75) * gridCell};
+                            const auto f = flat.over(cl, ch);
+                            const auto it = grid->occupied.find({x, y, z});
+                            const int inZero = zeroed[at(x, y, z)];
+                            if (it != grid->occupied.end() && inZero == 0 && f &&
+                                f->lipschitz == it->second.lipschitz && f->hessian == it->second.hessian &&
+                                f->execution == it->second.execution && f->low == it->second.low &&
+                                f->high == it->second.high && f->branchSignature == it->second.branchSignature)
+                                ++occupiedMatch;
+                            else if (it == grid->occupied.end() && inZero == 1 && f && f->low == 0.0 && f->high == 0.0)
+                                ++zeroMatch;
+                            else
+                                ++mismatch;
+                        }
+                const double flatMs = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t1).count();
+                std::printf("     PROOF GRID h=%g: %lld cells, %zu occupied, %zu zero blocks; %zu proofs %.1f ms vs flat %.1f ms\n",
+                            gridCell, cells, grid->occupied.size(), grid->zero.size(), grid->proofs, treeMs, flatMs);
+                check(mismatch == 0 && occupiedMatch + zeroMatch == cells,
+                      b.producerId + " σ proof grid: every occupied leaf equals the flat cell and every other cell is in one "
+                      "zero block and exactly zero alone (" + std::to_string(mismatch) + " mismatches)");
+            }
+        }
         const char* axes[3] = {"x", "y", "z"};
         for (int c = 0; c < channelCount; ++c) {
             if (selectedChannel >= 0 && c != selectedChannel) continue;

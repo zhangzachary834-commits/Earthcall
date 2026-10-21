@@ -2482,3 +2482,65 @@ Debug, same probe: 117.5–118.3 ms best per field (Codex's 203–207 ms before;
 - No save, data home, default, tolerance, lighting, installed app or native timestamp changed. No new visible behavior, so no new Person check. Existing checks remain open.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T22:20-07:00. Human origin: Zach's "catch up with where he left off and then do the next pass", and his frame-budget objection. Codex originated the six-endpoint Perlin memo candidate and the probe; the other three reuses and the Release finding are mine.
+
+
+## 6bd. A camera-independent proof grid: hierarchical certification of the real curtains, 10–19× cheaper, exact against the flat grid (2026-10-20)
+
+**Human origin.** Zach: "YASSS NEXT PASSASSSSSS", continuing the preparation-economy gate from §6bb/§6bc. Codex set the bar in §6av: "Regional execution must avoid paying for empty panels and must repay certificate preparation, lookup, shader occupancy and fallback cost."
+
+**Why not keep shaving the family.** §6bc brought one family to ~12 ms (Release). But a family's proof is tied to its ray domain: the witnessed family varies only origin and direction magnitude, and it *refuses* a tiny transverse direction change (Metal witness). Covering a view therefore costs per-family proofs that grow with the number of view directions, and they are re-proved whenever the camera moves. A constant-factor speedup does not change that scaling.
+
+**What is direction-independent.** `RegionCertificate`'s cells (§6at/§6av) prove the field over spatial boxes for a whole symbol domain. Here that domain is a 3 s clock window and all ω. Any ray of any camera can read those proofs, so the economy question is the cost of proving the grid once per edit or clock window.
+
+**Measured (Release, scratch probes, medium frame, t ∈ [0, 3]).** The flat grid costs ~45 µs per cell whether or not the cell is empty, and **96–98% of cells are exactly zero**:
+
+| curtain | h=4 cells | flat | exactly 0 |
+|---|---|---|---|
+| primary emerald | 36,936 | 1.69 s | 96.7% |
+| secondary cyan | 34,960 | 1.54 s | 96.8% |
+| accent violet | 36,936 | 1.65 s | 96.5% |
+| deep crimson | 22,572 | 1.05 s | 96.0% |
+
+**The remedy: hierarchical certification** (the interval branch-and-bound / sparse-majorant-grid pattern). Certify a containing box. If its mathematical range is exactly [0, 0], the field is ≡ 0 on every subset, so no sub-cell is visited. Otherwise split the longest index axis in half. A proof over a box is a proof over each of its subsets: this never reuses a *different* box's bound (Codex's pitfall), only a *containing* one.
+
+| Release | h=4 | h=2 | h=1 |
+|---|---|---|---|
+| flat (per curtain) | 1.0–1.7 s | 7.7–12.9 s | (2.2M cells, not run) |
+| hierarchical | **103–264 ms** | **460–707 ms** | 2.7–4.3 s |
+| proofs (emerald) | 4,079 / 36,936 | 18,887 / 279,979 | 99,231 / 2,179,269 |
+
+Occupied leaves grow ~5.4× per halving (sheet-like curtains), so work follows the curtain surface, not the volume.
+
+**Exactness, checked cell by cell against the flat grid** (h=4 and h=2, all four curtains, 1,127,122 cells):
+- Every occupied leaf is **bit-identical** to the flat cell's certificate. Leaves are built by the very box construction `over()` uses (`indexBox`, now shared).
+- Every other cell lies in exactly one zero block and is also exactly zero when certified alone. Execution, L and H are 0 as well; only the branch signature differs, because a small cell decides more switches than its block.
+- So the contract is: for each cell, either the flat certificate exactly, or a containing proof of ≡ 0. A consumer may skip such a cell (exact zero contributes zero error) or evaluate it under the block's own certificate.
+
+**Landed.**
+- `RegionProofGrid` and `RegionCertificate::proveGrid(lo, hi, maxProofs, why)`, with a work cap, refusal on any uncertifiable cell, and an explicit stack. Occupied leaves also fill `over()`'s cache: the same answers, so the CPU mirror gets them free.
+- `over()`'s cell box construction factored into `indexBox` (pure refactor).
+
+**Verification.**
+- `ontomath_line_segmentation_test` **141/141**: 9 new checks on a clamp ball, covering partition, bit-identical leaves, zero agreement, work ≪ cells (933 proofs / 4,096 cells), work-cap refusal and non-finite refusal.
+- `ontomath_veil_transport_feasibility_test` **10/10**: new real-curtain witnesses at h=8 over every medium box, t ∈ [0, 3], 0 mismatches. Debug: hierarchical 0.41–0.47 s vs flat 1.5–2.4 s per curtain.
+- Integral 85/85; `webgpu_line_quadrature_test` **180/180** (the refactored `over()` path, unchanged family preparations ~117 ms Debug); all run sequentially.
+
+**What this does not claim.**
+- No renderer reads the grid yet, and no native FPS change.
+- A 3 s window at h=4 costs ~0.6 s for all four curtains (Release). That is retained, camera-independent work, but not yet cheaper than the window it covers at h=2.
+- Making rebuilds incremental across clock windows is open: for example, re-prove only blocks whose time-extended proof fails, or prove a longer window.
+
+**Next (the GPU consumer, Codex's gate 2/3).**
+- Upload occupied leaves as cell constants (L, H, sup, low/high, execution) in a sparse brick layout. Zero blocks become empty bricks.
+- A WGSL DDA visits a ray's cells and skips empty bricks with exactly zero contribution.
+- Per-ray panels take their constants from the cells they touch: §6at's a-posteriori march (handoff step 3), now direction-free.
+- Measure against the current marcher on the native frame, including upload, lookup, occupancy and fallback cost, per Codex's bar.
+
+**Shipping ledger:**
+- Mathematical/error contract: unchanged. The grid is exact against flat certification.
+- Economical preparation: a camera-independent grid exists and is 10–19× cheaper than flat, but has no GPU consumer and no incremental clock-window rebuild yet.
+- Native renderer integration: unconnected.
+- Shipped performance: no claim.
+- No save, data home, default, tolerance, lighting, installed app or native timestamp changed. No new visible behavior, so no new Person check.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T22:40-07:00. Human origin: Zach's "NEXT PASS" continuation of the preparation-economy gate, and his frame-budget objection. Codex originated the regional grid's execution semantics and the "repay preparation, skip empty panels" bar. The hierarchical proof, its exactness contract and the measurements are mine.

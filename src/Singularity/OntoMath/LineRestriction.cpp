@@ -2796,13 +2796,7 @@ std::optional<LineQuadratureBand> RegionCertificate::over(const double lo[3], co
                 if (it == _cache.end()) {
                     Interval box[3];
                     const long long idx[3] = {x, y, z};
-                    for (int i = 0; i < 3; ++i) {
-                        const double a = double(idx[i]) * _cell, b = double(idx[i] + 1) * _cell;
-                        float fa = float(a), fb = float(b);
-                        if (double(fa) > a) fa = std::nextafter(fa, -INFINITY);
-                        if (double(fb) < b) fb = std::nextafter(fb, INFINITY);
-                        box[i] = Interval(fa, fb);
-                    }
+                    indexBox(idx, idx, box);
                     it = _cache.emplace(key, certifyBox(*_restriction.form, _restriction.form->roots[0], _model,
                                                         box, _symbolBox, _symbolMagnitudes)).first;
                 }
@@ -2825,6 +2819,72 @@ std::optional<LineQuadratureBand> RegionCertificate::over(const double lo[3], co
         if (worst->width == 0.0) { worst->lipschitz = 0.0; worst->hessian = 0.0; }
     }
     return worst;
+}
+
+void RegionCertificate::indexBox(const long long first[3], const long long last[3], Interval box[3]) const {
+    for (int i = 0; i < 3; ++i) {
+        const double a = double(first[i]) * _cell, b = double(last[i] + 1) * _cell;
+        float fa = float(a), fb = float(b);
+        if (double(fa) > a) fa = std::nextafter(fa, -INFINITY);
+        if (double(fb) < b) fb = std::nextafter(fb, INFINITY);
+        box[i] = Interval(fa, fb);
+    }
+}
+
+std::optional<RegionProofGrid> RegionCertificate::proveGrid(const double lo[3], const double hi[3],
+                                                            std::size_t maxProofs, std::string* why) const {
+    auto refuse = [&](const char* text) -> std::optional<RegionProofGrid> {
+        if (why) *why = text;
+        return std::nullopt;
+    };
+    if (!ok()) return refuse("invalid region certificate");
+    RegionProofGrid grid;
+    grid.cell = _cell;
+    for (int i = 0; i < 3; ++i) {
+        if (!std::isfinite(lo[i]) || !std::isfinite(hi[i])) return refuse("proof grid needs a finite box");
+        const double a = std::floor(std::min(lo[i], hi[i]) / _cell);
+        const double b = std::floor(std::max(lo[i], hi[i]) / _cell);
+        // The same overflow refusal as over(); the work cap below bounds the rest.
+        if (!(a >= -0x1p62 && b <= 0x1p62)) return refuse("proof grid indices exceed the bounded grid");
+        grid.first[i] = static_cast<long long>(a);
+        grid.last[i] = static_cast<long long>(b);
+    }
+    const auto& form = *_restriction.form;
+    const uint32_t root = form.roots[0];
+    bool complete = true;
+    // Explicit stack: depth is bounded by Σ log2(span) but the box count is not.
+    std::vector<std::pair<std::array<long long, 3>, std::array<long long, 3>>> pending{{grid.first, grid.last}};
+    while (!pending.empty() && complete) {
+        const auto [a, z] = pending.back();
+        pending.pop_back();
+        if (grid.proofs >= maxProofs) return refuse("proof grid reached its work cap before completing");
+        Interval box[3];
+        indexBox(a.data(), z.data(), box);
+        ++grid.proofs;
+        auto c = certifyBox(form, root, _model, box, _symbolBox, _symbolMagnitudes);
+        const bool single = a == z;
+        if (c && c->low == 0.0 && c->high == 0.0) {
+            grid.zero.push_back({a, z, *c});
+            continue;
+        }
+        if (single) {
+            if (!c) { complete = false; break; }
+            _cache.emplace(a, c);
+            grid.occupied.emplace(a, std::move(*c));
+            continue;
+        }
+        int axis = 0;
+        for (int i = 1; i < 3; ++i) if (z[i] - a[i] > z[axis] - a[axis]) axis = i;
+        const long long mid = a[axis] + (z[axis] - a[axis]) / 2;
+        auto z1 = z, a2 = a;
+        z1[axis] = mid;
+        a2[axis] = mid + 1;
+        pending.push_back({a2, z});
+        pending.push_back({a, z1});
+    }
+    if (!complete) return refuse("a proof-grid cell could not be certified");
+    if (why) why->clear();
+    return grid;
 }
 
 std::optional<LineQuadratureBand> RegionCertificate::tightOver(const double lo[3], const double hi[3]) const {
