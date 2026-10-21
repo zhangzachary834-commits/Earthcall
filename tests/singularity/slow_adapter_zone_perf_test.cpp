@@ -72,12 +72,71 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    // Isolate save root without copying 1GB of saves/worlds or 252MB of all zones on every performance run.
+    namespace fs = std::filesystem;
+    const fs::path p = fs::absolute(world);
+    const fs::path realSaves = p.parent_path().parent_path();
+
+    const fs::path scratch = fs::temp_directory_path() /
+        ("earthcall_perf_scratch_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    std::error_code ec;
+    fs::create_directories(scratch / "worlds", ec);
+    fs::create_directories(scratch / "zones", ec);
+    fs::create_directories(scratch / "homes", ec);
+
+    const fs::path scratchWorldFile = scratch / "worlds" / p.filename();
+    if (fs::exists(p, ec)) {
+        fs::copy_file(p, scratchWorldFile, fs::copy_options::overwrite_existing, ec);
+    }
+
+    // Copy small shared definitions (laws, homes, materials, persons) so world laws resolve
+    for (const auto& sharedDir : {"laws", "homes", "materials", "persons", "categories"}) {
+        if (fs::exists(realSaves / sharedDir, ec)) {
+            fs::copy(realSaves / sharedDir, scratch / sharedDir, fs::copy_options::recursive | fs::copy_options::copy_symlinks, ec);
+        }
+    }
+
+    if (fs::exists(p, ec) && fs::exists(realSaves / "zones", ec)) {
+        try {
+            nlohmann::json wj = SaveSystem::readSaveData(p.string());
+            std::vector<std::string> zoneNames;
+            if (wj.contains("currentZoneId") && wj["currentZoneId"].is_string()) {
+                zoneNames.push_back(wj["currentZoneId"].get<std::string>());
+            }
+            if (wj.contains("zoneRefs") && wj["zoneRefs"].is_array()) {
+                for (const auto& zr : wj["zoneRefs"]) {
+                    if (zr.is_string()) zoneNames.push_back(zr.get<std::string>());
+                }
+            }
+            if (wj.contains("zones") && wj["zones"].is_array()) {
+                for (const auto& zj : wj["zones"]) {
+                    if (zj.is_object()) {
+                        if (zj.contains("identifier") && zj["identifier"].is_string()) {
+                            zoneNames.push_back(zj["identifier"].get<std::string>());
+                        }
+                        if (zj.contains("name") && zj["name"].is_string()) {
+                            zoneNames.push_back(zj["name"].get<std::string>());
+                        }
+                    }
+                }
+            }
+            for (const auto& zName : zoneNames) {
+                const fs::path srcZoneDir = realSaves / "zones" / SaveSystem::sanitizeLabel(zName);
+                const fs::path dstZoneDir = scratch / "zones" / SaveSystem::sanitizeLabel(zName);
+                if (fs::exists(srcZoneDir, ec) && !fs::exists(dstZoneDir, ec)) {
+                    fs::copy(srcZoneDir, dstZoneDir, fs::copy_options::recursive | fs::copy_options::copy_symlinks, ec);
+                }
+            }
+        } catch (...) {}
+    }
+
+    const std::string prevRoot = SaveSystem::saveRoot();
+    SaveSystem::setSaveRoot(scratch.string());
+
+    TestSupport::BootedEngineHarness h("Player", "humanoid", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld(scratchWorldFile.string());
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
@@ -93,7 +152,8 @@ int main(int argc, char** argv) {
 
     // Warm foreground state without measuring it. The adapter's own timeline
     // advances too when ON, just as it would in a live 60 Hz session.
-    for (int i = 0; i < 30; ++i) {
+    const int warmFrames = std::min(10, frames / 2);
+    for (int i = 0; i < warmFrames; ++i) {
         zone->update(dt);
         zone->applyFormationRelations();
         h.worldTime += dt;
@@ -164,6 +224,9 @@ int main(int argc, char** argv) {
         static_cast<unsigned long long>(h.lawManager.slowAdapterMaintenanceRuns()),
         h.lawManager.slowAdapter().roadsKnown(), h.lawManager.slowAdapter().roadsPending(),
         tierDirect, tierAdapter, tierVocabulary, tierSweep);
+
+    SaveSystem::setSaveRoot(prevRoot);
+    fs::remove_all(scratch, ec);
 
     return 0;
 }
