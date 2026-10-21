@@ -114,9 +114,10 @@ public:
 // ---------------------------------------------------------------------------
 class WebDesignerTheme {
 public:
-    // Loads theme tokens from authored data fixture (saves/fixtures/web_themes.json)
+    // Loads theme tokens and recorded authors from authored data fixture (saves/fixtures/web_themes.json)
     static bool loadThemeTokens(const std::string& themeName,
                                 std::unordered_map<std::string, std::string>& outTokens,
+                                std::vector<std::string>* outAuthors = nullptr,
                                 const std::string& fixturePath = "");
 
     // Authors custom design system tokens with explicit Person stewardship.

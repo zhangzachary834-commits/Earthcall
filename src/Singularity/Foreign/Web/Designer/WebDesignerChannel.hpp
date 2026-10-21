@@ -45,7 +45,17 @@ public:
     static WebDesignerChannel* find(LawManager& laws);
 
     // Compilation and Authoring API (author must be a Person)
-    // Authors an element onto an existing Singular bearer (Object, Formation, etc.)
+    // Primary authored APIs require Person& stewardship
+    Singular& authorElementFromPhrase(
+        Singular& target,
+        const std::string& phrase,
+        const std::string& text,
+        Person& author,
+        LawManager* laws = nullptr,
+        Zone* explicitZone = nullptr,
+        Formation* explicitFormation = nullptr);
+
+    // Overload taking Person* author: if author is null, strictly REFUSES mutation!
     Singular& authorElementFromPhrase(
         Singular& target,
         const std::string& phrase,
@@ -56,6 +66,16 @@ public:
         Formation* explicitFormation = nullptr);
 
     // Convenience authoring: creates a new Singular bearer (Object by default)
+    std::shared_ptr<Singular> authorElementFromPhrase(
+        const std::string& identifier,
+        const std::string& phrase,
+        const std::string& text,
+        Person& author,
+        LawManager* laws = nullptr,
+        Zone* explicitZone = nullptr,
+        Formation* explicitFormation = nullptr);
+
+    // Overload taking Person* author: if author is null, strictly REFUSES creation!
     std::shared_ptr<Singular> authorElementFromPhrase(
         const std::string& identifier,
         const std::string& phrase,

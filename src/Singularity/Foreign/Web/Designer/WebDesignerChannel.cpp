@@ -56,7 +56,7 @@ Singular& WebDesignerChannel::authorElementFromPhrase(
     Singular& target,
     const std::string& phrase,
     const std::string& text,
-    Person* author,
+    Person& author,
     LawManager* laws,
     Zone* explicitZone,
     Formation* explicitFormation) {
@@ -80,22 +80,37 @@ Singular& WebDesignerChannel::authorElementFromPhrase(
         concept.text = text;
     }
 
-    concept.applyToSingular(target);
+    WebDesignerMetalaws::applyAuthoredConcept(target, concept, author);
 
-    if (author) {
-        auto authRel = std::make_shared<Relation>(WebRelationType::kAuthoredBy, target, *author, true, 1.0f);
-        _draftRelations.push_back(authRel);
-        admitRelation(authRel, explicitZone, explicitFormation);
-    }
+    auto authRel = std::make_shared<Relation>(WebRelationType::kAuthoredBy, target, author, true, 1.0f);
+    _draftRelations.push_back(authRel);
+    admitRelation(authRel, explicitZone, explicitFormation);
 
     return target;
+}
+
+Singular& WebDesignerChannel::authorElementFromPhrase(
+    Singular& target,
+    const std::string& phrase,
+    const std::string& text,
+    Person* author,
+    LawManager* laws,
+    Zone* explicitZone,
+    Formation* explicitFormation) {
+
+    if (!author) {
+        // Sun Round 7 Gate 11: Missing stewardship strictly REFUSES mutation of bearer!
+        // Authored APIs require Person stewardship.
+        return target;
+    }
+    return authorElementFromPhrase(target, phrase, text, *author, laws, explicitZone, explicitFormation);
 }
 
 std::shared_ptr<Singular> WebDesignerChannel::authorElementFromPhrase(
     const std::string& identifier,
     const std::string& phrase,
     const std::string& text,
-    Person* author,
+    Person& author,
     LawManager* laws,
     Zone* explicitZone,
     Formation* explicitFormation) {
@@ -107,19 +122,31 @@ std::shared_ptr<Singular> WebDesignerChannel::authorElementFromPhrase(
     Zone* targetZone = explicitZone ? explicitZone : _activeZone;
     Formation* targetFormation = explicitFormation ? explicitFormation : _activeFormation;
 
-    // Sun Round 6 Gate 11: World admission requires Person stewardship!
-    // Detached / authorless calls do not admit into Zone or Formation.
-    if (author) {
-        if (targetZone) {
-            targetZone->addObject(elem);
-        }
-        if (targetFormation) {
-            targetFormation->addMember(elem.get());
-        }
+    if (targetZone) {
+        targetZone->addObject(elem);
+    }
+    if (targetFormation) {
+        targetFormation->addMember(elem.get());
     }
 
     _elementCache[identifier] = elem;
     return elem;
+}
+
+std::shared_ptr<Singular> WebDesignerChannel::authorElementFromPhrase(
+    const std::string& identifier,
+    const std::string& phrase,
+    const std::string& text,
+    Person* author,
+    LawManager* laws,
+    Zone* explicitZone,
+    Formation* explicitFormation) {
+
+    if (!author) {
+        // Sun Round 7 Gate 11: Missing stewardship strictly REFUSES creation of authored element!
+        return nullptr;
+    }
+    return authorElementFromPhrase(identifier, phrase, text, *author, laws, explicitZone, explicitFormation);
 }
 
 std::shared_ptr<Singular> WebDesignerChannel::authorElementInZone(
@@ -132,7 +159,7 @@ std::shared_ptr<Singular> WebDesignerChannel::authorElementInZone(
 
     auto elem = std::make_shared<Object>();
     elem->setObjectID(identifier);
-    authorElementFromPhrase(*elem, phrase, text, &author, laws, &zone, nullptr);
+    authorElementFromPhrase(*elem, phrase, text, author, laws, &zone, nullptr);
     zone.addObject(elem);
     _elementCache[identifier] = elem;
     return elem;
@@ -161,8 +188,20 @@ std::shared_ptr<Singular> WebDesignerChannel::draftElementFromPhrase(
 
     auto elem = std::make_shared<Object>();
     elem->setObjectID(identifier);
-    // Draft compilation: does NOT admit into Zone or Formation
-    authorElementFromPhrase(*elem, phrase, text, nullptr, laws, nullptr, nullptr);
+    Object compileSlot;
+    compileSlot.setObjectID("web-compiler-" + identifier);
+    WebConcept concept;
+    if (laws) {
+        concept = WebDesignerMetalaws::compilePhrase(phrase, *laws, compileSlot);
+    } else {
+        LawManager tempManager;
+        WebDesignerMetalaws::syncRegister(tempManager);
+        concept = WebDesignerMetalaws::compilePhrase(phrase, tempManager, compileSlot);
+    }
+    if (!text.empty()) {
+        concept.text = text;
+    }
+    WebDesignerMetalaws::applyDraftConcept(*elem, concept);
     _elementCache[identifier] = elem;
     return elem;
 }

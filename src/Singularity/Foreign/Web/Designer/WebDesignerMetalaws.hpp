@@ -129,13 +129,14 @@ public:
         std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 
     // Authors concept onto any existing Singular bearer (Object, Formation, Lexeme, etc.).
-    // The Web adapter reads meaning from a being; it does not force every bearer to be an Object.
+    // Primary authored API requires explicit Person stewardship (Person&).
     static Singular& applyAuthoredConcept(
         Singular& bearer,
         const WebConcept& concept,
         Person& author,
         std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 
+    // Overload taking Person* author: if author is null, strictly REFUSES mutation!
     static Singular& applyAuthoredConcept(
         Singular& bearer,
         const WebConcept& concept,

@@ -30,6 +30,65 @@ std::string trim(const std::string& s) {
     return s.substr(first, (last - first + 1));
 }
 
+std::pair<std::string, int> parseIdVersion(const std::string& id) {
+    auto vPos = id.rfind(".v");
+    if (vPos != std::string::npos && vPos + 2 < id.size()) {
+        bool digits = true;
+        for (size_t i = vPos + 2; i < id.size(); ++i) {
+            if (!std::isdigit(static_cast<unsigned char>(id[i]))) {
+                digits = false;
+                break;
+            }
+        }
+        if (digits) {
+            return {id.substr(0, vPos), std::stoi(id.substr(vPos + 2))};
+        }
+    }
+    return {id, 0};
+}
+
+bool isSameLineage(const Law* candidate, const std::string& targetLawId) {
+    if (!candidate) return false;
+    if (candidate->getIdentifier() == targetLawId) return true;
+
+    auto [candBase, _] = parseIdVersion(candidate->getIdentifier());
+    auto [targetBase, _2] = parseIdVersion(targetLawId);
+    if (candBase == targetBase) return true;
+
+    // Check redefined-from provenance chain
+    std::vector<const Law*> stack;
+    stack.push_back(candidate);
+    while (!stack.empty()) {
+        const Law* cur = stack.back();
+        stack.pop_back();
+        for (const auto& r : cur->provenance().getRelationsOfType("redefined-from")) {
+            if (r) {
+                if (auto* prev = dynamic_cast<const Law*>(r->a())) {
+                    if (prev->getIdentifier() == targetLawId || parseIdVersion(prev->getIdentifier()).first == targetBase) {
+                        return true;
+                    }
+                    stack.push_back(prev);
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool isRelationActive(const Relation* r) {
+    if (!r) return false;
+    PropertyValue val;
+    if (r->getDynamicProperty("active", val)) {
+        if (auto b = std::get_if<bool>(&val)) {
+            if (!*b) return false;
+        }
+    }
+    if (r->getDynamicProperty("superseded_by", val)) {
+        return false;
+    }
+    return true;
+}
+
 } // namespace
 
 void WebDesignerMetalaws::syncRegister(LawManager& /*laws*/) {
@@ -51,30 +110,33 @@ void WebDesignerMetalaws::authorWord(Person& author,
     // Retain Lexeme canonically in LanguageSystem so relation endpoint never dangles
     auto lexeme = Singularity::Language::LanguageSystem::instance().intern(symbol, stableLexemeId);
 
-    // Sun Round 6 Gate 3 & 4: Graph-authoritative redefinition and stable history without process counters!
+    // Sun Round 7 Gate 3: Target exact requested Law lineage, not whichever relation appears first!
     Law* previousLaw = nullptr;
+
+    auto checkCandidate = [&](Relation* r) -> bool {
+        if (!r || r->type != "denotes" || r->a() != lexeme.get()) return false;
+        if (!isRelationActive(r)) return false;
+        auto* l = dynamic_cast<Law*>(r->b());
+        if (l && isSameLineage(l, lawId)) {
+            previousLaw = l;
+            return true;
+        }
+        return false;
+    };
+
     if (formation) {
         for (const auto& r : formation->relations().getAll()) {
-            if (r && r->type == "denotes" && r->a() == lexeme.get()) {
-                previousLaw = dynamic_cast<Law*>(r->b());
-                break;
-            }
+            if (checkCandidate(r.get())) break;
         }
     }
     if (!previousLaw && outRelations) {
         for (const auto& r : *outRelations) {
-            if (r && r->type == "denotes" && r->a() == lexeme.get()) {
-                previousLaw = dynamic_cast<Law*>(r->b());
-                break;
-            }
+            if (checkCandidate(r.get())) break;
         }
     }
     if (!previousLaw) {
         for (const auto* r : Universe::instance().relations()) {
-            if (r && r->type == "denotes" && r->a() == lexeme.get()) {
-                previousLaw = dynamic_cast<Law*>(r->b());
-                break;
-            }
+            if (checkCandidate(const_cast<Relation*>(r))) break;
         }
     }
     if (!previousLaw) {
@@ -92,23 +154,14 @@ void WebDesignerMetalaws::authorWord(Person& author,
         laws.add(law);
         targetLaw = law.get();
     } else {
-        // Redefinition: derive stable version identity from the actual previous active law!
+        // Redefinition: derive stable version identity from the actual previous active law in this lineage!
         std::string prevId = previousLaw->getIdentifier();
         std::string base = prevId;
         int nextVersion = 1;
-        auto vPos = prevId.rfind(".v");
-        if (vPos != std::string::npos && vPos + 2 < prevId.size()) {
-            bool allDigits = true;
-            for (size_t i = vPos + 2; i < prevId.size(); ++i) {
-                if (!std::isdigit(static_cast<unsigned char>(prevId[i]))) {
-                    allDigits = false;
-                    break;
-                }
-            }
-            if (allDigits) {
-                nextVersion = std::stoi(prevId.substr(vPos + 2)) + 1;
-                base = prevId.substr(0, vPos);
-            }
+        auto [parsedBase, parsedVer] = parseIdVersion(prevId);
+        if (parsedVer > 0) {
+            nextVersion = parsedVer + 1;
+            base = parsedBase;
         }
         std::string versionedId = base + ".v" + std::to_string(nextVersion);
 
@@ -121,21 +174,36 @@ void WebDesignerMetalaws::authorWord(Person& author,
         laws.add(newLaw);
         targetLaw = newLaw.get();
 
-        // Canonically retire/dissolve the previous denotes relation so graph has ONE active meaning
+        // Sun Round 7 Gate 4, 5 & 12: Preserve historical relation truth without erasure (no removeBetween)!
+        // Mark previous relation(s) in this lineage as historical (active = false, superseded_by = versionedId)
+        auto markSuperseded = [&](Relation* r) {
+            if (r && r->type == "denotes" && r->a() == lexeme.get()) {
+                if (auto* l = dynamic_cast<Law*>(r->b())) {
+                    if (isSameLineage(l, lawId) && isRelationActive(r)) {
+                        r->setDynamicProperty("active", PropertyValue(false));
+                        r->setDynamicProperty("superseded_by", PropertyValue(versionedId));
+                    }
+                }
+            }
+        };
+
         if (formation) {
-            formation->relations().removeBetween(*lexeme, *previousLaw, "denotes");
+            for (const auto& r : formation->relations().getAll()) {
+                markSuperseded(r.get());
+            }
         }
         if (outRelations) {
-            outRelations->erase(
-                std::remove_if(outRelations->begin(), outRelations->end(),
-                    [&](const std::shared_ptr<Relation>& r) {
-                        return r && r->type == "denotes" && r->a() == lexeme.get() && r->b() == previousLaw;
-                    }),
-                outRelations->end());
+            for (const auto& r : *outRelations) {
+                markSuperseded(r.get());
+            }
+        }
+        for (const auto* r : Universe::instance().relations()) {
+            markSuperseded(const_cast<Relation*>(r));
         }
     }
 
     auto rel = std::make_shared<Relation>("denotes", *lexeme, *targetLaw, true, 1.0f);
+    rel->setDynamicProperty("active", PropertyValue(true));
     if (formation) {
         formation->relations().add(rel);
     } else if (Universe::instance().hasRelationRegistrar()) {
@@ -298,6 +366,7 @@ WebConcept WebDesignerMetalaws::compilePhrase(const std::string& phrase,
                                              Singular& channelTarget,
                                              std::string* outError,
                                              const std::vector<Relation*>& extraRelations) {
+    (void)laws;
     if (outError) outError->clear();
 
     // 1. Gather all candidate "denotes" Relations linking in-world Lexemes to Laws
@@ -306,15 +375,19 @@ WebConcept WebDesignerMetalaws::compilePhrase(const std::string& phrase,
         std::string symbol;
         Law* law = nullptr;
     };
-    std::vector<LexemeMapping> mappings;
+    std::unordered_map<std::string, std::vector<Law*>> candidatesBySymbol;
 
     auto collectFrom = [&](const std::vector<Relation*>& rels) {
         for (const auto* rel : rels) {
             if (!rel || rel->type != "denotes") continue;
+            if (!isRelationActive(rel)) continue;
             auto* lex = dynamic_cast<Singularity::Language::Lexeme*>(rel->a());
             auto* law = dynamic_cast<Law*>(rel->b());
             if (lex && law) {
-                mappings.push_back({toLower(trim(lex->getSymbol())), law});
+                std::string sym = toLower(trim(lex->getSymbol()));
+                if (!sym.empty()) {
+                    candidatesBySymbol[sym].push_back(law);
+                }
             }
         }
     };
@@ -322,63 +395,56 @@ WebConcept WebDesignerMetalaws::compilePhrase(const std::string& phrase,
     collectFrom(extraRelations);
     collectFrom(Universe::instance().relations());
 
-    // Sun Round 6 Gate 3 & 4: Unambiguous graph-authoritative active mapping independent of iteration order!
-    auto isNewerDefinition = [](Law* candidate, Law* current) -> bool {
-        if (!candidate || !current) return false;
-        if (candidate == current) return false;
+    struct LexemeEntry {
+        std::string symbol;
+        std::vector<Law*> candidates;
+    };
+    std::vector<LexemeEntry> entries;
 
-        // 1. Check direct provenance: does candidate have "redefined-from" relation involving current?
-        for (const auto& r : candidate->provenance().getRelationsOfType("redefined-from")) {
-            if (r && r->a() == current) return true;
+    for (const auto& [sym, rawList] : candidatesBySymbol) {
+        std::vector<Law*> uniqueList;
+        for (Law* l : rawList) {
+            if (std::find(uniqueList.begin(), uniqueList.end(), l) == uniqueList.end()) {
+                uniqueList.push_back(l);
+            }
         }
 
-        // 2. Parse version numbers if IDs share the same base
-        auto parseIdVersion = [](const std::string& id) -> std::pair<std::string, int> {
-            auto vPos = id.rfind(".v");
-            if (vPos != std::string::npos && vPos + 2 < id.size()) {
-                bool digits = true;
-                for (size_t i = vPos + 2; i < id.size(); ++i) {
-                    if (!std::isdigit(static_cast<unsigned char>(id[i]))) {
-                        digits = false;
+        // Lineage pruning: if candidate A supersedes candidate B within the same revision lineage, prune B!
+        std::vector<Law*> prunedList;
+        for (size_t i = 0; i < uniqueList.size(); ++i) {
+            Law* cand = uniqueList[i];
+            bool superseded = false;
+            for (size_t j = 0; j < uniqueList.size(); ++j) {
+                if (i == j) continue;
+                Law* other = uniqueList[j];
+                if (isSameLineage(other, cand->getIdentifier())) {
+                    bool otherNewer = false;
+                    for (const auto& r : other->provenance().getRelationsOfType("redefined-from")) {
+                        if (r && r->a() == cand) { otherNewer = true; break; }
+                    }
+                    auto [candBase, candVer] = parseIdVersion(cand->getIdentifier());
+                    auto [otherBase, otherVer] = parseIdVersion(other->getIdentifier());
+                    if (candBase == otherBase && otherVer > candVer) {
+                        otherNewer = true;
+                    }
+                    if (otherNewer) {
+                        superseded = true;
                         break;
                     }
                 }
-                if (digits) {
-                    return {id.substr(0, vPos), std::stoi(id.substr(vPos + 2))};
-                }
             }
-            return {id, 0};
-        };
-
-        auto [candBase, candVer] = parseIdVersion(candidate->getIdentifier());
-        auto [currBase, currVer] = parseIdVersion(current->getIdentifier());
-
-        if (candBase == currBase) {
-            return candVer > currVer;
-        }
-
-        // 3. Deterministic order-independent tie-breaker
-        return candidate->getIdentifier() > current->getIdentifier();
-    };
-
-    std::unordered_map<std::string, Law*> activeMapping;
-    for (const auto& m : mappings) {
-        auto it = activeMapping.find(m.symbol);
-        if (it == activeMapping.end()) {
-            activeMapping[m.symbol] = m.law;
-        } else {
-            if (isNewerDefinition(m.law, it->second)) {
-                activeMapping[m.symbol] = m.law;
+            if (!superseded) {
+                prunedList.push_back(cand);
             }
         }
-    }
-    mappings.clear();
-    for (const auto& [sym, law] : activeMapping) {
-        mappings.push_back({sym, law});
+
+        // Sun Round 7 Gate 1 & 2: NO ALPHABETICAL TIE-BREAKER!
+        // Determinism is not semantics. If multiple unrelated Laws remain, retain all candidates.
+        entries.push_back({sym, prunedList});
     }
 
-    // Sort mappings by symbol length descending (greedy longest-match)
-    std::sort(mappings.begin(), mappings.end(), [](const LexemeMapping& a, const LexemeMapping& b) {
+    // Sort entries by symbol length descending (greedy longest-match)
+    std::sort(entries.begin(), entries.end(), [](const LexemeEntry& a, const LexemeEntry& b) {
         return a.symbol.size() > b.symbol.size();
     });
 
@@ -399,18 +465,52 @@ WebConcept WebDesignerMetalaws::compilePhrase(const std::string& phrase,
 
         // Try greedy longest match against registered Lexemes
         bool matchedLexeme = false;
-        for (const auto& m : mappings) {
-            if (m.symbol.empty()) continue;
-            size_t symLen = m.symbol.size();
+        for (const auto& entry : entries) {
+            if (entry.symbol.empty()) continue;
+            size_t symLen = entry.symbol.size();
             if (pos + symLen <= len) {
-                if (lowerPhrase.compare(pos, symLen, m.symbol) == 0) {
+                if (lowerPhrase.compare(pos, symLen, entry.symbol) == 0) {
                     // Check word boundary so "nav" does not match prefix of "navigate"
                     bool atWordBoundary = (pos + symLen == len) || isDelimiter(phrase[pos + symLen]);
                     if (atWordBoundary) {
-                        Law* denotedLaw = m.law;
-                        if (denotedLaw) {
-                            if (denotedLaw->isAuthored()) {
-                                if (const auto* am = denotedLaw->actionModel()) {
+                        Law* chosenLaw = nullptr;
+                        if (entry.candidates.size() == 1) {
+                            chosenLaw = entry.candidates[0];
+                        } else if (entry.candidates.size() > 1) {
+                            // Check authored context / resolution on channelTarget
+                            PropertyValue resVal;
+                            if (channelTarget.getDynamicProperty("web.resolve." + entry.symbol, resVal) ||
+                                channelTarget.getDynamicProperty("context." + entry.symbol, resVal) ||
+                                channelTarget.getDynamicProperty("web.context", resVal)) {
+                                std::string targetId;
+                                if (auto s = std::get_if<std::string>(&resVal)) targetId = *s;
+                                for (Law* c : entry.candidates) {
+                                    if (c && (c->getIdentifier() == targetId || isSameLineage(c, targetId))) {
+                                        chosenLaw = c;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!chosenLaw) {
+                                // Sun Round 7 Gate 1 & 2: Kill the Alphabetical Oracle!
+                                // Strictly REFUSE! No alphabetical tie-breaking!
+                                std::string candidateIds;
+                                for (size_t ci = 0; ci < entry.candidates.size(); ++ci) {
+                                    if (ci > 0) candidateIds += ", ";
+                                    candidateIds += entry.candidates[ci]->getIdentifier();
+                                }
+                                if (outError) {
+                                    *outError = "Ambiguous denotation for '" + entry.symbol +
+                                                "': multiple unrelated Laws denoted (" + candidateIds +
+                                                "); requires authored context or Metalaw resolution";
+                                }
+                                return WebConcept();
+                            }
+                        }
+
+                        if (chosenLaw) {
+                            if (chosenLaw->isAuthored()) {
+                                if (const auto* am = chosenLaw->actionModel()) {
                                     std::vector<PropertyPath> paths;
                                     am->collectPaths(paths);
                                     for (const auto& p : paths) {
@@ -424,11 +524,14 @@ WebConcept WebDesignerMetalaws::compilePhrase(const std::string& phrase,
 
                             // Mandate 1: All Laws MUST execute strictly via Law::applyTo().
                             // Unauthored laws refuse (ApplicationResult::Unauthored); NO ActionModel backdoor!
-                            auto res = denotedLaw->applyTo(channelTarget);
+                            auto res = chosenLaw->applyTo(channelTarget);
                             if (res != Law::ApplicationResult::Applied) {
                                 if (outError) {
-                                    *outError = "Law " + denotedLaw->getIdentifier() + " refused to apply (res=" +
+                                    *outError = "Law " + chosenLaw->getIdentifier() + " refused to apply (res=" +
                                                 (res == Law::ApplicationResult::Unauthored ? "Unauthored" : std::to_string(static_cast<int>(res))) + ")";
+                                }
+                                if (res == Law::ApplicationResult::Unauthored) {
+                                    return WebConcept();
                                 }
                             }
                         }
@@ -499,8 +602,8 @@ Singular& WebDesignerMetalaws::applyAuthoredConcept(
     std::vector<std::shared_ptr<Relation>>* outRelations) {
 
     if (!author) {
-        // Missing stewardship leaves bearer without author Relation
-        concept.applyToSingular(bearer);
+        // Sun Round 7 Gate 11: Missing stewardship strictly REFUSES mutation of bearer!
+        // Authored APIs require Person stewardship.
         return bearer;
     }
     return applyAuthoredConcept(bearer, concept, *author, outRelations);
