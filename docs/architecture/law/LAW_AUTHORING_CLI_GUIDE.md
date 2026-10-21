@@ -6,6 +6,10 @@ Zach asked for a sentence authoring surface with preconfigured vocabulary, then 
 
 Your sentence becomes a **Law in the running world**. A click sentence does not immediately execute its action: it listens for a later click. Its words are authored Lexemes with meanings connected through Relations to Laws. The Terminal senses the sentence; compiler Metalaws supply the parameterized action models; the resulting Law acts through existing channels and authority gates.
 
+### Naming boundary: `LawSentence` is the legacy name for `TerminalLine`
+
+Zach's 2026-10-20 clarification: `LawSentence` was a slight naming imprecision. Treat the current source name as a **legacy implementation identifier** for the Terminal modality's line parser. Conceptually it is `TerminalLine`: it reads the Terminal's command line and compiles through authored Lexeme/Relation/Law semantics. It is not Earthcall's universal text parser and must not be imported into another modality merely because that modality also accepts language. See the [architectural addendum](../../addendums/terminal_line_naming_and_modality_scope_addendum.md).
+
 ## 1. Start here: make a clicked object gold
 
 Launch **`Run Earthcall.command`** at the repository root, or run:
@@ -457,7 +461,7 @@ Start with the Person's requested meaning: origin, trigger, scope, state, effect
 |---|---|
 | [AGENTS.md](../../../AGENTS.md), [build guide](../../BUILD_AND_ENVIRONMENT.md), [engineering discipline](../../ENGINEERING_DISCIPLINE.md) | Repository constraints before searching, building, or implementing. |
 | [Law Line task](../../Agenda/Tasks/Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md) | Implementation history, exact limits, pending rungs, and future-agent directions. |
-| [Terminal sources](../../../src/Singularity/Terminal/) | LawSentence structural parsing, TerminalChannel compilation/adoption, LineEditor interaction. |
+| [Terminal sources](../../../src/Singularity/Terminal/) | `LawSentence` structural parsing (**legacy name; conceptually `TerminalLine`**), TerminalChannel compilation/adoption, LineEditor interaction. |
 | [seed_law_line.py](../../../scripts/seed_law_line.py) | Authored Lexemes, denotes Relations, presets, signatures, and compiler templates. |
 | [AuthorsOfLaw](../../../src/ZonesOfEarth/AuthorsOfLaw/) | Shared Law and ActionModel execution; follow declarations to actual implementations. |
 | [law_line_zone_test.cpp](../../../tests/singularity/law_line_zone_test.cpp) | Isolated real Terminal/Metalaw/tick checks, keyed identity, batches, creation, and pointer programs. |
