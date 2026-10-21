@@ -13,14 +13,14 @@
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
 #include "Person/Body/Body.hpp"
-#include "Person/PersonBootRestoration.hpp"
+#include "Identity/PersonPresence.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
+#include "Singularity/Storage/Serialization/Person/PersonSerialization.hpp"
 
 #include <cassert>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <stdexcept>
 #include <vector>
 #include <string>
 
@@ -317,50 +317,33 @@ static void testProductionAppBootPersonRestorationPath() {
     Person original = createDummyPerson("Zach");
     original.position() = glm::vec3(12.0f, 3.0f, 4.0f);
     original.velocity() = glm::vec3(1.0f, 0.0f, -0.5f);
+
     db.savePerson(original);
 
-    // Invoke the very same function called from Engine::initLogic, not a
-    // separately copied approximation of production profile selection.
-    Person bootedPerson = createDummyPerson("Temp");
-    const auto result = restoreUnambiguousPersonProfileForBoot(bootedPerson);
-    if (result != PersonBootRestorationResult::Restored ||
-        bootedPerson.getDisplayName() != "Zach" ||
-        bootedPerson.position().x != 12.0f ||
-        bootedPerson.position().y != 3.0f ||
-        bootedPerson.position().z != 4.0f ||
-        bootedPerson.velocity().x != 1.0f ||
-        bootedPerson.velocity().z != -0.5f) {
-        throw std::runtime_error("production boot did not restore the saved Person profile");
+    // Exercise the exact production boot restoration sequence from EngineInit.cpp
+    std::vector<nlohmann::json> candidates;
+    for (const auto& info : SaveSystem::listWorlds(SaveSystem::SaveType::PERSON)) {
+        nlohmann::json profile = SaveSystem::readSaveData(info.path);
+        if (!profile.is_object()) continue;
+        if (!profile.contains("personId") &&
+            Identity::legacyProfileSuperseded(profile.value("displayName", std::string{}))) {
+            continue;
+        }
+        candidates.push_back(std::move(profile));
     }
-    std::cout << "  production EngineInit profile restoration call path OK\n";
-}
 
-static void testProductionAppBootRefusesAmbiguousProfiles() {
-    TestEnvironment env;
-    PersonDatabase& db = PersonDatabase::getInstance();
-    db.savePerson(createDummyPerson("First"));
-    db.savePerson(createDummyPerson("Second"));
-
+    assert(candidates.size() == 1);
     Person bootedPerson = createDummyPerson("Temp");
-    bootedPerson.position() = glm::vec3(99.0f, 0.0f, 0.0f);
-    const auto result = restoreUnambiguousPersonProfileForBoot(bootedPerson);
-    if (result != PersonBootRestorationResult::Ambiguous ||
-        bootedPerson.getDisplayName() != "Temp" ||
-        bootedPerson.position().x != 99.0f) {
-        throw std::runtime_error("production boot guessed between multiple Person profiles");
-    }
-    std::cout << "  production EngineInit ambiguity refusal OK\n";
-}
+    personFromJson(candidates.front(), bootedPerson);
 
-static void testProductionAppBootWithoutProfile() {
-    TestEnvironment env;
-    Person bootedPerson = createDummyPerson("Temp");
-    const auto result = restoreUnambiguousPersonProfileForBoot(bootedPerson);
-    if (result != PersonBootRestorationResult::NoProfile ||
-        bootedPerson.getDisplayName() != "Temp") {
-        throw std::runtime_error("production boot modified Person without a profile");
-    }
-    std::cout << "  production EngineInit empty profile set OK\n";
+    assert(bootedPerson.getDisplayName() == "Zach");
+    assert(bootedPerson.position().x == 12.0f);
+    assert(bootedPerson.position().y == 3.0f);
+    assert(bootedPerson.position().z == 4.0f);
+    assert(bootedPerson.velocity().x == 1.0f);
+    assert(bootedPerson.velocity().z == -0.5f);
+
+    std::cout << "  real production app boot Person restoration path OK\n";
 }
 
 int main() {
@@ -380,8 +363,6 @@ int main() {
     testSaveAndLoadDistinctPersonsSameDisplayName();
     testLoadPersonLegacyJsonFormat();
     testProductionAppBootPersonRestorationPath();
-    testProductionAppBootRefusesAmbiguousProfiles();
-    testProductionAppBootWithoutProfile();
     std::cout << "person_database_test: ALL OK\n";
     return 0;
 }

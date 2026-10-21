@@ -146,7 +146,7 @@ jobs:
         run: |
           set -euxo pipefail
           # shellcheck disable=SC2086  # FOCUSED_TESTS is split into target names on purpose
-          cmake --build build --parallel 4 --target earthcall_terminal $FOCUSED_TESTS
+          cmake --build build --parallel 2 --target earthcall_terminal $FOCUSED_TESTS
 
       - name: Run foreign DOM fixture witnesses from nested build directories
         shell: bash
