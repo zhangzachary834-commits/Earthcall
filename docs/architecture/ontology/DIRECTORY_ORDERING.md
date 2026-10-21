@@ -105,10 +105,12 @@ Earthcall/
       Relationship/
         Community/
       Soul/
+      Voice/
+        VoicePart/
     Relation/              Relation · RelationManager
       Formation/
-      py/
       Traversal/
+      py/
     Singularity/           the modality layer — where language stops mattering
       Audio/               the Sound modality (AudioSystem)
       Core/                Engine · EventBus · CreationChannel
@@ -117,11 +119,17 @@ Earthcall/
         FirstMoverWindowTools/
           CreatorConsole/
           Menu/
-        Legacy/
         TalkingRobotGuyAPI/
       Foreign/             the Foreign software modality (ForeignChannel at the root)
-        Adapters/          MacOSAccessibilityAdapter
         API/               EarthcallAPI, SecurityManager
+        Adapters/          MacOSAccessibilityAdapter
+        Shell/
+        Sync/              AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
+        Web/               WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
+          web_ui/
+            public/
+            src/
+              assets/
         mcp/               earthcall-mcp-server.js
         py/                app.py
           agent/
@@ -132,12 +140,6 @@ Earthcall/
             ui/
           templates/
           web/
-        Sync/              AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
-        Web/               WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
-          web_ui/
-            public/
-            src/
-              assets/
       Input/               the Input modality
         Interaction/       InteractionChannel, ControlPatterns
         Keyboard/          KeyboardHandler
@@ -145,6 +147,8 @@ Earthcall/
         Mouse/             MouseHandler
       Language/            the Symbolic modality (LanguageSystem, parser; Lexeme is a Singular)
       Network/             WebSocketClient.cpp · WebSocketServer.cpp
+        Http/
+        Osc/
         py/                engine_server.py · events.py
       OntoMath/            authored mathematics (Field, Function, CurveModel, Operations)
       Physical/            the Physical hardware modality (PhysicalChannel)
@@ -174,8 +178,8 @@ Earthcall/
       HomesOfEarth/
       Ourverse/
       Physics/
-      py/
       Zone/
+      py/
 
   docs/  tests/  examples/  scripts/  saves/  scratch/  web_ui/     the workshop
   third_party/  local_deps/  imgui/                                 the foreign
