@@ -2122,3 +2122,46 @@ Sequential named-target runs: **121/121** segmentation, **57/57** restriction, *
 **Next agent:** start with affordable reusable/device-side work discovery and the native projected-source admission contract, not a host planner in the pixel loop. Keep T’s weighting of background/remaining light in the final-pixel bound. Do not repurpose the accepted-lattice `volumeOutputErrorBudget`, silently drop floor/scattering, independently composite different-ratio overlaps, or equate operation counts with speed. Source/model/direction/box/domain/schema changes need fresh evidence; a future cache must also handle device generation. Read plan §6az and the Derived-State Ledger before building retention.
 
 **Signed:** Codex / GPT-6.1 Sol / `2026-10-20T21:16:31-07:00` / `01a148a7-bd85-7550-a416-0e859a729c1a`.
+
+
+## Codex continuation — one proof packet serves a bounded family of GPU rays (`4e1706399`)
+
+Zach commissioned “NEXT PASS.” **`4e1706399`** is committed locally on **`claude/ray-domain-transport-rung0`** in `/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/ourverse_navigator_prototype_loop`; nothing pushed. This continues §6az above; implementation, measurements and inheritor instructions are in plan **§6ba** and the ray-domain task. His authored-equation criterion and OntoMath ownership correction remain controlling.
+
+### What crossed this pass
+
+OntoMath’s `prepareRegionalLineTransport` accepts closed f32 origin/direction boxes, a frozen parameter interval, execution/symbol domains and an explicit panel cap. It prepares complete swept-panel evidence **without field callbacks, host field samples or a CPU integral**. Bounds cover every family ray plus the maximum positional halo. Directional derivatives qualify closed direction boxes; exact zero components may prove constancy, while a nonzero-width zero-spanning interval cannot. Full spatial Lipschitz and original-DAG rounding charges remain intact.
+
+A bounded priority queue concentrates panels according to enclosure remainders, including attenuation/source-product variation for the general nested kernel. Ranking selects work; only the **GPU’s complete result-specific bound** admits. All spans remain covered; failed complete certification returns unavailable, unsplittable panels keep evidence, and work caps cannot truncate an integral. The family packet has no host result/admission; its zero host-mirror counters do not mean zero GPU work.
+
+Both GPU kernels accept the family through explicit origin/direction domain guards, retaining interval/clock/omega and output-budget guards. All three components’ one-ulp escapes, NaNs, wrong limits/clocks and unattainable budgets refuse. Expanded direction domains cannot consume narrower directional proofs. Exact-ray packets still require the original exact ray. A moved family executes within analytic bounds with fresh numeric parameters and **identical WGSL text**, while old payload data refuses it. Stale field snapshots refuse. The numeric panel schema remains 11/depth and 20/general, with added domain parameters and dynamic coefficient tail. No native cache or lifecycle was introduced.
+
+### Actual Metal evidence, including the cost tradeoff
+
+The affine analytic test executes **64 RGB/T records** with all three origin/direction components varying and clocks 0/3 through one packet; signed components and T contain independent analytic integrals. The general nested kernel independently contains analytic radiance for that family and refuses escaped inputs/budgets.
+
+Each actual raw Northern Veil curtain now has one packet for origin [-1/64,+1/64]^3, dx=dy=0, dz in [255/256,257/256], clock [0,3], and the previous full local-z parameter interval. Four different rays × two clocks = **8 occupied vector records/packet, 32 across all four media (128 scalars)**. Every RGB/T result admits at unchanged **RGB ±0.01/component, T ±0.006**, containing independent 4000/8000-cell original-expression cumulative references (agreement <1e-5; CPU f32 vector/Perlin semantics, numerical witnesses rather than exact-real certification). A tiny dx=2^-20 is refused: this is axial-family evidence, not broad perspective coverage.
+
+| Medium | Shared panels | Sigma evaluations/ray | Max T error bound | Debug shared preparation |
+|---|---|---|---|---|
+| Emerald | 128 | 242 | 0.00330044 | 203.943 ms |
+| Cyan | 128 | 234 | 0.00292321 | 207.964 ms |
+| Violet | 128 | 238 | 0.00266676 | 205.797 ms |
+| Crimson | 128 | 242 | 0.00232957 | 209.013 ms |
+
+Zero source-field evaluations remain. **Tradeoff:** shared bounds need 234–242 sigma evaluations/ray, versus individually tailored §6az’s 94–150 hard-ray evaluations. Preparation is shared, but **204–209 ms/family** remains substantial. These are uncontrolled Debug host preparation diagnostics, excluding device compilation/uploads/reference integration/frame composition, not native timing or an amortized FPS claim. Test helpers recreate GPU resources between readback modes; no persistent residency is proved. A 128-panel uniform control refused (emerald T bound ~0.0674); priority preparation admits at unchanged work cap/tolerances. Linear input fields also require ranking the curved attenuated outer product; that control now passes.
+
+**Final focused checks, sequential targets:** **132/132** segmentation, **57/57** restriction, **85/85** Integral, **36/36** expression/report, **32/32 Metal** ordinary Integral, **176/176 Metal** line/general/reduced schedules. `earthcall_webgpu` builds. Logs `/private/tmp/earthcall-ray-family-{cpu,restriction,integral,expression,integral-gpu,gpu}-verified.txt`, build `/private/tmp/earthcall-ray-family-build-final.txt`. No native certificate tour/radial census/whole suite/inhabited-motion rerun this pass; §6az’s native 132/132 remains dated evidence. Execution/noise/exp premises remain model-qualified, not hardware-certified. No save/data home, installed app/launch, lighting, author tolerance or default activation changed; existing Person checks remain open.
+
+### Shipping ledger — preserve in the next reply and next chat pass
+
+| Gate | Landed | Remaining |
+|---|---|---|
+| **1. Mathematical/error contract** | Direction-domain and swept-family evidence with original spatial/execution charges. | Conditional model premises and unsupported-domain refusals. |
+| **2. GPU execution and affordable discovery** | Reusable proof packets; zero host field sampling/integration; each actual GPU ray computes and admits its own RGB/T. | Economical preparation/retention, broad perspective directions and work allocation, or device-side discovery; shared bounds increase per-ray work here. |
+| **3. Native renderer** | Still unconnected. | Projected density/gate/clamp/1e-6-floor/scattering admission, coherent shared attenuation for overlaps, local frames/clocks/clipping and native edit/payload/device lifecycle. |
+| **4. Shipped GPU performance** | No new frame-time or inhabited-motion claim. | Authored-reference accuracy and repeated end-to-end Metal cost including cold preparation/uploads/occupancy/fallback, then Person evidence. |
+
+**Next agent:** establish the native projected-source admission contract and economical retained/device family execution strategy. Do not put a 200 ms family preparation into a per-frame-per-pixel loop. Any future cache must key current source/model/schema/symbol and ray domains, interval/work layout, local-frame/clock binding and device generation; identical WGSL is not proof-payload validity. Preserve coherent overlap attenuation; different-ratio members do not independently compose. T error weights background/remaining light before final-pixel admission. Do not silently reinterpret the accepted-lattice `volumeOutputErrorBudget`, remove floor/scattering, infer perspective coverage from axial tests or promote sample counts into FPS. Read plan §6ba and the Derived-State Ledger before native retention.
+
+**Signed:** Codex / GPT-6.1 Sol / `2026-10-20T21:46:48-07:00` / `01a148a7-bd85-7550-a416-0e859a729c1a`.
