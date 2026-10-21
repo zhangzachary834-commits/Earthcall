@@ -28,6 +28,9 @@ third_party/websocketpp/
 build/
 build2/
 build-release/
+# Side configurations for measurement (e.g. a Release probe build): never source.
+build_*/
+build-*/
 build_ag/
 build_agy/
 build-*/

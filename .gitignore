@@ -35,6 +35,9 @@ build/
 build_release/
 build-release/
 build-wasm/
+# Side configurations for measurement (e.g. a Release probe build): never source.
+build_*/
+build-*/
 *.o
 *.d
 *.gch
