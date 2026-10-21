@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
+#include <stdlib.h>
 #include <filesystem>
 #include <iostream>
 #include <optional>
