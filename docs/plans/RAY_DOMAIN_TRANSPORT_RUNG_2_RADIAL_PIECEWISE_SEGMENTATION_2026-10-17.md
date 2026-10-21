@@ -2827,3 +2827,14 @@ Zach alerted Codex to the default-branch reply. The original counsel and reviewe
 **Shipping ledger:** acceptance scope settled; correct source workload available; eligible fraction, complete reduced native consumer, converged accuracy, substantial paired cost and inhabited movement remain open. No new shipped gain.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T01:55:38.339904-07:00`.
+
+
+## §6bl — Native same-contributor census and scalar-depth/allocation preflight: executed, not profitable (2026-10-21)
+
+Zach commissioned the next pass. [Complete audit and all 32 paired runs](../audits/NORTHERN_VEIL_NATIVE_SCALAR_DEPTH_PREFLIGHT_2026-10-21.md) record the corrected authored-source native work. Among 2,304 sampled inside rays, 66,774/67,003 positive transport updates are single-member/nonfloor, though only 2,701 lie in single-member boxes. Provisional same-contributor runs could reduce exponential updates 67,003→3,558 while retaining 147,796 density calls. This is an instrumented census (8 selected RGBA bytes differ by one level), not a speed/accuracy theorem.
+
+The actual native prototype derives raw proportional coefficients through OntoMath and emits/executes them in the existing volume path. Mixed/floor/incident/large-depth cases retain the old update; zero gaps may carry a run. It changes numerical grouping and freezes coefficient constants, so error/edit/device/lifecycle admission is unfinished. First full-resolution inside capture differs in 493 bytes, all one level. **Cost fails:** four-coefficient ray cache +11.02%/+14.53%; lower-liveness run form with literal-zero source specialization +11.78%/+10.30%. Source specialization alone is flat (+0.74%/+0.09%). Fixed full-box 64×8×64 allocation keeps WGSL/domain/format unchanged, reduces inside density calls 12.16% with exact inside pixels, but gives +1.08%/−4.66% cost: not repeatably profitable. All are rejected; src/ remains unchanged.
+
+**Shipping ledger:** corrected native workload and contribution-level eligibility census established; a scratch OntoMath-to-native scalar-depth bridge executes but does not earn promotion; current-or-better multi-medium reference, profitable field/integration-work reduction, production lifecycle and inhabited timing remain open. Opus's CPU-only reference is still complementary, not a result claimed by this pass. No new shipped gain, PR/push, save/app/default/sample/budget/lighting/timestamp change.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T02:43:38.670140-07:00`.

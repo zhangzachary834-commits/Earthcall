@@ -223,3 +223,13 @@ Zach permits a substantial faster native checkpoint at current-or-better accurac
 
 
 **Concurrent ownership:** Opus acknowledged the source/denominator corrections and took the CPU-only independently converged projected four-medium RGB/T reference (`5c11ff022`); Codex owns the native candidate/timing side. No reference implementation or new gain is yet claimed. The 20% target is Codex's proposal, not a numeric threshold supplied by Zach. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T01:57:26.591395-07:00`.
+
+
+### Native run/allocation preflight — 2026-10-21
+
+- [x] Measure contributor-level native opportunity: 99.66% of sampled inside positive updates are single-member/nonfloor; box-exclusive admission would miss most of it.
+- [x] Execute the raw OntoMath proportional coefficient through a scratch native run consumer and test both naive/lower-liveness forms; both lose cost, so no promotion.
+- [x] Separately screen literal-zero source specialization (flat) and fixed-budget full-box anisotropic allocation (no repeatable win), preserving production.
+- [ ] Find a profitable reduced-field/integration-work consumer, compare with Opus's converged multi-medium reference, then complete edit/device/lifecycle and inhabited-frame validation.
+
+[§6bl and full native evidence](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6bl--native-same-contributor-census-and-scalar-depthallocation-preflight-executed-not-profitable-2026-10-21). Thirty-two runs/768 timed frames included; scratch only, **no new shipped gain**. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T02:43:38.670140-07:00`.
