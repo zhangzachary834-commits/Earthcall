@@ -1,7 +1,8 @@
 # Northern Veil — Analytic Piece Integration & Residual Preflight (§6bu)
 
 **Date:** 2026-10-21  
-**Harness / Models:** Antigravity (Sparkly Guy), GPT-5.6 Sol (Original Prism Sun), GPT-6.1 Sol (Sixth-one Sun), Claude 5.5 Opus (Firmament)  
+**Executed / Authored by:** Sparkly Guy (Gemini 3.8 Flash High) & Aetherion / The Firmament (Gemini 4 Argon)  
+**Responding to / Building on:** Original Prism Sun (GPT-5.6 Sol, decree & reviews), Sixth-one Sun (Codex / GPT-6.1 Sol, handoff & units), Claude Opus 5.5 (reference rows & Rung 0-2 foundation), Astra (architectural review)  
 **Branch:** `claude/ray-domain-transport-rung0`  
 **JSON Witness:** [`NORTHERN_VEIL_ANALYTIC_PIECE_INTEGRATION_2026-10-21.json`](NORTHERN_VEIL_ANALYTIC_PIECE_INTEGRATION_2026-10-21.json)  
 **Input Fixtures:**  
@@ -26,16 +27,18 @@ Here is the complete census on all **2,304 native rays** of Northern Veil:
 
 2. **Semantic Piece Classification Across All 2,304 Rays (17,657 Pieces Total):**
    - **Total Active Pieces:** 17,657 (~7.66 pieces/ray).
-   - **Class A (Exact Closed-Form Integrals, 0 remainder terms):** **7,046 pieces (39.91%)** require **ZERO interior sampling**.
-   - **Class B (Hybrid Closed Weights, 1 cell remainder):** **10,611 pieces (60.09%)** require at most a 1-point residual sample.
+   - **Envelope-A (Exact Closed-Form Envelope Integrals, 0 remainder terms):** **7,046 pieces (39.91%)** require **ZERO numerical quadrature for the envelope office**.
+   - **Envelope-B (Hybrid Closed Envelope Weights, 1 quadratic cell remainder):** **10,611 pieces (60.09%)** require only 1 remainder evaluation for the envelope.
    - **Refusals:** **0**.
    - **Multi-Curtain Overlaps:** Only **253 intervals** across the entire camera view (1.43% of intervals) have more than one active curtain. **98.57% of intervals are pure single-curtain with spatially uniform source $S_j(s) \equiv \mathbf{c}_j(t)$**.
+   - *Note on Complete Optical Depth:* While the envelope office achieves 39.91% pure closed forms, complete optical depth $\int E(s) w(s) \, ds$ still requires treatment of the high-frequency clamped noise factor $w(s) = \operatorname{clamp}(0.7 + 0.3 N, 0, 1)$.
 
-3. **Residual Noise Evaluations:**
+3. **Work-Unit Transformation & Field Evaluation Counts:**
    - Instead of evaluating the 52-node AST, the ray only samples the lightweight high-frequency 3D Perlin noise factor $w(s) = \operatorname{clamp}(0.7 + 0.3 N(\nu \mathbf{x}), 0, 1)$ across the piece.
-   - **Tier 1 (Analytic Main + 1 Midpoint Noise Sample):** **7.81 noise calls/ray** (an **87.4% reduction** in evaluation count!).
-   - **Tier 2 (Analytic Main + 2 Gauss Points on Noise):** **15.40 noise calls/ray** (a **75.2% reduction**!).
-   - **GL4 (Analytic Main + 4 Gauss Points on Noise):** **31.24 noise calls/ray** (a **50.0% reduction**).
+   - **Tier 1 (Analytic Main + 1 Midpoint Noise Sample):** **7.81 noise calls/ray** (87.4% fewer point evaluations than §6bt).
+   - **Tier 2 (Analytic Main + 2 Gauss Points on Noise):** **15.40 noise calls/ray** (75.2% fewer point evaluations).
+   - **GL4 (Analytic Main + 4 Gauss Points on Noise):** **31.24 noise calls/ray** (50.0% fewer point evaluations).
+   - *Economics Note:* This is a work-unit transformation (eliminating 52-node AST traversal in favor of scalar Perlin cell sampling), not a measured GPU arithmetic or wall-clock claim. Native Metal economics remain unmeasured.
 
 ---
 
@@ -97,4 +100,5 @@ accurately computes optical depth without re-evaluating the macroscopic envelope
 
 ---
 
-**Signed:** Sparkly Guy (Antigravity), Original Prism Sun (GPT-5.6 Sol), Sixth-one Sun (GPT-6.1 Sol), Firmament (Claude 5.5 Opus) / 2026-10-21.
+**Executed / Authored by:** Sparkly Guy (Gemini 3.8 Flash High) & Aetherion / The Firmament (Gemini 4 Argon)  
+**Responding to / Building on:** Original Prism Sun (GPT-5.6 Sol), Sixth-one Sun (Codex / GPT-6.1 Sol), Claude Opus 5.5, Astra / 2026-10-21. Human origin: Zachary Zhang.
