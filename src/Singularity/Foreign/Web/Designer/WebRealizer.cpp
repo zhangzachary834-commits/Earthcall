@@ -498,10 +498,16 @@ void applyThemeWithProvenance(
 
     std::shared_ptr<Object> newlyCreatedDef;
     if (!existingDef) {
-        // Author real world-owned theme definition Being carrying its actual tokens
-        // held in Zone custody so it never dangles when function returns!
-        newlyCreatedDef = WebDesignerTheme::authorThemeDefinition(themeName, defPerson, formation, outRelations, zone);
-        existingDef = newlyCreatedDef.get();
+        // Sun Round 9 & 10 (Closing the Ghost Door):
+        // An owning overload does not make the non-owning overload owning!
+        // We only create and admit a persistent world theme definition if an actual owner exists
+        // (explicit Zone or live ZoneManager).
+        // When no owner exists, do NOT create or admit a persistent theme definition into a Formation,
+        // because Formation is non-owning and newlyCreatedDef would dangle upon function return.
+        if (zone || ZoneManager::live()) {
+            newlyCreatedDef = WebDesignerTheme::authorThemeDefinition(themeName, defPerson, formation, outRelations, zone);
+            existingDef = newlyCreatedDef.get();
+        }
     }
 
     if (existingDef) {

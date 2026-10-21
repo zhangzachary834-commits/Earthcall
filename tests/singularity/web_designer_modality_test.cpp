@@ -9,6 +9,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
 #include "Relation/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
@@ -3113,8 +3114,50 @@ void test_round8_missing_theme_tokens_unset_no_cpp_aesthetic_fallbacks() {
 // ===========================================================================
 
 void test_round9_theme_definition_zone_custody_and_no_theme_ghost() {
-    std::cout << "[Round 9 Witness: Gate 1] Theme Definition Zone Custody (Killing Theme Ghost)..." << std::endl;
+    std::cout << "[Round 9 Witness: Gate 1 & Sun Round 10 Hostile Witness] Theme Definition Zone Custody & Ghost Door Sealed..." << std::endl;
 
+    // -----------------------------------------------------------------------
+    // Part 1: Exact Sun Hostile Witness (The Ghost Door is Sealed)
+    // Run with NO live ZoneManager and the old overload taking only Formation*
+    // -----------------------------------------------------------------------
+    assert(ZoneManager::live() == nullptr);
+    Formation f;
+    Person p = makeTestPerson("Zach");
+    Object pageGhostDoor;
+    pageGhostDoor.setObjectID("page-ghost-door");
+    f.addMember(&pageGhostDoor);
+
+    // Call old overload (no Zone&) from an isolated helper
+    auto runLegacyApply = [&]() {
+        WebDesignerTheme::applyModernDarkTheme(pageGhostDoor, p, &f);
+    };
+    runLegacyApply();
+
+    // Helper has returned!
+    // Check f: The forbidden outcome is f containing theme.definition.modern-dark
+    // as a raw member whose last shared_ptr has already died.
+    bool foundGhost = false;
+    for (const auto* m : f.getMembers()) {
+        if (m && m->getIdentifier() == "theme.definition.modern-dark") {
+            foundGhost = true;
+            break;
+        }
+    }
+    // GHOST DOOR SEALED: No dangling theme definition was created or admitted without an owner!
+    assert(!foundGhost);
+
+    // Page still received aesthetic tokens cleanly
+    PropertyValue pageBg;
+    assert(pageGhostDoor.getDynamicProperty("theme.backgroundColor", pageBg));
+    if (auto s = std::get_if<std::string>(&pageBg)) {
+        assert(*s == "#0b0f19");
+    }
+
+    std::cout << "  ✓ Ghost Door sealed: legacy no-Zone overload refuses to admit dangling theme definition into Formation" << std::endl;
+
+    // -----------------------------------------------------------------------
+    // Part 2: Explicit Zone& Custody Witness
+    // -----------------------------------------------------------------------
     Zone siteZone("zone.site.custody", "Theme Custody Zone");
     Person author = makeTestPerson("Zach");
     Object page;
