@@ -2544,3 +2544,57 @@ Occupied leaves grow ~5.4× per halving (sheet-like curtains), so work follows t
 - No save, data home, default, tolerance, lighting, installed app or native timestamp changed. No new visible behavior, so no new Person check.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T22:40-07:00. Human origin: Zach's "NEXT PASS" continuation of the preparation-economy gate, and his frame-budget objection. Codex originated the regional grid's execution semantics and the "repay preparation, skip empty panels" bar. The hierarchical proof, its exactness contract and the measurements are mine.
+
+
+## 6be. The device grid march: one proof grid serves every ray direction, soundly; admission is blocked by kinks (2026-10-20)
+
+**Human origin.** Zach: "BROOOOO NEXT PASSSSSSSSS ANDN KEEP THE ACCOUNT OF HOW MUCH IS LEFT UNTIL THE RAY TRANSPORT WORK BUYS MORE FASTER NORTHERN VEIL THAN BEFORE". The account is now a standing section of the [task](../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Ray_Domain_Transport_Compilation/Ray_Domain_Transport_Compilation.md#distance-to-a-faster-northern-veil). His generality question became its own [mission](../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Proof_Grid_Generality_Witness/Proof_Grid_Generality_Witness.md), as he asked.
+
+**Landed.**
+- **Dilated proofs.** `proveGrid(..., margin)` certifies every cell and zero block on its box widened by `margin` (outward f32). With margin 0, leaves remain exactly `over()`'s cells.
+- **Every panel ends on a cell face.** f32 rounding plus the positional halo therefore always reaches the neighbouring cell. Taking the worst of both cells would lose the Hessian at every face, because branch signatures cannot be compared on a device. Dilation makes one cell's proof cover its own panels.
+- **`compileGridDepthTransport` (`lineGridDepthAt`).** A per-ray DDA over the dense cell index:
+  - zero cells contribute exactly 0 and are never evaluated;
+  - occupied segments reuse `lowerScheduledTransport`'s depth-panel arithmetic (now the shared `kRayProofArithmetic`) with that cell's constants;
+  - sub-panels per cell (≤ 64) are chosen from the budget, as a work choice only;
+  - before a panel uses a cell, the device checks that its outward-rounded swept box ± 2·halo lies inside the dilated cell, with power-of-two cell and margin so faces are exact f32; otherwise the ray refuses.
+- **Refusals:** a clock outside the proved window, a ray leaving the grid, an edited field (source snapshot), a grid without margin, an incomplete partition, or the panel cap.
+
+**Metal witness** (`webgpu_line_quadrature_test`, **201/201**). For each real curtain: one h=4, δ=1/256 grid over the medium box (t ∈ [0, 3]), and 16 rays in 8 directions including pure x, pure y and oblique, at two clocks. A §6ba family *refuses* those directions.
+- **Sound everywhere:** every one of 64 rays returns a finite bound containing an independent CPU Simpson reference. The reference's own coarse/fine spread is charged against the bound, because uniform Simpson converges first-order across kinks.
+- **Device values match the reference to ~1e-7. The bounds are loose:** 0.01–0.15. Admission at T tolerance 0.006 is **22/64**: 8, 4, 6 and 4 per curtain. Rays through empty space cost 0 σ calls.
+
+| curtain | proofs | occupied | mean σ calls / ray | skipped zero cells | 32×16-ray batch |
+|---|---|---|---|---|---|
+| emerald | 4,079 | 1,230 | 529 | 36.5 | 59 ms |
+| cyan | 3,175 | 1,130 | 620 | 34.0 | 75 ms |
+| violet | 4,161 | 1,300 | 658 | 35.6 | 61 ms |
+| crimson | 2,789 | 896 | 641 | 34.4 | 63 ms |
+
+(Debug host proving 1.1–1.5 s; small-dispatch batches are not native frame time.)
+
+**Diagnosis: kinks, not the grid.** The emerald σ is `0.1·clamp(1−|x|/75)·clamp(0.25(y+16))·clamp(1−(y+16)/32)·clamp(1−|z − wave(x)|/3.2)·(0.68+…)·clamp(0.7+0.3·noise(0.08p))`, a product of tent profiles.
+
+| cell size | finite H | with an undecided switch |
+|---|---|---|
+| h=4 | 0 / 1,230 | all |
+| h=1 | 29% | 71% |
+| h=0.25 | 77% | 23% |
+
+A cell holding a kink has no Hessian, so its bound is first-order (∝ L·W²/m), and the panel cap is hit. Uniform refinement to second order costs millions of cells. A tolerance change is not a remedy.
+
+**Next: kink-aware device panels**, which is this plan's own Rung 2 segmentation brought to the grid march.
+- Store each occupied cell's undecided switches.
+- Per ray segment, locate each undecided switch's crossing (linear arguments in closed form; z − wave(x) by certified bracketing with its own derivative bound), and split panels there.
+- On each side, use branch-decided constants: certify cells per sign assignment, or per sub-box on one side.
+- This should make H finite on almost every panel, turning the bound second-order and cutting σ calls.
+- Then RGB through Codex's shared depth reduction, then the cost A/B.
+
+**Shipping ledger:**
+- Mathematical/error contract: unchanged and exact. The grid march is sound in every direction.
+- Economical preparation/execution: a camera-independent grid and its device consumer exist. Admission is 22/64 (kinks), and work is cap-bound.
+- Native renderer integration: unconnected.
+- Shipped performance: no claim.
+- No save, data home, default, tolerance, lighting, installed app or native timestamp changed. No new visible behavior, so no Person check.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T23:12-07:00. Human origin: Zach's instruction above. Codex originated the per-panel depth arithmetic, the a-posteriori region march and the native gates. The dilated grid, the device DDA, its containment check and the kink diagnosis are mine.

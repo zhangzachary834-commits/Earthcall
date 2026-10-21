@@ -2821,9 +2821,10 @@ std::optional<LineQuadratureBand> RegionCertificate::over(const double lo[3], co
     return worst;
 }
 
-void RegionCertificate::indexBox(const long long first[3], const long long last[3], Interval box[3]) const {
+void RegionCertificate::indexBox(const long long first[3], const long long last[3], Interval box[3],
+                                 double margin) const {
     for (int i = 0; i < 3; ++i) {
-        const double a = double(first[i]) * _cell, b = double(last[i] + 1) * _cell;
+        const double a = double(first[i]) * _cell - margin, b = double(last[i] + 1) * _cell + margin;
         float fa = float(a), fb = float(b);
         if (double(fa) > a) fa = std::nextafter(fa, -INFINITY);
         if (double(fb) < b) fb = std::nextafter(fb, INFINITY);
@@ -2832,14 +2833,17 @@ void RegionCertificate::indexBox(const long long first[3], const long long last[
 }
 
 std::optional<RegionProofGrid> RegionCertificate::proveGrid(const double lo[3], const double hi[3],
-                                                            std::size_t maxProofs, std::string* why) const {
+                                                            std::size_t maxProofs, std::string* why,
+                                                            double margin) const {
     auto refuse = [&](const char* text) -> std::optional<RegionProofGrid> {
         if (why) *why = text;
         return std::nullopt;
     };
     if (!ok()) return refuse("invalid region certificate");
+    if (!(margin >= 0.0 && margin < _cell)) return refuse("proof-grid margin must be finite, >= 0 and below the cell size");
     RegionProofGrid grid;
     grid.cell = _cell;
+    grid.margin = margin;
     for (int i = 0; i < 3; ++i) {
         if (!std::isfinite(lo[i]) || !std::isfinite(hi[i])) return refuse("proof grid needs a finite box");
         const double a = std::floor(std::min(lo[i], hi[i]) / _cell);
@@ -2859,7 +2863,7 @@ std::optional<RegionProofGrid> RegionCertificate::proveGrid(const double lo[3], 
         pending.pop_back();
         if (grid.proofs >= maxProofs) return refuse("proof grid reached its work cap before completing");
         Interval box[3];
-        indexBox(a.data(), z.data(), box);
+        indexBox(a.data(), z.data(), box, margin);
         ++grid.proofs;
         auto c = certifyBox(form, root, _model, box, _symbolBox, _symbolMagnitudes);
         const bool single = a == z;
@@ -2869,7 +2873,7 @@ std::optional<RegionProofGrid> RegionCertificate::proveGrid(const double lo[3], 
         }
         if (single) {
             if (!c) { complete = false; break; }
-            _cache.emplace(a, c);
+            if (margin == 0.0) _cache.emplace(a, c);   // only undilated leaves are over()'s cells
             grid.occupied.emplace(a, std::move(*c));
             continue;
         }

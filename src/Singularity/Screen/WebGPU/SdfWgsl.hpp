@@ -26,7 +26,7 @@
 #include "Singularity/Screen/RadianceSource.hpp"
 
 namespace geom { struct SdfNode; class FieldNode; }
-namespace OntoMath { struct LineQuadratureCertificate; struct LineTransportSchedule; }
+namespace OntoMath { struct LineQuadratureCertificate; struct LineTransportSchedule; struct RegionProofGrid; class RegionCertificate; }
 
 namespace sdfwgsl {
 
@@ -205,6 +205,16 @@ Program compileScheduledLineTransport(const OntoMath::MathNode& sigma, const Ont
 // separate absolute errors; no native density/floor/scattering policy implied.
 Program compileScheduledProportionalIntegral(const OntoMath::MathNode& sigma,
     const OntoMath::MathNode& vectorSource, const OntoMath::LineTransportSchedule& depthSchedule);
+
+// Plan §6be: extinction depth and transmittance for ANY ray through a
+// camera-independent RegionProofGrid of `certificate` (proved with a dilation
+// margin). Cells inside zero blocks are skipped and contribute exactly zero;
+// occupied cells use their own constants in the scheduled depth arithmetic.
+// Defines lineGridDepthAt(o,d,lo,hi,tTol,clock,omega) -> ScheduledTransport
+// (samples = (σ calls, skipped zero cells)). A ray whose panel escapes its
+// dilated cell, leaves the grid, or exceeds `maxPanels` refuses (status 0).
+Program compileGridDepthTransport(const OntoMath::MathNode& sigma, const OntoMath::RegionCertificate& certificate,
+                                  const OntoMath::RegionProofGrid& grid, uint32_t maxPanels);
 
 // Compile a field into a raymarching shader plus its parameter block.
 // `colorFormatIsSrgb` is unused for now; kept out of the signature deliberately —

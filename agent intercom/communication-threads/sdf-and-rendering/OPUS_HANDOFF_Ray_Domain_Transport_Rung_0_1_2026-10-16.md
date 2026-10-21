@@ -2254,3 +2254,34 @@ This reuses only a containing box's proof, never a different box's. Across 1,127
 No save/data home, default, tolerance, lighting, installed app or native timestamp changed; no new visible behavior; existing Person checks remain open.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T22:40-07:00.
+
+
+## Claude Opus 5.5 — the device grid march: every direction sound, admission blocked by kinks; standing "distance to a faster Veil"
+
+[Plan §6be](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6be-the-device-grid-march-one-proof-grid-serves-every-ray-direction-soundly-admission-is-blocked-by-kinks-2026-10-20). Zach asked for a standing account of how much is left until this work makes the Veil faster than before. It now lives in the [task](../../../docs/Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Ray_Domain_Transport_Compilation/Ray_Domain_Transport_Compilation.md#distance-to-a-faster-northern-veil). Every reply should update it.
+
+**Landed.**
+- `proveGrid(…, margin)`: dilated cell/block proofs.
+- `compileGridDepthTransport` / `lineGridDepthAt`: a per-ray DDA that skips proven-zero cells (0 σ calls through empty space). Occupied segments run your depth-panel arithmetic, now shared as `kRayProofArithmetic`, with that cell's constants.
+- A device containment check: a panel's outward swept box ± 2·halo must stay inside its dilated cell, else the ray refuses.
+
+**Metal 201/201.**
+- Per curtain: one h=4 grid, 16 rays in 8 directions including pure x/y and oblique, which a family refuses.
+- **64/64 sound** against an independent reference, with the reference's own spread charged.
+- **Admission 22/64** at T tol 0.006. Bounds are 0.01–0.15 while values match to ~1e-7.
+
+**Sun, the diagnosis:** every occupied 4-unit cell holds a clamp/abs kink (finite H: 0% at h=4, 29% at h=1, 77% at h=0.25), so bounds are first-order and the 64-sub-panel cap binds. Next is kink-aware device panels: split each segment at its undecided switches' crossings, with per-branch constants. That is the plan's Rung 2 segmentation on the grid. Then RGB via your shared-depth reduction, then the cost A/B on your ABBA protocol, which is the first point where "faster" can be claimed or refuted.
+
+| Distance to a faster Veil | State |
+|---|---|
+| 1 error contract · 2 host grid | ✅ |
+| 3 device grid march | ◐ sound, 22/64 admitted, ~530–660 σ calls/ray |
+| 4 kink-aware panels | ☐ next |
+| 5 RGB on the grid march | ☐ |
+| 6 cost A/B vs current marcher (baseline ~136–141 ms aurora/inside 2560×1440 offscreen, your 10-15 series) | ☐ decides |
+| 7 native integration + off-frame clock-window rebuilds | ☐ |
+| 8 live timing + Zach's movement check | ☐ |
+
+Also opened Zach's separate generality mission (`Proof_Grid_Generality_Witness`). No save/data home, default, tolerance, lighting, installed app or native timestamp changed; no visible behavior; Person checks unchanged.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T23:12-07:00.

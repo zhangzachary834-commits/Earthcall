@@ -2932,6 +2932,32 @@ var<private> screenPoint: vec3<f32>;
 // A numeric executable plan, retained only by the compute witness today. The
 // fields/domain lowering below is shared with the ordinary line kernel; no
 // second source/attenuation law lives in this backend.
+// Shared outward-rounding bound arithmetic of every scheduled/grid transport lowering.
+static const char* kRayProofArithmetic = R"WGSL(
+struct ScheduledTransport {
+    radiance: f32, transmittance: f32, radianceError: f32, transmittanceError: f32,
+    status: f32, samples: vec2<f32>, panels: f32
+};
+fn rayProofInfinity() -> f32 { return bitcast<f32>(0x7f800000u); }
+// Outward rounding for nonnegative bound arithmetic, using observable float
+// bits between operations. A normal floor also covers flushed subnormal results.
+// Qualification still includes the backend's IEEE/basic-arithmetic premise.
+fn rayProofUp(x: f32) -> f32 {
+    if (!(x >= 0.0) || x >= 3.402823466e38) { return rayProofInfinity(); }
+    return bitcast<f32>(bitcast<u32>(max(x, bitcast<f32>(0x00800000u))) + 1u);
+}
+fn rayProofAdd(a: f32,b: f32) -> f32 { if(a==0.0 && b==0.0){return 0.0;} return rayProofUp(a+b); }
+fn rayProofMul(a: f32,b: f32) -> f32 { if(a==0.0 || b==0.0){return 0.0;} return rayProofUp(a*b); }
+fn rayProofSignedUp(x: f32) -> f32 {
+    if(x<0.0){return bitcast<f32>(bitcast<u32>(x)-1u);} return rayProofUp(x);
+}
+fn rayProofLocal(w: f32,l: f32,h: f32,step: f32) -> f32 {
+    var r=min(w,rayProofMul(l,step));
+    if(h>=0.0){r=min(r,rayProofMul(rayProofMul(rayProofMul(h,step),step),0.5));}
+    return r;
+}
+)WGSL";
+
 static Program lowerScheduledTransport(Emit& e, std::string prelude, const std::string& domain,
                                         const OntoMath::LineTransportSchedule& plan, bool depthOnly = false) {
     Program out;
@@ -3004,30 +3030,7 @@ static Program lowerScheduledTransport(Emit& e, std::string prelude, const std::
     out.ok=!e.refused;out.error=e.refusal;out.params=std::move(e.params);
     if(!out.ok)return out;
     out.wgsl=std::move(prelude);
-    out.wgsl+=R"WGSL(
-struct ScheduledTransport {
-    radiance: f32, transmittance: f32, radianceError: f32, transmittanceError: f32,
-    status: f32, samples: vec2<f32>, panels: f32
-};
-fn rayProofInfinity() -> f32 { return bitcast<f32>(0x7f800000u); }
-// Outward rounding for nonnegative bound arithmetic, using observable float
-// bits between operations. A normal floor also covers flushed subnormal results.
-// Qualification still includes the backend's IEEE/basic-arithmetic premise.
-fn rayProofUp(x: f32) -> f32 {
-    if (!(x >= 0.0) || x >= 3.402823466e38) { return rayProofInfinity(); }
-    return bitcast<f32>(bitcast<u32>(max(x, bitcast<f32>(0x00800000u))) + 1u);
-}
-fn rayProofAdd(a: f32,b: f32) -> f32 { if(a==0.0 && b==0.0){return 0.0;} return rayProofUp(a+b); }
-fn rayProofMul(a: f32,b: f32) -> f32 { if(a==0.0 || b==0.0){return 0.0;} return rayProofUp(a*b); }
-fn rayProofSignedUp(x: f32) -> f32 {
-    if(x<0.0){return bitcast<f32>(bitcast<u32>(x)-1u);} return rayProofUp(x);
-}
-fn rayProofLocal(w: f32,l: f32,h: f32,step: f32) -> f32 {
-    var r=min(w,rayProofMul(l,step));
-    if(h>=0.0){r=min(r,rayProofMul(rayProofMul(rayProofMul(h,step),step),0.5));}
-    return r;
-}
-)WGSL";
+    out.wgsl+=kRayProofArithmetic;
     out.wgsl+="fn rayProofExp(x:f32)->f32 { let y=max(exp(x),0.0); let denominator=bitcast<f32>(bitcast<u32>(1.0-"+expR+")-1u); return rayProofUp(rayProofAdd(y,"+expA+")/denominator); }\n";
     if(depthOnly) {
         // Dedicated endpoint program: no idle emission/outer-integral branch
@@ -3170,10 +3173,186 @@ fn lineScheduledWorkAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,clock:f32,o
     return out;
 }
 
+// Plan §6be: σ depth and transmittance along ANY ray through a camera-independent
+// RegionProofGrid. Each ray walks the grid's cells (DDA). A cell a containing
+// proof shows ≡ 0 contributes exactly nothing and is never evaluated. An occupied
+// cell's segment uses that cell's own constants in the same per-panel bound
+// arithmetic as lowerScheduledTransport's depth program. Before a panel uses a
+// cell, the device checks that the panel's swept box, positional halo included,
+// lies inside that cell dilated by the grid margin, which the host proved;
+// otherwise the ray refuses. Sub-panel counts are a work choice; only the
+// accumulated bound admits. Claude Code / Claude Opus 5.5 / f3af84cf / 2026-10-20.
+static Program lowerGridDepth(Emit& e, std::string prelude, const std::string& domain,
+                              const OntoMath::RegionProofGrid& grid, const OntoMath::ExecutionModel& model,
+                              uint32_t maxPanels) {
+    Program out;
+    auto up = [&](double x) {
+        float f = float(x);
+        if (!(std::isfinite(x) && x >= 0.0 && std::isfinite(f))) e.refuse("non-finite grid bound");
+        if (double(f) < x) f = std::nextafter(f, INFINITY);
+        return f;
+    };
+    auto lower = [](double x) { float f=float(x); if(double(f)>x) f=std::nextafter(f,-INFINITY); return f; };
+    auto upper = [](double x) { float f=float(x); if(double(f)<x) f=std::nextafter(f,INFINITY); return f; };
+    auto powerOfTwo = [](double x) { int k; return std::isfinite(x) && x > 0.0 && std::frexp(x, &k) == 0.5; };
+    // Cell faces c·h ± margin must be exact f32 values on the device.
+    if (!powerOfTwo(grid.cell) || !powerOfTwo(grid.margin) || !(grid.margin < grid.cell))
+        e.refuse("grid transport needs power-of-two cell and margin, margin below the cell");
+    long long dims[3]; long long cells = 1, reach = 0;
+    for (int i = 0; i < 3; ++i) {
+        dims[i] = grid.last[i] - grid.first[i] + 1;
+        if (!(dims[i] >= 1 && dims[i] <= 4096)) { e.refuse("grid transport axis span outside 1..4096 cells"); dims[i] = 1; }
+        cells *= dims[i];
+        reach = std::max({reach, std::llabs(grid.first[i]), std::llabs(grid.last[i] + 1)});
+    }
+    if (cells > (1LL << 22)) e.refuse("grid transport index exceeds 2^22 cells");
+    if (double(reach) * grid.cell / std::max(grid.margin, 1e-300) >= 0x1p22) e.refuse("grid faces ± margin are not exact f32 values");
+    if (maxPanels < 1 || maxPanels > 65536) e.refuse("grid transport needs 1..65536 panels");
+    const double a = model.exponentialAbsolute(), r = model.expRelative;
+    if (!(std::isfinite(a) && a >= 0 && std::isfinite(r) && r >= 0 && r < 1) || !(up(r) < 1.0f)) e.refuse("invalid grid exponential model");
+    const std::string h = e.param(float(grid.cell)), margin = e.param(float(grid.margin));
+    const std::string fx = e.param(float(grid.first[0])), fy = e.param(float(grid.first[1])), fz = e.param(float(grid.first[2]));
+    const std::string nx = e.param(float(dims[0])), ny = e.param(float(dims[1])), nz = e.param(float(dims[2]));
+    const std::string expA = e.param(up(a)), expR = e.param(up(r)), expRound = e.param(up(r + 4.0 * std::ldexp(1.0, -23)));
+    // Dense cell → slot index (-1: inside a zero block), then 7 constants per slot.
+    std::vector<float> index(std::size_t(e.refused ? 0 : cells), -1.0f);
+    std::vector<float> slots;
+    if (!e.refused) {
+        for (const auto& [c, b] : grid.occupied) {
+            long long k = 0;
+            for (int i = 0; i < 3; ++i) {
+                if (c[i] < grid.first[i] || c[i] > grid.last[i]) e.refuse("occupied cell outside its grid");
+                k = k * dims[i] + (c[i] - grid.first[i]);
+            }
+            if (e.refused) break;
+            if (!(std::isfinite(b.low) && std::isfinite(b.high) && b.hessian >= 0.0)) e.refuse("invalid occupied cell certificate");
+            index[std::size_t(k)] = float(slots.size() / 7);
+            for (double v : {b.lipschitz, b.width, b.sup, b.execution}) slots.push_back(up(v));
+            slots.push_back(std::isfinite(b.hessian) ? up(b.hessian) : -1.0f);
+            slots.push_back(lower(b.low)); slots.push_back(upper(b.high));
+        }
+        long long zeros = 0;
+        for (const auto& z : grid.zero) {
+            long long n = 1;
+            for (int i = 0; i < 3; ++i) n *= z.last[i] - z.first[i] + 1;
+            zeros += n;
+        }
+        if (zeros + (long long)grid.occupied.size() != cells) e.refuse("grid is not a complete partition of its cells");
+        if (slots.size() / 7 >= (1u << 24)) e.refuse("too many occupied cells for exact f32 slot indices");
+    }
+    const std::size_t indexBase = e.params.size();
+    e.params.insert(e.params.end(), index.begin(), index.end());
+    const std::size_t slotBase = e.params.size();
+    e.params.insert(e.params.end(), slots.begin(), slots.end());
+    for (float v : e.params) if (!std::isfinite(v)) e.refuse("grid parameter is not finite f32");
+    out.ok = !e.refused; out.error = e.refusal; out.params = std::move(e.params);
+    if (!out.ok) return out;
+    out.wgsl = std::move(prelude);
+    out.wgsl += kRayProofArithmetic;
+    out.wgsl += "fn rayProofExp(x:f32)->f32 { let y=max(exp(x),0.0); let denominator=bitcast<f32>(bitcast<u32>(1.0-"+expR+")-1u); return rayProofUp(rayProofAdd(y,"+expA+")/denominator); }\n";
+    out.wgsl += "fn rayProofDown(x:f32)->f32 { return -rayProofSignedUp(-x); }\n";
+    out.wgsl += "fn lineGridDepthAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tTol:f32,clock:f32,omega:vec3<f32>)->ScheduledTransport {\n"
+        " var out=ScheduledTransport(0.0,0.0,rayProofInfinity(),rayProofInfinity(),0.0,vec2<f32>(0.0),0.0);\n"
+        " if(!("+domain+") || !(all(abs(o)<=vec3<f32>(3.4e38)) && all(abs(d)<=vec3<f32>(3.4e38)) && hi>lo && abs(lo)<=3.4e38 && abs(hi)<=3.4e38 && tTol>0.0 && tTol<=3.402823466e38)){return out;}\n"
+        " let h="+h+"; let margin="+margin+"; let first=vec3<f32>("+fx+","+fy+","+fz+"); let dims=vec3<f32>("+nx+","+ny+","+nz+");\n"
+        " let indexBase="+std::to_string(indexBase)+"u; let slotBase="+std::to_string(slotBase)+"u; let maxPanels="+std::to_string(maxPanels)+"u;\n"
+        " let expA="+expA+"; let expRound="+expRound+";\n";
+    out.wgsl += R"WGSL(
+    let u=1.1920928955078125e-7;
+    let gu=f32(16u*maxPanels+32u)*u;
+    let gamma=rayProofUp(gu/(1.0-gu));
+    // Model-qualified (relative 2^-16 premise) upper bound of |d|; the L1 norm bounds |o|.
+    let dn=rayProofUp(rayProofMul(sqrt(rayProofAdd(rayProofAdd(rayProofMul(d.x,d.x),rayProofMul(d.y,d.y)),rayProofMul(d.z,d.z))),1.0000153));
+    let on=rayProofAdd(rayProofAdd(abs(o.x),abs(o.y)),abs(o.z));
+    let dl1=rayProofAdd(rayProofAdd(abs(d.x),abs(d.y)),abs(d.z));
+    let pointError=rayProofMul(rayProofMul(8.0,u),rayProofAdd(on,rayProofMul(rayProofAdd(abs(lo),rayProofUp(hi-lo)),dl1)));
+    let halo=rayProofMul(2.0,pointError);
+    if(!(halo<margin)){return out;}
+    var tau=0.0;var dm=0.0;var de=0.0;var sigA=0.0;var fresh=true;var calls=0.0;var skipped=0.0;var panels=0u;
+    var s=lo;
+    let p0=o+lo*d;
+    var c=floor(p0/h);
+    let budget=tTol*0.5;let span=hi-lo;
+    let maxSteps=u32(dims.x+dims.y+dims.z)+8u;
+    for(var step=0u;step<maxSteps;step=step+1u){
+        if(!(s<hi)){break;}
+        // Exit parameter of cell c along each axis; ties advance together.
+        var sExit=hi;
+        for(var i=0;i<3;i=i+1){
+            if(d[i]>0.0){sExit=min(sExit,((c[i]+1.0)*h-o[i])/d[i]);}
+            else if(d[i]<0.0){sExit=min(sExit,(c[i]*h-o[i])/d[i]);}
+        }
+        if(!(sExit>s)){sExit=s;}
+        let rel=c-first;
+        if(any(rel<vec3<f32>(0.0)) || any(rel>=dims)){return out;}
+        if(sExit>s){
+            // The proved region is this cell dilated by margin; the panel and its halo must stay inside it.
+            let pa=o+s*d;let pb=o+sExit*d;
+            let boxLo=min(pa,pb);let boxHi=max(pa,pb);
+            for(var i=0;i<3;i=i+1){
+                if(!(rayProofDown(boxLo[i]-halo)>=c[i]*h-margin && rayProofSignedUp(boxHi[i]+halo)<=(c[i]+1.0)*h+margin)){return out;}
+            }
+            let slot=P.v[indexBase+u32((rel.x*dims.y+rel.y)*dims.z+rel.z)];
+            if(slot<0.0){skipped=skipped+1.0;fresh=true;}
+            else{
+                let k=slotBase+7u*u32(slot);
+                let l=P.v[k];let w=P.v[k+1u];let sup=P.v[k+2u];let e=P.v[k+3u];let hh=P.v[k+4u];let low=P.v[k+5u];let high=P.v[k+6u];
+                let constant=e==0.0 && low==high;
+                let ls=rayProofMul(l,dn);var hs=-1.0;if(hh>=0.0){hs=rayProofMul(rayProofMul(hh,dn),dn);}
+                let W=sExit-s;let allowed=max(budget*W/span,1e-30);
+                var m=1.0;
+                if(!constant && rayProofMul(rayProofMul(2.25,W),w)>allowed){
+                    if(hs>=0.0){m=ceil(sqrt(2.25*hs*W*W*W/(8.0*allowed)));}else{m=ceil(2.25*ls*W*W/(2.0*allowed));}
+                    m=clamp(m,1.0,64.0);
+                }
+                let n=u32(m);
+                if(panels+n>maxPanels){return out;}
+                if(constant){
+                    tau=tau+low*W;sigA=low;fresh=false;panels=panels+1u;
+                    de=rayProofAdd(de,rayProofMul(rayProofMul(1.2,rayProofUp(W)),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup))));
+                }else{
+                    if(fresh){sigA=lineSigma(o+s*d,clock,omega);calls=calls+1.0;fresh=false;}
+                    for(var j=0u;j<n;j=j+1u){
+                        let sa=s+W*f32(j)/m;var sb=s+W*f32(j+1u)/m;if(j+1u==n){sb=sExit;}
+                        let halfStep=(sb-sa)*0.5;let sm=sa+halfStep;
+                        let width=rayProofUp(sb-sa);let hw=rayProofMul(width,0.5);
+                        let sigM=lineSigma(o+sm*d,clock,omega);let sigB=lineSigma(o+sb*d,clock,omega);calls=calls+2.0;
+                        tau=tau+(halfStep/3.0)*(sigA+4.0*sigM+sigB);
+                        dm=rayProofAdd(dm,rayProofMul(rayProofMul(width,2.25),rayProofLocal(w,ls,hs,hw)));
+                        de=rayProofAdd(de,rayProofMul(rayProofMul(1.2,width),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup))));
+                        sigA=sigB;
+                    }
+                    panels=panels+n;
+                }
+            }
+        }
+        // Advance: every axis whose face this cell exit reached (at least one).
+        var moved=false;
+        for(var i=0;i<3;i=i+1){
+            var t=hi;
+            if(d[i]>0.0){t=((c[i]+1.0)*h-o[i])/d[i];}else if(d[i]<0.0){t=(c[i]*h-o[i])/d[i];}
+            if(d[i]!=0.0 && t<=sExit){c[i]=c[i]+sign(d[i]);moved=true;}
+        }
+        s=max(s,sExit);
+        if(!moved && s<hi){return out;}
+    }
+    if(s<hi){return out;}
+    let tUpper=rayProofExp(rayProofSignedUp(-tau+rayProofAdd(dm,de)));
+    let tError=rayProofAdd(rayProofMul(tUpper,rayProofAdd(dm,de)),rayProofAdd(expA,rayProofMul(expRound,tUpper)));
+    out.transmittance=exp(-tau);out.transmittanceError=tError;
+    out.samples=vec2<f32>(calls,skipped);out.panels=f32(panels);
+    if(abs(out.transmittance)<=3.402823466e38 && tError<=tTol){out.status=1.0;}
+    return out;
+}
+)WGSL";
+    return out;
+}
+
 static Program compileLineTransportImpl(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
                              const OntoMath::LineQuadratureCertificate& sigmaCert,
                              const OntoMath::LineQuadratureCertificate& emissionCert, uint32_t maxCells,
-                                        const OntoMath::LineTransportSchedule* schedule, bool depthOnly = false) {
+                                        const OntoMath::LineTransportSchedule* schedule, bool depthOnly = false,
+                                        const OntoMath::RegionProofGrid* grid = nullptr, uint32_t gridPanels = 0) {
     Program prog;
     Emit e;
     e.parameterOffset = "0u";
@@ -3204,7 +3383,7 @@ static Program compileLineTransportImpl(const OntoMath::MathNode& sigma, const O
             return prog;
         }
     }
-    if (!schedule && (sigmaCert.bands.empty() || emissionCert.bands.empty() || maxCells < 2)) {
+    if (!schedule && !grid && (sigmaCert.bands.empty() || emissionCert.bands.empty() || maxCells < 2)) {
         prog.ok = false;
         prog.error = "transport needs certificates with at least one band each, and at least 2 cells";
         return prog;
@@ -3245,6 +3424,7 @@ var<private> screenPoint: vec3<f32>;
     prelude += kPrimitives;
     prelude += "fn lineSigma(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + sigmaBody + "    return " + sigmaValue + ";\n}\n";
     if(!depthOnly) prelude += "fn lineEmission(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + emissionBody + "    return " + emissionValue + ";\n}\n";
+    if (grid) return lowerGridDepth(e, std::move(prelude), domainPredicate, *grid, sigmaCert.model, gridPanels);
     if (schedule) return lowerScheduledTransport(e, std::move(prelude), domainPredicate, *schedule, depthOnly);
     auto bands = [&](const OntoMath::LineQuadratureCertificate& cert, const std::string& tag) {
         std::string out;
@@ -3363,6 +3543,19 @@ Program compileScheduledLineTransport(const OntoMath::MathNode& sigma, const Ont
     sc.symbols=schedule.sigmaSymbols; ec.symbols=schedule.emissionSymbols;
     sc.sourceExpression=schedule.sigmaExpression; ec.sourceExpression=schedule.emissionExpression;
     return compileLineTransportImpl(sigma,emission,sc,ec,2,&schedule);
+}
+
+Program compileGridDepthTransport(const OntoMath::MathNode& sigma, const OntoMath::RegionCertificate& certificate,
+                                  const OntoMath::RegionProofGrid& grid, uint32_t maxPanels) {
+    OntoMath::MathNode zero; zero.scalarForm = OntoMath::ScalarForm::constant(0.0);
+    OntoMath::LineQuadratureCertificate sc, ec;
+    sc.model = ec.model = certificate.model();
+    sc.symbols = certificate.symbols();
+    sc.sourceExpression = certificate.sourceExpression(); ec.sourceExpression = zero.toJson().dump();
+    if (certificate.model().restrictedForm || !(certificate.cell() == grid.cell)) {
+        Program p; p.ok = false; p.error = "grid transport needs the original-DAG model and its own certificate's grid"; return p;
+    }
+    return compileLineTransportImpl(sigma, zero, sc, ec, 2, nullptr, true, &grid, maxPanels);
 }
 
 Program compileScheduledProportionalIntegral(const OntoMath::MathNode& sigma,

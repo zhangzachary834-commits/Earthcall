@@ -714,6 +714,11 @@ struct RegionProofGrid {
         LineQuadratureBand certificate;
     };
     double cell = 0.0;
+    // Every certificate here covers its cells dilated by `margin` on each side
+    // (outward f32). A device panel whose swept box, halo included, stays inside
+    // its own cell ± margin is then covered by that one cell's proof (plan §6be).
+    // With margin 0 leaves are exactly over()'s cells.
+    double margin = 0.0;
     std::array<long long, 3> first{}, last{};
     std::vector<ZeroBlock> zero;
     std::map<std::array<long long, 3>, LineQuadratureBand> occupied;
@@ -750,7 +755,7 @@ public:
     // cell cannot be certified, the grid is incomplete and nullopt returns.
     // Occupied leaves also fill over()'s cache (they are the same answers).
     std::optional<RegionProofGrid> proveGrid(const double lo[3], const double hi[3], std::size_t maxProofs,
-                                             std::string* why = nullptr) const;
+                                             std::string* why = nullptr, double margin = 0.0) const;
     double cell() const { return _cell; }
     const ExecutionModel& model() const { return _model; }
     const std::string& sourceExpression() const { return _sourceExpression; }
@@ -768,7 +773,7 @@ private:
     mutable std::map<std::array<long long, 3>, std::optional<LineQuadratureBand>> _cache;
     // The outward f32 box of cells [first, last]: the one construction shared by
     // over() and proveGrid(), so a leaf is the very box over() certifies.
-    void indexBox(const long long first[3], const long long last[3], Interval box[3]) const;
+    void indexBox(const long long first[3], const long long last[3], Interval box[3], double margin = 0.0) const;
 };
 // The a-posteriori march with each panel's constants from the region grid.
 std::optional<LineTransportMarch> marchLineTransport(const RegionCertificate& sigma, const RegionCertificate& emission,
