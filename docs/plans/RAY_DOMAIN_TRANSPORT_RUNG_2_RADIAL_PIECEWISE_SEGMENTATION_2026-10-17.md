@@ -2738,3 +2738,72 @@ References: the oracle ~8.5 (§6bg), the native renderer ~29 (Codex's census), t
 - No production source changed (probe and documents only). No save, data home, default, tolerance, lighting, installed app or native timestamp changed. Nothing visible, so no Person check.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-21T00:02-07:00. Human origin: Zach's choice (A) and its build rule. Codex originated the native census and fixture used for comparison. The probe, its accounting and the verdict are mine.
+
+
+## 6bi. Review response: the direct Simpson Peano constants are right and now in the grid march; the C2 floor is ~40–50 samples, not 10–14 (2026-10-21)
+
+**Human origin.** Zach: "THE OTHERS REVIEWED UR WORKKKKKKK". The reviews, all in `agent intercom/communication-threads/sdf-and-rendering/`:
+- [Aetherion / The Firmament, relayed by Prism](../../agent%20intercom/communication-threads/sdf-and-rendering/AETHERION_FIRMAMENT_REVIEW_RELAY_6BG_6BH_2026-10-21.md)
+- [🌈☀️ Prism Sun's independent review](../../agent%20intercom/communication-threads/sdf-and-rendering/PRISM_INDEPENDENT_REVIEW_C2_SIMPSON_GRID_ECONOMICS_2026-10-21.md)
+- [Prism's architectural addendum](../../agent%20intercom/communication-threads/sdf-and-rendering/PRISM_ARCHITECTURAL_ADDENDUM_AFTER_C2_REVIEW_2026-10-21.md)
+
+**Their correction holds.** I priced the second-order Simpson error through Codex's generic interpolation envelope, 2.25·w·min(W, L·w/2, H·w²/8), i.e. 9/32·H·w³. The direct Peano kernels of one unweighted Simpson panel give tighter constants. I verified them numerically from the kernels:
+- ∫|K₁| = 5h²/9, i.e. 5w²/36 (the old charge was 1.125·w²: 8.1×);
+- ∫|K₂| = 8h³/81, i.e. **w³/81** (the old charge was 9/32: **22.8×**);
+- ∫|K₄| = h⁵/90, i.e. w⁵/2880.
+- The range term is w·(high−low), since positive weights put both integral and rule in [low, high]·w (the old charge was 2.25×).
+
+I was wrong to treat "~70 idealised second-order evaluations" as the C2 floor.
+
+**Their prediction does not hold under the same probe.** `scratch/probes/grid_fourth_order_preview.cpp`, 256 inside pixels, uncertified and optimistic:
+- C2 runs split only where σ′ jumps (a second difference that grows like 1/h); Perlin's C² lattice planes are not split, as they asked.
+- Shared endpoints are counted once; each located kink costs one sample.
+
+| bound (σ samples per pixel, all four curtains) | mean | median | p90 |
+|---|---|---|---|
+| direct 1/81, C2 runs, tight | 40.1 | 31 | 85 |
+| direct 1/81, C2 runs, cell-wide | 40.3 | 31 | 85 |
+| **the march's own structure (C2 runs cut at 4-unit cell faces, cell M₂), direct 1/81** | **49.8** | 38 | 109 |
+| same structure, the old 9/32 | 166.2 | 114 | 363 |
+| fourth order, cell-wide (§6bh) | 27.3 | 25 | 48 |
+| native (Codex's census) / oracle | ~29 / ~8.5 | | |
+
+The constant buys 3.3× in-structure, but simple √22.8 scaling misses two things:
+- **A per-run floor:** 3.6 C2 runs per pixel, each ≥ 1 panel.
+- **Large per-run curvature maxima** (σ″ up to ~0.07–0.1, from noise curvature times the prefactors). A sup bound cannot exploit the sign cancellation that makes the oracle's true Simpson error tiny.
+
+Splitting only at real kinks also leaves long runs with one large sup; finer local constants help a C2 bound, so lattice-plane splits are a free work choice, not leakage, when they lower the sup.
+
+**Landed: `gridPeano` in the grid depth march.** min(w·W, ⌈5/36⌉·w²·L|d|, ⌈1/81⌉·w³·H|d|² where H is finite), with constants rounded up one ulp. The work choice is derived from the same constants. Codex's scheduled/family lowering is unchanged: its radiance path integrates a weighted integrand, and its depth path could adopt the same functional, which is his call. The 1.2 execution factor is unchanged.
+
+**Measured.**
+
+| | before (§6bf/§6bg) | after |
+|---|---|---|
+| Metal witness (`webgpu_line_quadrature_test`) | 201/201 | **201/201** (every ray still inside the tighter bound against the independent reference) |
+| σ calls per test ray | 364–500 | **89–132** |
+| occupied rays admitted | 24/42 | 24/42 (each refused ray is execution-bound: 0.006–0.012 of the 0.006 budget) |
+| full image, aurora/inside 2560×1440, depth only | 2,463 ms | **1,484 ms** |
+| σ calls / switch evaluations per pixel (sum of curtains) | ~1,000 / ~1,180 | ~424 / ~1,177 |
+| same image, kink evidence off | | 1,584 ms with ~1,590 σ calls |
+
+The last row answers Prism's break-even question directly: on this device a switch-function evaluation costs about as much as a σ evaluation, so kink stepping converts σ work into switch work almost one for one.
+
+**Verdict, unchanged in direction and now on the reviewers' own test.**
+- The C2 floor is ~40–50 samples/pixel in the march's structure, above the native ~29 and the ≤ 15 gate.
+- Fourth order is the best case at ~27, i.e. parity.
+- The realised march is ~11× slower before colour, compositing, gates or fallback.
+
+Prism's architectural points stand and are adopted:
+- sound ≠ tight ≠ economical;
+- split only where a proof premise changes (or where a split is a profitable work choice);
+- the grid is an execution strategy only if it wins, and otherwise a correctness oracle;
+- a complexity preflight with a kill condition before theorem-grade implementation. §6bd–§6bf should have had one; I accept that.
+
+**Shipping ledger:**
+- Mathematical/error contract: tighter and still sound (Metal 201/201).
+- Speed: ~11× slower; not a path to a faster Veil.
+- Native renderer integration: not recommended for speed.
+- No save, data home, default, tolerance, lighting, installed app or native timestamp changed. Nothing visible, so no Person check.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-21T01:05-07:00. Aetherion and Prism originated the direct-constant correction, the C2-split rule and the break-even framing. The kernel verification, the preview reruns, `gridPeano` and the measurements are mine. Codex originated the native census and fixture.

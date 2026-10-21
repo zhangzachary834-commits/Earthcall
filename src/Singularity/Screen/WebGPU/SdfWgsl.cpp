@@ -3305,8 +3305,19 @@ struct GridDepth { transmittance: f32, error: f32, status: f32, calls: f32, swit
                    mathematical: f32, execution: f32, expFloor: f32 };
 var<private> gTau: f32; var<private> gDm: f32; var<private> gDe: f32; var<private> gSigA: f32;
 var<private> gFresh: bool; var<private> gOk: bool; var<private> gCalls: f32; var<private> gPanels: u32;
+// Direct Simpson error functional for ONE unweighted panel of width w (plan §6bi;
+// Aetherion's and Prism's review, verified against the Peano kernels):
+// |E| <= w·(high − low) (positive weights), <= (5/36)·w²·sup|f′| (C1 kernel),
+// <= w³·sup|f″|/81 (C2 kernel, only where the run is C2: hs >= 0).
+// Constants are rounded up one ulp.
+fn gridPeano(width:f32,w:f32,ls:f32,hs:f32)->f32{
+    var r=rayProofMul(width,w);
+    r=min(r,rayProofMul(rayProofMul(rayProofMul(rayProofUp(0.13888889),width),width),ls));
+    if(hs>=0.0){r=min(r,rayProofMul(rayProofMul(rayProofMul(rayProofMul(rayProofUp(0.012345679),width),width),width),hs));}
+    return r;
+}
 // One run [sa0, sb0] under the 7 constants at k: exactly zero is skipped,
-// otherwise Simpson sub-panels with the scheduled depth arithmetic.
+// otherwise Simpson sub-panels bounded by gridPeano.
 fn gridRun(o:vec3<f32>,d:vec3<f32>,clock:f32,omega:vec3<f32>,sa0:f32,sb0:f32,k:u32,dn:f32,pointError:f32,gamma:f32,budget:f32,span:f32,maxPanels:u32){
     if(!(sb0>sa0)){return;}
     let l=P.v[k];let w=P.v[k+1u];let sup=P.v[k+2u];let e=P.v[k+3u];let hh=P.v[k+4u];let low=P.v[k+5u];let high=P.v[k+6u];
@@ -3319,10 +3330,10 @@ fn gridRun(o:vec3<f32>,d:vec3<f32>,clock:f32,omega:vec3<f32>,sa0:f32,sb0:f32,k:u
     let execution=rayProofMul(rayProofMul(1.2,rayProofUp(W)),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup)));
     let allowed=max(max(budget*W/span,0.25*execution),1e-30);
     var m=1.0;
-    if(!constant && rayProofMul(rayProofMul(2.25,W),w)>allowed){
+    if(!constant && rayProofMul(W,w)>allowed){
         // Either the first- or the second-order term may meet the share; take the cheaper.
-        m=ceil(2.25*ls*W*W/(2.0*allowed));
-        if(hs>=0.0){m=min(m,ceil(sqrt(2.25*hs*W*W*W/(8.0*allowed))));}
+        m=ceil(5.0*ls*W*W/(36.0*allowed));
+        if(hs>=0.0){m=min(m,ceil(sqrt(hs*W*W*W/(81.0*allowed))));}
         m=clamp(m,1.0,64.0);
     }
     let n=u32(m);
@@ -3340,7 +3351,7 @@ fn gridRun(o:vec3<f32>,d:vec3<f32>,clock:f32,omega:vec3<f32>,sa0:f32,sb0:f32,k:u
         let width=rayProofUp(sb-sa);let hw=rayProofMul(width,0.5);
         let sigM=lineSigma(o+sm*d,clock,omega);let sigB=lineSigma(o+sb*d,clock,omega);gCalls=gCalls+2.0;
         gTau=gTau+(halfStep/3.0)*(gSigA+4.0*sigM+sigB);
-        gDm=rayProofAdd(gDm,rayProofMul(rayProofMul(width,2.25),rayProofLocal(w,ls,hs,hw)));
+        gDm=rayProofAdd(gDm,gridPeano(width,w,ls,hs));
         gDe=rayProofAdd(gDe,rayProofMul(rayProofMul(1.2,width),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup))));
         gSigA=sigB;
     }
