@@ -159,6 +159,9 @@ void test_distinct_perspectives_same_spelling() {
     // Duplicate identifier should still be rejected
     manager.addPerspective(std::make_unique<PersonPerspective>("p1_cam", "Overhead View", PersonPerspective::PerspectiveType::FreeCamera));
     assert(manager.count() == 2);
+
+    // Searching by ambiguous display name "Overhead View" returns npos (-1) to prevent silent collapse
+    assert(manager.findPerspective("Overhead View") == static_cast<size_t>(-1));
 }
 
 } // namespace

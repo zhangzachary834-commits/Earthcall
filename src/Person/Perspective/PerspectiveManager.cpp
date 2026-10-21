@@ -150,10 +150,16 @@ size_t PerspectiveManager::findPerspective(const std::string& nameOrId) const {
             return i;
         }
     }
+    size_t foundIndex = static_cast<size_t>(-1);
+    size_t matchCount = 0;
     for (size_t i = 0; i < _perspectives.size(); ++i) {
         if (_perspectives[i] && _perspectives[i]->getName() == nameOrId) {
-            return i;
+            foundIndex = i;
+            matchCount++;
         }
+    }
+    if (matchCount == 1) {
+        return foundIndex;
     }
     return static_cast<size_t>(-1);
 }
