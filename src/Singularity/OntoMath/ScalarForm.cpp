@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <complex>
 #include <cstdio>
+#include <cstring>
 #include <sstream>
 #include <glm/gtc/noise.hpp>
 
@@ -2581,7 +2582,7 @@ std::optional<Interval> classicPerlin3CellRange(
     return perlinMixRange(ny0, ny1, fx) * 2.2f;
 }
 
-std::optional<Interval> classicPerlin3LatticeRange(
+std::optional<Interval> classicPerlin3LatticeRangeUncached(
     const std::array<Interval, 3>& box) {
 
     for (const Interval& axis : box) {
@@ -2645,6 +2646,36 @@ std::optional<Interval> classicPerlin3LatticeRange(
                            kClassicPerlin3ValueBound);
     const Interval met = joined.met(global);
     return met.empty() ? std::optional<Interval>{} : std::optional<Interval>{met};
+}
+
+// The lattice theorem is a pure function of its six f32 endpoints, and a ray
+// family's proof passes re-ask it for the same argument box from every
+// evaluator (range, each derivative direction, the device evaluation). A small
+// direct-mapped memo keyed by ALL SIX endpoint bit patterns answers only an
+// identical box, never a neighbouring one (Codex's candidate, preparation-cost
+// handoff 2026-10-20; plan §6bc). Beneath the Kernel: per-thread scratch of a
+// pure mathematical answer, carrying no authored or Person state.
+std::optional<Interval> classicPerlin3LatticeRange(
+    const std::array<Interval, 3>& box) {
+    struct Entry {
+        std::array<std::uint32_t, 6> key{};
+        bool valid = false;
+        std::optional<Interval> value;
+    };
+    thread_local std::array<Entry, 256> memo;
+    std::array<std::uint32_t, 6> key{};
+    std::uint64_t h = 1469598103934665603ull;
+    for (int axis = 0; axis < 3; ++axis) {
+        std::memcpy(&key[2 * axis], &box[axis].lo, sizeof(float));
+        std::memcpy(&key[2 * axis + 1], &box[axis].hi, sizeof(float));
+    }
+    for (std::uint32_t k : key) h = (h ^ k) * 1099511628211ull;
+    Entry& entry = memo[(h ^ (h >> 29)) & (memo.size() - 1)];
+    if (entry.valid && entry.key == key) return entry.value;
+    entry.value = classicPerlin3LatticeRangeUncached(box);
+    entry.key = key;
+    entry.valid = true;
+    return entry.value;
 }
 
 } // namespace

@@ -2425,3 +2425,60 @@ The retained test adds 32-dispatch resident replay with unchanged pipeline/proof
 **Shipping ledger:** mathematical/error contract and shared GPU execution remain as §6ba; economical preparation/retention and broader directions remain open; native projected-source/overlap/lifecycle integration remains unconnected; end-to-end native timing and inhabited movement remain open. No save, default, tolerance, lighting, installed app or native timestamp changed. Existing Person checks remain open.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-20T21:59:22-07:00`
+
+
+## 6bc. Exact proof-construction reuse: cold family preparation −33% in Release, every panel bit-identical (2026-10-20)
+
+Continues Codex's preparation-cost handoff (§6bb; [audit](../audits/RAY_FAMILY_PREPARATION_COST_HANDOFF_2026-10-20.md)) after Zach's instruction to "catch up with where he left off and then do the next pass". Zach's objection stands: a per-frame ~200 ms preparation would destroy his reported ~20 FPS baseline. This pass does **not** make preparation per-frame, and claims no native FPS change.
+
+**First finding: the 200 ms figure is mostly a Debug-build artifact.** The same probe, built against a Release (`-O3`) configuration of the same sources, prepares the primary curtain family in **17.8–18.0 ms** (best of 20, per field; four Northern Veil fields). Codex's 203–207 ms was a Debug measurement. Release is the honest basis for a shipping claim; both are recorded below.
+
+**Four exact reuses, each a pure function of identical inputs** (no bound, parameter, panel count, admission or error allowance changes):
+
+1. `certifyBox` builds each distinct box evaluator once. The pure second derivatives ∂ᵢᵢ reuse the direction-eᵢ evaluators of the Lipschitz pass; the device-execution evaluator is a copy of the direction-0 range evaluator taken *before any query* (the same object a second construction would build). 11 constructions per box → 7.
+2. `constantUnder` is memoized per node for one sign vector at a time. It was re-walked from every node of every derivative recursion (quadratic in the DAG), with string-keyed `exactDegreeOn` lookups at each polynomial leaf.
+3. Composite nodes beneath a switch get a range memo keyed by `([s0,s1], signs)`. It stores the range *and* whether evaluation reports undefined (a set-only flag that no branch reads), so a hit answers exactly as recomputation would. A nested query under another key cannot poison it: the store re-checks the key.
+4. `classicPerlin3LatticeRange` (Codex's named candidate) gets a 256-entry thread-local direct-mapped memo keyed by **all six f32 endpoint bit patterns**. It answers only an identical box, never a neighbouring one. It is named Kernel scratch of a pure mathematical answer (Refusal 6 comment in source).
+
+**Evidence.**
+
+- A scratch digest probe (scratchpad only, not in the repo or CMake) prints every schedule field in hex floats:
+  - `lo`, `hi`, `pointError`, `admitted`;
+  - each panel's interval;
+  - both bands' cap, L, width, sup, execution, Hessian, low, high and branch signature;
+  - both directional bounds.
+- Baseline and each step: **2568-line digest byte-identical** (`cmp`) at every step, across all four fields.
+- Each preparation runs on a fresh thread, so the thread-local memo starts empty and the timing is honest cold.
+
+| step (Release, best of 20 per field) | ms |
+|---|---|
+| baseline (`4e8c47cee`) | 17.5–18.0 |
+| + evaluator reuse | 15.4–16.2 |
+| + `constantUnder` memo | 13.6–13.9 |
+| + signed range memo | 12.9–13.1 |
+| + Perlin six-endpoint memo (fresh thread per prep) | **11.8–12.2** |
+
+Debug, same probe: 117.5–118.3 ms best per field (Codex's 203–207 ms before; the test's own `FAMILY` line reads 117.2 ms), digest likewise byte-identical.
+
+**Relation to Codex's rejected trial.** His box-proof memo (ranges, derivatives, constancy) was rejected because Debug cold cost "stayed around 200 ms", and he warned against restoring it merely because tests passed. It was not restored. This pass is an independent implementation, admitted on a different basis: Release measurement, a stepwise attribution of each change, and a bit-identical full-schedule digest.
+
+**Verification.**
+
+- `ontomath_line_segmentation_test` 132/132.
+- `ontomath_integral_operation_test` 85/85.
+- `ontomath_expression_evaluation_test` 36/36.
+- `ontomath_veil_transport_feasibility_test` 2/2.
+- `webgpu_line_quadrature_test` **180/180 on Metal** (55 s, run alone), including the four resident-replay bit comparisons, the family-escape refusals and the field-edit refusal.
+- All tests ran one at a time.
+
+**Remaining profile (Release, after this pass).** Evaluator construction and destruction are now about 40% of preparation: per-evaluator `std::map<std::string, Interval>` copies and per-node `vector<vector<double>>` allocation, plus coefficient `Term::evalRange`. The next exact step is a flat, index-keyed evaluator binding layout, or sharing direction-independent coefficient ranges across evaluators. The latter is exact only when proved bit-identical, which has not been done. 12 ms is still a whole frame, so preparation must stay retained and edit-invalidated, never per-frame.
+
+**Shipping ledger:**
+
+- Mathematical/error contract and shared GPU execution: unchanged from §6ba.
+- Cold preparation: −33% (Release), still about one frame. Economical retention/invalidation and broader directions remain open.
+- Native projected-source, overlap and lifecycle integration: unconnected.
+- End-to-end native timing and inhabited movement: open.
+- No save, data home, default, tolerance, lighting, installed app or native timestamp changed. No new visible behavior, so no new Person check. Existing checks remain open.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T22:20-07:00. Human origin: Zach's "catch up with where he left off and then do the next pass", and his frame-budget objection. Codex originated the six-endpoint Perlin memo candidate and the probe; the other three reuses and the Release finding are mine.

@@ -2191,3 +2191,35 @@ Zero source-field evaluations remain. **Tradeoff:** shared bounds need 234–242
 No save/data home, lighting, tolerances, switches, installed app or native timestamp changed. No new CPU/app/native-tour/full-image verification this pass; prior results remain dated evidence. Existing Person checks remain open. Preserve T’s weighting of background/remaining light and the existing accepted-lattice budget contract. **Next agent starts with the handoff and profiler, not a per-frame 200 ms preparation or an automatic activation.**
 
 **Signed:** Codex / GPT-6.1 Sol / `2026-10-20T22:00:26-07:00` / `01a148a7-bd85-7550-a416-0e859a729c1a`.
+
+
+## Claude Opus 5.5 resumes after the Sun's wrap-up — exact proof reuse, cold preparation −33% (Release), every panel bit-identical
+
+Continuing Codex's handoff `29836c9e7`/`4e8c47cee` at Zach's word ("catch up with where he left off and then do the next pass"). [Plan §6bc](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6bc-exact-proof-construction-reuse-cold-family-preparation-33-in-release-every-panel-bit-identical-2026-10-20).
+
+**1. The ~200 ms is mostly Debug.** The same probe built against an `-O3` configuration of the same sources prepares the primary curtain family in **17.5–18.0 ms**. Sun: your 203–207 ms is a Debug number, real but not the shipping basis. Debug after this pass: 117.5–118.3 ms best per field (Codex's 203–207 ms before; the test's own `FAMILY` line reads 117.2 ms), digest likewise byte-identical.
+
+**2. Four exact reuses, each a pure function of identical inputs:**
+- `certifyBox` builds each distinct box evaluator once. ∂ᵢᵢ reuses the eᵢ Lipschitz evaluators, and execution copies the direction-0 evaluator before any query (11 → 7 constructions).
+- `constantUnder` is memoized per sign vector; it was quadratic across derivative recursion.
+- A signed composite-range memo keyed by `([s0,s1], signs)` stores the range plus the set-only undefined flag, and re-checks the key before storing.
+- Your **six-f32-endpoint Perlin memo**: thread-local, 256 entries, direct-mapped, answering only an identical box.
+
+Release, best of 20 per field, honest cold (fresh thread per prep): **17.8 → 11.9 ms**. A scratchpad digest of every schedule field in hex floats (2568 lines, four fields) is **byte-identical** at each step.
+
+**On your rejected memo:** not restored. Mine overlaps its idea, but it is admitted on a different basis: Release measurement, stepwise attribution and a full-schedule bit digest, not test passes alone.
+
+**Verification:** line segmentation 132/132, integral 85/85, expression evaluation 36/36, Veil feasibility 2/2, `webgpu_line_quadrature_test` **180/180 on Metal** (55 s, run alone), including the four resident-replay bit comparisons, the family-escape refusals and the field-edit refusal; all run sequentially.
+
+**Next exact step:** evaluator construction/destruction is now ~40% (string-keyed binding maps, per-node nested vectors). Candidates are a flat index-keyed binding layout, or sharing direction-independent coefficient ranges across evaluators (exact only once proved bit-identical). 12 ms is still a frame: preparation stays retained and edit-invalidated, never per-frame.
+
+| Shipping gate | State |
+|---|---|
+| Mathematical/error contract | Unchanged from §6ba; digest bit-identical. |
+| GPU execution / economical preparation | Cold prep −33% (Release, ~12 ms/family). Retention/invalidation, broad perspective coverage and work allocation remain open. |
+| Native renderer | Still unconnected: projected gate/clamp/1e-6 floor/scattering, coherent overlaps, local frames/clocks/clipping, edit/payload/device lifecycle. |
+| Shipped performance | No native FPS claim; inhabited movement/Person evidence open. |
+
+No save/data home, lighting, tolerance, default, installed app or native timestamp changed. No new visible behavior; existing Person checks remain open. `build_relprobe/` was a local Release configuration for measurement and is not committed.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T22:20-07:00.

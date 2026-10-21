@@ -1859,7 +1859,31 @@ Interval LineAlgebraicEvaluator::rangeAt(uint32_t node, double sa, double sb, co
         ++_memoMisses;
         return _treeMemoRange[node] = rangeUnmemoized(node, sa, sb, kNoSigns, undefined);
     }
-    return rangeUnmemoized(node, sa, sb, signs, undefined);
+    if (n.kind == Kind::Polynomial || n.kind == Kind::Undefined) return rangeUnmemoized(node, sa, sb, signs, undefined);
+    const auto keyed = [&] {
+        return sa == _signedMemoS0 && sb == _signedMemoS1 && _signedMemoState.size() == _form->nodes.size() &&
+               signs == _signedMemoSigns;
+    };
+    if (!keyed()) {
+        _signedMemoS0 = sa;
+        _signedMemoS1 = sb;
+        _signedMemoSigns = signs;
+        _signedMemoRange.assign(_form->nodes.size(), Interval());
+        _signedMemoState.assign(_form->nodes.size(), 0);
+    }
+    if (_signedMemoState[node]) {
+        if (_signedMemoState[node] == 2 && undefined) *undefined = true;
+        return _signedMemoRange[node];
+    }
+    bool reportsUndefined = false;
+    const Interval r = rangeUnmemoized(node, sa, sb, signs, &reportsUndefined);
+    if (reportsUndefined && undefined) *undefined = true;
+    // A nested query under another key may have re-keyed the memo meanwhile.
+    if (keyed()) {
+        _signedMemoRange[node] = r;
+        _signedMemoState[node] = reportsUndefined ? 2 : 1;
+    }
+    return r;
 }
 
 Interval LineAlgebraicEvaluator::rangeUnmemoized(uint32_t node, double sa, double sb, const std::vector<int8_t>& signs,
@@ -1966,6 +1990,15 @@ Interval LineAlgebraicEvaluator::switchRange(std::size_t k, double s0, double s1
 }
 
 bool LineAlgebraicEvaluator::constantUnder(uint32_t node, const std::vector<int8_t>& signs) const {
+    if (_constantMemo.size() != _form->nodes.size() || _constantSigns != signs) {
+        _constantSigns = signs;
+        _constantMemo.assign(_form->nodes.size(), -1);
+    }
+    if (_constantMemo[node] < 0) _constantMemo[node] = constantUnderUncached(node, signs) ? 1 : 0;
+    return _constantMemo[node] != 0;
+}
+
+bool LineAlgebraicEvaluator::constantUnderUncached(uint32_t node, const std::vector<int8_t>& signs) const {
     const auto& n = _form->nodes[node];
     const int8_t s0 = n.switchCount > 0 ? signs[n.switchBegin] : 0;
     const int8_t s1 = n.switchCount > 1 ? signs[n.switchBegin + 1] : 0;
@@ -2331,12 +2364,20 @@ std::optional<LineQuadratureBand> certifyBox(const LineAlgebraicForm& form, uint
         } while (progress);
         return signs;
     };
+    // Evaluators are built once per distinct box binding and shared by every
+    // query over it: construction is deterministic and the memos hold only
+    // sign-free ranges keyed by [s0, s1], so a reused evaluator answers
+    // bit-identically to a fresh one (plan §6bc; Codex's preparation-cost handoff).
     // Range over the band: the origin is the whole box, the direction 0.
+    std::optional<LineAlgebraicEvaluator> executed;
     {
         std::map<std::string, Interval> b = symbolBox;
         for (int i = 0; i < 3; ++i) { b[kLineOriginVars[i]] = box[i]; b[kLineDirectionVars[i]] = Interval(0.0f); }
         LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
         if (!ev.ok()) return std::nullopt;
+        // The device evaluation below binds this same box; copied before any
+        // query, it is the fresh evaluator a second construction would build.
+        executed.emplace(ev);
         bool undefined = false;
         band.branchSignature = signsFor(ev);
         const Interval r = ev.range(root, 0.0, 0.0, band.branchSignature, &undefined);
@@ -2349,10 +2390,11 @@ std::optional<LineQuadratureBand> certifyBox(const LineAlgebraicForm& form, uint
     // Lipschitz: √(Σ sup|∂_i f|²), each partial a box-mode derivative along e_i.
     double sum = 0.0;
     bool bounded = true;
+    std::optional<LineAlgebraicEvaluator> along[3];   // direction e_i, reused for ∂ii below
     for (int axis = 0; axis < 3 && bounded; ++axis) {
         std::map<std::string, Interval> b = symbolBox;
         for (int i = 0; i < 3; ++i) { b[kLineOriginVars[i]] = box[i]; b[kLineDirectionVars[i]] = Interval(i == axis ? 1.0f : 0.0f); }
-        LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
+        const LineAlgebraicEvaluator& ev = along[axis].emplace(form, b, /*undefinedAsZero=*/false);
         if (!ev.ok()) { bounded = false; break; }
         const Interval dr = ev.derivativeRange(root, 0.0, 0.0, band.branchSignature);
         if (!dr.bounded()) { bounded = false; break; }
@@ -2365,6 +2407,11 @@ std::optional<LineQuadratureBand> certifyBox(const LineAlgebraicForm& form, uint
     // ∂ij = (D²(e_i + e_j) − D²(e_i) − D²(e_j))/2, as intervals.
     {
         auto second = [&](int i, int k) -> std::optional<Interval> {
+            if (i == k) {
+                const Interval r = along[i]->secondDerivativeRange(root, 0.0, 0.0, band.branchSignature);
+                if (!r.bounded()) return std::nullopt;
+                return r;
+            }
             std::map<std::string, Interval> b = symbolBox;
             for (int m = 0; m < 3; ++m) {
                 b[kLineOriginVars[m]] = box[m];
@@ -2400,12 +2447,8 @@ std::optional<LineQuadratureBand> certifyBox(const LineAlgebraicForm& form, uint
     magnitudes["z"] = std::max(std::abs(double(box[2].lo)), std::abs(double(box[2].hi)));
     // Original-DAG provenance remains authoritative. A clamp may execute its
     // literal exactly only when its whole-cell range clears the device margin.
-    std::map<std::string, Interval> executedBox = symbolBox;
-    for (int i = 0; i < 3; ++i) { executedBox[kLineOriginVars[i]] = box[i]; executedBox[kLineDirectionVars[i]] = Interval(0.0f); }
-    LineAlgebraicEvaluator executed(form, executedBox, /*undefinedAsZero=*/false);
-    if (!executed.ok()) return std::nullopt;
-    executed.setExecutionModel(deviceModel, magnitudes);
-    band.execution = executed.slack(root, 0.0, 0.0, signsFor(executed));
+    executed->setExecutionModel(deviceModel, magnitudes);
+    band.execution = executed->slack(root, 0.0, 0.0, signsFor(*executed));
     if (!std::isfinite(band.execution)) return std::nullopt;
     return band;
 }

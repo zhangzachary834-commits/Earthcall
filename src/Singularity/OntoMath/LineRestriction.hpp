@@ -566,6 +566,19 @@ private:
     mutable std::vector<Interval> _treeMemoRange;
     mutable std::vector<char> _treeMemoValid;
     mutable uint64_t _memoHits = 0, _memoMisses = 0;
+    // constantUnder answers per node for ONE sign vector at a time: a pure
+    // function of construction and signs, re-asked by every node of every
+    // derivative recursion (plan §6bc). -1 unknown, 0 false, 1 true.
+    mutable std::vector<int8_t> _constantSigns, _constantMemo;
+    bool constantUnderUncached(uint32_t node, const std::vector<int8_t>& signs) const;
+    // Composite nodes BENEATH a switch, for one ([s0, s1], signs) at a time:
+    // derivative recursions re-range every child at every level. Stores the
+    // range and whether evaluating it reports undefined (a set-only flag that no
+    // branch reads), so a hit answers exactly as a recomputation would.
+    mutable double _signedMemoS0 = 0.0, _signedMemoS1 = -1.0;
+    mutable std::vector<int8_t> _signedMemoSigns;
+    mutable std::vector<Interval> _signedMemoRange;
+    mutable std::vector<char> _signedMemoState;   // 0 absent, 1 defined, 2 reports undefined
 public:
     uint64_t leafRangeHits() const { return _memoHits; }
     uint64_t leafRangeMisses() const { return _memoMisses; }
