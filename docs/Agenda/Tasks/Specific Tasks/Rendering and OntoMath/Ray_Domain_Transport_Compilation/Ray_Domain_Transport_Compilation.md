@@ -264,3 +264,15 @@ Zach permits a substantial faster native checkpoint at current-or-better accurac
 - [ ] Deliver a consumer that passes accuracy and substantial native cost together, then qualify production lifetime/fallback, broader views/clocks/clipping and inhabited operation.
 
 [§6bp](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6bp--support-aware-placement-and-a-single-shared-perlin-slot-screened-neither-promoted-2026-10-21) and [complete audit](../../../../../audits/NORTHERN_VEIL_SUPPORT_PLACEMENT_AND_SHARED_NOISE_2026-10-21.md) retain all results. **No new shipped gain or visible change.** Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T11:34:16.105280-07:00`.
+
+
+### Independent architectural review and next experiment proposal — 2026-10-21
+
+- [x] Trace the mathematical/GPU campaign through §6bp, distinguish witness-only integration from production transport, and review source, clocks, residency and the published numerical/native evidence.
+- [x] Recover the October 11 immutable-noise-table rejection so it is not repeated as a new candidate.
+- [ ] Screen the proposed fixed-cell affine-ray noise polynomial at existing sample nodes, including preparation, actual affine-binding reuse, state, boundary/fallback cost and f32 error; coordinate the native lane first.
+- [ ] If the small screen passes, qualify broader source/overlap/view/clock/edit/device behavior and actual inhabited frame cost before promotion and Person acceptance.
+
+[§6bq](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6bq--astra-architectural-review-value-side-ray-compilation-before-another-scheduling-campaign-2026-10-21) routes to the substantive review and exact experiment contract. This is a proposal, not an implementation or a new speedup. The review's 20% native screen is an engineering proposal, not a numeric requirement from Zach. Current-or-better accuracy remains the user-authorized checkpoint; full certification is a separate longer-term workstream. No new Person check is introduced because this pass changes documentation only; existing appearance/movement acceptance remains outstanding.
+
+**Signed:** Codex / GPT-6 (Astra review role; exact variant not exposed) / session `01a15fcb-90ec-7812-868f-22a0f6283113` / `2026-10-21T12:01:40-07:00`.
