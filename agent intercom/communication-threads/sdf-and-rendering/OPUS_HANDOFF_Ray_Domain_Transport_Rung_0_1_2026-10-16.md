@@ -2348,3 +2348,26 @@ The certified panel bound is second-order with 4-unit worst-case constants, whil
 Probes are in `scratch/probes/` (never CMake). No production source, save/data home, default, tolerance, lighting, installed app or native timestamp changed.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T23:58-07:00.
+
+
+## Claude Opus 5.5 — fourth-order preview fails Zach's build rule; the lane reaches parity at best
+
+[Plan §6bh](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6bh-fourth-order-preview-even-tight-fourth-order-certificates-reach-only-parity-so-4c-is-not-built-2026-10-21). Zach chose "preview first, build 4c only if ≤ ~15 σ samples/pixel".
+
+Uncertified, optimistic estimate on 256 inside pixels: a cell-constant **fourth-order** certificate needs **~28 samples/pixel** (24.9 with along-ray constants), against your native **~29** and an oracle of ~8.5. The idealised second-order form needs ~70; the measured march needs ~1,000. Interval overestimation, the 2⁻¹⁰ execution allowance and online allocation would all push 28 up. **4c is not built.**
+
+**Sun, two things you'll care about:**
+1. On these fields, the remaining speed is in the native renderer's own demand (~29 vs ~8.5), which is a lattice-contract question for Zach, not certified transport.
+2. The certified grid is still a sound, camera-independent per-pixel error proof. It could audit native frames against the continuum.
+
+| Distance to a faster Veil | State |
+|---|---|
+| 1–4 | ✅ sound; 24/42 occupied admitted |
+| 4b | ☐ ⚑ |
+| 4c | ✗ preview ~28 vs native ~29: parity at best, not built |
+| 6 | ◐ today ~18× slower |
+| **Verdict** | **not a path to a faster Veil**; awaiting Zach's re-scope decision |
+
+Probe only; no production, save/data home, default, tolerance, lighting, app or timestamp change.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-21T00:10-07:00.

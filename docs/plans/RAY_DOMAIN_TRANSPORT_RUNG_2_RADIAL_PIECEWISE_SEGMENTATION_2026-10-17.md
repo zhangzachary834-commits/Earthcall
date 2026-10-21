@@ -2699,3 +2699,42 @@ The fields are smooth; **the certified bound is ~100× pessimistic**, for these 
 - No production source changed this pass; probes and documents only. No save, data home, default, tolerance, lighting, installed app or native timestamp changed. Nothing visible, so no Person check.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20T23:58-07:00. Human origin: Zach's standing request for a faster Veil and the account of its distance. Codex originated the aurora/inside fixture, the ~136–141 ms baseline series and the fragment-demand census used for comparison. The full-image probe, the oracle and the diagnosis are mine.
+
+
+## 6bh. Fourth-order preview: even tight fourth-order certificates reach only parity, so 4c is not built (2026-10-21)
+
+**Human origin.** Zach chose option (A) of §6bg ("yes a"): estimate, before building it, the sample count a fourth-order certified bound would need, and build 4c only if it is about **15 or fewer σ samples per pixel**.
+
+**Probe** (`scratch/probes/grid_fourth_order_preview.cpp`, never in CMake). It is uncertified and deliberately optimistic, and runs on 256 aurora/inside pixels (16×16 over 2560×1440, t = 0), all four curtains:
+- **Smooth runs.** Along each ray's occupied span, σ is classified smooth where the 4th and 2nd directional differences at steps 0.25 and 0.125 agree. Kinks and Perlin's C² lattice planes fail that test. Each non-smooth stretch becomes one boundary at its midpoint, costing one located sliver (2 samples).
+- **Constants per run.** sup|σ⁗| and sup|σ″|, either along the ray ("tight") or worst over 24 random points in each crossed 4-unit cell ("cell").
+- **Allocation.** The 0.003 depth budget is split optimally across runs. Fourth order: E = L⁵M/(2880n⁴). Second order, the march's form: E = 2.25·M·L³/(8n²).
+
+| bound | mean σ samples/pixel | median | p90 |
+|---|---|---|---|
+| 4th order, tight | 24.9 | 20 | 45 |
+| **4th order, cell-wide** | **27.8** | 25 | 52 |
+| 2nd order, tight | 57.3 | 34 | 146 |
+| 2nd order, cell-wide | 70.5 | 42 | 181 |
+
+References: the oracle ~8.5 (§6bg), the native renderer ~29 (Codex's census), the measured certified march ~1,000. On average 4.4 smooth runs per pixel (all curtains). The 8×8 run agrees: 24.0 / 27.1 / 60.0 / 71.6.
+
+**Decision under Zach's rule: do not build 4c.** A cell-constant fourth-order certificate needs ~28 samples/pixel, about parity with the native ~29, and every unmodelled factor pushes it higher:
+- interval overestimation of the certified derivative ranges;
+- sup values sampled at 24 points per cell (an underestimate);
+- the per-length execution allowance of the declared device model (4b);
+- the device's online allocation instead of this optimal one.
+
+**Two further findings for whoever continues.**
+1. The measured march (~1,000) is ~14× worse than its own idealised second-order form (~70). Most of its cost is implementation looseness: overestimated certified H, uniform budget shares across the whole span, the 64-sub-panel cap, and wide uncertain zones from the trig allowance. Fixing those would make the certified march cheaper, but still not faster than the native.
+2. The native renderer's ~29 positive-medium evaluations per pixel sit ~3.4× above the oracle's ~8.5. On these fields, any further speed for the Veil lies in the native renderer's own sample demand, not in replacing it with certified transport. Under Zach's faithfulness rules that is a lattice-contract question, his to decide.
+
+**What the lane still owns.** A sound, any-direction, camera-independent *proof* of each pixel's transmittance error (§6bd–§6bf). This is a correctness instrument: it can certify what a renderer draws, audit the native output against the continuum, or refuse where it cannot prove. It is not a faster renderer.
+
+**Shipping ledger:**
+- Mathematical/error contract: unchanged, sound.
+- Speed: the lane's best case is parity; 4c is not built.
+- Native integration: not recommended for speed.
+- No production source changed (probe and documents only). No save, data home, default, tolerance, lighting, installed app or native timestamp changed. Nothing visible, so no Person check.
+
+**Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-21T00:10-07:00. Human origin: Zach's choice (A) and its build rule. Codex originated the native census and fixture used for comparison. The probe, its accounting and the verdict are mine.
