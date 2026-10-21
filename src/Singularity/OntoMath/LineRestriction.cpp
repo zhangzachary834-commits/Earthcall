@@ -1106,6 +1106,8 @@ ExecutionModel cpuExecutionModel() {
     m.vector = std::ldexp(1.0, -24);
     m.noise = std::ldexp(1.0, -14);
     m.restrictedForm = true;
+    m.expAbsolute = std::numeric_limits<double>::denorm_min();
+    m.expRelative = std::ldexp(1.0, -52);
     return m;
 }
 
@@ -1186,7 +1188,7 @@ std::optional<ExecutionBound> execScalarForm(const ScalarForm& form, const std::
                     }
                 }
                 const double m = std::exp(top + arg.slack);
-                f = {std::exp(top), m * (arg.slack + tr)};
+                f = {std::exp(top), m * (arg.slack + model.expRelative) + model.exponentialAbsolute()};
             } else {
                 return std::nullopt;   // Ln: the CPU and emitter disagree at ≤ 0
             }
@@ -1526,15 +1528,7 @@ double LineAlgebraicEvaluator::slack(uint32_t node, double s0, double s1, const 
     auto sign = [&](uint32_t offset) -> int8_t {
         const uint32_t k = n.switchBegin + offset;
         if (k < signs.size() && signs[k] != 0) return signs[k];
-        bool undefined = false;
-        const Interval r = switchRange(k, s0, s1, signs, &undefined);
-        if (undefined || std::isnan(r.lo) || std::isnan(r.hi)) return 0;
-        const double sl = switchSlack(k, s0, s1, signs);
-        const bool strict = form.switches[k].strict;
-        const double lo = double(r.lo) - sl, hi = double(r.hi) + sl;
-        if (strict ? lo > 0.0 : lo >= 0.0) return 1;
-        if (strict ? hi < 0.0 : hi <= 0.0) return -1;
-        return 0;
+        return classifySwitch(k, s0, s1, signs);
     };
     switch (n.kind) {
         case Kind::Polynomial: {
@@ -1632,7 +1626,7 @@ double LineAlgebraicEvaluator::slack(uint32_t node, double s0, double s1, const 
             if (n.transKind == TransFactor::Kind::Exp) {
                 bool undefined = false;
                 const Interval r = rangeAt(n.a, s0, s1, signs, &undefined);
-                return std::exp(double(r.hi) + sa) * (sa + tr);
+                return std::exp(double(r.hi) + sa) * (sa + _model.expRelative) + _model.exponentialAbsolute();
             }
             return sa + tr;
         }
@@ -1677,6 +1671,19 @@ double LineAlgebraicEvaluator::switchSlack(std::size_t k, double s0, double s1, 
     const Interval sel = polynomialRange(sw.node, s0, s1);
     const double ms = std::max(std::abs(double(sel.lo)), std::abs(double(sel.hi)));
     return e * (2.0 * ms + 2.0 * bound);
+}
+
+int8_t LineAlgebraicEvaluator::classifySwitch(std::size_t k, double s0, double s1,
+                                                   const std::vector<int8_t>& signs) const {
+    bool undefined = false;
+    const Interval r = switchRange(k, s0, s1, signs, &undefined);
+    if (undefined || std::isnan(r.lo) || std::isnan(r.hi)) return 0;
+    const double sl = switchSlack(k, s0, s1, signs);
+    const double lo = double(r.lo) - sl, hi = double(r.hi) + sl;
+    const bool strict = _form->switches[k].strict;
+    if (strict ? lo > 0.0 : lo >= 0.0) return 1;
+    if (strict ? hi < 0.0 : hi <= 0.0) return -1;
+    return 0;
 }
 
 void LineAlgebraicEvaluator::computeSignFree() {
@@ -2283,19 +2290,35 @@ namespace {
 // One certificate over an axis-aligned box (plan §6ar/§6at): range, Lipschitz,
 // Hessian and one device evaluation's error. Shared by the magnitude bands and
 // the per-region grid.
-std::optional<LineQuadratureBand> certifyBox(const LineAlgebraicForm& form, uint32_t root, const MathNode& field,
+std::optional<LineQuadratureBand> certifyBox(const LineAlgebraicForm& form, uint32_t root,
                                              const ExecutionModel& deviceModel, const Interval box[3],
                                              const std::map<std::string, Interval>& symbolBox,
                                              const std::map<std::string, double>& symbolMagnitudes) {
     LineQuadratureBand band;
-        // Range over the band: the origin is the whole box, the direction 0.
+    // Mathematical signs are proved over the whole box. Execution signs
+    // additionally need the device's margin: never reuse the former as the
+    // latter. Classification is the segmenter's shared invariant office.
+    auto signsFor = [&](const LineAlgebraicEvaluator& ev) {
+        std::vector<int8_t> signs(form.switches.size(), 0);
+        bool progress;
+        do {
+            progress = false;
+            for (std::size_t k = 0; k < signs.size(); ++k) {
+                if (signs[k] != 0) continue;
+                const int8_t sign = ev.classifySwitch(k, 0.0, 0.0, signs);
+                if (sign != 0) { signs[k] = sign; progress = true; }
+            }
+        } while (progress);
+        return signs;
+    };
+    // Range over the band: the origin is the whole box, the direction 0.
     {
         std::map<std::string, Interval> b = symbolBox;
         for (int i = 0; i < 3; ++i) { b[kLineOriginVars[i]] = box[i]; b[kLineDirectionVars[i]] = Interval(0.0f); }
         LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
         if (!ev.ok()) return std::nullopt;
         bool undefined = false;
-        const Interval r = ev.range(root, 0.0, 0.0, std::vector<int8_t>(form.switches.size(), 0), &undefined);
+        const Interval r = ev.range(root, 0.0, 0.0, signsFor(ev), &undefined);
         if (undefined || !r.bounded()) return std::nullopt;
         band.width = double(r.hi) - double(r.lo);
         band.sup = std::max(std::abs(double(r.lo)), std::abs(double(r.hi)));
@@ -2310,7 +2333,7 @@ std::optional<LineQuadratureBand> certifyBox(const LineAlgebraicForm& form, uint
         for (int i = 0; i < 3; ++i) { b[kLineOriginVars[i]] = box[i]; b[kLineDirectionVars[i]] = Interval(i == axis ? 1.0f : 0.0f); }
         LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
         if (!ev.ok()) { bounded = false; break; }
-        const Interval dr = ev.derivativeRange(root, 0.0, 0.0, std::vector<int8_t>(form.switches.size(), 0));
+        const Interval dr = ev.derivativeRange(root, 0.0, 0.0, signsFor(ev));
         if (!dr.bounded()) { bounded = false; break; }
         const double m = std::max(std::abs(double(dr.lo)), std::abs(double(dr.hi)));
         sum += m * m;
@@ -2328,7 +2351,7 @@ std::optional<LineQuadratureBand> certifyBox(const LineAlgebraicForm& form, uint
             }
             LineAlgebraicEvaluator ev(form, b, /*undefinedAsZero=*/false);
             if (!ev.ok()) return std::nullopt;
-            const Interval r = ev.secondDerivativeRange(root, 0.0, 0.0, std::vector<int8_t>(form.switches.size(), 0));
+            const Interval r = ev.secondDerivativeRange(root, 0.0, 0.0, signsFor(ev));
             if (!r.bounded()) return std::nullopt;
             return r;
         };
@@ -2354,9 +2377,15 @@ std::optional<LineQuadratureBand> certifyBox(const LineAlgebraicForm& form, uint
     magnitudes["x"] = std::max(std::abs(double(box[0].lo)), std::abs(double(box[0].hi)));
     magnitudes["y"] = std::max(std::abs(double(box[1].lo)), std::abs(double(box[1].hi)));
     magnitudes["z"] = std::max(std::abs(double(box[2].lo)), std::abs(double(box[2].hi)));
-    const auto exec = executionBound(field, magnitudes, deviceModel);
-    if (!exec || !std::isfinite(exec->slack)) return std::nullopt;
-    band.execution = exec->slack;
+    // Original-DAG provenance remains authoritative. A clamp may execute its
+    // literal exactly only when its whole-cell range clears the device margin.
+    std::map<std::string, Interval> executedBox = symbolBox;
+    for (int i = 0; i < 3; ++i) { executedBox[kLineOriginVars[i]] = box[i]; executedBox[kLineDirectionVars[i]] = Interval(0.0f); }
+    LineAlgebraicEvaluator executed(form, executedBox, /*undefinedAsZero=*/false);
+    if (!executed.ok()) return std::nullopt;
+    executed.setExecutionModel(deviceModel, magnitudes);
+    band.execution = executed.slack(root, 0.0, 0.0, signsFor(executed));
+    if (!std::isfinite(band.execution)) return std::nullopt;
     return band;
 }
 } // namespace
@@ -2371,6 +2400,7 @@ std::optional<LineQuadratureCertificate> certifyLineQuadrature(const MathNode& f
     const uint32_t root = form.roots[0];
     LineQuadratureCertificate cert;
     cert.model = deviceModel;
+    cert.symbols = symbols;
     std::map<std::string, Interval> symbolBox;
     std::map<std::string, double> symbolMagnitudes;
     for (const auto& [name, range] : symbols) {
@@ -2384,7 +2414,7 @@ std::optional<LineQuadratureCertificate> certifyLineQuadrature(const MathNode& f
         const double cap = std::ldexp(1.0, j);
         const Interval axis(-float(cap), float(cap));
         const Interval box[3] = {axis, axis, axis};
-        auto band = certifyBox(form, root, field, deviceModel, box, symbolBox, symbolMagnitudes);
+        auto band = certifyBox(form, root, deviceModel, box, symbolBox, symbolMagnitudes);
         if (!band) continue;
         band->cap = cap;
         cert.bands.push_back(*band);
@@ -2469,15 +2499,21 @@ std::optional<LineTransportPlan> planLineTransport(const LineQuadratureCertifica
     // σ ≥ σ_low on the band, so τ ≥ −max(0, −σ_low)·S and e^−τ ≤ T_max. A
     // clamp at 0 rounds outward to −1.4e-45 (Northern Veil, plan §6ar), so
     // "proved ≥ 0" is replaced by this factor rather than demanded exactly.
-    const double Tmax = std::exp(std::max(0.0, -sg->low) * S);
+    const double expAbsolute = emission.model.exponentialAbsolute();
+    const double expRelative = emission.model.expRelative;
+    if (!(expAbsolute >= 0.0 && expRelative >= 0.0 && expRelative < 1.0)) return refuse("invalid exponential error contract");
+    // If |exp_device(x)-exp(x)| <= A + R*exp(x), the observed call y
+    // bounds exp(x) above by (y+A)/(1-R). Bound construction uses it too.
+    auto upperExp = [&](double x) { return (std::exp(x) + expAbsolute) / (1.0 - expRelative) * (1.0 + 1e-6); };
+    const double Tmax = upperExp(std::max(0.0, -sg->low) * S);
     if (!(Tmax <= 1e6)) return refuse("the extinction may be so negative on the ray's band that e^-tau is unbounded");
     const double u = std::ldexp(1.0, -23), lambda = 1.25;
     const double ds = 4.0 * u * (std::abs(a) + S);
     const double sMax = sg->sup, eMax = em->sup;
     const double Ls = sg->lipschitz * dn, Le = em->lipschitz * dn;
     const double Hs = sg->hessian * dn * dn, He = em->hessian * dn * dn;
-    // The exponential's device error, relative to e^−τ ≤ 1, under the model.
-    const double expError = emission.model.transcendental + 4.0 * u;
+    // Keep the library call's absolute allowance separate from arithmetic's relative term.
+    const double expRoundRelative = expRelative + 4.0 * u;
     auto local = [&](double width, double L1, double H2, double hw) {
         double l = std::min(width, L1 * hw);
         if (std::isfinite(H2)) l = std::min(l, H2 * hw * hw * 0.5);
@@ -2495,11 +2531,12 @@ std::optional<LineTransportPlan> planLineTransport(const LineQuadratureCertifica
         const double depthMath = span * (1.0 + lambda) * local(sg->width, Ls, Hs, h);
         const double depthExec = 1.2 * span * (sg->execution + Ls * ds) + gamma * 1.2 * span * sg->sup;
         // |e^−τ̃ − e^−τ| ≤ e^−min(τ, τ̃)·|τ̃ − τ| ≤ F·δτ, F = T_max·e^δτ.
-        const double F = Tmax * std::exp(depthMath + depthExec);
+        const double F = Tmax * upperExp(depthMath + depthExec);
         const double radius = S * (1.0 + lambda) * local(gWidth, gPrime, gSecond, h);
         const double mathematical = radius + S * F * depthMath * eMax;
-        const double execution = S * (F * depthExec * eMax + F * (em->execution + Le * ds) + expError * F * eMax) +
-                                  gamma * S * F * eMax + 4.0 * u * S * F * eMax;
+        const double sampleExecution = F * depthExec * eMax + F * (em->execution + Le * ds) +
+                                       (expAbsolute + expRoundRelative * F) * eMax;
+        const double execution = S * sampleExecution + (gamma + 4.0 * u) * S * (F * eMax + sampleExecution);
         lastRadius = radius; lastMath = mathematical; lastExecution = execution;
         if (mathematical + execution <= tolerance) {
             plan.cells = n;
@@ -2520,9 +2557,9 @@ namespace {
 using PanelBands = std::function<std::optional<std::pair<LineQuadratureBand, LineQuadratureBand>>(double, double)>;
 // The march and its accumulated bound (plan §6as), each panel's constants from
 // `bandsFor(sa, sb)` — one band pair for the whole ray, or the region grid.
-std::optional<LineTransportMarch> marchCore(const PanelBands& bandsFor, double transcendental,
+std::optional<LineTransportMarch> marchCore(const PanelBands& bandsFor, const ExecutionModel& model,
                                             const std::function<double(double)>& sigmaAt,
-                                            const std::function<double(double)>& emissionAt, const double o[3],
+                                            const std::function<double(double)>& emissionAt,
                                             const double d[3], double lo, double hi, double cells, std::string* why) {
     auto refuse = [&](const std::string& text) { if (why) *why = text; return std::nullopt; };
     if (!(hi >= lo)) return refuse("transport runs from lo to hi");
@@ -2535,7 +2572,8 @@ std::optional<LineTransportMarch> marchCore(const PanelBands& bandsFor, double t
     const double u = std::ldexp(1.0, -23), lambda = 1.25, h = S / n;
     const double ds = 4.0 * u * (std::abs(lo) + S);
     const double gamma = (n + 8.0) * u / (1.0 - (n + 8.0) * u);
-    const double expError = transcendental + 4.0 * u;
+    const double expAbsolute = model.exponentialAbsolute();
+    const double expRelative = model.expRelative + 4.0 * u;
     auto local = [&](double width, double L1, double H2, double hw) {
         double l = std::min(width, L1 * hw);
         if (std::isfinite(H2)) l = std::min(l, H2 * hw * hw * 0.5);
@@ -2557,10 +2595,11 @@ std::optional<LineTransportMarch> marchCore(const PanelBands& bandsFor, double t
         const double panelDepthExec = 1.2 * 2.0 * h * (sg.execution + Ls * ds + gamma * sg.sup);
         auto sampleError = [&](double tau, double dMath, double dExec, double eps, double& math, double& exec) {
             const double T = std::exp(-tau), epsMax = std::abs(eps) + em.execution;
-            const double depth = T * (std::exp(dMath + dExec) - 1.0) * epsMax;
+            const double depth = T * std::expm1(dMath + dExec) * epsMax;
             const double share = dMath + dExec > 0.0 ? dMath / (dMath + dExec) : 0.0;
             math = depth * share;
-            exec = depth * (1.0 - share) + T * std::exp(dMath + dExec) * (em.execution + Le * ds + expError * epsMax);
+            exec = depth * (1.0 - share) + T * std::exp(dMath + dExec) * (em.execution + Le * ds + expRelative * epsMax) +
+                   expAbsolute * epsMax;
         };
         const double sigM = sigmaAt(sm), sigB = sigmaAt(sb), epsM = emissionAt(sm), epsB = emissionAt(sb);
         const double tauM = tauA + h * (5.0 * sigA + 8.0 * sigM - sigB) / 12.0;
@@ -2583,7 +2622,8 @@ std::optional<LineTransportMarch> marchCore(const PanelBands& bandsFor, double t
         out.mathematical += 2.0 * h * (1.0 + lambda) * local(T * eWidth, gPrime, gSecond, h);
         tauA = tauB; mathA = mathB; execA = execB; sigA = sigB; epsA = epsB;
     }
-    out.execution += gamma * magnitude + 4.0 * u * magnitude;
+    // Include the bounded sample deviations in the device sum's magnitude.
+    out.execution += (gamma + 4.0 * u) * (magnitude + out.mathematical + out.execution);
     out.value = L;
     return out;
 }
@@ -2603,13 +2643,13 @@ std::optional<LineTransportMarch> marchLineTransport(const LineQuadratureCertifi
     for (const auto& b : emission.bands) if (M <= b.cap) { em = &b; break; }
     if (!sg || !em) { if (why) *why = "the ray leaves every certified magnitude band"; return std::nullopt; }
     const auto pair = std::make_pair(*sg, *em);
-    return marchCore([&](double, double) { return std::optional(pair); }, emission.model.transcendental,
-                     sigmaAt, emissionAt, o, d, lo, hi, cells, why);
+    return marchCore([&](double, double) { return std::optional(pair); }, emission.model,
+                     sigmaAt, emissionAt, d, lo, hi, cells, why);
 }
 
 RegionCertificate::RegionCertificate(const MathNode& field, const ExecutionModel& model, double cell,
                                      const std::map<std::string, std::pair<double, double>>& symbols)
-    : _field(&field), _restriction(restrictAlgebraicToLine(field, /*vectorValued=*/false)), _model(model), _cell(cell) {
+    : _restriction(restrictAlgebraicToLine(field, /*vectorValued=*/false)), _model(model), _cell(cell) {
     for (const auto& [name, range] : symbols) {
         float l = float(range.first), h = float(range.second);
         if (double(l) > range.first) l = std::nextafter(l, -INFINITY);
@@ -2620,11 +2660,17 @@ RegionCertificate::RegionCertificate(const MathNode& field, const ExecutionModel
 }
 
 std::optional<LineQuadratureBand> RegionCertificate::over(const double lo[3], const double hi[3]) const {
-    if (!_restriction) return std::nullopt;
+    if (!_restriction || !std::isfinite(_cell) || !(_cell > 0.0)) return std::nullopt;
     long long first[3], last[3];
     for (int i = 0; i < 3; ++i) {
-        first[i] = (long long)std::floor(std::min(lo[i], hi[i]) / _cell);
-        last[i] = (long long)std::floor(std::max(lo[i], hi[i]) / _cell);
+        if (!std::isfinite(lo[i]) || !std::isfinite(hi[i])) return std::nullopt;
+        const double a = std::floor(std::min(lo[i], hi[i]) / _cell);
+        const double b = std::floor(std::max(lo[i], hi[i]) / _cell);
+        // Refuse before conversion or index+1 can overflow. The grid is a
+        // bounded execution mechanism, not an unbounded integer coordinate.
+        if (!(a >= -0x1p62 && b <= 0x1p62)) return std::nullopt;
+        first[i] = static_cast<long long>(a);
+        last[i] = static_cast<long long>(b);
         if (last[i] - first[i] > 64) return std::nullopt;   // a work cap: no huge box through the grid
     }
     std::optional<LineQuadratureBand> worst;
@@ -2643,7 +2689,7 @@ std::optional<LineQuadratureBand> RegionCertificate::over(const double lo[3], co
                         if (double(fb) < b) fb = std::nextafter(fb, INFINITY);
                         box[i] = Interval(fa, fb);
                     }
-                    it = _cache.emplace(key, certifyBox(*_restriction.form, _restriction.form->roots[0], *_field, _model,
+                    it = _cache.emplace(key, certifyBox(*_restriction.form, _restriction.form->roots[0], _model,
                                                         box, _symbolBox, _symbolMagnitudes)).first;
                 }
                 if (!it->second) return std::nullopt;
@@ -2675,7 +2721,7 @@ std::optional<LineTransportMarch> marchLineTransport(const RegionCertificate& si
             if (!e) return std::nullopt;
             return std::make_pair(*s, *e);
         },
-        emission.model().transcendental, sigmaAt, emissionAt, o, d, lo, hi, cells, why);
+        emission.model(), sigmaAt, emissionAt, d, lo, hi, cells, why);
 }
 
 namespace {
@@ -2821,14 +2867,8 @@ struct Segmenter {
                         return;
                     }
                     ++stats.rangeEvaluations;
-                    bool undefined = false;
-                    const Interval r = ev.switchRange(k, a, b, signs[e], &undefined);
-                    const bool strict = ev.form().switches[k].strict;
-                    if (undefined || std::isnan(r.lo) || std::isnan(r.hi)) { pending = true; continue; }
-                    const double sl = ev.switchSlack(k, a, b, signs[e]);
-                    const double lo = double(r.lo) - sl, hi = double(r.hi) + sl;
-                    if (strict ? lo > 0.0 : lo >= 0.0) { signs[e][k] = 1; progress = true; }
-                    else if (strict ? hi < 0.0 : hi <= 0.0) { signs[e][k] = -1; progress = true; }
+                    const int8_t sign = ev.classifySwitch(k, a, b, signs[e]);
+                    if (sign != 0) { signs[e][k] = sign; progress = true; }
                     else pending = true;
                 }
             }
@@ -3085,13 +3125,7 @@ std::optional<LineHybridIntegral> LineAlgebraicEvaluator::integrateCore(uint32_t
     std::vector<int8_t> decided = signs;
     auto decide = [&](uint32_t k) -> int8_t {
         if (decided[k] != 0) return decided[k];
-        bool undefined = false;
-        const Interval r = switchRange(k, s0, s1, decided, &undefined);
-        if (undefined) return 0;
-        const bool strict = _form->switches[k].strict;
-        if (strict ? double(r.hi) < 0.0 : double(r.hi) <= 0.0) return decided[k] = -1;
-        if (strict ? double(r.lo) > 0.0 : double(r.lo) >= 0.0) return decided[k] = 1;
-        return 0;
+        return decided[k] = classifySwitch(k, s0, s1, decided);
     };
     std::function<std::optional<LineIntegrand>(uint32_t)> build;
     // Hybrid: a node with no closed form becomes a remainder of weight 1, to be

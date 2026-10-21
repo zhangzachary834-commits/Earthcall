@@ -318,7 +318,7 @@ int main() {
             check(text(read(medium, "t6.evaluation.totalBound")) == "unavailable" &&
                       text(read(medium, "t6.evaluation.boundsUnavailable")).find("some-other-device/1") != std::string::npos,
                   "an input under a different execution model is declined, naming it: " + text(read(medium, "t6.evaluation.boundsUnavailable")));
-            check(text(read(medium, "transmittance.evaluation.inputLineage.tau")).find("model-qualified under ontomath-cpu/2") == 0,
+            check(text(read(medium, "transmittance.evaluation.inputLineage.tau")).find("model-qualified under ontomath-cpu/3") == 0,
                   "a composed input's lineage is recorded: " + text(read(medium, "transmittance.evaluation.inputLineage.tau")));
         }
 

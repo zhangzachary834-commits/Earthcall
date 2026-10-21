@@ -874,7 +874,7 @@ std::optional<ScalarForm> substitute(const ScalarForm& form, const std::string& 
 // allowance (2^-14) is the one premise left in the sampled part, corroborated
 // by measurement (worst 2.9e-6 in 4·10^6 points), not proved.
 inline constexpr const char* kIntegralExecutionModel =
-    "ontomath-cpu/2: binary64 round-to-nearest scalar arithmetic; libm (exp, sin, cos, pow, log) within one ulp; "
+    "ontomath-cpu/3: binary64 round-to-nearest scalar arithmetic; libm (exp, sin, cos, pow, log) within one ulp; "
     "sampled values priced by their proved slack, with binary32 noise positions; glm::perlin's own float "
     "arithmetic within 2^-14 (corroborated, not proved)";
 struct IntegralBounds {

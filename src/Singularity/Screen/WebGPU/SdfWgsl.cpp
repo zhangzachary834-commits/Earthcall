@@ -2925,12 +2925,26 @@ Program compileLineTransport(const OntoMath::MathNode& sigma, const OntoMath::Ma
     Program prog;
     Emit e;
     e.parameterOffset = "0u";
+    // The host certificate retains the domain it proved. Runtime inputs must
+    // inhabit BOTH fields' domains; certification is not a clock/omega binding.
+    OntoMath::TypeEnv env{{"p", OntoMath::ValueKind::Vector}};
+    for (const auto* cert : {&sigmaCert, &emissionCert})
+        for (const auto& [name, range] : cert->symbols) {
+            if (name == OntoMath::kTimeVar) { e.bindTime = true; e.timeExpression = "clock"; }
+            else if (name == OntoMath::kOmegaXVar || name == OntoMath::kOmegaYVar || name == OntoMath::kOmegaZVar) e.bindOmega = true;
+        }
+    for (const auto* name : {OntoMath::kTimeVar, OntoMath::kOmegaXVar, OntoMath::kOmegaYVar, OntoMath::kOmegaZVar})
+        if (sigmaCert.symbols.count(name) || emissionCert.symbols.count(name)) env[name] = OntoMath::ValueKind::Scalar;
     for (const auto* f : {&sigma, &emission}) {
+        auto fieldEnv = env;
+        const auto& cert = f == &sigma ? sigmaCert : emissionCert;
+        for (const auto* name : {OntoMath::kTimeVar, OntoMath::kOmegaXVar, OntoMath::kOmegaYVar, OntoMath::kOmegaZVar})
+            if (!cert.symbols.count(name)) fieldEnv.erase(name);
         std::string why;
         OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
-        if (!f->checkTypes({{"p", OntoMath::ValueKind::Vector}}, why, &kind, false) || kind != OntoMath::ValueKind::Scalar) {
+        if (!f->checkTypes(fieldEnv, why, &kind, false) || kind != OntoMath::ValueKind::Scalar) {
             prog.ok = false;
-            prog.error = "a transport field must be a Scalar of p: " + why;
+            prog.error = "a transport field must be a Scalar with certified runtime inputs: " + why;
             return prog;
         }
     }
@@ -2960,7 +2974,32 @@ Program compileLineTransport(const OntoMath::MathNode& sigma, const OntoMath::Ma
     };
     const std::string sigmaBands = bands(sigmaCert, "s");
     const std::string emissionBands = bands(emissionCert, "e");
-    const std::string expError = e.param(float((emissionCert.model.transcendental + 4.0 * std::ldexp(1.0, -23)) * (1.0 + 1e-6)));
+    const double expA = emissionCert.model.exponentialAbsolute(), expR = emissionCert.model.expRelative;
+    if (!(expA >= 0.0 && expR >= 0.0 && expR < 1.0)) e.refuse("invalid exponential error contract");
+    const std::string expAbsolute = e.param(float(expA * (1.0 + 1e-6)));
+    const std::string expRelative = e.param(float(expR * (1.0 + 1e-6)));
+    const std::string expRoundRelative = e.param(float((expR + 4.0 * std::ldexp(1.0, -23)) * (1.0 + 1e-6)));
+    std::string domainGuard;
+    for (const auto* cert : {&sigmaCert, &emissionCert})
+        for (const auto& [name, range] : cert->symbols) {
+            std::string value;
+            if (name == OntoMath::kTimeVar) value = "clock";
+            else if (name == OntoMath::kOmegaXVar) value = "omega.x";
+            else if (name == OntoMath::kOmegaYVar) value = "omega.y";
+            else if (name == OntoMath::kOmegaZVar) value = "omega.z";
+            else { e.refuse("transport cannot bind certificate symbol: " + name); continue; }
+            // Test an inward-rounded domain so nearest f32 conversion cannot
+            // accept an input just outside the mathematical qualification.
+            float lo = float(range.first), hi = float(range.second);
+            if (double(lo) < range.first) lo = std::nextafter(lo, INFINITY);
+            if (double(hi) > range.second) hi = std::nextafter(hi, -INFINITY);
+            if (!(std::isfinite(lo) && std::isfinite(hi) && lo <= hi)) {
+                e.refuse("transport certificate has no finite f32 runtime domain for " + name);
+                continue;
+            }
+            domainGuard += "    if (!(" + value + " >= " + e.param(lo) + " && " + value + " <= " + e.param(hi) +
+                           ")) { return vec4<f32>(0.0); }\n";
+        }
     for (float number : e.params)
         if (!std::isfinite(number)) e.refuse("a transport constant is not finite float32");
     prog.ok = !e.refused;
@@ -2976,14 +3015,15 @@ struct Parameters { v: array<f32> };
 var<private> screenPoint: vec3<f32>;
 )WGSL";
     prog.wgsl += kPrimitives;
-    prog.wgsl += "fn lineSigma(p: vec3<f32>) -> f32 {\n" + sigmaBody + "    return " + sigmaValue + ";\n}\n";
-    prog.wgsl += "fn lineEmission(p: vec3<f32>) -> f32 {\n" + emissionBody + "    return " + emissionValue + ";\n}\n";
+    prog.wgsl += "fn lineSigma(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + sigmaBody + "    return " + sigmaValue + ";\n}\n";
+    prog.wgsl += "fn lineEmission(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + emissionBody + "    return " + emissionValue + ";\n}\n";
+    prog.wgsl += "fn transportUpperExp(x: f32) -> f32 { return (exp(x) + " + expAbsolute + ") / (1.0 - " + expRelative + ") * 1.000001; }\n";
     prog.wgsl += "fn panelLocal(width: f32, L1: f32, H2: f32, hw: f32) -> f32 {\n"
                  "    var l = min(width, L1 * hw);\n"
                  "    if (H2 >= 0.0) { l = min(l, H2 * hw * hw * 0.5); }\n"
                  "    return l;\n"
                  "}\n";
-    prog.wgsl += "fn lineTransport(o: vec3<f32>, d: vec3<f32>, lo: f32, hi: f32, tol: f32) -> vec4<f32> {\n"
+    prog.wgsl += "fn lineTransportAt(o: vec3<f32>, d: vec3<f32>, lo: f32, hi: f32, tol: f32, clock: f32, omega: vec3<f32>) -> vec4<f32> {\n" + domainGuard +
                  "    if (!(hi >= lo)) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }\n"
                  "    let a = lo;\n"
                  "    let b = hi;\n"
@@ -2996,7 +3036,7 @@ var<private> screenPoint: vec3<f32>;
                  "    var eL = 0.0; var eW = 0.0; var eSUP = 0.0; var eEPS = 0.0; var eH = -1.0; var eLOW = 0.0; var eHIGH = 0.0; var eOK = false;\n" +
                  sigmaBands + emissionBands +
                  "    if (!sOK || !eOK) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }\n"
-                 "    let Tmax = exp(max(0.0, -sLOW) * S) * 1.0001;\n"
+                 "    let Tmax = transportUpperExp(max(0.0, -sLOW) * S);\n"
                  "    if (!(Tmax <= 1e6)) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }\n"
                  "    let u = 1.1920929e-7;\n"
                  "    let lambda = 1.25;\n"
@@ -3015,10 +3055,11 @@ var<private> screenPoint: vec3<f32>;
                  "        let gamma = (n + 8.0) * u / (1.0 - (n + 8.0) * u);\n"
                  "        let depthMath = span * (1.0 + lambda) * panelLocal(sW, Ls, Hs, h);\n"
                  "        let depthExec = 1.2 * span * (sEPS + Ls * ds) + gamma * 1.2 * span * sSUP;\n"
-                 "        let F = Tmax * exp(depthMath + depthExec) * 1.0001;\n"
+                 "        let F = Tmax * transportUpperExp(depthMath + depthExec);\n"
                  "        let radius = S * (1.0 + lambda) * panelLocal(gWidth, gPrime, gSecond, h);\n"
                  "        let mathematical = radius + S * F * depthMath * eSUP;\n"
-                 "        let execution = S * (F * depthExec * eSUP + F * (eEPS + Le * ds) + " + expError + " * F * eSUP) + gamma * S * F * eSUP + 4.0 * u * S * F * eSUP;\n"
+                 "        let sampleExecution = F * depthExec * eSUP + F * (eEPS + Le * ds) + (" + expAbsolute + " + " + expRoundRelative + " * F) * eSUP;\n"
+                 "        let execution = S * sampleExecution + (gamma + 4.0 * u) * S * (F * eSUP + sampleExecution);\n"
                  "        total = (mathematical + execution) * 1.001;\n"
                  "        if (total <= tol) { break; }\n"
                  "        n = n * 2.0;\n"
@@ -3027,23 +3068,27 @@ var<private> screenPoint: vec3<f32>;
                  "    let h = S / n;\n"
                  "    let N = u32(n);\n"
                  "    var tauA = 0.0;\n"
-                 "    var sigA = lineSigma(o + a * d);\n"
-                 "    var gA = lineEmission(o + a * d);\n"
+                 "    var sigA = lineSigma(o + a * d, clock, omega);\n"
+                 "    var gA = lineEmission(o + a * d, clock, omega);\n"
                  "    var L = 0.0;\n"
                  "    for (var j = 0u; j < N; j = j + 2u) {\n"
                  "        let sm = a + S * (f32(j + 1u) / n);\n"
                  "        let sb = a + S * (f32(j + 2u) / n);\n"
-                 "        let sigM = lineSigma(o + sm * d);\n"
-                 "        let sigB = lineSigma(o + sb * d);\n"
+                 "        let sigM = lineSigma(o + sm * d, clock, omega);\n"
+                 "        let sigB = lineSigma(o + sb * d, clock, omega);\n"
                  "        let tauM = tauA + h * (5.0 * sigA + 8.0 * sigM - sigB) / 12.0;\n"
                  "        let tauB = tauA + (h / 3.0) * (sigA + 4.0 * sigM + sigB);\n"
-                 "        let gM = exp(-tauM) * lineEmission(o + sm * d);\n"
-                 "        let gB = exp(-tauB) * lineEmission(o + sb * d);\n"
+                 "        let gM = exp(-tauM) * lineEmission(o + sm * d, clock, omega);\n"
+                 "        let gB = exp(-tauB) * lineEmission(o + sb * d, clock, omega);\n"
                  "        L = L + (h / 3.0) * (gA + 4.0 * gM + gB);\n"
                  "        tauA = tauB; sigA = sigB; gA = gB;\n"
                  "    }\n"
                  "    return vec4<f32>(L, 1.0, n, total);\n"
                  "}\n";
+    // Compatibility compute entry. A native consumer supplies its medium's
+    // own clock and emission direction explicitly through lineTransportAt.
+    prog.wgsl += "fn lineTransport(o: vec3<f32>, d: vec3<f32>, lo: f32, hi: f32, tol: f32) -> vec4<f32> {\n"
+                 "    return lineTransportAt(o, d, lo, hi, tol, screen.time.x, -d);\n}\n";
     return prog;
 }
 

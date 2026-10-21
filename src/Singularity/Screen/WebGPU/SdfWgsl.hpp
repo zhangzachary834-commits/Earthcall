@@ -179,6 +179,11 @@ Program compileLineQuadrature(const OntoMath::MathNode& field, const OntoMath::L
 // hi, tol) -> vec4<f32>(L, status, cells, total) for L = ∫ exp(−∫σ)·ε ds, the
 // depth accumulated along ONE march (O(cells)), the cells and the a-priori
 // total chosen exactly as OntoMath::planLineTransport chooses them.
+// lineTransportAt adds (clock: f32, omega: vec3<f32>), explicit per-medium
+// runtime inputs. Each must lie in BOTH certificates' retained symbol domains;
+// missing bindings or an unrepresentable domain refuse compilation, runtime
+// inputs outside the domain refuse the ray. The compatibility wrapper binds
+// screen.time.x and -d. Neither route substitutes zero for a missing input.
 Program compileLineTransport(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
                              const OntoMath::LineQuadratureCertificate& sigmaCert,
                              const OntoMath::LineQuadratureCertificate& emissionCert, uint32_t maxCells);

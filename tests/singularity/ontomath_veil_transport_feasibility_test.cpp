@@ -7,11 +7,12 @@
 //          view direction ω certified over [−1, 1]³ so one certificate covers
 //          every pixel's direction;
 // certify both (OntoMath::certifyLineQuadrature under kVolumeExecutionModel),
-// then plan 12 rays crossing the curtain's authored box (origin ± |scale|),
+// then plan rays crossing the medium-local box [−|scale|,+|scale|],
 // entry to exit, at ±1e-2 and ±1e-3 (absolute, emission units). Printed: what
-// certifies, σ ≥ 0, admitted fractions and cells. ASSERTED: only soundness —
-// on every admitted ray, the double march at the plan's cells lies inside the
-// plan's mathematical part against a cumulative long-double reference.
+// certifies, σ ≥ 0, admitted fractions and cells. ASSERTED: admitted a-priori
+// marches fit the mathematical radius; posterior marches fit their total.
+// The fine cumulative reference is a numerical cross-check, not a certified
+// exact integral; its field samples still pass through CPU f32 vectors.
 // Claude Code · Claude Opus 5.5 · session f3af84cf-bfe3-429d-b417-2d533119f169 · 2026-10-20.
 
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
@@ -23,6 +24,8 @@
 #include "json.hpp"
 
 #include <cmath>
+#include <cstdlib>
+#include <optional>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -76,11 +79,20 @@ int main() {
     const std::map<std::string, std::pair<double, double>> symbols{
         {OntoMath::kTimeVar, {0.0, 0.0}}, {OntoMath::kOmegaXVar, {-1.0, 1.0}},
         {OntoMath::kOmegaYVar, {-1.0, 1.0}}, {OntoMath::kOmegaZVar, {-1.0, 1.0}}};
+    auto limit = [](const char* name, int maximum) {
+        const char* value = std::getenv(name);
+        return value ? std::max(1, std::min(maximum, std::atoi(value))) : maximum;
+    };
+    const int rayCount = limit("EC_VEIL_RAYS", 12), channelCount = limit("EC_VEIL_CHANNELS", 3);
+    const int mediumCount = limit("EC_VEIL_MEDIA", 4);
+    std::printf("  scope: up to %d media, %d channels, %d rays/channel; fixed t=0, medium-local frame\n", mediumCount, channelCount, rayCount);
     int media = 0, soundRays = 0, admittedRays = 0;
+    int scalarRays = 0, activeScalarRays = 0, regionTotal[2] = {0, 0}, regionActiveTotal[2] = {0, 0};
     for (const auto& fj : zone.at("spatialFields")) {
         auto field = geom::FieldNode::fromJson(fj);
         Rendering::VolumeDensityBinding b;
         if (!field || !Rendering::readVolumeDensity(*field, 0.0, 0.0, b) || !b.densityExpr) continue;
+        if (media == mediumCount) break;
         ++media;
         std::printf("  -- %s: box centre (%.3g, %.3g, %.3g) half-span (%.3g, %.3g, %.3g)\n", b.producerId.c_str(), b.origin.x, b.origin.y,
                     b.origin.z, std::abs(b.scale.x), std::abs(b.scale.y), std::abs(b.scale.z));
@@ -118,7 +130,7 @@ int main() {
             else std::printf("     PROBE σ core cell: no certificate\n");
         }
         const char* axes[3] = {"x", "y", "z"};
-        for (int c = 0; c < 3; ++c) {
+        for (int c = 0; c < channelCount; ++c) {
             auto component = node(Op::Component, clone(*emi));
             component->stringArg = axes[c];
             // max(ε_c, 0): Intersection is max for scalars (a Clamp with a huge
@@ -132,11 +144,19 @@ int main() {
             std::uniform_real_distribution<double> un(-1.0, 1.0);
             const OntoMath::RegionCertificate emissionRegion(*epsilon, model, cellSize, symbols);
             int regAdmitted[2] = {0, 0};
-            double regCells[2] = {0.0, 0.0}, regBest[2] = {INFINITY, INFINITY}, regMath = NAN, regExec = NAN, regWorst = 0.0, regWorstMath = NAN, regWorstExec = NAN;
+            double regCells[2] = {0.0, 0.0};
+            std::optional<OntoMath::LineTransportMarch> regBest, regWorst, postBest, postWorst;
+            int regCapCount = 0, postCapCount = 0, activeRays = 0, regActive[2] = {0, 0};
+            auto recordCap = [](const auto& value, auto& best, auto& worst, int& count) {
+                if (!value) return;
+                ++count;
+                if (!best || value->total() < best->total()) best = value;
+                if (!worst || value->total() > worst->total()) worst = value;
+            };
             int admitted[2] = {0, 0}, sound = 0, postAdmitted[2] = {0, 0}, postSound = 0, postTried = 0;
-            double cells[2] = {0.0, 0.0}, postCells[2] = {0.0, 0.0}, bestPost[2] = {INFINITY, INFINITY}, bestMath = NAN, bestExec = NAN;
+            double cells[2] = {0.0, 0.0}, postCells[2] = {0.0, 0.0};
             std::string refusal[2];
-            for (int r = 0; r < 12; ++r) {
+            for (int r = 0; r < rayCount; ++r) {
                 double o[3], d[3], n2 = 0.0;
                 const double centre[3] = {0.0, 0.0, 0.0}, half[3] = {std::abs(b.scale.x), std::abs(b.scale.y), std::abs(b.scale.z)};
                 for (int k = 0; k < 3; ++k) { o[k] = centre[k] + half[k] * 0.9 * un(rng); d[k] = un(rng); n2 += d[k] * d[k]; }
@@ -164,20 +184,37 @@ int main() {
                 for (int i = 1; i < M; i += 2)
                     tau[i] = tau[i - 1] + hh * (5.0L * at(*sigma, t0 + (i - 1) * hh) + 8.0L * at(*sigma, t0 + i * hh) - at(*sigma, t0 + (i + 1) * hh)) / 12.0L;
                 long double sum = 0.0L;
-                for (int i = 0; i <= M; ++i) sum += (i == 0 || i == M ? 1.0L : (i % 2 ? 4.0L : 2.0L)) * std::exp(-tau[i]) * at(*epsilon, t0 + i * hh);
+                long double maxEmission = 0.0L;
+                for (int i = 0; i <= M; ++i) {
+                    const long double source = at(*epsilon, t0 + i * hh);
+                    maxEmission = std::max(maxEmission, source);
+                    sum += (i == 0 || i == M ? 1.0L : (i % 2 ? 4.0L : 2.0L)) * std::exp(-tau[i]) * source;
+                }
+                const bool active = maxEmission > 0.0L;
+                if (active) ++activeRays;
                 const double ref = double(sum * hh / 3.0L);
+                // Cap diagnostics include EVERY ray, even those admitted early.
+                // Keep each winning value together with its own decomposition.
+                std::optional<OntoMath::LineTransportMarch> regionCap;
+                if (std::getenv("EC_VEIL_REGION")) {
+                    regionCap = OntoMath::marchLineTransport(sigmaRegion, emissionRegion,
+                        [&](double x) { return double(at(*sigma, x)); }, [&](double x) { return double(at(*epsilon, x)); }, o, d, t0, t1, 4096);
+                    recordCap(regionCap, regBest, regWorst, regCapCount);
+                }
+                const auto postCap = OntoMath::marchLineTransport(*sc, *ec,
+                    [&](double x) { return double(at(*sigma, x)); }, [&](double x) { return double(at(*epsilon, x)); }, o, d, t0, t1, 4096);
+                recordCap(postCap, postBest, postWorst, postCapCount);
                 // The region-grid march (plan §6at): each panel's constants from its cells.
                 // About 8 minutes in Debug, so opt-in: EC_VEIL_REGION=1 (EC_VEIL_CELL sets the cell size).
                 for (int k = 0; k < 2 && std::getenv("EC_VEIL_REGION"); ++k) {
                     const double tol = k == 0 ? 1e-2 : 1e-3;
                     for (double n = 2.0; n <= 4096.0; n *= 2.0) {
-                        const auto m = OntoMath::marchLineTransport(sigmaRegion, emissionRegion, [&](double s) { return double(at(*sigma, s)); },
+                        const auto m = n == 4096.0 ? regionCap : OntoMath::marchLineTransport(sigmaRegion, emissionRegion, [&](double s) { return double(at(*sigma, s)); },
                                                                     [&](double s) { return double(at(*epsilon, s)); }, o, d, t0, t1, n);
                         if (!m) continue;   // a coarse panel may touch too many cells: refine
-                        if (n == 4096.0 && m->total() < regBest[k]) { regBest[k] = m->total(); regMath = m->mathematical; regExec = m->execution; }
-                        if (n == 4096.0 && k == 0 && m->total() > regWorst) { regWorst = m->total(); regWorstMath = m->mathematical; regWorstExec = m->execution; }
                         if (m->total() <= tol) {
                             ++regAdmitted[k];
+                            if (active) ++regActive[k];
                             regCells[k] += n;
                             ++postTried;
                             postSound += std::abs(m->value - ref) <= m->total();
@@ -189,10 +226,9 @@ int main() {
                 for (int k = 0; k < 2; ++k) {
                     const double tol = k == 0 ? 1e-2 : 1e-3;
                     for (double n = 2.0; n <= 4096.0; n *= 2.0) {
-                        const auto m = OntoMath::marchLineTransport(*sc, *ec, [&](double s) { return double(at(*sigma, s)); },
+                        const auto m = n == 4096.0 ? postCap : OntoMath::marchLineTransport(*sc, *ec, [&](double s) { return double(at(*sigma, s)); },
                                                                     [&](double s) { return double(at(*epsilon, s)); }, o, d, t0, t1, n);
                         if (!m) break;
-                        if (n == 4096.0 && m->total() < bestPost[k]) { bestPost[k] = m->total(); bestMath = m->mathematical; bestExec = m->execution; }
                         if (m->total() <= tol) {
                             ++postAdmitted[k];
                             postCells[k] += n;
@@ -225,24 +261,38 @@ int main() {
                     ++admittedRays;
                 }
             }
+            scalarRays += rayCount;
+            activeScalarRays += activeRays;
+            for (int k = 0; k < 2; ++k) { regionTotal[k] += regAdmitted[k]; regionActiveTotal[k] += regActive[k]; }
             soundRays += sound + postSound;
             admittedRays += postTried;
-            std::printf("     ε_%s REGION GRID (%.3g-unit cells): ±1e-2 %d/12 (mean %.0f cells); ±1e-3 %d/12 (mean %.0f cells); best at 4096 %.3g / %.3g (math %.3g, exec %.3g); WORST at 4096 %.3g (math %.3g, exec %.3g)\n",
-                        axes[c], cellSize, regAdmitted[0], regAdmitted[0] ? regCells[0] / regAdmitted[0] : 0.0, regAdmitted[1],
-                        regAdmitted[1] ? regCells[1] / regAdmitted[1] : 0.0, regBest[0], regBest[1], regMath, regExec, regWorst, regWorstMath, regWorstExec);
-            std::printf("     ε_%s A-POSTERIORI: ±1e-2 %d/12 (mean %.0f cells); ±1e-3 %d/12 (mean %.0f cells); best total at 4096 cells %.3g / %.3g (mathematical %.3g, execution %.3g)\n",
-                        axes[c], postAdmitted[0], postAdmitted[0] ? postCells[0] / postAdmitted[0] : 0.0, postAdmitted[1],
-                        postAdmitted[1] ? postCells[1] / postAdmitted[1] : 0.0, bestPost[0], bestPost[1], bestMath, bestExec);
-            std::printf("     ε_%s (band sup %.3g, L %.3g, H %s, device error %.3g): ±1e-2 %d/12 (mean %.0f cells)%s; ±1e-3 %d/12 (mean %.0f cells)%s\n",
+            auto printCap = [&](const char* tag, const auto& best, const auto& worst, int count) {
+                std::printf("     ε_%s %s cap 4096: %d/%d rays; best %.6g (math %.6g, exec %.6g); worst %.6g (math %.6g, exec %.6g)\n",
+                    axes[c], tag, count, rayCount, best ? best->total() : NAN, best ? best->mathematical : NAN, best ? best->execution : NAN,
+                    worst ? worst->total() : NAN, worst ? worst->mathematical : NAN, worst ? worst->execution : NAN);
+            };
+            std::printf("     ε_%s REGION GRID (%.3g-unit cells): ±1e-2 %d/%d (mean %.0f cells); ±1e-3 %d/%d (mean %.0f cells); reference-sampled nonzero-source rays %d/%d; admitted active at ±1e-2 %d/%d; at ±1e-3 %d/%d\n",
+                axes[c], cellSize, regAdmitted[0], rayCount, regAdmitted[0] ? regCells[0] / regAdmitted[0] : 0.0,
+                regAdmitted[1], rayCount, regAdmitted[1] ? regCells[1] / regAdmitted[1] : 0.0, activeRays, rayCount, regActive[0], activeRays, regActive[1], activeRays);
+            printCap("REGION", regBest, regWorst, regCapCount);
+            std::printf("     ε_%s A-POSTERIORI: ±1e-2 %d/%d (mean %.0f cells); ±1e-3 %d/%d (mean %.0f cells)\n",
+                axes[c], postAdmitted[0], rayCount, postAdmitted[0] ? postCells[0] / postAdmitted[0] : 0.0,
+                postAdmitted[1], rayCount, postAdmitted[1] ? postCells[1] / postAdmitted[1] : 0.0);
+            printCap("BAND", postBest, postWorst, postCapCount);
+            std::printf("     ε_%s (band sup %.3g, L %.3g, H %s, device error %.3g): ±1e-2 %d/%d (mean %.0f cells)%s; ±1e-3 %d/%d (mean %.0f cells)%s\n",
                         axes[c], eb ? eb->sup : NAN, eb ? eb->lipschitz : NAN,
                         eb && std::isfinite(eb->hessian) ? std::to_string(eb->hessian).c_str() : "unbounded", eb ? eb->execution : NAN,
-                        admitted[0], admitted[0] ? cells[0] / admitted[0] : 0.0, admitted[0] < 12 ? (" — " + refusal[0]).c_str() : "",
-                        admitted[1], admitted[1] ? cells[1] / admitted[1] : 0.0, admitted[1] < 12 ? (" — " + refusal[1]).c_str() : "");
+                        admitted[0], rayCount, admitted[0] ? cells[0] / admitted[0] : 0.0, admitted[0] < rayCount ? (" — " + refusal[0]).c_str() : "",
+                        admitted[1], rayCount, admitted[1] ? cells[1] / admitted[1] : 0.0, admitted[1] < rayCount ? (" — " + refusal[1]).c_str() : "");
         }
     }
-    std::printf("  %d media read; %d admitted (ray, channel, tolerance) plans\n", media, admittedRays);
+    std::printf("  %d media read; %d admitted (route, ray, channel, tolerance) records\n", media, admittedRays);
+    if (std::getenv("EC_VEIL_REGION"))
+        std::printf("  REGION totals: ±1e-2 %d/%d, active %d/%d; ±1e-3 %d/%d, active %d/%d (scalar ray/channel records, not RGB frames)\n",
+                    regionTotal[0], scalarRays, regionActiveTotal[0], activeScalarRays,
+                    regionTotal[1], scalarRays, regionActiveTotal[1], activeScalarRays);
     check(media > 0, "Northern Veil's media were read");
-    check(soundRays == admittedRays, "on every admitted plan, the double march lies inside the mathematical part (" +
+    check(soundRays == admittedRays, "on every admitted record, the reference lies within its asserted route bound (" +
                                          std::to_string(soundRays) + "/" + std::to_string(admittedRays) + ")");
     std::cout << "ontomath_veil_transport_feasibility_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";
     return g_failures == 0 ? 0 : 1;

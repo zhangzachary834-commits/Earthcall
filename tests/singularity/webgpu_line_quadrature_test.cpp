@@ -62,7 +62,7 @@ template <class... Kids> Node node(Op op, Kids... kids) {
     auto n = std::make_unique<MathNode>(); n->op = op; (n->children.push_back(std::move(kids)), ...); return n;
 }
 
-struct Ray { double o[3], d[3], lo, hi, tol; };
+struct Ray { double o[3], d[3], lo, hi, tol; double clock = 0.0; double omega[3] = {0.0, 0.0, 1.0}; };
 
 // One lineIntegral per ray; nullopt when the device path fails.
 std::optional<std::vector<float>> runOnDevice(wgpu::Device& gpu, const sdfwgsl::Program& prog, const std::vector<Ray>& rays,
@@ -76,6 +76,8 @@ std::optional<std::vector<float>> runOnDevice(wgpu::Device& gpu, const sdfwgsl::
         for (int i = 0; i < 3; ++i) in.push_back(float(r.d[i]));
         in.push_back(float(r.hi));
         in.push_back(float(r.tol)); in.push_back(0.0f); in.push_back(0.0f); in.push_back(0.0f);
+        for (int i = 0; i < 3; ++i) in.push_back(float(r.omega[i]));
+        in.push_back(float(r.clock));
     }
     const uint64_t inBytes = in.size() * sizeof(float), outBytes = rays.size() * 4 * sizeof(float);
     const float screenData[8] = {1280.0f, 720.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
@@ -99,11 +101,12 @@ std::optional<std::vector<float>> runOnDevice(wgpu::Device& gpu, const sdfwgsl::
         "fn rayMain(@builtin(global_invocation_id) gid: vec3<u32>) {\n"
         "    let i = gid.x;\n"
         "    if (i >= arrayLength(&results)) { return; }\n"
-        "    let a = rays[3u * i];\n"
-        "    let b = rays[3u * i + 1u];\n"
-        "    let c = rays[3u * i + 2u];\n"
+        "    let a = rays[4u * i];\n"
+        "    let b = rays[4u * i + 1u];\n"
+        "    let c = rays[4u * i + 2u];\n"
+        "    let context = rays[4u * i + 3u];\n"
         "    screenPoint = a.xyz;\n"
-        "    results[i] = " + function + "(a.xyz, b.xyz, a.w, b.w, c.x) + vec4<f32>(0.0 * (screen.size.x + P.v[0]));\n"
+        "    results[i] = " + function + "(a.xyz, b.xyz, a.w, b.w, c.x" + (function == "lineTransportAt" ? ", context.w, context.xyz" : "") + ") + vec4<f32>(0.0 * (screen.size.x + P.v[0]));\n"
         "}\n";
     wgpuDevicePushErrorScope(gpu.device, WGPUErrorFilter_Validation);
     WGPUShaderSourceWGSL src = {};
@@ -388,6 +391,55 @@ int main() {
             const auto mc = OntoMath::certifyLineQuadrature(*negativeSigma, Rendering::kVolumeExecutionModel, 20, &why);
             check(mc && !OntoMath::planLineTransport(*mc, *ec, o, dd, 0.0, 2.0, 1.0, 4096, &why) && why.find("unbounded") != std::string::npos,
                   "an extinction negative enough that e^-tau is unbounded refuses: " + why);
+        }
+    }
+    // Real curtains read independent clocks and emission directions. A proved
+    // interval is not a value binding: exercise both and the qualification gate.
+    {
+        const std::map<std::string, std::pair<double, double>> symbols{
+            {OntoMath::kTimeVar, {-1.0, 1.0}}, {OntoMath::kOmegaZVar, {-1.0, 1.0}}};
+        auto sigma = node(Op::Add, constant(0.5), node(Op::Scale, constant(0.125), named(OntoMath::kTimeVar)));
+        auto epsilon = node(Op::Add, constant(1.0), named(OntoMath::kOmegaZVar));
+        const auto sc = OntoMath::certifyLineQuadrature(*sigma, Rendering::kVolumeExecutionModel, 4, nullptr, symbols);
+        const auto ec = OntoMath::certifyLineQuadrature(*epsilon, Rendering::kVolumeExecutionModel, 4, nullptr, symbols);
+        check(sc && ec && sc->symbols == symbols && ec->symbols == symbols,
+              "quadrature certificates retain the exact clock/angular qualification domain");
+        if (sc && ec) {
+            const auto prog = sdfwgsl::compileLineTransport(*sigma, *epsilon, *sc, *ec, 4096);
+            check(prog.ok, "clock- and direction-dependent transport lowers with explicit runtime bindings" +
+                           (prog.ok ? std::string() : " — " + prog.error));
+            std::vector<Ray> rays;
+            for (double clock : {-0.5, 0.5}) for (double z : {-1.0, 0.0, 0.5}) {
+                Ray r{{0, 0, 0}, {1, 0, 0}, 0, 1, 0.02}; r.clock = clock; r.omega[2] = z; rays.push_back(r);
+            }
+            auto invalid = rays.back(); invalid.clock = 2.0; rays.push_back(invalid);
+            invalid = rays.back(); invalid.clock = 0.0; invalid.omega[2] = -1.25; rays.push_back(invalid);
+            invalid = rays.front(); invalid.clock = NAN; rays.push_back(invalid);
+            const auto out = prog.ok ? runOnDevice(gpu, prog, rays, "lineTransportAt") : std::nullopt;
+            check(out.has_value(), "the device runs explicit clock/angular transport without validation errors");
+            if (out) {
+                int contained = 0, refused = 0;
+                double values[6]{};
+                for (int i = 0; i < 6; ++i) {
+                    const auto& r = rays[i];
+                    const double s = 0.5 + 0.125 * r.clock;
+                    const double reference = (1.0 + r.omega[2]) * -std::expm1(-s) / s;
+                    values[i] = (*out)[4*i];
+                    contained += (*out)[4*i+1] == 1.f && std::abs(values[i] - reference) <= (*out)[4*i+3] &&
+                                 (*out)[4*i+3] <= r.tol;
+                }
+                for (int i = 6; i < 9; ++i) refused += (*out)[4*i+1] == 0.f;
+                check(contained == 6, "all six bound clock/direction results contain their analytic transport");
+                check(values[0] == 0 && values[3] == 0 && values[2] > values[1] && values[1] > values[4],
+                      "clock and angular changes alter radiance as authored, including exact dark direction");
+                check(refused == 3, "out-of-domain clock, direction and NaN refuse before the march");
+            }
+            auto missing = *sc; missing.symbols.clear();
+            check(!sdfwgsl::compileLineTransport(*sigma, *epsilon, missing, *ec, 4096).ok,
+                  "one field cannot borrow the other field's clock certificate");
+            auto narrow = *sc; narrow.symbols[OntoMath::kTimeVar] = {0.1, 0.1};
+            check(!sdfwgsl::compileLineTransport(*sigma, *epsilon, narrow, *ec, 4096).ok,
+                  "a point domain with no exact f32 representation refuses instead of widening");
         }
     }
     std::cout << "webgpu_line_quadrature_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";

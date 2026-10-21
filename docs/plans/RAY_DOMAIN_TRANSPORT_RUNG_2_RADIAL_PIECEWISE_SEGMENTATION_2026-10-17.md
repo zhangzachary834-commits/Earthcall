@@ -2068,3 +2068,69 @@ It is about 18× tighter than a priori on the worst channel, but **0 plans are a
 **Nine plans are admitted at ±1e-2**, and every one contains its reference. On the worst rays the mathematical part is small but real (≤ 0.057). **Execution, the declared device model, is the dominant remainder everywhere.** The conclusion of §6at holds; its numbers were optimistic.
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-20.*
+
+
+## 6av. Codex takeover: repair the absolute-exp contract, decide regional branches, bind actual device inputs (2026-10-20)
+
+**Human origin.** Zachary Zhang: “TAKE THE TORCH … U TAKE IT FROM HERE.” Continuation of §6au and the two reproduced obligations in the [existing handoff](../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md). This is implementation on `claude/ray-domain-transport-rung0`, starting at `3eeddf027`.
+
+**Exponential contract repaired.** `ExecutionModel` distinguishes absolute A from relative R: a call's error is ≤ A + R·exp(x). Defaults preserve the device's existing absolute 2⁻¹⁰ allowance; CPU libm explicitly retains its one-ULP/subnormal premise, now identified as `ontomath-cpu/3`. Shared provenance slack and both transport bounds use the same distinction. The posterior march charges A·|ε| without transmittance discount. The a-priori shader's bound-building calls use `(exp_device(x)+A)/(1−R)` as an upper estimate, with existing arithmetic padding. The sum includes bounded sample deviations. This remains model-qualified; no complete Metal Fast enclosure or proved Perlin interpolation premise is claimed.
+
+The retained regression uses σ=2, ε=1 over 50 units and a valid adversarial f32 exp that adds half the absolute allowance. Its radiance error is about 0.0244, beyond the old ~0.00138 bound, and is enclosed after repair. This is a counterexample to the old model claim, not an observed Metal driver error. A device's constant absolute allowance cannot be silently replaced by a measured relative one.
+
+**Whole-cell branch decisions repaired.** The segmenter and regional analysis share `classifySwitch`. Mathematical range/gradient/Hessian use whole-cell mathematical signs; execution slack uses separately established device-margin signs and original-DAG provenance. Thus a safely saturated clamp can be exact, a linear clamp interior has zero Hessian, and touching/kink cells retain conservative fallbacks. Invalid cell sizes, non-finite coordinates and indices outside the bounded grid refuse before integer conversion. Region certificates still borrow immutable source provenance and are transient CPU research state, not a production-resident cache.
+
+**Real inputs now reach GPU transport.** Certificates retain the non-point symbol domain they actually proved. `lineTransportAt(o,d,lo,hi,tol,clock,omega)` binds explicit runtime values through the production mathematical emitter. Each field must carry its own needed inputs; it cannot borrow the other field's certificate. Runtime values must satisfy both domains. Bounds are rounded inward for the check; an unrepresentable point domain refuses compilation. NaN/out-of-domain values refuse the ray. The compatibility `lineTransport` wrapper uses `screen.time.x` and `-d`; a native consumer must pass its medium's own clock and emission direction explicitly. GPU tests exercise nonzero clock/directional changes against an analytic integral, a dark direction, missing premises and refusals.
+
+**Census accounting repaired.** Every ray now has an unconditional 4096-cell diagnostic, even if it admitted earlier. Each best/worst total retains its own mathematical/execution decomposition. Scope controls (`EC_VEIL_MEDIA`, `EC_VEIL_CHANNELS`, `EC_VEIL_RAYS`) are diagnostic only; defaults retain 4×3×12. Results distinguish reference-sampled nonzero-source rays from all admissions. Channel seeds differ, so these are scalar ray/channel records, not complete RGB-pixel admissions. A fine cumulative CPU reference remains a numerical cross-check with f32 vector/Perlin samples; it is not an independently certified exact continuum value. The full repaired census is recorded below when completed; §6au's nine admissions must not be reused as the post-repair result.
+
+**Witnesses already run before the final focused rebuild:** segmentation 99/99, Integral 66/66, expression evaluation 36/36, radial 41/41 including 172,032 real-medium samples; Metal field/transport 36/36 including eight new binding checks; Metal support enclosure 4/4 over 160 killer buckets. Final grid-readiness and consumer checks follow in the completion record. No native continuum consumer, new native frame-time result, save edit, tolerance change or lighting retune is claimed.
+
+| Shipping gate | Current boundary | Next closure |
+|---|---|---|
+| 1. Error contract | Absolute/relative-exp mismatch repaired; regional math/device signs separated. CPU/device models remain qualified. | Preserve qualification and discharge remaining CPU Perlin/native-profile premises; no tolerance relaxation. |
+| 2. GPU fields and transport | One scalar-L prefix march runs on Metal with explicit qualified clock/angular bindings. | Select useful nonzero regional scope; port regional/posterior execution, account for bound arithmetic, share depth across RGB and expose T. Retain traceability to authored Integral/Let or the shared mathematical plan. |
+| 3. Native curtain consumer | No new call from the native volume renderer yet. | Eligible inline-shader consumer with the authoritative local frame, clipping, source semantics and coherent medium-set fallback; invalidation/residency across clock/edit/device changes. With no eligible member, old shader key/code. |
+| 4. Shipping benefit | No new native performance claim. | Authored-reference accuracy and repeated readback-free Metal frame costs including preparation/uploads, then moving/inhabited-scene and Person evidence. |
+
+**Next implementation decision:** judge occupied-ray error and effective work, not the large number of empty-source admissions. More admitted 2048/4096-cell CPU marches alone would not beat the current marcher. Regional execution must avoid paying for empty panels and must repay certificate preparation, lookup, shader occupancy and fallback cost. A t=0 numerical census does not establish a moving-scene domain.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-20T18:29:35-07:00.
+
+
+### §6av corrected census completion — separate occupied-source feasibility from empty admissions
+
+The full repaired census completed: **4 curtains × 3 independently seeded channels × 12 rays**, fixed t=0, medium-local frame, four-unit region cells. All **248 admitted route/ray/channel/tolerance records** passed the numerical reference cross-check (**2/2** top-level checks). The pure magnitude-band a-priori and posterior routes admitted none at either tolerance; the following are regional results.
+
+| Curtain/channel | Regional ±0.01 | Regional ±0.001 | Sampled nonzero source | Nonzero admitted ±0.01 / ±0.001 | Worst cap total = mathematical + execution |
+|---|---:|---:|---:|---:|---:|
+| emerald x | 12/12 | 12/12 | 0/12 | 0 / 0 | 0.000148423 = 0.000106045 + 0.0000423775 |
+| emerald y | 11/12 | 11/12 | 1/12 | 0 / 0 | 0.0831725 = 0.071782 + 0.0113904 |
+| emerald z | 9/12 | 8/12 | 4/12 | 1 / 0 | 0.0265614 = 0.0233205 + 0.00324089 |
+| cyan x | 12/12 | 10/12 | 2/12 | 2 / 0 | 0.00300770 = 0.00260187 + 0.000405830 |
+| cyan y | 11/12 | 11/12 | 1/12 | 0 / 0 | 0.0131785 = 0.0111644 + 0.00201414 |
+| cyan z | 10/12 | 7/12 | 2/12 | 0 / 0 | 0.0287128 = 0.0255946 + 0.00311818 |
+| violet x | 12/12 | 12/12 | 1/12 | 1 / 1 | 0.000600427 = 0.000519089 + 0.0000813382 |
+| violet y | 12/12 | 11/12 | 1/12 | 1 / 0 | 0.00841658 = 0.00739101 + 0.00102557 |
+| violet z | 8/12 | 8/12 | 4/12 | 0 / 0 | 0.0571278 = 0.0509656 + 0.00616221 |
+| crimson x | 12/12 | 10/12 | 1/12 | 1 / 0 | 0.00505649 = 0.00458815 + 0.000468342 |
+| crimson y | 10/12 | 10/12 | 3/12 | 1 / 1 | 0.0132415 = 0.0124722 + 0.000769331 |
+| crimson z | 11/12 | 8/12 | 3/12 | 2 / 0 | 0.0115463 = 0.0107773 + 0.000769065 |
+| **Total** | **130/144** | **118/144** | **23/144** | **9/23; 2/23** | Per-row worst, never a combined ray |
+
+This supersedes §6au's post-frame-correction admissions, which preceded the regional sign/slack repair and honest cap accounting. The superficial jump to 130/144 must not be presented as integration of 130 glowing rays: 121 sampled rays have no source at their reference nodes. Conversely a sampled-zero classification is not itself proof of emptiness between those nodes. Certified regional values/radii, not those samples, decide admission.
+
+The new diagnosis is **mathematical radius first on the hardest rays**. Every displayed worst-cap mathematical component exceeds its execution component; e.g. emerald y is 0.0718 versus 0.0114, and violet z is 0.0510 versus 0.00616. Reducing the device allowance alone cannot admit those at ±0.01. Several useful admissions still require thousands of uniform cells. Next tighten/localize panel work, preserve uncertainty across the full prefix, and measure preparation and actual active work before assuming a GPU speedup. The bound can sometimes become best before the cap because f32 summation cost rises with cells, so cap values are diagnostics rather than an infallible refusal lower bound.
+
+Reproduction: `EC_VEIL_REGION=1 ./build/ontomath_veil_transport_feasibility_test`, from this active checkout. Log: `/private/tmp/earthcall-ray-torch/veil-full.txt`. This completed run used the repaired core before the later reporting-only aggregate and invalid-grid guard additions; valid-grid math is unchanged. No default value or authored equation was changed. No native frame or Person acceptance was measured.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-20T18:31:14-07:00.
+
+
+### §6av focused verification completion
+
+The final focused pass passed **100/100** line-segmentation checks, **66/66** Integral checks, **36/36** expression-evaluation checks, **41/41** radial checks, **36/36** Metal field/transport checks and **132/132** native support-certificate checks. The earlier same-pass Metal support-enclosure test passed **4/4**. `earthcall_webgpu` builds successfully, including a consistent rebuild after removal of the obsolete regional source pointer. The 132-check native target covers retained certificate behavior, camera tours, fresh-renderer equality and full 2560×1440 pixel comparisons; it does **not** call the new continuum transport kernel. Its incidental timing output is not a measured gain from this pass and is not used for promotion. No full suite or 35–41-minute faithfulness run was requested for this unchanged native transport path.
+
+The full regional census above passed **2/2**. A bounded slice verifies the later aggregate reporting without repeating the expensive full census. No new visible default behavior or manual control was introduced; the existing authored-faithfulness/live movement Person checks remain open. Next native work still must obtain paired accuracy and end-to-end cost evidence before promotion.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-20T18:36:03-07:00; commissioned by Zachary Zhang.

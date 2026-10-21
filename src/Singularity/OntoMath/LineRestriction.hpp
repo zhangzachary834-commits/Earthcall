@@ -3,6 +3,7 @@
 #include "Singularity/OntoMath/ScalarForm.hpp"
 
 #include <array>
+#include <cmath>
 #include <limits>
 #include <map>
 #include <memory>
@@ -300,7 +301,9 @@ LineAlgebraicRestriction restrictAlgebraicToLine(const Piecewise& model, bool ve
 //                  by ≤ relative × its magnitude bound, in any grouping
 //                  (reassociation and fusion only move error between
 //                  operations the model already charges);
-//   transcendental each sin/cos/exp/noise evaluation errs by ≤ this, absolute.
+//   transcendental each sin/cos/noise evaluation errs by ≤ this, absolute;
+//                  exp inherits it unless expAbsolute is explicitly supplied.
+//   expAbsolute, expRelative price exp as A + R*exp(x), independently.
 // It is a declared model, not a proof of any device's Fast-math enclosure (see
 // docs/audits/VOLUME_SUPPORT_NATIVE_PROFILE_2026-10-12.md). `magnitudes` maps a
 // symbol to sup|symbol| over the region; the point variable resolves through
@@ -327,7 +330,14 @@ struct ExecutionModel {
     double vector = 0.0;
     double noise = -1.0;
     bool restrictedForm = false;
-    bool active() const { return relative > 0.0 || transcendental > 0.0 || vector > 0.0 || noise > 0.0; }
+    // Exp has separate absolute/relative contracts. Negative expAbsolute
+    // inherits transcendental (the existing device model is absolute).
+    // CPU libm explicitly declares one-ulp relative plus subnormal error.
+    double expAbsolute = -1.0;
+    double expRelative = 0.0;
+    double exponentialAbsolute() const { return expAbsolute >= 0.0 ? expAbsolute : transcendental; }
+    bool active() const { return relative > 0.0 || transcendental > 0.0 || vector > 0.0 || noise > 0.0 ||
+                                 expAbsolute > 0.0 || expRelative > 0.0; }
 };
 // The CPU line evaluator's declared model: restricted form, binary64 (2^-52
 // per operation, libm within one ulp), binary32 Noise arguments, and one
@@ -420,6 +430,9 @@ public:
                    bool* undefined) const;
     Interval switchRange(std::size_t k, double s0, double s1, const std::vector<int8_t>& signs,
                          bool* undefined) const;
+    // Shared conservative branch classifier. An active model requires its
+    // execution margin; inactive means exact mathematics. Unknown is 0.
+    int8_t classifySwitch(std::size_t k, double s0, double s1, const std::vector<int8_t>& signs) const;
     // Proved constant over the whole region the signs describe: every surviving
     // polynomial leaf vanishes exactly in degree ≥ 1 on this line.
     bool constantUnder(uint32_t node, const std::vector<int8_t>& signs) const;
@@ -595,6 +608,9 @@ struct LineQuadratureBand {
 struct LineQuadratureCertificate {
     std::vector<LineQuadratureBand> bands;   // increasing cap
     ExecutionModel model;
+    // Qualification domain, retained for device runtime binding checks. This is
+    // mathematical evidence, not authored state or a cache-validity token.
+    std::map<std::string, std::pair<double, double>> symbols;
 };
 // `symbols` binds every non-point symbol to an interval [lo, hi]: a frame's
 // clock t as a point, a view direction ω as [−1, 1]³ so one certificate covers
@@ -659,11 +675,12 @@ class RegionCertificate {
 public:
     RegionCertificate(const MathNode& field, const ExecutionModel& model, double cell,
                       const std::map<std::string, std::pair<double, double>>& symbols = {});
-    bool ok() const { return bool(_restriction); }
+    bool ok() const { return bool(_restriction) && std::isfinite(_cell) && _cell > 0.0; }
     std::optional<LineQuadratureBand> over(const double lo[3], const double hi[3]) const;
     const ExecutionModel& model() const { return _model; }
 private:
-    const MathNode* _field;
+    // Restriction provenance borrows the immutable source tree, which must
+    // outlive this transient certificate; no native retention yet.
     LineAlgebraicRestriction _restriction;
     ExecutionModel _model;
     double _cell;

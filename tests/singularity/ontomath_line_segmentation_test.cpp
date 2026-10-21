@@ -958,6 +958,79 @@ int main() {
         }
     }
 
+
+    // Codex / GPT-6.1 Sol / 01a148a7-bd85-7550-a416-0e859a729c1a /
+    // 2026-10-20: the takeover review's two independently reproduced failures.
+    {
+        const OntoMath::ExecutionModel device{1.0 / 65536.0, 1.0 / 1024.0};
+        auto clamp = node(Op::Clamp, leaf("x"), num(0), num(1));
+        OntoMath::RegionCertificate regions(*clamp, device, 0.25);
+        const double lo[3] = {0.3, 0.01, 0.01}, hi[3] = {0.4, 0.02, 0.02};
+        const auto linear = regions.over(lo, hi);
+        check(linear && std::isfinite(linear->hessian) && linear->hessian < 1e-10,
+              "a whole cell in clamp's linear branch has zero curvature (previously infinity)");
+        const double belowLo[3] = {-0.4, 0.01, 0.01}, belowHi[3] = {-0.3, 0.02, 0.02};
+        const auto below = regions.over(belowLo, belowHi);
+        check(below && below->sup == 0.0 && below->hessian == 0.0 && below->execution == 0.0,
+              "a whole cell safely below clamp executes exact zero beyond the device margin");
+        const double crossLo[3] = {-0.1, 0.01, 0.01}, crossHi[3] = {0.1, 0.02, 0.02};
+        const auto cross = regions.over(crossLo, crossHi);
+        check(cross && !std::isfinite(cross->hessian),
+              "a region crossing the clamp kink keeps unbounded curvature");
+        const double nearLo[3] = {-0.01, 0.01, 0.01}, nearHi[3] = {-0.001, 0.02, 0.02};
+        const auto near = regions.over(nearLo, nearHi);
+        check(near && near->execution > 0.0,
+              "a cell touching the switch cannot use mathematical saturation as an execution proof");
+        bool invalidRefused = true;
+        for (double size : {0.0, -1.0, double(NAN), double(INFINITY)}) {
+            OntoMath::RegionCertificate invalid(*clamp, device, size);
+            invalidRefused &= !invalid.ok() && !invalid.over(lo, hi);
+        }
+        const double huge[3] = {1e300, 0.0, 0.0}, notFinite[3] = {NAN, 0.0, 0.0};
+        check(invalidRefused && !regions.over(huge, huge) && !regions.over(notFinite, hi),
+              "invalid region sizes and nonrepresentable indices refuse before integer conversion");
+    }
+    {
+        const double allowance = 1.0 / 1024.0;
+        const OntoMath::ExecutionModel model{0.0, allowance};
+        auto sigma = num(2), emission = num(1);
+        const auto sc = OntoMath::certifyLineQuadrature(*sigma, model, 6);
+        const auto ec = OntoMath::certifyLineQuadrature(*emission, model, 6);
+        check(sc && ec, "constant fields have device-model quadrature certificates");
+        if (sc && ec) {
+            const double o[3] = {0, 0, 0}, d[3] = {1, 0, 0};
+            const auto march = OntoMath::marchLineTransport(*sc, *ec, [](double) { return 2.0; },
+                                                           [](double) { return 1.0; }, o, d, 0, 50, 4096);
+            // A valid adversarial implementation of an ABSOLUTE exp allowance:
+            // exact exp(0), otherwise exp(x) + allowance/2 rounded to f32.
+            float acc = 0, tau = 0;
+            const float h = 50.0f / 4096.0f;
+            double worst = 0;
+            auto deviceExp = [&](float t) {
+                const double exact = std::exp(-double(t));
+                const float result = t == 0 ? 1.0f : float(exact + allowance * 0.5);
+                worst = std::max(worst, std::abs(double(result) - exact));
+                return result;
+            };
+            for (int j = 0; j < 4096; j += 2) {
+                const float mid = tau + h * (5.f * 2.f + 8.f * 2.f - 2.f) / 12.f;
+                const float end = tau + (h / 3.f) * (2.f + 4.f * 2.f + 2.f);
+                acc += (h / 3.f) * (deviceExp(tau) + 4.f * deviceExp(mid) + deviceExp(end));
+                tau = end;
+            }
+            const double reference = -std::expm1(-100.0) / 2.0;
+            check(worst <= allowance, "the adversarial f32 exp obeys every call's declared absolute allowance");
+            check(march && std::abs(double(acc) - reference) <= march->total(),
+                  "posterior transport encloses allowed absolute exp error even after transmittance decays");
+        }
+        auto f = ScalarForm::transcendental(OntoMath::TransFactor::Kind::Exp, "s", -1.0, 0.0);
+        OntoMath::SignedRanges range{{"s", {50, 50}}};
+        const auto device = OntoMath::executionBound(f, {{"s", 50}}, model, &range);
+        const auto cpu = OntoMath::executionBound(f, {{"s", 50}}, OntoMath::cpuExecutionModel(), &range);
+        check(device && device->slack >= allowance && cpu && cpu->slack < 1e-12 * std::exp(-50.0),
+              "the device's absolute exp contract and CPU's relative one-ulp contract stay distinct");
+    }
+
     std::cout << "ontomath_line_segmentation_test: " << (g_checks - g_failures) << "/" << g_checks
               << " checks passed\n";
     return g_failures == 0 ? 0 : 1;
