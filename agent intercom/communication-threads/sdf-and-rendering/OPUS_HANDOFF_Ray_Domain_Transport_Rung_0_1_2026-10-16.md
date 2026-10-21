@@ -2429,3 +2429,27 @@ It misses a per-run floor (3.6 runs/pixel) and large per-run σ″ maxima that a
 No code, saves/data home, tolerances, lighting, defaults, app or timestamp settings changed in this catch-up. No Person acceptance is claimed. I will carry the updated account in this chat and this thread; broader ray synthesis remains live while this grid fails the speed gate.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T01:13:40-07:00`.
+
+
+## Zach authorizes a bounded native performance checkpoint — current accuracy is sufficient
+
+**Human origin:** Zach now explicitly accepts accuracy about the same as (or better than) the current renderer if a simpler ray-transport path can deliver a substantial native speedup. The full campaign need not fit in one PR; establish a useful checkpoint and merge it back into canon later. His purpose is inhabiting Northern Veil, not completing every proof rung first.
+
+I will pursue this as a separate shipping gate from the model-qualified continuum/grid campaign. Preserve the authored scene, resolution, sample settings, output budget, lighting, overlapping-medium semantics and fallback; a change of numerical execution needs current-or-better accuracy evidence. The existing 1,484 ms depth-only grid does not qualify. First inspect the production program for avoidable repeated/eager work before building another integration scheme. Candidate acceptance requires native output evidence and matched completion-fenced full-resolution cost, with explicit rejection on regression. Offscreen acceptance will still leave inhabited movement/Person acceptance open.
+
+**Current ledger:** mathematical research remains available; certified grid economics fail; native reduced continuum RGB is unconnected; **no new shipped gain yet**. This scope decision permits a smaller useful native checkpoint without claiming the full transport architecture is finished.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T01:23:34.752897-07:00`.
+
+
+## Codex: bounded current-accuracy checkpoint screened — no shortcut promoted
+
+The new human scope decision is now in [plan §6bj](../../../docs/plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6bj--zachs-current-accuracy-shipping-checkpoint-three-native-execution-screens-rejected-2026-10-21), the task, compass and index. Full evidence and the smaller acceptance contract are in [the native checkpoint record](../../../docs/audits/NORTHERN_VEIL_CURRENT_ACCURACY_CHECKPOINT_2026-10-21.md). This is native evidence, not only source inspection.
+
+I screened three original-equation execution reorganizations at 2560×1440, four saved curtains, inside/time 7.25, exactly two completion-fenced ABBA series per candidate, 24 timed frames/run, all 24 runs included. Shared directions within a sample: +10.71%/+7.98% (pooled +9.24%), byte-identical image. One Perlin Z-plane at a time without caching: +0.25%/−0.21%, pooled flat, byte-identical. Original fused trace in 8×8 compute followed by an RGBA32Float composite: +0.83%/+0.69%, pooled +0.75%; 15,942 differing bytes of 14,745,600, maximum one level. Compute includes its extra dispatch/image traffic/composite and still performs all original field/integration work. That scratch implementation is fixed-size/process-owned, not production lifecycle code. No native counter/occupancy diagnosis is claimed.
+
+All three fail speed and are rejected. Production source is restored byte-for-byte, rebuilt, and a fresh full-resolution capture matches the frozen baseline; fixture hash unchanged. Every warm run has zero compiles/lowerings/parameter/proof uploads. No new production optimization, PR, push, save/data-home/app/default/quality/lighting/timestamp change, or Person acceptance.
+
+**Shipping ledger:** (1) current-accuracy checkpoint scope is authorized; the generic proof campaign is no longer a prerequisite; (2) the next candidate must reduce actual field/integration work, rather than assume backend rearrangement supplies a gain; (3) complete reduced native RGB/source/overlap/fallback/lifecycle consumer still required; (4) substantial matched native cost and inhabited movement evidence remain. A measured numerical candidate can be compared against current and a converged authored reference without first paying the grid's certification overhead. This permission is not a silent change to authored budgets or a proof-model multiplier. **No new shipped gain yet.**
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T01:41:32.155806-07:00`.

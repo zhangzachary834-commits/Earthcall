@@ -204,3 +204,16 @@ This is **architecture direction, not a landed implementation claim**. Existing 
 ### Catch-up qualification — 2026-10-21
 
 The §6bi grid fails the speed gate; the older remaining-steps countdown above must not be read as a recommendation to build fourth-order/RGB/native grid integration for speed. Preserve the grid as a conditional reference candidate and preflight other ray-synthesis strategies separately. §6bc’s Release preparation and §6bi’s full-image compute supersede the old Debug-only handoff. This catch-up inspected source/docs and did not rerun the reported tests or timings. **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T01:13:40-07:00`.
+
+
+### Current-accuracy shipping lane — Zach's 2026-10-21 scope decision
+
+Zach permits a substantial faster native checkpoint at current-or-better accuracy, independently of completion of the generic certified-integral campaign; see [§6bj and the acceptance contract](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6bj--zachs-current-accuracy-shipping-checkpoint-three-native-execution-screens-rejected-2026-10-21). Different numerical nodes require reference-accuracy evidence; lowering resolution/settings or omitting native contributions is not this checkpoint. Keep mathematical ownership in OntoMath and fallback for unsupported states.
+
+- [x] Screen simple execution rearrangements on native full-resolution transport: directions slower, Perlin scheduling flat, compute-plus-composite flat/slower; all rejected and production restored.
+- [ ] Preflight and implement a reduced native field/integration-work candidate against the current accuracy target, carrying complete RGB/source/overlap/fallback/lifecycle cost.
+- [ ] Establish the checkpoint's substantial paired native gain and then measure the inhabited movement case; full certification and Person acceptance remain separate.
+
+**Remaining shipping account:** authorization/accuracy scope settled; a profitable native candidate, complete accuracy/cost validation and inhabited measurement remain. **No new shipped gain.**
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T01:41:32.155806-07:00`.

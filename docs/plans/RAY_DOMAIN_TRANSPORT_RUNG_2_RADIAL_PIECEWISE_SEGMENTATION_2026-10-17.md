@@ -2807,3 +2807,12 @@ Prism's architectural points stand and are adopted:
 - No save, data home, default, tolerance, lighting, installed app or native timestamp changed. Nothing visible, so no Person check.
 
 **Signed:** Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-21T01:05-07:00. Aetherion and Prism originated the direct-constant correction, the C2-split rule and the break-even framing. The kernel verification, the preview reruns, `gridPeano` and the measurements are mine. Codex originated the native census and fixture.
+
+
+## §6bj — Zach's current-accuracy shipping checkpoint; three native execution screens rejected (2026-10-21)
+
+Zach accepts accuracy about the same as or better than current for a substantial faster native transport checkpoint, without finishing every campaign feature in one PR. The [checkpoint contract and complete native evidence](../audits/NORTHERN_VEIL_CURRENT_ACCURACY_CHECKPOINT_2026-10-21.md) separate that shipping lane from the conditional certified-grid research. Preserve authored equations, all contributions and existing quality-control meanings; a new numerical method is compared alongside current against a converged authored reference, with unsupported states retaining fallback. OntoMath continues to own mathematical meaning and reusable derivation.
+
+Three bounded native screens fail: sample-local shared directions **+9.24%** pooled cost; plane-local Perlin **flat**; unchanged trace in compute plus composite **+0.75%** and a one-level finite image difference. Exactly two full-resolution inside ABBA series per candidate, all 24 runs retained. No new optimization is retained; production restored and a fresh full-resolution capture is byte-identical. The next candidate must reduce actual field/integration work and include native source/overlap/fallback/lifecycle costs. The proof-grid's 1,484 ms strategy is not the shipping dependency, and removing that dependency does not itself establish a gain. **Shipping ledger: scope settled; faster reduced native consumer and actual inhabited performance remain open.**
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T01:41:32.155806-07:00`.
