@@ -2003,3 +2003,40 @@ Final focused results: **113/113** segmentation, **57/57** line restriction, **6
 **Next target:** the general exact proportional-source reduction in the mathematical derivation, then reusable/device-derived work and the native eligible consumer. The generic scheduled GPU kernel remains a tested execution mechanism for cases without that reduction. Full details, source conditions and reproduction: plan **§6aw**; logs `/private/tmp/earthcall-ray-adaptive-full.txt` and `/private/tmp/earthcall-ray-scheduled-verified-webgpu_line_quadrature_test.txt`.
 
 **Signed:** Codex / GPT-6.1 Sol / `2026-10-20T19:41:25-07:00` / `01a148a7-bd85-7550-a416-0e859a729c1a`.
+
+
+## Codex continuation — exact proportional derivative reduction belongs to authored mathematics (`7ceb58f07`)
+
+**From:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / **2026-10-20T20:19:33-07:00**. Human origin: Zachary Zhang’s “YAAASSSSSS” continuation of the takeover; his earlier ontology/“gift shop” correction determines ownership. This implements the next target in the preceding §6aw handoff.
+
+**Location:** branch `claude/ray-domain-transport-rung0`, `/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/ourverse_navigator_prototype_loop`. Source, witnesses, plan **§6ax**, task, compass and derived-state ledger are locally committed as **`7ceb58f07`**. Not pushed; Zach publishes. No new reply followed the preceding message in this checkout’s thread when inspected.
+
+### What landed
+
+OntoMath’s `deriveExponentialIntegral` recognizes the general change of variable: for `G(x)=Integral_a^x g` and an x-independent coefficient k, `Integral_a^b exp(-G(x))*k*g(x) dx = k*(1-exp(-G(b)))`. It returns an **ordinary Let/Integral tree**. CPU evaluation uses that derivation; Screen’s ordinary Integral emitter consumes the same returned tree rather than owning another calculus rule. The original cumulative body survives intact, preserving execution provenance. There is no field division or near-equality guess.
+
+Recognition supports scalar products, nondegenerate literal multipliers, linear vector-component projection and same-point SDF factors, including p/x/y/z aliases. It proves a supported finite/continuous derivative fragment, preventing an endpoint antiderivative from concealing an interior pole. Different cumulative bases, outer-dependent inner bodies, spatially varying ratios, unequal fields, zero divisors, unsafe nested binding/domain cases and different eliminated field points decline. Bound names may match or differ. CPU admission propagates the retained inner Integral’s full error through coefficient/exp/subtraction; exact-only outer requests still refuse approximate inner results. Bounds remain conditional on `ontomath-cpu/3`.
+
+**All twelve raw authored curtain channel pairs now derive this identity.** Their coefficients contain no integration/cumulative binding and match original scalar SDF/component evaluations at occupied points at clocks 0 and 3 within 1e-6. This is the real author’s equations, without curtain-name implementation branches. It does **not** project away native gates/floors/clamps/scattering.
+
+### Observed evidence
+
+- **83/83** `ontomath_integral_operation_test`: exact quadratic, reversed endpoints, same-name scope, piecewise/noisy common derivatives, inner uncertainty and negative controls. The noisy reduction uses **zero outer samples** and one bounded inner Integral.
+- **26/26** `EC_VEIL_REDUCTION_ONLY=1 ./build/ontomath_veil_transport_feasibility_test`: 12 structural identities plus two-clock original-coefficient checks.
+- **36/36** expression-evaluation/report regressions.
+- **32/32 Metal** `webgpu_integral_operation_test`: the new varying-polynomial proportional case executes through the shared derivation. 9 cases execute; 4 expected controls refuse, including a reducible but tolerance-bearing Integral. This ordinary emitter still cannot enclose a device tolerance or lower noisy inner field integrals; those refusals remain intact.
+- **81/81 Metal** `webgpu_line_quadrature_test`: retained occupied-curtain scheduled L/T references, guards and identical shader-text checks still pass.
+- `earthcall_webgpu` builds. No install/launch, save/data-home edit, lighting change, tolerance relaxation or default activation. No whole-suite or native-tour rerun is implied. Logs: `/private/tmp/earthcall-ray-substitution-{cpu,curtains,expression,gpu,line-gpu}-verified.txt`.
+
+### Shipping ledger — keep this distinction in the next pass
+
+| Gate | State now | Remaining closure |
+|---|---|---|
+| **1. Math/error contract** | Exact generic derivative reduction with domain/scope refusals and propagated endpoint uncertainty; all raw curtain channels recognize it. | Existing model premises remain conditional; unsupported domains refuse. |
+| **2. GPU execution** | Shared reduction executes for supported closed forms; scheduled noisy L/T remains verified. | Connect one bounded noisy depth to shared RGB/T, price coefficient/exp/subtraction on the device, prove the projected-source admission conditions, and derive/reuse work without host-per-pixel search. |
+| **3. Native consumer** | Still unconnected. | Preserve density gate, extinction floor, emission clamp, scattering/occlusion, local frames, clocks, clipping and coherent overlap fallback; source/edit/device residency and all-ineligible shader identity. |
+| **4. Shipped performance** | No new native timing or live-motion claim. | Paired authored-reference accuracy and repeated end-to-end Metal costs including preparation/upload/occupancy/fallback, then inhabited motion and Person evidence. |
+
+**Next:** feed the reduced endpoint into the bounded device execution plan and share its optical depth across RGB/T. Keep native semantics in the admission contract: prove the 1e-6 extinction floor inactive or bound its residual, retain the density gate and projected source, and do not independently composite overlapping media with different ratios. A transmittance error must also price the background/remaining contribution; the existing accepted-lattice `volumeOutputErrorBudget` is not automatically a continuum budget. No runtime allocation policy or default promotion is proposed by this commit. Full implementation/reproduction: plan **§6ax**.
+
+**Signed:** Codex / GPT-6.1 Sol / `2026-10-20T20:19:33-07:00` / `01a148a7-bd85-7550-a416-0e859a729c1a`.
