@@ -244,3 +244,13 @@ Zach permits a substantial faster native checkpoint at current-or-better accurac
 - [ ] Compare actual native rays with Opus's independent reference; preflight selective integration/fallback that preserves thin/nonsmooth contributions and retains the native gain, then qualify lifecycle and inhabited operation.
 
 [§6bm and complete evidence](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6bm--higher-order-native-transport-lowers-cost-but-fails-current-accuracy-screen-2026-10-21). **Remaining shipping account:** a cheap experimental native method exists; none has passed accuracy and cost together. Uniform CF4 is not activated. Independent accuracy, profitable selective consumer, fallback/lifecycle and inhabited-frame/Person evidence remain open. **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T09:54:39.816571-07:00`.
+
+
+### Selective native screen and independent-reference consumption — 2026-10-21
+
+- [x] Consume Opus's converged projected reference on all 2,304 actual native rays, superseding same-native refinement as accuracy truth for this finite fixture.
+- [x] Implement branch-observed original-lattice fallback and whole-panel proof, repair a scratch future-support jump by native trace, and measure complete cost.
+- [x] Reject selective group4: still worse current mean/p99/max and about twice the native cost in both paired series.
+- [ ] Preflight support-aware panel placement with executable support-discovery and unresolved-kink/fallback costs, then seek a candidate passing accuracy/native cost together before lifecycle and inhabited acceptance.
+
+[§6bo and complete evidence](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6bo--selective-cf4-tested-against-opuss-independent-reference-accuracy-improves-cost-doubles-2026-10-21). **Shipping account:** independent accuracy comparator is ready; no new admitted profitable native consumer or shipped gain. Existing defaults/saves/app remain unchanged. **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T11:04:34.754344-07:00`.

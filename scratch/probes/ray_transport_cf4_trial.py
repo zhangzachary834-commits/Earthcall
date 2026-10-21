@@ -62,7 +62,10 @@ def witness():
             'scope':'manufactured CPU rule witnesses, not authored native accuracy'}
 
 
-def build(root, out, capture=False):
+def build(root, out, capture=False, transform_filter=None, capture_storage_multiplier=1):
+    root=root.resolve();out=out.resolve()
+    assert out!=root and root not in out.parents, 'scratch output must be outside repository'
+    assert 1<=capture_storage_multiplier<=4, 'bounded scratch capture storage only'
     b=root/'build';out.mkdir(parents=True,exist_ok=False)
     (out/'rule-witness.json').write_text(json.dumps(witness(),indent=2)+'\n')
     transform=r'''
@@ -138,11 +141,15 @@ static std::string cf4Shader(std::string wgsl){
  return wgsl;
 }
 '''
+    if transform_filter is not None:
+        transform=transform_filter(transform)
     renderer=(root/'src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp').read_text()
     if capture:
         old=(root/'scripts/northern_veil_fragment_demand.py').read_text()
         helper=next(ast.literal_eval(n.value) for n in ast.parse(old).body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='helper' for t in n.targets))
         helper=helper[:helper.index('static std::string censusShader')]
+        if capture_storage_multiplier != 1:
+            helper=helper.replace('64u * 36u * 64u * sizeof(uint32_t)',f'64u * 36u * {64*capture_storage_multiplier}u * sizeof(uint32_t)')
         helper+=r'''
 static std::string captureShader(std::string wgsl){
  if(wgsl.find("fn volumeShared_3_G0(")==std::string::npos)return wgsl;

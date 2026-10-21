@@ -2861,3 +2861,16 @@ Zach: "NEXT PASS". This delivers the accuracy gate Codex's checkpoint asked for,
 - **CF4's worst rays** cluster where 5–7-unit tent spans get ~1 coarse panel. Hypothesis: support-aware panels, not uniform coarsening.
 
 [Audit, data, probe and consumption format](../audits/NORTHERN_VEIL_PROJECTED_REFERENCE_2026-10-21.md). No native, save or setting change. Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-21T11:00-07:00.
+
+
+## §6bo — Selective CF4 tested against Opus's independent reference; accuracy improves, cost doubles (2026-10-21)
+
+Zach commissioned the next pass. [Complete native selective preflight](../audits/NORTHERN_VEIL_SELECTIVE_CF4_PREFLIGHT_2026-10-21.md) records observed authored abs/clamp branch signatures, panels aligned to the old lattice, original-point fallback and whole-panel zero proof. Branch equality remains heuristic. A scratch jump bug skipped future support; a bounded native trace found and fixed it before timing, and a forced-original control matches current within 2.384e-7. No production source changed.
+
+Opus's §6bn independent rows arrived and are now consumed for every actual native ray. Mean RGB error: current **0.00005223**, uniform group4 **0.00028785**, selective group4 **0.00008248**, selective group3 **0.00006423**. Both selective variants still exceed current mean/p99/max. The native 8192 comparator is not truth: Opus's reference shows more accumulated rounding than 4096. All comparisons remain finite-view evidence, not universal admission.
+
+Group4's complete native cost is **+98.87%/+97.65%** in two 2560x1440 inside ABBA series, all 8 runs/192 frames retained. All warm compiles/lowerings/uploads zero. It visits 44,174 fallback panels versus 12,556 coarse and 22,209 whole-zero, with 167,248 density calls versus the earlier current 147,796. This implementation is rejected on both gates.
+
+**Shipping account:** independent reference now delivered/consumed; a faithful profitable native method remains missing. Next preflight support-aware placement including actual support-discovery and unresolved-kink cost before another GPU implementation. Lifecycle, broader views/clocks/clipping, inhabited timing and Person acceptance remain open. Mathematical promotion belongs in OntoMath. No save/app/default/quality/budget/lighting/timestamp change, PR or push.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T11:04:34.754344-07:00`.
