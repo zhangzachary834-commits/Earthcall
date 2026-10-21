@@ -2952,7 +2952,22 @@ static Program lowerScheduledTransport(Emit& e, std::string prelude, const std::
     const std::string origin="vec3<f32>("+exact(plan.origin[0])+","+exact(plan.origin[1])+","+exact(plan.origin[2])+")";
     const std::string direction="vec3<f32>("+exact(plan.direction[0])+","+exact(plan.direction[1])+","+exact(plan.direction[2])+")";
     const std::string lo=exact(plan.lo), hi=exact(plan.hi);
-    double dn2=0; for(double d:plan.direction) dn2+=d*d;
+    double dn2=0;
+    std::string rayPredicate = "all(o=="+origin+") && all(d=="+direction+")";
+    if (plan.rayDomain) {
+        const auto& q=*plan.rayDomain;
+        auto vector = [&](const std::array<double,3>& v) {
+            return "vec3<f32>("+exact(v[0])+","+exact(v[1])+","+exact(v[2])+")";
+        };
+        for(int i=0;i<3;++i) {
+            if(!(q.originLo[i]<=q.originHi[i] && q.directionLo[i]<=q.directionHi[i]))
+                e.refuse("invalid ray-family qualification box");
+            const double magnitude=std::max(std::abs(q.directionLo[i]),std::abs(q.directionHi[i]));
+            dn2+=magnitude*magnitude;
+        }
+        rayPredicate = "all(o>="+vector(q.originLo)+") && all(o<="+vector(q.originHi)+") && all(d>="+
+            vector(q.directionLo)+") && all(d<="+vector(q.directionHi)+")";
+    } else for(double d:plan.direction) dn2+=d*d;
     const std::string dn=e.param(up(std::sqrt(dn2)*(1.0+1e-12)));
     const std::string pointError=e.param(up(plan.pointError));
     const double a=plan.model.exponentialAbsolute(), r=plan.model.expRelative;
@@ -2973,8 +2988,12 @@ static Program lowerScheduledTransport(Emit& e, std::string prelude, const std::
             e.param(lower(b->low)); e.param(upper(b->high));
             const auto& along = b==&p.sigma ? p.sigmaAlong : p.emissionAlong;
             if (along) {
-                if (along->direction != plan.direction || !(along->slope>=0.0) || !(along->curvature>=0.0))
-                    e.refuse("directional panel evidence does not qualify this ray direction");
+                const auto& dl=plan.rayDomain?plan.rayDomain->directionLo:plan.direction;
+                const auto& dh=plan.rayDomain?plan.rayDomain->directionHi:plan.direction;
+                for(int i=0;i<3;++i)
+                    if (!(dl[i]>=along->directionLo[i] && dh[i]<=along->directionHi[i]))
+                        e.refuse("directional panel evidence does not qualify this ray direction domain");
+                if (!(along->slope>=0.0) || !(along->curvature>=0.0)) e.refuse("invalid directional panel bounds");
                 e.param(std::isfinite(along->slope)?up(along->slope):-1.0f);
                 e.param(std::isfinite(along->curvature)?up(along->curvature):-1.0f);
             } else { e.param(-1.0f);e.param(-1.0f); }
@@ -3017,7 +3036,7 @@ fn rayProofLocal(w: f32,l: f32,h: f32,step: f32) -> f32 {
         out.wgsl+="fn lineScheduledTail()->u32{return "+std::to_string(base)+"u+11u*u32("+count+");}\n";
         out.wgsl+="fn lineScheduledTransportAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,tTol:f32,clock:f32,omega:vec3<f32>)->ScheduledTransport {\n"
             " var out=ScheduledTransport(0.0,0.0,rayProofInfinity(),rayProofInfinity(),0.0,vec2<f32>(0.0),0.0);\n"
-            " if(!("+domain+") || !all(o=="+origin+") || !all(d=="+direction+") || !(lo=="+lo+" && hi=="+hi+" && tol>0.0 && tol<=3.402823466e38 && tTol>0.0 && tTol<=3.402823466e38)){return out;}\n"
+            " if(!("+domain+") || !("+rayPredicate+") || !(lo=="+lo+" && hi=="+hi+" && tol>0.0 && tol<=3.402823466e38 && tTol>0.0 && tTol<=3.402823466e38)){return out;}\n"
             " let count=u32("+count+"); let base="+std::to_string(base)+"u; let dn="+dn+"; let pointError="+pointError+";\n";
         out.wgsl+=R"WGSL(
     let u=1.1920928955078125e-7;
@@ -3064,7 +3083,7 @@ fn rayProofLocal(w: f32,l: f32,h: f32,step: f32) -> f32 {
         " return vec2<f32>(math,execution); }\n";
     out.wgsl+="fn lineScheduledTransportAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,tTol:f32,clock:f32,omega:vec3<f32>)->ScheduledTransport {\n"
         " var result=ScheduledTransport(0.0,0.0,rayProofInfinity(),rayProofInfinity(),0.0,vec2<f32>(0.0),0.0);\n"
-        " if(!("+domain+") || !all(o=="+origin+") || !all(d=="+direction+") || !(lo=="+lo+" && hi=="+hi+" && tol>0.0 && tol<=3.402823466e38 && tTol>0.0 && tTol<=3.402823466e38)){return result;}\n"
+        " if(!("+domain+") || !("+rayPredicate+") || !(lo=="+lo+" && hi=="+hi+" && tol>0.0 && tol<=3.402823466e38 && tTol>0.0 && tTol<=3.402823466e38)){return result;}\n"
         " let count=u32("+count+"); let base="+std::to_string(base)+"u; let dn="+dn+"; let pointError="+pointError+";\n";
     out.wgsl+=R"WGSL(
     let u=1.1920928955078125e-7;

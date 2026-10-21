@@ -2357,3 +2357,60 @@ Logs: `/private/tmp/earthcall-ray-direction-{cpu,restriction,integral,expression
 **Next:** derive affordable reusable or device-side scheduling evidence while establishing native projected-source admission. Different-ratio overlaps cannot be independently composited. T error must weight background/remaining light before being a final-pixel bound; the accepted-lattice `volumeOutputErrorBudget` is not silently a continuum budget. No save/data home, lighting, authored tolerance, installed app, native activation or default changed. There is no new visible native behavior to ask Zach to accept; existing Person checks remain open.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-20T21:15:34-07:00`. Human origin: Zachary Zhang’s “NEXT PASS” continuation, authored-equation faithfulness criterion and requirement that mathematical meaning remain in OntoMath.
+
+
+## 6ba. Ray families share preparation without host field sampling (2026-10-20)
+
+Zach’s next-pass commission targets §6az’s remaining preparation bottleneck. `prepareRegionalLineTransport` now derives one complete schedule for **closed boxes of ray origins and raw directions**, over a fixed f32 parameter interval and explicit symbol domains. It takes **no field callbacks, performs no host field samples and computes no CPU integral**. The packet retains source snapshots, model, whole-family position halo and per-panel evidence. It is deliberately not host-admitted: `result` and sample counters refer only to a host mirror when one ran; the family packet has none. Each GPU ray evaluates its own original authored field and checks its own complete result/error budgets.
+
+### Mathematical ownership and bounded preparation
+
+`RegionCertificate::alongOver` now also accepts a closed direction box. Its first/second derivative bounds apply to every raw direction in that box. The earlier exact-ray API delegates to a singleton domain. Exact singleton zero components can prove transverse constancy; a nonzero-width interval containing zero cannot. Domain endpoints must be explicit finite ordered f32 values for device preparation. Interval arithmetic encloses every `o+s*d`, including negative parameters/directions, before adding the maximum family-wide positional halo. Full spatial Lipschitz and original-DAG execution charges remain distinct from the directional quadrature evidence.
+
+Preparation uses a bounded priority queue of complete certified panels, ranked by their enclosure remainder estimates. The general nested integral additionally ranks variation of attenuation/source products: linear σ/ε do not imply a linear attenuated integrand. **Ranking chooses work; it never certifies accuracy.** There are at most the caller’s requested panels (Kernel ceiling 65536), and no uncovered sliver or failed panel is dropped. Unsplittable panels retain complete evidence. If complete certification cannot fit, preparation returns unavailable. Source, model, symbol domain and ray-domain changes require fresh proof data.
+
+Both GPU schedule variants now guard the retained origin/direction boxes, frozen interval and symbol domains. Inputs one f32 ulp outside, NaNs, interval/clock escapes and unattainable result budgets refuse. Expanded directional domains cannot reuse narrower directional packets. Existing exact-ray packets retain equality qualification. The payload stays **11 scalars/depth panel and 20/general panel**; family qualification adds numeric parameters rather than ray-specific shader code. A moved origin family executes within independent analytic bounds through fresh proof parameters and **identical WGSL text**, while the old payload rejects it. No native cache, activation policy, retention or device-generation lifecycle was added.
+
+### Executed evidence and tradeoffs
+
+A synthetic affine σ with all three origin/direction components varying, clocks 0/3 and signed proportional RGB coefficients runs **64 RGB/T ray records** through one unchanged packet; every component contains its independent analytic integral. The general nested kernel independently executes the same family against analytic radiance. Both variants retain domain/budget refusal checks. The moved-family and stale-source witnesses exercise proof/payload refresh rather than assuming reuse.
+
+For each actual raw authored Northern Veil curtain, one packet covers origins in **[-1/64,+1/64]³**, directions **dx=dy=0, dz in [255/256,257/256]**, the same full local z parameter interval as §6ay/§6az, and clock [0,3]. Four different rays × clocks 0 and 3 produce **8 occupied vector records per packet, 32 across the four media (128 scalar outputs)**. Every RGB/T result admits at unchanged **RGB ±0.01/component, T ±0.006** and contains independent original-expression cumulative Simpson references at 4000/8000 cells (agreement below 1e-5). These references preserve CPU f32 vector/Perlin semantics and remain numerical witnesses, not exact-real certification. A tiny dx=2^-20 is explicitly refused by these axial families; this does not establish coverage of general camera directions.
+
+| Medium | Shared panels | Device sigma evaluations per ray | Maximum device T error bound across family witnesses | Debug shared preparation |
+|---|---|---|---|---|
+| Emerald | 128 | 242 | 0.00330044 | 203.943 ms |
+| Cyan | 128 | 234 | 0.00292321 | 207.964 ms |
+| Violet | 128 | 238 | 0.00266676 | 205.797 ms |
+| Crimson | 128 | 242 | 0.00232957 | 209.013 ms |
+
+Zero emission-field evaluations remain. **Tradeoff:** wider shared evidence uses 234–242 extinction evaluations per ray, versus §6az’s 94–150 on individually tailored hard rays. Preparation is now shared instead of evaluating/integrating every ray on the host, but the observed **204–209 ms/family** is still substantial. These uncontrolled Debug preparation diagnostics exclude GPU compilation, uploads, reference integration and frame composition; they are not a native cost benchmark or an amortized FPS claim. The test helper also recreates device resources between readback modes, so it does not establish persistent GPU residency. Retention, broader perspective/direction domains, economical tile/work selection or device-side discovery remain necessary.
+
+A 128-panel uniform-family control refused the real-curtain budgets (e.g. emerald T bound about 0.0674). The retained priority preparation admits at the same panel cap/budgets by concentrating evidence/work; no tolerance or device allowance was tightened. All earlier single-ray references and controls remain in the final run.
+
+### Final focused verification
+
+| Target | Actual result |
+|---|---|
+| `ontomath_line_segmentation_test` | **132/132**, including family swept-box/derivative corners, full signed-interval coverage, exact-zero versus near-zero directions, invalid domains/models/work caps and retained unsplittable coverage |
+| `ontomath_line_restriction_test` | **57/57** |
+| `ontomath_integral_operation_test` | **85/85** |
+| `ontomath_expression_evaluation_test` | **36/36** |
+| `webgpu_integral_operation_test` | **32/32 Metal** |
+| `webgpu_line_quadrature_test` | **176/176 Metal**, including all new family records/refusals and previous occupied single-ray witnesses |
+| `earthcall_webgpu` | Builds; not installed or launched |
+
+Named targets built and ran sequentially. Logs `/private/tmp/earthcall-ray-family-{cpu,restriction,integral,expression,integral-gpu,gpu}-verified.txt`; build `/private/tmp/earthcall-ray-family-build-final.txt`. This pass does not repeat the native certificate tour, radial census, whole suite or inhabited movement checks; §6az’s native 132/132 result remains dated evidence. Existing arithmetic/noise/exp execution premises remain model-qualified, not hardware-certified.
+
+### Shipping ledger
+
+| Gate | Landed now | Remaining closure |
+|---|---|---|
+| **1. Mathematical/error contract** | Direction-box derivatives, swept-family spatial/position/execution evidence; exact-ray behavior retained. | Conditional model premises and unsupported-domain refusals remain. |
+| **2. GPU execution and affordable discovery** | One prepared proof packet serves different rays/clocks, with **zero host field samples/integrals** and actual GPU result-specific admission. | Economical preparation/retention and broad perspective/direction/work-allocation coverage, or device-side discovery; shared bounds increase per-ray device work in these witnesses. |
+| **3. Native renderer** | Still unconnected. | Projected gate/clamp/1e-6-floor/scattering admission, coherent overlap attenuation, local frames/clocks/clipping and native edit/payload/device lifecycle. |
+| **4. Shipped GPU performance** | No new frame-time or inhabited-motion claim. | Paired authored-reference accuracy and repeated end-to-end Metal timing including cold proof preparation, uploads, occupancy and fallback; then Person evidence. |
+
+**Next:** establish the native projected-source admission contract and an economical retained/device execution strategy for these families. Do not turn a 200 ms family preparation into a per-frame-per-pixel loop. Different-ratio overlapping media still require coherent shared attenuation; T uncertainty must weight background/remaining light before forming a final-pixel budget. The accepted-lattice `volumeOutputErrorBudget` is not silently a continuum budget. No save/data home, lighting, authored tolerance, installed app, default switch or native activation changed. No new visible native behavior needs a new Person check; existing visual/movement checks remain open.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-20T21:45:35-07:00`. Human origin: Zachary Zhang’s “NEXT PASS” continuation, his authored-equation faithfulness criterion and OntoMath ownership correction.

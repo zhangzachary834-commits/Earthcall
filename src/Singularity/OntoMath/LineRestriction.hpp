@@ -613,10 +613,11 @@ struct LineQuadratureBand {
 };
 // Transient Kernel mathematical execution evidence, not authored state.
 // Direction-qualified mathematical derivatives, per unit of the ray's own
-// parameter: slope >= |D_d f| and curvature >= |D_d^2 f|. These never replace
+// parameter, for every d in [directionLo,directionHi]: slope >= |D_d f|
+// and curvature >= |D_d^2 f|. These never replace
 // the region's isotropic Lipschitz/Hessian or price transverse position error.
 struct LineDirectionalBound {
-    std::array<double, 3> direction{};
+    std::array<double, 3> directionLo{}, directionHi{};
     double slope = std::numeric_limits<double>::infinity();
     double curvature = std::numeric_limits<double>::infinity();
 };
@@ -702,6 +703,10 @@ public:
     // No directional grid cache: the returned proof is scoped to this box/d.
     std::optional<std::pair<LineQuadratureBand, LineDirectionalBound>> alongOver(
         const double lo[3], const double hi[3], const double direction[3]) const;
+    // Derivatives valid for every raw direction in this closed box. Exact zero
+    // components may prove constancy; a nonzero-width component may not.
+    std::optional<std::pair<LineQuadratureBand, LineDirectionalBound>> alongOver(
+        const double lo[3], const double hi[3], const double directionLo[3], const double directionHi[3]) const;
     const ExecutionModel& model() const { return _model; }
     const std::string& sourceExpression() const { return _sourceExpression; }
     const std::map<std::string, std::pair<double, double>>& symbols() const { return _symbols; }
@@ -742,23 +747,32 @@ std::optional<ComplementProductBound> boundComplementProduct(double coefficient,
 // authored transport law. Every panel retains its regional evidence; the
 // ordered panels cover the full ray, including absorbing non-emitting spans.
 // No CPU-per-pixel production consumer: the first use is a host reference and
-// device execution witness. Native use still needs GPU schedule derivation.
+// device execution witness. Native use still needs affordable family preparation,
+// source admission and lifecycle integration.
 struct LineTransportPanel {
     double lo = 0.0, hi = 0.0;
     LineQuadratureBand sigma, emission;
     std::optional<LineDirectionalBound> sigmaAlong, emissionAlong;
 };
+// Transient Kernel execution qualification, not an authored being/property.
+// All origins/directions in these closed boxes share the prepared evidence.
+struct LineRayDomain {
+    std::array<double, 3> originLo{}, originHi{}, directionLo{}, directionHi{};
+};
 struct LineTransportSchedule {
     std::array<double, 3> origin{}, direction{};
+    // Absent: the exact ray above. Present: that ray is only a representative;
+    // both GPU schedule variants validate this full domain at execution time.
+    std::optional<LineRayDomain> rayDomain;
     double lo = 0.0, hi = 0.0, pointError = 0.0;
     ExecutionModel model;
     std::string sigmaExpression, emissionExpression;
     std::map<std::string, std::pair<double, double>> sigmaSymbols, emissionSymbols;
     std::vector<LineTransportPanel> panels;
-    LineTransportMarch result;
-    bool admitted = false;
+    LineTransportMarch result; // Host mirror only; family preparation leaves this unevaluated.
+    bool admitted = false; // Host admission only; GPU execution always checks its own full bound.
     std::string refusal;
-    std::size_t sigmaSamples = 0, emissionSamples = 0; // final schedule's field sites
+    std::size_t sigmaSamples = 0, emissionSamples = 0; // last host mirror's field sites; 0 when no mirror ran
     std::size_t sigmaPreparations = 0, emissionPreparations = 0; // host search cost, not device work
 };
 // Refines panels using a heuristic error score; ONLY the final whole-result
@@ -771,6 +785,16 @@ std::optional<LineTransportSchedule> planRegionalLineTransport(
     const std::function<double(double)>& sigmaAt, const std::function<double(double)>& emissionAt,
     const double o[3], const double d[3], double lo, double hi, double radianceTolerance,
     double transmittanceTolerance, std::size_t maxPanels, std::string* why = nullptr);
+
+// Prepare a complete geometric schedule once for a closed FAMILY of rays.
+// No field callbacks, host samples or CPU integral: each device ray computes its
+// own result and complete admission bound. A priority ranking of enclosure remainders
+// allocates at most `panels` without numerical sampling. Panel count is a work cap,
+// not an accuracy promise. Interval endpoints/domain bounds must be finite f32.
+// Source/model/symbol/ray-domain edits require rebuilding these transient proofs.
+std::optional<LineTransportSchedule> prepareRegionalLineTransport(
+    const RegionCertificate& sigma, const RegionCertificate& emission, const LineRayDomain& rays,
+    double lo, double hi, std::size_t panels, std::string* why = nullptr);
 
 struct LineSegmentationPiece {
     double s0 = 0.0, s1 = 0.0;

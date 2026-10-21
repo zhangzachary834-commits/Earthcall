@@ -719,6 +719,85 @@ int main() {
             check(keepsSpatial,"finite directional curvature never removes the full spatial crease, position or original-execution evidence");
         }
     }
+    // One prepared packet and one shader serve many origins, all three direction
+    // components and clocks. No host evaluator or per-ray plan is involved.
+    {
+        auto sigma=leaf(ScalarForm::constant(0.5).plus(ScalarForm::variable("x").scaled(0.125))
+            .plus(ScalarForm::variable("y").scaled(0.0625)).plus(ScalarForm::variable("z").scaled(0.25))
+            .plus(ScalarForm::variable(OntoMath::kTimeVar).scaled(0.0625)));
+        auto source=node(Op::Scale,std::make_unique<MathNode>(*sigma),node(Op::VectorConstruct,constant(0.25),constant(-0.5),constant(2)));
+        auto zero=constant(0);
+        const std::map<std::string,std::pair<double,double>> symbols{{OntoMath::kTimeVar,{0,3}}};
+        OntoMath::RegionCertificate sc(*sigma,Rendering::kVolumeExecutionModel,1,symbols),zc(*zero,Rendering::kVolumeExecutionModel,1,symbols);
+        const OntoMath::LineRayDomain domain{{-0.125,-0.125,-0.125},{0.125,0.125,0.125},{-0.125,-0.125,0.875},{0.125,0.125,1.125}};
+        std::string why;
+        const auto plan=OntoMath::prepareRegionalLineTransport(sc,zc,domain,-0.5,1,16,&why);
+        check(plan && !plan->admitted && plan->sigmaPreparations==0,"a ray-family packet contains proof data without a CPU integral or host admission: "+why);
+        if(plan){
+            const auto program=sdfwgsl::compileScheduledProportionalIntegral(*sigma,*source,*plan);
+            check(program.ok,"one proportional-integral program accepts a qualified ray family: "+program.error);
+            std::vector<Ray> rays;
+            for(int o=0;o<8;++o)for(int d=0;d<4;++d)for(double clock:{0.0,3.0}){
+                Ray r{{0,0,0},{0,0,1},-0.5,1,0.01};r.tTolerance=0.006;r.clock=clock;
+                for(int i=0;i<3;++i){r.o[i]=(o&(1<<i))?domain.originHi[i]:domain.originLo[i];
+                    r.d[i]=((d^(d<<1))&(1<<i))?domain.directionHi[i]:domain.directionLo[i];}
+                rays.push_back(r);
+            }
+            const auto values=program.ok?runOnDevice(gpu,program,rays,"reducedRGB"):std::nullopt;
+            const auto errors=program.ok?runOnDevice(gpu,program,rays,"reducedErrors"):std::nullopt;
+            const auto work=program.ok?runOnDevice(gpu,program,rays,"reducedWork"):std::nullopt;
+            bool contained=values && errors && work;
+            const double k[3]={0.25,-0.5,2};
+            if(contained)for(std::size_t j=0;j<rays.size();++j){const auto& r=rays[j];
+                const double a=0.5+0.125*r.o[0]+0.0625*r.o[1]+0.25*r.o[2]+0.0625*r.clock;
+                const double b=0.125*r.d[0]+0.0625*r.d[1]+0.25*r.d[2];
+                const double T=std::exp(-(a*(r.hi-r.lo)+b*(r.hi*r.hi-r.lo*r.lo)*0.5));
+                contained=contained && (*work)[4*j+3]==1 && (*work)[4*j+1]==0;
+                for(int c=0;c<4;++c)contained=contained && std::abs((*values)[4*j+c]-(c==3?T:k[c]*(1-T)))<=(*errors)[4*j+c] && (*errors)[4*j+c]<=(c==3?0.006:0.01);
+            }
+            check(contained,"all 64 varying-origin/direction/clock RGB/T records contain independent analytic integrals through one unchanged proof payload");
+            std::vector<Ray> invalid;
+            for(int i=0;i<3;++i)for(bool high:{false,true}){
+                auto r=rays[0];r.o[i]=std::nextafter(float(high?domain.originHi[i]:domain.originLo[i]),high?INFINITY:-INFINITY);invalid.push_back(r);
+                r=rays[0];r.d[i]=std::nextafter(float(high?domain.directionHi[i]:domain.directionLo[i]),high?INFINITY:-INFINITY);invalid.push_back(r);
+            }
+            auto r=rays[0];r.o[1]=NAN;invalid.push_back(r);r=rays[0];r.d[2]=NAN;invalid.push_back(r);
+            r=rays[0];r.clock=4;invalid.push_back(r);r=rays[0];r.hi=1.125;invalid.push_back(r);
+            r=rays[0];r.tTolerance=1e-8;invalid.push_back(r);
+            const auto refused=program.ok?runOnDevice(gpu,program,invalid,"reducedWork"):std::nullopt;
+            bool declines=refused.has_value();if(refused)for(std::size_t i=0;i<invalid.size();++i)declines=declines && (*refused)[4*i+3]==0;
+            check(declines,"ray-family runtime guards refuse one-ulp origin/direction escapes, NaNs, clock/interval escape and unattainable budgets");
+            auto expanded=*plan;expanded.rayDomain->directionHi[0]=0.25;
+            check(!sdfwgsl::compileScheduledProportionalIntegral(*sigma,*source,expanded).ok,"expanded direction families require fresh directional proof evidence");
+            auto edited=node(Op::Add,std::make_unique<MathNode>(*sigma),constant(0.125));
+            check(!sdfwgsl::compileScheduledProportionalIntegral(*edited,*source,*plan).ok,"a field edit cannot reuse a previous ray-family proof snapshot");
+            auto movedDomain=domain;movedDomain.originLo[0]+=0.5;movedDomain.originHi[0]+=0.5;
+            const auto moved=OntoMath::prepareRegionalLineTransport(sc,zc,movedDomain,-0.5,1,16,&why);
+            const auto mp=moved?sdfwgsl::compileScheduledProportionalIntegral(*sigma,*source,*moved):sdfwgsl::Program{};
+            auto movedRay=rays[0];movedRay.o[0]+=0.5;
+            const auto mv=moved && mp.ok?runOnDevice(gpu,mp,{movedRay},"reducedWork"):std::nullopt;
+            const auto stale=program.ok?runOnDevice(gpu,program,{movedRay},"reducedWork"):std::nullopt;
+            const auto mrgb=moved && mp.ok?runOnDevice(gpu,mp,{movedRay},"reducedRGB"):std::nullopt;
+            const auto merr=moved && mp.ok?runOnDevice(gpu,mp,{movedRay},"reducedErrors"):std::nullopt;
+            const double ma=0.5+0.125*movedRay.o[0]+0.0625*movedRay.o[1]+0.25*movedRay.o[2]+0.0625*movedRay.clock;
+            const double mb=0.125*movedRay.d[0]+0.0625*movedRay.d[1]+0.25*movedRay.d[2],mt=std::exp(-(ma*1.5+mb*0.375));
+            bool movedFits=mrgb && merr;if(movedFits)for(int c=0;c<4;++c)movedFits=movedFits && std::abs((*mrgb)[c]-(c==3?mt:k[c]*(1-mt)))<=(*merr)[c];
+            check(moved && mp.ok && program.ok && mp.wgsl==program.wgsl && mv && stale && (*mv)[3]==1 && (*stale)[3]==0 && movedFits,
+                "a moved origin family executes inside analytic bounds through fresh parameters and identical shader text, while the old payload refuses it");
+            const auto general=OntoMath::prepareRegionalLineTransport(sc,sc,domain,-0.5,1,64,&why);
+            const auto gp=general?sdfwgsl::compileScheduledLineTransport(*sigma,*sigma,*general):sdfwgsl::Program{};
+            const auto gv=general && gp.ok?runOnDevice(gpu,gp,rays,"scheduledL"):std::nullopt;
+            bool gfits=gv.has_value();if(gv)for(std::size_t i=0;i<rays.size();++i){const auto& r=rays[i];
+                const double a=0.5+0.125*r.o[0]+0.0625*r.o[1]+0.25*r.o[2]+0.0625*r.clock,b=0.125*r.d[0]+0.0625*r.d[1]+0.25*r.d[2];
+                const double ref=-std::expm1(-(a*1.5+b*0.375));
+                gfits=gfits && (*gv)[4*i+1]==1 && std::abs((*gv)[4*i]-ref)<=(*gv)[4*i+3] && (*gv)[4*i+3]<=0.01;
+            }
+            check(gfits,"the general nested kernel also executes the same ray family with independent analytic radiance checks");
+            const auto gi=general && gp.ok?runOnDevice(gpu,gp,invalid,"scheduledWork"):std::nullopt;
+            bool gdeclines=gi.has_value();if(gi)for(std::size_t i=0;i<invalid.size();++i)gdeclines=gdeclines && (*gi)[4*i+3]==0;
+            check(gdeclines,"the general nested kernel also refuses escaped family inputs and unattainable output budgets");
+        }
+    }
     // Actual raw authored curtain equations: all RGB components and T from one
     // device depth. Native floor/gate/scattering admission is deliberately not
     // inferred by this mathematical execution witness.
@@ -744,6 +823,62 @@ int main() {
                 const auto* sigma=single(b.extinctionExpr);const auto* source=single(b.emissionExpr);
                 check(sigma && source,"raw authored vector source and extinction are available: "+b.producerId);
                 if(!sigma || !source)continue;
+                // One fixed packet is reused across occupied rays and clocks,
+                // including a spatial box straddling x=0. This family keeps dx=dy=0;
+                // nonzero transverse directions must not borrow its constancy.
+                {
+                    auto zero=constant(0);
+                    const std::map<std::string,std::pair<double,double>> symbols{{OntoMath::kTimeVar,{0,3}},
+                        {OntoMath::kOmegaXVar,{-1,1}},{OntoMath::kOmegaYVar,{-1,1}},{OntoMath::kOmegaZVar,{-1,1}}};
+                    OntoMath::RegionCertificate sc(*sigma,Rendering::kVolumeExecutionModel,4,symbols),zc(*zero,Rendering::kVolumeExecutionModel,4,symbols);
+                    const OntoMath::LineRayDomain domain{{-0.015625,-0.015625,-0.015625},{0.015625,0.015625,0.015625},{0,0,0.99609375},{0,0,1.00390625}};
+                    const double lo=double(float(-std::abs(b.scale.z))),hi=double(float(std::abs(b.scale.z)));
+                    std::string why;
+                    const auto begin=std::chrono::steady_clock::now();
+                    const auto family=OntoMath::prepareRegionalLineTransport(sc,zc,domain,lo,hi,128,&why);
+                    const double ms=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-begin).count();
+                    const auto program=family?sdfwgsl::compileScheduledProportionalIntegral(*sigma,*source,*family):sdfwgsl::Program{};
+                    check(family && program.ok && !family->admitted && family->sigmaPreparations==0,
+                        "one shared real-curtain packet prepares without host field evaluation: "+b.producerId+": "+why+program.error);
+                    if(family && program.ok){
+                        std::vector<Ray> rays;
+                        for(int j=0;j<4;++j)for(double clock:{0.0,3.0}){
+                            Ray r{{0,0,0},{0,0,1},lo,hi,0.01};r.clock=clock;r.tTolerance=0.006;r.omega[2]=-1;
+                            for(int i=0;i<3;++i)r.o[i]=(j&(1<<(i%2)))?domain.originHi[i]:domain.originLo[i];
+                            r.d[2]=(j&1)?domain.directionHi[2]:domain.directionLo[2];rays.push_back(r);
+                        }
+                        const auto values=runOnDevice(gpu,program,rays,"reducedRGB"),errors=runOnDevice(gpu,program,rays,"reducedErrors"),work=runOnDevice(gpu,program,rays,"reducedWork");
+                        const auto depth=runOnDevice(gpu,program,rays,"scheduledT");
+                        if(depth){double maximum=0;for(std::size_t j=0;j<rays.size();++j)maximum=std::max(maximum,double((*depth)[4*j+3]));
+                            std::printf("    FAMILY-DEPTH %s: max T bound %.8g; first status %.0f\n",b.producerId.c_str(),maximum,(*depth)[1]);}
+                        auto reference=[&](const Ray& r,int n){
+                            auto fields=[&](double t){const glm::vec3 p(float(r.o[0]+t*r.d[0]),float(r.o[1]+t*r.d[1]),float(r.o[2]+t*r.d[2]));
+                                const std::map<std::string,PropertyValue> vars{{"p",PropertyValue(p)},{"x",PropertyValue(double(p.x))},{"y",PropertyValue(double(p.y))},{"z",PropertyValue(double(p.z))},
+                                    {OntoMath::kTimeVar,PropertyValue(r.clock)},{OntoMath::kOmegaXVar,PropertyValue(r.omega[0])},{OntoMath::kOmegaYVar,PropertyValue(r.omega[1])},{OntoMath::kOmegaZVar,PropertyValue(r.omega[2])}};
+                                const auto sv=sigma->evaluate(vars),ev=source->evaluate(vars);double v=NAN;if(sv)propertyValueToNumber(*sv,v);
+                                return std::make_pair(v,ev && std::holds_alternative<glm::vec3>(*ev)?std::get<glm::vec3>(*ev):glm::vec3(NAN));};
+                            const long double h=((long double)r.hi-r.lo)/n;long double tau=0;std::array<long double,3> L{};
+                            auto a=fields(r.lo);std::array<long double,3> ga{a.second.x,a.second.y,a.second.z};
+                            for(int j=0;j<n;j+=2){const auto m=fields(double(r.lo+(j+1)*h)),b=fields(double(r.lo+(j+2)*h));
+                                const long double tm=tau+h*(5*a.first+8*m.first-b.first)/12,tb=tau+h*(a.first+4*m.first+b.first)/3;
+                                for(int c=0;c<3;++c){const long double gm=std::exp(-tm)*m.second[c],gb=std::exp(-tb)*b.second[c];L[c]+=h*(ga[c]+4*gm+gb)/3;ga[c]=gb;}
+                                tau=tb;a=b;}
+                            return std::array<double,4>{double(L[0]),double(L[1]),double(L[2]),double(std::exp(-tau))};};
+                        bool fits=values && errors && work,converged=true,occupied=true;
+                        for(std::size_t j=0;j<rays.size();++j){const auto coarse=reference(rays[j],4000),fine=reference(rays[j],8000);
+                            occupied=occupied && fine[0]>0 && fine[1]>0 && fine[2]>0 && fine[3]<0.999;
+                            for(int c=0;c<4;++c){converged=converged && std::abs(coarse[c]-fine[c])<1e-5;
+                                if(values && errors && work)fits=fits && (*work)[4*j+3]==1 && (*work)[4*j+1]==0 &&
+                                    std::abs((*values)[4*j+c]-fine[c])<=(*errors)[4*j+c] && (*errors)[4*j+c]<=(c==3?0.006:0.01);}
+                        }
+                        check(fits && converged && occupied,"one unchanged real-curtain packet admits eight occupied ray/clock RGB/T records inside independent cumulative references: "+b.producerId);
+                        if(work && errors)std::printf("    FAMILY %s: %.3f ms shared preparation; %zu panels; %.0f sigma sites; first T bound %.6g; eight records; zero host field samples; admitted %.0f\n",
+                            b.producerId.c_str(),ms,family->panels.size(),(*work)[0],(*errors)[3],(*work)[3]);
+                        auto escape=rays[0];escape.d[0]=0x1p-20;
+                        const auto refused=runOnDevice(gpu,program,{escape},"reducedWork");
+                        check(refused && (*refused)[3]==0,"a real-curtain family refuses a tiny nonzero transverse direction outside its proof");
+                    }
+                }
                 for(double transverse:{0.0,2.0}) {
                 auto zero=constant(0);
                 const std::map<std::string,std::pair<double,double>> symbols{{OntoMath::kTimeVar,{0,3}},

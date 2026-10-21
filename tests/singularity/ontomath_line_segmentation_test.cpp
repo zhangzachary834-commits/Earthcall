@@ -1087,6 +1087,55 @@ int main() {
     }
     // Nonuniform schedules are judged by analytic controls, including a dark
     // absorber BEFORE the source. Never infer no transport from zero emission.
+    // A reusable ray family prepares evidence, never CPU field samples or an
+    // admitted answer. Analytic corner derivatives and swept values are checked
+    // independently of the interval derivation.
+    {
+        auto f=node(Op::Scale,node(Op::Sub,num(1),node(Op::Abs,leaf("x"))),
+            node(Op::Add,num(1),node(Op::Scale,num(0.5),leaf("z"))));
+        auto zero=num(0);
+        OntoMath::ExecutionModel model{1.0/65536.0,1.0/1024.0};
+        OntoMath::RegionCertificate sc(*f,model,1),zc(*zero,model,1);
+        OntoMath::LineRayDomain rays{{-0.125,-0.125,-0.0625},{0.125,0.125,0.0625},{0,0,0.875},{0,0,1.125}};
+        std::string why;
+        const auto family=OntoMath::prepareRegionalLineTransport(sc,zc,rays,-1,1,16,&why);
+        check(family && family->rayDomain && family->panels.size()<=16 && !family->admitted &&
+              family->sigmaPreparations==0 && family->emissionPreparations==0 && family->sigmaSamples==0,
+              "a ray-family schedule prepares complete proof data without host field samples or admission: "+why);
+        bool covered=family.has_value(),bounds=covered,spatial=covered;
+        if(family)for(std::size_t j=0;j<family->panels.size();++j){
+            const auto& p=family->panels[j];
+            covered=covered && p.lo==(j?family->panels[j-1].hi:-1.0) && p.hi>p.lo && (j+1<family->panels.size() || p.hi==1);
+            spatial=spatial && !std::isfinite(p.sigma.hessian) && p.sigma.lipschitz>0 && p.sigma.execution>0 &&
+                p.sigmaAlong && std::isfinite(p.sigmaAlong->curvature);
+            for(double x:{-0.125,0.0,0.125})for(double z:{-0.0625,0.0625})for(double dz:{0.875,1.125})
+                for(double t:{p.lo,(p.lo+p.hi)/2,p.hi}){
+                    const double value=(1-std::abs(x))*(1+0.5*(z+t*dz));
+                    const double slope=(1-std::abs(x))*0.5*dz;
+                    bounds=bounds && value>=p.sigma.low && value<=p.sigma.high && p.sigmaAlong && slope<=p.sigmaAlong->slope;
+                }
+        }
+        check(covered,"reusable panels cover the entire signed interval without gaps");
+        check(bounds,"every independent analytic corner value and slope lies inside the family evidence");
+        check(spatial,"a direction family retains transverse crease and execution uncertainty while proving along-ray curvature");
+        auto crossing=rays;crossing.directionLo[0]=-0x1p-20;crossing.directionHi[0]=0x1p-20;
+        const auto c=OntoMath::prepareRegionalLineTransport(sc,zc,crossing,-1,1,4,&why);
+        check(c && !std::isfinite(c->panels[0].sigmaAlong->curvature),
+              "a family containing nearly transverse directions cannot borrow exact-zero constancy");
+        auto bad=rays;bad.originLo[0]=NAN;
+        check(!OntoMath::prepareRegionalLineTransport(sc,zc,bad,-1,1,4,&why),"a non-finite ray-family domain refuses");
+        bad=rays;bad.directionLo[2]=2;
+        check(!OntoMath::prepareRegionalLineTransport(sc,zc,bad,-1,1,4,&why),"an inverted direction family refuses");
+        bad=rays;bad.originLo[0]=0.1;
+        check(!OntoMath::prepareRegionalLineTransport(sc,zc,bad,-1,1,4,&why),"unrounded domain inputs refuse rather than silently changing the ray family");
+        check(!OntoMath::prepareRegionalLineTransport(sc,zc,rays,-1,1,0,&why) &&
+              !OntoMath::prepareRegionalLineTransport(sc,zc,rays,-1,1,65537,&why),"explicit ray-family work caps refuse zero or unbounded preparation");
+        const auto collapsed=OntoMath::prepareRegionalLineTransport(zc,zc,rays,16777216,16777218,4,&why);
+        check(collapsed && collapsed->panels.front().lo==16777216 && collapsed->panels.back().hi==16777218 && !collapsed->admitted,
+              "unsplittable f32 panels retain a complete unadmitted packet rather than leaving a gap");
+        auto other=model;other.noise+=0.01;OntoMath::RegionCertificate changed(*zero,other,1);
+        check(!OntoMath::prepareRegionalLineTransport(sc,changed,rays,-1,1,4,&why),"different execution premises cannot share one ray-family schedule");
+    }
     {
         const OntoMath::ExecutionModel model{1.0 / 65536.0, 1.0 / 1024.0};
         auto tent = [&](double centre, double half) {

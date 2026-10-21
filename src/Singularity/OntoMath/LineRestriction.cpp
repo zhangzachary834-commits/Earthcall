@@ -6,6 +6,7 @@
 #include <cmath>
 #include <functional>
 #include <limits>
+#include <queue>
 #include <sstream>
 
 // Exact line restriction over OntoMath's own signomial algebra. Every algebraic
@@ -2629,7 +2630,8 @@ std::optional<LineTransportMarch> marchCore(const PanelBands& bandsFor, const Ex
             const auto& panel = (*panels)[j / 2];
             auto use = [&](const std::optional<LineDirectionalBound>& along, double& first, double& second) {
                 if (!along) return;
-                for (int i = 0; i < 3; ++i) if (along->direction[i] != d[i]) return;
+                for (int i = 0; i < 3; ++i)
+                    if (!(d[i] >= along->directionLo[i] && d[i] <= along->directionHi[i])) return;
                 first = std::min(first, along->slope); second = std::min(second, along->curvature);
             };
             use(panel.sigmaAlong, Ls, Hs); use(panel.emissionAlong, Le, He);
@@ -2799,12 +2801,17 @@ std::optional<LineQuadratureBand> RegionCertificate::tightOver(const double lo[3
 
 std::optional<std::pair<LineQuadratureBand, LineDirectionalBound>> RegionCertificate::alongOver(
     const double lo[3], const double hi[3], const double d[3]) const {
+    return alongOver(lo, hi, d, d);
+}
+
+std::optional<std::pair<LineQuadratureBand, LineDirectionalBound>> RegionCertificate::alongOver(
+    const double lo[3], const double hi[3], const double dl[3], const double dh[3]) const {
     const auto region = tightOver(lo, hi);
     if (!region) return std::nullopt;
     std::map<std::string, Interval> bindings = _symbolBox;
     LineDirectionalBound along;
     for (int i = 0; i < 3; ++i) {
-        if (!std::isfinite(d[i])) return std::nullopt;
+        if (!(std::isfinite(dl[i]) && std::isfinite(dh[i]) && dl[i] <= dh[i])) return std::nullopt;
         auto interval = [](double a, double b) {
             float l = float(a), h = float(b);
             if (double(l) > a) l = std::nextafter(l, -INFINITY);
@@ -2812,9 +2819,9 @@ std::optional<std::pair<LineQuadratureBand, LineDirectionalBound>> RegionCertifi
             return Interval(l, h);
         };
         bindings[kLineOriginVars[i]] = interval(std::min(lo[i], hi[i]), std::max(lo[i], hi[i]));
-        bindings[kLineDirectionVars[i]] = interval(d[i], d[i]);
+        bindings[kLineDirectionVars[i]] = interval(dl[i], dh[i]);
         if (!bindings[kLineDirectionVars[i]].bounded()) return std::nullopt;
-        along.direction[i] = d[i];
+        along.directionLo[i] = dl[i]; along.directionHi[i] = dh[i];
     }
     LineAlgebraicEvaluator ev(*_restriction.form, bindings, false);
     if (!ev.ok()) return std::nullopt;
@@ -2981,6 +2988,112 @@ std::optional<LineTransportSchedule> planRegionalLineTransport(
         }
         out.panels = std::move(refined);
     }
+}
+
+
+std::optional<LineTransportSchedule> prepareRegionalLineTransport(
+    const RegionCertificate& sigma, const RegionCertificate& emission, const LineRayDomain& rays,
+    double lo, double hi, std::size_t panels, std::string* why) {
+    auto refuse = [&](const std::string& text) -> std::optional<LineTransportSchedule> {
+        if (why) *why = text;
+        return std::nullopt;
+    };
+    auto f32 = [](double x) { return std::isfinite(x) && double(float(x)) == x; };
+    if (!(sigma.ok() && emission.ok() && f32(lo) && f32(hi) && hi > lo && panels > 0 && panels <= 65536))
+        return refuse("ray-family preparation needs finite f32 limits and 1..65536 panels");
+    const auto& m = sigma.model(); const auto& e = emission.model();
+    if (!(std::isfinite(m.relative) && m.relative >= 0 && std::isfinite(m.transcendental) && m.transcendental >= 0 &&
+          std::isfinite(m.vector) && m.vector >= 0 && std::isfinite(m.noise) &&
+          std::isfinite(m.exponentialAbsolute()) && m.exponentialAbsolute() >= 0 &&
+          std::isfinite(m.expRelative) && m.expRelative >= 0 && m.expRelative < 1) ||
+        m.relative != e.relative || m.transcendental != e.transcendental || m.vector != e.vector || m.noise != e.noise ||
+        m.expAbsolute != e.expAbsolute || m.expRelative != e.expRelative || m.restrictedForm || e.restrictedForm)
+        return refuse("ray-family preparation needs matching original-DAG execution models");
+    double on2 = 0, dn2 = 0;
+    for (int i = 0; i < 3; ++i) {
+        if (!(f32(rays.originLo[i]) && f32(rays.originHi[i]) && rays.originLo[i] <= rays.originHi[i] &&
+              f32(rays.directionLo[i]) && f32(rays.directionHi[i]) && rays.directionLo[i] <= rays.directionHi[i]))
+            return refuse("ray-family domain must be ordered finite f32 boxes");
+        const double o = std::max(std::abs(rays.originLo[i]), std::abs(rays.originHi[i]));
+        const double d = std::max(std::abs(rays.directionLo[i]), std::abs(rays.directionHi[i]));
+        on2 += o * o; dn2 += d * d;
+    }
+    LineTransportSchedule out;
+    out.rayDomain = rays; out.origin = rays.originLo; out.direction = rays.directionLo;
+    out.lo = lo; out.hi = hi; out.model = m;
+    out.sigmaExpression = sigma.sourceExpression(); out.emissionExpression = emission.sourceExpression();
+    out.sigmaSymbols = sigma.symbols(); out.emissionSymbols = emission.symbols();
+    out.pointError = 8.0 * std::ldexp(1.0, -23) *
+        (std::sqrt(on2) + (std::abs(lo) + hi - lo) * std::sqrt(dn2)) * (1.0 + 1e-12);
+    if (!std::isfinite(float(out.pointError))) return refuse("ray-family positional halo is not finite f32");
+    auto panel = [&](double a, double b) -> std::optional<LineTransportPanel> {
+        double boxLo[3], boxHi[3];
+        for (int i = 0; i < 3; ++i) {
+            // Interval operations enclose every o+s*d in the panel, including
+            // negative parameters/directions, before adding the same full halo.
+            const Interval swept = Interval(float(rays.originLo[i]), float(rays.originHi[i])) +
+                Interval(float(a), float(b)) * Interval(float(rays.directionLo[i]), float(rays.directionHi[i]));
+            boxLo[i] = double(swept.lo) - out.pointError;
+            boxHi[i] = double(swept.hi) + out.pointError;
+        }
+        const auto sc = sigma.alongOver(boxLo, boxHi, rays.directionLo.data(), rays.directionHi.data());
+        const auto ec = emission.alongOver(boxLo, boxHi, rays.directionLo.data(), rays.directionHi.data());
+        if (!sc || !ec) return std::nullopt;
+        return LineTransportPanel{a, b, sc->first, ec->first, sc->second, ec->second};
+    };
+    auto score = [&](const LineTransportPanel& p) {
+        const double w = p.hi - p.lo;
+        auto remainder = [&](const LineQuadratureBand& b, const std::optional<LineDirectionalBound>& along) {
+            const double first = along ? std::min(b.lipschitz * std::sqrt(dn2), along->slope) : b.lipschitz * std::sqrt(dn2);
+            double r = std::min(b.width, first * w * 0.5);
+            if (along && std::isfinite(along->curvature)) r = std::min(r, along->curvature * w * w * 0.125);
+            return w * r;
+        };
+        // A search ranking only, never an admission/error certificate. The
+        // device recomputes the complete result-specific L/T bound afterwards.
+        const double sl = p.sigmaAlong ? std::min(p.sigma.lipschitz * std::sqrt(dn2), p.sigmaAlong->slope) : p.sigma.lipschitz * std::sqrt(dn2);
+        const double el = p.emissionAlong ? std::min(p.emission.lipschitz * std::sqrt(dn2), p.emissionAlong->slope) : p.emission.lipschitz * std::sqrt(dn2);
+        // Linear fields can still yield a curved exp(-integral(sigma))*epsilon.
+        // Rank that outer product too; epsilon=0 leaves the depth-only ranking.
+        const double outer = p.emission.sup * (p.sigma.sup * p.sigma.sup + sl) + 2.0 * el * p.sigma.sup;
+        const double value = remainder(p.sigma, p.sigmaAlong) * (1.0 + p.emission.sup) +
+            remainder(p.emission, p.emissionAlong) + w * w * w * outer * 0.125;
+        return std::isnan(value) ? std::numeric_limits<double>::infinity() : value;
+    };
+    struct Ranked { LineTransportPanel panel; double score; };
+    auto less = [](const Ranked& a, const Ranked& b) {
+        return a.score != b.score ? a.score < b.score : a.panel.lo > b.panel.lo;
+    };
+    std::priority_queue<Ranked, std::vector<Ranked>, decltype(less)> pending(less);
+    std::vector<std::pair<double, double>> uncovered{{lo, hi}};
+    // Obtain full coverage before allocating the remaining refinement budget.
+    while (!uncovered.empty()) {
+        const auto [a, b] = uncovered.back(); uncovered.pop_back();
+        if (auto p = panel(a, b)) pending.push({*p, score(*p)});
+        else {
+            const double mid = float(a + (b - a) * 0.5);
+            if (!(mid > a && mid < b) || pending.size() + uncovered.size() + 2 > panels)
+                return refuse("ray-family budget cannot certify its complete swept domain");
+            uncovered.push_back({mid, b}); uncovered.push_back({a, mid});
+        }
+    }
+    while (!pending.empty() && pending.size() + out.panels.size() < panels && pending.top().score > 0) {
+        const auto old = pending.top(); pending.pop();
+        const double mid = float(old.panel.lo + (old.panel.hi - old.panel.lo) * 0.5);
+        if (mid > old.panel.lo && mid < old.panel.hi) {
+            const auto a = panel(old.panel.lo, mid), b = panel(mid, old.panel.hi);
+            if (a && b) { pending.push({*a, score(*a)}); pending.push({*b, score(*b)}); continue; }
+        }
+        // Unsplittable panels keep their complete evidence; no sliver vanishes.
+        out.panels.push_back(old.panel);
+    }
+    while (!pending.empty()) { out.panels.push_back(pending.top().panel); pending.pop(); }
+    std::sort(out.panels.begin(), out.panels.end(), [](const auto& a, const auto& b) { return a.lo < b.lo; });
+    // No host field value or error admission was computed. Only the device's
+    // result-specific bound may admit; never treat this packet as an answer.
+    out.refusal = "prepared ray family; admission awaits device execution";
+    if (why) why->clear();
+    return out;
 }
 
 namespace {
