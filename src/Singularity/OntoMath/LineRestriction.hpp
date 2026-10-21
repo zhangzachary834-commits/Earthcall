@@ -712,6 +712,16 @@ std::optional<LineTransportPlan> planLineTransport(const LineQuadratureCertifica
                                                    const double d[3], double lo, double hi, double tolerance,
                                                    double maxCells, std::string* why = nullptr);
 
+// Shared arithmetic office for k*(1-v), given executed k/v and their whole
+// absolute errors. Upstream uncertainty and new subtraction/product rounding
+// are separate. The GPU lowering mirrors this formula with outward arithmetic.
+struct ComplementProductBound {
+    double propagated = 0.0, execution = 0.0;
+    double total() const { return propagated + execution; }
+};
+std::optional<ComplementProductBound> boundComplementProduct(double coefficient, double coefficientError,
+    double value, double valueError, double relative);
+
 // A bounded executable schedule of the same nested integral, not a new
 // authored transport law. Every panel retains its regional evidence; the
 // ordered panels cover the full ray, including absorbing non-emitting spans.

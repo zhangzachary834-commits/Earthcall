@@ -2787,6 +2787,21 @@ std::optional<LineTransportMarch> marchLineTransport(const RegionCertificate& si
         emission.model(), sigmaAt, emissionAt, d, lo, hi, cells, why);
 }
 
+std::optional<ComplementProductBound> boundComplementProduct(double k, double ke, double v, double ve, double relative) {
+    if (!(std::isfinite(k) && std::isfinite(ke) && ke >= 0 && std::isfinite(v) &&
+          std::isfinite(ve) && ve >= 0 && std::isfinite(relative) && relative >= 0)) return std::nullopt;
+    if (k == 0 && ke == 0) return ComplementProductBound{};
+    const double r = std::max(relative, std::ldexp(1.0, -23));
+    const double floor = std::numeric_limits<float>::min();
+    const double difference = std::abs(1.0 - v);
+    const double subtraction = floor + r * (1.0 + std::abs(v));
+    ComplementProductBound out;
+    out.propagated = std::abs(k) * ve + ke * (difference + ve);
+    out.execution = (std::abs(k) + ke) * subtraction + floor + r * std::abs(k) * (difference + subtraction);
+    if (!std::isfinite(out.total())) return std::nullopt;
+    return out;
+}
+
 std::optional<LineTransportSchedule> planRegionalLineTransport(
     const RegionCertificate& sigma, const RegionCertificate& emission,
     const std::function<double(double)>& sigmaAt, const std::function<double(double)>& emissionAt,

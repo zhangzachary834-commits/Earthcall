@@ -14,6 +14,7 @@
 // Claude Code · Claude Opus 5.5 · session f3af84cf-bfe3-429d-b417-2d533119f169 · 2026-10-19.
 
 #include "Singularity/OntoMath/ScalarForm.hpp"
+#include "Singularity/OntoMath/LineRestriction.hpp"
 #include "Singularity/Screen/MathEditors.hpp"
 
 #include <chrono>
@@ -657,6 +658,20 @@ int main() {
         auto cancelled = node(Op::Sub, node(Op::Add, constant(std::ldexp(1.0, 54)), named("s")), constant(std::ldexp(1.0, 54)));
         auto cancelledRatio = make(polynomial("u"), polynomial("s"), std::move(cancelled), 0.0, 2.0);
         check(!OntoMath::deriveExponentialIntegral(*cancelledRatio, &why), "authored spatial dependence cannot disappear through algebraic cancellation");
+    }
+
+    {
+        bool corners=true;
+        for(double k:{-2.0,0.25,4.0})for(double v:{0.2,0.9,1.2}) {
+            const auto bound=OntoMath::boundComplementProduct(k,0.03,v,0.01,std::ldexp(1.0,-16));
+            const double executed=float(float(k)*float(1.0f-float(v)));
+            for(double dk:{-0.03,0.03})for(double dv:{-0.01,0.01})
+                corners=corners && bound && std::abs(executed-(k+dk)*(1-v-dv))<=bound->total();
+        }
+        check(corners,"the shared complement-product error office encloses independent signed input-error corners");
+        const auto zero=OntoMath::boundComplementProduct(0,0,0.5,0.1,0);
+        check(zero && zero->total()==0 && !OntoMath::boundComplementProduct(1,-0.1,0.5,0.1,0),
+              "an exact zero coefficient stays zero; invalid uncertainty never becomes a bound");
     }
 
     std::cout << "ontomath_integral_operation_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";

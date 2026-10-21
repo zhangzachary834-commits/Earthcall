@@ -899,6 +899,12 @@ struct IntegralBounds {
 // k independent of x, lexical bindings checked. Unknown shapes return nullptr.
 // This derives mathematics only; consumers still account for execution error.
 std::unique_ptr<MathNode> deriveExponentialIntegral(const MathNode& node, std::string* why = nullptr);
+// Structural field corollary of the same authored Integral/Let derivation:
+// source(p)=k*derivative(p), with k independent of p/x/y/z. No approximate
+// equality or division by a field. Returns the original-arithmetic coefficient
+// expression, or nullptr. Channels still qualify its runtime inputs/execution.
+std::unique_ptr<MathNode> deriveProportionalFieldCoefficient(const MathNode& derivative,
+                                                           const MathNode& source, std::string* why = nullptr);
 std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std::string, PropertyValue>& vars,
                                        const Singular* subject, std::string* why = nullptr,
                                        IntegralBounds* bounds = nullptr);

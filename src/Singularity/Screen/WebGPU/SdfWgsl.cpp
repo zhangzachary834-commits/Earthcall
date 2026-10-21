@@ -2933,7 +2933,7 @@ var<private> screenPoint: vec3<f32>;
 // fields/domain lowering below is shared with the ordinary line kernel; no
 // second source/attenuation law lives in this backend.
 static Program lowerScheduledTransport(Emit& e, std::string prelude, const std::string& domain,
-                                        const OntoMath::LineTransportSchedule& plan) {
+                                        const OntoMath::LineTransportSchedule& plan, bool depthOnly = false) {
     Program out;
     auto up = [&](double x) {
         float f = float(x);
@@ -2967,6 +2967,7 @@ static Program lowerScheduledTransport(Emit& e, std::string prelude, const std::
         if(p.lo!=previous || !(p.hi>p.lo)) e.refuse("schedule is not an ordered complete partition");
         exact(p.lo); exact(p.hi); previous=p.hi;
         for(const auto* b:{&p.sigma,&p.emission}) {
+            if(depthOnly && b==&p.emission)continue;
             e.param(up(b->lipschitz)); e.param(up(b->width)); e.param(up(b->sup)); e.param(up(b->execution));
             e.param(std::isfinite(b->hessian)?up(b->hessian):-1.0f);
             e.param(lower(b->low)); e.param(upper(b->high));
@@ -3002,6 +3003,49 @@ fn rayProofLocal(w: f32,l: f32,h: f32,step: f32) -> f32 {
 }
 )WGSL";
     out.wgsl+="fn rayProofExp(x:f32)->f32 { let y=max(exp(x),0.0); let denominator=bitcast<f32>(bitcast<u32>(1.0-"+expR+")-1u); return rayProofUp(rayProofAdd(y,"+expA+")/denominator); }\n";
+    if(depthOnly) {
+        // Dedicated endpoint program: no idle emission/outer-integral branch
+        // remains in the called shader. Nine numeric scalars per panel; ray,
+        // count and bounds stay payload data, preserving program-text reuse.
+        out.wgsl+="fn lineScheduledTail()->u32{return "+std::to_string(base)+"u+9u*u32("+count+");}\n";
+        out.wgsl+="fn lineScheduledTransportAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,tTol:f32,clock:f32,omega:vec3<f32>)->ScheduledTransport {\n"
+            " var out=ScheduledTransport(0.0,0.0,rayProofInfinity(),rayProofInfinity(),0.0,vec2<f32>(0.0),0.0);\n"
+            " if(!("+domain+") || !all(o=="+origin+") || !all(d=="+direction+") || !(lo=="+lo+" && hi=="+hi+" && tol>0.0 && tol<=3.402823466e38 && tTol>0.0 && tTol<=3.402823466e38)){return out;}\n"
+            " let count=u32("+count+"); let base="+std::to_string(base)+"u; let dn="+dn+"; let pointError="+pointError+";\n";
+        out.wgsl+=R"WGSL(
+    let u=1.1920928955078125e-7;
+    let gu=f32(16u*count+32u)*u;
+    let gamma=rayProofUp(gu/(1.0-gu));
+    var tau=0.0;var dm=0.0;var de=0.0;var sigA=0.0;var calls=0.0;
+    for(var j=0u;j<count;j=j+1u){
+        let k=base+9u*j;
+        let sa=P.v[k];let sb=P.v[k+1u];let step=(sb-sa)*0.5;let sm=sa+(sb-sa)*0.5;
+        let width=rayProofUp(sb-sa);let hw=rayProofMul(width,0.5);
+        let l=P.v[k+2u];let w=P.v[k+3u];let sup=P.v[k+4u];let e=P.v[k+5u];let h=P.v[k+6u];let low=P.v[k+7u];let high=P.v[k+8u];
+        if(sup==0.0 && e==0.0){sigA=0.0;continue;}
+        let constant=e==0.0 && low==high;
+        if(j==0u){if(constant){sigA=low;}else{sigA=lineSigma(o+sa*d,clock,omega);calls=calls+1.0;}}
+        var sigM=low;var sigB=low;
+        if(!constant){sigM=lineSigma(o+sm*d,clock,omega);sigB=lineSigma(o+sb*d,clock,omega);calls=calls+2.0;}
+        tau=tau+(step/3.0)*(sigA+4.0*sigM+sigB);
+        let ls=rayProofMul(l,dn);var hs=-1.0;
+        if(h>=0.0){hs=rayProofMul(rayProofMul(h,dn),dn);}
+        dm=rayProofAdd(dm,rayProofMul(rayProofMul(width,2.25),rayProofLocal(w,ls,hs,hw)));
+        de=rayProofAdd(de,rayProofMul(rayProofMul(1.2,width),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup))));
+        sigA=sigB;
+    }
+    let tUpper=rayProofExp(rayProofSignedUp(-tau+rayProofAdd(dm,de)));
+)WGSL";
+        out.wgsl+="    let tError=rayProofAdd(rayProofMul(tUpper,rayProofAdd(dm,de)),rayProofAdd("+expA+",rayProofMul("+expRound+",tUpper)));\n";
+        out.wgsl+=R"WGSL(
+    out.radiance=0.0;out.radianceError=0.0;out.transmittance=exp(-tau);out.transmittanceError=tError;
+    out.samples=vec2<f32>(calls,0.0);out.panels=f32(count);
+    if(abs(out.transmittance)<=3.402823466e38 && tError<=tTol){out.status=1.0;}
+    return out;
+}
+)WGSL";
+        return out;
+    }
     out.wgsl+="fn rayProofSample(tau:f32,dm:f32,de:f32,eps:f32,ee:f32,ep:f32)->vec2<f32> {\n"
         " let delta=rayProofAdd(dm,de); let f=rayProofExp(rayProofSignedUp(-tau+delta));\n"
         " let magnitude=rayProofAdd(abs(eps),rayProofAdd(ee,ep));\n"
@@ -3096,7 +3140,7 @@ fn lineScheduledWorkAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,clock:f32,o
 static Program compileLineTransportImpl(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
                              const OntoMath::LineQuadratureCertificate& sigmaCert,
                              const OntoMath::LineQuadratureCertificate& emissionCert, uint32_t maxCells,
-                                        const OntoMath::LineTransportSchedule* schedule) {
+                                        const OntoMath::LineTransportSchedule* schedule, bool depthOnly = false) {
     Program prog;
     Emit e;
     e.parameterOffset = "0u";
@@ -3135,7 +3179,7 @@ static Program compileLineTransportImpl(const OntoMath::MathNode& sigma, const O
     const std::string sigmaValue = emitMathNode(sigma, e, "p");
     const std::string sigmaBody = e.body;
     e.body.clear();
-    const std::string emissionValue = emitMathNode(emission, e, "p");
+    const std::string emissionValue = depthOnly ? "0.0" : emitMathNode(emission, e, "p");
     const std::string emissionBody = e.body;
     e.body.clear();
     std::string domainPredicate = "true";
@@ -3167,8 +3211,8 @@ var<private> screenPoint: vec3<f32>;
 )WGSL";
     prelude += kPrimitives;
     prelude += "fn lineSigma(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + sigmaBody + "    return " + sigmaValue + ";\n}\n";
-    prelude += "fn lineEmission(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + emissionBody + "    return " + emissionValue + ";\n}\n";
-    if (schedule) return lowerScheduledTransport(e, std::move(prelude), domainPredicate, *schedule);
+    if(!depthOnly) prelude += "fn lineEmission(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + emissionBody + "    return " + emissionValue + ";\n}\n";
+    if (schedule) return lowerScheduledTransport(e, std::move(prelude), domainPredicate, *schedule, depthOnly);
     auto bands = [&](const OntoMath::LineQuadratureCertificate& cert, const std::string& tag) {
         std::string out;
         for (std::size_t j = 0; j < cert.bands.size(); ++j) {
@@ -3286,6 +3330,107 @@ Program compileScheduledLineTransport(const OntoMath::MathNode& sigma, const Ont
     sc.symbols=schedule.sigmaSymbols; ec.symbols=schedule.emissionSymbols;
     sc.sourceExpression=schedule.sigmaExpression; ec.sourceExpression=schedule.emissionExpression;
     return compileLineTransportImpl(sigma,emission,sc,ec,2,&schedule);
+}
+
+Program compileScheduledProportionalIntegral(const OntoMath::MathNode& sigma,
+    const OntoMath::MathNode& vectorSource, const OntoMath::LineTransportSchedule& schedule) {
+    using Op = OntoMath::MathNode::Op;
+    OntoMath::MathNode zero; zero.scalarForm = OntoMath::ScalarForm::constant(0.0);
+    OntoMath::LineQuadratureCertificate sc,ec;
+    sc.model=ec.model=schedule.model;sc.symbols=schedule.sigmaSymbols;ec.symbols=schedule.emissionSymbols;
+    sc.sourceExpression=schedule.sigmaExpression;ec.sourceExpression=schedule.emissionExpression;
+    Program out = compileLineTransportImpl(sigma,zero,sc,ec,2,&schedule,true);
+    if (!out.ok) return out;
+    if(!(std::isfinite(schedule.model.relative) && schedule.model.relative>=0) || schedule.model.restrictedForm) {
+        out.ok=false;out.error="reduced integral needs a finite original-DAG relative execution model";return out;
+    }
+    Emit e; e.parameterOffset="lineScheduledTail()";
+    auto refuse = [&](const std::string& reason) { Program p; p.ok=false; p.error=reason; return p; };
+    OntoMath::TypeEnv env{{"p",OntoMath::ValueKind::Vector},{"x",OntoMath::ValueKind::Scalar},
+        {"y",OntoMath::ValueKind::Scalar},{"z",OntoMath::ValueKind::Scalar}};
+    std::map<std::string,double> magnitudes;
+    OntoMath::SignedRanges ranges;
+    for(const auto& [name,range]:schedule.sigmaSymbols) {
+        env[name]=OntoMath::ValueKind::Scalar;
+        magnitudes[name]=std::max(std::abs(range.first),std::abs(range.second)); ranges[name]=range;
+        if(name==OntoMath::kTimeVar){e.bindTime=true;e.timeExpression="clock";}
+        else if(name==OntoMath::kOmegaXVar || name==OntoMath::kOmegaYVar || name==OntoMath::kOmegaZVar)e.bindOmega=true;
+        else return refuse("reduced integral cannot bind symbol: "+name);
+    }
+    std::string why; OntoMath::ValueKind kind=OntoMath::ValueKind::Unknown;
+    if(!vectorSource.checkTypes(env,why,&kind,false) || kind!=OntoMath::ValueKind::Vector)
+        return refuse("reduced source needs a Vector with explicitly qualified inputs: "+why);
+    auto up=[&](double x) {
+        float f=float(x);
+        if(!(std::isfinite(x) && x>=0 && std::isfinite(f))){e.refuse("non-finite coefficient/error bound");return 0.0f;}
+        if(double(f)<x)f=std::nextafter(f,INFINITY);
+        return f;
+    };
+    std::string coefficients, errors;
+    // Coefficient proof uses the original arithmetic returned by OntoMath.
+    // Do not normalize it into a CPU-computed constant before emission.
+    for(const char* axis:{"x","y","z"}) {
+        OntoMath::MathNode component; component.op=Op::Component; component.stringArg=axis;
+        component.children.push_back(std::make_unique<OntoMath::MathNode>(vectorSource));
+        const auto coefficient=OntoMath::deriveProportionalFieldCoefficient(sigma,component,&why);
+        if(!coefficient)return refuse("no exact proportional component "+std::string(axis)+": "+why);
+        const auto bound=OntoMath::executionBound(*coefficient,magnitudes,schedule.model,-1,OntoMath::kAmbientPointVar,&ranges);
+        if(!bound || !(std::isfinite(bound->magnitude) && std::isfinite(bound->slack) && bound->slack>=0))
+            return refuse("the proportional coefficient has no finite execution enclosure");
+        // The relative execution premise does not cover arbitrary flush-to-zero
+        // amplification. Unknown tiny intermediate ranges decline; no device
+        // allowance is silently tightened to make a coefficient fit.
+        auto normal=[&](auto&& self,const OntoMath::MathNode& n)->bool{
+            const auto b=OntoMath::executionBound(n,magnitudes,schedule.model,-1,OntoMath::kAmbientPointVar,&ranges);
+            const double tiny=std::numeric_limits<float>::min();
+            if(!b || (b->magnitude>0 && b->magnitude<tiny) || (b->slack>0 && b->slack<tiny))return false;
+            for(const auto& c:n.children)if(!c || !self(self,*c))return false;
+            return true;
+        };
+        if(!normal(normal,*coefficient))return refuse("coefficient subnormal amplification is not qualified by the execution model");
+        if(!coefficients.empty()){coefficients+=",";errors+=",";}
+        coefficients+=emitMathNode(*coefficient,e,"p");
+        errors+=e.param(up(bound->slack*(1.0+1e-12)));
+    }
+    const std::string relative=e.param(up(std::max(schedule.model.relative,std::ldexp(1.0,-23))));
+    for(float p:e.params)if(!std::isfinite(p))e.refuse("coefficient parameter is not finite f32");
+    if(e.refused)return refuse(e.refusal);
+    out.params.insert(out.params.end(),e.params.begin(),e.params.end());
+    out.wgsl+="\nfn lineReductionCoefficient(clock:f32,omega:vec3<f32>)->vec3<f32>{\n"+e.body+"return vec3<f32>("+coefficients+");\n}\n";
+    // This is the arithmetic lowering of OntoMath::boundComplementProduct,
+    // not an independent transport identity. T's whole bound already includes
+    // inner quadrature, field execution and the absolute exp library allowance.
+    out.wgsl+=R"WGSL(
+struct ReducedIntegral {
+    value:vec3<f32>, transmittance:f32, error:vec3<f32>, transmittanceError:f32,
+    status:f32, samples:vec2<f32>, panels:f32
+};
+fn lineReducedIntegralAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,tTol:f32,clock:f32,omega:vec3<f32>)->ReducedIntegral {
+    var out=ReducedIntegral(vec3<f32>(0.0),0.0,vec3<f32>(rayProofInfinity()),rayProofInfinity(),0.0,vec2<f32>(0.0),0.0);
+    let depth=lineScheduledTransportAt(o,d,lo,hi,tol,tTol,clock,omega);
+    if(depth.status!=1.0){return out;}
+    let coefficient=lineReductionCoefficient(clock,omega);
+    let difference=1.0-depth.transmittance;
+    out.value=coefficient*difference;out.transmittance=depth.transmittance;
+    out.transmittanceError=depth.transmittanceError;out.samples=depth.samples;out.panels=depth.panels;
+)WGSL";
+    out.wgsl+="    let coefficientError=vec3<f32>("+errors+");let relative="+relative+";\n";
+    out.wgsl+=R"WGSL(
+    let normalFloor=bitcast<f32>(0x00800000u);
+    let subtraction=rayProofAdd(normalFloor,rayProofMul(relative,rayProofAdd(1.0,abs(depth.transmittance))));
+    for(var c=0u;c<3u;c=c+1u){
+        if(coefficient[c]==0.0 && coefficientError[c]==0.0){out.error[c]=0.0;continue;}
+        let k=abs(coefficient[c]);let ke=coefficientError[c];let dt=depth.transmittanceError;
+        let propagated=rayProofAdd(rayProofMul(k,dt),rayProofMul(ke,rayProofAdd(abs(difference),dt)));
+        let execution=rayProofAdd(rayProofMul(rayProofAdd(k,ke),subtraction),rayProofAdd(normalFloor,
+            rayProofMul(rayProofMul(relative,k),rayProofAdd(abs(difference),subtraction))));
+        out.error[c]=rayProofAdd(propagated,execution);
+    }
+    if(all(abs(out.value)<=vec3<f32>(3.402823466e38)) && all(out.error<=vec3<f32>(tol))){out.status=1.0;}
+    return out;
+}
+)WGSL";
+    return out;
 }
 
 ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,

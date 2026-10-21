@@ -863,6 +863,42 @@ std::unique_ptr<MathNode> deriveExponentialIntegral(const MathNode& n, std::stri
     return out;
 }
 
+// Compile fields through the authored integral identity above. The formal
+// point stays symbolic: matching compares the unevaluated field subtrees, not
+// samples on a chosen line. Rejecting every point-dependent residual makes the
+// resulting coefficient valid independently of a channel's concrete ray.
+std::unique_ptr<MathNode> deriveProportionalFieldCoefficient(const MathNode& derivative,
+                                                           const MathNode& source, std::string* why) {
+    using Op = MathNode::Op;
+    std::set<std::string> deps; derivative.collectDependencies(deps); source.collectDependencies(deps);
+    auto fresh = [&](std::string name) { while (deps.count(name)) name += "_"; deps.insert(name); return name; };
+    const auto u = fresh("__onto_inner"), s = fresh("__onto_outer"), tau = fresh("__onto_cumulative");
+    auto variable = [](const std::string& name) {
+        auto n = std::make_unique<MathNode>(); n->op = Op::ValueLeaf; n->variableName = name; return n;
+    };
+    auto point = [&](const std::string& name) {
+        auto n = std::make_unique<MathNode>(); n->op = Op::VectorConstruct;
+        for (int i = 0; i < 3; ++i) n->children.push_back(variable(name));
+        return n;
+    };
+    auto depth = std::make_unique<MathNode>(); depth->op = Op::Integral; depth->variableName = u;
+    depth->children.push_back(binaryNode(Op::SDF, std::make_unique<MathNode>(derivative), point(u)));
+    depth->children.push_back(scalarNode(0.0)); depth->children.push_back(variable(s));
+    auto exponential = std::make_unique<MathNode>();
+    exponential->scalarForm = ScalarForm::transcendental(TransFactor::Kind::Exp, tau, -1.0);
+    auto body = binaryNode(Op::Let, std::move(depth), binaryNode(Op::Scale, std::move(exponential),
+        binaryNode(Op::SDF, std::make_unique<MathNode>(source), point(s))));
+    body->variableName = tau;
+    auto integral = std::make_unique<MathNode>(); integral->op = Op::Integral; integral->variableName = s;
+    integral->children.push_back(std::move(body)); integral->children.push_back(scalarNode(0.0)); integral->children.push_back(scalarNode(1.0));
+    auto reduced = deriveExponentialIntegral(*integral, why);
+    if (!reduced) return nullptr;
+    auto coefficient = std::move(reduced->children[1]->children[0]);
+    for (const auto& name : {std::string(kAmbientPointVar), std::string("x"), std::string("y"), std::string("z"), u, s, tau})
+        if (reads(*coefficient, name)) { say(why, "the proportional coefficient retains a point or integration binding"); return nullptr; }
+    return coefficient;
+}
+
 // The three routes, after the common entry has read the limits and the
 // tolerance (and priced computed limits). `tolerance` here is what remains for
 // the route: the authored one minus the limits' and tolerance's own error.

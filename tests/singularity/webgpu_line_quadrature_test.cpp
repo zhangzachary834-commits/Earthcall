@@ -105,6 +105,11 @@ std::optional<std::vector<float>> runOnDevice(wgpu::Device& gpu, const sdfwgsl::
         if(function=="scheduledL") invocation+="    results[i]=vec4<f32>(r.radiance,r.status,r.panels,r.radianceError);\n";
         else if(function=="scheduledT") invocation+="    results[i]=vec4<f32>(r.transmittance,r.status,r.panels,r.transmittanceError);\n";
         else invocation+="    results[i]=vec4<f32>(r.samples,r.panels,r.status);\n";
+    } else if(function=="reducedRGB" || function=="reducedErrors" || function=="reducedWork") {
+        invocation="    let r=lineReducedIntegralAt(a.xyz,b.xyz,a.w,b.w,c.x,c.y,context.w,context.xyz);\n";
+        if(function=="reducedRGB")invocation+="    results[i]=vec4<f32>(r.value,r.transmittance);\n";
+        else if(function=="reducedErrors")invocation+="    results[i]=vec4<f32>(r.error,r.transmittanceError);\n";
+        else invocation+="    results[i]=vec4<f32>(r.samples,r.panels,r.status);\n";
     } else invocation="    results[i] = " + function + "(a.xyz, b.xyz, a.w, b.w, c.x" +
         (function == "lineTransportAt" ? ", context.w, context.xyz" : "") + ");\n";
     const std::string code = prog.wgsl +
@@ -602,6 +607,164 @@ int main() {
                 check(admitted==4 && contained==4,"all four real-curtain L/T results admit and contain the fine numerical reference");
                 check(sameProgram==4,"different ray schedules change numeric payload only, preserving identical shader text");
             }
+        }
+    }
+    // The same mathematical coefficient derivation, now consumed alongside
+    // one bounded device extinction integral for all vector components and T.
+    {
+        auto sigma=leaf(OntoMath::ScalarForm::variable("x").plus(OntoMath::ScalarForm::constant(1.0)));
+        auto zero=constant(0);
+        auto pulse=leaf(OntoMath::ScalarForm::constant(0.85).plus(
+            OntoMath::ScalarForm::transcendental(OntoMath::TransFactor::Kind::Cos,"t",0.32,0,0.15)));
+        auto vector=node(Op::Scale,node(Op::VectorConstruct,constant(0.25),constant(-0.5),constant(2)),std::move(pulse));
+        auto source=node(Op::Scale,std::make_unique<MathNode>(*sigma),std::move(vector));
+        const std::map<std::string,std::pair<double,double>> symbols{{OntoMath::kTimeVar,{0,3}}};
+        OntoMath::RegionCertificate sc(*sigma,Rendering::kVolumeExecutionModel,4,symbols),zc(*zero,Rendering::kVolumeExecutionModel,4,symbols);
+        Ray ray{{0,0,0},{1,0,0},0,1,0.01};ray.tTolerance=0.006;
+        std::string why;
+        auto plan=OntoMath::planRegionalLineTransport(sc,zc,[](double x){return 1+x;},[](double){return 0;},
+            ray.o,ray.d,ray.lo,ray.hi,0.009,0.004,2048,&why);
+        check(plan && plan->admitted,"an extinction-only schedule admits for the shared complement reduction: "+why);
+        if(plan) {
+            const auto program=sdfwgsl::compileScheduledProportionalIntegral(*sigma,*source,*plan);
+            check(program.ok,"the general exact vector reduction compiles: "+program.error);
+            if(program.ok) {
+                check(program.wgsl.find("lineEmission(")==std::string::npos && program.wgsl.find("rayProofSample(")==std::string::npos,
+                      "the endpoint program structurally omits source sampling and outer-integration code");
+                auto split=*plan;
+                const auto p=split.panels.front();const double mid=float((p.lo+p.hi)*0.5);
+                if(mid>p.lo && mid<p.hi){auto left=p,right=p;left.hi=mid;right.lo=mid;split.panels.erase(split.panels.begin());split.panels.insert(split.panels.begin(),right);split.panels.insert(split.panels.begin(),left);}
+                const auto other=sdfwgsl::compileScheduledProportionalIntegral(*sigma,*source,split);
+                check(other.ok && other.wgsl==program.wgsl && other.params.size()!=program.params.size(),
+                      "coefficient payload follows a dynamic panel tail, so a changed panel count preserves shader identity");
+                const auto splitValues=other.ok?runOnDevice(gpu,other,{ray},"reducedRGB"):std::nullopt;
+                check(splitValues && std::abs((*splitValues)[2]-2*(1-std::exp(-1.5)))<1e-5,
+                      "the same program actually executes a different-sized numeric panel payload");
+                auto edited=std::make_unique<MathNode>(*source);
+                edited->children[1]->children[0]->children[2]=constant(1.5);
+                const auto edit=sdfwgsl::compileScheduledProportionalIntegral(*sigma,*edited,*plan);
+                const auto editedValues=edit.ok?runOnDevice(gpu,edit,{ray},"reducedRGB"):std::nullopt;
+                check(edit.ok && edit.wgsl==program.wgsl && editedValues && std::abs((*editedValues)[2]-1.5*(1-std::exp(-1.5)))<1e-5,
+                      "a numeric coefficient edit reuses shader text and changes the executed value");
+                auto later=ray;later.clock=3;
+                const auto values=runOnDevice(gpu,program,{ray,later},"reducedRGB");
+                const auto errors=runOnDevice(gpu,program,{ray,later},"reducedErrors");
+                const auto work=runOnDevice(gpu,program,{ray,later},"reducedWork");
+                bool fits=values && errors && work;
+                if(fits)for(int i=0;i<2;++i){
+                    const double pulse=0.85+0.15*std::cos(0.32*(i?3:0));const double T=std::exp(-1.5);
+                    for(int c=0;c<4;++c){const double k[3]={0.25,-0.5,2};const double reference=c==3?T:k[c]*pulse*(1-T);
+                        fits=fits && std::abs((*values)[4*i+c]-reference)<=(*errors)[4*i+c] && (*errors)[4*i+c]<=(c==3?0.006:0.01);}
+                    fits=fits && (*work)[4*i+3]==1 && (*work)[4*i]==plan->sigmaSamples && (*work)[4*i+1]==0;
+                }
+                check(fits,"signed RGB and T contain independent analytic values at both qualified clocks, with sigma calls only");
+                check(errors && (*errors)[2]>=2*Rendering::kVolumeExecutionModel.exponentialAbsolute(),
+                      "the absolute exp allowance scales with the source coefficient rather than disappearing");
+                auto strict=ray;strict.tol=1e-6;
+                auto outside=ray;outside.clock=4;
+                auto wrongRay=ray;wrongRay.o[1]=1;
+                const auto refused=runOnDevice(gpu,program,{strict,outside,wrongRay},"reducedWork");
+                check(refused && (*refused)[3]==0 && (*refused)[7]==0 && (*refused)[11]==0,
+                      "whole RGB budget, clock-domain and fixed-ray violations refuse the reduced result");
+                auto huge=node(Op::Scale,std::make_unique<MathNode>(*sigma),node(Op::VectorConstruct,constant(0.25),constant(-0.5),constant(20000)));
+                const auto amplified=sdfwgsl::compileScheduledProportionalIntegral(*sigma,*huge,*plan);
+                const auto amplifiedWork=amplified.ok?runOnDevice(gpu,amplified,{ray},"reducedWork"):std::nullopt;
+                check(amplifiedWork && (*amplifiedWork)[3]==0,"a large source coefficient amplifies T uncertainty and cannot borrow the unscaled budget");
+            }
+            auto missingClock=*plan;missingClock.sigmaSymbols.erase(OntoMath::kTimeVar);missingClock.emissionSymbols.erase(OntoMath::kTimeVar);
+            check(!sdfwgsl::compileScheduledProportionalIntegral(*sigma,*source,missingClock).ok,
+                  "a coefficient cannot invent a clock absent from its explicit qualification domain");
+            auto changed=std::make_unique<MathNode>(*sigma);changed->scalarForm=OntoMath::ScalarForm::constant(2);
+            check(!sdfwgsl::compileScheduledProportionalIntegral(*changed,*source,*plan).ok,"a stale extinction schedule cannot acquire a fresh coefficient");
+            auto unrelated=node(Op::Add,std::make_unique<MathNode>(*source),node(Op::VectorConstruct,constant(0.1),constant(0),constant(0)));
+            check(!sdfwgsl::compileScheduledProportionalIntegral(*sigma,*unrelated,*plan).ok,"an additional nonproportional source component declines the exact reduction");
+            auto tiny=node(Op::Scale,std::make_unique<MathNode>(*sigma),node(Op::VectorConstruct,constant(1e-40),constant(1),constant(1)));
+            check(!sdfwgsl::compileScheduledProportionalIntegral(*sigma,*tiny,*plan).ok,"unqualified subnormal coefficient amplification declines compilation");
+        }
+    }
+    // Actual raw authored curtain equations: all RGB components and T from one
+    // device depth. Native floor/gate/scattering admission is deliberately not
+    // inferred by this mathematical execution witness.
+    {
+        namespace fs = std::filesystem;
+        fs::path dir;
+        for(const char* p:{"saves/zones/Northern Veil","../saves/zones/Northern Veil"})
+            if(fs::exists(fs::path(p)/"zone.ecform") || fs::exists(fs::path(p)/"zone.json")){dir=p;break;}
+        check(!dir.empty(),"the four-curtain authored fixture is available for shared RGB/T execution");
+        if(!dir.empty()) {
+            nlohmann::json zone;
+            if(fs::exists(dir/"zone.json")){std::ifstream in(dir/"zone.json");zone=nlohmann::json::parse(in);}
+            else{std::ifstream in(dir/"zone.ecform",std::ios::binary);std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)),{});
+                zone=nlohmann::json::parse(nlohmann::json::from_msgpack(bytes).at("MigrationRoot").get<std::string>());}
+            auto single=[](const OntoMath::Piecewise* p)->const MathNode*{
+                if(!p || p->pieces.size()!=1)return nullptr;const auto& x=p->pieces[0];
+                return !x.guard && !x.call && !x.fold && !x.hasLo && !x.hasHi && !x.whereLEZero?x.mathNode.get():nullptr;
+            };
+            int media=0,contained=0,occupied=0;
+            for(const auto& json:zone.at("spatialFields")) {
+                auto field=geom::FieldNode::fromJson(json);Rendering::VolumeDensityBinding b;
+                if(!field || !Rendering::readVolumeDensity(*field,0,0,b) || !b.densityExpr)continue;
+                const auto* sigma=single(b.extinctionExpr);const auto* source=single(b.emissionExpr);
+                check(sigma && source,"raw authored vector source and extinction are available: "+b.producerId);
+                if(!sigma || !source)continue;
+                for(double transverse:{0.0,2.0}) {
+                auto zero=constant(0);
+                const std::map<std::string,std::pair<double,double>> symbols{{OntoMath::kTimeVar,{0,3}},
+                    {OntoMath::kOmegaXVar,{-1,1}},{OntoMath::kOmegaYVar,{-1,1}},{OntoMath::kOmegaZVar,{-1,1}}};
+                OntoMath::RegionCertificate sc(*sigma,Rendering::kVolumeExecutionModel,4,symbols),zc(*zero,Rendering::kVolumeExecutionModel,4,symbols);
+                Ray ray{{transverse,0,0},{0,0,1},double(float(-std::abs(b.scale.z))),double(float(std::abs(b.scale.z))),0.01};
+                ray.omega[2]=-1;ray.tTolerance=0.006;
+                auto scope=[&](double s,double clock){const glm::vec3 p(float(transverse),0,float(s));return std::map<std::string,PropertyValue>{
+                    {"p",PropertyValue(p)},{"x",PropertyValue(transverse)},{"y",PropertyValue(0.0)},{"z",PropertyValue(double(p.z))},
+                    {OntoMath::kTimeVar,PropertyValue(clock)},{OntoMath::kOmegaXVar,PropertyValue(0.0)},
+                    {OntoMath::kOmegaYVar,PropertyValue(0.0)},{OntoMath::kOmegaZVar,PropertyValue(-1.0)}};};
+                auto extinction=[&](double s){const auto v=sigma->evaluate(scope(s,0));double x=NAN;if(v)propertyValueToNumber(*v,x);return x;};
+                std::string why;
+                const auto plan=OntoMath::planRegionalLineTransport(sc,zc,extinction,[](double){return 0;},ray.o,ray.d,ray.lo,ray.hi,0.009,0.004,2048,&why);
+                check(plan && plan->admitted,"the real curtain obtains one extinction-only schedule: "+b.producerId+": "+why);
+                if(!plan || !plan->admitted)continue;
+                const auto program=sdfwgsl::compileScheduledProportionalIntegral(*sigma,*source,*plan);
+                check(program.ok,"all three actual authored source components reduce to the shared depth: "+b.producerId+": "+program.error);
+                if(!program.ok)continue;
+                auto later=ray;later.clock=3;
+                const auto values=runOnDevice(gpu,program,{ray,later},"reducedRGB");
+                const auto errors=runOnDevice(gpu,program,{ray,later},"reducedErrors");
+                const auto work=runOnDevice(gpu,program,{ray,later},"reducedWork");
+                bool fits=values && errors && work,real=true;
+                auto reference=[&](int cells,double clock){
+                    const long double h=((long double)ray.hi-ray.lo)/cells;
+                    long double tau=0;std::array<long double,3> L{};
+                    auto emission=[&](double s){auto v=source->evaluate(scope(s,clock));return v && std::holds_alternative<glm::vec3>(*v)?std::get<glm::vec3>(*v):glm::vec3(NAN);};
+                    long double sa=extinction(ray.lo);auto ea=emission(ray.lo);std::array<long double,3> ga{ea.x,ea.y,ea.z};
+                    for(int j=0;j<cells;j+=2){
+                        const double sm=double(ray.lo+(j+1)*h),sb=double(ray.lo+(j+2)*h);const long double sM=extinction(sm),sB=extinction(sb);
+                        const long double tm=tau+h*(5*sa+8*sM-sB)/12,tb=tau+h*(sa+4*sM+sB)/3;
+                        const auto em=emission(sm),eb=emission(sb);
+                        for(int c=0;c<3;++c){const long double gm=std::exp(-tm)*em[c],gb=std::exp(-tb)*eb[c];L[c]+=h*(ga[c]+4*gm+gb)/3;ga[c]=gb;}
+                        tau=tb;sa=sB;
+                    }
+                    return std::array<double,4>{double(L[0]),double(L[1]),double(L[2]),double(std::exp(-tau))};
+                };
+                for(int i=0;i<2;++i){
+                    const auto coarse=reference(4000,i?3:0),fine=reference(8000,i?3:0);
+                    bool converged=true;
+                    for(int c=0;c<4;++c){converged=converged && std::abs(coarse[c]-fine[c])<1e-5;
+                        if(fits)fits=std::abs((*values)[4*i+c]-fine[c])<=(*errors)[4*i+c] && (*errors)[4*i+c]<=(c==3?0.006:0.01);}
+                    real=real && fine[0]>0 && fine[1]>0 && fine[2]>0 && fine[3]<0.999;
+                    check(converged,"independent cumulative RGB integration agrees at two fine resolutions: "+b.producerId);
+                    if(work)fits=fits && (*work)[4*i+3]==1 && (*work)[4*i]==plan->sigmaSamples && (*work)[4*i+1]==0;
+                    if(values && errors && work)std::printf("    REDUCED %s x %.0f clock %d: RGB %.8g %.8g %.8g T %.8g; bounds %.5g %.5g %.5g %.5g; sigma/epsilon %.0f/%.0f; %zu panels\n",
+                        b.producerId.c_str(),transverse,i?3:0,(*values)[4*i],(*values)[4*i+1],(*values)[4*i+2],(*values)[4*i+3],
+                        (*errors)[4*i],(*errors)[4*i+1],(*errors)[4*i+2],(*errors)[4*i+3],(*work)[4*i],(*work)[4*i+1],plan->panels.size());
+                }
+                ++media;occupied+=real;contained+=fits;
+                check(fits,"all RGB/T outputs admit and contain independent references at both clocks, with zero source-field calls: "+b.producerId);
+                auto outside=ray;outside.clock=4;
+                const auto refused=runOnDevice(gpu,program,{outside},"reducedWork");
+                check(refused && (*refused)[3]==0,"the complete real-curtain reduction cannot reuse a proof outside its clock domain");
+                }
+            }
+            check(media==8 && occupied==8 && contained==8,"all four real curtains have two occupied rays and shared RGB/T device witnesses at two clocks");
         }
     }
     std::cout << "webgpu_line_quadrature_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";

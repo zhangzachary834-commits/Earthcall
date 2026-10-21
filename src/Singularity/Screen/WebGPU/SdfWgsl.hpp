@@ -198,6 +198,14 @@ Program compileLineTransport(const OntoMath::MathNode& sigma, const OntoMath::Ma
 Program compileScheduledLineTransport(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
                                       const OntoMath::LineTransportSchedule& schedule);
 
+// OntoMath derives each component's proportional coefficient. Execute one
+// extinction-only schedule, then its exact reduction for a vector source.
+// The schedule must certify sigma and literal zero emission. Coefficients are
+// qualified over the schedule's explicit symbol domains. Reports RGB/T and
+// separate absolute errors; no native density/floor/scattering policy implied.
+Program compileScheduledProportionalIntegral(const OntoMath::MathNode& sigma,
+    const OntoMath::MathNode& vectorSource, const OntoMath::LineTransportSchedule& depthSchedule);
+
 // Compile a field into a raymarching shader plus its parameter block.
 // `colorFormatIsSrgb` is unused for now; kept out of the signature deliberately —
 // the fragment output convention lives with the pipeline, not the codegen.
