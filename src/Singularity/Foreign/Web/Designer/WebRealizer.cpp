@@ -1,5 +1,7 @@
 #include "Singularity/Foreign/Web/Designer/WebRealizer.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
 #include "Person/Person.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include <algorithm>
@@ -404,7 +406,8 @@ void applyThemeWithProvenance(
     Singular& root,
     Person* applicantAuthor,
     Formation* formation,
-    std::vector<std::shared_ptr<Relation>>* outRelations) {
+    std::vector<std::shared_ptr<Relation>>* outRelations,
+    Zone* zone = nullptr) {
 
     std::unordered_map<std::string, std::string> tokens;
     std::vector<std::string> themeAuthors;
@@ -421,10 +424,29 @@ void applyThemeWithProvenance(
         return;
     }
 
-    // 2. Sun Round 8 Gate 5: Theme Definition is ordinary world-owned authored state, NOT a private static plush!
+    // 2. Sun Round 8 Gate 5 & Round 9 Gate 1: Theme Definition is ordinary world-owned authored state,
+    // NOT a private static plush and NOT a dangling Theme Ghost!
+    // It must be held in genuine Zone custody.
     std::string themeDefId = "theme.definition." + themeName;
     Singular* existingDef = nullptr;
-    if (formation) {
+    if (zone) {
+        for (const auto& obj : zone->objects()) {
+            if (obj && obj->getIdentifier() == themeDefId) {
+                existingDef = obj.get();
+                break;
+            }
+        }
+    } else if (ZoneManager::live()) {
+        try {
+            for (const auto& obj : ZoneManager::live()->active().objects()) {
+                if (obj && obj->getIdentifier() == themeDefId) {
+                    existingDef = obj.get();
+                    break;
+                }
+            }
+        } catch (...) {}
+    }
+    if (!existingDef && formation) {
         for (Singular* b : formation->getMembers()) {
             if (b && b->getIdentifier() == themeDefId) {
                 existingDef = b;
@@ -477,7 +499,8 @@ void applyThemeWithProvenance(
     std::shared_ptr<Object> newlyCreatedDef;
     if (!existingDef) {
         // Author real world-owned theme definition Being carrying its actual tokens
-        newlyCreatedDef = WebDesignerTheme::authorThemeDefinition(themeName, defPerson, formation, outRelations);
+        // held in Zone custody so it never dangles when function returns!
+        newlyCreatedDef = WebDesignerTheme::authorThemeDefinition(themeName, defPerson, formation, outRelations, zone);
         existingDef = newlyCreatedDef.get();
     }
 
@@ -513,7 +536,8 @@ std::shared_ptr<Object> WebDesignerTheme::authorThemeDefinition(
     const std::string& themeName,
     Person* author,
     Formation* formation,
-    std::vector<std::shared_ptr<Relation>>* outRelations) {
+    std::vector<std::shared_ptr<Relation>>* outRelations,
+    Zone* zone) {
 
     std::unordered_map<std::string, std::string> tokens;
     std::vector<std::string> themeAuthors;
@@ -525,6 +549,15 @@ std::shared_ptr<Object> WebDesignerTheme::authorThemeDefinition(
     themeDef->setDynamicProperty("theme.name", PropertyValue(themeName));
     for (const auto& [k, v] : tokens) {
         themeDef->setDynamicProperty(k, PropertyValue(v));
+    }
+
+    // Sun Round 9 Gate 1: Genuine Zone custody prevents Theme Ghost!
+    if (zone) {
+        zone->addObject(themeDef);
+    } else if (ZoneManager::live()) {
+        try {
+            ZoneManager::live()->active().addObject(themeDef);
+        } catch (...) {}
     }
 
     if (formation) {
@@ -625,7 +658,7 @@ void WebDesignerTheme::applyModernDarkTheme(
     Person& author,
     Formation* formation,
     std::vector<std::shared_ptr<Relation>>* outRelations) {
-    applyThemeWithProvenance("modern-dark", root, &author, formation, outRelations);
+    applyThemeWithProvenance("modern-dark", root, &author, formation, outRelations, nullptr);
 }
 
 void WebDesignerTheme::applyModernDarkTheme(
@@ -633,7 +666,25 @@ void WebDesignerTheme::applyModernDarkTheme(
     Person* author,
     Formation* formation,
     std::vector<std::shared_ptr<Relation>>* outRelations) {
-    applyThemeWithProvenance("modern-dark", root, author, formation, outRelations);
+    applyThemeWithProvenance("modern-dark", root, author, formation, outRelations, nullptr);
+}
+
+void WebDesignerTheme::applyModernDarkTheme(
+    Singular& root,
+    Person& author,
+    Zone& zone,
+    Formation* formation,
+    std::vector<std::shared_ptr<Relation>>* outRelations) {
+    applyThemeWithProvenance("modern-dark", root, &author, formation, outRelations, &zone);
+}
+
+void WebDesignerTheme::applyModernDarkTheme(
+    Singular& root,
+    Person* author,
+    Zone& zone,
+    Formation* formation,
+    std::vector<std::shared_ptr<Relation>>* outRelations) {
+    applyThemeWithProvenance("modern-dark", root, author, formation, outRelations, &zone);
 }
 
 void WebDesignerTheme::applyNeutralLightTheme(
@@ -641,7 +692,7 @@ void WebDesignerTheme::applyNeutralLightTheme(
     Person& author,
     Formation* formation,
     std::vector<std::shared_ptr<Relation>>* outRelations) {
-    applyThemeWithProvenance("neutral-light", root, &author, formation, outRelations);
+    applyThemeWithProvenance("neutral-light", root, &author, formation, outRelations, nullptr);
 }
 
 void WebDesignerTheme::applyNeutralLightTheme(
@@ -649,7 +700,25 @@ void WebDesignerTheme::applyNeutralLightTheme(
     Person* author,
     Formation* formation,
     std::vector<std::shared_ptr<Relation>>* outRelations) {
-    applyThemeWithProvenance("neutral-light", root, author, formation, outRelations);
+    applyThemeWithProvenance("neutral-light", root, author, formation, outRelations, nullptr);
+}
+
+void WebDesignerTheme::applyNeutralLightTheme(
+    Singular& root,
+    Person& author,
+    Zone& zone,
+    Formation* formation,
+    std::vector<std::shared_ptr<Relation>>* outRelations) {
+    applyThemeWithProvenance("neutral-light", root, &author, formation, outRelations, &zone);
+}
+
+void WebDesignerTheme::applyNeutralLightTheme(
+    Singular& root,
+    Person* author,
+    Zone& zone,
+    Formation* formation,
+    std::vector<std::shared_ptr<Relation>>* outRelations) {
+    applyThemeWithProvenance("neutral-light", root, author, formation, outRelations, &zone);
 }
 
 std::string WebRealizer::generateStyleSheet(const Singular* root, const RealizeOptions& options) {
@@ -1054,9 +1123,8 @@ h6.web-heading { font-size: var(--web-h6-size); }
                         if (auto s = std::get_if<std::string>(&capVal)) {
                             if (*s == "web.rawCss") return true;
                         }
-                    } else {
-                        return true;
                     }
+                    return false;
                 }
                 return false;
             };

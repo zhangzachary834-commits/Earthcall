@@ -19,16 +19,20 @@
 
 #include <cassert>
 #include <iostream>
+#include <fstream>
 #include <filesystem>
 #include <vector>
 
 using namespace Singularity::Foreign::Web;
 
-static Person makeTestPerson(const std::string& name = "Zach") {
+static Person makeTestPerson(const std::string& name = "Zach", bool setCanonicalDid = true) {
     Soul soul(name);
     Body body("humanoid", "default");
     Person p(std::move(soul), std::move(body), "default");
     p.setDisplayName(name);
+    if (name == "Zach" && setCanonicalDid) {
+        p.setPersonId(Identity::SingularId::parse("did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"));
+    }
     return p;
 }
 
@@ -2780,10 +2784,10 @@ void test_round8_the_actual_two_zachs_bug_refusal_and_stable_did() {
     keyB[0] = 0xBB;
     Identity::SingularId idB = Identity::SingularId::fromPublicKey(keyB);
 
-    Person personA = makeTestPerson("Zach");
+    Person personA = makeTestPerson("Zach", false);
     personA.setPersonId(idA);
 
-    Person personB = makeTestPerson("Zach");
+    Person personB = makeTestPerson("Zach", false);
     personB.setPersonId(idB);
 
     // Both Persons are present in the Universe provider
@@ -3104,6 +3108,203 @@ void test_round8_missing_theme_tokens_unset_no_cpp_aesthetic_fallbacks() {
     std::cout << "  ✓ Conservative CSS declaration/breakout filter truthfully labeled and defended" << std::endl;
 }
 
+// ===========================================================================
+// Round 9 Acceptance Gate Witnesses (Decreed by The Sun / GPT-5.6 Sol)
+// ===========================================================================
+
+void test_round9_theme_definition_zone_custody_and_no_theme_ghost() {
+    std::cout << "[Round 9 Witness: Gate 1] Theme Definition Zone Custody (Killing Theme Ghost)..." << std::endl;
+
+    Zone siteZone("zone.site.custody", "Theme Custody Zone");
+    Person author = makeTestPerson("Zach");
+    Object page;
+    page.setObjectID("page-site");
+
+    // Execute application in an isolated scope, letting any temporary shared_ptr return and die!
+    {
+        Formation localFormation;
+        localFormation.addMember(&page);
+        // Sun Round 9 Gate 1: Pass zone custody so theme definition survives helper return!
+        WebDesignerTheme::applyModernDarkTheme(page, author, siteZone, &localFormation);
+    }
+
+    // Now the helper has returned, localFormation is out of scope, and no shared_ptr
+    // from the helper was retained on this stack frame.
+    // Rediscover theme.definition.modern-dark through canonical Zone ownership!
+    const Object* foundDef = nullptr;
+    for (const auto& obj : siteZone.objects()) {
+        if (obj && obj->getIdentifier() == "theme.definition.modern-dark") {
+            foundDef = obj.get();
+            break;
+        }
+    }
+
+    // THEME GHOST BANISHED: Object is alive and held by Zone!
+    assert(foundDef != nullptr);
+
+    // Read its token properties safely
+    PropertyValue bgVal;
+    assert(foundDef->getDynamicProperty("theme.backgroundColor", bgVal));
+    if (auto s = std::get_if<std::string>(&bgVal)) {
+        assert(*s == "#0b0f19");
+    }
+
+    std::cout << "  ✓ Theme definition has genuine Zone custody; no dangling Formation member" << std::endl;
+    std::cout << "  ✓ Theme Ghost slain: definition rediscovered and queried safely after helper returns" << std::endl;
+}
+
+void test_round9_shipped_fixtures_use_canonical_stable_did_not_bare_name() {
+    std::cout << "[Round 9 Witness: Gate 2] Shipped Fixtures Use Canonical Stable DID (No Bare Display Name)..." << std::endl;
+
+    // 1. Verify web_vocabulary_seed.json
+    std::ifstream vocabFile("saves/fixtures/web_vocabulary_seed.json");
+    assert(vocabFile.is_open());
+    nlohmann::json vocabJson = nlohmann::json::parse(vocabFile);
+
+    // Top-level authors must not contain bare "Zach"
+    assert(vocabJson.contains("authors") && vocabJson["authors"].is_array());
+    for (const auto& a : vocabJson["authors"]) {
+        std::string authorStr = a.get<std::string>();
+        assert(authorStr != "Zach");
+        assert(authorStr.rfind("did:earthcall:", 0) == 0);
+    }
+
+    // Every law entry must not record bare "Zach"
+    if (vocabJson.contains("laws") && vocabJson["laws"].is_array()) {
+        for (const auto& lj : vocabJson["laws"]) {
+            if (lj.contains("authors") && lj["authors"].is_array()) {
+                for (const auto& a : lj["authors"]) {
+                    std::string authorStr = a.get<std::string>();
+                    assert(authorStr != "Zach");
+                    assert(authorStr.rfind("did:earthcall:", 0) == 0);
+                }
+            }
+        }
+    }
+
+    // 2. Verify web_themes.json
+    std::ifstream themesFile("saves/fixtures/web_themes.json");
+    assert(themesFile.is_open());
+    nlohmann::json themesJson = nlohmann::json::parse(themesFile);
+
+    assert(themesJson.contains("authors") && themesJson["authors"].is_array());
+    for (const auto& a : themesJson["authors"]) {
+        std::string authorStr = a.get<std::string>();
+        assert(authorStr != "Zach");
+        assert(authorStr.rfind("did:earthcall:", 0) == 0);
+    }
+
+    std::cout << "  ✓ Production fixtures use canonical cryptographic DID (did:earthcall:...)" << std::endl;
+    std::cout << "  ✓ Bare display name 'Zach' eliminated from shipped bootstrap authorship" << std::endl;
+}
+
+void test_round9_raw_css_capability_fail_closed_hostile_matrix() {
+    std::cout << "[Round 9 Witness: Gate 3] Raw-CSS Capability Fails Closed Hostile Matrix..." << std::endl;
+
+    Person alice = makeTestPerson("Alice");
+    Person bob = makeTestPerson("Bob");
+    Object pageA;
+    pageA.setObjectID("page-hostile-a");
+    Object pageB;
+    pageB.setObjectID("page-hostile-b");
+
+    RealizeOptions baseOpts;
+    baseOpts.allowUnrestrictedCss = true;
+    baseOpts.governingAuthor = &alice;
+    baseOpts.extraCss = "body { background: crimson; }";
+
+    // Hostile Case 1: Relation exists, but capability dynamic property is COMPLETELY MISSING
+    // (Sun Round 9 Gate 3: missing property must refuse, not fail open to wildcard!)
+    auto missingPropRel = std::make_shared<Relation>("grants-capability", alice, pageA, true, 1.0f);
+    Universe::instance().setRelationProvider([&](std::vector<Relation*>& out) {
+        out.push_back(missingPropRel.get());
+    });
+    std::string res1 = WebRealizer::generateStyleSheet(&pageA, baseOpts);
+    assert(res1.find("background: crimson") == std::string::npos);
+
+    // Hostile Case 2: Wrong capability string (e.g. "web.script" instead of "web.rawCss")
+    missingPropRel->setDynamicProperty("capability", PropertyValue(std::string("web.script")));
+    std::string res2 = WebRealizer::generateStyleSheet(&pageA, baseOpts);
+    assert(res2.find("background: crimson") == std::string::npos);
+
+    // Hostile Case 3: Wrong capability type (e.g. int instead of string)
+    missingPropRel->setDynamicProperty("capability", PropertyValue(static_cast<int64_t>(1)));
+    std::string res3 = WebRealizer::generateStyleSheet(&pageA, baseOpts);
+    assert(res3.find("background: crimson") == std::string::npos);
+
+    // Hostile Case 4: Wrong governing author (grant is from Alice, but requested governor is Bob)
+    missingPropRel->setDynamicProperty("capability", PropertyValue(std::string("web.rawCss")));
+    RealizeOptions bobOpts = baseOpts;
+    bobOpts.governingAuthor = &bob;
+    std::string res4 = WebRealizer::generateStyleSheet(&pageA, bobOpts);
+    assert(res4.find("background: crimson") == std::string::npos);
+
+    // Hostile Case 5: Wrong target page (grant is for pageA, but rendered on pageB)
+    std::string res5 = WebRealizer::generateStyleSheet(&pageB, baseOpts);
+    assert(res5.find("background: crimson") == std::string::npos);
+
+    // Valid Case: Exact grant (Alice -> pageA -> "web.rawCss") matches exactly -> ADMITS!
+    std::string resValid = WebRealizer::generateStyleSheet(&pageA, baseOpts);
+    assert(resValid.find("background: crimson") != std::string::npos);
+
+    Universe::instance().setRelationProvider(nullptr);
+
+    std::cout << "  ✓ Missing capability property strictly refuses (fail-closed, no wildcard grant)" << std::endl;
+    std::cout << "  ✓ Wrong capability, wrong author, and wrong page all strictly refuse" << std::endl;
+    std::cout << "  ✓ Exact matching capability admits cleanly" << std::endl;
+}
+
+void test_round9_supersession_deduplication_across_multiple_graph_views() {
+    std::cout << "[Round 9 Witness: Gate 4] Supersession Deduplication Across Multiple Graph Views..." << std::endl;
+
+    Person author = makeTestPerson("Zach");
+    LawManager laws;
+    Formation formation;
+    std::vector<std::shared_ptr<Relation>> outRelations;
+
+    // 1. Author initial word v0
+    ActionNode a0 = ActionNode::set("role", PropertyValue(std::string("hero")));
+    WebDesignerMetalaws::authorWord(author, laws, "hero", "lexeme.web.hero.dup", "law.concept.role.hero.v0",
+                                   std::move(a0), &formation, &outRelations);
+
+    auto denotesRels = formation.relations().getRelationsOfType("denotes");
+    assert(!denotesRels.empty());
+    auto oldDenotes = denotesRels[0];
+
+    // Arrange engine-like environment where oldDenotes is simultaneously visible through:
+    // (1) formation
+    // (2) outRelations
+    // (3) Universe::relations() provider
+    Universe::instance().setRelationProvider([&](std::vector<Relation*>& out) {
+        out.push_back(oldDenotes.get());
+    });
+
+    // 2. Author word v1 redefinition
+    ActionNode a1 = ActionNode::set("role", PropertyValue(std::string("superhero")));
+    WebDesignerMetalaws::authorWord(author, laws, "hero", "lexeme.web.hero.dup", "law.concept.role.hero.v1",
+                                   std::move(a1), &formation, &outRelations);
+
+    // Count superseded-by relations in formation
+    auto supersedingRels = formation.relations().getRelationsOfType("superseded-by");
+    int matchingCount = 0;
+    float totalWeight = 0.0f;
+    for (const auto& r : supersedingRels) {
+        if (r && r->a() == oldDenotes.get()) {
+            matchingCount++;
+            totalWeight += r->getWeight();
+        }
+    }
+
+    // Sun Round 9 Gate 4: Exactly ONE supersession sub-relation authored, weight == 1.0f!
+    assert(matchingCount == 1);
+    assert(totalWeight == 1.0f);
+
+    Universe::instance().setRelationProvider(nullptr);
+
+    std::cout << "  ✓ Multiple graph views (formation + outRelations + Universe) deduplicated" << std::endl;
+    std::cout << "  ✓ Exactly one superseded-by relation produced with weight 1.0f" << std::endl;
+}
+
 int main() {
     std::cout << "========================================" << std::endl;
     std::cout << "Running Web Designer Modality Test Suite" << std::endl;
@@ -3172,6 +3373,12 @@ int main() {
     test_round8_theme_plush_abolished_and_no_shadow_provenance();
     test_round8_governed_raw_css_capability_relation();
     test_round8_missing_theme_tokens_unset_no_cpp_aesthetic_fallbacks();
+
+    // Acceptance Gate Witnesses (Round 9 Decreed by The Sun / GPT-5.6 Sol)
+    test_round9_theme_definition_zone_custody_and_no_theme_ghost();
+    test_round9_shipped_fixtures_use_canonical_stable_did_not_bare_name();
+    test_round9_raw_css_capability_fail_closed_hostile_matrix();
+    test_round9_supersession_deduplication_across_multiple_graph_views();
 
     std::cout << "========================================" << std::endl;
     std::cout << "ALL WEB DESIGNER MODALITY TESTS PASSED!" << std::endl;

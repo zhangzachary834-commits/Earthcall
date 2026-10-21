@@ -1,13 +1,13 @@
 {
   "authors": [
-    "Zach"
+    "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
   ],
   "laws": [
     {
       "id": "law.concept.role.page",
       "name": "law.concept.role.page",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -31,7 +31,7 @@
       "id": "law.concept.role.section",
       "name": "law.concept.role.section",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -55,7 +55,7 @@
       "id": "law.concept.role.navigation",
       "name": "law.concept.role.navigation",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -79,7 +79,7 @@
       "id": "law.concept.role.heading",
       "name": "law.concept.role.heading",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -113,7 +113,7 @@
       "id": "law.concept.role.title",
       "name": "law.concept.role.title",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -147,7 +147,7 @@
       "id": "law.concept.role.subtitle",
       "name": "law.concept.role.subtitle",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -181,7 +181,7 @@
       "id": "law.concept.role.paragraph",
       "name": "law.concept.role.paragraph",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -205,7 +205,7 @@
       "id": "law.concept.role.action",
       "name": "law.concept.role.action",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -229,7 +229,7 @@
       "id": "law.concept.role.link",
       "name": "law.concept.role.link",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -253,7 +253,7 @@
       "id": "law.concept.role.container",
       "name": "law.concept.role.container",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -277,7 +277,7 @@
       "id": "law.concept.variant.card",
       "name": "law.concept.variant.card",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -301,7 +301,7 @@
       "id": "law.concept.role.list",
       "name": "law.concept.role.list",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -325,7 +325,7 @@
       "id": "law.concept.role.item",
       "name": "law.concept.role.item",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -349,7 +349,7 @@
       "id": "law.concept.role.media",
       "name": "law.concept.role.media",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -373,7 +373,7 @@
       "id": "law.concept.role.quote",
       "name": "law.concept.role.quote",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -397,7 +397,7 @@
       "id": "law.concept.role.divider",
       "name": "law.concept.role.divider",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -421,7 +421,7 @@
       "id": "law.concept.layout.horizontal",
       "name": "law.concept.layout.horizontal",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -445,7 +445,7 @@
       "id": "law.concept.layout.vertical",
       "name": "law.concept.layout.vertical",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -469,7 +469,7 @@
       "id": "law.concept.layout.grid",
       "name": "law.concept.layout.grid",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -493,7 +493,7 @@
       "id": "law.concept.align.center",
       "name": "law.concept.align.center",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -517,7 +517,7 @@
       "id": "law.concept.align.start",
       "name": "law.concept.align.start",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -541,7 +541,7 @@
       "id": "law.concept.align.end",
       "name": "law.concept.align.end",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -565,7 +565,7 @@
       "id": "law.concept.justify.between",
       "name": "law.concept.justify.between",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -589,7 +589,7 @@
       "id": "law.concept.spacing.tight",
       "name": "law.concept.spacing.tight",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -613,7 +613,7 @@
       "id": "law.concept.spacing.normal",
       "name": "law.concept.spacing.normal",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -637,7 +637,7 @@
       "id": "law.concept.spacing.relaxed",
       "name": "law.concept.spacing.relaxed",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -661,7 +661,7 @@
       "id": "law.concept.spacing.generous",
       "name": "law.concept.spacing.generous",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -685,7 +685,7 @@
       "id": "law.concept.size.small",
       "name": "law.concept.size.small",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -709,7 +709,7 @@
       "id": "law.concept.size.large",
       "name": "law.concept.size.large",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -733,7 +733,7 @@
       "id": "law.concept.size.huge",
       "name": "law.concept.size.huge",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -757,7 +757,7 @@
       "id": "law.concept.weight.bold",
       "name": "law.concept.weight.bold",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -781,7 +781,7 @@
       "id": "law.concept.weight.light",
       "name": "law.concept.weight.light",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -805,7 +805,7 @@
       "id": "law.concept.tone.muted",
       "name": "law.concept.tone.muted",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -829,7 +829,7 @@
       "id": "law.concept.tone.prominent",
       "name": "law.concept.tone.prominent",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -863,7 +863,7 @@
       "id": "law.concept.shape.rounded",
       "name": "law.concept.shape.rounded",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -887,7 +887,7 @@
       "id": "law.concept.shape.pill",
       "name": "law.concept.shape.pill",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -911,7 +911,7 @@
       "id": "law.concept.shape.sharp",
       "name": "law.concept.shape.sharp",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -935,7 +935,7 @@
       "id": "law.concept.variant.primary",
       "name": "law.concept.variant.primary",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -959,7 +959,7 @@
       "id": "law.concept.variant.secondary",
       "name": "law.concept.variant.secondary",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -983,7 +983,7 @@
       "id": "law.concept.variant.hero",
       "name": "law.concept.variant.hero",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -1007,7 +1007,7 @@
       "id": "law.concept.variant.outline",
       "name": "law.concept.variant.outline",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -1031,7 +1031,7 @@
       "id": "law.concept.elevation.subtle",
       "name": "law.concept.elevation.subtle",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -1055,7 +1055,7 @@
       "id": "law.concept.elevation.raised",
       "name": "law.concept.elevation.raised",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -1079,7 +1079,7 @@
       "id": "law.concept.rel.subordinate",
       "name": "law.concept.rel.subordinate",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -1103,7 +1103,7 @@
       "id": "law.concept.rel.prominent",
       "name": "law.concept.rel.prominent",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -1127,7 +1127,7 @@
       "id": "law.concept.rel.quiet",
       "name": "law.concept.rel.quiet",
       "authors": [
-        "Zach"
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
       ],
       "authority": 0,
       "enabled": true,
@@ -1726,7 +1726,7 @@
   ],
   "injectedBy": {
     "mover": "Antigravity",
-    "onBehalfOf": "Zach",
+    "onBehalfOf": "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga",
     "at": 1787452800,
     "sections": [
       "vocabulary"

@@ -206,14 +206,23 @@ void WebDesignerMetalaws::authorWord(Person& author,
             outRelations->push_back(targetRel);
         }
 
-        // Sun Round 8 Gate 1 & 2: Supersession as First-Class Relation, not shadow string!
-        // Link all previous active denotes Relations in this lineage to targetRel with "superseded-by"
+        // Sun Round 8 Gate 1 & 2 & Round 9 Gate 4:
+        // Supersession as First-Class Relation, not shadow string!
+        // Link all previous active denotes Relations in this lineage to targetRel with "superseded-by".
+        // Deduplicate old relations by pointer and stable identity across Formation, outRelations, and Universe!
         std::vector<Relation*> oldRelations;
+        std::unordered_set<std::string> seenOldKeys;
         auto collectOld = [&](Relation* r) {
             if (r && r != targetRel.get() && r->type == "denotes" && r->a() == lexeme.get()) {
                 if (auto* l = dynamic_cast<Law*>(r->b())) {
                     if (isSameLineage(l, lawId) && isRelationActive(r, formation, extraList)) {
-                        oldRelations.push_back(r);
+                        std::string key = r->getIdentifier();
+                        if (key.empty()) {
+                            key = std::to_string(reinterpret_cast<uintptr_t>(r));
+                        }
+                        if (seenOldKeys.insert(key).second) {
+                            oldRelations.push_back(r);
+                        }
                     }
                 }
             }

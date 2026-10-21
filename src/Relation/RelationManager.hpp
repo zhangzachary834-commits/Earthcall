@@ -83,6 +83,10 @@ public:
     std::vector<std::shared_ptr<Relation>> getRelationsOf(const std::string& identifier) const;
     std::vector<std::shared_ptr<Relation>> getRelationsBetween(const Singular& a, const Singular& b) const;
     std::vector<std::shared_ptr<Relation>> getRelationsBetween(const std::string& a, const std::string& b) const;
+    // Query contract: Raw Relation queries (getRelationsOf, getRelationsBetween, getRelationsOfType, getAll)
+    // return historical truth without destructive erasure. Callers asking for current semantic state
+    // must consult canonical currentness/supersession semantics (isCurrent / isSuperseded).
+    // Do not assume that being returned by getRelationsOfType means "currently active".
     std::vector<std::shared_ptr<Relation>> getRelationsOfType(const std::string& type) const;
 
     // Canonical world-level supersession queries:

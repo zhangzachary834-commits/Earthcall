@@ -9,6 +9,7 @@
 #include <unordered_map>
 
 class Person;
+class Zone;
 
 namespace Singularity {
 namespace Foreign {
@@ -137,12 +138,13 @@ public:
                                   std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 
     // Authors a real world-owned theme definition Being carrying its design tokens
-    // with explicit Person stewardship. (Sun Round 8 Gate 5: No static plush!)
+    // with explicit Person stewardship. (Sun Round 8 Gate 5 & Round 9 Gate 1: Held in Zone custody!)
     static std::shared_ptr<Object> authorThemeDefinition(
         const std::string& themeName,
         Person* author = nullptr,
         Formation* formation = nullptr,
-        std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+        std::vector<std::shared_ptr<Relation>>* outRelations = nullptr,
+        Zone* zone = nullptr);
 
     // Authors full modern dark theme design tokens loading from authored fixture web_themes.json
     static void applyModernDarkTheme(Singular& root,
@@ -167,6 +169,19 @@ public:
         applyModernDarkTheme(root, author, nullptr, outRelations);
     }
 
+    // Overloads taking explicit Zone custody to banish the Theme Ghost (Sun Round 9 Gate 1)
+    static void applyModernDarkTheme(Singular& root,
+                                     Person& author,
+                                     Zone& zone,
+                                     Formation* formation = nullptr,
+                                     std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    static void applyModernDarkTheme(Singular& root,
+                                     Person* author,
+                                     Zone& zone,
+                                     Formation* formation = nullptr,
+                                     std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
     // Authors clean neutral light theme design tokens loading from authored fixture web_themes.json
     static void applyNeutralLightTheme(Singular& root,
                                        Person& author,
@@ -189,6 +204,18 @@ public:
                                        std::vector<std::shared_ptr<Relation>>* outRelations) {
         applyNeutralLightTheme(root, author, nullptr, outRelations);
     }
+
+    static void applyNeutralLightTheme(Singular& root,
+                                       Person& author,
+                                       Zone& zone,
+                                       Formation* formation = nullptr,
+                                       std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    static void applyNeutralLightTheme(Singular& root,
+                                       Person* author,
+                                       Zone& zone,
+                                       Formation* formation = nullptr,
+                                       std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
 };
 
 } // namespace Web
