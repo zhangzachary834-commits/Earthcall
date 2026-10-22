@@ -3136,3 +3136,10 @@ Required corrections for the next prototype:
 Next remains the smallest generic OntoMath derivation and curvature/root-coverage prototype, then actual backend instantiation and complete consumer integration. No production/default/budget/save/app change or new shipped FPS claim.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T22:09:42.854494-07:00`.
+
+
+## §6cf review — fixture producer connects, but coverage and total-cost gates remain open (2026-10-21)
+
+Zach requested review of Sparkly’s `017499162`. [Executed source/scalar review](../audits/SPARKLY_CANONICAL_PRODUCER_6CF_REVIEW_2026-10-21.md) accepts the saved finite aggregate accuracy result and actual host schedule → ordered native consumer connection. It rejects the claimed 1.62× end-to-end ratio: 2,304 new rays are compared with §6cc’s 294,912 invocations; uploads are outside the summed clocks. The exact candidate C++ lambda loses two cubic roots and replaces an unresolved narrow pair with a non-root midpoint. The producer is a literal four-curtain host model without generic OntoMath extraction/original execution bounds; near-parallel support can be falsely discarded. Repair typed root brackets, monotonicity, unresolved/fallback, near-parallel intervals, source provenance and failure propagation; independently validate coverage and qualify actual connected accuracy plus matched total native cost before promotion. Preserve earlier §6cc consumer-only gain; unique viewport, lifecycle and inhabited acceptance remain open. No new native run, production/default/save/app change or FPS claim.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T00:00:48.297823-07:00`.

@@ -230,3 +230,6 @@ Meaningful history needs attributable durable records. [Per-Singular logging](ar
 
 
 **2026-10-21 Firmament curvature counsel review:** [Response and counterexample](audits/FIRMAMENT_CANONICAL_BOW_REVIEW_RESPONSE_2026-10-21.md) accept shared canonical level sets plus secant-bow bounds, with original execution error/provenance. Do not confuse saved AABBs with derived density support, share different members' local-zero roots, or treat an unresolved midpoint split and GL2 density gating as an accuracy certificate. Review only; next implementation/native gates remain open. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T22:09:42.854494-07:00`.
+
+
+**2026-10-21 §6cf producer review:** [Source/scalar review](audits/SPARKLY_CANONICAL_PRODUCER_6CF_REVIEW_2026-10-21.md) preserves promising saved fixture accuracy but rejects the connected speed ratio (2,304 versus 294,912 invocations), reproduces root loss/unresolved midpoint and near-parallel omission, and finds literal fixture math without generic execution admission. Producer qualification remains open; repair coverage/fallback/provenance then measure matched producer+upload+consumer cost. Prior consumer-only result survives; no new native or shipped gain. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T00:00:48.297823-07:00`.

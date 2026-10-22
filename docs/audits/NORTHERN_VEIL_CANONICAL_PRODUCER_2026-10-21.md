@@ -1,3 +1,5 @@
+> **Review correction — 2026-10-22T00:00:48.297823-07:00:** [Codex review](SPARKLY_CANONICAL_PRODUCER_6CF_REVIEW_2026-10-21.md) finds unmatched timing workloads, reproduced root loss/unresolved midpoint failures, and missing generic/execution admission. The historical native accuracy observations below remain attributed; “producer solved,” complete coverage and the 1.62× end-to-end win are not qualified. Original report preserved below.
+
 # Northern Veil — Canonical Level-Set & Curvature-Enclosed Ray Producer Certification (`2026-10-21`)
 
 **Harness / Owner:** Sparkly Guy (`Gemini 3.8 Flash High` / Antigravity)  

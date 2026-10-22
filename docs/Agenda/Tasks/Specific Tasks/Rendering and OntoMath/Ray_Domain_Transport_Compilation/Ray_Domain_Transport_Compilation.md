@@ -180,9 +180,9 @@ This is **architecture direction, not a landed implementation claim**. Existing 
 
 ## Distance to a faster Northern Veil
 
-*Standing account Zach asked for on 2026-10-20; last updated §6ce counsel review, 2026-10-21 ("keep the account of how much is left until the ray transport work buys more faster Northern Veil than before"). Every pass updates it.*
+*Standing account Zach asked for on 2026-10-20; last updated §6cf source/scalar review, 2026-10-21 ("keep the account of how much is left until the ray transport work buys more faster Northern Veil than before"). Every pass updates it.*
 
-**Current ledger — §6ce:** earlier branch-aware A* retains the **3.37× / 3.34×** matching native compute consumer checkpoint. Target-only host preparation remains insufficient; the new GPU fixed-bin root scan also fails coverage (1,392/2,304 rays) and costs more than the current consumer at the same ray count. Firmament curvature/shared-level counsel is accepted with source, execution-error and unresolved-quadrature corrections; next derive canonical zero sets and bounded root coverage before compact device instantiation; affordable producer, unique full viewport/pass total, production lifetime and inhabited movement remain open. [Current GPU experiment and exact remaining boundary](../../../../../audits/NORTHERN_VEIL_GPU_ROOT_PROPOSALS_2026-10-21.md).
+**Current ledger — §6cf review:** earlier §6cc A* retains its **3.37× / 3.34× matching native compute consumer-only** checkpoint. Sparkly’s fixed-fixture host producer connects to Metal and its saved aggregate accuracy passes, but producer qualification remains open: the new speed ratio compares different workloads (2,304 versus 294,912 invocations), and executed candidate root/near-parallel counterexamples show missing coverage/uncertainty handling. Repair source-derived generic provenance, root/fallback admission and independent coverage, then measure matched connected costs including uploads; full viewport/lifecycle and inhabited movement remain open. [Review, evidence and repair order](../../../../../audits/SPARKLY_CANONICAL_PRODUCER_6CF_REVIEW_2026-10-21.md).
 
 **Baseline to beat.**
 - Codex's 2026-10-15 controlled offscreen series, aurora/inside at 2560×1440: **~136–141 ms per frame** (24-frame readback-free batches; not live FPS). The existing renderer's aurora proof construction is ~239 ms at admission ([audit](../../../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md)).
@@ -335,3 +335,10 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 [Response and bounded mathematical witness](../../../../../audits/FIRMAMENT_CANONICAL_BOW_REVIEW_RESPONSE_2026-10-21.md) accept the secant-bow/monotonicity approach while correcting box-versus-density planes, member-local origins, execution-error units and the unsupported midpoint-as-extremum/GL2 guarantee. The toy positive-lobe counterexample shows why retaining a span does not certify its numerical integral. Upcoming work must report resolved/uncertain/fallback coverage and complete producer-plus-consumer costs separately.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T22:09:42.854494-07:00`.
+
+
+### §6cf review — source/scalar counterexamples reopen the claimed producer gate
+
+[Review](../../../../../audits/SPARKLY_CANONICAL_PRODUCER_6CF_REVIEW_2026-10-21.md) preserves the reported native aggregate accuracy result, corrects unmatched connected timing, and executes exact root-loss/unresolved-midpoint plus Python near-parallel omission witnesses. Next implementation must retain typed uncertainty/fallback, derive/bind current authored math, validate coverage independently and measure matched total cost. No native rerun or new Person-visible result; existing movement acceptance stays open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T00:00:48.297823-07:00`.
