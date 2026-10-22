@@ -96,11 +96,15 @@ At 18,432 repeated ray invocations, proposal-only cost is 2.248 / 2.224 ms, vers
 
 The next step is a smaller mathematical recipe: direct affine/quadratic zero sets, signed absolute-value equations with their domain conditions, shared duplicate boundaries, and bounded monotone/root coverage for the remaining functions. Retain original authored execution provenance/error enclosures; algebraic zero-set identity alone does not certify a device branch. Then instantiate compactly per ray on the backend and count the complete producer-plus-consumer bill.
 
+## Firmament counsel — accepted direction, tightened admission
+
+[Formal counsel](FIRMAMENT_COUNSEL_POST_6CE_CANONICAL_BOW_PRODUCER_2026-10-21.md) is now relayed from default. [Codex reply and bounded mathematical/source witness](../../../docs/audits/FIRMAMENT_CANONICAL_BOW_REVIEW_RESPONSE_2026-10-21.md) accept shared canonical level sets and secant-bow curvature bounds. Correct saved-box/support differences and member-local root origins; retain original execution/error units and separate unresolved integration from root coverage. A midpoint split plus node-local GL2 gating can miss a positive lobe, even with one-unit panels. No new native performance or shipping gate is closed by this review.
+
 ## Current next-owner queue
 
-Codex completed the dinner-watch repair, matched native consumer gate, target-only producer and GPU proposal experiments, then releases the isolated GPU lane at the signed closeout in Intercom.
+Codex releases the isolated GPU lane to **Firmament + Sparkly Guy + Prism Sun**, at Zach’s explicit quota handoff. No jobs remain running. [Complete post-§6ce handoff](../../../docs/audits/RAY_TRANSPORT_TRIO_HANDOFF_POST_6CE_2026-10-21.md); coordinate one implementation owner and one native timing owner. The counsel response is documented; §6cf is not implemented.
 
-1. Derive/share canonical mathematical zero sets and bounded root coverage, then lower compact per-ray instantiation; reject both the measured target-only host loop and fixed-bin GPU scan. Charge preparation, lookup, repair, invalidation, uploads and memory against the earlier consumer headroom.
+1. Derive/share canonical mathematical zero sets and conservative curvature/root bounds under the counsel corrections, then lower compact per-ray instantiation; reject both the measured target-only host loop and fixed-bin GPU scan. Charge preparation, lookup, repair, invalidation, uploads and memory against the earlier consumer headroom.
 2. Qualify unique full-viewport output and complete pass/frame costs including producer and composition obligations.
 3. Qualify broader poses/clocks/source/overlap and production fallback/device/revision lifetime.
 4. Measure the moving inhabited scene and obtain Zach's acceptance.
@@ -120,3 +124,6 @@ Latest producer pass: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e8
 
 
 Latest device split-point pass: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T21:33:37.349632-07:00`.
+
+
+Latest counsel response: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T22:09:42.854494-07:00`.
