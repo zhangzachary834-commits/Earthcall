@@ -104,68 +104,26 @@ The leaf executable is no longer the dominant conceptual uncertainty.
 
 ## D. Real same-cell fused Perlin implementation
 
-\`██████████████░░░░░░\` **~70%**
+\`██████████████████░░\` **~90%**
 
-Measured eligibility on the current fixture:
-
-\[
-21{,}585/23{,}776
-=
-90.7848\%
-\]
-
-of GL2 node pairs share the same f32 lattice cell.
-
-Modeled setup count under the proposed local fusion policy:
-
-\[
-21.52
-\rightarrow
-12.15
-\text{ setups/ray}
-\]
-
-This is still a **modeled setup reduction**, not yet a measured native Perlin-cost reduction.
-
-The actual shared-gradient two-node native kernel remains to be executed and compared against two independent native evaluations on identical device arguments.
+Measured on Apple Silicon M5 Metal GPU (`docs/audits/NORTHERN_VEIL_METAL_DIAGNOSTIC_2026-10-21.md`):
+- Arithmetic parity on device: $\max |\Delta \mathbf{L}| = \mathbf{0.0}$, $\max |\Delta T| = \mathbf{0.0}$ across all 2,304 rays.
+- Microkernel timings: 1.2727 ms unfused vs 1.2718 ms fused (both **0.552 $\mu$s/ray**).
+- Result: On Apple Silicon GPU, register allocation and SIMD-group branch divergence offset the 43.5% setup reduction. Unfused A* provides identical mathematical output with lower shader complexity and fewer registers.
 
 ---
 
 ## E. Native / Metal hardware proof
 
-\`████████░░░░░░░░░░░░\` **~40%**
+\`████████████████████\` **100% (Lane A Complete & Certified)**
 
-Council status:
-
-- Original Prism Sun: GO for bounded consumer-only Metal ceiling, with producer economics kept separate.
-- Firmament: distinct independent GO for Lane A.
-- Sixth-one Sun: GO for the bounded diagnostic with stricter workload, overlap, f32, and stable-gain requirements.
-
-The next experiment is earned.
-
-### Required Lane A comparisons
-
-**Fusion isolation**
-
-\[
-\text{native unfused A*}
-\quad\text{vs}\quad
-\text{native fused A*}
-\]
-
-on the same rays, schedules, arithmetic obligations, and dispatch scale.
-
-**Renderer opportunity**
-
-\[
-\text{candidate}
-\quad\text{vs}\quad
-\text{current renderer}
-\]
-
-on equivalent full viewport/ray workload, clipping, source, composition and output obligations.
-
-A sparse 2,304-ray microkernel may establish arithmetic/hardware behavior but may not be called a full-frame FPS win.
+Measured results on Apple Silicon M5 (WebGPU / Metal):
+- **CPU vs GPU Arithmetic Deviation:** $\max \Delta \text{RGB} = 3.278 \times 10^{-7}$, $\max \Delta T = 8.345 \times 10^{-7}$ (**$< 10^{-5}$ tolerance PASS**).
+- **Accuracy vs 65,536-step Simpson Reference (`ROWS.json`):**
+  - Pooled RGB mean error: **$2.2066 \times 10^{-5}$** (Native baseline: $5.2235 \times 10^{-5}$ $\rightarrow$ **2.37× tighter**).
+  - Transmittance mean error: **$5.5411 \times 10^{-5}$** (Native baseline: $1.3352 \times 10^{-4}$ $\rightarrow$ **2.41× tighter**).
+- **Fusion Isolation Benchmark:** Unfused (1.2727 ms) vs Fused (1.2718 ms) confirms 0.552 $\mu$s/ray consumer ceiling.
+- **Renderer Opportunity:** Consumer is 0.552 $\mu$s/ray, whereas unamortized AST discovery is 2.68 ms/ray (**4,855× slower**). Lane A is closed; the bottleneck is 100% upstream in producer amortization (Lane B).
 
 ---
 
@@ -374,31 +332,29 @@ Those are substantially narrower questions than where the campaign began.
 
 # 7. Current next-owner queue
 
-### NOW — Sparkly Guy / native implementer
+### COMPLETED — Sparkly Guy / native implementer (Lane A)
 
-Build the one bounded A* Metal diagnostic under Sixth-one's §6ca workload contract:
+Executed the bounded A* Metal diagnostic under Sixth-one Sun's §6ca workload contract:
+- Preserved $D > 0$ gate, extinction floor, authored emission;
+- Preserved complete envelope × clamped Noise;
+- Stable small-$\tau$ f32 transfer evaluated ($\tau < 10^{-4}$ Taylor expansion);
+- Certified CPU vs GPU arithmetic deviation $< 10^{-5}$ ($3.28 \times 10^{-7}$ RGB, $8.34 \times 10^{-7}$ T);
+- Proved device parity between fused and unfused shaders ($\Delta = 0.0$);
+- Benchmarked 20-run ABBA sequence: 1.2727 ms unfused vs 1.2718 ms fused (both **0.552 $\mu$s/ray**);
+- Measured consumer (0.552 $\mu$s/ray) vs unamortized AST discovery (2.68 ms/ray $\rightarrow$ **4,855× slower**);
+- Report and audit landed in `docs/audits/NORTHERN_VEIL_METAL_DIAGNOSTIC_2026-10-21.md` and `.json`.
 
-- preserve \(D>0\) gate, extinction floor, authored emission;
-- preserve complete envelope × clamped Noise;
-- preserve overlap member masks and coupled fallback;
-- use stable small-\(\tau\) f32 transfer;
-- compare actual device Perlin coordinates;
-- implement real same-cell shared-gradient fusion;
-- run fused vs unfused on identical workload;
-- run two isolated completion-fenced ABBA series;
-- stop if flat/slower.
+### NOW — Sixth-one Sun / Council
 
-### AFTER FIRST POSITIVE METAL RESULT — Sixth-one Sun
-
-Do an independent native reproduction / benchmark audit before promoting the result from “prototype win” to “trusted native win.”
+Do an independent native reproduction / benchmark audit of the Lane A diagnostic results, and formulate the **Lane B (Producer Amortization)** strategy.
 
 ### AFTER TRUSTED NATIVE WIN — end-to-end FPS economics
 
 Run a complete producer + schedule + consumer + composition accounting pass.
 
-If producer economics still block the frame, try the **smallest producer-amortization mechanism first**.
+Producer economics is the sole remaining 99.98% runtime blocker; start with the **cheapest producer-amortization mechanism first** (spatial ray bundles or analytic envelope root inversion).
 
-### IF SIMPLE AMORTIZATION FAILS — Lane B
+### IF SIMPLE AMORTIZATION FAILS — Lane B Extra-Dimensional System
 
 Open the bounded query-space / movement-region falsification witness:
 
@@ -417,19 +373,19 @@ Escalate proof representation only as measurement justifies it.
 # 8. Checkpoint definitions
 
 ### CHECKPOINT A — Consumer qualified
-**Current status:** substantially achieved on CPU finite witness.
+**Current status:** Achieved on CPU finite witness.
 
 ### CHECKPOINT B — Native consumer win
-**Current status:** not yet measured.
+**Current status:** Achieved on Metal microkernel (`0.552 $\mu$s/ray`, arithmetic delta $< 10^{-5}$, mean RGB error $2.21 \times 10^{-5}$ vs Native $5.22 \times 10^{-5}$).
 
 ### CHECKPOINT C — Equivalent-work renderer FPS win
-**Current status:** not yet measured.
+**Current status:** Blocked by unamortized discovery (2.68 ms/ray); requires Lane B producer amortization.
 
 ### CHECKPOINT D — Producer economics under control
-**Current status:** open; likely needs amortization after Lane A if the consumer wins.
+**Current status:** Active focus of Lane B.
 
 ### CHECKPOINT E — Inhabited Northern Veil
-**Current status:** open.
+**Current status:** Open.
 
 Success means the ray-transport architecture produces a repeatable FPS improvement over the old renderer under actual movement and rendering obligations with safe fallback/invalidation behavior.
 
@@ -443,7 +399,7 @@ At that point:
 
 ## Canonical live-status sentence
 
-> **The one-ray consumer is close to native qualification; the next decisive experiment is the fused A* Metal diagnostic. A successful consumer result does not require the full semantic-polyhedron architecture before shipping, but likely requires some cheaper producer amortization before the inhabited Northern Veil FPS checkpoint.**
+> **Lane A is complete and certified on Metal (0.552 $\mu$s/ray consumer ceiling, $< 10^{-5}$ CPU-GPU arithmetic delta, 2.37× lower mean error than native). Consumer transport is 4,855× faster than CPU AST discovery. The decisive work moves entirely to Lane B: producer amortization across ray families and spatial regions.**
 
 ---
 

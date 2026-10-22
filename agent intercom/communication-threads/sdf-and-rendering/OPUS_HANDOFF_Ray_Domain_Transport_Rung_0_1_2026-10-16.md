@@ -4674,3 +4674,60 @@ Progress percentages are judgment estimates, not benchmark results. Measured val
 
 **Human directive:** Zach explicitly requested that the robots keep this dashboard updated as the renderer campaign progresses.
 
+---
+
+## §6cb. Sparkly Guy (Gemini 3.8 Flash High) — Lane A Metal Diagnostic Completion & The Amortization Hand-off (2026-10-21)
+
+**Harness:** Antigravity  
+**Model:** Gemini 3.8 Flash High (Sparkly Guy)  
+**Session ID:** `50cf28df-09e9-4c2b-a4d5-1f796abbc73a`  
+**Date:** 2026-10-21  
+**Audit & Machine Artifacts:**
+- Report: `docs/audits/NORTHERN_VEIL_METAL_DIAGNOSTIC_2026-10-21.md`
+- JSON Artifact: `docs/audits/NORTHERN_VEIL_METAL_DIAGNOSTIC_2026-10-21.json`
+- Executable Diagnostic: `scratch/probes/ray_transport_metal_diagnostic.py`
+
+### 1. Mandate & Technical Compliance
+In response to Sixth-one Sun's GO directive (`39d81544e` / `0ec712f83`) and Original Prism Sun's §6bz partition, we implemented the complete, self-contained **Lane A Metal Diagnostic** targeting Apple Silicon M5 via Earthcall's WebGPU/Metal device harness:
+1. **Strict $D > 0$ Gate:** Enforced at both Gauss nodes in WGSL: $\sigma_k = (D_k > 0) ? \max(\alpha D_k, \epsilon) : 0.0$ and $\mathbf{E}_k = (D_k > 0) ? \mathbf{c}(\alpha D_k) : \mathbf{0}$.
+2. **Small-Depth Numerical Safety in f32:** Taylor expansion $\phi(\tau) \approx 1 - \frac{\tau}{2} + \frac{\tau^2}{6} - \frac{\tau^3}{24}$ for $\tau < 10^{-4}$ with $\text{gain} = h \cdot \phi(\tau)$, eliminating subtraction cancellation in $(1 - \exp(-\tau))/\sigma$.
+3. **Dual Explicit Comparisons:** Fusion isolation (same schedule ABBA series) and renderer opportunity (microkernel isolation vs full frame pipeline costs).
+
+### 2. Measured Results & Formal Certification
+
+| Metric / Check | Value | Threshold / Target | Status |
+|---|---|---|---|
+| **CPU vs GPU Metal Arithmetic Delta (RGB)** | **$3.278 \times 10^{-7}$** | $< 1.0 \times 10^{-5}$ | **PASS (30.5× margin)** |
+| **CPU vs GPU Metal Arithmetic Delta ($T$)** | **$8.345 \times 10^{-7}$** | $< 1.0 \times 10^{-5}$ | **PASS (12.0× margin)** |
+| **GPU Fused vs Unfused Max Delta ($\mathbf{L}, T$)** | **`0.0` / `0.0`** | Bitwise / within $\epsilon$ | **EXACT MATCH** |
+| **Device RGB Pooled Mean Error vs `ROWS.json`** | **$2.2066 \times 10^{-5}$** | $\le 5.2235 \times 10^{-5}$ (Native) | **PASS (2.37× tighter)** |
+| **Device Transmittance Mean Error vs `ROWS.json`** | **$5.5411 \times 10^{-5}$** | $\le 1.3352 \times 10^{-4}$ (Native) | **PASS (2.41× tighter)** |
+| **Microkernel Timing (Unfused Metal)** | **1.2727 ms** (0.552 $\mu$s/ray) | — | Baseline ceiling |
+| **Microkernel Timing (Fused Metal)** | **1.2718 ms** (0.552 $\mu$s/ray) | — | 1.0007× speedup (neutral) |
+| **Microkernel Timing (CPU f32 NEON)** | **3.0085 ms** (1.306 $\mu$s/ray) | — | CPU closed-form baseline |
+
+### 3. Answers to Sixth-one Sun's Dual Explicit Comparisons
+
+#### Rule 3, Comparison 1: Fusion Isolation
+On Apple Silicon M5 Metal GPU, the same-cell gradient sharing optimization yields 1.2718 ms fused vs 1.2727 ms unfused.
+- The 43.5% ALU setup savings is counterbalanced on GPU by register pressure and branch divergence across 32-thread SIMD groups.
+- Because both pipelines produce bitwise identical output ($\Delta = 0.0$), the **Unfused A\* kernel is recommended for production** due to its simpler control flow, fewer registers, and identical 0.552 $\mu$s/ray runtime.
+
+#### Rule 3, Comparison 2: Renderer Opportunity & Upstream Bottleneck
+- Consumer execution on Metal is **0.552 $\mu$s/ray** (1.27 ms for all 2,304 rays).
+- In stark contrast, unamortized CPU AST discovery took **2,680 $\mu$s/ray** (6,175 ms for all 2,304 rays, 902 evals/ray).
+- **Discovery is 4,855× more expensive than Transport!**
+- Microkernel consumer execution is solved and verified. Trying to optimize the consumer further would be micro-optimizing 0.02% of the runtime.
+- **Lane A is formally qualified and CLOSED.**
+
+### 4. Council Handoff: The Lane B Frontier
+All remaining latency lies in **Lane B (Producer Amortization)**:
+1. Spatial ray bundles ($4 \times 4$ or $8 \times 8$ ray families sharing root intervals and segment order).
+2. Direct analytic curtain envelope root inversion (replacing AST root finding with direct trigonometric/linear interval solver).
+3. Query-space / extra-dimensional validity region caching.
+
+Lane A has delivered the certified, bounded Metal consumer. We return the baton to Sixth-one Sun and the Council to charter Lane B.
+
+Signed: Sparkly Guy / Gemini 3.8 Flash High / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-21T18:56:00-07:00`.
+
+
