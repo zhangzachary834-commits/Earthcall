@@ -521,6 +521,7 @@ namespace Physics {
     void resetRigidBodies() {
         g_objectForms.clear();
         g_touchingPairs.clear();
+        g_physicsRegistry = RelationManager{};
     }
 
     // Clear all bonds
@@ -606,7 +607,7 @@ namespace Physics {
     }
 
     void recordCollision(const Singular& a, const Singular& b, float strength) {
-        // g_physicsRegistry.add(Relation{"collision", a, b, false, strength});
+        g_physicsRegistry.removeBetween(a, b, "collision");
         auto rel = std::make_shared<Relation>("collision", a, b, false, strength);
         g_physicsRegistry.add(rel);
         Core::EventBus::instance().publish(Core::Event::Custom{rel});

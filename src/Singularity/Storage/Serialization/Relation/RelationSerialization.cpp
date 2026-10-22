@@ -4,6 +4,7 @@
 
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 
+#include <atomic>
 #include <cstdio>
 #include <cstring>
 
@@ -139,10 +140,13 @@ Relation relationFromJson(const nlohmann::json& json,
         Singular* b = savedB.empty() ? nullptr : resolve(savedB);
         relation.bind(a, b);
         if ((!savedA.empty() && !relation.a()) || (!savedB.empty() && !relation.b())) {
-            std::fprintf(stderr,
-                "Relation load: unbound endpoint(s) type='%s' a='%s' b='%s'. "
-                "Identifier properties are kept for a later bind.\n",
-                relation.typeLabel().c_str(), savedA.c_str(), savedB.c_str());
+            static std::atomic<std::size_t> s_unboundLogCount{0};
+            if (s_unboundLogCount.fetch_add(1) < 20) {
+                std::fprintf(stderr,
+                    "Relation load: unbound endpoint(s) type='%s' a='%s' b='%s'. "
+                    "Identifier properties are kept for a later bind.\n",
+                    relation.typeLabel().c_str(), savedA.c_str(), savedB.c_str());
+            }
         }
     }
     return relation;
