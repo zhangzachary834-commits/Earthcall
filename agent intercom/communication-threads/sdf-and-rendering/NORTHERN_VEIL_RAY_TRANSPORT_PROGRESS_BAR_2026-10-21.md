@@ -3,7 +3,7 @@
 **Human goal:** Zachary Zhang's substantial native Northern Veil speed checkpoint at current-or-better accuracy, followed by an inhabited movement result.
 **Branch:** `claude/ray-domain-transport-rung0`.
 **Council:** [existing Intercom thread](OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md).
-**Latest pass:** [§6cl bounded streaming and Firmament response](../../../docs/audits/GPU_RAY_TRANSPORT_BOUNDED_STREAMING_2026-10-22.md). Fixed-buffer reuse/tail/fallback passes, including a10 MiB allocation control; small chunks lose cost and large-query/full-viewport economics remain open. Raw schedule census rejects general one-span compression. No new shipped FPS or app change.
+**Latest pass:** [§6cm distinct native rays](../../../docs/audits/GPU_RAY_TRANSPORT_WIDE_QUERY_SCREEN_2026-10-22.md). Accuracy/reuse passes on32,784 distinct queries; every wide bulk/streamed trial loses cost. Envelope/adaptive-bin counsel does not recover a win. Production remains the retained marcher; no shipped FPS gain.
 
 **Preceding review:** [§6cf source/scalar review](../../../docs/audits/SPARKLY_CANONICAL_PRODUCER_6CF_REVIEW_2026-10-21.md) preserves Sparkly’s saved aggregate accuracy while reopening producer qualification: mismatched timing workloads, root loss, untyped uncertainty and hardcoded fixture math. **No new connected speedup or shipping gate passed.**
 
@@ -13,7 +13,7 @@
 
 ## Current state
 
-**The retained pinned-source GPU production/transport candidate now passes numerical witnesses at four native poses/two clocks after binding original authored time coefficients. Native throughput varies by view; the full original control remains positive, while tiny exact-empty work loses. Generic density/root derivation, frame-lived coefficients, unique viewport/depth/composition, lifecycle and inhabited FPS/Person acceptance remain open. Earlier consumer-only and frozen-camera checkpoints remain dated evidence.**
+**Scoped mathematical/accuracy and buffer-reuse witnesses pass. The32,784-distinct-ray screen fails connected economics, superseding any inference that earlier repeated sparse speedups forecast a viewport benefit. Generic density/root/lifetimes, a profitable distinct-query execution layout, full viewport/depth/composition/frame costs and inhabited acceptance remain open.**
 
 The initial Metal diagnostic omitted all 253 overlap intervals in its GPU kernels and its CPU comparator. Its “Lane A complete/certified,” production recommendation, exclusive-producer-bottleneck and 0.552 microseconds/ray performance-ceiling claims are superseded. Historical text and artifacts remain in the [initial audit](../../../docs/audits/NORTHERN_VEIL_METAL_DIAGNOSTIC_2026-10-21.md) and Intercom; this page tracks current qualified evidence.
 
@@ -27,7 +27,7 @@ The initial Metal diagnostic omitted all 253 overlap intervals in its GPU kernel
 | Same-cell gradient fusion | Implemented, rejected on cost | Fused +17.99% / +17.51% in repeated 64-dispatch host-fenced batches |
 | Unfused A* versus production-generated marcher | **Passed matching compute consumer gate** | 3.37× / 3.34× on 2,304 frozen rays repeated 128×; baseline T exact, RGB max delta 4.47e-8 |
 | Unique full viewport and complete frame | **Open** | Actual boundary generation, depth/raster/composition obligations and full pass/frame total |
-| Boundary production / amortization | **Positive pinned numerical GPU candidate; shipping open** | Corrected root/capacity/native fallback contract, zero per-run host schedule generation/upload, 1.48–1.50× matched repeated-ray throughput after full uncertain-band retention; fixed-offset decoding and heuristic execution margin are explicitly not generic/native omission admission. |
+| Boundary production / amortization | **Accuracy passes; distinct-query cost fails** | Earlier sparse throughput is dated evidence; all wide bulk/streamed variants lose to their matched current lane. Generic math/source admission and a profitable representation remain required. |
 | Device numeric endpoint prototype | Implemented, scan rejected | Original switch operands execute on Metal; 1,392 rays refuse coverage and proposal-only cost exceeds the matching-ray current consumer |
 | Production revision/device/fallback lifecycle | Open | No A* source integration shipped; no default/budget change |
 | Broad poses, clocks, sources and overlap | **Bounded pose/clock witness passed; generality open** | Four actual native camera poses, clocks 0/7.25, independent fine/half AST references; source stays pinned and zero-radiance. More sources/occlusion/general domains remain unqualified. |
@@ -203,3 +203,10 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 Firmament’s Gemini review motivated bounded two-pass packet streaming. All four capacities (176/512/1,024/8,192) pass strict normal/bulk and forced/native float-bit equality on 2,304 inside +192 spawn rays, including the 16-ray tail. The 8,192 schedule allocation is 10 MiB, but these fixtures do not fill/reuse a large chunk. Small chunks cost 2.1–6.7× the matched bulk candidate; no performance promotion. An initial 1/16/64 screen lost its device during timing (exact repetition unknown); final 1/2/4 screens pass without explaining that limit. Independent raw GPU-packet census finds 208 inside ray/member pairs with multiple retained spans, 11 with three; single-span compression is not generally lossless. Original math, reference thresholds and production/default/save/app state remain unchanged. Generic density/root and production lifetime, profitable unique large-query streaming, full viewport/depth/composition/complete costs and inhabited acceptance remain open.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T11:16:00.866645-07:00`.
+
+
+## §6cm — current distinct-query standing
+
+The newly written Firmament review is preserved and answered. All32,784 distinct native queries pass original-AST checks and nine large-ring normal/bulk plus forced/native bitwise cases;192 predetermined holdout rays pass both-resolution independent transport gates in all three variants. Unlike the earlier sparse result, every matched bulk/streamed lane loses cost on this workload (streaming +18–63%). Tight harmonic-envelope and adaptive1..16-bin screens pass accuracy but recover no economic win. A normalized cosine+linear witness refutes endpoint-change>2ε as a monotonicity proof; the conservative derivative enclosure stays. Six external-case and ten replay-corruption refusals plus four capture controls pass. No promotion/default/save/app/FPS change. Next: generic density/root/lifetimes and a demonstrably profitable distinct-query representation, then unique full viewport/depth/composition/complete frame costs and moving inhabited Person acceptance.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T11:52:54.393507-07:00`.

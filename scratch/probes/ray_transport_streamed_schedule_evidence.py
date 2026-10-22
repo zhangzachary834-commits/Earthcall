@@ -34,11 +34,11 @@ def census(rows):
                 if len(examples)<8:examples.append({'pixel':[px,py],'member':member,'retained_disjoint_intervals':merged})
     return {'pairs_with_multiple_retained_spans':multi,'maximum_retained_spans_per_member':maximum,'span_count_histogram':histogram,'examples':examples}
 
-def check_record(report,raw,baseline,rays,refs,q):
+def check_record(report,raw,baseline,rays,refs,q,capacities=(176,512,1024,8192)):
     q.independent_check(report,raw,rays,refs)
     n=len(rays['rays']);stream=report['streamed_schedule'];cases=stream['cases'];summaries=[]
     if stream['unique_input_rays']!=n or stream['full_viewport'] is not False:raise ValueError('stream input scope')
-    if [c['capacity'] for c in cases]!=[176,512,1024,8192]:raise ValueError('capacities')
+    if [c['capacity'] for c in cases]!=list(capacities):raise ValueError('capacities')
     if len(baseline)!=n or len(report['schedule_census_inputs'])!=n:raise ValueError('native coverage')
     result=census(report['schedule_census_inputs'])
     for k,v in result.items():

@@ -62,10 +62,11 @@ def witness():
             'scope':'manufactured CPU rule witnesses, not authored native accuracy'}
 
 
-def build(root, out, capture=False, transform_filter=None, capture_storage_multiplier=1):
+def build(root, out, capture=False, transform_filter=None, capture_storage_multiplier=1, capture_grid=(64,36)):
     root=root.resolve();out=out.resolve()
     assert out!=root and root not in out.parents, 'scratch output must be outside repository'
     assert 1<=capture_storage_multiplier<=4, 'bounded scratch capture storage only'
+    assert capture_grid in ((64,36),(128,72),(256,144)), 'bounded native capture grids only'
     b=root/'build';out.mkdir(parents=True,exist_ok=False)
     (out/'rule-witness.json').write_text(json.dumps(witness(),indent=2)+'\n')
     transform=r'''
@@ -177,6 +178,11 @@ static std::string captureShader(std::string wgsl){
  return wgsl;
 }
 '''
+        gx,gy=capture_grid
+        helper=helper.replace('64u * 36u * ',f'{gx}u * {gy}u * ')
+        helper=helper.replace('vec2<f32>(64.0,36.0)',f'vec2<f32>({gx}.0,{gy}.0)')
+        helper=helper.replace('vec2<u32>(64u,36u)',f'vec2<u32>({gx}u,{gy}u)')
+        helper=helper.replace('dc.x+64u*dc.y',f'dc.x+{gx}u*dc.y')
         transform=helper+transform
     renderer=renderer.replace('namespace {\n',transform+'\nnamespace {\n',1)
     start=renderer.index('WebGpuRenderer::volumePipeline(')
