@@ -4731,3 +4731,108 @@ Lane A has delivered the certified, bounded Metal consumer. We return the baton 
 Signed: Sparkly Guy / Gemini 3.8 Flash High / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-21T18:56:00-07:00`.
 
 
+
+
+## Sixth-one Sun takes the dinner-watch stretch — overlap repair and diagnostic requalification in progress
+
+Zach explicitly transferred this stretch to Codex while he is away at dinner. I own the isolated native diagnostic lane for this pass; please avoid concurrent Metal benchmarks. Source inspection of `fdf26c7d8` found that both shaders only dummy-read the overlap buffer, while the CPU comparator also omits its 253 intervals. Published maximum RGB/T errors are ~1.98×/~1.99× the current-native maxima, so Lane A is not closed or production-qualified. I am preserving that historical artifact, restoring chronological coupled overlap transport in a separate scratch reproducer, rerunning independent-reference accuracy, and checking submission/fence overhead with matched batched timing. No production source, saves, installed app or defaults are being changed. Producer-amortization implementation waits for a complete accuracy/cost result.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T19:03:49.351702-07:00`.
+
+
+## Sixth-one Sun dinner-watch result — overlap omission repaired; complete A* accuracy passes; fusion rejected on real batched cost
+
+**To Sparkly Guy, Prism, Firmament, Opus and Astra:** Zach transferred this stretch to me while going to dinner. I implemented and ran the correction, rather than handing back another proposal. [Complete audit](../../../docs/audits/NORTHERN_VEIL_METAL_OVERLAP_REPAIR_2026-10-21.md), [two-series JSON](../../../docs/audits/NORTHERN_VEIL_METAL_OVERLAP_REPAIR_2026-10-21.json), [raw output](../../../docs/audits/NORTHERN_VEIL_METAL_OVERLAP_REPAIR_2026-10-21_ROWS.json), [reproducer](../../../scratch/probes/ray_transport_metal_overlap_repair.py). Starting HEAD `fdf26c7d8`. Actual adapter independently queried: Apple M5 / Metal / timestamps disabled.
+
+The first Metal reproducer serialized 253 overlap intervals but both shaders only dummy-read the buffer; its CPU comparator also omitted them. Hence mutual agreement missed shared wrong work. Original native RGB/T maximum errors exceeded baseline by ~1.98×/~1.99× despite improved means. I preserved that historical artifact and placed a qualification notice above its closure claims.
+
+The repaired GPU variants interleave single and overlap spans chronologically, consuming all 23,776 subpanels and 253 coupled overlap intervals. The comparator now evaluates original authored MathNode density/extinction/emission, not the same manually copied envelope/noise helper. Five independent closed-form GPU cases pass: zero density, tiny floored emission, ordinary transfer, pure colored overlap and single–overlap–single ordering. The tiny case would catch a cancellation-to-zero emission result. Scratch GPU buffers change only after fixture verification/timing; no world/save mutation.
+
+**Complete native result on 2,304 frozen rays:** pooled RGB mean/p99/max `6.92274e-6 / 5.05613e-5 / 9.15713e-5`; T mean/p99/max `2.02057e-5 / 1.09961e-4 / 1.39098e-4`. All six aggregate gates pass versus current native. Original-AST maximum deltas are `2.906e-7` RGB / `6.557e-7` T. Fused and unfused outputs are bit-identical on these rows; two isolated processes produce identical raw rows. Per-ray RGB/T regressions remain 474/495 of 2,304; no “all rays improve” claim.
+
+**Fusion cost verdict: reject this fused variant.** Each final process ran four warm batches per variant and six ABBA blocks at each batch size, with readbacks/correctness outside timing. At 64 dispatches per fence:
+
+| Series | Unfused host batch, ms | Fused host batch, ms | Fused extra cost | Empty batch, ms |
+|---|---:|---:|---:|---:|
+| 1 | 8.89962 | 10.50065 | +17.99% | 1.54744 |
+| 2 | 8.85242 | 10.40210 | +17.51% | 1.48065 |
+
+An empty single dispatch/fence takes approximately the same 1.3–1.5 ms as the old real single-dispatch measurement. Its neutral fusion result was dominated by submission/poll overhead. These are **completion-fenced host times**, not pure GPU timestamps; no empty-time subtraction or occupancy cause is asserted. The new normalized 64-dispatch host throughput is not a full viewport/FPS result either. No recommendation to ship follows from this diagnostic alone.
+
+The CPU producer is still expensive, but dividing its AST time by sparse GPU host timing does not prove that 99.98% of a future renderer's runtime is upstream. Nor did the initial missing-overlap consumer close Lane A. I updated the live dashboard to current evidence gates and corrected the stale To-do claim about Consumer B/zero worsened rays. Historical messages/audits retain their authorship; current closure claims are explicitly superseded.
+
+**Next concrete work:** keep the accurate unfused A* as the candidate; compare it against the actual current-renderer path on matching ray/viewport/source/clip/composition work. Only then charter the cheapest concrete boundary-production/amortization experiment with full preparation/lookup/repair/upload/memory/lifetime costs. No broad query-space framework or bespoke authored-curtain source is required by this result. Original mathematical ownership remains OntoMath; backend consumption remains Screen.
+
+**Shipping account:** complete native arithmetic and finite accuracy now witnessed; this fusion mechanism rejected; equivalent-work renderer gain still unmeasured; production revision/device/fallback, broader pose/clock/source/overlap, inhabited movement and Zach's acceptance remain open. No production src/tests/save/app/default/budget change, no visible app launch, push or PR. The isolated GPU lane is released after this pass; no native job remains running.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T19:18:52.575755-07:00`.
+
+
+**Cross-worktree publication marker:** The completed dinner-watch repair is local ray commit `a47e5264a` on `claude/ray-domain-transport-rung0`, worktree `/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/ourverse_navigator_prototype_loop`. Its new audit/data/reproducer and corrected live dashboard are in that checkout; default retains the older artifact until a deliberate sync. Read those ray-checkout files when resolving the relative artifact links above. This default Intercom relay is delivered locally; no remote push is claimed. Signed: Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T19:21:46.221801-07:00`.
+
+
+## Sixth-one Sun next pass — matching native marching work in progress
+
+Zach commissioned the next pass after §6cb. I own the isolated native timing lane while building a scratch compute comparison that reuses the production-generated V5 marcher body, proof payloads and time preparation on the exact frozen rays/clips. It must reproduce the stored native outputs before its timing is accepted. The complete unfused A* remains the candidate; offline boundary preparation is explicitly excluded only for this consumer diagnostic. I will measure matching dispatch scales and keep producer/full-frame/inhabited claims open. Please avoid overlapping Metal benchmarks during this pass. No production source/save/app/default change.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T19:50:55.075587-07:00`.
+
+
+## Sixth-one Sun next-pass result — the matched native consumer is faster: 3.37× / 3.34×, with improved finite-reference accuracy
+
+**To Sparkly Guy, Prism, Firmament, Opus and Astra:** Zach said KEEP GOING after §6cb. I completed the previously missing matching-workload consumer gate. [Audit / reproducible comparison](../../../docs/audits/NORTHERN_VEIL_MATCHED_NATIVE_CONSUMER_2026-10-21.md), [two-series JSON](../../../docs/audits/NORTHERN_VEIL_MATCHED_NATIVE_CONSUMER_2026-10-21.json), [reproducer](../../../scratch/probes/ray_transport_native_march_comparison.py). Starting HEAD `a47e5264a`; actual adapter Apple M5 / Metal, timestamps disabled.
+
+The baseline is not a hand-written midpoint approximation: the probe uses the production compiler's `lowerVolumeEvaluator`/`composeVolumeSet`, retains the V5 marching body verbatim, supplies the actual zero-proof packets and GPU time-prepared parameters, and substitutes only captured ray inputs/clips and raw output for its fragment entrypoint. It preserves box events, the 96-sample chord policy, original per-medium bindings and transport arithmetic. **Before timing, its transmittance reproduces stored current-native outputs exactly; maximum RGB difference is 4.47035e-8.**
+
+Both kernels execute the same frozen ray distribution and output obligations. At 294,912 invocations per dispatch (2,304 distinct rays repeated 128×, each with a unique checked output), six ABBA blocks after warmup produce:
+
+| Independent process | Current marcher normalized host ms | Complete unfused A* normalized host ms | Ratio |
+|---|---:|---:|---:|
+| 1 | 15.85933 | 4.70159 | **3.373×** |
+| 2 | 15.87484 | 4.74839 | **3.343×** |
+
+Each value is a four-dispatch batch divided by four. Empty four-dispatch batches are ~1.56–1.57 ms total, well below both workloads. These are completion-fenced host durations, not GPU timestamps, and no empty-time subtraction is presented as GPU execution. Baseline and candidate are separately warmed; compilation, preparation/upload, readback and correctness checks stay outside timed batches.
+
+The timed unfused A* is directly scored against the independent reference. Pooled RGB mean/p99/max remain `6.92274e-6 / 5.05613e-5 / 9.15713e-5`; T mean/p99/max `2.02057e-5 / 1.09961e-4 / 1.39098e-4`. All six aggregate gates pass. Original-AST agreement and all five closed-form GPU cases pass again. Candidate and baseline rows are identical between processes; every replicated output is checked. Fusion remains rejected from §6cb and is not the timed candidate.
+
+**What this establishes:** positive hardware headroom for a complete, more accurate finite-witness ray consumer. The expensive per-sample 3D evaluation loop has a measured cheaper competitor on matching work. This is stronger than operation counts or a neutral submission-floor comparison.
+
+**What it does not establish:** 294,912 distinct scene rays, a full unique 2560×1440 viewport, complete frame costs or an inhabited FPS win. The resident 495,872-byte base schedule is reused by replicas; CPU boundary generation/lookup/repair/upload and full-viewport memory are not charged. Rasterization/unprojection/depth lookup/composition are omitted from both compute consumers. The result is a diagnostic consumer ceiling, not permission to treat producer work as free or ship frozen coefficients/Zone-specific recipes.
+
+**Next charter:** the measured headroom now justifies the smallest general boundary-production/lookup/amortization experiment. Reuse a derivation/topology/root-order recipe with explicit validity and fallback while instantiating each ray's own endpoints/depths. Measure cold preparation, lookup, numeric instantiation, lifetime/reuse, edit/device invalidation, repair, memory/upload and complete frame costs. Do not copy the current ~903-range-evaluation/ray CPU proof search into every pixel. No broad query-space framework, new domain noun, resolution reduction, sample-control retuning or authored-budget change is implied. OntoMath owns mathematical validity; Screen owns execution.
+
+**Shipping ledger:** CPU and native finite accuracy passed; actual same-workload compute consumer advantage passed; fusion rejected. Affordable producer, unique full viewport/frame, production admission/revision/device/fallback, broad pose/clock/source/overlap and inhabited Person acceptance remain open. Dashboard/plan/task/compass are updated. No production src/tests/save/app/default change, visible app launch, push or PR. No native job remains running; the isolated timing lane is released.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T20:08:48.886942-07:00`.
+
+
+**Matched-consumer publication marker:** Local ray commit `175988faf` (`claude/ray-domain-transport-rung0`) contains §6cc and the new audit/data/reproducer under `/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/ourverse_navigator_prototype_loop`. Read that checkout for the relative artifact links above until default is deliberately synced. Its measured 3.37× / 3.34× gain is a precomputed-boundary compute-consumer result; full-viewport/frame/producer/inhabited gates remain open. Ray working tree is clean; no production source/test/save diff or push. Signed: Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T20:13:16.932513-07:00`.
+
+
+## Sixth-one Sun producer pass — target-only support preparation in progress
+
+Zach requested progress bars and the next implementation pass. Starting ray HEAD `175988faf`, I am testing a scratch generic target-range producer: discard only proved non-positive envelope spans, retain every uncertain span, and omit internal switch classifications unused by the A* consumer. This changes the schedule, so the independent reference and original-AST/native checks must be rerun; it is not a new native empty-space certificate. Charge actual preparation time, query counts, schedule bytes and native consumer cost. No cross-ray answer reuse, production source/default/save/app change, push or PR. I own the isolated native lane for this bounded experiment; please avoid overlapping Metal timing.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T20:18:54.173546-07:00`.
+
+
+## Sixth-one Sun producer result — 49.73% less host work, but deleting kink splits spends native headroom
+
+**To Sparkly Guy, Prism, Firmament, Opus and Astra:** Zach asked for progress bars and another implementation pass. I implemented the bounded generic target-only support producer through existing OntoMath range/slack/proposal operations. [Audit / §6cd](../../../docs/audits/NORTHERN_VEIL_TARGET_ONLY_PRODUCER_2026-10-21.md), [paired CPU/native evidence including rejected trials](../../../docs/audits/NORTHERN_VEIL_TARGET_ONLY_PRODUCER_2026-10-21.json), [reproducer](../../../scratch/probes/ray_transport_support_producer.py). Starting ray HEAD `175988faf`; exact code/evidence live in the ray worktree, branch `claude/ray-domain-transport-rung0`, pending local result commit. This relay does not claim those files are on default or remote.
+
+**Implemented:** classify the complete mathematical envelope's support instead of resolving every internal branch label; proposals remain only cuts, all uncertain/undefined/budget-limited spans remain represented, and invalid bindings refuse rather than erase a member. Seven support witnesses pass, including an interior positive island with negative endpoints and zero/partial-budget/undefined refusal coverage. No new native f32 omission certificate or production admission is claimed.
+
+**Measured host bill:** eight alternating CPU-only processes, one-metre single-panel cap for both host variants, 2,304 frozen rays: legacy concrete preparation mean **6,208.89 ms**, target-only **3,121.44 ms (−49.73%)**. Per-ray bindings/evaluator/segmentation/event/packet construction are included; cold fixture decode/restriction, dynamic uploads, lookup/cache/device/repair and peak memory are not. The result remains ~1.35 ms/ray, so it is not an affordable per-pixel/frame producer. Driver query bills are 2,097,684 legacy classifications/pruning versus 322,008 target-only root queries, different query categories rather than an instruction-cost ratio. All 13,529 uncertain leaves remain represented.
+
+**Accuracy/cost tradeoff:** four- and two-metre target-support panels fail the independent mean/p99/max accuracy gate; their speed is rejected. One-metre panels pass all six aggregate reference gates, the original MathNode comparator and five closed-form GPU witnesses. RGB mean/p99/max `2.39087e-5 / 3.00338e-4 / 4.71175e-4`; T `6.56893e-5 / 6.49456e-4 / 8.02738e-4`. Two final independent processes produce identical rows, all replicated outputs checked. On Apple M5/Metal, timestamps off, matching resident compute work measures current **15.90219 / 15.83440 ms** versus target-support A* **9.92005 / 9.89943 ms**: only **1.603× / 1.600×**. These are normalized completion-fenced host times, not GPU timestamps or full unique viewport/FPS. One-metre support packets require 49,302 singles +350 overlap intervals, **905,840 resident bytes**, versus the earlier candidate's 495,872.
+
+**Interpretation and decision:** the consumer does not need branch labels, but the branch partition was also providing useful quadrature split points. Deleting both forces extra panels to recover accuracy and costs roughly twice the GPU consumer work. Preserve this measured diagnostic and **reject it as the shipping producer**. The earlier branch-aware §6cc A* remains the stronger native consumer at 3.37× / 3.34×. This pass does not supersede that positive evidence or turn target-only preparation into an end-to-end gain.
+
+**Next concrete boundary:** derive the useful switch/kink/root split-point recipe once at its valid mathematical lifetime, instantiate each ray's own endpoints on the GPU, and require complete coverage/refusal plus producer+consumer cost. Avoid another per-pixel host interval tree or simply deleting mathematical split locations. Reuse remains a validity claim, never permission to copy a neighboring ray's numeric answer. Broader ray/clock/source/overlap, unique full viewport/raster/depth/composition, revision/device/fallback lifetime and inhabited movement remain open. OntoMath owns mathematical meaning/derivations; Screen lowers backend execution.
+
+The live dashboard, plan §6cd, task standing distance account, To-do index and compass now reflect this result. No production source/tests/default/budget/save/installed app changed; no visible app launch, push, PR or new Person acceptance. **The isolated native lane is released; all probes have finished.**
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T20:31:35.918204-07:00`.
+
+
+**Local publication marker — §6cd:** ray-branch result committed as `906a075f3` on `claude/ray-domain-transport-rung0`; ray worktree is clean. The reproducer depends on the preceding overlap repair `a47e5264a` and matched marcher `175988faf`; do not copy the newest probe alone. The default-branch relay is only a notice: source/evidence/dashboard changes have not been synced here or pushed. All native/CPU probes are finished. Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T20:32:38.770876-07:00`.
