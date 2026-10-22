@@ -5223,3 +5223,14 @@ Implementation/evidence: `85662cc9cffa54218688f9c67de569f43b9bde5c` on `claude/r
 Default `sync-from-earthcall-main` received the audit, byte-identical machine/raw evidence, progress/companion updates and the reply to the newly received12:38 Firmament review; that review is preserved verbatim on both checkouts. Default delivery is local/uncommitted, not remote publication or a merge. No push/PR, production/default/sample/save/data-home/app changes. Native lane released. Next hypothesis: shared coarse-knot/level-set work with current capacities and the cheaper consumer; then generic OntoMath math/lifetimes, full viewport/frame and inhabited acceptance. GPU15-entry overflow remains an explicit unexercised witness.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T13:11:49.902322-07:00`.
+
+
+### Sixth-one Sun — post-§6cn handoff to Firmament + Sparkly Guy
+
+Zach explicitly commissions the reviewer/executor duo because Codex has8% usage left. **Firmament reviews; Sparkly Guy executes.** [Concrete handoff, commands, evidence and stop conditions](../../../docs/audits/RAY_TRANSPORT_DUO_HANDOFF_POST_6CN_2026-10-22.md). Start from ray `claude/ray-domain-transport-rung0` at `5636aafaa`, implementation/evidence parent `85662cc9c`. Native timing lane is released; no probe remains running. This is local delivery in both checkouts, not recipient acknowledgement or remote publication.
+
+Compact128-byte packets passed scoped numerical accuracy but lost connected cost45–73%; strict exactness witnesses still refuse. Next isolate shared coarse Φ endpoints across three levels, with current capacities and the old cheaper consumer.48→9 concerns only initial endpoint evaluations, not total speed. Preserve per-level f32/error rules, full uncertainty and native fallback; do not bundle SoA, smaller arrays or suppressed fallback. Review the authored-source and same-device gates before promotion. No production/default/save/app change or shipped gain.
+
+Remaining shipment gates: profitable connected distinct-ray execution; generic OntoMath math/source/clock/device lifetimes plus full viewport/depth/composition/frame economics; moving inhabited p95 and Zach acceptance. Sparkly, report those alongside each pass; Firmament, distinguish measured evidence from hardware hypotheses. The handoff preserves the newest counsel, failed exactness screens, unexercised native overflow and unexplained older device loss.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T13:17:49.724985-07:00`.

@@ -217,3 +217,10 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 128-byte full-f32 event packets reduce schedule-only ring storage10×, but are not bit-lossless: strict native endpoint/output witnesses refuse. The separate numerical candidate passes original-AST1e-5 across32,784 actual queries, both dense-reference resolutions on192 predetermined rays, exact forced native fallback and10 corruption refusals;241 codec round trips pass. No normal fallback (max14 events), so native15-entry overflow remains unexercised. Primary compact costs are73%/45% slower than current. Same-query component clocks show comparable producer cost and33% more consumer cost at4 repetitions; phases are non-additive and hardware causes unmeasured. New Firmament counsel is answered: test shared Φ/coarse endpoints first with current capacities and cheaper consumer, preserve per-level execution error, and do not infer cache/spill behavior or capacity bounds from source/merged spans. No promotion/default/save/app/FPS change. Profitable connected execution, generic math/lifetimes, full viewport/frame and inhabited acceptance remain open.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T13:06:29.632017-07:00`.
+
+
+## Post-§6cn ownership handoff
+
+Zach requests Firmament as reviewer and Sparkly Guy as executor. [Starting commits, evidence, next isolated coarse-knot experiment and shipping gates](../../../docs/audits/RAY_TRANSPORT_DUO_HANDOFF_POST_6CN_2026-10-22.md). Native lane released. Compact candidate rejected on connected cost; no new shipped FPS gain. Next: share initial Φ work with the cheaper consumer, retain current capacities/error/fallback, then require profitable distinct-ray economics before generic/full-frame/inhabited promotion. Local delivery is not recipient acknowledgement.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T13:17:49.724985-07:00`.
