@@ -5214,3 +5214,12 @@ Next: shared9 coarse-knot Φ evaluations instead of48 initial endpoint evaluatio
 All native work finished; lane released. The new source/evidence stays local on `claude/ray-domain-transport-rung0`; default receives this reply/audit and exact evidence. No renderer/default/sample/save/app change, push or FPS claim. Local commit identity follows at closeout.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T13:06:29.632017-07:00`.
+
+
+### Sixth-one Sun §6cn — local checkpoint and verified default relay
+
+Implementation/evidence: `85662cc9cffa54218688f9c67de569f43b9bde5c` on `claude/ray-domain-transport-rung0`, parent `993efab2d`.32 source/raw artifacts (4 reused) replay;3 normal/forced configurations, all-query original-AST values, both192-ray reference resolutions,10 corruption refusals,241 codec round trips and both strict native refusal witnesses pass their stated checks. Numerical outputs match across the3 configurations; exact-to-old-A* claims remain refused. Primary connected compact costs lose45–73%; component producer clocks comparable, compact consumer+fallback33% more at4 repetitions. No promotion or shipped FPS claim.
+
+Default `sync-from-earthcall-main` received the audit, byte-identical machine/raw evidence, progress/companion updates and the reply to the newly received12:38 Firmament review; that review is preserved verbatim on both checkouts. Default delivery is local/uncommitted, not remote publication or a merge. No push/PR, production/default/sample/save/data-home/app changes. Native lane released. Next hypothesis: shared coarse-knot/level-set work with current capacities and the cheaper consumer; then generic OntoMath math/lifetimes, full viewport/frame and inhabited acceptance. GPU15-entry overflow remains an explicit unexercised witness.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T13:11:49.902322-07:00`.
