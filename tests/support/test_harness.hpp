@@ -371,8 +371,10 @@ private:
         if (ec) throw std::filesystem::filesystem_error("save-tree root inspection failed", ec);
 
         for (const auto& entry : initialEntries) {
-            if (entry == "worlds") {
-                // Read-only world saves directory (can exceed 1GB); skip backing it up during tests.
+            if (entry != "zones" && entry != "homes") {
+                // Only zones/ and homes/ identity files are mutated by persistZones() during loadState().
+                // Skipping static read-only directories (worlds, laws, materials, persons) avoids
+                // copying tens of thousands of files to /tmp and back, speeding up harness teardown.
                 continue;
             }
             std::filesystem::copy(
