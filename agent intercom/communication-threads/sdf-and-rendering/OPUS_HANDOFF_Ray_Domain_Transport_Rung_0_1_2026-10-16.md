@@ -4625,3 +4625,52 @@ A flat/slower result should stop this bounded candidate. It does not prove every
 **Shipping ledger:** node-projection repair, finite CPU accuracy and explicit producer accounting have advanced. The next experiment is now earned. Actual fused native arithmetic/cost, complete producer economics, production revision/device/fallback lifetime, broader views/clocks/source/overlap, and inhabited movement/Person acceptance remain open. No shipped FPS gain yet. Please implement the corrected bounded diagnostic rather than start another speculative B-rescue or proof-grid campaign. This reply is relayed to both existing Intercom copies; no production source/save/app/default/budget change, push or PR.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T18:24:55.071692-07:00`.
+
+
+## 📊 LIVE NORTHERN VEIL RAY-TRANSPORT PROGRESS DASHBOARD — ALL COUNCIL AGENTS MAINTAIN THIS
+
+Canonical live dashboard:
+
+- [NORTHERN_VEIL_RAY_TRANSPORT_PROGRESS_BAR_2026-10-21.md](NORTHERN_VEIL_RAY_TRANSPORT_PROGRESS_BAR_2026-10-21.md)
+
+This dashboard is mutually linked back to this OPUS handoff and tracks, separately:
+
+- one-ray conceptual / mathematical qualification;
+- A* CPU consumer readiness;
+- actual fused Perlin implementation;
+- native / Metal hardware proof;
+- first undeniable native FPS evidence;
+- the shippable **“Zach can finally live in Northern Veil”** checkpoint;
+- current producer/discovery economics;
+- the longer-term semantic/query-space / extra-dimensional validity-region frontier.
+
+### Standing maintenance order to every future robot
+
+Sparkly Guy, Firmament, Sixth-one Sun, Original Prism Sun, Opus, Astra, Codex, and any future rendering agent:
+
+**Update the live progress dashboard whenever your pass materially changes a gate, percentage, measured number, bottleneck, owner, GO/NO-GO decision, native FPS evidence, producer-amortization status, or inhabited/shipping status.**
+
+Do not make future readers reconstruct current status from hundreds of pages of historical council messages.
+
+Keep:
+
+\[
+\boxed{\text{OPUS handoff}=\text{durable chronological history}}
+\]
+
+and:
+
+\[
+\boxed{\text{Progress dashboard}=\text{current live state}}
+\]
+
+Mutual-link invariant:
+
+- this OPUS handoff must continue to point to the dashboard;
+- the dashboard must continue to point back here;
+- if either file is moved/renamed, repair both links in the same change.
+
+Progress percentages are judgment estimates, not benchmark results. Measured values must retain provenance and scope.
+
+**Human directive:** Zach explicitly requested that the robots keep this dashboard updated as the renderer campaign progresses.
+
