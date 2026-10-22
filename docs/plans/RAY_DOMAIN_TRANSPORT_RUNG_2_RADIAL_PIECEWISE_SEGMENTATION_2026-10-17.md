@@ -3016,3 +3016,34 @@ Zach commissioned the next pass responding to Original Prism Sun's directives §
 **Executed by:** Sparkly Guy (Gemini 3.8 Flash High)  
 **Reviewed by:** Aetherion / The Firmament (Gemini 4 Argon) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · `2026-10-21T17:15:00-07:00`.  
 **Responding to / Building on:** Original Prism Sun (GPT-5.6 Sol), Sixth-one Sun (Codex / GPT-6.1 Sol), Claude Opus 5.5, Astra. Human origin: Zachary Zhang.
+
+
+## §6bx — Admission Semantics and Metric Repair Audit (2026-10-21)
+
+Zach commissioned the next pass responding to Original Prism Sun's review `PRISM_REVIEW_6BW_ADMISSION_AND_METRIC_REPAIR_2026-10-21.md`. [Complete audit and data](../audits/NORTHERN_VEIL_ADMISSION_AND_METRIC_REPAIR_2026-10-21.md) execute the 6 required repairs across all 2,304 native rays:
+
+1. **Metric Disentanglement:**
+   - **Per-Channel Pooled:** Native target bar: RGB Mean $5.223 \times 10^{-5}$, Max $1.958 \times 10^{-3}$, T Mean $1.335 \times 10^{-4}$.
+   - **Consumer A (Control, Frozen §6bv GL2):** RGB Mean **$6.927 \times 10^{-6}$** (**7.54x tighter**), RGB Max **$9.153 \times 10^{-5}$** (**21.39x tighter**), T Mean **$2.021 \times 10^{-5}$** (**6.61x tighter**).
+   - **Consumer B (OntoMath Moments + Sound Floor):** RGB Mean **$6.762 \times 10^{-6}$** (**7.72x tighter**), RGB Max **$9.284 \times 10^{-5}$** (**21.09x tighter**), T Mean **$1.984 \times 10^{-5}$** (**6.73x tighter**).
+   - **Consumer C:** RGB Mean $2.379 \times 10^{-5}$, Max $3.601 \times 10^{-4}$. Decisively eliminated from native lowering contention.
+2. **Per-Ray Native Regressions (from `RAYS.json` columns 7..10):**
+   - On **79.90% of rays (1,841 rays)**, Consumer B beats current native marcher. On the 20.10% where B has higher error, the maximum delta is only $7.01 \times 10^{-5}$ (0.00007).
+   - Maximum difference between B and A across the entire 2,304-ray frame is only $5.59 \times 10^{-5}$.
+3. **Authored Noise Clamp:**
+   - Evaluated $\operatorname{std::clamp}(0.7 + 0.3 N, 0.0, 1.0)$ on all 28,299 samples.
+   - 100.0% of samples lie strictly in the linear interior $(0.40, 0.96)$ (0 clamp saturation).
+4. **Sound Interval Floor Proof:**
+   - $\alpha_m \cdot r_{\mathrm{env}}.\mathrm{lo} \cdot 0.40 > 10^{-6}$ proves floor inactive throughout on **9,433 subpanels (39.67%)**.
+   - Floor active proved on 380 subpanels (1.60%); unresolved/crossing on 13,963 subpanels (58.73%), which cleanly fall back to Consumer A.
+5. **OntoMath Moment Evaluation:**
+   - $M_0$ evaluated via `ev->integral()` (2.58 exact calls/ray, 1.52 hybrid calls/ray).
+   - $M_1$ evaluated via `ev->hybridIntegral()` with `LineSampledFactor uFactor` (4.09 calls/ray, 100% success, 0 refusals).
+   - Runtime envelope point calls on admitted subpanels: **EXACTLY 0.0**.
+6. **Native Gate Decision:**
+   - Both Consumer A and Consumer B achieve **7.5x tighter mean error and 21x tighter max error** than native.
+   - However, Consumer B requires complex symbolic moment branching and runtime range proofs on GPU.
+   - **Consumer A (Frozen §6bv GL2 with Intra-Subpanel Same-Cell Dual-Noise Fusion)** is recommended as the first bounded Metal candidate: it directly evaluates $E(s_\pm) w(s_\pm)$, cuts Perlin setups to **12.15 setups/ray** via the verified 90.78% same-cell sharing, and requires **zero persistent cross-piece cache registers**.
+
+**Executed by:** Sparkly Guy (Gemini 3.8 Flash High) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · `2026-10-21T17:35:00-07:00`.  
+**Post-§6bx Independent Review:** Pending Aetherion / The Firmament (Gemini 4 Argon). Human origin: Zachary Zhang.
