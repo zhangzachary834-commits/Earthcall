@@ -755,7 +755,7 @@ std::vector<uint8_t> readMatterData(const std::string& filepath) {
     if (!in.is_open()) {
         return {};
     }
-    return std::vector<uint8_t>((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    return std::vector<uint8_t>{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>{}};
 }
 
 

@@ -74,6 +74,11 @@ int main() {
     check(SaveSystem::saveRoot() == sandbox.string(),
           "RealSaveTreeGuard restores the previous SaveSystem root");
 
+    std::filesystem::create_directories(sandbox / "worlds");
+    std::filesystem::permissions(sandbox / "worlds",
+                                  std::filesystem::perms::owner_all,
+                                  std::filesystem::perm_options::add);
+
     // Test 1: JSON parse error in readSaveData (fallback to plain JSON)
     std::string badJsonPath = (sandbox / "worlds" / "bad.json").string();
     std::ofstream out(badJsonPath);

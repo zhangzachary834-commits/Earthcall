@@ -364,7 +364,9 @@ private:
             for (auto it = std::filesystem::directory_iterator(realSaves, ec);
                  it != std::filesystem::directory_iterator(); it.increment(ec)) {
                 if (ec) break;
-                initialEntries.insert(it->path().filename().string());
+                const std::string name = it->path().filename().string();
+                if (name == "worlds") continue; // worlds are read-only input manifests; never mutated by loadWorld/persistZones
+                initialEntries.insert(name);
             }
             if (ec) throw std::filesystem::filesystem_error("save-tree root enumeration failed", ec);
         }
