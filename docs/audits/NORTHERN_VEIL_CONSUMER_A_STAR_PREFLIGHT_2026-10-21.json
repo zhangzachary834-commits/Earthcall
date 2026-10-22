@@ -93,7 +93,17 @@
   },
   "discovery_work": {
     "budget_exhausted_calls": 0,
+    "definite_rejected_hi_le_zero": 0,
+    "definite_rejected_target_sign": 32004,
+    "definite_retained": 7046,
+    "definite_undefined_retained": 0,
+    "evaluator_not_ok_skips": 0,
+    "indefinite_rejected_hi_le_zero": 0,
+    "indefinite_rejected_target_sign": 22040,
+    "indefinite_retained": 10611,
     "indefinite_sliver_pct": 45.537719139202444,
+    "indefinite_undefined_retained": 0,
+    "media_box_miss_skips": 496,
     "pieces_per_ray": 7.663628472222222,
     "proposed_roots_per_ray": 3.837673611111111,
     "range_evaluations_per_ray": 902.7894965277778,
@@ -168,11 +178,11 @@
     }
   },
   "timing_ms": {
-    "discovery_total": 6252.288925999991,
-    "ms_per_ray_discovery": 2.713667068576385,
-    "ms_per_ray_quadrature": 0.38943269704861105,
-    "ms_per_ray_total": 3.103749421440972,
-    "quadrature_total": 897.2529339999999,
-    "total": 7151.038667
+    "discovery_total": 6185.962036000004,
+    "ms_per_ray_discovery": 2.6848793559027797,
+    "ms_per_ray_quadrature": 0.38554862673611145,
+    "ms_per_ray_total": 3.0710494791666667,
+    "quadrature_total": 888.3040360000008,
+    "total": 7075.698
   }
 }
