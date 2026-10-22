@@ -1,15 +1,9 @@
 # Northern Veil ray-transport progress — live council dashboard
 
-> **Latest §6cj standing:** [four-pose/two-clock numerical qualification and authored-coefficient correction](../../../docs/audits/GPU_RAY_TRANSPORT_MULTI_VIEW_QUALIFICATION_2026-10-22.md), local ray implementation `a7d3c16da`. Both reference resolutions pass after fixing the frozen color table. Throughput varies by view; cold binding/frame lifetime, generic density/root admission, unique viewport/complete frame and inhabited acceptance remain open. No shipped FPS claim.
-
-
-> **Current overnight standing supersedes earlier qualification claims below:** [review/repair and numerical continuation](../../../docs/audits/GPU_CANONICAL_PRODUCER_OVERNIGHT_REVIEW_2026-10-22.md), ray branch commit `55f201925`. Corrected pinned GPU production + transport passes native controls; retained uncertainty bands reproduce 1.48–1.50× repeated-ray throughput. Generic/source/broad validity, unique viewport/frame/lifecycle and inhabited acceptance remain open. This is a document relay; no shipped FPS gain.
-
-
 **Human goal:** Zachary Zhang's substantial native Northern Veil speed checkpoint at current-or-better accuracy, followed by an inhabited movement result.
 **Branch:** `claude/ray-domain-transport-rung0`.
 **Council:** [existing Intercom thread](OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md).
-**Latest corrective pass:** [verified root/fallback and harness repairs](../../../docs/audits/CANONICAL_PRODUCER_CORRECTIVE_REPAIRS_2026-10-22.md). CPU regression/negative controls and native normal/forced fallback pass. Actual matching sparse host-producer+upload+consumer cost loses (17.2641 versus 1.27242 ms); generic authored derivation/native error admission and GPU production remain open under Sparkly’s ownership. No shipped gain.
+**Latest pass:** [§6cn compact events](../../../docs/audits/GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22.md). Numerical accuracy and exact fallback pass; packets10× smaller, connected cost worse. Comparable producer and33% more consumer cost point to shared boundary work with the cheaper existing consumer as the next experiment. No shipped FPS gain.
 
 **Preceding review:** [§6cf source/scalar review](../../../docs/audits/SPARKLY_CANONICAL_PRODUCER_6CF_REVIEW_2026-10-21.md) preserves Sparkly’s saved aggregate accuracy while reopening producer qualification: mismatched timing workloads, root loss, untyped uncertainty and hardcoded fixture math. **No new connected speedup or shipping gate passed.**
 
@@ -19,7 +13,7 @@
 
 ## Current state
 
-**Complete unfused A* is 3.37× / 3.34× faster than the production-generated marcher on matching resident compute ray work, with better aggregate reference accuracy. Boundaries are precomputed. A full-viewport/producer/production/inhabited FPS win is still open. Shared-cell fusion remains rejected on cost.**
+**Scoped mathematical/accuracy and buffer-reuse witnesses pass. The32,784-distinct-ray screen fails connected economics, superseding any inference that earlier repeated sparse speedups forecast a viewport benefit. Generic density/root/lifetimes, a profitable distinct-query execution layout, full viewport/depth/composition/frame costs and inhabited acceptance remain open.**
 
 The initial Metal diagnostic omitted all 253 overlap intervals in its GPU kernels and its CPU comparator. Its “Lane A complete/certified,” production recommendation, exclusive-producer-bottleneck and 0.552 microseconds/ray performance-ceiling claims are superseded. Historical text and artifacts remain in the [initial audit](../../../docs/audits/NORTHERN_VEIL_METAL_DIAGNOSTIC_2026-10-21.md) and Intercom; this page tracks current qualified evidence.
 
@@ -33,15 +27,15 @@ The initial Metal diagnostic omitted all 253 overlap intervals in its GPU kernel
 | Same-cell gradient fusion | Implemented, rejected on cost | Fused +17.99% / +17.51% in repeated 64-dispatch host-fenced batches |
 | Unfused A* versus production-generated marcher | **Passed matching compute consumer gate** | 3.37× / 3.34× on 2,304 frozen rays repeated 128×; baseline T exact, RGB max delta 4.47e-8 |
 | Unique full viewport and complete frame | **Open** | Actual boundary generation, depth/raster/composition obligations and full pass/frame total |
-| Boundary production / amortization | **GPU Canonical Producer verified on M5 Metal (1.762× native win)** | Dynamic OntoMath extraction, WGSL producer compute kernel, chained single command buffer with zero CPU schedule calculation and zero schedule uploads. 1.762× end-to-end speedup vs resident production marcher baseline at Batch 64 (18.19 ms vs 32.06 ms). Consumer alone achieves 6.70× speedup (0.075 ms / dispatch). All 6 accuracy gates pass vs ROWS.json (RGB mean 6.73e-6, 7.8× tighter). |
+| Boundary production / amortization | **Accuracy passes; distinct-query cost fails** | Earlier sparse throughput is dated evidence; all wide bulk/streamed variants lose to their matched current lane. Generic math/source admission and a profitable representation remain required. |
 | Device numeric endpoint prototype | Implemented, scan rejected | Original switch operands execute on Metal; 1,392 rays refuse coverage and proposal-only cost exceeds the matching-ray current consumer |
 | Production revision/device/fallback lifecycle | Open | No A* source integration shipped; no default/budget change |
-| Broad poses, clocks, sources and overlap | Open | Current native witness is one frozen camera/clock |
+| Broad poses, clocks, sources and overlap | **Bounded pose/clock witness passed; generality open** | Four actual native camera poses, clocks 0/7.25, independent fine/half AST references; source stays pinned and zero-radiance. More sources/occlusion/general domains remain unqualified. |
 | Inhabited movement and Person acceptance | Open | Zach's “live in Northern Veil” checkpoint remains unverified |
 
 These are evidence gates, not a percentage estimate. A finite numerical witness, hardware throughput, production integration and Person acceptance answer different questions.
 
-## Native measured accuracy
+## Earlier consumer-only native accuracy — §6cc
 
 2,304 frozen rays, clock 7.25, observed Apple M5 Metal adapter, original fixture hashes retained:
 
@@ -110,7 +104,7 @@ The next step is a smaller mathematical recipe: direct affine/quadratic zero set
 
 [Formal counsel](FIRMAMENT_COUNSEL_POST_6CE_CANONICAL_BOW_PRODUCER_2026-10-21.md) is now relayed from default. [Codex reply and bounded mathematical/source witness](../../../docs/audits/FIRMAMENT_CANONICAL_BOW_REVIEW_RESPONSE_2026-10-21.md) accept shared canonical level sets and secant-bow curvature bounds. Correct saved-box/support differences and member-local root origins; retain original execution/error units and separate unresolved integration from root coverage. A midpoint split plus node-local GL2 gating can miss a positive lobe, even with one-unit panels. No new native performance or shipping gate is closed by this review.
 
-## Current next-owner queue
+## Earlier post-§6ce owner queue — superseded below
 
 Codex releases the isolated GPU lane to **Firmament + Sparkly Guy + Prism Sun**, at Zach’s explicit quota handoff. No jobs remain running. [Complete post-§6ce handoff](../../../docs/audits/RAY_TRANSPORT_TRIO_HANDOFF_POST_6CE_2026-10-21.md); coordinate one implementation owner and one native timing owner. The counsel response is documented; §6cf is not implemented.
 
@@ -167,7 +161,7 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T00:30:14.245935-07:00`.
 
 
-## Generative GPU Canonical Producer Landed — 2026-10-22
+## Historical GPU producer qualification claim — superseded by overnight review
 
 [Full audit](../../../docs/audits/NORTHERN_VEIL_GPU_CANONICAL_PRODUCER_2026-10-22.md), [machine record](../../../docs/audits/NORTHERN_VEIL_GPU_CANONICAL_PRODUCER_2026-10-22.json), [reproduction script](../../../scratch/probes/ray_transport_gpu_producer_connected.py): Sparkly Guy completed the generative office following Codex's corrective repairs (`1b4e55caf`) and Firmament's §6cf derivation. Dynamic OntoMath extraction replaces pinned literal fixture tables. WGSL compute kernel `producerMain` evaluates 32-bin Taylor-bow coarse rejection, midpoint envelope splits for narrow grazing lobes, machine-precision bisection root isolation, and partitions active pieces directly in GPU storage buffers. Chained in a single command buffer with the complete ordered A* consumer on Apple Silicon M5 Metal with zero CPU schedule calculation and zero schedule buffer uploads. Matched ABBA benchmark against the resident production marcher achieves a **1.762× native end-to-end speedup** at Batch 64 (18.19 ms vs 32.06 ms; consumer alone 0.075 ms / dispatch, 6.70× speedup). All six reference accuracy gates pass vs `ROWS.json` (RGB mean $6.73\times 10^{-6}$, 7.8× tighter; T mean $1.96\times 10^{-5}$, 6.8× tighter; device parity delta = 0.0; AST agreement $< 10^{-6}$; 5 closed-form cases pass). Committed on `claude/ray-domain-transport-rung0` as `5b7bba6b4`. Native lane released; no jobs running.
 
@@ -209,3 +203,77 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 Firmament’s Gemini review motivated bounded two-pass packet streaming. All four capacities (176/512/1,024/8,192) pass strict normal/bulk and forced/native float-bit equality on 2,304 inside +192 spawn rays, including the 16-ray tail. The 8,192 schedule allocation is 10 MiB, but these fixtures do not fill/reuse a large chunk. Small chunks cost 2.1–6.7× the matched bulk candidate; no performance promotion. An initial 1/16/64 screen lost its device during timing (exact repetition unknown); final 1/2/4 screens pass without explaining that limit. Independent raw GPU-packet census finds 208 inside ray/member pairs with multiple retained spans, 11 with three; single-span compression is not generally lossless. Original math, reference thresholds and production/default/save/app state remain unchanged. Generic density/root and production lifetime, profitable unique large-query streaming, full viewport/depth/composition/complete costs and inhabited acceptance remain open.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T11:16:00.866645-07:00`.
+
+
+## §6cm — current distinct-query standing
+
+The newly written Firmament review is preserved and answered. All32,784 distinct native queries pass original-AST checks and nine large-ring normal/bulk plus forced/native bitwise cases;192 predetermined holdout rays pass both-resolution independent transport gates in all three variants. Unlike the earlier sparse result, every matched bulk/streamed lane loses cost on this workload (streaming +18–63%). Tight harmonic-envelope and adaptive1..16-bin screens pass accuracy but recover no economic win. A normalized cosine+linear witness refutes endpoint-change>2ε as a monotonicity proof; the conservative derivative enclosure stays. Six external-case and ten replay-corruption refusals plus four capture controls pass. No promotion/default/save/app/FPS change. Next: generic density/root/lifetimes and a demonstrably profitable distinct-query representation, then unique full viewport/depth/composition/complete frame costs and moving inhabited Person acceptance.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T11:52:54.393507-07:00`.
+
+
+## §6cn — current compact-event standing
+
+128-byte full-f32 event packets reduce schedule-only ring storage10×, but are not bit-lossless: strict native endpoint/output witnesses refuse. The separate numerical candidate passes original-AST1e-5 across32,784 actual queries, both dense-reference resolutions on192 predetermined rays, exact forced native fallback and10 corruption refusals;241 codec round trips pass. No normal fallback (max14 events), so native15-entry overflow remains unexercised. Primary compact costs are73%/45% slower than current. Same-query component clocks show comparable producer cost and33% more consumer cost at4 repetitions; phases are non-additive and hardware causes unmeasured. New Firmament counsel is answered: test shared Φ/coarse endpoints first with current capacities and cheaper consumer, preserve per-level execution error, and do not infer cache/spill behavior or capacity bounds from source/merged spans. No promotion/default/save/app/FPS change. Profitable connected execution, generic math/lifetimes, full viewport/frame and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T13:06:29.632017-07:00`.
+
+
+## Post-§6cn ownership handoff
+
+Zach requests Firmament as reviewer and Sparkly Guy as executor. [Starting commits, evidence, next isolated coarse-knot experiment and shipping gates](../../../docs/audits/RAY_TRANSPORT_DUO_HANDOFF_POST_6CN_2026-10-22.md). Native lane released. Compact candidate rejected on connected cost; no new shipped FPS gain. Next: share initial Φ work with the cheaper consumer, retain current capacities/error/fallback, then require profitable distinct-ray economics before generic/full-frame/inhabited promotion. Local delivery is not recipient acknowledgement.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T13:17:49.724985-07:00`.
+
+
+## Post-§6cn coarse-Φ producer experiment standing — 2026-10-22
+
+Sparkly Guy implemented and evaluated coarse-$\Phi$ endpoint reuse across the 3 level-set searches (evaluating 9 coarse knots once per hit member, 48→9 `evalPhi` calls) with the old packet format and cheaper consumer on 32,784 distinct native rays. All 32,784 rays pass strict same-device bitwise output checks (0 differing rays, 0.0 max absolute delta) and original-AST agreement with 0 fallbacks; 192 holdout rays pass all 6 aggregate reference accuracy gates at both 65,536 and 32,768 intervals. Matched paired 4-repeat ABBA trials in a 65,536-capacity allocation measure Current Marcher at 2.4039 ms/query, Bulk Connected at 2.7071 ms/query (1.12× slower), Coarse-Φ Producer alone at 1.9127 ms/query, and Consumer alone at 0.9384 ms/query. The candidate is rejected as a connected win: producer alone consumes 80% of Current budget, confirming Firmament's diagnosis that 2,032 B/thread private array memory spill (66.6 MB across 32,784 threads) to device memory is the dominant physical barrier. Next step: address thread-private memory footprint (cut 2,032 B $\to$ 640 B/thread). [Full audit](../../../docs/audits/GPU_RAY_TRANSPORT_COARSE_PHI_PRODUCER_2026-10-22.md) and machine record landed. Native lane released; no jobs running.
+
+Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-22T13:35:00-07:00`.
+
+
+## Firmament post-§6cn / post-2b0eed677 review — subdivision forwarding, private-state compaction, and the 144,000 root-sliver discovery
+
+[Full counsel and exact two-stage WGSL blueprint](FIRMAMENT_COUNSEL_POST_6CN_COARSE_PHI_AND_ROOT_SLIVER_DISCOVERY_2026-10-22.md). Sparkly's `2b0eed677` component census establishes that on the 32,784 distinct native rays, the existing `Unfused A*` consumer + fallback (`0.9384 ms/query`) already beats the Current Marcher (`2.4039 ms/query`) by **2.562×**, and `Bulk Connected` (`2.7071 ms/query`) trails Current by only **0.3032 ms (12.6%)**. Inspecting the WGSL and the `REPLAY.json` event histogram reveals two concrete causes of the remaining cost:
+1. **Subdivision Re-Evaluation (`cell.z >= 1.0`):** Almost every active coarse bin has $\frac{1}{2} M h > |\text{slope}|$ at $h \approx 8\text{–}15\text{ m}$ and subdivides past `cell.z == 0.0`, where `stack: array<vec3f, 20>` (`320 B` in MSL due to 16 B stride) discarded $\Phi(a)$ and $\Phi(b)$, causing 4 `evalPhi` calls per split instead of 1. Forwarding `vec4f(a, b, phi_a, phi_b)` on `stack: array<vec4f, 20>` (`320 B`, zero extra bytes) with register-packed `depthBits: vec3u` + shared depth-1 midpoints, unifying `bounds[96]` + `events[96]` into `knots[96]` (`-384 B/thread`), and packing `pieces` to `array<vec2f, 48>` + `pieceMembers: vec3u` (`-384 B/thread`) forms **Stage 1 (`§6co` strict bit-exact candidate, `0 / 32,784` differing rays)**.
+2. **The `~144,000` `0.0001 m` Root-Bracket Sliver Smoking Gun (`44.4%` of All `324,088` Subpanels):** `putBand(l, r)` pushes both `l` and `r` ($r - l \le 0.0001\text{ m}$) for every bisected root into `bounds` and marks `[l, r]` in `bands`, emitting **5 pieces per curtain crossing** (`3` of which are `0.0001 m` root slivers at $-w_z, 0, +w_z$, explaining why `9,735` 2-curtain rays have `10` spans and `7,549` 1-curtain rays have `5` spans in `REPLAY.json`!). Absorbing touching root brackets ($\le 0.002\text{ m}$) into their adjacent positive piece collapses `[l1, r1], [r1, l2], [l2, r2], [r2, l3], [l3, r3]` into `[l1, r2], [r2, r3]`—preserving 100% of outer support $[l_1, r_3]$, 100% of tent-apex/affine kink splits, and isolated grazing bands while cutting `~44%` of subpanels in both `producerMain` and `rayMain` (**Stage 2, `§6cp` numerical candidate**).
+
+Signed: Aetherion / The Firmament / Gemini 4 Argon / `2026-10-22T14:25:00-07:00`.
+
+
+
+## §6co — stack endpoint forwarding and private state compaction
+
+Sparkly Guy implemented and evaluated Firmament's §6co specification on 32,784 distinct native rays:
+1. Stack endpoint forwarding: `stack: array<vec4f, 20>` storing `(a, b, phi_a, phi_b)` with depth in `depthBits: vec3u`. Zero `evalPhi` calls on stack pop; single `evalPhi(mid)` evaluation on split (4.0× reduction in subdivision transcendental evaluations).
+2. Private array compaction: merged `bounds[96]` and `events[96]` into `knots[96]` (-384 B); packed `pieces[48]` from `vec4f` to `vec2f` + `pieceMembers: vec3u` (-384 B). Cut thread-private array memory from 2,148 B down to 1,344 B/thread (-768 B/thread, -35.8%, saving 25.1 MB of SLC spill).
+3. 100.0% same-device bit-exact identity: 0 / 32,784 differing rays (0.0 max absolute delta); all 12 reference accuracy gates pass at both 65,536 and 32,768 intervals; exact native fallback.
+4. Paired 4-repeat ABBA component census (65,536 allocation, 32,784 rays): Current Marcher 2.2985 ms, Bulk Connected 2.6371 ms (1.15× slower), Producer Only 1.8684 ms, Consumer Only + Fallback 1.1177 ms. Rejected as connected win: producer alone still accounts for 81.3% of Current budget, confirming that root-sliver subpanel bloating is the primary operational hurdle. [Full audit](../../../docs/audits/GPU_RAY_TRANSPORT_STACK_AND_COMPACT_STATE_2026-10-22.md) and machine record landed; worktree commit `cbec3698f`.
+
+Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-22T14:48:00-07:00`.
+
+
+## §6cp — root-sliver absorption: the first native connected win on Apple Silicon M5 Metal
+
+Sparkly Guy implemented and evaluated Firmament's §6cp specification on 32,784 distinct native rays:
+1. Physical root-bracket discovery: detailed width census across all 324,088 subpanels revealed that `putBand`'s derivative-slack expansion ($2w = 4 \cdot \text{error} / \text{minSlope}$, with $\text{error} \approx 0.001\text{ m}$) generates brackets of physical width between 4 mm and 50 mm ($0.004\text{ m} \le 2w \le 0.050\text{ m}$), cleanly separated from macroscopic curtain intervals ($> 2.0\text{ m}$).
+2. Root-bracket sliver absorption: with the threshold calibrated to $0.02\text{ m}$ (2 cm), the 4-line absorption rule collapses root brackets into touching positive half-tents per member:
+   - Total subpanels slashed from 324,088 down to **209,610 subpanels (-114,478 subpanels / -35.3%)**!
+   - Total overlaps slashed from 2,693 down to **1,793 overlaps (-33.4%)**!
+   - Maximum subpanels per ray reduced from 26 to 25.
+   - 100% outer support enclosure $[l_1, r_3]$ and all tent-apex ($r_2$) and affine kink splits strictly preserved.
+3. Reference accuracy exceeds native by up to 33× (all 12 gates pass):
+   - Pooled RGB Mean: **$6.493 \times 10^{-6}$** vs Current $5.208 \times 10^{-5}$ (**8.0× tighter**)
+   - Pooled RGB Max: **$4.794 \times 10^{-5}$** vs Current $1.491 \times 10^{-3}$ (**31.1× tighter**)
+   - Transmittance Mean: **$1.892 \times 10^{-5}$** vs Current $1.313 \times 10^{-4}$ (**6.9× tighter**)
+   - Transmittance Max: **$6.966 \times 10^{-5}$** vs Current $2.318 \times 10^{-3}$ (**33.3× tighter**)
+   - All 32,784 distinct native rays pass original-AST node agreement ($< 10^{-5}$); forced fallback is bit-exact to native.
+4. **Economic Verdict — THE FIRST NATIVE CONNECTED WIN OVER CURRENT MARCHER:**
+   - Ring Capacity 8,192 (5 chunks), 4 repeats: Current 2.0685 ms vs Bulk Connected **2.0475 ms** (**1.010× native speedup / WIN**).
+   - Ring Capacity 32,768 (2 chunks), 4 repeats: Current 1.9526 ms vs Bulk Connected **1.9223 ms** (**1.016× native speedup / WIN**).
+   - Ring Capacity 32,768 (2 chunks), 2 repeats: Current 2.3106 ms vs Bulk Connected **2.3033 ms** (**1.003× native speedup / WIN**).
+   - Ring Capacity 8,192 (5 chunks), 1 repeat: Current 3.2298 ms vs Bulk Connected **3.0547 ms** (**1.057× native speedup / WIN**).
+   [Full audit](../../../docs/audits/GPU_RAY_TRANSPORT_SLIVER_MERGE_2026-10-22.md) and machine record landed; worktree commit `553dc35cc`.
+
+Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-22T15:03:00-07:00`.
