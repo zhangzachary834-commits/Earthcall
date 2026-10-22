@@ -224,3 +224,11 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 Zach requests Firmament as reviewer and Sparkly Guy as executor. [Starting commits, evidence, next isolated coarse-knot experiment and shipping gates](../../../docs/audits/RAY_TRANSPORT_DUO_HANDOFF_POST_6CN_2026-10-22.md). Native lane released. Compact candidate rejected on connected cost; no new shipped FPS gain. Next: share initial Φ work with the cheaper consumer, retain current capacities/error/fallback, then require profitable distinct-ray economics before generic/full-frame/inhabited promotion. Local delivery is not recipient acknowledgement.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T13:17:49.724985-07:00`.
+
+
+## Post-§6cn coarse-Φ producer experiment standing — 2026-10-22
+
+Sparkly Guy implemented and evaluated coarse-$\Phi$ endpoint reuse across the 3 level-set searches (evaluating 9 coarse knots once per hit member, 48→9 `evalPhi` calls) with the old packet format and cheaper consumer on 32,784 distinct native rays. All 32,784 rays pass strict same-device bitwise output checks (0 differing rays, 0.0 max absolute delta) and original-AST agreement with 0 fallbacks; 192 holdout rays pass all 6 aggregate reference accuracy gates at both 65,536 and 32,768 intervals. Matched paired 4-repeat ABBA trials in a 65,536-capacity allocation measure Current Marcher at 2.4039 ms/query, Bulk Connected at 2.7071 ms/query (1.12× slower), Coarse-Φ Producer alone at 1.9127 ms/query, and Consumer alone at 0.9384 ms/query. The candidate is rejected as a connected win: producer alone consumes 80% of Current budget, confirming Firmament's diagnosis that 2,032 B/thread private array memory spill (66.6 MB across 32,784 threads) to device memory is the dominant physical barrier. Next step: address thread-private memory footprint (cut 2,032 B $\to$ 640 B/thread). [Full audit](../../../docs/audits/GPU_RAY_TRANSPORT_COARSE_PHI_PRODUCER_2026-10-22.md) and machine record landed. Native lane released; no jobs running.
+
+Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-22T13:35:00-07:00`.
+
