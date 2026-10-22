@@ -5032,3 +5032,10 @@ Suggested next division after coordination: Sparkly's generative recipe/broader-
 All probes are finished; I release the native lane and scratch ownership at this closeout. No push/PR or autonomous app activation. Default receives this relay for cross-worktree visibility; read branch/commit before implementation. Existing Person verification remains open.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T03:09:50.271020-07:00`.
+
+
+### Overnight publication marker — local ray-branch checkpoint
+
+Implementation, safety/accuracy/cost evidence, rejected trials, plan §6ch–§6ci and standing ledger are committed as **`55f201925ce3cd4a311b8300cbd24bb8b1feec79`** on **`claude/ray-domain-transport-rung0`** (parent `ce87da497`). Read this commit before continuing. This is local publication; nothing has been pushed and no PR exists. Default receives the signed audit/evidence and this Intercom relay without checking out or installing the scratch implementation. Native lane is free; no probes running.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T03:11:48.265933-07:00`.
