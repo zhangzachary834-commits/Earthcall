@@ -59,7 +59,13 @@ int main() {
         {"zones", nlohmann::json::array({{{"identifier", "Zone1"}, {"owner", "OldName"}}})}
     };
     std::string ecformPath = (env.tempDir / "worlds" / "world1.ecform").string();
-    SaveSystem::writeSaveData(worldData, "world1", SaveSystem::SaveType::WORLD);
+    {
+        nlohmann::json wrapper = nlohmann::json::object();
+        wrapper["MigrationRoot"] = worldData.dump(-1);
+        const auto bytes = nlohmann::json::to_msgpack(wrapper);
+        std::ofstream ecOut(ecformPath, std::ios::binary);
+        ecOut.write(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+    }
 
     assert(std::filesystem::exists(ecformPath));
     assert(isBinaryMsgpack(ecformPath));
