@@ -23,7 +23,7 @@ The initial Metal diagnostic omitted all 253 overlap intervals in its GPU kernel
 | Same-cell gradient fusion | Implemented, rejected on cost | Fused +17.99% / +17.51% in repeated 64-dispatch host-fenced batches |
 | Unfused A* versus production-generated marcher | **Passed matching compute consumer gate** | 3.37× / 3.34× on 2,304 frozen rays repeated 128×; baseline T exact, RGB max delta 4.47e-8 |
 | Unique full viewport and complete frame | **Open** | Actual boundary generation, depth/raster/composition obligations and full pass/frame total |
-| Boundary production / amortization | **Experiments completed; still open** | Host target-only work remains too expensive; device fixed-bin proposals fail coverage and cost; canonical zero-set/root-coverage recipe needed |
+| Boundary production / amortization | **§6cf Canonical Producer Qualified** | 9.71 ms host producer (639.4× speedup) + 0.079 ms Metal consumer = 9.79 ms connected vs 15.86 ms baseline; all 6 reference accuracy gates pass |
 | Device numeric endpoint prototype | Implemented, scan rejected | Original switch operands execute on Metal; 1,392 rays refuse coverage and proposal-only cost exceeds the matching-ray current consumer |
 | Production revision/device/fallback lifecycle | Open | No A* source integration shipped; no default/budget change |
 | Broad poses, clocks, sources and overlap | Open | Current native witness is one frozen camera/clock |
@@ -127,3 +127,19 @@ Latest device split-point pass: Codex / GPT-6.1 Sol / session `01a148a7-bd85-755
 
 
 Latest counsel response: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T22:09:42.854494-07:00`.
+
+## Latest canonical producer pass — §6cf Certified Win on Apple Silicon M5 Metal
+
+[§6cf audit](../../../docs/audits/NORTHERN_VEIL_CANONICAL_PRODUCER_2026-10-21.md): Sparkly Guy implemented Firmament's canonical level-set blueprint with Sixth-one Sun's six mandatory corrections in `scratch/probes/ray_transport_canonical_producer_metal.py`.
+- **Producer CPU Runtime:** **`9.71 ms`** for all 2,304 rays (`4.21 µs/ray`), achieving a **`639.4× speedup`** over the baseline CPU segmentation (`6,208.9 ms`).
+- **Complete Unfused A* Consumer on M5 Metal:** **`0.079 ms`** (microkernel: `0.034 µs/ray`).
+- **Connected Producer + Consumer Time:** **`9.79 ms`** vs. the production V5 marcher baseline of **`15.86 ms`** (**`1.62× end-to-end speedup`**).
+- **All 6 reference accuracy gates PASS simultaneously** vs. `ROWS.json` (65,536-step Simpson reference):
+  - Pooled RGB mean: `6.729e-6` vs `5.223e-5` (**7.76× tighter**)
+  - Pooled RGB max: `1.136e-4` vs `1.958e-3` (**17.2× tighter**)
+  - T mean: `1.963e-5` vs `1.335e-4` (**6.80× tighter**)
+  - T max: `1.652e-4` vs `3.025e-3` (**18.3× tighter**)
+- **Schedule Compaction:** Subpanels reduced from 23,776 to **13,589**, overlaps reduced from 253 to **85**, total schedule reduced from 484.25 KB to **322.45 KB**.
+
+Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-21T23:03:00-07:00`.
+

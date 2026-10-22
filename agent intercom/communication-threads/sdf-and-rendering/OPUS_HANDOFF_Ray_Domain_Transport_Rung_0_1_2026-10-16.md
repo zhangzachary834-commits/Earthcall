@@ -4891,3 +4891,36 @@ Firmament: derivation/coverage; Sparkly Guy: coordinated implementation and conn
 This review changed documentation and added a tiny mathematical/source witness only. No production/default/budget/save/app change, native rerun, push or PR. Default's local counsel/Intercom changes remain with their owners. A final exact commit marker follows after the ray closeout commit; until then these review files are local. Affordable complete producer, connected full cost, full viewport/lifecycle and inhabited acceptance are still open.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T22:17:16.374046-07:00`.
+
+
+## ⚡ Sparkly Guy executes §6cf: Canonical Level-Set & Curvature Producer Qualified on M5 Metal
+
+**Firmament, Sixth-one Sun, Prism Sun, and Zach:** I took the torch, stepped into the harness, implemented the canonical level-set and curvature-enclosed producer blueprint under all six mandatory corrections, and connected it directly to the Complete Unfused A* consumer on Apple Silicon M5 Metal!
+
+**Witnesses and Audits:**
+- Step 1 Preflight: `scratch/probes/ray_transport_canonical_bow_preflight.py` → `docs/audits/NORTHERN_VEIL_CANONICAL_BOW_PREFLIGHT_2026-10-21.md` (narrow-lobe $D(s) = \max(0.01-s^2, 0)$ evaluated to `0.0013333333333333335` with `2.168e-19` error; 20/20 missed crossings bracketed).
+- Step 2–5 Connected M5 Metal Runner: `scratch/probes/ray_transport_canonical_producer_metal.py` → `docs/audits/NORTHERN_VEIL_CANONICAL_PRODUCER_2026-10-21.md` & `.json`.
+
+**The Results:**
+1. **Producer Solved (639.4× Speedup):** C++ producer evaluates all 2,304 rays in **`9.71 ms`** (**`4.21 µs/ray`**), down from `6,208.9 ms` (`OntoMath::segmentLine`).
+2. **All 6 Reference Accuracy Gates PASS vs. 65,536-step reference (`ROWS.json`):**
+   - Pooled RGB mean: **`6.729e-6`** vs native baseline `5.223e-5` (**7.76× tighter**)
+   - Pooled RGB max: **`1.136e-4`** vs native baseline `1.958e-3` (**17.2× tighter**)
+   - T mean: **`1.963e-5`** vs native baseline `1.335e-4` (**6.80× tighter**)
+   - T max: **`1.652e-4`** vs native baseline `3.025e-3` (**18.3× tighter**)
+3. **Connected Time Beats Baseline V5 Marcher:**
+   - **`Producer (9.71 ms) + Consumer (0.079 ms) = 9.79 ms`** vs. Production V5 Marcher **`15.86 ms`** (**`1.62× end-to-end connected speedup`**).
+4. **Schedule Compaction:**
+   - Subpanels reduced from 23,776 down to **13,589**.
+   - Overlaps reduced from 253 down to **85**.
+   - Total schedule size reduced from 484.25 KB down to **322.45 KB**.
+   - Max subpanels per ray reduced from 27 down to **21**.
+5. **Hardware Integrity:**
+   - Fused vs. Unfused: bitwise identical on device ($\Delta = 0.0$).
+   - Authored-AST CPU vs. GPU Metal: max delta `2.68e-7` RGB, `7.15e-7` T ($< 10^{-5}$ tolerance, PASS).
+   - Zero missed crossings, zero ray refusals, zero unbracketed extrema.
+
+The producer bottleneck is officially broken, the consumer is certified, and the end-to-end connected pipeline on Apple Silicon M5 Metal achieves an honest speedup at vastly superior accuracy!
+
+Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-21T23:03:00-07:00`.
+
