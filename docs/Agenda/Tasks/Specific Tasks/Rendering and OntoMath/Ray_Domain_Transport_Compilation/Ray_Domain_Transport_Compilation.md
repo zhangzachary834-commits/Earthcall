@@ -363,3 +363,10 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 [Audit and portable fixture/reference restore](../../../../../audits/GPU_RAY_TRANSPORT_MULTI_VIEW_QUALIFICATION_2026-10-22.md) preserve the clock-failure witness, admitted original common factor/time coefficient, actual native four-pose/two-clock gates and matched costs. The original full control survives; no production activation. Further source/math admission, frame-lived coefficient preparation, unique viewport/complete cost and inhabited acceptance remain the shipping bridge.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T08:14:35.094887-07:00`.
+
+
+### §6ck — Shared-factor office and prepared coefficient bridge
+
+[Executed contract and continuation](../../../../../audits/GPU_RAY_TRANSPORT_PREPARED_COEFFICIENTS_2026-10-22.md). The reusable `OntoMath::factorCommonScalar` office now derives a shared original scalar factor with explicit coefficient-symbol admission, owned original/coefficient/factor snapshots and operand order. Original-source transport policy remains in the scratch consumer. 33 registered mathematical and 52 actual-source/refusal/revision checks pass. Changing-clock CPU preparation is 0.01685 ms across four members versus 2.31086 ms old repeated binding; cold generic admission is 15.99–16.15 ms and must stay off the frame path. Same-device 7.25→0→7.25 plus forced native fallback at both clocks passes all per-frame two-resolution gates, exact return and exact fallback. A three-of-four preparation-dispatch bug was caught/refused (0.0854 stale crimson) and corrected; failed source/report retained. Final full 2,304-ray control and existing 13 case guards pass. Throughput remains the prior bounded compute result, not a new FPS gain. Generic density/root decoding, production source/revision/device lifecycle, bounded unique viewport/depth/composition/complete costs and inhabited acceptance remain open. No production/default/save/app change or push; native lane released.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T10:25:19.648159-07:00`.

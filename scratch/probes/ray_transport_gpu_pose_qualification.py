@@ -54,7 +54,8 @@ def verify_case(root,path,zone_hash):
         if len(v)!=23 or len(w)!=10 or v[:2]!=w[:2] or not all(math.isfinite(x) for x in v+w) or v[5]>v[6]:raise ValueError('invalid native/reference row')
     return m,rays,rows
 
-def independent_check(report,raw,rays,refs):
+def reference_metrics(raw,rays,refs):
+    """Recompute both reference resolutions from raw outputs, without saved metrics."""
     if len(raw)!=len(refs):raise ValueError('raw count')
     def stats(v):
         v=sorted(v)
@@ -75,13 +76,17 @@ def independent_check(report,raw,rays,refs):
         gates={ch+'.'+metric:metrics['candidate'][ch][metric]<=metrics['current'][ch][metric]
             for ch in ['RGB_pooled_channels','T'] for metric in ['mean','p99','max']}
         result[name]={'metrics':metrics,'gates':gates,'all_six_pass':all(gates.values())}
+    result['reference_convergence']={'T_max_delta':max(abs(r[2]-r[6]) for r in refs),
+        'RGB_max_delta':max(abs(r[3+k]-r[7+k]) for r in refs for k in range(3))}
+    result['both_resolutions_pass']=result['finest']['all_six_pass'] and result['half']['all_six_pass']
+    return result
+
+def independent_check(report,raw,rays,refs):
+    result=reference_metrics(raw,rays,refs)
     for lane,key in [('current','native_baseline'),('candidate','unfused_A_star_on_device')]:
         for ch,values in result['finest']['metrics'][lane].items():
             for key2,value in values.items():
                 if not math.isclose(value,report['accuracy_vs_independent_reference'][key][ch][key2],rel_tol=1e-10,abs_tol=1e-15):raise ValueError('saved metric mismatch')
-    result['reference_convergence']={'T_max_delta':max(abs(r[2]-r[6]) for r in refs),
-        'RGB_max_delta':max(abs(r[3+k]-r[7+k]) for r in refs for k in range(3))}
-    result['both_resolutions_pass']=result['finest']['all_six_pass'] and result['half']['all_six_pass']
     return result
 
 def main():

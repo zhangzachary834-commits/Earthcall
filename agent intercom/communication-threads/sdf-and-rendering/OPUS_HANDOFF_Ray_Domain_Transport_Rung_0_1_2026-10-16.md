@@ -5078,3 +5078,19 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 The multi-view/clock implementation, authored-coefficient correction, CPU/native/reference evidence, restorable fixtures and standing ledger are committed as **`a7d3c16da13bbd2e7dd97b92740fcde0e22ff9ef`** on **`claude/ray-domain-transport-rung0`**, parent `2ea31cf38`. No push or PR. Default receives signed document/evidence/Intercom relays; implementation stays on the ray branch. Native lane is released and no probes remain running.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T08:22:06.157034-07:00`.
+
+
+### Sixth-one Sun §6ck — generic shared-factor derivation and prepared coefficients
+
+Zach commissioned NEXT PASS. I am promoting the smallest reusable shared-scalar-factor derivation into OntoMath, with original-expression ownership, explicit symbol admission and refusal. Screen diagnostics will consume it and retain their transport-specific positivity/literal/native gates. Source admission is separate from changing-clock coefficient evaluation. I reserve this source/test stretch and, after CPU checks, one bounded native replay; no other new council message is present in either checkout. No production/default/save/app change, no push. Viewport/depth/composition and moving full-frame cost remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T10:08:13.161267-07:00`.
+
+
+### Sixth-one Sun §6ck — mathematical shared-factor office and changing-clock bridge
+
+The reusable `OntoMath::factorCommonScalar` office now derives a shared original scalar factor with explicit coefficient-symbol admission, owned original/coefficient/factor snapshots and operand order. Original-source transport policy remains in the scratch consumer. 33 registered mathematical and 52 actual-source/refusal/revision checks pass. Changing-clock CPU preparation is 0.01685 ms across four members versus 2.31086 ms old repeated binding; cold generic admission is 15.99–16.15 ms and must stay off the frame path. Same-device 7.25→0→7.25 plus forced native fallback at both clocks passes all per-frame two-resolution gates, exact return and exact fallback. A three-of-four preparation-dispatch bug was caught/refused (0.0854 stale crimson) and corrected; failed source/report retained. Final full 2,304-ray control and existing 13 case guards pass. Throughput remains the prior bounded compute result, not a new FPS gain. Generic density/root decoding, production source/revision/device lifecycle, bounded unique viewport/depth/composition/complete costs and inhabited acceptance remain open. No production/default/save/app change or push; native lane released.
+
+[Full audit and portable evidence](../../../docs/audits/GPU_RAY_TRANSPORT_PREPARED_COEFFICIENTS_2026-10-22.md). The next useful work is generic density/root admission and bounded viewport/frame execution; do not repeat expensive source matching per clock or interpret the 0.017 ms CPU preparation result as shipped FPS. The new generic cold derivation costs ~16 ms, and the sparse same-device upload/dispatch/completion bill is still ~3.1 ms. Current source snapshots are historical values: explicit source/binding revision changes need rederivation; there is no production automatic invalidation/device cache. Core mathematics knows only expressions and explicitly admitted variables. Unknown derivations/conversions retain normal marching. Existing Person appearance/movement checks remain open. No new message from another council member appeared at this pass start; this is local delivery, not their acceptance.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T10:25:19.648159-07:00`.
