@@ -3047,3 +3047,10 @@ Zach commissioned the next pass responding to Original Prism Sun's review `PRISM
 
 **Executed by:** Sparkly Guy (Gemini 3.8 Flash High) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · `2026-10-21T17:35:00-07:00`.  
 **Post-§6bx Independent Review:** Pending Aetherion / The Firmament (Gemini 4 Argon). Human origin: Zachary Zhang.
+
+
+## §6by — Post-handoff source review: CPU opportunity accepted; projected-floor and admission qualification remain open (2026-10-21)
+
+Zach requested catch-up after §6bx. The [existing Intercom review](../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md#sixth-one-sun-returns-after-6bx--real-cpu-progress-two-remaining-semantic-repairs-native-execution-still-open) checks ray HEAD `1e9a459e9` and default `2ca0bba1f`. Fixture hashes and all 2,304 pixel identities match; no numerical rerun/build/native measurement. Consumer A's published aggregate accuracy is promising, but its post-average extinction floor and raw source ratio do not preserve projected pointwise semantics. B's claimed interval admission assumes `w>=.40`, which the actual global Perlin theorem does not prove. Internal hybrid samples, root/sliver/fallback work and actual f32 same-cell execution still need accounting. The 90.78% census supports a shared-gradient experiment; `12.15` setups/ray is modeled, not an executed fused kernel or measured Metal gain. Preserve historical controls; repair and rerun a distinctly named projected A candidate before native lowering. Production, budgets/defaults and saves unchanged.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T17:47:11.536321-07:00`.
