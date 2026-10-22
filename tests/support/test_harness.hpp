@@ -376,6 +376,7 @@ private:
         if (ec) throw std::filesystem::filesystem_error("save-tree root inspection failed", ec);
 
         for (const auto& entry : initialEntries) {
+            if (entry == "worlds") continue; // worlds are read-only input fixtures; backing them up copies >1GB unnecessarily
             std::filesystem::copy(
                 realSaves / entry, backup / entry,
                 std::filesystem::copy_options::recursive |

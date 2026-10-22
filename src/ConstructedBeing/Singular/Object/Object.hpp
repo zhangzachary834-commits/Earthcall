@@ -662,11 +662,8 @@ public:
             incoming.rpn.empty()) {
             incoming.rpn = geom::compileExpr(incoming.expr);
             if (incoming.rpn.empty()) {
-                static std::atomic<std::size_t> s_warnCount1{0};
-                if (s_warnCount1.fetch_add(1) < 5) {
-                    std::cerr << "[Object] setFieldShape: implicit expression could not be compiled; "
-                                 "keeping it as an Expr shell instead of lying with a primitive.\n";
-                }
+                std::cerr << "[Object] setFieldShape: implicit expression could not be compiled; "
+                             "keeping it as an Expr shell instead of lying with a primitive.\n";
             }
         }
 
@@ -696,11 +693,8 @@ public:
             // The evaluation extent is part of the authored Field too. A
             // rejected lossy replacement does not get to clip or expand the
             // surviving mathematical form as a side effect.
-            static std::atomic<std::size_t> s_warnCount2{0};
-            if (s_warnCount2.fetch_add(1) < 5) {
-                std::cerr << "[Object] setFieldShape: refused a lossy field shell over an "
-                             "already-complete authored SDF; semantic shape and extent remain authoritative.\n";
-            }
+            std::cerr << "[Object] setFieldShape: refused a lossy field shell over an "
+                         "already-complete authored SDF; semantic shape and extent remain authoritative.\n";
             return;
         }
 

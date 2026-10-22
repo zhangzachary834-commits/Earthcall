@@ -276,12 +276,9 @@ bool Formation::addRelation(const std::shared_ptr<Relation>& r) {
     if (!r->hasEndpoints()) {
         if (std::find(pendingRelations.begin(), pendingRelations.end(), r) == pendingRelations.end()) {
             pendingRelations.push_back(r);
-            static std::atomic<std::size_t> s_pendingLogCount{0};
-            if (s_pendingLogCount.fetch_add(1) < 20) {
-                std::fprintf(stderr,
-                    "Formation '%s': PENDING relation '%s' (%s -> %s) waiting for Singular endpoints.\n",
-                    getIdentifier().c_str(), r->type.c_str(), r->aId().c_str(), r->bId().c_str());
-            }
+            std::fprintf(stderr,
+                "Formation '%s': PENDING relation '%s' (%s -> %s) waiting for Singular endpoints.\n",
+                getIdentifier().c_str(), r->type.c_str(), r->aId().c_str(), r->bId().c_str());
         }
         return false;
     }
