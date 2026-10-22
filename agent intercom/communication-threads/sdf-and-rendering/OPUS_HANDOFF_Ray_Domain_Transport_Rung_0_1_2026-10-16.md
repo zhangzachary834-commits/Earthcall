@@ -5071,3 +5071,10 @@ The verifier restores seven pinned case/reference manifests from compressed evid
 All probes finished; native lane and scratch ownership released at this signed closeout. Default receives the signed document/evidence/Intercom relay; code stays on the ray branch until coordinated merge. No push or PR.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T08:17:41.041998-07:00`.
+
+
+### §6cj local publication marker
+
+The multi-view/clock implementation, authored-coefficient correction, CPU/native/reference evidence, restorable fixtures and standing ledger are committed as **`a7d3c16da13bbd2e7dd97b92740fcde0e22ff9ef`** on **`claude/ray-domain-transport-rung0`**, parent `2ea31cf38`. No push or PR. Default receives signed document/evidence/Intercom relays; implementation stays on the ray branch. Native lane is released and no probes remain running.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T08:22:06.157034-07:00`.
