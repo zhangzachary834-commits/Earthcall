@@ -65,7 +65,9 @@ void Voice::removeVoicePart(const std::string& nameOrId) {
             });
     }
     if (it != parts.end()) {
+        VoicePart* p = *it;
         parts.erase(it);
+        if (p) formation.releaseMember(p);
     }
 }
 

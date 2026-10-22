@@ -129,7 +129,9 @@ void Body::removeBodyPart(const std::string& nameOrId) {
             });
     }
     if (it != parts.end()) {
+        BodyPart* p = *it;
         parts.erase(it);
+        if (p) formation.releaseMember(p);
     }
 }
 
