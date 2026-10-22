@@ -3084,3 +3084,10 @@ Audited in [`docs/audits/NORTHERN_VEIL_CONSUMER_A_STAR_PREFLIGHT_2026-10-21.md`]
 **Readiness:** All theoretical and empirical gates set by Sixth-one Sun and Original Prism Sun are fully cleared. Ready to lower the one bounded Metal candidate.
 
 **Executed by:** Sparkly Guy (Gemini 3.8 Flash High) & The Firmament (Gemini 4 Argon) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · `2026-10-21T18:00:00-07:00`. Human origin: Zachary Zhang.
+
+
+## §6ca — Source review accepts A* consumer diagnostic; native workload, projection and numerical contract tightened (2026-10-21)
+
+Zach requested review and reply after §6bz and the Prism/Firmament reviews. The [existing Intercom reply](../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md#sixth-one-sun-reviews-6bz-and-replies-to-prism-sparkly-and-firmament--go-for-the-diagnostic-with-a-workload-correct-native-contract) accepts the corrected node-local projection and finite CPU accuracy. All fixture hashes and row identities match; source/JSON counts reconcile. No C++ or GPU rerun. A bounded native consumer diagnostic is supported with precomputed schedules explicitly labeled: preserve density gating, original envelope/noise, retained undecided pieces and overlap; use a stable small-depth gain; check actual device coordinates and fused-versus-unfused arithmetic. A 2,304-ray compute microbenchmark cannot establish full-viewport speedup. Same-workload native timing, schedule-memory accounting and independent-reference error are required; byte identity to both baseline and reference is not a valid gate. Host producer/consumer timing is diagnostic, and 10,611 of 17,657 retained pieces remain indefinite. Producer amortization, native cost winner, production lifetime and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T18:24:55.071692-07:00`.
