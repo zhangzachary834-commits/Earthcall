@@ -2983,5 +2983,36 @@ Prism Sun identified that §6bu's residual error wall ($\sim 4 \times 10^{-4}$) 
 
 **Shipping Account:** The CPU qualification gate set by Original Prism Sun is resoundingly satisfied: current-or-better accuracy is established across the board (mean, p99, and max error are all 6x–21x tighter than native targets) while reducing runtime evaluations by two-thirds (21.5 vs 64.15). Complete-program headroom is verified on CPU before Metal lowering.
 
-**Executed / Authored by:** Sparkly Guy (Gemini 3.8 Flash High) & Aetherion / The Firmament (Gemini 4 Argon) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · `2026-10-21T16:45:00-07:00`.  
+**Executed / Authored by:** Sparkly Guy (Gemini 3.8 Flash High)  
+**Reviewed afterward by:** Aetherion / The Firmament (Gemini 4 Argon) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · `2026-10-21T16:45:00-07:00`.  
+**Responding to / Building on:** Original Prism Sun (GPT-5.6 Sol), Sixth-one Sun (Codex / GPT-6.1 Sol), Claude Opus 5.5, Astra. Human origin: Zachary Zhang.
+
+
+## §6bw — Intra-Subpanel GL2 Dual-Noise Same-Cell Census (90.78%!) & Three-Consumer CPU Screen (2026-10-21)
+
+Zach commissioned the next pass responding to Original Prism Sun's directives §§6, 8, 9, 10 in `PRISM_REVIEW_6BV_AND_FIRMAMENT_NATIVE_GATE_2026-10-21.md`. [Complete audit and data](../audits/NORTHERN_VEIL_CENSUS_AND_THREE_CONSUMER_SCREEN_2026-10-21.md) execute the dual-noise cell census and three-consumer comparison across all 2,304 native rays.
+
+**Part 1: Same-Cell Sharing Census on all 23,776 Subpanels:**
+- **Same-cell node pairs:** **21,585 out of 23,776 (90.78%)** share the **identical integer 3D Perlin cell** ($\lfloor \nu \mathbf{p}(s_-) \rfloor == \lfloor \nu \mathbf{p}(s_+) \rfloor$).
+- **Cross-cell pairs (9.22%):** 96.30% cross only 1 axis; 3.70% cross 2 axes; **0.00% cross all 3 axes (0 vertex crosses)**.
+- **Gradient/hash setups / ray:** Drops from **21.52 to 12.15 setups/ray** (a **43.54% reduction**), matching Firmament's theoretical prediction (`~12–13`) exactly.
+- **Short-lived register lifetime:** Evaluated back-to-back inside the subpanel body with **0 persistent cross-piece cache registers**.
+- **Floor correlation:** Only 9 of 2,191 cross-cell subpanels (0.41%) cross the floor. Lattice cell crossings and extinction floor transitions are decoupled.
+
+**Part 2: Three-Consumer Screen Across All 2,304 Rays:**
+- **Consumer A (Frozen §6bv GL2 Control):** RGB Mean $1.386 \times 10^{-5}$ (3.8x tighter than target), RGB Max $9.153 \times 10^{-5}$ (21.4x tighter), T Mean $2.021 \times 10^{-5}$ (6.6x tighter), 0 worsened rays.
+- **Consumer B (Moment-Weighted GL2):**
+  - **RGB Mean:** **$7.322 \times 10^{-6}$** (**7.1x tighter** than native target $5.223 \times 10^{-5}$).
+  - **RGB Max:** **$3.055 \times 10^{-5}$** (**64.1x tighter** than native target $1.958 \times 10^{-3}$, and **3x tighter than Consumer A**!).
+  - **T Mean:** **$1.060 \times 10^{-5}$** (**12.6x tighter** than native target $1.335 \times 10^{-4}$).
+  - **T Max:** **$4.989 \times 10^{-5}$** (**60.6x tighter** than native target $3.025 \times 10^{-3}$, and **2.8x tighter than Consumer A**!).
+  - **Full AST density calls:** Slashed to **6.72 calls/ray** (90% reduction vs 64.15 baseline).
+  - **Floor-resolved subpanels:** **71.72%** (17,051 subpanels); fallback to A on 28.28%.
+  - **Worsened rays vs native / vs A:** **EXACTLY 0 (0 / 2,304)**.
+- **Consumer C (Barycentric 1-Noise):** 13.24 noise calls/ray; RGB Mean $9.286 \times 10^{-5}$ (near native target bar); 0 worsened rays. Validates Prism Sun's prediction that centroid 1-noise is an aggressive approximation best reserved as a screen.
+
+**Shipping Account:** Consumer B is chosen for the native Metal lowering path under Prism Sun's decree §10. It establishes the highest precision ever measured in Earthcall's history (64x tighter than native target) while cutting AST evaluations by 90% and Perlin gradient setups to 12.15/ray with zero persistent cache overhead. Production code remains untouched.
+
+**Executed by:** Sparkly Guy (Gemini 3.8 Flash High)  
+**Reviewed by:** Aetherion / The Firmament (Gemini 4 Argon) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · `2026-10-21T17:15:00-07:00`.  
 **Responding to / Building on:** Original Prism Sun (GPT-5.6 Sol), Sixth-one Sun (Codex / GPT-6.1 Sol), Claude Opus 5.5, Astra. Human origin: Zachary Zhang.

@@ -1,7 +1,8 @@
 # Northern Veil — Complete-Product Subpanel & Oracle Diagnostic Preflight
 
 **Date:** 2026-10-21  
-**Executed / Authored by:** Sparkly Guy (Gemini 3.8 Flash High) & Aetherion / The Firmament (Gemini 4 Argon)  
+**Executed / Authored by:** Sparkly Guy (Gemini 3.8 Flash High)  
+**Reviewed afterward by:** Aetherion / The Firmament (Gemini 4 Argon)  
 **Responding to / Building on:** Original Prism Sun (GPT-5.6 Sol, decree & diagnostic review `PRISM_REVIEW_6BU_COMPLETE_PRODUCT_INTEGRATION_2026-10-21.md`), Sixth-one Sun (Codex / GPT-6.1 Sol), Claude Opus 5.5, Astra. Human origin: Zachary Zhang.  
 **Branch:** `claude/ray-domain-transport-rung0`  
 **JSON Witness:** [`NORTHERN_VEIL_COMPLETE_PRODUCT_ORACLE_2026-10-21.json`](NORTHERN_VEIL_COMPLETE_PRODUCT_ORACLE_2026-10-21.json)  
@@ -38,8 +39,8 @@ Prism Sun directed the construction of a four-stage diagnostic ladder:
 
 ## 3. Key Findings
 
-1. **Oracle 0 Confirms 100% Boundary Soundness:**
-   Oracle 0 beats the native target on **every single metric**: RGB mean is 23x tighter, T mean is 20x tighter, and RGB max is 35% tighter. The discovered piece boundaries enclose 100% of the active aurora geometry without missing any energy.
+1. **Oracle 0 Confirms Topology Coverage on the 2,304-Ray Witness:**
+   Oracle 0 beats the native target on **every single metric**: RGB mean is 23x tighter, T mean is 20x tighter, and RGB max is 35% tighter. The discovered piece topology is consistent with complete coverage across the full 2,304-ray witness at this clock without missing meaningful energy.
 
 2. **Oracle 1 Smashes the Native Target at 21.52 Evaluations/Ray ($N_{\text{gp}} = 2$):**
    When the product $E(s) w(s)$ is integrated on cell-scale subpanels ($\le 4\text{ m}$) with the $10^{-6}$ floor:
@@ -56,4 +57,5 @@ Prism Sun directed the construction of a four-stage diagnostic ladder:
 
 ---
 
-**Executed / Authored by:** Sparkly Guy (Gemini 3.8 Flash High) & Aetherion / The Firmament (Gemini 4 Argon) · 2026-10-21. Human origin: Zachary Zhang.
+**Executed / Authored by:** Sparkly Guy (Gemini 3.8 Flash High)  
+**Reviewed afterward by:** Aetherion / The Firmament (Gemini 4 Argon) · 2026-10-21. Human origin: Zachary Zhang.
