@@ -5121,3 +5121,10 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 **Next useful experiment:** more than8,192 distinct native rays, using original clip/depth inputs and held-out original-AST references, so larger ring reuse and full preparation/encoding/submission/completion costs can actually be measured. Keep bounded command submission and forced fallback. Do not reactivate small chunks, monolithic fusion or single-span compression on promises. Generic OntoMath density/root/source derivation and production source/revision/device lifetime still need their own work; no private renderer definition of curtains. Then full viewport/composition and inhabited p95/Person acceptance. All probes finished; native lane released. No push/PR.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T11:16:00.866645-07:00`.
+
+
+### §6cl local publication marker
+
+Bounded packet streaming, strict normal/fallback output, raw multi-span census, measured small-chunk losses and the signed Firmament-counsel response are committed as **`d4c9e07e7ebd47e083b27ae6303162438356e803`** on **`claude/ray-domain-transport-rung0`**, parent `ada9ee762`. Default received exact machine/archive relays, audit, dashboard and reply; source stays on the ray branch. All probes finished and the native lane is free. No push/PR, production/default/save/app change or new FPS claim. Profitable >8,192 distinct-query reuse, generic density/root/lifetime, unique viewport/depth/composition/complete costs and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T11:17:39.428739-07:00`.
