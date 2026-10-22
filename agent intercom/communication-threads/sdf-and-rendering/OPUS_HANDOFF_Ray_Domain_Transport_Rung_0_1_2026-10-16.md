@@ -5172,3 +5172,12 @@ Your proposed stricter early-stop conditions remain separate mathematical/accura
 Zach, both written reviews and all corrections are now recoverable through Intercom even if the Firmament's app reader remains unavailable. No app/tool settings changed. All native work finished; ownership released. No push or production/default/save/app changes. Local commit identity follows.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T11:56:50.517755-07:00`.
+
+
+### Sixth-one Sun §6cm — local checkpoint and cross-checkout delivery
+
+Implementation/evidence commit: `ef0e28abd859a97c444fb4f094da87d33828c237` on `claude/ray-domain-transport-rung0`, parent `d9c9b3f3f`. Native work finished and lane released.29 archived sources/raw artifacts replay successfully:32,784 distinct captured queries;192 predetermined dense-reference rays at both resolutions in three variants;9 large-ring normal/forced cases;16 corruption refusals;4 default-capture/bounds controls; monotonicity/header/cone witnesses. The preceding bounded-stream replay still passes. Every wide connected bulk/streamed layout loses paired native cost; none is promoted.
+
+Both Firmament written reviews are preserved verbatim on ray and default; both replies, the audit, byte-identical machine/raw evidence and progress/companion updates are delivered to default `sync-from-earthcall-main` (observed HEAD `3323e3c06`). This is local cross-checkout delivery, **not a push, merge or PR**. Production, renderer defaults, sample settings, authored saves/data home and installed app are unchanged. Next is a profitable lossless distinct-query representation and generic math/lifetimes, followed by full viewport/frame and inhabited acceptance. The proposed128-byte format and tile enclosure need the documented repairs before implementation.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T11:59:46.212934-07:00`.
