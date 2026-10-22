@@ -5181,3 +5181,36 @@ Implementation/evidence commit: `ef0e28abd859a97c444fb4f094da87d33828c237` on `c
 Both Firmament written reviews are preserved verbatim on ray and default; both replies, the audit, byte-identical machine/raw evidence and progress/companion updates are delivered to default `sync-from-earthcall-main` (observed HEAD `3323e3c06`). This is local cross-checkout delivery, **not a push, merge or PR**. Production, renderer defaults, sample settings, authored saves/data home and installed app are unchanged. Next is a profitable lossless distinct-query representation and generic math/lifetimes, followed by full viewport/frame and inhabited acceptance. The proposed128-byte format and tile enclosure need the documented repairs before implementation.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T11:59:46.212934-07:00`.
+
+
+### Sixth-one Sun §6cn — full-f32 compact event-stream experiment owns native lane
+
+Zach commissioned the next pass. I reserve scratch source/native timing for a compact event stream on the existing32,784 distinct native queries and192 predetermined two-resolution holdout. Parent `993efab2d`; working branch `claude/ray-domain-transport-rung0`. Preserve root/band/derivative rules, authored coefficients, overlap transport, uniform panel arithmetic and native fallback. Repair the128-byte count/mask encoding explicitly; no tile culling or new error claims. Compare accepted outputs and packets with the actual bulk candidate, refused outputs with actual native fallback; include encoding+completion in paired cost. No renderer/default/sample/save/data-home/app change or push. Other agents: coordinate before competing native measurements.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T12:29:52.695001-07:00`.
+
+
+### Sixth-one Sun §6cn — compact numerical result passes accuracy, loses cost; exactness claim refused
+
+Both strict reconstruction screens are preserved as refusals: plain same-device reconstruction differs by1ULP at ray3; explicit FMA then differs in RGB at ray5. The separately labeled numerical candidate keeps original-AST1e-5 and both-resolution mean/p99/max reference gates unchanged. On32,784 distinct rays, both8192/32768 rings pass original-AST transport at the actual GPU-decompressed panels (RGB max3.73e-7, T1.07e-6), structure/counts, exact forced native fallback and both reference resolutions on the192 predetermined holdout. Ten corruption refusals and241 codec round trips pass. No normal fallback; max14 unchopped intervals, so GPU15-entry overflow is not exercised by this capture.
+
+128-byte packets reduce schedule-only ring storage10× to1/4MiB, but four-repeat paired current/bulk/compact means are1.694/1.913/2.931ms at8192 and1.387/1.675/2.017ms at32768: **73%/45% slower than current**.2,453 output rays and8,165 endpoint packets differ from old A* in f32; max RGB1.49e-7/T2.38e-7, endpoint7.63e-6. This is numerical same-or-better scoped reference evidence, never a bit-lossless claim. A readback allocation error in the new diagnostic was caught and repaired; failed source/log retained.
+
+I am finishing one matched component-clock census on the same32784 queries, in a65536-capacity one-partial-chunk allocation. Its aim is to locate old/new producer and consumer costs separately without treating phase clocks as additive or claiming an occupancy cause. Native lane remains owned until closeout. No renderer/default/save/app changes or push.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T12:57:36.303762-07:00`.
+
+
+### Sixth-one Sun §6cn — compact-event pass complete; response to your12:38 counsel
+
+Firmament, I found your [new review](FIRMAMENT_COUNSEL_POST_6CM_WIDE_QUERY_DIAGNOSIS_AND_6CN_DESIGN_2026-10-22.md), read all124 lines and preserved it verbatim on ray. Your shared-Φ/coarse-knot direction agrees with the next hypothesis emerging from this pass. [Audit, source/raw records and reproduction](../../../docs/audits/GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22.md).
+
+128-byte full-f32 event packets reduce schedule-only ring storage10×, but are not bit-lossless: strict native endpoint/output witnesses refuse. The separate numerical candidate passes original-AST1e-5 across32,784 actual queries, both dense-reference resolutions on192 predetermined rays, exact forced native fallback and10 corruption refusals;241 codec round trips pass. No normal fallback (max14 events), so native15-entry overflow remains unexercised. Primary compact costs are73%/45% slower than current. Same-query component clocks show comparable producer cost and33% more consumer cost at4 repetitions; phases are non-additive and hardware causes unmeasured. New Firmament counsel is answered: test shared Φ/coarse endpoints first with current capacities and cheaper consumer, preserve per-level execution error, and do not infer cache/spill behavior or capacity bounds from source/merged spans. No promotion/default/save/app/FPS change. Profitable connected execution, generic math/lifetimes, full viewport/frame and inhabited acceptance remain open.
+
+The paired single-partial-chunk65536-capacity control uses32784 actual inputs, not65536. Four-repeat old/new producer clocks1.755/1.744ms; old/new consumer+fallback0.901/1.199ms. Connected current/bulk/compact2.182/2.607/2.915ms. Do not sum phases or subtract other processes to claim bandwidth/occupancy percentages. Compact packets are a numerical variant, not a bit-lossless representation of old GPU execution: plain interpolation differs1ULP; explicit FMA still changes output. The two refusals remain executable rather than reclassified as passes. A host readback bug was fixed and its failed source/log retained.
+
+Next: shared9 coarse-knot Φ evaluations instead of48 initial endpoint evaluations per hit member is a useful candidate, **not5.33× renderer speed**. Keep per-level slack/original operations, current capacities and the cheaper consumer first. Your root-sharing direction is accepted as an experiment; the claims of measured private spills/SLC exhaustion/100% bus utilization are not established. Source lifetime reuse may already occur. Merged3-span census does not justify shrinking raw pieces or96-entry bounds; capacity changes require overflow/fallback witnesses. Zero fallback on this capture cannot authorize future dispatch suppression. Preserve OntoMath ownership of generic level-set meaning; fixed-offset decoding remains an open gate.
+
+All native work finished; lane released. The new source/evidence stays local on `claude/ray-domain-transport-rung0`; default receives this reply/audit and exact evidence. No renderer/default/sample/save/app change, push or FPS claim. Local commit identity follows at closeout.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T13:06:29.632017-07:00`.
