@@ -243,6 +243,16 @@ int main(int argc, char** argv) {
     long long totalDiscoveredPieces = 0;
     long long totalDefinitePieces = 0;
     long long totalIndefinitePieces = 0;
+    long long defRetained = 0;
+    long long defRejTargetSign = 0;
+    long long defRejHiLEZero = 0;
+    long long defUndefinedRetained = 0;
+    long long indefRetained = 0;
+    long long indefRejTargetSign = 0;
+    long long indefRejHiLEZero = 0;
+    long long indefUndefinedRetained = 0;
+    long long mediaBoxMissSkips = 0;
+    long long evaluatorNotOkSkips = 0;
     long long totalRangeEvaluations = 0;
     long long totalProposedRoots = 0;
     long long totalBudgetExhausted = 0;
@@ -293,7 +303,10 @@ int main(int argc, char** argv) {
                     tb = std::min(tb, std::max(x, y));
                 }
             }
-            if (!hit || !(tb > ta)) continue;
+            if (!hit || !(tb > ta)) {
+                ++mediaBoxMissSkips;
+                continue;
+            }
             
             std::map<std::string, double> bind;
             for (int a = 0; a < 3; ++a) {
@@ -306,7 +319,10 @@ int main(int argc, char** argv) {
             bind[OntoMath::kOmegaZVar] = -d.z;
             
             OntoMath::LineAlgebraicEvaluator ev(m.envForm, bind, true);
-            if (!ev.ok()) continue;
+            if (!ev.ok()) {
+                ++evaluatorNotOkSkips;
+                continue;
+            }
             
             const std::vector<std::pair<std::size_t, uint32_t>> target{{0, m.envForm.roots[0]}};
             const double resolution = 1e-4 * (tb - ta);
@@ -317,12 +333,30 @@ int main(int argc, char** argv) {
             if (segStats.budgetExhausted) ++totalBudgetExhausted;
             
             for (const auto& p : pieces) {
-                if (p.definite) ++totalDefinitePieces;
+                bool isDef = p.definite;
+                if (isDef) ++totalDefinitePieces;
                 else ++totalIndefinitePieces;
-                if (!p.targetSigns.empty() && p.targetSigns[0] < 0) continue;
+                
+                if (!p.targetSigns.empty() && p.targetSigns[0] < 0) {
+                    if (isDef) ++defRejTargetSign;
+                    else ++indefRejTargetSign;
+                    continue;
+                }
                 bool undefinedD = false;
                 const auto rd = ev.range(m.envForm.roots[0], p.s0, p.s1, p.signs[0], &undefinedD);
-                if (!undefinedD && double(rd.hi) <= 0.0) continue;
+                if (undefinedD) {
+                    if (isDef) ++defUndefinedRetained;
+                    else ++indefUndefinedRetained;
+                    allPieces.push_back(Piece{(int)j, p.s0, p.s1, p.signs[0]});
+                    continue;
+                }
+                if (double(rd.hi) <= 0.0) {
+                    if (isDef) ++defRejHiLEZero;
+                    else ++indefRejHiLEZero;
+                    continue;
+                }
+                if (isDef) ++defRetained;
+                else ++indefRetained;
                 allPieces.push_back(Piece{(int)j, p.s0, p.s1, p.signs[0]});
             }
         }
@@ -546,8 +580,18 @@ int main(int argc, char** argv) {
         {"total_pieces_discovered", totalDiscoveredPieces},
         {"pieces_per_ray", double(totalDiscoveredPieces) / count},
         {"total_definite_pieces", totalDefinitePieces},
+        {"definite_retained", defRetained},
+        {"definite_rejected_target_sign", defRejTargetSign},
+        {"definite_rejected_hi_le_zero", defRejHiLEZero},
+        {"definite_undefined_retained", defUndefinedRetained},
         {"total_indefinite_pieces", totalIndefinitePieces},
+        {"indefinite_retained", indefRetained},
+        {"indefinite_rejected_target_sign", indefRejTargetSign},
+        {"indefinite_rejected_hi_le_zero", indefRejHiLEZero},
+        {"indefinite_undefined_retained", indefUndefinedRetained},
         {"indefinite_sliver_pct", double(totalIndefinitePieces) * 100.0 / (totalDefinitePieces + totalIndefinitePieces + 1e-9)},
+        {"media_box_miss_skips", mediaBoxMissSkips},
+        {"evaluator_not_ok_skips", evaluatorNotOkSkips},
         {"total_range_evaluations", totalRangeEvaluations},
         {"range_evaluations_per_ray", double(totalRangeEvaluations) / count},
         {"total_proposed_roots", totalProposedRoots},
