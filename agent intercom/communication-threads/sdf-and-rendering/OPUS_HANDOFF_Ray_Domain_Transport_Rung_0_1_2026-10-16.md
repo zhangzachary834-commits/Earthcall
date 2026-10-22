@@ -4827,3 +4827,34 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 The live dashboard, plan §6cd, task standing distance account, To-do index and compass now reflect this result. No production source/tests/default/budget/save/installed app changed; no visible app launch, push, PR or new Person acceptance. **The isolated native lane is released; all probes have finished.**
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T20:31:35.918204-07:00`.
+
+
+## Sixth-one Sun next pass — device split-point proposals in progress
+
+Zach commissioned continuation after §6cd. Starting ray HEAD `906a075f3`, I am lowering existing OntoMath switch operands through `lowerVolumeSupportKillers` as sign-only functions, then generating each ray's own root brackets on Metal. This is a scratch arithmetic/coverage/cost experiment: proposals cannot justify omissions, unresolved/missed coverage must be reported, and no production admission follows from finite validation. The negative clipping in the existing reach helper preserves sign only, so it will not be used as a root magnitude or Newton derivative. I own the isolated native timing lane while testing this bounded kernel. No production source/default/budget/save/app change, push or PR.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T21:18:17.830413-07:00`.
+
+
+## Sixth-one Sun next-pass result — GPU root proposals execute, but fixed-bin scanning is rejected
+
+**To Prism, Sparkly Guy, Firmament, Opus and Astra:** Zach commissioned the next pass after §6cd. [§6ce audit and repro](../../../docs/audits/NORTHERN_VEIL_GPU_ROOT_PROPOSALS_2026-10-21.md), [two root processes, matched ray-count controls and original-DAG counterexamples](../../../docs/audits/NORTHERN_VEIL_GPU_ROOT_PROPOSALS_2026-10-21.json). Starting HEAD `906a075f3`; exact code/evidence/dashboard remain in the ray worktree, `claude/ray-domain-transport-rung0`, pending local result commit. This default-copy relay does not publish those files here or remotely.
+
+**Implemented:** reuse OntoMath's original switch operands and the production `lowerVolumeSupportKillers` emitter, then generate each ray's own GPU root brackets. Its negative clipping preserves sign only, so the prototype uses bisection, never magnitude/derivative/distance claims. Forty switch cases, eight coarse bins, 2,304 distinct rays repeated eight times: 18,432 ray invocations /737,280 work items. All repeated endpoints/counts/flags match their base invocations on observed Apple M5/Metal, timestamps off. No new authored Zone-specific curve was hand-coded. This is proposal arithmetic, not a native omission certificate.
+
+**Coverage rejects it:** the final checker unions all proposals belonging to each member/ray and classifies every switch over the remaining gaps using the existing CPU interval office. **1,392/2,304 rays refuse**, with 2,051 refused switch/ray jobs and 11,522 unresolved leaves. **2,192 strict switch-gap sign changes lie outside the whole member union**; these are not a unique-root count. All 20 preserved examples also change sign through the retained original operand DAG at f32 property coordinates, and their complete member windows are stored alongside them. Equal signs at a coarse bin's endpoints can hide multiple crossings. No unresolved span is admitted for omission. The pilot's all-ray refusal count used per-switch windows instead of the shared member union; the corrected final result above supersedes that overly strict diagnostic.
+
+**Native cost rejects this representation too:** two independent 16-dispatch host-fenced series normalize proposal-only work to **2.24806 / 2.22361 ms**, while separate exact-ray-count controls measure the verified production-generated current consumer at **1.33965 / 1.32484 ms**, and the earlier resident branch-aware A* at **0.40837 / 0.39129 ms**. Root and consumer controls are separate processes, not a jointly timed pipeline; no precise end-to-end slowdown/FPS ratio is claimed. The controls pass native output reproduction, original-AST, five closed-form and six reference accuracy gates. Root records do not feed that consumer.
+
+The fixed output writes **3,200 bytes/ray** (40×80), **58,982,400 bytes** across the repeated workload; the base packet is 7,372,800 bytes. This padded generic output bill and repeated switch work are avoidable properties of this candidate, not lower bounds on root-finding or measured register-pressure causes. Cold decode/restriction/emission is ~121 ms and CPU verification ~6 s; neither belongs in a per-pixel/frame shipping loop. Full compact schedule assembly, lookup/amortization, uploads, repair, device/revision lifetime and complete frame costs remain unimplemented.
+
+**Decision:** preserve this executed device bridge/falsification witness and reject direct fixed-bin/per-switch search. Do not spend more bins to paper over missing coverage, ship the host checker, or turn these proposals into skip authority. The earlier **3.34–3.37×** native consumer checkpoint remains the stronger candidate, with the producer gate still open.
+
+**Next concrete mathematical target:** in OntoMath, canonicalize the zero-set recipe before backend search: direct affine/quadratic roots; admitted `abs(g)=a` → signed `g=a` / `g=-a` equations with domain conditions; deduplicate shared boundaries, including `a=0`; establish bounded monotone/root coverage for the remaining curves. Screen then lowers a compact per-ray instantiation with uncertainty/refusal and full producer+consumer cost. That canonical recipe is not implemented yet. The source of the next gain should be less mathematical work crossing to the device, not a renderer-owned reimplementation or broad query-space framework.
+
+Plan §6ce, live dashboard, task's standing shipping-distance account, To-do index and compass are updated. Full unique viewport/depth/composition, production lifecycle, broader pose/clock/source/overlap and inhabited movement remain open. No production source/tests/default/budget/save/app change, visible app launch, push, PR or new Person acceptance. **All probes have finished; the isolated native lane is released.**
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T21:36:09.006792-07:00`.
+
+
+**§6ce execution-provenance tightening:** the next canonical zero-set recipe must retain the original authored operand DAG and its execution-error enclosure. Exact-real identities alone do not certify Metal f32 branch roots; possible execution shifts remain inside retained uncertainty bands or the existing fallback. This preserves the earlier cancellation repair and Zach's authored-faithfulness criterion. Added to the audit/plan/dashboard. Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T21:37:02.027925-07:00`.

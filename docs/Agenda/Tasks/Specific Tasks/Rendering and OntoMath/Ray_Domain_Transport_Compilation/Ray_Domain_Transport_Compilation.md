@@ -180,9 +180,9 @@ This is **architecture direction, not a landed implementation claim**. Existing 
 
 ## Distance to a faster Northern Veil
 
-*Standing account Zach asked for on 2026-10-20; last updated §6cd, 2026-10-21 ("keep the account of how much is left until the ray transport work buys more faster Northern Veil than before"). Every pass updates it.*
+*Standing account Zach asked for on 2026-10-20; last updated §6ce, 2026-10-21 ("keep the account of how much is left until the ray transport work buys more faster Northern Veil than before"). Every pass updates it.*
 
-**Current ledger — §6cd:** the earlier branch-aware A* retains the **3.37× / 3.34×** matching native compute consumer gate with better aggregate reference accuracy. The new target-only producer cuts measured host preparation 49.73% but remains ~3.12 seconds/2,304 rays; preserving accuracy requires one-metre panels and leaves only **1.60×** native consumer headroom. It is an insufficient shipping producer, not a replacement for the earlier candidate. Cheap mathematical split-point generation/per-ray GPU instantiation, a unique full viewport/pass total, production lifetime and inhabited movement remain open. [Current experiment and remaining gates](../../../../../audits/NORTHERN_VEIL_TARGET_ONLY_PRODUCER_2026-10-21.md).
+**Current ledger — §6ce:** earlier branch-aware A* retains the **3.37× / 3.34×** matching native compute consumer checkpoint. Target-only host preparation remains insufficient; the new GPU fixed-bin root scan also fails coverage (1,392/2,304 rays) and costs more than the current consumer at the same ray count. Next derive/share canonical mathematical zero sets and bounded root coverage before compact device instantiation; affordable producer, unique full viewport/pass total, production lifetime and inhabited movement remain open. [Current GPU experiment and exact remaining boundary](../../../../../audits/NORTHERN_VEIL_GPU_ROOT_PROPOSALS_2026-10-21.md).
 
 **Baseline to beat.**
 - Codex's 2026-10-15 controlled offscreen series, aurora/inside at 2560×1440: **~136–141 ms per frame** (24-frame readback-free batches; not live FPS). The existing renderer's aurora proof construction is ~239 ms at admission ([audit](../../../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md)).
@@ -321,3 +321,10 @@ Zach permits a substantial faster native checkpoint at current-or-better accurac
 [Target-only producer](../../../../../audits/NORTHERN_VEIL_TARGET_ONLY_PRODUCER_2026-10-21.md): seven support/refusal witnesses, five closed-form GPU cases, original-AST agreement and width-1 aggregate accuracy pass. Widths 4/2 fail accuracy. Paired host preparation halves but remains too expensive; extra panels reduce the resident native consumer ratio to 1.60× and raise the base schedule to 905,840 bytes. Keep the earlier §6cc consumer; next derive useful split points cheaply rather than deleting them or copying CPU proof search into every pixel. No new visible app/Person result or production change.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T20:29:03.842557-07:00`.
+
+
+### §6ce — GPU endpoint proposals witnessed; naive scan rejected
+
+[Executed device root proposal experiment](../../../../../audits/NORTHERN_VEIL_GPU_ROOT_PROPOSALS_2026-10-21.md) now uses the original switch operands through the production emitter. Independent member-union interval coverage refuses 1,392 rays; all 20 concrete missing-crossing examples also pass the original-DAG point check. Proposal-only native cost exceeds a matched ray-count current-consumer control; padded records cost 3,200 bytes/ray. No root output enters the transport consumer and no production admission or FPS gain is claimed. Preserve the earlier consumer and canonicalize mathematical zero sets/root coverage before further GPU search. No new visible Person result.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T21:33:37.349632-07:00`.

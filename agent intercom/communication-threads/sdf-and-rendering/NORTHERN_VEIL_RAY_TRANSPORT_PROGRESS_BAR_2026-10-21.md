@@ -3,7 +3,7 @@
 **Human goal:** Zachary Zhang's substantial native Northern Veil speed checkpoint at current-or-better accuracy, followed by an inhabited movement result.
 **Branch:** `claude/ray-domain-transport-rung0`.
 **Council:** [existing Intercom thread](OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md).
-**Latest producer experiment:** [target-only support / §6cd](../../../docs/audits/NORTHERN_VEIL_TARGET_ONLY_PRODUCER_2026-10-21.md) halves host preparation but remains insufficient and reduces consumer headroom.
+**Latest producer experiment:** [device root proposals / §6ce](../../../docs/audits/NORTHERN_VEIL_GPU_ROOT_PROPOSALS_2026-10-21.md) execute through existing production lowering but fail coverage and native cost; canonical mathematical zero-set derivation is next. [Target-only support / §6cd](../../../docs/audits/NORTHERN_VEIL_TARGET_ONLY_PRODUCER_2026-10-21.md) also remains insufficient.
 
 **Current evidence:** [matched native consumer / §6cc](../../../docs/audits/NORTHERN_VEIL_MATCHED_NATIVE_CONSUMER_2026-10-21.md); [overlap repair and rejected fusion / §6cb](../../../docs/audits/NORTHERN_VEIL_METAL_OVERLAP_REPAIR_2026-10-21.md).
 
@@ -23,7 +23,8 @@ The initial Metal diagnostic omitted all 253 overlap intervals in its GPU kernel
 | Same-cell gradient fusion | Implemented, rejected on cost | Fused +17.99% / +17.51% in repeated 64-dispatch host-fenced batches |
 | Unfused A* versus production-generated marcher | **Passed matching compute consumer gate** | 3.37× / 3.34× on 2,304 frozen rays repeated 128×; baseline T exact, RGB max delta 4.47e-8 |
 | Unique full viewport and complete frame | **Open** | Actual boundary generation, depth/raster/composition obligations and full pass/frame total |
-| Boundary production / amortization | **Experiment completed; still open** | Target-only root queries halve measured host preparation (~6.21→3.12 s/2,304 rays), but preserving accuracy needs extra panels; no shipping producer |
+| Boundary production / amortization | **Experiments completed; still open** | Host target-only work remains too expensive; device fixed-bin proposals fail coverage and cost; canonical zero-set/root-coverage recipe needed |
+| Device numeric endpoint prototype | Implemented, scan rejected | Original switch operands execute on Metal; 1,392 rays refuse coverage and proposal-only cost exceeds the matching-ray current consumer |
 | Production revision/device/fallback lifecycle | Open | No A* source integration shipped; no default/budget change |
 | Broad poses, clocks, sources and overlap | Open | Current native witness is one frozen camera/clock |
 | Inhabited movement and Person acceptance | Open | Zach's “live in Northern Veil” checkpoint remains unverified |
@@ -87,11 +88,19 @@ Deleting the branch partition also removes useful quadrature split points. Width
 
 The next producer must obtain useful mathematical split points cheaply, with reusable derivation/validity and each ray's own numerical endpoints; total preparation/instantiation/lookup/repair/upload/memory/lifetime must fit the native headroom.
 
+## Latest GPU split-point pass — arithmetic executes; direct scanning rejected
+
+[§6ce audit](../../../docs/audits/NORTHERN_VEIL_GPU_ROOT_PROPOSALS_2026-10-21.md) uses the existing production emitter for original switch operands and generates each ray's own root proposals on Apple M5/Metal, timestamps off. Independent interval coverage over the **union of all member proposals** refuses 1,392/2,304 rays; 2,192 switch-gap sign changes lie outside the windows, with 20 saved examples independently corroborated by original MathNode evaluation.
+
+At 18,432 repeated ray invocations, proposal-only cost is 2.248 / 2.224 ms, versus 1.340 / 1.325 ms for separate verified current-consumer controls. These are normalized host-fenced diagnostic times, not GPU timestamps, a jointly timed pipeline or FPS. Padded records write 3,200 bytes/ray. The scan is rejected; no proposal output enters transport or certifies an omission. Earlier branch-aware A* remains the stronger consumer.
+
+The next step is a smaller mathematical recipe: direct affine/quadratic zero sets, signed absolute-value equations with their domain conditions, shared duplicate boundaries, and bounded monotone/root coverage for the remaining functions. Retain original authored execution provenance/error enclosures; algebraic zero-set identity alone does not certify a device branch. Then instantiate compactly per ray on the backend and count the complete producer-plus-consumer bill.
+
 ## Current next-owner queue
 
-Codex completed the dinner-watch repair, matched native consumer gate and target-only producer experiment, then releases the isolated GPU lane at the signed closeout in Intercom.
+Codex completed the dinner-watch repair, matched native consumer gate, target-only producer and GPU proposal experiments, then releases the isolated GPU lane at the signed closeout in Intercom.
 
-1. Preserve useful switch/kink/root split points with the cheapest general derivation/instantiation experiment; do not ship the measured target-only host loop. Count cold preparation, lookup, repair, invalidation, uploads and memory against the earlier branch-aware consumer headroom.
+1. Derive/share canonical mathematical zero sets and bounded root coverage, then lower compact per-ray instantiation; reject both the measured target-only host loop and fixed-bin GPU scan. Charge preparation, lookup, repair, invalidation, uploads and memory against the earlier consumer headroom.
 2. Qualify unique full-viewport output and complete pass/frame costs including producer and composition obligations.
 3. Qualify broader poses/clocks/source/overlap and production fallback/device/revision lifetime.
 4. Measure the moving inhabited scene and obtain Zach's acceptance.
@@ -108,3 +117,6 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 
 
 Latest producer pass: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T20:29:03.842557-07:00`.
+
+
+Latest device split-point pass: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T21:33:37.349632-07:00`.
