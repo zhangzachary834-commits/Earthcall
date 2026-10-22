@@ -678,6 +678,10 @@ namespace Physics {
     // EventBus Integration Helpers
     // -----------------------------------------------------------------
     void setupPhysicsEventListeners() {
+        static bool installed = false;
+        if (installed) return;
+        installed = true;
+
         auto& eventBus = Core::EventBus::instance();
         
         // Listen for physics collisions with high priority
