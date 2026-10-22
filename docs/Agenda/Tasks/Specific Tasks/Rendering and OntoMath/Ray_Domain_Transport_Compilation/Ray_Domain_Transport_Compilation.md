@@ -180,9 +180,9 @@ This is **architecture direction, not a landed implementation claim**. Existing 
 
 ## Distance to a faster Northern Veil
 
-*Standing account Zach asked for on 2026-10-20; last updated §6cc, 2026-10-21 ("keep the account of how much is left until the ray transport work buys more faster Northern Veil than before"). Every pass updates it.*
+*Standing account Zach asked for on 2026-10-20; last updated §6cd, 2026-10-21 ("keep the account of how much is left until the ray transport work buys more faster Northern Veil than before"). Every pass updates it.*
 
-**Current ledger — §6cc:** complete unfused A* passes the matching native compute consumer gate at **3.37× / 3.34×** faster, using resident precomputed boundaries on 2,304 distinct rays repeated 128×; all six aggregate accuracy gates pass. Affordable general boundary production/lookup, a unique full viewport/pass total, production lifetime and inhabited movement remain open. [Measured scope and reproducer](../../../../../audits/NORTHERN_VEIL_MATCHED_NATIVE_CONSUMER_2026-10-21.md). The older grid table/countdown below is historical rejected-route evidence, not the current implementation queue.
+**Current ledger — §6cd:** the earlier branch-aware A* retains the **3.37× / 3.34×** matching native compute consumer gate with better aggregate reference accuracy. The new target-only producer cuts measured host preparation 49.73% but remains ~3.12 seconds/2,304 rays; preserving accuracy requires one-metre panels and leaves only **1.60×** native consumer headroom. It is an insufficient shipping producer, not a replacement for the earlier candidate. Cheap mathematical split-point generation/per-ray GPU instantiation, a unique full viewport/pass total, production lifetime and inhabited movement remain open. [Current experiment and remaining gates](../../../../../audits/NORTHERN_VEIL_TARGET_ONLY_PRODUCER_2026-10-21.md).
 
 **Baseline to beat.**
 - Codex's 2026-10-15 controlled offscreen series, aurora/inside at 2560×1440: **~136–141 ms per frame** (24-frame readback-free batches; not live FPS). The existing renderer's aurora proof construction is ~239 ms at admission ([audit](../../../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md)).
@@ -314,3 +314,10 @@ Zach permits a substantial faster native checkpoint at current-or-better accurac
 
 
 **2026-10-21 matched native consumer checkpoint:** [§6cc](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6cc--matched-native-consumer-wins-337--334-producer-and-full-viewport-gates-remain-open-2026-10-21) witnesses complete unfused A* at 3.37× / 3.34× faster than the production-generated marcher on the same resident compute rays, with current-or-better aggregate reference error. Baseline output reproduction, replicated outputs, independent AST and five closed-form checks pass. Boundaries are precomputed; 294,912 invocations repeat 2,304 distinct rays. Producer cost, unique full viewport/frame, production lifecycle and inhabited acceptance remain open. No shipped FPS/default/save change. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T20:08:48.886942-07:00`.
+
+
+### §6cd — Producer experiment completed; shipping producer still open
+
+[Target-only producer](../../../../../audits/NORTHERN_VEIL_TARGET_ONLY_PRODUCER_2026-10-21.md): seven support/refusal witnesses, five closed-form GPU cases, original-AST agreement and width-1 aggregate accuracy pass. Widths 4/2 fail accuracy. Paired host preparation halves but remains too expensive; extra panels reduce the resident native consumer ratio to 1.60× and raise the base schedule to 905,840 bytes. Keep the earlier §6cc consumer; next derive useful split points cheaply rather than deleting them or copying CPU proof search into every pixel. No new visible app/Person result or production change.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T20:29:03.842557-07:00`.

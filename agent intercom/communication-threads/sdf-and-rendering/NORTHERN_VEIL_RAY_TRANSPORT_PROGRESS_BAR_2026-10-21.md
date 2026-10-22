@@ -3,6 +3,8 @@
 **Human goal:** Zachary Zhang's substantial native Northern Veil speed checkpoint at current-or-better accuracy, followed by an inhabited movement result.
 **Branch:** `claude/ray-domain-transport-rung0`.
 **Council:** [existing Intercom thread](OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md).
+**Latest producer experiment:** [target-only support / §6cd](../../../docs/audits/NORTHERN_VEIL_TARGET_ONLY_PRODUCER_2026-10-21.md) halves host preparation but remains insufficient and reduces consumer headroom.
+
 **Current evidence:** [matched native consumer / §6cc](../../../docs/audits/NORTHERN_VEIL_MATCHED_NATIVE_CONSUMER_2026-10-21.md); [overlap repair and rejected fusion / §6cb](../../../docs/audits/NORTHERN_VEIL_METAL_OVERLAP_REPAIR_2026-10-21.md).
 
 ## Current state
@@ -21,7 +23,7 @@ The initial Metal diagnostic omitted all 253 overlap intervals in its GPU kernel
 | Same-cell gradient fusion | Implemented, rejected on cost | Fused +17.99% / +17.51% in repeated 64-dispatch host-fenced batches |
 | Unfused A* versus production-generated marcher | **Passed matching compute consumer gate** | 3.37× / 3.34× on 2,304 frozen rays repeated 128×; baseline T exact, RGB max delta 4.47e-8 |
 | Unique full viewport and complete frame | **Open** | Actual boundary generation, depth/raster/composition obligations and full pass/frame total |
-| Boundary production / amortization | Open | Current host diagnostic costs ~903 segmentation range evaluations/ray; no shipping producer |
+| Boundary production / amortization | **Experiment completed; still open** | Target-only root queries halve measured host preparation (~6.21→3.12 s/2,304 rays), but preserving accuracy needs extra panels; no shipping producer |
 | Production revision/device/fallback lifecycle | Open | No A* source integration shipped; no default/budget change |
 | Broad poses, clocks, sources and overlap | Open | Current native witness is one frozen camera/clock |
 | Inhabited movement and Person acceptance | Open | Zach's “live in Northern Veil” checkpoint remains unverified |
@@ -77,11 +79,19 @@ The architectural aim remains:
 
 Reuse the derivation at its longest justified lifetime while computing each ray's own endpoints, depths and colors. Neighboring rays do not inherit one ray's numerical answer. Query-space/movement-region analysis is a possible producer direction; the newly measured consumer headroom justifies the smallest concrete preparation/lookup experiment, without requiring a broad new framework.
 
+## Latest producer pass — concrete tradeoff, insufficient for shipping
+
+[§6cd audit](../../../docs/audits/NORTHERN_VEIL_TARGET_ONLY_PRODUCER_2026-10-21.md): a generic target-only support classifier avoids internal branch labels and retains uncertain spans. Seven support/refusal witnesses pass. Eight alternating CPU-only processes measure −49.73% concrete preparation, but ~1.35 ms/ray is still too expensive for per-pixel/frame work.
+
+Deleting the branch partition also removes useful quadrature split points. Widths 4 and 2 fail independent accuracy; width 1 passes all six aggregate gates, original-AST agreement and five closed-form GPU cases. Two native processes then measure only **1.603× / 1.600×** versus current, using 49,302 single packets +350 overlaps and 905,840 resident bytes. This does not supersede the earlier 3.34–3.37× branch-aware consumer. Preserve the diagnostic; do not integrate this host producer. No complete frame or FPS gain is claimed.
+
+The next producer must obtain useful mathematical split points cheaply, with reusable derivation/validity and each ray's own numerical endpoints; total preparation/instantiation/lookup/repair/upload/memory/lifetime must fit the native headroom.
+
 ## Current next-owner queue
 
-Codex completed the dinner-watch repair and the matching native consumer gate, then releases the isolated GPU lane at the signed closeout in Intercom.
+Codex completed the dinner-watch repair, matched native consumer gate and target-only producer experiment, then releases the isolated GPU lane at the signed closeout in Intercom.
 
-1. Use the measured compute-consumer headroom to implement the cheapest general boundary-generation/lookup/amortization experiment, counting cold preparation, reuse lifetime, edit invalidation, repair, uploads and memory.
+1. Preserve useful switch/kink/root split points with the cheapest general derivation/instantiation experiment; do not ship the measured target-only host loop. Count cold preparation, lookup, repair, invalidation, uploads and memory against the earlier branch-aware consumer headroom.
 2. Qualify unique full-viewport output and complete pass/frame costs including producer and composition obligations.
 3. Qualify broader poses/clocks/source/overlap and production fallback/device/revision lifetime.
 4. Measure the moving inhabited scene and obtain Zach's acceptance.
@@ -95,3 +105,6 @@ This is a live status document. Update gate statuses, measured values, ownership
 Original dashboard: Original Prism Sun / GPT-5.6 Sol, 2026-10-21. Current measured-status repair: Codex, commissioned by Zach. No authored saves, installed app or production defaults changed.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T20:08:48.886942-07:00`.
+
+
+Latest producer pass: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T20:29:03.842557-07:00`.
