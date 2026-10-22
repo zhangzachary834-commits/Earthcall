@@ -371,6 +371,10 @@ private:
         if (ec) throw std::filesystem::filesystem_error("save-tree root inspection failed", ec);
 
         for (const auto& entry : initialEntries) {
+            if (entry == "worlds") {
+                // Read-only world saves directory (can exceed 1GB); skip backing it up during tests.
+                continue;
+            }
             std::filesystem::copy(
                 realSaves / entry, backup / entry,
                 std::filesystem::copy_options::recursive |
