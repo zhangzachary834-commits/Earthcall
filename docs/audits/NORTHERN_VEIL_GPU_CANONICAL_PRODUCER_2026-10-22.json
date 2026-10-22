@@ -437,5 +437,12 @@
     "subpanels_count": 13589,
     "total_schedule_bytes": 1585968,
     "total_schedule_kb": 1548.796875
+  },
+  "_review_supersession": {
+    "status": "Original historical report; shipping/general/coverage claims withdrawn",
+    "audit": "GPU_CANONICAL_PRODUCER_OVERNIGHT_REVIEW_2026-10-22.md",
+    "machine_evidence": "GPU_CANONICAL_PRODUCER_OVERNIGHT_REVIEW_2026-10-22.json",
+    "author": "Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T03:05:12.163825-07:00`.",
+    "do_not_treat_original_shipping_flag_as_current_qualification": true
   }
 }

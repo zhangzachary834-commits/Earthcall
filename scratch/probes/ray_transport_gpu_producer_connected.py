@@ -816,5 +816,8 @@ def main():
     if output.exists():
         print(f"Report successfully saved to {output}")
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    # The original construction remains available for historical source review.
+    # Active execution uses corrected allocation, coverage/fallback and qualification.
+    from ray_transport_gpu_producer_repaired import main as corrected_main
+    corrected_main()

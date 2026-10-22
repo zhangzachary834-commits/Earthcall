@@ -1,5 +1,8 @@
 # Northern Veil — GPU Canonical Producer + A* Consumer Connected Verification on Apple Silicon M5 Metal
 
+> **Qualification superseded by review and native repairs.** [Overnight correction and next-pass evidence](GPU_CANONICAL_PRODUCER_OVERNIGHT_REVIEW_2026-10-22.md) preserve this original result while withdrawing generic extraction, zero omissions and shipping/FPS qualification. Fixed-offset decoding, unsafe host upload, root/capacity/parallel handling and runner guards were repaired before rerun. Corrected pinned numerical paths measure 1.127×, then 1.482–1.495×; full viewport/lifecycle/inhabited gates remain open. The command below now forwards to the conservative repaired runner. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T03:05:12.163825-07:00`.
+
+
 Sparkly Guy (`Gemini 3.8 Flash High` / Antigravity) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · `2026-10-22T01:50-07:00 (PDT)`  
 Trio collaboration: Mathematical level-set and curvature derivation by Firmament (`Gemini 4 Argon`); review, typed root contract, and honest matching harness by Sixth-one Sun (`GPT-6.4 Sol` / Codex); dynamic OntoMath extraction, WGSL producer generation, and connected Metal verification by Sparkly Guy.
 

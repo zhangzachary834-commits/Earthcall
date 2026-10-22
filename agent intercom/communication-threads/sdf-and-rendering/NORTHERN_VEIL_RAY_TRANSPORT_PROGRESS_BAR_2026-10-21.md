@@ -3,7 +3,7 @@
 **Human goal:** Zachary Zhang's substantial native Northern Veil speed checkpoint at current-or-better accuracy, followed by an inhabited movement result.
 **Branch:** `claude/ray-domain-transport-rung0`.
 **Council:** [existing Intercom thread](OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md).
-**Latest corrective pass:** [verified root/fallback and harness repairs](../../../docs/audits/CANONICAL_PRODUCER_CORRECTIVE_REPAIRS_2026-10-22.md). CPU regression/negative controls and native normal/forced fallback pass. Actual matching sparse host-producer+upload+consumer cost loses (17.2641 versus 1.27242 ms); generic authored derivation/native error admission and GPU production remain open under Sparkly’s ownership. No shipped gain.
+**Latest overnight pass:** [GPU review, native repairs and positive numerical continuation](../../../docs/audits/GPU_CANONICAL_PRODUCER_OVERNIGHT_REVIEW_2026-10-22.md). Corrected pinned producer → transport → native fallback passes accuracy at 1.127× matched sparse throughput; model-limited retained uncertainty bands reproduce **1.482× / 1.490×**, with final-source confirmation **1.495×**. All six numerical gates and fallback/failure controls pass. Generic authored recipe/native omission authority, unique viewport/frame, lifecycle and inhabited acceptance remain open; no shipped FPS gain.
 
 **Preceding review:** [§6cf source/scalar review](../../../docs/audits/SPARKLY_CANONICAL_PRODUCER_6CF_REVIEW_2026-10-21.md) preserves Sparkly’s saved aggregate accuracy while reopening producer qualification: mismatched timing workloads, root loss, untyped uncertainty and hardcoded fixture math. **No new connected speedup or shipping gate passed.**
 
@@ -13,7 +13,7 @@
 
 ## Current state
 
-**Complete unfused A* is 3.37× / 3.34× faster than the production-generated marcher on matching resident compute ray work, with better aggregate reference accuracy. Boundaries are precomputed. A full-viewport/producer/production/inhabited FPS win is still open. Shared-cell fusion remains rejected on cost.**
+**A corrected GPU producer and complete native transport now have a positive numerical checkpoint: 1.48–1.50× matched repeated-ray throughput with current-or-better aggregate reference error. This is a pinned one-camera compute experiment. Generic derivation, unique viewport/frame integration, lifecycle and inhabited FPS/Person acceptance remain open. Earlier consumer-only 3.34–3.37× evidence survives.**
 
 The initial Metal diagnostic omitted all 253 overlap intervals in its GPU kernels and its CPU comparator. Its “Lane A complete/certified,” production recommendation, exclusive-producer-bottleneck and 0.552 microseconds/ray performance-ceiling claims are superseded. Historical text and artifacts remain in the [initial audit](../../../docs/audits/NORTHERN_VEIL_METAL_DIAGNOSTIC_2026-10-21.md) and Intercom; this page tracks current qualified evidence.
 
@@ -27,7 +27,7 @@ The initial Metal diagnostic omitted all 253 overlap intervals in its GPU kernel
 | Same-cell gradient fusion | Implemented, rejected on cost | Fused +17.99% / +17.51% in repeated 64-dispatch host-fenced batches |
 | Unfused A* versus production-generated marcher | **Passed matching compute consumer gate** | 3.37× / 3.34× on 2,304 frozen rays repeated 128×; baseline T exact, RGB max delta 4.47e-8 |
 | Unique full viewport and complete frame | **Open** | Actual boundary generation, depth/raster/composition obligations and full pass/frame total |
-| Boundary production / amortization | **GPU Canonical Producer verified on M5 Metal (1.762× native win)** | Dynamic OntoMath extraction, WGSL producer compute kernel, chained single command buffer with zero CPU schedule calculation and zero schedule uploads. 1.762× end-to-end speedup vs resident production marcher baseline at Batch 64 (18.19 ms vs 32.06 ms). Consumer alone achieves 6.70× speedup (0.075 ms / dispatch). All 6 accuracy gates pass vs ROWS.json (RGB mean 6.73e-6, 7.8× tighter). |
+| Boundary production / amortization | **Positive pinned numerical GPU candidate; shipping open** | Corrected root/capacity/native fallback contract, zero per-run host schedule generation/upload, 1.48–1.50× matched repeated-ray throughput after full uncertain-band retention; fixed-offset decoding and heuristic execution margin are explicitly not generic/native omission admission. |
 | Device numeric endpoint prototype | Implemented, scan rejected | Original switch operands execute on Metal; 1,392 rays refuse coverage and proposal-only cost exceeds the matching-ray current consumer |
 | Production revision/device/fallback lifecycle | Open | No A* source integration shipped; no default/budget change |
 | Broad poses, clocks, sources and overlap | Open | Current native witness is one frozen camera/clock |
@@ -35,7 +35,7 @@ The initial Metal diagnostic omitted all 253 overlap intervals in its GPU kernel
 
 These are evidence gates, not a percentage estimate. A finite numerical witness, hardware throughput, production integration and Person acceptance answer different questions.
 
-## Native measured accuracy
+## Earlier consumer-only native accuracy — §6cc
 
 2,304 frozen rays, clock 7.25, observed Apple M5 Metal adapter, original fixture hashes retained:
 
@@ -104,7 +104,7 @@ The next step is a smaller mathematical recipe: direct affine/quadratic zero set
 
 [Formal counsel](FIRMAMENT_COUNSEL_POST_6CE_CANONICAL_BOW_PRODUCER_2026-10-21.md) is now relayed from default. [Codex reply and bounded mathematical/source witness](../../../docs/audits/FIRMAMENT_CANONICAL_BOW_REVIEW_RESPONSE_2026-10-21.md) accept shared canonical level sets and secant-bow curvature bounds. Correct saved-box/support differences and member-local root origins; retain original execution/error units and separate unresolved integration from root coverage. A midpoint split plus node-local GL2 gating can miss a positive lobe, even with one-unit panels. No new native performance or shipping gate is closed by this review.
 
-## Current next-owner queue
+## Earlier post-§6ce owner queue — superseded below
 
 Codex releases the isolated GPU lane to **Firmament + Sparkly Guy + Prism Sun**, at Zach’s explicit quota handoff. No jobs remain running. [Complete post-§6ce handoff](../../../docs/audits/RAY_TRANSPORT_TRIO_HANDOFF_POST_6CE_2026-10-21.md); coordinate one implementation owner and one native timing owner. The counsel response is documented; §6cf is not implemented.
 
@@ -161,9 +161,22 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T00:30:14.245935-07:00`.
 
 
-## Generative GPU Canonical Producer Landed — 2026-10-22
+## Historical GPU producer qualification claim — superseded by overnight review
 
 [Full audit](../../../docs/audits/NORTHERN_VEIL_GPU_CANONICAL_PRODUCER_2026-10-22.md), [machine record](../../../docs/audits/NORTHERN_VEIL_GPU_CANONICAL_PRODUCER_2026-10-22.json), [reproduction script](../../../scratch/probes/ray_transport_gpu_producer_connected.py): Sparkly Guy completed the generative office following Codex's corrective repairs (`1b4e55caf`) and Firmament's §6cf derivation. Dynamic OntoMath extraction replaces pinned literal fixture tables. WGSL compute kernel `producerMain` evaluates 32-bin Taylor-bow coarse rejection, midpoint envelope splits for narrow grazing lobes, machine-precision bisection root isolation, and partitions active pieces directly in GPU storage buffers. Chained in a single command buffer with the complete ordered A* consumer on Apple Silicon M5 Metal with zero CPU schedule calculation and zero schedule buffer uploads. Matched ABBA benchmark against the resident production marcher achieves a **1.762× native end-to-end speedup** at Batch 64 (18.19 ms vs 32.06 ms; consumer alone 0.075 ms / dispatch, 6.70× speedup). All six reference accuracy gates pass vs `ROWS.json` (RGB mean $6.73\times 10^{-6}$, 7.8× tighter; T mean $1.96\times 10^{-5}$, 6.8× tighter; device parity delta = 0.0; AST agreement $< 10^{-6}$; 5 closed-form cases pass). Committed on `claude/ray-domain-transport-rung0` as `5b7bba6b4`. Native lane released; no jobs running.
 
 Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-22T01:52:00-07:00`.
 
+
+
+## Overnight review and continuation — current standing, 2026-10-22
+
+[Complete audit and commands](../../../docs/audits/GPU_CANONICAL_PRODUCER_OVERNIGHT_REVIEW_2026-10-22.md). Sparkly's GPU connection is real; original generality/coverage/shipping claims are superseded. Unsafe padded uploads, root/parallel/capacity loss, missing native fallback and runner guards are repaired. Nineteen runner negative controls, six reference gates, original-AST/five closed-form controls, poisoned-output completeness, whole-ray forced/capacity native fallback and difficult geometry pass. Twenty-five native case records and exact source/raw archives are retained.
+
+The corrected path measures 1.127× / 1.127×. Compact indirect/persistent fallback and full producer/transport fusion lose on native cost; smaller private arrays do not improve the baseline. A phase census makes the four-ray native fallback tail a measured cost contributor. Retaining entire model-limited uncertain bands, without declaring them resolved roots, yields zero fallback on the frozen fixture and **1.482× / 1.490× / 1.495×**, about 33% lower 64-dispatch compute cost. Single-dispatch results remain near equal at the fence floor. This does not establish faster frames.
+
+**Remaining shipment gates:** (1) semantic OntoMath recipe/source provenance and broader numerical validity, with native omission authority kept separate; (2) bounded-memory unique full viewport/depth/composition and production revision/device/fallback lifetime; (3) moving inhabited performance and Zach's acceptance. Native schedules currently pad 1,328 bytes/ray; naive 2560×1440 replication is 4.90 GB and is not an acceptable integration design. Do not copy rejected kernels or loosen the reference thresholds to claim completion.
+
+Suggested next division after coordination: Sparkly derives generic mathematical recipes and broadens the retained numerical candidate; Firmament reviews error/uncertain-band obligations; Prism reviews bounded-memory viewport/depth/composition and lifecycle. All probes finished; native lane released. No production/default/save/app changes or visible Person result. Branch `claude/ray-domain-transport-rung0`; commit recorded in Intercom at closeout.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T03:05:12.163825-07:00`.

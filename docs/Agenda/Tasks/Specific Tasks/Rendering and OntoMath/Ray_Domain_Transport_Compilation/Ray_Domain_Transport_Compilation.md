@@ -180,9 +180,9 @@ This is **architecture direction, not a landed implementation claim**. Existing 
 
 ## Distance to a faster Northern Veil
 
-*Standing account Zach asked for on 2026-10-20; last updated §6cg corrective repair, 2026-10-22 ("keep the account of how much is left until the ray transport work buys more faster Northern Veil than before"). Every pass updates it.*
+*Standing account Zach asked for on 2026-10-20; last updated §6ch–§6ci overnight GPU review/continuation, 2026-10-22 ("keep the account of how much is left until the ray transport work buys more faster Northern Veil than before"). Every pass updates it.*
 
-**Current ledger — §6cg corrections:** root/bracket/unresolved, near-parallel, complete whole-ray diagnostic fallback and runner guards are implemented and pass CPU/native checks. The actual matching 2,304-ray connected host producer loses (17.26407 ms versus 1.27242 ms current consumer). Sparkly now owns generic authored recipe/execution admission and GPU boundary generation; affordable complete producer, unique viewport/lifecycle and inhabited movement remain open. Earlier §6cc 3.34–3.37× matched native **consumer-only** evidence survives. [Corrective evidence and generative hand-back](../../../../../audits/CANONICAL_PRODUCER_CORRECTIVE_REPAIRS_2026-10-22.md).
+**Current ledger — §6ch–§6ci:** corrected pinned GPU production + ordered native transport + actual production fallback pass the numerical/refusal controls. Conservative corrected throughput is 1.127×; retained model-limited uncertainty bands reproduce 1.482× / 1.490×, with final-source confirmation 1.495×, on matching repeated sparse compute rays. Generic mathematical recipe/source admission, broader numerical validity, affordable unique full viewport/depth/composition and production lifetime remain open before inhabited movement/Person acceptance. Native omission authority remains unproved; no shipped FPS/default/save change. [Overnight audit and exact next gates](../../../../../audits/GPU_CANONICAL_PRODUCER_OVERNIGHT_REVIEW_2026-10-22.md).
 
 **Baseline to beat.**
 - Codex's 2026-10-15 controlled offscreen series, aurora/inside at 2560×1440: **~136–141 ms per frame** (24-frame readback-free batches; not live FPS). The existing renderer's aurora proof construction is ~239 ms at admission ([audit](../../../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md)).
@@ -349,3 +349,10 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 [Audit and reproducer commands](../../../../../audits/CANONICAL_PRODUCER_CORRECTIVE_REPAIRS_2026-10-22.md): 33,640 CPU assertions, seven negative harness controls, actual corrected Metal and forced-all-ray fallback pass. The runtime ratio now uses matching work and includes concrete CPU production/uploads, exposing a loss instead of the former invalid win. Frozen manual model edits refuse; generic OntoMath extraction, original execution enclosure and GPU generation remain Sparkly’s next work. No production/save/default or Person-visible change; existing movement acceptance stays open.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T00:30:14.245935-07:00`.
+
+
+### §6ch–§6ci — GPU producer repaired; positive numerical throughput checkpoint
+
+[Audit, source/raw archives and next-owner commands](../../../../../audits/GPU_CANONICAL_PRODUCER_OVERNIGHT_REVIEW_2026-10-22.md) preserve Sparkly's GPU connection while withdrawing its unsupported generality/coverage/shipping claims. Corrected buffer/root/capacity/native fallback/harness execution passes native controls; twenty-five case records and nineteen negative runner checks are archived. Compact fallback and full fusion lose on measured cost. Retained uncertainty sets avoid chasing irreducible model uncertainty and pass the frozen reference gates at 1.48–1.50× matching batched compute throughput. No universal error certificate, full-frame/FPS result or Person acceptance follows. Next: generic mathematical recipe plus broader validity, bounded-memory unique viewport/depth/composition/lifecycle, then inhabited movement. Existing Person verification remains open; no new visible app behavior.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T03:05:12.163825-07:00`.
