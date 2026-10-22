@@ -101,15 +101,34 @@ double median(std::vector<double> values) {
     return 0.5 * (values[n / 2 - 1] + values[n / 2]);
 }
 
+// Median absolute deviation is descriptive, not a confidence interval.
+double pairedMad(const std::vector<double>& values) {
+    if (values.empty()) return 0.0;
+    const double center = median(values);
+    std::vector<double> deviations;
+    deviations.reserve(values.size());
+    for (const double v : values) deviations.push_back(std::abs(v - center));
+    return median(deviations);
+}
+
 struct Sample {
     double wallMs = 0.0;
+    double recordSubmitMs = 0.0;
+    double devicePollMs = 0.0;
     Renderer::FrameStats stats;
 };
 
 struct Arm {
     std::vector<double> wallMs;
+    std::vector<double> recordSubmitMs;
+    std::vector<double> devicePollMs;
     std::vector<double> gpuMs;
     size_t recurringRangeUploadBytes = 0;
+    size_t recurringSdfParameterUploadBytes = 0;
+    size_t recurringUniformBytesWritten = 0;
+    uint32_t recurringSdfCompiles = 0;
+    uint32_t recurringSdfCacheHits = 0;
+    uint32_t recurringSdfCacheMisses = 0;
     uint32_t traversalDraws = 0;
 };
 
@@ -2116,6 +2135,30 @@ int main() {
         return 1;
     }
 
+    // Observe the actual native adapter. Do NOT enable timestamp features on
+    // this correctness/measurement device: the renderer's timestamp readback
+    // describes an earlier frame and cannot be paired with this frame's CPU wall.
+    WGPUAdapterInfo adapterInfo = {};
+    wgpuAdapterGetInfo(gpu.adapter, &adapterInfo);
+    const bool advertisedTimestampQuery =
+        wgpuAdapterHasFeature(gpu.adapter, WGPUFeatureName_TimestampQuery);
+#ifndef __EMSCRIPTEN__
+    const bool advertisedInsideEncoderTimestamp =
+        wgpuAdapterHasFeature(
+            gpu.adapter,
+            static_cast<WGPUFeatureName>(WGPUNativeFeature_TimestampQueryInsideEncoders));
+#else
+    const bool advertisedInsideEncoderTimestamp = false;
+#endif
+    std::printf(
+        "SDF_RANGE_DEVICE backend=%u device=%.*s "
+        "timestamp_query_advertised=%d timestamp_inside_encoder_advertised=%d "
+        "timestamp_requested=0 gpu_execution_timestamps=UNAVAILABLE\n",
+        static_cast<unsigned>(adapterInfo.backendType),
+        static_cast<int>(adapterInfo.device.length), adapterInfo.device.data,
+        advertisedTimestampQuery ? 1 : 0,
+        advertisedInsideEncoderTimestamp ? 1 : 0);
+
     WebGpuRenderer offRenderer;
     WebGpuRenderer onRenderer;
     if (!offRenderer.init(gpu) || !onRenderer.init(gpu)) {
@@ -2280,13 +2323,18 @@ int main() {
                               nullptr,
                               /*memoParameterRevision=*/1);
         renderer.endFrame();
-        // The benchmark deliberately waits here. That makes wallMs an honest
-        // submitted-frame cost instead of merely measuring command recording.
+        const auto tSubmitted = std::chrono::steady_clock::now();
+        // Completion-fenced wall time; poll is a HOST waiting interval, never
+        // a GPU execution timestamp. Preserve the original fence and work.
         wgpuDevicePoll(gpu.device, true, nullptr);
         const auto t1 = std::chrono::steady_clock::now();
 
         Sample s;
         s.wallMs = std::chrono::duration<double, std::milli>(t1 - t0).count();
+        s.recordSubmitMs =
+            std::chrono::duration<double, std::milli>(tSubmitted - t0).count();
+        s.devicePollMs =
+            std::chrono::duration<double, std::milli>(t1 - tSubmitted).count();
         s.stats = renderer.frameStats();
         return s;
     };
@@ -2296,14 +2344,26 @@ int main() {
         if (s.stats.sdfRangeHierarchyBuilds > 0) sawHierarchyBuild = true;
     };
 
-    auto warmupOne = [&](WebGpuRenderer& renderer) {
+    auto warmupOne = [&](WebGpuRenderer& renderer, const char* arm,
+                         int index, const char* order) {
         const Sample s = renderOne(renderer);
         observeSample(s);
+        std::printf(
+            "SDF_RANGE_WARMUP arm=%s warmup=%d order=%s wall_ms=%.6f "
+            "record_submit_ms=%.6f poll_host_ms=%.6f\n",
+            arm, index, order, s.wallMs, s.recordSubmitMs, s.devicePollMs);
     };
 
     auto recordSample = [&](WebGpuRenderer& renderer, Arm& arm) {
         const Sample s = renderOne(renderer);
         arm.wallMs.push_back(s.wallMs);
+        arm.recordSubmitMs.push_back(s.recordSubmitMs);
+        arm.devicePollMs.push_back(s.devicePollMs);
+        arm.recurringSdfCompiles += s.stats.sdfProgramCompiles;
+        arm.recurringSdfCacheHits += s.stats.sdfProgramCacheHits;
+        arm.recurringSdfCacheMisses += s.stats.sdfProgramCacheMisses;
+        arm.recurringSdfParameterUploadBytes += s.stats.sdfParameterBytesUploaded;
+        arm.recurringUniformBytesWritten += s.stats.uniformBytesWritten;
         if (s.stats.gpuMainPassTimingValid) {
             arm.gpuMs.push_back(static_cast<double>(s.stats.gpuMainPassMs));
         }
@@ -2475,16 +2535,20 @@ int main() {
         for (int i = 0; i < kWarmupFrames; ++i) {
             const bool abOrder = (i % 2) == 0;
             if (abOrder) {
-                warmupOne(offRenderer);
-                warmupOne(onRenderer);
+                warmupOne(offRenderer, "OFF", i, "AB");
+                warmupOne(onRenderer, "ON", i, "AB");
             } else {
-                warmupOne(onRenderer);
-                warmupOne(offRenderer);
+                warmupOne(onRenderer, "ON", i, "BA");
+                warmupOne(offRenderer, "OFF", i, "BA");
             }
         }
 
         std::vector<double> pairedWallRatios;
         std::vector<double> pairedWallDeltas;
+        std::vector<double> pairedRecordSubmitDeltas;
+        std::vector<double> pairedPollDeltas;
+        std::vector<double> abWallDeltas;
+        std::vector<double> baWallDeltas;
         std::vector<double> pairedGpuRatios;
         std::vector<double> pairedGpuDeltas;
 
@@ -2509,6 +2573,31 @@ int main() {
             const double wallPairDelta = onSample.wallMs - offSample.wallMs;
             pairedWallRatios.push_back(wallPairRatio);
             pairedWallDeltas.push_back(wallPairDelta);
+            pairedRecordSubmitDeltas.push_back(
+                onSample.recordSubmitMs - offSample.recordSubmitMs);
+            pairedPollDeltas.push_back(
+                onSample.devicePollMs - offSample.devicePollMs);
+            (abOrder ? abWallDeltas : baWallDeltas).push_back(wallPairDelta);
+
+            std::printf(
+                "SDF_RANGE_ATTRIBUTION_PAIR view=%s pair=%d order=%s "
+                "off_record_submit_ms=%.6f on_record_submit_ms=%.6f "
+                "off_poll_host_ms=%.6f on_poll_host_ms=%.6f "
+                "off_sdf_compiles=%u on_sdf_compiles=%u "
+                "off_sdf_cache_hits=%u on_sdf_cache_hits=%u "
+                "off_sdf_cache_misses=%u on_sdf_cache_misses=%u "
+                "off_sdf_param_upload_bytes=%zu on_sdf_param_upload_bytes=%zu "
+                "off_uniform_bytes=%zu on_uniform_bytes=%zu\n",
+                c.name, i, abOrder ? "AB" : "BA",
+                offSample.recordSubmitMs, onSample.recordSubmitMs,
+                offSample.devicePollMs, onSample.devicePollMs,
+                offSample.stats.sdfProgramCompiles, onSample.stats.sdfProgramCompiles,
+                offSample.stats.sdfProgramCacheHits, onSample.stats.sdfProgramCacheHits,
+                offSample.stats.sdfProgramCacheMisses, onSample.stats.sdfProgramCacheMisses,
+                offSample.stats.sdfParameterBytesUploaded,
+                onSample.stats.sdfParameterBytesUploaded,
+                offSample.stats.uniformBytesWritten,
+                onSample.stats.uniformBytesWritten);
 
             const bool gpuPairValid =
                 offSample.stats.gpuMainPassTimingValid &&
@@ -2570,6 +2659,31 @@ int main() {
             off.gpuMs.size(), on.gpuMs.size(),
             on.traversalDraws,
             on.recurringRangeUploadBytes);
+
+        std::printf(
+            "SDF_RANGE_ATTRIBUTION view=%s "
+            "off_record_submit_median_ms=%.6f on_record_submit_median_ms=%.6f "
+            "off_poll_host_median_ms=%.6f on_poll_host_median_ms=%.6f "
+            "paired_record_submit_delta_median_ms=%.6f "
+            "paired_poll_host_delta_median_ms=%.6f "
+            "paired_wall_mad_ms=%.6f ab_wall_delta_median_ms=%.6f "
+            "ba_wall_delta_median_ms=%.6f "
+            "off_sdf_compiles=%u on_sdf_compiles=%u "
+            "off_sdf_cache_hits=%u on_sdf_cache_hits=%u "
+            "off_sdf_cache_misses=%u on_sdf_cache_misses=%u "
+            "off_sdf_param_upload_bytes=%zu on_sdf_param_upload_bytes=%zu "
+            "off_uniform_bytes=%zu on_uniform_bytes=%zu "
+            "gpu_execution_timestamps=UNAVAILABLE poll_is_not_gpu_time=1\n",
+            c.name,
+            median(off.recordSubmitMs), median(on.recordSubmitMs),
+            median(off.devicePollMs), median(on.devicePollMs),
+            median(pairedRecordSubmitDeltas), median(pairedPollDeltas),
+            pairedMad(pairedWallDeltas), median(abWallDeltas), median(baWallDeltas),
+            off.recurringSdfCompiles, on.recurringSdfCompiles,
+            off.recurringSdfCacheHits, on.recurringSdfCacheHits,
+            off.recurringSdfCacheMisses, on.recurringSdfCacheMisses,
+            off.recurringSdfParameterUploadBytes, on.recurringSdfParameterUploadBytes,
+            off.recurringUniformBytesWritten, on.recurringUniformBytesWritten);
 
         if (on.traversalDraws == 0) {
             std::printf("SDF_RANGE_PERF FAIL traversal did not activate for %s\n", c.name);
