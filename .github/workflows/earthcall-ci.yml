@@ -75,6 +75,7 @@ jobs:
         person_migration_test
         person_home_migration_boot_test
         body_part_test
+        voice_test
         person_database_test
         person_serialization_test
         person_ecform_propagation_test
