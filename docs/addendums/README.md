@@ -35,5 +35,7 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating Systemic Propagation and Temporal Events](systemic_propagation_and_temporal_events_addendum.md)
 *   [Integrating Unified Brush System and Object Hover Events](unified_brush_and_hover_events_addendum.md)
 *   [Integrating Unified Brush System and CPU-GPU Micro-Mastery](unified_brush_and_micro_mastery_addendum.md)
+*   [Integrating Pixel Substrate, Performance as Truth, and the No Black Box Principle](pixel_identity_and_performance_as_truth_addendum.md)
+*   [Integrating Substrate Ordering and the Ontology of Time](substrate_ordering_and_time_addendum.md)
 *   [Integrating the Event Bus, Discrete Moments, and Continuous Time](event_bus_and_time_moment_addendum.md)
 *   [The Slow Adapter and the Architecture of Understanding](slow_adapter_and_architectural_interrelations_addendum.md)
