@@ -1,0 +1,441 @@
+{
+  "accuracy_vs_65536_step_reference": {
+    "native_baseline": {
+      "RGB_max_per_ray": {
+        "max": 0.001958256955896076,
+        "mean": 8.746626815145005e-05,
+        "min": 1.439868953928558e-08,
+        "p50": 3.251150159287036e-05,
+        "p90": 0.00019474293633072598,
+        "p99": 0.0009241536164616843,
+        "rms": 0.00019371082514280588
+      },
+      "RGB_pooled_channels": {
+        "max": 0.001958256955896076,
+        "mean": 5.223495505468815e-05,
+        "min": 2.3976475978237932e-09,
+        "p50": 1.2157359495723608e-05,
+        "p90": 0.00011330401954848246,
+        "p99": 0.0007491029737184962,
+        "rms": 0.0001455854561176458
+      },
+      "T": {
+        "max": 0.003024910893728472,
+        "mean": 0.00013351522807581676,
+        "min": 8.460271927468455e-09,
+        "p50": 4.4844231534613144e-05,
+        "p90": 0.0003039946986195252,
+        "p99": 0.0014302853591834364,
+        "rms": 0.00030088063395123597
+      }
+    },
+    "unfused_A_star_on_device": {
+      "RGB_max_per_ray": {
+        "max": 0.00011367197765807524,
+        "mean": 1.3465507060002258e-05,
+        "min": 1.566548676823693e-09,
+        "p50": 1.0175310202642507e-05,
+        "p90": 2.959384081321903e-05,
+        "p99": 7.60955475662961e-05,
+        "rms": 1.9331345710444018e-05
+      },
+      "RGB_pooled_channels": {
+        "max": 0.00011367197765807524,
+        "mean": 6.729923857627002e-06,
+        "min": 1.7199611480268515e-10,
+        "p50": 3.2292191225035544e-06,
+        "p90": 1.5904852329124558e-05,
+        "p99": 4.975079039076097e-05,
+        "rms": 1.2166885568468943e-05
+      },
+      "T": {
+        "max": 0.0001652396935035716,
+        "mean": 1.9625557891128998e-05,
+        "min": 1.1596956728254781e-09,
+        "p50": 1.4602267469854269e-05,
+        "p90": 4.423309271150977e-05,
+        "p99": 0.0001108554442204035,
+        "rms": 2.8513694556434603e-05
+      }
+    }
+  },
+  "batched_fence_series": [
+    {
+      "connected_batch_ms": {
+        "max": 3.04725,
+        "mean": 2.66051725,
+        "min": 1.522541,
+        "p50": 3.034458,
+        "p90": 3.045542,
+        "p99": 3.04725,
+        "rms": 2.739304240538599
+      },
+      "consumer_only_batch_ms": {
+        "max": 1.536625,
+        "mean": 1.5290763333333335,
+        "min": 1.517583,
+        "p50": 1.531875,
+        "p90": 1.534542,
+        "p99": 1.536625,
+        "rms": 1.5290884139991712
+      },
+      "current_batch_ms": {
+        "max": 3.04475,
+        "mean": 3.0350451666666665,
+        "min": 3.024042,
+        "p50": 3.036875,
+        "p90": 3.043541,
+        "p99": 3.04475,
+        "rms": 3.035052631777742
+      },
+      "dispatches_per_fence": 1,
+      "empty_batch_ms": {
+        "max": 1.528833,
+        "mean": 1.5227778333333335,
+        "min": 1.513958,
+        "p50": 1.525709,
+        "p90": 1.528833,
+        "p99": 1.528833,
+        "rms": 1.5227875032458842
+      },
+      "speedup_connected": 1.1407725947526433
+    },
+    {
+      "connected_batch_ms": {
+        "max": 3.095333,
+        "mean": 3.070427,
+        "min": 3.052209,
+        "p50": 3.0735,
+        "p90": 3.0875,
+        "p99": 3.095333,
+        "rms": 3.0704581266710296
+      },
+      "consumer_only_batch_ms": {
+        "max": 1.55625,
+        "mean": 1.524847333333333,
+        "min": 1.513958,
+        "p50": 1.521958,
+        "p90": 1.532625,
+        "p99": 1.55625,
+        "rms": 1.5248862704109007
+      },
+      "current_batch_ms": {
+        "max": 4.57425,
+        "mean": 4.5290555,
+        "min": 4.379334,
+        "p50": 4.538875,
+        "p90": 4.554083,
+        "p99": 4.57425,
+        "rms": 4.529293909548872
+      },
+      "dispatches_per_fence": 8,
+      "empty_batch_ms": {
+        "max": 1.548834,
+        "mean": 1.5277638333333332,
+        "min": 1.516709,
+        "p50": 1.529125,
+        "p90": 1.548834,
+        "p99": 1.548834,
+        "rms": 1.5278000971911105
+      },
+      "speedup_connected": 1.4750572151690955
+    },
+    {
+      "connected_batch_ms": {
+        "max": 18.506166,
+        "mean": 18.194781333333335,
+        "min": 18.1385,
+        "p50": 18.172042,
+        "p90": 18.218792,
+        "p99": 18.506166,
+        "rms": 18.195035527652102
+      },
+      "consumer_only_batch_ms": {
+        "max": 6.050083,
+        "mean": 4.783986083333334,
+        "min": 4.5215,
+        "p50": 4.535208,
+        "p90": 6.049208,
+        "p99": 6.050083,
+        "rms": 4.8173563094770575
+      },
+      "current_batch_ms": {
+        "max": 33.234833,
+        "mean": 32.05759366666666,
+        "min": 31.682583,
+        "p50": 31.730583,
+        "p90": 33.208375,
+        "p99": 33.234833,
+        "rms": 32.06328229403915
+      },
+      "dispatches_per_fence": 64,
+      "empty_batch_ms": {
+        "max": 1.520625,
+        "mean": 1.5124308333333332,
+        "min": 1.506833,
+        "p50": 1.516292,
+        "p90": 1.520625,
+        "p99": 1.520625,
+        "rms": 1.5124408464343875
+      },
+      "speedup_connected": 1.7619114557829985
+    }
+  ],
+  "closed_form_witnesses": [
+    {
+      "case": "zero density",
+      "expected": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "max_RGB_delta": 0.0,
+      "max_T_delta": 0.0,
+      "pass": true,
+      "unfused": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "case": "tiny positive floored depth",
+      "expected": [
+        9.99999985024662e-10,
+        1.999999970049324e-09,
+        3.999999940098648e-09,
+        0.9999999900000003
+      ],
+      "max_RGB_delta": 5.322637415462918e-17,
+      "max_T_delta": 9.999999717180685e-09,
+      "pass": true,
+      "unfused": [
+        9.999999717180685e-10,
+        1.999999943436137e-09,
+        3.999999886872274e-09,
+        1.0
+      ]
+    },
+    {
+      "case": "ordinary single medium",
+      "expected": [
+        0.1450154016505186,
+        0.03625385041262965,
+        0.018126925206314825,
+        0.8187307506379741
+      ],
+      "max_RGB_delta": 1.2923330489078566e-08,
+      "max_T_delta": 2.090362138940094e-08,
+      "pass": true,
+      "unfused": [
+        0.1450153887271881,
+        0.03625384718179703,
+        0.018126923590898514,
+        0.8187307715415955
+      ]
+    },
+    {
+      "case": "pure different-color overlap",
+      "expected": [
+        0.15165442391197007,
+        0.16484176574112977,
+        0.4285885630229874,
+        0.4065696633756152
+      ],
+      "max_RGB_delta": 3.594361108749666e-08,
+      "max_T_delta": 3.665684755738141e-09,
+      "pass": true,
+      "unfused": [
+        0.1516544371843338,
+        0.16484177112579346,
+        0.4285885989665985,
+        0.4065696597099304
+      ]
+    },
+    {
+      "case": "single-overlap-single chronological flow",
+      "expected": [
+        0.28593676167771587,
+        0.2214865333634056,
+        0.5198405321840498,
+        0.16529889117736102
+      ],
+      "max_RGB_delta": 6.592233448010631e-08,
+      "max_T_delta": 1.7771537297317508e-08,
+      "pass": true,
+      "unfused": [
+        0.28593677282333374,
+        0.22148655354976654,
+        0.5198405981063843,
+        0.16529890894889832
+      ]
+    }
+  ],
+  "connected_measured_scope": {
+    "actual_full_viewport": false,
+    "connected_gpu_ms": {
+      "max": 1.576542,
+      "mean": 1.5499088125,
+      "min": 1.525375,
+      "p50": 1.550583,
+      "p90": 1.554292,
+      "p99": 1.576542,
+      "rms": 1.549939110248105
+    },
+    "current_host_ms": {
+      "max": 1.525125,
+      "mean": 1.5189843125000002,
+      "min": 1.513583,
+      "p50": 1.516375,
+      "p90": 1.525041,
+      "p99": 1.525125,
+      "rms": 1.518990470661415
+    },
+    "producer_only_gpu_ms": {
+      "max": 1.538,
+      "mean": 1.5322241250000002,
+      "min": 1.53,
+      "p50": 1.531792,
+      "p90": 1.538,
+      "p99": 1.538,
+      "rms": 1.5322264140383677
+    },
+    "samples_connected_ms": [
+      1.550334,
+      1.550166,
+      1.549375,
+      1.541125,
+      1.576542,
+      1.554292,
+      1.553291,
+      1.546625,
+      1.552458,
+      1.553375,
+      1.551875,
+      1.550583,
+      1.550625,
+      1.549583,
+      1.542917,
+      1.525375
+    ],
+    "samples_current_ms": [
+      1.515208,
+      1.523208,
+      1.513917,
+      1.513583,
+      1.525125,
+      1.525041,
+      1.515417,
+      1.516375,
+      1.515833,
+      1.523333,
+      1.5155,
+      1.523292,
+      1.516084,
+      1.523875,
+      1.515333,
+      1.522625
+    ],
+    "samples_producer_ms": [
+      1.530375,
+      1.538,
+      1.534708,
+      1.531792,
+      1.532459,
+      1.530125,
+      1.53,
+      1.530334
+    ],
+    "scope": "Same 2304 frozen rays; warmed stable scene/buffers; GPU Canonical Producer + A* Consumer chained in single command buffer versus resident production marcher",
+    "speedup_factor": 0.9800475358610816,
+    "zero_host_schedule_cpu_ms": true,
+    "zero_host_schedule_upload_bytes": true
+  },
+  "cpu_vs_gpu_arithmetic_deviation": {
+    "cpu_quadrature_ms": 1422.267917,
+    "cpu_us_per_ray": 617.3037834201389,
+    "max_delta_RGB": 2.980232238769531e-07,
+    "max_delta_T": 7.152557373046875e-07,
+    "note": "Independent AST; CPU double scalar operations and vec3/f32 properties differ from shader execution",
+    "within_1e-5_tolerance": true
+  },
+  "current_baseline_witness": {
+    "GPU_time_preparation": true,
+    "integration_body_verbatim": true,
+    "stored_native_max_RGB_delta": 4.470348358154297e-08,
+    "stored_native_max_T_delta": 0.0,
+    "trim_support_lane": false,
+    "zero_proofs": true
+  },
+  "current_vs_A_star": {
+    "A_star_normalized_host_ms": 0.07474978255208334,
+    "clock": "submission-to-blocking-poll host elapsed; normalized batched dispatches",
+    "current_normalized_host_ms": 0.5008999010416666,
+    "speedup_factor": 6.701021513910827
+  },
+  "device_arithmetic_fidelity": {
+    "arithmetic_identical_within_f32_eps": true,
+    "max_delta_RGB_between_fused_and_unfused": 0.0,
+    "max_delta_T_between_fused_and_unfused": 0.0
+  },
+  "execution_workload": {
+    "actual_full_viewport": false,
+    "boundary_preparation_in_timing": false,
+    "distinct_rays": 2304,
+    "invocations_per_dispatch": 2304,
+    "repeat_factor": 1,
+    "replicated_output_verified": true
+  },
+  "gpu_canonical_producer": {
+    "GPU_producer": true,
+    "chained_command_buffer": true,
+    "dynamic_OntoMath_extraction": true,
+    "zero_cpu_schedule_generation": true,
+    "zero_schedule_upload_overhead": true
+  },
+  "observed_adapter": {
+    "backend": 5,
+    "device": "Apple M5",
+    "metal": true,
+    "timestamps": false
+  },
+  "ordered_coverage": {
+    "cpu_overlap_intervals": 85,
+    "cpu_overlap_member_sites": 680,
+    "cpu_single_subpanels": 13589,
+    "independent_comparator": "original authored MathNode density/extinction/emission; no copied-envelope oracle"
+  },
+  "platform": "Apple Silicon M5 (Metal / WebGPU)",
+  "qualification": {
+    "closed_form_witnesses_pass": true,
+    "device_fused_unfused_parity_pass": true,
+    "independent_AST_agreement_pass": true,
+    "mean_p99_max_reference_gates_pass": true,
+    "shipping_performance_qualified": false
+  },
+  "rays": 2304,
+  "regressions_vs_native": {
+    "RGB_max_delta": 9.975831366286492e-05,
+    "RGB_worse_pct": 20.008680555555557,
+    "RGB_worse_rays": 461,
+    "T_max_delta": 0.00014498460338829844,
+    "T_worse_pct": 20.833333333333332,
+    "T_worse_rays": 480
+  },
+  "scope": "Generative GPU Canonical Producer + A* Consumer connected in single command buffer; dynamic OntoMath extraction",
+  "timing_protocol": "Completion-fenced host elapsed; normalization by the last configured batch (64 dispatches at repeat=1, 4 at repeat>1); no GPU timestamps, no readback in timed batches",
+  "workload_accounting": {
+    "max_subpanels_per_ray": 21,
+    "media_bytes": 192,
+    "overlaps_bytes": 294912,
+    "overlaps_count": 85,
+    "params_bytes": 624,
+    "ray_headers_bytes": 110592,
+    "subpanels_bytes": 1179648,
+    "subpanels_count": 13589,
+    "total_schedule_bytes": 1585968,
+    "total_schedule_kb": 1548.796875
+  }
+}

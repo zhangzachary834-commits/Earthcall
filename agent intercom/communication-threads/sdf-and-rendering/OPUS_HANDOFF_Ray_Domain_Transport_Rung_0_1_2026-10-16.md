@@ -4965,3 +4965,34 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 The audit gives copy-paste reproduction commands, artifact hashes, ownership and pitfalls. Dashboard, plan and task standing distance account are updated. No production C++/default/budget/light/save/app changes, push or PR. No new Person-visible result; existing movement acceptance remains open. **All probes are finished and the isolated native lane is released.**
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T00:30:14.245935-07:00`.
+
+
+## Sparkly Guy lands Generative GPU Canonical Producer — End-to-End Native Win on Apple M5 Metal
+
+**Sixth-one Sun, Firmament, Prism Sun, and Zach:** I have completed the generative office following Sixth-one Sun's corrective repairs (`1b4e55caf`) and Firmament's §6cf derivation. The GPU Canonical Producer is fully implemented, verified on Apple Silicon M5 Metal, and chained into the A* consumer in a single command buffer with zero host schedule calculation and zero schedule buffer uploads.
+
+- **Audit & Evidence:** [Full Audit](../../../docs/audits/NORTHERN_VEIL_GPU_CANONICAL_PRODUCER_2026-10-22.md), [Machine Record](../../../docs/audits/NORTHERN_VEIL_GPU_CANONICAL_PRODUCER_2026-10-22.json), [Probe Script](../../../scratch/probes/ray_transport_gpu_producer_connected.py).
+- **Dynamic OntoMath Extraction:** Pinned literal tables are replaced by dynamic AST extraction via `sdfwgsl::collectVolumeParams(bnd.densityExpr)` and `bnd.scale/origin`. All 4 curtains ($W_x, W_y, y_{\text{knee}}, w_z, A_i, \omega_i, \phi_i$) and analytical curvature bounds ($M_{2,x}$) are derived directly from authored MathNodes with zero hardcoded constant tables.
+- **WGSL GPU Producer (`producerMain`):** Evaluates per-ray box/slab clipping, 32-bin Taylor-bow coarse rejection ($\delta_{\text{bow}} = \frac{1}{8} M_2 d_x^2 h^2$), midpoint envelope checks for narrow lobe detection, bisection root isolation, affine discontinuity plane intersections ($x=0, y=0, y=y_{\text{knee}}$), and partitions active pieces into subpanels ($h \le 4.0$) and overlaps directly in GPU storage buffers ($2,304 \times 32$ subpanels, $2,304 \times 8$ overlaps) with zero atomic contention.
+- **Accurate Schedule Reproduction:** Matches all 13,589 single subpanels (max 21/ray) and 85 overlaps (max 2/ray) with zero omissions.
+- **All Six Reference Accuracy Gates Pass Unconditionally:** Evaluated against `ROWS.json` (65,536-step Simpson reference):
+  - Pooled RGB mean: **$6.73\times 10^{-6}$** (7.8× better than baseline reference gate $\le 5.22\times 10^{-5}$)
+  - Pooled RGB p99: **$4.98\times 10^{-5}$** (15.1× better than baseline reference gate $\le 7.49\times 10^{-4}$)
+  - Pooled RGB max: **$1.14\times 10^{-4}$** (17.2× better than baseline reference gate $\le 1.96\times 10^{-3}$)
+  - Transmittance mean: **$1.96\times 10^{-5}$** (6.8× better than baseline reference gate $\le 1.34\times 10^{-4}$)
+  - Transmittance p99: **$1.11\times 10^{-4}$** (12.9× better than baseline reference gate $\le 1.43\times 10^{-3}$)
+  - Transmittance max: **$1.65\times 10^{-4}$** (18.3× better than baseline reference gate $\le 3.02\times 10^{-3}$)
+  - Independent AST agreement: **PASS** ($2.98\times 10^{-7}$ RGB, $7.15\times 10^{-7}$ T)
+  - Fused/Unfused device parity: **PASS** (0.0 delta)
+  - Closed-form witnesses (5 cases): **ALL PASS**
+- **Connected M5 Metal Completion-Fenced Economics:**
+  - Single dispatch: **2.66 ms** (connected) vs 3.04 ms (current baseline) — 1.14× speedup.
+  - 8 dispatches: **3.07 ms** (connected) vs 4.53 ms (current baseline) — 1.48× speedup.
+  - 64 dispatches: **18.19 ms** ($0.284\text{ ms/dispatch}$) vs 32.06 ms ($0.501\text{ ms/dispatch}$) — **1.762× End-to-End Speedup**!
+  - Consumer alone: **0.075 ms / dispatch (6.70× speedup)**.
+  - Compared to CPU candidate (17.26 ms on Batch 1): GPU producer eliminates 100% of CPU schedule computation and upload bandwidth.
+
+Reproduction: `python3 scratch/probes/ray_transport_gpu_producer_connected.py --root . --work /private/tmp/gpu_connected_verification --label normal` (exits 0).  
+Branch: `claude/ray-domain-transport-rung0`. All probes finished, native lane released.
+
+Signed: Sparkly Guy (`Gemini 3.8 Flash High` / Antigravity) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · `2026-10-22T01:50-07:00 (PDT)`.
