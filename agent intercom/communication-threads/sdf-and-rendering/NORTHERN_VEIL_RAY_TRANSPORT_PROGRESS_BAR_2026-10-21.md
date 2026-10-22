@@ -3,7 +3,7 @@
 **Human goal:** Zachary Zhang's substantial native Northern Veil speed checkpoint at current-or-better accuracy, followed by an inhabited movement result.
 **Branch:** `claude/ray-domain-transport-rung0`.
 **Council:** [existing Intercom thread](OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md).
-**Latest overnight pass:** [GPU review, native repairs and positive numerical continuation](../../../docs/audits/GPU_CANONICAL_PRODUCER_OVERNIGHT_REVIEW_2026-10-22.md). Corrected pinned producer → transport → native fallback passes accuracy at 1.127× matched sparse throughput; model-limited retained uncertainty bands reproduce **1.482× / 1.490×**, with final-source confirmation **1.495×**. All six numerical gates and fallback/failure controls pass. Generic authored recipe/native omission authority, unique viewport/frame, lifecycle and inhabited acceptance remain open; no shipped FPS gain.
+**Latest pass:** [multi-view/clock qualification and authored coefficients](../../../docs/audits/GPU_RAY_TRANSPORT_MULTI_VIEW_QUALIFICATION_2026-10-22.md). Four native poses/two clocks pass both-resolution numerical gates; frozen clock-specific RGB binding is replaced by structural original-expression binding. View-dependent 192-ray throughput is 1.05–1.82×; full 2,304-ray control confirms 1.58× / 1.57× in longer 512-dispatch batches, not an isolated gain over prior 64-dispatch work. Cold binding/frame lifetime, generic source admission, unique viewport and inhabited acceptance remain open.
 
 **Preceding review:** [§6cf source/scalar review](../../../docs/audits/SPARKLY_CANONICAL_PRODUCER_6CF_REVIEW_2026-10-21.md) preserves Sparkly’s saved aggregate accuracy while reopening producer qualification: mismatched timing workloads, root loss, untyped uncertainty and hardcoded fixture math. **No new connected speedup or shipping gate passed.**
 
@@ -13,7 +13,7 @@
 
 ## Current state
 
-**A corrected GPU producer and complete native transport now have a positive numerical checkpoint: 1.48–1.50× matched repeated-ray throughput with current-or-better aggregate reference error. This is a pinned one-camera compute experiment. Generic derivation, unique viewport/frame integration, lifecycle and inhabited FPS/Person acceptance remain open. Earlier consumer-only 3.34–3.37× evidence survives.**
+**The retained pinned-source GPU production/transport candidate now passes numerical witnesses at four native poses/two clocks after binding original authored time coefficients. Native throughput varies by view; the full original control remains positive, while tiny exact-empty work loses. Generic density/root derivation, frame-lived coefficients, unique viewport/depth/composition, lifecycle and inhabited FPS/Person acceptance remain open. Earlier consumer-only and frozen-camera checkpoints remain dated evidence.**
 
 The initial Metal diagnostic omitted all 253 overlap intervals in its GPU kernels and its CPU comparator. Its “Lane A complete/certified,” production recommendation, exclusive-producer-bottleneck and 0.552 microseconds/ray performance-ceiling claims are superseded. Historical text and artifacts remain in the [initial audit](../../../docs/audits/NORTHERN_VEIL_METAL_DIAGNOSTIC_2026-10-21.md) and Intercom; this page tracks current qualified evidence.
 
@@ -30,7 +30,7 @@ The initial Metal diagnostic omitted all 253 overlap intervals in its GPU kernel
 | Boundary production / amortization | **Positive pinned numerical GPU candidate; shipping open** | Corrected root/capacity/native fallback contract, zero per-run host schedule generation/upload, 1.48–1.50× matched repeated-ray throughput after full uncertain-band retention; fixed-offset decoding and heuristic execution margin are explicitly not generic/native omission admission. |
 | Device numeric endpoint prototype | Implemented, scan rejected | Original switch operands execute on Metal; 1,392 rays refuse coverage and proposal-only cost exceeds the matching-ray current consumer |
 | Production revision/device/fallback lifecycle | Open | No A* source integration shipped; no default/budget change |
-| Broad poses, clocks, sources and overlap | Open | Current native witness is one frozen camera/clock |
+| Broad poses, clocks, sources and overlap | **Bounded pose/clock witness passed; generality open** | Four actual native camera poses, clocks 0/7.25, independent fine/half AST references; source stays pinned and zero-radiance. More sources/occlusion/general domains remain unqualified. |
 | Inhabited movement and Person acceptance | Open | Zach's “live in Northern Veil” checkpoint remains unverified |
 
 These are evidence gates, not a percentage estimate. A finite numerical witness, hardware throughput, production integration and Person acceptance answer different questions.
@@ -180,3 +180,12 @@ The corrected path measures 1.127× / 1.127×. Compact indirect/persistent fallb
 Suggested next division after coordination: Sparkly derives generic mathematical recipes and broadens the retained numerical candidate; Firmament reviews error/uncertain-band obligations; Prism reviews bounded-memory viewport/depth/composition and lifecycle. All probes finished; native lane released. No production/default/save/app changes or visible Person result. Branch `claude/ray-domain-transport-rung0`; commit recorded in Intercom at closeout.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T03:05:12.163825-07:00`.
+
+
+## §6cj — current multi-view/clock standing
+
+[Evidence, correction and restored-case commands](../../../docs/audits/GPU_RAY_TRANSPORT_MULTI_VIEW_QUALIFICATION_2026-10-22.md). The source's pulse changes with clock, so the frozen 7.25 RGB table fails at 0 by 0.099 RGB. Structural common-factor identity/time-only dependency admission now binds the original authored coefficient and passes all four camera poses plus clock-zero, at both reference resolutions. Thirty-six actual C++ admission/refusal and thirteen external-case guards pass. Spawn's fragment-only empty-support exit is correctly adapted/tested as raw identity; an exact-empty five-query control remains a performance loss, not universal enablement evidence.
+
+Inside/reverse/side/spawn 192-ray throughput ratios are 1.782/1.055/1.305/1.529; reverse confirms 1.052 and clock-zero 1.818. Full original 2,304-ray control is 1.581/ 1.571 in 512-dispatch batches. Earlier 64-dispatch1.48–1.50 remains valid; different batches do not isolate a new speedup. Cold structural/time binding costs about 2.4 ms at setup, excluded from stable GPU batches. Next source/revision math recipe and clock-payload lifetimes, then affordable unique viewport/depth/composition/complete frame costs (including empties), then moving inhabited acceptance. No production/default/save/app/Person-visible change; no FPS claim or push. Native lane released.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T08:14:35.094887-07:00`.

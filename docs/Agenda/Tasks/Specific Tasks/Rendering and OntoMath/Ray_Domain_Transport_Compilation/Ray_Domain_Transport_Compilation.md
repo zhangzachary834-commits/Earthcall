@@ -180,9 +180,9 @@ This is **architecture direction, not a landed implementation claim**. Existing 
 
 ## Distance to a faster Northern Veil
 
-*Standing account Zach asked for on 2026-10-20; last updated §6ch–§6ci overnight GPU review/continuation, 2026-10-22 ("keep the account of how much is left until the ray transport work buys more faster Northern Veil than before"). Every pass updates it.*
+*Standing account Zach asked for on 2026-10-20; last updated §6cj multi-view/clock qualification, 2026-10-22 ("keep the account of how much is left until the ray transport work buys more faster Northern Veil than before"). Every pass updates it.*
 
-**Current ledger — §6ch–§6ci:** corrected pinned GPU production + ordered native transport + actual production fallback pass the numerical/refusal controls. Conservative corrected throughput is 1.127×; retained model-limited uncertainty bands reproduce 1.482× / 1.490×, with final-source confirmation 1.495×, on matching repeated sparse compute rays. Generic mathematical recipe/source admission, broader numerical validity, affordable unique full viewport/depth/composition and production lifetime remain open before inhabited movement/Person acceptance. Native omission authority remains unproved; no shipped FPS/default/save change. [Overnight audit and exact next gates](../../../../../audits/GPU_CANONICAL_PRODUCER_OVERNIGHT_REVIEW_2026-10-22.md).
+**Current ledger — §6cj:** four native poses/two clocks now pass both-resolution numerical gates after replacing the prototype’s frozen clock-specific RGB coefficients with original-expression binding. 36 actual binding/refusal and 13 case guards pass; view-dependent 192-ray throughput is 1.05–1.82×, and full original 2,304-ray control 1.58× / 1.57× in longer batches. This is pinned compute evidence, not a new isolated FPS gain. Cold coefficient/revision lifetime, generic density/root recipe, bounded-memory unique viewport/depth/composition/complete frame and inhabited Person acceptance remain open; exact-empty tiny workloads can lose. [Latest evidence and next bridge](../../../../../audits/GPU_RAY_TRANSPORT_MULTI_VIEW_QUALIFICATION_2026-10-22.md).
 
 **Baseline to beat.**
 - Codex's 2026-10-15 controlled offscreen series, aurora/inside at 2560×1440: **~136–141 ms per frame** (24-frame readback-free batches; not live FPS). The existing renderer's aurora proof construction is ~239 ms at admission ([audit](../../../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md)).
@@ -356,3 +356,10 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 [Audit, source/raw archives and next-owner commands](../../../../../audits/GPU_CANONICAL_PRODUCER_OVERNIGHT_REVIEW_2026-10-22.md) preserve Sparkly's GPU connection while withdrawing its unsupported generality/coverage/shipping claims. Corrected buffer/root/capacity/native fallback/harness execution passes native controls; twenty-five case records and nineteen negative runner checks are archived. Compact fallback and full fusion lose on measured cost. Retained uncertainty sets avoid chasing irreducible model uncertainty and pass the frozen reference gates at 1.48–1.50× matching batched compute throughput. No universal error certificate, full-frame/FPS result or Person acceptance follows. Next: generic mathematical recipe plus broader validity, bounded-memory unique viewport/depth/composition/lifecycle, then inhabited movement. Existing Person verification remains open; no new visible app behavior.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T03:05:12.163825-07:00`.
+
+
+### §6cj — Multi-view numerical gate advanced; authored time coefficient repair
+
+[Audit and portable fixture/reference restore](../../../../../audits/GPU_RAY_TRANSPORT_MULTI_VIEW_QUALIFICATION_2026-10-22.md) preserve the clock-failure witness, admitted original common factor/time coefficient, actual native four-pose/two-clock gates and matched costs. The original full control survives; no production activation. Further source/math admission, frame-lived coefficient preparation, unique viewport/complete cost and inhabited acceptance remain the shipping bridge.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T08:14:35.094887-07:00`.
