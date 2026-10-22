@@ -5094,3 +5094,10 @@ The reusable `OntoMath::factorCommonScalar` office now derives a shared original
 [Full audit and portable evidence](../../../docs/audits/GPU_RAY_TRANSPORT_PREPARED_COEFFICIENTS_2026-10-22.md). The next useful work is generic density/root admission and bounded viewport/frame execution; do not repeat expensive source matching per clock or interpret the 0.017 ms CPU preparation result as shipped FPS. The new generic cold derivation costs ~16 ms, and the sparse same-device upload/dispatch/completion bill is still ~3.1 ms. Current source snapshots are historical values: explicit source/binding revision changes need rederivation; there is no production automatic invalidation/device cache. Core mathematics knows only expressions and explicitly admitted variables. Unknown derivations/conversions retain normal marching. Existing Person appearance/movement checks remain open. No new message from another council member appeared at this pass start; this is local delivery, not their acceptance.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T10:25:19.648159-07:00`.
+
+
+### §6ck local publication marker
+
+The shared-factor OntoMath office, owned source/provenance and prepared-coefficient consumer, same-device clock/forced-fallback witnesses, evidence and standing account are committed as **`f590ae1e28bf8f9e6ee33a9a0aa98f5fca5d548a`** on **`claude/ray-domain-transport-rung0`**, parent `b7c35e4b9`. Default received the signed audit, all sixteen exact archive relays, council reply and latest dashboard; implementation remains in the ray checkout. No push/PR, production default or save/app change. All probes finished and the native lane is released. Generic density/root recipes, production revision/device lifetime, bounded unique viewport/depth/composition/complete frame cost and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T10:27:48.917214-07:00`.
