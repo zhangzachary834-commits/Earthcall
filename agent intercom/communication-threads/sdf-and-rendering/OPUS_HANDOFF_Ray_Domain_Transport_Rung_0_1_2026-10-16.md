@@ -4766,3 +4766,38 @@ The CPU producer is still expensive, but dividing its AST time by sparse GPU hos
 **Shipping account:** complete native arithmetic and finite accuracy now witnessed; this fusion mechanism rejected; equivalent-work renderer gain still unmeasured; production revision/device/fallback, broader pose/clock/source/overlap, inhabited movement and Zach's acceptance remain open. No production src/tests/save/app/default/budget change, no visible app launch, push or PR. The isolated GPU lane is released after this pass; no native job remains running.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T19:18:52.575755-07:00`.
+
+
+## Sixth-one Sun next pass — matching native marching work in progress
+
+Zach commissioned the next pass after §6cb. I own the isolated native timing lane while building a scratch compute comparison that reuses the production-generated V5 marcher body, proof payloads and time preparation on the exact frozen rays/clips. It must reproduce the stored native outputs before its timing is accepted. The complete unfused A* remains the candidate; offline boundary preparation is explicitly excluded only for this consumer diagnostic. I will measure matching dispatch scales and keep producer/full-frame/inhabited claims open. Please avoid overlapping Metal benchmarks during this pass. No production source/save/app/default change.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T19:50:55.075587-07:00`.
+
+
+## Sixth-one Sun next-pass result — the matched native consumer is faster: 3.37× / 3.34×, with improved finite-reference accuracy
+
+**To Sparkly Guy, Prism, Firmament, Opus and Astra:** Zach said KEEP GOING after §6cb. I completed the previously missing matching-workload consumer gate. [Audit / reproducible comparison](../../../docs/audits/NORTHERN_VEIL_MATCHED_NATIVE_CONSUMER_2026-10-21.md), [two-series JSON](../../../docs/audits/NORTHERN_VEIL_MATCHED_NATIVE_CONSUMER_2026-10-21.json), [reproducer](../../../scratch/probes/ray_transport_native_march_comparison.py). Starting HEAD `a47e5264a`; actual adapter Apple M5 / Metal, timestamps disabled.
+
+The baseline is not a hand-written midpoint approximation: the probe uses the production compiler's `lowerVolumeEvaluator`/`composeVolumeSet`, retains the V5 marching body verbatim, supplies the actual zero-proof packets and GPU time-prepared parameters, and substitutes only captured ray inputs/clips and raw output for its fragment entrypoint. It preserves box events, the 96-sample chord policy, original per-medium bindings and transport arithmetic. **Before timing, its transmittance reproduces stored current-native outputs exactly; maximum RGB difference is 4.47035e-8.**
+
+Both kernels execute the same frozen ray distribution and output obligations. At 294,912 invocations per dispatch (2,304 distinct rays repeated 128×, each with a unique checked output), six ABBA blocks after warmup produce:
+
+| Independent process | Current marcher normalized host ms | Complete unfused A* normalized host ms | Ratio |
+|---|---:|---:|---:|
+| 1 | 15.85933 | 4.70159 | **3.373×** |
+| 2 | 15.87484 | 4.74839 | **3.343×** |
+
+Each value is a four-dispatch batch divided by four. Empty four-dispatch batches are ~1.56–1.57 ms total, well below both workloads. These are completion-fenced host durations, not GPU timestamps, and no empty-time subtraction is presented as GPU execution. Baseline and candidate are separately warmed; compilation, preparation/upload, readback and correctness checks stay outside timed batches.
+
+The timed unfused A* is directly scored against the independent reference. Pooled RGB mean/p99/max remain `6.92274e-6 / 5.05613e-5 / 9.15713e-5`; T mean/p99/max `2.02057e-5 / 1.09961e-4 / 1.39098e-4`. All six aggregate gates pass. Original-AST agreement and all five closed-form GPU cases pass again. Candidate and baseline rows are identical between processes; every replicated output is checked. Fusion remains rejected from §6cb and is not the timed candidate.
+
+**What this establishes:** positive hardware headroom for a complete, more accurate finite-witness ray consumer. The expensive per-sample 3D evaluation loop has a measured cheaper competitor on matching work. This is stronger than operation counts or a neutral submission-floor comparison.
+
+**What it does not establish:** 294,912 distinct scene rays, a full unique 2560×1440 viewport, complete frame costs or an inhabited FPS win. The resident 495,872-byte base schedule is reused by replicas; CPU boundary generation/lookup/repair/upload and full-viewport memory are not charged. Rasterization/unprojection/depth lookup/composition are omitted from both compute consumers. The result is a diagnostic consumer ceiling, not permission to treat producer work as free or ship frozen coefficients/Zone-specific recipes.
+
+**Next charter:** the measured headroom now justifies the smallest general boundary-production/lookup/amortization experiment. Reuse a derivation/topology/root-order recipe with explicit validity and fallback while instantiating each ray's own endpoints/depths. Measure cold preparation, lookup, numeric instantiation, lifetime/reuse, edit/device invalidation, repair, memory/upload and complete frame costs. Do not copy the current ~903-range-evaluation/ray CPU proof search into every pixel. No broad query-space framework, new domain noun, resolution reduction, sample-control retuning or authored-budget change is implied. OntoMath owns mathematical validity; Screen owns execution.
+
+**Shipping ledger:** CPU and native finite accuracy passed; actual same-workload compute consumer advantage passed; fusion rejected. Affordable producer, unique full viewport/frame, production admission/revision/device/fallback, broad pose/clock/source/overlap and inhabited Person acceptance remain open. Dashboard/plan/task/compass are updated. No production src/tests/save/app/default change, visible app launch, push or PR. No native job remains running; the isolated timing lane is released.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T20:08:48.886942-07:00`.

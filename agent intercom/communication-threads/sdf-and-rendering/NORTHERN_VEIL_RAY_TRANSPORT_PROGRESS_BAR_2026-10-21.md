@@ -3,11 +3,11 @@
 **Human goal:** Zachary Zhang's substantial native Northern Veil speed checkpoint at current-or-better accuracy, followed by an inhabited movement result.
 **Branch:** `claude/ray-domain-transport-rung0`.
 **Council:** [existing Intercom thread](OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md).
-**Current evidence:** [complete overlap repair / §6cb](../../../docs/audits/NORTHERN_VEIL_METAL_OVERLAP_REPAIR_2026-10-21.md).
+**Current evidence:** [matched native consumer / §6cc](../../../docs/audits/NORTHERN_VEIL_MATCHED_NATIVE_CONSUMER_2026-10-21.md); [overlap repair and rejected fusion / §6cb](../../../docs/audits/NORTHERN_VEIL_METAL_OVERLAP_REPAIR_2026-10-21.md).
 
 ## Current state
 
-**Native consumer arithmetic passes the frozen witness. Shared-cell fusion is rejected on measured cost. An equivalent-work renderer win is still unmeasured. Northern Veil has no new shipped FPS gain from this pass.**
+**Complete unfused A* is 3.37× / 3.34× faster than the production-generated marcher on matching resident compute ray work, with better aggregate reference accuracy. Boundaries are precomputed. A full-viewport/producer/production/inhabited FPS win is still open. Shared-cell fusion remains rejected on cost.**
 
 The initial Metal diagnostic omitted all 253 overlap intervals in its GPU kernels and its CPU comparator. Its “Lane A complete/certified,” production recommendation, exclusive-producer-bottleneck and 0.552 microseconds/ray performance-ceiling claims are superseded. Historical text and artifacts remain in the [initial audit](../../../docs/audits/NORTHERN_VEIL_METAL_DIAGNOSTIC_2026-10-21.md) and Intercom; this page tracks current qualified evidence.
 
@@ -19,7 +19,8 @@ The initial Metal diagnostic omitted all 253 overlap intervals in its GPU kernel
 | Independent native arithmetic checks | Passed on frozen witness | Original MathNode comparator; five closed-form GPU cases; timestamps disabled |
 | Native accuracy versus independent reference | Passed aggregate mean/p99/max | Per-ray regressions remain recorded; no universal certificate |
 | Same-cell gradient fusion | Implemented, rejected on cost | Fused +17.99% / +17.51% in repeated 64-dispatch host-fenced batches |
-| Unfused A* versus actual current renderer | **Open — next decisive measurement** | Matching ray/viewport/source/clip/output work, full-image check and complete pass total |
+| Unfused A* versus production-generated marcher | **Passed matching compute consumer gate** | 3.37× / 3.34× on 2,304 frozen rays repeated 128×; baseline T exact, RGB max delta 4.47e-8 |
+| Unique full viewport and complete frame | **Open** | Actual boundary generation, depth/raster/composition obligations and full pass/frame total |
 | Boundary production / amortization | Open | Current host diagnostic costs ~903 segmentation range evaluations/ray; no shipping producer |
 | Production revision/device/fallback lifecycle | Open | No A* source integration shipped; no default/budget change |
 | Broad poses, clocks, sources and overlap | Open | Current native witness is one frozen camera/clock |
@@ -51,7 +52,20 @@ Two isolated processes, four warm batches/variant and six ABBA blocks at each ba
 | 1 | 8.89962 | 10.50065 | +17.99% | 1.54744 |
 | 2 | 8.85242 | 10.40210 | +17.51% | 1.48065 |
 
-Single-dispatch empty and real measurements share a roughly 1.5 ms submission/poll floor. These are completion-fenced host durations, not GPU timestamp measurements. No occupancy/register-pressure cause is established. This is not a full-viewport frame or an end-to-end FPS result. Unfused A* remains the simpler scratch candidate; it has no production recommendation yet.
+Single-dispatch empty and real measurements share a roughly 1.5 ms submission/poll floor. These are completion-fenced host durations, not GPU timestamp measurements. No occupancy/register-pressure cause is established. This is not a full-viewport frame or an end-to-end FPS result. Unfused A* is now the positive matching-workload consumer candidate below; it has no production recommendation yet.
+
+## Matching native consumer comparison — latest positive gate
+
+The baseline retains the actual production-generated V5 integration body, proof data and GPU clock preparation. Both consumers use the same captured rays and clip endpoints. The baseline reproduces stored native transmittance exactly and RGB within 4.47e-8.
+
+Two independent processes, 294,912 invocations per dispatch (2,304 distinct rays repeated 128×), four-dispatch batches, completion-fenced **host** elapsed time:
+
+| Series | Current normalized, ms | Unfused A* normalized, ms | Consumer speedup |
+|---|---:|---:|---:|
+| 1 | 15.85933 | 4.70159 | **3.373×** |
+| 2 | 15.87484 | 4.74839 | **3.343×** |
+
+All reference mean/p99/max gates and five closed-form GPU cases pass. Every replicated output is checked against its base ray. Input schedules are resident/precomputed and reused; these are not 294,912 distinct scene rays. Opaque raster/depth lookup and composition are omitted from both compute consumers. This result earns work on an affordable producer, not a shipped renderer/FPS claim.
 
 ## Producer and full-vision account
 
@@ -61,14 +75,14 @@ The architectural aim remains:
 
 `authored math → valid derivation/topology recipe → concrete ray instantiation → backend consumer`
 
-Reuse the derivation at its longest justified lifetime while computing each ray's own endpoints, depths and colors. Neighboring rays do not inherit one ray's numerical answer. Query-space/movement-region analysis is a possible producer direction; a broad new framework is not required before measuring the accurate unfused consumer against the existing renderer.
+Reuse the derivation at its longest justified lifetime while computing each ray's own endpoints, depths and colors. Neighboring rays do not inherit one ray's numerical answer. Query-space/movement-region analysis is a possible producer direction; the newly measured consumer headroom justifies the smallest concrete preparation/lookup experiment, without requiring a broad new framework.
 
 ## Current next-owner queue
 
-Codex completed the dinner-watch diagnostic repair and releases the isolated GPU lane at the signed closeout in Intercom.
+Codex completed the dinner-watch repair and the matching native consumer gate, then releases the isolated GPU lane at the signed closeout in Intercom.
 
-1. Compare complete unfused A* and actual current-renderer work fairly, preserving source/clipping/composition obligations and current-or-better reference metrics.
-2. If there is credible headroom, implement the cheapest concrete boundary-generation/lookup/amortization experiment, counting cold preparation, reuse lifetime, edit invalidation, repair, uploads, memory and full frame costs.
+1. Use the measured compute-consumer headroom to implement the cheapest general boundary-generation/lookup/amortization experiment, counting cold preparation, reuse lifetime, edit invalidation, repair, uploads and memory.
+2. Qualify unique full-viewport output and complete pass/frame costs including producer and composition obligations.
 3. Qualify broader poses/clocks/source/overlap and production fallback/device/revision lifetime.
 4. Measure the moving inhabited scene and obtain Zach's acceptance.
 
@@ -80,4 +94,4 @@ This is a live status document. Update gate statuses, measured values, ownership
 
 Original dashboard: Original Prism Sun / GPT-5.6 Sol, 2026-10-21. Current measured-status repair: Codex, commissioned by Zach. No authored saves, installed app or production defaults changed.
 
-Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T19:18:52.575755-07:00`.
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T20:08:48.886942-07:00`.
