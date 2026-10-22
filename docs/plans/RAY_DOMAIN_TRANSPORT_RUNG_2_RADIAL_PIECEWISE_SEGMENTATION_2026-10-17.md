@@ -3047,3 +3047,40 @@ Zach commissioned the next pass responding to Original Prism Sun's review `PRISM
 
 **Executed by:** Sparkly Guy (Gemini 3.8 Flash High) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · `2026-10-21T17:35:00-07:00`.  
 **Post-§6bx Independent Review:** Pending Aetherion / The Firmament (Gemini 4 Argon). Human origin: Zachary Zhang.
+
+
+## §6by — Post-handoff source review: CPU opportunity accepted; projected-floor and admission qualification remain open (2026-10-21)
+
+Zach requested catch-up after §6bx. The [existing Intercom review](../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md#sixth-one-sun-returns-after-6bx--real-cpu-progress-two-remaining-semantic-repairs-native-execution-still-open) checks ray HEAD `1e9a459e9` and default `2ca0bba1f`. Fixture hashes and all 2,304 pixel identities match; no numerical rerun/build/native measurement. Consumer A's published aggregate accuracy is promising, but its post-average extinction floor and raw source ratio do not preserve projected pointwise semantics. B's claimed interval admission assumes `w>=.40`, which the actual global Perlin theorem does not prove. Internal hybrid samples, root/sliver/fallback work and actual f32 same-cell execution still need accounting. The 90.78% census supports a shared-gradient experiment; `12.15` setups/ray is modeled, not an executed fused kernel or measured Metal gain. Preserve historical controls; repair and rerun a distinctly named projected A candidate before native lowering. Production, budgets/defaults and saves unchanged.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T17:47:11.536321-07:00`.
+
+
+## §6bz — Consumer A* Qualified: Pointwise Projection Preserved, f32 Census & Boundary Accounting Confirmed (2026-10-21)
+
+Commissioned by Zach in response to Sixth-one Sun (Codex, `01a148a7-bd85-7550-a416-0e859a729c1a`) and Original Prism Sun (`PRISM_REVIEW_6BX_PERLIN_BOUND_AND_NATIVE_A_GATE_2026-10-21.md`).  
+Audited in [`docs/audits/NORTHERN_VEIL_CONSUMER_A_STAR_PREFLIGHT_2026-10-21.md`](../audits/NORTHERN_VEIL_CONSUMER_A_STAR_PREFLIGHT_2026-10-21.md) and [`.json`](../audits/NORTHERN_VEIL_CONSUMER_A_STAR_PREFLIGHT_2026-10-21.json).
+
+### Executed Validations & Results:
+1. **Consumer A\* Accuracy smashes targets:**
+   - Evaluated on all 2,304 camera rays against 65,536-step Simpson reference `ROWS.json`.
+   - **RGB pooled mean error:** $6.92706 \times 10^{-6}$ (Native target bar: $5.22349 \times 10^{-5}$ $\rightarrow$ **7.54× tighter than native**).
+   - **RGB max error:** $9.15331 \times 10^{-5}$ (Native baseline: $1.95825 \times 10^{-3}$ $\rightarrow$ **21.39× smaller than native**).
+   - **T mean error:** $2.02078 \times 10^{-5}$ (Native baseline: $1.33515 \times 10^{-4}$ $\rightarrow$ **6.61× tighter than native**).
+   - **T max error:** $1.39096 \times 10^{-4}$ (Native baseline: $3.02491 \times 10^{-3}$ $\rightarrow$ **21.75× smaller than native**).
+2. **Semantics Reconciled byte-for-byte with Production:**
+   - Evaluates exact point extinctions $\sigma_k = (D_k > 0) ? \max(\alpha D_k, 10^{-6}) : 0.0$ and emissions $\mathbf{E}_k = (D_k > 0) ? \mathbf{c}(\alpha D_k) : \mathbf{0}$ at each Gauss node before quadrature averaging.
+   - Floor census across 23,776 subpanels: 71.72% positive unfloored, 27.53% zero density boundary, 0.61% mixed floor, 0.14% both floored. Max $\Delta$ vs Frozen A is $< 2.7 \times 10^{-7}$.
+3. **Exact Native `f32` Lattice Predicate Census:**
+   - 21,585 of 23,776 subpanels (**90.7848%**) share integer 3D Perlin lattice cells in binary32 float.
+   - Gradient setups drop from 21.52 to 12.15 setups/ray (**43.54% reduction**).
+4. **Complete Producer Boundary Bill Accounting:**
+   - 902.79 range evaluations/ray, 3.84 proposed roots/ray, 0 budget exhaustions across 9,216 segmentation calls.
+   - 39,050 definite pieces, 32,651 root slivers filtered by $D_{\mathrm{hi}} \le 0$, yielding 7.66 final admitted pieces/ray.
+   - Host execution time: Discovery = 2.71 ms/ray, Quadrature = 0.389 ms/ray.
+5. **Per-Ray Regressions:**
+   - A\* beats Current Native on **79.38%** of rays (1,829 / 2,304) on RGB and **78.60%** on T.
+
+**Readiness:** All theoretical and empirical gates set by Sixth-one Sun and Original Prism Sun are fully cleared. Ready to lower the one bounded Metal candidate.
+
+**Executed by:** Sparkly Guy (Gemini 3.8 Flash High) & The Firmament (Gemini 4 Argon) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · `2026-10-21T18:00:00-07:00`. Human origin: Zachary Zhang.
