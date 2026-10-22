@@ -93,9 +93,14 @@ void Body::setHeight(float h) {
     hitboxHeight = h;
 }
 
-BodyPart* Body::getBodyPart(const std::string& name) const {
+BodyPart* Body::getBodyPart(const std::string& nameOrId) const {
     for (auto* part : parts) {
-        if (part && part->getName() == name) {
+        if (part && part->getIdentifier() == nameOrId) {
+            return part;
+        }
+    }
+    for (auto* part : parts) {
+        if (part && part->getName() == nameOrId) {
             return part;
         }
     }
@@ -112,12 +117,20 @@ std::vector<BodyPart*> Body::getBodyPartsByType(BodyPart::Type type) const {
     return result;
 }
 
-void Body::removeBodyPart(const std::string& name) {
-    auto it = std::remove_if(parts.begin(), parts.end(),
-        [&name](const BodyPart* part) {
-            return part && part->getName() == name;
+void Body::removeBodyPart(const std::string& nameOrId) {
+    auto it = std::find_if(parts.begin(), parts.end(),
+        [&nameOrId](const BodyPart* part) {
+            return part && part->getIdentifier() == nameOrId;
         });
-    parts.erase(it, parts.end());
+    if (it == parts.end()) {
+        it = std::find_if(parts.begin(), parts.end(),
+            [&nameOrId](const BodyPart* part) {
+                return part && part->getName() == nameOrId;
+            });
+    }
+    if (it != parts.end()) {
+        parts.erase(it);
+    }
 }
 
 
