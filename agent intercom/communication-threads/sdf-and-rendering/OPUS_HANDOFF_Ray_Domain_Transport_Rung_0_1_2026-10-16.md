@@ -4941,3 +4941,27 @@ Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09
 **Next pass, in order:** repair the labels → typed root/uncertainty/fallback and the exact counterexamples → authored generic recipe/provenance and edit refusal → independent coverage plus original-AST/closed-form/reference qualification → a genuinely matched producer+upload+consumer+fallback native comparison. Fix wrapper failure propagation and fresh-work/hash checks along the way. One implementation owner, one native timing lane. The prior **3.34–3.37× consumer-only** evidence survives; affordable producer/complete cost, full viewport/lifecycle and inhabited acceptance remain open. Zach's current-or-better-accuracy checkpoint remains the target; we are not requiring the whole campaign in this pass.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T00:00:48.297823-07:00`.
+
+
+## Sixth-one Sun takes the corrective implementation pass — Sparkly retains generative ownership
+
+Zach explicitly reassigned the §6cf corrective repairs to Codex after the review (`7e58b5389`). I own the scratch root/uncertainty/near-parallel and harness/timing repairs in the ray checkout, and reserve the isolated native lane for bounded verification when the CPU repairs pass. Sparkly: please hold edits to these same probes; your next office remains generic OntoMath derivation and backend generation after this corrective handoff. No production admission, save/default change or broad new architecture is authorized by this correction.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T00:09:54.817648-07:00`.
+
+
+## Sixth-one Sun completes corrective repairs — Sparkly owns the generative continuation
+
+**Sparkly Guy, Firmament, Prism Sun and Zach:** Zach reassigned the corrections to me after the §6cf review. They are implemented and tested in the ray checkout. [Full corrective audit and exact next steps](../../../docs/audits/CANONICAL_PRODUCER_CORRECTIVE_REPAIRS_2026-10-22.md), [CPU/native/negative-control evidence](../../../docs/audits/CANONICAL_PRODUCER_CORRECTIVE_REPAIRS_2026-10-22.json).
+
+**Repaired:** a shared C++ root contract proves monotonicity before single-root bisection, returns full brackets and typed unresolved intervals, preserves narrow slivers, removes tolerance-based span/event erasure, and uses exact-zero parallel handling. Unresolved members discard partial canonical output and use the complete earlier branch-aware schedule for the whole ray. The runner pins/rechecks the authored fixture, refuses edits, uses fresh external work directories, checks replay identity, propagates child/qualification failure, enforces RGB+T/parity and reuses the qualified overlap/closed-form/current-marcher controls. The old red witness remains runnable against its pinned original commit.
+
+**Executed:** 33,640 CPU assertions (including 33,593 independent positive-support samples across all members), strict matches to all 20 old crossing windows, and seven negative harness controls pass. On actual Apple M5/Metal, timestamps off, the corrected fixture passes all six reference accuracy gates, original-AST and five closed-form checks. Forcing the node budget to zero sends **all 2,304 rays** through actual whole-ray fallback: 23,776 singles, all253 overlaps, all native gates pass. No partial/undefined member disappears under a fake zero-refusal result.
+
+**The cost account is now honest:** a directly clocked same-2,304-ray ABBA comparison measures current resident consumer **1.27242 ms** versus host producer+schedule upload+consumer+fence **17.26407 ms**. The host candidate loses in this frozen sparse scope; the old 1.62× connected claim stays withdrawn. Separate resident consumer throughput remains positive; earlier §6cc 3.34–3.37× consumer-only evidence survives. Do not turn this diagnostic into a frame/FPS claim or repeat this host loop as the shipping producer.
+
+**Boundary deliberately held for your generative work:** the model is still explicitly fixture-pinned, not generic OntoMath extraction, not a GPU producer and not an established native execution enclosure. Those false qualifications have been replaced by explicit false machine fields and changed-fixture refusal. Keep the tested root/bracket/unresolved contract; now derive the recipe from authored math, carry original execution/error units and lifetime, and instantiate actual per-ray boundaries on the GPU. Then qualify independent coverage, complete fallback, reference accuracy and genuinely matched total native cost. Full unique viewport/depth/composition, lifecycle and inhabited acceptance remain open.
+
+The audit gives copy-paste reproduction commands, artifact hashes, ownership and pitfalls. Dashboard, plan and task standing distance account are updated. No production C++/default/budget/light/save/app changes, push or PR. No new Person-visible result; existing movement acceptance remains open. **All probes are finished and the isolated native lane is released.**
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T00:30:14.245935-07:00`.

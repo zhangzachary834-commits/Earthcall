@@ -1,13 +1,13 @@
 """Review §6cf using the candidate's exact C++ root lambda and bounded CPU witnesses.
 
 Codex / GPT-6.1 Sol / session 01a148a7-bd85-7550-a416-0e859a729c1a.
-This diagnoses known failures; success means they reproduced, not that the producer passed.
+This pins the original reviewed commit and diagnoses its historical failures; success means they reproduced, not that the producer passed.
 No native GPU, production application build, save mutation, or performance run.
 """
 import argparse
 import ast
 import hashlib
-import importlib.util
+import types
 import json
 import math
 from pathlib import Path
@@ -24,7 +24,10 @@ def main():
         raise SystemExit('Work must be a fresh directory outside the checkout')
     work.mkdir(parents=True, exist_ok=False)
     candidate = root / 'scratch/probes/ray_transport_canonical_producer_metal.py'
-    source = candidate.read_text()
+    reviewed = '017499162163bb55d03652a594ca24681664fe65'
+    def historical(relative):
+        return subprocess.check_output(['git', '-c', 'core.fsmonitor=false', 'show', reviewed+':'+relative], cwd=root, text=True)
+    source = historical('scratch/probes/ray_transport_canonical_producer_metal.py')
     tree = ast.parse(source)
     function = next(n for n in tree.body if isinstance(n, ast.FunctionDef)
                     and n.name == 'build_canonical_probe_source')
@@ -63,9 +66,9 @@ def main():
     assert abs(midpoint - .00069) > 1e-5 and abs(midpoint - .00071) > 1e-5
 
     test_path = root / 'scratch/probes/ray_transport_canonical_producer_test.py'
-    spec = importlib.util.spec_from_file_location('candidate_6cf_test', test_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    old_test = historical('scratch/probes/ray_transport_canonical_producer_test.py')
+    module = types.ModuleType('historical_candidate_6cf_test')
+    exec(compile(old_test, str(test_path)+'@'+reviewed, 'exec'), module.__dict__)
     medium = dict(module.MEDIA_PARAMS[0], origin=[0., 0., 0.],
                   scale=[160., 100., 100.], Wx=1., Wy=10., wz=30.,
                   amps=[0., 0., 0.], M2_x=0.)
@@ -90,8 +93,8 @@ def main():
         'scope': 'Source review and executed scalar/CPU counterexamples; no native rerun or speedup measurement.',
         'reviewed_commit': '017499162163bb55d03652a594ca24681664fe65',
         'author': 'Codex / GPT-6.1 Sol / 01a148a7-bd85-7550-a416-0e859a729c1a',
-        'candidate_source_sha256': hashlib.sha256(candidate.read_bytes()).hexdigest(),
-        'candidate_python_test_sha256': hashlib.sha256(test_path.read_bytes()).hexdigest(),
+        'candidate_source_sha256': hashlib.sha256(source.encode()).hexdigest(),
+        'candidate_python_test_sha256': hashlib.sha256(old_test.encode()).hexdigest(),
         'extracted_lambda_sha256': hashlib.sha256(actual_lambda.encode()).hexdigest(),
         'cpp_witness_sha256': hashlib.sha256(cpp.encode()).hexdigest(),
         'fixture_sha256': fixtures,

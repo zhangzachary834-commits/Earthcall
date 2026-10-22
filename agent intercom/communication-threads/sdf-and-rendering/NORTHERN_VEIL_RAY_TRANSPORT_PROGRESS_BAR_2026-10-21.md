@@ -3,7 +3,9 @@
 **Human goal:** Zachary Zhang's substantial native Northern Veil speed checkpoint at current-or-better accuracy, followed by an inhabited movement result.
 **Branch:** `claude/ray-domain-transport-rung0`.
 **Council:** [existing Intercom thread](OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md).
-**Latest review:** [§6cf source/scalar review](../../../docs/audits/SPARKLY_CANONICAL_PRODUCER_6CF_REVIEW_2026-10-21.md) preserves Sparkly’s saved aggregate accuracy while reopening producer qualification: mismatched timing workloads, root loss, untyped uncertainty and hardcoded fixture math. **No new connected speedup or shipping gate passed.**
+**Latest corrective pass:** [verified root/fallback and harness repairs](../../../docs/audits/CANONICAL_PRODUCER_CORRECTIVE_REPAIRS_2026-10-22.md). CPU regression/negative controls and native normal/forced fallback pass. Actual matching sparse host-producer+upload+consumer cost loses (17.2641 versus 1.27242 ms); generic authored derivation/native error admission and GPU production remain open under Sparkly’s ownership. No shipped gain.
+
+**Preceding review:** [§6cf source/scalar review](../../../docs/audits/SPARKLY_CANONICAL_PRODUCER_6CF_REVIEW_2026-10-21.md) preserves Sparkly’s saved aggregate accuracy while reopening producer qualification: mismatched timing workloads, root loss, untyped uncertainty and hardcoded fixture math. **No new connected speedup or shipping gate passed.**
 
 **Earlier producer experiment:** [device root proposals / §6ce](../../../docs/audits/NORTHERN_VEIL_GPU_ROOT_PROPOSALS_2026-10-21.md) execute through existing production lowering but fail coverage and native cost; canonical mathematical zero-set derivation is next. [Target-only support / §6cd](../../../docs/audits/NORTHERN_VEIL_TARGET_ONLY_PRODUCER_2026-10-21.md) also remains insufficient.
 
@@ -25,7 +27,7 @@ The initial Metal diagnostic omitted all 253 overlap intervals in its GPU kernel
 | Same-cell gradient fusion | Implemented, rejected on cost | Fused +17.99% / +17.51% in repeated 64-dispatch host-fenced batches |
 | Unfused A* versus production-generated marcher | **Passed matching compute consumer gate** | 3.37× / 3.34× on 2,304 frozen rays repeated 128×; baseline T exact, RGB max delta 4.47e-8 |
 | Unique full viewport and complete frame | **Open** | Actual boundary generation, depth/raster/composition obligations and full pass/frame total |
-| Boundary production / amortization | **Open — §6cf fixture prototype needs repair** | Saved accuracy passes; claimed connected ratio compares 2,304 with 294,912 invocations. Exact root-loss and unresolved-midpoint witnesses reproduce; generic derivation/execution admission and matched total cost remain open |
+| Boundary production / amortization | **Corrective contract verified; generative producer open** | Typed brackets/uncertainty, whole-ray fallback, exact-zero parallel and harness guards pass CPU/native checks. Same-2,304-ray host connected cost loses; generic OntoMath derivation, native error admission and GPU generation remain open |
 | Device numeric endpoint prototype | Implemented, scan rejected | Original switch operands execute on Metal; 1,392 rays refuse coverage and proposal-only cost exceeds the matching-ray current consumer |
 | Production revision/device/fallback lifecycle | Open | No A* source integration shipped; no default/budget change |
 | Broad poses, clocks, sources and overlap | Open | Current native witness is one frozen camera/clock |
@@ -151,3 +153,9 @@ Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09
 [Review and exact counterexamples](../../../docs/audits/SPARKLY_CANONICAL_PRODUCER_6CF_REVIEW_2026-10-21.md): the saved 2,304-ray aggregate accuracy result remains promising. The 1.62× ratio is invalid because its baseline executes 128 times as many ray invocations, and uploads/fallback are not in the summed clocks. The exact C++ routine loses roots and emits unresolved midpoints; literal fixture coefficients are not OntoMath derivation or original execution admission. Next repair root/uncertainty/near-parallel handling and generic provenance, then require independent coverage and matched connected costs. Earlier §6cc consumer-only evidence survives. No native rerun or production change this review.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T00:00:48.297823-07:00`.
+
+## Corrective hand-back — 2026-10-22
+
+[Full audit](../../../docs/audits/CANONICAL_PRODUCER_CORRECTIVE_REPAIRS_2026-10-22.md): 33,640 CPU assertions and seven wrapper negative controls pass; corrected and forced-all-ray-fallback Metal outputs pass all six aggregate accuracy, original-AST and five closed-form controls. Actual same-2,304-ray ABBA costs current resident consumer 1.27242 ms versus producer+schedule upload+consumer 17.26407 ms. This host strategy is rejected for shipping. Root/native-omission authority remains explicitly separated; Sparkly owns authored generic recipe and GPU instantiation. Full viewport/lifecycle/inhabited acceptance remain open. Native lane released; no jobs running.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T00:30:14.245935-07:00`.

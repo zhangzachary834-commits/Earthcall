@@ -180,9 +180,9 @@ This is **architecture direction, not a landed implementation claim**. Existing 
 
 ## Distance to a faster Northern Veil
 
-*Standing account Zach asked for on 2026-10-20; last updated §6cf source/scalar review, 2026-10-21 ("keep the account of how much is left until the ray transport work buys more faster Northern Veil than before"). Every pass updates it.*
+*Standing account Zach asked for on 2026-10-20; last updated §6cg corrective repair, 2026-10-22 ("keep the account of how much is left until the ray transport work buys more faster Northern Veil than before"). Every pass updates it.*
 
-**Current ledger — §6cf review:** earlier §6cc A* retains its **3.37× / 3.34× matching native compute consumer-only** checkpoint. Sparkly’s fixed-fixture host producer connects to Metal and its saved aggregate accuracy passes, but producer qualification remains open: the new speed ratio compares different workloads (2,304 versus 294,912 invocations), and executed candidate root/near-parallel counterexamples show missing coverage/uncertainty handling. Repair source-derived generic provenance, root/fallback admission and independent coverage, then measure matched connected costs including uploads; full viewport/lifecycle and inhabited movement remain open. [Review, evidence and repair order](../../../../../audits/SPARKLY_CANONICAL_PRODUCER_6CF_REVIEW_2026-10-21.md).
+**Current ledger — §6cg corrections:** root/bracket/unresolved, near-parallel, complete whole-ray diagnostic fallback and runner guards are implemented and pass CPU/native checks. The actual matching 2,304-ray connected host producer loses (17.26407 ms versus 1.27242 ms current consumer). Sparkly now owns generic authored recipe/execution admission and GPU boundary generation; affordable complete producer, unique viewport/lifecycle and inhabited movement remain open. Earlier §6cc 3.34–3.37× matched native **consumer-only** evidence survives. [Corrective evidence and generative hand-back](../../../../../audits/CANONICAL_PRODUCER_CORRECTIVE_REPAIRS_2026-10-22.md).
 
 **Baseline to beat.**
 - Codex's 2026-10-15 controlled offscreen series, aurora/inside at 2560×1440: **~136–141 ms per frame** (24-frame readback-free batches; not live FPS). The existing renderer's aurora proof construction is ~239 ms at admission ([audit](../../../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md)).
@@ -342,3 +342,10 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 [Review](../../../../../audits/SPARKLY_CANONICAL_PRODUCER_6CF_REVIEW_2026-10-21.md) preserves the reported native aggregate accuracy result, corrects unmatched connected timing, and executes exact root-loss/unresolved-midpoint plus Python near-parallel omission witnesses. Next implementation must retain typed uncertainty/fallback, derive/bind current authored math, validate coverage independently and measure matched total cost. No native rerun or new Person-visible result; existing movement acceptance stays open.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T00:00:48.297823-07:00`.
+
+
+### §6cg — Corrective contract verified; generative producer handed back
+
+[Audit and reproducer commands](../../../../../audits/CANONICAL_PRODUCER_CORRECTIVE_REPAIRS_2026-10-22.md): 33,640 CPU assertions, seven negative harness controls, actual corrected Metal and forced-all-ray fallback pass. The runtime ratio now uses matching work and includes concrete CPU production/uploads, exposing a loss instead of the former invalid win. Frozen manual model edits refuse; generic OntoMath extraction, original execution enclosure and GPU generation remain Sparkly’s next work. No production/save/default or Person-visible change; existing movement acceptance stays open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T00:30:14.245935-07:00`.
