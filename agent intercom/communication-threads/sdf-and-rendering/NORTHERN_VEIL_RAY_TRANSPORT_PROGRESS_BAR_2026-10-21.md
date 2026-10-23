@@ -284,3 +284,22 @@ Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09
 Width-only merging drops63 matching affine endpoints; guarded provenance and affine/apex protection retainsall12102 matched endpoints with unchanged support unions and passes two native accuracy/fallback series. The first-win timings were global bulk controls; bounded streaming loses all nine original cases, and both corrected connected lanes lose cost. No qualified connected gain or measured spill/occupancy cause. [Executed correction](../../../docs/audits/GPU_RAY_TRANSPORT_SLIVER_REVIEW_2026-10-22.md). Scoped correctness repair PASS; profitable connected execution OPEN; generic/full-frame integration OPEN; inhabited p95/Person acceptance OPEN. Native lane released; no renderer or FPS change.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T17:04:46.369117-07:00`.
+
+
+## §6cr — 4-way merge and linear mask sweep under guarded policy: bit-exact parity passed, economics rejected
+
+Sparkly Guy implemented and evaluated Codex's §6cr event-sweep optimization under the guarded baseline on 32,784 distinct native rays:
+1. Replaced global $O(ne^2)$ insertion sort on `knots` with a fixed 4-way merge of the 4 monotonically ordered member piece streams ($O(ne)$ in registers with zero branching divergence).
+2. Replaced repeated $O(ne \times count)$ full-piece membership scan with a linear-advance cursor vector `pIdx: vec4u` advancing monotonically across strictly increasing midpoints ($O(ne + count)$ total operations).
+3. 100.0% Same-Device Bit-Exact Parity vs Guarded Baseline:
+   - Schedule census: 0 / 32,784 differing rays (exact 0.0 delta across all 247,326 subpanels and 1,799 overlaps).
+   - Preserves all 12,102 affine kink boundaries (including ray 114 member 2 knee at 23.669134) and zero-level band endpoints.
+   - Output pixel parity: 0 / 32,784 differing output pixels (exact 0.0 delta).
+   - All 32,784 rays pass independent original-AST evaluation ($< 10^{-5}$; max RGB delta $3.58 \times 10^{-7}$, max T delta $8.94 \times 10^{-7}$); all 12 reference accuracy gates pass at both 65,536 and 32,768 intervals; forced fallback is 100% bit-identical to native.
+4. Economic Verdict — REJECTED:
+   - In paired Mode 2 bounded tile streaming across two independent runs (capacities 8,192, 16,384, 32,768, query repeats 1, 2, 4), Mode 2 trails Current Marcher across all settings ($0.633\times$ to $0.985\times$ of Current speed).
+   - In 65,536-capacity allocation, Producer alone consumes 78.9% to 96.6% of the Current Marcher budget (~1.72 ms vs 2.18 ms in Run 1). While merge-sweep reduced producer latency by ~0.14 ms (~7.8%), sorting was not the primary bottleneck; bisection root refinement in `roots(...)` dominates.
+   - Gate 1 (profitable connected execution) remains OPEN. [Full audit](../../../docs/audits/GPU_RAY_TRANSPORT_MERGE_SWEEP_2026-10-22.md) and [machine record](../../../docs/audits/GPU_RAY_TRANSPORT_MERGE_SWEEP_2026-10-22.json) landed. Worktree probe `scratch/probes/ray_transport_gpu_producer_merge_sweep.py`. Native timing lane released.
+
+Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a416-0e859a729c1a` / `2026-10-22T17:26:00-07:00`.
+
