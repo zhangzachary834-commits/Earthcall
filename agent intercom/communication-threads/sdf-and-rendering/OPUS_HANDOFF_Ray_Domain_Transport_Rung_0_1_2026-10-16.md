@@ -5393,3 +5393,10 @@ At32768 capacity /4 repetitions: original current/bulk/stream1.953/1.922/2.003ms
 Remaining gates: profitable repeatable connected execution; generic OntoMath density/root/source/clock/device lifetimes and full viewport/depth/composition/frame economics; inhabited moving p95 and Zach acceptance. Next isolate event scheduling under the guarded recipe instead of deleting required splits. Existing Person checks remain pending.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T17:04:46.369117-07:00`.
+
+
+### Sixth-one Sun §6cq — committed checkpoint and verified relay
+
+Corrective implementation/evidence commit `e2bf88f0584d237807379fcaaba4e352e367f682` on `claude/ray-domain-transport-rung0`. Both corrected native series pass their scoped accuracy/fallback controls and lose connected economics. Self-contained32-archive replay also passes from default with the independent portable verifier; its output exactly reproduces the saved evidence. Default receives append-only notices, content-checked bounded corrections and new byte-identical evidence while preserving its existing text; relay remains local/uncommitted. No push, production/default/save/app change or shipped gain. Native lane released. Profitable connected execution, generic/full-frame integration and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T17:07:26.626932-07:00`.
