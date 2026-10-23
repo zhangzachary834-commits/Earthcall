@@ -72,12 +72,34 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
+    // Protect the real save tree by setting SaveSystem to a lightweight scratch directory
+    // containing only the necessary subdirectories and target world file (avoiding 740MB saves/worlds copy).
+    const auto scratchPath = std::filesystem::temp_directory_path() /
+        ("earthcall-perf-scratch-" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()));
+    std::filesystem::create_directories(scratchPath / "worlds");
+
+    const std::filesystem::path realSaves("saves");
+    for (const auto& sub : {"zones", "laws", "materials", "homes"}) {
+        if (std::filesystem::exists(realSaves / sub)) {
+            std::error_code ec;
+            std::filesystem::copy(realSaves / sub, scratchPath / sub,
+                                  std::filesystem::copy_options::recursive, ec);
+        }
+    }
+    const std::filesystem::path worldFile(world);
+    const std::filesystem::path scratchWorldPath = scratchPath / "worlds" / worldFile.filename();
+    std::error_code copyEc;
+    std::filesystem::copy_file(worldFile, scratchWorldPath,
+                               std::filesystem::copy_options::overwrite_existing, copyEc);
+
+    const std::string prevSaveRoot = SaveSystem::saveRoot();
+    SaveSystem::setSaveRoot(scratchPath.string());
+
     TestSupport::BootedEngineHarness h;
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld(scratchWorldPath.string());
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
@@ -164,6 +186,10 @@ int main(int argc, char** argv) {
         static_cast<unsigned long long>(h.lawManager.slowAdapterMaintenanceRuns()),
         h.lawManager.slowAdapter().roadsKnown(), h.lawManager.slowAdapter().roadsPending(),
         tierDirect, tierAdapter, tierVocabulary, tierSweep);
+
+    SaveSystem::setSaveRoot(prevSaveRoot);
+    std::error_code cleanupEc;
+    std::filesystem::remove_all(scratchPath, cleanupEc);
 
     return 0;
 }
