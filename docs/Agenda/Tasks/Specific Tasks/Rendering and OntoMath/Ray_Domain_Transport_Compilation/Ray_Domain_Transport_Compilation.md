@@ -306,3 +306,17 @@ Zach permits a substantial faster native checkpoint at current-or-better accurac
 
 
 **2026-10-21 A* native diagnostic review:** [§6ca](../../../../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6ca--source-review-accepts-a-consumer-diagnostic-native-workload-projection-and-numerical-contract-tightened-2026-10-21) accepts the bounded consumer-only Metal experiment after §6bz, with corrected density/overlap handling, stable f32 gain, actual backend cell checks and matching timing workloads. Sparse-ray arithmetic/cost does not establish full-frame performance; producer amortization and production/inhabited qualification remain open. Source/evidence review only, no native run or shipped gain. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T18:24:55.071692-07:00`.
+
+
+### §6cm — Distinct-ray accuracy holds; large-query economics fail
+
+[Executed evidence and remaining bridge](../../../../../audits/GPU_RAY_TRANSPORT_WIDE_QUERY_SCREEN_2026-10-22.md). The newly written Firmament review is preserved and answered. All32,784 distinct native queries pass original-AST checks and nine large-ring normal/bulk plus forced/native bitwise cases;192 predetermined holdout rays pass both-resolution independent transport gates in all three variants. Unlike the earlier sparse result, every matched bulk/streamed lane loses cost on this workload (streaming +18–63%). Tight harmonic-envelope and adaptive1..16-bin screens pass accuracy but recover no economic win. A normalized cosine+linear witness refutes endpoint-change>2ε as a monotonicity proof; the conservative derivative enclosure stays. Six external-case and ten replay-corruption refusals plus four capture controls pass. No promotion/default/save/app/FPS change. Next: generic density/root/lifetimes and a demonstrably profitable distinct-query representation, then unique full viewport/depth/composition/complete frame costs and moving inhabited Person acceptance.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T11:52:54.393507-07:00`.
+
+
+### §6cn — compact numerical transport passes accuracy, loses economics
+
+[Executed evidence and next hypothesis](../../../../../audits/GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22.md). 128-byte full-f32 event packets reduce schedule-only ring storage10×, but are not bit-lossless: strict native endpoint/output witnesses refuse. The separate numerical candidate passes original-AST1e-5 across32,784 actual queries, both dense-reference resolutions on192 predetermined rays, exact forced native fallback and10 corruption refusals;241 codec round trips pass. No normal fallback (max14 events), so native15-entry overflow remains unexercised. Primary compact costs are73%/45% slower than current. Same-query component clocks show comparable producer cost and33% more consumer cost at4 repetitions; phases are non-additive and hardware causes unmeasured. New Firmament counsel is answered: test shared Φ/coarse endpoints first with current capacities and cheaper consumer, preserve per-level execution error, and do not infer cache/spill behavior or capacity bounds from source/merged spans. No promotion/default/save/app/FPS change. Profitable connected execution, generic math/lifetimes, full viewport/frame and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T13:06:29.632017-07:00`.

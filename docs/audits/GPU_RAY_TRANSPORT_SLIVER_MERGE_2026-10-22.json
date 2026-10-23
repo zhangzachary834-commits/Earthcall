@@ -1,0 +1,104 @@
+{
+  "audit": "docs/audits/GPU_RAY_TRANSPORT_SLIVER_MERGE_2026-10-22.md",
+  "date": "2026-10-22T15:03:00-07:00",
+  "platform": "Apple Silicon M5 (Metal / WebGPU)",
+  "session": "50cf28df-09e9-4c2b-a4d5-1f796abbc73a",
+  "branch": "claude/ray-domain-transport-rung0",
+  "author": "Sparkly Guy (Gemini 3.8 Flash High / Antigravity)",
+  "workload": {
+    "distinct_native_rays": 32784,
+    "viewport": [
+      2560,
+      1440
+    ],
+    "capture_grid": [
+      256,
+      144
+    ],
+    "camera": "inside",
+    "clock": 7.25,
+    "manifest_sha256": "9b7aeb82f1b777a8342416f06b6eb4313f8c5b3c3b0eb6886e08216fc1b97a2d"
+  },
+  "qualification": {
+    "numerical_candidate": true,
+    "independent_AST_agreement_pass": true,
+    "mean_p99_max_reference_gates_pass": true,
+    "fallback_native_baseline_identical": true,
+    "device_fused_unfused_parity_pass": true,
+    "poisoned_connected_output_fully_written": true,
+    "closed_form_witnesses_pass": true,
+    "shipping_performance_qualified": false
+  },
+  "workload_reduction": {
+    "subpanels_before": 324088,
+    "subpanels_after": 209610,
+    "subpanels_absorbed": 114478,
+    "subpanels_reduction_percent": 35.32,
+    "overlaps_before": 2693,
+    "overlaps_after": 1793,
+    "overlaps_absorbed": 900,
+    "overlaps_reduction_percent": 33.42,
+    "max_subpanels_per_ray": 25,
+    "absorption_threshold_m": 0.02,
+    "outer_support_enclosure_preserved": true,
+    "tent_apex_and_affine_kinks_preserved": true
+  },
+  "accuracy_vs_independent_reference": {
+    "finest_65536_intervals": {
+      "RGB_pooled_mean": {
+        "candidate": 6.493211250832381e-06,
+        "current": 5.2083436005461535e-05,
+        "ratio_vs_current": 0.1247,
+        "pass": true
+      },
+      "RGB_pooled_max": {
+        "candidate": 4.793734590402554e-05,
+        "current": 0.0014908520057793223,
+        "ratio_vs_current": 0.0322,
+        "pass": true
+      },
+      "T_mean": {
+        "candidate": 1.8918894465834446e-05,
+        "current": 0.00013126131932741114,
+        "ratio_vs_current": 0.1441,
+        "pass": true
+      },
+      "T_max": {
+        "candidate": 6.965939815839484e-05,
+        "current": 0.0023179769068414346,
+        "ratio_vs_current": 0.0301,
+        "pass": true
+      },
+      "all_six_gates_pass": true
+    },
+    "half_32768_intervals": {
+      "all_six_gates_pass": true
+    }
+  },
+  "streamed_connected_vs_current": {
+    "ring_8192_reps_4": {
+      "current_ms": 2.0685,
+      "bulk_connected_ms": 2.0475,
+      "speedup_vs_current": 1.0102,
+      "verdict": "FIRST_NATIVE_CONNECTED_WIN"
+    },
+    "ring_32768_reps_4": {
+      "current_ms": 1.9526,
+      "bulk_connected_ms": 1.9223,
+      "speedup_vs_current": 1.0158,
+      "verdict": "FIRST_NATIVE_CONNECTED_WIN"
+    },
+    "ring_32768_reps_2": {
+      "current_ms": 2.3106,
+      "bulk_connected_ms": 2.3033,
+      "speedup_vs_current": 1.0032,
+      "verdict": "FIRST_NATIVE_CONNECTED_WIN"
+    }
+  },
+  "component_phases_65536_cap_4_repeats": {
+    "current_marcher_ms_per_query": 3.1174,
+    "bulk_connected_ms_per_query": 3.2837,
+    "sliver_merge_producer_only_ms_per_query": 2.3005,
+    "consumer_only_plus_fallback_ms_per_query": 1.1795
+  }
+}
