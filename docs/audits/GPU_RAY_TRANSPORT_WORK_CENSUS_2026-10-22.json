@@ -477,5 +477,27 @@
     "gate_3": "OPEN (inhabited moving p95 and Zach acceptance)",
     "engine_files_mutated": 0,
     "save_files_mutated": 0
+  },
+  "codex_6cy_review": {
+    "signature": "Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T00:40:20.361400-07:00",
+    "audit": "GPU_RAY_TRANSPORT_CENSUS_REVIEW_2026-10-23.md",
+    "original_claims_preserved": true,
+    "corrected_coarse_reject_total": 2332420,
+    "corrected_coarse_reject_max": 93,
+    "corrected_stack_min_and_p50": 1,
+    "noise_and_Phi_totals_unchanged": true,
+    "counts_are_not_elapsed_cost": true,
+    "spill_occupancy_cause_measured": false,
+    "width_bins_are_root_provenance": false,
+    "controls_now_fatal_and_poisoned": true,
+    "corrected_raw_per_ray_counters": true,
+    "per_member_counters_available": false,
+    "historical_control_refusals": 3,
+    "corrected_corruption_refusals": 8,
+    "corrected_stream_timing_sweep_disabled": true,
+    "new_optimization_candidate_executed": false,
+    "shipping_gates_open": 3,
+    "next": "One on-the-fly schedule-consumption experiment preserving exact n-way subdivisions, arithmetic, shared attenuation and late fallback",
+    "pinned_zone_sha256": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496"
   }
 }

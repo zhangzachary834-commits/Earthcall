@@ -291,3 +291,10 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 Actual fused outputs/forced fallback replay bit-exact on32784 rays, and192 holdouts pass both reference resolutions, but the tested32/8 implementation changes the assigned64/16 contract and exports no fused packets/normal headers. The runner now refuses incomplete admission; counts/AST fields are scoped to the unfused control. Connected primary cost remains2.070ms vs current1.583ms (+30.76%). Allocated bytes are not measured traffic; spill/occupancy causation is unmeasured and batching has one host completion. No new native run or production gain. Next Sparkly execution is a bounded work/resource census with Firmament reviewing; all three shipping gates remain OPEN. [Audit and replay](audits/GPU_RAY_TRANSPORT_FUSED_REVIEW_2026-10-22.md).
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-22T19:31:41.653259-07:00.
+
+
+## §6cy — census review and on-the-fly experiment contract
+
+§6cx actual fused packets/outputs qualify on32784 rays; corrective native diagnostics make controls fatal/poisoned, export raw per-ray counters/outputs and actual headers, and correct coarse rejects2389859→2332420 and initial stack use0→1. Noise496468 vs956301 and Phi2606763 counts survive, but work counts do not establish elapsed cost or spilling; narrow widths do not identify root provenance. Three historical/eight corrected refusal checks pass. Next Sparkly experiment consumes the chronological sweep directly while preserving exact n-way panels, overlap attenuation and late native fallback; Firmament reviews. All three shipping gates remain OPEN, with no new renderer/FPS gain. [Executed evidence/next steps](audits/GPU_RAY_TRANSPORT_CENSUS_REVIEW_2026-10-23.md).
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T00:40:20.361400-07:00.

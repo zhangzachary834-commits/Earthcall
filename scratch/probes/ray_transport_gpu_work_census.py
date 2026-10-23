@@ -937,7 +937,7 @@ var<private> g_currentDensityEvals: u32 = 0u;
     assert pos_semi != -1, 'end of streamed_schedule not found'
     s = s[:pos_semi + 2] + diagnostic_execution + s[pos_semi + 2:]
 
-    return s
+    return load(root, 'ray_transport_gpu_census_review').correct_source(s)
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
@@ -951,6 +951,7 @@ def main():
     root = args.root.resolve()
     work = args.work.resolve()
     case_path = args.case.resolve()
+    if work == root or root in work.parents or Path(args.label).name != args.label: raise SystemExit('unsafe work/label')
 
     # Load modules
     q = load(root, 'ray_transport_gpu_pose_qualification')
@@ -972,7 +973,7 @@ def main():
     digest = hashlib.sha256(cpp.encode()).hexdigest()
 
     # Build probe
-    work.mkdir(parents=True, exist_ok=True)
+    work.mkdir(parents=True, exist_ok=False)
     probe_cpp = work / 'probe.cpp'
     probe_o = work / 'probe.o'
     probe_bin = work / 'probe'
@@ -1003,7 +1004,7 @@ def main():
 
     # Run probe
     output_json = work / (args.label + '.json')
-    if output_json.exists(): output_json.unlink()
+    if output_json.exists(): raise SystemExit('refusing output overwrite')
 
     env = dict(os.environ,
                EC_POSE_RAYS=case_meta['rays'],
@@ -1016,18 +1017,22 @@ def main():
                EC_GPU_MARGIN='.001')
     env.pop('EC_GPU_GEOMETRY_CASE', None)
 
+    wide.verify_case(root, case_path, v['ZONE_HASH'])
+    if sha(case_path)!=mhash or sha(zone)!=v['ZONE_HASH']: raise SystemExit('fixture changed before execution')
     print('Executing probe on GPU...')
     res = subprocess.run([str(probe_bin), str(output_json)], cwd=root, env=env)
     if res.returncode != 0:
         raise SystemExit(f'Probe execution failed with code {res.returncode}')
 
+    wide.verify_case(root, case_path, v['ZONE_HASH'])
+    if sha(case_path)!=mhash or sha(zone)!=v['ZONE_HASH']: raise SystemExit('fixture changed during execution')
     # Validate output
     report = json.loads(output_json.read_text())
     rows_path = Path(str(output_json) + '-rows.json')
     rows = json.loads(rows_path.read_text())
 
     print('Validating admission contract...')
-    require_contract(report.get('compiled_fused_shader', 'var local_subpanels: array<Subpanel, 64>; var local_overlaps: array<Overlap, 16>;'))
+    review.require_contract(make_fused_wgsl_64(load(root, 'ray_transport_gpu_producer_fused_normal').FUSED_WGSL))
     require_packet_evidence(report)
 
     # Independent admission check
@@ -1037,8 +1042,14 @@ def main():
     if not admission_res['both_resolutions_pass']:
         raise SystemExit('Reference holdout gate failed')
 
-    # Subpanel provenance width breakdown
-    print('Analyzing subpanel width provenance...')
+    census_review = load(root, 'ray_transport_gpu_census_review')
+    baseline = json.loads(Path(str(output_json) + '-baseline-rows.json').read_text())
+    checked = census_review.validate_report(root, report, rows, baseline, rays, (ref_rows, ref_indices))
+    Path(str(output_json) + '-independent.json').write_text(json.dumps(checked, indent=2) + '\n')
+
+    # Width classes only; root provenance is not recorded.
+
+    print('Analyzing subpanel widths (not provenance)...')
     trace = report['fused_packet_census_inputs']
     total_single_count = 0
     sub_apex = 0       # h <= 0.02
@@ -1070,20 +1081,20 @@ def main():
 
     provenance = {
         "total_singles": total_single_count,
-        "apex_le_2cm": {"count": sub_apex, "pct": sub_apex * 100.0 / total_single_count, "total_width_m": width_apex},
-        "support_2_to_5cm": {"count": sub_support, "pct": sub_support * 100.0 / total_single_count, "total_width_m": width_support},
+        "width_le_2cm": {"count": sub_apex, "pct": sub_apex * 100.0 / total_single_count, "total_width_m": width_apex},
+        "width_2_to_5cm": {"count": sub_support, "pct": sub_support * 100.0 / total_single_count, "total_width_m": width_support},
         "intermediate_5_to_20cm": {"count": sub_inter, "pct": sub_inter * 100.0 / total_single_count, "total_width_m": width_inter},
         "macro_gt_20cm": {"count": sub_macro, "pct": sub_macro * 100.0 / total_single_count, "total_width_m": width_macro}
     }
-    report["subpanel_provenance_breakdown"] = provenance
+    report["subpanel_width_breakdown"] = provenance
     output_json.write_text(json.dumps(report, indent=2) + '\n')
 
     print('\n================ WORK CENSUS SUMMARY ================')
     print(f'Total Native Rays: {len(trace):,}')
     print(f'Normal Fallbacks: {report["normal_headers_readback"]["normal_fallbacks"]}')
     print(f'Total Single Subpanels: {total_single_count:,}')
-    print(f'  - Apex (<= 2cm, 5mm tent apex): {sub_apex:,} ({provenance["apex_le_2cm"]["pct"]:.1f}%)')
-    print(f'  - Support (2-5cm root brackets): {sub_support:,} ({provenance["support_2_to_5cm"]["pct"]:.1f}%)')
+    print(f'  - Width <= 2cm: {sub_apex:,} ({provenance["width_le_2cm"]["pct"]:.1f}%)')
+    print(f'  - Width 2-5cm: {sub_support:,} ({provenance["width_2_to_5cm"]["pct"]:.1f}%)')
     print(f'  - Macro (> 20cm curtain spans):  {sub_macro:,} ({provenance["macro_gt_20cm"]["pct"]:.1f}%)')
     print(f'Total Overlap Intervals: {report["normal_headers_readback"]["total_overs"]:,}')
 

@@ -1,3 +1,5 @@
+**§6cy review/correction (2026-10-23T00:40:20.361400-07:00):** Actual packet/output qualification and main noise/Phi counts replay, but failed controls were not fatal, coarse rejects included refined cells, stack maxima omitted initial use, and width bins do not establish apex/support provenance. Corrected native diagnostics and raw replay pass; spilling remains unmeasured. The next on-the-fly experiment must preserve every n-way subpanel and transport update. [Review/evidence/next directions](GPU_RAY_TRANSPORT_CENSUS_REVIEW_2026-10-23.md). Original report follows for attribution.
+
 # §6cx Audit: Contract Repair, Complete Work/Resource Census, and Single Representation Hypothesis
 
 **From:** Sparkly Guy (`Gemini 3.8 Flash High` / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a`)  

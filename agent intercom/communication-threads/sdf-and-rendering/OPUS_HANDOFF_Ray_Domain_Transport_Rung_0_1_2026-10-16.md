@@ -5909,3 +5909,43 @@ All three shipping gates (`Gate 1`, `Gate 2`, `Gate 3`) remain **OPEN**. Ready f
 Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-23T00:15:00-07:00`.
 
 
+
+
+### Sixth-one Sun §6cy — census review/correction native lane claim
+
+Zach commissions another review/analysis/feedback/next-steps pass after `9d1e35882`. Actual fused packet/readback work is substantial; checking failed-control admission, coarse/refined counter semantics, raw census coverage, width-versus-provenance and the on-the-fly subdivision contract. No Earthcall/probe process observed. Native lane claimed for one bounded diagnostic correction run, no new optimization/timing campaign. Preserve equations/capture/native fallback. All shipping gates remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T00:40:20.361400-07:00.
+
+
+### Sixth-one Sun §6cy — bounded native correction complete; lane released
+
+Corrected native census completes on32784 rays. Actual packets/outputs, three normal/forced stream capacities, budget23/24/25 and both poisoned mixed-fallback capacity controls pass. Raw per-ray counters and instrumentation outputs are exported; eight corruption refusals pass. Coarse-only bow rejects correct to2332420 (old2389859 included refined cells); max-stack minimum corrects0 to1. Main noise/density/Phi counts unchanged. No new stream timing sweep, renderer/default/save/app change or FPS gain. Native lane released; final review/next assignment follows.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T00:40:20.361400-07:00.
+
+
+### Sixth-one Sun §6cy — Sparkly/Firmament census review, corrections and next execution
+
+Zach commissions this review after `9d1e35882`. **Actual64/16 fused packet/output qualification is accepted in its frozen capture scope.** All32784 packets agree with guarded; all12102 matched affine endpoints remain; outer support unions stay unchanged. Instrumented/uninstrumented RGB/T and192 holdouts at both65536/32768 references pass. Firmament’s new counsel was present in default but absent in the ray checkout; it is now relayed there too.
+
+I corrected and executed the census witness. Original budget/capacity pass booleans were not fatal (the old admission still accepts a report with failed capacity parity injected). Capacity controls are now poisoned and check EVERY normal/fallback result with raw flags, expected reasons and non-vacuity. Budgets23/24/25 retain16/0/0 refusals; capacity4 singles causes26243 fallbacks and capacity1 overlap causes412, all mixed outputs bit-exact. Forced flags are actually read, trace headers compare with normal headers, and raw24+4 per-ray counters/instrumented outputs are exported. Offline replay recomputes all stats/histograms and refuses3 historical/8 corrected corruptions.
+
+The coarse reject counter included refined nodes: fixed total2332420, max93 instead of2389859/max105 (coarse visits max96). Stack minimum/p50 correct0→1. Noise496468 vs956301, consumer envelope509044 vs current density2102076, and producer Phi2606763 stay unchanged. These are different work categories, not a proof total math is cheaper or time dominated by any category. Width≤2cm37808 and2–5cm11515 do NOT prove apex/support provenance; no tag was exported. Private1280-byte source declarations do not measure spilling/occupancy. Actual `xcrun --find metal` reports unavailable. No physical cause is established.
+
+[Executed corrective audit and15-document portable bundle](../../../docs/audits/GPU_RAY_TRANSPORT_CENSUS_REVIEW_2026-10-23.md). Original census source ran a nine-setting stream sweep unconditionally despite the prose; corrected diagnostics disable that sweep. Legacy bulk/component clocks still execute and are not used as new optimization evidence. Native lane released. Production/default/save/app unchanged; all3 shipping gates OPEN.
+
+**Next assignment APPROVED as one isolated experiment: ON-THE-FLY CHRONOLOGICAL CONSUMPTION. Sparkly executes; Firmament reviews.**
+
+1. Pin the reviewed guarded/corrected64/16 source, fixture and compiled identities; inspect concurrent changes and claim/release native lane in BOTH copies. Start a fresh work/output directory. Keep OntoMath’s generic mathematical ownership and Screen lowering boundary; the fixed-layout fixture is not generic admission.
+2. Remove only `local_subpanels[64]`, `local_overlaps[16]` and their two-stream re-merge in the candidate. Keep root math, sorted knots, masks, protected affine/apex/uncertainty boundaries, all budgets/capacities, noise, lighting and error contract unchanged. Use shared transport fragments or executable fragment identity checks; no second hand-written integrator.
+3. **DO NOT integrate a whole single-member event span once.** Preserve `n=max(1u,u32(ceil((b-a)/4.0)))`; check `singles+n` against64/config exactly as before; emit k=0..n-1 using the EXACT original endpoint `select`/arithmetic; run ONE original transport update per emitted subpanel in order. A long event span can contain many original Gauss panels. For overlap, call the original `advanceOverlap` with the same interval/mask/member order and shared attenuation. Chronological equivalence is the proposal; actual compiled f32 bit equality remains an empirical gate.
+4. Accumulate `(L,T)` locally and publish output only once after full success. On a late capacity/budget failure discard ALL partial L/T, write the exact established fallback reason/flag, and let unchanged native fallback write the whole ray once. Every normal and failure path must set/clear the flag. Keep the final16-ray tile and per-tile offsets correct. Remaining roots/knots/pieces/noise state is not zero memory merely because two arrays disappear.
+5. First run untimed structural emission/order export plus strict bit comparison between the actual uninstrumented candidate, its instrumented trace and buffered64/16 control on all32784 rays. Preserve every original endpoint/count/mask, all12102 matched affine knots and support unions. Include n>1 spans, interleaved single/overlap, touching/duplicate events, gaps/short/protected intervals, empty rays, tail and mid-transport late fallback. Keep poisoned normal/forced/mixed outputs, mandatory budgets/capacity controls, native AST1e-5 and both-resolution192 holdout gates against captured AND contemporary baselines. Preserve counterexamples; do not weaken gates to obtain a pass.
+6. If accuracy/structure pass, compare FOUR paths in the SAME process: current; guarded bulk; buffered fused64/16; on-the-fly fused64/16. Buffered/on-the-fly use identical chunks, fallback passes, inputs and preparation, so that comparison tests the buffering change. Start only primary32768 capacity (two chunks,16 tail), bounded repetition and balanced paired order with raw encode/completion samples; update the clock verifier for the actual four-mode order. Include every preparation/upload/pass required for the result. No native timestamps. No historic absolute-ms target, additive phase bound or subtraction across processes.
+7. Stop on clear loss. A possible win needs a second clean matched series before more views/clocks/full-frame work. Beating buffered/bulk while losing CURRENT leaves gate1 open. If both series win current at current-or-better accuracy, return the finite-query checkpoint for review before generic/full-frame promotion. No broader culling/secant/apex removal/adaptive sampling/cache bundle.
+8. Firmament: review the subdivision-preserving derivation and fallback publication boundary; do not infer exact compiled equality or causal spills from source algebra/work counts. Sparkly: close out with exact source, compact deduplicated raw evidence/replay, explicit lane release and all three gate statuses. Gate2 generic source/lifetimes/full viewport/depth/composition/frame costs and gate3 moving inhabited p95/Zach acceptance remain future work even after a profitable query.
+
+These directions and review are delivered to both LOCAL Intercom copies. Receipt/remote publication is not assumed; no push or production promotion is included.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T00:40:20.361400-07:00.
