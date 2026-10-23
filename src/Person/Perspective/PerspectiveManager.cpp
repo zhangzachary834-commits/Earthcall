@@ -150,10 +150,15 @@ size_t PerspectiveManager::findPerspective(const std::string& nameOrId) const {
             return i;
         }
     }
+    // Display names are not identities. A unique legacy name may resolve,
+    // but ambiguous names must never silently select the first perspective.
+    const size_t npos = static_cast<size_t>(-1);
+    size_t match = npos;
     for (size_t i = 0; i < _perspectives.size(); ++i) {
         if (_perspectives[i] && _perspectives[i]->getName() == nameOrId) {
-            return i;
+            if (match != npos) return npos;
+            match = i;
         }
     }
-    return static_cast<size_t>(-1);
+    return match;
 }
