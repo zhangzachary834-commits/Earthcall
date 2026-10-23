@@ -160,19 +160,12 @@ void RelationManager::rebuildEndpointIndex() const {
     _byEndpoint.clear();
     _byIdentifier.clear();
     _sharedByPointer.clear();
-    _indexedNames.clear();
     for (const auto& owned : relations) {
         Relation* r = owned.get();
         if (!r) continue;
         _sharedByPointer[r] = owned;
-        if (Singular* a = r->a()) {
-            _byEndpoint[a].push_back(r);
-            _indexedNames[a] = a->getIdentifier();
-        }
-        if (Singular* b = r->b(); b && b != r->a()) {
-            _byEndpoint[b].push_back(r);
-            _indexedNames[b] = b->getIdentifier();
-        }
+        if (Singular* a = r->a()) _byEndpoint[a].push_back(r);
+        if (Singular* b = r->b(); b && b != r->a()) _byEndpoint[b].push_back(r);
         // aId()/bId(): a bound endpoint's live name, an unbound one's kept name.
         // Reading it here also fills the endpoint's cached id, which is what
         // lets Relation::Endpoint::forget() keep the name when the being dies.
@@ -185,32 +178,11 @@ void RelationManager::rebuildEndpointIndex() const {
         if (!bId.empty() && bId != aId) _byIdentifier[bId].push_back(r);
     }
     _indexedGeneration = _generation;
-    _isIndexNameClean = false;
-}
-
-void RelationManager::ensureEndpointIndexCurrent() const {
-    if (_indexedGeneration != _generation) {
-        rebuildEndpointIndex();
-        return;
-    }
-    if (!_isIndexNameClean) {
-        bool dirty = false;
-        for (const auto& [being, oldName] : _indexedNames) {
-            if (being && being->getIdentifier() != oldName) {
-                dirty = true;
-                break;
-            }
-        }
-        if (dirty) {
-            rebuildEndpointIndex();
-        }
-        _isIndexNameClean = true;
-    }
 }
 
 void RelationManager::relationsInvolving(const Singular& being, std::vector<Relation*>& out) const {
     out.clear();
-    ensureEndpointIndexCurrent();
+    if (_indexedGeneration != _generation) rebuildEndpointIndex();
     if (auto it = _byEndpoint.find(&being); it != _byEndpoint.end()) out = it->second;
     const std::string id = being.getIdentifier();
     if (id.empty()) return;
@@ -444,27 +416,8 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const Sin
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const std::string& identifier) const {
     std::vector<std::shared_ptr<Relation>> result;
-    if (identifier.empty()) return result;
-    ensureEndpointIndexCurrent();
-    auto it = _byIdentifier.find(identifier);
-    if (it == _byIdentifier.end()) {
-        for (const auto& [being, oldName] : _indexedNames) {
-            if (being && being->getIdentifier() == identifier) {
-                rebuildEndpointIndex();
-                it = _byIdentifier.find(identifier);
-                break;
-            }
-        }
-    }
-    if (it != _byIdentifier.end()) {
-        for (Relation* r : it->second) {
-            if (r && r->involves(identifier)) {
-                auto sharedIt = _sharedByPointer.find(r);
-                if (sharedIt != _sharedByPointer.end()) {
-                    result.push_back(sharedIt->second);
-                }
-            }
-        }
+    for (const auto& r : relations) {
+        if (r && r->involves(identifier)) result.push_back(r);
     }
     return result;
 }
@@ -486,27 +439,8 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(cons
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(const std::string& a, const std::string& b) const {
     std::vector<std::shared_ptr<Relation>> result;
-    if (a.empty() || b.empty()) return result;
-    ensureEndpointIndexCurrent();
-    auto it = _byIdentifier.find(a);
-    if (it == _byIdentifier.end()) {
-        for (const auto& [being, oldName] : _indexedNames) {
-            if (being && being->getIdentifier() == a) {
-                rebuildEndpointIndex();
-                it = _byIdentifier.find(a);
-                break;
-            }
-        }
-    }
-    if (it != _byIdentifier.end()) {
-        for (Relation* r : it->second) {
-            if (r && r->isBetween(a, b)) {
-                auto sharedIt = _sharedByPointer.find(r);
-                if (sharedIt != _sharedByPointer.end()) {
-                    result.push_back(sharedIt->second);
-                }
-            }
-        }
+    for (const auto& r : relations) {
+        if (r && r->isBetween(a, b)) result.push_back(r);
     }
     return result;
 }
@@ -543,29 +477,15 @@ void RelationManager::loadFromJson(const nlohmann::json& j, const RelationEndpoi
 
 std::vector<std::string> RelationManager::findAdjacentEntities(const std::string& entityId, const std::string& relationType) const {
     std::vector<std::string> adjacent;
-    if (entityId.empty()) return adjacent;
-    ensureEndpointIndexCurrent();
-    auto it = _byIdentifier.find(entityId);
-    if (it == _byIdentifier.end()) {
-        for (const auto& [being, oldName] : _indexedNames) {
-            if (being && being->getIdentifier() == entityId) {
-                rebuildEndpointIndex();
-                it = _byIdentifier.find(entityId);
-                break;
-            }
-        }
-    }
-    if (it != _byIdentifier.end()) {
-        for (Relation* relPtr : it->second) {
-            if (!relPtr) continue;
-            const Relation& rel = *relPtr;
-            if (!relationType.empty() && rel.type != relationType) continue;
+    for (const auto& relPtr : relations) {
+        if (!relPtr) continue;
+        const Relation& rel = *relPtr;
+        if (!relationType.empty() && rel.type != relationType) continue;
 
-            if (rel.aId() == entityId) {
-                adjacent.push_back(rel.bId());
-            } else if (!rel.directed && rel.bId() == entityId) {
-                adjacent.push_back(rel.aId());
-            }
+        if (rel.aId() == entityId) {
+            adjacent.push_back(rel.bId());
+        } else if (!rel.directed && rel.bId() == entityId) {
+            adjacent.push_back(rel.aId());
         }
     }
     return adjacent;

@@ -350,8 +350,7 @@ struct RealSaveTreeGuard {
 private:
     void beginGuarding(const std::filesystem::path& saves) {
         realSaves = saves;
-        const auto baseTmp = std::filesystem::exists("build") ? std::filesystem::path("build") : std::filesystem::temp_directory_path();
-        backup = baseTmp /
+        backup = std::filesystem::temp_directory_path() /
             ("earthcall-save-backup-" + std::to_string(
                 std::chrono::steady_clock::now().time_since_epoch().count()));
         if (!std::filesystem::create_directory(backup))
@@ -372,7 +371,6 @@ private:
         if (ec) throw std::filesystem::filesystem_error("save-tree root inspection failed", ec);
 
         for (const auto& entry : initialEntries) {
-            if (entry == "worlds") continue; // read-only world saves, never mutated by test hydration or persistZones
             std::filesystem::copy(
                 realSaves / entry, backup / entry,
                 std::filesystem::copy_options::recursive |

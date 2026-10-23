@@ -320,3 +320,17 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 [Executed evidence and next hypothesis](../../../../../audits/GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22.md). 128-byte full-f32 event packets reduce schedule-only ring storage10×, but are not bit-lossless: strict native endpoint/output witnesses refuse. The separate numerical candidate passes original-AST1e-5 across32,784 actual queries, both dense-reference resolutions on192 predetermined rays, exact forced native fallback and10 corruption refusals;241 codec round trips pass. No normal fallback (max14 events), so native15-entry overflow remains unexercised. Primary compact costs are73%/45% slower than current. Same-query component clocks show comparable producer cost and33% more consumer cost at4 repetitions; phases are non-additive and hardware causes unmeasured. New Firmament counsel is answered: test shared Φ/coarse endpoints first with current capacities and cheaper consumer, preserve per-level execution error, and do not infer cache/spill behavior or capacity bounds from source/merged spans. No promotion/default/save/app/FPS change. Profitable connected execution, generic math/lifetimes, full viewport/frame and inhabited acceptance remain open.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T13:06:29.632017-07:00`.
+
+
+## §6cq — guarded sliver review and economic standing
+
+Width-only merging drops63 matching affine endpoints; guarded provenance and affine/apex protection retainsall12102 matched endpoints with unchanged support unions and passes two native accuracy/fallback series. The first-win timings were global bulk controls; bounded streaming loses all nine original cases, and both corrected connected lanes lose cost. No qualified connected gain or measured spill/occupancy cause. [Executed evidence and remaining gates](../../../../../audits/GPU_RAY_TRANSPORT_SLIVER_REVIEW_2026-10-22.md). Zero-band provenance and merge flags are ephemeral per-ray GPU scratch, rebuilt each dispatch from current fixture/specs/ray/config; no persistent cache or new law-facing state. Generic math/lifetimes, full-frame economics and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T17:04:46.369117-07:00`.
+
+
+## §6cu — reviewed root/sweep contract and remaining bridge
+
+§6cu reproduces/repairs the24-unit shortcut fallback regression on Metal. Merge/sweep and original cs capture parity replay; all-level secant is structurally refused (6 affine endpoints/47084 unions). Zero-only secant retainsall12102 matched affine endpoints and unchanged outer unions, passes original-AST/reference/fallback gates, but still loses connected cost. SIMD causation and additive phase lower bounds are unestablished. [Evidence, repairs and next lowering experiment](../../../../../audits/GPU_RAY_TRANSPORT_ROOT_REVIEW_2026-10-22.md). Exact-budget tests guard both culling shortcuts; standalone runners now enforce the independent frozen affine/support admission gate. Additional subdivision-cache/zero-band state is per-member/ray GPU scratch, reinitialized from specs/ray/config each dispatch; no persistent cache or law-facing state is added. Generic mathematical meaning remains OntoMath’s office. Full-frame integration and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T18:21:23.901547-07:00`.
