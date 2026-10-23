@@ -8,6 +8,8 @@
 #include "Singularity/Storage/Serialization/Person/PersonSerialization.hpp"
 
 #include <cassert>
+#include <cstdlib>
+#include <optional>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -19,6 +21,7 @@ namespace {
 struct TestEnvironment {
     std::filesystem::path tempDir;
     std::string prevSaveRoot;
+    std::optional<std::string> prevEarthcallHome;
 
     TestEnvironment() {
         tempDir = std::filesystem::temp_directory_path() / "earthcall_person_db_test";
@@ -27,10 +30,28 @@ struct TestEnvironment {
 
         prevSaveRoot = SaveSystem::saveRoot();
         SaveSystem::setSaveRoot(tempDir.string());
+
+        // The identity ledger lives outside SaveSystem's save root.
+        // Isolate it too, never writing to the developer's real identity.
+        if (const char* previous = std::getenv("EARTHCALL_HOME")) {
+            prevEarthcallHome = previous;
+        }
+        const std::string sandboxHome = (tempDir / "home").string();
+#if defined(_WIN32)
+        _putenv_s("EARTHCALL_HOME", sandboxHome.c_str());
+#else
+        setenv("EARTHCALL_HOME", sandboxHome.c_str(), 1);
+#endif
     }
 
     ~TestEnvironment() {
         SaveSystem::setSaveRoot(prevSaveRoot);
+#if defined(_WIN32)
+        _putenv_s("EARTHCALL_HOME", prevEarthcallHome ? prevEarthcallHome->c_str() : "");
+#else
+        if (prevEarthcallHome) setenv("EARTHCALL_HOME", prevEarthcallHome->c_str(), 1);
+        else unsetenv("EARTHCALL_HOME");
+#endif
         std::filesystem::remove_all(tempDir);
     }
 };
@@ -300,71 +321,76 @@ static void testLoadPersonLegacyJsonFormat() {
     std::cout << "  loadPerson legacy .json format resolution OK\n";
 }
 
-// WITNESS TEST:
-// What PersonDatabase::loadPerson COULD prove:
-//   - Low-level Person::deserialize member function parsing of arbitrary JSON objects.
-//   - Direct file reading from SaveSystem::SaveType::PERSON directory.
-//
-// What PersonDatabase::loadPerson COULD NOT prove:
-//   - The true production application boot restoration path in EngineInit.cpp.
-//   - EngineInit.cpp enumerates profiles via SaveSystem::listWorlds(PERSON), checks
-//     Identity::legacyProfileSuperseded(profile.value("displayName")), and deserializes
-//     profiles via personFromJson(profile, *_person). PersonDatabase::loadPerson is
-//     never called during engine initialization.
-//
-// This witness test traverses the real production application profile restoration path.
+// WITNESS: exercise the same SaveSystem discovery, legacy supersession,
+// candidate-count gate, and Person codec used by Engine::initLogic.
+// This does not instantiate Engine or prove key possession / Person presence.
+// The old PersonDatabase::loadPerson tests exercise the storage API, not boot.
 static void testPersonFromJsonProductionRestoration() {
     TestEnvironment env;
 
-    // 1. Create a Person profile JSON with a specific displayName and personId.
     Person source = createDummyPerson("WitnessPerson");
     std::array<uint8_t, 32> pubKey{};
     pubKey[0] = 42;
-    source.setPersonId(Identity::SingularId::fromPublicKey(pubKey));
+    assert(source.setPersonId(Identity::SingularId::fromPublicKey(pubKey)));
+    source.position() = glm::vec3(11.0f, 12.0f, 13.0f);
 
-    nlohmann::json profileJson = personToJson(source);
-    std::string savedPath = SaveSystem::writeSaveData(profileJson, source.getIdentifier(), SaveSystem::SaveType::PERSON);
+    const auto keyedProfile = personToJson(source);
+    const std::string savedPath = SaveSystem::writeSaveData(
+        keyedProfile, source.getIdentifier(), SaveSystem::SaveType::PERSON);
     assert(!savedPath.empty());
 
-    // 2. Exercise real EngineInit.cpp profile discovery and restoration logic.
-    std::vector<nlohmann::json> candidates;
-    for (const auto& info : SaveSystem::listWorlds(SaveSystem::SaveType::PERSON)) {
-        nlohmann::json profile = SaveSystem::readSaveData(info.path);
-        if (!profile.is_object()) continue;
+    assert(!Identity::legacyProfileSuperseded("SupersededUser"));
 
-        // EngineInit filter logic: check legacy profile superseding
-        if (!profile.contains("personId") &&
-            Identity::legacyProfileSuperseded(profile.value("displayName", std::string{}))) {
-            continue;
+    // A legacy profile exists alongside its keyed successor, as on
+    // installations migrated from a name-based Person to a keyed Person.
+    Person legacy = createDummyPerson("SupersededUser");
+    const std::string legacyPath = SaveSystem::writeSaveData(
+        personToJson(legacy), legacy.getIdentifier(), SaveSystem::SaveType::PERSON);
+    assert(!legacyPath.empty());
+
+    Identity::IdentityLedger ledger;
+    ledger.record("SupersededUser", source.personId());
+    assert(ledger.save());
+    assert(std::filesystem::exists(Identity::IdentityLedger::defaultPath()));
+    assert(Identity::legacyProfileSuperseded("SupersededUser"));
+    assert(!Identity::legacyProfileSuperseded("UnseenLegacyUser"));
+
+    // Mirror the exact candidate-selection loop in EngineInit.cpp. A future
+    // change to that loop still needs an integration test through Engine.
+    auto bootCandidates = [] {
+        std::vector<nlohmann::json> candidates;
+        for (const auto& info : SaveSystem::listWorlds(SaveSystem::SaveType::PERSON)) {
+            nlohmann::json profile = SaveSystem::readSaveData(info.path);
+            if (!profile.is_object()) continue;
+            if (!profile.contains("personId") &&
+                Identity::legacyProfileSuperseded(profile.value("displayName", std::string{}))) {
+                continue;
+            }
+            candidates.push_back(std::move(profile));
         }
-        candidates.push_back(std::move(profile));
-    }
+        return candidates;
+    };
 
+    auto candidates = bootCandidates();
     assert(candidates.size() == 1);
-
-    // 3. Restore via personFromJson (real production path)
     Person restored = createDummyPerson("Temp");
     personFromJson(candidates.front(), restored);
-
     assert(restored.getDisplayName() == "WitnessPerson");
     assert(restored.hasIdentity());
     assert(restored.personId() == source.personId());
+    assert(restored.position().x == 11.0f);
+    assert(restored.position().y == 12.0f);
+    assert(restored.position().z == 13.0f);
 
-    // 4. Test production legacy superseded profile filtering logic
-    // In a clean test environment with no ledger/keyed profile, legacyProfileSuperseded returns false.
-    assert(!Identity::legacyProfileSuperseded("WitnessPerson"));
-    assert(!Identity::legacyProfileSuperseded("UnseenLegacyUser"));
+    // Multiple unsuperseded profiles must remain ambiguous: boot must not
+    // guess a Person from display names or silently choose the first file.
+    Person other = createDummyPerson("OtherPerson");
+    assert(!SaveSystem::writeSaveData(
+        personToJson(other), other.getIdentifier(), SaveSystem::SaveType::PERSON).empty());
+    candidates = bootCandidates();
+    assert(candidates.size() == 2);
 
-    // Set up a ledger record and a keyed profile to verify superseded detection.
-    Identity::IdentityLedger ledger;
-    ledger.record("SupersededUser", source.personId());
-    bool savedLedger = ledger.save();
-    assert(savedLedger);
-
-    // Now SupersededUser is mapped in the ledger to source.personId, and source profile is saved and keyed.
-    assert(Identity::legacyProfileSuperseded("SupersededUser"));
-
-    std::cout << "  testPersonFromJsonProductionRestoration (production boot path) OK\n";
+    std::cout << "  testPersonFromJsonProductionRestoration (boot selection/codec mirror) OK\n";
 }
 
 int main() {
