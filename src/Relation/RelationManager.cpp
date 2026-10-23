@@ -160,14 +160,10 @@ void RelationManager::rebuildEndpointIndex() const {
     _byEndpoint.clear();
     _byIdentifier.clear();
     _sharedByPointer.clear();
-    _orderByPointer.clear();
-    std::size_t position = 0;
     for (const auto& owned : relations) {
-        const std::size_t order = position++;
         Relation* r = owned.get();
         if (!r) continue;
         _sharedByPointer[r] = owned;
-        _orderByPointer[r] = order;
         if (Singular* a = r->a()) _byEndpoint[a].push_back(r);
         if (Singular* b = r->b(); b && b != r->a()) _byEndpoint[b].push_back(r);
         // aId()/bId(): a bound endpoint's live name, an unbound one's kept name.
@@ -199,37 +195,6 @@ void RelationManager::relationsInvolving(const Singular& being, std::vector<Rela
     }
 }
 
-std::vector<Relation*> RelationManager::stringLookupCandidates(const std::string& identifier) const {
-    std::vector<Relation*> candidates;
-    if (identifier.empty()) return candidates;
-    if (_indexedGeneration != _generation) rebuildEndpointIndex();
-
-    std::unordered_set<Relation*> seen;
-    auto append = [&](Relation* r) {
-        if (r && seen.insert(r).second) candidates.push_back(r);
-    };
-
-    // Include saved/unbound endpoint names and the names observed when the
-    // index was last rebuilt.
-    if (auto it = _byIdentifier.find(identifier); it != _byIdentifier.end())
-        for (Relation* r : it->second) append(r);
-
-    // A bound Singular's virtual identifier can change WITHOUT a manager
-    // generation bump. The old full scan observed that change immediately.
-    // Check live endpoint pointers as well, including when the new name is
-    // already indexed for another being. An index miss alone is not enough.
-    for (const auto& [being, edges] : _byEndpoint) {
-        if (being && being->getIdentifier() == identifier)
-            for (Relation* r : edges) append(r);
-    }
-
-    // The old scans emitted relations in insertion order. The endpoint hash
-    // map's iteration order must not silently change that public behavior.
-    std::sort(candidates.begin(), candidates.end(), [&](Relation* a, Relation* b) {
-        return _orderByPointer.at(a) < _orderByPointer.at(b);
-    });
-    return candidates;
-}
 
 bool RelationManager::retain(const std::shared_ptr<Relation>& r) {
     if (!r || !r->hasEndpoints()) return false;
@@ -451,10 +416,21 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const Sin
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const std::string& identifier) const {
     std::vector<std::shared_ptr<Relation>> result;
-    for (Relation* r : stringLookupCandidates(identifier)) {
-        if (!r->involves(identifier)) continue;
-        auto sharedIt = _sharedByPointer.find(r);
-        if (sharedIt != _sharedByPointer.end()) result.push_back(sharedIt->second);
+    if (identifier.empty()) return result;
+    if (_indexedGeneration != _generation) rebuildEndpointIndex();
+    if (auto it = _byIdentifier.find(identifier); it != _byIdentifier.end()) {
+        for (Relation* r : it->second) {
+            if (r && r->involves(identifier)) {
+                auto sharedIt = _sharedByPointer.find(r);
+                if (sharedIt != _sharedByPointer.end()) {
+                    result.push_back(sharedIt->second);
+                }
+            }
+        }
+    } else {
+        for (const auto& r : relations) {
+            if (r && r->involves(identifier)) result.push_back(r);
+        }
     }
     return result;
 }
@@ -477,10 +453,20 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(cons
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(const std::string& a, const std::string& b) const {
     std::vector<std::shared_ptr<Relation>> result;
     if (a.empty() || b.empty()) return result;
-    for (Relation* r : stringLookupCandidates(a)) {
-        if (!r->isBetween(a, b)) continue;
-        auto sharedIt = _sharedByPointer.find(r);
-        if (sharedIt != _sharedByPointer.end()) result.push_back(sharedIt->second);
+    if (_indexedGeneration != _generation) rebuildEndpointIndex();
+    if (auto it = _byIdentifier.find(a); it != _byIdentifier.end()) {
+        for (Relation* r : it->second) {
+            if (r && r->isBetween(a, b)) {
+                auto sharedIt = _sharedByPointer.find(r);
+                if (sharedIt != _sharedByPointer.end()) {
+                    result.push_back(sharedIt->second);
+                }
+            }
+        }
+    } else {
+        for (const auto& r : relations) {
+            if (r && r->isBetween(a, b)) result.push_back(r);
+        }
     }
     return result;
 }
@@ -517,13 +503,31 @@ void RelationManager::loadFromJson(const nlohmann::json& j, const RelationEndpoi
 
 std::vector<std::string> RelationManager::findAdjacentEntities(const std::string& entityId, const std::string& relationType) const {
     std::vector<std::string> adjacent;
-    for (Relation* relPtr : stringLookupCandidates(entityId)) {
-        const Relation& rel = *relPtr;
-        if (!relationType.empty() && rel.type != relationType) continue;
-        if (rel.aId() == entityId) {
-            adjacent.push_back(rel.bId());
-        } else if (!rel.directed && rel.bId() == entityId) {
-            adjacent.push_back(rel.aId());
+    if (entityId.empty()) return adjacent;
+    if (_indexedGeneration != _generation) rebuildEndpointIndex();
+    if (auto it = _byIdentifier.find(entityId); it != _byIdentifier.end()) {
+        for (Relation* relPtr : it->second) {
+            if (!relPtr) continue;
+            const Relation& rel = *relPtr;
+            if (!relationType.empty() && rel.type != relationType) continue;
+
+            if (rel.aId() == entityId) {
+                adjacent.push_back(rel.bId());
+            } else if (!rel.directed && rel.bId() == entityId) {
+                adjacent.push_back(rel.aId());
+            }
+        }
+    } else {
+        for (const auto& relPtr : relations) {
+            if (!relPtr) continue;
+            const Relation& rel = *relPtr;
+            if (!relationType.empty() && rel.type != relationType) continue;
+
+            if (rel.aId() == entityId) {
+                adjacent.push_back(rel.bId());
+            } else if (!rel.directed && rel.bId() == entityId) {
+                adjacent.push_back(rel.aId());
+            }
         }
     }
     return adjacent;
