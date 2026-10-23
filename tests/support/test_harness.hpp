@@ -61,7 +61,10 @@ struct BootedEngineHarness {
         // A boot harness that omits this wire is not actually exercising the
         // same runtime graph as the app.
         Physics::setLawManager(&lawManager);
-        // Match production EngineInit: collision events reach the physics graph.
+
+        // Collisions feed the relation graph (recordCollision). Mirror EngineInit:
+        // wire physics event listeners so PhysicsCollisionEvent on EventBus reaches
+        // Physics::registry().
         Physics::setupPhysicsEventListeners();
 
         // 1. Sync register standard channels like InteractionChannel
@@ -373,6 +376,7 @@ private:
         if (ec) throw std::filesystem::filesystem_error("save-tree root inspection failed", ec);
 
         for (const auto& entry : initialEntries) {
+            if (entry == "worlds") continue; // worlds are read-only input fixtures; backing them up copies >1GB unnecessarily
             std::filesystem::copy(
                 realSaves / entry, backup / entry,
                 std::filesystem::copy_options::recursive |
