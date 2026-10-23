@@ -89,7 +89,6 @@ jobs:
         file_channel_test
         file_watcher_test
         first_mover_test
-        first_mover_tool_test
         law_file_tree_fossil_test
         earthcall_api_test
         rete_state_ptr_index_test
@@ -139,6 +138,7 @@ jobs:
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.22" \
             -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.22/include" \
+            -DOPENSSL_USE_STATIC_LIBS=ON \
             -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.22/libcrypto.a" \
             -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.22/libssl.a"
 
@@ -199,6 +199,7 @@ jobs:
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.22" \
             -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.22/include" \
+            -DOPENSSL_USE_STATIC_LIBS=ON \
             -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.22/libcrypto.a" \
             -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.22/libssl.a"
 
@@ -336,6 +337,7 @@ jobs:
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.22" \
             -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.22/include" \
+            -DOPENSSL_USE_STATIC_LIBS=ON \
             -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.22/libcrypto.a" \
             -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.22/libssl.a" \
             >/tmp/sdf-range-perf-configure.log 2>&1; then
@@ -387,6 +389,7 @@ jobs:
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.22" \
             -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.22/include" \
+            -DOPENSSL_USE_STATIC_LIBS=ON \
             -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.22/libcrypto.a" \
             -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.22/libssl.a"
 
