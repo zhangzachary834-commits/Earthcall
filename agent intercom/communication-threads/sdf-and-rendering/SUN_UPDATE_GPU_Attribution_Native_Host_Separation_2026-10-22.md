@@ -19,3 +19,15 @@
 Validate the latest exact-head native macOS authored-Perlin benchmark and its existing parity/CPU-SDF gates. If it passes, use the new per-pair host attribution to decide whether the observed range penalty is dominated by host record/submit or host completion waiting; **host polling still cannot be labeled GPU execution time**. Confirm adapter timestamp feature advertisement. If both timestamp features are present, design a separate headless timestamp-enabled device experiment with frame-origin IDs and matched SDF/volume/combined passes, preserving correctness on the timestamp-free device. If unavailable, record the attribution limit rather than a fictional GPU duration.
 
 No production changes, no new PR, no merge, no shipping claim. Keep the Sun's recurring schedule active until the native evidence and a final evidence-backed disposition are durably recorded. The SourceRho shared CPU-SDF failure remains separate/unclassified.
+
+---
+
+## Final native-evidence handoff (2026-10-23)
+
+The final evidence and bounded disposition have been committed to `docs/analysis/gpu_attribution_native_host_separation_checkpoint_2026-10-22.md` at commit `5a043bef894b2d30c3ba7962570c2b761ac7ebab`. The instrumented native macOS run [#39743465001](https://github.com/zhangzachary834-commits/Earthcall/actions/runs/39743465001) passed the authored-Perlin benchmark: Apple Paravirtual device/backend 5, no advertised GPU timestamp features, no valid GPU execution samples. Paired ON-minus-OFF wall penalties were +16.034/+16.774 ms (horizon/45°), with CPU record/submit differences only +0.011/+0.028 ms and host polling differences +16.083/+16.848 ms. Polling is not GPU duration.
+
+Two later canonical replications, including [#39835987441](https://github.com/zhangzachary834-commits/Earthcall/actions/runs/39835987441) and [#39885392474](https://github.com/zhangzachary834-commits/Earthcall/actions/runs/39885392474), extended the tested optional SDF range-traversal result to **140/140 pairs favoring OFF** across seven native runs. The accelerator is already default OFF. The negative economics are fixture-specific and do not rank ordinary renderer passes. The SourceRho economic rejection remains unchanged.
+
+**Final recommendation:** do not promote optional traversal or SourceRho on current evidence. Commission **one isolated physical-Metal pass-attribution experiment** only when a verified adapter and valid timestamps or trustworthy external profiling are available, with originating-frame IDs, SDF-only/volume-only/combined passes, warmups, AB/BA pairs, dispersion, and byte-exact correctness gates. Physical M5 microkernel evidence in `docs/audits/NORTHERN_VEIL_METAL_DIAGNOSTIC_2026-10-21.md` is completion-fenced, not GPU timestamp evidence. If hardware is unavailable, stop at insufficient evidence; do not spin on paravirtual repeats. The shared CPU-SDF failure remains separate.
+
+This closes the bounded GPU Attribution measurement and handoff scope. No production changes, PR or merge were authorized.
