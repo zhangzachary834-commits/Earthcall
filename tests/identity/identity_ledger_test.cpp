@@ -1,5 +1,7 @@
 #include "Identity/IdentityLedger.hpp"
+#include "Singularity/Storage/SaveSystem.hpp"
 #include <cassert>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -105,6 +107,16 @@ static void testResolveOrMint() {
 }
 
 int main() {
+    const auto sandbox = std::filesystem::temp_directory_path() / "earthcall_identity_ledger_test";
+    std::filesystem::remove_all(sandbox);
+    std::filesystem::create_directories(sandbox / "saves");
+    SaveSystem::setSaveRoot((sandbox / "saves").string());
+#ifdef _WIN32
+    _putenv_s("EARTHCALL_HOME", (sandbox / "home").string().c_str());
+#else
+    setenv("EARTHCALL_HOME", (sandbox / "home").string().c_str(), 1);
+#endif
+
     std::cout << "identity_ledger_test:\n";
     testEmptyLoadSave();
     testRecordAndFind();
@@ -112,5 +124,8 @@ int main() {
     testMalformedLedger();
     testResolveOrMint();
     std::cout << "identity_ledger_test: ALL OK\n";
+
+    SaveSystem::setSaveRoot("");
+    std::filesystem::remove_all(sandbox);
     return 0;
 }

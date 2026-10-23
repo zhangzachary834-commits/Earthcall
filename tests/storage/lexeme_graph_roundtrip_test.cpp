@@ -55,7 +55,7 @@ int main() {
     pStream.properties.push_back(pVar);
     graph.properties.push_back(pStream);
     
-    std::string testPath = "test_graph.ecform";
+    std::string testPath = (std::filesystem::temp_directory_path() / "test_graph.ecform").string();
     bool writeOk = BinarySerializer::writeBinary(graph, testPath);
     check(writeOk, "BinarySerializer writes binary file successfully");
     
