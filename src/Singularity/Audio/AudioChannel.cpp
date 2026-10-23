@@ -19,18 +19,18 @@ namespace {
 
 AudioChannel* gAudioSinkOwner = nullptr;
 
-bool readString(Singular& being, const char* path, std::string& out) {
+bool readString(Singular& being, const PropertyPath& path, std::string& out) {
     PropertyValue value;
-    if (!lawGetValue(being, PropertyPath::parse(path), value)) return false;
+    if (!lawGetValue(being, path, value)) return false;
     const auto* text = std::get_if<std::string>(&value);
     if (!text) return false;
     out = *text;
     return true;
 }
 
-bool readNumber(Singular& being, const char* path, double& out) {
+bool readNumber(Singular& being, const PropertyPath& path, double& out) {
     PropertyValue value;
-    return lawGetValue(being, PropertyPath::parse(path), value) &&
+    return lawGetValue(being, path, value) &&
            propertyValueToNumber(value, out);
 }
 
@@ -126,14 +126,20 @@ bool AudioChannel::resolveAuthoredForm(Singular& subject,
     Singular* carrier = nullptr;
     std::string serialized;
 
+    // Immutable authored paths are parsed once, not on each sound request.
+    static const PropertyPath pathForm = PropertyPath::parse("acoustic.form");
+    static const PropertyPath pathTimeVariable = PropertyPath::parse("acoustic.timeVariable");
+    static const PropertyPath pathReferenceFrequency = PropertyPath::parse("acoustic.referenceFrequency");
+    static const PropertyPath pathDuration = PropertyPath::parse("acoustic.duration");
+
     // A sounding being may author its own waveform directly.
-    if (readString(subject, "acoustic.form", serialized) && !serialized.empty()) {
+    if (readString(subject, pathForm, serialized) && !serialized.empty()) {
         carrier = &subject;
     } else if (!timbre.empty()) {
         // Otherwise the authored timbre token is an identity, not an enum.
         carrier = findBeing(timbre);
         if (carrier) {
-            if (!readString(*carrier, "acoustic.form", serialized) ||
+            if (!readString(*carrier, pathForm, serialized) ||
                 serialized.empty()) {
                 reason = "timbre '" + timbre +
                          "' resolves to a being with no acoustic.form";
@@ -157,14 +163,14 @@ bool AudioChannel::resolveAuthoredForm(Singular& subject,
     form = OntoMath::Piecewise::fromJson(parsed);
     timeVariable = form.inputVariable.empty() ? "phase" : form.inputVariable;
     std::string authoredTimeVar;
-    if (readString(*carrier, "acoustic.timeVariable", authoredTimeVar) &&
+    if (readString(*carrier, pathTimeVariable, authoredTimeVar) &&
         !authoredTimeVar.empty()) {
         timeVariable = authoredTimeVar;
     }
 
     referenceFrequency = 1.0;
     double authoredReference = 0.0;
-    if (readNumber(*carrier, "acoustic.referenceFrequency", authoredReference)) {
+    if (readNumber(*carrier, pathReferenceFrequency, authoredReference)) {
         if (!std::isfinite(authoredReference) || authoredReference <= 0.0) {
             reason = "acoustic.referenceFrequency must be finite and positive";
             return false;
@@ -174,7 +180,7 @@ bool AudioChannel::resolveAuthoredForm(Singular& subject,
 
     duration = 0.35;
     double authoredDuration = 0.0;
-    if (readNumber(*carrier, "acoustic.duration", authoredDuration)) {
+    if (readNumber(*carrier, pathDuration, authoredDuration)) {
         if (!std::isfinite(authoredDuration) || authoredDuration <= 0.0) {
             reason = "acoustic.duration must be finite and positive";
             return false;
