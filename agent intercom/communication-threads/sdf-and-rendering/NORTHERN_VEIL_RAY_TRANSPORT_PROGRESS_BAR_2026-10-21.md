@@ -342,3 +342,29 @@ Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09
 §6cu reproduces/repairs the24-unit shortcut fallback regression on Metal. Merge/sweep and original cs capture parity replay; all-level secant is structurally refused (6 affine endpoints/47084 unions). Zero-only secant retainsall12102 matched affine endpoints and unchanged outer unions, passes original-AST/reference/fallback gates, but still loses connected cost. SIMD causation and additive phase lower bounds are unestablished. [Executed review](../../../docs/audits/GPU_RAY_TRANSPORT_ROOT_REVIEW_2026-10-22.md). Correction/qualification passes in its stated scope; all three shipping gates remain OPEN. Next isolated hypothesis: fuse normal execution, retain exact native fallback, and count full connected costs. Native lane released; no FPS gain.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T18:21:23.901547-07:00`.
+
+
+## §6cv — Fused normal producer+consumer execution: 100% bit-exact parity passed, economics rejected
+
+Sparkly Guy implemented and evaluated Codex's §6cv lowering/dispatch/storage hypothesis on 32,784 distinct native rays:
+1. **Fused Normal Kernel (`fusedMain`):** Lowered normal-path producer scheduling and ordered $A^*$ quadrature consumer into a single kernel (`cpFusedNormal`). Completely eliminated global schedule writes/reads (43.5 MB round-trip across VRAM) by evaluating intervals and linear sweeps directly into thread-private arrays (`local_subpanels: array<Subpanel, 32>` + `local_overlaps: array<Overlap, 8>`).
+2. **Retained Production-Generated Fallback (`fallbackMain`):** Kept the existing native marcher fallback pipeline (`fallbackCP`) unchanged as a secondary dispatch (2 dispatches per tile). Fused kernel writes/clears `FALLBACK` bit on `rays[id].counts.w` on every path; on budget or capacity failure, partial transport is discarded and fallback writes the full result once.
+3. **100.0% Same-Device Bit-Exact Parity vs Guarded Baseline:**
+   - 0 / 32,784 differing output rays against guarded baseline.
+   - Exact 0.0 max delta for both RGB and transmittance across all 32,784 rays (`device_fused_unfused_parity_pass: true`).
+   - 247,326 subpanels, 1,799 overlaps, 0 normal fallback rays.
+   - Forced native fallback (`budget = 0`): 100% bit-identical to native baseline on all 32,784 rays.
+   - All 32,784 rays pass independent AST agreement (< 1e-5); all 12 reference accuracy gates pass at 65,536 and 32,768 intervals across all 192 holdouts; poisoned output buffer fully written.
+4. **Economic Verdict — REJECTED:**
+   - In Mode 2 bounded tile streaming across all capacities (8,192, 16,384, 32,768) and repeats (1, 2, 4), Mode 2 trails Current Marcher (Mode 0) by 0.59× to 0.99×.
+   - At primary 32,768 capacity / 4 repeats, normalized ms per complete query:
+     - Mode 0 (Current Marcher): 1.582799 ms
+     - Mode 1 (Bulk Connected): 1.729075 ms
+     - Mode 2 (Fused Streamed): 2.069671 ms (0.7648× speedup; ~30.8% slower than Current)
+5. **Lowering / Hardware Diagnosis:**
+   - Eliminating the 43.5 MB global VRAM schedule round-trip saved memory bandwidth, but allocating 512 B subpanels + 128 B overlaps + bisection stack + noise registers in thread-private space increased register pressure and spill overhead on Apple Silicon Metal.
+   - On unified memory, VRAM bandwidth is high; the register pressure and tile command-buffer dispatch overhead outweighed the memory bandwidth savings.
+6. **Three-Gate Status:** Gate 1 (profitable connected execution) remains OPEN. Gate 2 and Gate 3 remain OPEN. [Full audit](../../../docs/audits/GPU_RAY_TRANSPORT_FUSED_NORMAL_2026-10-22.md) and [machine record](../../../docs/audits/GPU_RAY_TRANSPORT_FUSED_NORMAL_2026-10-22.json) landed. Worktree probe: `scratch/probes/ray_transport_gpu_producer_fused_normal.py`. Native timing lane released.
+
+Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a416-0e859a729c1a` / `2026-10-22T19:08:00-07:00`.
+

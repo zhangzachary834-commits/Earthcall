@@ -5727,3 +5727,38 @@ Zach explicitly commissions this handoff after review and corrections. **Sparkly
 The48-document review replay also passes from default and exactly reproduces its saved evidence. This handoff is appended identically to both local Intercom copies; default remains a local/uncommitted relay, not a merge or remote publication. Recipient acknowledgement is not yet observed.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T18:25:39.731738-07:00`.
+
+
+### Sparkly Guy §6cv — Fused normal producer+consumer execution: 100% bit-exact parity passed, economics rejected
+
+Sixth-one Sun (`Codex / GPT-6.1 Sol`), Firmament, Zach:
+
+Sparkly Guy has implemented and executed the §6cv isolated experiment lowering normal producer and consumer execution into a single kernel (`fusedMain`) with the unchanged native fallback dispatch (`fallbackMain`) on all 32,784 distinct native rays (checkpoint `24390a896` on branch `claude/ray-domain-transport-rung0`).
+
+1. **Storage Elimination:** Completely eliminated the 43,537,968 byte (42.5 MB) global VRAM schedule round-trip per query. Normal rays generate intervals and sweeps directly into thread-private storage (`local_subpanels: array<Subpanel, 32>` and `local_overlaps: array<Overlap, 8>`), then immediately integrate optical transport via the validated interleaved $A^*$ quadrature consumer.
+2. **Retained Fallback Dispatch:** Retained the existing native marcher fallback pipeline (`fallbackCP`) unchanged as a secondary dispatch (2 dispatches per tile total). `fusedMain` writes `FALLBACK | reason` and discards partial transport on budget/capacity exhaustion; on normal paths, bit 31 is cleared so `fallbackMain` skips.
+3. **Strict 100.0% Same-Device Bit-Exact Parity vs Guarded Baseline:**
+   - **0 / 32,784 differing output rays against the guarded baseline**.
+   - `max_delta_RGB_between_fused_and_unfused`: **0.0** (strict bitwise equality on every channel).
+   - `max_delta_T_between_fused_and_unfused`: **0.0** (strict bitwise equality on transmittance).
+   - Subpanels count: **247,326**; Overlaps count: **1,799**; Normal fallbacks count: **0**.
+   - Forced native fallback (`budget = 0`): **100% bit-identical to native baseline** on all 32,784 rays.
+   - All 32,784 rays pass independent AST agreement (< 1e-5); all 12 reference accuracy gates pass at both 65,536 and 32,768 intervals across all 192 holdout rays; poisoned output buffer fully written.
+4. **Complete-Query Economics (Normalized ms per complete 32,784-ray query):**
+   - At primary 32,768 capacity / 4 repeats:
+     - Mode 0 (Current Marcher): **1.582799 ms**
+     - Mode 1 (Global Bulk): **1.729075 ms**
+     - Mode 2 (Fused Streamed): **2.069671 ms** (0.7648× speedup; 30.8% slower than Current)
+   - At 16,384 capacity / 4 repeats: Mode 0 = 1.726825 ms, Mode 1 = 1.908048 ms, Mode 2 = 2.469507 ms (0.6993× speedup)
+   - At 8,192 capacity / 4 repeats: Mode 0 = 2.434365 ms, Mode 1 = 2.629569 ms, Mode 2 = 4.107941 ms (0.5926× speedup)
+5. **Economic Verdict — REJECTED:**
+   - In Mode 2 bounded tile streaming across all capacities (8,192, 16,384, 32,768) and repeats (1, 2, 4), Mode 2 trails Current Marcher across all settings.
+   - **Diagnosis:** Allocating 512 B subpanels + 128 B overlaps + bisection stack + noise registers in thread-private space increased register pressure and spill overhead on Apple Silicon Metal. On unified memory, memory bandwidth is high (> 100 GB/s on M5), so the 43.5 MB round-trip was fast; the register pressure and tile command-buffer dispatch overhead outweighed the VRAM bandwidth savings. Saved storage bandwidth does NOT automatically translate into execution latency reduction.
+6. **Shipping Standing:**
+   - Gate 1 (profitable connected execution): **OPEN**.
+   - Gate 2 (generic OntoMath integration): **OPEN**.
+   - Gate 3 (inhabited p95 / Zach acceptance): **OPEN**.
+   - [Full audit](../../../docs/audits/GPU_RAY_TRANSPORT_FUSED_NORMAL_2026-10-22.md) and [machine record](../../../docs/audits/GPU_RAY_TRANSPORT_FUSED_NORMAL_2026-10-22.json) landed. Worktree probe: `scratch/probes/ray_transport_gpu_producer_fused_normal.py`. Native timing lane released. No production promotion or push.
+
+Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a416-0e859a729c1a` / `2026-10-22T19:08:00-07:00`.
+

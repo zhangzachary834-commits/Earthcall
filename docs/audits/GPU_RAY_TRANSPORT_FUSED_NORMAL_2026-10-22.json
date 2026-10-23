@@ -1,0 +1,250 @@
+{
+  "protocol": "\u00a76cv: Fused normal producer+consumer execution with retained native fallback dispatch",
+  "harness": "Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session 50cf28df-09e9-4c2b-a4d5-1f796abbc73a",
+  "date": "2026-10-22",
+  "device": "Apple M5 / Metal (timestamps disabled, host completion-fenced timing)",
+  "workload": {
+    "distinct_rays": 32784,
+    "viewport": "2560x1440",
+    "camera": "inside",
+    "clock": 7.25,
+    "subpanels_count": 247326,
+    "overlaps_count": 1799,
+    "max_subpanels_per_ray": 26,
+    "global_schedule_storage_eliminated_bytes": 43537968,
+    "global_schedule_storage_eliminated_kb": 42517.546875,
+    "thread_private_subpanels_capacity": 32,
+    "thread_private_overlaps_capacity": 8,
+    "normal_fallbacks_count": 0
+  },
+  "bit_exactness_vs_guarded_baseline": {
+    "differing_output_pixel_rays": 0,
+    "max_delta_RGB_between_fused_and_unfused": 0.0,
+    "max_delta_T_between_fused_and_unfused": 0.0,
+    "device_fused_unfused_parity_pass": true,
+    "forced_fallback_32784_rays_bit_identical": true,
+    "poisoned_connected_output_fully_written": true
+  },
+  "accuracy_gates": {
+    "all_32784_rays_pass_AST_agreement": true,
+    "reference_both_resolutions_pass": true,
+    "closed_form_witnesses_pass": true,
+    "holdout_rays_count": 192,
+    "unfused_A_star_on_device_accuracy": {
+      "RGB_max_per_ray": {
+        "max": 4.794852177492093e-05,
+        "mean": 1.2968880236549394e-05,
+        "min": 8.330411915835612e-09,
+        "p50": 9.66360907043301e-06,
+        "p90": 3.098899991647169e-05,
+        "p99": 4.746073331337447e-05,
+        "rms": 1.7262416868253853e-05
+      },
+      "RGB_pooled_channels": {
+        "max": 4.794852177492093e-05,
+        "mean": 6.501119626747072e-06,
+        "min": 5.292035160781028e-10,
+        "p50": 3.4010546037469697e-06,
+        "p90": 1.587961162813692e-05,
+        "p99": 4.565286806328117e-05,
+        "rms": 1.0698333376511584e-05
+      },
+      "T": {
+        "max": 6.965939815839484e-05,
+        "mean": 1.8915837015402726e-05,
+        "min": 4.5079824317895145e-09,
+        "p50": 1.471621730064765e-05,
+        "p90": 4.442334708709694e-05,
+        "p99": 6.906425235697622e-05,
+        "rms": 2.512583803100466e-05
+      }
+    }
+  },
+  "timing_measurements": {
+    "bounded_streaming": {
+      "8192": {
+        "tiles": 5,
+        "tail_rays": 16,
+        "bit_identical_to_bulk": true,
+        "forced_bit_identical": true,
+        "repeats_series": [
+          {
+            "repeats": 1,
+            "batch_total_ms": {
+              "mode0_current": 3.8051565,
+              "mode1_bulk": 3.819702875,
+              "mode2_fused_streamed": 5.9872028749999995
+            },
+            "normalized_per_query_ms": {
+              "mode0_current": 3.8051565,
+              "mode1_bulk": 3.819702875,
+              "mode2_fused_streamed": 5.9872028749999995
+            },
+            "speedup_mode0_over_mode2": 0.635548281800957
+          },
+          {
+            "repeats": 2,
+            "batch_total_ms": {
+              "mode0_current": 7.590614625,
+              "mode1_bulk": 7.621598875,
+              "mode2_fused_streamed": 11.745275875
+            },
+            "normalized_per_query_ms": {
+              "mode0_current": 3.7953073125,
+              "mode1_bulk": 3.8107994375,
+              "mode2_fused_streamed": 5.8726379375
+            },
+            "speedup_mode0_over_mode2": 0.6462695900703992
+          },
+          {
+            "repeats": 4,
+            "batch_total_ms": {
+              "mode0_current": 9.73745825,
+              "mode1_bulk": 10.518276125,
+              "mode2_fused_streamed": 16.4317655
+            },
+            "normalized_per_query_ms": {
+              "mode0_current": 2.4343645625,
+              "mode1_bulk": 2.62956903125,
+              "mode2_fused_streamed": 4.107941375
+            },
+            "speedup_mode0_over_mode2": 0.5925996357482097
+          }
+        ]
+      },
+      "16384": {
+        "tiles": 3,
+        "tail_rays": 16,
+        "bit_identical_to_bulk": true,
+        "forced_bit_identical": true,
+        "repeats_series": [
+          {
+            "repeats": 1,
+            "batch_total_ms": {
+              "mode0_current": 2.531869875,
+              "mode1_bulk": 2.54519775,
+              "mode2_fused_streamed": 3.201119875
+            },
+            "normalized_per_query_ms": {
+              "mode0_current": 2.531869875,
+              "mode1_bulk": 2.54519775,
+              "mode2_fused_streamed": 3.201119875
+            },
+            "speedup_mode0_over_mode2": 0.790932540444147
+          },
+          {
+            "repeats": 2,
+            "batch_total_ms": {
+              "mode0_current": 3.7955365,
+              "mode1_bulk": 3.95928125,
+              "mode2_fused_streamed": 5.389458250000001
+            },
+            "normalized_per_query_ms": {
+              "mode0_current": 1.89776825,
+              "mode1_bulk": 1.979640625,
+              "mode2_fused_streamed": 2.6947291250000003
+            },
+            "speedup_mode0_over_mode2": 0.7042519533387237
+          },
+          {
+            "repeats": 4,
+            "batch_total_ms": {
+              "mode0_current": 6.907301875,
+              "mode1_bulk": 7.63219275,
+              "mode2_fused_streamed": 9.87802625
+            },
+            "normalized_per_query_ms": {
+              "mode0_current": 1.72682546875,
+              "mode1_bulk": 1.9080481875,
+              "mode2_fused_streamed": 2.4695065625
+            },
+            "speedup_mode0_over_mode2": 0.6992593155945501
+          }
+        ]
+      },
+      "32768": {
+        "tiles": 2,
+        "tail_rays": 16,
+        "bit_identical_to_bulk": true,
+        "forced_bit_identical": true,
+        "repeats_series": [
+          {
+            "repeats": 1,
+            "batch_total_ms": {
+              "mode0_current": 2.504406375,
+              "mode1_bulk": 2.535422,
+              "mode2_fused_streamed": 2.519979125
+            },
+            "normalized_per_query_ms": {
+              "mode0_current": 2.504406375,
+              "mode1_bulk": 2.535422,
+              "mode2_fused_streamed": 2.519979125
+            },
+            "speedup_mode0_over_mode2": 0.993820286110505
+          },
+          {
+            "repeats": 2,
+            "batch_total_ms": {
+              "mode0_current": 3.783776,
+              "mode1_bulk": 3.80452625,
+              "mode2_fused_streamed": 5.093848875
+            },
+            "normalized_per_query_ms": {
+              "mode0_current": 1.891888,
+              "mode1_bulk": 1.902263125,
+              "mode2_fused_streamed": 2.5469244375
+            },
+            "speedup_mode0_over_mode2": 0.7428127714134433
+          },
+          {
+            "repeats": 4,
+            "batch_total_ms": {
+              "mode0_current": 6.331197875,
+              "mode1_bulk": 6.916302,
+              "mode2_fused_streamed": 8.278682125
+            },
+            "normalized_per_query_ms": {
+              "mode0_current": 1.58279946875,
+              "mode1_bulk": 1.7290755,
+              "mode2_fused_streamed": 2.06967053125
+            },
+            "speedup_mode0_over_mode2": 0.7647591463719837
+          }
+        ]
+      }
+    },
+    "component_breakdown": [
+      {
+        "dispatches_per_fence": 1,
+        "current_marcher_ms_per_query": 5.2722325,
+        "consumer_only_ms_per_query": 2.4274099166666674,
+        "connected_producer_consumer_ms_per_query": 5.999979416666666
+      },
+      {
+        "dispatches_per_fence": 2,
+        "current_marcher_ms_per_query": 3.5869234999999997,
+        "consumer_only_ms_per_query": 1.3844200833333333,
+        "connected_producer_consumer_ms_per_query": 3.8617030833333335
+      },
+      {
+        "dispatches_per_fence": 4,
+        "current_marcher_ms_per_query": 3.0974314583333338,
+        "consumer_only_ms_per_query": 1.2211553750000002,
+        "connected_producer_consumer_ms_per_query": 3.5526223958333336
+      }
+    ]
+  },
+  "verdict": {
+    "bit_exactness": "PASS (100.0% strict same-device bit-identical output on all 32,784 rays, 0 differing rays, 0.0 max delta)",
+    "accuracy": "PASS (all 32,784 AST checks pass < 1e-5, all 12 reference gates pass at 65,536 and 32,768 intervals)",
+    "fallback": "PASS (forced fallback produces bit-identical results to native marcher on all 32,784 rays; 0 normal fallbacks)",
+    "economic_gate1": "REJECTED (Mode 2 fused normal trails Mode 0 Current Marcher across all capacities and repeats, achieving 0.59x to 0.99x of Current Marcher speed)",
+    "architectural_diagnosis": "Eliminating global schedule storage (43.5 MB round-trip across VRAM) and fusing producer+consumer into a single kernel eliminates schedule buffer bandwidth, but increases thread-private register and stack pressure (local_subpanels: array<Subpanel, 32> + local_overlaps: array<Overlap, 8>). On Apple Silicon Metal, this register pressure reduces thread occupancy and instruction throughput, while tile command buffer dispatch overhead remains in bounded streaming. The VRAM traffic reduction is outweighed by compute/occupancy penalties in this kernel configuration."
+  },
+  "shipping_standing": {
+    "gate1_profitable_connected_execution": "OPEN",
+    "gate2_generic_ontomath_integration": "OPEN",
+    "gate3_inhabited_p95_zach_acceptance": "OPEN",
+    "production_promoted": false
+  }
+}
