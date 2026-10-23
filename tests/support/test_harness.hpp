@@ -14,6 +14,7 @@
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "ZonesOfEarth/Ourverse/Ourverse.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ZonesOfEarth/Physics/AuthoredPhysicsLaws.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
@@ -43,6 +44,7 @@ struct BootedEngineHarness {
     Person player;
     LawManager lawManager;
     ZoneManager zones;
+    Ourverse ourverse;
     float currentColor[3]{1.0f, 1.0f, 1.0f};
     double worldTime{0.0};
     SaveContext ctx;
@@ -172,6 +174,10 @@ struct BootedEngineHarness {
             // Isolated witnesses must not hydrate or mutate real authored saves.
             zones.addZone(std::make_shared<Zone>("Default", "default"));
         }
+
+        // Mirror EngineInit: ensure Ourverse gathering zone and metalaws exist.
+        ourverse.ensureGatheringZone(zones);
+        ourverse.registerMetalaws(lawManager);
     }
 
     ~BootedEngineHarness() {

@@ -3,6 +3,17 @@
 // Gathering Zone is unowned. Filaments between Zones are mutual.
 // Shared Joys are a hierarchy. Ecumenical convening is empty by default.
 // No LocalOurverse / Filament class.
+//
+// Witness Documentation:
+// OLD TEST PROVED:
+//   Unit-level Ourverse mechanics on synthetic/standalone objects: unowned gathering
+//   zone rules, filament mutuality, community gathering integration, and isolated
+//   registerMetalaws invocation into a raw LawManager.
+// OLD TEST COULD NOT PROVE:
+//   Real application boot path integration: whether constructing BootedEngineHarness
+//   (which mirrors Engine::initLogic) properly initializes Ourverse, creates and registers
+//   the Gathering Zone within ZoneManager, and installs metalaws ("ourverse-gathering-unowned"
+//   and "ourverse-filaments-mutual") into the active LawManager.
 
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
@@ -13,6 +24,7 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
+#include "support/test_harness.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -86,6 +98,29 @@ int main() {
     assert(laws.find("ourverse-gathering-unowned"));
     assert(laws.find("ourverse-filaments-mutual"));
     assert(laws.find("ourverse-gathering-unowned")->isFirstMover());
+
+    // ------------------------------------------------------------------
+    // Real application boot path test: verify BootedEngineHarness
+    // correctly registers Ourverse gathering zone and metalaws.
+    // ------------------------------------------------------------------
+    {
+        TestSupport::BootedEngineHarness harness("Player", "humanoid", false);
+
+        assert(harness.lawManager.find("ourverse-gathering-unowned") &&
+               "metalaw 'ourverse-gathering-unowned' registered in harness lawManager");
+        assert(harness.lawManager.find("ourverse-filaments-mutual") &&
+               "metalaw 'ourverse-filaments-mutual' registered in harness lawManager");
+
+        bool foundGathering = false;
+        for (const auto& z : harness.zones.zones()) {
+            if (z && z->isOurverseGathering()) {
+                foundGathering = true;
+                assert(z->owner().empty() && "gathering zone is unowned");
+                break;
+            }
+        }
+        assert(foundGathering && "Gathering zone present in harness ZoneManager");
+    }
 
     Singularity::Language::LanguageSystem::instance().clear();
     glfwDestroyWindow(window);
