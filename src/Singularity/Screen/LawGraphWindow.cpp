@@ -322,6 +322,8 @@ struct SessionState {
         std::string actionName;
         std::string targetId;
         int count = 1;
+        bool success = true;
+        std::string reason;
     };
     std::vector<ActionNodeEntry> actionNodeFeed;
     
@@ -359,11 +361,25 @@ void subscribeEventFeed() {
     Core::EventBus::instance().subscribe<ActionNode::ExecutedEvent>([](const ActionNode::ExecutedEvent& e) {
         const std::string targetId = e.target ? e.target->getIdentifier() : "";
         if (!g.actionNodeFeed.empty() && g.actionNodeFeed.front().actionName == e.actionName &&
-            g.actionNodeFeed.front().targetId == targetId) {
+            g.actionNodeFeed.front().targetId == targetId &&
+            g.actionNodeFeed.front().success == true) {
             ++g.actionNodeFeed.front().count;
             return;
         }
-        g.actionNodeFeed.insert(g.actionNodeFeed.begin(), {e.actionName, targetId, 1});
+        g.actionNodeFeed.insert(g.actionNodeFeed.begin(), {e.actionName, targetId, 1, true, ""});
+        if (g.actionNodeFeed.size() > 8) g.actionNodeFeed.pop_back();
+    });
+    Core::EventBus::instance().subscribe<ActionNode::FailedEvent>([](const ActionNode::FailedEvent& e) {
+        const std::string targetId = e.target ? e.target->getIdentifier() : "";
+        const std::string reason = ActionNode::reasonName(e.reason);
+        if (!g.actionNodeFeed.empty() && g.actionNodeFeed.front().actionName == e.actionName &&
+            g.actionNodeFeed.front().targetId == targetId &&
+            g.actionNodeFeed.front().success == false &&
+            g.actionNodeFeed.front().reason == reason) {
+            ++g.actionNodeFeed.front().count;
+            return;
+        }
+        g.actionNodeFeed.insert(g.actionNodeFeed.begin(), {e.actionName, targetId, 1, false, reason});
         if (g.actionNodeFeed.size() > 8) g.actionNodeFeed.pop_back();
     });
 }
@@ -4359,16 +4375,30 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
     ImGui::Separator();
     if (ImGui::CollapsingHeader("Recent Action Nodes Fired")) {
         if (g.actionNodeFeed.empty()) {
-            ImGui::TextDisabled("No ActionNodes successfully fired yet.");
+            ImGui::TextDisabled("No ActionNodes fired yet.");
         }
         for (const auto& entry : g.actionNodeFeed) {
-            if (entry.count > 1) {
-                ImGui::BulletText("%s executed on %s  x%d", entry.actionName.c_str(),
-                                  entry.targetId.empty() ? "(no target)" : entry.targetId.c_str(),
-                                  entry.count);
+            if (entry.success) {
+                if (entry.count > 1) {
+                    ImGui::BulletText("%s executed on %s  x%d", entry.actionName.c_str(),
+                                      entry.targetId.empty() ? "(no target)" : entry.targetId.c_str(),
+                                      entry.count);
+                } else {
+                    ImGui::BulletText("%s executed on %s", entry.actionName.c_str(),
+                                      entry.targetId.empty() ? "(no target)" : entry.targetId.c_str());
+                }
             } else {
-                ImGui::BulletText("%s executed on %s", entry.actionName.c_str(),
-                                  entry.targetId.empty() ? "(no target)" : entry.targetId.c_str());
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 0.3f, 1.0f));
+                if (entry.count > 1) {
+                    ImGui::BulletText("%s failed on %s (%s)  x%d", entry.actionName.c_str(),
+                                      entry.targetId.empty() ? "(no target)" : entry.targetId.c_str(),
+                                      entry.reason.c_str(), entry.count);
+                } else {
+                    ImGui::BulletText("%s failed on %s (%s)", entry.actionName.c_str(),
+                                      entry.targetId.empty() ? "(no target)" : entry.targetId.c_str(),
+                                      entry.reason.c_str());
+                }
+                ImGui::PopStyleColor();
             }
         }
     }
