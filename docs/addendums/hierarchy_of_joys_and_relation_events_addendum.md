@@ -1,18 +1,24 @@
 # Integrating Hierarchy of Joys and Relation Events
 
-**Status:** Conceptual integration; the event publication exists, but no automatic Hierarchy-of-Joys Law reaction is established here.
-**Connected documents:** [Hierarchy of Joys](../architecture/ontology/HIERARCHY_OF_JOYS.md) and [Relation Event System](../architecture/events/RELATION_EVENT_SYSTEM.md).
+**Status:** Conceptual interrelation.
+**Connected Documents:**
+*   `../architecture/ontology/HIERARCHY_OF_JOYS.md` (The representation of a Person's telos as a rooted Formation of Lexemes, ordered by `grounds` Relations)
+*   `../architecture/events/RELATION_EVENT_SYSTEM.md` (The system that automatically triggers `RelationCreatedEvent` when new relations are formed)
 
-## Existing structure
+---
 
-A Hierarchy of Joys is a rooted Formation of Lexemes, tagged `hierarchy-of-joys`, ordered by directed `grounds` Relations. The root and the edge direction determine rank; the hierarchy is not an opaque Person string or a special C++ kind.
+## The Interrelation
 
-`Formation::addRelation` validates a candidate and, when admitted, delegates to `RelationManager::add`. When that manager **inserts a new Relation**, it publishes a C++ `RelationCreatedEvent` containing a pointer to the Relation and a timestamp, and separately publishes a string-typed ECA `relation-formed` event with the Relation as subject. The ECA echo is the current Law-facing trigger. Duplicate additions and refused edges do not publish a new-relation event; `Formation::retainRelation` uses a different path and does not provide this publication guarantee.
+The `HIERARCHY_OF_JOYS.md` doctrine establishes that a Person's highest intended purpose (Telos) is not an opaque string field. It is explicitly authored as a `Formation` of `Lexeme`s, where the hierarchical structure is physically constructed using directed `grounds` `Relation`s (e.g., A is grounded in B).
 
-## Proposed authored bridge
+The `RELATION_EVENT_SYSTEM.md` dictates that whenever a new `Relation` is added to a `RelationManager`, a `RelationCreatedEvent` is synchronously published to the `EventBus`, carrying the relation type (`type`) and the entities involved (`entityA`, `entityB`).
 
-An authored Law could react to `relation-formed`, inspect the Relation's type and endpoints, and establish that the Relation belongs to the particular Person's `hierarchy-of-joys` Formation before deriving a new consequence. **The event itself does not carry a Formation tag or prove membership, ownership, consent, or authority.** A `grounds` edge elsewhere in the world is not automatically a change to this Person's telos.
+Because the Hierarchy of Joys is fundamentally built out of `Relation`s, it naturally inherits the observability provided by the Relation Event System.
 
-Changes to roots, removal or rebinding of edges, and reordering of an existing hierarchy are not covered merely by listening for newly inserted Relations. Those operations need their own explicit, witnessed observation contract before anyone can claim complete teleological change tracking.
+### Teleological Evolution as an Observable Event
 
-Any capability grant or Zone response is a possible authored Law, **not** an existing automatic behavior. It must respect the ordinary Law/TransferPolicy and Person-consent boundaries rather than treating a preference event as blanket permission.
+When a Person expands or reorganizes their Hierarchy of Joys—for example, by declaring that a new creative pursuit `grounds` their daily work—they are mathematically appending a new `grounds` Relation to their Telos Formation.
+
+Because this act is a Relation creation, the `RelationCreatedEvent` is automatically fired. This ensures that the evolution of a Person's deepest intentions is completely visible to the Event Bus.
+
+As a result, Authored Laws can subscribe to these specific teleological shifts. A Zone could author a Law that listens for `RelationCreatedEvent`s where the type is `grounds` and the formation tag is `hierarchy-of-joys`. When a Person's values align with the Zone's purpose, the Law can dynamically grant them new capabilities or alter the surrounding environment, ensuring the Ourverse constantly reacts to the evolving, explicitly authored nature of its inhabitants.

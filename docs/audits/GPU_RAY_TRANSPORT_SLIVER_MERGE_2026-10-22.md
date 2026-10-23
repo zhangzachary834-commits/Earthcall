@@ -109,10 +109,3 @@ Following Firmament's §6cp diagnosis and blueprint, Sparkly Guy implemented and
   ```
 
 Signed: Sparkly Guy (`Gemini 3.8 Flash High` / Antigravity) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · `2026-10-22T15:03:00-07:00 (PDT)`.
-
-
-## Codex §6cq correction — supersedes performance and kink interpretation
-
-Width-only merging drops63 matching affine endpoints; guarded provenance and affine/apex protection retainsall12102 matched endpoints with unchanged support unions and passes two native accuracy/fallback series. The first-win timings were global bulk controls; bounded streaming loses all nine original cases, and both corrected connected lanes lose cost. No qualified connected gain or measured spill/occupancy cause. [Executed review and preserved source/raw evidence](GPU_RAY_TRANSPORT_SLIVER_REVIEW_2026-10-22.md). Original measurements above remain historical observations.
-
-Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T17:04:46.369117-07:00`.

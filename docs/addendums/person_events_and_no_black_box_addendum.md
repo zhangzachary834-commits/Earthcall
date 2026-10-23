@@ -1,18 +1,24 @@
 # Integrating Person Events and the No Black Box Principle
 
-**Status:** Conceptual integration; proposed property paths below are **not** implemented API.
-**Connected documents:** [Person Events System](../architecture/events/PERSON_EVENTS_SYSTEM.md) and [No Black Box](../architecture/ontology/NO_BLACK_BOX.md).
+**Status:** Conceptual interrelation.
+**Connected Documents:**
+*   `../architecture/events/PERSON_EVENTS_SYSTEM.md` (The system triggering events for Person activities like `PersonLoginEvent` and `PersonJoinedEvent`)
+*   `../architecture/ontology/NO_BLACK_BOX.md` (The doctrine dictating that all meaningful state governing a Person must be legible and accessible as registered property paths)
 
-## Existing behavior and its boundary
+---
 
-`Person::login`, `logout`, `joinZone`, and `leaveZone` publish typed C++ Person events and corresponding string-typed ECA events (`person-logged-in`, `person-logged-out`, `person-joined-zone`, `person-left-zone`). These are notifications about transitions, not proof that their payloads are already available as registered PropertyPaths or persisted Moments.
+## The Interrelation
 
-The current `Person::buildProperties` registers `position`, `velocity`, `name`, `cameraPos`, `cameraForward`, and `joys`. It does **not** register `session.active` or `session.currentZone`. Session and joined-Zone state also have different meanings: membership in a Zone is not, by itself, an authoritative physical location or the active Zone.
+The `PERSON_EVENTS_SYSTEM.md` establishes a suite of discrete events that the engine automatically fires when a Person changes their operational state—such as logging in (`PersonLoginEvent`) or joining a specific zone (`PersonJoinedEvent`).
 
-## Proposed legible state
+Simultaneously, the `NO_BLACK_BOX.md` refusal demands that no variable governing a Person can be hidden beneath the C++ kernel. "Nobody has registered it yet" is not a valid excuse for keeping state unaddressable by Authored Laws.
 
-The No Black Box refusal requires meaningful Person-governing state to be addressable, or explicitly classified as kernel mechanism. A future design could expose an appropriately authorized session-active boolean and a separately defined Zone-membership or derived-location view. Names such as `@person.session.active` and `@person.session.currentZone` are **illustrative proposals only**; no Law should rely on them until their registration, identity, read semantics, and tests exist.
+These two architectures intersect directly at the concept of **Session State**.
 
-Legibility is not unrestricted disclosure. A raw session identifier may be an authentication credential and must not become publicly readable merely to satisfy the refusal. Define a safe, non-secret observable projection, the authority controlling access, and the distinction between a Person's own view and other observers' views. Do not invent a second permission gate: use the documented constitutional and TransferPolicy boundaries.
+### Exposing Session and Zone State
 
-A complete implementation needs property registration, transition-to-property consistency tests, Law-facing event witnesses, and an explicit persistence contract where durability is intended. Event publication alone proves none of these.
+When a `PersonLoginEvent` or `PersonJoinedEvent` fires on the Event Bus, it implies that the engine is tracking an active session (`sessionId`) and a location (`zoneName`). If this tracking existed solely as private C++ variables (`std::string _currentSessionId` or `std::vector<std::string> _activeZones`), it would create a Black Box. The system would know where a Person is and whether they are active, but the authored world would be blind to it.
+
+To comply with the No Black Box refusal, the state changes announced by Person Events must correspond to registered, legible property paths on the `Person` Singular (e.g., `@person.session.active`, `@person.session.currentZone`).
+
+Because these fields are registered properties, any First Mover or Authored Law can read them to understand the Person's current engagement context. For example, a Law can check `@person.session.currentZone` to verify presence before allowing interaction with a Zone-specific Object, all without needing backdoor C++ access. The Person Events serve as the reactive triggers, while the No Black Box principle ensures the underlying state remains a transparent, governable part of the ontology.

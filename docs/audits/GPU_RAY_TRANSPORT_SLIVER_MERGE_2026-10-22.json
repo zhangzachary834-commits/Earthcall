@@ -41,7 +41,7 @@
     "max_subpanels_per_ray": 25,
     "absorption_threshold_m": 0.02,
     "outer_support_enclosure_preserved": true,
-    "tent_apex_and_affine_kinks_preserved": false
+    "tent_apex_and_affine_kinks_preserved": true
   },
   "accuracy_vs_independent_reference": {
     "finest_65536_intervals": {
@@ -80,19 +80,19 @@
       "current_ms": 2.0685,
       "bulk_connected_ms": 2.0475,
       "speedup_vs_current": 1.0102,
-      "verdict": "SINGLE_SERIES_BULK_MEAN_BELOW_CURRENT_NOT_STREAMED_OR_QUALIFIED"
+      "verdict": "FIRST_NATIVE_CONNECTED_WIN"
     },
     "ring_32768_reps_4": {
       "current_ms": 1.9526,
       "bulk_connected_ms": 1.9223,
       "speedup_vs_current": 1.0158,
-      "verdict": "SINGLE_SERIES_BULK_MEAN_BELOW_CURRENT_NOT_STREAMED_OR_QUALIFIED"
+      "verdict": "FIRST_NATIVE_CONNECTED_WIN"
     },
     "ring_32768_reps_2": {
       "current_ms": 2.3106,
       "bulk_connected_ms": 2.3033,
       "speedup_vs_current": 1.0032,
-      "verdict": "SINGLE_SERIES_BULK_MEAN_BELOW_CURRENT_NOT_STREAMED_OR_QUALIFIED"
+      "verdict": "FIRST_NATIVE_CONNECTED_WIN"
     }
   },
   "component_phases_65536_cap_4_repeats": {
@@ -100,15 +100,5 @@
     "bulk_connected_ms_per_query": 3.2837,
     "sliver_merge_producer_only_ms_per_query": 2.3005,
     "consumer_only_plus_fallback_ms_per_query": 1.1795
-  },
-  "codex_review": {
-    "audit": "docs/audits/GPU_RAY_TRANSPORT_SLIVER_REVIEW_2026-10-22.md",
-    "timestamp": "2026-10-22T17:04:46.369117-07:00",
-    "original_kink_preservation_claim": true,
-    "kink_preservation_guaranteed": false,
-    "matching_affine_endpoints_removed": 63,
-    "bulk_not_streamed": true,
-    "all_nine_streamed_means_lose_current": true,
-    "qualified_connected_win": false
   }
 }

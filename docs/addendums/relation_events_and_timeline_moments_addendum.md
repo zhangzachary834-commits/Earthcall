@@ -1,20 +1,24 @@
 # Integrating Relation Events and Timeline Moments
 
-**Status:** Proposed bridge, not an automatic durable event-history feature.
-**Connected documents:** [Relation Event System](../architecture/events/RELATION_EVENT_SYSTEM.md) and [Time and Moment](../architecture/ontology/TIME_AND_MOMENT.md).
+**Status:** Conceptual interrelation.
+**Connected Documents:**
+*   `../architecture/events/RELATION_EVENT_SYSTEM.md` (The system that automatically triggers `RelationCreatedEvent` when new relations are formed)
+*   `../architecture/ontology/TIME_AND_MOMENT.md` (The ontology defining `Timeline` as a first-class `Singular` that contains `Moment`s, where `Event` inherits from `Moment`)
 
-## Two distinct event representations
+---
 
-When `RelationManager::add` accepts a **new** Relation, it publishes a `RelationCreatedEvent` with a Relation pointer and timestamp; it also emits the Law-facing ECA `relation-formed` echo. This is immediate EventBus publication, not a durable historical write. Updates of an existing Relation do not produce another creation event.
+## The Interrelation
 
-The temporal ontology separately defines `Timeline` and `Moment` as Singulars, with ontological `Event : Moment`. A C++ `RelationCreatedEvent` or ECA event is **not automatically** that ontological Event, and the EventBus does not by itself insert anything into a Timeline.
+The `RELATION_EVENT_SYSTEM.md` defines how the creation of a new `Relation` (e.g., "friend", "owns", "at") between `entityA` and `entityB` is published to the `EventBus` as a `RelationCreatedEvent`. Crucially, this event structure contains a `timestamp` field.
 
-## Proposed authored history bridge
+Simultaneously, `TIME_AND_MOMENT.md` defines that temporal concepts are not hidden engine mechanisms but explicitly authored `Singular`s. A `Timeline` owns a collection of `Moment`s, and an `Event` is a distinguished subclass of `Moment`.
 
-An explicit, authorized consumer could take a newly accepted Relation event, resolve the involved Singulars and the Timeline(s) lawfully in scope, construct an ontological Event/Moment with provenance, and persist it through a witnessed Timeline save path. No such automatic translation or durable insertion is claimed here.
+These systems interrelate because the instantaneous publication of a `RelationCreatedEvent` is the exact catalyst for minting a new `Moment` on an authored `Timeline`.
 
-The `RelationCreatedEvent` timestamp is a wall-clock value. A Timeline can have an independent temporal domain, so the timestamp is **not** automatically the correct coordinate on either endpoint's Timeline. Any bridge must declare a clock mapping or refuse an ambiguous conversion; it must not silently assume a global time axis.
+### Integrating Events into Ontological History
 
-Likewise, both endpoints do not necessarily own Timelines, and an event on one Timeline does not automatically occur on another. A real bridge must establish authored ownership/reachability, consent and visibility, event identity and deduplication, ordering, and serialization/reload tests before claiming a permanent navigable history.
+When a `RelationCreatedEvent` is fired, it signifies that a new fact has entered the Ourverse. Because any `Singular` can own a `Timeline`, `entityA` and `entityB` may each possess their own temporal domains.
 
-This is a possible use of the two architectures, not a feature already implemented by their coexistence.
+By combining these two architectures, we establish that a `RelationCreatedEvent` on the Event Bus can be intercepted by an authored Law, translated into an ontological `Event` (which is a `Moment`), and permanently inscribed onto the `Timeline` of the involved entities.
+
+The `timestamp` provided by the `RelationCreatedEvent` becomes the exact coordinate of that `Moment`. This ensures that a Person's history—who they befriended, what they built, where they traveled—is not an ephemeral engine log, but a durable, navigable timeline constructed explicitly from the semantic relations they have forged.
