@@ -431,3 +431,47 @@ Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09
 - Gate3 OPEN: moving inhabited p95 and Zach acceptance remain.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T00:40:20.361400-07:00.
+
+
+## §6cz — Sparkly Guy Lane Claim: On-The-Fly Chronological Consumption & 4-Mode Benchmark
+
+Sparkly Guy claims the native timing lane for `§6cz` on `claude/ray-domain-transport-rung0`. Implementing `scratch/probes/ray_transport_gpu_on_the_fly.py`:
+1. Eliminates `local_subpanels[64]` and `local_overlaps[16]` and the two-stream re-merge loop.
+2. Preserves exact single-member subdivision `n = max(1u, u32(ceil((b - a) / 4.0)))` with exact `s0`/`s1` endpoint arithmetic and one Gauss-Legendre update per subpanel.
+3. Preserves exact overlap sequence, member order, and shared attenuation.
+4. Preserves output publication boundary (discards partial transport and routes through `fallbackCP` on capacity/budget failure).
+5. Untimed structural trace export verifying bit-identical schedule and RGB/T parity on all 32,784 rays vs guarded baseline.
+6. Four-mode benchmark in the same process: Mode 0 (Current), Mode 1 (Guarded Bulk), Mode 2 (Buffered Fused 64/16), Mode 3 (On-The-Fly Fused 64/16) at primary 32,768 capacity.
+
+Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-23T01:06:00-07:00`.
+
+
+
+## §6cz — Sparkly Guy: On-The-Fly Chronological Consumption & 4-Mode Benchmark
+
+Sparkly Guy has implemented, verified, and benchmarked §6cz on-the-fly chronological consumption on Apple M5 Metal across all 32,784 distinct native rays (`scratch/probes/ray_transport_gpu_on_the_fly.py`, audit [`GPU_RAY_TRANSPORT_ON_THE_FLY_2026-10-23.md`](docs/audits/GPU_RAY_TRANSPORT_ON_THE_FLY_2026-10-23.md)):
+
+1. **Parity Passed (100.0% Match):**
+   - Preserves single-member rule $n = \max(1, \lceil(b - a)/4.0ceil)$ with exact $s_0, s_1$ arithmetic and 1 Gauss update per subpanel.
+   - Preserves exact `advanceOverlap` sequence, member order, shared attenuation.
+   - Schedule parity: 0 differing rays vs guarded baseline (12,102 / 12,102 affine boundaries preserved, 0 changed outer support unions). Exactly 247,326 singles, 1,799 overlaps, 0 normal fallbacks.
+   - Pixel parity: 0 differing rays vs guarded unfused baseline (`max_delta_RGB = 0.0`, `max_delta_T = 0.0`).
+   - Forced fallback: 100% bit-identical to native marcher on all 32,784 rays.
+   - Synthetic budget controls (23/24/25 → 16/0/0) and capacity controls (`maxSub=4` → 26,243; `maxOver=1` → 412) pass bit-exact.
+   - Reference accuracy: all 12 gates pass across 192 holdouts at 65,536 and 32,768 intervals on both captured and contemporary baselines.
+2. **Economics Rejected (4-Mode Benchmark at 32,768 Capacity):**
+   - Mode 0 (Current Marcher): 4.15 ms (rep=1), 3.50 ms (rep=2), 2.24 ms (rep=4).
+   - Mode 1 (Guarded Bulk): 4.08 ms (rep=1), 3.74 ms (rep=2), 2.43 ms (rep=4).
+   - Mode 2 (Buffered Fused 64/16): 4.31 ms (rep=1), 4.24 ms (rep=2), 2.88 ms (rep=4).
+   - Mode 3 (On-The-Fly Fused 64/16): 5.27 ms (rep=1), 4.81 ms (rep=2), 3.22 ms (rep=4).
+   - Mode 3 is 10.4% to 18.2% slower than Mode 2, and 21.4% to 30.4% slower than Mode 0.
+3. **Buffering Hypothesis Falsified:**
+   - Removing thread-private arrays worsened execution latency because interleaving consumer optical quadrature inside the knot sweep loop forced all producer variables (pieces, knots, bisection stack, band indices) to remain live across transcendental noise evaluations.
+   - Widened variable lifetimes severely increased live register pressure and reduced SIMD occupancy compared to Mode 2 (where producer variables die before consumer quadrature begins, enabling register reuse).
+4. **Gates & Lane Status:**
+   - Gate 1: **OPEN**.
+   - Gate 2: **OPEN**.
+   - Gate 3: **OPEN**.
+   - Native timing lane **RELEASED**.
+
+Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-23T01:40:00-07:00`.

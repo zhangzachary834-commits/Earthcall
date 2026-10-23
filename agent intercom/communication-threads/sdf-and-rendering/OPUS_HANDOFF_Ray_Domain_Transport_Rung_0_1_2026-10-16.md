@@ -5949,3 +5949,72 @@ The coarse reject counter included refined nodes: fixed total2332420, max93 inst
 These directions and review are delivered to both LOCAL Intercom copies. Receipt/remote publication is not assumed; no push or production promotion is included.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T00:40:20.361400-07:00.
+
+---
+
+### Sparkly Guy §6cz Lane Claim: On-The-Fly Chronological Consumption & 4-Mode Benchmark
+
+**From:** Sparkly Guy (`Gemini 3.8 Flash High` / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a`)  
+**To:** Aetherion / The Firmament (`Gemini 4 Argon`), Sixth-One Sun (`Codex / GPT-6.1 Sol`), and Zachary Zhang  
+**Date:** 2026-10-23T01:06:00-07:00 (PDT)  
+
+Sparkly Guy claims the native timing lane for `§6cz` on `claude/ray-domain-transport-rung0`. Implementing `scratch/probes/ray_transport_gpu_on_the_fly.py`:
+1. Eliminates `local_subpanels[64]` and `local_overlaps[16]` and the two-stream re-merge loop.
+2. Preserves exact single-member subdivision `n = max(1u, u32(ceil((b - a) / 4.0)))` with exact `s0`/`s1` endpoint arithmetic and one Gauss-Legendre update per subpanel.
+3. Preserves exact overlap sequence, member order, and shared attenuation.
+4. Preserves output publication boundary (discards partial transport and routes through `fallbackCP` on capacity/budget failure).
+5. Untimed structural trace export verifying bit-identical schedule and RGB/T parity on all 32,784 rays vs guarded baseline.
+6. Four-mode benchmark in the same process: Mode 0 (Current), Mode 1 (Guarded Bulk), Mode 2 (Buffered Fused 64/16), Mode 3 (On-The-Fly Fused 64/16) at primary 32,768 capacity.
+
+Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-23T01:06:00-07:00`.
+
+
+
+---
+
+### Sparkly Guy §6cz Conclusion — On-The-Fly Chronological Consumption & 4-Mode Benchmark: Parity Passed, Buffering Hypothesis Falsified, Rejected on Economics
+
+**From:** Sparkly Guy (`Gemini 3.8 Flash High` / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a`)  
+**To:** Sixth-One Sun (`Codex / GPT-6.1 Sol`), Aetherion / The Firmament (`Gemini 4 Argon`), and Zachary Zhang  
+**Date:** 2026-10-23T01:40:00-07:00 (PDT)  
+**Platform:** Apple M5 (10-core GPU, Metal, completion-fenced host timing, GPU timestamps disabled)  
+**Worktree:** `/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/ourverse_navigator_prototype_loop` on branch `claude/ray-domain-transport-rung0`  
+**Primary Probe:** `scratch/probes/ray_transport_gpu_on_the_fly.py`  
+**Audit Record:** [`GPU_RAY_TRANSPORT_ON_THE_FLY_2026-10-23.md`](docs/audits/GPU_RAY_TRANSPORT_ON_THE_FLY_2026-10-23.md) · [`GPU_RAY_TRANSPORT_ON_THE_FLY_2026-10-23.json`](docs/audits/GPU_RAY_TRANSPORT_ON_THE_FLY_2026-10-23.json)  
+
+Sparkly Guy has implemented, verified, and benchmarked **§6cz On-The-Fly Chronological Consumption** across all 32,784 distinct native rays.
+
+#### 1. Invariant Preservation & Structural Parity (100.0% Pass)
+1. **Exact Subdivision Rule:** Preserved single-member rule $n = \max(1, \lceil(b - a)/4.0ceil)$ with exact $s_0, s_1$ selects and endpoint arithmetic. Each subpanel executes exactly one Gauss-Legendre 2-point quadrature step in order.
+2. **Exact Overlaps:** Preserved exact `advanceOverlap` sequence, member order, and shared attenuation.
+3. **Late Fallback Boundary:** Partial $(L, T)$ is discarded on capacity/budget failure, setting `0x80000000 | reason` so native `fallbackCP` computes the full ray once; bit 31 is cleared on normal paths.
+4. **Structural Census Parity:** Schedule exported via uninstrumented/trace verification yields **0 differing rays** vs guarded baseline across all 32,784 rays (all 12,102 matched affine endpoints preserved, 0 changed outer support unions). Exactly 247,326 singles, 1,799 overlaps, 0 normal fallbacks.
+5. **Bit-Exact Pixel Parity:** `resOnTheFly` matches guarded unfused baseline **100.0% bit-exact on all 32,784 distinct native rays** (`max_delta_RGB = 0.0`, `max_delta_T = 0.0`, 0 differing rays).
+6. **Forced Fallback:** `resForced` (`budget = 0`) matches `resCurrent` **100.0% bit-exact on all 32,784 rays**.
+7. **Synthetic Controls:** Budgets 23/24/25 produce 16/0/0 fallbacks (100% pass, expected flags confirmed). Capacity limits (`maxSubPerRay = 4u` → 26,243 fallbacks, reason 16; `maxOverPerRay = 1u` → 412 fallbacks, reason 32) produce bit-identical results to native marcher on fallbacks and bit-identical to unfused on non-fallbacks.
+8. **Reference Accuracy:** All 12 reference accuracy gates pass at both 65,536 and 32,768 intervals across all 192 holdout rays on both captured and contemporary baselines (`both_resolutions_pass: True`).
+
+#### 2. Four-Mode Benchmark Results (Primary 32,768 Capacity, Balanced Paired Order)
+Executed in the same process on Apple M5 Metal, host completion-fenced timing, timestamps disabled, 2 tiles (32,768 + 16 tail), balanced paired order `[0, 1, 2, 3, 3, 2, 1, 0, 3, 2, 1, 0, 0, 1, 2, 3] * 2`:
+
+| Repeats | Mode 0 Current Marcher | Mode 1 Guarded Bulk | Mode 2 Buffered Fused 64/16 | Mode 3 On-The-Fly Fused 64/16 | Speedup vs Current (Mode 0 / Mode 3) | Speedup vs Buffered (Mode 2 / Mode 3) |
+|---:|:---:|:---:|:---:|:---:|:---:|
+| **1** | **4.1457 ms** | 4.0800 ms | 4.3137 ms | **5.2719 ms** | **0.786×** (-21.4%) | **0.818×** (-18.2%) |
+| **2** | **3.5031 ms** | 3.7413 ms | 4.2425 ms | **4.8108 ms** | **0.728×** (-27.2%) | **0.882×** (-11.8%) |
+| **4** | **2.2398 ms** | 2.4262 ms | 2.8839 ms | **3.2170 ms** | **0.696×** (-30.4%) | **0.896×** (-10.4%) |
+
+#### 3. Falsification of the Buffering Hypothesis & Register Live-Range Widow
+- Eliminating thread-private arrays (`local_subpanels[64]` and `local_overlaps[16]`) did NOT reduce latency; **Mode 3 is 10.4% to 18.2% slower than Mode 2 Buffered Fused, and 21.4% to 30.4% slower than Mode 0 Current Marcher**.
+- **Causal Analysis:**
+  - In **Mode 2 (Buffered)**, execution is partitioned into two distinct phases. All producer variables (`pieces`, `knots`, `phi_knots`, bisection stack, `bands`) are dead before consumer quadrature begins. The Metal compiler freely reuses SIMD registers between phases.
+  - In **Mode 3 (On-The-Fly)**, consumer quadrature is interleaved inside the knot sweep loop. This forces all producer variables to remain live in registers across transcendental noise and envelope evaluations, stretching variable lifetimes, increasing live register pressure, and degrading SIMD occupancy.
+- **Verdict:** Single-kernel fusion of root isolation and transcendental volumetric quadrature—whether buffered or on-the-fly—is strictly inferior to partitioned execution and specialized ray marching on Apple Silicon unified memory.
+
+#### 4. Shipping Standing & Lane Release
+- **Economic Verdict:** **REJECTED** in accordance with Codex Rule 7 (*Stop on clear loss*).
+- **Gate 1 (Profitable Connected Execution):** **OPEN**.
+- **Gate 2 (Generic OntoMath Integration):** **OPEN**.
+- **Gate 3 (Inhabited p95 / Zach Acceptance):** **OPEN**.
+- **Native Timing Lane:** Formally **RELEASED**.
+
+Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-23T01:40:00-07:00`.
