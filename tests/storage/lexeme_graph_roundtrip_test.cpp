@@ -1,7 +1,6 @@
 #include "Singularity/Storage/Serialization/BinarySerializer.hpp"
 #include <iostream>
 #include <filesystem>
-#include <chrono>
 #include <cassert>
 
 using namespace Earthcall::Storage;
@@ -56,11 +55,7 @@ int main() {
     pStream.properties.push_back(pVar);
     graph.properties.push_back(pStream);
     
-    const auto sandbox = std::filesystem::temp_directory_path() /
-        ("earthcall_lexeme_roundtrip_" +
-         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    check(std::filesystem::create_directory(sandbox), "Creates isolated test directory");
-    const std::string testPath = (sandbox / "test_graph.ecform").string();
+    std::string testPath = (std::filesystem::temp_directory_path() / "test_graph.ecform").string();
     bool writeOk = BinarySerializer::writeBinary(graph, testPath);
     check(writeOk, "BinarySerializer writes binary file successfully");
     
@@ -75,7 +70,7 @@ int main() {
     check(loadedGraph.properties.size() == 1, "Properties count matches");
     check(loadedGraph.properties[0].properties[0].strLexemeId == pVar.strLexemeId, "Property variant value matches");
     
-    std::filesystem::remove_all(sandbox);
+    std::filesystem::remove(testPath);
     
     std::cout << "------------------------------------------------------------\n";
     std::cout << "All checks passed.\n";
