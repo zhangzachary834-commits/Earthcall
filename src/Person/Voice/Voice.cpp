@@ -30,17 +30,23 @@ Voice Voice::createBasicVoice(const std::string& style) {
 }
 
 VoicePart* Voice::getVoicePart(const std::string& nameOrId) const {
+    VoicePart* idMatch = nullptr;
     for (auto* part : parts) {
         if (part && part->getIdentifier() == nameOrId) {
-            return part;
+            if (idMatch) return nullptr; // Duplicate IDs cannot select a being.
+            idMatch = part;
         }
     }
+    if (idMatch) return idMatch;
+
+    VoicePart* nameMatch = nullptr;
     for (auto* part : parts) {
         if (part && part->getName() == nameOrId) {
-            return part;
+            if (nameMatch) return nullptr; // Ambiguous display names must not collapse identities.
+            nameMatch = part;
         }
     }
-    return nullptr;
+    return nameMatch;
 }
 
 std::vector<VoicePart*> Voice::getVoicePartsByType(VoicePart::Type type) const {
@@ -54,26 +60,10 @@ std::vector<VoicePart*> Voice::getVoicePartsByType(VoicePart::Type type) const {
 }
 
 void Voice::removeVoicePart(const std::string& nameOrId) {
-    bool hasIdMatch = std::any_of(parts.begin(), parts.end(),
-        [&nameOrId](const VoicePart* p) {
-            return p && p->getIdentifier() == nameOrId;
-        });
-
-    if (hasIdMatch) {
-        auto it = std::remove_if(parts.begin(), parts.end(), [&](const VoicePart* p) {
-            return p && p->getIdentifier() == nameOrId;
-        });
-        if (it != parts.end()) {
-            parts.erase(it, parts.end());
-        }
-    } else {
-        auto it = std::remove_if(parts.begin(), parts.end(), [&](const VoicePart* p) {
-            return p && p->getName() == nameOrId;
-        });
-        if (it != parts.end()) {
-            parts.erase(it, parts.end());
-        }
-    }
+    VoicePart* target = getVoicePart(nameOrId);
+    if (!target) return; // Refuse ambiguous names/IDs rather than remove multiple beings.
+    formation.releaseMember(target);
+    parts.erase(std::remove(parts.begin(), parts.end(), target), parts.end());
 }
 
 void Voice::buildProperties() {
