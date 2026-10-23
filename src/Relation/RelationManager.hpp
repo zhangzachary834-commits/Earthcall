@@ -150,9 +150,12 @@ public:
     std::size_t generation() const { return _generation; }
 private:
     void rebuildEndpointIndex() const;
+    void ensureEndpointFreshness() const;
     std::size_t _generation = 0;
     mutable std::size_t _indexedGeneration = static_cast<std::size_t>(-1);
+    mutable bool _allEndpointsFresh = false;
     mutable std::unordered_map<const Singular*, std::vector<Relation*>> _byEndpoint;
     mutable std::unordered_map<std::string, std::vector<Relation*>> _byIdentifier;
+    mutable std::unordered_map<const Singular*, std::string> _boundIds;
     mutable std::unordered_map<const Relation*, std::shared_ptr<Relation>> _sharedByPointer;
 };
