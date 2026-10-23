@@ -340,7 +340,8 @@ static void testPersonFromJsonProductionRestoration() {
     Person source = createDummyPerson("WitnessPerson");
     std::array<uint8_t, 32> pubKey{};
     pubKey[0] = 42;
-    assert(source.setPersonId(Identity::SingularId::fromPublicKey(pubKey)));
+    const bool keyed = source.setPersonId(Identity::SingularId::fromPublicKey(pubKey));
+    assert(keyed);
     source.position() = glm::vec3(11.0f, 12.0f, 13.0f);
 
     const auto keyedProfile = personToJson(source);
@@ -359,7 +360,8 @@ static void testPersonFromJsonProductionRestoration() {
 
     Identity::IdentityLedger ledger;
     ledger.record("SupersededUser", source.personId());
-    assert(ledger.save());
+    const bool savedLedger = ledger.save();
+    assert(savedLedger);
     assert(std::filesystem::exists(Identity::IdentityLedger::defaultPath()));
     assert(Identity::legacyProfileSuperseded("SupersededUser"));
     assert(!Identity::legacyProfileSuperseded("UnseenLegacyUser"));
@@ -394,8 +396,9 @@ static void testPersonFromJsonProductionRestoration() {
     // Multiple unsuperseded profiles must remain ambiguous: boot must not
     // guess a Person from display names or silently choose the first file.
     Person other = createDummyPerson("OtherPerson");
-    assert(!SaveSystem::writeSaveData(
-        personToJson(other), other.getIdentifier(), SaveSystem::SaveType::PERSON).empty());
+    const std::string otherPath = SaveSystem::writeSaveData(
+        personToJson(other), other.getIdentifier(), SaveSystem::SaveType::PERSON);
+    assert(!otherPath.empty());
     candidates = bootCandidates();
     assert(candidates.size() == 2);
 
