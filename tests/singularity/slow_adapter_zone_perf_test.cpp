@@ -72,73 +72,12 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real save tree by setting SaveSystem to a lightweight scratch directory
-    // containing only the necessary subdirectories and target world file (avoiding 740MB saves/worlds copy).
-    const auto scratchPath = std::filesystem::temp_directory_path() /
-        ("earthcall-perf-scratch-" + std::to_string(
-            std::chrono::steady_clock::now().time_since_epoch().count()));
-    std::filesystem::create_directories(scratchPath / "worlds");
-
-    const std::filesystem::path realSaves("saves");
-    for (const auto& sub : {"laws", "materials", "homes"}) {
-        if (std::filesystem::exists(realSaves / sub)) {
-            std::error_code ec;
-            std::filesystem::copy(realSaves / sub, scratchPath / sub,
-                                  std::filesystem::copy_options::recursive, ec);
-        }
-    }
-
-    std::unordered_set<std::string> requiredZoneIds;
-    nlohmann::json worldData = SaveSystem::readSaveData(world);
-    if (worldData.is_object()) {
-        if (worldData.contains("currentZoneId") && worldData["currentZoneId"].is_string()) {
-            requiredZoneIds.insert(worldData["currentZoneId"].get<std::string>());
-        }
-        if (worldData.contains("zoneRefs") && worldData["zoneRefs"].is_array()) {
-            for (const auto& ref : worldData["zoneRefs"]) {
-                if (ref.is_object() && ref.contains("identifier") && ref["identifier"].is_string()) {
-                    requiredZoneIds.insert(ref["identifier"].get<std::string>());
-                } else if (ref.is_string()) {
-                    requiredZoneIds.insert(ref.get<std::string>());
-                }
-            }
-        }
-        if (worldData.contains("zones") && worldData["zones"].is_array()) {
-            for (const auto& zj : worldData["zones"]) {
-                if (zj.is_object()) {
-                    if (zj.contains("identifier") && zj["identifier"].is_string()) {
-                        requiredZoneIds.insert(zj["identifier"].get<std::string>());
-                    } else if (zj.contains("name") && zj["name"].is_string()) {
-                        requiredZoneIds.insert(zj["name"].get<std::string>());
-                    }
-                }
-            }
-        }
-    }
-
-    std::filesystem::create_directories(scratchPath / "zones");
-    for (const auto& zoneId : requiredZoneIds) {
-        if (zoneId.empty()) continue;
-        const auto srcZoneDir = realSaves / "zones" / zoneId;
-        if (std::filesystem::exists(srcZoneDir)) {
-            std::error_code ec;
-            std::filesystem::copy(srcZoneDir, scratchPath / "zones" / zoneId,
-                                  std::filesystem::copy_options::recursive, ec);
-        }
-    }
-    const std::filesystem::path worldFile(world);
-    const std::filesystem::path scratchWorldPath = scratchPath / "worlds" / worldFile.filename();
-    std::error_code copyEc;
-    std::filesystem::copy_file(worldFile, scratchWorldPath,
-                               std::filesystem::copy_options::overwrite_existing, copyEc);
-
-    const std::string prevSaveRoot = SaveSystem::saveRoot();
-    SaveSystem::setSaveRoot(scratchPath.string());
-
+    // Protect the real Zone identity store exactly like frame_lag_test.
+    TestSupport::RealSaveTreeGuard saveGuard(world);
     TestSupport::BootedEngineHarness h;
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(scratchWorldPath.string());
+    h.loadWorld(world);
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
@@ -225,10 +164,6 @@ int main(int argc, char** argv) {
         static_cast<unsigned long long>(h.lawManager.slowAdapterMaintenanceRuns()),
         h.lawManager.slowAdapter().roadsKnown(), h.lawManager.slowAdapter().roadsPending(),
         tierDirect, tierAdapter, tierVocabulary, tierSweep);
-
-    SaveSystem::setSaveRoot(prevSaveRoot);
-    std::error_code cleanupEc;
-    std::filesystem::remove_all(scratchPath, cleanupEc);
 
     return 0;
 }
