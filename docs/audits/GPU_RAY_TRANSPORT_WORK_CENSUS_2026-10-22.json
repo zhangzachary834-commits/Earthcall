@@ -1,0 +1,503 @@
+{
+  "meta": {
+    "protocol": "\u00a76cx: Contract Repair + Complete Work/Resource Census & Single Representation Hypothesis",
+    "harness": "Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session 50cf28df-09e9-4c2b-a4d5-1f796abbc73a",
+    "reviewer": "Sixth-One Sun (Codex / GPT-6.1 Sol) & Aetherion / The Firmament (Gemini 4 Argon)",
+    "date": "2026-10-22T23:59:00-07:00",
+    "branch": "claude/ray-domain-transport-rung0",
+    "head_commit": "9592c5d70",
+    "device": "Apple M5 / Metal (timestamps disabled, host completion-fenced timing)",
+    "total_native_rays": 32784,
+    "zone_hash": ""
+  },
+  "admission_and_contract_repairs": {
+    "capacity_contract": {
+      "required": [
+        64,
+        16
+      ],
+      "enforced_in_shader": true,
+      "require_contract_pass": true
+    },
+    "normal_headers_readback": {
+      "contract_pass": true,
+      "normal_fallbacks": 0,
+      "total_overs": 1799,
+      "total_singles": 247326
+    },
+    "packet_evidence": {
+      "exported_fused_packets": true,
+      "fused_packet_count": 32784,
+      "total_singles": 247326,
+      "total_overs": 1799,
+      "guarded_baseline_parity": {
+        "differing_packet_rays": 0,
+        "preserved_affine_endpoints": 12102,
+        "total_affine_endpoints": 12102,
+        "changed_outer_support_unions": 0
+      }
+    },
+    "independent_reference_admission": {
+      "holdout_rays": 192,
+      "resolutions_checked": [
+        65536,
+        32768
+      ],
+      "both_resolutions_pass": true
+    },
+    "synthetic_budget_controls": [
+      {
+        "budget": 23,
+        "expected": 16,
+        "fallbacks": 16,
+        "pass": true
+      },
+      {
+        "budget": 24,
+        "expected": 0,
+        "fallbacks": 0,
+        "pass": true
+      },
+      {
+        "budget": 25,
+        "expected": 0,
+        "fallbacks": 0,
+        "pass": true
+      }
+    ],
+    "synthetic_capacity_controls": [
+      {
+        "control": "maxSubPerRay=4",
+        "fallback_bit_exact_pass": true,
+        "fallbacks": 26243
+      },
+      {
+        "control": "maxOverPerRay=1",
+        "fallback_bit_exact_pass": true,
+        "fallbacks": 412
+      }
+    ]
+  },
+  "work_census_producer": {
+    "bisectionItersTotal": {
+      "max": 75,
+      "mean": 39.86786237188873,
+      "min": 0,
+      "p50": 34,
+      "p90": 67,
+      "p99": 71,
+      "total": 1307028
+    },
+    "boxHits": {
+      "max": 4,
+      "mean": 3.16575158613958,
+      "min": 2,
+      "p50": 3,
+      "p90": 4,
+      "p99": 4,
+      "total": 103786
+    },
+    "candidateIntervalsChecked": {
+      "max": 19,
+      "mean": 13.781204245973646,
+      "min": 7,
+      "p50": 13,
+      "p90": 18,
+      "p99": 19,
+      "total": 451803
+    },
+    "coarseBinsBowRejected": {
+      "max": 105,
+      "mean": 72.89711444607126,
+      "min": 43,
+      "p50": 69,
+      "p90": 93,
+      "p99": 93,
+      "total": 2389859
+    },
+    "coarseBinsVisited": {
+      "max": 96,
+      "mean": 75.97803806734993,
+      "min": 48,
+      "p50": 72,
+      "p90": 96,
+      "p99": 96,
+      "total": 2490864
+    },
+    "evalPhiBisection": {
+      "max": 75,
+      "mean": 39.86786237188873,
+      "min": 0,
+      "p50": 34,
+      "p90": 67,
+      "p99": 71,
+      "total": 1307028
+    },
+    "evalPhiCoarseKnots": {
+      "max": 36,
+      "mean": 28.491764275256223,
+      "min": 18,
+      "p50": 27,
+      "p90": 36,
+      "p99": 36,
+      "total": 934074
+    },
+    "evalPhiPieceMid": {
+      "max": 13,
+      "mean": 9.734108101512932,
+      "min": 5,
+      "p50": 10,
+      "p90": 12,
+      "p99": 13,
+      "total": 319123
+    },
+    "evalPhiSubdivision": {
+      "max": 21,
+      "mean": 1.4195339189848706,
+      "min": 0,
+      "p50": 0,
+      "p90": 5,
+      "p99": 12,
+      "total": 46538
+    },
+    "evalPhiTotal": {
+      "max": 121,
+      "mean": 79.51326866764275,
+      "min": 34,
+      "p50": 76,
+      "p90": 107,
+      "p99": 115,
+      "total": 2606763
+    },
+    "expAttenSteps": {
+      "max": 36,
+      "mean": 7.763604197169351,
+      "min": 0,
+      "p50": 6,
+      "p90": 15,
+      "p99": 24,
+      "total": 254522
+    },
+    "maxDepthReached": {
+      "max": 5,
+      "mean": 0.48178989751098095,
+      "min": 0,
+      "p50": 0,
+      "p90": 2,
+      "p99": 3,
+      "total": 15795
+    },
+    "maxStackTop": {
+      "max": 6,
+      "mean": 0.7448145436798438,
+      "min": 0,
+      "p50": 0,
+      "p90": 3,
+      "p99": 4,
+      "total": 24418
+    },
+    "mergedKnots": {
+      "max": 24,
+      "mean": 9.787091264031234,
+      "min": 0,
+      "p50": 10,
+      "p90": 14,
+      "p99": 20,
+      "total": 320860
+    },
+    "overlapCnoise3Calls": {
+      "max": 30,
+      "mean": 0.3977244997559785,
+      "min": 0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 14,
+      "total": 13039
+    },
+    "overlapEvalEnvelopeCalls": {
+      "max": 32,
+      "mean": 0.43899463152757445,
+      "min": 0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 16,
+      "total": 14392
+    },
+    "overlapIntervals": {
+      "max": 4,
+      "mean": 0.05487432894094681,
+      "min": 0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 2,
+      "total": 1799
+    },
+    "piecesEmitted": {
+      "max": 12,
+      "mean": 4.893545632015617,
+      "min": 0,
+      "p50": 5,
+      "p90": 7,
+      "p99": 10,
+      "total": 160430
+    },
+    "signChangeBrackets": {
+      "max": 7,
+      "mean": 4.037304782820888,
+      "min": 0,
+      "p50": 4,
+      "p90": 6,
+      "p99": 6,
+      "total": 132359
+    },
+    "singleCnoise3Calls": {
+      "max": 51,
+      "mean": 14.745882137628112,
+      "min": 0,
+      "p50": 12,
+      "p90": 29,
+      "p99": 44,
+      "total": 483429
+    },
+    "singleEvalEnvelopeCalls": {
+      "max": 52,
+      "mean": 15.088213762811128,
+      "min": 0,
+      "p50": 12,
+      "p90": 30,
+      "p99": 44,
+      "total": 494652
+    },
+    "singleSubpanels": {
+      "max": 26,
+      "mean": 7.544106881405564,
+      "min": 0,
+      "p50": 6,
+      "p90": 15,
+      "p99": 22,
+      "total": 247326
+    },
+    "subdivisionSplits": {
+      "max": 21,
+      "mean": 1.4195339189848706,
+      "min": 0,
+      "p50": 0,
+      "p90": 5,
+      "p99": 12,
+      "total": 46538
+    },
+    "uncertainBandsRetained": {
+      "max": 7,
+      "mean": 4.044594924353343,
+      "min": 0,
+      "p50": 4,
+      "p90": 6,
+      "p99": 6,
+      "total": 132598
+    }
+  },
+  "work_census_consumer": {
+    "singleSubpanels": {
+      "max": 26,
+      "mean": 7.544106881405564,
+      "min": 0,
+      "p50": 6,
+      "p90": 15,
+      "p99": 22,
+      "total": 247326
+    },
+    "overlapIntervals": {
+      "max": 4,
+      "mean": 0.05487432894094681,
+      "min": 0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 2,
+      "total": 1799
+    },
+    "singleEvalEnvelopeCalls": {
+      "max": 52,
+      "mean": 15.088213762811128,
+      "min": 0,
+      "p50": 12,
+      "p90": 30,
+      "p99": 44,
+      "total": 494652
+    },
+    "singleCnoise3Calls": {
+      "max": 51,
+      "mean": 14.745882137628112,
+      "min": 0,
+      "p50": 12,
+      "p90": 29,
+      "p99": 44,
+      "total": 483429
+    },
+    "overlapEvalEnvelopeCalls": {
+      "max": 32,
+      "mean": 0.43899463152757445,
+      "min": 0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 16,
+      "total": 14392
+    },
+    "overlapCnoise3Calls": {
+      "max": 30,
+      "mean": 0.3977244997559785,
+      "min": 0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 14,
+      "total": 13039
+    },
+    "expAttenSteps": {
+      "max": 36,
+      "mean": 7.763604197169351,
+      "min": 0,
+      "p50": 6,
+      "p90": 15,
+      "p99": 24,
+      "total": 254522
+    },
+    "total_consumer_quadrature_points": 509044,
+    "total_fused_cnoise3": 496468
+  },
+  "work_census_current": {
+    "currentCnoise3Calls": {
+      "max": 188,
+      "mean": 29.169747437774525,
+      "min": 0,
+      "p50": 26,
+      "p90": 50,
+      "p99": 94,
+      "total": 956301
+    },
+    "currentDensityEvals": {
+      "max": 225,
+      "mean": 64.11896046852122,
+      "min": 26,
+      "p50": 57,
+      "p90": 97,
+      "p99": 139,
+      "total": 2102076
+    },
+    "marchLoopSteps": {
+      "max": 211,
+      "mean": 75.26458028306492,
+      "min": 45,
+      "p50": 74,
+      "p90": 91,
+      "p99": 131,
+      "total": 2467474
+    },
+    "zeroProofSkippedSteps": {
+      "max": 183,
+      "mean": 115.66953391898487,
+      "min": 28,
+      "p50": 125,
+      "p90": 144,
+      "p99": 160,
+      "total": 3792110
+    }
+  },
+  "subpanel_provenance_breakdown": {
+    "total_singles": 247326,
+    "apex_le_2cm": {
+      "count": 37808,
+      "pct": 15.286706613942732,
+      "total_width_m": 240.475031375885
+    },
+    "support_2_to_5cm": {
+      "count": 11515,
+      "pct": 4.655798419899242,
+      "total_width_m": 364.7157373428345
+    },
+    "intermediate_5_to_20cm": {
+      "count": 5238,
+      "pct": 2.117852550884258,
+      "total_width_m": 467.087158203125
+    },
+    "macro_gt_20cm": {
+      "count": 192765,
+      "pct": 77.93964241527377,
+      "total_width_m": 576627.4883344173
+    }
+  },
+  "comparative_mathematical_audit": {
+    "total_cnoise3_fused": 496468,
+    "total_cnoise3_current": 956301,
+    "cnoise3_delta": -459833,
+    "cnoise3_delta_pct": -48.084546601959005,
+    "total_density_points_fused": 509044,
+    "total_density_points_current": 2102076,
+    "density_points_ratio": 4.129458357234345,
+    "total_eval_phi": 2606763,
+    "eval_phi_per_ray_mean": 79.51326866764275,
+    "eval_phi_bisection_pct": 50.13988613464285,
+    "eval_phi_coarse_pct": 35.8327166681436,
+    "micro_sliver_subpanels_le_5cm": 49323,
+    "micro_sliver_pct": 19.94250503384197
+  },
+  "compiler_resource_facts": {
+    "dawn_pipeline_reflection_registers": "unavailable via Dawn WebGPU API",
+    "host_command_buffer_architecture": "Single command buffer with single queue submit and single completion fence per batch (not per-tile host fence)",
+    "metal_offline_compiler": "unavailable via Dawn WebGPU API / offline tool"
+  },
+  "streamed_timing_normalized_ms": {
+    "cap_8192_rep_4": {
+      "mode0_current": 2.322,
+      "mode1_unfused_bulk": 2.5013,
+      "mode2_fused_stream": 3.8202
+    },
+    "cap_16384_rep_4": {
+      "mode0_current": 1.5855,
+      "mode1_unfused_bulk": 1.8024,
+      "mode2_fused_stream": 2.3428
+    },
+    "cap_32768_rep_4": {
+      "mode0_current": 1.5677,
+      "mode1_unfused_bulk": 1.7117,
+      "mode2_fused_stream": 2.0155
+    }
+  },
+  "single_representation_hypothesis": {
+    "selected_change": "On-The-Fly Chronological Sweep Integration inside fusedMain",
+    "falsifiable_cost_claim": "Eliminating local_subpanels[64] (1,024 B/thread) and local_overlaps[16] (256 B/thread) from thread-private memory and directly evaluating Gauss-Legendre quadrature on intervals [knots[i-1], knots[i]] on the fly inside the chronological sweep loop will drop private storage to 0 B/thread, relieve SIMD register pressure, and reduce Mode 2 Fused latency below Mode 1 Unfused Bulk (1.71 ms/query) toward Mode 0 Current (1.57 ms/query).",
+    "invariants_preserved": [
+      "100.0% bit-exact RGB/T output on all 32,784 rays vs guarded baseline",
+      "Chronological IEEE-754 evaluation order along the ray is mathematically identical",
+      "Identical capacity counters (singles, overs) and fallback triggers (reason |= 16u, 32u)",
+      "Identical fallbackCP whole-ray native fallback path"
+    ]
+  },
+  "shipping_standing": {
+    "gate_1": "OPEN (profitable repeatable connected distinct-ray execution)",
+    "gate_2": "OPEN (generic OntoMath admission/lifetimes/full-frame economics)",
+    "gate_3": "OPEN (inhabited moving p95 and Zach acceptance)",
+    "engine_files_mutated": 0,
+    "save_files_mutated": 0
+  },
+  "codex_6cy_review": {
+    "signature": "Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T00:40:20.361400-07:00",
+    "audit": "GPU_RAY_TRANSPORT_CENSUS_REVIEW_2026-10-23.md",
+    "original_claims_preserved": true,
+    "corrected_coarse_reject_total": 2332420,
+    "corrected_coarse_reject_max": 93,
+    "corrected_stack_min_and_p50": 1,
+    "noise_and_Phi_totals_unchanged": true,
+    "counts_are_not_elapsed_cost": true,
+    "spill_occupancy_cause_measured": false,
+    "width_bins_are_root_provenance": false,
+    "controls_now_fatal_and_poisoned": true,
+    "corrected_raw_per_ray_counters": true,
+    "per_member_counters_available": false,
+    "historical_control_refusals": 3,
+    "corrected_corruption_refusals": 8,
+    "corrected_stream_timing_sweep_disabled": true,
+    "new_optimization_candidate_executed": false,
+    "shipping_gates_open": 3,
+    "next": "One on-the-fly schedule-consumption experiment preserving exact n-way subdivisions, arithmetic, shared attenuation and late fallback",
+    "pinned_zone_sha256": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496"
+  }
+}
