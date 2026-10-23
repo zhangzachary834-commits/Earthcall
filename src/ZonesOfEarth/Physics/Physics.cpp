@@ -606,7 +606,13 @@ namespace Physics {
     }
 
     void recordCollision(const Singular& a, const Singular& b, float strength) {
-        // g_physicsRegistry.add(Relation{"collision", a, b, false, strength});
+        const auto existing = g_physicsRegistry.getRelationsBetween(a, b);
+        for (const auto& rel : existing) {
+            if (rel && rel->type == "collision") {
+                rel->setWeight(strength);
+                return;
+            }
+        }
         auto rel = std::make_shared<Relation>("collision", a, b, false, strength);
         g_physicsRegistry.add(rel);
         Core::EventBus::instance().publish(Core::Event::Custom{rel});
