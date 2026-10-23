@@ -13,6 +13,7 @@
 // it to an independent same-thread clock.
 
 #include "support/test_harness.hpp"
+#include "support/test_save_helper.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <algorithm>
@@ -72,8 +73,20 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
+    // Sandbox SaveSystem root using TempSaveRoot and copy required identity subdirectories
+    // while skipping saves/worlds/ to avoid disk I/O timeouts in CI.
+    TempSaveRoot tempSaveRoot;
+    std::filesystem::path realSaves = std::filesystem::path(world).parent_path().parent_path();
+    if (std::filesystem::exists(realSaves)) {
+        for (const auto& sub : {"zones", "laws", "materials", "homes", "persons"}) {
+            std::filesystem::path src = realSaves / sub;
+            if (std::filesystem::exists(src)) {
+                std::error_code ec;
+                std::filesystem::copy(src, tempSaveRoot.path / sub,
+                    std::filesystem::copy_options::recursive | std::filesystem::copy_options::copy_symlinks, ec);
+            }
+        }
+    }
     TestSupport::BootedEngineHarness h;
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
