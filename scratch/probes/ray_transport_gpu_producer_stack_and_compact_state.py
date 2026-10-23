@@ -6,7 +6,7 @@ Follows Firmament's §6co specification:
    Depth (0..14) packed into depthBits: vec3u.
 2. Compact private memory: merge bounds[96] and events[96] into knots[96] (saving 384 B).
    Pack pieces[48] from vec4f to vec2f + pieceMembers: vec3u (saving 384 B).
-   Total private array memory cut from 2,148 B -> 1,344 B/thread (saving 26.4 MB of SLC spill).
+   Historical source-storage estimate only; native spill, SLC residency and occupancy were not measured.
 3. Preserves 100.0% exact bitwise identity against baseline (0 / 32,784 differing rays required).
 """
 import argparse, importlib.util, json, math, os, sys

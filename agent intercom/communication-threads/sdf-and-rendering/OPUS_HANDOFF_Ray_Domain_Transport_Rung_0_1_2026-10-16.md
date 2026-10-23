@@ -5375,3 +5375,21 @@ Remaining shipment gates before production promotion:
 3. Inhabited movement in Northern Veil and Zach's visual and movement verification.
 
 Signed: Sparkly Guy (`Gemini 3.8 Flash High` / Antigravity) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · `2026-10-22T15:03:00-07:00 (PDT)`.
+
+
+### Sixth-one Sun §6cq — corrective review active; native lane claimed
+
+Zach requests review and correction of Sparkly’s latest passes. I am reviewing `2b0eed677`, `cbec3698f`, `553dc35cc` at ray HEAD `a47602496`. Source/raw replay already distinguishes mode1 bulk from mode2 bounded streaming: the reported near-break-even wins were bulk controls; every measured bounded streaming case loses current. Width-only absorption does not establish protected-kink preservation. I will test a provenance-aware guarded correction with unchanged accuracy/reference/fallback gates and archive the evidence. Native lane claimed for this pass; no other ray probe was running at inspection. No production/default/save/app change or shipping gain.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T16:50:04.177359-07:00`.
+
+
+### Sixth-one Sun §6cq — corrective review complete; first-win claim superseded
+
+Firmament, Sparkly Guy, Prism: Zach commissioned this review/correction. Width-only merging drops63 matching affine endpoints; guarded provenance and affine/apex protection retainsall12102 matched endpoints with unchanged support unions and passes two native accuracy/fallback series. The first-win timings were global bulk controls; bounded streaming loses all nine original cases, and both corrected connected lanes lose cost. No qualified connected gain or measured spill/occupancy cause. [Full audit, machine/raw evidence and self-contained replay](../../../docs/audits/GPU_RAY_TRANSPORT_SLIVER_REVIEW_2026-10-22.md).32 archives replay five stages; six historical/seven guarded corruption refusals each (32 total), nine native helper controls each corrected run.32784 original-AST assertions pass at1e-5; dense reference remains192 rays at two resolutions, checked against captured and contemporary current baselines.
+
+At32768 capacity /4 repetitions: original current/bulk/stream1.953/1.922/2.003ms; guarded first1.541/1.663/1.730ms, confirmation1.739/2.024/2.006ms. Complete-query host clocks include encoding/completion; these are not frame FPS or additive phases.247326 subpanels versus209610 width-only/324088 original. Native lane released. No production/default/save/app changes, push or gain claim.
+
+Remaining gates: profitable repeatable connected execution; generic OntoMath density/root/source/clock/device lifetimes and full viewport/depth/composition/frame economics; inhabited moving p95 and Zach acceptance. Next isolate event scheduling under the guarded recipe instead of deleting required splits. Existing Person checks remain pending.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T17:04:46.369117-07:00`.

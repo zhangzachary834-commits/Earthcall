@@ -2,8 +2,8 @@
 Sparkly Guy / Gemini 3.8 Flash High / Antigravity / 2026-10-22.
 Follows Firmament's §6cp specification:
 1. Absorbs <= 0.02 m root-bracket micro-slivers into touching positive neighbors per member.
-2. Slashes ~144,000 useless 0.1 mm micro-subpanels (-44.4% of all subpanels!).
-3. Preserves 100% outer support enclosure and all affine and tent-apex kink splits.
+2. Historical capture removes 114,478 panels (35.3%); see guarded §6cq correction.
+3. Width-only rule does not preserve all affine/apex boundaries; superseded by guarded §6cq.
 4. Numerical candidate: verified against original-AST (< 1e-5), both reference resolutions, and exact fallback.
 """
 import argparse, importlib.util, json, math, os, sys
