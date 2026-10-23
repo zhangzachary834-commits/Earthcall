@@ -94,17 +94,23 @@ void Body::setHeight(float h) {
 }
 
 BodyPart* Body::getBodyPart(const std::string& nameOrId) const {
+    BodyPart* idMatch = nullptr;
     for (auto* part : parts) {
         if (part && part->getIdentifier() == nameOrId) {
-            return part;
+            if (idMatch) return nullptr; // Duplicate IDs cannot select a being.
+            idMatch = part;
         }
     }
+    if (idMatch) return idMatch;
+
+    BodyPart* nameMatch = nullptr;
     for (auto* part : parts) {
         if (part && part->getName() == nameOrId) {
-            return part;
+            if (nameMatch) return nullptr; // Ambiguous display names must not collapse identities.
+            nameMatch = part;
         }
     }
-    return nullptr;
+    return nameMatch;
 }
 
 std::vector<BodyPart*> Body::getBodyPartsByType(BodyPart::Type type) const {
@@ -118,24 +124,10 @@ std::vector<BodyPart*> Body::getBodyPartsByType(BodyPart::Type type) const {
 }
 
 void Body::removeBodyPart(const std::string& nameOrId) {
-    bool hasIdMatch = std::any_of(parts.begin(), parts.end(),
-        [&nameOrId](const BodyPart* part) {
-            return part && part->getIdentifier() == nameOrId;
-        });
-
-    if (hasIdMatch) {
-        auto it = std::remove_if(parts.begin(), parts.end(),
-            [&nameOrId](const BodyPart* part) {
-                return part && part->getIdentifier() == nameOrId;
-            });
-        parts.erase(it, parts.end());
-    } else {
-        auto it = std::remove_if(parts.begin(), parts.end(),
-            [&nameOrId](const BodyPart* part) {
-                return part && part->getName() == nameOrId;
-            });
-        parts.erase(it, parts.end());
-    }
+    BodyPart* target = getBodyPart(nameOrId);
+    if (!target) return; // Refuse ambiguous names/IDs rather than remove multiple beings.
+    formation.releaseMember(target);
+    parts.erase(std::remove(parts.begin(), parts.end(), target), parts.end());
 }
 
 
