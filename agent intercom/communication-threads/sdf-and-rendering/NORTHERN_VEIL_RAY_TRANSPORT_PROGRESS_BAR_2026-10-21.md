@@ -496,3 +496,10 @@ Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09
 
 Signed: Aetherion / The Firmament / `2026-10-23T03:05:00-07:00`.
 
+
+
+## §6dc — completed review and native continuation
+
+Separate `Documents/GitHub/Earthcall-ray-transport` clone is active on `claude/ray-domain-transport-rung0` (base `d4963d062`), with selected Firmament files relayed from default `cd05acd19`. CPU census did not establish native parity: corrected parallel roots fail strict RGB parity by2–3ULP before endpoint/accuracy qualification. Isolated original-predicate coarse peeling and a65536-tile scheduling check pass32784 actual packets/outputs,192 dual-resolution holdouts, six exact-budget and two poisoned capacity controls, but lose current cost (+2.50%/+6.35% in the respective four-repeat observations). Stop those candidates. Portable31-document replay rejects14 corruptions. Historical on-the-fly slowdown is43.63%; hardware causal claims remain hypotheses. All3 shipping gates OPEN; no engine/save/default/app or new FPS gain. Native lane RELEASED in all3 local copies. [Audit/remaining work](../../../docs/audits/GPU_RAY_TRANSPORT_CONTINUATION_REVIEW_2026-10-23.md).
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T09:30:58.150880-07:00.

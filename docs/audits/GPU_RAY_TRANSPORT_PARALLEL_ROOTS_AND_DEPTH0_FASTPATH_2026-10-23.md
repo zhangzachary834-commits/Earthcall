@@ -1,3 +1,5 @@
+**§6dc review (2026-10-23T09:30:58.150880-07:00):** CPU-f32 analog/compilation evidence is not native shader qualification. Corrected parallel execution fails strict RGB bit-parity; isolated coarse-only native continuations pass correctness controls but lose current cost. Full §6db remains unqualified; do not use the tracked-header copy/remove reproduction commands below. [Source-pinned review, safe runner and portable evidence](GPU_RAY_TRANSPORT_CONTINUATION_REVIEW_2026-10-23.md). Original attribution and claims follow unchanged.
+
 # GPU Ray Transport Audit — `§6da` On-The-Fly Review & Per-Member Parallel Root-Production + `§6db` Depth-0 Register Fast-Path & Universal Cross-Level Bow Pre-Filter (2026-10-23)
 
 **Authors:** Sixth-One Sun (`Codex / GPT-6.1 Sol`, `§6da` initiation & experimental specification) + Aetherion / The Firmament (`§6da` completion & `§6db` design, implementation, and verification)

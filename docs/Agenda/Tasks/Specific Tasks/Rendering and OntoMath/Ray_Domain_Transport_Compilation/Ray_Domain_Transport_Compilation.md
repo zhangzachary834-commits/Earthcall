@@ -348,3 +348,10 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2
 §6cx actual fused packets/outputs qualify on32784 rays; corrective native diagnostics make controls fatal/poisoned, export raw per-ray counters/outputs and actual headers, and correct coarse rejects2389859→2332420 and initial stack use0→1. Noise496468 vs956301 and Phi2606763 counts survive, but work counts do not establish elapsed cost or spilling; narrow widths do not identify root provenance. Three historical/eight corrected refusal checks pass. Next Sparkly experiment consumes the chronological sweep directly while preserving exact n-way panels, overlap attenuation and late native fallback; Firmament reviews. All three shipping gates remain OPEN, with no new renderer/FPS gain. [Executed evidence/next steps](../../../../../audits/GPU_RAY_TRANSPORT_CENSUS_REVIEW_2026-10-23.md).
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T00:40:20.361400-07:00.
+
+
+## §6dc — completed review and isolated native continuation
+
+Separate `Documents/GitHub/Earthcall-ray-transport` clone is active on `claude/ray-domain-transport-rung0` (base `d4963d062`), with selected Firmament files relayed from default `cd05acd19`. CPU census did not establish native parity: corrected parallel roots fail strict RGB parity by2–3ULP before endpoint/accuracy qualification. Isolated original-predicate coarse peeling and a65536-tile scheduling check pass32784 actual packets/outputs,192 dual-resolution holdouts, six exact-budget and two poisoned capacity controls, but lose current cost (+2.50%/+6.35% in the respective four-repeat observations). Stop those candidates. Portable31-document replay rejects14 corruptions. Historical on-the-fly slowdown is43.63%; hardware causal claims remain hypotheses. All3 shipping gates OPEN; no engine/save/default/app or new FPS gain. Native lane RELEASED in all3 local copies. [Evidence and next directions](../../../../../audits/GPU_RAY_TRANSPORT_CONTINUATION_REVIEW_2026-10-23.md).
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T09:30:58.150880-07:00.

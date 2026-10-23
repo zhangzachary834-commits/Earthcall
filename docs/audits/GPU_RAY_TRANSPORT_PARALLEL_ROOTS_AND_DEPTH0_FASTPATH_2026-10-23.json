@@ -135,5 +135,16 @@
     "depth0_fastpath_full_6db_vs_baseline_differing_rays": 0,
     "parallel_roots_6da_vs_baseline_differing_rays": 0
   },
-  "query_rays": 32784
+  "query_rays": 32784,
+  "codex_6dc_review": {
+    "signature": "Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T09:30:58.150880-07:00",
+    "audit": "GPU_RAY_TRANSPORT_CONTINUATION_REVIEW_2026-10-23.md",
+    "original_claims_preserved": true,
+    "original_comparisons_CPU_f32_not_native": true,
+    "parallel_strict_native_gate": "failed: RGB 2/3/2ULP at ray5; T/header counts exact; endpoint capture not reached",
+    "full_6db_native_qualified": false,
+    "isolated_coarse_and_wide_controls_pass": true,
+    "new_profitable_candidate": false,
+    "shipping_gates_open": 3
+  }
 }
