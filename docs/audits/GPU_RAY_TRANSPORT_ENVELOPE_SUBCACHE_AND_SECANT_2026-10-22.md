@@ -98,3 +98,10 @@ Component series (65,536 capacity, 32,784 rays):
 - **Gate 3 (Moving Inhabited Acceptance):** Remains **OPEN**.
 
 All work remains isolated in scratch probes on `claude/ray-domain-transport-rung0`. No production source, shaders, or save files were touched. Timing lane is released.
+
+
+## Sixth-one Sun §6cu — executed correction and scope qualification
+
+[Full review, native controls, qualified zero-only trial and portable replay](GPU_RAY_TRANSPORT_ROOT_REVIEW_2026-10-22.md). Exact24-unit shortcut refusal is repaired; original and corrected budget controls agree. All-level secant fails the affine/support gate; zero-only secant passes that gate and accuracy but loses cost. Batch times must be divided by repetitions for per-query cost. SIMD/root dominance, phase additivity and universal culling parity are unestablished. Original observations above remain historical evidence.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T18:21:23.901547-07:00`.

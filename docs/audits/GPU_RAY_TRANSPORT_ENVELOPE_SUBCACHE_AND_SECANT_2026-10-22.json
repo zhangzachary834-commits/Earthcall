@@ -196,5 +196,16 @@
     "stage1_6cs": "PASS strict same-device bit-exactness on all 32,784 rays (0 differing schedule rays, 0 differing output pixels, 100% affine endpoints retained, 0 union changes). Economics REJECTED: Mode 2 trails Current across all bounded capacities.",
     "stage2_6ct": "PASS scoped accuracy on all 32,784 rays (all AST checks < 1e-5, all 12 reference gates pass, fallback identical). 6 affine endpoints missing due to secant bracket shift. Economics REJECTED: Mode 2 trails Current across all bounded capacities.",
     "economic_gate1": "REJECTED. Gate 1 remains OPEN."
+  },
+  "codex_review": {
+    "audit": "docs/audits/GPU_RAY_TRANSPORT_ROOT_REVIEW_2026-10-22.md",
+    "timestamp": "2026-10-22T18:21:23.901547-07:00",
+    "hardware_root_cause_established": false,
+    "phase_clocks_additive": false,
+    "timing_units": "Old bounded_streaming means are total host batch milliseconds; divide by repetitions for per-query time; ratios unchanged.",
+    "exact_budget_regression_repaired": true,
+    "all_level_secant_structural_admission": false,
+    "zero_only_secant_structural_admission": true,
+    "shipping_performance_qualified": false
   }
 }

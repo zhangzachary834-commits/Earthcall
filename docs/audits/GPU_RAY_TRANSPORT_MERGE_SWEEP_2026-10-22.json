@@ -302,5 +302,16 @@
     "accuracy": "PASS (all 32,784 AST checks < 1e-5, all 12 reference gates pass)",
     "economic_gate1": "REJECTED (loses to Current Marcher in Mode 2 bounded streaming across all capacities 8192, 16384, 32768 and all repetition counts 1, 2, 4)",
     "root_cause_analysis": "Eliminating insertion sort and piece scan reduced producer latency by ~0.14 ms (~7.8%), but producer alone still consumes 78.9% - 96.6% of Current Marcher budget. Sorting is NOT the dominant bottleneck; transcendental evaluations in bisection roots(...) dominate producer cost."
+  },
+  "codex_review": {
+    "audit": "docs/audits/GPU_RAY_TRANSPORT_ROOT_REVIEW_2026-10-22.md",
+    "timestamp": "2026-10-22T18:21:23.901547-07:00",
+    "hardware_root_cause_established": false,
+    "phase_clocks_additive": false,
+    "timing_units": "Old bounded_streaming means are total host batch milliseconds; divide by repetitions for per-query time; ratios unchanged.",
+    "exact_budget_regression_repaired": true,
+    "all_level_secant_structural_admission": false,
+    "zero_only_secant_structural_admission": true,
+    "shipping_performance_qualified": false
   }
 }

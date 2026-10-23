@@ -335,3 +335,10 @@ Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09
 
 
 
+
+
+## §6cu — root/sweep review and correction
+
+§6cu reproduces/repairs the24-unit shortcut fallback regression on Metal. Merge/sweep and original cs capture parity replay; all-level secant is structurally refused (6 affine endpoints/47084 unions). Zero-only secant retainsall12102 matched affine endpoints and unchanged outer unions, passes original-AST/reference/fallback gates, but still loses connected cost. SIMD causation and additive phase lower bounds are unestablished. [Executed review](../../../docs/audits/GPU_RAY_TRANSPORT_ROOT_REVIEW_2026-10-22.md). Correction/qualification passes in its stated scope; all three shipping gates remain OPEN. Next isolated hypothesis: fuse normal execution, retain exact native fallback, and count full connected costs. Native lane released; no FPS gain.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T18:21:23.901547-07:00`.

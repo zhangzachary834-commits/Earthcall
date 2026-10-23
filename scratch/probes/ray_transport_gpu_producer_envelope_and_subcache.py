@@ -3,7 +3,7 @@ Sparkly Guy / Gemini 3.8 Flash High / Antigravity / 2026-10-22.
 Counsel from Aetherion / The Firmament (Gemini 4 Argon).
 Parent: §6cr (794e5ea03, merge-sweep) on claude/ray-domain-transport-rung0.
 
-Four strictly bit-exact optimizations:
+Four fixture-qualified candidates; not a general f32 culling theorem:
 1. Whole-member & per-coarse-bin linear-z wave-envelope culling (without modifying a or b).
 2. Demand-driven phi_knots[0..8] evaluation (only for knots bounding active bins).
 3. Cross-level depth-0 & depth-1 subdivision phi-cache (24 floats, 24-bit mask).
@@ -89,7 +89,7 @@ def source(base, root):
   let zCull = wMax + m.limits.w + 0.125 * M0 * h0 * h0 + m.curv.y + 0.05;
   let za = o.z + a * d.z; let zb = o.z + b * d.z;
   if (min(za, zb) > zCull || max(za, zb) < -zCull) {
-   if (work + 24u >= cfg.budget) { reason |= 1u; break; }
+   if (work > cfg.budget || cfg.budget - work < 24u) { reason |= 1u; break; }
    work += 24u;
    continue;
   }
@@ -104,7 +104,7 @@ def source(base, root):
    }
   }
   if (activeBins == 0u) {
-   if (work + 24u >= cfg.budget) { reason |= 1u; break; }
+   if (work > cfg.budget || cfg.budget - work < 24u) { reason |= 1u; break; }
    work += 24u;
    continue;
   }
@@ -241,7 +241,7 @@ def main():
     wide = load(root, 'ray_transport_gpu_wide_stream')
     q.source = lambda base, r: source(base, r)
     q.verify_case = lambda r, p, z: wide.verify_case(r, p, z)
-    q.independent_check = wide.independent_check
+    q.independent_check = lambda report, raw, rays, refs: load(root, 'ray_transport_gpu_producer_budget_review').admission(root, report, raw, rays, refs, 'cs-fixed')
     q.main()
 
 if __name__ == '__main__':

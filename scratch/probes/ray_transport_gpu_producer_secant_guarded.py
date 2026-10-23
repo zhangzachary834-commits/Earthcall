@@ -10,8 +10,8 @@ with a guarded hybrid secant-bisection solver:
 - Preserves full physical derivative bracket w = 2.0 * error / minSlope
 - Preserves 100% of Codex's §6cq mayAbsorb guarded policy
 - Preserves 100% of putBandTagged zeroBands protections
-- Preserves 100% of all 12,102 matched affine boundaries
-- Reduces root-refinement evalPhi calls by 4x-6x
+- Historical all-level trial loses6 matched affine endpoints and fails structural admission
+- Call-count reduction is a hypothesis, not a measured connected gain
 """
 import argparse, importlib.util, sys
 from pathlib import Path
@@ -74,9 +74,10 @@ def source(base, root):
         {"algorithm", "guarded hybrid secant-bisection root solver with clamped secant and derivative bracket"},
         {"even_iterations_secant", true},
         {"odd_iterations_bisection", true},
-        {"physical_bracket_preserved", true},
-        {"affine_kinks_preserved", true},
-        {"zero_bands_preserved", true},
+        {"derivative_slack_formula_retained", true},
+        {"affine_kinks_preserved", false},
+        {"independent_structural_admission_required", true},
+        {"zero_band_provenance_policy_retained", true},
         {"scope", "§6ct: Guarded hybrid secant-bisection numerical candidate"}
     };
 '''
@@ -93,7 +94,7 @@ def main():
     wide = load(root, 'ray_transport_gpu_wide_stream')
     q.source = lambda base, r: source(base, r)
     q.verify_case = lambda r, p, z: wide.verify_case(r, p, z)
-    q.independent_check = wide.independent_check
+    q.independent_check = lambda report, raw, rays, refs: load(root, 'ray_transport_gpu_producer_budget_review').admission(root, report, raw, rays, refs, 'secant-all')
     q.main()
 
 if __name__ == '__main__':

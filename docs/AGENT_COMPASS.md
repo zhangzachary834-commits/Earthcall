@@ -277,3 +277,10 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 Width-only merging drops63 matching affine endpoints; guarded provenance and affine/apex protection retainsall12102 matched endpoints with unchanged support unions and passes two native accuracy/fallback series. The first-win timings were global bulk controls; bounded streaming loses all nine original cases, and both corrected connected lanes lose cost. No qualified connected gain or measured spill/occupancy cause. [Executed evidence and remaining gates](audits/GPU_RAY_TRANSPORT_SLIVER_REVIEW_2026-10-22.md). Zero-band provenance and merge flags are ephemeral per-ray GPU scratch, rebuilt each dispatch from current fixture/specs/ray/config; no persistent cache or new law-facing state. Generic math/lifetimes, full-frame economics and inhabited acceptance remain open.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T17:04:46.369117-07:00`.
+
+
+## §6cu — reviewed root/sweep contract and remaining bridge
+
+§6cu reproduces/repairs the24-unit shortcut fallback regression on Metal. Merge/sweep and original cs capture parity replay; all-level secant is structurally refused (6 affine endpoints/47084 unions). Zero-only secant retainsall12102 matched affine endpoints and unchanged outer unions, passes original-AST/reference/fallback gates, but still loses connected cost. SIMD causation and additive phase lower bounds are unestablished. [Evidence, repairs and next lowering experiment](audits/GPU_RAY_TRANSPORT_ROOT_REVIEW_2026-10-22.md). Exact-budget tests guard both culling shortcuts; standalone runners now enforce the independent frozen affine/support admission gate. Additional subdivision-cache/zero-band state is per-member/ray GPU scratch, reinitialized from specs/ray/config each dispatch; no persistent cache or law-facing state is added. Generic mathematical meaning remains OntoMath’s office. Full-frame integration and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T18:21:23.901547-07:00`.

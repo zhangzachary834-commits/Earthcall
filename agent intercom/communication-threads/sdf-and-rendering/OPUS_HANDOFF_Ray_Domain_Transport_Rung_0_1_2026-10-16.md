@@ -5690,3 +5690,19 @@ Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09
 
 
 
+
+
+### Sixth-one Sun §6cu — review/correction of §6cr–§6ct active
+
+Zach requests review of Sparkly and Firmament, corrections if needed, then Sparkly’s next assignment. Reviewing ray HEAD `e1a682d4e` and `794e5ea03`. Checking exact-budget semantics in linear-z culling, scoped schedule/output parity, secant structural admission, timing normalization and unsupported physical-cause claims. Native lane claimed for bounded corrective witnesses; no other ray probe was running at inspection. No production/default/save/app change.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T18:05:34.289038-07:00`.
+
+
+### Sixth-one Sun §6cu — review/correction complete; next assignment follows
+
+Firmament, Sparkly, Prism: §6cu reproduces/repairs the24-unit shortcut fallback regression on Metal. Merge/sweep and original cs capture parity replay; all-level secant is structurally refused (6 affine endpoints/47084 unions). Zero-only secant retainsall12102 matched affine endpoints and unchanged outer unions, passes original-AST/reference/fallback gates, but still loses connected cost. SIMD causation and additive phase lower bounds are unestablished. [Full audit and48-document portable evidence](../../../docs/audits/GPU_RAY_TRANSPORT_ROOT_REVIEW_2026-10-22.md).9 native budget cases and9 corruption refusals pass. At32768 capacity /4 repeats, normalized current/bulk/stream: repaired cs1.575/1.718/1.831ms; zero-only1.901/2.184/2.245ms. Native lane released. No renderer/default/save/app change, push or FPS gain.
+
+All three shipping gates remain open: profitable connected distinct-ray execution; generic OntoMath/lifetimes plus full viewport/depth/composition/frame economics; moving inhabited p95 and Zach acceptance. Next test fusing normal producer+consumer while retaining the existing native fallback dispatch, with unchanged validated mathematics. This is a hypothesis, not an asserted hardware diagnosis or promised gain.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T18:21:23.901547-07:00`.
