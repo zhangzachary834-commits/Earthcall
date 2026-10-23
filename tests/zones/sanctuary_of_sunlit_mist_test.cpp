@@ -17,6 +17,7 @@
 #include <memory>
 #include <filesystem>
 #include <cassert>
+#include <chrono>
 
 namespace {
 
@@ -33,6 +34,15 @@ void check(bool condition, const std::string& description) {
     std::cout << "  ok: " << description << std::endl;
 }
 
+struct ScratchSaveRoot {
+    std::filesystem::path path;
+    ~ScratchSaveRoot() {
+        SaveSystem::setSaveRoot("");
+        std::error_code ec;
+        std::filesystem::remove_all(path, ec);
+    }
+};
+
 } // namespace
 
 int main() {
@@ -44,10 +54,25 @@ int main() {
         return 1;
     }
 
-    // Ensure SaveSystem saveRoot points to the containing saves directory
+    // Isolate save operations in a temporary scratch directory so that loadState's
+    // implicit persistZones does not write to real authored save trees.
     const auto absWorld = std::filesystem::absolute(worldSavePath);
     const auto savesDir = absWorld.parent_path().parent_path();
-    SaveSystem::setSaveRoot(savesDir.string());
+
+    ScratchSaveRoot scratch{
+        std::filesystem::temp_directory_path() /
+        ("earthcall-sanctuary-mist-test-" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))};
+    std::error_code ec;
+    std::filesystem::copy(savesDir, scratch.path,
+                          std::filesystem::copy_options::recursive | std::filesystem::copy_options::copy_symlinks, ec);
+    if (ec) {
+        std::cout << "sanctuary_of_sunlit_mist_test: FAILED (cannot copy saves tree: " << ec.message() << ")\n";
+        return 1;
+    }
+
+    SaveSystem::setSaveRoot(scratch.path.string());
+    const std::string sandboxWorldPath = (scratch.path / "worlds" / "sanctuary_of_sunlit_mist.json").string();
 
     ZoneManager mgr;
     Core::Camera camera;
@@ -67,7 +92,7 @@ int main() {
     ctx.lawManager = &laws;
     ctx.worldTime = &worldTime;
 
-    mgr.loadState(worldSavePath, ctx);
+    mgr.loadState(sandboxWorldPath, ctx);
 
     check(!mgr.zones().empty(), "zones loaded from sanctuary save");
     if (mgr.zones().empty()) {
