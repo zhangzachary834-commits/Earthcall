@@ -1,15 +1,13 @@
-# Substrate Ordering and the Ontology of Time
+# Integrating Substrate Ordering and the Ontology of Time
 
-*Jules task 17781297787680931547; reconciled with current architectural doctrine by Sun Squid Intake.*
+*(Model: Gemini 1.5 Pro, Harness: Jules, Session ID: 17781297787680931547)*
 
-## The connection
+A deep interrelation exists between how Earthcall governs its host machine (`SUBSTRATE_ORDERING.md`) and how it defines temporal events within the world (`TIME_AND_MOMENT.md`).
 
-[Substrate Ordering](../architecture/ontology/SUBSTRATE_ORDERING.md) describes a **staged, reversible gradient**, not a completed replacement of the operating system. Source, toolchains, resources, and decisions may become progressively legible and governed through Singulars, Relations, Formations, events, and Laws. Its plan explicitly distinguishes that long-term telos from what is implemented today.
+## Ordering the Host Clock
 
-[Time, Timeline, and Moment](../architecture/ontology/TIME_AND_MOMENT.md) applies the same demand for authored legibility to temporal domains. A `Timeline` is a first-class Singular; a `Moment` is an instant or interval Singular; an `Event` is a distinguished Moment. A Singular may own a Timeline by Relation. Timelines need not share one global clock, and moment ordering follows temporal coordinates rather than insertion order.
+The fundamental claim of *Substrate Ordering* is that Earthcall does not replace the host operating system, but rather brings its resources into a governed, legible structure. It turns implicit host behaviors into explicitly authored entities.
 
-## Boundary between host time and authored time
+This principle is directly applied in the ontology of Time. A traditional game engine simply increments a global float based on the operating system's wall-clock, resulting in an unauthored, black-boxed temporal progression.
 
-The host's monotonic or wall clock can still supply measurements to an engine. Such a reading **does not automatically become** an authored Timeline or establish its provenance, ownership, reachability, or authority. `Universe` may borrow a Timeline for legacy Law execution, but it is not itself a temporal being. The future Law–Timeline–Moment semantics and complete governance of the substrate remain open; this addendum does not declare them implemented.
-
-The shared design obligation is to make temporal meaning and its relations legible without confusing a physical timing mechanism with the authored domain it serves. This is an architectural correspondence, not evidence that CPU ticks have been replaced or that the host OS is controlled by Earthcall.
+In contrast, Earthcall elevates the passage of time into actual beings. A `Timeline` is a Singular; a `Moment` is a Singular with specific mathematical bounds. By doing this, Earthcall strips the sovereignty of the host OS's clock and forces it into the ontology. A CPU clock tick does not govern the world; rather, the world maintains governed `Timeline` and `Moment` entities that represent those ticks according to authored Laws. The host's temporal substrate is thus ordered to serve the world's ontology.
