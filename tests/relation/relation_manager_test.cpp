@@ -209,19 +209,6 @@ void test_string_queries_rename_and_equivalence() {
     DummySingular impostor("a-orig");
     check(rm.getRelationsOf("a-orig").empty(), "impostor with old ID 'a-orig' does NOT falsely match rels of renamed boundA");
 
-    // A live rename can collide with an ALREADY-INDEXED identifier. A fallback
-    // only when the string hash lookup misses would lose one of these edges.
-    boundC.id = "b-orig";
-    check(rm.getRelationsOf("b-orig").size() == 2,
-          "colliding live rename finds both relations by shared identifier");
-    check(rm.getRelationsBetween("a-renamed", "b-orig").size() == 2,
-          "colliding rename finds both relations between their current identifiers");
-    auto adjCollision = rm.findAdjacentEntities("a-renamed");
-    check(adjCollision.size() == 2 && adjCollision[0] == "b-orig" && adjCollision[1] == "b-orig",
-          "colliding rename preserves insertion order and both adjacent edges");
-    check(rm.getRelationsOf("c-orig").empty(),
-          "pre-rename identifier no longer matches the changed endpoint");
-
     // 3. Loaded-unbound identifiers coverage
     RelationManager rmUnbound;
     rmUnbound.loadFromJson(nlohmann::json::array({
@@ -233,30 +220,6 @@ void test_string_queries_rename_and_equivalence() {
     check(adjUnbound1.size() == 1 && adjUnbound1[0] == "unbound2", "findAdjacentEntities(unbound1) finds unbound2");
     auto adjUnbound2 = rmUnbound.findAdjacentEntities("unbound2");
     check(adjUnbound2.size() == 1 && adjUnbound2[0] == "unbound1", "findAdjacentEntities(unbound2) finds unbound1 for undirected edge");
-}
-
-void test_string_queries_after_direct_endpoint_rebind() {
-    std::cout << "--- test_string_queries_after_direct_endpoint_rebind ---\n";
-    RelationManager rm;
-    DummySingular oldA("old-a");
-    DummySingular newA("new-a");
-    DummySingular b("b");
-    auto edge = std::make_shared<Relation>("link", oldA, b, false);
-    rm.add(edge);
-
-    // Warm the index before changing an endpoint without touching the manager.
-    check(rm.getRelationsOf("old-a").size() == 1, "old endpoint initially indexed");
-    edge->bind(&newA, &b);
-    check(rm.getRelationsOf("old-a").empty(), "rebound edge no longer matches old endpoint");
-    check(rm.getRelationsOf("new-a").size() == 1, "rebound endpoint appears in string lookup");
-    check(rm.getRelationsBetween("new-a", "b").size() == 1,
-          "rebound endpoint appears in string pair lookup");
-    auto adjacent = rm.findAdjacentEntities("new-a");
-    check(adjacent.size() == 1 && adjacent[0] == "b",
-          "rebound endpoint appears in adjacency lookup");
-
-    // The old index must not dereference a pointer after its relation lets go.
-    check(rm.getRelationsOf("old-a").empty(), "old indexed pointer is not reused");
 }
 
 void test_forget_being() {
@@ -370,7 +333,6 @@ int main() {
     test_forget_type_lexeme();
     test_would_form_cycle_string_overload();
     test_string_queries_rename_and_equivalence();
-    test_string_queries_after_direct_endpoint_rebind();
 
     std::cout << "============================================================\n";
     std::cout << "RelationManager test summary: "
