@@ -80,10 +80,49 @@ int main(int argc, char** argv) {
     std::filesystem::create_directories(scratchPath / "worlds");
 
     const std::filesystem::path realSaves("saves");
-    for (const auto& sub : {"zones", "laws", "materials", "homes"}) {
+    for (const auto& sub : {"laws", "materials", "homes"}) {
         if (std::filesystem::exists(realSaves / sub)) {
             std::error_code ec;
             std::filesystem::copy(realSaves / sub, scratchPath / sub,
+                                  std::filesystem::copy_options::recursive, ec);
+        }
+    }
+
+    std::unordered_set<std::string> requiredZoneIds;
+    nlohmann::json worldData = SaveSystem::readSaveData(world);
+    if (worldData.is_object()) {
+        if (worldData.contains("currentZoneId") && worldData["currentZoneId"].is_string()) {
+            requiredZoneIds.insert(worldData["currentZoneId"].get<std::string>());
+        }
+        if (worldData.contains("zoneRefs") && worldData["zoneRefs"].is_array()) {
+            for (const auto& ref : worldData["zoneRefs"]) {
+                if (ref.is_object() && ref.contains("identifier") && ref["identifier"].is_string()) {
+                    requiredZoneIds.insert(ref["identifier"].get<std::string>());
+                } else if (ref.is_string()) {
+                    requiredZoneIds.insert(ref.get<std::string>());
+                }
+            }
+        }
+        if (worldData.contains("zones") && worldData["zones"].is_array()) {
+            for (const auto& zj : worldData["zones"]) {
+                if (zj.is_object()) {
+                    if (zj.contains("identifier") && zj["identifier"].is_string()) {
+                        requiredZoneIds.insert(zj["identifier"].get<std::string>());
+                    } else if (zj.contains("name") && zj["name"].is_string()) {
+                        requiredZoneIds.insert(zj["name"].get<std::string>());
+                    }
+                }
+            }
+        }
+    }
+
+    std::filesystem::create_directories(scratchPath / "zones");
+    for (const auto& zoneId : requiredZoneIds) {
+        if (zoneId.empty()) continue;
+        const auto srcZoneDir = realSaves / "zones" / zoneId;
+        if (std::filesystem::exists(srcZoneDir)) {
+            std::error_code ec;
+            std::filesystem::copy(srcZoneDir, scratchPath / "zones" / zoneId,
                                   std::filesystem::copy_options::recursive, ec);
         }
     }
