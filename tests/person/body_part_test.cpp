@@ -78,8 +78,9 @@ static void testCustomInitialization() {
 static void testAccessorsAndMutators() {
     BodyPart bodyPart("Head", BodyPart::Type::Head, ObjectTypes::ShapeKind::Sphere, glm::vec3(1.0f));
 
-    // Identifier check
-    assert(bodyPart.getIdentifier() == "Head");
+    // Name and Identifier check
+    assert(bodyPart.getName() == "Head");
+    assert(!bodyPart.getIdentifier().empty());
 
     // Color mutator/accessor
     bodyPart.setColor(0.5f, 0.6f, 0.7f);
@@ -312,6 +313,30 @@ static void testConstitutionIsExplicitRelation() {
     std::cout << "  testConstitutionIsExplicitRelation OK\n";
 }
 
+static void testDistinctIdentitiesWithSameName() {
+    BodyPart arm1("Arm", BodyPart::Type::Arm, ObjectTypes::ShapeKind::Cube, glm::vec3(1.0f));
+    BodyPart arm2("Arm", BodyPart::Type::Arm, ObjectTypes::ShapeKind::Cube, glm::vec3(1.0f));
+
+    // Display names are identical
+    assert(arm1.getName() == "Arm");
+    assert(arm2.getName() == "Arm");
+
+    // Unique identifiers are distinct Formation IDs
+    assert(!arm1.getIdentifier().empty());
+    assert(!arm2.getIdentifier().empty());
+    assert(arm1.getIdentifier() != arm2.getIdentifier());
+
+    // Explicit setIdentifier works and overrides default formation ID while keeping partName
+    arm1.setIdentifier("arm.left");
+    arm2.setIdentifier("arm.right");
+    assert(arm1.getIdentifier() == "arm.left");
+    assert(arm2.getIdentifier() == "arm.right");
+    assert(arm1.getName() == "Arm");
+    assert(arm2.getName() == "Arm");
+
+    std::cout << "  testDistinctIdentitiesWithSameName OK\n";
+}
+
 int main() {
     std::cout << "body_part_test:\n";
     testInitialState();
@@ -323,6 +348,7 @@ int main() {
     testAutomations();
     testDraw();
     testConstitutionIsExplicitRelation();
+    testDistinctIdentitiesWithSameName();
     std::cout << "body_part_test: ALL OK\n";
     return 0;
 }
