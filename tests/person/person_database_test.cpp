@@ -22,6 +22,7 @@ struct TestEnvironment {
     std::filesystem::path tempDir;
     std::string prevSaveRoot;
     std::optional<std::string> prevEarthcallHome;
+    std::optional<std::string> prevChosenPerson;
 
     TestEnvironment() {
         tempDir = std::filesystem::temp_directory_path() / "earthcall_person_db_test";
@@ -36,11 +37,16 @@ struct TestEnvironment {
         if (const char* previous = std::getenv("EARTHCALL_HOME")) {
             prevEarthcallHome = previous;
         }
+        if (const char* previous = std::getenv("EARTHCALL_PERSON_ID")) {
+            prevChosenPerson = previous;
+        }
         const std::string sandboxHome = (tempDir / "home").string();
 #if defined(_WIN32)
         _putenv_s("EARTHCALL_HOME", sandboxHome.c_str());
+        _putenv_s("EARTHCALL_PERSON_ID", "");
 #else
         setenv("EARTHCALL_HOME", sandboxHome.c_str(), 1);
+        unsetenv("EARTHCALL_PERSON_ID");
 #endif
     }
 
@@ -48,9 +54,12 @@ struct TestEnvironment {
         SaveSystem::setSaveRoot(prevSaveRoot);
 #if defined(_WIN32)
         _putenv_s("EARTHCALL_HOME", prevEarthcallHome ? prevEarthcallHome->c_str() : "");
+        _putenv_s("EARTHCALL_PERSON_ID", prevChosenPerson ? prevChosenPerson->c_str() : "");
 #else
         if (prevEarthcallHome) setenv("EARTHCALL_HOME", prevEarthcallHome->c_str(), 1);
         else unsetenv("EARTHCALL_HOME");
+        if (prevChosenPerson) setenv("EARTHCALL_PERSON_ID", prevChosenPerson->c_str(), 1);
+        else unsetenv("EARTHCALL_PERSON_ID");
 #endif
         std::filesystem::remove_all(tempDir);
     }
