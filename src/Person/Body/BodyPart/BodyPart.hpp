@@ -43,10 +43,9 @@ class BodyPart : public Formation {
     // Accessors
     const std::string& getName() const { return partName; }
     Type getType() const { return partType; }
-    std::string getIdentifier() const override {
-        return _identifier.empty() ? partName : _identifier;
-    }
-    void setIdentifier(const std::string& id) { _identifier = id; }
+    // A BodyPart/VoicePart is a Formation: one identity, never a second shadow ID.
+    // Formation::setIdentifier is inherited and updates the same identity.
+    std::string getIdentifier() const override { return Formation::getIdentifier(); }
     glm::mat4 getTransform() const { return _transform; }
     // transform ∘ scale(dimensions): the geometry the primary manifestation
     // is DRAWN and COLLIDED with. Before 2026-10-13 this was named
@@ -128,7 +127,7 @@ class BodyPart : public Formation {
     glm::mat4 _transform = glm::mat4(1.0f);
 
     std::string partName;
-    std::string _identifier;
+
     Type        partType {Type::Undefined};
     glm::vec3   _dimensions = glm::vec3(1.0f, 1.0f, 1.0f);
     float color[3] = {1.0f,1.0f,1.0f};
