@@ -47,6 +47,34 @@ int main() {
         }
     }
 
+    // Inspect Engine.hpp and CreatorConsoleState.hpp for legacy 2D tools fossil methods/members
+    const fs::path engineHeaderRel = "src/Singularity/Core/Engine.hpp";
+    std::ifstream engineFile(root / engineHeaderRel);
+    if (!engineFile) {
+        std::cerr << "FAIL: Could not open Engine.hpp at " << root / engineHeaderRel << "\n";
+        return 1;
+    }
+    const std::string engineContent((std::istreambuf_iterator<char>(engineFile)),
+                                    std::istreambuf_iterator<char>());
+    if (engineContent.find("getUseLegacy2DTools") != std::string::npos ||
+        engineContent.find("_useLegacy2DTools") != std::string::npos) {
+        std::cerr << "FAIL: Engine.hpp contains legacy 2D tools fossil: getUseLegacy2DTools / _useLegacy2DTools\n";
+        return 1;
+    }
+
+    const fs::path consoleHeaderRel = "src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp";
+    std::ifstream consoleFile(root / consoleHeaderRel);
+    if (!consoleFile) {
+        std::cerr << "FAIL: Could not open CreatorConsoleState.hpp at " << root / consoleHeaderRel << "\n";
+        return 1;
+    }
+    const std::string consoleContent((std::istreambuf_iterator<char>(consoleFile)),
+                                     std::istreambuf_iterator<char>());
+    if (consoleContent.find("useLegacy2DTools") != std::string::npos) {
+        std::cerr << "FAIL: CreatorConsoleState.hpp contains legacy 2D tools fossil: useLegacy2DTools\n";
+        return 1;
+    }
+
     std::cout << "PASS: Legacy fossil files and stubs are absent.\n";
     return 0;
 }
