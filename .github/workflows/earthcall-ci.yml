@@ -30,6 +30,7 @@ jobs:
         law_line_test
         law_sentence_test
         law_line_zone_test
+        terminal_zones_test
         destroy_law_test
         language_identity_reference_test
         creation_tools_test
