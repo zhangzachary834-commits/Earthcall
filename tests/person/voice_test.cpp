@@ -27,6 +27,18 @@ static void testVoicePartIdentityAndLookup() {
     assert(voice.getVoicePart("voice.pitch.base") == part1);
     assert(voice.getVoicePart("voice.pitch.overtone") == part2);
 
+    // The exact ID wins even when a different part has that display name.
+    assert(voice.getVoicePart("Pitch") == part1); // display fallback
+    auto* namedById = new VoicePart("Timbre", VoicePart::Type::Timbre);
+    namedById->setIdentifier("Pitch");
+    voice.addPart(namedById);
+    assert(voice.getVoicePart("Pitch") == namedById);
+    voice.removeVoicePart("Pitch");
+    assert(!voice.formation.hasMember(namedById));
+    assert(voice.getVoicePart("Pitch") == part1); // fallback restored
+    assert(voice.getVoicePart("voice.pitch.overtone") == part2);
+    delete namedById;
+
     // Removing by identifier removes part1 and leaves part2
     voice.removeVoicePart("voice.pitch.base");
     assert(voice.getVoicePart("voice.pitch.base") == nullptr);
