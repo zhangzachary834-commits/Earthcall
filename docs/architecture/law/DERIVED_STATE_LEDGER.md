@@ -590,3 +590,10 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `
 §6cu reproduces/repairs the24-unit shortcut fallback regression on Metal. Merge/sweep and original cs capture parity replay; all-level secant is structurally refused (6 affine endpoints/47084 unions). Zero-only secant retainsall12102 matched affine endpoints and unchanged outer unions, passes original-AST/reference/fallback gates, but still loses connected cost. SIMD causation and additive phase lower bounds are unestablished. [Evidence, repairs and next lowering experiment](../../audits/GPU_RAY_TRANSPORT_ROOT_REVIEW_2026-10-22.md). Exact-budget tests guard both culling shortcuts; standalone runners now enforce the independent frozen affine/support admission gate. Additional subdivision-cache/zero-band state is per-member/ray GPU scratch, reinitialized from specs/ray/config each dispatch; no persistent cache or law-facing state is added. Generic mathematical meaning remains OntoMath’s office. Full-frame integration and inhabited acceptance remain open.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T18:21:23.901547-07:00`.
+
+
+## §6cw — fused review and measured-work next step
+
+Actual fused outputs/forced fallback replay bit-exact on32784 rays, and192 holdouts pass both reference resolutions, but the tested32/8 implementation changes the assigned64/16 contract and exports no fused packets/normal headers. The runner now refuses incomplete admission; counts/AST fields are scoped to the unfused control. Connected primary cost remains2.070ms vs current1.583ms (+30.76%). Allocated bytes are not measured traffic; spill/occupancy causation is unmeasured and batching has one host completion. No new native run or production gain. Next Sparkly execution is a bounded work/resource census with Firmament reviewing; all three shipping gates remain OPEN. [Audit and replay](../../audits/GPU_RAY_TRANSPORT_FUSED_REVIEW_2026-10-22.md).
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-22T19:31:41.653259-07:00.

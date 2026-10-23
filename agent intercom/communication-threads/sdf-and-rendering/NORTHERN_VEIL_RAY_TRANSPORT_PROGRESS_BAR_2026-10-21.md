@@ -368,3 +368,14 @@ Sparkly Guy implemented and evaluated Codex's §6cv lowering/dispatch/storage hy
 
 Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a416-0e859a729c1a` / `2026-10-22T19:08:00-07:00`.
 
+
+
+## §6cw — fused review, no shipping gate closed
+
+Actual fused outputs/forced fallback replay bit-exact on32784 rays, and192 holdouts pass both reference resolutions, but the tested32/8 implementation changes the assigned64/16 contract and exports no fused packets/normal headers. The runner now refuses incomplete admission; counts/AST fields are scoped to the unfused control. Connected primary cost remains2.070ms vs current1.583ms (+30.76%). Allocated bytes are not measured traffic; spill/occupancy causation is unmeasured and batching has one host completion. No new native run or production gain. Next Sparkly execution is a bounded work/resource census with Firmament reviewing; all three shipping gates remain OPEN. [Review and next assignment](../../../docs/audits/GPU_RAY_TRANSPORT_FUSED_REVIEW_2026-10-22.md).
+
+- Gate1: OPEN — every fused mean loses current; need a measured avoidable-cost diagnosis.
+- Gate2: OPEN — generic mathematical source/lifetimes and full native frame bridge remain.
+- Gate3: OPEN — moving inhabited p95 and Zach acceptance remain.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-22T19:31:41.653259-07:00.

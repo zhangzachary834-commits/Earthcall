@@ -694,11 +694,15 @@ def main():
     p.add_argument('--root', type=Path, required=True)
     args, _ = p.parse_known_args()
     root = args.root.resolve()
+    # §6cw review: preserve the rejected historical shader for replay, but do
+    # not let the executable silently certify changed capacities/old packets.
+    review = load(root, 'ray_transport_gpu_fused_review')
+    review.require_contract(FUSED_WGSL)
     q = load(root, 'ray_transport_gpu_pose_qualification')
     wide = load(root, 'ray_transport_gpu_wide_stream')
     q.source = lambda base, r: source(base, r)
     q.verify_case = lambda r, p, z: wide.verify_case(r, p, z)
-    q.independent_check = wide.independent_check
+    q.independent_check = lambda report, rows, rays, refs: review.admission(root, report, rows, rays, refs)
     q.main()
 
 if __name__ == '__main__':

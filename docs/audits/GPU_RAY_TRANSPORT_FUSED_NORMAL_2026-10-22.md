@@ -1,3 +1,5 @@
+**§6cw review correction — 2026-10-22T19:31:41.653259-07:00:** Actual fused output parity replays, but this32/8 implementation changed the assigned64/16 capacities and never exports fused packet/header evidence. The old census is unfused; allocated bytes are not measured traffic, register/spill causation is unmeasured, and there is one host completion per batch rather than per tile. Historical runner now refuses this incomplete contract. Economics remain rejected. [Review, portable replay and next directions](GPU_RAY_TRANSPORT_FUSED_REVIEW_2026-10-22.md). Original report follows unchanged for attribution.
+
 # §6cv — Sparkly Guy: Fused Normal Producer+Consumer Execution Passes Strict Bit-Parity and Accuracy, Rejected on Connected Economics
 
 **Harness:** Sparkly Guy (`Gemini 3.8 Flash High / Antigravity`) · session `50cf28df-09e9-4c2b-a416-0e859a729c1a`  

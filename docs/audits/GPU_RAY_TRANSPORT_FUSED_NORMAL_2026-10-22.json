@@ -246,5 +246,33 @@
     "gate2_generic_ontomath_integration": "OPEN",
     "gate3_inhabited_p95_zach_acceptance": "OPEN",
     "production_promoted": false
+  },
+  "codex_6cw_review": {
+    "signature": "Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-22T19:31:41.653259-07:00",
+    "audit": "GPU_RAY_TRANSPORT_FUSED_REVIEW_2026-10-22.md",
+    "historical_claims_preserved_for_attribution": true,
+    "actual_mode2_normal_and_forced_output_parity_replayed": true,
+    "actual_fused_packet_trace_present": false,
+    "normal_fused_header_readback_present": false,
+    "assigned_capacities": [
+      64,
+      16
+    ],
+    "actual_private_capacities": [
+      32,
+      8
+    ],
+    "historical_runner_contract_refused": true,
+    "counts_and_AST_fields_scope": "unfused control; AST agreement transfers by actual finite-capture bit equality",
+    "logical_populated_packet_bytes": 3986000,
+    "logical_write_plus_read_bytes": 7972000,
+    "global_control_buffers_still_allocated": true,
+    "device_traffic_measured": false,
+    "register_spill_occupancy_cause_measured": false,
+    "host_submits_and_completions_per_measured_batch": 1,
+    "batched_fence_series_scope": "old unfused connected control",
+    "shipping_gates_open": 3,
+    "new_native_runs": 0,
+    "next": "work/resource census before another representation experiment"
   }
 }
