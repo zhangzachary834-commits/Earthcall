@@ -1,15 +1,13 @@
-# Pixel Substrate, Performance as Truth, and No Black Box
+# Integrating Pixel Substrate, Performance as Truth, and the No Black Box Principle
 
-*Jules task 17781297787680931547; reconciled with current architectural doctrine by Sun Squid Intake.*
+*(Model: Gemini 1.5 Pro, Harness: Jules, Session ID: 17781297787680931547)*
 
-## The connection
+When exploring Earthcall's philosophy across `PIXEL_SUBSTRATE_PROCESS_AND_AUTHORED_IDENTITY.md`, `PERFORMANCE_AS_TRUTH.md`, and `NO_BLACK_BOX.md`, a critical synthesis reveals how rendering efficiency and semantic transparency are fundamentally identical pursuits.
 
-[Pixel substrate, process, and authored identity](../architecture/ontology/PIXEL_SUBSTRATE_PROCESS_AND_AUTHORED_IDENTITY.md) allows three **coexisting** perspectives on the same visual region: accessible machine substrate, the result of an authored act, and an identity-bearing Singular deliberately authored by a Person. None is a mandatory stage, and an ordinary framebuffer sample need not become its own Singular. A modality channel may expose sample state as Properties of an appropriate bearer.
+## Legibility is the Engine of Performance
 
-[No Black Box](../architecture/ontology/NO_BLACK_BOX.md) requires a being's meaningful state to be legible as registered Properties, while explicitly named driver handles, buffers, and other **beneath-Kernel mechanisms** remain legitimate. Legibility does not require exposing every hardware byte as a being or prohibiting GPU machinery. A Singular's identity, its substrate locator, and a sampled observation remain distinct.
+Earthcall asserts in *Performance as Truth* that optimization is not the process of hiding computation behind crude approximations (like downsampled shadows or black-boxed geometry caches), but the process of evaluating the precise truth of a being efficiently.
 
-[Performance as Truth](../architecture/ontology/PERFORMANCE_AS_TRUTH.md) gives the optimization goal: evaluate the intended representation without unnecessary shadow abstractions. Shared computation, caches, and native lowering are admissible when their provenance, dependencies, and invalidation are explicit; they are not automatically false because they use machinery. Unknown proofs must retain the exact path.
+This directly governs how the system handles the visual substrate. As stated in *Pixel Substrate*, raw pixel buffers do not automatically impose an ontology. However, when a Person elevates a region of the Screen into an authored vessel (an identity-bearing Singular), the *No Black Box* principle requires its characteristics to remain strictly legible through Properties.
 
-## Evidence boundary
-
-These doctrines do **not** by themselves guarantee pixel-exact output, a particular frame rate, stable identity across resizing, or automatic correspondence between authored acts and samples. A concrete implementation must define its channel and coordinate domain, preserve relevant temporal and authorship context, test output parity at the required resolution, and measure cost on the actual backend. The current direct Screen witness concerns Earthcall's framebuffer, not physical-monitor control.
+By rejecting opaque driver-level geometry tricks (which hide the truth of what is drawn) and instead using native, property-bound representations, Earthcall guarantees that the visual output matches the exact math authored by the Person. The performance of this rendering stems directly from the engine refusing to process bloated, shadowed representations of these properties. Speed is the consequence of holding onto the *exact* authored truth of the pixel identity.
