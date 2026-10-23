@@ -209,6 +209,19 @@ void test_string_queries_rename_and_equivalence() {
     DummySingular impostor("a-orig");
     check(rm.getRelationsOf("a-orig").empty(), "impostor with old ID 'a-orig' does NOT falsely match rels of renamed boundA");
 
+    // A live rename can collide with an ALREADY-INDEXED identifier. A fallback
+    // only when the string hash lookup misses would lose one of these edges.
+    boundC.id = "b-orig";
+    check(rm.getRelationsOf("b-orig").size() == 2,
+          "colliding live rename finds both relations by shared identifier");
+    check(rm.getRelationsBetween("a-renamed", "b-orig").size() == 2,
+          "colliding rename finds both relations between their current identifiers");
+    auto adjCollision = rm.findAdjacentEntities("a-renamed");
+    check(adjCollision.size() == 2 && adjCollision[0] == "b-orig" && adjCollision[1] == "b-orig",
+          "colliding rename preserves insertion order and both adjacent edges");
+    check(rm.getRelationsOf("c-orig").empty(),
+          "pre-rename identifier no longer matches the changed endpoint");
+
     // 3. Loaded-unbound identifiers coverage
     RelationManager rmUnbound;
     rmUnbound.loadFromJson(nlohmann::json::array({

@@ -150,9 +150,13 @@ public:
     std::size_t generation() const { return _generation; }
 private:
     void rebuildEndpointIndex() const;
+    // Rename-safe string candidate discovery. O(bound beings + candidate degree),
+    // plus output sorting: mutable virtual identifiers prohibit pure O(degree).
+    std::vector<Relation*> stringLookupCandidates(const std::string& identifier) const;
     std::size_t _generation = 0;
     mutable std::size_t _indexedGeneration = static_cast<std::size_t>(-1);
     mutable std::unordered_map<const Singular*, std::vector<Relation*>> _byEndpoint;
     mutable std::unordered_map<std::string, std::vector<Relation*>> _byIdentifier;
     mutable std::unordered_map<const Relation*, std::shared_ptr<Relation>> _sharedByPointer;
+    mutable std::unordered_map<const Relation*, std::size_t> _orderByPointer;
 };
