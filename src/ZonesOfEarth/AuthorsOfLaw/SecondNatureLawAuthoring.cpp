@@ -2,13 +2,17 @@
 
 #include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
 #include "ConstructedBeing/Singular/Property/Property.hpp"
+#include "Identity/PersonPresence.hpp"
+#include "Person/Person.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 
+#include <algorithm>
 #include <ctime>
 #include <string>
+#include <vector>
 
 namespace SecondNatureLawAuthoring {
 namespace {
@@ -34,9 +38,28 @@ void writeString(Singular& being, const char* property, const std::string& value
 
 Singular* findBeing(const std::string& id) {
     if (id.empty()) return nullptr;
+    std::vector<Singular*> exactMatches;
     for (Singular* being : Universe::instance().beings()) {
-        if (being && being->getIdentifier() == id) return being;
+        if (being && being->getIdentifier() == id) {
+            if (std::find(exactMatches.begin(), exactMatches.end(), being) == exactMatches.end()) {
+                exactMatches.push_back(being);
+            }
+        }
     }
+    if (exactMatches.size() == 1) return exactMatches.front();
+    if (exactMatches.size() > 1) return nullptr;
+
+    std::vector<Singular*> candidates;
+    for (Singular* being : Universe::instance().beings()) {
+        if (auto* person = dynamic_cast<Person*>(being)) {
+            if (Identity::personAnswersTo(*person, id)) {
+                if (std::find(candidates.begin(), candidates.end(), being) == candidates.end()) {
+                    candidates.push_back(being);
+                }
+            }
+        }
+    }
+    if (candidates.size() == 1) return candidates.front();
     return nullptr;
 }
 
