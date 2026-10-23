@@ -44,6 +44,32 @@ void testRemoveBodyPart() {
     delete head;
 }
 
+void testDistinctIdentitiesSameName() {
+    Body body("Humanoid", "Voxel");
+    auto* arm1 = new BodyPart("Arm", BodyPart::Type::Arm);
+    auto* arm2 = new BodyPart("Arm", BodyPart::Type::Arm);
+
+    arm1->setIdentifier("LeftArm_ID");
+    arm2->setIdentifier("RightArm_ID");
+
+    body.addPart(arm1);
+    body.addPart(arm2);
+
+    check(body.getBodyPart("LeftArm_ID") == arm1, "Lookup by unique identifier returns exact arm1");
+    check(body.getBodyPart("RightArm_ID") == arm2, "Lookup by unique identifier returns exact arm2");
+
+    // Both share display name "Arm"
+    check(body.getBodyPart("Arm") != nullptr, "Lookup by display name returns a matching part");
+
+    // Remove arm1 specifically by identifier
+    body.removeBodyPart("LeftArm_ID");
+    check(body.getBodyPart("LeftArm_ID") == nullptr, "Arm1 removed by identifier");
+    check(body.getBodyPart("RightArm_ID") == arm2, "Arm2 remains after arm1 removal by identifier");
+
+    delete arm1;
+    delete arm2;
+}
+
 void testBasicAvatarCreation() {
     Body avatar = Body::createBasicAvatar("LowPoly");
     check(avatar.shape == "Humanoid", "Basic avatar shape is Humanoid");
@@ -61,6 +87,7 @@ int main() {
     testBodyCreation();
     testAddAndGetBodyPart();
     testRemoveBodyPart();
+    testDistinctIdentitiesSameName();
     testBasicAvatarCreation();
     std::cout << "All body_test assertions passed.\n";
     return 0;
