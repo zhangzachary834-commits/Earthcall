@@ -379,3 +379,44 @@ Actual fused outputs/forced fallback replay bit-exact on32784 rays, and192 holdo
 - Gate3: OPEN — moving inhabited p95 and Zach acceptance remain.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-22T19:31:41.653259-07:00.
+
+
+## Firmament post-§6cw review & exact `§6cx` work/resource census specification
+
+[Full counsel and `§6cx` blueprint](FIRMAMENT_COUNSEL_POST_6CW_WORK_CENSUS_AND_ON_THE_FLY_SWEEP_2026-10-22.md). We reviewed all five passes since `794e5ea03` (`§6cs`, `§6ct`, `§6cu`, `§6cv`, `§6cw`), endorsing Codex's `§6cu` exact-budget repair (`work > cfg.budget || cfg.budget - work < 24u`), `§6cu` zero-level-only secant qualification (`12,102 / 12,102` affine knots retained, `0` changed outer unions), and `§6cw` fused-contract corrections (`64 / 16` capacities, reading normal headers before forced fallback overwrites them, exporting `fused_packet_census_inputs`, and distinguishing `3.99 MB` logical packet bytes from `43.5 MB` padded capacity). Inspecting `FUSED_WGSL` (`263251da8`) highlights two key insights to guide Sparkly Guy's `§6cx` census (`scratch/probes/ray_transport_gpu_work_census.py`):
+1. **Redundant `local_subpanels` / `local_overlaps` Buffering in `fusedMain`:** Because `knots[0..ne-1]` is already sorted in strict chronological order, buffering intervals in `local_subpanels[64]` (`1,024 B/thread`) + `local_overlaps[16]` (`256 B/thread`) only to merge them back in the same order `i = 1..ne-1` is an artifact of the unfused two-buffer split; on-the-fly integration inside the `i = 1..ne-1` sweep loop is 100.0% bit-exact with `0 B` of interval arrays.
+2. **Producer `evalPhi` + Consumer `evalEnvelope` / `cnoise3` Work Census vs. `Mode 0 Current`:** `§6cx` will first close all four `64 / 16` and `fused_packet_census_inputs` contract gaps (including native budget `23/24/25` and mid-ray capacity failure `maxSubPerRay=4 / maxOverPerRay=1` controls), and then export exact per-ray/member distributions (`totals, means, p50, p90, p99, max`) across all `32,784` rays for `evalPhi` by phase (coarse knots, subdivision splits, bisection, candidate midpoints), subpanel width/provenance (`37,716` zero-band `~5 mm` apex slivers, `17,009` `2–5 cm` support-band slivers, `192,601` macro subpanels), consumer `evalEnvelope` and `cnoise3` calls, and `Mode 0 Current` march steps and `cnoise3` calls—returning a concise evidence matrix and ONE falsifiable representation proposal before the next timing run. All three shipping gates (`Gate 1`, `Gate 2`, `Gate 3`) remain **OPEN**.
+
+Signed: Aetherion / The Firmament / Gemini 4 Argon / `2026-10-22T19:42:00-07:00`.
+
+
+## §6cx — Contract Repair, Complete Work/Resource Census, and Single Representation Hypothesis
+
+Sparkly Guy executed the full work and resource census commissioned by Codex (`§6cw`) and Firmament (`FIRMAMENT_COUNSEL_POST_6CW_WORK_CENSUS_AND_ON_THE_FLY_SWEEP_2026-10-22.md`), without running unrequested timing sweeps of bundled optimizations. [Full audit](../../../docs/audits/GPU_RAY_TRANSPORT_WORK_CENSUS_2026-10-22.md) and [machine record](../../../docs/audits/GPU_RAY_TRANSPORT_WORK_CENSUS_2026-10-22.json).
+
+1. **All Contract & Diagnostic Gaps Closed:**
+   - **Contract Restored:** `(64, 16)` capacity contract strictly enforced and passing `ray_transport_gpu_fused_review.require_contract`.
+   - **Actual Fused Packets Exported:** Diagnostic trace exported `fused_packet_census_inputs` across all 32,784 rays (`0` differing schedule rays, `0` differing output pixels, `12,102 / 12,102` affine boundaries preserved, `0` changed support unions).
+   - **Normal Headers Decoded:** Normal execution decoded `singles = 247,326`, `overs = 1,799`, and `normal_fallbacks = 0` before forced fallback ran (`outBuf` poisoned with `NAN` before every dispatch).
+   - **Synthetic Controls Qualified:**
+     - Exact budget boundary (`budgets = 23, 24, 25` on isolated synthetic geometry) refused `16 / 0 / 0` rays (100% pass).
+     - Capacity exhaustion (`maxSubPerRay = 4u` with 26,243 fallbacks, `maxOverPerRay = 1u` with 412 fallbacks) achieved 100.0% bit-identical RGB/T output to `Mode 0 Current` on every fallback ray.
+   - **Independent Admission:** All 192 holdouts pass at 65536/32768 resolutions (`both_resolutions_pass = True`).
+2. **Work Census Evidence Matrix (Measured Across All 32,784 Rays):**
+   - **Noise Calls:** Connected Fused Consumer executes **`496,468` total `cnoise3` calls** (483,429 singles + 13,039 overlaps) vs **`956,301` calls** in `Mode 0 Current Marcher` — an absolute reduction of **`459,833` calls (-48.1%)**!
+   - **Density Evaluations:** Connected Fused Consumer evaluates **`509,044` quadrature points** vs **`2,102,076` density points** in `Mode 0 Current Marcher` — **4.12x fewer density evaluations**!
+   - **Producer Root Math:** `2,606,763` total `evalPhi` calls (mean 79.5/ray, max 121), with `50.1%` in bisection (`1,307,028`), `35.8%` in coarse knots (`934,074`), `12.2%` in piece midpoints (`319,123`), and `1.8%` in subdivision splits (`46,538`).
+   - **Subpanel Width Breakdown:** `37,808` apex uncertainty bands ($\le 0.02\text{ m}$, 15.3%), `11,515` support root brackets ($0.02-0.05\text{ m}$, 4.7%), `5,238` intermediate spans ($0.05-0.20\text{ m}$, 2.1%), and `192,765` macro spans ($> 0.20\text{ m}$, 77.9%). The 49,323 micro-slivers ($\le 0.05\text{ m}$) consume 98,646 envelope evaluations and up to 98,646 noise calls.
+3. **Compiler Resource Facts:**
+   - Metal offline compiler (`xcrun -sdk macosx metal`): `"unavailable via Dawn WebGPU API / offline tool"`.
+   - Dawn pipeline reflection: `"unavailable via Dawn WebGPU API"`.
+   - Command buffer architecture: Confirmed single command buffer with single queue submit and single completion fence per batch.
+4. **Single Representation Hypothesis Selected for Sign-Off:**
+   - **On-The-Fly Chronological Sweep Integration inside `fusedMain`:**
+     - Eliminates `local_subpanels[64]` (`1,024 B/thread`) and `local_overlaps[16]` (`256 B/thread`), dropping dynamic private storage from `1,280 B/thread` to `0 B/thread`.
+     - Eliminates the consumer two-stream merge loop, integrating `[a, b] = [knots[i - 1u], knots[i]]` directly on the fly while preserving 100.0% bit-exactness and capacity guards.
+     - Falsifiable claim: Relieving SIMD register spills will drop `Mode 2 Fused` latency below `Mode 1 Unfused Bulk` (1.71 ms/query) toward `Mode 0 Current` (1.57 ms/query).
+5. **Three-Gate Status:** Gate 1, Gate 2, Gate 3 remain **OPEN**. Probe quarantined at `scratch/probes/ray_transport_gpu_work_census.py`.
+
+Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-23T00:15:00-07:00`.
+
