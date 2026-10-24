@@ -2410,11 +2410,11 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                 bool holds = false;
                 if (law->drives()) {
                     const std::string subjectId = subject->getIdentifier();
-                    if (hasDriveSession(lawId, subjectId) &&
-                        law->retrigger() == Law::Retrigger::Absorb) {
+                    const bool activeDrive = hasDriveSession(lawId, subjectId);
+                    if (activeDrive && law->retrigger() == Law::Retrigger::Absorb) {
                         holds = law->conditionsSatisfied(*subject);
                     } else {
-                        if (hasDriveSession(lawId, subjectId)) {
+                        if (activeDrive) {
                             restartDriveSession(*law, subjectId);
                         }
                         const Law::ApplicationResult result =
@@ -2986,7 +2986,7 @@ void LawManager::releaseFromLaws(Singular* being) {
         std::remove_if(_driveSessions.begin(), _driveSessions.end(),
                        [&id, this](const DriveSession& s) {
                            if (s.subjectId == id) {
-                               _driveSessionKeys.erase({s.lawId, s.subjectId});
+                               eraseDriveSessionKey(s.lawId, s.subjectId);
                                return true;
                            }
                            return false;
@@ -3054,7 +3054,7 @@ void LawManager::maybeStartDriveSession(Law& law, Singular& subject) {
             session.eventObjectId = o->getIdentifier();
         }
     }
-    _driveSessionKeys.insert({law.getIdentifier(), subjectId});
+    _driveSessionKeys[law.getIdentifier()].insert(subjectId);
     _driveSessions.push_back(std::move(session));
 }
 
@@ -3088,7 +3088,7 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
         // A law or being that left the world ends its sessions silently.
         if (!law || !subject || !law->isEnabled()) {
             if (law && subject) law->forgetOnset(subject);
-            _driveSessionKeys.erase({it->lawId, it->subjectId});
+            eraseDriveSessionKey(it->lawId, it->subjectId);
             it = _driveSessions.erase(it);
             continue;
         }
@@ -3114,7 +3114,7 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
             law->forgetOnset(subject);
             Core::EventBus::instance().publish(
                 ECA::Event{"law-drive-finished", subject, nullptr, std::time(nullptr)});
-            _driveSessionKeys.erase({it->lawId, it->subjectId});
+            eraseDriveSessionKey(it->lawId, it->subjectId);
             it = _driveSessions.erase(it);
             continue;
         }
@@ -3160,7 +3160,7 @@ bool LawManager::remove(const std::string& lawId) {
         std::remove_if(_driveSessions.begin(), _driveSessions.end(),
                        [&lawId, this](const DriveSession& s) {
                            if (s.lawId == lawId) {
-                               _driveSessionKeys.erase({s.lawId, s.subjectId});
+                               eraseDriveSessionKey(s.lawId, s.subjectId);
                                return true;
                            }
                            return false;
