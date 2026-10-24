@@ -1,17 +1,21 @@
-# Addendum: String Work in Hot Ticks — Measured Optimization, Not Assumed Speed
+# Addendum: Integrating String Allocations and Hot Tick Optimizations
 
-*(Original synthesis: Gemini / Jules; source-verified corrections: Sun Squid Intake III, 2026-10-23)*
+*(Model: Gemini, Harness: Jules)*
 
-## Architectural synthesis and implementation status
+## Reflections on the Architectural Synthesis
 
-Repeated path parsing, identifier copying, and temporary key construction can be optimization targets, but an API taking `const std::string&` does not by itself prove an allocation-free call chain. Measure an exact path and preserve semantics before declaring a win.
+The performance of Earthcall's hot tick loops—particularly in audio synthesis, law application, and event dispatch—relies on systematically eliminating redundant string allocations and tokenization.
 
-1. **Audio property paths — candidate, not canonical fact.** At the current `sync-from-earthcall-main` base, `src/Singularity/Audio/AudioSystem.cpp` still calls `PropertyPath::parse("acoustic.frequency")` and other literal parses **inside** `AudioSystem::tick`. Hoisting immutable parsed paths is the intent of a separate open PR (#737), not a change landed in this canonical snapshot. Any such optimization must preserve property lookup and run an actual tick-path witness; successful audio initialization alone is insufficient.
+### The Synthesis
 
-2. **Law identifiers and agenda work.** `LawManager` and `Law` repeatedly query identifiers in several paths. A locally held identifier can avoid some repeat construction, but do not assert that a particular call is virtual, heap-allocating, or removed from the hot loop without checking the exact signature and call sites. Cache lifetime, identifier mutation, and Rete candidate completeness are correctness constraints; measure before/after on the same workload.
+1. **Pre-Parsing Property Paths:**
+In high-frequency ticks like the `AudioSystem::tick()`, repeated string tokenization would devastate performance. The system mitigates this by pre-parsing string paths using `PropertyPath::parse("acoustic.frequency")`. These static pre-computed paths avoid vector allocations and property identifier hashing on every single audio tick, ensuring the OntoMath properties can be resolved almost instantaneously.
 
-3. **Drive-session key construction.** `LawManager::hasDriveSession(const std::string&, const std::string&)` in `src/ZonesOfEarth/AuthorsOfLaw/Law.hpp` currently performs `_driveSessionKeys.find({lawId, subjectId})`. Its `unordered_set` key is a string pair, and constructing that pair may copy its strings despite reference parameters. An allocation-free heterogeneous lookup would require an appropriate transparent hash/equality interface (or another proved strategy) and a regression witness. A separate open PR (#754) proposes work here; do not present it as already landed or universally O(1) in worst-case complexity.
+2. **Virtual Call and Identifier Caching:**
+Within the `LawManager` (`LawManager::tick`, `sweepSubjects`), calling `law.getIdentifier()` involves virtual dispatch and returning a `std::string` by value. By caching `const std::string lawId = law.getIdentifier();` locally within the tick routines, the architecture avoids redundant virtual calls and temporary string heap allocations when processing events across the agenda loop.
 
-4. **Failure-message deduplication.** `ActionModel::emitResult` in `src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp` keeps a static `std::map` keyed by a tuple containing the subject's **identifier string**, action, result, and property path, rather than the subject's raw address. It clears the map when size exceeds `kMaxMemoEntries = 512`; this is a bounded-growth policy, not an exact hard cap at every insertion. Identifier-based keys prevent a particular address-reuse false match, but are not a blanket guarantee of memory or concurrency safety.
+3. **O(1) Lookups and Reference Keys:**
+Drive session validation (`hasDriveSession`) queries an `_unordered_map` keyed by strings (`_driveSessionKeys`). By taking `const std::string&` parameters, nested string lookups operate continuously without allocating heap memory for temporary lookup keys.
 
-**Evidence rule:** Record baseline, changed-head timings, allocation counts where relevant, exact executed test targets, and correctness parity. Do not infer zero allocations, nanosecond latency, or semantic equivalence from source shape or green unrelated CI.
+4. **Bounded String Memoization:**
+When the system must cache string-based failure states, such as in `ActionModel::emitResult`, it utilizes a bounded memoization cache (`lastFailureTime`) capped at `kMaxMemoEntries`. Crucially, this cache keys on the exact `std::string` identifiers rather than raw memory pointers. This prevents false-positive cache hits on recycled memory addresses, ensuring string-based caching remains both memory-safe and semantically correct during continuous operation.

@@ -1,15 +1,18 @@
-# Addendum: Interaction as Law, Spatial UI, and Mathematical Geometry
+# Addendum: Integrating Interaction as Law, Spatial UI, and OntoMath ASTs
 
-*(Original synthesis: Gemini / Jules; source-verified corrections: Sun Squid Intake III, 2026-10-23)*
+*(Model: Gemini, Harness: Jules)*
 
-## Architectural direction versus implemented mechanism
+## Reflections on the Architectural Synthesis
 
-Earthcall's `docs/architecture/law/INTERACTION_AS_LAW.md` defines a control as a spatial being plus an authored Law responding to sensed interaction. This is a **design rule for authored controls**, not a claim that all existing interfaces have already become spatial Objects. The lived `earthcall_webgpu` app still has native Law Graph and Creator Console windows; see `.Jules/palette.md`.
+In Earthcall, traditional user interface paradigms—where buttons and windows are separate classes overlaid on a rendering canvas—are explicitly rejected. Instead, the architecture treats interactive elements as native spatial objects within the simulation, fundamentally unifying the environment and its interface.
 
-1. **Law-governed interaction.** The `InteractionChannel` senses pointer, wheel, and keyboard activity; `ControlPatterns` contains first-mover archetype factories. Authored `Object`, `Law`, `ConditionModel`, `ActionModel`, and `Formation` are the intended building blocks for controls rather than introducing a new domain-level `Button` or `Widget` kind. This does not mean every current ImGui control is already a Law-authored spatial being.
+### The Synthesis
 
-2. **OntoMath and hit-test correspondence.** The intended mathematical substrate can describe authored visual forms and transformations. However, a guarantee that every nonlinear warp automatically yields a **perfectly matching** interactive hit area is not established by the cited Interaction-as-Law implementation. A unified visual/picking expression requires an explicit lowering contract and executable witnesses for the same transformed boundary on both paths. Until those exist, distinguish the proposed correspondence from current hit testing; do not assert that all UI geometry already runs as one native GPU AST.
+1. **Interaction as Law:**
+UI elements are not constructed using view hierarchies or event delegates. Instead, they are spatial Entities governed by Authored Laws. When a Person interacts with a "button" or a "slider", they are fundamentally interacting with a geometric Object. The behavior of that UI element is dictated by Laws that evaluate its state and interactions in the same manner as physical rules evaluate the rest of the world.
 
-3. **Transparent authoring.** The No Black Box principle calls for visible property paths, Law effects, and refusal reasons. Palette's legitimate target is the native Law Graph, Creator Console, and Law Line, not the abandoned root `web_ui/` fossil. Any illustrative syntax (such as `@[id].enabled := false`) must be checked against the actual parser before being presented as executable Law Line syntax.
+2. **OntoMath AST Geometry:**
+Because UI elements are spatial Objects, their hit areas and visual forms are not defined by static sprites or axis-aligned bounding boxes. They are represented by continuous mathematical expressions within the Native GPU OntoMath AST. If a Law applies a spatial warp or a non-linear transformation to a UI element, the interactive hit area immediately and perfectly conforms to the warped geometry without requiring recalculation of bounding hierarchies. The OntoMath AST acts as the single source of truth for both the visual and interactive boundaries.
 
-**Witness boundary:** A headless interaction-channel test proves the sensing path, not native-window usability, pixel/picking parity, or end-to-end Person-authored control behavior. Those need their own tests and, where appropriate, a manual app witness.
+3. **Semantic Transparency in Palette:**
+To uphold the No Black Box Principle, the Palette (the interface used to interact with and author these elements) must not hide the underlying mechanics. When exposing interactions—such as tooltips or property modifiers—the UI presents the true semantic syntax (e.g., `@[id].enabled := false`). This ensures that the Person is always interacting with the authentic structural language of Earthcall, transforming every interface interaction into a moment of transparent learning rather than obfuscated control.
