@@ -1,6 +1,6 @@
 # Northern Veil: Dendritic Cell and GPU Run Origin Lines
 
-**Date:** 2026-10-23
+**Date:** 2026-10-23  
 **Purpose:** Preserve exact memorable lines from Zach's live conversation with Original Prism Sun / GPT-5.6 Sol during the Northern Veil ray-transport architecture discussion, so the Hall of Fame can cite chat-origin material without pretending it came from a repository thread.
 
 This is provenance, not architecture authority. The architecture itself lives in [Authorable GPU Runs Between CPU Cycles](../../docs/architecture/AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md), and the long-running engineering correspondence lives in [OPUS Handoff — Ray-Domain Transport](../communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md).
@@ -57,8 +57,8 @@ This line was subsequently written into the canonical distinctions of [Authorabl
 
 ## Closing architecture inscription
 
-> "The Person authors the policy.
-> The Kernel guarantees liveness and truth.
+> "The Person authors the policy.  
+> The Kernel guarantees liveness and truth.  
 > The GPU is allowed to keep working intelligently before asking the CPU what to do next."
 
 This is the closing inscription of [Authorable GPU Runs Between CPU Cycles](../../docs/architecture/AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md).
