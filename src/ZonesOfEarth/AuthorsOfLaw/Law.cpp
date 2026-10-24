@@ -2038,9 +2038,10 @@ void LawManager::connectToEventBus() {
 
     _ecaEventSubscription = Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
         std::string subjectId = e.subject ? e.subject->getIdentifier() : "null";
-        std::string objectId = e.object ? e.object->getIdentifier() : "null";
 
         if (ECA::LawAuditLogger::instance().wouldLog("EVENT")) {
+            // Only the audit payload needs the object identifier; Rete uses subjectId.
+            std::string objectId = e.object ? e.object->getIdentifier() : "null";
             ECA::LawAuditLogger::instance().log("EVENT", "Event \"" + e.type + "\" triggered (Subject: " + subjectId + ", Object: " + objectId + ")", {
                 {"eventType", e.type},
                 {"eventId", e.getIdentifier()},
