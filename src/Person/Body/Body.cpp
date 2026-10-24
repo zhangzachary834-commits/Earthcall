@@ -93,13 +93,24 @@ void Body::setHeight(float h) {
     hitboxHeight = h;
 }
 
-BodyPart* Body::getBodyPart(const std::string& name) const {
+BodyPart* Body::getBodyPart(const std::string& nameOrId) const {
+    BodyPart* idMatch = nullptr;
     for (auto* part : parts) {
-        if (part && part->getName() == name) {
-            return part;
+        if (part && part->getIdentifier() == nameOrId) {
+            if (idMatch) return nullptr; // Duplicate IDs cannot select a being.
+            idMatch = part;
         }
     }
-    return nullptr;
+    if (idMatch) return idMatch;
+
+    BodyPart* nameMatch = nullptr;
+    for (auto* part : parts) {
+        if (part && part->getName() == nameOrId) {
+            if (nameMatch) return nullptr; // Ambiguous display names must not collapse identities.
+            nameMatch = part;
+        }
+    }
+    return nameMatch;
 }
 
 std::vector<BodyPart*> Body::getBodyPartsByType(BodyPart::Type type) const {
@@ -112,12 +123,11 @@ std::vector<BodyPart*> Body::getBodyPartsByType(BodyPart::Type type) const {
     return result;
 }
 
-void Body::removeBodyPart(const std::string& name) {
-    auto it = std::remove_if(parts.begin(), parts.end(),
-        [&name](const BodyPart* part) {
-            return part && part->getName() == name;
-        });
-    parts.erase(it, parts.end());
+void Body::removeBodyPart(const std::string& nameOrId) {
+    BodyPart* target = getBodyPart(nameOrId);
+    if (!target) return; // Refuse ambiguous names/IDs rather than remove multiple beings.
+    formation.releaseMember(target);
+    parts.erase(std::remove(parts.begin(), parts.end(), target), parts.end());
 }
 
 

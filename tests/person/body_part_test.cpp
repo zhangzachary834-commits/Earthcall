@@ -78,8 +78,10 @@ static void testCustomInitialization() {
 static void testAccessorsAndMutators() {
     BodyPart bodyPart("Head", BodyPart::Type::Head, ObjectTypes::ShapeKind::Sphere, glm::vec3(1.0f));
 
-    // Identifier check
-    assert(bodyPart.getIdentifier() == "Head");
+    // Identity belongs to Formation, not the display-name spelling.
+    assert(bodyPart.getName() == "Head");
+    assert(!bodyPart.getIdentifier().empty());
+    assert(bodyPart.getIdentifier() == bodyPart.Formation::getIdentifier());
 
     // Color mutator/accessor
     bodyPart.setColor(0.5f, 0.6f, 0.7f);

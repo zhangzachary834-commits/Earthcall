@@ -29,33 +29,41 @@ Voice Voice::createBasicVoice(const std::string& style) {
     return v;
 }
 
-VoicePart* Voice::getVoicePart(const std::string& name) const {
+VoicePart* Voice::getVoicePart(const std::string& nameOrId) const {
+    VoicePart* idMatch = nullptr;
     for (auto* part : parts) {
-        if (part->getName() == name) {
-            return part;
+        if (part && part->getIdentifier() == nameOrId) {
+            if (idMatch) return nullptr; // Duplicate IDs cannot select a being.
+            idMatch = part;
         }
     }
-    return nullptr;
+    if (idMatch) return idMatch;
+
+    VoicePart* nameMatch = nullptr;
+    for (auto* part : parts) {
+        if (part && part->getName() == nameOrId) {
+            if (nameMatch) return nullptr; // Ambiguous display names must not collapse identities.
+            nameMatch = part;
+        }
+    }
+    return nameMatch;
 }
 
 std::vector<VoicePart*> Voice::getVoicePartsByType(VoicePart::Type type) const {
     std::vector<VoicePart*> result;
     for (auto* part : parts) {
-        if (part->getType() == type) {
+        if (part && part->getType() == type) {
             result.push_back(part);
         }
     }
     return result;
 }
 
-void Voice::removeVoicePart(const std::string& name) {
-    auto it = std::remove_if(parts.begin(), parts.end(), [&](const VoicePart* p) {
-        return p->getName() == name;
-    });
-    if (it != parts.end()) {
-        parts.erase(it, parts.end());
-        // Formation element removal logic would be handled here as well.
-    }
+void Voice::removeVoicePart(const std::string& nameOrId) {
+    VoicePart* target = getVoicePart(nameOrId);
+    if (!target) return; // Refuse ambiguous names/IDs rather than remove multiple beings.
+    formation.releaseMember(target);
+    parts.erase(std::remove(parts.begin(), parts.end(), target), parts.end());
 }
 
 void Voice::buildProperties() {
