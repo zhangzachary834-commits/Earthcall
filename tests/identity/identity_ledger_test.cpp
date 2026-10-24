@@ -1,5 +1,9 @@
 #include "Identity/IdentityLedger.hpp"
+#include "Singularity/Storage/SaveSystem.hpp"
 #include <cassert>
+#include <chrono>
+#include <cstdlib>
+#include <stdexcept>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -7,8 +11,10 @@
 
 using namespace Identity;
 
+static std::filesystem::path sandboxRoot;
+
 static void testEmptyLoadSave() {
-    std::filesystem::path testPath = std::filesystem::temp_directory_path() / "test_ledger.json";
+    std::filesystem::path testPath = sandboxRoot / "test_ledger.json";
     std::filesystem::remove(testPath);
 
     IdentityLedger ledger(testPath);
@@ -22,7 +28,7 @@ static void testEmptyLoadSave() {
 }
 
 static void testRecordAndFind() {
-    std::filesystem::path testPath = std::filesystem::temp_directory_path() / "test_ledger2.json";
+    std::filesystem::path testPath = sandboxRoot / "test_ledger2.json";
     std::filesystem::remove(testPath);
 
     IdentityLedger ledger(testPath);
@@ -43,7 +49,7 @@ static void testRecordAndFind() {
 }
 
 static void testPersistence() {
-    std::filesystem::path testPath = std::filesystem::temp_directory_path() / "test_ledger3.json";
+    std::filesystem::path testPath = sandboxRoot / "test_ledger3.json";
     std::filesystem::remove(testPath);
 
     SingularId id = PrivateKey::generate().id();
@@ -66,7 +72,7 @@ static void testPersistence() {
 }
 
 static void testMalformedLedger() {
-    std::filesystem::path testPath = std::filesystem::temp_directory_path() / "test_ledger4.json";
+    std::filesystem::path testPath = sandboxRoot / "test_ledger4.json";
     // Write garbage to file
     std::ofstream out(testPath);
     out << "not a json file";
@@ -79,10 +85,10 @@ static void testMalformedLedger() {
 }
 
 static void testResolveOrMint() {
-    std::filesystem::path testPath = std::filesystem::temp_directory_path() / "test_ledger5.json";
+    std::filesystem::path testPath = sandboxRoot / "test_ledger5.json";
     std::filesystem::remove(testPath);
     // We need a keystore for this
-    std::filesystem::path ksPath = std::filesystem::temp_directory_path() / "test_keystore";
+    std::filesystem::path ksPath = sandboxRoot / "test_keystore";
     std::filesystem::remove_all(ksPath);
 
     KeyStore ks(ksPath);
@@ -105,6 +111,25 @@ static void testResolveOrMint() {
 }
 
 int main() {
+    sandboxRoot = std::filesystem::temp_directory_path() /
+        ("earthcall_identity_ledger_test_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    if (!std::filesystem::create_directory(sandboxRoot)) {
+        throw std::runtime_error("identity_ledger_test scratch directory already exists");
+    }
+    const auto& sandbox = sandboxRoot;
+    std::filesystem::create_directories(sandbox / "saves");
+    const std::string previousSaveRoot = SaveSystem::saveRoot();
+    const char* oldHomeEnv = std::getenv("EARTHCALL_HOME");
+    const bool hadHome = oldHomeEnv != nullptr;
+    const std::string previousHome = hadHome ? oldHomeEnv : "";
+    SaveSystem::setSaveRoot((sandbox / "saves").string());
+#ifdef _WIN32
+    _putenv_s("EARTHCALL_HOME", (sandbox / "home").string().c_str());
+#else
+    setenv("EARTHCALL_HOME", (sandbox / "home").string().c_str(), 1);
+#endif
+
     std::cout << "identity_ledger_test:\n";
     testEmptyLoadSave();
     testRecordAndFind();
@@ -112,5 +137,14 @@ int main() {
     testMalformedLedger();
     testResolveOrMint();
     std::cout << "identity_ledger_test: ALL OK\n";
+
+    SaveSystem::setSaveRoot(previousSaveRoot);
+#ifdef _WIN32
+    _putenv_s("EARTHCALL_HOME", hadHome ? previousHome.c_str() : "");
+#else
+    if (hadHome) setenv("EARTHCALL_HOME", previousHome.c_str(), 1);
+    else unsetenv("EARTHCALL_HOME");
+#endif
+    std::filesystem::remove_all(sandbox);
     return 0;
 }
