@@ -23,7 +23,6 @@ bool nearf(float a, float b, float eps = 1e-4f) { return std::fabs(a - b) < eps;
 } // namespace
 
 int main() {
-    // This witness exercises Law Graph models, not rendering: no GL context required.
     {
         using Rendering::layoutCardTree;
 
