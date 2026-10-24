@@ -11,6 +11,7 @@
 #include "Singularity/Screen/LawGraphWindow.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 
+#include <GLFW/glfw3.h>
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -23,7 +24,25 @@ bool nearf(float a, float b, float eps = 1e-4f) { return std::fabs(a - b) < eps;
 } // namespace
 
 int main() {
-    // This witness exercises Law Graph models, not rendering: no GL context required.
+    if (!glfwInit()) {
+        std::fprintf(stderr, "law_graph_test: glfwInit failed\n");
+        return 1;
+    }
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+    GLFWwindow* window = glfwCreateWindow(64, 64, "law_graph_test", nullptr, nullptr);
+    if (!window) {
+        std::fprintf(stderr, "law_graph_test: no GL context\n");
+        glfwTerminate();
+        return 1;
+    }
+    glfwMakeContextCurrent(window);
+
     {
         using Rendering::layoutCardTree;
 
@@ -189,6 +208,8 @@ int main() {
         assert(bare.applyTo(idle) == Law::ApplicationResult::NoAction);
     }
 
+    glfwDestroyWindow(window);
+    glfwTerminate();
     std::puts("law_graph_test: ALL OK");
     return 0;
 }
