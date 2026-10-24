@@ -105,8 +105,9 @@ but Game owns instances of them and they have back-pointers to Game.
 
 ### Rung 2: Extract Camera State
 
-**Current State:** Game owns `CameraState _camera` with pos, front, up, viewport,
-modelview, projection matrices.
+**Historical state (before Rung 2):** Game owned `CameraState _camera` with pos, front, up,
+viewport, modelview, and projection matrices. The legacy header was subsequently retired;
+current camera state lives in `src/Singularity/Screen/Camera.hpp`.
 
 **Target State:**
 - `Singularity/Screen/Camera.hpp/cpp` — the Screen modality's camera channel
@@ -427,7 +428,7 @@ Use the todo system to track progress:
   - Updated `Game.hpp` to include `Singularity/Screen/Camera.hpp` instead of `CameraState.hpp`
   - Changed `_camera` member type from `CameraState` to `Camera`
   - All Game*.cpp files use direct member access which works with both types
-  - CameraState.hpp still exists but is no longer included anywhere
+  - Legacy CameraState.hpp was unused after extraction and has since been removed; the fossil absence test guards against its return
 
 - **[Rung 3] Migrate Player Movement State** ✅
   - **Phase 1 (Shadow) - COMPLETED:**
