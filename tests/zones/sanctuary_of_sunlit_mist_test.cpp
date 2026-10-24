@@ -17,6 +17,8 @@
 #include <memory>
 #include <filesystem>
 #include <cassert>
+#include <chrono>
+#include <stdexcept>
 
 namespace {
 
@@ -33,21 +35,84 @@ void check(bool condition, const std::string& description) {
     std::cout << "  ok: " << description << std::endl;
 }
 
+struct ScratchSaveRoot {
+    std::filesystem::path path;
+    std::string previousSaveRoot;
+
+    ScratchSaveRoot() : previousSaveRoot(SaveSystem::saveRoot()) {
+        // Claim a genuinely new directory before it can be removed by RAII.
+        // A timestamp alone is not proof of ownership of an existing path.
+        const auto temp = std::filesystem::temp_directory_path();
+        const auto stamp = std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count());
+        for (int attempt = 0; attempt < 32; ++attempt) {
+            const auto candidate = temp / ("earthcall-sanctuary-mist-test-" +
+                                           stamp + "-" + std::to_string(attempt));
+            std::error_code ec;
+            if (std::filesystem::create_directory(candidate, ec)) {
+                path = candidate;
+                return;
+            }
+            if (ec) {
+                throw std::filesystem::filesystem_error("create scratch save root", candidate, ec);
+            }
+        }
+        throw std::runtime_error("could not reserve a unique sanctuary test save root");
+    }
+
+    ~ScratchSaveRoot() {
+        SaveSystem::setSaveRoot(previousSaveRoot);
+        std::error_code ec;
+        std::filesystem::remove_all(path, ec);
+        if (ec) std::cerr << "sanctuary test scratch cleanup failed: "
+                          << ec.message() << " (" << path << ")\n";
+    }
+
+    ScratchSaveRoot(const ScratchSaveRoot&) = delete;
+    ScratchSaveRoot& operator=(const ScratchSaveRoot&) = delete;
+};
+
 } // namespace
 
 int main() {
     std::cout << "Starting sanctuary_of_sunlit_mist_test...\n";
 
-    std::string worldSavePath = TestSupport::resolveRealWorldPath("saves/worlds/sanctuary_of_sunlit_mist.json");
-    if (!std::filesystem::exists(worldSavePath)) {
-        std::cout << "sanctuary_of_sunlit_mist_test: FAILED (file not found: " << worldSavePath << ")\n";
+    std::string realWorldPath = TestSupport::resolveRealWorldPath("saves/worlds/sanctuary_of_sunlit_mist.json");
+    if (!std::filesystem::exists(realWorldPath)) {
+        std::cout << "sanctuary_of_sunlit_mist_test: FAILED (file not found: " << realWorldPath << ")\n";
         return 1;
     }
 
-    // Ensure SaveSystem saveRoot points to the containing saves directory
-    const auto absWorld = std::filesystem::absolute(worldSavePath);
-    const auto savesDir = absWorld.parent_path().parent_path();
-    SaveSystem::setSaveRoot(savesDir.string());
+    const auto absWorld = std::filesystem::absolute(realWorldPath);
+    const auto realSavesDir = absWorld.parent_path().parent_path();
+
+    // The World references this Zone, which references the Material.
+    // Missing fixture identities must fail loudly rather than silently
+    // exercising a different world with defaulted state.
+    const auto zoneFixture = realSavesDir / "zones" / "Sanctuary of Sunlit Mist" / "zone.json";
+    const auto materialFixture = realSavesDir / "materials" / "cathedral_basalt" / "material.json";
+    for (const auto& fixture : {zoneFixture, materialFixture}) {
+        if (!std::filesystem::is_regular_file(fixture)) {
+            std::cerr << "sanctuary_of_sunlit_mist_test: FAILED (missing fixture: "
+                      << fixture << ")\n";
+            return 1;
+        }
+    }
+
+    ScratchSaveRoot scratch;
+    std::filesystem::create_directories(scratch.path / "worlds");
+    std::filesystem::create_directories(scratch.path / "zones" / "Sanctuary of Sunlit Mist");
+    std::filesystem::create_directories(scratch.path / "materials" / "cathedral_basalt");
+
+    std::filesystem::copy_file(realWorldPath, scratch.path / "worlds" / "sanctuary_of_sunlit_mist.json",
+                               std::filesystem::copy_options::overwrite_existing);
+    std::filesystem::copy_file(zoneFixture,
+                               scratch.path / "zones" / "Sanctuary of Sunlit Mist" / "zone.json");
+    std::filesystem::copy_file(materialFixture,
+                               scratch.path / "materials" / "cathedral_basalt" / "material.json");
+
+    SaveSystem::setSaveRoot(scratch.path.string());
+    const std::string worldSavePath = (scratch.path / "worlds" / "sanctuary_of_sunlit_mist.json").string();
 
     ZoneManager mgr;
     Core::Camera camera;
