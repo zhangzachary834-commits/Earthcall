@@ -286,7 +286,6 @@ void Law::setActionModel(ActionModel model) {
 void Law::recompile() {
     _compiledGates.clear();
     _writesQualifiedRoots = false;
-    _writesMotionProperties = false;
     _writesZoneCanExit = false;
     _writesZoneOwner = false;
     if (_conditionModel) {
@@ -305,59 +304,16 @@ void Law::recompile() {
 
         std::vector<PropertyPath> writes;
         _actionModel->collectPaths(writes);
+        // The same collectPaths() set used by the previous per-application
+        // kernel check: only the FIRST segment matters. In particular,
+        // nested names such as metadata.owner are not Zone owner writes.
         for (const PropertyPath& w : writes) {
-            if (!w.segments.empty() && !w.segments.front().empty() &&
-                w.segments.front()[0] == '@') {
-                _writesQualifiedRoots = true;
-                break;
-            }
+            if (w.segments.empty()) continue;
+            const std::string& root = w.segments.front();
+            if (!root.empty() && root[0] == '@') _writesQualifiedRoots = true;
+            if (root == "canExit") _writesZoneCanExit = true;
+            if (root == "owner") _writesZoneOwner = true;
         }
-        const std::function<void(const ActionNode&)> checkActionNode = [&](const ActionNode& node) {
-            const auto checkPath = [&](const PropertyPath& p) {
-                for (const std::string& seg : p.segments) {
-                    if (seg.empty()) continue;
-                    std::string_view unquoted = seg;
-                    if (unquoted[0] == '@') unquoted.remove_prefix(1);
-                    if (unquoted == "position" || unquoted == "velocity" || unquoted == "acceleration") {
-                        _writesMotionProperties = true;
-                    }
-                    if (unquoted == "canExit") {
-                        _writesZoneCanExit = true;
-                    }
-                    if (unquoted == "owner") {
-                        _writesZoneOwner = true;
-                    }
-                }
-            };
-
-            checkPath(node.path);
-            checkPath(node.input);
-            checkPath(node.spawnParentPath);
-            checkPath(node.spawnPlacementPath);
-            checkPath(node.spawnShapeKindPath);
-            checkPath(node.spawnColorPath);
-            checkPath(node.pixelFacePath);
-            checkPath(node.pixelUPath);
-            checkPath(node.pixelVPath);
-            checkPath(node.pixelColorPath);
-
-            if (node.kind == ActionNode::Kind::RemoveProperty || node.kind == ActionNode::Kind::AddProperty) {
-                if (node.propertyName == "position" || node.propertyName == "velocity" || node.propertyName == "acceleration") {
-                    _writesMotionProperties = true;
-                }
-                if (node.propertyName == "canExit") {
-                    _writesZoneCanExit = true;
-                }
-                if (node.propertyName == "owner") {
-                    _writesZoneOwner = true;
-                }
-            }
-
-            for (const auto& child : node.children) {
-                checkActionNode(child);
-            }
-        };
-        checkActionNode(*_actionModel);
     }
     rebuildRequiredProperties();
 }
@@ -519,17 +475,18 @@ Law::ApplicationResult Law::applyToImpl(
     const Law* targetLaw = dynamic_cast<const Law*>(&target);
     const Zone* targetZone = dynamic_cast<const Zone*>(&target);
 
-    const bool lacksPersonMotionConsent = _writesMotionProperties && _actionModel &&
+    const bool lacksPersonMotionConsent = _actionModel &&
         writesPersonsMotionWithoutActuationConsent(*_actionModel, target);
     bool violatesKernelBoundary = lacksPersonMotionConsent;
     bool personMotionRefused = false;
-
-    if (targetZone) {
-        if (_writesZoneCanExit) {
-            violatesKernelBoundary = true;
-        } else if (_writesZoneOwner && targetZone->isOurverseGathering()) {
-            violatesKernelBoundary = true;
-        }
+    // Cached from the identical collectPaths() roots at recompile(), not a
+    // wider scan of inputs, nested segments, or newborn-only child actions.
+    // Person motion consent still uses its destination-aware live scan:
+    // conservatively skipping that guard would weaken a Kernel boundary.
+    if (_actionModel && targetZone &&
+        (_writesZoneCanExit ||
+         (_writesZoneOwner && targetZone->isOurverseGathering()))) {
+        violatesKernelBoundary = true;
     }
 
     if (!_enabled) {
