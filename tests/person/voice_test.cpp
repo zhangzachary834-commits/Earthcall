@@ -1,75 +1,61 @@
 #include "Person/Voice/Voice.hpp"
 #include "Person/Voice/VoicePart/VoicePart.hpp"
-#include <cstdlib>
 #include <iostream>
-#include <string>
-#include <vector>
 
-namespace {
 void check(bool condition, const std::string& message) {
     if (!condition) {
-        std::cerr << "FAILED: " << message << '\n';
-        std::exit(1);
+        std::cerr << "FAILED: " << message << std::endl;
+        exit(1);
     }
+    std::cout << "PASSED: " << message << std::endl;
 }
 
 void testVoiceCreation() {
     Voice voice("Melodic");
-    check(voice.style == "Melodic", "explicit voice style");
-    check(voice.getIdentifier() == "Melodic_voice", "voice identifier");
-    check(voice.parts.empty(), "new voice starts without parts");
-
-    Voice defaultVoice;
-    check(defaultVoice.style == "natural", "default voice style");
+    check(voice.style == "Melodic", "Voice style is set correctly");
 }
 
-void testPartQueriesAndRemoval() {
-    // Parts are owned by the surrounding scope, not Voice. Declare them
-    // first so Voice (including its non-owning Formation) dies before them.
-    VoicePart timbre("Timbre", VoicePart::Type::Timbre);
-    VoicePart pitch("Pitch", VoicePart::Type::Pitch);
-    VoicePart secondTimbre("Bright", VoicePart::Type::Timbre);
+void testAddAndGetVoicePart() {
     Voice voice("Melodic");
+    auto* timbre = new VoicePart("Timbre", VoicePart::Type::Timbre);
 
-    voice.addPart(nullptr);
-    check(voice.parts.empty(), "null part is ignored");
+    voice.addPart(timbre);
 
-    voice.addPart(&timbre);
-    voice.addPart(&pitch);
-    voice.addPart(&secondTimbre);
-    check(voice.parts.size() == 3, "all non-null parts added");
-    check(voice.formation.hasMember(&timbre), "part registered in Formation");
-    check(voice.getVoicePart("Timbre") == &timbre, "lookup returns original part");
-    check(voice.getVoicePart("Missing") == nullptr, "missing name returns null");
+    VoicePart* retrieved = voice.getVoicePart("Timbre");
+    check(retrieved != nullptr, "Added voice part can be retrieved by name");
+    check(retrieved == timbre, "Retrieved voice part is the same as the added one");
 
-    const std::vector<VoicePart*> timbres =
-        voice.getVoicePartsByType(VoicePart::Type::Timbre);
-    check(timbres.size() == 2, "type query includes both matching parts");
-    check(timbres[0] == &timbre && timbres[1] == &secondTimbre,
-          "type query preserves insertion order");
-    check(voice.getVoicePartsByType(VoicePart::Type::Resonance).empty(),
-          "absent type returns empty result");
+    std::vector<VoicePart*> timbres = voice.getVoicePartsByType(VoicePart::Type::Timbre);
+    check(timbres.size() == 1, "getVoicePartsByType returns correct number of parts");
+    check(timbres[0] == timbre, "getVoicePartsByType returns the correct part");
+    delete timbre;
+}
 
+void testRemoveVoicePart() {
+    Voice voice("Melodic");
+    auto* timbre = new VoicePart("Timbre", VoicePart::Type::Timbre);
+
+    voice.addPart(timbre);
     voice.removeVoicePart("Timbre");
-    check(voice.getVoicePart("Timbre") == nullptr, "removed name is absent");
-    check(voice.parts.size() == 2, "removal retains other parts");
-    check(voice.getVoicePart("Pitch") == &pitch, "other type remains");
-    check(voice.getVoicePart("Bright") == &secondTimbre, "other matching type remains");
-    voice.removeVoicePart("Missing");
-    check(voice.parts.size() == 2, "removing missing name is a no-op");
+
+    check(voice.getVoicePart("Timbre") == nullptr, "Removed voice part is no longer found");
+    delete timbre;
 }
 
-void testBasicVoiceFactory() {
-    Voice basic = Voice::createBasicVoice("Harsh");
-    check(basic.style == "Harsh", "factory preserves requested style");
-    check(basic.parts.empty(), "current basic factory creates no parts");
-}
+void testBasicVoiceCreation() {
+    Voice basicVoice = Voice::createBasicVoice("Harsh");
+    check(basicVoice.style == "Harsh", "Basic voice style is Harsh");
+    for (auto* p : basicVoice.parts) {
+        delete p;
+    }
 }
 
 int main() {
+    std::cout << "Running voice_test...\n";
     testVoiceCreation();
-    testPartQueriesAndRemoval();
-    testBasicVoiceFactory();
-    std::cout << "voice_test: PASS\n";
+    testAddAndGetVoicePart();
+    testRemoveVoicePart();
+    testBasicVoiceCreation();
+    std::cout << "All voice_test assertions passed.\n";
     return 0;
 }

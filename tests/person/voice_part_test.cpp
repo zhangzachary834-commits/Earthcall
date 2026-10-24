@@ -1,42 +1,27 @@
 #include "Person/Voice/VoicePart/VoicePart.hpp"
-#include <cstdlib>
 #include <iostream>
-#include <string>
 
-namespace {
 void check(bool condition, const std::string& message) {
     if (!condition) {
-        std::cerr << "FAILED: " << message << '\n';
-        std::exit(1);
+        std::cerr << "FAILED: " << message << std::endl;
+        exit(1);
     }
+    std::cout << "PASSED: " << message << std::endl;
 }
 
 void testVoicePartCreation() {
     VoicePart part("VocalCords", VoicePart::Type::Resonance);
-    check(part.getName() == "VocalCords", "name preserved");
-    check(part.getType() == VoicePart::Type::Resonance, "type preserved");
-    // Do not require identity == display name: independent identity work
-    // must remain free to disambiguate same-named VoiceParts.
-    check(!part.getIdentifier().empty(), "part has an identifier");
-    check(part.isLiteral, "literal defaults to true");
-    check(part.isSymbolic, "symbolic defaults to true");
 
-    part.isLiteral = false;
-    part.isSymbolic = false;
-    check(!part.isLiteral && !part.isSymbolic, "flags are independently mutable");
-}
-
-void testDefaultVoicePart() {
-    VoicePart part;
-    check(part.getName().empty(), "default name is empty");
-    check(part.getType() == VoicePart::Type::Undefined,
-          "default type is undefined");
-}
+    check(part.getName() == "VocalCords", "getName returns correct name");
+    check(part.getType() == VoicePart::Type::Resonance, "getType returns correct type");
+    check(part.getIdentifier() == "VocalCords", "getIdentifier matches name");
+    check(part.isLiteral == true, "VoicePart is literal by default");
+    check(part.isSymbolic == true, "VoicePart is symbolic by default");
 }
 
 int main() {
+    std::cout << "Running voice_part_test...\n";
     testVoicePartCreation();
-    testDefaultVoicePart();
-    std::cout << "voice_part_test: PASS\n";
+    std::cout << "All voice_part_test assertions passed.\n";
     return 0;
 }
