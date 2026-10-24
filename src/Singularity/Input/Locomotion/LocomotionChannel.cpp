@@ -23,6 +23,14 @@ namespace Input {
 
 LocomotionChannel::LocomotionChannel() = default;
 
+LocomotionChannel::~LocomotionChannel() {
+    if (_routingSubscription) {
+        ::Core::EventBus::instance().unsubscribe(_routingSubscription);
+        _routingSubscription = {};
+    }
+    _routingInstalled = false;
+}
+
 void LocomotionChannel::syncRegister(LawManager& laws) {
     if (find(laws)) return;
     laws.add(std::make_shared<LocomotionChannel>());
@@ -53,15 +61,15 @@ void LocomotionChannel::buildProperties() {
 
 void LocomotionChannel::tickAutomations(Person& person, float dt) {
     for (auto* part : person.getBody().parts) {
-        if (!part || !part->hasAutomations()) continue;
-        part->setAutomationRest(part->localTransform());
-        part->advanceAutomations(dt);
+        if (!part || !part->getPrimaryObject()->hasAutomations()) continue;
+        part->getPrimaryObject()->setAutomationRest(part->localTransform());
+        part->getPrimaryObject()->advanceAutomations(dt);
     }
 }
 
 void LocomotionChannel::stopClips(Person& person) {
     for (auto* part : person.getBody().parts) {
-        if (part) part->clearAutomations();
+        if (part) part->getPrimaryObject()->clearAutomations();
     }
     _idleActive = false;
     _walkActive = false;
@@ -99,8 +107,8 @@ void LocomotionChannel::playIdle(Person& person) {
                 continue;
         }
 
-        part->addAutomation(clip);
-        part->setAutomationRest(part->localTransform());
+        part->getPrimaryObject()->addAutomation(clip);
+        part->getPrimaryObject()->setAutomationRest(part->localTransform());
     }
 }
 
@@ -143,14 +151,14 @@ void LocomotionChannel::playWalk(Person& person, float travelSpeed) {
                     continue;
             }
 
-            part->addAutomation(clip);
-            part->setAutomationRest(part->localTransform());
+            part->getPrimaryObject()->addAutomation(clip);
+            part->getPrimaryObject()->setAutomationRest(part->localTransform());
         }
     }
 
     for (auto* part : person.getBody().parts) {
         if (!part) continue;
-        for (auto& clip : part->automationState().clips) {
+        for (auto& clip : part->getPrimaryObject()->automationState().clips) {
             if (clip.name == "walk") clip.speed = tempo;
         }
     }
@@ -168,9 +176,10 @@ void LocomotionChannel::setLocomotion(Person& person, bool isMoving, float trave
 void LocomotionChannel::installRouting() {
     if (_routingInstalled) return;
     _routingInstalled = true;
-    Core::EventBus::instance().subscribe<LocomotionChanged>([this](const LocomotionChanged& e) {
-        if (e.person) setLocomotion(*e.person, e.moving, e.speed);
-    });
+    _routingSubscription =
+        ::Core::EventBus::instance().subscribe<LocomotionChanged>([this](const LocomotionChanged& e) {
+            if (e.person) setLocomotion(*e.person, e.moving, e.speed);
+        });
 }
 
 // Order each frame:
@@ -289,7 +298,7 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
         if (jumpKeyDown && !_jumpKeyDownLast && grounded) {
             person.velocity().y = JUMP_SPEED;
             grounded = false;
-            Core::EventBus::instance().publish(ECA::Event{"jump-started", &person, nullptr, std::time(nullptr)});
+            ::Core::EventBus::instance().publish(ECA::Event{"jump-started", &person, nullptr, std::time(nullptr)});
         }
         if (gravityEnabled) {
             person.velocity().y -= GRAVITY * dt;
@@ -310,7 +319,7 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
         grounded = false;
     }
     if (grounded && !groundedLast) {
-        Core::EventBus::instance().publish(ECA::Event{"landed", &person, nullptr, std::time(nullptr)});
+        ::Core::EventBus::instance().publish(ECA::Event{"landed", &person, nullptr, std::time(nullptr)});
     }
     _wasGrounded = grounded;
 
@@ -319,11 +328,11 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
     const float distance = glm::length(horizDelta);
     moving = distance > 1e-5f;
     speed  = (moving && dt > 1e-5f) ? distance / dt : 0.0f;
-    Core::EventBus::instance().publish(LocomotionChanged{&person, moving, speed});
+    ::Core::EventBus::instance().publish(LocomotionChanged{&person, moving, speed});
     if (moving && !_wasMoving) {
-        Core::EventBus::instance().publish(ECA::Event{"locomotion-started", &person, nullptr, std::time(nullptr)});
+        ::Core::EventBus::instance().publish(ECA::Event{"locomotion-started", &person, nullptr, std::time(nullptr)});
     } else if (!moving && _wasMoving) {
-        Core::EventBus::instance().publish(ECA::Event{"locomotion-stopped", &person, nullptr, std::time(nullptr)});
+        ::Core::EventBus::instance().publish(ECA::Event{"locomotion-stopped", &person, nullptr, std::time(nullptr)});
     }
     _wasMoving = moving;
 

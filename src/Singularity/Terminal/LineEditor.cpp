@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
+#include <iterator>
+#include "utf8proc.h"
 
 namespace Singularity {
 namespace Terminal {
@@ -28,21 +31,54 @@ bool startsWithCi(const std::string& s, const std::string& prefix) {
     return s.size() >= prefix.size() && lower(s.substr(0, prefix.size())) == lower(prefix);
 }
 
+// Editing and drawing share Unicode extended grapheme boundaries. These are
+// device-cell mechanics, not authored semantic state (NO_BLACK_BOX §5).
 std::size_t prevBoundary(const std::string& s, std::size_t i) {
-    if (i == 0) return 0;
-    --i;
-    while (i > 0 && isContinuation(static_cast<unsigned char>(s[i]))) --i;
-    return i;
+    std::size_t at = 0, previous = 0;
+    while (at < i) { previous = at; at = nextDisplayCluster(s, at); }
+    return previous;
 }
-
 std::size_t nextBoundary(const std::string& s, std::size_t i) {
-    if (i >= s.size()) return s.size();
-    ++i;
-    while (i < s.size() && isContinuation(static_cast<unsigned char>(s[i]))) ++i;
-    return i;
+    return nextDisplayCluster(s, i);
+}
+bool isSpace(char c) { return c == ' ' || c == '\t'; }
+
+std::size_t decode(const std::string& s, std::size_t at, utf8proc_int32_t& cp) {
+    const auto n = utf8proc_iterate(reinterpret_cast<const utf8proc_uint8_t*>(s.data() + at),
+                                  s.size() - at, &cp);
+    if (n < 1) { cp = 0xFFFD; return 1; }
+    return static_cast<std::size_t>(n);
 }
 
-bool isSpace(char c) { return c == ' ' || c == '\t'; }
+bool printable(utf8proc_int32_t cp) {
+    const auto category = utf8proc_category(cp);
+    return category != UTF8PROC_CATEGORY_CC && category != UTF8PROC_CATEGORY_CS &&
+           category != UTF8PROC_CATEGORY_ZL && category != UTF8PROC_CATEGORY_ZP;
+}
+
+std::string printableText(const std::string& text) {
+    std::string out;
+    for (std::size_t i = 0; i < text.size();) {
+        utf8proc_int32_t cp;
+        const auto n = decode(text, i, cp);
+        if (!printable(cp) || (cp == 0xFFFD && n == 1)) out += "\uFFFD";
+        else out.append(text, i, n);
+        i += n;
+    }
+    return out;
+}
+
+std::size_t clusterCells(const std::string& s, std::size_t at, std::size_t end) {
+    int cells = 0;
+    bool emoji = false;
+    for (; at < end;) {
+        utf8proc_int32_t cp;
+        at += decode(s, at, cp);
+        cells = std::max(cells, utf8proc_charwidth(cp));
+        emoji |= cp == 0xFE0F || cp == 0x20E3 || (cp >= 0x1F1E6 && cp <= 0x1F1FF);
+    }
+    return emoji && cells > 0 ? 2 : static_cast<std::size_t>(cells);
+}
 
 // Colour of each reading, so the line shows how it is being understood.
 std::string roleColor(const std::string& role) {
@@ -69,37 +105,72 @@ struct PanelLine {
 
     void add(const std::string& text, const std::string& code = "") {
         if (used >= max) return;
-        std::string piece;
-        std::size_t i = 0;
-        while (i < text.size() && used < max) {
-            const std::size_t n = std::min(utf8Length(static_cast<unsigned char>(text[i])), text.size() - i);
-            piece += text.substr(i, n);
-            i += n;
-            ++used;
-        }
-        if (i < text.size() && !piece.empty()) {
-            // Mark the cut so a truncated description never reads as whole.
-            const std::size_t last = prevBoundary(piece, piece.size());
-            piece = piece.substr(0, last) + "…";
-        }
+        const std::string piece = clipToCells(text, max - used, true);
+        used += visibleWidth(piece);
         out += (color && !code.empty()) ? "\x1b[" + code + "m" + piece + "\x1b[0m" : piece;
     }
 };
 
 } // namespace
 
+std::size_t nextDisplayCluster(const std::string& text, std::size_t at) {
+    if (at >= text.size()) return text.size();
+    utf8proc_int32_t previous, state = 0;
+    at += decode(text, at, previous);
+    while (at < text.size()) {
+        utf8proc_int32_t current;
+        const auto n = decode(text, at, current);
+        if (utf8proc_grapheme_break_stateful(previous, current, &state)) break;
+        at += n;
+        previous = current;
+    }
+    return at;
+}
+
+bool isPrintableGlyph(const std::string& text) {
+    for (std::size_t i = 0; i < text.size();) {
+        utf8proc_int32_t cp;
+        const auto n = utf8proc_iterate(reinterpret_cast<const utf8proc_uint8_t*>(text.data() + i),
+                                       text.size() - i, &cp);
+        if (n < 1 || !printable(cp)) return false;
+        i += static_cast<std::size_t>(n);
+    }
+    return true;
+}
+
 std::size_t visibleWidth(const std::string& text) {
-    std::size_t width = 0;
-    for (std::size_t i = 0; i < text.size(); ++i) {
-        const unsigned char c = static_cast<unsigned char>(text[i]);
-        if (c == 0x1b && i + 1 < text.size() && text[i + 1] == '[') {
+    // Strip styling before segmentation: an SGR must not split a base from
+    // its combining mark, variation selector, or joined emoji sequence.
+    std::string plain;
+    for (std::size_t i = 0; i < text.size();) {
+        if (text[i] == '\x1b' && i + 1 < text.size() && text[i + 1] == '[') {
             i += 2;
             while (i < text.size() && !(text[i] >= 0x40 && text[i] <= 0x7E)) ++i;
-            continue;
-        }
-        if (!isContinuation(c)) ++width;
+            if (i < text.size()) ++i;
+        } else plain += text[i++];
+    }
+    std::size_t width = 0;
+    for (std::size_t i = 0; i < plain.size();) {
+        const auto end = nextDisplayCluster(plain, i);
+        width += clusterCells(plain, i, end);
+        i = end;
     }
     return width;
+}
+
+std::string clipToCells(const std::string& text, std::size_t budget, bool markCut) {
+    const std::string safe = printableText(text);
+    std::size_t i = 0, used = 0, previous = 0, previousWidth = 0;
+    while (i < safe.size()) {
+        const auto end = nextDisplayCluster(safe, i);
+        const auto cells = clusterCells(safe, i, end);
+        if (used + cells > budget) break;
+        previous = i; previousWidth = used;
+        i = end; used += cells;
+    }
+    if (i == safe.size() || !markCut || budget == 0) return safe.substr(0, i);
+    if (used == budget && i > 0) { i = previous; used = previousWidth; }
+    return safe.substr(0, i) + (used < budget ? "…" : "");
 }
 
 // ---------------------------------------------------------------------------
@@ -115,6 +186,10 @@ std::vector<Key> KeyDecoder::feed(const std::string& bytes, double now) {
 }
 
 std::vector<Key> KeyDecoder::flush(double now) {
+    // Paste ends only at its bracket marker. A slow/chunked transfer can
+    // pause with a partial marker in _pending; timing it out would turn that
+    // marker into text and leave both decoder/editor in paste indefinitely.
+    if (_pasting) return {};
     if (_pending.empty() || now - _pendingSince < escapeDelay) return {};
     return drain(true);
 }
@@ -195,6 +270,35 @@ std::vector<Key> KeyDecoder::drain(bool final) {
                     --_expectReports;
                     const auto n = numbers(params);
                     if (n.size() >= 2) pushAt(K::CursorReport, n[1], n[0]);
+                    i = j + 1;
+                    continue;
+                }
+                // CSI-u modifier chords (kitty/fixterms). This is device decoding,
+                // not a binding: Laws decide what canonical chord strings mean.
+                if (fin == 'u') {
+                    const auto semi = params.find(';');
+                    const std::string code = params.substr(0, semi);
+                    const std::string mods = semi == std::string::npos ? "1" : params.substr(semi + 1);
+                    const auto colon = mods.find(':');
+                    const std::string bits = mods.substr(0, colon);
+                    const std::string edge = colon == std::string::npos ? "1" : mods.substr(colon + 1);
+                    const auto decimal = [](const std::string& v) {
+                        return !v.empty() && v.size() <= 6 && v.find_first_not_of("0123456789") == std::string::npos;
+                    };
+                    if (decimal(code) && decimal(bits) && edge == "1") {
+                        const int cp = std::stoi(code), mask = std::stoi(bits) - 1;
+                        if (cp >= 32 && cp <= 126 && mask > 0 && mask < 64) {
+                            std::string chord;
+                            if (mask & 8) chord += "cmd+";
+                            if (mask & 4) chord += "ctrl+";
+                            if (mask & 2) chord += "alt+";
+                            if (mask & 1) chord += "shift+";
+                            if (mask & 16) chord += "hyper+";
+                            if (mask & 32) chord += "meta+";
+                            chord += static_cast<char>(std::tolower(static_cast<unsigned char>(cp)));
+                            push(K::Chord, chord);
+                        }
+                    }
                     i = j + 1;
                     continue;
                 }
@@ -290,7 +394,8 @@ std::vector<Key> KeyDecoder::drain(bool final) {
                     i += n;
                     continue;
                 }
-                break;   // other controls mean nothing here
+                if (c >= 1 && c <= 26) push(K::Chord, "ctrl+" + std::string(1, static_cast<char>('a' + c - 1)));
+                break;   // existing editor controls keep their device meanings
         }
         ++i;
     }
@@ -317,6 +422,12 @@ void LineEditor::edited(bool textChanged) {
     }
     _navigated = false;
     _selected = 0;
+    if (secret) {   // no provider ever sees a secret line
+        _suggestions.clear();
+        _status.clear();
+        _menuForced = false;
+        return;
+    }
     _suggestions = _suggest ? _suggest(_buffer.substr(0, _cursor)) : std::vector<LawSentence::Suggestion>{};
     _status = _statusFn ? _statusFn(_buffer) : std::vector<Status>{};
     if (_suggestions.empty()) _menuForced = false;
@@ -394,6 +505,16 @@ void LineEditor::accept(const LawSentence::Suggestion& s) {
     const std::string text = startsWithCi(s.text, typed) ? typed + s.text.substr(typed.size()) : s.text;
     _buffer.replace(from, _cursor - from, text);
     _cursor = from + text.size();
+    if (accepted) accepted();
+    // Whole-text completions may carry their own blanks, not just a suffix.
+    const std::size_t embedded = _buffer.find(kOpen, from);
+    if (embedded < _cursor) {
+        _cursor = embedded;
+        _menuForced = false;
+        edited(true);
+        _menuForced = !_suggestions.empty();
+        return;
+    }
     // The word's own blanks follow it ("set" -> "set ‹path› to ‹value›"),
     // and the first one is selected — unless blanks already follow.
     if (!s.snippet.empty()) {
@@ -436,8 +557,9 @@ void LineEditor::clickAt(int row, int col) {
     std::size_t at = 0;
     int seen = 0;
     while (at < _buffer.size() && seen < cell) {
-        at = nextBoundary(_buffer, at);
-        ++seen;
+        const std::size_t next = nextBoundary(_buffer, at);
+        seen += static_cast<int>(clusterCells(_buffer, at, next));
+        at = next;
     }
     _cursor = at;
     _menuForced = false;
@@ -453,7 +575,7 @@ std::string LineEditor::historyMatch() const {
 }
 
 std::string LineEditor::ghost() const {
-    if (_cursor != _buffer.size() || _searching) return {};
+    if (secret || _cursor != _buffer.size() || _searching) return {};
     if (menuVisible() && _selected < static_cast<int>(_suggestions.size())) {
         const auto& s = _suggestions[_selected];
         const std::string tail = typedTail(s);
@@ -599,11 +721,27 @@ LineEditor::Outcome LineEditor::press(const Key& key) {
         case K::PasteBegin: _pasting = true; return Outcome::None;
         case K::PasteEnd: _pasting = false; edited(true); return Outcome::None;
         case K::Enter:
+            if (secret) {
+                if (_buffer.empty()) return Outcome::None;
+                _submitted = _buffer;                 // never into history
+                std::fill(_buffer.begin(), _buffer.end(), '\0');
+                _buffer.clear();
+                _cursor = 0;
+                edited(true);
+                return Outcome::Submitted;
+            }
             if (menuVisible() && _navigated) {
                 accept(_suggestions[_selected]);
                 return Outcome::None;
             }
-            if (_buffer.find_first_not_of(' ') == std::string::npos) return Outcome::None;
+            if (_buffer.find_first_not_of(' ') == std::string::npos) {
+                if (!submitEmpty) return Outcome::None;
+                _submitted.clear();   // ends the block; never into history
+                _buffer.clear();
+                _cursor = 0;
+                edited(true);
+                return Outcome::Submitted;
+            }
             if (hasPlaceholders()) {
                 _notice = "fill the ‹blanks› first — tab jumps between them";
                 return Outcome::None;
@@ -666,10 +804,12 @@ LineEditor::Outcome LineEditor::press(const Key& key) {
             if (menuVisible()) select(-1);
             return Outcome::None;
         case K::Up:
+            if (secret) return Outcome::None;   // history never enters a secret line
             if (menuVisible()) select(-1);
             else historyStep(-1);
             return Outcome::None;
         case K::Down:
+            if (secret) return Outcome::None;
             if (menuVisible()) select(+1);
             else historyStep(+1);
             return Outcome::None;
@@ -771,6 +911,7 @@ LineEditor::Outcome LineEditor::press(const Key& key) {
         case K::Redraw: return Outcome::Redraw;
         case K::Click: case K::Help: case K::CursorReport: return Outcome::None;   // handled above
         case K::HistorySearch:
+            if (secret) return Outcome::None;
             _searching = true;
             _query.clear();
             _searchSkip = 0;
@@ -784,6 +925,42 @@ std::string LineEditor::sgr(const std::string& code, const std::string& text) co
     return "\x1b[" + code + "m" + text + "\x1b[0m";
 }
 
+namespace {
+std::string joinSgr(const std::string& a, const std::string& b) {
+    if (a.empty()) return b;
+    if (b.empty()) return a;
+    return a + ";" + b;
+}
+} // namespace
+
+// The returned Look's `sgr` is complete: authored style over authored-or-built-in colour.
+LineEditor::Look LineEditor::lookOr(const std::string& key, const std::string& glyph, const std::string& code) const {
+    Look out{glyph, code, {}, {}};
+    if (!look) return out;
+    const Look authored = look(key);
+    if (!authored.glyph.empty() && isPrintableGlyph(authored.glyph)) out.glyph = authored.glyph;
+    if (!authored.sgr.empty()) out.sgr = authored.sgr;
+    out.sgr = joinSgr(authored.style, out.sgr);
+    return out;
+}
+
+// A word's look: its own Lexeme's authored colour and style, over its role's
+// (which a Zone may author), over the built-in role colour.
+std::string LineEditor::wordCode(const std::string& role, const std::string& lexemeId) const {
+    const std::string byRole = lookOr("role." + role, "", roleColor(role)).sgr;
+    if (!look || lexemeId.empty()) return byRole;
+    const Look own = look("lexeme." + lexemeId);
+    if (own.sgr.empty() && own.style.empty()) return byRole;
+    return joinSgr(own.style, own.sgr.empty() ? byRole : own.sgr);
+}
+
+LineEditor::Look LineEditor::wordLook(const std::string& lexemeId) const {
+    if (!look || lexemeId.empty()) return {};
+    Look own = look("lexeme." + lexemeId);
+    if (!isPrintableGlyph(own.glyph)) own.glyph.clear();
+    return own;
+}
+
 std::string LineEditor::styled(const std::string& text, bool markCursor) const {
     // Blanks read as blanks: dim italic, and the selected one inverted.
     std::vector<std::pair<std::size_t, std::size_t>> blanks;
@@ -794,6 +971,13 @@ std::string LineEditor::styled(const std::string& text, bool markCursor) const {
     }
     if (!color) return text;
     const auto spans = _highlight ? _highlight(text) : std::vector<LawSentence::Span>{};
+    // One look per reading, not per byte.
+    std::vector<std::string> spanCodes;
+    spanCodes.reserve(spans.size());
+    for (const auto& sp : spans) spanCodes.push_back(wordCode(sp.role, sp.lexemeId));
+    const std::string unread = wordCode("", "");
+    const std::string blank = lookOr("chrome.blank", "", "3;38;5;245").sgr;
+    const std::string blankHere = lookOr("chrome.blank.selected", "", "7").sgr;
     std::string out;
     std::string current;
     for (std::size_t i = 0; i < text.size();) {
@@ -802,22 +986,21 @@ std::string LineEditor::styled(const std::string& text, bool markCursor) const {
         for (const auto& [a, b] : blanks) {
             if (i >= a && i < b) {
                 inBlank = true;
-                code = (markCursor && a == _cursor) ? "7" : "3;38;5;245";
+                code = (markCursor && a == _cursor) ? blankHere : blank;
             }
         }
         if (!inBlank) {
-            std::string role;
-            for (const auto& s : spans) {
-                if (i >= s.start && i < s.end) role = s.role;   // later spans (errors) win
+            code = unread;
+            for (std::size_t k = 0; k < spans.size(); ++k) {
+                if (i >= spans[k].start && i < spans[k].end) code = spanCodes[k];   // later spans (errors) win
             }
-            code = roleColor(role);
         }
         if (code != current) {
             out += "\x1b[0m";
             if (!code.empty()) out += "\x1b[" + code + "m";
             current = code;
         }
-        const std::size_t n = std::min(utf8Length(static_cast<unsigned char>(text[i])), text.size() - i);
+        const std::size_t n = nextDisplayCluster(text, i) - i;
         out += text.substr(i, n);
         i += n;
     }
@@ -826,7 +1009,7 @@ std::string LineEditor::styled(const std::string& text, bool markCursor) const {
 }
 
 std::string LineEditor::echo(const std::string& line) const {
-    return sgr("2", prompt) + styled(line);
+    return sgr(lookOr("chrome.echo", "", "2").sgr, prompt) + styled(line);
 }
 
 namespace {
@@ -886,10 +1069,22 @@ LineEditor::Frame LineEditor::render(int width) const {
         before = visibleWidth(label) + visibleWidth(_query);
         total = visibleWidth(input);
     } else {
+        if (secret) {
+            // One bullet per character; the characters themselves never
+            // reach the screen.
+            std::string dots;
+            const std::size_t shown = visibleWidth(_buffer);
+            for (std::size_t k = 0; k < shown; ++k) dots += "\xE2\x80\xA2";
+            input = sgr(lookOr("chrome.prompt", "", "1;38;5;141").sgr, prompt) + dots;
+            before = visibleWidth(prompt) + visibleWidth(_buffer.substr(0, _cursor));
+            total = visibleWidth(prompt) + shown;
+        } else {
         const std::string g = ghost();
-        input = sgr("1;38;5;141", prompt) + styled(_buffer, true) + sgr("2", g);
+        input = sgr(lookOr("chrome.prompt", "", "1;38;5;141").sgr, prompt) + styled(_buffer, true) +
+                sgr(lookOr("chrome.ghost", "", "2").sgr, g);
         before = visibleWidth(prompt) + visibleWidth(_buffer.substr(0, _cursor));
         total = visibleWidth(prompt) + visibleWidth(_buffer) + visibleWidth(g);
+        }
     }
     const int inputRows = total == 0 ? 1 : static_cast<int>((total + w - 1) / w);
     _inputRows = inputRows;
@@ -925,8 +1120,9 @@ LineEditor::Frame LineEditor::render(int width) const {
                     visibleWidth(prompt) + visibleWidth(_buffer.substr(0, std::min(s.errorOffset, _buffer.size())));
                 if (col < max) {
                     PanelLine l = line();
+                    const Look caret = lookOr("chrome.caret", "^", "1;31");
                     l.add(std::string(col, ' '));
-                    l.add("^", "1;31");
+                    l.add(caret.glyph, caret.sgr);
                     push(l.out);
                 }
                 break;
@@ -963,34 +1159,57 @@ LineEditor::Frame LineEditor::render(int width) const {
                 }
             }
             std::size_t textCol = 0;
+            std::size_t glyphCol = 0;   // a column for authored glyphs, only when one is shown
             for (int r = start; r < start + shown; ++r) {
-                if (!rows[r].header) textCol = std::max(textCol, visibleWidth(_suggestions[rows[r].item].text));
+                if (rows[r].header) continue;
+                const auto& sg = _suggestions[rows[r].item];
+                textCol = std::max(textCol, visibleWidth(sg.text));
+                glyphCol = std::max(glyphCol, visibleWidth(wordLook(sg.lexemeId).glyph));
             }
             textCol = std::min<std::size_t>(textCol, 30);
+            glyphCol = std::min<std::size_t>(glyphCol, 4);
+            const Look mark = lookOr("chrome.selected", "\u25B8", "1;36");   // ▸
+            const std::size_t markCells = visibleWidth(mark.glyph);
+            const Look header = lookOr("chrome.header", "", "1;38;5;244");
+            const std::string chosenCode = lookOr("chrome.chosen", "", "7").sgr;
+            const std::string describe = lookOr("chrome.description", "", "2").sgr;
             for (int r = start; r < start + shown; ++r) {
                 PanelLine l = line();
                 if (rows[r].header) {
-                    l.add("   " + rows[r].label, "1;38;5;244");
+                    l.add("   " + (header.glyph.empty() ? "" : header.glyph + " ") + rows[r].label, header.sgr);
                     push(l.out);
                     continue;
                 }
                 const int i = rows[r].item;
                 const auto& s = _suggestions[i];
                 const bool chosen = i == _selected;
-                l.add(chosen ? "  ▸ " : "    ", chosen ? "1;36" : "");
+                const std::string own = wordCode(s.role, s.lexemeId);
+                if (chosen) {
+                    l.add("  ");
+                    l.add(mark.glyph, mark.sgr);
+                    l.add(" ");
+                } else {
+                    l.add(std::string(3 + markCells, ' '));
+                }
+                if (glyphCol > 0) {
+                    const Look w = wordLook(s.lexemeId);
+                    const std::string& g = w.glyph;
+                    l.add(g, w.glyphSgr.empty() ? own : w.glyphSgr);
+                    l.add(std::string(glyphCol - std::min(glyphCol, visibleWidth(g)) + 1, ' '));
+                }
                 const auto hit = matchedLetters(s.text, typedTail(s));
-                const std::string base = chosen ? "7" : roleColor(s.role);
+                const std::string base = chosen ? chosenCode : own;
                 for (std::size_t k = 0; k < s.text.size();) {
-                    const std::size_t len = std::min(utf8Length(static_cast<unsigned char>(s.text[k])), s.text.size() - k);
+                    const std::size_t len = nextDisplayCluster(s.text, k) - k;
                     const std::string code = hit[k] ? (base.empty() ? "1" : base + ";1") : base;
                     l.add(s.text.substr(k, len), code);
                     k += len;
                 }
                 const std::size_t shownWidth = visibleWidth(s.text);
-                if (shownWidth < textCol) l.add(std::string(textCol - shownWidth, ' '), chosen ? "7" : "");
+                if (shownWidth < textCol) l.add(std::string(textCol - shownWidth, ' '), chosen ? chosenCode : "");
                 if (!s.description.empty()) {
                     l.add("  ");
-                    l.add(s.description, "2");
+                    l.add(s.description, describe);
                 }
                 push(l.out, i);
             }
@@ -1001,7 +1220,7 @@ LineEditor::Frame LineEditor::render(int width) const {
             }();
             if (moreItems > 0) {
                 PanelLine l = line();
-                l.add("    " + std::to_string(moreItems) + " more · wheel, ↑↓ or PgUp PgDn · keep typing to narrow", "2");
+                l.add("    " + std::to_string(moreItems) + " more · wheel, ↑↓ or PgUp PgDn · keep typing to narrow", describe);
                 push(l.out);
             }
             // The selected entry, explained.
@@ -1009,25 +1228,23 @@ LineEditor::Frame LineEditor::render(int width) const {
             const std::string detail = sel.detail.empty() ? std::string{} : sel.detail;
             if (!detail.empty() && detail != sel.description) {
                 PanelLine l = line();
-                l.add("    ⤷ ", "38;5;141");
-                l.add(detail, "3");
+                const Look d = lookOr("chrome.detail", "\u2937", "38;5;141");   // ⤷
+                l.add("    " + d.glyph + " ", d.sgr);
+                l.add(detail, lookOr("chrome.detail.text", "", "3").sgr);
                 push(l.out);
             }
         }
 
         for (const auto& s : _status) {
             PanelLine l = line();
-            if (s.role == "error") {
-                l.add("  ✗ ", "31");
-                l.add(s.text, "31");
-            } else if (s.role == "preview") {
-                l.add("  ↳ ", "2");
-                l.add(s.text, "2");
-            } else if (s.role == "question") {
-                l.add("  ? ", "1;33");
-                l.add(s.text, "1;33");
+            if (s.role == "error" || s.role == "preview" || s.role == "question") {
+                const Look k = s.role == "error"   ? lookOr("chrome.error", "\u2717", "31")      // ✗
+                             : s.role == "preview" ? lookOr("chrome.preview", "\u21B3", "2")     // ↳
+                                                   : lookOr("chrome.question", "?", "1;33");
+                l.add("  " + k.glyph + " ", k.sgr);
+                l.add(s.text, k.sgr);
             } else if (s.role == "note") {
-                l.add("    " + s.text, "2");
+                l.add("    " + s.text, lookOr("chrome.note", "", "2").sgr);
             } else {
                 l.add("  " + s.text);
             }
@@ -1036,7 +1253,7 @@ LineEditor::Frame LineEditor::render(int width) const {
 
         if (!_notice.empty()) {
             PanelLine l = line();
-            l.add("  " + _notice, "33");
+            l.add("  " + _notice, lookOr("chrome.notice", "", "33").sgr);
             push(l.out);
         }
     }
@@ -1057,12 +1274,16 @@ LineEditor::Frame LineEditor::render(int width) const {
             h = "tab complete · → take ghost · enter author · end with ? to preview";
         }
         PanelLine l = line();
+        // The mark's colour is a fact (green: this Zone hears the line), never
+        // a theme; its glyph and the footer's text colour may be authored.
+        const Look f = lookOr("chrome.footer", "\u25C6", "2");   // ◆
+        const std::string hint = lookOr("chrome.hint", "", "2").sgr;
         if (!footer.empty()) {
-            l.add("  ◆ ", footerMark);
-            l.add(footer, "2");
-            if (hints) l.add("  │  " + h, "2");
+            l.add("  " + f.glyph + " ", footerMark);
+            l.add(footer, f.sgr);
+            if (hints) l.add("  │  " + h, hint);
         } else {
-            l.add("  " + h, "2");
+            l.add("  " + h, hint);
         }
         push(l.out);
     }

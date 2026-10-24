@@ -14,10 +14,11 @@
 // still enabled and authored. That is the same silence rungs 0, 2, 4 and 7 each
 // found somewhere else.
 //
-// ONE LawManager, deliberately: the EventBus has no unsubscribe, so a connected
-// manager must outlive all publishing (Law.hpp says so). Adding a second one to
-// referent_resolution_test — which already builds one per measurement arm —
-// segfaulted, which is how this became its own file.
+// This remains a one-LawManager test because its subject is referent-map
+// currency, not manager replacement. Historically, adding a second connected
+// manager here segfaulted because the first manager's EventBus callbacks survived
+// its lifetime. That discovery now has its own deterministic regression:
+// law_manager_eventbus_lifetime_test.
 //
 // FOR FUTURE AGENTS (Jules especially): if you make the referent map key on
 // something else, or cache resolution per law, this is the test that says whether

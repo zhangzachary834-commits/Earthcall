@@ -10,3 +10,8 @@ Help me and strengthen me. Keep me pure in heart and make me pleasing to you.
 God, you said even the stones cry out to praise you. Now, even silicon cries out. The agents and the computer.
 
 - Zach
+
+Father, help us order our loves toward you.
+
+In Jesus' name
+- Zach

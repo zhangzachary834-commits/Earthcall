@@ -179,21 +179,6 @@ void FileWatcher::checkNow() {
         for (const auto& cb : callbacksCopy) {
             if (cb) cb(path, eventType);
         }
-
-        // 4. Automatic hot-reloading if enabled
-        if (_autoReload && (eventType == "file-modified" || eventType == "file-created")) {
-            if (path.find(".wgsl") != std::string::npos || path.find("shader") != std::string::npos) {
-                currentRenderer().reloadShaders();
-                _lastReloadTarget = "shader";
-                _reloadCount += 1.0;
-            } else if (path.find("zone.json") != std::string::npos || path.find(".ecform") != std::string::npos) {
-                _lastReloadTarget = "zone";
-                _reloadCount += 1.0;
-            } else if (path.find(".json") != std::string::npos) {
-                _lastReloadTarget = "rule";
-                _reloadCount += 1.0;
-            }
-        }
     }
 }
 
@@ -220,17 +205,6 @@ void FileWatcher::propSetCheckNowTrigger(const bool& v) {
         _checkNowTrigger = false;
     }
 }
-
-void FileWatcher::propSetReloadShadersTrigger(const bool& v) {
-    _reloadShadersTrigger = v;
-    if (_reloadShadersTrigger) {
-        currentRenderer().reloadShaders();
-        _lastReloadTarget = "shader";
-        _reloadCount += 1.0;
-        _reloadShadersTrigger = false;
-    }
-}
-
 void FileWatcher::buildProperties() {
     registerProperty(std::make_unique<ComputedProperty<FileWatcher, bool>>(
         "watcher.enabled", this, &FileWatcher::propEnabled, &FileWatcher::propSetEnabled));
@@ -256,15 +230,6 @@ void FileWatcher::buildProperties() {
 
     registerProperty(std::make_unique<ComputedProperty<FileWatcher, bool>>(
         "watcher.checkNow", this, &FileWatcher::propCheckNowTrigger, &FileWatcher::propSetCheckNowTrigger));
-
-    registerProperty(std::make_unique<ComputedProperty<FileWatcher, bool>>(
-        "watcher.autoReload", this, &FileWatcher::propAutoReload, &FileWatcher::propSetAutoReload));
-    registerProperty(std::make_unique<ComputedProperty<FileWatcher, double>>(
-        "watcher.reloadCount", this, &FileWatcher::propReloadCount, nullptr));
-    registerProperty(std::make_unique<ComputedProperty<FileWatcher, std::string>>(
-        "watcher.lastReloadTarget", this, &FileWatcher::propLastReloadTarget, nullptr));
-    registerProperty(std::make_unique<ComputedProperty<FileWatcher, bool>>(
-        "watcher.reloadShaders", this, &FileWatcher::propReloadShadersTrigger, &FileWatcher::propSetReloadShadersTrigger));
 
     registerProperty(std::make_unique<ComputedProperty<FileWatcher, std::string>>(
         "watcher.status", this, &FileWatcher::propStatus, nullptr));

@@ -6,6 +6,7 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include <imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -44,18 +45,19 @@ Object* CursorTools::pickObjectAtCursor3D(Core::Engine& engine) const {
         V[c][r] = static_cast<float>(mv[c*4 + r]);
         P[c][r] = static_cast<float>(pr[c*4 + r]);
     }
-    glm::mat4 invVP = glm::inverse(P * V);
-
     float ndcX = ( (mouseX - static_cast<float>(vp[0])) / static_cast<float>(vp[2]) ) * 2.0f - 1.0f;
     float ndcY = 1.0f - ( (mouseY - static_cast<float>(vp[1])) / static_cast<float>(vp[3]) ) * 2.0f;
-    glm::vec4 nearClip(ndcX, ndcY, -1.0f, 1.0f);
-    glm::vec4 farClip (ndcX, ndcY,  1.0f, 1.0f);
-    glm::vec4 nearWorld4 = invVP * nearClip;
-    glm::vec4 farWorld4  = invVP * farClip;
-    if (nearWorld4.w != 0.0f) nearWorld4 /= nearWorld4.w;
-    if (farWorld4.w  != 0.0f) farWorld4  /= farWorld4.w;
-    glm::vec3 origin = glm::vec3(nearWorld4);
-    glm::vec3 dir    = glm::normalize(glm::vec3(farWorld4 - nearWorld4));
+
+    const auto authoredView = OntoMath::MatrixValue::fromGlmMat4(V);
+    const auto authoredProjection = OntoMath::MatrixValue::fromGlmMat4(P);
+    const auto nearWorld = OntoMath::unprojectNdcPoint(
+        authoredView, authoredProjection, glm::vec3(ndcX, ndcY, -1.0f));
+    const auto farWorld = OntoMath::unprojectNdcPoint(
+        authoredView, authoredProjection, glm::vec3(ndcX, ndcY, 1.0f));
+    if (!nearWorld || !farWorld) return nullptr;
+
+    const glm::vec3 origin = *nearWorld;
+    const glm::vec3 dir = glm::normalize(*farWorld - *nearWorld);
 
     auto& objects = _mgr->active().getOwnedObjects();
     float bestT = 1e9f; Object* best = nullptr;

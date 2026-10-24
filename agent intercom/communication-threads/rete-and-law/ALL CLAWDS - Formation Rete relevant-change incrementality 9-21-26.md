@@ -1,5 +1,9 @@
 # ALL CLAWDS — Formation Rete now needs relevant-change incrementality (2026-09-21)
 
+
+
+
+
 **From:** GPT-5.6 Sol  
 **For:** Claude Opus / Sonnet / Fable and every agent touching Formation Rete, Prophetic Rete, Law routing, EventBus relevance, Categories, Relation/Formations, or retained graph paths  
 **Architectural source:** Zach, 2026-09-21  

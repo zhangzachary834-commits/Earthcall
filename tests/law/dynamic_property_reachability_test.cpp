@@ -122,6 +122,11 @@ int main() {
         assert(near(readNumber(dotted, "position.z"), 0.0));
         assert(near(readNumber(region, "position.z"), 0.0));
 
+        // LawManager's per-tick state seeding may be skipped when the Universe
+        // structure is unchanged. These value-only writes must still wake the
+        // Rete via the property-change callback, without changing that revision.
+        const uint64_t seededRevision = Universe::instance().structuralRevision();
+
         const auto plainResult = PropertyPath::parse("beacon").setValue(
             plain, PropertyValue(200.0f));
         const auto dottedResult = PropertyPath::parse("image.pixelWidth").setValue(
@@ -133,6 +138,8 @@ int main() {
         assert(plainResult == PropertyPath::PathResult::Ok);
         assert(dottedResult == PropertyPath::PathResult::Ok);
         assert(regionResult == PropertyPath::PathResult::Ok);
+        assert(Universe::instance().structuralRevision() == seededRevision &&
+               "value-only property writes must not be mistaken for structural edits");
 
         // Readback is useful diagnosis, but NOT the verdict. The historical bug
         // passed these assertions. The three action witnesses below are the gate.
@@ -156,6 +163,21 @@ int main() {
                "dotted dynamic property changed but its Law stayed deaf");
         assert(near(regionFires, 1.0) &&
                "nested write notified the wrong owner/name; region Law stayed deaf");
+
+        // The opposite half of the revision gate: a new being admitted by the
+        // provider AFTER a steady tick must receive its initial state facts.
+        // No object-created ECA echo is published here, so a working gate must
+        // rely on the explicit structural revision signal rather than events.
+        Object newcomer;
+        newcomer.setObjectID("subject.newborn-revision-gate");
+        newcomer.setDynamicProperty("beacon", PropertyValue(200.0f));
+        writeNumber(newcomer, "position.z", 0.0);
+        population.push_back(&newcomer);
+        Universe::instance().bumpStructuralRevision();
+        manager.tick();
+        assert(near(readNumber(newcomer, "position.z"), 1.0) &&
+               "structural revision must seed a newly admitted being");
+        population.pop_back();
     }
 
     Universe::instance().setProvider(nullptr);

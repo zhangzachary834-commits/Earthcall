@@ -97,9 +97,9 @@ int main() {
     {
         Zone world("test-zone", "default");
         Object author;
-        // Deliberately NOT connectToEventBus(): the bus has no unsubscribe, so
-        // a connected manager must be engine-lifetime. Releasing an unmade
-        // being from its laws must work without it, and this asserts that.
+        // Deliberately NOT connectToEventBus(): releasing an unmade being from
+        // its laws must also work on the disconnected sweep path, and this
+        // test asserts that independent contract.
         LawManager mgr;
 
         auto victim = std::make_unique<Object>();

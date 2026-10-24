@@ -1,5 +1,9 @@
 # SUN UPDATE — V5 exact-head green; local-sampling segmentation is now the next implementation gate
 
+
+
+
+
 Date: 2026-09-23
 Repository: `zhangzachary834-commits/Earthcall`
 PR: #343 — Volumetric V5: medium-set composition foundation

@@ -936,6 +936,7 @@ const char* valueKindName(ValueKind k) {
     switch (k) {
         case ValueKind::Scalar:      return "Scalar";
         case ValueKind::Vector:      return "Vector";
+        case ValueKind::Matrix:      return "Matrix";
         case ValueKind::ScalarField: return "ScalarField";
         case ValueKind::VectorField: return "VectorField";
         case ValueKind::Unknown:     return "Unknown";
@@ -973,9 +974,19 @@ const char* mathOpName(MathNode::Op op) {
         case MathNode::Op::Abs:             return "Abs";
         case MathNode::Op::Clamp:           return "Clamp";
         case MathNode::Op::Sqrt:            return "Sqrt";
-        case MathNode::Op::Tan:             return "Tan";
-        case MathNode::Op::Noise:           return "Noise";
-        case MathNode::Op::Unsupported:     return "Unsupported";
+        case MathNode::Op::Tan:                  return "Tan";
+        case MathNode::Op::Noise:                return "Noise";
+        case MathNode::Op::MatrixConstruct:      return "MatrixConstruct";
+        case MathNode::Op::MatrixIdentity:       return "MatrixIdentity";
+        case MathNode::Op::MatrixAdd:            return "MatrixAdd";
+        case MathNode::Op::MatrixSub:            return "MatrixSub";
+        case MathNode::Op::MatrixScale:          return "MatrixScale";
+        case MathNode::Op::MatrixMultiply:       return "MatrixMultiply";
+        case MathNode::Op::MatrixVectorMultiply: return "MatrixVectorMultiply";
+        case MathNode::Op::MatrixTranspose:      return "MatrixTranspose";
+        case MathNode::Op::MatrixDeterminant:    return "MatrixDeterminant";
+        case MathNode::Op::MatrixInverse:        return "MatrixInverse";
+        case MathNode::Op::Unsupported:          return "Unsupported";
     }
     return "Unsupported";
 }
@@ -1016,6 +1027,16 @@ bool isKnownMathOp(int raw) {
         case MathNode::Op::Sqrt:
         case MathNode::Op::Tan:
         case MathNode::Op::Noise:
+        case MathNode::Op::MatrixConstruct:
+        case MathNode::Op::MatrixIdentity:
+        case MathNode::Op::MatrixAdd:
+        case MathNode::Op::MatrixSub:
+        case MathNode::Op::MatrixScale:
+        case MathNode::Op::MatrixMultiply:
+        case MathNode::Op::MatrixVectorMultiply:
+        case MathNode::Op::MatrixTranspose:
+        case MathNode::Op::MatrixDeterminant:
+        case MathNode::Op::MatrixInverse:
             return true;
         // Unsupported is where unknown ops LAND; it is never a stored value an
         // author picked, so it does not read back as known.
@@ -1053,6 +1074,29 @@ ValueKind widerScalar(ValueKind a, ValueKind b) {
     return ValueKind::Scalar;
 }
 
+bool matrixShapeMatches(const MathType& a, const MathType& b) {
+    return a.kind == ValueKind::Matrix && b.kind == ValueKind::Matrix &&
+           a.rows == b.rows && a.cols == b.cols;
+}
+
+bool isMatrixOperation(MathNode::Op op) {
+    switch (op) {
+        case MathNode::Op::MatrixConstruct:
+        case MathNode::Op::MatrixIdentity:
+        case MathNode::Op::MatrixAdd:
+        case MathNode::Op::MatrixSub:
+        case MathNode::Op::MatrixScale:
+        case MathNode::Op::MatrixMultiply:
+        case MathNode::Op::MatrixVectorMultiply:
+        case MathNode::Op::MatrixTranspose:
+        case MathNode::Op::MatrixDeterminant:
+        case MathNode::Op::MatrixInverse:
+            return true;
+        default:
+            return false;
+    }
+}
+
 TypeResult arity(const std::string& path, MathNode::Op op, std::size_t got, std::size_t want) {
     return TypeResult::error(TypeDiagnostic{
         path, std::string(mathOpName(op)) + " requires " + std::to_string(want) +
@@ -1088,6 +1132,23 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
                                    allowUnbound);
     };
 
+    // Matrix is a legible TYPE, but the pre-existing scalar/vector operations
+    // do not acquire matrix meaning by accident. Only the dedicated Rung 2
+    // matrix operations below may consume Matrix children; legacy Add/Scale/etc.
+    // still refuse them. A Matrix ValueLeaf carries its dimensions forward.
+    if (op != Op::ValueLeaf && !isMatrixOperation(op)) {
+        for (std::size_t i = 0; i < children.size(); ++i) {
+            auto childType = sub(i);
+            if (!childType) return childType;
+            if (childType.kind == ValueKind::Matrix) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, std::string(mathOpName(op)) + " argument " +
+                          std::to_string(static_cast<int>(i)) +
+                          " is Matrix; core matrix operations land in OntoMath Rung 2"});
+            }
+        }
+    }
+
     switch (op) {
         case Op::Stochastic:
         case Op::ScalarLeaf: return TypeResult::ok(ValueKind::Scalar);
@@ -1098,6 +1159,12 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
                 return TypeResult::error(TypeDiagnostic{
                     path, "ValueLeaf names '" + variableName +
                           "', which has no declared signature in this environment"});
+            }
+            if (it->second.kind == ValueKind::Matrix &&
+                !it->second.hasValidMatrixShape()) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "ValueLeaf names matrix '" + variableName +
+                          "' with missing/invalid dimensions"});
             }
             return TypeResult::ok(it->second);
         }
@@ -1302,6 +1369,140 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
             auto t = sub(0); if (!t) return t;
             if (!vectorLike(*t)) return mismatch(path, op, 0, "Vector", *t);
             return TypeResult::ok(ValueKind::Scalar);
+        }
+        case Op::MatrixConstruct: {
+            if (matrixRows == 0 || matrixCols == 0) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "MatrixConstruct requires non-zero rows and columns"});
+            }
+            if (matrixRows > std::numeric_limits<std::size_t>::max() / matrixCols) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "MatrixConstruct dimensions overflow"});
+            }
+            const std::size_t want = matrixRows * matrixCols;
+            if (children.size() != want) return arity(path, op, children.size(), want);
+            for (std::size_t i = 0; i < children.size(); ++i) {
+                auto t = sub(i); if (!t) return t;
+                if (*t != ValueKind::Scalar && *t != ValueKind::Unknown) {
+                    return mismatch(path, op, static_cast<int>(i), "Scalar", *t);
+                }
+            }
+            return TypeResult::ok(MathType::matrix(matrixRows, matrixCols));
+        }
+        case Op::MatrixIdentity: {
+            if (!children.empty()) return arity(path, op, children.size(), 0);
+            if (matrixRows == 0 || matrixRows != matrixCols) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "MatrixIdentity requires one non-zero square dimension"});
+            }
+            return TypeResult::ok(MathType::matrix(matrixRows, matrixCols));
+        }
+        case Op::MatrixAdd:
+        case Op::MatrixSub: {
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto a = sub(0); if (!a) return a;
+            auto b = sub(1); if (!b) return b;
+            if (a.kind == ValueKind::Unknown && b.kind == ValueKind::Unknown)
+                return TypeResult::ok(ValueKind::Unknown);
+            if (a.kind == ValueKind::Unknown && b.kind == ValueKind::Matrix)
+                return TypeResult::ok(b.type);
+            if (b.kind == ValueKind::Unknown && a.kind == ValueKind::Matrix)
+                return TypeResult::ok(a.type);
+            if (a.kind != ValueKind::Matrix) return mismatch(path, op, 0, "Matrix", a.kind);
+            if (b.kind != ValueKind::Matrix) return mismatch(path, op, 1, "Matrix", b.kind);
+            if (!matrixShapeMatches(a.type, b.type)) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, std::string(mathOpName(op)) + " requires equal shapes, got " +
+                          std::to_string(a.type.rows) + "x" + std::to_string(a.type.cols) +
+                          " and " + std::to_string(b.type.rows) + "x" + std::to_string(b.type.cols)});
+            }
+            return TypeResult::ok(a.type);
+        }
+        case Op::MatrixScale: {
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto a = sub(0); if (!a) return a;
+            auto b = sub(1); if (!b) return b;
+            if (a.kind == ValueKind::Matrix &&
+                (b.kind == ValueKind::Scalar || b.kind == ValueKind::Unknown)) {
+                return TypeResult::ok(a.type);
+            }
+            if (b.kind == ValueKind::Matrix &&
+                (a.kind == ValueKind::Scalar || a.kind == ValueKind::Unknown)) {
+                return TypeResult::ok(b.type);
+            }
+            if (a.kind == ValueKind::Unknown && b.kind == ValueKind::Unknown)
+                return TypeResult::ok(ValueKind::Unknown);
+            return TypeResult::error(TypeDiagnostic{
+                path, "MatrixScale requires (Scalar, Matrix) or (Matrix, Scalar), got " +
+                      std::string(valueKindName(a.kind)) + " and " + valueKindName(b.kind)});
+        }
+        case Op::MatrixMultiply: {
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto a = sub(0); if (!a) return a;
+            auto b = sub(1); if (!b) return b;
+            if (a.kind == ValueKind::Unknown || b.kind == ValueKind::Unknown)
+                return TypeResult::ok(ValueKind::Unknown);
+            if (a.kind != ValueKind::Matrix) return mismatch(path, op, 0, "Matrix", a.kind);
+            if (b.kind != ValueKind::Matrix) return mismatch(path, op, 1, "Matrix", b.kind);
+            if (a.type.cols != b.type.rows) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "MatrixMultiply inner dimensions differ: " +
+                          std::to_string(a.type.cols) + " vs " + std::to_string(b.type.rows)});
+            }
+            return TypeResult::ok(MathType::matrix(a.type.rows, b.type.cols));
+        }
+        case Op::MatrixVectorMultiply: {
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto m = sub(0); if (!m) return m;
+            auto v = sub(1); if (!v) return v;
+            if (m.kind == ValueKind::Unknown || v.kind == ValueKind::Unknown)
+                return TypeResult::ok(ValueKind::Unknown);
+            if (m.kind != ValueKind::Matrix) return mismatch(path, op, 0, "Matrix", m.kind);
+            if (v.kind != ValueKind::Vector) return mismatch(path, op, 1, "Vector", v.kind);
+            const std::size_t vectorDim = v.type.vectorDimension ? v.type.vectorDimension : 3;
+            if (m.type.cols != vectorDim) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "MatrixVectorMultiply matrix columns " +
+                          std::to_string(m.type.cols) + " do not match vector dimension " +
+                          std::to_string(vectorDim)});
+            }
+            if (m.type.rows != 3) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "MatrixVectorMultiply currently returns Earthcall's vec3 and "
+                          "therefore requires exactly 3 matrix rows"});
+            }
+            return TypeResult::ok(MathType::vector(3));
+        }
+        case Op::MatrixTranspose: {
+            if (children.size() != 1) return arity(path, op, children.size(), 1);
+            auto m = sub(0); if (!m) return m;
+            if (m.kind == ValueKind::Unknown) return TypeResult::ok(ValueKind::Unknown);
+            if (m.kind != ValueKind::Matrix) return mismatch(path, op, 0, "Matrix", m.kind);
+            return TypeResult::ok(MathType::matrix(m.type.cols, m.type.rows));
+        }
+        case Op::MatrixDeterminant: {
+            if (children.size() != 1) return arity(path, op, children.size(), 1);
+            auto m = sub(0); if (!m) return m;
+            if (m.kind == ValueKind::Unknown) return TypeResult::ok(ValueKind::Scalar);
+            if (m.kind != ValueKind::Matrix) return mismatch(path, op, 0, "Matrix", m.kind);
+            if (m.type.rows != m.type.cols) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "MatrixDeterminant requires a square matrix, got " +
+                          std::to_string(m.type.rows) + "x" + std::to_string(m.type.cols)});
+            }
+            return TypeResult::ok(ValueKind::Scalar);
+        }
+        case Op::MatrixInverse: {
+            if (children.size() != 1) return arity(path, op, children.size(), 1);
+            auto m = sub(0); if (!m) return m;
+            if (m.kind == ValueKind::Unknown) return TypeResult::ok(ValueKind::Unknown);
+            if (m.kind != ValueKind::Matrix) return mismatch(path, op, 0, "Matrix", m.kind);
+            if (m.type.rows != m.type.cols) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "MatrixInverse requires a square matrix, got " +
+                          std::to_string(m.type.rows) + "x" + std::to_string(m.type.cols)});
+            }
+            return TypeResult::ok(m.type);
         }
         case Op::Unsupported:
             return TypeResult::error(TypeDiagnostic{
@@ -1724,6 +1925,127 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
             return PropertyValue(static_cast<double>(glm::perlin(va)));
         }
 
+        // --- Rung 2: first-class matrix algebra ----------------------------
+        case Op::MatrixConstruct: {
+            if (matrixRows == 0 || matrixCols == 0 ||
+                matrixRows > std::numeric_limits<std::size_t>::max() / matrixCols ||
+                children.size() != matrixRows * matrixCols) {
+                return std::nullopt;
+            }
+            std::vector<double> elements;
+            elements.reserve(children.size());
+            for (const auto& child : children) {
+                if (!child) return std::nullopt;
+                auto value = child->evaluate(vars, subject);
+                double scalar = 0.0;
+                if (!value || !propertyValueToNumber(*value, scalar) ||
+                    !std::isfinite(scalar)) {
+                    return std::nullopt;
+                }
+                elements.push_back(scalar);
+            }
+            auto matrix = MatrixValue::create(matrixRows, matrixCols, std::move(elements));
+            if (!matrix) return std::nullopt;
+            return PropertyValue(std::move(*matrix));
+        }
+        case Op::MatrixIdentity: {
+            if (!children.empty() || matrixRows == 0 || matrixRows != matrixCols)
+                return std::nullopt;
+            auto matrix = matrixIdentity(matrixRows);
+            if (!matrix) return std::nullopt;
+            return PropertyValue(std::move(*matrix));
+        }
+        case Op::MatrixAdd:
+        case Op::MatrixSub: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evaluate(vars, subject);
+            auto b = children[1]->evaluate(vars, subject);
+            if (!a || !b ||
+                !std::holds_alternative<MatrixValue>(*a) ||
+                !std::holds_alternative<MatrixValue>(*b)) {
+                return std::nullopt;
+            }
+            auto result = (op == Op::MatrixAdd)
+                ? matrixAdd(std::get<MatrixValue>(*a), std::get<MatrixValue>(*b))
+                : matrixSubtract(std::get<MatrixValue>(*a), std::get<MatrixValue>(*b));
+            if (!result) return std::nullopt;
+            return PropertyValue(std::move(*result));
+        }
+        case Op::MatrixScale: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evaluate(vars, subject);
+            auto b = children[1]->evaluate(vars, subject);
+            if (!a || !b) return std::nullopt;
+
+            const MatrixValue* matrix = nullptr;
+            double scalar = 0.0;
+            if (std::holds_alternative<MatrixValue>(*a) &&
+                propertyValueToNumber(*b, scalar)) {
+                matrix = &std::get<MatrixValue>(*a);
+            } else if (std::holds_alternative<MatrixValue>(*b) &&
+                       propertyValueToNumber(*a, scalar)) {
+                matrix = &std::get<MatrixValue>(*b);
+            } else {
+                return std::nullopt;
+            }
+
+            auto result = matrixScale(*matrix, scalar);
+            if (!result) return std::nullopt;
+            return PropertyValue(std::move(*result));
+        }
+        case Op::MatrixMultiply: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evaluate(vars, subject);
+            auto b = children[1]->evaluate(vars, subject);
+            if (!a || !b ||
+                !std::holds_alternative<MatrixValue>(*a) ||
+                !std::holds_alternative<MatrixValue>(*b)) {
+                return std::nullopt;
+            }
+            auto result = matrixMultiply(std::get<MatrixValue>(*a),
+                                         std::get<MatrixValue>(*b));
+            if (!result) return std::nullopt;
+            return PropertyValue(std::move(*result));
+        }
+        case Op::MatrixVectorMultiply: {
+            if (children.size() != 2) return std::nullopt;
+            auto m = children[0]->evaluate(vars, subject);
+            auto v = children[1]->evaluate(vars, subject);
+            if (!m || !v ||
+                !std::holds_alternative<MatrixValue>(*m) ||
+                !std::holds_alternative<glm::vec3>(*v)) {
+                return std::nullopt;
+            }
+            auto result = matrixMultiplyVec3(std::get<MatrixValue>(*m),
+                                             std::get<glm::vec3>(*v));
+            if (!result) return std::nullopt;
+            return PropertyValue(*result);
+        }
+        case Op::MatrixTranspose: {
+            if (children.size() != 1) return std::nullopt;
+            auto m = children[0]->evaluate(vars, subject);
+            if (!m || !std::holds_alternative<MatrixValue>(*m)) return std::nullopt;
+            auto result = matrixTranspose(std::get<MatrixValue>(*m));
+            if (!result) return std::nullopt;
+            return PropertyValue(std::move(*result));
+        }
+        case Op::MatrixDeterminant: {
+            if (children.size() != 1) return std::nullopt;
+            auto m = children[0]->evaluate(vars, subject);
+            if (!m || !std::holds_alternative<MatrixValue>(*m)) return std::nullopt;
+            auto result = matrixDeterminant(std::get<MatrixValue>(*m));
+            if (!result) return std::nullopt;
+            return PropertyValue(*result);
+        }
+        case Op::MatrixInverse: {
+            if (children.size() != 1) return std::nullopt;
+            auto m = children[0]->evaluate(vars, subject);
+            if (!m || !std::holds_alternative<MatrixValue>(*m)) return std::nullopt;
+            auto result = matrixInverse(std::get<MatrixValue>(*m));
+            if (!result) return std::nullopt;
+            return PropertyValue(std::move(*result));
+        }
+
         // --- Sampling a field expression at a point ------------------------
         // SDF(f, q): evaluate f with the AMBIENT POINT rebound to q. The WGSL
         // emitter does the same thing by substituting q for its point
@@ -1825,6 +2147,33 @@ std::string MathNode::print() const {
         case Op::Sqrt:         return "sqrt(" + arg(0) + ")";
         case Op::Tan:          return "tan(" + arg(0) + ")";
         case Op::Noise:        return "noise(" + arg(0) + ")";
+        case Op::MatrixConstruct: {
+            std::string out = "matrix" + std::to_string(matrixRows) + "x" +
+                              std::to_string(matrixCols) + "(";
+            for (std::size_t i = 0; i < children.size(); ++i) {
+                if (i) out += ", ";
+                out += arg(i);
+            }
+            return out + ")";
+        }
+        case Op::MatrixIdentity:
+            return "identity(" + std::to_string(matrixRows) + ")";
+        case Op::MatrixAdd:
+            return "(" + arg(0) + " + " + arg(1) + ")";
+        case Op::MatrixSub:
+            return "(" + arg(0) + " - " + arg(1) + ")";
+        case Op::MatrixScale:
+            return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::MatrixMultiply:
+            return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::MatrixVectorMultiply:
+            return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::MatrixTranspose:
+            return "transpose(" + arg(0) + ")";
+        case Op::MatrixDeterminant:
+            return "det(" + arg(0) + ")";
+        case Op::MatrixInverse:
+            return "inverse(" + arg(0) + ")";
         case Op::SDF:          return "SDF(" + arg(0) + " @ " + arg(1) + ")";
         case Op::Gradient:     return "gradient(" + arg(0) + " @ " + arg(1) + ")";
         // Declared but not implemented anywhere (see evaluate() above) —
@@ -2061,7 +2410,21 @@ std::optional<Interval> classicPerlin3LatticeRange(
 
 } // namespace
 
-std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::string, RangeValue>& vars) const {
+// Kernel analysis context is invocation-local and never persisted. Keep the
+// legacy consumer entrypoint separate: adding a host theorem must not silently
+// grant the renderer permission to omit work. See VOLUME_EUCLIDEAN_RANGE_2026-10-15.
+static std::optional<MathNode::RangeValue> evalMathRange(
+    const MathNode& node, const std::map<std::string, MathNode::RangeValue>& vars,
+    bool euclidean) {
+    using RangeValue = MathNode::RangeValue;
+    using Op = MathNode::Op;
+    const auto op = node.op;
+    const auto& children = node.children;
+    const auto& scalarForm = node.scalarForm;
+    const auto& variableName = node.variableName;
+    const auto& stringArg = node.stringArg;
+    if (euclidean && std::any_of(children.begin(), children.end(),
+                                [](const auto& child) { return !child; })) return std::nullopt;
     auto retInf = []() { return RangeValue::makeScalar(Interval::infinite()); };
     auto retVecInf = []() { return RangeValue::makeVector(Interval::infinite(), Interval::infinite(), Interval::infinite()); };
     
@@ -2085,9 +2448,9 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::VectorConstruct: {
             if (children.size() != 3) return std::nullopt;
-            auto x = children[0]->evalRange(vars);
-            auto y = children[1]->evalRange(vars);
-            auto z = children[2]->evalRange(vars);
+            auto x = evalMathRange(*children[0], vars, euclidean);
+            auto y = evalMathRange(*children[1], vars, euclidean);
+            auto z = evalMathRange(*children[2], vars, euclidean);
             if (!x || !y || !z) return std::nullopt;
             // Runtime VectorConstruct coerces three SCALARS. Reading the
             // default scalar slot of a vector RangeValue would fabricate a
@@ -2103,7 +2466,7 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::Component: {
             if (children.size() != 1) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
             if (!a || a->kind != ValueKind::Vector) return std::nullopt;
             if (stringArg == "x") return RangeValue::makeScalar(a->vec[0]);
             if (stringArg == "y") return RangeValue::makeScalar(a->vec[1]);
@@ -2112,8 +2475,8 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::Add: {
             if (children.size() != 2) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
-            auto b = children[1]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
+            auto b = evalMathRange(*children[1], vars, euclidean);
             if (!a || !b) return std::nullopt;
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) return RangeValue::makeScalar(a->scalar + b->scalar);
             if (a->kind == ValueKind::Vector && b->kind == ValueKind::Vector) return RangeValue::makeVector(a->vec[0] + b->vec[0], a->vec[1] + b->vec[1], a->vec[2] + b->vec[2]);
@@ -2121,8 +2484,8 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::Sub: {
             if (children.size() != 2) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
-            auto b = children[1]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
+            auto b = evalMathRange(*children[1], vars, euclidean);
             if (!a || !b) return std::nullopt;
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) return RangeValue::makeScalar(a->scalar - b->scalar);
             if (a->kind == ValueKind::Vector && b->kind == ValueKind::Vector) return RangeValue::makeVector(a->vec[0] - b->vec[0], a->vec[1] - b->vec[1], a->vec[2] - b->vec[2]);
@@ -2130,8 +2493,8 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::Scale: {
             if (children.size() != 2) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
-            auto b = children[1]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
+            auto b = evalMathRange(*children[1], vars, euclidean);
             if (!a || !b) return std::nullopt;
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) return RangeValue::makeScalar(a->scalar * b->scalar);
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Vector) return RangeValue::makeVector(a->scalar * b->vec[0], a->scalar * b->vec[1], a->scalar * b->vec[2]);
@@ -2140,8 +2503,8 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::Div: {
             if (children.size() != 2) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
-            auto b = children[1]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
+            auto b = evalMathRange(*children[1], vars, euclidean);
             if (!a || !b) return std::nullopt;
             if (b->kind != ValueKind::Scalar) return std::nullopt;
 
@@ -2166,9 +2529,53 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
                                               a->vec[2] / b->scalar);
             return std::nullopt;
         }
+        case Op::Length:
+        case Op::Distance: {
+            // Only the explicit analysis entrypoint admits these new rules.
+            // Scalar overloads are not invented: runtime requires vec3 inputs.
+            if (!euclidean) return retInf();
+            const size_t arity = op == Op::Length ? 1 : 2;
+            if (children.size() != arity) return std::nullopt;
+            auto a = evalMathRange(*children[0], vars, true);
+            if (!a || a->kind != ValueKind::Vector) return std::nullopt;
+            auto valid = [](Interval i) { return i.bounded() && !i.empty(); };
+            Interval components[3] = {a->vec[0], a->vec[1], a->vec[2]};
+            if (op == Op::Distance) {
+                auto b = evalMathRange(*children[1], vars, true);
+                if (!b || b->kind != ValueKind::Vector) return std::nullopt;
+                for (int i = 0; i < 3; ++i) {
+                    if (!valid(components[i]) || !valid(b->vec[i])) return std::nullopt;
+                    components[i] = components[i] - b->vec[i];
+                }
+            }
+            Interval sum(0.0f);
+            for (const auto component : components) {
+                if (!valid(component)) return std::nullopt;
+                const float lower = component.lo <= 0.0f && component.hi >= 0.0f
+                    ? 0.0f : std::min(std::abs(component.lo), std::abs(component.hi));
+                const float upper = std::max(std::abs(component.lo), std::abs(component.hi));
+                // Squaring one variable is dependency-aware: [-1,1]^2 is
+                // [0,1], not [-1,1]. Widen EACH multiplication and addition,
+                // not just the final sqrt. This encloses host float dot/length
+                // as well as the ideal norm of already-enclosed components.
+                const auto square = upper == 0.0f ? Interval(0.0f)
+                    : Interval::outward(lower * lower, upper * upper);
+                if (!valid(square)) return std::nullopt;
+                sum = sum + Interval(std::max(0.0f, square.lo), square.hi);
+                sum.lo = std::max(0.0f, sum.lo);
+                // A finite mathematical norm does not license an overflowing
+                // host dot product. Refuse instead of excluding CPU infinity.
+                if (!valid(sum)) return std::nullopt;
+            }
+            if (sum.exactZero()) return RangeValue::makeScalar(sum);
+            auto norm = Interval::outward(std::sqrt(sum.lo), std::sqrt(sum.hi));
+            norm.lo = std::max(0.0f, norm.lo);
+            if (!valid(norm)) return std::nullopt;
+            return RangeValue::makeScalar(norm);
+        }
         case Op::Abs: {
             if (children.size() != 1) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
             if (!a) return std::nullopt;
             auto absInt = [](Interval i) {
                 float minAbs = (i.lo <= 0.0f && i.hi >= 0.0f) ? 0.0f : std::min(std::abs(i.lo), std::abs(i.hi));
@@ -2181,8 +2588,8 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::Union: {
             if (children.size() != 2) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
-            auto b = children[1]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
+            auto b = evalMathRange(*children[1], vars, euclidean);
             if (!a || !b) return std::nullopt;
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) {
                 return RangeValue::makeScalar(Interval(std::min(a->scalar.lo, b->scalar.lo), std::min(a->scalar.hi, b->scalar.hi)));
@@ -2191,8 +2598,8 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::Intersection: {
             if (children.size() != 2) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
-            auto b = children[1]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
+            auto b = evalMathRange(*children[1], vars, euclidean);
             if (!a || !b) return std::nullopt;
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) {
                 return RangeValue::makeScalar(Interval(std::max(a->scalar.lo, b->scalar.lo), std::max(a->scalar.hi, b->scalar.hi)));
@@ -2201,11 +2608,64 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
         }
         case Op::Difference: {
             if (children.size() != 2) return std::nullopt;
-            auto a = children[0]->evalRange(vars);
-            auto b = children[1]->evalRange(vars);
+            auto a = evalMathRange(*children[0], vars, euclidean);
+            auto b = evalMathRange(*children[1], vars, euclidean);
             if (!a || !b) return std::nullopt;
             if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) {
                 return RangeValue::makeScalar(Interval(std::max(a->scalar.lo, -b->scalar.hi), std::max(a->scalar.hi, -b->scalar.lo)));
+            }
+            return std::nullopt;
+        }
+        case Op::MatrixConstruct:
+        case Op::MatrixIdentity:
+        case Op::MatrixAdd:
+        case Op::MatrixSub:
+        case Op::MatrixScale:
+        case Op::MatrixMultiply:
+        case Op::MatrixVectorMultiply:
+        case Op::MatrixTranspose:
+        case Op::MatrixDeterminant:
+        case Op::MatrixInverse:
+            // RangeValue currently has only Scalar and vec3 interval domains.
+            // Returning a scalar [-inf,+inf] for a Matrix would lie about the
+            // expression's type. Refuse range proof until a matrix interval
+            // domain exists; callers already treat nullopt as "cannot prove".
+            return std::nullopt;
+        case Op::Clamp: {
+            // WGSL clamp(e, lo, hi) is min(max(e, lo), hi); both are monotone,
+            // so the enclosure is that composition applied to the endpoints.
+            // When lo <= hi is not guaranteed, std::clamp (the CPU evaluator)
+            // is undefined, so this answers "unbounded" rather than a theorem.
+            // Without this case every clamped envelope bounded to [-inf, inf],
+            // and no zero-set proof could see through one.
+            if (children.size() != 3) return std::nullopt;
+            auto v = evalMathRange(*children[0], vars, euclidean);
+            auto l = evalMathRange(*children[1], vars, euclidean);
+            auto h = evalMathRange(*children[2], vars, euclidean);
+            if (!v || !l || !h) return std::nullopt;
+            auto component = [](const RangeValue& r, int axis) {
+                return r.kind == ValueKind::Vector ? r.vec[axis] : r.scalar;
+            };
+            auto clampInterval = [](Interval x, Interval lo, Interval hi) {
+                if (std::isnan(x.lo) || std::isnan(x.hi) || std::isnan(lo.lo) ||
+                    std::isnan(lo.hi) || std::isnan(hi.lo) || std::isnan(hi.hi) ||
+                    !(lo.hi <= hi.lo)) {
+                    return Interval::infinite();
+                }
+                return Interval(std::min(std::max(x.lo, lo.lo), hi.lo),
+                                std::min(std::max(x.hi, lo.hi), hi.hi));
+            };
+            if (v->kind == ValueKind::Scalar) {
+                if (l->kind != ValueKind::Scalar || h->kind != ValueKind::Scalar) {
+                    return retInf();
+                }
+                return RangeValue::makeScalar(clampInterval(v->scalar, l->scalar, h->scalar));
+            }
+            if (v->kind == ValueKind::Vector) {
+                return RangeValue::makeVector(
+                    clampInterval(v->vec[0], component(*l, 0), component(*h, 0)),
+                    clampInterval(v->vec[1], component(*l, 1), component(*h, 1)),
+                    clampInterval(v->vec[2], component(*l, 2), component(*h, 2)));
             }
             return std::nullopt;
         }
@@ -2218,7 +2678,7 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
             if (children.size() != 1 || !children[0]) {
                 return RangeValue::makeScalar(global);
             }
-            auto arg = children[0]->evalRange(vars);
+            auto arg = evalMathRange(*children[0], vars, euclidean);
             if (!arg || arg->kind != ValueKind::Vector) {
                 return RangeValue::makeScalar(global);
             }
@@ -2271,6 +2731,16 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
     }
 }
 
+std::optional<MathNode::RangeValue> MathNode::evalRange(
+    const std::map<std::string, RangeValue>& vars) const {
+    return evalMathRange(*this, vars, false);
+}
+
+std::optional<MathNode::RangeValue> MathNode::evalMathematicalRange(
+    const std::map<std::string, RangeValue>& vars) const {
+    return evalMathRange(*this, vars, true);
+}
+
 nlohmann::json MathNode::toJson() const {
     // An op this build cannot read is handed back exactly as it arrived.
     // Re-serializing it from our own fields would drop every payload key we
@@ -2289,6 +2759,9 @@ nlohmann::json MathNode::toJson() const {
         j["var"] = variableName;
     } else if (op == Op::Component || op == Op::Map) {
         j["arg"] = stringArg;
+    } else if (op == Op::MatrixConstruct || op == Op::MatrixIdentity) {
+        j["rows"] = matrixRows;
+        j["cols"] = matrixCols;
     }
     if (!children.empty()) {
         j["children"] = nlohmann::json::array();
@@ -2341,6 +2814,10 @@ std::unique_ptr<MathNode> MathNode::fromJson(const nlohmann::json& j) {
     } else if (j.contains("stringArg")) {
         node->stringArg = j["stringArg"].get<std::string>();
     }
+    if (node->op == Op::MatrixConstruct || node->op == Op::MatrixIdentity) {
+        node->matrixRows = j.value("rows", static_cast<std::size_t>(0));
+        node->matrixCols = j.value("cols", static_cast<std::size_t>(0));
+    }
     if (j.contains("children")) {
         for (const auto& c : j["children"]) {
             node->children.push_back(fromJson(c));
@@ -2353,7 +2830,8 @@ std::unique_ptr<MathNode> MathNode::fromJson(const nlohmann::json& j) {
     // names and every concrete type mismatch are caught and named. The node is
     // still returned — refusing to load law text is worse than loading it with
     // a complaint on the record — but nothing enters the world silently wrong.
-    if (!node->children.empty() || node->op == Op::Component || node->op == Op::Map) {
+    if (!node->children.empty() || node->op == Op::Component || node->op == Op::Map ||
+        isMatrixOperation(node->op)) {
         std::string error;
         if (!node->checkTypes(TypeEnv{}, error, nullptr, /*allowUnbound=*/true)) {
             std::fprintf(stderr, "[OntoMath] MathNode type error on load: %s\n",

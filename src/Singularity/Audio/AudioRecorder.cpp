@@ -276,7 +276,7 @@ std::string AudioRecorder::ensureSessionFile() {
     char buf[64];
     std::strftime(buf, sizeof(buf), "mic_%Y%m%d_%H%M%S.wav", &gm_tm);
 
-    fs::path baseDir = _outputPath.empty() ? "saves/recordings" : _outputPath;
+    fs::path baseDir = Storage::VirtualFileSystem::resolve(_outputPath.empty() ? "saves/recordings" : _outputPath);
     fs::path sessionFile = baseDir / buf;
 
     std::error_code ec;

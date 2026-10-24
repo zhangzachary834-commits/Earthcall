@@ -94,10 +94,36 @@ inline void dump_test_save(const std::string& test_name, Zone& testWorld, LawMan
     ctx.unpackForAuthoring = false;
 
     std::string filepath = filepathOverride;
+    auto isDefaultSaveRoot = [](const std::string& sr) {
+        if (sr.empty()) return true;
+        std::filesystem::path p = std::filesystem::absolute(sr).lexically_normal();
+        std::string pStr = p.string();
+        while (!pStr.empty() && (pStr.back() == '/' || pStr.back() == '\\')) pStr.pop_back();
+        std::filesystem::path curSaves = (std::filesystem::current_path() / "saves").lexically_normal();
+        std::string curStr = curSaves.string();
+        while (!curStr.empty() && (curStr.back() == '/' || curStr.back() == '\\')) curStr.pop_back();
+        return pStr == curStr;
+    };
+
+    struct SaveRootRestorer {
+        std::string prev;
+        bool changed;
+        SaveRootRestorer(bool shouldOverride) : changed(shouldOverride) {
+            if (changed) {
+                prev = SaveSystem::saveRoot();
+                std::filesystem::path tmpDumps = std::filesystem::temp_directory_path() / "earthcall_test_dumps";
+                SaveSystem::setSaveRoot(tmpDumps.string());
+            }
+        }
+        ~SaveRootRestorer() {
+            if (changed) {
+                SaveSystem::setSaveRoot(prev);
+            }
+        }
+    } restorer(isDefaultSaveRoot(SaveSystem::saveRoot()));
+
     if (filepath.empty()) {
-        std::filesystem::path root = SaveSystem::saveRoot().empty()
-            ? (std::filesystem::temp_directory_path() / "earthcall_test_dumps")
-            : std::filesystem::path(SaveSystem::saveRoot());
+        std::filesystem::path root = std::filesystem::path(SaveSystem::saveRoot());
         std::filesystem::path testsFolder = root / "tests";
         std::filesystem::create_directories(testsFolder);
         filepath = (testsFolder / (test_name + ".json")).string();

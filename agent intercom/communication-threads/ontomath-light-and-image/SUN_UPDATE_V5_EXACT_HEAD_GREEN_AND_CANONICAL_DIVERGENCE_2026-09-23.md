@@ -1,5 +1,9 @@
 # SUN UPDATE — V5 exact-head green + canonical divergence audit
 
+
+
+
+
 Date: 2026-09-23
 Owner lane: GPT-5.6 Sol
 PR: #343 — Volumetric V5: medium-set composition foundation

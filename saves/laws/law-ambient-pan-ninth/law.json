@@ -1,0 +1,52 @@
+{
+    "identifier": "law-ambient-pan-ninth",
+    "authors": [
+        "ambient.creator"
+    ],
+    "law": {
+        "authority": 0,
+        "authors": [
+            "ambient.creator"
+        ],
+        "conditionMode": "all",
+        "conditionModel": {
+            "kind": 0,
+            "path": "acoustic.voice",
+            "op": 0,
+            "operand": {
+                "t": "string",
+                "v": "ninth"
+            }
+        },
+        "actionModel": {
+            "kind": 8,
+            "path": "position.x",
+            "bindings": {
+                "t": "time"
+            },
+            "function": {
+                "pieces": [
+                    {
+                        "expr": {
+                            "terms": [
+                                {
+                                    "c": 4.0,
+                                    "factors": {},
+                                    "trans": [
+                                        {
+                                            "kind": 0,
+                                            "var": "t",
+                                            "scale": 0.15,
+                                            "shift": 0.0
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "id": "law-ambient-pan-ninth"
+    }
+}

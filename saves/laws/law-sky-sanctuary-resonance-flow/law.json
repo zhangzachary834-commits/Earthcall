@@ -1,0 +1,126 @@
+{
+  "identifier": "law-sky-sanctuary-resonance-flow",
+  "injected_by": {
+    "agent": "Gemini 4 Argon (Spark)",
+    "session": "argon-sky-island-sanctuary-20261013",
+    "timestamp": "2026-10-13T11:40:00-07:00"
+  },
+  "authors": [
+    "Zach"
+  ],
+  "law": {
+    "id": "law-sky-sanctuary-resonance-flow",
+    "name": "Sky-Island Sanctuary: Resonance flows smoothly toward awakened intention",
+    "enabled": true,
+    "authority": 0,
+    "activation": 1,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "Zach"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "applicationLog": [],
+    "conditionModel": {
+      "kind": 0,
+      "path": "sanctuaryTouchstone",
+      "op": 0,
+      "operand": {
+        "t": "bool",
+        "v": true
+      }
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "resonance",
+          "bindings": {
+            "a": "resonance",
+            "q": "awakened",
+            "d": "time.delta"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "q": 1.0
+                      }
+                    },
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "a": 1.0
+                      },
+                      "trans": [
+                        {
+                          "kind": 2,
+                          "var": "d",
+                          "scale": -2.2,
+                          "shift": 0.0
+                        }
+                      ]
+                    },
+                    {
+                      "c": -1.0,
+                      "factors": {
+                        "q": 1.0
+                      },
+                      "trans": [
+                        {
+                          "kind": 2,
+                          "var": "d",
+                          "scale": -2.2,
+                          "shift": 0.0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "entityA": "law-sky-sanctuary-resonance-flow",
+        "entityB": "lexeme.argon.sky_sanctuary.commission",
+        "type": "commissioned-under",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "commissioned-under",
+            "deltaWeight": 1.0,
+            "timestamp": 1791916800
+          }
+        ]
+      },
+      {
+        "entityA": "law-sky-sanctuary-resonance-flow",
+        "entityB": "Zach",
+        "type": "authored-by",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1791916800
+          }
+        ]
+      }
+    ]
+  },
+  "triggers": []
+}

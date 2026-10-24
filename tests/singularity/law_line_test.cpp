@@ -13,6 +13,11 @@
 
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "Identity/FirstMoverRegister.hpp"
+#include "Identity/KeyPair.hpp"
+#include "Person/Body/Body.hpp"
+#include "Person/Person.hpp"
+#include "Person/Soul/Soul.hpp"
 #include "Relation/Relation.hpp"
 #include "Relation/RelationManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
@@ -62,10 +67,76 @@ LS::Vocabulary baseVocabulary() {
         if (id == "cube") return std::vector<std::string>{"color", "glow", "hp"};
         return std::vector<std::string>{"brightness"};
     };
+    v.describeEvent = [](const std::string& event) {
+        return event == "object-clicked" ? std::string("event · heard 4×") : std::string("event");
+    };
+    v.describeBeing = [](const std::string& id) {
+        if (id == "cube") return std::string("object · Amber Cube");
+        if (id == "lamp") return std::string("object · Moon Lamp");
+        return std::string("being");
+    };
+    v.describeProperty = [](const std::string& id, const std::string& property) {
+        if (id == "cube" && property == "glow") return std::string("= 0.75");
+        return std::string{};
+    };
+    v.laws.push_back({"law-red", "Red", "on object-clicked · if hp > 2 · then set glow 1"});
     return v;
 }
 
 void grammar() {
+    // Zach's general initializer syntax is sensed structurally; its output
+    // model belongs to an authored compiler, not a Create parser branch.
+    {
+        auto v = baseVocabulary();
+        v.pathRoots["my"] = "@zach";
+        int calls = 0;
+        v.compileInvocation = [&](const nlohmann::json& input, bool readOnly) {
+            ++calls;
+            if (input["slot"] == "initializer") {
+                assert(input["property"] == "position");
+                assert(input["expression"] == true);
+                assert(input["bindings"].contains("@zach.position"));
+                const auto f = OntoMath::Piecewise::fromJson(input["function"]);
+                auto result = f.evaluate({{"@zach.position", glm::vec3(4, 8, -2)}});
+                assert(result && std::get<glm::vec3>(*result) == glm::vec3(4, 5, -2));
+            }
+            // Deliberately emit Publish, proving this grammar has no hidden
+            // fallback that turns a Create spelling into a Create model.
+            return LS::Compilation{ActionNode::publish(readOnly ? "preview" : "compiler-chose-this"), "", {}};
+        };
+        const auto p = LS::parse("when hp > 0 on object-clicked then Create <Object, properties: {position: my.position + (0, -3, 0)}>", v);
+        assert(p.ok && calls == 2 && p.action->kind == ActionNode::Kind::Publish);
+        const auto preview = LS::parse("on object-clicked then Create <Object, properties: {position: my.position + (0, -3, 0)}> ?", v);
+        assert(preview.ok && preview.previewOnly);
+        v.compileInvocation = {};
+        assert(!LS::parse("on object-clicked then Create <Object, properties: {}>", v).ok);
+    }
+
+    {
+        auto v = baseVocabulary();
+        nlohmann::json sensed;
+        v.compileInvocation = [&](const nlohmann::json& input, bool readOnly) {
+            sensed = input;
+            return LS::Compilation{ActionNode::publish(readOnly ? "preview" : "chosen-by-compiler"), "", {}};
+        };
+        auto p = LS::parse(R"(on tick then Lerp <path: "glow", operand: 10, factor: 0.25>)", v);
+        assert(p.ok && p.action->kind == ActionNode::Kind::Publish);
+        assert(sensed["slot"] == "arguments" && sensed["arguments"]["factor"] == 0.25);
+        p = LS::parse(R"(on tick then Sequence <children: [Set glow 1, Add glow 2]>)", v);
+        assert(p.ok && sensed["arguments"]["children"].size() == 2);
+        p = LS::parse(R"(on tick then Map <path: "glow", expression: @cube.hp + 2>)", v);
+        assert(p.ok && sensed["arguments"].contains("function") && sensed["arguments"]["bindings"].contains("@cube.hp"));
+        assert(!LS::parse(R"(on tick then Lerp <factor: 1, factor: 2>)", v).ok);
+        assert(!LS::parse(R"(on tick then Map <expression: 2, bindings: {}>)", v).ok);
+        std::string deep = "Set glow 1";
+        for (int depth = 0; depth < 33; ++depth) deep = "Sequence <children: [" + deep + "]>";
+        assert(!LS::parse("on tick then " + deep, v).ok);
+        v.compileInvocation = {};
+        assert(!LS::parse(R"(on tick then Lerp <path: "glow", operand: 1, factor: 0.25>)", v).ok);
+        for (int kind = 0; kind <= 25; ++kind)
+            assert(!LS::argumentTemplate(std::string("action.") + ActionNode::kindName(static_cast<ActionNode::Kind>(kind))).empty());
+    }
+
     // --- canonical spellings alone: the line works before any alias exists
     {
         const auto p = LS::parse("on object-clicked then set color 1 0 0", baseVocabulary());
@@ -228,6 +299,22 @@ void grammar() {
         assert(p.candidates.size() == 2);
     }
     {
+        // Tab must preserve the plurality that Relation exposed. The menu may
+        // filter meanings by grammatical position, but it must not crown one
+        // surviving denotation before a Metalaw has actually resolved it.
+        const auto menu = LS::suggest("on tick if hp ", v);
+        const auto shared = std::find_if(menu.begin(), menu.end(), [](const LS::Suggestion& s) {
+            return s.text == "is";
+        });
+        assert(shared != menu.end());
+        assert(mentions(shared->detail, "shared spelling"));
+        assert(mentions(shared->detail, "Metalaw decides"));
+        assert(mentions(shared->detail, "lex_is_a->law_eq"));
+        assert(mentions(shared->detail, "lex_is_b->law_ne"));
+        assert(!mentions(shared->detail, "lex_is_c->law_iskind"));
+        assert(shared->snippet.empty());
+    }
+    {
         LS::Vocabulary resolved = v;
         resolved.resolve = [](const LS::Ambiguity& a) {
             assert(a.symbol == "is" && a.slot == "operator");
@@ -239,14 +326,43 @@ void grammar() {
         assert(!p.notes.empty() && mentions(p.notes.front(), "Metalaw"));
     }
 
+    // --- multi-line blocks fold into one sentence of the same grammar
+    {
+        std::string err;
+        const auto folded = LS::unfoldBlock({
+            "called \"Guard\" when clicked:",
+            "  if all:",
+            "    hp > 2",
+            "    glow < 1",
+            "  then:",
+            "    set color gold",
+            "    add glow by 1",
+            ""}, v, err);
+        assert(err.empty());
+        assert(folded == "called \"Guard\" when clicked if hp > 2 and glow < 1 then set color gold and add glow by 1");
+        assert(LS::unfoldBlock({"on any:", "  object-clicked", "  object-hovered", "then set glow 1"}, v, err) ==
+               "on object-clicked or object-hovered then set glow 1" && err.empty());
+        assert(LS::unfoldBlock({"if any:", "  hp > 2", "  glow < 1"}, v, err) == "if hp > 2 or glow < 1");
+        // the same joiner nested flattens; a different one refuses
+        assert(LS::unfoldBlock({"if:", "  all:", "    hp > 2", "    glow < 1", "  hp < 9"}, v, err) ==
+               "if hp > 2 and glow < 1 and hp < 9" && err.empty());
+        assert(LS::unfoldBlock({"if any:", "  all:", "    hp > 2", "    glow < 1"}, v, err).empty() && mentions(err, "parentheses"));
+        assert(LS::unfoldBlock({"then:"}, v, err).empty() && mentions(err, "no indented lines"));
+        assert(LS::unfoldBlock({"  if:", "    hp > 2", "then set glow 1"}, v, err).empty() && mentions(err, "indented less"));
+        // a deeper line under a plain line simply continues it
+        assert(LS::unfoldBlock({"called Long when clicked", "    then set glow 1"}, v, err) == "called Long when clicked then set glow 1");
+    }
+
     // --- refusals that name themselves
     {
         const auto p = LS::parse("on tick then Map glow", v);
         assert(!p.ok && mentions(p.error, "Law Graph"));
         const auto t = LS::parse("on timeline dawn then set glow 1", v);
         assert(!t.ok && mentions(t.error, "Timeline"));
+        // Reading another path is compiled by an authored Metalaw (the
+        // binding movement's "copy value"); with no compiler it refuses.
         const auto b = LS::parse("on tick then set glow @lamp.brightness", v);
-        assert(!b.ok && mentions(b.error, "binding"));
+        assert(!b.ok && mentions(b.error, "Metalaw"));
         const auto u = LS::parse("on tick then frobnicate glow", v);
         assert(!u.ok && u.errorOffset == std::string("on tick then ").size());
         const auto open = LS::parse("then set glow 1", v);
@@ -262,6 +378,10 @@ void grammar() {
         assert(!unknown.ok && mentions(unknown.error, "not an event this world knows"));
         const auto near = LS::parse("on object then set glow 1", v);
         assert(!near.ok && contains(near.candidates, "object-clicked"));
+        const auto typo = LS::parse("on boject-clicked then set glow 1", v);
+        assert(!typo.ok);
+        assert(contains(typo.candidates, "object-clicked"));
+        assert(mentions(typo.error, "Did you mean 'object-clicked'?"));
         const auto minted = LS::parse("on \"door-opened\" then set glow 1", v);
         assert(minted.ok && minted.triggers == std::vector<std::string>{"door-opened"});
         const auto publish = LS::parse("on tick then publish door-opened", v);
@@ -312,6 +432,40 @@ void grammar() {
         assert(contains(next, "then") && contains(next, "if") && contains(next, "or"));
         const auto hits = LS::search("glow", v);
         assert(!hits.empty());
+
+        // ?? searches the live descriptions the vocabulary already exposes,
+        // not only identifiers/spellings.
+        const auto eventMeaning = LS::search("heard 4", v);
+        assert(std::any_of(eventMeaning.begin(), eventMeaning.end(),
+                           [](const std::string& s) {
+                               return mentions(s, "object-clicked") && mentions(s, "heard 4");
+                           }));
+        const auto beingMeaning = LS::search("Amber", v);
+        assert(std::any_of(beingMeaning.begin(), beingMeaning.end(),
+                           [](const std::string& s) {
+                               return mentions(s, "@cube") && mentions(s, "Amber Cube");
+                           }));
+        const auto propertyMeaning = LS::search("0.75", v);
+        assert(std::any_of(propertyMeaning.begin(), propertyMeaning.end(),
+                           [](const std::string& s) {
+                               return mentions(s, "glow") && mentions(s, "= 0.75");
+                           }));
+
+        // Authored Laws are searchable as Laws: by display name, stable id,
+        // or the existing read-back summary carried by Vocabulary::laws.
+        const auto lawByName = LS::search("Red", v);
+        assert(std::any_of(lawByName.begin(), lawByName.end(),
+                           [](const std::string& s) {
+                               return mentions(s, "law      Red") && mentions(s, "law-red");
+                           }));
+        const auto lawById = LS::search("law-red", v);
+        assert(std::any_of(lawById.begin(), lawById.end(),
+                           [](const std::string& s) { return mentions(s, "law      Red"); }));
+        const auto lawBySummary = LS::search("object-clicked", v);
+        assert(std::any_of(lawBySummary.begin(), lawBySummary.end(),
+                           [](const std::string& s) {
+                               return mentions(s, "law      Red") && mentions(s, "object-clicked");
+                           }));
     }
 }
 
@@ -326,7 +480,13 @@ void channel() {
 
     Object zach;
     zach.setObjectID("zach");
-    zach.setDynamicProperty("who", PropertyValue(std::string("zach")));
+    // The line authors only as a PRESENT Person (stdin trust, 2026-10-05): a
+    // real Person, keyed with a fresh key and trusted through the real
+    // First Mover Register, exactly as the Identity unlock seats one.
+    Person person(Soul("Zach"), Body("humanoid", "default"), "default");
+    auto personKey = Identity::PrivateKey::generate();
+    assert(person.setPersonId(personKey.id()));
+    zach.setDynamicProperty("who", PropertyValue(person.getIdentifier()));
     Object cube;
     cube.setObjectID("cube");
     cube.setDynamicProperty("hp", PropertyValue(3.0));
@@ -366,6 +526,7 @@ void channel() {
 
     Universe::instance().setProvider([&](std::vector<Singular*>& out) {
         out.push_back(&zach);
+        out.push_back(&person);
         out.push_back(&cube);
         for (const auto& law : laws.getAll()) {
             if (law) out.push_back(law.get());
@@ -402,6 +563,19 @@ void channel() {
         terminal->act(laws);
     };
 
+    // 0. Stdin trust: until the Person proves their key to this process, a
+    //    typed line authors nothing; a preview still reads.
+    {
+        const std::size_t absentBefore = laws.getAll().size();
+        terminal->inject("my law called Absent fires on object-clicked then set glow 1");
+        frame();
+        assert(laws.getAll().size() == absentBefore && mentions(printed.back(), "not present"));
+        terminal->inject("my law called Absent fires on object-clicked then set glow 1?");
+        frame();
+        assert(laws.getAll().size() == absentBefore && mentions(printed.back(), "preview"));
+        assert(Identity::FirstMoverRegister::instance().trustAuthenticatedPerson(personKey));
+    }
+
     // 1. A sentence becomes a Law, written by the Person.
     const std::size_t before = laws.getAll().size();
     terminal->inject("my law called Red fires on object-clicked if hp greater than 2 then set glow 1");
@@ -410,7 +584,7 @@ void channel() {
     Law* red = laws.getAll().back().get();
     assert(red->name() == "Red");
     assert(red->getIdentifier().rfind("law_", 0) == 0);
-    assert(red->authors().getMembers().size() == 1 && red->authors().getMembers().front() == &zach);
+    assert(red->authors().getMembers().size() == 1 && red->authors().getMembers().front() == &person);
     assert(laws.triggersOf(red->getIdentifier()) == std::vector<std::string>{"object-clicked"});
     assert(!printed.empty() && mentions(printed.back(), "authored " + red->getIdentifier()));
 
@@ -464,6 +638,13 @@ void channel() {
     frame();
     assert(mentions(printed.back(), "right now the IF holds for 1 being"));
 
+    // Event-relative dry runs have no occurrence to bind, so the line must say
+    // that this is a hypothetical event-less probe rather than a verdict.
+    terminal->inject("on object-clicked if @event.verb = \"object-clicked\" then set glow 1 ?");
+    frame();
+    assert(mentions(printed.back(), "hypothetical"));
+    assert(mentions(printed.back(), "no event supplied"));
+
     // 4. Nothing enters the world without an author.
     PropertyPath::parse("authorPath").setValue(*terminal, PropertyValue(std::string("@nobody.who")));
     const std::size_t beforeUnauthored = laws.getAll().size();
@@ -477,12 +658,17 @@ void channel() {
     const std::size_t printedBefore = printed.size();
     terminal->inject("on tick then set glow 5");
     frame();
-    assert(printed.size() == printedBefore + 1 && mentions(printed.back(), "no Law in this Zone hears"));
+    assert(printed.size() == printedBefore + 1 && mentions(printed.back(), "hears terminal-line-entered"));   // worded by where the LINE is since Terminal Zones
 }
 
 } // namespace
 
 int main() {
+    std::string splitError;
+    auto parts = LS::sentences("called A then Set note to \"a;b\"; called B then Create <Object, properties: {authored: {note: \"c;d\"}}>", splitError);
+    assert(splitError.empty() && parts.size() == 2 && parts.front().find("a;b") != std::string::npos);
+    assert(LS::sentences("then Set glow 1;;then Set glow 2", splitError).empty() && !splitError.empty());
+    assert(LS::sentences("then Set glow 1;", splitError).empty() && !splitError.empty());
     grammar();
     channel();
     std::cout << "law_line_test: OK\n";

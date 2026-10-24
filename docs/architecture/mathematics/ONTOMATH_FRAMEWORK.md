@@ -29,11 +29,15 @@ The foundation of `OntoMath` is exact symbolic math, avoiding approximations whe
 `ScalarForm` represents a continuous algebraic expression: a sum of terms where a term is `coefficient * Π var^exp * Π trans(scale·var + shift)`. Within it, algebra (+, ×) and basic calculus (derivatives) are exact.
 
 ### `MathNode` (AST)
-When we need complex vector calculations (Dot products, Cross products) or structured combinations of scalars, we construct a tree of `MathNode`s. 
+When we need complex vector calculations (Dot products, Cross products) or structured combinations of scalars, we construct a tree of `MathNode`s.
+
+**Linear-algebra sovereignty (Rung 1, 2026-09-30).** OntoMath now has a first-class, dimension-aware `MatrixValue` in `LinearAlgebra.hpp`. Its canonical logical storage is row-major and indexed as `(row, col)`; the GLM bridge explicitly converts to/from GLM's `matrix[column][row]` representation, so storage convention is not mathematical meaning. `ValueKind::Matrix` and `MathType::matrix(rows, cols)` make matrix dimensions legible to the type judgement. Rung 1 deliberately does **not** assign matrix meaning to existing scalar/vector ops: a Matrix `ValueLeaf` type-checks, but existing operations refuse Matrix children until append-only matrix operations land in Rung 2. Legacy `glm::mat4` remains accepted at property/save boundaries for compatibility and converts only through the explicit bridge.
 
 Supported Operations (append-only `MathNode::Op`, serialized as ints):
 - Leaves: `ScalarLeaf` (a `ScalarForm`), `ValueLeaf`, `VectorConstruct`, `Component`.
-- Linear algebra: `Add`, `Sub`, `Scale`, `Dot`, `Cross`, `Hadamard`, `Normalize`, `Length`, `Project`, `Distance`, `Map`.
+- Vector/scalar algebra: `Add`, `Sub`, `Scale`, `Dot`, `Cross`, `Hadamard`, `Normalize`, `Length`, `Project`, `Distance`, `Map`.
+- Matrix algebra (Rung 2, append-only ops 30–39): `MatrixConstruct`, `MatrixIdentity`, `MatrixAdd`, `MatrixSub`, `MatrixScale`, `MatrixMultiply`, `MatrixVectorMultiply`, `MatrixTranspose`, `MatrixDeterminant`, `MatrixInverse`. Matrix dimensions are part of the type judgement. CPU evaluation is live; WGSL explicitly refuses these operations until the dedicated Rung 4 lowering lands.
+- Matrix authoring (Rung 3): the shared Math editor exposes matrix dimensions/elements plus identity, add/sub/scale/multiply, transpose, determinant, and inverse. Registered `MatrixValue` properties traverse the ordinary Law property bridge. `MathNode::evalRange` currently refuses matrix expressions because `RangeValue` has no matrix interval domain; returning a scalar infinite interval would be a type lie.
 - CSG (one vocabulary with `geom::SdfOp`, also componentwise min/max on vectors): `Union` (20), `Intersection` (21), `Difference` (22). There is no `Op::Min` / `Op::Max`.
 - Rational / non-smooth, added 2026-08-18: `Div` (23), `Pow` (24), `Abs` (25), `Clamp` (26), `Sqrt` (27), `Tan` (28). `Div` is guarded by shared `kDegenerateDivisor`; CPU and WGSL both return `0.0` below the threshold. `Abs` / `Clamp` / `Sqrt` are Scalar→Scalar and Vector→Vector (componentwise).
 - Declared, not implemented: `Raycast` (16), `LineIntegral` (19). See §5.
@@ -57,6 +61,7 @@ Mathematical laws in reality often only apply under certain conditions (e.g., gr
 - `Field`: Continuous Scalar and Vector fields.
 - `CurveModel`: 1D time-based parameter curves.
 - `ProbabilityForm`: Stochastic modeling.
+- `LinearAlgebra`: Dimension-aware matrix values, explicit substrate bridges, and the Rung 2 CPU algebra kernel (identity/add/sub/scale/multiply/vec3 application/transpose/determinant/inverse). Singular inverse and non-finite arithmetic refuse rather than fabricating values.
 
 By centralizing these in `OntoMath`, Earthcall ensures that any mathematical law authored by a `Person` can be reliably executed by any sub-system.
 
@@ -216,3 +221,46 @@ mathematics untouched.
 Verified by `tests/ontomath_sounding_test.cpp`; demonstrated audibly by
 `scratch/probes/one_expression_two_senses.cpp`, which prints one expression as an ASCII arch,
 writes it as a playable `.wav`, and reverses a `Flow` governed by its derivative.
+
+
+## 8. Direct Screen manifestation
+
+Zach's [pixel doctrine](../ontology/PIXEL_SUBSTRATE_PROCESS_AND_AUTHORED_IDENTITY.md)
+permits substrate Properties, authored process results and identity-bearing pixel/region
+vessels to coexist. OntoMath expresses their bounds, values and mappings as admitted;
+the channel does not choose one exclusive identity model. A source expression, its act
+of manifestation and a dated observed result retain their distinct information. This
+governs authoring direction without claiming a general live substrate locator, inverse
+compositor or automatic conversion between all views.
+
+*Codex / GPT-6.1 Sol / `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-17T16:41:45-07:00; canonized at Zach's request.*
+
+The Screen channel now reads authored `VectorField` color and optional `ScalarField`
+opacity directly at physical framebuffer sample centres. This uses the same MathNode
+calculus and WGSL emitter as surface expressions without an Object, Material, texture,
+or ShapeKind carrier. Pure `whereLEZero` guards author arbitrary regions; undefined
+regions produce no act. Its `x/y`, `u/v`, `p`, framebuffer dimension, and explicitly
+admitted `t` bindings are documented in [Direct Screen forms](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md).
+Unsupported world-dependent expressions refuse rather than inventing a result.
+The existing generic PropertyValue serializer now preserves the typed field's complete
+Field JSON payload; old tag-only records cannot recover lost mathematics.
+
+Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-04 21:10 PDT. Zach requested a directly authorable Screen medium.
+
+**Singular-borne form is the authoring route.** An addressable Singular can carry a
+named record with typed `color` VectorField and `selector` ScalarField predicates;
+the authored `ScreenRegion` constructor produces this ordinary dictionary. Bind
+`output.colorPath` explicitly to that bearer's color field. Its Piece `where`
+conditions determine drawn support, while the separately authored selector determines
+membership for dated framebuffer observations. A region record is not itself a new
+Singular, and it does not automatically become a display layer. One pixel and a
+compound region use the same admitted mathematical domain. New direct 2D form should
+start here rather than assembling ShapeKind carriers; see
+[the app guide §5.1](../Design/Building%202D%20and%203D%20Apps%20with%20Earthcall%20Guide.md#51-start-with-a-singular-and-its-mathematical-form)
+and [CLI §5b](../law/LAW_AUTHORING_CLI_GUIDE.md#5b-a-named-displayed-region-its-source-and-its-sensed-pixels).
+
+*Clarification commissioned by Zach: Codex / GPT-6.1 Sol / session
+`01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` / 2026-10-17T16:18:23-07:00;
+source inspection and documentation routing, no new runtime witness.*
