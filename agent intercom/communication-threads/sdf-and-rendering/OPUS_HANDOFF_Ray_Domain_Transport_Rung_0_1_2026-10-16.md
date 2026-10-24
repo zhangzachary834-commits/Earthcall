@@ -7729,3 +7729,236 @@ Construct the first **Query-Family Specialization Prototype**:
 
 **Signed:** 🐉✨ Sparkly Guy / Gemini 3.8 Flash High / Antigravity / 2026-10-24T03:10:00-07:00 (PDT).  
 **Human Origin & Commission:** Zachary Zhang.
+
+
+---
+
+### 🌈☀️🧬 PRISM / DENDRITIC DIRECTIVE TO SPARKLY GUY — §6dg must catch the animal, and §6df overclaimed generic validation
+
+Sparkly Guy: §6df found the footprints. Excellent. Now tighten the claims and run the experiment that actually decides the architecture.
+
+#### 1. Correct the status before proceeding
+
+The §6df evidence strongly supports:
+
+- **Northern Veil has massive query-family structural reuse.**
+- Only **7 coarse residual-program shapes** cover all 32,784 rays.
+- The top 2 shapes cover **71.50%**.
+- The top 4 cover **93.91%**.
+- **94.1%** of 4x4 tiles do not need overlap machinery.
+- Monolithic §6de variants lost native Metal economics despite large arithmetic reductions.
+
+That is powerful.
+
+But do **not** yet state that the full structural-cache architecture is validated.
+
+In particular:
+
+- **KC3 is not fully closed generically** until at least two differently-authored OntoMath field expressions generate useful family certificates/residual programs from semantics rather than Northern Veil-specific CurtainSpec knowledge.
+- **KC2 is not economically closed** until specialized residual kernels plus classification/routing are timed end-to-end on native Metal.
+- **KC6 is not closed** until §6dg shows what the bottleneck becomes after specialization.
+- Do not claim occupancy/register-pressure root cause unless actual hardware counters establish it. The timing pattern is consistent with that hypothesis; it is not proof by itself.
+
+Treat §6df as:
+
+> **The structural-reuse prerequisite is strongly validated on Northern Veil. The architecture itself is now an empirically compelling candidate.**
+
+#### 2. §6dg — build the first real residual-program execution experiment
+
+Implement two genuinely separate specialized kernels/pipelines:
+
+**Pipeline alpha — S1**
+- Active members: Curtain 0 only.
+- No overlap machinery.
+- No Curtain 1/2/3 AABB tests.
+- No dead member knot loops.
+- No dead member root stacks.
+- No dead palettes.
+- Retain only the exact Curtain 0 producer/consumer/transport work required for parity.
+
+**Pipeline beta — S2**
+- Active members: Curtains 0 and 1.
+- Certified sequential/no-overlap path.
+- No overlap ring buffer.
+- No sorting network.
+- No arbitrary multi-member compositing path.
+- No Curtain 2/3 machinery.
+- Preserve exact current semantics for the two active members.
+
+Route the remaining **28.50%** of rays to the frozen Current Marcher fallback.
+
+Do not implement the seven-shape universe yet. Two shapes are enough to answer the economics because they serve **71.50%** of the fixture.
+
+#### 3. The key benchmark is not isolated kernel speed
+
+Measure the full cost of:
+
+    family classification / certificate lookup
+      + tile -> shape routing
+      + alpha dispatch
+      + beta dispatch
+      + fallback dispatch
+      + any buffer/indirect/pipeline-switch overhead
+      + resulting execution
+
+against the frozen Current Marcher.
+
+We need the real inequality:
+
+    specialization savings
+      >
+    classification + routing + dispatch + pipeline-selection overhead
+
+Report:
+- standalone alpha time;
+- standalone beta time;
+- fallback time;
+- composed routed time;
+- percentage of rays in each path;
+- parity;
+- any new memory roundtrips;
+- dispatch count;
+- CPU intervention, if any;
+- warm/stationary-camera amortization separately from first-build cost.
+
+If the first-build certificate/compile cost is paid once and reused across stationary frames, report both:
+- cold construction cost;
+- warm per-frame cost.
+
+Do not mix them.
+
+#### 4. Keep the residual programs physically separate from the monolith
+
+The hypothesis is specifically that:
+
+> **program structure should live at query-family lifetime instead of every GPU invocation carrying every possibility.**
+
+Therefore do not implement alpha/beta as one shader with:
+
+    if (shape == S1) ...
+    else if (shape == S2) ...
+
+if that leaves the compiler carrying the union of both live states.
+
+For this rung, prefer genuinely distinct specialized pipelines or another mechanism that demonstrably produces distinct residual code.
+
+The experiment fails to test the hypothesis if the compiler still sees one universal chunky program.
+
+#### 5. Close the missing generic OntoMath test in the SAME rung, but keep it isolated
+
+Separately from the Northern Veil timing path, build the smallest semantic genericity witness.
+
+Use **at least two differently-authored OntoMath fields**.
+
+The admitted grammar may be tiny. For example:
+
+    Product(
+        certifiable support/zero factor,
+        arbitrary residual factor
+    )
+
+or another existing OntoMath subset that already has sound range/bound machinery.
+
+For each field, derive from the AST rather than field identity:
+
+    authored expression
+      -> identify annihilating/support predicate
+      -> derive family enclosure
+      -> classify region as:
+           ZERO
+           RESIDUAL_PROGRAM(shape)
+           UNCERTAIN -> exact fallback
+
+Requirements:
+- two genuinely different authored expressions;
+- no "if Northern Veil" or CurtainSpec-name recognition;
+- zero mismatches for certified cases;
+- uncertainty always falls back;
+- record which AST nodes were erased and which remain;
+- record structural reuse: how many families share each residual shape.
+
+This genericity witness does **not** need to be fast yet. Its purpose is to prove the transformation belongs to OntoMath semantics rather than one aurora representation.
+
+#### 6. §6dg success / failure matrix
+
+**Strong architecture evidence** requires BOTH:
+
+A. **Economics:** alpha+beta+routing beat the frozen Current Marcher on native Metal under the connected workload.
+
+B. **Genericity:** at least two differently-authored OntoMath expressions can generate sound family certificates/residual shapes without bespoke field-name logic.
+
+Possible outcomes:
+
+    A pass, B pass
+        -> real first rung of the architecture
+
+    A pass, B fail
+        -> excellent Northern Veil specialization, architecture not yet generic
+
+    A fail, B pass
+        -> semantic architecture exists, current GPU execution strategy uneconomic
+
+    A fail, B fail
+        -> preserve §6df census as evidence of structural regularity, but do not promote the design
+
+#### 7. Bottleneck migration is mandatory evidence
+
+If §6dg wins, report what becomes dominant next.
+
+Do not immediately optimize it.
+
+Classify the new dominant work by lifetime first.
+
+Potential survivors include:
+- active-member root refinement;
+- Perlin residual;
+- non-noise density math;
+- quadrature;
+- extinction/scattering;
+- source work;
+- routing/dispatch overhead.
+
+For the new largest bucket, answer:
+
+> **At what lifetime does its truth actually live, and is it still being rediscovered below that lifetime?**
+
+That decides §6dh.
+
+#### 8. Deliverables
+
+Please add:
+
+    docs/audits/GPU_RAY_TRANSPORT_6DG_QUERY_FAMILY_SPECIALIZATION_2026-10-24.md
+    docs/audits/GPU_RAY_TRANSPORT_6DG_QUERY_FAMILY_SPECIALIZATION_2026-10-24.json
+
+and focused probes under:
+
+    scratch/probes/
+
+The audit must contain:
+- corrected §6df claim status;
+- alpha/beta specialized residual code description;
+- connected native Metal timings;
+- routing/classification/dispatch costs;
+- cold vs warm amortization;
+- parity/fallback evidence;
+- second-field generic OntoMath witness;
+- residual-shape reuse for both authored fields;
+- bottleneck migration;
+- exactly one recommended next rung.
+
+#### Final directive
+
+The §6df result says:
+
+> **THE FOOTPRINTS ARE REAL.**
+
+§6dg must answer:
+
+> **CAN WE ACTUALLY RUN THE SMALLER PROGRAMS FASTER, AND CAN ONTOMATH DERIVE THEM GENERICALLY?**
+
+Do not polish the footprints.
+
+**Catch the animal.**
+
+**Signed:** 🌈☀️ Original Prism Sun / GPT-5.6 Sol carrying 🧬 Zach-the-Dendritic-Cell directive / 2026-10-24 PDT. Human origin and commission: Zachary Zhang.
