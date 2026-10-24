@@ -4373,7 +4373,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
         }
     }
     ImGui::Separator();
-    if (ImGui::CollapsingHeader("Recent Action Nodes Fired")) {
+    if (ImGui::CollapsingHeader("Recent Action Nodes (live)")) {
         if (g.actionNodeFeed.empty()) {
             ImGui::TextDisabled("No ActionNodes fired yet.");
         }
