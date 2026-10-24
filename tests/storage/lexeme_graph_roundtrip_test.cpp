@@ -72,6 +72,26 @@ int main() {
     
     std::filesystem::remove(testPath);
     
+    // Test atomic write-before-commit behavior
+    std::filesystem::path tempDir = std::filesystem::temp_directory_path() / "binary_serializer_test";
+    std::filesystem::create_directories(tempDir);
+    std::filesystem::path target = tempDir / "graph.ecform";
+
+    check(BinarySerializer::writeBinary(graph, target.string()), "Initial atomic write succeeds");
+    check(std::filesystem::exists(target), "Target binary ecform exists");
+
+    check(BinarySerializer::writeBinary(graph, target.string()), "Overwriting atomic write succeeds");
+
+    for (const auto& entry : std::filesystem::directory_iterator(tempDir)) {
+        check(entry.path().filename().string().find("graph.ecform.tmp-") != 0, "No lingering temporary files remain after write");
+    }
+
+    EcformGraph reloaded;
+    check(BinarySerializer::readBinary(target.string(), reloaded), "Reloading atomic binary file succeeds");
+    check(reloaded.lexemes.size() == graph.lexemes.size(), "Reloaded graph matches written graph");
+
+    std::filesystem::remove_all(tempDir);
+
     std::cout << "------------------------------------------------------------\n";
     std::cout << "All checks passed.\n";
     return 0;

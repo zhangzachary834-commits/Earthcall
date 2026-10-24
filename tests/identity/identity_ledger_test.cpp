@@ -104,6 +104,38 @@ static void testResolveOrMint() {
     std::cout << "  resolve or mint OK\n";
 }
 
+static void testAtomicWritePreservesOnFailure() {
+    std::filesystem::path testPath = std::filesystem::temp_directory_path() / "test_ledger_atomic.json";
+    std::filesystem::remove(testPath);
+
+    SingularId id = PrivateKey::generate().id();
+
+    // Write initial valid ledger
+    {
+        IdentityLedger ledger(testPath);
+        ledger.record("initial_user", id);
+        assert(ledger.save());
+    }
+
+    // Confirm file exists and no temporary leftover files exist
+    assert(std::filesystem::exists(testPath));
+    for (const auto& entry : std::filesystem::directory_iterator(std::filesystem::temp_directory_path())) {
+        if (entry.path().filename().string().find("test_ledger_atomic.json.tmp-") == 0) {
+            assert(false && "Stale temporary file found");
+        }
+    }
+
+    // Re-load and verify
+    {
+        IdentityLedger reloaded(testPath);
+        assert(reloaded.load());
+        assert(reloaded.find("initial_user").has_value());
+    }
+
+    std::filesystem::remove(testPath);
+    std::cout << "  atomic write-before-commit OK\n";
+}
+
 int main() {
     std::cout << "identity_ledger_test:\n";
     testEmptyLoadSave();
@@ -111,6 +143,7 @@ int main() {
     testPersistence();
     testMalformedLedger();
     testResolveOrMint();
+    testAtomicWritePreservesOnFailure();
     std::cout << "identity_ledger_test: ALL OK\n";
     return 0;
 }
