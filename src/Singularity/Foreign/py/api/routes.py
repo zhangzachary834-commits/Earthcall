@@ -4,7 +4,6 @@ from pathlib import Path
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
-# Public default allowlist. Environment configuration can replace it at runtime.
 PORTFOLIO_ALLOWED_ORIGINS = {
     "https://zhangzachary834-commits.github.io",
     "http://localhost:8000",
