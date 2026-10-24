@@ -286,6 +286,8 @@ void Law::setActionModel(ActionModel model) {
 void Law::recompile() {
     _compiledGates.clear();
     _writesQualifiedRoots = false;
+    _writesZoneCanExit = false;
+    _writesZoneOwner = false;
     if (_conditionModel) {
         _conditionPredicates.clear();
         addCondition(_conditionModel->describe(), _conditionModel->compile());
@@ -302,12 +304,15 @@ void Law::recompile() {
 
         std::vector<PropertyPath> writes;
         _actionModel->collectPaths(writes);
+        // The same collectPaths() set used by the previous per-application
+        // kernel check: only the FIRST segment matters. In particular,
+        // nested names such as metadata.owner are not Zone owner writes.
         for (const PropertyPath& w : writes) {
-            if (!w.segments.empty() && !w.segments.front().empty() &&
-                w.segments.front()[0] == '@') {
-                _writesQualifiedRoots = true;
-                break;
-            }
+            if (w.segments.empty()) continue;
+            const std::string& root = w.segments.front();
+            if (!root.empty() && root[0] == '@') _writesQualifiedRoots = true;
+            if (root == "canExit") _writesZoneCanExit = true;
+            if (root == "owner") _writesZoneOwner = true;
         }
     }
     rebuildRequiredProperties();
@@ -474,29 +479,14 @@ Law::ApplicationResult Law::applyToImpl(
         writesPersonsMotionWithoutActuationConsent(*_actionModel, target);
     bool violatesKernelBoundary = lacksPersonMotionConsent;
     bool personMotionRefused = false;
-    if (_actionModel) {
-        std::vector<PropertyPath> paths;
-        _actionModel->collectPaths(paths);
-
-        for (const auto& p : paths) {
-            if (p.segments.empty()) continue;
-            const std::string& root = p.segments.front();
-
-            // 3. Zone Exit Lock Rejection: Nobody can be locked in a zone against their will.
-            if (targetZone) {
-                if (root == "canExit") {
-                    violatesKernelBoundary = true;
-                    break;
-                }
-                // Local Ourverse gathering: no one may own it. Owner is
-                // already read-only on Zone; this refuses any write path
-                // that would seat a Singular over the gathering place.
-                if (targetZone->isOurverseGathering() && root == "owner") {
-                    violatesKernelBoundary = true;
-                    break;
-                }
-            }
-        }
+    // Cached from the identical collectPaths() roots at recompile(), not a
+    // wider scan of inputs, nested segments, or newborn-only child actions.
+    // Person motion consent still uses its destination-aware live scan:
+    // conservatively skipping that guard would weaken a Kernel boundary.
+    if (_actionModel && targetZone &&
+        (_writesZoneCanExit ||
+         (_writesZoneOwner && targetZone->isOurverseGathering()))) {
+        violatesKernelBoundary = true;
     }
 
     if (!_enabled) {

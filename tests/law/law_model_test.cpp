@@ -31,6 +31,29 @@ int main() {
     {
         Object author;   // any Singular can author (Person governance comes later)
 
+        // Kernel boundary cache must preserve the former root-only semantics
+        // and must be invalidated when the authored ActionModel changes.
+        {
+            Zone ordinaryZone("Boundary Witness", "default");
+            Zone gatheringZone("Gathering Witness", "default");
+            gatheringZone.markOurverseGathering();
+            Law boundaryLaw("cached-zone-boundary");
+            boundaryLaw.addAuthor(author);
+
+            boundaryLaw.setActionModel(ActionNode::set("canExit", PropertyValue(false)));
+            assert(boundaryLaw.applyTo(ordinaryZone) == Law::ApplicationResult::AuthorityDenied);
+
+            boundaryLaw.setActionModel(ActionNode::set("metadata.canExit", PropertyValue(false)));
+            assert(boundaryLaw.applyTo(ordinaryZone) == Law::ApplicationResult::Applied);
+
+            boundaryLaw.setActionModel(ActionNode::set("owner", PropertyValue(std::string("intruder"))));
+            assert(boundaryLaw.applyTo(gatheringZone) == Law::ApplicationResult::AuthorityDenied);
+            assert(boundaryLaw.applyTo(ordinaryZone) == Law::ApplicationResult::Applied);
+
+            boundaryLaw.setActionModel(ActionNode::set("metadata.owner", PropertyValue(std::string("intruder"))));
+            assert(boundaryLaw.applyTo(gatheringZone) == Law::ApplicationResult::Applied);
+        }
+
         // ------------------------------------------------------------------
         // 1. The ported floor law: IF position.y < 0 THEN position.y := 0.
         // ------------------------------------------------------------------
