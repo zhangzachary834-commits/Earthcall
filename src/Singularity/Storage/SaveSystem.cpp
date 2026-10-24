@@ -130,13 +130,19 @@ void seedMissingCheckoutIdentities(const std::filesystem::path& home,
         for (const auto& entry : fs::directory_iterator(srcDir, ec)) {
             const std::string fname = entry.path().filename().string();
             const fs::path dst = dstDir / fname;
-            const bool isSanctuary =
+            const bool isSyncedShowcase =
                 (fname == "Sky-Island Sanctuary" ||
                  fname.rfind("sky.sanctuary.", 0) == 0 ||
                  fname.rfind("law-sky-sanctuary-", 0) == 0 ||
-                 fname == "sky_island_sanctuary.json");
+                 fname == "sky_island_sanctuary.json" ||
+                 fname == "SynthesisStudio" ||
+                 fname == "SynthesisStudio.LivingInstrument" ||
+                 fname.rfind("studio.", 0) == 0 ||
+                 fname.rfind("law-studio-", 0) == 0 ||
+                 fname == "synthesis_studio.json" ||
+                 fname == "synthesis_studio_living.json");
             if (fs::exists(dst, ec)) {
-                if (isSanctuary) {
+                if (isSyncedShowcase) {
                     fs::remove_all(dst, ec);
                     fs::copy(entry.path(), dst,
                              fs::copy_options::recursive | fs::copy_options::overwrite_existing, ec);

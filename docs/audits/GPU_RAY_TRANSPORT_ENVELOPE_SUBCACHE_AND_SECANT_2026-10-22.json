@@ -1,0 +1,211 @@
+{
+  "protocol": "\u00a76cs & \u00a76ct: Linear-z wave envelope culling, cross-level subdivision phi-caching, and guarded hybrid secant-bisection",
+  "harness": "Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session 50cf28df-09e9-4c2b-a416-0e859a729c1a",
+  "counsel": "Aetherion / The Firmament (Gemini 4 Argon) 2026-10-22T17:38:00-07:00",
+  "date": "2026-10-22",
+  "device": "Apple M5 / Metal (timestamps disabled)",
+  "workload": {
+    "distinct_rays": 32784,
+    "viewport": "2560x1440",
+    "camera": "inside",
+    "clock": 7.25
+  },
+  "stage1_6cs_bit_exact": {
+    "subpanels_count": 247326,
+    "overlaps_count": 1799,
+    "differing_schedule_census_rays": 0,
+    "differing_output_pixel_rays": 0,
+    "matched_affine_endpoints": 12102,
+    "missing_affine_endpoints": 0,
+    "ray_member_unions_changed": 0,
+    "all_32784_AST_checks_pass": true,
+    "all_12_reference_gates_pass": true,
+    "forced_fallback_bit_identical": true,
+    "economics": {
+      "connected_65536_partial_ms": {
+        "current_marcher_mean": 2.5281928750000002,
+        "bulk_connected_mean": 2.5442630625000002,
+        "producer_only_mean": 2.5382918749999996,
+        "producer_share_pct": 100.39945528285689
+      },
+      "bounded_streaming": {
+        "8192": {
+          "1": {
+            "mode0_current_mean_ms": 2.498968375,
+            "mode1_bulk_mean_ms": 2.8512343749999998,
+            "mode2_stream_mean_ms": 3.889333125,
+            "speedup_mode0_over_mode1": 0.876451405367193,
+            "speedup_mode0_over_mode2": 0.6425184715953073
+          },
+          "2": {
+            "mode0_current_mean_ms": 5.0632915,
+            "mode1_bulk_mean_ms": 5.06367725,
+            "mode2_stream_mean_ms": 7.103349125,
+            "speedup_mode0_over_mode1": 0.9999238201842348,
+            "speedup_mode0_over_mode2": 0.7128034129956973
+          },
+          "4": {
+            "mode0_current_mean_ms": 7.374166625,
+            "mode1_bulk_mean_ms": 8.257745,
+            "mode2_stream_mean_ms": 11.48339075,
+            "speedup_mode0_over_mode1": 0.8930000411734681,
+            "speedup_mode0_over_mode2": 0.6421593400015584
+          }
+        },
+        "16384": {
+          "1": {
+            "mode0_current_mean_ms": 2.539151125,
+            "mode1_bulk_mean_ms": 2.5455205,
+            "mode2_stream_mean_ms": 2.605703125,
+            "speedup_mode0_over_mode1": 0.997497810369235,
+            "speedup_mode0_over_mode2": 0.9744591011303332
+          },
+          "2": {
+            "mode0_current_mean_ms": 3.765703125,
+            "mode1_bulk_mean_ms": 3.829406,
+            "mode2_stream_mean_ms": 4.847401125,
+            "speedup_mode0_over_mode1": 0.9833648155875871,
+            "speedup_mode0_over_mode2": 0.7768499094450327
+          },
+          "4": {
+            "mode0_current_mean_ms": 6.29781775,
+            "mode1_bulk_mean_ms": 6.689859125,
+            "mode2_stream_mean_ms": 8.053135375,
+            "speedup_mode0_over_mode1": 0.9413976635868249,
+            "speedup_mode0_over_mode2": 0.7820330165504017
+          }
+        },
+        "32768": {
+          "1": {
+            "mode0_current_mean_ms": 2.546406375,
+            "mode1_bulk_mean_ms": 2.5601301249999997,
+            "mode2_stream_mean_ms": 2.868624875,
+            "speedup_mode0_over_mode1": 0.9946394326343082,
+            "speedup_mode0_over_mode2": 0.8876749264750066
+          },
+          "2": {
+            "mode0_current_mean_ms": 3.802484375,
+            "mode1_bulk_mean_ms": 3.823213375,
+            "mode2_stream_mean_ms": 4.035343625,
+            "speedup_mode0_over_mode1": 0.9945781210811966,
+            "speedup_mode0_over_mode2": 0.9422950629142518
+          },
+          "4": {
+            "mode0_current_mean_ms": 6.75149475,
+            "mode1_bulk_mean_ms": 7.6375155,
+            "mode2_stream_mean_ms": 7.723411625,
+            "speedup_mode0_over_mode1": 0.8839909719332157,
+            "speedup_mode0_over_mode2": 0.8741596431486326
+          }
+        }
+      }
+    }
+  },
+  "stage2_6ct_numerical_secant": {
+    "subpanels_count": 253936,
+    "overlaps_count": 1871,
+    "matched_affine_endpoints": 12096,
+    "missing_affine_endpoints": 6,
+    "ray_member_unions_changed": 47084,
+    "all_32784_AST_checks_pass": true,
+    "max_delta_RGB_AST": 3.650784492492676e-07,
+    "max_delta_T_AST": 8.940696716308594e-07,
+    "all_12_reference_gates_pass": true,
+    "forced_fallback_bit_identical": true,
+    "economics": {
+      "connected_65536_partial_ms": {
+        "current_marcher_mean": 2.54790875,
+        "bulk_connected_mean": 2.7801458749999997,
+        "producer_only_mean": 2.581489625,
+        "producer_share_pct": 101.31797792993962
+      },
+      "bounded_streaming": {
+        "8192": {
+          "1": {
+            "mode0_current_mean_ms": 2.908229,
+            "mode1_bulk_mean_ms": 3.014375,
+            "mode2_stream_mean_ms": 4.22740625,
+            "speedup_mode0_over_mode1": 0.9647867302508812,
+            "speedup_mode0_over_mode2": 0.6879464210471847
+          },
+          "2": {
+            "mode0_current_mean_ms": 6.6016565,
+            "mode1_bulk_mean_ms": 7.7952657499999995,
+            "mode2_stream_mean_ms": 10.318651,
+            "speedup_mode0_over_mode1": 0.8468802362510861,
+            "speedup_mode0_over_mode2": 0.6397790273166521
+          },
+          "4": {
+            "mode0_current_mean_ms": 9.60294275,
+            "mode1_bulk_mean_ms": 10.64180725,
+            "mode2_stream_mean_ms": 14.540505374999999,
+            "speedup_mode0_over_mode1": 0.9023789403815786,
+            "speedup_mode0_over_mode2": 0.6604270279704774
+          }
+        },
+        "16384": {
+          "1": {
+            "mode0_current_mean_ms": 2.541687625,
+            "mode1_bulk_mean_ms": 2.528161375,
+            "mode2_stream_mean_ms": 3.0993335,
+            "speedup_mode0_over_mode1": 1.005350232043633,
+            "speedup_mode0_over_mode2": 0.8200755501142422
+          },
+          "2": {
+            "mode0_current_mean_ms": 3.7832084999999998,
+            "mode1_bulk_mean_ms": 4.59233875,
+            "mode2_stream_mean_ms": 5.22335925,
+            "speedup_mode0_over_mode1": 0.8238086748282669,
+            "speedup_mode0_over_mode2": 0.7242864828797675
+          },
+          "4": {
+            "mode0_current_mean_ms": 6.311588875,
+            "mode1_bulk_mean_ms": 7.035942375,
+            "mode2_stream_mean_ms": 8.534494875,
+            "speedup_mode0_over_mode1": 0.897049540574158,
+            "speedup_mode0_over_mode2": 0.7395386566448667
+          }
+        },
+        "32768": {
+          "1": {
+            "mode0_current_mean_ms": 2.534005125,
+            "mode1_bulk_mean_ms": 2.571697875,
+            "mode2_stream_mean_ms": 2.59016675,
+            "speedup_mode0_over_mode1": 0.9853432433232462,
+            "speedup_mode0_over_mode2": 0.9783173708796935
+          },
+          "2": {
+            "mode0_current_mean_ms": 3.7705155,
+            "mode1_bulk_mean_ms": 3.84236975,
+            "mode2_stream_mean_ms": 3.98269775,
+            "speedup_mode0_over_mode1": 0.9812994962288573,
+            "speedup_mode0_over_mode2": 0.9467239887837334
+          },
+          "4": {
+            "mode0_current_mean_ms": 6.185343625,
+            "mode1_bulk_mean_ms": 6.3482917500000005,
+            "mode2_stream_mean_ms": 6.456365,
+            "speedup_mode0_over_mode1": 0.9743319728492313,
+            "speedup_mode0_over_mode2": 0.9580226063737103
+          }
+        }
+      }
+    }
+  },
+  "verdict": {
+    "stage1_6cs": "PASS strict same-device bit-exactness on all 32,784 rays (0 differing schedule rays, 0 differing output pixels, 100% affine endpoints retained, 0 union changes). Economics REJECTED: Mode 2 trails Current across all bounded capacities.",
+    "stage2_6ct": "PASS scoped accuracy on all 32,784 rays (all AST checks < 1e-5, all 12 reference gates pass, fallback identical). 6 affine endpoints missing due to secant bracket shift. Economics REJECTED: Mode 2 trails Current across all bounded capacities.",
+    "economic_gate1": "REJECTED. Gate 1 remains OPEN."
+  },
+  "codex_review": {
+    "audit": "docs/audits/GPU_RAY_TRANSPORT_ROOT_REVIEW_2026-10-22.md",
+    "timestamp": "2026-10-22T18:21:23.901547-07:00",
+    "hardware_root_cause_established": false,
+    "phase_clocks_additive": false,
+    "timing_units": "Old bounded_streaming means are total host batch milliseconds; divide by repetitions for per-query time; ratios unchanged.",
+    "exact_budget_regression_repaired": true,
+    "all_level_secant_structural_admission": false,
+    "zero_only_secant_structural_admission": true,
+    "shipping_performance_qualified": false
+  }
+}
